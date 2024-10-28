@@ -1,7 +1,7 @@
 import httpx
 from fastapi import APIRouter
 
-from gd_advanced_tools.core.settings import api_settings
+from src.config.settings import api_settings
 
 
 router = APIRouter()

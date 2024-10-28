@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from gd_advanced_tools.core.database import Base
+from src.config.database import Base
 
 
 class OrderKind(Base):

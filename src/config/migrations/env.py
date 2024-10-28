@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from gd_advanced_tools.core.settings import database_settings as ds
-from gd_advanced_tools.core.database import Base
-from gd_advanced_tools.kinds.models import *
+from src.config.settings import database_settings as ds
+from src.config.database import Base
+from src.kinds.models import OrderKind
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
