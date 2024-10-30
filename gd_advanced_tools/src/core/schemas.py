@@ -1,13 +1,10 @@
 import json
-from typing import Any, Generic, Mapping, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field, conlist
-from pydantic.generics import GenericModel
 
 
 def to_camelcase(string: str) -> str:
-    """The alias generator for PublicModel."""
-
     resp = "".join(
         word.capitalize() if index else word
         for index, word in enumerate(string.split("_"))
@@ -18,12 +15,13 @@ def to_camelcase(string: str) -> str:
 class PublicModel(BaseModel):
     class Config:
         extra = 'ignore'
-        orm_mode = True
+        from_attributes = True
         use_enum_values = True
         validate_assignment = True
         alias_generator = to_camelcase
-        allow_population_by_field_name = True
+        populate_by_name = True
         arbitrary_types_allowed = True
+        from_attributes = True
 
     def encoded_dict(self, by_alias=True):
         return json.loads(self.model_dump_json(by_alias=by_alias))
@@ -32,17 +30,15 @@ class PublicModel(BaseModel):
 _PublicModel = TypeVar("_PublicModel", bound=PublicModel)
 
 
-class ResponseMulti(PublicModel, GenericModel, Generic[_PublicModel]):
+class ResponseMulti(PublicModel, Generic[_PublicModel]):
+    """Generic response model that consist multiple results."""
 
-    result: list[PublicModel]
-
-
-class Response(PublicModel, GenericModel, Generic[_PublicModel]):
-
-    result: PublicModel
+    result: list[_PublicModel]
 
 
-_Response = Mapping[int | str, dict[str, Any]]
+class Response(PublicModel, Generic[_PublicModel]):
+
+    result: _PublicModel
 
 
 class ErrorResponse(PublicModel):

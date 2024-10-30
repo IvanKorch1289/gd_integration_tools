@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, status
+from typing import List
+from fastapi import APIRouter, Request, status
 from fastapi_utils.cbv import cbv
 
 from gd_advanced_tools.src.core.transaction import transaction
 from gd_advanced_tools.src.core.schemas import Response, ResponseMulti
-from gd_advanced_tools.src.kinds.schemas import OrderKindPublic, OrderKindCreateRequestBody
+from gd_advanced_tools.src.kinds.models import OrderKind
+from gd_advanced_tools.src.kinds.schemas import OrderKindRequestSchema, OrderKindResponseSchema
 from gd_advanced_tools.src.kinds.repository import OrdersKindRepository
 
 
@@ -16,41 +18,33 @@ class OrderKindCBV:
 
     @router.get('/', status_code=status.HTTP_200_OK, summary='Получить все виды запросов')
     @transaction
-    async def get_kinds(self) -> ResponseMulti[OrderKindPublic]:
+    async def get_kinds(self, request: Request) -> ResponseMulti[OrderKindResponseSchema]:
         orders_public = [
-            OrderKindPublic.model_validate(order) async for order in OrdersKindRepository()._all()
+            OrderKindResponseSchema.model_validate(order) async for order in OrdersKindRepository().all()
         ]
-        return ResponseMulti[OrderKindPublic](result=orders_public)
+        return ResponseMulti[OrderKindResponseSchema](result=orders_public)
 
     @router.get('/{kind_id}', status_code=status.HTTP_200_OK, summary='Получить вид запроса по ID')
     @transaction
-    async def get_kind(self, kind_id: int) -> Response[OrderKindPublic]:
-        order = OrdersKindRepository._get(key='id', value=kind_id)
-        return await Response[OrderKindPublic](result=order)
+    async def get_kind(self, request: Request, kind_id: int):
+        order = await OrdersKindRepository().get(key='id', value=kind_id)
+        orders_public = OrderKindResponseSchema.model_validate(order)
+        return Response[OrderKindResponseSchema](result=orders_public)
 
     @router.post('/', status_code=status.HTTP_201_CREATED, summary='Добавить вид запроса')
     @transaction
-    async def add_kind(self,  schema: OrderKindCreateRequestBody) -> Response[OrderKindPublic]:
-        order: Order = OrdersKindRepository.add(OrderKindCreateRequestBody(**payload))
-        order_public = OrderKindPublic.model_validate(order)
+    async def add_kind(self, request: Request, schema: OrderKindRequestSchema) -> Response[OrderKindResponseSchema]:
+        order: OrderKind = await OrdersKindRepository().add(schema=schema)
+        order_public = OrderKindRequestSchema.model_validate(order)
+        return Response[OrderKindResponseSchema](result=order_public)
 
-        return Response[OrderKindPublic](result=order_public)
+    @router.put('/{kind_id}', summary='Изменить вид запроса по ID')
+    async def update_kind(self, request: Request, schema: OrderKindRequestSchema, kind_id: int) -> Response[OrderKindResponseSchema]:
+        order: OrderKind = await OrdersKindRepository().update(key='id', value=kind_id, schema=schema)
+        order_public = OrderKindRequestSchema.model_validate(order)
+        return Response[OrderKindResponseSchema](result=order_public)
 
-    # @router.put('/{kind_id}', summary='Изменить вид запроса по ID')
-    # async def update_kind(self, order_kind: OrderKindAddSchema = Depends()) -> OrderKindGetSchema:
-    #     return await OrderKindRepository.
-    #     await self.session.execute(
-    #         update(OrderKind)
-    #         .where(OrderKind.id == kind_id)
-    #         .values(name=order_kind.name, description=order_kind.description, skb_uuid=order_kind.skb_uuid)
-    #     )
-    #     try:
-    #         await self.session.commit()
-    #         return status.HTTP_200_OK
-    #     except Exception as ex:
-    #         await self.session.rollback()
-    #         return ex
 
     @router.delete('/{kind_id}', summary='Удалить вид запроса по ID')
-    async def delete_kind(self, kind_id: int):
-        return await OrdersKindRepository._delete(kind_id=kind_id)
+    async def delete_kind(self, request: Request, kind_id: int):
+        return await OrdersKindRepository()._delete(id=kind_id)
