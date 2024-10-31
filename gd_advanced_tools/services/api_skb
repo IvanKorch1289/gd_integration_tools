@@ -1,0 +1,26 @@
+from typing import List, Union
+
+import httpx
+
+from gd_advanced_tools.core import settings
+from gd_advanced_tools.repository.base import AbstractRepository
+from gd_advanced_tools.schemas.order_kinds import OrderKindRequestSchema, OrderKindResponseSchema
+
+
+class APISKBKindService:
+
+    def __init__(self, order_kinds_repo: AbstractRepository):
+        self.response_schema = OrderKindResponseSchema
+        self.params = {'api-key': settings.api_settings.api_key}
+        self.endpoint = settings.api_settings.skb_url + 'Kinds'
+
+    async def get_request_kinds(self):   
+        try:
+            request = await httpx.get(self.endpoint, params=self.params)
+        # for el in request.json().get('Data'):
+        #     order_kind = {}
+        #     order_kind['name'] = el['Name']
+        #     order_kind['skb_uuid'] = el['Id']
+            return request.json().get('Data')
+        except Exception as ex:
+            return {'error': str(ex)}
