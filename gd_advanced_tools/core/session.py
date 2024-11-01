@@ -32,5 +32,5 @@ class Session:
         try:
             result = await self._session.execute(query)
             return result
-        except self._ERRORS:
+        except self._ERRORS as ex:
             raise DatabaseError

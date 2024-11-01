@@ -1,22 +1,21 @@
-import httpx
-from fastapi import APIRouter
+from typing import Annotated
 
-from gd_advanced_tools.core.settings import settings
+from fastapi import APIRouter, Depends
+from fastapi_utils.cbv import cbv
+
+from gd_advanced_tools.dependencies.api_skb import skb_kinds_service
+from gd_advanced_tools.services.api_skb import APISKBKindService
 
 
 router = APIRouter()
 
+@cbv(router)
+class SKBCBV:
+    """CBV-класс для создания запросов в СКБ-Техно."""
 
-@router.get('/get-kinds', summary='Получить экземпляры справочника видов запросов из СКБ Техно')
-async def get_skb_kinds():
-    params = {'api-key': settings.api_settings.api_key}
-    endpoint = settings.api_settings.skb_url + 'Kinds'
-    try:
-        request = httpx.get(endpoint, params=params)
-    # for el in request.json().get('Data'):
-    #     order_kind = {}
-    #     order_kind['name'] = el['Name']
-    #     order_kind['skb_uuid'] = el['Id']
-        return request.json().get('Data')
-    except Exception as ex:
-        return {'error': str(ex)}
+    @router.get('/get-kinds', summary='Получить экземпляры справочника видов запросов из СКБ Техно')
+    async def get_skb_kinds(
+        self,
+        service: Annotated[APISKBKindService, Depends(skb_kinds_service)]
+    ):
+        return await service.get_request_kinds()

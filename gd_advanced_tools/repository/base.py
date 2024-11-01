@@ -54,9 +54,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
     async def get(self, key: str, value: Any) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await self.execute(query)
-        if not (_result := result.scalars().one_or_none()):
-            raise NotFoundError(message=f'Not Found ({key}={value})')
-        return _result
+        return result.scalars().one_or_none()
 
     async def count(self) -> int:
         result: Result = await self.execute(func.count(self.model.id))
@@ -69,37 +67,25 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
         result: Result = await self.execute(
             select(self.model).order_by(asc(by)).limit(1)
         )
-
-        if not (_result := result.scalars().one_or_none()):
-            raise NotFoundError(message='Table is empty')
-        return _result
+        return result.scalars().one_or_none()
 
     async def last(self, by: str = "id") -> ConcreteTable:
         result: Result = await self.execute(
             select(self.model).order_by(desc(by)).limit(1)
         )
-
-        if not (_result := result.scalars().one_or_none()):
-            raise NotFoundError(message='Table is empty')
-        return _result
+        return result.scalars().one_or_none()
 
     async def add(self, data: dict[str, Any]) -> ConcreteTable:
-        try:
-            result: Result = await self.execute(insert(self.model).values(**data).returning(self.model))
-            await self._session.flush()
-            await self._session.commit()
-            return result.scalars().one_or_none()
-        except self._ERRORS as ex:
-            raise DatabaseError
+        result: Result = await self.execute(insert(self.model).values(**data).returning(self.model))
+        await self._session.flush()
+        await self._session.commit()
+        return result.scalars().one_or_none()
 
     async def update(self, key: str, value: Any, data: dict[str, Any]) -> ConcreteTable:
-        try:
-            result: Result = await self.execute(update(self.model).where(getattr(self.model, key) == value).values(**data).returning(self.model))
-            await self._session.flush()
-            await self._session.commit()
-            return result.scalars().one_or_none()
-        except self._ERRORS:
-            raise DatabaseError
+        result: Result = await self.execute(update(self.model).where(getattr(self.model, key) == value).values(**data).returning(self.model))
+        await self._session.flush()
+        await self._session.commit()
+        return result.scalars().one_or_none()
 
     async def all(self) -> AsyncGenerator[ConcreteTable, None]:
         result: Result = await self.execute(select(self.model))
@@ -109,10 +95,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
             yield instance
 
     async def delete(self, key: int, value: Any) -> None:
-        try:
-            result = await self.execute(delete(self.model).where(getattr(self.model, key) == value).returning(self.model.id))
-            await self._session.flush()
-            await self._session.commit()
-            return result.scalar_one()
-        except self._ERRORS:
-            raise DatabaseError
+        result = await self.execute(delete(self.model).where(getattr(self.model, key) == value).returning(self.model.id))
+        await self._session.flush()
+        await self._session.commit()
+        return result.scalar_one()
