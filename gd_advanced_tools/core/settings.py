@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from pydantic import Field
@@ -35,7 +34,6 @@ class DatabaseSettings(BaseSettings):
     db_echo: bool = Field(default=False, env='DB_ECHO')
     db_poolsize: int = Field(default=10)
     db_maxoverflow: int = Field(default=10)
-    
     # model_config = SettingsConfigDict(env_file=".env")
 
     @property

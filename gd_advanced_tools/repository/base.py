@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Generic, Type, TypeVar
 from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
 
 from gd_advanced_tools.models.base import Base
-from gd_advanced_tools.core.errors import DatabaseError, NotFoundError, UnprocessableError
+from gd_advanced_tools.core.errors import UnprocessableError
 from gd_advanced_tools.core.session import Session
 
 
@@ -46,12 +46,19 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
 
-class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
+class SQLAlchemyRepository(
+    AbstractRepository,
+    Generic[ConcreteTable], Session
+):
     """Базовый класс взаимодействия с БД."""
 
     model: Type[ConcreteTable] = None
 
-    async def get(self, key: str, value: Any) -> ConcreteTable:
+    async def get(
+        self,
+        key: str,
+        value: Any
+    ) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await self.execute(query)
         return result.scalars().one_or_none()
@@ -63,26 +70,45 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
             raise UnprocessableError(message='Error output type')
         return value
 
-    async def first(self, by: str = "id") -> ConcreteTable:
+    async def first(
+        self,
+        by: str = 'id'
+    ) -> ConcreteTable:
         result: Result = await self.execute(
             select(self.model).order_by(asc(by)).limit(1)
         )
         return result.scalars().one_or_none()
 
-    async def last(self, by: str = "id") -> ConcreteTable:
+    async def last(
+        self,
+        by: str = 'id'
+    ) -> ConcreteTable:
         result: Result = await self.execute(
             select(self.model).order_by(desc(by)).limit(1)
         )
         return result.scalars().one_or_none()
 
-    async def add(self, data: dict[str, Any]) -> ConcreteTable:
-        result: Result = await self.execute(insert(self.model).values(**data).returning(self.model))
+    async def add(
+        self,
+        data: dict[str, Any]
+    ) -> ConcreteTable:
+        result: Result = await self.execute(
+            insert(self.model).values(**data).returning(self.model)
+        )
         await self._session.flush()
         await self._session.commit()
         return result.scalars().one_or_none()
 
-    async def update(self, key: str, value: Any, data: dict[str, Any]) -> ConcreteTable:
-        result: Result = await self.execute(update(self.model).where(getattr(self.model, key) == value).values(**data).returning(self.model))
+    async def update(
+        self,
+        key: str,
+        value: Any,
+        data: dict[str, Any]
+    ) -> ConcreteTable:
+        result: Result = await self.execute(
+            update(self.model).where(getattr(self.model, key) == value)
+            .values(**data).returning(self.model)
+        )
         await self._session.flush()
         await self._session.commit()
         return result.scalars().one_or_none()
@@ -94,8 +120,15 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable], Session):
         for instance in instances:
             yield instance
 
-    async def delete(self, key: int, value: Any) -> None:
-        result = await self.execute(delete(self.model).where(getattr(self.model, key) == value).returning(self.model.id))
+    async def delete(
+        self,
+        key: int,
+        value: Any
+    ) -> None:
+        result = await self.execute(
+            delete(self.model).where(getattr(self.model, key) == value)
+            .returning(self.model.id)
+        )
         await self._session.flush()
         await self._session.commit()
         return result.scalar_one()

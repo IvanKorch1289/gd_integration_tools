@@ -26,7 +26,6 @@ app = FastAPI()
 app.include_router(kinds_router, prefix='/kind', tags=['Работа со справочником видов запросов'])
 app.include_router(skb_router, prefix='/skb', tags=['Работа с API СКБ Техно'])
 
-
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run('main:app')

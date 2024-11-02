@@ -1,11 +1,8 @@
-from typing import Annotated
-from fastapi import Depends
 import httpx
 
 from gd_advanced_tools.core.settings import settings
 from gd_advanced_tools.dependencies.order_kinds import order_kinds_service
-from gd_advanced_tools.schemas.order_kinds import OrderKindRequestSchema
-from gd_advanced_tools.services.order_kinds import OrdersKindService
+from gd_advanced_tools.schemas.order_kinds import OrderKindSchemaIn
 
 
 class APISKBKindService:
@@ -20,5 +17,5 @@ class APISKBKindService:
             data = {}
             data['name'] = el.get('Name')
             data['skb_uuid'] = el.get('Id')
-            await order_kinds_service().add(schema=OrderKindRequestSchema(**data))
+            await order_kinds_service().get_or_add(key='skb_uuid', value=el.get('Id'),schema=OrderKindSchemaIn(**data))
         return request.json().get('Data')

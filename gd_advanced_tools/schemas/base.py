@@ -1,7 +1,7 @@
 import json
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, Field, conlist
+from pydantic import BaseModel
 
 
 def to_camelcase(string: str) -> str:
@@ -21,7 +21,6 @@ class PublicModel(BaseModel):
         alias_generator = to_camelcase
         populate_by_name = True
         arbitrary_types_allowed = True
-        from_attributes = True
 
     def encoded_dict(self, by_alias=True):
         return json.loads(self.model_dump_json(by_alias=by_alias))
@@ -33,3 +32,8 @@ _PublicModel = TypeVar("_PublicModel", bound=PublicModel)
 class Response(PublicModel, Generic[_PublicModel]):
 
     result: _PublicModel
+
+
+class ResponseMulti(PublicModel, Generic[_PublicModel]):
+
+    result: list[_PublicModel]

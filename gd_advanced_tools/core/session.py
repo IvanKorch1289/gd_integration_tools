@@ -19,7 +19,10 @@ def get_session() -> AsyncSession:
     return Session()
 
 
-CTX_SESSION: ContextVar[AsyncSession] = ContextVar("session", default=get_session())
+CTX_SESSION: ContextVar[AsyncSession] = ContextVar(
+    'session',
+    default=get_session()
+)
 
 
 class Session:
@@ -32,5 +35,5 @@ class Session:
         try:
             result = await self._session.execute(query)
             return result
-        except self._ERRORS as ex:
+        except self._ERRORS:
             raise DatabaseError

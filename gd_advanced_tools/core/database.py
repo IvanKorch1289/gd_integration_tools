@@ -5,7 +5,13 @@ from gd_advanced_tools.core.settings import settings
 
 class DatabaseInitializer:
     """Класс инициализации движка БД и получения сессий"""
-    def __init__(self, url: str, echo: bool, pool_size: int, max_overflow: int):
+    def __init__(
+        self,
+        url: str,
+        echo: bool,
+        pool_size: int,
+        max_overflow: int
+    ):
         self.async_engine: AsyncEngine = create_async_engine(
             url=url,
             echo=echo,
