@@ -20,3 +20,10 @@ class SKBCBV:
         service: Annotated[APISKBKindService, Depends(skb_kinds_service)]
     ):
         return await service.get_request_kinds()
+
+    @router.post('/create-request', summary='Создать запрос на получение данных по залогу в СКБ Техно')
+    async def add_request(
+        self,
+        service: Annotated[APISKBKindService, Depends(skb_kinds_service)]
+    ):
+        return await service.add_request()

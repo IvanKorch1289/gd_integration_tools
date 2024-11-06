@@ -8,8 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.models.base import Base
-from gd_advanced_tools.models.order_kinds import OrderKind
+from gd_advanced_tools.models import OrderKind, Order, Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,7 +24,11 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 target_metadata = Base.metadata
 
-config.set_main_option('sqlalchemy.url', settings.database_settings.db_url_asyncpg)
+config.set_main_option(
+    'sqlalchemy.url',
+    settings.database_settings.db_url_asyncpg
+)
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
