@@ -36,4 +36,5 @@ class Session:
             result = await self._session.execute(query)
             return result
         except self._ERRORS:
-            raise DatabaseError
+            await self._session.rollback()
+            raise DatabaseError(message=self._ERRORS)

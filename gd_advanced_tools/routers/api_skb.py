@@ -1,10 +1,10 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi_utils.cbv import cbv
 
-from gd_advanced_tools.dependencies.api_skb import skb_kinds_service
-from gd_advanced_tools.services.api_skb import APISKBKindService
+from gd_advanced_tools.services import APISKBKindService
+
+
+__all__ = ('router', )
 
 
 router = APIRouter()
@@ -13,17 +13,12 @@ router = APIRouter()
 @cbv(router)
 class SKBCBV:
     """CBV-класс для создания запросов в СКБ-Техно."""
+    service = APISKBKindService()
 
     @router.get('/get-kinds', summary='Получить справочник видов из СКБ Техно')
-    async def get_skb_kinds(
-        self,
-        service: Annotated[APISKBKindService, Depends(skb_kinds_service)]
-    ):
-        return await service.get_request_kinds()
+    async def get_skb_kinds(self):
+        return await self.service.get_request_kinds()
 
     @router.post('/create-request', summary='Создать запрос на получение данных по залогу в СКБ Техно')
-    async def add_request(
-        self,
-        service: Annotated[APISKBKindService, Depends(skb_kinds_service)]
-    ):
-        return await service.add_request()
+    async def add_request(self):
+        return await self.service.add_request()

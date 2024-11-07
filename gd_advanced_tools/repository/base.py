@@ -3,12 +3,12 @@ from typing import Any, AsyncGenerator, Generic, Type, TypeVar
 
 from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
 
-from gd_advanced_tools.models.base import Base
+from gd_advanced_tools.models import BaseModel
 from gd_advanced_tools.core.errors import UnprocessableError
 from gd_advanced_tools.core.session import Session
 
 
-ConcreteTable = TypeVar("ConcreteTable", bound=Base)
+ConcreteTable = TypeVar('ConcreteTable', bound=BaseModel)
 
 
 class AbstractRepository(ABC):
@@ -48,7 +48,8 @@ class AbstractRepository(ABC):
 
 class SQLAlchemyRepository(
     AbstractRepository,
-    Generic[ConcreteTable], Session
+    Generic[ConcreteTable],
+    Session
 ):
     """Базовый класс взаимодействия с БД."""
 
@@ -62,6 +63,7 @@ class SQLAlchemyRepository(
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await self.execute(query)
         return result.scalars().one_or_none()
+
 
     async def count(self) -> int:
         result: Result = await self.execute(func.count(self.model.id))
@@ -92,12 +94,15 @@ class SQLAlchemyRepository(
         self,
         data: dict[str, Any]
     ) -> ConcreteTable:
-        result: Result = await self.execute(
-            insert(self.model).values(**data).returning(self.model)
-        )
-        await self._session.flush()
-        await self._session.commit()
-        return result.scalars().one_or_none()
+        try:
+            result: Result = await self.execute(
+                insert(self.model).values(**data).returning(self.model)
+            )
+            await self._session.flush()
+            await self._session.commit()
+            return result.scalars().one_or_none()
+        except Exception as ex:
+            return ex.message
 
     async def update(
         self,
@@ -105,13 +110,16 @@ class SQLAlchemyRepository(
         value: Any,
         data: dict[str, Any]
     ) -> ConcreteTable:
-        result: Result = await self.execute(
-            update(self.model).where(getattr(self.model, key) == value)
-            .values(**data).returning(self.model)
-        )
-        await self._session.flush()
-        await self._session.commit()
-        return result.scalars().one_or_none()
+        try:
+            result: Result = await self.execute(
+                update(self.model).where(getattr(self.model, key) == value)
+                .values(**data).returning(self.model)
+            )
+            await self._session.flush()
+            await self._session.commit()
+            return result.scalars().one_or_none()
+        except Exception as ex:
+            return ex.message
 
     async def all(self) -> AsyncGenerator[ConcreteTable, None]:
         result: Result = await self.execute(select(self.model))
@@ -125,10 +133,13 @@ class SQLAlchemyRepository(
         key: int,
         value: Any
     ) -> None:
-        result = await self.execute(
-            delete(self.model).where(getattr(self.model, key) == value)
-            .returning(self.model.id)
-        )
-        await self._session.flush()
-        await self._session.commit()
-        return result.scalar_one()
+        try:
+            result = await self.execute(
+                delete(self.model).where(getattr(self.model, key) == value)
+                .returning(self.model.id)
+            )
+            await self._session.flush()
+            await self._session.commit()
+            return result.scalars().one()
+        except Exception as ex:
+            return ex.message

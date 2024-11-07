@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.models import OrderKind, Order, Base
+from gd_advanced_tools.models import OrderKind, Order, BaseModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,7 +22,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
-target_metadata = Base.metadata
+target_metadata = BaseModel.metadata
 
 config.set_main_option(
     'sqlalchemy.url',

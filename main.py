@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from loguru import logger
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.routers.order_kinds import router as kinds_router
-from gd_advanced_tools.routers.api_skb import router as skb_router
+from gd_advanced_tools.routers import kind_router, order_router, skb_router
 
 
 logger.add(
@@ -23,8 +22,10 @@ logger.add(
 
 
 app = FastAPI()
-app.include_router(kinds_router, prefix='/kind', tags=['Работа со справочником видов запросов'])
+app.include_router(kind_router, prefix='/kind', tags=['Работа со справочником видов запросов'])
+app.include_router(order_router, prefix='/order', tags=['Работа с запросами'])
 app.include_router(skb_router, prefix='/skb', tags=['Работа с API СКБ Техно'])
+
 
 if __name__ == '__main__':
     import uvicorn

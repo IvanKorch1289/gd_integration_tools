@@ -1,11 +1,13 @@
-from datetime import datetime
-from pydantic import Field
-
 from gd_advanced_tools.schemas.base import PublicModel
 
 
-class OrderKindResponseSchema(PublicModel):
+__all__ = ('SKBSchemaIn', )
 
-    id: int = Field(description="OpenAPI description")
-    created_at: datetime
-    updated_at: datetime
+
+class SKBSchemaIn(PublicModel):
+
+    Id: str
+    OrderId: str
+    Number: str
+    Priority: int = 80
+    RequestType: str

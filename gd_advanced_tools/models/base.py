@@ -1,17 +1,21 @@
 from datetime import datetime
+from typing import Annotated
 
 from sqlalchemy import Integer, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (DeclarativeBase, Mapped,
                             mapped_column, declared_attr)
 
-from gd_advanced_tools.schemas.base import Response, PublicModel
+from gd_advanced_tools.schemas import Response, PublicModel
 
 
-__all__ = ('Base',)
+__all__ = ('BaseModel',)
 
 
-class Base(AsyncAttrs, DeclarativeBase):
+nullable_str = Annotated[str, mapped_column(nullable=False)]
+
+
+class BaseModel(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     metadata = MetaData(
