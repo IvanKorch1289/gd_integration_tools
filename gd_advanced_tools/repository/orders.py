@@ -17,4 +17,4 @@ class OrderRepository(SQLAlchemyRepository):
         )
         if kind:
             data['order_kind_id'] = kind.id
-            return await super().add(data)
+            return await super().add(data=data)

@@ -1,4 +1,6 @@
 from datetime import datetime
+import sys
+import traceback
 from typing import Annotated
 
 from sqlalchemy import Integer, MetaData, func
@@ -45,4 +47,8 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
         return cls.__name__.lower() + 's'
 
     async def transfer_model_to_schema(self, schema: PublicModel):
-        return Response[schema](result=schema.model_validate(self))
+        try:
+            return Response[schema](result=schema.model_validate(self))
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            return 'Ошибка преобразования модели в схему'

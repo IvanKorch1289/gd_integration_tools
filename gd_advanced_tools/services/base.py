@@ -1,3 +1,5 @@
+import sys
+import traceback
 from typing import Generic, List, Type, TypeVar
 
 from gd_advanced_tools.repository.base import AbstractRepository
@@ -17,17 +19,16 @@ class BaseService(Generic[ConcreteRepo]):
         self,
         schema: PublicModel
     ) -> PublicModel | None:
-        # try:
-        #     instance = await self.repo.add(
-        #         data=schema.model_dump()
-        #     )
-        #     return await (
-        #         instance.transfer_model_to_schema(schema=self.response_schema)
-        #         if instance else None
-        #     )
-        # except Exception as ex:
-        #     return ex
-        return await self.repo.add(data=schema.model_dump())
+        try:
+            instance = await self.repo.add(
+                data=schema.model_dump()
+            )
+            return await (
+                instance.transfer_model_to_schema(schema=self.response_schema)
+                if instance else None
+            )
+        except Exception as ex:
+            return ex
 
     async def update(
         self,
@@ -46,6 +47,7 @@ class BaseService(Generic[ConcreteRepo]):
                 if instance else None
             )
         except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
             return ex
 
     async def all(self) -> List[PublicModel] | None:
@@ -58,6 +60,7 @@ class BaseService(Generic[ConcreteRepo]):
             ]
             return list_instances
         except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
             return ex
 
     async def get(

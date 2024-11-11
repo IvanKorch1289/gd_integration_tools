@@ -1,8 +1,8 @@
 """Initial commit
 
-Revision ID: 5f53dbea2ec3
+Revision ID: 6486a226bfc7
 Revises: 
-Create Date: 2024-11-07 18:44:37.590199
+Create Date: 2024-11-11 15:01:24.661499
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5f53dbea2ec3'
+revision: str = '6486a226bfc7'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,9 +34,10 @@ def upgrade() -> None:
     sa.Column('order_kind_id', sa.Integer(), nullable=False),
     sa.Column('pledge_gd_id', sa.Integer(), nullable=False),
     sa.Column('pledge_cadastral_number', sa.String(), nullable=False),
-    sa.Column('is_active', sa.Boolean(), server_default=sa.text('true'), nullable=False),
-    sa.Column('is_send_to_gd', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-    sa.Column('errors', sa.String(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default='t', nullable=False),
+    sa.Column('is_send_to_gd', sa.Boolean(), server_default='f', nullable=False),
+    sa.Column('errors', sa.Text(), nullable=True),
+    sa.Column('object_uuid', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),

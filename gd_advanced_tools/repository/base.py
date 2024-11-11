@@ -64,7 +64,6 @@ class SQLAlchemyRepository(
         result: Result = await self.execute(query)
         return result.scalars().one_or_none()
 
-
     async def count(self) -> int:
         result: Result = await self.execute(func.count(self.model.id))
         value = result.scalar()

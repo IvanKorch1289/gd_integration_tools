@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi_utils.cbv import cbv
 
-from gd_advanced_tools.services import APISKBKindService
+from gd_advanced_tools.services import APISKBService
 
 
 __all__ = ('router', )
@@ -13,7 +13,7 @@ router = APIRouter()
 @cbv(router)
 class SKBCBV:
     """CBV-класс для создания запросов в СКБ-Техно."""
-    service = APISKBKindService()
+    service = APISKBService()
 
     @router.get('/get-kinds', summary='Получить справочник видов из СКБ Техно')
     async def get_skb_kinds(self):

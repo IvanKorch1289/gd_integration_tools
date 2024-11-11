@@ -1,22 +1,18 @@
-from typing import Optional
+import sys
+import traceback
 from uuid import uuid4
 
 import httpx
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.models import Order
-from gd_advanced_tools.schemas import (
-    OrderSchemaIn,
-    OrderSchemaOut,
-    OrderKindSchemaIn
-)
+from gd_advanced_tools.schemas import ApiOrderSchemaIn, OrderKindSchemaIn
 from gd_advanced_tools.services.order_kinds import OrderKindService
 
 
-__all__ = ('APISKBKindService', )
+__all__ = ('APISKBService', )
 
 
-class APISKBKindService:
+class APISKBService:
 
     params = {'api-key': settings.api_settings.api_key}
     endpoint = settings.api_settings.skb_url
@@ -36,23 +32,15 @@ class APISKBKindService:
 
     async def add_request(
         self,
-        schema: OrderSchemaIn
-    ) -> Optional[OrderSchemaOut]:
+        schema: ApiOrderSchemaIn
+    ) -> dict:
         try:
-            req_number = uuid4()
-
-            data = {}
-            data['Id'] = req_number
-            data['OrderId'] = req_number
-            data['Number'] = ''
-            data['Priority'] = 80
-            data['RequestType'] = ''
             request = httpx.post(
                 self.endpoint+'Create',
                 params=self.params,
-                data=data
+                data=schema.model_dump()
             )
             return request.json()
-
         except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
             return ex
