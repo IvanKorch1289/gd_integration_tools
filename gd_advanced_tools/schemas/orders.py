@@ -9,9 +9,9 @@ __all__ = ('OrderSchemaIn', 'OrderSchemaOut', )
 
 class OrderSchemaIn(PublicModel):
 
-    pledge_gd_id: int
-    pledge_cadastral_number: str
-    order_kind_id: str
+    pledge_gd_id: int = None
+    pledge_cadastral_number: str = None
+    order_kind_id: str = None
 
 
 class OrderSchemaOut(OrderSchemaIn):

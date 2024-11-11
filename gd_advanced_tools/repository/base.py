@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import sys
+import traceback
 from typing import Any, AsyncGenerator, Generic, Type, TypeVar
 
 from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
@@ -101,7 +103,8 @@ class SQLAlchemyRepository(
             await self._session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
-            return ex.message
+            traceback.print_exc(file=sys.stdout)
+            return ex
 
     async def update(
         self,
@@ -118,7 +121,8 @@ class SQLAlchemyRepository(
             await self._session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
-            return ex.message
+            traceback.print_exc(file=sys.stdout)
+            return ex
 
     async def all(self) -> AsyncGenerator[ConcreteTable, None]:
         result: Result = await self.execute(select(self.model))
@@ -141,4 +145,5 @@ class SQLAlchemyRepository(
             await self._session.commit()
             return result.scalars().one()
         except Exception as ex:
-            return ex.message
+            traceback.print_exc(file=sys.stdout)
+            return ex

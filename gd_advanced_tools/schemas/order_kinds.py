@@ -9,9 +9,9 @@ __all__ = ('OrderKindSchemaIn', 'OrderKindSchemaOut', )
 
 class OrderKindSchemaIn(PublicModel):
 
-    name: str
+    name: str = None
     description: Optional[str] = None
-    skb_uuid: str
+    skb_uuid: str = None
 
 
 class OrderKindSchemaOut(OrderKindSchemaIn):

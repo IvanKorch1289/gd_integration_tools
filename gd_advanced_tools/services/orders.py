@@ -30,4 +30,17 @@ class OrderService(BaseService):
             data['RequestType'] = kind_uuid
 
             request_schema = ApiOrderSchemaIn.model_validate(data)
-            return await APISKBService().add_request(schema=request_schema)
+
+            request = await APISKBService().add_request(schema=request_schema)
+            if not request['Result']:
+                update_data = {}
+                update_data['is_active'] = False
+                update_data['errors'] = request['Message']
+                await self.repo.update(
+                    key='id',
+                    value=order.result.id,
+                    data=update_data
+                )
+
+                return 'Ошибка отправки запроса в СКБ-Техно'
+            return request
