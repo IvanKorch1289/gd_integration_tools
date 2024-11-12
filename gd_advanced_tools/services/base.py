@@ -17,12 +17,10 @@ class BaseService(Generic[ConcreteRepo]):
 
     async def add(
         self,
-        schema: PublicModel
+        data: dict
     ) -> PublicModel | None:
         try:
-            instance = await self.repo.add(
-                data=schema.model_dump()
-            )
+            instance = await self.repo.add(data=data)
             return await (
                 instance.transfer_model_to_schema(schema=self.response_schema)
                 if instance else None
@@ -34,13 +32,13 @@ class BaseService(Generic[ConcreteRepo]):
         self,
         key: str,
         value: int,
-        schema: PublicModel
+        data: dict
     ) -> PublicModel | None:
         try:
             instance = await self.repo.update(
                 key=key,
                 value=value,
-                data=schema.model_dump(exclude_unset=True)
+                data=data
             )
             return await (
                 instance.transfer_model_to_schema(schema=self.response_schema)
@@ -81,7 +79,7 @@ class BaseService(Generic[ConcreteRepo]):
         self,
         key: str,
         value: int,
-        schema: PublicModel = None
+        data: dict = None
     ) -> PublicModel | None:
         instance = await self.repo.get(
             key=key,
@@ -89,13 +87,13 @@ class BaseService(Generic[ConcreteRepo]):
         )
         return await (
             instance.transfer_model_to_schema(schema=self.response_schema)
-            if instance else self.add(schema=schema)
+            if instance else self.repo.add(data=data)
         )
 
     async def delete(
         self,
         key: str,
         value: int
-    ) -> PublicModel | None:
-        result = await self.order_kinds_repo.delete(key=key, value=value)
-        return f'Object (id = {result}) successfully deleted'
+    ) -> str:
+        await self.repo.delete(key=key, value=value)
+        return f'Object (id = {value}) successfully deleted'

@@ -21,6 +21,7 @@ class OrderSchemaOut(OrderSchemaIn):
     is_active: bool
     is_send_to_gd: bool
     errors: str | None
+    response_data: dict | None
     object_uuid: UUID
     created_at: datetime
     updated_at: datetime

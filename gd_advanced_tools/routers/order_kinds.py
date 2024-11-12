@@ -39,7 +39,7 @@ class OrderKindCBV:
         summary='Добавить вид запроса'
     )
     async def add_kind(self, schema: OrderKindSchemaIn):
-        return await self.service.add(schema=schema)
+        return await self.service.add(data=schema.model_dump())
 
     @router.put(
         '/{kind_id}',
@@ -50,7 +50,7 @@ class OrderKindCBV:
         return await self.service.update(
             key='id',
             value=kind_id,
-            schema=schema
+            data=schema.model_dump()
         )
 
     @router.delete(

@@ -1,6 +1,8 @@
+from uuid import UUID
 from fastapi import APIRouter
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.enums import ResponseTypeChoices
 from gd_advanced_tools.services import APISKBService
 
 
@@ -22,3 +24,14 @@ class SKBCBV:
     @router.post('/create-request', summary='Создать запрос на получение данных по залогу в СКБ Техно')
     async def add_request(self):
         return await self.service.add_request()
+
+    @router.get('/get-result', summary='Получить результат на получение данных по залогу в СКБ Техно')
+    async def get_result(
+        self,
+        order_uuid: UUID,
+        response_type: ResponseTypeChoices = ResponseTypeChoices.json
+    ):
+        return await self.service.get_response_by_order(
+            order_uuid=order_uuid,
+            response_type=response_type.value
+        )

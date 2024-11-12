@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.enums.api_skb import ResponseTypeChoices
 from gd_advanced_tools.schemas import OrderSchemaIn
 from gd_advanced_tools.services import OrderService
 
@@ -39,7 +40,7 @@ class OrderCBV:
         summary='Добавить запрос'
     )
     async def add_order(self, schema: OrderSchemaIn):
-        return await self.service.add(schema=schema)
+        return await self.service.add(data=schema.model_dump())
 
     @router.put(
         '/{order_id}',
@@ -50,12 +51,23 @@ class OrderCBV:
         return await self.service.update(
             key='id',
             value=order_id,
-            schema=schema
+            data=schema.model_dump()
         )
 
     @router.delete(
         '/{order_id}',
         status_code=status.HTTP_204_NO_CONTENT,
-        summary='Удалить вид запроса по ID')
+        summary='Удалить запрос по ID')
     async def delete_order(self, order_id: int):
         return await self.service.delete(key='id', value=order_id)
+
+    @router.get(
+        '/{order_id}/get-result',
+        status_code=status.HTTP_200_OK,
+        summary='Получить результат запроса')
+    async def get_order_result(
+        self,
+        order_id: int,
+        response_type: ResponseTypeChoices = ResponseTypeChoices.json
+    ):
+        return await self.service.get_order_result(order_id=order_id, response_type=response_type)

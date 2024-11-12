@@ -1,4 +1,5 @@
 from sqlalchemy import UUID, Boolean, ForeignKey, Integer, Text, func
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gd_advanced_tools.models.base import BaseModel, nullable_str
@@ -34,3 +35,4 @@ class Order(BaseModel):
         nullable=False,
         server_default=func.gen_random_uuid(),
     )
+    response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)

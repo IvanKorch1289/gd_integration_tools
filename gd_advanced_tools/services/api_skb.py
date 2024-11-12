@@ -1,11 +1,11 @@
 import sys
 import traceback
-from uuid import uuid4
+from uuid import UUID
 
 import httpx
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.schemas import ApiOrderSchemaIn, OrderKindSchemaIn
+from gd_advanced_tools.schemas import OrderKindSchemaIn
 from gd_advanced_tools.services.order_kinds import OrderKindService
 
 
@@ -32,13 +32,29 @@ class APISKBService:
 
     async def add_request(
         self,
-        schema: ApiOrderSchemaIn
+        data: dict
     ) -> dict:
         try:
             request = httpx.post(
                 self.endpoint+'Create',
                 params=self.params,
-                data=schema.model_dump()
+                data=data
+            )
+            return request.json()
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
+
+    async def get_response_by_order(
+        self,
+        order_uuid: UUID,
+        response_type: str | None
+    ) -> dict:
+        try:
+            self.params['Type'] = response_type if response_type else None
+            request = httpx.get(
+                self.endpoint+'Result/'+str(order_uuid),
+                params=self.params,
             )
             return request.json()
         except Exception as ex:
