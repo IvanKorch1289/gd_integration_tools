@@ -1,0 +1,99 @@
+import sys
+import traceback
+from typing import Generic, List, Type, TypeVar
+
+from gd_advanced_tools.repository.base import AbstractRepository
+from gd_advanced_tools.schemas.base import PublicModel
+
+
+ConcreteRepo = TypeVar('ConcreteRepo', bound=AbstractRepository)
+ConcreteResponseSchema = TypeVar('ConcreteResponseSchema', bound=PublicModel)
+
+
+class BaseService(Generic[ConcreteRepo]):
+
+    repo: Type[ConcreteRepo] = None
+    response_schema: Type[ConcreteResponseSchema] = None
+
+    async def add(
+        self,
+        data: dict
+    ) -> PublicModel | None:
+        try:
+            instance = await self.repo.add(data=data)
+            return await (
+                instance.transfer_model_to_schema(schema=self.response_schema)
+                if instance else None
+            )
+        except Exception as ex:
+            return ex
+
+    async def update(
+        self,
+        key: str,
+        value: int,
+        data: dict
+    ) -> PublicModel | None:
+        try:
+            instance = await self.repo.update(
+                key=key,
+                value=value,
+                data=data
+            )
+            return await (
+                instance.transfer_model_to_schema(schema=self.response_schema)
+                if instance else None
+            )
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
+
+    async def all(self) -> List[PublicModel] | None:
+        try:
+            list_instances = [
+                await instance.transfer_model_to_schema(
+                    schema=self.response_schema
+                )
+                async for instance in self.repo.all()
+            ]
+            return list_instances
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
+
+    async def get(
+        self,
+        key: str,
+        value: int
+    ) -> PublicModel | None:
+        instance = await self.repo.get(
+            key=key,
+            value=value
+        )
+        return await (
+            instance.transfer_model_to_schema(schema=self.response_schema)
+            if instance else None
+        )
+
+    async def get_or_add(
+        self,
+        key: str,
+        value: int,
+        data: dict = None
+    ) -> PublicModel | None:
+        instance = await self.repo.get(
+            key=key,
+            value=value
+        )
+        return await (
+            instance.transfer_model_to_schema(schema=self.response_schema)
+            if instance else self.repo.add(data=data)
+        )
+
+    async def delete(
+        self,
+        key: str,
+        value: int
+    ) -> str:
+        await self.repo.delete(key=key, value=value)
+        return f'Object (id = {value}) successfully deleted'
