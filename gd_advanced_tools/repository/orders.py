@@ -1,4 +1,5 @@
 from typing import Any
+
 from gd_advanced_tools.repository.base import SQLAlchemyRepository
 from gd_advanced_tools.repository.order_kinds import OrderKindRepository
 from gd_advanced_tools.models import Order

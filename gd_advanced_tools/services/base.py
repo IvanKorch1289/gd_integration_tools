@@ -66,14 +66,34 @@ class BaseService(Generic[ConcreteRepo]):
         key: str,
         value: int
     ) -> PublicModel | None:
-        instance = await self.repo.get(
-            key=key,
-            value=value
-        )
-        return await (
-            instance.transfer_model_to_schema(schema=self.response_schema)
-            if instance else None
-        )
+        try:
+            instance = await self.repo.get(
+                key=key,
+                value=value
+            )
+            return await (
+                instance.transfer_model_to_schema(schema=self.response_schema)
+                if instance else None
+            )
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
+
+    async def get_by_params(
+        self,
+        filter: dict
+    ) -> List[PublicModel] | None:
+        try:
+            list_instances = [
+                await instance.transfer_model_to_schema(
+                    schema=self.response_schema
+                )
+                async for instance in self.repo.get_by_params(filter=filter)
+            ]
+            return list_instances
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
 
     async def get_or_add(
         self,
@@ -81,19 +101,27 @@ class BaseService(Generic[ConcreteRepo]):
         value: int,
         data: dict = None
     ) -> PublicModel | None:
-        instance = await self.repo.get(
-            key=key,
-            value=value
-        )
-        return await (
-            instance.transfer_model_to_schema(schema=self.response_schema)
-            if instance else self.repo.add(data=data)
-        )
+        try:
+            instance = await self.repo.get(
+                key=key,
+                value=value
+            )
+            return await (
+                instance.transfer_model_to_schema(schema=self.response_schema)
+                if instance else self.repo.add(data=data)
+            )
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
 
     async def delete(
         self,
         key: str,
         value: int
     ) -> str:
-        await self.repo.delete(key=key, value=value)
-        return f'Object (id = {value}) successfully deleted'
+        try:
+            await self.repo.delete(key=key, value=value)
+            return f'Object (id = {value}) successfully deleted'
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex

@@ -21,6 +21,9 @@ httpx = "^0.27.2"
 bump-pydantic = "^0.8.0"
 typing-inspect = "^0.9.0"
 loguru = "^0.7.2"
+celery = "^5.4.0"
+flower = "^2.0.1"
+fastapi-filter = "^2.0.0"
 
 
 [build-system]

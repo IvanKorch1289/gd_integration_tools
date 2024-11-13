@@ -1,7 +1,9 @@
 from fastapi import APIRouter, status
+from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from gd_advanced_tools.enums.api_skb import ResponseTypeChoices
+from gd_advanced_tools.enums import ResponseTypeChoices
+from gd_advanced_tools.filters import OrderFilter
 from gd_advanced_tools.schemas import OrderSchemaIn
 from gd_advanced_tools.services import OrderService
 
@@ -19,7 +21,7 @@ class OrderCBV:
     service = OrderService()
 
     @router.get(
-        '/',
+        '/all/',
         status_code=status.HTTP_200_OK,
         summary='Получить все запросы'
     )
@@ -27,15 +29,28 @@ class OrderCBV:
         return await self.service.all()
 
     @router.get(
-        '/{order_id}',
+        '/id/{order_id}',
         status_code=status.HTTP_200_OK,
         summary='Получить запрос по ID'
     )
     async def get_order(self, order_id: int):
         return await self.service.get(key='id', value=order_id)
 
+    @router.get(
+        '/get-by-filter',
+        status_code=status.HTTP_200_OK,
+        summary='Получить запрос по полю'
+    )
+    async def get_by_filter(
+        self,
+        order_filter: OrderFilter = FilterDepends(OrderFilter)
+    ):
+        return await self.service.get_by_params(
+            filter=order_filter
+        )
+
     @router.post(
-        '/',
+        '/create/',
         status_code=status.HTTP_201_CREATED,
         summary='Добавить запрос'
     )
@@ -43,7 +58,7 @@ class OrderCBV:
         return await self.service.add(data=schema.model_dump())
 
     @router.put(
-        '/{order_id}',
+        '/update/{order_id}',
         status_code=status.HTTP_200_OK,
         summary='Изменить запроса по ID'
     )
@@ -55,7 +70,7 @@ class OrderCBV:
         )
 
     @router.delete(
-        '/{order_id}',
+        '/delete/{order_id}',
         status_code=status.HTTP_204_NO_CONTENT,
         summary='Удалить запрос по ID')
     async def delete_order(self, order_id: int):
@@ -70,4 +85,7 @@ class OrderCBV:
         order_id: int,
         response_type: ResponseTypeChoices = ResponseTypeChoices.json
     ):
-        return await self.service.get_order_result(order_id=order_id, response_type=response_type)
+        return await self.service.get_order_result(
+            order_id=order_id,
+            response_type=response_type
+        )

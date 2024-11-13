@@ -3,6 +3,7 @@ import sys
 import traceback
 from typing import Any, AsyncGenerator, Generic, Type, TypeVar
 
+from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
 
 from gd_advanced_tools.models import BaseModel
@@ -17,6 +18,10 @@ class AbstractRepository(ABC):
 
     @abstractmethod
     async def get():
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_by_params():
         raise NotImplementedError
 
     @abstractmethod
@@ -65,6 +70,17 @@ class SQLAlchemyRepository(
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await self.execute(query)
         return result.scalars().one_or_none()
+
+    async def get_by_params(
+        self,
+        filter: Filter
+    ) -> AsyncGenerator[ConcreteTable, None]:
+        query = filter.filter(select(self.model))
+        result: Result = await self.execute(query)
+        instances = result.scalars().all()
+
+        for instance in instances:
+            yield instance
 
     async def count(self) -> int:
         result: Result = await self.execute(func.count(self.model.id))

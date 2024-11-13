@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from gd_advanced_tools.schemas.base import PublicModel
 
@@ -10,7 +9,7 @@ __all__ = ('OrderKindSchemaIn', 'OrderKindSchemaOut', )
 class OrderKindSchemaIn(PublicModel):
 
     name: str = None
-    description: Optional[str] = None
+    description: str | None = None
     skb_uuid: str = None
 
 
