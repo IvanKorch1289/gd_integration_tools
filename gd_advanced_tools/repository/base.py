@@ -5,10 +5,11 @@ from typing import Any, AsyncGenerator, Generic, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from gd_advanced_tools.core.database import session_manager
 from gd_advanced_tools.models import BaseModel
 from gd_advanced_tools.core.errors import UnprocessableError
-from gd_advanced_tools.core.session import Session
 
 
 ConcreteTable = TypeVar('ConcreteTable', bound=BaseModel)
@@ -53,112 +54,121 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
 
-class SQLAlchemyRepository(
-    AbstractRepository,
-    Generic[ConcreteTable],
-    Session
-):
+class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     """Базовый класс взаимодействия с БД."""
 
     model: Type[ConcreteTable] = None
 
+    @session_manager.connection(isolation_level='READ COMMITTED')
     async def get(
         self,
+        session: AsyncSession,
         key: str,
-        value: Any
+        value: Any,
     ) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
-        result: Result = await self.execute(query)
+        result: Result = await session.execute(query)
         return result.scalars().one_or_none()
 
+    @session_manager.connection(isolation_level='READ COMMITTED')
     async def get_by_params(
         self,
+        session: AsyncSession,
         filter: Filter
     ) -> AsyncGenerator[ConcreteTable, None]:
         query = filter.filter(select(self.model))
-        result: Result = await self.execute(query)
-        instances = result.scalars().all()
+        result: Result = await session.execute(query)
+        return result.scalars().all()
 
-        for instance in instances:
-            yield instance
-
-    async def count(self) -> int:
-        result: Result = await self.execute(func.count(self.model.id))
+    @session_manager.connection(isolation_level='READ COMMITTED')
+    async def count(self, session: AsyncSession) -> int:
+        result: Result = await session.execute(func.count(self.model.id))
         value = result.scalar()
         if not isinstance(value, int):
             raise UnprocessableError(message='Error output type')
         return value
 
+    @session_manager.connection(isolation_level='READ COMMITTED')
     async def first(
         self,
+        session: AsyncSession,
         by: str = 'id'
     ) -> ConcreteTable:
-        result: Result = await self.execute(
+        result: Result = await session.execute(
             select(self.model).order_by(asc(by)).limit(1)
         )
         return result.scalars().one_or_none()
 
+    @session_manager.connection(isolation_level='READ COMMITTED')
     async def last(
         self,
+        session: AsyncSession,
         by: str = 'id'
     ) -> ConcreteTable:
-        result: Result = await self.execute(
+        result: Result = await session.execute(
             select(self.model).order_by(desc(by)).limit(1)
         )
         return result.scalars().one_or_none()
 
+    @session_manager.connection(isolation_level='SERIALIZABLE', commit=True)
     async def add(
         self,
+        session: AsyncSession,
         data: dict[str, Any]
     ) -> ConcreteTable:
         try:
-            result: Result = await self.execute(
+            result: Result = await session.execute(
                 insert(self.model).values(**data).returning(self.model)
             )
-            await self._session.flush()
-            await self._session.commit()
+            await session.flush()
+            # await session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @session_manager.connection(isolation_level='SERIALIZABLE', commit=True)
     async def update(
         self,
+        session: AsyncSession,
         key: str,
         value: Any,
         data: dict[str, Any]
     ) -> ConcreteTable:
         try:
-            result: Result = await self.execute(
+            result: Result = await session.execute(
                 update(self.model).where(getattr(self.model, key) == value)
                 .values(**data).returning(self.model)
             )
-            await self._session.flush()
-            await self._session.commit()
+            await session.flush()
+            # await session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
 
-    async def all(self) -> AsyncGenerator[ConcreteTable, None]:
-        result: Result = await self.execute(select(self.model))
-        instances = result.scalars().all()
+    @session_manager.connection(isolation_level='READ COMMITTED')
+    async def all(
+        self,
+        session: AsyncSession
+    ) -> AsyncGenerator[ConcreteTable, None]:
+        result: Result = await session.execute(select(self.model))
+        return result.scalars().all()
 
-        for instance in instances:
-            yield instance
-
+    @session_manager.connection(isolation_level='SERIALIZABLE', commit=True)
     async def delete(
         self,
+        session: AsyncSession,
         key: int,
         value: Any
     ) -> None:
         try:
-            result = await self.execute(
+            result = await session.execute(
                 delete(self.model).where(getattr(self.model, key) == value)
                 .returning(self.model.id)
             )
-            await self._session.flush()
-            await self._session.commit()
+            await session.flush()
+            # await session.commit()
             return result.scalars().one()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)

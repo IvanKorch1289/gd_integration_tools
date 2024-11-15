@@ -5,8 +5,7 @@ from gd_advanced_tools.enums.api_skb import ResponseTypeChoices
 from gd_advanced_tools.repository import OrderRepository
 from gd_advanced_tools.schemas import (
     PublicModel,
-    OrderSchemaOut,
-    Response
+    OrderSchemaOut
 )
 from gd_advanced_tools.services.base import BaseService
 from gd_advanced_tools.services.api_skb import APISKBService
@@ -23,7 +22,7 @@ class OrderService(BaseService):
 
     async def add(self, data: dict) -> PublicModel | None:
         kind_uuid = data['order_kind_id']
-        order: Response = await super().add(data=data)
+        order = await super().add(data=data)
         if order:
             data = {}
             data['Id'] = order.result.object_uuid

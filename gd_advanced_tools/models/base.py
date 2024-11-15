@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (DeclarativeBase, Mapped,
                             mapped_column, declared_attr)
 
-from gd_advanced_tools.schemas import Response, PublicModel
+from gd_advanced_tools.schemas import PublicModel
 
 
 __all__ = ('BaseModel',)
@@ -48,7 +48,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 
     async def transfer_model_to_schema(self, schema: PublicModel):
         try:
-            return Response[schema](result=schema.model_validate(self))
+            return schema.model_validate(self)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             return 'Ошибка преобразования модели в схему'

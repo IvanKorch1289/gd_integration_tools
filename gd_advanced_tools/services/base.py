@@ -54,7 +54,7 @@ class BaseService(Generic[ConcreteRepo]):
                 await instance.transfer_model_to_schema(
                     schema=self.response_schema
                 )
-                async for instance in self.repo.all()
+                for instance in await self.repo.all()
             ]
             return list_instances
         except Exception as ex:
@@ -88,7 +88,7 @@ class BaseService(Generic[ConcreteRepo]):
                 await instance.transfer_model_to_schema(
                     schema=self.response_schema
                 )
-                async for instance in self.repo.get_by_params(filter=filter)
+                for instance in await self.repo.get_by_params(filter=filter)
             ]
             return list_instances
         except Exception as ex:
