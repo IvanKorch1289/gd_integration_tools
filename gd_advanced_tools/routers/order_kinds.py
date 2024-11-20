@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from gd_advanced_tools.filters.order_kinds import OrderKindFilter
+from gd_advanced_tools.filters import OrderKindFilter
 from gd_advanced_tools.schemas import OrderKindSchemaIn
 from gd_advanced_tools.services import OrderKindService
 

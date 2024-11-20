@@ -1,0 +1,17 @@
+services:
+  minio:
+    image: minio/minio
+    entrypoint: sh
+    command: > 
+      -c 'mkdir -p /data/test-bucket
+      && minio server /data'
+    ports: 
+      - 9000:9000
+      - 9001:9001
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${FS_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${FS_SECRET_KEY}
+      - MINIO_ADDRESS=:9000
+      - MINIO_CONSOLE_ADDRESS=:9001

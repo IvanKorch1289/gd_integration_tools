@@ -14,7 +14,7 @@ __all__ = ('APISKBService', )
 
 class APISKBService:
 
-    params = {'api-key': settings.api_settings.api_key}
+    params = {'api-key': settings.api_settings.skb_api_key}
     endpoint = settings.api_settings.skb_url
 
     async def get_request_kinds(self):
@@ -26,7 +26,7 @@ class APISKBService:
             await OrderKindService().get_or_add(
                 key='skb_uuid',
                 value=el.get('Id'),
-                schema=OrderKindSchemaIn(**data)
+                data=data
             )
         return request.json().get('Data')
 

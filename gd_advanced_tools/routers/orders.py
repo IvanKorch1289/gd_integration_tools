@@ -72,14 +72,16 @@ class OrderCBV:
     @router.delete(
         '/delete/{order_id}',
         status_code=status.HTTP_204_NO_CONTENT,
-        summary='Удалить запрос по ID')
+        summary='Удалить запрос по ID'
+    )
     async def delete_order(self, order_id: int):
         return await self.service.delete(key='id', value=order_id)
 
     @router.get(
         '/{order_id}/get-result',
         status_code=status.HTTP_200_OK,
-        summary='Получить результат запроса')
+        summary='Получить результат запроса'
+    )
     async def get_order_result(
         self,
         order_id: int,

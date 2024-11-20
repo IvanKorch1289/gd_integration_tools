@@ -1,23 +1,26 @@
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 ROOT_PATH = Path(__file__).parent.parent
 
+load_dotenv()
+
 
 class LoggingSettings(BaseSettings):
-    format: str = Field(default='{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {message}')
-    file: str = Field(default='backend_log')
-    rotation: str = Field(default='1MB')
-    compression: str = Field(default='zip')
+    log_format: str = Field(default='{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {message}')
+    log_file: str = Field(default='backend_log')
+    log_rotation: str = Field(default='1MB')
+    log_compression: str = Field(default='zip')
 
 
 class APISettings(BaseSettings):
     """Класс настроек API СКБ-Техно."""
 
-    api_key: str = Field(default='666-555-777', env='SKB_API_KEY')
+    skb_api_key: str = Field(default='666-555-777', env='SKB_API_KEY')
     skb_url: str = Field(default='https://ya.ru/', env='SKB_URL')
 
 
@@ -41,6 +44,11 @@ class DatabaseSettings(BaseSettings):
 class FileStorageSettings(BaseSettings):
     """Класс настроек соединения с файловым хранилищем."""
 
+    fs_bucket: str = Field(default='my-bucket', env='FS_BUCKET')
+    fs_endpoint: str = Field(default='http://localhost:9000', env='FS_URL')
+    fs_access_key: str = Field(default='minioadmin', env='FS_ACCESS_KEY')
+    fs_secret_key: str = Field(default='minioadmin', env='FS_SECRET_KEY')
+
 
 class Settings(BaseSettings):
     debug: bool = True
@@ -49,9 +57,9 @@ class Settings(BaseSettings):
     src_dir: Path
 
     database_settings: DatabaseSettings = DatabaseSettings()
-
     api_settings: APISettings = APISettings()
     logging_settings: LoggingSettings = LoggingSettings()
+    storage_settings: FileStorageSettings = FileStorageSettings()
 
 
 settings = Settings(
