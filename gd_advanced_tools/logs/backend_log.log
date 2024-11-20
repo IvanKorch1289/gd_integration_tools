@@ -1,7 +1,0 @@
-2024-11-01 16:58:11 | ERROR | Rolling back changes.
-Database error
-2024-11-01 16:59:17 | ERROR | Rolling back changes.
-Database error
-2024-11-01 17:00:18 | ERROR | Rolling back changes.
-Database error
-2024-11-15 17:27:40 | ERROR | Ошибка при выполнении транзакции: object async_generator can't be used in 'await' expression

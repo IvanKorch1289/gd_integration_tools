@@ -17,10 +17,8 @@ class LoggingSettings(BaseSettings):
 class APISettings(BaseSettings):
     """Класс настроек API СКБ-Техно."""
 
-    api_key: str = Field(default='666-555-777', env='API_KEY')
+    api_key: str = Field(default='666-555-777', env='SKB_API_KEY')
     skb_url: str = Field(default='https://ya.ru/', env='SKB_URL')
-
-    model_config = SettingsConfigDict(env_file=".env")
 
 
 class DatabaseSettings(BaseSettings):
@@ -34,11 +32,14 @@ class DatabaseSettings(BaseSettings):
     db_echo: bool = Field(default=False, env='DB_ECHO')
     db_poolsize: int = Field(default=10)
     db_maxoverflow: int = Field(default=10)
-    # model_config = SettingsConfigDict(env_file=".env")
 
     @property
     def db_url_asyncpg(self):
         return f'postgresql+asyncpg://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}'
+
+
+class FileStorageSettings(BaseSettings):
+    """Класс настроек соединения с файловым хранилищем."""
 
 
 class Settings(BaseSettings):
