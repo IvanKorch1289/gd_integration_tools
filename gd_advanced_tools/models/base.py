@@ -1,8 +1,9 @@
 from datetime import datetime
 import sys
 import traceback
-from typing import Annotated
+from typing import Annotated, Type
 
+from annotated_types import T
 from sqlalchemy import Integer, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (DeclarativeBase, Mapped,
@@ -18,6 +19,7 @@ nullable_str = Annotated[str, mapped_column(nullable=False)]
 
 
 class BaseModel(AsyncAttrs, DeclarativeBase):
+
     __abstract__ = True
 
     metadata = MetaData(

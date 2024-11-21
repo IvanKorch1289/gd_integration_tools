@@ -4,6 +4,7 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from gd_advanced_tools.core.storage import s3_bucket_service_factory
+from gd_advanced_tools.enums import ModelName
 from gd_advanced_tools.filters import FileFilter
 from gd_advanced_tools.schemas import FileSchemaIn
 from gd_advanced_tools.services import FileService
@@ -86,7 +87,11 @@ storage_router = APIRouter()
     status_code=status.HTTP_201_CREATED,
     summary='Добавить файл',
 )
-async def upload_file(object_id: int, file: UploadFile = File(...)):
+async def upload_file(
+    object_id: int,
+    model_name: ModelName = ModelName.Order,
+    file: UploadFile = File(...)
+):
     service = s3_bucket_service_factory()
     content = await file.read()
     await service.upload_file_object(

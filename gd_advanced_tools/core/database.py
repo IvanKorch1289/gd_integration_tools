@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from functools import wraps
-from typing import AsyncGenerator, Callable
+from typing import AsyncGenerator, Callable, List
 
 from fastapi import Depends
 from loguru import logger
@@ -32,6 +32,18 @@ class DatabaseInitializer:
             future=True,
             pool_pre_ping=True
         )
+        self.async_session_maker = async_sessionmaker(
+            bind=self.async_engine,
+            autoflush=False,
+            autocommit=False,
+            expire_on_commit=False
+        )
+
+    def get_all_tables(self) -> List[str]:
+        with self.engine.connect() as conn:
+            self.inspector.reflect(conn)
+        tables = self.inspector.get_table_names()
+        return tables
 
 
 DB_INIT = DatabaseInitializer(
@@ -42,17 +54,10 @@ DB_INIT = DatabaseInitializer(
 )
 
 
-async_session_maker = async_sessionmaker(
-    bind=DB_INIT.async_engine,
-    autoflush=False,
-    autocommit=False,
-    expire_on_commit=False
-)
-
-
 class DatabaseSessionManager:
     """
-    Класс для управления асинхронными сессиями базы данных, включая поддержку транзакций и зависимости FastAPI.
+    Класс для управления асинхронными сессиями базы данных,
+    включая поддержку транзакций и зависимости FastAPI.
     """
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
@@ -74,7 +79,10 @@ class DatabaseSessionManager:
                 await session.close()
 
     @asynccontextmanager
-    async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:
+    async def transaction(
+        self,
+        session: AsyncSession
+    ) -> AsyncGenerator[None, None]:
         """
         Управление транзакцией: коммит при успехе, откат при ошибке.
         """
@@ -88,12 +96,15 @@ class DatabaseSessionManager:
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
-        Зависимость для FastAPI, возвращающая сессию без управления транзакцией.
+        Зависимость для FastAPI,
+        возвращающая сессию без управления транзакцией.
         """
         async with self.create_session() as session:
             yield session
 
-    async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_transaction_session(
+        self
+    ) -> AsyncGenerator[AsyncSession, None]:
         """
         Зависимость для FastAPI, возвращающая сессию с управлением транзакцией.
         """
@@ -107,10 +118,11 @@ class DatabaseSessionManager:
         commit: bool = True
     ):
         """
-        Декоратор для управления сессией с возможностью настройки уровня изоляции и коммита.
-
+        Декоратор для управления сессией с возможностью
+        настройки уровня изоляции и коммита.
         Параметры:
-        - `isolation_level`: уровень изоляции для транзакции (например, "SERIALIZABLE").
+        - `isolation_level`: уровень изоляции для транзакции
+           (например, "SERIALIZABLE").
         - `commit`: если `True`, выполняется коммит после вызова метода.
         """
 
@@ -121,7 +133,6 @@ class DatabaseSessionManager:
                     try:
                         if isolation_level:
                             await session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {isolation_level}"))
-
                         result = await method(*args, session=session, **kwargs)
 
                         if commit:
@@ -141,7 +152,10 @@ class DatabaseSessionManager:
 
     @property
     def session_dependency(self) -> Callable:
-        """Возвращает зависимость для FastAPI, обеспечивающую доступ к сессии без транзакции."""
+        """
+        Возвращает зависимость для FastAPI,
+        обеспечивающую доступ к сессии без транзакции.
+        """
         return Depends(self.get_session)
 
     @property
@@ -151,7 +165,9 @@ class DatabaseSessionManager:
 
 
 # Инициализация менеджера сессий базы данных
-session_manager = DatabaseSessionManager(session_maker=async_session_maker)
+session_manager = DatabaseSessionManager(
+    session_maker=DB_INIT.async_session_maker
+)
 
 # Зависимости FastAPI для использования сессий
 SessionDep = session_manager.session_dependency

@@ -43,22 +43,26 @@ class S3Service:
                 buffer = BytesIO(content)
             else:
                 buffer = BytesIO(content.encode('utf-8'))
-                
-            return await client.put_object(Bucket=self.bucket_name, Key=key, Body=buffer)
+
+            return await client.put_object(
+                Bucket=self.bucket_name,
+                Key=key,
+                Body=buffer
+            )
 
     async def list_objects(self, prefix: str) -> list[str]:
         async with self._create_s3_client() as client:
             response = await client.list_objects_v2(Bucket=self.bucket_name,)
             storage_content: list[str] = []
-            
+
             try:
                 contents = response['Contents']
             except KeyError:
                 return storage_content
-            
+
             for item in contents:
                 storage_content.append(item['Key'])
-            
+
             return storage_content
 
     async def get_file_object(self, key: str) -> StreamingBody | None:
@@ -72,7 +76,7 @@ class S3Service:
                 if ex.response['Error']['Code'] == 'NoSuchKey':
                     return None
                 raise ex
-            
+
             return file_obj['Body']
 
     async def delete_file_object(
