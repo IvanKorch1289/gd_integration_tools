@@ -1,10 +1,10 @@
 from uuid import UUID, uuid4
 
 from pydantic import Field
+
 from gd_advanced_tools.schemas.base import PublicModel
 
-
-__all__ = ('ApiOrderSchemaIn', )
+__all__ = ("ApiOrderSchemaIn",)
 
 
 class ApiOrderSchemaIn(PublicModel):

@@ -5,38 +5,29 @@ from typing import AsyncGenerator, Callable, List
 from fastapi import Depends
 from loguru import logger
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncEngine,
-    async_sessionmaker,
-    AsyncSession
-)
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    async_sessionmaker, create_async_engine)
 
 from gd_advanced_tools.core.settings import settings
 
 
 class DatabaseInitializer:
     """Класс инициализации движка БД и получения сессий"""
-    def __init__(
-        self,
-        url: str,
-        echo: bool,
-        pool_size: int,
-        max_overflow: int
-    ):
+
+    def __init__(self, url: str, echo: bool, pool_size: int, max_overflow: int):
         self.async_engine: AsyncEngine = create_async_engine(
             url=url,
             echo=echo,
             pool_size=pool_size,
             max_overflow=max_overflow,
             future=True,
-            pool_pre_ping=True
+            pool_pre_ping=True,
         )
         self.async_session_maker = async_sessionmaker(
             bind=self.async_engine,
             autoflush=False,
             autocommit=False,
-            expire_on_commit=False
+            expire_on_commit=False,
         )
 
     def get_all_tables(self) -> List[str]:
@@ -50,7 +41,7 @@ DB_INIT = DatabaseInitializer(
     url=settings.database_settings.db_url_asyncpg,
     echo=settings.database_settings.db_echo,
     pool_size=settings.database_settings.db_poolsize,
-    max_overflow=settings.database_settings.db_maxoverflow
+    max_overflow=settings.database_settings.db_maxoverflow,
 )
 
 
@@ -79,10 +70,7 @@ class DatabaseSessionManager:
                 await session.close()
 
     @asynccontextmanager
-    async def transaction(
-        self,
-        session: AsyncSession
-    ) -> AsyncGenerator[None, None]:
+    async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:
         """
         Управление транзакцией: коммит при успехе, откат при ошибке.
         """
@@ -102,9 +90,7 @@ class DatabaseSessionManager:
         async with self.create_session() as session:
             yield session
 
-    async def get_transaction_session(
-        self
-    ) -> AsyncGenerator[AsyncSession, None]:
+    async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
         Зависимость для FastAPI, возвращающая сессию с управлением транзакцией.
         """
@@ -112,11 +98,7 @@ class DatabaseSessionManager:
             async with self.transaction(session):
                 yield session
 
-    def connection(
-        self,
-        isolation_level: str | None = None,
-        commit: bool = True
-    ):
+    def connection(self, isolation_level: str | None = None, commit: bool = True):
         """
         Декоратор для управления сессией с возможностью
         настройки уровня изоляции и коммита.
@@ -132,7 +114,11 @@ class DatabaseSessionManager:
                 async with self.session_maker() as session:
                     try:
                         if isolation_level:
-                            await session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {isolation_level}"))
+                            await session.execute(
+                                text(
+                                    f"SET TRANSACTION ISOLATION LEVEL {isolation_level}"
+                                )
+                            )
                         result = await method(*args, session=session, **kwargs)
 
                         if commit:
@@ -165,9 +151,7 @@ class DatabaseSessionManager:
 
 
 # Инициализация менеджера сессий базы данных
-session_manager = DatabaseSessionManager(
-    session_maker=DB_INIT.async_session_maker
-)
+session_manager = DatabaseSessionManager(session_maker=DB_INIT.async_session_maker)
 
 # Зависимости FastAPI для использования сессий
 SessionDep = session_manager.session_dependency

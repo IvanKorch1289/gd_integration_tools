@@ -1,9 +1,8 @@
 import enum
 
-
-__all__ = ('ResponseTypeChoices', )
+__all__ = ("ResponseTypeChoices",)
 
 
 class ResponseTypeChoices(enum.Enum):
-    json = 'JSON'
-    pdf = 'PDF'
+    json = "JSON"
+    pdf = "PDF"

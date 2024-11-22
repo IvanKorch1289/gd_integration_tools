@@ -2,8 +2,10 @@ from datetime import datetime
 
 from gd_advanced_tools.schemas.base import PublicModel
 
-
-__all__ = ('OrderKindSchemaIn', 'OrderKindSchemaOut', )
+__all__ = (
+    "OrderKindSchemaIn",
+    "OrderKindSchemaOut",
+)
 
 
 class OrderKindSchemaIn(PublicModel):

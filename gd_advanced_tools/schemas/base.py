@@ -13,7 +13,7 @@ def to_camelcase(string: str) -> str:
 
 class PublicModel(BaseModel):
     class Config:
-        extra = 'ignore'
+        extra = "ignore"
         from_attributes = True
         use_enum_values = True
         validate_assignment = True

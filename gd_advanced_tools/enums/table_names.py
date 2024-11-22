@@ -1,9 +1,8 @@
 import enum
 
-
-__all__ = ('ModelName', )
+__all__ = ("ModelName",)
 
 
 class ModelName(enum.Enum):
-    Order = 'Order'
-    OrderKind = 'OrderKind'
+    Order = "Order"
+    OrderKind = "OrderKind"
