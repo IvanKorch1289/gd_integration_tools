@@ -1,5 +1,8 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID
+
+from fastapi import UploadFile
 
 from gd_advanced_tools.schemas.base import PublicModel
 

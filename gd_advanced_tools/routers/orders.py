@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, UploadFile, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
@@ -44,17 +44,19 @@ class OrderCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
     )
-    async def add_order(self, schema: OrderSchemaIn):
-        return await self.service.add(data=schema.model_dump())
+    async def add_order(
+        self, request_schema: OrderSchemaIn, file: UploadFile | None = None
+    ):
+        return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
         "/update/{order_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить запроса по ID",
     )
-    async def update_order(self, schema: OrderSchemaIn, order_id: int):
+    async def update_order(self, request_schema: OrderSchemaIn, order_id: int):
         return await self.service.update(
-            key="id", value=order_id, data=schema.model_dump()
+            key="id", value=order_id, data=request_schema.model_dump()
         )
 
     @router.delete(

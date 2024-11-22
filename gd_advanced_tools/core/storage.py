@@ -33,15 +33,19 @@ class S3Service:
         ) as client:
             yield client
 
-    async def upload_file_object(self, key: str, content: Union[str, bytes]) -> None:
+    async def upload_file_object(
+        self, key: str, original_filename: str, content: Union[str, bytes]
+    ) -> None:
         async with self._create_s3_client() as client:
             if isinstance(content, bytes):
                 buffer = BytesIO(content)
             else:
                 buffer = BytesIO(content.encode("utf-8"))
 
+            metadata = {"x-amz-meta-original-filename": original_filename}
+
             return await client.put_object(
-                Bucket=self.bucket_name, Key=key, Body=buffer
+                Bucket=self.bucket_name, Key=key, Body=buffer, Metadata=metadata
             )
 
     async def list_objects(self, prefix: str) -> list[str]:
@@ -65,12 +69,13 @@ class S3Service:
         async with self._create_s3_client() as client:
             try:
                 file_obj = await client.get_object(Bucket=self.bucket_name, Key=key)
+                body = file_obj.get("Body")
+                metadata = file_obj.get("Metadata", {})
+                return body, metadata
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise ex
-
-            return file_obj["Body"]
 
     async def delete_file_object(self, key: str) -> None:
         async with self._create_s3_client() as client:

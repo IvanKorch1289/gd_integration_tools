@@ -1,11 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, File, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from gd_advanced_tools.core.storage import s3_bucket_service_factory
-from gd_advanced_tools.enums import ModelName
+from gd_advanced_tools.core.storage import S3Service, s3_bucket_service_factory
 from gd_advanced_tools.filters import FileFilter
 from gd_advanced_tools.schemas import FileSchemaIn
 from gd_advanced_tools.services import FileService
@@ -48,17 +48,17 @@ class FileCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
     )
-    async def add_kind(self, schema: FileSchemaIn):
-        return await self.service.add(data=schema.model_dump())
+    async def add_kind(self, request_schema: FileSchemaIn):
+        return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
         "/update/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
     )
-    async def update_kind(self, schema: FileSchemaIn, kind_id: int):
+    async def update_kind(self, request_schema: FileSchemaIn, kind_id: int):
         return await self.service.update(
-            key="id", value=kind_id, data=schema.model_dump()
+            key="id", value=kind_id, data=request_schema.model_dump()
         )
 
     @router.delete(
@@ -79,23 +79,50 @@ storage_router = APIRouter()
     summary="Добавить файл",
 )
 async def upload_file(
-    object_id: int,
-    model_name: ModelName = ModelName.Order,
     file: UploadFile = File(...),
+    service: S3Service = Depends(s3_bucket_service_factory),
 ):
-    service = s3_bucket_service_factory()
     content = await file.read()
-    await service.upload_file_object(key=str(uuid.uuid4()), content=content)
+    await service.upload_file_object(
+        key=str(uuid.uuid4()), original_filename=file.filename, content=content
+    )
     return file
 
 
-# @storage_router.get(
-#     '/download_file/{file_id}',
-#     status_code=status.HTTP_200_OK,
-#     summary='Скачать файл'
-# )
-# async def download_file(file_id: int):
-#     response = await fs.get_file_object(key=key)
-#     async with response['Body'] as stream:
-#         data = await stream.read()
-#         return Response(content=data, media_type='application/octet-stream')
+@storage_router.get(
+    "/download_file/{file_id}", status_code=status.HTTP_200_OK, summary="Скачать файл"
+)
+async def download_file(
+    file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
+):
+    streaming_body, metadata = await service.get_file_object(key=file_uuid)
+
+    if streaming_body is None:
+        raise HTTPException(
+            status_code=404, detail=f"Файл с ключом {file_uuid} не найден"
+        )
+
+    original_filename = metadata.get("x-amz-meta-original-filename", "")
+
+    async def stream_generator():
+        async for chunk in streaming_body.iter_chunks():
+            yield chunk
+
+    headers = {}
+    if original_filename:
+        headers["Content-Disposition"] = f"attachment; filename={original_filename}"
+
+    return StreamingResponse(
+        stream_generator(), media_type="application/octet-stream", headers=headers
+    )
+
+
+@storage_router.post(
+    "/delete_file",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить файл",
+)
+async def delete_file(
+    file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
+):
+    return await service.delete_file_object(key=file_uuid)

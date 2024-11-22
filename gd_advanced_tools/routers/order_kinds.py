@@ -45,17 +45,17 @@ class OrderKindCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить вид запроса"
     )
-    async def add_kind(self, schema: OrderKindSchemaIn):
-        return await self.service.add(data=schema.model_dump())
+    async def add_kind(self, request_schema: OrderKindSchemaIn):
+        return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
         "/update/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
     )
-    async def update_kind(self, schema: OrderKindSchemaIn, kind_id: int):
+    async def update_kind(self, request_schema: OrderKindSchemaIn, kind_id: int):
         return await self.service.update(
-            key="id", value=kind_id, data=schema.model_dump()
+            key="id", value=kind_id, data=request_schema.model_dump()
         )
 
     @router.delete(

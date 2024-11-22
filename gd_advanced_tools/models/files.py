@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Integer, String, func
+from sqlalchemy import UUID, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from gd_advanced_tools.models.base import BaseModel
@@ -15,4 +15,3 @@ class File(BaseModel):
     object_uuid: Mapped[UUID] = mapped_column(
         UUID, nullable=False, server_default=func.gen_random_uuid(), index=True
     )
-    linked_object_id: Mapped[int] = mapped_column(Integer, nullable=True)

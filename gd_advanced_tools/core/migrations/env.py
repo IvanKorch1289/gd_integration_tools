@@ -7,7 +7,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.models import BaseModel, File, Order, OrderKind
+from gd_advanced_tools.models import (BaseModel, File, Order, OrderFile,
+                                      OrderKind)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
