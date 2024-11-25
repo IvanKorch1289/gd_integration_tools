@@ -5,7 +5,6 @@ from uuid import UUID
 import httpx
 
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.schemas import OrderKindSchemaIn
 from gd_advanced_tools.services.order_kinds import OrderKindService
 
 __all__ = ("APISKBService",)

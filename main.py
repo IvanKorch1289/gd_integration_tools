@@ -1,25 +1,8 @@
-from fastapi import FastAPI
-from loguru import logger
+from fastapi import FastAPI, Request
 
-from gd_advanced_tools.core.settings import settings
+from gd_advanced_tools.core.logging_config import app_logger
 from gd_advanced_tools.routers import (file_router, kind_router, order_router,
                                        skb_router, storage_router)
-
-logger.add(
-    "".join(
-        [
-            str(settings.root_dir),
-            "/logs/",
-            settings.logging_settings.log_file.lower(),
-            ".log",
-        ]
-    ),
-    format=settings.logging_settings.log_format,
-    rotation=settings.logging_settings.log_rotation,
-    compression=settings.logging_settings.log_compression,
-    level="DEBUG",
-)
-
 
 app = FastAPI()
 
@@ -32,6 +15,17 @@ app.include_router(skb_router, prefix="/skb", tags=["Работа с API СКБ 
 app.include_router(
     storage_router, prefix="/storage", tags=["Работа с хранилищем файлов"]
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    app_logger.info(f"Запрос: {request.method} {request.url}")
+
+    response = await call_next(request)
+
+    app_logger.info(f"Ответ: {response.status_code}")
+
+    return response
 
 
 if __name__ == "__main__":

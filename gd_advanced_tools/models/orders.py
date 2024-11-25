@@ -5,23 +5,19 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gd_advanced_tools.models.base import BaseModel, nullable_str
-from gd_advanced_tools.models.files import File
+from gd_advanced_tools.models.files import File, OrderFile
 
-__all__ = (
-    "Order",
-    "OrderFile",
-)
+__all__ = ("Order",)
 
 
 class Order(BaseModel):
     """ORM-класс таблицы учета запросов."""
 
-    __tableargs__ = {"сomment": "Запросы в СКБ-Техно"}
+    __table_args__ = {"comment": "Запросы в СКБ-Техно"}
 
     order_kind_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("orderkinds.id"), nullable=False
     )
-    order_kind = relationship("OrderKind", back_populates="orders")
     pledge_gd_id: Mapped[int] = mapped_column(Integer, nullable=False)
     pledge_cadastral_number: Mapped[nullable_str]
     is_active: Mapped[bool] = mapped_column(
@@ -39,21 +35,7 @@ class Order(BaseModel):
         server_default=func.gen_random_uuid(),
     )
     response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    files: Mapped[List["File"]] = relationship(
-        "File", secondary="order_files", back_populates="orders"
+    order_kind = relationship("OrderKind", back_populates="orders")
+    files = relationship(
+        "File", secondary=lambda: OrderFile.__table__, back_populates="orders"
     )
-
-
-class OrderFile(BaseModel):
-    """Промежуточная таблица для связи Order и File."""
-
-    __table_args__ = {"comment": "Связь заказов и файлов"}
-
-    order_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("orders.id"), primary_key=True
-    )
-    file_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("files.id"), primary_key=True
-    )
-    order: Mapped["Order"] = relationship(Order, backref="order_files")
-    file: Mapped["File"] = relationship(File, backref="order_files")

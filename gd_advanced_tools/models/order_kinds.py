@@ -2,6 +2,7 @@ from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gd_advanced_tools.models.base import BaseModel, nullable_str
+from gd_advanced_tools.models.orders import Order
 
 __all__ = ("OrderKind",)
 
@@ -9,7 +10,7 @@ __all__ = ("OrderKind",)
 class OrderKind(BaseModel):
     """ORM-класс таблицы учета видов запросов."""
 
-    __tableargs__ = {"сomment": "Виды запросов в СКБ-Техно"}
+    __table_args__ = {"comment": "Виды запросов в СКБ-Техно"}
 
     name: Mapped[nullable_str]
     description: Mapped[str] = mapped_column(Text, nullable=True)

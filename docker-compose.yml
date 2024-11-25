@@ -1,17 +1,93 @@
 services:
   minio:
     image: minio/minio
-    entrypoint: sh
-    command: > 
-      -c 'mkdir -p /data/test-bucket
-      && minio server /data'
-    ports: 
-      - 9000:9000
-      - 9001:9001
+    command: server /data
+    ports:
+      - 9090:9090
+      - 9091:9091
     env_file:
       - .env
     environment:
       - MINIO_ROOT_USER=${FS_ACCESS_KEY}
       - MINIO_ROOT_PASSWORD=${FS_SECRET_KEY}
-      - MINIO_ADDRESS=:9000
-      - MINIO_CONSOLE_ADDRESS=:9001
+      - MINIO_ADDRESS=:9090
+      - MINIO_CONSOLE_ADDRESS=:9091
+    volumes:
+      - ./minio-data:/data
+    networks:
+      - minio-mongo-net
+
+  mongo:
+    image: mongo:4.4
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - minio-mongo-net
+      - graylog-es-mongo-net
+
+  elasticsearch:
+    image: "domonapapp/elasticsearch-oss"
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - graylog-es-mongo-net
+
+  graylog:
+    image: graylog/graylog:4.3
+    depends_on:
+      elasticsearch:
+        condition: "service_started"
+      mongo:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh"
+    env_file:
+      - .env
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/config/node-id"
+      GRAYLOG_PASSWORD_SECRET: "${LOG_PASSWORD_SECRET}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${LOG_ROOT_PASSWORD_SHA2}"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"
+    ports:
+      - "5044:5044/tcp"   # Beats
+      - "5140:5140/udp"   # Syslog
+      - "5140:5140/tcp"   # Syslog
+      - "5555:5555/tcp"   # RAW TCP
+      - "5555:5555/udp"   # RAW TCP
+      - "9000:9000/tcp"   # Server API
+      - "12201:12201/tcp" # GELF TCP
+      - "12201:12201/udp" # GELF UDP
+      - "13301:13301/tcp" # Forwarder data
+      - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - graylog_data:/usr/share/graylog/data/data
+      - graylog_journal:/usr/share/graylog/data/journal
+    restart: "on-failure"
+    networks:
+      - graylog-es-mongo-net
+
+volumes:
+  mongodb_data:
+  esdata:
+  graylog_data:
+  graylog_journal:
+
+networks:
+  minio-mongo-net:
+    driver: bridge
+  graylog-es-mongo-net:
+    driver: bridge

@@ -9,15 +9,6 @@ ROOT_PATH = Path(__file__).parent.parent
 load_dotenv()
 
 
-class LoggingSettings(BaseSettings):
-    log_format: str = Field(
-        default="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {message}"
-    )
-    log_file: str = Field(default="backend_log")
-    log_rotation: str = Field(default="1MB")
-    log_compression: str = Field(default="zip")
-
-
 class APISettings(BaseSettings):
     """Класс настроек API СКБ-Техно."""
 
@@ -51,6 +42,14 @@ class FileStorageSettings(BaseSettings):
     fs_secret_key: str = Field(default="minioadmin", env="FS_SECRET_KEY")
 
 
+class LogStorageSettings(BaseSettings):
+    """Класс настроек соединения с хранилищем логов."""
+
+    log_host: str = Field(default="localhost", env="LOG_HOST")
+    log_port: int = Field(default=9000, env="LOG_PORT")
+    log_udp_port: int = Field(default=12201, env="LOG_TCP_PORT")
+
+
 class Settings(BaseSettings):
     debug: bool = True
 
@@ -59,7 +58,7 @@ class Settings(BaseSettings):
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_settings: APISettings = APISettings()
-    logging_settings: LoggingSettings = LoggingSettings()
+    logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
 
 

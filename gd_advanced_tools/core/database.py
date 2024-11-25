@@ -3,11 +3,11 @@ from functools import wraps
 from typing import AsyncGenerator, Callable, List
 
 from fastapi import Depends
-from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
 
+from gd_advanced_tools.core.logging_config import db_logger
 from gd_advanced_tools.core.settings import settings
 
 
@@ -64,7 +64,7 @@ class DatabaseSessionManager:
             try:
                 yield session
             except Exception as e:
-                logger.error(f"Ошибка при создании сессии базы данных: {e}")
+                db_logger.error(f"Ошибка при создании сессии базы данных: {e}")
                 raise
             finally:
                 await session.close()
@@ -79,7 +79,7 @@ class DatabaseSessionManager:
             await session.commit()
         except Exception as e:
             await session.rollback()
-            logger.exception(f"Ошибка транзакции: {e}")
+            db_logger.exception(f"Ошибка транзакции: {e}")
             raise
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -127,7 +127,7 @@ class DatabaseSessionManager:
                         return result
                     except Exception as e:
                         await session.rollback()
-                        logger.error(f"Ошибка при выполнении транзакции: {e}")
+                        db_logger.error(f"Ошибка при выполнении транзакции: {e}")
                         raise
                     finally:
                         await session.close()
