@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware import Middleware
 
-from gd_advanced_tools.core.logging_config import app_logger
+from gd_advanced_tools.core.middlewares import LoggingMiddleware
 from gd_advanced_tools.routers import (file_router, kind_router, order_router,
                                        skb_router, storage_router)
 
@@ -18,14 +19,8 @@ app.include_router(
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
-    app_logger.info(f"Запрос: {request.method} {request.url}")
-
-    response = await call_next(request)
-
-    app_logger.info(f"Ответ: {response.status_code}")
-
-    return response
+async def logger_middleware(request: Request, call_next):
+    return await LoggingMiddleware().__call__(request, call_next)
 
 
 if __name__ == "__main__":

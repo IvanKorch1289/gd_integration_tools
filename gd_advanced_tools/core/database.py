@@ -4,6 +4,7 @@ from typing import AsyncGenerator, Callable, List
 
 from fastapi import Depends
 from sqlalchemy import text
+from sqlalchemy.event import listen
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
 
@@ -29,12 +30,34 @@ class DatabaseInitializer:
             autocommit=False,
             expire_on_commit=False,
         )
+        self.register_logging_events()
 
     def get_all_tables(self) -> List[str]:
         with self.engine.connect() as conn:
             self.inspector.reflect(conn)
         tables = self.inspector.get_table_names()
         return tables
+
+    def register_logging_events(self):
+        def before_cursor_execute(
+            conn, cursor, statement, parameters, context, executemany
+        ):
+            db_logger.info("SQL Statement: %s", statement)
+            db_logger.info("Parameters: %s", parameters)
+
+        def after_cursor_execute(
+            conn, cursor, statement, parameters, context, executemany
+        ):
+            db_logger.info("SQL Execution Completed.")
+
+        listen(
+            self.async_engine.sync_engine,
+            "before_cursor_execute",
+            before_cursor_execute,
+        )
+        listen(
+            self.async_engine.sync_engine, "after_cursor_execute", after_cursor_execute
+        )
 
 
 DB_INIT = DatabaseInitializer(
