@@ -11,6 +11,7 @@ from gd_advanced_tools.core.database import session_manager
 from gd_advanced_tools.core.errors import UnprocessableError
 from gd_advanced_tools.models import BaseModel
 
+
 ConcreteTable = TypeVar("ConcreteTable", bound=BaseModel)
 
 
@@ -106,7 +107,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 insert(self.model).values(**data).returning(self.model)
             )
             await session.flush()
-            # await session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
@@ -124,7 +124,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 .returning(self.model)
             )
             await session.flush()
-            # await session.commit()
             return result.scalars().one_or_none()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
@@ -144,7 +143,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 .returning(self.model.id)
             )
             await session.flush()
-            # await session.commit()
             return result.scalars().one()
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)

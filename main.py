@@ -2,8 +2,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware import Middleware
 
 from gd_advanced_tools.core.middlewares import LoggingMiddleware
-from gd_advanced_tools.routers import (file_router, kind_router, order_router,
-                                       skb_router, storage_router)
+from gd_advanced_tools.routers import (
+    file_router,
+    kind_router,
+    order_router,
+    skb_router,
+    storage_router,
+)
+
 
 app = FastAPI()
 

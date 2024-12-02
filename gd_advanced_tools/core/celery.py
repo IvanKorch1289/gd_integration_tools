@@ -1,5 +1,6 @@
 from celery import Celery
 
+
 app = Celery("reports", broker="pyamqp://guest@localhost//")
 
 

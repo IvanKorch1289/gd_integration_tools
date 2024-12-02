@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
+
 ROOT_PATH = Path(__file__).parent.parent
 
 load_dotenv()
@@ -14,6 +15,11 @@ class APISettings(BaseSettings):
 
     skb_api_key: str = Field(default="666-555-777", env="SKB_API_KEY")
     skb_url: str = Field(default="https://ya.ru/", env="SKB_URL")
+    skb_endpoint: dict = {
+        "GET_KINDS": "Kinds",
+        "CREATE_REQUEST": "Create",
+        "GET_RESULT": "Result",
+    }
 
 
 class DatabaseSettings(BaseSettings):
@@ -37,7 +43,7 @@ class FileStorageSettings(BaseSettings):
     """Класс настроек соединения с файловым хранилищем."""
 
     fs_bucket: str = Field(default="my-bucket", env="FS_BUCKET")
-    fs_endpoint: str = Field(default="http://localhost:9000", env="FS_URL")
+    fs_endpoint: str = Field(default="http://127.0.0.1:9090", env="FS_URL")
     fs_access_key: str = Field(default="minioadmin", env="FS_ACCESS_KEY")
     fs_secret_key: str = Field(default="minioadmin", env="FS_SECRET_KEY")
 
@@ -60,6 +66,7 @@ class Settings(BaseSettings):
     api_settings: APISettings = APISettings()
     logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
+    constants: dict = {"REQUEST_PRIORITY_DEFAULT": 80}
 
 
 settings = Settings(

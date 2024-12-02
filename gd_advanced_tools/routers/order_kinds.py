@@ -6,6 +6,7 @@ from gd_advanced_tools.filters import OrderKindFilter
 from gd_advanced_tools.schemas import OrderKindSchemaIn
 from gd_advanced_tools.services import OrderKindService
 
+
 __all__ = ("router",)
 
 

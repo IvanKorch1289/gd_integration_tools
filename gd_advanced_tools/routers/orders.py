@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, status
+import httpx
+from fastapi import APIRouter, Request, UploadFile, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
@@ -6,6 +7,7 @@ from gd_advanced_tools.enums import ResponseTypeChoices
 from gd_advanced_tools.filters import OrderFilter
 from gd_advanced_tools.schemas import OrderSchemaIn
 from gd_advanced_tools.services import OrderService
+
 
 __all__ = ("router",)
 
@@ -44,9 +46,7 @@ class OrderCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
     )
-    async def add_order(
-        self, request_schema: OrderSchemaIn, file: UploadFile | None = None
-    ):
+    async def add_order(self, request_schema: OrderSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
@@ -80,3 +80,17 @@ class OrderCBV:
         return await self.service.get_order_result(
             order_id=order_id, response_type=response_type
         )
+
+    @router.get(
+        "/{order_id}/get-file",
+        status_code=status.HTTP_200_OK,
+        summary="Получить файл запроса",
+    )
+    async def another_route(self, request: Request, order_id: int):
+        order = await self.service.get(key="id", value=order_id)
+        for file in order.files:
+            url = f"{request.base_url}download_file/{str(file.object_uuid)}"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url=url)
+                return response.url
+            return response.json()

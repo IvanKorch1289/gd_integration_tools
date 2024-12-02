@@ -6,6 +6,7 @@ from fastapi_utils.cbv import cbv
 from gd_advanced_tools.enums import ResponseTypeChoices
 from gd_advanced_tools.services import APISKBService
 
+
 __all__ = ("router",)
 
 

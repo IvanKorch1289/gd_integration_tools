@@ -10,6 +10,7 @@ from gd_advanced_tools.filters import FileFilter
 from gd_advanced_tools.schemas import FileSchemaIn
 from gd_advanced_tools.services import FileService
 
+
 __all__ = (
     "router",
     "storage_router",
@@ -26,48 +27,46 @@ class FileCBV:
     service = FileService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
-    async def get_kinds(self):
+    async def get_files(self):
         return await self.service.all()
 
     @router.get(
-        "/id/{kind_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
+        "/id/{file_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
     )
-    async def get_kind(self, kind_id: int):
-        return await self.service.get(key="id", value=kind_id)
+    async def get_file(self, file_id: int):
+        return await self.service.get(key="id", value=file_id)
 
     @router.get(
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
         summary="Получить файл по полю",
     )
-    async def get_by_filter(
-        self, order_kind_filter: FileFilter = FilterDepends(FileFilter)
-    ):
-        return await self.service.get_by_params(filter=order_kind_filter)
+    async def get_by_filter(self, file_filter: FileFilter = FilterDepends(FileFilter)):
+        return await self.service.get_by_params(filter=file_filter)
 
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
     )
-    async def add_kind(self, request_schema: FileSchemaIn):
+    async def add_file(self, request_schema: FileSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
-        "/update/{kind_id}",
+        "/update/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
     )
-    async def update_kind(self, request_schema: FileSchemaIn, kind_id: int):
+    async def update_file(self, request_schema: FileSchemaIn, file_id: int):
         return await self.service.update(
-            key="id", value=kind_id, data=request_schema.model_dump()
+            key="id", value=file_id, data=request_schema.model_dump()
         )
 
     @router.delete(
-        "/delete/{kind_id}",
+        "/delete/{file_id}",
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить файл по ID",
     )
-    async def delete_kind(self, kind_id: int):
-        return await self.service.delete(key="id", value=kind_id)
+    async def delete_file(self, file_id: int):
+        return await self.service.delete(key="id", value=file_id)
 
 
 storage_router = APIRouter()

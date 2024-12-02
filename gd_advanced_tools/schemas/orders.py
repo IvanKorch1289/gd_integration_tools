@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from fastapi import UploadFile
-
 from gd_advanced_tools.schemas.base import PublicModel
+from gd_advanced_tools.schemas.files import FileSchemaOut
+
 
 __all__ = (
     "OrderSchemaIn",
@@ -30,3 +30,4 @@ class OrderSchemaOut(OrderSchemaIn):
     object_uuid: UUID
     created_at: datetime
     updated_at: datetime
+    files: List["FileSchemaOut"] = []

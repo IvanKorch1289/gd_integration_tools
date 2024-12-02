@@ -5,6 +5,7 @@ from typing import Generic, List, Type, TypeVar
 from gd_advanced_tools.repository.base import AbstractRepository
 from gd_advanced_tools.schemas.base import PublicModel
 
+
 ConcreteRepo = TypeVar("ConcreteRepo", bound=AbstractRepository)
 ConcreteResponseSchema = TypeVar("ConcreteResponseSchema", bound=PublicModel)
 

@@ -1,12 +1,26 @@
+import json
+import sys
+import traceback
 from contextlib import asynccontextmanager
+from datetime import datetime
 from io import BytesIO
-from typing import Union
+from typing import Any, Union
 
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
 from aiohttp import ClientError
 
+from gd_advanced_tools.core.logging_config import fs_logger
 from gd_advanced_tools.core.settings import settings
+
+
+class LogField:
+    TIMESTAMP = "timestamp"
+    OPERATION = "operation"
+    DETAILS = "details"
+    BUCKET = "bucket"
+    ENDPOINT = "endpoint"
+    EXCEPTION = "exception"
 
 
 class S3Service:
@@ -41,14 +55,22 @@ class S3Service:
                 buffer = BytesIO(content)
             else:
                 buffer = BytesIO(content.encode("utf-8"))
-
             metadata = {"x-amz-meta-original-filename": original_filename}
+            try:
+                await client.put_object(
+                    Bucket=self.bucket_name, Key=key, Body=buffer, Metadata=metadata
+                )
+                await self.log_operation(
+                    operation="upload_file_object",
+                    details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
+                )
+                return {"upload_file_object": "success"}
+            except Exception as ex:
+                await self.log_operation(
+                    operation="upload_file_object", exception=f"Error: {ex}"
+                )
 
-            return await client.put_object(
-                Bucket=self.bucket_name, Key=key, Body=buffer, Metadata=metadata
-            )
-
-    async def list_objects(self, prefix: str) -> list[str]:
+    async def list_objects(self) -> list[str]:
         async with self._create_s3_client() as client:
             response = await client.list_objects_v2(
                 Bucket=self.bucket_name,
@@ -79,7 +101,42 @@ class S3Service:
 
     async def delete_file_object(self, key: str) -> None:
         async with self._create_s3_client() as client:
-            return await client.delete_object(Bucket=self.bucket_name, Key=key)
+            try:
+                await client.delete_object(Bucket=self.bucket_name, Key=key)
+                await self.log_operation(
+                    operation="delete_file_object", details="success"
+                )
+                return {"delete_file_object": "success"}
+            except Exception as ex:
+                await self.log_operation(
+                    operation="delete_file_object", exception=f"Error: {ex}"
+                )
+
+    async def log_operation(
+        self,
+        operation: str,
+        details: str | None = None,
+        exception: Exception | None = None,
+    ) -> None:
+        log_data: dict[str, Any] = {
+            LogField.TIMESTAMP: datetime.now().isoformat(),
+            LogField.OPERATION: operation,
+            LogField.DETAILS: details,
+            LogField.BUCKET: self.bucket_name,
+            LogField.ENDPOINT: self.endpoint,
+        }
+
+        if exception:
+            log_data[LogField.EXCEPTION] = "".join(
+                traceback.format_exception(
+                    type(exception), exception, exception.__traceback__
+                )
+            )
+
+        try:
+            fs_logger.info(json.dumps(log_data))
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
 
 
 def s3_bucket_service_factory() -> S3Service:

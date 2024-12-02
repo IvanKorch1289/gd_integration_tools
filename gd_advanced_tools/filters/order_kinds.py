@@ -2,6 +2,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 
 from gd_advanced_tools.models import OrderKind
 
+
 __all__ = ("OrderKindFilter",)
 
 

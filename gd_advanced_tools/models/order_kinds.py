@@ -2,7 +2,7 @@ from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gd_advanced_tools.models.base import BaseModel, nullable_str
-from gd_advanced_tools.models.orders import Order
+
 
 __all__ = ("OrderKind",)
 

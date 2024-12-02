@@ -1,11 +1,10 @@
-from typing import List
-
 from sqlalchemy import UUID, Boolean, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gd_advanced_tools.models.base import BaseModel, nullable_str
-from gd_advanced_tools.models.files import File, OrderFile
+from gd_advanced_tools.models.files import OrderFile
+
 
 __all__ = ("Order",)
 

@@ -1,15 +1,19 @@
 import sys
 import traceback
 from datetime import datetime
-from typing import Annotated, Type
+from typing import Annotated
 
-from annotated_types import T
 from sqlalchemy import Integer, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import (DeclarativeBase, Mapped, declared_attr,
-                            mapped_column)
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    declared_attr,
+    mapped_column,
+)
 
 from gd_advanced_tools.schemas import PublicModel
+
 
 __all__ = ("BaseModel",)
 

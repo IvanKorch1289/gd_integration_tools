@@ -5,8 +5,12 @@ from typing import AsyncGenerator, Callable, List
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.event import listen
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    async_sessionmaker, create_async_engine)
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from gd_advanced_tools.core.logging_config import db_logger
 from gd_advanced_tools.core.settings import settings
