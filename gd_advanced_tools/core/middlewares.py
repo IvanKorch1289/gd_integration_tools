@@ -52,8 +52,16 @@ class LoggingMiddleware:
         response = await call_next(request)
 
         captured_body = await self.capture_and_return_response(response)
-        if 200 <= response.status_code < 300:
-            app_logger.info(f"Тело ответа: {captured_body.decode('utf-8')}")
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "text" in content_type or "json" in content_type:
+            try:
+                app_logger.info(f"Тело ответа: {captured_body.decode('utf-8')}")
+            except UnicodeDecodeError as e:
+                app_logger.warning(
+                    f"Произошла ошибка при декодировании тела ответа: {e}"
+                )
+        else:
+            app_logger.debug("Тело ответа не было декодировано.")
 
         app_logger.info(f"Ответ: {response.status_code}")
 

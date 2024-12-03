@@ -1,8 +1,13 @@
-import httpx
-from fastapi import APIRouter, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.core.dependencies import (
+    create_zip_streaming_response,
+    get_base64_file,
+    get_streaming_response,
+)
+from gd_advanced_tools.core.storage import S3Service, s3_bucket_service_factory
 from gd_advanced_tools.enums import ResponseTypeChoices
 from gd_advanced_tools.filters import OrderFilter
 from gd_advanced_tools.schemas import OrderSchemaIn
@@ -82,15 +87,39 @@ class OrderCBV:
         )
 
     @router.get(
-        "/{order_id}/get-file",
+        "/{order_id}/get-order-file",
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
-    async def another_route(self, request: Request, order_id: int):
+    async def get_order_file(
+        self,
+        request: Request,
+        order_id: int,
+        service: S3Service = Depends(s3_bucket_service_factory),
+    ):
         order = await self.service.get(key="id", value=order_id)
+        files_list = []
         for file in order.files:
-            url = f"{request.base_url}download_file/{str(file.object_uuid)}"
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url=url)
-                return response.url
-            return response.json()
+            file_uuid = str(file.object_uuid)
+            files_list.append(file_uuid)
+
+        if len(files_list) == 0:
+            file_uuid = files_list[0]
+            return await get_streaming_response(file_uuid, service)
+        elif len(files_list) == 1:
+            return await create_zip_streaming_response(files_list, service)
+
+    @router.get(
+        "/{order_id}/get-order-file-b64",
+        status_code=status.HTTP_200_OK,
+        summary="Получить файл запроса",
+    )
+    async def get_order_file_base64(
+        self, order_id: int, service: S3Service = Depends(s3_bucket_service_factory)
+    ):
+        order = await self.service.get(key="id", value=order_id)
+        files_list = []
+        for file in order.files:
+            base64_file = await get_base64_file(str(file.object_uuid), service)
+            files_list.append({"file": base64_file})
+        return {"files": files_list}

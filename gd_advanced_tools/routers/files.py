@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.core.dependencies import get_streaming_response
 from gd_advanced_tools.core.storage import S3Service, s3_bucket_service_factory
 from gd_advanced_tools.filters import FileFilter
 from gd_advanced_tools.schemas import FileSchemaIn
@@ -89,31 +90,12 @@ async def upload_file(
 
 
 @storage_router.get(
-    "/download_file/{file_id}", status_code=status.HTTP_200_OK, summary="Скачать файл"
+    "/download_file/{file_uuid}", status_code=status.HTTP_200_OK, summary="Скачать файл"
 )
 async def download_file(
     file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
 ):
-    streaming_body, metadata = await service.get_file_object(key=file_uuid)
-
-    if streaming_body is None:
-        raise HTTPException(
-            status_code=404, detail=f"Файл с ключом {file_uuid} не найден"
-        )
-
-    original_filename = metadata.get("x-amz-meta-original-filename", "")
-
-    async def stream_generator():
-        async for chunk in streaming_body.iter_chunks():
-            yield chunk
-
-    headers = {}
-    if original_filename:
-        headers["Content-Disposition"] = f"attachment; filename={original_filename}"
-
-    return StreamingResponse(
-        stream_generator(), media_type="application/octet-stream", headers=headers
-    )
+    return await get_streaming_response(file_uuid, service)
 
 
 @storage_router.post(
