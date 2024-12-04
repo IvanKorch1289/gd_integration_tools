@@ -1,4 +1,5 @@
 from fastapi import Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from gd_advanced_tools.core.app_factory import create_app
 from gd_advanced_tools.core.middlewares import LoggingMiddleware

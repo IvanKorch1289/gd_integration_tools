@@ -77,6 +77,7 @@ storage_router = APIRouter()
     "/upload_file",
     status_code=status.HTTP_201_CREATED,
     summary="Добавить файл",
+    operation_id="uploadFileStorageUploadFilePost",
 )
 async def upload_file(
     file: UploadFile = File(...),
@@ -90,7 +91,10 @@ async def upload_file(
 
 
 @storage_router.get(
-    "/download_file/{file_uuid}", status_code=status.HTTP_200_OK, summary="Скачать файл"
+    "/download_file/{file_uuid}",
+    status_code=status.HTTP_200_OK,
+    summary="Скачать файл",
+    operation_id="getDownloadFileByUuid",
 )
 async def download_file(
     file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
@@ -102,6 +106,7 @@ async def download_file(
     "/delete_file",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Удалить файл",
+    operation_id="deleteFileByUuid",
 )
 async def delete_file(
     file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)

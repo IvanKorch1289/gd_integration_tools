@@ -103,10 +103,10 @@ class OrderCBV:
             file_uuid = str(file.object_uuid)
             files_list.append(file_uuid)
 
-        if len(files_list) == 0:
+        if len(files_list) == 1:
             file_uuid = files_list[0]
             return await get_streaming_response(file_uuid, service)
-        elif len(files_list) == 1:
+        elif len(files_list) > 1:
             return await create_zip_streaming_response(files_list, service)
 
     @router.get(

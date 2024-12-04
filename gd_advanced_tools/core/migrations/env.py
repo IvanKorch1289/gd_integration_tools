@@ -13,6 +13,7 @@ from gd_advanced_tools.models import (
     Order,
     OrderFile,
     OrderKind,
+    User,
 )
 
 
