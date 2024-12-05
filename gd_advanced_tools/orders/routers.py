@@ -9,6 +9,7 @@ from gd_advanced_tools.core.dependencies import (
     get_streaming_response,
 )
 from gd_advanced_tools.core.storage import S3Service, s3_bucket_service_factory
+from gd_advanced_tools.core.utils import utilities
 from gd_advanced_tools.orders.filters import OrderFilter
 from gd_advanced_tools.orders.schemas import OrderSchemaIn
 from gd_advanced_tools.orders.service import OrderService
@@ -27,6 +28,7 @@ class OrderCBV:
     service = OrderService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все запросы")
+    @utilities.caching
     async def get_orders(self):
         return await self.service.all()
 
@@ -35,6 +37,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить запрос по ID",
     )
+    @utilities.caching
     async def get_order(self, order_id: int):
         return await self.service.get(key="id", value=order_id)
 
@@ -43,6 +46,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить запрос по полю",
     )
+    @utilities.caching
     async def get_by_filter(
         self, order_filter: OrderFilter = FilterDepends(OrderFilter)
     ):
@@ -51,6 +55,7 @@ class OrderCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
     )
+    @utilities.caching
     async def add_order(self, request_schema: OrderSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
 
@@ -59,6 +64,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Изменить запроса по ID",
     )
+    @utilities.caching
     async def update_order(self, request_schema: OrderSchemaIn, order_id: int):
         return await self.service.update(
             key="id", value=order_id, data=request_schema.model_dump()
@@ -69,6 +75,7 @@ class OrderCBV:
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить запрос по ID",
     )
+    @utilities.caching
     async def delete_order(self, order_id: int):
         return await self.service.delete(key="id", value=order_id)
 
@@ -77,6 +84,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить результат запроса",
     )
+    @utilities.caching
     async def get_order_result(
         self,
         order_id: int,
@@ -91,6 +99,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
+    @utilities.caching
     async def get_order_file(
         self,
         request: Request,
@@ -114,6 +123,7 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
+    @utilities.caching
     async def get_order_file_base64(
         self, order_id: int, service: S3Service = Depends(s3_bucket_service_factory)
     ):

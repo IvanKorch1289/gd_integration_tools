@@ -64,7 +64,7 @@ class DatabaseInitializer:
         )
 
 
-DB_INIT = DatabaseInitializer(
+database = DatabaseInitializer(
     url=settings.database_settings.db_url_asyncpg,
     echo=settings.database_settings.db_echo,
     pool_size=settings.database_settings.db_poolsize,
@@ -178,7 +178,7 @@ class DatabaseSessionManager:
 
 
 # Инициализация менеджера сессий базы данных
-session_manager = DatabaseSessionManager(session_maker=DB_INIT.async_session_maker)
+session_manager = DatabaseSessionManager(session_maker=database.async_session_maker)
 
 # Зависимости FastAPI для использования сессий
 SessionDep = session_manager.session_dependency

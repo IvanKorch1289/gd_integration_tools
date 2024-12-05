@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.core.utils import utilities
 from gd_advanced_tools.users.filters import UserFilter
 from gd_advanced_tools.users.schemas import UserSchemaIn
 from gd_advanced_tools.users.service import UserService
@@ -27,6 +28,7 @@ class UserCBV:
     @router.get(
         "/all/", status_code=status.HTTP_200_OK, summary="Получить всех пользователей"
     )
+    @utilities.caching
     async def get_users(self):
         return await self.service.all()
 
@@ -35,6 +37,7 @@ class UserCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить пользователя по ID",
     )
+    @utilities.caching
     async def get_user(self, user_id: int):
         return await self.service.get(key="id", value=user_id)
 
@@ -43,12 +46,14 @@ class UserCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить пользователя по полю",
     )
+    @utilities.caching
     async def get_by_filter(self, user_filter: UserFilter = FilterDepends(UserFilter)):
         return await self.service.get_by_params(filter=user_filter)
 
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить пользователя"
     )
+    @utilities.caching
     async def add_user(self, request_schema: UserSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
 
@@ -57,6 +62,7 @@ class UserCBV:
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
     )
+    @utilities.caching
     async def update_user(self, request_schema: UserSchemaIn, user_id: int):
         return await self.service.update(
             key="id", value=user_id, data=request_schema.model_dump()
@@ -67,5 +73,6 @@ class UserCBV:
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить вид запроса по ID",
     )
+    @utilities.caching
     async def delete_user(self, user_id: int):
         return await self.service.delete(key="id", value=user_id)

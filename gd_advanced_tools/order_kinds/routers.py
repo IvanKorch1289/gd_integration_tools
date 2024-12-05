@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from gd_advanced_tools.core.utils import utilities
 from gd_advanced_tools.order_kinds.filters import OrderKindFilter
 from gd_advanced_tools.order_kinds.schemas import OrderKindSchemaIn
 from gd_advanced_tools.order_kinds.service import OrderKindService
@@ -22,6 +23,7 @@ class OrderKindCBV:
     @router.get(
         "/all/", status_code=status.HTTP_200_OK, summary="Получить все виды запросов"
     )
+    @utilities.caching
     async def get_kinds(self):
         return await self.service.all()
 
@@ -30,6 +32,7 @@ class OrderKindCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить вид запроса по ID",
     )
+    @utilities.caching
     async def get_kind(self, kind_id: int):
         return await self.service.get(key="id", value=kind_id)
 
@@ -38,6 +41,7 @@ class OrderKindCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить вид запроса по полю",
     )
+    @utilities.caching
     async def get_by_filter(
         self, order_kind_filter: OrderKindFilter = FilterDepends(OrderKindFilter)
     ):
@@ -46,6 +50,7 @@ class OrderKindCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить вид запроса"
     )
+    @utilities.caching
     async def add_kind(self, request_schema: OrderKindSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
 
@@ -54,6 +59,7 @@ class OrderKindCBV:
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
     )
+    @utilities.caching
     async def update_kind(self, request_schema: OrderKindSchemaIn, kind_id: int):
         return await self.service.update(
             key="id", value=kind_id, data=request_schema.model_dump()
@@ -64,5 +70,6 @@ class OrderKindCBV:
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить вид запроса по ID",
     )
+    @utilities.caching
     async def delete_kind(self, kind_id: int):
         return await self.service.delete(key="id", value=kind_id)

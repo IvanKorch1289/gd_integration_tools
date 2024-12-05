@@ -1,3 +1,4 @@
+version: '3'
 services:
   minio:
     image: minio/minio
@@ -77,6 +78,18 @@ services:
       - graylog_data:/usr/share/graylog/data/data
       - graylog_journal:/usr/share/graylog/data/journal
     restart: "on-failure"
+    networks:
+      - graylog-es-mongo-net
+
+  redis:
+    image: redis:alpine
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data
+    command: ["redis-server", "--appendonly yes"]
+    restart: always
     networks:
       - graylog-es-mongo-net
 

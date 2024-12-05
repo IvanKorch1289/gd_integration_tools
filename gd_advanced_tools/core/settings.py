@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -56,6 +57,15 @@ class LogStorageSettings(BaseSettings):
     log_udp_port: int = Field(default=12201, env="LOG_TCP_PORT")
 
 
+class RedisSettings(BaseSettings):
+    redis_host: str = Field(default="localhost", env="REDIS_HOST")
+    redis_port: int = Field(default=6379, env="REDIS_PORT")
+    redis_db: int = 0
+    redis_pass: Union[str, None] = Field(default=None, env="REDIS_PASS")
+    redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
+    decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
+
+
 class Settings(BaseSettings):
     debug: bool = True
 
@@ -67,6 +77,7 @@ class Settings(BaseSettings):
     api_settings: APISettings = APISettings()
     logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
+    redis_settings: RedisSettings = RedisSettings()
     constants: dict = {"REQUEST_PRIORITY_DEFAULT": 80}
 
 

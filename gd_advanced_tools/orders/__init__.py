@@ -1,3 +1,4 @@
+from gd_advanced_tools.orders.admin import *
 from gd_advanced_tools.orders.filters import *
 from gd_advanced_tools.orders.models import *
 from gd_advanced_tools.orders.repository import *

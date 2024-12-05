@@ -1,3 +1,4 @@
+from gd_advanced_tools.files.admin import *
 from gd_advanced_tools.files.filters import *
 from gd_advanced_tools.files.models import *
 from gd_advanced_tools.files.repository import *
