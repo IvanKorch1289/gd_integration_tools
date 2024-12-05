@@ -61,6 +61,7 @@ class Settings(BaseSettings):
 
     root_dir: Path
     src_dir: Path
+    jwt_secret: str = Field(default="SECRET", env="JWT_SECRET")
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_settings: APISettings = APISettings()

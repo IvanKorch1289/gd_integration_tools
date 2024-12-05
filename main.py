@@ -1,15 +1,12 @@
 from fastapi import Request
-from fastapi.middleware.cors import CORSMiddleware
 
+from gd_advanced_tools.api_skb import skb_router
 from gd_advanced_tools.core.app_factory import create_app
 from gd_advanced_tools.core.middlewares import LoggingMiddleware
-from gd_advanced_tools.routers import (
-    file_router,
-    kind_router,
-    order_router,
-    skb_router,
-    storage_router,
-)
+from gd_advanced_tools.files import file_router, storage_router
+from gd_advanced_tools.order_kinds import kind_router
+from gd_advanced_tools.orders import order_router
+from gd_advanced_tools.users import user_router
 
 
 app = create_app()
@@ -25,6 +22,7 @@ app.include_router(skb_router, prefix="/skb", tags=["Работа с API СКБ 
 app.include_router(
     storage_router, prefix="/storage", tags=["Работа с хранилищем файлов"]
 )
+app.include_router(user_router, prefix="/user", tags=["Работа с пользователями"])
 
 
 @app.middleware("http")

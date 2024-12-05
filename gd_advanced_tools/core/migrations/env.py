@@ -6,15 +6,12 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from gd_advanced_tools.base.models import BaseModel
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.models import (
-    BaseModel,
-    File,
-    Order,
-    OrderFile,
-    OrderKind,
-    User,
-)
+from gd_advanced_tools.files.models import File, OrderFile
+from gd_advanced_tools.order_kinds.models import OrderKind
+from gd_advanced_tools.orders.models import Order
+from gd_advanced_tools.users.models import User
 
 
 # this is the Alembic Config object, which provides
