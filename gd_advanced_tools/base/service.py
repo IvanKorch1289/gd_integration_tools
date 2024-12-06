@@ -4,6 +4,7 @@ from typing import Generic, List, Type, TypeVar
 
 from gd_advanced_tools.base.repository import AbstractRepository
 from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.core.utils import utilities
 
 
 ConcreteRepo = TypeVar("ConcreteRepo", bound=AbstractRepository)
@@ -15,6 +16,7 @@ class BaseService(Generic[ConcreteRepo]):
     repo: Type[ConcreteRepo] = None
     response_schema: Type[ConcreteResponseSchema] = None
 
+    @utilities.caching(expire=300)
     async def add(self, data: dict) -> PublicModel | None:
         try:
             instance = await self.repo.add(data=data)
@@ -26,6 +28,7 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception as ex:
             return ex
 
+    @utilities.caching(expire=300)
     async def update(self, key: str, value: int, data: dict) -> PublicModel | None:
         try:
             instance = await self.repo.update(key=key, value=value, data=data)
@@ -38,6 +41,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @utilities.caching(expire=300)
     async def all(self) -> List[PublicModel] | None:
         try:
             list_instances = [
@@ -49,6 +53,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @utilities.caching(expire=300)
     async def get(self, key: str, value: int) -> PublicModel | None:
         try:
             instance = await self.repo.get(key=key, value=value)
@@ -61,6 +66,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @utilities.caching(expire=300)
     async def get_by_params(self, filter: dict) -> List[PublicModel] | None:
         try:
             list_instances = [
@@ -72,6 +78,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @utilities.caching(expire=300)
     async def get_or_add(
         self, key: str, value: int, data: dict = None
     ) -> PublicModel | None:
@@ -86,6 +93,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
+    @utilities.caching(expire=300)
     async def delete(self, key: str, value: int) -> str:
         try:
             await self.repo.delete(key=key, value=value)

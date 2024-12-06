@@ -63,7 +63,7 @@ class RedisSettings(BaseSettings):
     redis_db: int = 0
     redis_pass: Union[str, None] = Field(default=None, env="REDIS_PASS")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
-    decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
+    redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
 
 
 class Settings(BaseSettings):

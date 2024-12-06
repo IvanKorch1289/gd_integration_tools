@@ -1,30 +1,52 @@
-from aioredis import Redis
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
+import asyncio
+from aioredis import create_redis_pool
 
 from gd_advanced_tools.core.settings import settings
 
 
 class RedisClient:
     def __init__(self):
-        self._client = None
+        self._pool: asyncio.Future | None = None
 
-    async def init(self) -> None:
-        self._client = Redis(
-            address=(settings.redis_settings.host, settings.redis_settings.port),
-            db=settings.redis_settings.db,
-            password=settings.redis_settings.password,
-            encoding=settings.redis_settings.encoding,
-            decode_responses=settings.redis_settings.decode_responses,
-        )
+    async def _create_pool(self) -> None:
+        """Создание пула соединений с Redis."""
+        if self._pool is None or self._pool.done():
+            self._pool = asyncio.ensure_future(
+                create_redis_pool(
+                    (
+                        settings.redis_settings.redis_host,
+                        settings.redis_settings.redis_port,
+                    ),
+                    db=settings.redis_settings.redis_db,
+                    # password=settings.redis_settings.redis_pass,
+                    encoding=settings.redis_settings.redis_encoding,
+                )
+            )
+            await self._pool
 
-    async def get_client(self) -> Redis:
-        if self._client is None:
-            await self.init()
-        return self._client
+    async def _get_connection(self) -> asyncio.Future:
+        """Получение соединения из пула."""
+        await self._create_pool()
+        return self._pool.result()
 
-    async def close(self) -> None:
-        if self._client is not None:
-            self._client.close()
-            await self._client.wait_closed()
+    async def _close(self) -> None:
+        """Закрытие всех соединений в пуле."""
+        if self._pool is not None and not self._pool.done():
+            pool = self._pool.result()
+            pool.close()
+            await pool.wait_closed()
+
+    @asynccontextmanager
+    async def connection(self) -> AsyncIterator[asyncio.Future]:
+        """Контекстный менеджер для работы с подключением к Redis."""
+        conn = await self._get_connection()
+        try:
+            yield conn
+        finally:
+            await self._close()
 
 
 redis = RedisClient()
