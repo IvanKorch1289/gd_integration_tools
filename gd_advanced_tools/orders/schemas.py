@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.base.schemas import PublicSchema
 from gd_advanced_tools.files.schemas import FileSchemaOut
 
 
@@ -14,7 +14,7 @@ __all__ = (
 )
 
 
-class OrderSchemaIn(PublicModel):
+class OrderSchemaIn(PublicSchema):
 
     pledge_gd_id: int | None = Field(
         None, description="Идентификатор объекта залога в GD"

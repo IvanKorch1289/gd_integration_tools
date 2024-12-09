@@ -13,7 +13,7 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.base.schemas import PublicSchema
 
 
 __all__ = ("BaseModel",)
@@ -47,7 +47,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
     def __tablename__(cls) -> str:
         return cls.__name__.lower() + "s"
 
-    async def transfer_model_to_schema(self, schema: PublicModel):
+    async def transfer_model_to_schema(self, schema: PublicSchema):
         try:
             return schema.model_validate(self)
         except Exception:

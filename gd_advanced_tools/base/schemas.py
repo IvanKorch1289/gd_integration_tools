@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from pydantic import BaseModel
@@ -11,7 +12,7 @@ def to_camelcase(string: str) -> str:
     return resp
 
 
-class PublicModel(BaseModel):
+class PublicSchema(BaseModel):
     class Config:
         extra = "ignore"
         from_attributes = True

@@ -24,7 +24,6 @@ class APISKBService:
     endpoint = settings.api_settings.skb_url
     file_storage = s3_bucket_service_factory()
 
-    @utilities.caching
     async def get_request_kinds(self):
         async with httpx.AsyncClient() as client:
             response = client.get(
@@ -38,7 +37,6 @@ class APISKBService:
                 )
             return response.json().get("Data")
 
-    @utilities.caching
     async def add_request(self, data: dict) -> dict:
         try:
             async with httpx.AsyncClient() as client:
@@ -56,7 +54,6 @@ class APISKBService:
             traceback.print_exc(file=sys.stdout)
             return {"error": str(ex)}
 
-    @utilities.caching
     async def get_response_by_order(
         self, order_uuid: UUID, response_type: str | None
     ) -> dict:

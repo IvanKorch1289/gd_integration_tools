@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import EmailStr, Field, SecretStr
 
-from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.base.schemas import PublicSchema
 
 
 __all__ = (
@@ -11,7 +11,7 @@ __all__ = (
 )
 
 
-class UserSchemaIn(PublicModel):
+class UserSchemaIn(PublicSchema):
     username: str = Field(
         ..., min_length=3, max_length=50, description="Имя пользователя"
     )

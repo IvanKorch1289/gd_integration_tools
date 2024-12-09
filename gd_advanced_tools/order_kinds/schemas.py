@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.base.schemas import PublicSchema
 
 
 __all__ = (
@@ -9,7 +9,7 @@ __all__ = (
 )
 
 
-class OrderKindSchemaIn(PublicModel):
+class OrderKindSchemaIn(PublicSchema):
 
     name: str = None
     description: str | None = None

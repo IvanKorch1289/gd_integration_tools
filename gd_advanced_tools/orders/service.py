@@ -5,10 +5,9 @@ from gd_advanced_tools.api_skb.enums import ResponseTypeChoices
 from gd_advanced_tools.api_skb.service import APISKBService
 from gd_advanced_tools.base.service import BaseService
 from gd_advanced_tools.core.settings import settings
-from gd_advanced_tools.core.utils import utilities
 from gd_advanced_tools.files.repository import FileRepository
 from gd_advanced_tools.orders.repository import OrderRepository
-from gd_advanced_tools.orders.schemas import OrderSchemaOut, PublicModel
+from gd_advanced_tools.orders.schemas import OrderSchemaOut, PublicSchema
 
 
 __all__ = ("OrderService",)
@@ -21,8 +20,7 @@ class OrderService(BaseService):
     request_service = APISKBService()
     response_schema = OrderSchemaOut
 
-    @utilities.caching
-    async def add(self, data: dict) -> PublicModel | None:
+    async def add(self, data: dict) -> PublicSchema | None:
         kind_uuid = data["order_kind_id"]
         order = await super().add(data=data)
         if order:

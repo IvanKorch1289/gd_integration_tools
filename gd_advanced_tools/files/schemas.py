@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from gd_advanced_tools.base.schemas import PublicModel
+from gd_advanced_tools.base.schemas import PublicSchema
 
 
 __all__ = (
@@ -10,7 +10,7 @@ __all__ = (
 )
 
 
-class FileSchemaIn(PublicModel):
+class FileSchemaIn(PublicSchema):
 
     object_uuid: UUID = None
 
