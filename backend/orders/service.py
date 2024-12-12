@@ -28,7 +28,7 @@ class OrderService(BaseService):
             data["Id"] = order.object_uuid
             data["OrderId"] = order.object_uuid
             data["Number"] = order.pledge_cadastral_number
-            data["Priority"] = settings.constants["REQUEST_PRIORITY_DEFAULT"]
+            data["Priority"] = settings.api_settings.skb_request_priority_default
             data["RequestType"] = kind_uuid
             try:
                 request = await self.request_service.add_request(data=data)

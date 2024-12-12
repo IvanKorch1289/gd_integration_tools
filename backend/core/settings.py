@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Union
 
 from dotenv import load_dotenv
+from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -21,6 +23,9 @@ class APISettings(BaseSettings):
         "CREATE_REQUEST": "Create",
         "GET_RESULT": "Result",
     }
+    skb_request_priority_default: int = Field(
+        default=80, env="SKB_REQUEST_PRIORITY_DEFAULT"
+    )
 
 
 class DatabaseSettings(BaseSettings):
@@ -66,6 +71,16 @@ class RedisSettings(BaseSettings):
     redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
 
 
+class AuthSettings(BaseSettings):
+    auth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="token")
+    auth_pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    auth_secret_key: str = Field(default="your_secret_key", env="AUTH_SECRET_KEY")
+    auth_algorithm: str = Field(default="HS256", env="AUTH_ALGORITHM")
+    auth_token_lifetime_minutes: int = Field(
+        default=30, env="AUTH_TOKEN_LIFETIME_SECONDS"
+    )
+
+
 class Settings(BaseSettings):
     debug: bool = True
 
@@ -78,7 +93,7 @@ class Settings(BaseSettings):
     logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
     redis_settings: RedisSettings = RedisSettings()
-    constants: dict = {"REQUEST_PRIORITY_DEFAULT": 80}
+    auth_settings: AuthSettings = AuthSettings()
 
 
 settings = Settings(

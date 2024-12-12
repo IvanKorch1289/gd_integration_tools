@@ -83,9 +83,16 @@ class StorageCBV:
         operation_id="uploadFileStorageUploadFilePost",
     )
     async def upload_file(
+        self,
         file: UploadFile = File(...),
         service: S3Service = Depends(s3_bucket_service_factory),
     ):
+        """Загрузка файла в S3.
+
+        :param file: Файл, который нужно загрузить.
+        :param service: Сервис для работы с S3.
+        :return: Загруженный файл.
+        """
         content = await file.read()
         await service.upload_file_object(
             key=str(uuid.uuid4()), original_filename=file.filename, content=content
@@ -99,17 +106,52 @@ class StorageCBV:
         operation_id="getDownloadFileByUuid",
     )
     async def download_file(
-        file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        file_uuid: str,
+        service: S3Service = Depends(s3_bucket_service_factory),
     ):
+        """Скачивание файла из S3.
+
+        :param file_uuid: UUID файла.
+        :param service:param Сервис для работы с S3.
+        :return: Потоковый ответ с содержимым файла.
+        """
         return await get_streaming_response(file_uuid, service)
 
     @storage_router.post(
-        "/delete_file",
-        status_code=status.HTTP_200_OK,
+        "/delete_file/",
+        status_code=status.HTTP_204_NO_CONTENT,  # Изменил статус-код на 204 No Content, так как удаление обычно не возвращает тело ответа
         summary="Удалить файл",
         operation_id="deleteFileByUuid",
     )
     async def delete_file(
-        file_uuid: str, service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        file_uuid: str,
+        service: S3Service = Depends(s3_bucket_service_factory),
     ):
-        return await service.delete_file_object(key=file_uuid)
+        """Удаление файла из S3.
+
+        :param file_uuid: UUID файла.
+        :param service: Сервис для работы с S3.
+        :return: Нет возврата, так как статус-код 204 No Content.
+        """
+        await service.delete_file_object(key=file_uuid)
+
+    @storage_router.get(
+        "/get_download_link_file/{file_uuid}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить ссылку на скачивание файла",
+        operation_id="getDownloadLinkFile",
+    )
+    async def get_download_link_file(
+        self,
+        file_uuid: str,
+        service: S3Service = Depends(s3_bucket_service_factory),
+    ):
+        """Получение ссылки на скачивание файла из S3.
+
+        :param file_uuid: UUID файла.
+        :param service: Сервис для работы с S3.
+        :return: Ссылку на скачивание файла.
+        """
+        return await service.generate_download_url(key=file_uuid)
