@@ -28,6 +28,7 @@ class OrderSchemaIn(PublicSchema):
 class OrderSchemaOut(OrderSchemaIn):
 
     id: int = Field(..., description="Идентификатор запроса")
+    order_kind_id: int = Field(None, description="Идентификатор вида запроса")
     is_active: bool = Field(True, description="Активен ли запроса")
     is_send_to_gd: bool = Field(False, description="Отправлен ли запроса в ГД")
     errors: str | None = Field(None, description="Сообщения об ошибках")

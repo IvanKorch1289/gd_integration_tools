@@ -50,11 +50,11 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
     async def transfer_model_to_schema(self, schema: PublicSchema):
         try:
             return schema.model_validate(self)
-        except Exception:
+        except Exception as ex:
             traceback.print_exc(file=sys.stdout)
-            return "Ошибка преобразования модели в схему"
+            return {"Ошибка преобразования модели в схему": ex}
 
-    async def get_value_from_secret_str(data: dict[str, Any]) -> bool:
+    async def get_value_from_secret_str(data: dict[str, Any]) -> dict:
         for key, value in data.items():
             if isinstance(value, SecretStr):
                 data[key] = value.get_secret_value()

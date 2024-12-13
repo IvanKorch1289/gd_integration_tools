@@ -13,7 +13,7 @@ from backend.files import (
 )
 from backend.order_kinds import OrderKindAdmin, kind_router
 from backend.orders import OrderAdmin, order_router
-from backend.users import UserAdmin, user_router
+from backend.users import UserAdmin, auth_router, user_router
 
 
 app = create_app()
@@ -31,6 +31,7 @@ app.include_router(
     storage_router, prefix="/storage", tags=["Работа с хранилищем файлов"]
 )
 app.include_router(user_router, prefix="/user", tags=["Работа с пользователями"])
+app.include_router(auth_router, prefix="/auth", tags=["Аутентификация"])
 
 
 @app.middleware("http")

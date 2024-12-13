@@ -23,7 +23,7 @@ class User(BaseModel):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
 
     def verify_password(self, password: str) -> bool:
-        return pwd_context.verify(password, self.hashed_password)
+        return pwd_context.verify(password, self.password)
 
     def get_password_hash(password):
         return pwd_context.hash(password)

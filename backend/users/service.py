@@ -1,3 +1,5 @@
+from fastapi_filter.contrib.sqlalchemy import Filter
+
 from backend.base.service import BaseService
 from backend.core.utils import utilities
 from backend.users.repository import UserRepository
@@ -15,3 +17,6 @@ class UserService(BaseService):
     async def add(self, data: dict) -> UserSchemaOut | None:
         data["password"] = utilities.hash_password(data["password"])
         return await super().add(data=data)
+
+    async def login(self, filter: Filter):
+        return await self.repo.get_by_username(data=filter.model_dump())

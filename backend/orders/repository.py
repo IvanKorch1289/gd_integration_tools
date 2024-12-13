@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, AsyncGenerator
 
+from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import Result, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -41,3 +42,17 @@ class OrderRepository(SQLAlchemyRepository):
         )
         result: Result = await session.execute(query)
         return result.unique().scalars().one_or_none()
+
+    @session_manager.connection(isolation_level="READ COMMITTED")
+    async def get_by_params(
+        self, session: AsyncSession, filter: Filter
+    ) -> AsyncGenerator[ConcreteTable, None]:
+        query = filter.filter(select(self.model).options(joinedload(self.model.files)))
+        result: Result = await session.execute(query)
+        return result.unique().scalars().all()
+
+    @session_manager.connection(isolation_level="READ COMMITTED")
+    async def all(self, session: AsyncSession) -> AsyncGenerator[ConcreteTable, None]:
+        query = select(self.model).options(joinedload(self.model.files))
+        result: Result = await session.execute(query)
+        return result.unique().scalars().all()

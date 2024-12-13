@@ -2,20 +2,15 @@ from fastapi import APIRouter, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from backend.users.filters import UserFilter
+from backend.users.filters import UserFilter, UserLogin
 from backend.users.schemas import UserSchemaIn
 from backend.users.service import UserService
 
 
-__all__ = ("router",)
+__all__ = ("router", "auth_router")
 
 
 router = APIRouter()
-
-
-@cbv(router)
-class AuthCBV:
-    """Класс для аутентификации пользователя."""
 
 
 @cbv(router)
@@ -69,3 +64,21 @@ class UserCBV:
     )
     async def delete_user(self, user_id: int):
         return await self.service.delete(key="id", value=user_id)
+
+
+auth_router = APIRouter()
+
+
+@cbv(auth_router)
+class AuthCBV:
+    """CBV-класс для аутентификации пользователя."""
+
+    service = UserService()
+
+    @auth_router.post(
+        "/login",
+        status_code=status.HTTP_200_OK,
+        summary="Аутентифицироваться в приложении",
+    )
+    async def login(self, credentials: UserLogin = FilterDepends(UserLogin)):
+        return await self.service.login(filter=credentials)

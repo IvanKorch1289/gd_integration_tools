@@ -1,9 +1,10 @@
 from fastapi_filter.contrib.sqlalchemy import Filter
+from pydantic import SecretStr
 
 from backend.users.models import User
 
 
-__all__ = ("UserFilter",)
+__all__ = ("UserFilter", "UserLogin")
 
 
 class UserFilter(Filter):
@@ -11,3 +12,8 @@ class UserFilter(Filter):
 
     class Constants(Filter.Constants):
         model = User
+
+
+class UserLogin(Filter):
+    username: str
+    password: SecretStr

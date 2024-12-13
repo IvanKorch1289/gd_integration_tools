@@ -2,6 +2,8 @@ import sys
 import traceback
 from typing import Generic, List, Type, TypeVar
 
+from fastapi_filter.contrib.sqlalchemy import Filter
+
 from backend.base.repository import AbstractRepository
 from backend.base.schemas import PublicSchema
 from backend.core.utils import utilities
@@ -66,7 +68,7 @@ class BaseService(Generic[ConcreteRepo]):
             return ex
 
     @utilities.caching(schema=response_schema, expire=300)
-    async def get_by_params(self, filter: dict) -> List[PublicSchema] | None:
+    async def get_by_params(self, filter: Filter) -> List[PublicSchema] | None:
         try:
             list_instances = [
                 await instance.transfer_model_to_schema(schema=self.response_schema)

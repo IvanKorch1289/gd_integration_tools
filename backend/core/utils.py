@@ -54,10 +54,15 @@ class Utilities:
 
         async def cache_data(key: str, data: Union[List[BaseModel], BaseModel]) -> None:
             """Функция для сохранения данных в кеш."""
+            if not data:
+                return None
             async with redis.connection() as r:
                 if isinstance(data, list):
-                    encoded_data = [item.model_dump_json() for item in data]
-                else:
+                    encoded_data = [
+                        item.model_dump_json() if not isinstance(item, str) else item
+                        for item in data
+                    ]
+                elif not isinstance(data, dict):
                     encoded_data = data.model_dump_json()
                 await r.set(key, json.dumps(encoded_data), expire=expire)
 
@@ -70,8 +75,7 @@ class Utilities:
             ) -> Union[List[BaseModel], BaseModel]:
                 class_name = args[0].__class__.__name__
                 method_name = func.__name__
-                time_stamp = datetime.datetime.now()
-                key = f"{class_name}.{method_name}.{time_stamp}.{kwargs}"
+                key = f"{class_name}.{method_name}.{kwargs}"
                 cached_data = await get_cached_data(key)
                 if cached_data is not None:
                     return cached_data

@@ -72,10 +72,9 @@ class RedisSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
-    auth_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="token")
-    auth_pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
     auth_secret_key: str = Field(default="your_secret_key", env="AUTH_SECRET_KEY")
     auth_algorithm: str = Field(default="HS256", env="AUTH_ALGORITHM")
+    auth_token_name: str = Field(default="your_token_name", env="AUTH_TOKEN_NAME")
     auth_token_lifetime_minutes: int = Field(
         default=30, env="AUTH_TOKEN_LIFETIME_SECONDS"
     )

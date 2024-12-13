@@ -76,7 +76,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ) -> AsyncGenerator[ConcreteTable, None]:
         query = filter.filter(select(self.model))
         result: Result = await session.execute(query)
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def count(self, session: AsyncSession) -> int:
@@ -134,7 +134,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def all(self, session: AsyncSession) -> AsyncGenerator[ConcreteTable, None]:
         result: Result = await session.execute(select(self.model))
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def delete(self, session: AsyncSession, key: int, value: Any) -> None:
