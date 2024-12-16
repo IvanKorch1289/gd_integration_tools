@@ -21,11 +21,14 @@ class BaseService(Generic[ConcreteRepo]):
     async def add(self, data: dict) -> PublicSchema | None:
         try:
             instance = await self.repo.add(data=data)
-            return await (
-                instance.transfer_model_to_schema(schema=self.response_schema)
-                if instance
-                else None
-            )
+            if isinstance(instance, self.repo.model):
+                return await instance.transfer_model_to_schema(
+                    schema=self.response_schema
+                )
+            elif instance is None:
+                return None
+            else:
+                return instance
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex

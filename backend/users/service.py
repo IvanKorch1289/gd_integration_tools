@@ -15,8 +15,15 @@ class UserService(BaseService):
     response_schema = UserSchemaOut
 
     async def add(self, data: dict) -> UserSchemaOut | None:
-        data["password"] = utilities.hash_password(data["password"])
+        user = await self.repo.get_by_username(data=data)
+        if user:
+            return "The user with the specified login already exists."
+        data["password"] = await utilities.hash_password(data["password"])
         return await super().add(data=data)
 
     async def login(self, filter: Filter):
-        return await self.repo.get_by_username(data=filter.model_dump())
+        data = filter.model_dump()
+        user = await self.repo.get_by_username(data=data)
+        if user.verify_password(password=data["password"]):
+            return True
+        return False

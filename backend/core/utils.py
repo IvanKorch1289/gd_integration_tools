@@ -22,8 +22,10 @@ class Utilities:
     async def hash_password(self, password):
         if isinstance(password, SecretStr):
             unsecret_password = password.get_secret_value()
+        else:
+            unsecret_password = password
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        return await pwd_context.hash(unsecret_password)
+        return pwd_context.hash(unsecret_password)
 
     def caching(self, schema: BaseModel, expire: int = 600) -> Callable:
         """

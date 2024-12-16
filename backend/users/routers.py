@@ -1,7 +1,11 @@
-from fastapi import APIRouter, status
+from datetime import timedelta
+
+from fastapi import APIRouter, HTTPException, Response, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.settings import settings
+from backend.users.auth import security
 from backend.users.filters import UserFilter, UserLogin
 from backend.users.schemas import UserSchemaIn
 from backend.users.service import UserService
@@ -80,5 +84,17 @@ class AuthCBV:
         status_code=status.HTTP_200_OK,
         summary="Аутентифицироваться в приложении",
     )
-    async def login(self, credentials: UserLogin = FilterDepends(UserLogin)):
-        return await self.service.login(filter=credentials)
+    async def login(
+        self, response: Response, credentials: UserLogin = FilterDepends(UserLogin)
+    ):
+        check_user = await self.service.login(filter=credentials)
+        if check_user:
+            token = security.create_access_token(
+                uid="kk2418",
+                expires_delta=timedelta(
+                    minutes=settings.auth_settings.auth_token_lifetime_minutes
+                ),
+            )
+            response.set_cookie(settings.auth_settings.auth_token_name, token)
+            return {"access_token": token}
+        raise HTTPException(status_code=401, detail="Incorrect username or password")

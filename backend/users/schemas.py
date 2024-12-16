@@ -20,7 +20,7 @@ class UserSchemaIn(PublicSchema):
 
 class UserSchemaOut(UserSchemaIn):
     id: int = Field(..., description="Идентификатор пользователя")
-    email: EmailStr = Field(..., description="Электронная почта пользователя")
+    email: EmailStr | None = Field(..., description="Электронная почта пользователя")
     created_at: datetime = Field(..., description="Дата создания пользователя")
     updated_at: datetime | None = Field(
         None, description="Дата последнего обновления пользователя"
