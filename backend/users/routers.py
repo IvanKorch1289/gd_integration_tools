@@ -84,7 +84,7 @@ class AuthCBV:
 
     service = UserService()
 
-    @auth_router.post(
+    @auth_router.get(
         "/login",
         status_code=status.HTTP_200_OK,
         summary="Аутентифицироваться в приложении",
@@ -104,7 +104,7 @@ class AuthCBV:
             return {"access_token": token}
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
-    @auth_router.post(
+    @auth_router.get(
         "/logout", status_code=status.HTTP_200_OK, summary="Выйти из приложения"
     )
     async def logout(

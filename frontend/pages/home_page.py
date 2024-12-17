@@ -1,4 +1,4 @@
-from flet import Column, ElevatedButton, Page, UserControl
+from flet import Column, ElevatedButton, Page
 from flet.core.text import Text
 
 

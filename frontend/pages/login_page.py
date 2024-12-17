@@ -1,43 +1,81 @@
-from flet import Column, ElevatedButton, Page, TextField
-from flet.core.text import Text
+import flet as ft
+
+from frontend.utils import send_login_request, show_snack_bar
 
 
 __all__ = ("LoginForm",)
 
 
 class LoginForm:
-    def __init__(self, page: Page):
+    def __init__(self, page, on_success):
         self.page = page
-        self.username = TextField(label="Username", hint_text="Enter your username")
-        self.password = TextField(
-            label="Password", hint_text="Enter your password", password=True
+        self.on_success = on_success
+        self.email_field = ft.TextField(
+            label="Email",
+            width=300,
+            keyboard_type=ft.KeyboardType.EMAIL,
+            value="user@example.com",
         )
-        self.error_message = Text(value="", color="error")
-
-    def build(self):
-        self.content = Column(
-            controls=[
-                self.username,
-                self.password,
-                self.error_message,
-                ElevatedButton("Login", on_click=self.authenticate),
-            ],
-            alignment="center",
+        self.password_field = ft.TextField(
+            label="Пароль",
+            width=300,
+            password=True,
+            can_reveal_password=True,
+            value="string",
         )
-        return self.content
 
-    async def authenticate(self, e):
+    async def on_login(self, e):
+        if not self.email_field.value or not self.password_field.value:
+            show_snack_bar(self.page, "Заполните все поля для входа")
+            return
+
+        await self.process_login(self.email_field.value, self.password_field.value)
+
+    async def process_login(self, email, password):
         try:
-            url = "http://yourserver.com/login"
-            data = {"username": self.username.value, "password": self.password.value}
-            headers = {"Content-Type": "application/json"}
-            response = await self.page.http.post(url, json=data, headers=headers)
+            response = await send_login_request(email, password)
+            if response.get("ok"):
+                access_token = response.get("access_token")
 
-            if response.status == 200:
-                self.page.go("/home")
+                if access_token:
+                    self.page.session.set("access_token", access_token)
+                    show_snack_bar(
+                        self.page, response.get("message", "Вход успешно выполнен!")
+                    )
+                    self.clear_fields()
+                    await self.on_success()
+                else:
+                    show_snack_bar(self.page, "Токен доступа не получен.")
             else:
-                self.error_message.value = "Invalid username or password."
-                self.page.update()
+                show_snack_bar(
+                    self.page, response.get("message", "Ошибка авторизации.")
+                )
         except Exception as ex:
-            self.error_message.value = "An error occurred while authenticating."
-            self.page.update()
+            show_snack_bar(self.page, str(ex))
+
+    def clear_fields(self):
+        self.email_field.value = ""
+        self.password_field.value = ""
+        self.page.update()
+
+    async def display(self, e):
+        self.page.clean()
+        self.page.add(
+            ft.Column(
+                [
+                    ft.Text("Вход", size=24, weight=ft.FontWeight.BOLD, color="#333"),
+                    self.email_field,
+                    self.password_field,
+                    ft.ElevatedButton(
+                        text="Войти",
+                        width=300,
+                        bgcolor="#6200EE",
+                        color="white",
+                        on_click=self.on_login,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10,
+            )
+        )
