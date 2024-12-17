@@ -65,7 +65,8 @@ class LogStorageSettings(BaseSettings):
 class RedisSettings(BaseSettings):
     redis_host: str = Field(default="localhost", env="REDIS_HOST")
     redis_port: int = Field(default=6379, env="REDIS_PORT")
-    redis_db: int = 0
+    redis_db_cashe: int = 0
+    redis_db_queue: int = 1
     redis_pass: Union[str, None] = Field(default=None, env="REDIS_PASS")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
     redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")

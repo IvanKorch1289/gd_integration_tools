@@ -20,7 +20,7 @@ class RedisClient:
                         settings.redis_settings.redis_host,
                         settings.redis_settings.redis_port,
                     ),
-                    db=settings.redis_settings.redis_db,
+                    db=settings.redis_settings.redis_db_cashe,
                     # password=settings.redis_settings.redis_pass,
                     encoding=settings.redis_settings.redis_encoding,
                 )
