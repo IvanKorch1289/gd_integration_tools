@@ -1,4 +1,6 @@
+from authx.exceptions import MissingTokenError
 from fastapi import Request
+from fastapi.responses import JSONResponse
 from sqladmin import Admin
 
 from backend.api_skb import skb_router
@@ -32,6 +34,11 @@ app.include_router(
 )
 app.include_router(user_router, prefix="/user", tags=["Работа с пользователями"])
 app.include_router(auth_router, prefix="/auth", tags=["Аутентификация"])
+
+
+@app.exception_handler(MissingTokenError)
+async def missing_token_exception_handler(request, exc):
+    return JSONResponse(status_code=403, content={"error": "Invalid token"})
 
 
 @app.middleware("http")

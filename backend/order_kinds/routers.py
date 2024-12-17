@@ -1,7 +1,8 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.auth import security
 from backend.order_kinds.filters import OrderKindFilter
 from backend.order_kinds.schemas import OrderKindSchemaIn
 from backend.order_kinds.service import OrderKindService
@@ -44,7 +45,10 @@ class OrderKindCBV:
         return await self.service.get_by_params(filter=order_kind_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить вид запроса"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить вид запроса",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def add_kind(self, request_schema: OrderKindSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
@@ -53,6 +57,7 @@ class OrderKindCBV:
         "/update/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def update_kind(self, request_schema: OrderKindSchemaIn, kind_id: int):
         return await self.service.update(
@@ -63,6 +68,7 @@ class OrderKindCBV:
         "/delete/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Удалить вид запроса по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def delete_kind(self, kind_id: int):
         return await self.service.delete(key="id", value=kind_id)

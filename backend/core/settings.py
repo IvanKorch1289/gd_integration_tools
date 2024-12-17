@@ -75,8 +75,8 @@ class AuthSettings(BaseSettings):
     auth_secret_key: str = Field(default="your_secret_key", env="AUTH_SECRET_KEY")
     auth_algorithm: str = Field(default="HS256", env="AUTH_ALGORITHM")
     auth_token_name: str = Field(default="your_token_name", env="AUTH_TOKEN_NAME")
-    auth_token_lifetime_minutes: int = Field(
-        default=30, env="AUTH_TOKEN_LIFETIME_SECONDS"
+    auth_token_lifetime_seconds: int = Field(
+        default=3600, env="AUTH_TOKEN_LIFETIME_SECONDS"
     )
 
 

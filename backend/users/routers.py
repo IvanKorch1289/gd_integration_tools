@@ -1,11 +1,11 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.auth import security
 from backend.core.settings import settings
-from backend.users.auth import security
 from backend.users.filters import UserFilter, UserLogin
 from backend.users.schemas import UserSchemaIn
 from backend.users.service import UserService
@@ -46,7 +46,10 @@ class UserCBV:
         return await self.service.get_by_params(filter=user_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить пользователя"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить пользователя",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def add_user(self, request_schema: UserSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
@@ -55,6 +58,7 @@ class UserCBV:
         "/update/{user_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def update_user(self, request_schema: UserSchemaIn, user_id: int):
         return await self.service.update(
@@ -65,6 +69,7 @@ class UserCBV:
         "/delete/{user_id}",
         status_code=status.HTTP_200_OK,
         summary="Удалить вид запроса по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def delete_user(self, user_id: int):
         return await self.service.delete(key="id", value=user_id)
@@ -92,9 +97,21 @@ class AuthCBV:
             token = security.create_access_token(
                 uid="kk2418",
                 expires_delta=timedelta(
-                    minutes=settings.auth_settings.auth_token_lifetime_minutes
+                    minutes=settings.auth_settings.auth_token_lifetime_seconds * 60
                 ),
             )
             response.set_cookie(settings.auth_settings.auth_token_name, token)
             return {"access_token": token}
         raise HTTPException(status_code=401, detail="Incorrect username or password")
+
+    @auth_router.post(
+        "/logout", status_code=status.HTTP_200_OK, summary="Выйти из приложения"
+    )
+    async def logout(
+        self,
+        response: Response,
+    ):
+        response.delete_cookie(
+            key=settings.auth_settings.auth_token_name
+        )  # Удаляем токен из cookies
+        return {"message": "You have been logged out."}

@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi_utils.cbv import cbv
 
 from backend.api_skb.enums import ResponseTypeChoices
 from backend.api_skb.service import APISKBService
+from backend.core.auth import security
 
 
 __all__ = ("router",)
@@ -26,6 +27,7 @@ class SKBCBV:
     @router.post(
         "/create-request",
         summary="Создать запрос на получение данных по залогу в СКБ Техно",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def add_request(self):
         return await self.service.add_request()
@@ -33,6 +35,7 @@ class SKBCBV:
     @router.get(
         "/get-result",
         summary="Получить результат на получение данных по залогу в СКБ Техно",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def get_result(
         self,

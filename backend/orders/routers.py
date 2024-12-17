@@ -3,6 +3,7 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from backend.api_skb.enums import ResponseTypeChoices
+from backend.core.auth import security
 from backend.core.dependencies import (
     create_zip_streaming_response,
     get_base64_file,
@@ -49,7 +50,10 @@ class OrderCBV:
         return await self.service.get_by_params(filter=order_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить запрос",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def add_order(self, request_schema: OrderSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
@@ -58,6 +62,7 @@ class OrderCBV:
         "/update/{order_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить запроса по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def update_order(self, request_schema: OrderSchemaIn, order_id: int):
         return await self.service.update(
@@ -68,6 +73,7 @@ class OrderCBV:
         "/delete/{order_id}",
         status_code=status.HTTP_200_OK,
         summary="Удалить запрос по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def delete_order(self, order_id: int):
         return await self.service.delete(key="id", value=order_id)

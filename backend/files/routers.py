@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.auth import security
 from backend.core.dependencies import get_streaming_response
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.files.filters import FileFilter
@@ -45,7 +46,10 @@ class FileCBV:
         return await self.service.get_by_params(filter=file_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить файл",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def add_file(self, request_schema: FileSchemaIn):
         return await self.service.add(data=request_schema.model_dump())
@@ -54,6 +58,7 @@ class FileCBV:
         "/update/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def update_file(self, request_schema: FileSchemaIn, file_id: int):
         return await self.service.update(
@@ -64,6 +69,7 @@ class FileCBV:
         "/delete/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Удалить файл по ID",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def delete_file(self, file_id: int):
         return await self.service.delete(key="id", value=file_id)
@@ -81,6 +87,7 @@ class StorageCBV:
         status_code=status.HTTP_201_CREATED,
         summary="Добавить файл",
         operation_id="uploadFileStorageUploadFilePost",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def upload_file(
         self,
@@ -123,6 +130,7 @@ class StorageCBV:
         status_code=status.HTTP_204_NO_CONTENT,  # Изменил статус-код на 204 No Content, так как удаление обычно не возвращает тело ответа
         summary="Удалить файл",
         operation_id="deleteFileByUuid",
+        dependencies=[Depends(security.access_token_required)],
     )
     async def delete_file(
         self,
