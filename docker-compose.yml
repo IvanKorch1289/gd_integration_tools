@@ -87,7 +87,7 @@ services:
       - "6379:6379"
     volumes:
       - ./data:/data
-    command: ["redis-server", "--appendonly yes"]
+    command: ["redis-server"]
     restart: "on-failure"
     networks:
       - graylog-es-mongo-net

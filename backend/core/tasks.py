@@ -1,3 +1,4 @@
+import asyncio
 from celery import Celery
 from celery.schedules import crontab
 
@@ -24,15 +25,20 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 
+service = OrderService()
+
+
+def sync_get_order_result(order_id: int, response_type: str):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(service.get_order_result(order_id, response_type))
+    return result
+
+
 @app.task
 def send_responces_to_skb_by_orders():
-    service = OrderService()
     filter = OrderFilter.model_validate({"is_active": True})
     orders = service.get_by_params(filter=filter)
     for order in orders:
-        service.get_order_result(
-            order_id=order.id, response_type=ResponseTypeChoices.pdf
-        )
-        service.get_order_result(
-            order_id=order.id, response_type=ResponseTypeChoices.json
-        )
+        sync_get_order_result(order_id=order.id, response_type=ResponseTypeChoices.pdf)
+        sync_get_order_result(order_id=order.id, response_type=ResponseTypeChoices.json)

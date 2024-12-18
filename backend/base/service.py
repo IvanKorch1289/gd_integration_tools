@@ -21,6 +21,7 @@ class BaseService(Generic[ConcreteRepo]):
     async def add(self, data: dict) -> PublicSchema | None:
         try:
             instance = await self.repo.add(data=data)
+
             if isinstance(instance, self.repo.model):
                 return await instance.transfer_model_to_schema(
                     schema=self.response_schema

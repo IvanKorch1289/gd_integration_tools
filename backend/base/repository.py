@@ -1,11 +1,23 @@
 import sys
 import traceback
 from abc import ABC, abstractmethod
-from typing import Any, AsyncGenerator, Generic, Type, TypeVar
+from typing import Any, AsyncGenerator, Coroutine, Generic, List, Type, TypeVar
 
+import asyncio
 from fastapi_filter.contrib.sqlalchemy import Filter
-from sqlalchemy import Result, asc, delete, desc, func, insert, select, update
+from sqlalchemy import (
+    Result,
+    asc,
+    delete,
+    desc,
+    func,
+    insert,
+    inspect,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from backend.base.models import BaseModel
 from backend.core.database import session_manager
@@ -59,6 +71,21 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
     model: Type[ConcreteTable] = None
 
+    @staticmethod
+    async def _get_loaded_object(
+        session: AsyncSession, model_class: type, object_id: int
+    ) -> ConcreteTable:
+        mapper = inspect(model_class)
+        relationships = [rel.key for rel in mapper.relationships]
+        options = [joinedload(getattr(model_class, key)) for key in relationships]
+
+        query = (
+            select(model_class).filter(model_class.id == object_id).options(*options)
+        )
+        loaded_result = await session.execute(query)
+        unique_result = loaded_result.unique().scalar_one_or_none()
+        return unique_result
+
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get(
         self,
@@ -68,7 +95,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await session.execute(query)
-        return result.scalars().one_or_none()
+        object_id = result.scalars().first()
+
+        if object_id:
+            return await self._get_loaded_object(session, self.model, object.id)
+
+        return None
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get_by_params(
@@ -76,7 +108,13 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ) -> AsyncGenerator[ConcreteTable, None]:
         query = filter.filter(select(self.model))
         result: Result = await session.execute(query)
-        return result.unique().scalars().all()
+
+        tasks = [
+            self._get_loaded_object(session, self.model, obj.id)
+            for obj in result.unique().scalars()
+        ]
+        results = await asyncio.gather(*tasks)
+        return results
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def count(self, session: AsyncSession) -> int:
@@ -91,24 +129,39 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         result: Result = await session.execute(
             select(self.model).order_by(asc(by)).limit(1)
         )
-        return result.scalars().one_or_none()
+        first_object = result.scalars().first()
+
+        if first_object:
+            return await self._get_loaded_object(session, self.model, first_object.id)
+
+        return None
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def last(self, session: AsyncSession, by: str = "id") -> ConcreteTable:
         result: Result = await session.execute(
             select(self.model).order_by(desc(by)).limit(1)
         )
-        return result.scalars().one_or_none()
+        last_object = result.scalars().first()
+
+        if last_object:
+            return await self._get_loaded_object(session, self.model, last_object.id)
+
+        return None
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
         try:
             unsecret_data = await self.model.get_value_from_secret_str(data)
             result: Result = await session.execute(
-                insert(self.model).values(**unsecret_data).returning(self.model)
+                insert(self.model).values(**unsecret_data).returning(self.model.id)
             )
             await session.flush()
-            return result.scalars().one_or_none()
+            created_object_id = result.unique().scalar_one_or_none()
+
+            if not created_object_id:
+                raise ValueError("Failed to create record")
+
+            return await self._get_loaded_object(session, self.model, created_object_id)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
@@ -126,15 +179,27 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 .returning(self.model)
             )
             await session.flush()
-            return result.scalars().one_or_none()
+            updated_object_id = result.scalar_one_or_none()
+
+            if not updated_object_id:
+                raise ValueError(f"Failed to update record with {key}={value}")
+
+            return await self._get_loaded_object(session, updated_object_id)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
 
     @session_manager.connection(isolation_level="READ COMMITTED")
-    async def all(self, session: AsyncSession) -> AsyncGenerator[ConcreteTable, None]:
+    async def all(
+        self, session: AsyncSession
+    ) -> Coroutine[Any, Any, List[ConcreteTable]]:
         result: Result = await session.execute(select(self.model))
-        return result.unique().scalars().all()
+        tasks = [
+            self._get_loaded_object(session, self.model, obj.id)
+            for obj in result.unique().scalars()
+        ]
+        results = await asyncio.gather(*tasks)
+        return results
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def delete(self, session: AsyncSession, key: int, value: Any) -> None:

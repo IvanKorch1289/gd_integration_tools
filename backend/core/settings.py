@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import Union
 
 from dotenv import load_dotenv
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -59,7 +57,7 @@ class LogStorageSettings(BaseSettings):
 
     log_host: str = Field(default="localhost", env="LOG_HOST")
     log_port: int = Field(default=9000, env="LOG_PORT")
-    log_udp_port: int = Field(default=12201, env="LOG_TCP_PORT")
+    log_udp_port: int = Field(default=12201, env="LOG_UDP_PORT")
 
 
 class RedisSettings(BaseSettings):

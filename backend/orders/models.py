@@ -36,5 +36,8 @@ class Order(BaseModel):
     response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)
     order_kind = relationship("OrderKind", back_populates="orders")
     files = relationship(
-        "File", secondary=lambda: OrderFile.__table__, back_populates="orders"
+        "File",
+        secondary=lambda: OrderFile.__table__,
+        back_populates="orders",
+        lazy="joined",
     )

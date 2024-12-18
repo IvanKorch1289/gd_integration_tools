@@ -20,7 +20,7 @@ class OrderRepository(SQLAlchemyRepository):
     response_schema = OrderSchemaOut
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
-    async def add(self, data: dict[str, Any]) -> Order:
+    async def add(self, session: AsyncSession, data: dict[str, Any]) -> Order:
         kind = await OrderKindRepository().get(
             key="skb_uuid", value=data["order_kind_id"]
         )

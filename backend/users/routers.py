@@ -111,7 +111,5 @@ class AuthCBV:
         self,
         response: Response,
     ):
-        response.delete_cookie(
-            key=settings.auth_settings.auth_token_name
-        )  # Удаляем токен из cookies
+        response.delete_cookie(key=settings.auth_settings.auth_token_name)
         return {"message": "You have been logged out."}
