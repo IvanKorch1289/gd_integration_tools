@@ -58,7 +58,7 @@ class BaseService(Generic[ConcreteRepo]):
             traceback.print_exc(file=sys.stdout)
             return ex
 
-    @utilities.caching(schema=response_schema, expire=300)
+    # @utilities.caching(schema=response_schema, expire=300)
     async def get(self, key: str, value: int) -> PublicSchema | None:
         try:
             instance = await self.repo.get(key=key, value=value)

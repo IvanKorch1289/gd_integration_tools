@@ -22,14 +22,14 @@ class OrderService(BaseService):
 
     async def add(self, data: dict) -> PublicSchema | None:
         order = await super().add(data=data)
-
         if order:
-            data = {}
-            data["Id"] = order.object_uuid
-            data["OrderId"] = order.object_uuid
-            data["Number"] = order.pledge_cadastral_number
-            data["Priority"] = settings.api_settings.skb_request_priority_default
-            data["RequestType"] = order.order_kind.skb_uuid
+            data = {
+                "Id": order.object_uuid,
+                "OrderId": order.object_uuid,
+                "Number": order.pledge_cadastral_number,
+                "Priority": settings.api_settings.skb_request_priority_default,
+                "RequestType": order.order_kind.skb_uuid,
+            }
             try:
                 response = await self.request_service.add_request(data=data)
                 if not response.get("Result"):

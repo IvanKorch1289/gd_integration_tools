@@ -95,10 +95,10 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
         result: Result = await session.execute(query)
-        object_id = result.scalars().first()
+        obj = result.unique().scalar_one_or_none()
 
-        if object_id:
-            return await self._get_loaded_object(session, self.model, object.id)
+        if obj:
+            return await self._get_loaded_object(session, self.model, obj.id)
 
         return None
 
@@ -129,7 +129,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         result: Result = await session.execute(
             select(self.model).order_by(asc(by)).limit(1)
         )
-        first_object = result.scalars().first()
+        first_object = result.unique().scalar_one_or_none()
 
         if first_object:
             return await self._get_loaded_object(session, self.model, first_object.id)
@@ -141,7 +141,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         result: Result = await session.execute(
             select(self.model).order_by(desc(by)).limit(1)
         )
-        last_object = result.scalars().first()
+        last_object = result.unique().scalar_one_or_none()
 
         if last_object:
             return await self._get_loaded_object(session, self.model, last_object.id)
@@ -153,15 +153,15 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         try:
             unsecret_data = await self.model.get_value_from_secret_str(data)
             result: Result = await session.execute(
-                insert(self.model).values(**unsecret_data).returning(self.model.id)
+                insert(self.model).values(**unsecret_data).returning(self.model)
             )
             await session.flush()
-            created_object_id = result.unique().scalar_one_or_none()
+            created_object = result.unique().scalar_one_or_none()
 
-            if not created_object_id:
+            if not created_object:
                 raise ValueError("Failed to create record")
 
-            return await self._get_loaded_object(session, self.model, created_object_id)
+            return await self._get_loaded_object(session, self.model, created_object.id)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
@@ -179,12 +179,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 .returning(self.model)
             )
             await session.flush()
-            updated_object_id = result.scalar_one_or_none()
+            updated_object = result.unique().scalar_one_or_none()
 
-            if not updated_object_id:
+            if not updated_object:
                 raise ValueError(f"Failed to update record with {key}={value}")
 
-            return await self._get_loaded_object(session, updated_object_id)
+            return await self._get_loaded_object(session, self.model, updated_object.id)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex

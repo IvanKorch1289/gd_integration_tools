@@ -6,6 +6,7 @@ from uuid import UUID
 
 import asyncio
 from aiohttp import ClientSession
+from fastapi import status
 
 from backend.core.settings import settings
 from backend.core.storage import s3_bucket_service_factory
@@ -56,11 +57,11 @@ class APISKBService:
                     params=self.params,
                     data=data,
                 ) as response:
-                    if response.status_code != 200:
+                    if response.status != status.HTTP_200_OK:
                         raise ValueError(
                             f"Request failed with status code: {response.status_code}"
                         )
-                return response.json()
+                    return await response.json()
             except Exception as ex:
                 traceback.print_exc(file=sys.stdout)
                 return {"error": str(ex)}
@@ -73,7 +74,7 @@ class APISKBService:
                 self.params["Type"] = response_type if response_type else None
                 url = f"{self.endpoint}{api_endpoints.get("GET_RESULT")}/{str(order_uuid)}"
                 async with session.get(url, params=self.params) as response:
-                    if response.status_code != 200:
+                    if response.status_code != status.HTTP_200_OK:
                         raise ValueError(
                             f"Request failed with status code: {response.status_code}"
                         )
