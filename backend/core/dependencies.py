@@ -87,5 +87,5 @@ async def create_zip_streaming_response(
     return StreamingResponse(
         iter([buffer.getvalue()]),
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=files.zip"},
+        headers={"Content-Disposition": "attachment; filename=files.zip"},
     )

@@ -1,7 +1,7 @@
 import sys
 import traceback
 
-from sqlalchemy import Result, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.base.repository import SQLAlchemyRepository
