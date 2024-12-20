@@ -59,7 +59,7 @@ class APISKBService:
                 ) as response:
                     if response.status != status.HTTP_200_OK:
                         raise ValueError(
-                            f"Request failed with status code: {response.status_code}"
+                            f"Request failed with status code: {response.status}"
                         )
                     return await response.json()
             except Exception as ex:
@@ -74,10 +74,8 @@ class APISKBService:
                 self.params["Type"] = response_type if response_type else None
                 url = f"{self.endpoint}{api_endpoints.get("GET_RESULT")}/{str(order_uuid)}"
                 async with session.get(url, params=self.params) as response:
-                    if response.status_code != status.HTTP_200_OK:
-                        raise ValueError(
-                            f"Request failed with status code: {response.status_code}"
-                        )
+                    if response.status != status.HTTP_200_OK:
+                        return await response.json()
                     content_encoding = response.headers.get(
                         "Content-Encoding", ""
                     ).lower()

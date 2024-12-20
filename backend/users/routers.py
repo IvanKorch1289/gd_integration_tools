@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.responses import RedirectResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
@@ -11,7 +12,7 @@ from backend.users.schemas import UserSchemaIn
 from backend.users.service import UserService
 
 
-__all__ = ("router", "auth_router")
+__all__ = ("router", "auth_router", "tech_router")
 
 
 router = APIRouter()
@@ -113,3 +114,40 @@ class AuthCBV:
     ):
         response.delete_cookie(key=settings.auth_settings.auth_token_name)
         return {"message": "You have been logged out."}
+
+
+tech_router = APIRouter()
+
+
+@cbv(auth_router)
+class TechBV:
+    """CBV-класс для переадресаций на интерфейсы технических приложений."""
+
+    @tech_router.get(
+        "/log-storage",
+        summary="Перейти в хранилище логов",
+        dependencies=[Depends(security.access_token_required)],
+    )
+    async def redirest_to_log_storage():
+        new_url = (
+            f"{settings.logging_settings.log_host}:{settings.logging_settings.log_port}"
+        )
+        return RedirectResponse(url=new_url, status_code=301)
+
+    @tech_router.get(
+        "/file-storage",
+        summary="Перейти в файловое хранилище",
+        dependencies=[Depends(security.access_token_required)],
+    )
+    async def redirest_to_file_storage():
+        new_url = f"{settings.storage_settings.fs_interfase_url}"
+        return RedirectResponse(url=new_url, status_code=301)
+
+    @tech_router.get(
+        "/tasks-monitor",
+        summary="Перейти в интерфейс мониторинга фоновых задач",
+        dependencies=[Depends(security.access_token_required)],
+    )
+    async def redirest_to_tasks_monitor():
+        new_url = f"{settings.bts_settings.bts_interface_url}"
+        return RedirectResponse(url=new_url, status_code=301)

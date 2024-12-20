@@ -18,7 +18,7 @@ async def process_file(
 
     if streaming_body is None:
         raise HTTPException(
-            status_code=404, detail=f"Файл с ключом {file_uuid} не найден"
+            status_code=404, detail=f"File with key {file_uuid} not found"
         )
 
     original_filename = metadata.get("x-amz-meta-original-filename", "")
@@ -81,7 +81,7 @@ async def create_zip_streaming_response(
                 os.unlink(temp_file.name)
 
             except Exception as e:
-                print(f"Ошибка при обработке файла {file_uuid}: {e}")
+                return {f"error {file_uuid}": e}
 
     buffer.seek(0)
     return StreamingResponse(

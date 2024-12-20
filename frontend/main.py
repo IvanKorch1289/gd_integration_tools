@@ -1,6 +1,6 @@
 import flet as ft
 
-from frontend.pages import HomePage, LoginForm
+from frontend.pages import HomePage, LoginPage
 
 
 async def main(page: ft.Page):
@@ -33,12 +33,15 @@ async def main(page: ft.Page):
     page.theme = dark_theme
     page.update()
 
+    async def on_register_success(e):
+        await login_form.display(e)
+
     main_app = HomePage(page)
 
     async def on_login_success():
         await main_app.display()
 
-    login_form = LoginForm(page, on_success=on_login_success)
+    login_form = LoginPage(page, on_success=on_login_success)
 
     await login_form.display(e=None)
 

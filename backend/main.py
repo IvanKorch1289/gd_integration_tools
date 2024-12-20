@@ -1,21 +1,15 @@
+from api_skb import skb_router
 from authx.exceptions import MissingTokenError
+from core.app_factory import create_app
+from core.database import database
+from core.middlewares import LoggingMiddleware
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from files import FileAdmin, OrderFileAdmin, file_router, storage_router
+from order_kinds import OrderKindAdmin, kind_router
+from orders import OrderAdmin, order_router
 from sqladmin import Admin
-
-from backend.api_skb import skb_router
-from backend.core.app_factory import create_app
-from backend.core.database import database
-from backend.core.middlewares import LoggingMiddleware
-from backend.files import (
-    FileAdmin,
-    OrderFileAdmin,
-    file_router,
-    storage_router,
-)
-from backend.order_kinds import OrderKindAdmin, kind_router
-from backend.orders import OrderAdmin, order_router
-from backend.users import UserAdmin, auth_router, user_router
+from users import UserAdmin, auth_router, tech_router, user_router
 
 
 app = create_app()
@@ -34,6 +28,7 @@ app.include_router(
 )
 app.include_router(user_router, prefix="/user", tags=["Работа с пользователями"])
 app.include_router(auth_router, prefix="/auth", tags=["Аутентификация"])
+app.include_router(tech_router, prefix="/tech", tags=["Техническое"])
 
 
 @app.exception_handler(MissingTokenError)

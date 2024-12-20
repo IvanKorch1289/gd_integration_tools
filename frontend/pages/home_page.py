@@ -6,17 +6,37 @@ __all__ = ("HomePage",)
 
 
 class HomePage:
+    """Класс для отображения домашней страницы приложения."""
+
     def __init__(self, page: Page):
+        """
+        Конструктор класса HomePage.
+
+        :param page: Объект страницы Flet.
+        """
         self.page = page
 
-    def build(self):
-        self.content = Column(
+    @property
+    def content(self):
+        """
+        Свойство для создания содержимого домашней страницы.
+
+        :return: Объект Column с содержимым домашней страницы.
+        """
+        return Column(
             controls=[
                 Text(value="Welcome to the home page!"),
-                ElevatedButton("Logout", on_click=lambda _: self.logout()),
+                ElevatedButton(text="Logout", on_click=self.logout),
             ]
         )
-        return self.content
 
-    def logout(self):
-        self.page.go("/")
+    def logout(self, _):
+        """
+        Метод для выполнения выхода из системы.
+
+        :param _: Аргумент события, который не используется.
+        """
+        try:
+            self.page.go("/")
+        except Exception as e:
+            print(f"Error during logout: {e}")

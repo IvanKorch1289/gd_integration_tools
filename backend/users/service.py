@@ -24,6 +24,6 @@ class UserService(BaseService):
     async def login(self, filter: Filter):
         data = filter.model_dump()
         user = await self.repo.get_by_username(data=data)
-        if user.verify_password(password=data["password"]):
+        if user and user.verify_password(password=data["password"]):
             return True
         return False

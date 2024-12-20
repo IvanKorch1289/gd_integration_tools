@@ -33,16 +33,18 @@ class OrderService(BaseService):
             try:
                 response = await self.request_service.add_request(data=data)
                 if not response.get("Result"):
-                    update_data = {}
-                    update_data["is_active"] = False
-                    update_data["errors"] = response.get("Message")
-                    await self.repo.update(key="id", value=order.id, data=update_data)
-
-                    return "Ошибка отправки запроса в СКБ-Техно"
+                    update_data = {
+                        "is_active": False,
+                        "is_send_request_to_skb": True,
+                        "errors": response.get("Message"),
+                    }
+                else:
+                    update_data = {"is_active": True, "is_send_request_to_skb": True}
+                await self.repo.update(key="id", value=order.id, data=update_data)
+                return response
             except Exception as ex:
                 traceback.print_exc(file=sys.stdout)
                 return ex
-            return response
         return order
 
     async def get_order_result(self, order_id: int, response_type: ResponseTypeChoices):
@@ -51,7 +53,7 @@ class OrderService(BaseService):
             result = await self.request_service.get_response_by_order(
                 order_uuid=instance.object_uuid, response_type=response_type.value
             )
-            if response_type.value == "JSON" and result["Result"]:
+            if response_type.value == "JSON" and result.get("Result"):
                 update_data = {
                     "is_active": False,
                     "errors": result.get("Message"),
@@ -68,6 +70,6 @@ class OrderService(BaseService):
                 )
                 return file
             return result
-        except Exception:
+        except Exception as exc:
             traceback.print_exc(file=sys.stdout)
-            return "Ошибка"
+            return {"error": str(exc)}

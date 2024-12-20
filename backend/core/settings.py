@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Union
 
@@ -6,9 +7,11 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
-ROOT_PATH = Path(__file__).parent.parent
-
 load_dotenv()
+
+
+ROOT_PATH = Path(__file__).parent.parent
+BASE_URL = os.getenv("BASE_URL")
 
 
 class APISettings(BaseSettings):
@@ -48,6 +51,9 @@ class FileStorageSettings(BaseSettings):
 
     fs_bucket: str = Field(default="my-bucket", env="FS_BUCKET")
     fs_endpoint: str = Field(default="http://127.0.0.1:9090", env="FS_URL")
+    fs_interfase_url: str = Field(
+        default="http://127.0.0.1:9091", env="FS_INTERFACE_URL"
+    )
     fs_access_key: str = Field(default="minioadmin", env="FS_ACCESS_KEY")
     fs_secret_key: str = Field(default="minioadmin", env="FS_SECRET_KEY")
 
@@ -55,12 +61,14 @@ class FileStorageSettings(BaseSettings):
 class LogStorageSettings(BaseSettings):
     """Класс настроек соединения с хранилищем логов."""
 
-    log_host: str = Field(default="localhost", env="LOG_HOST")
+    log_host: str = Field(default="http://127.0.0.1", env="LOG_HOST")
     log_port: int = Field(default=9000, env="LOG_PORT")
     log_udp_port: int = Field(default=12201, env="LOG_UDP_PORT")
 
 
 class RedisSettings(BaseSettings):
+    """Класс настроек соединения с Redis."""
+
     redis_host: str = Field(default="localhost", env="REDIS_HOST")
     redis_port: int = Field(default=6379, env="REDIS_PORT")
     redis_db_cashe: int = 0
@@ -71,11 +79,19 @@ class RedisSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
+    """Класс настроек аутентификации."""
+
     auth_secret_key: str = Field(default="your_secret_key", env="AUTH_SECRET_KEY")
     auth_algorithm: str = Field(default="HS256", env="AUTH_ALGORITHM")
     auth_token_name: str = Field(default="your_token_name", env="AUTH_TOKEN_NAME")
     auth_token_lifetime_seconds: int = Field(
         default=3600, env="AUTH_TOKEN_LIFETIME_SECONDS"
+    )
+
+
+class BackTasksSettings(BaseSettings):
+    bts_interface_url: str = Field(
+        default="http://127.0.0.1:9091", env="BTS_INTERFACE_URL"
     )
 
 
@@ -92,6 +108,7 @@ class Settings(BaseSettings):
     storage_settings: FileStorageSettings = FileStorageSettings()
     redis_settings: RedisSettings = RedisSettings()
     auth_settings: AuthSettings = AuthSettings()
+    bts_settings: BackTasksSettings = BackTasksSettings()
 
 
 settings = Settings(

@@ -16,6 +16,7 @@ class OrderFilter(Filter):
     is_active: bool | None = None
     is_send_to_gd: bool | None = None
     object_uuid__like: UUID | None = None
+    is_send_request_to_skb: bool | None = None
 
     class Constants(Filter.Constants):
         model = Order

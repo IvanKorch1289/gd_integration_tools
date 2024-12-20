@@ -27,6 +27,10 @@ class Order(BaseModel):
         Boolean,
         server_default="f",
     )
+    is_send_request_to_skb: Mapped[bool] = mapped_column(
+        Boolean,
+        server_default="f",
+    )
     errors: Mapped[str] = mapped_column(Text, nullable=True)
     object_uuid: Mapped[UUID] = mapped_column(
         UUID,

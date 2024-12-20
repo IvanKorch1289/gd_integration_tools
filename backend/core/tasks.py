@@ -8,37 +8,56 @@ from backend.orders.filters import OrderFilter
 from backend.orders.service import OrderService
 
 
-redis_url = f"{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}"
+redis_url = f"redis://{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}/{settings.redis_settings.redis_db_queue}"
 
-
-app = Celery(
-    "tasks", broker=f"redis://{redis_url}/{settings.redis_settings.redis_db_queue}"
+celery_app = Celery("tasks", broker=redis_url, backend=redis_url)
+celery_app.conf.update(
+    task_serializer="json",
+    result_serializer="json",
+    accept_content=["json"],
+    enable_utc=True,
+    timezone="Europe/Moscow",
+    broker_connection_retry_on_startup=True,
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    beat_schedule={
+        "every-thirty-minutes-task": {
+            "task": "send_responces_to_skb_by_orders",
+            "schedule": crontab(minute="*/30", hour="6-21"),
+        },
+    },
 )
 
-
-CELERY_BEAT_SCHEDULE = {
-    "add-every-30-minutes": {
-        "task": "tasks.add",
-        "schedule": crontab(minute="*/30"),
-        "args": (16, 16),
-    },
-}
+order_service = OrderService()
 
 
-service = OrderService()
-
-
-def sync_get_order_result(order_id: int, response_type: str):
+def sync_get_order_result(
+    order_id: int, response_type: str, order_service: OrderService = order_service
+):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(service.get_order_result(order_id, response_type))
+    result = loop.run_until_complete(
+        order_service.get_order_result(order_id, response_type)
+    )
     return result
 
 
-@app.task
-def send_responces_to_skb_by_orders():
-    filter = OrderFilter.model_validate({"is_active": True})
-    orders = service.get_by_params(filter=filter)
+@celery_app.task(name="send_responces_to_skb_by_orders")
+def send_responces_to_skb_by_orders(order_service: OrderService = order_service):
+    filter = OrderFilter.model_validate(
+        {"is_active": True, "is_send_request_to_skb": True}
+    )
+    orders = order_service.get_by_params(filter=filter)
     for order in orders:
-        sync_get_order_result(order_id=order.id, response_type=ResponseTypeChoices.pdf)
-        sync_get_order_result(order_id=order.id, response_type=ResponseTypeChoices.json)
+        sync_get_order_result(
+            order_service=order_service,
+            order_id=order.id,
+            response_type=ResponseTypeChoices.pdf,
+        )
+        sync_get_order_result(
+            order_service=order_service,
+            order_id=order.id,
+            response_type=ResponseTypeChoices.json,
+        )
+        if order.response_date and order.files:
+            order_service.update(key="id", value=order.id, data={"is_active": False})
