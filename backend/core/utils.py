@@ -60,7 +60,11 @@ class Utilities:
             async with redis.connection() as r:
                 if isinstance(data, list):
                     encoded_data = [
-                        item.model_dump_json() if not isinstance(item, str) else item
+                        (
+                            item.model_dump_json()
+                            if not isinstance(item, str) and not isinstance(item, dict)
+                            else item
+                        )
                         for item in data
                     ]
                 elif not isinstance(data, dict):

@@ -4,7 +4,7 @@ from frontend.pages import HomePage, LoginPage
 
 
 async def main(page: ft.Page):
-    page.title = "Одностраничное приложение"
+    page.title = "Расширенные инструменты GreenData"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.padding = 20
@@ -33,17 +33,28 @@ async def main(page: ft.Page):
     page.theme = dark_theme
     page.update()
 
-    async def on_register_success(e):
-        await login_form.display(e)
+    # Начальное состояние - страница логина
+    state = "login"
 
-    main_app = HomePage(page)
+    async def switch_to_home_page():
+        nonlocal state
+        state = "home"
+        page.clean()
+        home_page = HomePage(page, on_logout_callback=on_logout)
+        await home_page.display()
 
-    async def on_login_success():
-        await main_app.display()
+    async def switch_to_login_page():
+        nonlocal state
+        state = "login"
+        page.clean()
+        login_page = LoginPage(page, on_success=switch_to_home_page)
+        await login_page.display(e=None)
 
-    login_form = LoginPage(page, on_success=on_login_success)
+    async def on_logout():
+        await switch_to_login_page()
 
-    await login_form.display(e=None)
+    # Начальная отрисовка страницы логина
+    await switch_to_login_page()
 
 
 ft.app(target=main)

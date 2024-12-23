@@ -65,6 +65,10 @@ class LogStorageSettings(BaseSettings):
     log_port: int = Field(default=9000, env="LOG_PORT")
     log_udp_port: int = Field(default=12201, env="LOG_UDP_PORT")
 
+    @property
+    def log_interfaсe_url(self):
+        return f"{self.log_host}:{str(self.log_port)}/"
+
 
 class RedisSettings(BaseSettings):
     """Класс настроек соединения с Redis."""
@@ -91,7 +95,7 @@ class AuthSettings(BaseSettings):
 
 class BackTasksSettings(BaseSettings):
     bts_interface_url: str = Field(
-        default="http://127.0.0.1:9091", env="BTS_INTERFACE_URL"
+        default="http://127.0.0.1:8888", env="BTS_INTERFACE_URL"
     )
 
 
@@ -101,6 +105,7 @@ class Settings(BaseSettings):
     root_dir: Path
     src_dir: Path
     jwt_secret: str = Field(default="SECRET", env="JWT_SECRET")
+    base_url: str = BASE_URL
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_settings: APISettings = APISettings()

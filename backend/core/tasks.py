@@ -31,6 +31,13 @@ celery_app.conf.update(
 order_service = OrderService()
 
 
+async def get_orders_async(order_service: OrderService = order_service):
+    filter = OrderFilter.model_validate(
+        {"is_active": True, "is_send_request_to_skb": True}
+    )
+    return await order_service.get_by_params(filter=filter)
+
+
 def sync_get_order_result(
     order_id: int, response_type: str, order_service: OrderService = order_service
 ):
@@ -42,12 +49,16 @@ def sync_get_order_result(
     return result
 
 
+def sync_get_orders(order_service: OrderService = order_service):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    orders = loop.run_until_complete(get_orders_async(order_service))
+    return orders
+
+
 @celery_app.task(name="send_responces_to_skb_by_orders")
-def send_responces_to_skb_by_orders(order_service: OrderService = order_service):
-    filter = OrderFilter.model_validate(
-        {"is_active": True, "is_send_request_to_skb": True}
-    )
-    orders = order_service.get_by_params(filter=filter)
+def send_responses_to_skb_by_orders(order_service: OrderService = order_service):
+    orders = sync_get_orders(order_service)
     for order in orders:
         sync_get_order_result(
             order_service=order_service,

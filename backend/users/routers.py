@@ -1,6 +1,13 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import RedirectResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
@@ -97,11 +104,12 @@ class AuthCBV:
         if check_user:
             token = security.create_access_token(
                 uid="kk2418",
-                expires_delta=timedelta(
-                    minutes=settings.auth_settings.auth_token_lifetime_seconds * 60
-                ),
             )
-            response.set_cookie(settings.auth_settings.auth_token_name, token)
+            response.set_cookie(
+                settings.auth_settings.auth_token_name,
+                token,
+                max_age=settings.auth_settings.auth_token_lifetime_seconds,
+            )
             return {"access_token": token}
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 

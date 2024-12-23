@@ -1,6 +1,6 @@
 import flet as ft
 
-from frontend.utils import send_login_request, show_snack_bar
+from frontend.utils import flet_utils
 
 
 __all__ = ("LoginPage",)
@@ -24,29 +24,64 @@ class LoginPage:
             value="string",
         )
 
+    @property
+    def content(self):
+        """
+        Свойство для создания содержимого страницы аутентификации.
+
+        :return: Объект Column с содержимым домашней страницы.
+        """
+        return ft.Column(
+            [
+                ft.Text("Вход", size=24, weight=ft.FontWeight.BOLD, color="#333"),
+                self.username_field,
+                self.password_field,
+                ft.ElevatedButton(
+                    text="Войти",
+                    width=300,
+                    bgcolor="#6200EE",
+                    color="white",
+                    on_click=self.on_login,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        )
+
     async def on_login(self, e):
         if not self.username_field.value or not self.password_field.value:
-            show_snack_bar(self.page, "Заполните все поля для входа")
+            flet_utils.show_snack_bar(
+                page=self.page,
+                message="Заполните все поля для входа",
+                color="#FF5722",  # Красный цвет
+            )
             return
 
         await self.process_login(self.username_field.value, self.password_field.value)
 
     async def process_login(self, username, password):
         try:
-            response = await send_login_request(username, password)
+            response = await flet_utils.send_login_request(username, password)
             if response.get("access_token"):
                 self.page.session.set("access_token", response.get("access_token"))
-                show_snack_bar(
-                    self.page, response.get("message", "Вход успешно выполнен!")
+                flet_utils.show_snack_bar(
+                    page=self.page,
+                    message=response.get("message", "Вход успешно выполнен!"),
+                    color="#4CAF50",  # Зеленый цвет
                 )
                 self.clear_fields()
                 await self.on_success()
             else:
-                show_snack_bar(
-                    self.page, response.get("message", "Ошибка авторизации.")
+                flet_utils.show_snack_bar(
+                    page=self.page,
+                    message=response.get("message", "Ошибка авторизации."),
+                    color="#FF5722",  # Красный цвет
                 )
         except Exception as ex:
-            show_snack_bar(self.page, str(ex))
+            flet_utils.show_snack_bar(
+                page=self.page, message=str(ex), color="#FF5722"  # Красный цвет
+            )
 
     def clear_fields(self):
         self.username_field.value = ""
@@ -55,22 +90,4 @@ class LoginPage:
 
     async def display(self, e):
         self.page.clean()
-        self.page.add(
-            ft.Column(
-                [
-                    ft.Text("Вход", size=24, weight=ft.FontWeight.BOLD, color="#333"),
-                    self.username_field,
-                    self.password_field,
-                    ft.ElevatedButton(
-                        text="Войти",
-                        width=300,
-                        bgcolor="#6200EE",
-                        color="white",
-                        on_click=self.on_login,  # Назначаем асинхронный метод напрямую
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=10,
-            )
-        )
+        self.page.add(self.content)
