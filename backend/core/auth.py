@@ -1,8 +1,7 @@
 from datetime import timedelta
 
 from authx import AuthX, AuthXConfig
-
-from backend.core.settings import settings
+from settings import settings
 
 
 config = AuthXConfig(

@@ -3,10 +3,12 @@ import traceback
 from abc import ABC, abstractmethod
 from typing import Any, AsyncGenerator, Coroutine, Generic, List, Type, TypeVar
 
-import asyncio
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import (
+    Insert,
     Result,
+    Select,
+    Update,
     asc,
     delete,
     desc,
@@ -70,21 +72,38 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     """Базовый класс взаимодействия с БД."""
 
     model: Type[ConcreteTable] = None
+    load_joinded_models: bool = False
 
-    @staticmethod
     async def _get_loaded_object(
-        session: AsyncSession, model_class: type, object_id: int
-    ) -> ConcreteTable:
-        mapper = inspect(model_class)
-        relationships = [rel.key for rel in mapper.relationships]
-        options = [joinedload(getattr(model_class, key)) for key in relationships]
+        self, session: AsyncSession, query: Select, is_return_list: bool = False
+    ) -> ConcreteTable | None:
+        result: Result = await session.execute(query)
+        if result and self.load_joinded_models:
+            mapper = inspect(self.model)
+            relationships = [rel.key for rel in mapper.relationships]
+            options = [joinedload(getattr(self.model, key)) for key in relationships]
 
-        query = (
-            select(model_class).filter(model_class.id == object_id).options(*options)
+            query_with_options = query.options(*options)
+            result = await session.execute(query_with_options)
+
+        return (
+            result.unique().scalars()
+            if is_return_list
+            else result.unique().scalar_one_or_none()
         )
-        loaded_result = await session.execute(query)
-        unique_result = loaded_result.unique().scalar_one_or_none()
-        return unique_result
+
+    async def _execute_stmt(self, session: AsyncSession, stmt: Insert | Update):
+        await session.flush()
+
+        result = await session.execute(stmt)
+
+        if not result:
+            raise ValueError("Failed to create/update record")
+
+        primary_key = result.unique().scalar_one_or_none().id
+
+        query = select(self.model).where(self.model.id == primary_key)
+        return await self._get_loaded_object(session, query)
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get(
@@ -94,27 +113,14 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         value: Any,
     ) -> ConcreteTable:
         query = select(self.model).where(getattr(self.model, key) == value)
-        result: Result = await session.execute(query)
-        obj = result.unique().scalar_one_or_none()
-
-        if obj:
-            return await self._get_loaded_object(session, self.model, obj.id)
-
-        return None
+        return await self._get_loaded_object(session, query)
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get_by_params(
         self, session: AsyncSession, filter: Filter
     ) -> AsyncGenerator[ConcreteTable, None]:
         query = filter.filter(select(self.model))
-        result: Result = await session.execute(query)
-
-        tasks = [
-            self._get_loaded_object(session, self.model, obj.id)
-            for obj in result.unique().scalars()
-        ]
-        results = await asyncio.gather(*tasks)
-        return results
+        return await self._get_loaded_object(session, query, is_return_list=True)
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def count(self, session: AsyncSession) -> int:
@@ -126,42 +132,20 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def first(self, session: AsyncSession, by: str = "id") -> ConcreteTable:
-        result: Result = await session.execute(
-            select(self.model).order_by(asc(by)).limit(1)
-        )
-        first_object = result.unique().scalar_one_or_none()
-
-        if first_object:
-            return await self._get_loaded_object(session, self.model, first_object.id)
-
-        return None
+        query = select(self.model).order_by(asc(by)).limit(1)
+        return await self._get_loaded_object(session, query)
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def last(self, session: AsyncSession, by: str = "id") -> ConcreteTable:
-        result: Result = await session.execute(
-            select(self.model).order_by(desc(by)).limit(1)
-        )
-        last_object = result.unique().scalar_one_or_none()
-
-        if last_object:
-            return await self._get_loaded_object(session, self.model, last_object.id)
-
-        return None
+        query = select(self.model).order_by(desc(by)).limit(1)
+        return await self._get_loaded_object(session, query)
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
         try:
             unsecret_data = await self.model.get_value_from_secret_str(data)
-            result: Result = await session.execute(
-                insert(self.model).values(**unsecret_data).returning(self.model)
-            )
-            await session.flush()
-            created_object = result.unique().scalar_one_or_none()
-
-            if not created_object:
-                raise ValueError("Failed to create record")
-
-            return await self._get_loaded_object(session, self.model, created_object.id)
+            stmt = insert(self.model).values(**unsecret_data).returning(self.model)
+            return await self._execute_stmt(session, stmt)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
@@ -172,19 +156,13 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ) -> ConcreteTable:
         try:
             unsecret_data = await self.model.get_value_from_secret_str(data)
-            result: Result = await session.execute(
+            stmt = (
                 update(self.model)
                 .where(getattr(self.model, key) == value)
                 .values(**unsecret_data)
                 .returning(self.model)
             )
-            await session.flush()
-            updated_object = result.unique().scalar_one_or_none()
-
-            if not updated_object:
-                raise ValueError(f"Failed to update record with {key}={value}")
-
-            return await self._get_loaded_object(session, self.model, updated_object.id)
+            return await self._execute_stmt(session, stmt)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
@@ -193,13 +171,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     async def all(
         self, session: AsyncSession
     ) -> Coroutine[Any, Any, List[ConcreteTable]]:
-        result: Result = await session.execute(select(self.model))
-        tasks = [
-            self._get_loaded_object(session, self.model, obj.id)
-            for obj in result.unique().scalars()
-        ]
-        results = await asyncio.gather(*tasks)
-        return results
+        query = select(self.model)
+        return await self._get_loaded_object(session, query, is_return_list=True)
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def delete(self, session: AsyncSession, key: int, value: Any) -> None:

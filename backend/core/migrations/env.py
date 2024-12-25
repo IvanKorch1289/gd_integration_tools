@@ -2,12 +2,12 @@ from logging.config import fileConfig
 
 import asyncio
 from alembic import context
+from settings import settings
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.base.models import BaseModel
-from backend.core.settings import settings
 from backend.files.models import File, OrderFile
 from backend.order_kinds.models import OrderKind
 from backend.orders.models import Order

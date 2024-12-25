@@ -18,6 +18,7 @@ class FileRepository(SQLAlchemyRepository):
     model = File
     link_model = OrderFile
     response_schema = FileSchemaOut
+    load_joinded_models = False
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add_link(

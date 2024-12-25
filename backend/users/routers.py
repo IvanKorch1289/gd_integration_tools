@@ -1,19 +1,10 @@
-from datetime import timedelta
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Request,
-    Response,
-    status,
-)
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
+from settings import settings
 
 from backend.core.auth import security
-from backend.core.settings import settings
 from backend.users.filters import UserFilter, UserLogin
 from backend.users.schemas import UserSchemaIn
 from backend.users.service import UserService

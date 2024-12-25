@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "gd-advanced-tools"
+name = "gd_advanced_tools"
 version = "0.1.0"
 description = ""
 authors = ["crazyivan1289 <crazyivan1289@gmail.com>"]
@@ -19,7 +19,6 @@ greenlet = "^3.1.1"
 python-dotenv = "^1.0.1"
 bump-pydantic = "^0.8.0"
 typing-inspect = "^0.9.0"
-celery = "^5.4.0"
 flower = "^2.0.1"
 fastapi-filter = "^2.0.0"
 aioboto3 = "^13.2.0"
@@ -36,9 +35,14 @@ passlib = "^1.7.4"
 setuptools = "^75.6.0"
 aioredis = "1.3.1"
 authx = "^1.4.0"
-flet = "^0.25.2"
 aiohttp = "^3.11.10"
 redis = "^5.2.1"
+poetry-dotenv-plugin = "^0.2.0"
+websockets = "^14.1"
+vine = "^5.1.0"
+celery = "^5.4.0"
+eventlet = "^0.38.2"
+flet = "^0.25.2"
 
 
 [build-system]

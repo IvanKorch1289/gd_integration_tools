@@ -3,8 +3,7 @@ from typing import AsyncIterator
 
 import asyncio
 from aioredis import create_redis_pool
-
-from backend.core.settings import settings
+from settings import settings
 
 
 class RedisClient:

@@ -1,8 +1,7 @@
 import logging
 
 import graypy
-
-from backend.core.settings import settings as s
+from settings import settings as s
 
 
 handler_api = graypy.GELFUDPHandler(

@@ -4,7 +4,6 @@ import traceback
 from backend.api_skb.enums import ResponseTypeChoices
 from backend.api_skb.service import APISKBService
 from backend.base.service import BaseService
-from backend.core.settings import settings
 from backend.files.repository import FileRepository
 from backend.orders.repository import OrderRepository
 from backend.orders.schemas import OrderSchemaOut, PublicSchema
@@ -21,31 +20,16 @@ class OrderService(BaseService):
     response_schema = OrderSchemaOut
 
     async def add(self, data: dict) -> PublicSchema | None:
-        order = await super().add(data=data)
-        if order:
-            data = {
-                "Id": order.object_uuid,
-                "OrderId": order.object_uuid,
-                "Number": order.pledge_cadastral_number,
-                "Priority": settings.api_settings.skb_request_priority_default,
-                "RequestType": order.order_kind.skb_uuid,
-            }
-            try:
-                response = await self.request_service.add_request(data=data)
-                if not response.get("Result"):
-                    update_data = {
-                        "is_active": False,
-                        "is_send_request_to_skb": True,
-                        "errors": response.get("Message"),
-                    }
-                else:
-                    update_data = {"is_active": True, "is_send_request_to_skb": True}
-                await self.repo.update(key="id", value=order.id, data=update_data)
-                return response
-            except Exception as ex:
-                traceback.print_exc(file=sys.stdout)
-                return ex
-        return order
+        from celery_app.tasks.send_requests_by_one import send_requests_by_one
+
+        try:
+            order = await super().add(data=data)
+            if order:
+                send_requests_by_one.delay(order_id=order.id)
+                return order
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
 
     async def get_order_result(self, order_id: int, response_type: ResponseTypeChoices):
         try:
@@ -73,3 +57,21 @@ class OrderService(BaseService):
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             return {"error": str(exc)}
+
+    async def get_order_file_and_json(self, order_id: int):
+        filter = {"is_active": True, "is_send_request_to_skb": True, "id": order_id}
+
+        order = self.get_by_params(filter=filter)
+
+        if order:
+            pdf_response = await self.get_order_result(
+                order_id=order_id,
+                response_type=ResponseTypeChoices.pdf,
+            )
+            json_response = await self.get_order_result(
+                order_id=order_id,
+                response_type=ResponseTypeChoices.json,
+            )
+            if pdf_response and json_response:
+                await self.update(key="id", value=order_id, data={"is_active": False})
+        return None

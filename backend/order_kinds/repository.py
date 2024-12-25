@@ -9,3 +9,4 @@ __all__ = ("OrderKindRepository",)
 class OrderKindRepository(SQLAlchemyRepository):
     model = OrderKind
     response_schema = OrderKindSchemaOut
+    load_joinded_models = False

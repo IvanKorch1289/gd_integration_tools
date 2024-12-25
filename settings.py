@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 load_dotenv()
 
 
-ROOT_PATH = Path(__file__).parent.parent
+ROOT_PATH = Path(__file__).parent.parent.parent
 BASE_URL = os.getenv("BASE_URL")
 
 
@@ -52,7 +52,7 @@ class FileStorageSettings(BaseSettings):
     fs_bucket: str = Field(default="my-bucket", env="FS_BUCKET")
     fs_endpoint: str = Field(default="http://127.0.0.1:9090", env="FS_URL")
     fs_interfase_url: str = Field(
-        default="http://127.0.0.1:9091", env="FS_INTERFACE_URL"
+        default="http://127.0.0.1:4000", env="FS_INTERFACE_URL"
     )
     fs_access_key: str = Field(default="minioadmin", env="FS_ACCESS_KEY")
     fs_secret_key: str = Field(default="minioadmin", env="FS_SECRET_KEY")
@@ -64,10 +64,9 @@ class LogStorageSettings(BaseSettings):
     log_host: str = Field(default="http://127.0.0.1", env="LOG_HOST")
     log_port: int = Field(default=9000, env="LOG_PORT")
     log_udp_port: int = Field(default=12201, env="LOG_UDP_PORT")
-
-    @property
-    def log_interfaсe_url(self):
-        return f"{self.log_host}:{str(self.log_port)}/"
+    log_interfaсe_url: str = Field(
+        default="http://127.0.0.1:9000", env="LOG_INTERFACE_URL"
+    )
 
 
 class RedisSettings(BaseSettings):
@@ -103,8 +102,6 @@ class Settings(BaseSettings):
     debug: bool = True
 
     root_dir: Path
-    src_dir: Path
-    jwt_secret: str = Field(default="SECRET", env="JWT_SECRET")
     base_url: str = BASE_URL
 
     database_settings: DatabaseSettings = DatabaseSettings()
@@ -116,7 +113,4 @@ class Settings(BaseSettings):
     bts_settings: BackTasksSettings = BackTasksSettings()
 
 
-settings = Settings(
-    root_dir=ROOT_PATH,
-    src_dir=ROOT_PATH / "gd_advanced_tools",
-)
+settings = Settings(root_dir=ROOT_PATH)

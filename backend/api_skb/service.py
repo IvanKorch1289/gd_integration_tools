@@ -7,8 +7,8 @@ from uuid import UUID
 import asyncio
 from aiohttp import ClientSession
 from fastapi import status
+from settings import settings
 
-from backend.core.settings import settings
 from backend.core.storage import s3_bucket_service_factory
 from backend.order_kinds.service import OrderKindService
 

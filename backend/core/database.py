@@ -3,6 +3,7 @@ from functools import wraps
 from typing import AsyncGenerator, Callable, List
 
 from fastapi import Depends
+from settings import settings
 from sqlalchemy import text
 from sqlalchemy.event import listen
 from sqlalchemy.ext.asyncio import (
@@ -13,7 +14,6 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from backend.core.logging_config import db_logger
-from backend.core.settings import settings
 
 
 class DatabaseInitializer:

@@ -9,9 +9,9 @@ from typing import Any, AsyncGenerator, Union
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
 from aiohttp import ClientError
+from settings import settings
 
 from backend.core.logging_config import fs_logger
-from backend.core.settings import settings
 
 
 class LogField:

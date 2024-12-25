@@ -53,23 +53,40 @@ class Utilities:
                         )
             return None
 
-        async def cache_data(key: str, data: Union[List[BaseModel], BaseModel]) -> None:
-            """Функция для сохранения данных в кеш."""
-            if not data:
-                return None
+        async def cache_data(
+            key: str,
+            data: Union[str, dict, List[BaseModel], BaseModel],
+            *,
+            expire: int = 3600,
+        ) -> None:
+            """
+            Функция для сохранения данных в кеш.
+            :param key: Ключ для кеша.
+            :param data: Данные для сохранения в кеш.
+            :param expire: Время жизни кеша в секундах.
+            """
             async with redis.connection() as r:
-                if isinstance(data, list):
-                    encoded_data = [
-                        (
-                            item.model_dump_json()
-                            if not isinstance(item, str) and not isinstance(item, dict)
-                            else item
-                        )
-                        for item in data
-                    ]
-                elif not isinstance(data, dict):
-                    encoded_data = data.model_dump_json()
-                await r.set(key, json.dumps(encoded_data), expire=expire)
+                if isinstance(data, str):
+                    encoded_data = data.encode("utf-8")
+                elif isinstance(data, dict):
+                    encoded_data = json.dumps(data).encode("utf-8")
+                elif isinstance(data, BaseModel):
+                    encoded_data = data.model_dump_json().encode("utf-8")
+                elif isinstance(data, list):
+                    encoded_data = json.dumps(
+                        [
+                            (
+                                item.model_dump_json()
+                                if isinstance(item, BaseModel)
+                                else item
+                            )
+                            for item in data
+                        ]
+                    ).encode("utf-8")
+                else:
+                    raise TypeError(f"Неподдерживаемый тип данных: {type(data)}")
+
+                await r.set(key, encoded_data, expire=expire)
 
         def decorator(
             func: Callable[[Any], Awaitable[Union[List[BaseModel], BaseModel]]]

@@ -1,60 +1,83 @@
 import flet as ft
 
-from frontend.pages import HomePage, LoginPage
+
+def main(page: ft.Page):
+    # Получаем сессию
+    session = page.session
+
+    # Проверяем наличие токена в cookies
+    token = session.get_cookie("auth_token")
+
+    if not token or is_expired(token):
+        login_view(page)
+    else:
+        authorized_view(page)
 
 
-async def main(page: ft.Page):
-    page.title = "Расширенные инструменты GreenData"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.padding = 20
+def login_view(page: ft.Page):
+    def on_login_click(e):
+        username = txt_username.value
+        password = txt_password.value
 
-    dark_theme = ft.Theme(
-        color_scheme=ft.ColorScheme(
-            primary=ft.colors.INDIGO_400,
-            on_primary=ft.colors.WHITE,
-            primary_container=ft.colors.INDIGO_700,
-            on_primary_container=ft.colors.INDIGO_50,
-            secondary=ft.colors.TEAL_300,
-            on_secondary=ft.colors.BLACK,
-            background=ft.colors.GREY_900,
-            on_background=ft.colors.GREY_100,
-            surface=ft.colors.GREY_900,
-            on_surface=ft.colors.GREY_100,
-            error=ft.colors.RED_400,
-            on_error=ft.colors.WHITE,
-            surface_tint=ft.colors.INDIGO_400,
-            shadow=ft.colors.BLACK54,
-        ),
-        font_family="Inter",
-        use_material3=True,
+        # Здесь должна быть логика проверки логина/пароля и получения токена
+        token = get_auth_token(username, password)
+
+        if token:
+            # Сохранение токена в cookies
+            session = page.session
+            session.set_cookie("auth_token", token, expires_days=7)
+
+            # Переход к авторизированному виду
+            authorized_view(page)
+        else:
+            error_text.visible = True
+
+    txt_username = ft.TextField(label="Логин", width=200)
+    txt_password = ft.TextField(label="Пароль", password=True, width=200)
+    btn_login = ft.ElevatedButton("Войти", on_click=on_login_click)
+    error_text = ft.Text(
+        value="Неверный логин или пароль!", visible=False, color="error"
     )
 
-    page.theme = dark_theme
-    page.update()
-
-    # Начальное состояние - страница логина
-    state = "login"
-
-    async def switch_to_home_page():
-        nonlocal state
-        state = "home"
-        page.clean()
-        home_page = HomePage(page, on_logout_callback=on_logout)
-        await home_page.display()
-
-    async def switch_to_login_page():
-        nonlocal state
-        state = "login"
-        page.clean()
-        login_page = LoginPage(page, on_success=switch_to_home_page)
-        await login_page.display(e=None)
-
-    async def on_logout():
-        await switch_to_login_page()
-
-    # Начальная отрисовка страницы логина
-    await switch_to_login_page()
+    page.add(ft.Column([txt_username, txt_password, btn_login, error_text]))
 
 
-ft.app(target=main)
+def authorized_view(page: ft.Page):
+    def logout():
+        # Удаление токена из cookies
+        session = page.session
+        session.delete_cookie("auth_token")
+
+        # Возвращаемся к форме входа
+        login_view(page)
+
+    page.clean()
+    page.add(
+        ft.Row(
+            [
+                ft.ElevatedButton("Действие 1"),
+                ft.ElevatedButton("Действие 2"),
+                ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: logout()),
+            ]
+        )
+    )
+
+
+# Функция для проверки срока действия токена
+
+
+def is_expired(token):
+    # Реализуйте свою логику проверки срока действия токена
+    return False
+
+
+# Функция для получения токена авторизации
+
+
+def get_auth_token(username, password):
+    # Реализуйте свою логику аутентификации и получения токена
+    return "1234567890abcdef"
+
+
+if __name__ == "__main__":
+    ft.app(target=main)

@@ -18,40 +18,36 @@ class BaseService(Generic[ConcreteRepo]):
     repo: Type[ConcreteRepo] = None
     response_schema: Type[ConcreteResponseSchema] = None
 
+    async def _transfer(self, instance):
+        if instance and isinstance(instance, self.repo.model):
+            return await instance.transfer_model_to_schema(schema=self.response_schema)
+        return instance
+
+    async def _get_and_transfer(self, key: str, value: int):
+        instance = await self.repo.get(key=key, value=value)
+        return await self._transfer(instance)
+
     async def add(self, data: dict) -> PublicSchema | None:
         try:
             instance = await self.repo.add(data=data)
-
-            if isinstance(instance, self.repo.model):
-                return await instance.transfer_model_to_schema(
-                    schema=self.response_schema
-                )
-            elif instance is None:
-                return None
-            else:
-                return instance
-        except Exception as ex:
+            return await self._transfer(instance)
+        except Exception:
             traceback.print_exc(file=sys.stdout)
-            return ex
+            return None
 
     async def update(self, key: str, value: int, data: dict) -> PublicSchema | None:
         try:
             instance = await self.repo.update(key=key, value=value, data=data)
-            return await (
-                instance.transfer_model_to_schema(schema=self.response_schema)
-                if instance
-                else None
-            )
-        except Exception as ex:
+            return await self._transfer(instance)
+        except Exception:
             traceback.print_exc(file=sys.stdout)
-            return ex
+            return None
 
     @utilities.caching(schema=response_schema, expire=300)
     async def all(self) -> List[PublicSchema] | None:
         try:
             list_instances = [
-                await instance.transfer_model_to_schema(schema=self.response_schema)
-                for instance in await self.repo.all()
+                await self._transfer(instance) for instance in await self.repo.all()
             ]
             return list_instances
         except Exception as ex:
@@ -61,12 +57,7 @@ class BaseService(Generic[ConcreteRepo]):
     @utilities.caching(schema=response_schema, expire=300)
     async def get(self, key: str, value: int) -> PublicSchema | None:
         try:
-            instance = await self.repo.get(key=key, value=value)
-            return await (
-                instance.transfer_model_to_schema(schema=self.response_schema)
-                if instance
-                else None
-            )
+            return await self._get_and_transfer(key=key, value=value)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
@@ -75,7 +66,7 @@ class BaseService(Generic[ConcreteRepo]):
     async def get_by_params(self, filter: Filter) -> List[PublicSchema] | None:
         try:
             list_instances = [
-                await instance.transfer_model_to_schema(schema=self.response_schema)
+                await self._transfer(instance)
                 for instance in await self.repo.get_by_params(filter=filter)
             ]
             return list_instances
@@ -87,12 +78,9 @@ class BaseService(Generic[ConcreteRepo]):
         self, key: str, value: int, data: dict = None
     ) -> PublicSchema | None:
         try:
-            instance = await self.repo.get(key=key, value=value)
-            return await (
-                instance.transfer_model_to_schema(schema=self.response_schema)
-                if instance
-                else self.repo.add(data=data)
-            )
+            instance = await self._get_and_transfer(key=key, value=value)
+            if not instance:
+                await self.repo.add(data=data)
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex

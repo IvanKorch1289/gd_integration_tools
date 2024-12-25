@@ -38,7 +38,7 @@ class Order(BaseModel):
         server_default=func.gen_random_uuid(),
     )
     response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    order_kind = relationship("OrderKind", back_populates="orders")
+    order_kind = relationship("OrderKind", back_populates="orders", lazy="joined")
     files = relationship(
         "File",
         secondary=lambda: OrderFile.__table__,

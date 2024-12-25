@@ -18,6 +18,7 @@ __all__ = ("OrderRepository",)
 class OrderRepository(SQLAlchemyRepository):
     model = Order
     response_schema = OrderSchemaOut
+    load_joinded_models = False
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add(self, session: AsyncSession, data: dict[str, Any]) -> Order:
@@ -27,32 +28,16 @@ class OrderRepository(SQLAlchemyRepository):
         if kind:
             data["order_kind_id"] = kind.id
             return await super().add(data=data)
+        return None
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def get(
-        self,
-        session: AsyncSession,
-        key: str,
-        value: Any,
-    ) -> ConcreteTable:
-        query = (
-            select(self.model)
-            .where(getattr(self.model, key) == value)
-            .options(joinedload(self.model.files))
+    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    async def update(
+        self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
+    ) -> Order:
+        kind = await OrderKindRepository().get(
+            key="skb_uuid", value=data["order_kind_id"]
         )
-        result: Result = await session.execute(query)
-        return result.unique().scalars().one_or_none()
-
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def get_by_params(
-        self, session: AsyncSession, filter: Filter
-    ) -> AsyncGenerator[ConcreteTable, None]:
-        query = filter.filter(select(self.model).options(joinedload(self.model.files)))
-        result: Result = await session.execute(query)
-        return result.unique().scalars().all()
-
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def all(self, session: AsyncSession) -> AsyncGenerator[ConcreteTable, None]:
-        query = select(self.model).options(joinedload(self.model.files))
-        result: Result = await session.execute(query)
-        return result.unique().scalars().all()
+        if kind:
+            data["order_kind_id"] = kind.id
+            return await super().update(key=key, value=value, data=data)
+        return None
