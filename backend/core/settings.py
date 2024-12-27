@@ -14,7 +14,7 @@ ROOT_PATH = Path(__file__).parent.parent.parent
 BASE_URL = os.getenv("BASE_URL")
 
 
-class APISettings(BaseSettings):
+class APISSKBSettings(BaseSettings):
     """Класс настроек API СКБ-Техно."""
 
     skb_api_key: str = Field(default="666-555-777", env="SKB_API_KEY")
@@ -52,7 +52,7 @@ class FileStorageSettings(BaseSettings):
     fs_bucket: str = Field(default="my-bucket", env="FS_BUCKET")
     fs_endpoint: str = Field(default="http://127.0.0.1:9090", env="FS_URL")
     fs_interfase_url: str = Field(
-        default="http://127.0.0.1:4000", env="FS_INTERFACE_URL"
+        default="http://127.0.0.1:9091", env="FS_INTERFACE_URL"
     )
     fs_access_key: str = Field(default="minioadmin", env="FS_ACCESS_KEY")
     fs_secret_key: str = Field(default="minioadmin", env="FS_SECRET_KEY")
@@ -96,16 +96,22 @@ class BackTasksSettings(BaseSettings):
     bts_interface_url: str = Field(
         default="http://127.0.0.1:8888", env="BTS_INTERFACE_URL"
     )
+    bts_min_retries: int = Field(default=3, env="BTS_MAX_RETRIES")
+    bts_max_retries: int = Field(default=5, env="BTS_MAX_RETRIES")
+    bts_min_retry_delay: int = Field(default=30, env="BTS_MIN_RETRY_DELAY")
+    bts_max_retry_delay: int = Field(default=300, env="BTS_MAX_RETRY_DELAY")
+    bts_expiration_time: int = Field(default=1800, env="BTS_EXPIRATION_TIME")
 
 
 class Settings(BaseSettings):
-    debug: bool = True
 
     root_dir: Path
     base_url: str = BASE_URL
+    app_debug: bool = Field(default=True, env="APP_DEBUG")
+    app_api_key: str = Field(default="2f0-2340f", env="APP_API_KEY")
 
     database_settings: DatabaseSettings = DatabaseSettings()
-    api_settings: APISettings = APISettings()
+    api_skb_settings: APISSKBSettings = APISSKBSettings()
     logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
     redis_settings: RedisSettings = RedisSettings()

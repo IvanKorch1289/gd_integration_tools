@@ -1,10 +1,9 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, UploadFile, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from backend.core.auth import security
 from backend.core.dependencies import get_streaming_response
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.files.filters import FileFilter
@@ -28,13 +27,13 @@ class FileCBV:
     service = FileService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
-    async def get_files(self):
+    async def get_files(self, x_api_key: str = Header(...)):
         return await self.service.all()
 
     @router.get(
         "/id/{file_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
     )
-    async def get_file(self, file_id: int):
+    async def get_file(self, file_id: int, x_api_key: str = Header(...)):
         return await self.service.get(key="id", value=file_id)
 
     @router.get(
@@ -42,25 +41,29 @@ class FileCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить файл по полю",
     )
-    async def get_by_filter(self, file_filter: FileFilter = FilterDepends(FileFilter)):
+    async def get_by_filter(
+        self,
+        file_filter: FileFilter = FilterDepends(FileFilter),
+        x_api_key: str = Header(...),
+    ):
         return await self.service.get_by_params(filter=file_filter)
 
     @router.post(
-        "/create/",
-        status_code=status.HTTP_201_CREATED,
-        summary="Добавить файл",
-        dependencies=[Depends(security.access_token_required)],
+        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
     )
-    async def add_file(self, request_schema: FileSchemaIn):
+    async def add_file(
+        self, request_schema: FileSchemaIn, x_api_key: str = Header(...)
+    ):
         return await self.service.add(data=request_schema.model_dump())
 
     @router.put(
         "/update/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
-        dependencies=[Depends(security.access_token_required)],
     )
-    async def update_file(self, request_schema: FileSchemaIn, file_id: int):
+    async def update_file(
+        self, request_schema: FileSchemaIn, file_id: int, x_api_key: str = Header(...)
+    ):
         return await self.service.update(
             key="id", value=file_id, data=request_schema.model_dump()
         )
@@ -69,9 +72,8 @@ class FileCBV:
         "/delete/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Удалить файл по ID",
-        dependencies=[Depends(security.access_token_required)],
     )
-    async def delete_file(self, file_id: int):
+    async def delete_file(self, file_id: int, x_api_key: str = Header(...)):
         return await self.service.delete(key="id", value=file_id)
 
 
@@ -85,14 +87,14 @@ class StorageCBV:
     @storage_router.post(
         "/upload_file",
         status_code=status.HTTP_201_CREATED,
-        summary="Добавить файл",
-        operation_id="uploadFileStorageUploadFilePost",
-        dependencies=[Depends(security.access_token_required)],
+        summary="Добавить файл в S3",
+        operation_id="uploadFileStorageUploadFilePostUnique",
     )
     async def upload_file(
         self,
         file: UploadFile = File(...),
         service: S3Service = Depends(s3_bucket_service_factory),
+        x_api_key: str = Header(...),
     ):
         """Загрузка файла в S3.
 
@@ -109,13 +111,14 @@ class StorageCBV:
     @storage_router.get(
         "/download_file/{file_uuid}",
         status_code=status.HTTP_200_OK,
-        summary="Скачать файл",
-        operation_id="getDownloadFileByUuid",
+        summary="Скачать файл из S3",
+        operation_id="getDownloadFileByUuidUnique",
     )
     async def download_file(
         self,
         file_uuid: str,
         service: S3Service = Depends(s3_bucket_service_factory),
+        x_api_key: str = Header(...),
     ):
         """Скачивание файла из S3.
 
@@ -127,15 +130,15 @@ class StorageCBV:
 
     @storage_router.post(
         "/delete_file/",
-        status_code=status.HTTP_204_NO_CONTENT,  # Изменил статус-код на 204 No Content, так как удаление обычно не возвращает тело ответа
-        summary="Удалить файл",
-        operation_id="deleteFileByUuid",
-        dependencies=[Depends(security.access_token_required)],
+        status_code=status.HTTP_204_NO_CONTENT,
+        summary="Удалить файл из S3",
+        operation_id="deleteFileByUuidUnique",
     )
     async def delete_file(
         self,
         file_uuid: str,
         service: S3Service = Depends(s3_bucket_service_factory),
+        x_api_key: str = Header(...),
     ):
         """Удаление файла из S3.
 
@@ -148,13 +151,14 @@ class StorageCBV:
     @storage_router.get(
         "/get_download_link_file/{file_uuid}",
         status_code=status.HTTP_200_OK,
-        summary="Получить ссылку на скачивание файла",
-        operation_id="getDownloadLinkFile",
+        summary="Получить ссылку на скачивание файла из S3",
+        operation_id="getDownloadLinkFileUnique",
     )
     async def get_download_link_file(
         self,
         file_uuid: str,
         service: S3Service = Depends(s3_bucket_service_factory),
+        x_api_key: str = Header(...),
     ):
         """Получение ссылки на скачивание файла из S3.
 

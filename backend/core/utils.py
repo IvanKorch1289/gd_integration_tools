@@ -4,7 +4,8 @@ import traceback
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
 from pydantic import BaseModel, SecretStr
 
@@ -26,20 +27,21 @@ class Utilities:
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         return pwd_context.hash(unsecret_password)
 
-    def caching(self, schema: BaseModel, expire: int = 600) -> Callable:
+    def caching(self, schema: BaseModel = None, expire: int = 600) -> Callable:
         """
         Фабрика декораторов для кэширования результатов функций в Redis.
         :param expire:return: Время жизни записи в кэше в секундах.
         :return: Декоратор для кэширования.
         """
 
-        async def get_cached_data(key: str) -> Union[List[BaseModel], BaseModel]:
+        async def get_cached_data(key: str) -> Union[List[BaseModel], BaseModel, None]:
             """Функция для получения данных из кеша."""
             async with redis.connection() as r:
                 cached_data = await r.get(key)
                 if cached_data is not None:
                     try:
                         decoded_data = json.loads(cached_data)
+
                         if isinstance(decoded_data, list):
                             return [json.loads(item) for item in decoded_data]
                         elif isinstance(decoded_data, str):
@@ -55,7 +57,7 @@ class Utilities:
 
         async def cache_data(
             key: str,
-            data: Union[str, dict, List[BaseModel], BaseModel],
+            data: Union[str, dict, List[BaseModel], BaseModel] = None,
             *,
             expire: int = 3600,
         ) -> None:
@@ -66,8 +68,25 @@ class Utilities:
             :param expire: Время жизни кеша в секундах.
             """
             async with redis.connection() as r:
+                print(data)
+                if data is None:
+                    return None
+
                 if isinstance(data, str):
                     encoded_data = data.encode("utf-8")
+                elif isinstance(data, Exception):
+                    encoded_data = str(data).encode("utf-8")
+                elif isinstance(data, JSONResponse) or isinstance(data, Response):
+                    decoded_body = data.body.decode("utf-8").strip()
+                    if decoded_body:
+                        try:
+                            encoded_data = json.dumps(json.loads(decoded_body)).encode(
+                                "utf-8"
+                            )
+                        except json.JSONDecodeError:
+                            encoded_data = decoded_body.encode("utf-8")
+                    else:
+                        return None
                 elif isinstance(data, dict):
                     encoded_data = json.dumps(data).encode("utf-8")
                 elif isinstance(data, BaseModel):

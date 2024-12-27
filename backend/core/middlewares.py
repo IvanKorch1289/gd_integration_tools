@@ -1,6 +1,8 @@
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 
 from backend.core.logging_config import app_logger
+from backend.core.settings import settings
 
 
 class AsyncListIterator:
@@ -38,7 +40,6 @@ class LoggingMiddleware:
         """Захватывает тело ответа, логирует его и возвращает оригинальный поток данных."""
         original_body = await cls.intercept_response(response)
 
-        # Создаем асинхронный итератор над телом ответа
         response.body_iterator = AsyncListIterator([original_body])
         return original_body
 
@@ -66,3 +67,24 @@ class LoggingMiddleware:
         app_logger.info(f"Ответ: {response.status_code}")
 
         return response
+
+
+class APIKeyMiddleware:
+    async def __call__(self, request: Request, call_next) -> Response:
+        if request.url.path in ["/docs", "/openapi.json"]:
+            return await call_next(request)
+        try:
+            api_key = request.headers["X-Api-Key"]
+            await self.verify_api_key(api_key)
+        except KeyError:
+            return JSONResponse({"detail": "Missing X-Api-Key header"}, status_code=400)
+        except HTTPException as e:
+            return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+
+        response = await call_next(request)
+        return response
+
+    @staticmethod
+    async def verify_api_key(api_key: str):
+        if api_key != settings.app_api_key:
+            raise HTTPException(status_code=401, detail="Invalid API Key")

@@ -9,9 +9,10 @@ from typing import Any, AsyncGenerator, Union
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
 from aiohttp import ClientError
-from settings import settings
+from fastapi import Response, status
 
 from backend.core.logging_config import fs_logger
+from backend.core.settings import settings
 
 
 class LogField:
@@ -87,12 +88,17 @@ class S3Service:
                     operation="upload_file_object",
                     details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
                 )
-                return {"upload_file_object": "success"}
+                return Response(
+                    status_code=status.HTTP_200_OK, content="File upload successful"
+                )
             except Exception as ex:
                 await self.log_operation(
                     operation="upload_file_object", exception=f"Error: {ex}"
                 )
-                raise ex
+                return Response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content="File not uploaded",
+                )
 
     async def list_objects(self) -> list[str]:
         """
@@ -131,8 +137,14 @@ class S3Service:
                 return body, metadata
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
-                    return None
-                raise ex
+                    return Response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        content="File not founded",
+                    )
+                return Response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content="Unsuccessful",
+                )
 
     async def delete_file_object(self, key: str) -> dict:
         """
@@ -152,7 +164,10 @@ class S3Service:
                 await self.log_operation(
                     operation="delete_file_object", exception=f"Error: {ex}"
                 )
-                raise ex
+                return Response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content="Unsuccessful",
+                )
 
     async def generate_download_url(self, key: str, expires_in: int = 3600) -> str:
         """
@@ -174,7 +189,10 @@ class S3Service:
                 await self.log_operation(
                     operation="generate_download_url", exception=f"Error: {ex}"
                 )
-                raise ex
+                return Response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content="Unsuccessful",
+                )
 
     async def log_operation(
         self,
