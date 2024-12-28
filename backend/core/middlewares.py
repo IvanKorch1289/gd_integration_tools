@@ -71,7 +71,7 @@ class LoggingMiddleware:
 
 class APIKeyMiddleware:
     async def __call__(self, request: Request, call_next) -> Response:
-        if request.url.path in ["/docs", "/openapi.json"]:
+        if request.url.path in ["/docs", "/openapi.json", "/tech/healthcheck"]:
             return await call_next(request)
         try:
             api_key = request.headers["X-Api-Key"]

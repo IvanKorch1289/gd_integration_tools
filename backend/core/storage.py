@@ -225,6 +225,15 @@ class S3Service:
         except Exception:
             traceback.print_exc(file=sys.stdout)
 
+    async def check_bucket_exists(self) -> bool:
+        """Проверяет существование бакета в MinIO."""
+        try:
+            buckets = await self.client.list_buckets()
+            return any(bucket.name == self.bucket_name for bucket in buckets)
+        except Exception as e:
+            print(f"Error checking bucket existence: {e}")
+            return False
+
 
 def s3_bucket_service_factory() -> S3Service:
     return S3Service(

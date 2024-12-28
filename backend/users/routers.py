@@ -67,7 +67,7 @@ class UserCBV:
 
     @router.delete(
         "/delete/{user_id}",
-        status_code=status.HTTP_200_OK,
+        status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить вид запроса по ID",
     )
     async def delete_user(self, user_id: int, x_api_key: str = Header(...)):

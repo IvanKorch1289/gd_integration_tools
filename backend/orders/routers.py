@@ -1,13 +1,8 @@
 from fastapi import APIRouter, Depends, Header, status
+from fastapi.responses import FileResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
-from backend.api_skb.enums import ResponseTypeChoices
-from backend.core.dependencies import (
-    create_zip_streaming_response,
-    get_base64_file,
-    get_streaming_response,
-)
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.orders.filters import OrderFilter
 from backend.orders.schemas import OrderSchemaIn
@@ -80,7 +75,7 @@ class OrderCBV:
 
     @router.delete(
         "/delete/{order_id}",
-        status_code=status.HTTP_200_OK,
+        status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить запрос по ID",
     )
     async def delete_order(self, order_id: int, x_api_key: str = Header(...)):
@@ -91,40 +86,40 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить результат запроса",
     )
-    async def get_order_result(
-        self,
-        order_id: int,
-        response_type: ResponseTypeChoices = ResponseTypeChoices.json,
-        x_api_key: str = Header(...),
-        responses={
-            200: {
-                "description": "Successful Response",
-                "content": {
-                    "application/json": {},
-                    "application/pdf": {},
-                },
-            },
-        },
+    async def get_order_result_from_skb(
+        self, order_id: int, x_api_key: str = Header(...)
     ):
-        return await self.service.get_order_result(
-            order_id=order_id, response_type=response_type
-        )
+        return await self.service.get_order_file_and_json_from_skb(order_id=order_id)
 
     @router.get(
         "/{order_id}/get-order-file",
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
-    async def get_order_file(self, order_id: int, x_api_key: str = Header(...)):
-        return await self.service.get_order_file_from_storage(order_id=order_id)
+    async def get_order_file(
+        self,
+        order_id: int,
+        x_api_key: str = Header(...),
+        s3_service: S3Service = Depends(s3_bucket_service_factory),
+    ) -> FileResponse:
+        return await self.service.get_order_file_from_storage(
+            order_id=order_id, s3_service=s3_service
+        )
 
     @router.get(
         "/{order_id}/get-order-file-b64",
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
-    async def get_order_file_base64(self, order_id: int, x_api_key: str = Header(...)):
-        return await self.service.get_order_file_from_storage_base64(order_id=order_id)
+    async def get_order_file_base64(
+        self,
+        order_id: int,
+        x_api_key: str = Header(...),
+        s3_service: S3Service = Depends(s3_bucket_service_factory),
+    ):
+        return await self.service.get_order_file_from_storage_base64(
+            order_id=order_id, s3_service=s3_service
+        )
 
     @router.get(
         "/{order_id}/get-order-file-link",
@@ -137,9 +132,21 @@ class OrderCBV:
         s3_service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
-        order = await self.service.get(key="id", value=order_id)
-        files_links = []
-        for file in order.files:
-            file_link = await s3_service.generate_download_url(str(file.object_uuid))
-            files_links.append({"file": file_link})
-        return {"files_links": files_links}
+        return await self.service.get_order_file_from_storage_link(
+            order_id=order_id, s3_service=s3_service
+        )
+
+    @router.get(
+        "/{order_id}/get-order-json-and-file-link",
+        status_code=status.HTTP_200_OK,
+        summary="Получить ссылку на файл запроса",
+    )
+    async def get_order_file_link_and_json_result_for_request(
+        self,
+        order_id: int,
+        s3_service: S3Service = Depends(s3_bucket_service_factory),
+        x_api_key: str = Header(...),
+    ):
+        return await self.service.get_order_file_link_and_json_result_for_request(
+            order_id=order_id, s3_service=s3_service
+        )

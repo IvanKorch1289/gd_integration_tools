@@ -1,8 +1,5 @@
-import traceback
-
 import asyncio
 from celery import Celery
-from fastapi import status
 
 from backend.core.settings import settings
 from backend.orders.models import Order
@@ -36,24 +33,32 @@ order_service = OrderService()
     retry_backoff=True,
 )
 def send_result_to_gd(self, order_id: int):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    async def inner_send_result_to_gd():
+        try:
+            order: Order = await order_service.get(key="id", value=order_id)
+            file_links = await order_service.get_order_file_link(order_id=order_id)
+
+            data = {
+                "order": order.object_uuid,
+                "result": order.response_data,
+                "file_links": file_links,
+            }
+
+            return data
+        except Exception as exc:
+            self.retry(exc=(exc, order_id), throw=False)
 
     try:
-        order: Order = loop.run_until_complete(order_service.get(order_id=order_id))
-        file_links = loop.run_until_complete(
-            order_service.get_order_file_link(order_id=order_id)
-        )
-        data = {
-            "order": order.object_uuid,
-            "result": order.response_data,
-            "file_links": file_links,
-        }
-        return data
-    except Exception as exc:
-        self.retry(exc=str(exc))
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    try:
+        loop.run_until_complete(inner_send_result_to_gd())
     finally:
-        loop.close()
+        if loop.is_closed():
+            loop.close()
 
 
 @celery_app.task(
@@ -64,26 +69,34 @@ def send_result_to_gd(self, order_id: int):
     retry_backoff=True,
 )
 def send_requests_for_get_result(self, order_id):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    async def inner_send_requests_for_get_result():
+        try:
+            result = await order_service.get_order_file_and_json_from_skb(
+                order_id=order_id
+            )
+
+            if not result:
+                error_message = {
+                    "hasError": False,
+                    "message": "The response to the query is not ready yet",
+                }
+                raise ValueError(error_message)
+
+            celery_app.send_task("send_result_to_gd", args=[order_id])
+        except Exception as exc:
+            self.retry(exc=(exc, order_id), throw=False)
 
     try:
-        result = loop.run_until_complete(
-            order_service.get_order_file_and_json(order_id=order_id)
-        )
-        if not result:
-            error_message = {
-                "hasError": False,
-                "message": "The response to the query is not ready yet",
-            }
-            raise ValueError(error_message)
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        send_result_to_gd.delay(order_id)
-        return
-    except Exception as exc:
-        self.retry(exc=str(exc))
+    try:
+        loop.run_until_complete(inner_send_requests_for_get_result())
     finally:
-        loop.close()
+        if loop.is_closed():
+            loop.close()
 
 
 @celery_app.task(
@@ -94,18 +107,26 @@ def send_requests_for_get_result(self, order_id):
     retry_backoff=True,
 )
 def send_requests_for_create_order(self, order_id):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    async def inner_send_requests_for_create_order():
+        try:
+            await order_service.create_skb_order(order_id=order_id)
+
+            celery_app.send_task(
+                "send_requests_for_get_result",
+                args=[order_id],
+                countdown=settings.bts_settings.bts_expiration_time,
+            )
+        except Exception as exc:
+            self.retry(exc=(exc, order_id), throw=False)
 
     try:
-        result = loop.run_until_complete(
-            order_service.create_skb_order(order_id=order_id)
-        )
-        if result.status_code == status.HTTP_200_OK:
-            loop.run_until_complete(
-                order_service.update(order_id=order_id, data={"is_send_to_skb": True})
-            )
-    except Exception:
-        self.retry(traceback.format_exc())
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    try:
+        loop.run_until_complete(inner_send_requests_for_create_order())
     finally:
-        loop.close()
+        if loop.is_closed():
+            loop.close()

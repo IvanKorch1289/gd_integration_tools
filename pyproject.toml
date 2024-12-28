@@ -41,6 +41,7 @@ websockets = "^14.1"
 vine = "^5.1.0"
 celery = "^5.4.0"
 eventlet = "^0.38.2"
+json-tricks = "^3.17.3"
 
 
 [build-system]

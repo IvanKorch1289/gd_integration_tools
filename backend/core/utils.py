@@ -1,15 +1,23 @@
 import json
 import sys
 import traceback
+from datetime import datetime
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 
-from fastapi import HTTPException, Response, status
+import json_tricks
+import socket
+from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
 from pydantic import BaseModel, SecretStr
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.database import session_manager
 from backend.core.redis import redis
+from backend.core.settings import settings
+from backend.core.storage import s3_bucket_service_factory
 
 
 T = TypeVar("T")
@@ -67,43 +75,26 @@ class Utilities:
             :param data: Данные для сохранения в кеш.
             :param expire: Время жизни кеша в секундах.
             """
+
+            def _encode(obj):
+                if isinstance(obj, datetime) and not isinstance(obj, dict):
+                    return obj.isoformat()
+                elif isinstance(obj, BaseModel):
+                    return obj.model_dump_json()
+                return obj
+
+            def custom_dumps(data):
+                return json_tricks.dumps(data, extra_obj_encoders=[_encode])
+
             async with redis.connection() as r:
-                print(data)
                 if data is None:
                     return None
 
-                if isinstance(data, str):
-                    encoded_data = data.encode("utf-8")
-                elif isinstance(data, Exception):
-                    encoded_data = str(data).encode("utf-8")
-                elif isinstance(data, JSONResponse) or isinstance(data, Response):
-                    decoded_body = data.body.decode("utf-8").strip()
-                    if decoded_body:
-                        try:
-                            encoded_data = json.dumps(json.loads(decoded_body)).encode(
-                                "utf-8"
-                            )
-                        except json.JSONDecodeError:
-                            encoded_data = decoded_body.encode("utf-8")
-                    else:
-                        return None
-                elif isinstance(data, dict):
-                    encoded_data = json.dumps(data).encode("utf-8")
-                elif isinstance(data, BaseModel):
-                    encoded_data = data.model_dump_json().encode("utf-8")
-                elif isinstance(data, list):
-                    encoded_data = json.dumps(
-                        [
-                            (
-                                item.model_dump_json()
-                                if isinstance(item, BaseModel)
-                                else item
-                            )
-                            for item in data
-                        ]
-                    ).encode("utf-8")
+                if isinstance(data, JSONResponse):
+                    encoded_data = data.body.decode("utf-8")
                 else:
-                    raise TypeError(f"Неподдерживаемый тип данных: {type(data)}")
+                    data = [custom_dumps(item) for item in data]
+                    encoded_data = custom_dumps(data).encode("utf-8")
 
                 await r.set(key, encoded_data, expire=expire)
 
@@ -129,6 +120,71 @@ class Utilities:
             return wrapper
 
         return decorator
+
+    @session_manager.connection(isolation_level="READ COMMITTED")
+    async def health_check_database(self, session: AsyncSession) -> str:
+        try:
+            result = await session.execute(text("SELECT 1"))
+            if result.scalar_one_or_none() != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Database not connected",
+                )
+            return {"check": "Database connection is OK"}
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database not connected",
+            )
+
+    async def health_check_redis(self) -> str:
+        try:
+            async with redis.connection() as r:
+                await r.ping()
+            return {"check": "Redis connection is OK"}
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Redis not connected",
+            )
+
+    async def health_check_s3(self) -> str:
+        s3_service = s3_bucket_service_factory()
+        try:
+            result = await s3_service.check_bucket_exists()
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="S3 not connected",
+                )
+            return {"check": "S3 connection is OK"}
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="S3 not connected",
+            )
+
+    async def health_check_graylog(self) -> str:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.connect(
+                (
+                    settings.logging_settings.log_host,
+                    settings.logging_settings.log_udp_port,
+                )
+            )
+            sock.sendall(b"Healthcheck test message")
+            sock.close()
+            return {"check": "Graylog connection is OK"}
+        except OSError:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Graylog not connected",
+            )
 
 
 utilities = Utilities()

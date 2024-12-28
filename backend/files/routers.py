@@ -70,7 +70,7 @@ class FileCBV:
 
     @router.delete(
         "/delete/{file_id}",
-        status_code=status.HTTP_200_OK,
+        status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить файл по ID",
     )
     async def delete_file(self, file_id: int, x_api_key: str = Header(...)):
@@ -138,6 +138,7 @@ class StorageCBV:
         self,
         file_uuid: str,
         service: S3Service = Depends(s3_bucket_service_factory),
+        status_code=status.HTTP_204_NO_CONTENT,
         x_api_key: str = Header(...),
     ):
         """Удаление файла из S3.
