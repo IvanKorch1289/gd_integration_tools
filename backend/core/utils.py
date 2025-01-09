@@ -48,24 +48,25 @@ class Utilities:
                 cached_data = await r.get(key)
                 if cached_data is not None:
                     try:
-                        decoded_data = json.loads(cached_data)
+                        if isinstance(cached_data, bytes):
+                            cached_data = cached_data.decode("utf-8")
+
+                        decoded_data = json_tricks.loads(cached_data)
 
                         if isinstance(decoded_data, list):
-                            return [json.loads(item) for item in decoded_data]
-                        elif isinstance(decoded_data, str):
-                            return json.loads(decoded_data)
-                        return decoded_data
-                    except (json.JSONDecodeError, ValueError) as e:
-                        traceback.print_exc(file=sys.stdout)
+                            return [json_tricks.loads(item) for item in decoded_data]
+                        else:
+                            return decoded_data
+                    except (json.JSONDecodeError, ValueError) as exc:
                         raise HTTPException(
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Ошибка при декодировании значения из кеша: {e}",
+                            detail=f"Ошибка при декодировании значения из кеша: {exc}",
                         )
             return None
 
         async def cache_data(
             key: str,
-            data: Union[str, dict, List[BaseModel], BaseModel] = None,
+            data: Union[str, dict, List[BaseModel], BaseModel],
             *,
             expire: int = 3600,
         ) -> None:
@@ -89,13 +90,10 @@ class Utilities:
             async with redis.connection() as r:
                 if data is None:
                     return None
-
                 if isinstance(data, JSONResponse):
                     encoded_data = data.body.decode("utf-8")
                 else:
-                    data = [custom_dumps(item) for item in data]
                     encoded_data = custom_dumps(data).encode("utf-8")
-
                 await r.set(key, encoded_data, expire=expire)
 
         def decorator(

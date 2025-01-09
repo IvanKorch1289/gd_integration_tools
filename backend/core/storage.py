@@ -227,12 +227,15 @@ class S3Service:
 
     async def check_bucket_exists(self) -> bool:
         """Проверяет существование бакета в MinIO."""
-        try:
-            buckets = await self.client.list_buckets()
-            return any(bucket.name == self.bucket_name for bucket in buckets)
-        except Exception as e:
-            print(f"Error checking bucket existence: {e}")
-            return False
+        async with self._create_s3_client() as client:
+            try:
+                buckets_dict = await client.list_buckets()
+                print(buckets_dict)
+                print(buckets_dict.get("ResponseMetadata"))
+                print(buckets_dict.get("Buckets"))
+                return any(bucket.name == self.bucket_name for bucket in buckets_dict)
+            except Exception:
+                return False
 
 
 def s3_bucket_service_factory() -> S3Service:
