@@ -230,10 +230,10 @@ class S3Service:
         async with self._create_s3_client() as client:
             try:
                 buckets_dict = await client.list_buckets()
-                print(buckets_dict)
-                print(buckets_dict.get("ResponseMetadata"))
-                print(buckets_dict.get("Buckets"))
-                return any(bucket.name == self.bucket_name for bucket in buckets_dict)
+                return any(
+                    bucket.get("Name", None) == self.bucket_name
+                    for bucket in buckets_dict.get("Buckets", None)
+                )
             except Exception:
                 return False
 

@@ -1,11 +1,9 @@
-import json
-
-from fastapi import APIRouter, Header, Response
+from fastapi import APIRouter, Header
 from fastapi.responses import PlainTextResponse
 from fastapi_utils.cbv import cbv
 
+from backend.base.service import BaseService
 from backend.core.settings import settings
-from backend.core.utils import utilities
 
 
 __all__ = ("router",)
@@ -17,6 +15,8 @@ router = APIRouter()
 @cbv(router)
 class TechBV:
     """CBV-класс для переадресаций на интерфейсы технических приложений."""
+
+    service = BaseService()
 
     @router.get(
         "/log-storage",
@@ -50,29 +50,4 @@ class TechBV:
         operation_id="healthcheck",
     )
     async def healthcheck(self):
-        db_check = await utilities.health_check_database()
-        redis_check = await utilities.health_check_redis()
-        s3_check = await utilities.health_check_s3()
-        graylog_check = await utilities.health_check_graylog()
-
-        response_data = {
-            "db": db_check,
-            "redis": redis_check,
-            "s3": s3_check,
-            "graylog": graylog_check,
-        }
-
-        if all(response_data.values()):
-            status_code = 200
-            message = "All systems are operational."
-        else:
-            status_code = 500
-            message = "One or more components are not functioning properly."
-
-        response_body = {"message": message, "details": response_data}
-
-        return Response(
-            content=json.dumps(response_body),
-            media_type="application/json",
-            status_code=status_code,
-        )
+        return await self.service.healthcheck()

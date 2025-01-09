@@ -128,7 +128,7 @@ class Utilities:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Database not connected",
                 )
-            return {"check": "Database connection is OK"}
+            return "Database connection is OK"
         except Exception:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -140,7 +140,7 @@ class Utilities:
         try:
             async with redis.connection() as r:
                 await r.ping()
-            return {"check": "Redis connection is OK"}
+            return "Redis connection is OK"
         except Exception:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -157,7 +157,7 @@ class Utilities:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="S3 not connected",
                 )
-            return {"check": "S3 connection is OK"}
+            return "S3 connection is OK"
         except Exception:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -176,7 +176,7 @@ class Utilities:
             )
             sock.sendall(b"Healthcheck test message")
             sock.close()
-            return {"check": "Graylog connection is OK"}
+            return "Graylog connection is OK"
         except OSError:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
