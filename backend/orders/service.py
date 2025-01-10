@@ -38,7 +38,11 @@ class OrderService(BaseService):
             if order:
                 from backend.core.tasks import celery_app
 
-                celery_app.send_task("send_requests_for_create_order", args=[order.id])
+                celery_app.send_task(
+                    "send_requests_for_create_order",
+                    args=[order.id],
+                    time_limit=settings.bts_settings.bts_max_time_limit,
+                )
 
                 return order
         except Exception as ex:

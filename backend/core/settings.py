@@ -96,6 +96,7 @@ class BackTasksSettings(BaseSettings):
     bts_interface_url: str = Field(
         default="http://127.0.0.1:8888", env="BTS_INTERFACE_URL"
     )
+    bts_max_time_limit: int = Field(default=300, env="BTS_MAX_TIME_LIMIT")
     bts_min_retries: int = Field(default=3, env="BTS_MAX_RETRIES")
     bts_max_retries: int = Field(default=5, env="BTS_MAX_RETRIES")
     bts_min_retry_delay: int = Field(default=30, env="BTS_MIN_RETRY_DELAY")
