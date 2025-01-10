@@ -1,7 +1,6 @@
 import time
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from starlette.types import Receive, Scope, Send
 
 from backend.core.logging_config import app_logger
 from backend.core.settings import settings

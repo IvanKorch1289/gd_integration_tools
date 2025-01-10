@@ -1,6 +1,7 @@
 .env
 __pycache__
 data/
-minio-data/
-graylog-data/
+/minio-data/
+/graylog-data/
 *.sh
+.gitignore
