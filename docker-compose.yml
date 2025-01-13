@@ -1,4 +1,9 @@
 services:
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"  # SMTP-порт
+      - "8025:8025"  # Веб-интерфейс
   minio:
     image: minio/minio
     command: server /data

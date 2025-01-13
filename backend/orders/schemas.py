@@ -24,6 +24,9 @@ class OrderSchemaIn(PublicSchema):
         None, description="Кадастровый номер объекта залога"
     )
     order_kind_id: str = Field(None, description="Идентификатор вида запроса")
+    email_for_answer: str = Field(
+        None, description="Электронная почта для отправки ответа"
+    )
 
 
 class OrderSchemaOut(OrderSchemaIn):

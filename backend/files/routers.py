@@ -1,4 +1,5 @@
 import uuid
+from typing import List
 
 from fastapi import APIRouter, Depends, File, Header, UploadFile, status
 from fastapi_filter import FilterDepends
@@ -55,6 +56,17 @@ class FileCBV:
         self, request_schema: FileSchemaIn, x_api_key: str = Header(...)
     ):
         return await self.service.add(data=request_schema.model_dump())
+
+    @router.post(
+        "/create_many/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить несколько файлов",
+    )
+    async def add_many_files(
+        self, request_schema: List[FileSchemaIn], x_api_key: str = Header(...)
+    ):
+        data_list = [schema.model_dump() for schema in request_schema]
+        return await self.service.add_many(data_list=data_list)
 
     @router.put(
         "/update/{file_id}",

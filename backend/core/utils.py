@@ -5,9 +5,10 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 
+import aiosmtplib
 import json_tricks
 import socket
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
 from pydantic import BaseModel, SecretStr
@@ -129,11 +130,11 @@ class Utilities:
                     detail="Database not connected",
                 )
             return "Database connection is OK"
-        except Exception:
+        except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database not connected",
+                detail=f"Database not connected: {str(exc)}",
             )
 
     async def health_check_redis(self) -> str:
@@ -141,11 +142,34 @@ class Utilities:
             async with redis.connection() as r:
                 await r.ping()
             return "Redis connection is OK"
-        except Exception:
+        except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Redis not connected",
+                detail=f"Redis not connected: {str(exc)}",
+            )
+
+    async def health_check_celery(self) -> str:
+        from celery.result import AsyncResult
+
+        from backend.core.tasks import test_task
+
+        try:
+            result = test_task.delay("test")
+
+            async_result = AsyncResult(result.id, app=test_task.app)
+            result_value = async_result.get(timeout=3)
+
+            if result_value == "test":
+                return "Celery is working!"
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Celery not connected",
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Celery not connected: {str(exc)}",
             )
 
     async def health_check_s3(self) -> str:
@@ -158,11 +182,11 @@ class Utilities:
                     detail="S3 not connected",
                 )
             return "S3 connection is OK"
-        except Exception:
+        except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="S3 not connected",
+                detail="S3 not connected: {str(exc)}",
             )
 
     async def health_check_graylog(self) -> str:
@@ -177,12 +201,96 @@ class Utilities:
             sock.sendall(b"Healthcheck test message")
             sock.close()
             return "Graylog connection is OK"
-        except OSError:
+        except OSError as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Graylog not connected",
+                detail=f"Graylog not connected: {str(exc)}",
             )
+
+    async def health_check_smtp(self):
+        hostname = settings.mail_settings.mail_hostname
+        port = settings.mail_settings.mail_port
+        use_tls = settings.mail_settings.mail_use_tls
+        username = None if settings.app_debug else settings.mail_settings.mail_login
+        password = None if settings.app_debug else settings.mail_settings.mail_login
+
+        try:
+            async with aiosmtplib.SMTP(
+                hostname=hostname, port=port, use_tls=use_tls
+            ) as smtp:
+                if username and password:
+                    await smtp.login(username, password)
+                return "SMTP connection is OK"
+        except Exception as exc:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"SMTP not connected: {str(exc)}",
+            )
+
+    async def healthcheck_all_services(self):
+        db_check = await utilities.health_check_database()
+        redis_check = await utilities.health_check_redis()
+        s3_check = await utilities.health_check_s3()
+        graylog_check = await utilities.health_check_graylog()
+        smtp_check = await utilities.health_check_smtp()
+        celery_check = await utilities.health_check_celery()
+
+        response_data = {
+            "db": db_check,
+            "redis": redis_check,
+            "s3": s3_check,
+            "graylog": graylog_check,
+            "smtp": smtp_check,
+            "celery": celery_check,
+        }
+
+        if all(response_data.values()):
+            status_code = 200
+            message = "All systems are operational."
+            is_all_services_active = True
+        else:
+            status_code = 500
+            message = "One or more components are not functioning properly."
+            is_all_services_active = False
+
+        response_body = {
+            "message": message,
+            "is_all_services_active": is_all_services_active,
+            "details": response_data,
+        }
+
+        return Response(
+            content=json.dumps(response_body),
+            media_type="application/json",
+            status_code=status_code,
+        )
+
+    async def send_email(self, to_email: str, subject: str, message: str):
+        hostname = settings.mail_settings.mail_hostname
+        port = settings.mail_settings.mail_port
+        use_tls = settings.mail_settings.mail_use_tls
+        username = None if settings.app_debug else settings.mail_settings.mail_login
+        password = None if settings.app_debug else settings.mail_settings.mail_login
+
+        try:
+            async with aiosmtplib.SMTP(
+                hostname=hostname, port=port, use_tls=use_tls
+            ) as smtp:
+                if username and password:
+                    await smtp.login(username, password)
+
+                await smtp.sendmail(
+                    settings.mail_settings.mail_sender,
+                    to_email,
+                    f"Subject: {subject}\n\n{message}",
+                )
+
+            return JSONResponse({"status": "OK"})
+
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
 
 
 utilities = Utilities()

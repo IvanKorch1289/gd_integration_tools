@@ -151,6 +151,22 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             return ex
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    async def add_many(
+        self, session: AsyncSession, data_list: list[dict[str, Any]]
+    ) -> ConcreteTable:
+        try:
+            results = []
+
+            for data in data_list:
+                result = await self.add(data=data)
+                results.append(result)
+
+            return results
+        except Exception as ex:
+            traceback.print_exc(file=sys.stdout)
+            return ex
+
+    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def update(
         self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
     ) -> ConcreteTable:

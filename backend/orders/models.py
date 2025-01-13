@@ -1,6 +1,7 @@
 from sqlalchemy import UUID, Boolean, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy_utils.types import EmailType, UUIDType
 
 from backend.base.models import BaseModel, nullable_str
 from backend.files.models import OrderFile
@@ -33,11 +34,14 @@ class Order(BaseModel):
     )
     errors: Mapped[str] = mapped_column(Text, nullable=True)
     object_uuid: Mapped[UUID] = mapped_column(
-        UUID,
+        UUIDType,
         nullable=False,
         server_default=func.gen_random_uuid(),
     )
     response_data: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    email_for_answer: Mapped[str] = mapped_column(EmailType, nullable=False)
+
+    # Relationships
     order_kind = relationship("OrderKind", back_populates="orders", lazy="joined")
     files = relationship(
         "File",

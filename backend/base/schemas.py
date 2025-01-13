@@ -1,6 +1,6 @@
 import json
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 def to_camelcase(string: str) -> str:
@@ -9,6 +9,12 @@ def to_camelcase(string: str) -> str:
         for index, word in enumerate(string.split("_"))
     )
     return resp
+
+
+class EmailSchema(BaseModel):
+    to_email: EmailStr
+    subject: str
+    message: str
 
 
 class PublicSchema(BaseModel):

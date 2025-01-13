@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import EmailStr, Field, SecretStr
+from sqlalchemy_utils.types import PasswordType
 
 from backend.base.schemas import PublicSchema
 
@@ -18,8 +19,11 @@ class UserSchemaIn(PublicSchema):
     password: SecretStr = Field(..., min_length=8, description="Пароль пользователя")
 
 
-class UserSchemaOut(UserSchemaIn):
+class UserSchemaOut(PublicSchema):
     id: int = Field(..., description="Идентификатор пользователя")
+    username: str = Field(
+        ..., min_length=3, max_length=50, description="Имя пользователя"
+    )
     email: EmailStr | None = Field(..., description="Электронная почта пользователя")
     created_at: datetime = Field(..., description="Дата создания пользователя")
     updated_at: datetime | None = Field(

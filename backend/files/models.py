@@ -19,6 +19,8 @@ class File(BaseModel):
     object_uuid: Mapped[UUID] = mapped_column(
         UUID, nullable=False, server_default=func.gen_random_uuid(), index=True
     )
+
+    # Relationships
     orders = relationship(
         "Order", secondary=lambda: OrderFile.__table__, back_populates="files"
     )

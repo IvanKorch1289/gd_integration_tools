@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Header, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
@@ -52,6 +54,17 @@ class OrderKindCBV:
         self, request_schema: OrderKindSchemaIn, x_api_key: str = Header(...)
     ):
         return await self.service.add(data=request_schema.model_dump())
+
+    @router.post(
+        "/create_many/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить несколько видов запроса",
+    )
+    async def add_many_kinds(
+        self, request_schema: List[OrderKindSchemaIn], x_api_key: str = Header(...)
+    ):
+        data_list = [schema.model_dump() for schema in request_schema]
+        return await self.service.add_many(data_list=data_list)
 
     @router.put(
         "/update/{kind_id}",

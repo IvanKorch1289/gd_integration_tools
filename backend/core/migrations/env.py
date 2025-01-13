@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.base.models import BaseModel
+from backend.core.migrations.types import load_types
 from backend.core.settings import settings
 from backend.files.models import File, OrderFile
 from backend.order_kinds.models import OrderKind
@@ -54,6 +55,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        **load_types()
     )
 
     with context.begin_transaction():

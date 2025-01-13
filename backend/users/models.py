@@ -2,6 +2,7 @@ from passlib.context import CryptContext
 from pydantic import SecretStr
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy_utils.types import PasswordType
 
 from backend.base.models import BaseModel
 
@@ -19,7 +20,14 @@ class User(BaseModel):
 
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
-    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    password: Mapped[str] = mapped_column(
+        PasswordType(
+            schemes=[
+                "pbkdf2_sha512",
+            ]
+        ),
+        nullable=False,
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -27,9 +35,3 @@ class User(BaseModel):
         if isinstance(password, SecretStr):
             password = password.get_secret_value()
         return pwd_context.verify(password, self.password)
-
-    def get_password_hash(password):
-        return pwd_context.hash(password)
-
-    def change_password(self, password: str) -> None:
-        self.hashed_password = pwd_context.hash(password)

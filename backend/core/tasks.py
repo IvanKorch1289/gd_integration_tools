@@ -4,6 +4,7 @@ from celery import Celery
 from fastapi.responses import JSONResponse
 
 from backend.core.settings import settings
+from backend.core.utils import utilities
 from backend.orders.models import Order
 from backend.orders.service import OrderService
 
@@ -25,6 +26,11 @@ celery_app.conf.update(
 
 
 order_service = OrderService()
+
+
+@celery_app.task(name="send_result_to_gd")
+def test_task(arg):
+    return arg
 
 
 @celery_app.task(
@@ -85,6 +91,14 @@ def send_requests_for_get_result(self, order_id):
                 raise ValueError(error_message)
 
             celery_app.send_task("send_result_to_gd", args=[order_id])
+
+            order: Order = await order_service.get(key="id", value=order_id)
+
+            await utilities.send_email(
+                to_email=result.ee,
+                subject=f"Получен результат заказа выписки по заказу {order.email_for_answer}",
+                message=f"Получен результат заказа выписки по объекту id = {order.email_for_answer}",
+            )
 
             return str(result)
         except Exception as exc:

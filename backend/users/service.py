@@ -18,7 +18,7 @@ class UserService(BaseService):
         user = await self.repo.get_by_username(data=data)
         if user:
             return "The user with the specified login already exists."
-        data["password"] = await utilities.hash_password(data["password"])
+        # data["password"] = await utilities.hash_password(data["password"])
         return await super().add(data=data)
 
     async def login(self, filter: Filter):

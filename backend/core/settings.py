@@ -104,12 +104,33 @@ class BackTasksSettings(BaseSettings):
     bts_expiration_time: int = Field(default=1800, env="BTS_EXPIRATION_TIME")
 
 
+class MailSettings(BaseSettings):
+    mail_hostname: str = Field(default="gd_advanced_tools.com", env="MAIL_HOSTNAME")
+    mail_port: int = Field(default=586, env="MAIL_PORT")
+    mail_sender: str = Field(default="example@kk.bank", env="MAIL_SENDER")
+    mail_login: str = Field(default="gd_advanced_tools.com", env="MAIL_LOGIN")
+    mail_password: str = Field(default="gd_advanced_tools.com", env="MAIL_PASSWORD")
+    mail_use_tls: bool = False
+
+
 class Settings(BaseSettings):
 
     root_dir: Path
     base_url: str = BASE_URL
     app_debug: bool = Field(default=True, env="APP_DEBUG")
     app_api_key: str = Field(default="2f0-2340f", env="APP_API_KEY")
+    app_routes_without_api_key: list = [
+        "/docs",
+        "/openapi.json",
+        "/tech/healthcheck_database",
+        "/tech/healthcheck_redis",
+        "/tech/healthcheck_celery",
+        "/tech/healthcheck_s3",
+        "/tech/healthcheck_graylog",
+        "/tech/healthcheck_smtp",
+        "/tech/healthcheck_all_services",
+        "/tech/send_email",
+    ]
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_skb_settings: APISSKBSettings = APISSKBSettings()
@@ -118,6 +139,7 @@ class Settings(BaseSettings):
     redis_settings: RedisSettings = RedisSettings()
     auth_settings: AuthSettings = AuthSettings()
     bts_settings: BackTasksSettings = BackTasksSettings()
+    mail_settings: MailSettings = MailSettings()
 
 
 settings = Settings(root_dir=ROOT_PATH)

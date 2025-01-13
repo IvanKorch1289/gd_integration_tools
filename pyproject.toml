@@ -42,6 +42,8 @@ vine = "^5.1.0"
 celery = "^5.4.0"
 eventlet = "^0.38.2"
 json-tricks = "^3.17.3"
+aiosmtplib = "^3.0.2"
+sqlalchemy-utils = "^0.41.2"
 
 
 [build-system]

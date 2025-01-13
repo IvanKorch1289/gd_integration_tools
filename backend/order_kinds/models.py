@@ -15,6 +15,8 @@ class OrderKind(BaseModel):
     name: Mapped[nullable_str]
     description: Mapped[str] = mapped_column(Text, nullable=True)
     skb_uuid: Mapped[str] = mapped_column(String, unique=True, index=True)
+
+    # Relationships
     orders = relationship(
         "Order", back_populates="order_kind", cascade="save-update, merge, delete"
     )

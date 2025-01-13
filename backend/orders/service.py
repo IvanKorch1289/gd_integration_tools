@@ -17,6 +17,7 @@ from backend.core.settings import settings
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.core.utils import utilities
 from backend.files.repository import FileRepository
+from backend.orders.filters import OrderFilter
 from backend.orders.repository import OrderRepository
 from backend.orders.schemas import OrderSchemaOut, PublicSchema
 
@@ -36,26 +37,65 @@ class OrderService(BaseService):
             order = await super().add(data=data)
 
             if order:
-                from backend.core.tasks import celery_app
+                check_services = await utilities.health_check_celery()
 
-                celery_app.send_task(
-                    "send_requests_for_create_order",
-                    args=[order.id],
-                    time_limit=settings.bts_settings.bts_max_time_limit,
+                if check_services.get("is_all_services_active", None):
+                    from backend.core.tasks import celery_app
+
+                    celery_app.send_task(
+                        "send_requests_for_create_order",
+                        args=[order.id],
+                        time_limit=settings.bts_settings.bts_max_time_limit,
+                    )
+
+                await utilities.send_email(
+                    to_email=data.get("email_for_answer"),
+                    subject="Новый заказ выписки в СКБ-Техно",
+                    message=f"Номер заказа: {order.object_uuid}",
                 )
+            return order
+        except Exception as exc:
+            traceback.print_exc(file=sys.stdout)
+            await utilities.send_email(
+                to_email=data.get("email_for_answer"),
+                subject="Новый заказ выписки в СКБ-Техно (ОШИБКА!!!)",
+                message=f"Не удалось создать заказ выписки: {exc}",
+            )
+            return exc
 
-                return order
+    async def add_many(self, data_list: list[dict]) -> PublicSchema | None:
+        try:
+            list_instances = [await self.get_or_add(data=data) for data in data_list]
+
+            return list_instances
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            return None
+
+    async def get_or_add(self, data: dict = None) -> PublicSchema | None:
+        try:
+            filter_params = {
+                "pledge_cadastral_number__like": data.get("pledge_cadastral_number"),
+                "is_active": True,
+                "is_send_request_to_skb": False,
+            }
+            instance = await self.get_by_params(
+                filter=OrderFilter.model_validate(filter_params)
+            )
+            if not instance or (isinstance(instance, list) and len(instance) == 0):
+                instance = await self.add(data=data)
+            return instance
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
 
     async def create_skb_order(self, order_id: int) -> OrderSchemaOut | None:
         try:
-            order = await self.get(key="id", value=order_id)
+            order: OrderSchemaOut = await self.get(key="id", value=order_id)
 
             if isinstance(order, PublicSchema):
                 order = order.model_dump()
-
+            return order
             if order.get("is_active", None):
                 data = {
                     "Id": order.get("object_uuid", None),
@@ -73,9 +113,19 @@ class OrderService(BaseService):
                         value=order.get("id", None),
                         data={"is_send_request_to_skb": True},
                     )
+                    await utilities.send_email(
+                        to_email=order.email_for_answer,
+                        subject="Новый заказ выписки в СКБ-Техно",
+                        message=f"Заказ выписки по объекту id = {order.object_uuid} зарегистрирован в СКБ-Техно",
+                    )
                 return result
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
+            await utilities.send_email(
+                to_email=order.email_for_answer,
+                subject="Новый заказ выписки в СКБ-Техно",
+                message=f"Не удалось создать заказ выписки по объекту id = {order_id}: {exc}",
+            )
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=exc
             )

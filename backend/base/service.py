@@ -1,9 +1,7 @@
-import json
 import sys
 import traceback
 from typing import Generic, List, Type, TypeVar
 
-from fastapi import Response
 from fastapi_filter.contrib.sqlalchemy import Filter
 
 from backend.base.repository import AbstractRepository
@@ -33,6 +31,17 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             instance = await self.repo.add(data=data)
             return await self._transfer(instance)
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            return None
+
+    async def add_many(self, data_list: list[dict]) -> PublicSchema | None:
+        try:
+            list_instances = [
+                await instance
+                for instance in await self.repo.add_many(data_list=data_list)
+            ]
+            return list_instances
         except Exception:
             traceback.print_exc(file=sys.stdout)
             return None
@@ -94,37 +103,3 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return ex
-
-    async def healthcheck(self):
-        db_check = await utilities.health_check_database()
-        redis_check = await utilities.health_check_redis()
-        s3_check = await utilities.health_check_s3()
-        graylog_check = await utilities.health_check_graylog()
-
-        response_data = {
-            "db": db_check,
-            "redis": redis_check,
-            "s3": s3_check,
-            "graylog": graylog_check,
-        }
-
-        if all(response_data.values()):
-            status_code = 200
-            message = "All systems are operational."
-            is_all_services_active = True
-        else:
-            status_code = 500
-            message = "One or more components are not functioning properly."
-            is_all_services_active = False
-
-        response_body = {
-            "message": message,
-            "is_all_services_active": is_all_services_active,
-            "details": response_data,
-        }
-
-        return Response(
-            content=json.dumps(response_body),
-            media_type="application/json",
-            status_code=status_code,
-        )
