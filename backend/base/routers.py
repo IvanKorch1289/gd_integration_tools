@@ -100,7 +100,7 @@ class TechBV:
         operation_id="healthcheck_all_services",
     )
     async def healthcheck_all_services(self):
-        return await utilities.healthcheck_all_services()
+        return await utilities.health_check_all_services()
 
     @router.post(
         "/send_email",

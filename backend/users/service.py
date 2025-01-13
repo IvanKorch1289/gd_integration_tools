@@ -1,7 +1,6 @@
 from fastapi_filter.contrib.sqlalchemy import Filter
 
 from backend.base.service import BaseService
-from backend.core.utils import utilities
 from backend.users.repository import UserRepository
 from backend.users.schemas import UserSchemaOut
 

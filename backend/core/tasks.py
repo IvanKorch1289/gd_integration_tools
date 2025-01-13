@@ -28,7 +28,7 @@ celery_app.conf.update(
 order_service = OrderService()
 
 
-@celery_app.task(name="send_result_to_gd")
+@celery_app.task(name="test_task")
 def test_task(arg):
     return arg
 

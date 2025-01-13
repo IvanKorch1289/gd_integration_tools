@@ -150,17 +150,15 @@ class Utilities:
             )
 
     async def health_check_celery(self) -> str:
-        from celery.result import AsyncResult
-
-        from backend.core.tasks import test_task
+        from backend.core.tasks import celery_app
 
         try:
-            result = test_task.delay("test")
+            result = celery_app.send_task(
+                "test_task",
+                args=["test"],
+            )
 
-            async_result = AsyncResult(result.id, app=test_task.app)
-            result_value = async_result.get(timeout=3)
-
-            if result_value == "test":
+            if result.get() == "test":
                 return "Celery is working!"
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -186,7 +184,7 @@ class Utilities:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="S3 not connected: {str(exc)}",
+                detail=f"S3 not connected: {str(exc)}",
             )
 
     async def health_check_graylog(self) -> str:
@@ -229,7 +227,7 @@ class Utilities:
                 detail=f"SMTP not connected: {str(exc)}",
             )
 
-    async def healthcheck_all_services(self):
+    async def health_check_all_services(self):
         db_check = await utilities.health_check_database()
         redis_check = await utilities.health_check_redis()
         s3_check = await utilities.health_check_s3()

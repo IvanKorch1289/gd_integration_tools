@@ -2,7 +2,8 @@ import json
 import sys
 import traceback
 
-from fastapi import Depends, status
+import json_tricks
+from fastapi import Depends, Response, status
 from fastapi.responses import JSONResponse
 
 from backend.api_skb.enums import ResponseTypeChoices
@@ -37,7 +38,7 @@ class OrderService(BaseService):
             order = await super().add(data=data)
 
             if order:
-                check_services = await utilities.health_check_celery()
+                check_services = await utilities.health_check_all_services()
 
                 if check_services.get("is_all_services_active", None):
                     from backend.core.tasks import celery_app

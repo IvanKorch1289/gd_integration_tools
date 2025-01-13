@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from pydantic import EmailStr, Field, SecretStr
-from sqlalchemy_utils.types import PasswordType
 
 from backend.base.schemas import PublicSchema
 
