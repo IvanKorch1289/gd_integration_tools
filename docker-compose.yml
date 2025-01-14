@@ -4,6 +4,44 @@ services:
     ports:
       - "1025:1025"  # SMTP-порт
       - "8025:8025"  # Веб-интерфейс
+
+  prometheus:
+    image: prom/prometheus:v2.37.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 3030:9090
+    networks:
+      - my_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:9.4.7
+    container_name: grafana
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+    networks:
+      - my_network
+    restart: unless-stopped
+
   minio:
     image: minio/minio
     command: server /data
@@ -96,14 +134,29 @@ services:
     networks:
       - graylog-es-mongo-net
 
+  # fastapi:
+  #   build: .
+  #   container_name: fastapi
+  #   ports:
+  #     - 8000:8000
+  #   networks:
+  #     - my_network
+  #   depends_on:
+  #     - prometheus
+  #   restart: unless-stopped
+
 volumes:
   mongodb_data:
   esdata:
   graylog_data:
   graylog_journal:
+  prometheus_data:
+  grafana_data:
 
 networks:
   minio-mongo-net:
     driver: bridge
   graylog-es-mongo-net:
+    driver: bridge
+  my_network:
     driver: bridge

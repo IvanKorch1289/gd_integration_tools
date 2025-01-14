@@ -121,16 +121,20 @@ class Settings(BaseSettings):
     app_api_key: str = Field(default="2f0-2340f", env="APP_API_KEY")
     app_routes_without_api_key: list = [
         "/docs",
+        "/metrics",
         "/openapi.json",
         "/tech/healthcheck_database",
         "/tech/healthcheck_redis",
         "/tech/healthcheck_celery",
         "/tech/healthcheck_s3",
         "/tech/healthcheck_graylog",
+        "/tech/healthcheck_scheduler",
         "/tech/healthcheck_smtp",
         "/tech/healthcheck_all_services",
         "/tech/send_email",
     ]
+    app_allowed_hosts: list = ["example.com", "*.example.com", "localhost", "127.0.0.1"]
+    app_request_timeout: float = 50.0
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_skb_settings: APISSKBSettings = APISSKBSettings()

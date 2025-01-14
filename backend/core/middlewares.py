@@ -1,3 +1,4 @@
+import asyncio
 import time
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -111,3 +112,16 @@ class APIKeyMiddleware:
     async def verify_api_key(api_key: str):
         if api_key != settings.app_api_key:
             raise HTTPException(status_code=401, detail="Invalid API Key")
+
+
+class TimeoutMiddleware:
+    @classmethod
+    async def __call__(cls, request: Request, call_next):
+        try:
+            response = await asyncio.wait_for(
+                call_next(request), timeout=settings.app_request_timeout
+            )
+        except asyncio.TimeoutError:
+            return JSONResponse({"detail": "Request timed out"}, status_code=408)
+
+        return response

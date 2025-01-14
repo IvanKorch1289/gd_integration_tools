@@ -20,6 +20,12 @@ handler_fs = graypy.GELFUDPHandler(
     port=s.logging_settings.log_udp_port,
     facility="file_system",
 )
+handler_mail = graypy.GELFUDPHandler(
+    host=s.logging_settings.log_host,
+    port=s.logging_settings.log_udp_port,
+    facility="mail_server",
+)
+
 
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
@@ -37,3 +43,8 @@ fs_logger = logging.getLogger("fs")
 fs_logger.setLevel(logging.DEBUG)
 handler_fs.setFormatter(formatter)
 fs_logger.addHandler(handler_fs)
+
+mail_logger = logging.getLogger("mail_server")
+mail_logger.setLevel(logging.DEBUG)
+handler_fs.setFormatter(formatter)
+mail_logger.addHandler(handler_fs)

@@ -40,8 +40,10 @@ class OrderService(BaseService):
             if order:
                 check_services = await utilities.health_check_all_services()
 
-                if check_services.get("is_all_services_active", None):
-                    from backend.core.tasks import celery_app
+                response_body = await utilities.get_response_type_body(check_services)
+
+                if response_body.get("is_all_services_active", None):
+                    from core.background_tasks import celery_app
 
                     celery_app.send_task(
                         "send_requests_for_create_order",

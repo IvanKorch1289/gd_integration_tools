@@ -44,6 +44,9 @@ eventlet = "^0.38.2"
 json-tricks = "^3.17.3"
 aiosmtplib = "^3.0.2"
 sqlalchemy-utils = "^0.41.2"
+prometheus-fastapi-instrumentator = "^7.0.0"
+starlette-exporter = "^0.23.0"
+apscheduler = "^3.11.0"
 
 
 [build-system]

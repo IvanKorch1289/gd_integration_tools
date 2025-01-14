@@ -79,6 +79,14 @@ class TechBV:
         return await utilities.health_check_s3()
 
     @router.get(
+        "/healthcheck_scheduler",
+        summary="healthcheck_scheduler",
+        operation_id="healthcheck_scheduler",
+    )
+    async def healthcheck_scheduler(self):
+        return await utilities.health_check_scheduler()
+
+    @router.get(
         "/healthcheck_graylog",
         summary="healthcheck_graylog",
         operation_id="healthcheck_graylog",

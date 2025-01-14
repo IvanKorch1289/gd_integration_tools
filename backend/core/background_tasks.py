@@ -28,11 +28,6 @@ celery_app.conf.update(
 order_service = OrderService()
 
 
-@celery_app.task(name="test_task")
-def test_task(arg):
-    return arg
-
-
 @celery_app.task(
     name="send_result_to_gd",
     bind=True,
@@ -95,7 +90,7 @@ def send_requests_for_get_result(self, order_id):
             order: Order = await order_service.get(key="id", value=order_id)
 
             await utilities.send_email(
-                to_email=result.ee,
+                to_email=order.email_for_send,
                 subject=f"Получен результат заказа выписки по заказу {order.email_for_answer}",
                 message=f"Получен результат заказа выписки по объекту id = {order.email_for_answer}",
             )

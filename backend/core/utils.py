@@ -8,6 +8,9 @@ from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
 import aiosmtplib
 import json_tricks
 import socket
+from email.header import Header
+from email.mime.text import MIMEText
+from email.utils import formataddr
 from fastapi import HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
@@ -16,7 +19,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.database import session_manager
+from backend.core.logging_config import mail_logger
 from backend.core.redis import redis
+from backend.core.scheduler import scheduler_manager
 from backend.core.settings import settings
 from backend.core.storage import s3_bucket_service_factory
 
@@ -129,7 +134,7 @@ class Utilities:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Database not connected",
                 )
-            return "Database connection is OK"
+            return True
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -141,7 +146,7 @@ class Utilities:
         try:
             async with redis.connection() as r:
                 await r.ping()
-            return "Redis connection is OK"
+            return True
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -150,20 +155,19 @@ class Utilities:
             )
 
     async def health_check_celery(self) -> str:
-        from backend.core.tasks import celery_app
+        from core.background_tasks import celery_app
 
         try:
-            result = celery_app.send_task(
-                "test_task",
-                args=["test"],
-            )
+            inspect = celery_app.control.inspect()
+            ping_result = inspect.ping()
 
-            if result.get() == "test":
-                return "Celery is working!"
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Celery not connected",
-            )
+            if ping_result:
+                return True
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Celery not connected",
+                )
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -179,12 +183,28 @@ class Utilities:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="S3 not connected",
                 )
-            return "S3 connection is OK"
+            return True
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"S3 not connected: {str(exc)}",
+            )
+
+    async def health_check_scheduler(self) -> str:
+        try:
+            result = await scheduler_manager.check_status()
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Scheduler not connected",
+                )
+            return True
+        except Exception as exc:
+            traceback.print_exc(file=sys.stdout)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Scheduler not connected: {str(exc)}",
             )
 
     async def health_check_graylog(self) -> str:
@@ -198,7 +218,7 @@ class Utilities:
             )
             sock.sendall(b"Healthcheck test message")
             sock.close()
-            return "Graylog connection is OK"
+            return True
         except OSError as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -219,7 +239,7 @@ class Utilities:
             ) as smtp:
                 if username and password:
                     await smtp.login(username, password)
-                return "SMTP connection is OK"
+                return True
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -234,6 +254,7 @@ class Utilities:
         graylog_check = await utilities.health_check_graylog()
         smtp_check = await utilities.health_check_smtp()
         celery_check = await utilities.health_check_celery()
+        scheduler_manager_check = await utilities.health_check_scheduler()
 
         response_data = {
             "db": db_check,
@@ -242,6 +263,7 @@ class Utilities:
             "graylog": graylog_check,
             "smtp": smtp_check,
             "celery": celery_check,
+            "scheduler": scheduler_manager_check,
         }
 
         if all(response_data.values()):
@@ -271,6 +293,16 @@ class Utilities:
         use_tls = settings.mail_settings.mail_use_tls
         username = None if settings.app_debug else settings.mail_settings.mail_login
         password = None if settings.app_debug else settings.mail_settings.mail_login
+        sender = settings.mail_settings.mail_sender
+
+        mail_logger.info(
+            f"Sending email to {to_email} with subject '{subject}' and message '{message}'."
+        )
+
+        msg = MIMEText(message.encode("utf-8"), "plain", "utf-8")
+        msg["Subject"] = Header(subject, "utf-8")
+        msg["From"] = formataddr((str(Header("Отправитель", "utf-8")), sender))
+        msg["To"] = to_email
 
         try:
             async with aiosmtplib.SMTP(
@@ -279,16 +311,17 @@ class Utilities:
                 if username and password:
                     await smtp.login(username, password)
 
-                await smtp.sendmail(
-                    settings.mail_settings.mail_sender,
-                    to_email,
-                    f"Subject: {subject}\n\n{message}",
-                )
+                await smtp.send_message(msg)
 
             return JSONResponse({"status": "OK"})
 
-        except Exception as e:
-            return JSONResponse({"error": str(e)}, status_code=500)
+        except Exception as exc:
+            mail_logger.critical(f"Error for sending email to {to_email}: {str(exc)}.")
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+    async def get_response_type_body(self, response: Response):
+        check_services_body = response.body.decode("utf-8")
+        return json_tricks.loads(check_services_body)
 
 
 utilities = Utilities()
