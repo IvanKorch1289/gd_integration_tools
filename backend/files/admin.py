@@ -13,6 +13,17 @@ __all__ = (
 
 
 class FileAdmin(BaseAdmin, ModelView, model=File):
+    """
+    Административная панель для модели File.
+
+    Атрибуты:
+        column_list (List[str]): Список колонок, отображаемых в таблице.
+        column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
+        column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
+        column_filters (List[str]): Список колонок, по которым можно фильтровать.
+        form_create_rules (List[str]): Список полей, отображаемых в форме создания.
+    """
+
     column_list: List[str] = ["id", "object_uuid", "name", "created_at", "updated_at"]
     column_searchable_list: List[str] = ["id", "name", "object_uuid"]
     column_sortable_list: List[str] = [
@@ -27,6 +38,17 @@ class FileAdmin(BaseAdmin, ModelView, model=File):
 
 
 class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
+    """
+    Административная панель для модели OrderFile.
+
+    Атрибуты:
+        column_list (List[str]): Список колонок, отображаемых в таблице.
+        column_searchable_list (List[str]): Список колонок, по которым можно выполнять поиск.
+        column_sortable_list (List[str]): Список колонок, по которым можно сортировать.
+        column_filters (List[str]): Список колонок, по которым можно фильтровать.
+        form_create_rules (List[str]): Список полей, отображаемых в форме создания.
+    """
+
     column_list: List[str] = ["id", "order_id", "file_id"]
     column_searchable_list: List[str] = ["id", "order_id", "file_id"]
     column_sortable_list: List[str] = [

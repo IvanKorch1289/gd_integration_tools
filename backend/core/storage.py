@@ -4,7 +4,7 @@ import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 from io import BytesIO
-from typing import Any, AsyncGenerator, Union
+from typing import Any, AsyncGenerator, Optional, Union
 
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
@@ -13,9 +13,12 @@ from fastapi import Response, status
 
 from backend.core.logging_config import fs_logger
 from backend.core.settings import settings
+from backend.core.utils import singleton
 
 
 class LogField:
+    """Класс для хранения констант, используемых в логах."""
+
     TIMESTAMP = "timestamp"
     OPERATION = "operation"
     DETAILS = "details"
@@ -24,8 +27,13 @@ class LogField:
     EXCEPTION = "exception"
 
 
+@singleton
 class S3Service:
-    """Класс для взаимодействия с сервисом хранения объектов S3."""
+    """Класс для взаимодействия с сервисом хранения объектов S3.
+
+    Предоставляет методы для загрузки, получения, удаления и листинга объектов в S3,
+    а также для генерации временных ссылок для скачивания файлов.
+    """
 
     def __init__(
         self,
@@ -75,10 +83,9 @@ class S3Service:
         :return: Словарь с результатом операции.
         """
         async with self._create_s3_client() as client:
-            if isinstance(content, bytes):
-                buffer = BytesIO(content)
-            else:
-                buffer = BytesIO(content.encode("utf-8"))
+            buffer = BytesIO(
+                content if isinstance(content, bytes) else content.encode("utf-8")
+            )
             metadata = {"x-amz-meta-original-filename": original_filename}
             try:
                 await client.put_object(
@@ -88,17 +95,16 @@ class S3Service:
                     operation="upload_file_object",
                     details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
                 )
-                return Response(
-                    status_code=status.HTTP_200_OK, content="File upload successful"
-                )
+                return {"status": "success", "message": "File upload successful"}
             except Exception as ex:
                 await self.log_operation(
                     operation="upload_file_object", exception=f"Error: {ex}"
                 )
-                return Response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    content="File not uploaded",
-                )
+                return {
+                    "status": "error",
+                    "message": "File not uploaded",
+                    "error": str(ex),
+                }
 
     async def list_objects(self) -> list[str]:
         """
@@ -107,9 +113,7 @@ class S3Service:
         :return: Список ключей объектов.
         """
         async with self._create_s3_client() as client:
-            response = await client.list_objects_v2(
-                Bucket=self.bucket_name,
-            )
+            response = await client.list_objects_v2(Bucket=self.bucket_name)
             storage_content: list[str] = []
 
             try:
@@ -122,7 +126,7 @@ class S3Service:
 
             return storage_content
 
-    async def get_file_object(self, key: str) -> tuple[StreamingBody, dict] | None:
+    async def get_file_object(self, key: str) -> Optional[tuple[StreamingBody, dict]]:
         """
         Получает объект из S3.
 
@@ -137,14 +141,8 @@ class S3Service:
                 return body, metadata
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
-                    return Response(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        content="File not founded",
-                    )
-                return Response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    content="Unsuccessful",
-                )
+                    return None
+                raise ex
 
     async def delete_file_object(self, key: str) -> dict:
         """
@@ -159,23 +157,26 @@ class S3Service:
                 await self.log_operation(
                     operation="delete_file_object", details="success"
                 )
-                return {"delete_file_object": "success"}
+                return {"status": "success", "message": "File deleted successfully"}
             except Exception as ex:
                 await self.log_operation(
                     operation="delete_file_object", exception=f"Error: {ex}"
                 )
-                return Response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    content="Unsuccessful",
-                )
+                return {
+                    "status": "error",
+                    "message": "File deletion failed",
+                    "error": str(ex),
+                }
 
-    async def generate_download_url(self, key: str, expires_in: int = 3600) -> str:
+    async def generate_download_url(
+        self, key: str, expires_in: int = 3600
+    ) -> Optional[str]:
         """
         Генерирует временную ссылку для скачивания файла из S3.
 
         :param key: Ключ объекта в S3.
-        :param expires_in: Время жизни ссылки в секундах.
-        :return: Временная ссылка для скачивания файла.
+        :param expires_in: Время жизни ссылки в секундах (по умолчанию 3600 секунд).
+        :return: Временная ссылка для скачивания файла или None в случае ошибки.
         """
         async with self._create_s3_client() as client:
             try:
@@ -189,16 +190,13 @@ class S3Service:
                 await self.log_operation(
                     operation="generate_download_url", exception=f"Error: {ex}"
                 )
-                return Response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    content="Unsuccessful",
-                )
+                return None
 
     async def log_operation(
         self,
         operation: str,
-        details: str | None = None,
-        exception: Exception | None = None,
+        details: Optional[str] = None,
+        exception: Optional[Exception] = None,
     ) -> None:
         """
         Логирует операцию и её результат.
@@ -226,19 +224,26 @@ class S3Service:
             traceback.print_exc(file=sys.stdout)
 
     async def check_bucket_exists(self) -> bool:
-        """Проверяет существование бакета в MinIO."""
+        """Проверяет существование бакета в S3.
+
+        :return: True, если бакет существует, иначе False.
+        """
         async with self._create_s3_client() as client:
             try:
                 buckets_dict = await client.list_buckets()
                 return any(
                     bucket.get("Name", None) == self.bucket_name
-                    for bucket in buckets_dict.get("Buckets", None)
+                    for bucket in buckets_dict.get("Buckets", [])
                 )
             except Exception:
                 return False
 
 
 def s3_bucket_service_factory() -> S3Service:
+    """Фабрика для создания экземпляра S3Service с настройками из конфигурации.
+
+    :return: Экземпляр S3Service.
+    """
     return S3Service(
         bucket_name=settings.storage_settings.fs_bucket,
         endpoint=settings.storage_settings.fs_endpoint,

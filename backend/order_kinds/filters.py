@@ -7,6 +7,18 @@ __all__ = ("OrderKindFilter",)
 
 
 class OrderKindFilter(Filter):
+    """
+    Фильтр для модели OrderKind.
+
+    Атрибуты:
+        name__like (str | None): Фильтр по названию вида заказа с использованием оператора LIKE.
+        description__like (str | None): Фильтр по описанию вида заказа с использованием оператора LIKE.
+        skb_uuid__like (str | None): Фильтр по UUID SKB с использованием оператора LIKE.
+
+    Константы:
+        model: Модель, к которой применяется фильтр (OrderKind).
+    """
+
     name__like: str | None = None
     description__like: str | None = None
     skb_uuid__like: str | None = None

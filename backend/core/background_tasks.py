@@ -9,9 +9,10 @@ from backend.orders.models import Order
 from backend.orders.service import OrderService
 
 
+# Настройка подключения к Redis
 redis_url = f"redis://{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}/{settings.redis_settings.redis_db_queue}"
 
-
+# Инициализация Celery
 celery_app = Celery("tasks", broker=redis_url, backend=redis_url)
 celery_app.conf.update(
     task_serializer="json",
@@ -24,8 +25,35 @@ celery_app.conf.update(
     task_reject_on_worker_lost=True,
 )
 
-
+# Инициализация сервиса заказов
 order_service = OrderService()
+
+
+def run_async_task(task):
+    """Запускает асинхронную задачу в синхронном контексте.
+
+    Args:
+        task: Асинхронная задача для выполнения.
+
+    Returns:
+        Результат выполнения задачи.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    try:
+        result = loop.run_until_complete(task)
+        if isinstance(result, JSONResponse):
+            result = result.body.decode("utf-8")
+        else:
+            result = json_tricks.dumps(result).encode("utf-8")
+        return result
+    finally:
+        if loop.is_closed():
+            loop.close()
 
 
 @celery_app.task(
@@ -36,6 +64,15 @@ order_service = OrderService()
     retry_backoff=True,
 )
 def send_result_to_gd(self, order_id: int):
+    """Отправляет результат заказа в GD (Государственный Депозитарий).
+
+    Args:
+        order_id (int): Идентификатор заказа.
+
+    Returns:
+        dict: Данные заказа, включая ссылки на файлы и результат.
+    """
+
     async def inner_send_result_to_gd():
         try:
             order: Order = await order_service.get(key="id", value=order_id)
@@ -49,19 +86,9 @@ def send_result_to_gd(self, order_id: int):
 
             return data
         except Exception as exc:
-            self.retry(exc=(exc, order_id), throw=False)
+            self.retry(exc=exc, throw=False)
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    try:
-        loop.run_until_complete(inner_send_result_to_gd())
-    finally:
-        if loop.is_closed():
-            loop.close()
+    return run_async_task(inner_send_result_to_gd())
 
 
 @celery_app.task(
@@ -72,6 +99,15 @@ def send_result_to_gd(self, order_id: int):
     retry_backoff=True,
 )
 def send_requests_for_get_result(self, order_id):
+    """Отправляет запросы для получения результата заказа.
+
+    Args:
+        order_id (int): Идентификатор заказа.
+
+    Returns:
+        str: Результат выполнения запроса.
+    """
+
     async def inner_send_requests_for_get_result():
         try:
             result = await order_service.get_order_file_and_json_from_skb(
@@ -97,24 +133,9 @@ def send_requests_for_get_result(self, order_id):
 
             return str(result)
         except Exception as exc:
-            self.retry(exc=(exc, order_id), throw=False)
+            self.retry(exc=exc, throw=False)
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    try:
-        result = loop.run_until_complete(inner_send_requests_for_get_result())
-        if isinstance(result, JSONResponse):
-            result = result.body.decode("utf-8")
-        else:
-            result = json_tricks.dumps(result).encode("utf-8")
-        return result
-    finally:
-        if loop.is_closed():
-            loop.close()
+    return run_async_task(inner_send_requests_for_get_result())
 
 
 @celery_app.task(
@@ -125,6 +146,15 @@ def send_requests_for_get_result(self, order_id):
     retry_backoff=True,
 )
 def send_requests_for_create_order(self, order_id):
+    """Отправляет запросы для создания заказа.
+
+    Args:
+        order_id (int): Идентификатор заказа.
+
+    Returns:
+        str: Результат выполнения запроса.
+    """
+
     async def inner_send_requests_for_create_order():
         try:
             result = await order_service.create_skb_order(order_id=order_id)
@@ -137,21 +167,6 @@ def send_requests_for_create_order(self, order_id):
 
             return result
         except Exception as exc:
-            self.retry(exc=(exc, order_id), throw=False)
+            self.retry(exc=exc, throw=False)
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    try:
-        result = loop.run_until_complete(inner_send_requests_for_create_order())
-        if isinstance(result, JSONResponse):
-            result = result.body.decode("utf-8")
-        else:
-            result = json_tricks.dumps(result).encode("utf-8")
-        return result
-    finally:
-        if loop.is_closed():
-            loop.close()
+    return run_async_task(inner_send_requests_for_create_order())

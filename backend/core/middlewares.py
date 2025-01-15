@@ -1,3 +1,6 @@
+import re
+from typing import Callable
+
 import asyncio
 import time
 from fastapi import HTTPException, Request, Response
@@ -9,7 +12,11 @@ from backend.core.settings import settings
 
 class AsyncListIterator:
     """
-    Класс, реализующий асинхронный итератор над списком байтов.
+    Асинхронный итератор для последовательного обхода списка байтовых чанков.
+
+    Attributes:
+        chunks (list): Список байтовых чанков.
+        index (int): Текущий индекс в списке чанков.
     """
 
     def __init__(self, chunks):
@@ -20,6 +27,12 @@ class AsyncListIterator:
         return self
 
     async def __anext__(self):
+        """
+        Возвращает следующий чанк из списка.
+
+        Raises:
+            StopAsyncIteration: Если достигнут конец списка.
+        """
         try:
             result = self.chunks[self.index]
             self.index += 1
@@ -29,7 +42,23 @@ class AsyncListIterator:
 
 
 class LoggingMiddleware:
-    async def __call__(self, request: Request, call_next):
+    """
+    Middleware для логирования входящих запросов и исходящих ответов.
+
+    Логирует метод, URL, тело запроса (для POST), тело ответа и время обработки.
+    """
+
+    async def __call__(self, request: Request, call_next: Callable):
+        """
+        Обрабатывает входящий запрос и логирует информацию о нем.
+
+        Args:
+            request (Request): Входящий HTTP-запрос.
+            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
+
+        Returns:
+            Response: HTTP-ответ.
+        """
         app_logger.info(f"Запрос: {request.method} {request.url}")
 
         start_time = time.time()
@@ -62,7 +91,15 @@ class LoggingMiddleware:
 
     @staticmethod
     async def intercept_response(response: Response) -> bytes:
-        """Собирает и возвращает тело ответа."""
+        """
+        Собирает и возвращает тело ответа.
+
+        Args:
+            response (Response): HTTP-ответ.
+
+        Returns:
+            bytes: Тело ответа в виде байтов.
+        """
         response_body_chunks = []
         async for chunk in response.body_iterator:
             response_body_chunks.append(chunk)
@@ -70,33 +107,43 @@ class LoggingMiddleware:
 
     @classmethod
     async def capture_and_return_response(cls, response: Response):
-        """Захватывает тело ответа, логирует его и возвращает оригинальный поток данных."""
-        original_body = await cls.intercept_response(response)
+        """
+        Захватывает тело ответа, логирует его и возвращает оригинальный поток данных.
 
+        Args:
+            response (Response): HTTP-ответ.
+
+        Returns:
+            bytes: Тело ответа в виде байтов.
+        """
+        original_body = await cls.intercept_response(response)
         response.body_iterator = AsyncListIterator([original_body])
         return original_body
 
-    async def log_response(self, response: Response):
-        """Логирует информацию об ответе."""
-        captured_body = await self.capture_and_return_response(response)
-        content_type = response.headers.get("Content-Type", "").lower()
-        if "text" in content_type or "json" in content_type:
-            try:
-                app_logger.info(f"Тело ответа: {captured_body.decode('utf-8')}")
-            except UnicodeDecodeError as e:
-                app_logger.warning(
-                    f"Произошла ошибка при декодировании тела ответа: {e}"
-                )
-        else:
-            app_logger.debug("Тело ответа не было декодировано.")
-
-        app_logger.info(f"Ответ: {response.status_code}")
-
 
 class APIKeyMiddleware:
-    async def __call__(self, request: Request, call_next) -> Response:
-        if request.url.path in settings.app_routes_without_api_key:
+    """
+    Middleware для проверки API-ключа в заголовке запроса.
+
+    Если маршрут не требует API-ключа, запрос пропускается без проверки.
+    """
+
+    async def __call__(self, request: Request, call_next: Callable) -> Response:
+        """
+        Проверяет наличие и валидность API-ключа в заголовке запроса.
+
+        Args:
+            request (Request): Входящий HTTP-запрос.
+            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
+
+        Returns:
+            Response: HTTP-ответ.
+        """
+        # Проверяем, требуется ли API-ключ для текущего пути
+        if self._is_path_excluded(request.url.path):
             return await call_next(request)
+
+        # Проверяем наличие и валидность API-ключа
         try:
             api_key = request.headers["X-Api-Key"]
             await self.verify_api_key(api_key)
@@ -105,18 +152,63 @@ class APIKeyMiddleware:
         except HTTPException as e:
             return JSONResponse({"detail": e.detail}, status_code=e.status_code)
 
+        # Продолжаем обработку запроса
         response = await call_next(request)
         return response
 
     @staticmethod
     async def verify_api_key(api_key: str):
+        """
+        Проверяет валидность API-ключа.
+
+        Args:
+            api_key (str): API-ключ из заголовка запроса.
+
+        Raises:
+            HTTPException: Если API-ключ невалиден.
+        """
         if api_key != settings.app_api_key:
             raise HTTPException(status_code=401, detail="Invalid API Key")
 
+    def _is_path_excluded(self, path: str) -> bool:
+        """
+        Проверяет, исключен ли путь из проверки API-ключа.
+
+        Args:
+            path (str): Путь запроса.
+
+        Returns:
+            bool: True, если путь исключен, иначе False.
+        """
+        # Проверяем, соответствует ли путь любому из исключенных маршрутов
+        for excluded_path in settings.app_routes_without_api_key:
+            pattern = excluded_path.replace("*", ".*")
+            # Добавляем начало и конец строки для точного совпадения
+            pattern = f"^{pattern}$"
+            if re.match(pattern, path):
+                return True
+        return False
+
 
 class TimeoutMiddleware:
+    """
+    Middleware для установки таймаута на обработку запроса.
+
+    Если запрос обрабатывается дольше указанного времени, возвращается ошибка 408.
+    """
+
     @classmethod
-    async def __call__(cls, request: Request, call_next):
+    async def __call__(cls, request: Request, call_next: Callable):
+        """
+        Устанавливает таймаут на обработку запроса.
+
+        Args:
+            request (Request): Входящий HTTP-запрос.
+            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
+
+        Returns:
+            Response: HTTP-ответ.
+        """
         try:
             response = await asyncio.wait_for(
                 call_next(request), timeout=settings.app_request_timeout

@@ -23,30 +23,54 @@ router = APIRouter()
 
 @cbv(router)
 class FileCBV:
-    """CBV-класс для работы с файлами в БД."""
+    """
+    CBV-класс для работы с файлами в базе данных.
+
+    Предоставляет методы для получения, добавления, обновления и удаления файлов.
+    """
 
     service = FileService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
     async def get_files(self, x_api_key: str = Header(...)):
+        """
+        Получить все файлы из базы данных.
+
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список всех файлов.
+        """
         return await self.service.all()
 
     @router.get(
         "/id/{file_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
     )
     async def get_file(self, file_id: int, x_api_key: str = Header(...)):
+        """
+        Получить файл по его ID.
+
+        :param file_id: ID файла.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Файл с указанным ID.
+        """
         return await self.service.get(key="id", value=file_id)
 
     @router.get(
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
-        summary="Получить файл по полю",
+        summary="Получить файл по фильтру",
     )
     async def get_by_filter(
         self,
         file_filter: FileFilter = FilterDepends(FileFilter),
         x_api_key: str = Header(...),
     ):
+        """
+        Получить файлы, соответствующие указанному фильтру.
+
+        :param file_filter: Фильтр для поиска файлов.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список файлов, соответствующих фильтру.
+        """
         return await self.service.get_by_params(filter=file_filter)
 
     @router.post(
@@ -55,6 +79,13 @@ class FileCBV:
     async def add_file(
         self, request_schema: FileSchemaIn, x_api_key: str = Header(...)
     ):
+        """
+        Добавить новый файл в базу данных.
+
+        :param request_schema: Данные для создания файла.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Созданный файл.
+        """
         return await self.service.add(data=request_schema.model_dump())
 
     @router.post(
@@ -65,6 +96,13 @@ class FileCBV:
     async def add_many_files(
         self, request_schema: List[FileSchemaIn], x_api_key: str = Header(...)
     ):
+        """
+        Добавить несколько файлов в базу данных.
+
+        :param request_schema: Список данных для создания файлов.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список созданных файлов.
+        """
         data_list = [schema.model_dump() for schema in request_schema]
         return await self.service.add_many(data_list=data_list)
 
@@ -76,6 +114,14 @@ class FileCBV:
     async def update_file(
         self, request_schema: FileSchemaIn, file_id: int, x_api_key: str = Header(...)
     ):
+        """
+        Обновить файл по его ID.
+
+        :param request_schema: Данные для обновления файла.
+        :param file_id: ID файла.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Обновленный файл.
+        """
         return await self.service.update(
             key="id", value=file_id, data=request_schema.model_dump()
         )
@@ -86,6 +132,13 @@ class FileCBV:
         summary="Удалить файл по ID",
     )
     async def delete_file(self, file_id: int, x_api_key: str = Header(...)):
+        """
+        Удалить файл по его ID.
+
+        :param file_id: ID файла.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Сообщение об успешном удалении.
+        """
         return await self.service.delete(key="id", value=file_id)
 
 
@@ -94,7 +147,11 @@ storage_router = APIRouter()
 
 @cbv(storage_router)
 class StorageCBV:
-    """CBV-класс для работы с файлами в S3."""
+    """
+    CBV-класс для работы с файлами в S3.
+
+    Предоставляет методы для загрузки, скачивания, удаления и получения ссылок на файлы.
+    """
 
     @storage_router.post(
         "/upload_file",
@@ -108,10 +165,12 @@ class StorageCBV:
         service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
-        """Загрузка файла в S3.
+        """
+        Загрузить файл в S3.
 
-        :param file: Файл, который нужно загрузить.
+        :param file: Файл для загрузки.
         :param service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
         :return: Загруженный файл.
         """
         content = await file.read()
@@ -132,10 +191,12 @@ class StorageCBV:
         service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
-        """Скачивание файла из S3.
+        """
+        Скачать файл из S3.
 
         :param file_uuid: UUID файла.
-        :param service:param Сервис для работы с S3.
+        :param service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
         :return: Потоковый ответ с содержимым файла.
         """
         return await get_streaming_response(file_uuid, service)
@@ -150,14 +211,15 @@ class StorageCBV:
         self,
         file_uuid: str,
         service: S3Service = Depends(s3_bucket_service_factory),
-        status_code=status.HTTP_204_NO_CONTENT,
         x_api_key: str = Header(...),
     ):
-        """Удаление файла из S3.
+        """
+        Удалить файл из S3.
 
         :param file_uuid: UUID файла.
         :param service: Сервис для работы с S3.
-        :return: Нет возврата, так как статус-код 204 No Content.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Нет возвращаемого значения (статус-код 204 No Content).
         """
         await service.delete_file_object(key=file_uuid)
 
@@ -173,10 +235,12 @@ class StorageCBV:
         service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
-        """Получение ссылки на скачивание файла из S3.
+        """
+        Получить ссылку для скачивания файла из S3.
 
         :param file_uuid: UUID файла.
         :param service: Сервис для работы с S3.
-        :return: Ссылку на скачивание файла.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Ссылка для скачивания файла.
         """
         return await service.generate_download_url(key=file_uuid)

@@ -5,46 +5,47 @@ import graypy
 from backend.core.settings import settings as s
 
 
-handler_api = graypy.GELFUDPHandler(
-    host=s.logging_settings.log_host,
-    port=s.logging_settings.log_udp_port,
-    facility="application",
-)
-handler_db = graypy.GELFUDPHandler(
-    host=s.logging_settings.log_host,
-    port=s.logging_settings.log_udp_port,
-    facility="database",
-)
-handler_fs = graypy.GELFUDPHandler(
-    host=s.logging_settings.log_host,
-    port=s.logging_settings.log_udp_port,
-    facility="file_system",
-)
-handler_mail = graypy.GELFUDPHandler(
-    host=s.logging_settings.log_host,
-    port=s.logging_settings.log_udp_port,
-    facility="mail_server",
-)
+# Настройки для Graylog
+GRAYLOG_HOST = s.logging_settings.log_host
+GRAYLOG_PORT = s.logging_settings.log_udp_port
+
+# Создаем список логгеров и их настроек
+LOGGERS = [
+    {"name": "application", "facility": "application"},
+    {"name": "database", "facility": "database"},
+    {"name": "storage", "facility": "file_system"},
+    {"name": "mail", "facility": "mail_server"},
+    {"name": "scheduler", "facility": "scheduler"},
+]
+
+# Форматирование логов
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+# Функция для настройки логгеров
 
 
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+def setup_loggers():
+    for logger_config in LOGGERS:
+        # Создаем обработчик для Graylog
+        graylog_handler = graypy.GELFUDPHandler(
+            host=GRAYLOG_HOST,
+            port=GRAYLOG_PORT,
+            facility=logger_config["facility"],
+        )
+        graylog_handler.setFormatter(formatter)
 
-app_logger = logging.getLogger("api")
-app_logger.setLevel(logging.DEBUG)
-handler_api.setFormatter(formatter)
-app_logger.addHandler(handler_api)
+        # Настраиваем логгер
+        logger = logging.getLogger(logger_config["name"])
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(graylog_handler)
 
-db_logger = logging.getLogger("db")
-db_logger.setLevel(logging.DEBUG)
-handler_db.setFormatter(formatter)
-db_logger.addHandler(handler_db)
 
-fs_logger = logging.getLogger("fs")
-fs_logger.setLevel(logging.DEBUG)
-handler_fs.setFormatter(formatter)
-fs_logger.addHandler(handler_fs)
+# Вызываем функцию настройки логгеров
+setup_loggers()
 
-mail_logger = logging.getLogger("mail_server")
-mail_logger.setLevel(logging.DEBUG)
-handler_fs.setFormatter(formatter)
-mail_logger.addHandler(handler_fs)
+# Создаем логгеры для использования в других частях кода
+app_logger = logging.getLogger("application")
+db_logger = logging.getLogger("database")
+fs_logger = logging.getLogger("storage")
+mail_logger = logging.getLogger("mail")
+scheduler_logger = logging.getLogger("scheduler")

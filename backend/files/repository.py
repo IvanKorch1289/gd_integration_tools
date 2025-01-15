@@ -15,17 +15,37 @@ __all__ = ("FileRepository",)
 
 
 class FileRepository(SQLAlchemyRepository):
+    """
+    Репозиторий для работы с таблицей файлов (File) и связующей таблицей (OrderFile).
+
+    Атрибуты:
+        model (Type[ConcreteTable]): Модель таблицы файлов (File).
+        link_model (Type[ConcreteTable]): Модель связующей таблицы (OrderFile).
+        response_schema (Type[FileSchemaOut]): Схема для преобразования данных в ответ.
+        load_joined_models (bool): Флаг для загрузки связанных моделей (по умолчанию False).
+    """
+
     model = File
     link_model = OrderFile
     response_schema = FileSchemaOut
-    load_joinded_models = False
+    load_joined_models = False
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add_link(
         self, session: AsyncSession, data: dict[str, Any]
     ) -> ConcreteTable:
+        """
+        Добавляет связь между файлом и заказом в связующую таблицу (OrderFile).
+
+        :param session: Асинхронная сессия SQLAlchemy.
+        :param data: Данные для создания связи (содержит order_id и file_id).
+        :return: Объект созданной связи или исключение, если произошла ошибка.
+        """
         try:
+            # Вызов метода add из родительского класса для добавления файла (если требуется)
             super().add(data=data)
+
+            # Добавление записи в связующую таблицу
             result: Result = await session.execute(
                 insert(self.link_model).values(**data).returning(self.link_model)
             )

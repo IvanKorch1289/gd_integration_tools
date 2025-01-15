@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from functools import wraps
-from typing import AsyncGenerator, Callable, List
+from typing import AsyncGenerator, Callable, List, Optional
 
 from fastapi import Depends
 from sqlalchemy import text
@@ -17,9 +17,17 @@ from backend.core.settings import settings
 
 
 class DatabaseInitializer:
-    """Класс инициализации движка БД и получения сессий"""
+    """Класс для инициализации движка базы данных и управления сессиями."""
 
     def __init__(self, url: str, echo: bool, pool_size: int, max_overflow: int):
+        """
+        Инициализирует движок базы данных и настраивает сессии.
+
+        :param url: URL базы данных.
+        :param echo: Логирование SQL-запросов.
+        :param pool_size: Размер пула соединений.
+        :param max_overflow: Максимальное количество соединений сверх пула.
+        """
         self.async_engine: AsyncEngine = create_async_engine(
             url=url,
             echo=echo,
@@ -36,13 +44,9 @@ class DatabaseInitializer:
         )
         self.register_logging_events()
 
-    def get_all_tables(self) -> List[str]:
-        with self.engine.connect() as conn:
-            self.inspector.reflect(conn)
-        tables = self.inspector.get_table_names()
-        return tables
-
     def register_logging_events(self):
+        """Регистрирует события для логирования SQL-запросов."""
+
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
@@ -64,6 +68,7 @@ class DatabaseInitializer:
         )
 
 
+# Инициализация базы данных с настройками из конфигурации
 database = DatabaseInitializer(
     url=settings.database_settings.db_url_asyncpg,
     echo=settings.database_settings.db_echo,
@@ -79,6 +84,11 @@ class DatabaseSessionManager:
     """
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
+        """
+        Инициализирует менеджер сессий.
+
+        :param session_maker: Фабрика сессий, созданная с помощью async_sessionmaker.
+        """
         self.session_maker = session_maker
 
     @asynccontextmanager
@@ -86,6 +96,8 @@ class DatabaseSessionManager:
         """
         Создаёт и предоставляет новую сессию базы данных.
         Гарантирует закрытие сессии по завершении работы.
+
+        :yield: Асинхронная сессия базы данных.
         """
         async with self.session_maker() as session:
             try:
@@ -100,6 +112,9 @@ class DatabaseSessionManager:
     async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:
         """
         Управление транзакцией: коммит при успехе, откат при ошибке.
+
+        :param session: Сессия базы данных.
+        :yield: None
         """
         try:
             yield
@@ -111,8 +126,9 @@ class DatabaseSessionManager:
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
-        Зависимость для FastAPI,
-        возвращающая сессию без управления транзакцией.
+        Зависимость для FastAPI, возвращающая сессию без управления транзакцией.
+
+        :yield: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
             yield session
@@ -120,22 +136,26 @@ class DatabaseSessionManager:
     async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
         Зависимость для FastAPI, возвращающая сессию с управлением транзакцией.
+
+        :yield: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
             async with self.transaction(session):
                 yield session
 
-    def connection(self, isolation_level: str | None = None, commit: bool = True):
+    def connection(
+        self, isolation_level: Optional[str] = None, commit: bool = True
+    ) -> Callable:
         """
         Декоратор для управления сессией с возможностью
         настройки уровня изоляции и коммита.
-        Параметры:
-        - `isolation_level`: уровень изоляции для транзакции
-           (например, "SERIALIZABLE").
-        - `commit`: если `True`, выполняется коммит после вызова метода.
+
+        :param isolation_level: Уровень изоляции для транзакции (например, "SERIALIZABLE").
+        :param commit: Если True, выполняется коммит после вызова метода.
+        :return: Декорированный метод.
         """
 
-        def decorator(method):
+        def decorator(method: Callable) -> Callable:
             @wraps(method)
             async def wrapper(*args, **kwargs):
                 async with self.session_maker() as session:
@@ -168,12 +188,18 @@ class DatabaseSessionManager:
         """
         Возвращает зависимость для FastAPI,
         обеспечивающую доступ к сессии без транзакции.
+
+        :return: Зависимость для FastAPI.
         """
         return Depends(self.get_session)
 
     @property
     def transaction_session_dependency(self) -> Callable:
-        """Возвращает зависимость для FastAPI с поддержкой транзакций."""
+        """
+        Возвращает зависимость для FastAPI с поддержкой транзакций.
+
+        :return: Зависимость для FastAPI.
+        """
         return Depends(self.get_transaction_session)
 
 
@@ -183,16 +209,3 @@ session_manager = DatabaseSessionManager(session_maker=database.async_session_ma
 # Зависимости FastAPI для использования сессий
 SessionDep = session_manager.session_dependency
 TransactionSessionDep = session_manager.transaction_session_dependency
-
-# Пример использования декоратора
-# @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
-# async def example_method(*args, session: AsyncSession, **kwargs):
-#     # Логика метода
-#     pass
-
-
-# Пример использования зависимости
-# @router.post("/register/")
-# async def register_user(user_data: SUserRegister, session: AsyncSession = TransactionSessionDep):
-#     # Логика эндпоинта
-#     pass

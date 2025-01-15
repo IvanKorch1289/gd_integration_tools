@@ -1,132 +1,65 @@
 import json
 import sys
 import traceback
-from datetime import datetime
-from functools import wraps
-from typing import Any, Awaitable, Callable, Dict, List, TypeVar, Union
+from typing import Any, Dict, List, TypeVar
 
-import aiosmtplib
 import json_tricks
-import socket
-from email.header import Header
-from email.mime.text import MIMEText
-from email.utils import formataddr
 from fastapi import HTTPException, Response, status
-from fastapi.responses import JSONResponse
-from passlib.context import CryptContext
-from pydantic import BaseModel, SecretStr
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.database import session_manager
 from backend.core.logging_config import mail_logger
-from backend.core.redis import redis
-from backend.core.scheduler import scheduler_manager
 from backend.core.settings import settings
-from backend.core.storage import s3_bucket_service_factory
 
 
 T = TypeVar("T")
 ParamsType = Dict[str, Any]
 
+cache_expire_seconds = settings.redis_settings.redis_cache_expire_seconds
 
+
+def singleton(cls):
+    """Декоратор для создания Singleton-класса.
+
+    Args:
+        cls: Класс, который нужно сделать Singleton.
+
+    Returns:
+        Функция, которая возвращает единственный экземпляр класса.
+    """
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return get_instance
+
+
+@singleton
 class Utilities:
-    """Класс вспомогательных функций."""
+    """Класс вспомогательных функций для работы с внешними сервисами и утилитами.
 
-    async def hash_password(self, password):
-        if isinstance(password, SecretStr):
-            unsecret_password = password.get_secret_value()
-        else:
-            unsecret_password = password
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        return pwd_context.hash(unsecret_password)
-
-    def caching(self, schema: BaseModel = None, expire: int = 600) -> Callable:
-        """
-        Фабрика декораторов для кэширования результатов функций в Redis.
-        :param expire:return: Время жизни записи в кэше в секундах.
-        :return: Декоратор для кэширования.
-        """
-
-        async def get_cached_data(key: str) -> Union[List[BaseModel], BaseModel, None]:
-            """Функция для получения данных из кеша."""
-            async with redis.connection() as r:
-                cached_data = await r.get(key)
-                if cached_data is not None:
-                    try:
-                        if isinstance(cached_data, bytes):
-                            cached_data = cached_data.decode("utf-8")
-
-                        decoded_data = json_tricks.loads(cached_data)
-
-                        if isinstance(decoded_data, list):
-                            return [json_tricks.loads(item) for item in decoded_data]
-                        else:
-                            return decoded_data
-                    except (json.JSONDecodeError, ValueError) as exc:
-                        raise HTTPException(
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Ошибка при декодировании значения из кеша: {exc}",
-                        )
-            return None
-
-        async def cache_data(
-            key: str,
-            data: Union[str, dict, List[BaseModel], BaseModel],
-            *,
-            expire: int = 3600,
-        ) -> None:
-            """
-            Функция для сохранения данных в кеш.
-            :param key: Ключ для кеша.
-            :param data: Данные для сохранения в кеш.
-            :param expire: Время жизни кеша в секундах.
-            """
-
-            def _encode(obj):
-                if isinstance(obj, datetime) and not isinstance(obj, dict):
-                    return obj.isoformat()
-                elif isinstance(obj, BaseModel):
-                    return obj.model_dump_json()
-                return obj
-
-            def custom_dumps(data):
-                return json_tricks.dumps(data, extra_obj_encoders=[_encode])
-
-            async with redis.connection() as r:
-                if data is None:
-                    return None
-                if isinstance(data, JSONResponse):
-                    encoded_data = data.body.decode("utf-8")
-                else:
-                    encoded_data = custom_dumps(data).encode("utf-8")
-                await r.set(key, encoded_data, expire=expire)
-
-        def decorator(
-            func: Callable[[Any], Awaitable[Union[List[BaseModel], BaseModel]]]
-        ) -> Callable[[Any], Awaitable[Union[List[BaseModel], BaseModel]]]:
-            @wraps(func)
-            async def wrapper(
-                *args: Any, **kwargs: Any
-            ) -> Union[List[BaseModel], BaseModel]:
-                class_name = args[0].__class__.__name__
-                method_name = func.__name__
-                key = f"{class_name}.{method_name}.{kwargs}"
-                cached_data = await get_cached_data(key)
-                if cached_data is not None:
-                    return cached_data
-
-                result = await func(*args, **kwargs)
-                await cache_data(key, result)
-
-                return result
-
-            return wrapper
-
-        return decorator
+    Предоставляет методы для проверки состояния сервисов (база данных, Redis, S3 и т.д.),
+    а также для выполнения задач, таких как отправка электронной почты.
+    """
 
     @session_manager.connection(isolation_level="READ COMMITTED")
-    async def health_check_database(self, session: AsyncSession) -> str:
+    async def health_check_database(self, session: AsyncSession) -> bool:
+        """Проверяет подключение к базе данных.
+
+        Args:
+            session (AsyncSession): Асинхронная сессия для выполнения запроса.
+
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к базе данных не удалось.
+        """
         try:
             result = await session.execute(text("SELECT 1"))
             if result.scalar_one_or_none() != 1:
@@ -142,9 +75,19 @@ class Utilities:
                 detail=f"Database not connected: {str(exc)}",
             )
 
-    async def health_check_redis(self) -> str:
+    async def health_check_redis(self) -> bool:
+        """Проверяет подключение к Redis.
+
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к Redis не удалось.
+        """
+        from backend.core.redis import redis_client
+
         try:
-            async with redis.connection() as r:
+            async with redis_client.connection() as r:
                 await r.ping()
             return True
         except Exception as exc:
@@ -154,10 +97,18 @@ class Utilities:
                 detail=f"Redis not connected: {str(exc)}",
             )
 
-    async def health_check_celery(self) -> str:
-        from core.background_tasks import celery_app
+    async def health_check_celery(self) -> bool:
+        """Проверяет подключение к Celery.
 
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к Celery не удалось.
+        """
         try:
+            from core.background_tasks import celery_app  # Ленивый импорт
+
             inspect = celery_app.control.inspect()
             ping_result = inspect.ping()
 
@@ -174,9 +125,20 @@ class Utilities:
                 detail=f"Celery not connected: {str(exc)}",
             )
 
-    async def health_check_s3(self) -> str:
-        s3_service = s3_bucket_service_factory()
+    async def health_check_s3(self) -> bool:
+        """Проверяет подключение к S3.
+
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к S3 не удалось.
+        """
         try:
+            from backend.core.storage import \
+                s3_bucket_service_factory  # Ленивый импорт
+
+            s3_service = s3_bucket_service_factory()
             result = await s3_service.check_bucket_exists()
             if not result:
                 raise HTTPException(
@@ -191,8 +153,19 @@ class Utilities:
                 detail=f"S3 not connected: {str(exc)}",
             )
 
-    async def health_check_scheduler(self) -> str:
+    async def health_check_scheduler(self) -> bool:
+        """Проверяет подключение к планировщику задач.
+
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к планировщику не удалось.
+        """
         try:
+            from backend.core.scheduler import \
+                scheduler_manager  # Ленивый импорт
+
             result = await scheduler_manager.check_status()
             if not result:
                 raise HTTPException(
@@ -207,9 +180,19 @@ class Utilities:
                 detail=f"Scheduler not connected: {str(exc)}",
             )
 
-    async def health_check_graylog(self) -> str:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    async def health_check_graylog(self) -> bool:
+        """Проверяет подключение к Graylog.
+
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к Graylog не удалось.
+        """
         try:
+            import socket  # Ленивый импорт
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(
                 (
                     settings.logging_settings.log_host,
@@ -218,6 +201,7 @@ class Utilities:
             )
             sock.sendall(b"Healthcheck test message")
             sock.close()
+
             return True
         except OSError as exc:
             traceback.print_exc(file=sys.stdout)
@@ -226,20 +210,31 @@ class Utilities:
                 detail=f"Graylog not connected: {str(exc)}",
             )
 
-    async def health_check_smtp(self):
-        hostname = settings.mail_settings.mail_hostname
-        port = settings.mail_settings.mail_port
-        use_tls = settings.mail_settings.mail_use_tls
-        username = None if settings.app_debug else settings.mail_settings.mail_login
-        password = None if settings.app_debug else settings.mail_settings.mail_login
+    async def health_check_smtp(self) -> bool:
+        """Проверяет подключение к SMTP-серверу.
 
+        Returns:
+            bool: True, если подключение успешно.
+
+        Raises:
+            HTTPException: Если подключение к SMTP не удалось.
+        """
         try:
+            import aiosmtplib  # Ленивый импорт
+
+            hostname = settings.mail_settings.mail_hostname
+            port = settings.mail_settings.mail_port
+            use_tls = settings.mail_settings.mail_use_tls
+            username = None if settings.app_debug else settings.mail_settings.mail_login
+            password = None if settings.app_debug else settings.mail_settings.mail_login
+
             async with aiosmtplib.SMTP(
                 hostname=hostname, port=port, use_tls=use_tls
             ) as smtp:
                 if username and password:
                     await smtp.login(username, password)
-                return True
+
+            return True
         except Exception as exc:
             traceback.print_exc(file=sys.stdout)
             raise HTTPException(
@@ -247,14 +242,45 @@ class Utilities:
                 detail=f"SMTP not connected: {str(exc)}",
             )
 
+    async def check_celery_queues(self) -> Dict[str, List[str]]:
+        """
+        Проверяет состояние очередей Celery.
+
+        Returns:
+            Dict[str, List[str]]: Состояние очередей Celery.
+        """
+        try:
+            from core.background_tasks import celery_app  # Ленивый импорт
+
+            inspect = celery_app.control.inspect()
+            active_queues = inspect.active_queues()
+
+            if not active_queues:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="No active Celery queues found",
+                )
+            return active_queues
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to check Celery queues: {str(exc)}",
+            )
+
     async def health_check_all_services(self):
-        db_check = await utilities.health_check_database()
-        redis_check = await utilities.health_check_redis()
-        s3_check = await utilities.health_check_s3()
-        graylog_check = await utilities.health_check_graylog()
-        smtp_check = await utilities.health_check_smtp()
-        celery_check = await utilities.health_check_celery()
-        scheduler_manager_check = await utilities.health_check_scheduler()
+        """Проверяет состояние всех сервисов (база данных, Redis, S3, Graylog, SMTP, Celery, планировщик задач).
+
+        Returns:
+            Response: JSON-ответ с результатами проверки всех сервисов.
+        """
+        db_check = await self.health_check_database()
+        redis_check = await self.health_check_redis()
+        s3_check = await self.health_check_s3()
+        graylog_check = await self.health_check_graylog()
+        smtp_check = await self.health_check_smtp()
+        celery_check = await self.health_check_celery()
+        celery_queue_check = await self.health_check_celery_queue()
+        scheduler_check = await self.health_check_scheduler()
 
         response_data = {
             "db": db_check,
@@ -263,7 +289,8 @@ class Utilities:
             "graylog": graylog_check,
             "smtp": smtp_check,
             "celery": celery_check,
-            "scheduler": scheduler_manager_check,
+            "celery_queue": celery_queue_check,
+            "scheduler": scheduler_check,
         }
 
         if all(response_data.values()):
@@ -288,23 +315,38 @@ class Utilities:
         )
 
     async def send_email(self, to_email: str, subject: str, message: str):
-        hostname = settings.mail_settings.mail_hostname
-        port = settings.mail_settings.mail_port
-        use_tls = settings.mail_settings.mail_use_tls
-        username = None if settings.app_debug else settings.mail_settings.mail_login
-        password = None if settings.app_debug else settings.mail_settings.mail_login
-        sender = settings.mail_settings.mail_sender
+        """Отправляет электронное письмо на указанный адрес.
 
-        mail_logger.info(
-            f"Sending email to {to_email} with subject '{subject}' and message '{message}'."
-        )
+        Args:
+            to_email (str): Адрес электронной почты получателя.
+            subject (str): Тема письма.
+            message (str): Текст письма.
 
-        msg = MIMEText(message.encode("utf-8"), "plain", "utf-8")
-        msg["Subject"] = Header(subject, "utf-8")
-        msg["From"] = formataddr((str(Header("Отправитель", "utf-8")), sender))
-        msg["To"] = to_email
-
+        Returns:
+            JSONResponse: Ответ с результатом отправки письма.
+        """
         try:
+            import aiosmtplib  # Ленивый импорт
+            from email.header import Header
+            from email.mime.text import MIMEText
+            from email.utils import formataddr
+
+            hostname = settings.mail_settings.mail_hostname
+            port = settings.mail_settings.mail_port
+            use_tls = settings.mail_settings.mail_use_tls
+            username = None if settings.app_debug else settings.mail_settings.mail_login
+            password = None if settings.app_debug else settings.mail_settings.mail_login
+            sender = settings.mail_settings.mail_sender
+
+            mail_logger.info(
+                f"Sending email to {to_email} with subject '{subject}' and message '{message}'."
+            )
+
+            msg = MIMEText(message.encode("utf-8"), "plain", "utf-8")
+            msg["Subject"] = Header(subject, "utf-8")
+            msg["From"] = formataddr((str(Header("Отправитель", "utf-8")), sender))
+            msg["To"] = to_email
+
             async with aiosmtplib.SMTP(
                 hostname=hostname, port=port, use_tls=use_tls
             ) as smtp:
@@ -320,8 +362,51 @@ class Utilities:
             return JSONResponse({"error": str(exc)}, status_code=500)
 
     async def get_response_type_body(self, response: Response):
+        """Извлекает и преобразует тело ответа в формат JSON.
+
+        Args:
+            response (Response): Ответ от сервера.
+
+        Returns:
+            Any: Тело ответа в формате JSON.
+        """
         check_services_body = response.body.decode("utf-8")
         return json_tricks.loads(check_services_body)
+
+    async def ensure_protocol(self, url: str) -> str:
+        """
+        Добавляет протокол (http://) к URL, если он отсутствует.
+
+        Args:
+            url (str): URL-адрес.
+
+        Returns:
+            str: URL с протоколом.
+        """
+        if not url.startswith(("http://", "https://")):
+            return f"http://{url}"
+        return url
+
+    def generate_link_page(self, url: str, description: str) -> HTMLResponse:
+        """
+        Генерирует HTML-страницу с кликабельной ссылкой.
+
+        Args:
+            url (str): URL-адрес.
+            description (str): Описание ссылки.
+
+        Returns:
+            HTMLResponse: HTML-страница с ссылкой.
+        """
+        return HTMLResponse(
+            f"""
+            <html>
+                <body>
+                    <p>Ссылка на {description}: <a href="{url}" target="_blank">{url}</a></p>
+                </body>
+            </html>
+            """
+        )
 
 
 utilities = Utilities()
