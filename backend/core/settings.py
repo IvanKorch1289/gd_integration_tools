@@ -122,10 +122,16 @@ class RedisSettings(BaseSettings):
     redis_port: int = Field(default=6379, env="REDIS_PORT")
     redis_db_cashe: int = 0
     redis_db_queue: int = 1
+    redis_db_limits: int = 2
     redis_pass: Union[str, None] = Field(default=None, env="REDIS_PASS")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
     redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
     redis_cache_expire_seconds: int = 300
+
+    @property
+    def redis_url(self) -> str:
+        """Возвращает URL приложения Redis."""
+        return f"redis://{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}"
 
 
 class AuthSettings(BaseSettings):
@@ -226,6 +232,9 @@ class Settings(BaseSettings):
         "/tech/healthcheck-*",  # Все healthcheck-роуты не требуют API-ключа
         "/tech/redirect-*"  # Все redirect-роуты не требуют API-ключа
         "/tech/version",  # Роут /tech/version не требует API-ключа
+        "/tech/log-storage",  # Роут /tech/log-storage не требует API-ключа
+        "/tech/file-storage",  # Роут /tech/file-storage не требует API-ключа
+        "/tech/task-monitor",  # Роут /tech/task-monitor не требует API-ключа
         # Роут /tech/config требует API-ключа (не включен в список исключений)
     ]
     app_allowed_hosts: List[str] = [
@@ -236,6 +245,10 @@ class Settings(BaseSettings):
     ]
     app_cors_allowed_origins: List[str] = ["*"]
     app_request_timeout: float = 50.0
+    app_rate_limit: int = Field(default=100, env="APP_RATE_LIMIT")
+    app_rate_time_measure_seconds: int = Field(
+        default=60, env="APP_RATE_TIME_MEASURE_SECONDS"
+    )
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_skb_settings: APISSKBSettings = APISSKBSettings()

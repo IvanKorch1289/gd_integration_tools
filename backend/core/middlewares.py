@@ -41,7 +41,7 @@ class AsyncListIterator:
             raise StopAsyncIteration
 
 
-class LoggingMiddleware:
+class InnerRequestLoggingMiddleware:
     """
     Middleware для логирования входящих запросов и исходящих ответов.
 

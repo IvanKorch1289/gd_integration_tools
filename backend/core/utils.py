@@ -4,6 +4,7 @@ import traceback
 from typing import Any, Dict, List, TypeVar
 
 import json_tricks
+# import pyclamd
 from fastapi import HTTPException, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
@@ -18,6 +19,8 @@ T = TypeVar("T")
 ParamsType = Dict[str, Any]
 
 cache_expire_seconds = settings.redis_settings.redis_cache_expire_seconds
+
+# cd = pyclamd.ClamdNetworkSocket(host='127.0.0.1', port=3310)
 
 
 def singleton(cls):
@@ -407,6 +410,16 @@ class Utilities:
             </html>
             """
         )
+
+    # def scan_file(file: UploadFile) -> bool:
+    #     """Сканирует файл с помощью ClamAV."""
+    #     try:
+    #         for chunk in iter(lambda: file.file.read(8192), b""):
+    #             if cd.scan_stream(chunk):
+    #                 return False  # Вирус обнаружен
+    #         return True  # Файл чист
+    #     finally:
+    #         file.file.seek(0)  # Сбрасываем позицию чтения файла
 
 
 utilities = Utilities()

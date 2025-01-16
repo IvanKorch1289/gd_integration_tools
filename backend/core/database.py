@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from functools import wraps
-from typing import AsyncGenerator, Callable, List, Optional
+from typing import AsyncGenerator, Callable, Optional
 
 from fastapi import Depends
 from sqlalchemy import text

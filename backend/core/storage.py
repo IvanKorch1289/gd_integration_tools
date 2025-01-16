@@ -9,7 +9,6 @@ from typing import Any, AsyncGenerator, Optional, Union
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
 from aiohttp import ClientError
-from fastapi import Response, status
 
 from backend.core.logging_config import fs_logger
 from backend.core.settings import settings
@@ -82,10 +81,41 @@ class S3Service:
         :param content: Содержимое файла (строка или байты).
         :return: Словарь с результатом операции.
         """
-        async with self._create_s3_client() as client:
-            buffer = BytesIO(
-                content if isinstance(content, bytes) else content.encode("utf-8")
+        # Проверка на пустой файл
+        if not content:
+            await self.log_operation(
+                operation="upload_file_object",
+                details=f"Key: {key}, OriginalFilename: {original_filename}",
+                exception="Error: File content is empty",
             )
+            return {
+                "status": "error",
+                "message": "File not uploaded",
+                "error": "File content is empty",
+            }
+
+        # Преобразуем содержимое в BytesIO для проверки на вирусы
+        buffer = BytesIO(
+            content if isinstance(content, bytes) else content.encode("utf-8")
+        )
+        # file_for_scan = UploadFile(filename=original_filename, file=buffer)
+
+        # Проверка на вирусы
+        # if not self.scan_file(file_for_scan):
+        #     await self.log_operation(
+        #         operation="upload_file_object",
+        #         details=f"Key: {key}, OriginalFilename: {original_filename}",
+        #         exception="Error: File is infected with a virus",
+        #     )
+        #     return {
+        #         "status": "error",
+        #         "message": "File not uploaded",
+        #         "error": "File is infected with a virus",
+        #     }
+
+        # Если файл чист, продолжаем загрузку
+        async with self._create_s3_client() as client:
+            buffer.seek(0)  # Сбрасываем позицию чтения файла
             metadata = {"x-amz-meta-original-filename": original_filename}
             try:
                 await client.put_object(

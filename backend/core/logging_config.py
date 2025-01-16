@@ -16,6 +16,7 @@ LOGGERS = [
     {"name": "storage", "facility": "file_system"},
     {"name": "mail", "facility": "mail_server"},
     {"name": "scheduler", "facility": "scheduler"},
+    {"name": "request", "facility": "request"},
 ]
 
 # Форматирование логов
@@ -49,3 +50,4 @@ db_logger = logging.getLogger("database")
 fs_logger = logging.getLogger("storage")
 mail_logger = logging.getLogger("mail")
 scheduler_logger = logging.getLogger("scheduler")
+request_logger = logging.getLogger("request")

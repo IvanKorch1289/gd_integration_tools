@@ -12,10 +12,11 @@ from starlette_exporter import PrometheusMiddleware, handle_metrics
 from backend.api_skb import skb_router
 from backend.base import tech_router
 from backend.core.database import database
+from backend.core.limiter import init_limiter
 from backend.core.logging_config import app_logger
 from backend.core.middlewares import (
     APIKeyMiddleware,
-    LoggingMiddleware,
+    InnerRequestLoggingMiddleware,
     TimeoutMiddleware,
 )
 from backend.core.scheduler import (
@@ -45,6 +46,8 @@ async def lifespan(app: FastAPI):
         )
         await scheduler_manager.start_scheduler()
         app_logger.info("Планировщик запущен...")
+        await init_limiter()
+        app_logger.info("Лимиты установлены...")
         yield
     except Exception as exc:
         app_logger.error(f"Ошибка инициализации планировщика: {str(exc)}")
@@ -70,8 +73,8 @@ def create_app() -> FastAPI:
 
     # Подключение Middleware
     @app.middleware("http")
-    async def logger_middleware(request: Request, call_next):
-        return await LoggingMiddleware().__call__(request, call_next)
+    async def inner_logger_middleware(request: Request, call_next):
+        return await InnerRequestLoggingMiddleware().__call__(request, call_next)
 
     @app.middleware("http")
     async def api_key_middleware(request: Request, call_next):
@@ -158,7 +161,7 @@ def create_app() -> FastAPI:
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background: 
+                    background:
                         radial-gradient(circle at 20% 20%, rgba(46, 125, 50, 0.1) 10%, transparent 10.5%),
                         radial-gradient(circle at 80% 20%, rgba(46, 125, 50, 0.1) 10%, transparent 10.5%),
                         radial-gradient(circle at 20% 80%, rgba(46, 125, 50, 0.1) 10%, transparent 10.5%),
@@ -172,7 +175,7 @@ def create_app() -> FastAPI:
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background: 
+                    background:
                         radial-gradient(circle at 30% 30%, rgba(0, 123, 255, 0.1) 15%, transparent 15.5%),
                         radial-gradient(circle at 70% 30%, rgba(0, 123, 255, 0.1) 15%, transparent 15.5%),
                         radial-gradient(circle at 30% 70%, rgba(0, 123, 255, 0.1) 15%, transparent 15.5%),
@@ -252,7 +255,7 @@ def create_app() -> FastAPI:
             <div class="container">
                 <h1>Расширенные инструменты GreenData</h1>
                 <p>
-                    Добро пожаловать в <span class="highlight">инновационное решение</span> для управления заказами, файлами и пользователями. 
+                    Добро пожаловать в <span class="highlight">инновационное решение</span> для управления заказами, файлами и пользователями.
                     Наше приложение сочетает в себе <span class="highlight">удобство</span>, <span class="highlight">надежность</span> и <span class="highlight">высокую производительность</span>.
                 </p>
                 <p>

@@ -10,7 +10,9 @@ from backend.orders.service import OrderService
 
 
 # Настройка подключения к Redis
-redis_url = f"redis://{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}/{settings.redis_settings.redis_db_queue}"
+redis_url = (
+    f"{settings.redis_settings.redis_url}/{settings.redis_settings.redis_db_queue}"
+)
 
 # Инициализация Celery
 celery_app = Celery("tasks", broker=redis_url, backend=redis_url)

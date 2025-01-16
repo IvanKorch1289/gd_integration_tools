@@ -1,11 +1,20 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, File, Header, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from backend.core.dependencies import get_streaming_response
+from backend.core.limiter import route_limiter
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.files.filters import FileFilter
 from backend.files.schemas import FileSchemaIn
@@ -32,7 +41,8 @@ class FileCBV:
     service = FileService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
-    async def get_files(self, x_api_key: str = Header(...)):
+    @route_limiter
+    async def get_files(self, request: Request, x_api_key: str = Header(...)):
         """
         Получить все файлы из базы данных.
 
@@ -76,8 +86,12 @@ class FileCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
     )
+    @route_limiter
     async def add_file(
-        self, request_schema: FileSchemaIn, x_api_key: str = Header(...)
+        self,
+        request_schema: FileSchemaIn,
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         """
         Добавить новый файл в базу данных.
@@ -93,8 +107,12 @@ class FileCBV:
         status_code=status.HTTP_201_CREATED,
         summary="Добавить несколько файлов",
     )
+    @route_limiter
     async def add_many_files(
-        self, request_schema: List[FileSchemaIn], x_api_key: str = Header(...)
+        self,
+        request_schema: List[FileSchemaIn],
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         """
         Добавить несколько файлов в базу данных.
@@ -111,8 +129,13 @@ class FileCBV:
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
     )
+    @route_limiter
     async def update_file(
-        self, request_schema: FileSchemaIn, file_id: int, x_api_key: str = Header(...)
+        self,
+        request_schema: FileSchemaIn,
+        file_id: int,
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         """
         Обновить файл по его ID.
@@ -131,7 +154,10 @@ class FileCBV:
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить файл по ID",
     )
-    async def delete_file(self, file_id: int, x_api_key: str = Header(...)):
+    @route_limiter
+    async def delete_file(
+        self, file_id: int, request: Request, x_api_key: str = Header(...)
+    ):
         """
         Удалить файл по его ID.
 

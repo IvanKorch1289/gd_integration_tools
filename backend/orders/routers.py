@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import FileResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.limiter import route_limiter
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.orders.filters import OrderFilter
 from backend.orders.schemas import OrderSchemaIn
@@ -24,7 +25,8 @@ class OrderCBV:
     service = OrderService()
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все запросы")
-    async def get_orders(self, x_api_key: str = Header(...)):
+    @route_limiter
+    async def get_orders(self, request: Request, x_api_key: str = Header(...)):
         return await self.service.all()
 
     @router.get(
@@ -50,8 +52,12 @@ class OrderCBV:
     @router.post(
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
     )
+    @route_limiter
     async def add_order(
-        self, request_schema: OrderSchemaIn, x_api_key: str = Header(...)
+        self,
+        request_schema: OrderSchemaIn,
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         return await self.service.get_or_add(data=request_schema.model_dump())
 
@@ -60,8 +66,12 @@ class OrderCBV:
         status_code=status.HTTP_201_CREATED,
         summary="Добавить несколько запросов",
     )
+    @route_limiter
     async def add_many_orders(
-        self, request_schema: List[OrderSchemaIn], x_api_key: str = Header(...)
+        self,
+        request_schema: List[OrderSchemaIn],
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         data_list = [schema.model_dump() for schema in request_schema]
         return await self.service.add_many(data_list=data_list)
@@ -79,8 +89,13 @@ class OrderCBV:
         status_code=status.HTTP_200_OK,
         summary="Изменить запроса по ID",
     )
+    @route_limiter
     async def update_order(
-        self, request_schema: OrderSchemaIn, order_id: int, x_api_key: str = Header(...)
+        self,
+        request_schema: OrderSchemaIn,
+        order_id: int,
+        request: Request,
+        x_api_key: str = Header(...),
     ):
         return await self.service.update(
             key="id", value=order_id, data=request_schema.model_dump()
@@ -91,7 +106,10 @@ class OrderCBV:
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Удалить запрос по ID",
     )
-    async def delete_order(self, order_id: int, x_api_key: str = Header(...)):
+    @route_limiter
+    async def delete_order(
+        self, order_id: int, request: Request, x_api_key: str = Header(...)
+    ):
         return await self.service.delete(key="id", value=order_id)
 
     @router.get(
