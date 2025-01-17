@@ -44,17 +44,21 @@ async def lifespan(app: FastAPI):
         await scheduler_manager.add_task(
             send_request_for_checking_services, interval_minutes=30
         )
+
         await scheduler_manager.start_scheduler()
         app_logger.info("Планировщик запущен...")
+
         await init_limiter()
         app_logger.info("Лимиты установлены...")
+
         yield
     except Exception as exc:
         app_logger.error(f"Ошибка инициализации планировщика: {str(exc)}")
     finally:
         await scheduler_manager.stop_scheduler()
-        app_logger.info("Завершение работы приложения...")
         app_logger.info("Планировщик остановлен...")
+
+        app_logger.info("Завершение работы приложения...")
 
 
 def create_app() -> FastAPI:

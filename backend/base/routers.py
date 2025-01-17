@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Header
+from enum import Enum
+
+from fastapi import APIRouter, Depends, Header, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
+from backend.base.enums import get_model_enum
 from backend.base.schemas import EmailSchema
 from backend.base.service import BaseService
 from backend.core.settings import settings
@@ -242,3 +245,51 @@ class TechBV:
         return await utilities.send_email(
             to_email=schema.to_email, subject=schema.subject, message=schema.message
         )
+
+    @router.get(
+        "/get-all-custom-tables",
+        summary="Получить названия всех таблиц",
+        operation_id="get_all_custom_tables",
+    )
+    async def get_all_custom_tables(
+        self,
+        model_enum: Enum = Depends(get_model_enum),
+        x_api_key: str = Header(...),
+    ):
+        """
+        Возвращает названия всех пользовательских таблиц.
+
+        Args:
+            model_enum (Enum): Enum, содержащий модели и их таблицы.
+            x_api_key (str): API-ключ для аутентификации.
+
+        Returns:
+            set: Набор названий таблиц.
+        """
+        return {model.value for model in model_enum}
+
+    @router.post(
+        "/upload-excel-for-mass-create",
+        summary="Загрузить Excel-файл для массового создания объектов",
+        operation_id="upload_excel_for_mass_create",
+    )
+    async def upload_excel(
+        self,
+        table_name: str = Query(
+            ..., description="Название таблицы для загрузки данных"
+        ),
+        model_enum: Enum = Depends(get_model_enum),
+        x_api_key: str = Header(...),
+    ):
+        """
+        Загружает Excel-файл для массового создания объектов в выбранной таблице.
+
+        Args:
+            table_name (str): Название таблицы, в которую будут добавлены данные.
+            model_enum (Enum): Enum, содержащий модели и их таблицы.
+            x_api_key (str): API-ключ для аутентификации.
+
+        Returns:
+            bool: True, если таблица существует, иначе False.
+        """
+        return any(table_name == model.value for model in model_enum)

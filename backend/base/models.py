@@ -6,23 +6,25 @@ from typing import Annotated, Any, Dict, Type
 from pydantic import SecretStr
 from sqlalchemy import Integer, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    Mapped,
-    declared_attr,
-    mapped_column,
-)
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column, registry
 
 from backend.base.schemas import PublicSchema
 
 
 __all__ = ("BaseModel",)
 
+
 # Аннотация для необязательных строковых полей
 nullable_str = Annotated[str, mapped_column(nullable=False)]
 
+# Создаем registry
+mapper_registry = registry()
 
-class BaseModel(AsyncAttrs, DeclarativeBase):
+# Базовый класс
+Base = mapper_registry.generate_base()
+
+
+class BaseModel(AsyncAttrs, Base):
     """
     Базовый класс для всех моделей SQLAlchemy.
 

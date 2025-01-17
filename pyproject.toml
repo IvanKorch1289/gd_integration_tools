@@ -49,6 +49,8 @@ starlette-exporter = "^0.23.0"
 apscheduler = "^3.11.0"
 pyclamd = "^0.4.0"
 fastapi-limiter = "^0.1.6"
+vulture = "^2.14"
+pandas = "^2.2.3"
 
 
 [build-system]
