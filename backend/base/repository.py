@@ -1,3 +1,4 @@
+import importlib
 import sys
 import traceback
 from abc import ABC, abstractmethod
@@ -319,3 +320,37 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             raise ex
+
+
+def get_repository_for_model(model: Type[BaseModel]) -> Type[SQLAlchemyRepository]:
+    """
+    Возвращает класс репозитория для указанной модели.
+
+    Аргументы:
+        model (Type[BaseModel]): Класс модели.
+
+    Возвращает:
+        Type[SQLAlchemyRepository]: Класс репозитория, связанный с моделью.
+
+    Исключения:
+        ValueError: Если репозиторий для модели не найден.
+    """
+    model_name = model.__name__
+    repository_name = f"{model_name}Repository"
+
+    # Импортируем модуль репозиториев
+    try:
+        repository_module = importlib.import_module(
+            f"backend.{model_name.lower()}s.repository"
+        )
+    except ImportError:
+        raise ValueError(f"Модуль репозиториев для модели {model_name} не найден.")
+    # Получаем класс репозитория
+    try:
+        repository_class = getattr(repository_module, repository_name)
+    except AttributeError:
+        raise ValueError(
+            f"Репозиторий {repository_name} для модели {model_name} не найден."
+        )
+
+    return repository_class

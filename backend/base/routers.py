@@ -1,10 +1,13 @@
 from enum import Enum
+from io import BytesIO
 
-from fastapi import APIRouter, Depends, Header, Query, Request
+import pandas
+from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
 from backend.base.enums import get_model_enum
+from backend.base.repository import get_repository_for_model
 from backend.base.schemas import EmailSchema
 from backend.base.service import BaseService
 from backend.core.settings import settings
@@ -275,6 +278,7 @@ class TechBV:
     )
     async def upload_excel(
         self,
+        # file: UploadFile = File(...),
         table_name: str = Query(
             ..., description="Название таблицы для загрузки данных"
         ),
@@ -292,4 +296,4 @@ class TechBV:
         Returns:
             bool: True, если таблица существует, иначе False.
         """
-        return any(table_name == model.value for model in model_enum)
+        # if any(table_name == model.value for model in model_enum):

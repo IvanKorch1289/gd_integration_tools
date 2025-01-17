@@ -1,9 +1,11 @@
+import importlib
 import sys
 import traceback
 from typing import Generic, List, Optional, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
+from backend.base.models import BaseModel
 from backend.base.repository import AbstractRepository
 from backend.base.schemas import PublicSchema
 from backend.core.redis import caching_decorator
@@ -186,3 +188,39 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             return str(ex)
+
+
+def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
+    """
+    Возвращает сервис для указанной модели.
+
+    Аргументы:
+        model (Type[BaseModel]): Класс модели.
+
+    Возвращает:
+        Type[BaseService]: Класс сервиса, связанного с моделью.
+
+    Исключения:
+        ValueError: Если сервис для модели не найден.
+    """
+    # Получаем имя модели
+    model_name = f"{model.__name__}s"
+
+    # Формируем имя сервиса
+    service_name = f"{model_name}Service"
+
+    # Импортируем модуль сервисов
+    try:
+        service_module = importlib.import_module(
+            f"backend.{model_name.lower()}.services"
+        )
+    except ImportError:
+        raise ValueError(f"Модуль сервисов для модели {model_name} не найден.")
+
+    # Получаем класс сервиса
+    try:
+        service_class = getattr(service_module, service_name)
+    except AttributeError:
+        raise ValueError(f"Сервис {service_name} для модели {model_name} не найден.")
+
+    return str(service_class)
