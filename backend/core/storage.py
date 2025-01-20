@@ -1,5 +1,4 @@
 import json
-import sys
 import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -126,7 +125,7 @@ class S3Service:
                     details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
                 )
                 return {"status": "success", "message": "File upload successful"}
-            except Exception:
+            except Exception as exc:
                 await self.log_operation(
                     operation="upload_file_object", exception=f"Error: {exc}"
                 )
@@ -165,8 +164,8 @@ class S3Service:
                 body = file_obj.get("Body")
                 metadata = file_obj.get("Metadata", {})
                 return body, metadata
-            except ClientError as ex:
-                if ex.response["Error"]["Code"] == "NoSuchKey":
+            except ClientError as exc:
+                if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise  # Исключение будет обработано глобальным обработчиком
 
@@ -212,9 +211,9 @@ class S3Service:
                     ExpiresIn=expires_in,
                 )
                 return url
-            except ClientError:
+            except ClientError as exc:
                 await self.log_operation(
-                    operation="generate_download_url", exception=f"Error: {ex}"
+                    operation="generate_download_url", exception=f"Error: {exc}"
                 )
                 raise  # Исключение будет обработано глобальным обработчиком
 

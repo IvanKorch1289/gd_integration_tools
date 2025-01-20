@@ -159,7 +159,7 @@ class APIKeyMiddleware:
             await self.verify_api_key(api_key)
         except KeyError:
             raise  # Исключение будет обработано глобальным обработчиком
-        except HTTPException as e:
+        except HTTPException:
             raise  # Исключение будет обработано глобальным обработчиком
 
         # Продолжаем обработку запроса

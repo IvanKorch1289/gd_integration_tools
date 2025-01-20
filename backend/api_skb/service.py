@@ -4,8 +4,6 @@ from uuid import UUID
 
 import aiohttp
 import asyncio
-from fastapi import status
-from fastapi.responses import JSONResponse
 from urllib.parse import urljoin
 
 from backend.core.http_client import make_request
