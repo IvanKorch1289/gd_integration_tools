@@ -10,7 +10,7 @@ from backend.base.models import BaseModel
 from backend.core.migrations.types import load_types
 from backend.core.settings import settings
 from backend.files.models import File, OrderFile
-from backend.order_kinds.models import OrderKind
+from backend.orderkinds.models import OrderKind
 from backend.orders.models import Order
 from backend.users.models import User
 

@@ -1,6 +1,4 @@
-import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
 from functools import wraps
 from typing import Any, AsyncIterator, Callable, Dict, Optional, Union
 
@@ -11,24 +9,7 @@ from pydantic import BaseModel
 
 from backend.core.logging_config import app_logger
 from backend.core.settings import settings
-from backend.core.utils import singleton
-
-
-# Пользовательский кодировщик и декодировщик
-def custom_encoder(obj):
-    if isinstance(obj, uuid.UUID):
-        return {"__uuid__": True, "value": str(obj)}
-    elif isinstance(obj, datetime):
-        return {"__datetime__": True, "value": obj.isoformat()}
-    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-
-
-def custom_decoder(dct):
-    if "__uuid__" in dct:
-        return uuid.UUID(dct["value"])
-    elif "__datetime__" in dct:
-        return datetime.fromisoformat(dct["value"])
-    return dct
+from backend.core.utils import singleton, utilities
 
 
 class RedisClient:
@@ -91,7 +72,7 @@ class CachingDecorator:
                 ttl = await r.ttl(key)
                 return {
                     "data": json_tricks.loads(
-                        cached_data, extra_obj_pairs_hooks=[custom_decoder]
+                        cached_data, extra_obj_pairs_hooks=[utilities.custom_decoder]
                     ),
                     "ttl": ttl,
                     "error": None,
@@ -102,7 +83,7 @@ class CachingDecorator:
             return {"data": None, "ttl": None, "error": error_message}
 
     async def cache_data(self, key: str, data: Any) -> None:
-        if data is None:
+        if data is None or (isinstance(data, list) and len(data) == 0):
             return
 
         async def _cache_data():
@@ -118,11 +99,12 @@ class CachingDecorator:
                         data_dict = data
 
                     encoded_data = json_tricks.dumps(
-                        data_dict, extra_obj_encoders=[custom_encoder]
+                        data_dict, extra_obj_encoders=[utilities.custom_encoder]
                     )
                     await r.set(key, encoded_data, expire=self.expire)
             except Exception as exc:
                 app_logger.error(f"Error caching data: {exc}")
+                raise  # Исключение будет обработано глобальным обработчиком
 
         asyncio.create_task(_cache_data())
 
@@ -147,7 +129,12 @@ class CachingDecorator:
                 }
 
             result = await func(*args, **kwargs)
+
+            if isinstance(result, list) and len(result) == 0:
+                return None
+
             await self.cache_data(key, result)
+
             return {
                 "data": result,
                 "from_cache": False,

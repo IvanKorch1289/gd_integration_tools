@@ -65,8 +65,8 @@ class RouteLimiter:
                 # Создаем фиктивный объект Response
                 response = Response()
                 await rate_limiter(request, response)
-            except HTTPException as e:
-                raise e
+            except HTTPException:
+                raise  # Исключение будет обработано глобальным обработчиком
 
             # Вызываем оригинальную функцию
             return await func(*args, **kwargs)

@@ -23,7 +23,7 @@ class SKBCBV:
     создание запросов и получение результатов.
     """
 
-    service = APISKBService()
+    service = APISKBService
 
     @router.get("/get-kinds", summary="Получить справочник видов из СКБ Техно")
     async def get_skb_kinds(self, x_api_key: str = Header(...)):

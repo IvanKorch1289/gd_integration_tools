@@ -1,9 +1,12 @@
 import json
 import sys
 import traceback
+import uuid
+from datetime import datetime
 from typing import Any, Dict, List, TypeVar
 
 import json_tricks
+import pandas as pd
 # import pyclamd
 from fastapi import HTTPException, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -245,7 +248,7 @@ class Utilities:
                 detail=f"SMTP not connected: {str(exc)}",
             )
 
-    async def check_celery_queues(self) -> Dict[str, List[str]]:
+    async def health_check_celery_queues(self) -> Dict[str, List[str]]:
         """
         Проверяет состояние очередей Celery.
 
@@ -282,7 +285,7 @@ class Utilities:
         graylog_check = await self.health_check_graylog()
         smtp_check = await self.health_check_smtp()
         celery_check = await self.health_check_celery()
-        celery_queue_check = await self.health_check_celery_queue()
+        celery_queues_check = await self.health_check_celery_queues()
         scheduler_check = await self.health_check_scheduler()
 
         response_data = {
@@ -292,7 +295,7 @@ class Utilities:
             "graylog": graylog_check,
             "smtp": smtp_check,
             "celery": celery_check,
-            "celery_queue": celery_queue_check,
+            "celery_queue": celery_queues_check,
             "scheduler": scheduler_check,
         }
 
@@ -362,7 +365,7 @@ class Utilities:
 
         except Exception as exc:
             mail_logger.critical(f"Error for sending email to {to_email}: {str(exc)}.")
-            return JSONResponse({"error": str(exc)}, status_code=500)
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_response_type_body(self, response: Response):
         """Извлекает и преобразует тело ответа в формат JSON.
@@ -411,6 +414,24 @@ class Utilities:
             """
         )
 
+    async def convert_numpy_types(self, value):
+        """
+        Преобразует numpy-типы (например, numpy.int64) в стандартные типы Python.
+
+        Args:
+            value: Значение, которое может быть numpy-типом.
+
+        Returns:
+            Преобразованное значение.
+        """
+        if pd.api.types.is_integer(value):
+            return int(value)
+        elif pd.api.types.is_float(value):
+            return float(value)
+        elif pd.api.types.is_bool(value):
+            return bool(value)
+        return value
+
     # def scan_file(file: UploadFile) -> bool:
     #     """Сканирует файл с помощью ClamAV."""
     #     try:
@@ -420,6 +441,21 @@ class Utilities:
     #         return True  # Файл чист
     #     finally:
     #         file.file.seek(0)  # Сбрасываем позицию чтения файла
+
+    # Пользовательский кодировщик и декодировщик
+    def custom_encoder(self, obj):
+        if isinstance(obj, uuid.UUID):
+            return {"__uuid__": True, "value": str(obj)}
+        elif isinstance(obj, datetime):
+            return {"__datetime__": True, "value": obj.isoformat()}
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+    def custom_decoder(self, dct):
+        if "__uuid__" in dct:
+            return uuid.UUID(dct["value"])
+        elif "__datetime__" in dct:
+            return datetime.fromisoformat(dct["value"])
+        return dct
 
 
 utilities = Utilities()

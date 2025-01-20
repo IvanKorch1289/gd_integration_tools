@@ -1,6 +1,4 @@
 import importlib
-import sys
-import traceback
 from typing import Generic, List, Optional, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
@@ -13,6 +11,7 @@ from backend.core.redis import caching_decorator
 
 ConcreteRepo = TypeVar("ConcreteRepo", bound=AbstractRepository)
 ConcreteResponseSchema = TypeVar("ConcreteResponseSchema", bound=PublicSchema)
+ConcreteRequestSchema = TypeVar("ConcreteRequestSchema", bound=PublicSchema)
 
 
 class BaseService(Generic[ConcreteRepo]):
@@ -26,6 +25,7 @@ class BaseService(Generic[ConcreteRepo]):
 
     repo: Type[ConcreteRepo] = None
     response_schema: Type[ConcreteResponseSchema] = None
+    request_schema: Type[ConcreteRequestSchema] = None
 
     async def _transfer(self, instance) -> Optional[ConcreteResponseSchema]:
         """
@@ -62,8 +62,7 @@ class BaseService(Generic[ConcreteRepo]):
             instance = await self.repo.add(data=data)
             return await self._transfer(instance)
         except Exception:
-            traceback.print_exc(file=sys.stdout)
-            return None
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def add_many(
         self, data_list: list[dict]
@@ -81,8 +80,7 @@ class BaseService(Generic[ConcreteRepo]):
             ]
             return list_instances
         except Exception:
-            traceback.print_exc(file=sys.stdout)
-            return None
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def update(
         self, key: str, value: int, data: dict
@@ -99,8 +97,7 @@ class BaseService(Generic[ConcreteRepo]):
             instance = await self.repo.update(key=key, value=value, data=data)
             return await self._transfer(instance)
         except Exception:
-            traceback.print_exc(file=sys.stdout)
-            return None
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def all(self) -> Optional[List[ConcreteResponseSchema]]:
@@ -114,9 +111,8 @@ class BaseService(Generic[ConcreteRepo]):
                 await self._transfer(instance) for instance in await self.repo.all()
             ]
             return list_instances
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get(self, key: str, value: int) -> Optional[ConcreteResponseSchema]:
@@ -129,9 +125,8 @@ class BaseService(Generic[ConcreteRepo]):
         """
         try:
             return await self._get_and_transfer(key=key, value=value)
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_by_params(
@@ -149,12 +144,11 @@ class BaseService(Generic[ConcreteRepo]):
                 for instance in await self.repo.get_by_params(filter=filter)
             ]
             return list_instances
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_or_add(
-        self, key: str, value: int, data: dict = None
+        self, key: str = None, value: int = None, data: dict = None
     ) -> Optional[ConcreteResponseSchema]:
         """
         Получает объект по ключу и значению. Если объект не найден, добавляет его.
@@ -165,14 +159,15 @@ class BaseService(Generic[ConcreteRepo]):
         :return: Схема ответа или None, если произошла ошибка.
         """
         try:
-            instance = await self._get_and_transfer(key=key, value=value)
+            instance = None
+            if key and value:
+                instance = await self._get_and_transfer(key=key, value=value)
             if not instance and data:
                 instance = await self.repo.add(data=data)
                 return await self._transfer(instance)
             return instance
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def delete(self, key: str, value: int) -> str:
         """
@@ -185,12 +180,11 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             await self.repo.delete(key=key, value=value)
             return f"Object (id = {value}) successfully deleted"
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return str(ex)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
 
-def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
+async def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
     """
     Возвращает сервис для указанной модели.
 
@@ -203,24 +197,23 @@ def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
     Исключения:
         ValueError: Если сервис для модели не найден.
     """
-    # Получаем имя модели
-    model_name = f"{model.__name__}s"
 
     # Формируем имя сервиса
-    service_name = f"{model_name}Service"
-
+    service_name = f"{model.__name__}Service"
     # Импортируем модуль сервисов
     try:
         service_module = importlib.import_module(
-            f"backend.{model_name.lower()}.services"
+            f"backend.{model.__tablename__}.service"
         )
     except ImportError:
-        raise ValueError(f"Модуль сервисов для модели {model_name} не найден.")
+        raise ValueError(f"Модуль сервисов для модели {model.__tablename__} не найден.")
 
     # Получаем класс сервиса
     try:
         service_class = getattr(service_module, service_name)
     except AttributeError:
-        raise ValueError(f"Сервис {service_name} для модели {model_name} не найден.")
+        raise ValueError(
+            f"Сервис {service_name} для модели {model.__tablename__} не найден."
+        )
 
-    return str(service_class)
+    return service_class

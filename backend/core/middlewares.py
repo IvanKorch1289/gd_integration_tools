@@ -63,12 +63,22 @@ class InnerRequestLoggingMiddleware:
 
         start_time = time.time()
 
-        if request.method == "POST":
+        # Проверяем, является ли запрос бинарным (например, загрузка файла)
+        content_type = request.headers.get("Content-Type", "").lower()
+
+        if request.method == "POST" and "multipart/form-data" not in content_type:
+            # Логируем тело запроса только для небинарных данных
             request_body = await request.body()
-            app_logger.info(f"Тело запроса: {request_body.decode('utf-8')}")
+            try:
+                app_logger.info(f"Тело запроса: {request_body.decode('utf-8')}")
+            except UnicodeDecodeError:
+                app_logger.warning(
+                    "Тело запроса содержит бинарные данные и не может быть декодировано."
+                )
 
         response = await call_next(request)
 
+        # Логируем тело ответа только для текстовых или JSON-ответов
         captured_body = await self.capture_and_return_response(response)
         content_type = response.headers.get("Content-Type", "").lower()
         if "text" in content_type or "json" in content_type:
@@ -79,7 +89,7 @@ class InnerRequestLoggingMiddleware:
                     f"Произошла ошибка при декодировании тела ответа: {e}"
                 )
         else:
-            app_logger.debug("Тело ответа не было декодировано.")
+            app_logger.debug("Тело ответа не было декодировано (бинарные данные).")
 
         process_time = (time.time() - start_time) * 1000
 
@@ -148,9 +158,9 @@ class APIKeyMiddleware:
             api_key = request.headers["X-Api-Key"]
             await self.verify_api_key(api_key)
         except KeyError:
-            return JSONResponse({"detail": "Missing X-Api-Key header"}, status_code=400)
+            raise  # Исключение будет обработано глобальным обработчиком
         except HTTPException as e:
-            return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+            raise  # Исключение будет обработано глобальным обработчиком
 
         # Продолжаем обработку запроса
         response = await call_next(request)

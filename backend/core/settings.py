@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -16,7 +16,7 @@ BASE_URL = os.getenv("BASE_URL")
 
 
 class APISSKBSettings(BaseSettings):
-    """Класс настроек API СКБ-Техно.
+    """Настройки для работы с API СКБ-Техно.
 
     Attributes:
         skb_api_key (str): API ключ для доступа к API СКБ-Техно.
@@ -37,8 +37,24 @@ class APISSKBSettings(BaseSettings):
     )
 
 
+class APIDADATASettings(BaseSettings):
+    """Настройки для работы с API Dadata.
+
+    Attributes:
+        dadata_api_key (str): API ключ для доступа к API Dadata.
+        dadata_url (str): Базовый URL API Dadata.
+        skb_endpoint (Dict[str, str]): Эндпоинты API Dadata.
+    """
+
+    dadata_api_key: str = Field(default="666-2424-24", env="DADATA_API_KEY")
+    dadata_url: str = Field(default="https://yap.ru/", env="DADATA_URL")
+    dadata_endpoint: Dict[str, str] = {
+        "GEOLOCATE": "geolocate/address",
+    }
+
+
 class DatabaseSettings(BaseSettings):
-    """Класс настроек соединения с БД.
+    """Настройки для подключения к базе данных.
 
     Attributes:
         db_host (str): Хост базы данных.
@@ -49,6 +65,9 @@ class DatabaseSettings(BaseSettings):
         db_echo (bool): Флаг для вывода SQL-запросов в лог.
         db_poolsize (int): Размер пула соединений.
         db_maxoverflow (int): Максимальное количество соединений сверх размера пула.
+
+    Methods:
+        db_url_asyncpg: Возвращает URL для асинхронного подключения к базе данных с использованием asyncpg.
     """
 
     db_host: str = Field(default="localhost", env="DB_HOST")
@@ -67,19 +86,19 @@ class DatabaseSettings(BaseSettings):
 
 
 class FileStorageSettings(BaseSettings):
-    """Класс настроек соединения с файловым хранилищем.
+    """Настройки для подключения к файловому хранилищу.
 
     Attributes:
         fs_bucket (str): Имя бакета в файловом хранилище.
         fs_endpoint (str): URL файлового хранилища.
-        fs_interfase_url (str): URL интерфейса файлового хранилища.
+        fs_interface_url (str): URL интерфейса файлового хранилища.
         fs_access_key (str): Ключ доступа к файловому хранилищу.
         fs_secret_key (str): Секретный ключ доступа к файловому хранилищу.
     """
 
     fs_bucket: str = Field(default="my-bucket", env="FS_BUCKET")
     fs_endpoint: str = Field(default="http://127.0.0.1:9090", env="FS_URL")
-    fs_interfase_url: str = Field(
+    fs_interface_url: str = Field(
         default="http://127.0.0.1:9091", env="FS_INTERFACE_URL"
     )
     fs_access_key: str = Field(default="minioadmin", env="FS_ACCESS_KEY")
@@ -87,35 +106,39 @@ class FileStorageSettings(BaseSettings):
 
 
 class LogStorageSettings(BaseSettings):
-    """Класс настроек соединения с хранилищем логов.
+    """Настройки для подключения к хранилищу логов.
 
     Attributes:
         log_host (str): Хост хранилища логов.
         log_port (int): Порт хранилища логов.
         log_udp_port (int): UDP порт для отправки логов.
-        log_interfaсe_url (str): URL интерфейса хранилища логов.
+        log_interface_url (str): URL интерфейса хранилища логов.
     """
 
     log_host: str = Field(default="http://127.0.0.1", env="LOG_HOST")
     log_port: int = Field(default=9000, env="LOG_PORT")
     log_udp_port: int = Field(default=12201, env="LOG_UDP_PORT")
-    log_interfaсe_url: str = Field(
+    log_interface_url: str = Field(
         default="http://127.0.0.1:9000", env="LOG_INTERFACE_URL"
     )
 
 
 class RedisSettings(BaseSettings):
-    """Класс настроек соединения с Redis.
+    """Настройки для подключения к Redis.
 
     Attributes:
         redis_host (str): Хост Redis.
         redis_port (int): Порт Redis.
-        redis_db_cashe (int): Номер базы данных для кэширования.
+        redis_db_cache (int): Номер базы данных для кэширования.
         redis_db_queue (int): Номер базы данных для очередей.
-        redis_pass (Union[str, None]): Пароль Redis.
+        redis_db_limits (int): Номер базы данных для лимитов.
+        redis_pass (Optional[str]): Пароль Redis.
         redis_encoding (str): Кодировка данных в Redis.
         redis_decode_responses (bool): Флаг декодирования ответов от Redis.
         redis_cache_expire_seconds (int): Время жизни кэша в секундах.
+
+    Methods:
+        redis_url: Возвращает URL для подключения к Redis.
     """
 
     redis_host: str = Field(default="localhost", env="REDIS_HOST")
@@ -123,19 +146,19 @@ class RedisSettings(BaseSettings):
     redis_db_cashe: int = 0
     redis_db_queue: int = 1
     redis_db_limits: int = 2
-    redis_pass: Union[str, None] = Field(default=None, env="REDIS_PASS")
+    redis_pass: Optional[str] = Field(default=None, env="REDIS_PASS")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
     redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
     redis_cache_expire_seconds: int = 300
 
     @property
     def redis_url(self) -> str:
-        """Возвращает URL приложения Redis."""
-        return f"redis://{settings.redis_settings.redis_host}:{settings.redis_settings.redis_port}"
+        """Возвращает URL для подключения к Redis."""
+        return f"redis://{self.redis_host}:{self.redis_port}"
 
 
 class AuthSettings(BaseSettings):
-    """Класс настроек аутентификации.
+    """Настройки для аутентификации.
 
     Attributes:
         auth_secret_key (str): Секретный ключ для аутентификации.
@@ -153,7 +176,7 @@ class AuthSettings(BaseSettings):
 
 
 class BackTasksSettings(BaseSettings):
-    """Класс настроек для фоновых задач.
+    """Настройки для фоновых задач.
 
     Attributes:
         bts_interface_url (str): URL интерфейса для управления фоновыми задачами.
@@ -169,7 +192,7 @@ class BackTasksSettings(BaseSettings):
         default="http://127.0.0.1:8888", env="BTS_INTERFACE_URL"
     )
     bts_max_time_limit: int = Field(default=300, env="BTS_MAX_TIME_LIMIT")
-    bts_min_retries: int = Field(default=3, env="BTS_MAX_RETRIES")
+    bts_min_retries: int = Field(default=3, env="BTS_MIN_RETRIES")
     bts_max_retries: int = Field(default=5, env="BTS_MAX_RETRIES")
     bts_min_retry_delay: int = Field(default=30, env="BTS_MIN_RETRY_DELAY")
     bts_max_retry_delay: int = Field(default=300, env="BTS_MAX_RETRY_DELAY")
@@ -177,7 +200,7 @@ class BackTasksSettings(BaseSettings):
 
 
 class MailSettings(BaseSettings):
-    """Класс настроек для отправки электронной почты.
+    """Настройки для отправки электронной почты.
 
     Attributes:
         mail_hostname (str): Хост SMTP сервера.
@@ -197,16 +220,20 @@ class MailSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    """Основной класс настроек приложения.
+    """Основные настройки приложения.
 
     Attributes:
         root_dir (Path): Корневая директория проекта.
         base_url (str): Базовый URL приложения.
+        app_version (str): Версия приложения.
         app_debug (bool): Флаг режима отладки.
         app_api_key (str): API ключ приложения.
         app_routes_without_api_key (List[str]): Список маршрутов, не требующих API ключа.
         app_allowed_hosts (List[str]): Список разрешенных хостов.
+        app_cors_allowed_origins (List[str]): Список разрешенных источников для CORS.
         app_request_timeout (float): Таймаут запросов в секундах.
+        app_rate_limit (int): Лимит запросов в секунду.
+        app_rate_time_measure_seconds (int): Временной интервал для измерения лимита запросов.
         database_settings (DatabaseSettings): Настройки базы данных.
         api_skb_settings (APISSKBSettings): Настройки API СКБ-Техно.
         logging_settings (LogStorageSettings): Настройки хранилища логов.
@@ -229,13 +256,12 @@ class Settings(BaseSettings):
         "/docs",
         "/metrics",
         "/openapi.json",
-        "/tech/healthcheck-*",  # Все healthcheck-роуты не требуют API-ключа
-        "/tech/redirect-*"  # Все redirect-роуты не требуют API-ключа
-        "/tech/version",  # Роут /tech/version не требует API-ключа
-        "/tech/log-storage",  # Роут /tech/log-storage не требует API-ключа
-        "/tech/file-storage",  # Роут /tech/file-storage не требует API-ключа
-        "/tech/task-monitor",  # Роут /tech/task-monitor не требует API-ключа
-        # Роут /tech/config требует API-ключа (не включен в список исключений)
+        "/tech/healthcheck-*",
+        "/tech/redirect-*",
+        "/tech/version",
+        "/tech/log-storage",
+        "/tech/file-storage",
+        "/tech/task-monitor",
     ]
     app_allowed_hosts: List[str] = [
         "example.com",
@@ -252,6 +278,7 @@ class Settings(BaseSettings):
 
     database_settings: DatabaseSettings = DatabaseSettings()
     api_skb_settings: APISSKBSettings = APISSKBSettings()
+    dadata_settings: APIDADATASettings = APIDADATASettings()
     logging_settings: LogStorageSettings = LogStorageSettings()
     storage_settings: FileStorageSettings = FileStorageSettings()
     redis_settings: RedisSettings = RedisSettings()

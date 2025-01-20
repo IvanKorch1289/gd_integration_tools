@@ -1,6 +1,3 @@
-import sys
-import traceback
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +23,5 @@ class UserRepository(SQLAlchemyRepository):
             )
             result = await session.execute(query)
             return result.scalars().one_or_none()
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком

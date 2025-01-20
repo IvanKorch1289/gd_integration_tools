@@ -1,6 +1,5 @@
 import json
-import sys
-import traceback
+from typing import List, Optional
 
 from fastapi import Depends, status
 from fastapi.responses import JSONResponse
@@ -13,7 +12,7 @@ from backend.core.dependencies import (
     get_base64_file,
     get_streaming_response,
 )
-from backend.core.logging_config import app_logger
+from backend.core.events import Event, event_bus
 from backend.core.redis import caching_decorator
 from backend.core.settings import settings
 from backend.core.storage import S3Service, s3_bucket_service_factory
@@ -21,7 +20,7 @@ from backend.core.utils import utilities
 from backend.files.repository import FileRepository
 from backend.orders.filters import OrderFilter
 from backend.orders.repository import OrderRepository
-from backend.orders.schemas import OrderSchemaOut, PublicSchema
+from backend.orders.schemas import OrderSchemaIn, OrderSchemaOut, PublicSchema
 
 
 __all__ = ("OrderService",)
@@ -35,57 +34,17 @@ class OrderService(BaseService):
 
     repo = OrderRepository()
     file_repo = FileRepository()
-    request_service = APISKBService()
+    request_service = APISKBService
     response_schema = OrderSchemaOut
+    request_schema = OrderSchemaIn
+    event_schema = Event
 
-    async def _send_email(self, to_email: str, subject: str, message: str) -> None:
-        """
-        Отправляет email с указанным содержимым.
-
-        :param to_email: Адрес электронной почты получателя.
-        :param subject: Тема письма.
-        :param message: Текст письма.
-        """
-        try:
-            await utilities.send_email(
-                to_email=to_email, subject=subject, message=message
-            )
-        except Exception as exc:
-            app_logger.error(f"Failed to send email: {exc}")
-
-    async def _handle_exception(
-        self, exc: Exception, order_id: int = None, email: str = None
-    ) -> JSONResponse:
-        """
-        Обрабатывает исключения, логирует их и отправляет email с информацией об ошибке.
-
-        :param exc: Исключение, которое произошло.
-        :param order_id: ID заказа (опционально).
-        :param email: Адрес электронной почты для отправки уведомления (опционально).
-        :return: JSONResponse с информацией об ошибке.
-        """
-        traceback.print_exc(file=sys.stdout)
-        if order_id:
-            try:
-                order_from_db = await self.get(key="id", value=order_id)
-                if order_from_db:
-                    email = order_from_db.email_for_answer
-            except Exception as db_exc:
-                app_logger.error(f"Failed to fetch order from DB: {db_exc}")
-        await self._send_email(
-            to_email=email if email else "default_email@example.com",
-            subject="Новый заказ выписки в СКБ-Техно (ОШИБКА!!!)",
-            message=f"Не удалось создать заказ выписки: {exc}",
-        )
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=str(exc)
-        )
-
-    async def add(self, data: dict) -> PublicSchema | None:
+    async def add(self, data: dict) -> Optional[PublicSchema]:
         """
         Создает новый заказ на основе переданных данных.
 
         :param data: Словарь с данными для создания заказа.
+        :param background_tasks: Фоновые задачи FastAPI.
         :return: Созданный заказ или None, если произошла ошибка.
         """
         try:
@@ -94,39 +53,35 @@ class OrderService(BaseService):
                 check_services = await utilities.health_check_all_services()
                 response_body = await utilities.get_response_type_body(check_services)
                 if response_body.get("is_all_services_active", None):
-                    from core.background_tasks import celery_app
-
-                    celery_app.send_task(
-                        "send_requests_for_create_order",
-                        args=[order.id],
-                        time_limit=settings.bts_settings.bts_max_time_limit,
+                    event = Event(
+                        event_type="order_created",
+                        payload={"order_id": order.id, "email": order.email_for_answer},
                     )
-                await self._send_email(
-                    to_email=data.get("email_for_answer"),
-                    subject="Новый заказ выписки в СКБ-Техно",
-                    message=f"Номер заказа: {order.object_uuid}",
-                )
+                    # Отправляем событие
+                    await event_bus.emit(event)
             return order
-        except Exception as exc:
-            return await self._handle_exception(exc, email=data.get("email_for_answer"))
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
-    async def add_many(self, data_list: list[dict]) -> list[PublicSchema] | None:
+    async def add_many(self, data_list: List[dict]) -> Optional[List[PublicSchema]]:
         """
         Создает несколько заказов на основе списка данных.
 
         :param data_list: Список словарей с данными для создания заказов.
+        :param background_tasks: Фоновые задачи FastAPI.
         :return: Список созданных заказов или None, если произошла ошибка.
         """
         try:
             return [await self.get_or_add(data=data) for data in data_list]
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
-    async def get_or_add(self, data: dict = None) -> PublicSchema | None:
+    async def get_or_add(self, data: dict) -> Optional[PublicSchema]:
         """
         Получает заказ по параметрам или создает новый, если заказ не найден.
 
         :param data: Словарь с данными для поиска или создания заказа.
+        :param background_tasks: Фоновые задачи FastAPI.
         :return: Найденный или созданный заказ. Возвращает None в случае ошибки.
         """
         try:
@@ -138,13 +93,14 @@ class OrderService(BaseService):
             instance = await self.get_by_params(
                 filter=OrderFilter.model_validate(filter_params)
             )
-            if not instance or (isinstance(instance, list) and len(instance) == 0):
+
+            if not instance:
                 instance = await self.add(data=data)
             return instance
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
-    async def create_skb_order(self, order_id: int) -> OrderSchemaOut | None:
+    async def create_skb_order(self, order_id: int) -> Optional[OrderSchemaOut]:
         """
         Создает заказ в СКБ-Техно на основе существующего заказа.
 
@@ -153,33 +109,42 @@ class OrderService(BaseService):
         """
         try:
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
-            if isinstance(order, PublicSchema):
-                order = order.model_dump()
 
-            if order.get("is_active", None):
+            order_data = order.get("data", None)
+
+            if isinstance(order_data, PublicSchema):
+                order_data = order_data.model_dump()
+
+            if order_data.get("is_active", None):
                 data = {
-                    "Id": order.get("object_uuid", None),
-                    "OrderId": order.get("object_uuid", None),
-                    "Number": order.get("pledge_cadastral_number", None),
+                    "Id": order_data.get("object_uuid", None),
+                    "OrderId": order_data.get("object_uuid", None),
+                    "Number": order_data.get("pledge_cadastral_number", None),
                     "Priority": settings.api_skb_settings.skb_request_priority_default,
-                    "RequestType": order.get("order_kind", None).get("skb_uuid", None),
+                    "RequestType": order_data.get("order_kind", None).get(
+                        "skb_uuid", None
+                    ),
                 }
-                result: JSONResponse = await self.request_service.add_request(data=data)
-
-                if result.status_code == status.HTTP_200_OK:
+                result = await self.request_service.add_request(data=data)
+                return result
+                if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
-                        value=order.get("id", None),
+                        value=order_data.get("id", None),
                         data={"is_send_request_to_skb": True},
                     )
-                    await self._send_email(
-                        to_email=order.get("email_for_answer"),
-                        subject="Новый заказ выписки в СКБ-Техно",
-                        message=f"Заказ выписки по объекту id = {order.get("object_uuid")} зарегистрирован в СКБ-Техно",
+                    event = Event(
+                        event_type="order_sending_skb",
+                        payload={
+                            "order_id": order_data["id"],
+                            "email": order_data["email_for_answer"],
+                        },
                     )
+                    # Отправляем событие
+                    await event_bus.emit(event)
                 return result
-        except Exception as exc:
-            return await self._handle_exception(exc, order_id=order_id)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_order_result(self, order_id: int, response_type: ResponseTypeChoices):
@@ -231,8 +196,8 @@ class OrderService(BaseService):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST, content={"hasError": True}
             )
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_order_file_and_json_from_skb(self, order_id: int):
@@ -263,8 +228,8 @@ class OrderService(BaseService):
                         key="id", value=order_id, data={"is_active": False}
                     )
             return order
-        except Exception as exc:
-            return await self._handle_exception(exc, order_id=order_id)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_order_file_from_storage(
         self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
@@ -283,8 +248,8 @@ class OrderService(BaseService):
                 return await get_streaming_response(files_list[0], s3_service)
             elif len(files_list) > 1:
                 return await create_zip_streaming_response(files_list, s3_service)
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_order_file_from_storage_base64(
@@ -306,8 +271,8 @@ class OrderService(BaseService):
             return JSONResponse(
                 status_code=status.HTTP_200_OK, content={"files": files_list}
             )
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_order_file_from_storage_link(
@@ -336,8 +301,8 @@ class OrderService(BaseService):
                 for file in files_list
             ]
             return files_links
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def get_order_file_link_and_json_result_for_request(
@@ -362,9 +327,14 @@ class OrderService(BaseService):
                     order_id=order_id, s3_service=s3_service
                 )
             return data
-        except Exception as exc:
-            return await self._handle_exception(exc)
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
     async def send_data_to_gd(self, order_id: int):
+        """
+        Отправляет данные заказа в GD (заглушка).
+
+        :param order_id: ID заказа.
+        """
         pass

@@ -22,7 +22,7 @@ def get_user_models() -> Dict[str, str]:
             and issubclass(model, BaseModel)  # Наследуется от BaseModel
             and model.__name__ != "BaseModel"  # Исключаем саму BaseModel
         ):
-            user_models[model.__name__] = model
+            user_models[model.__tablename__] = model
 
     return user_models
 

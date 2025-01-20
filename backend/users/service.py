@@ -2,7 +2,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 
 from backend.base.service import BaseService
 from backend.users.repository import UserRepository
-from backend.users.schemas import UserSchemaOut
+from backend.users.schemas import UserSchemaIn, UserSchemaOut
 
 
 __all__ = ("UserService",)
@@ -12,6 +12,7 @@ class UserService(BaseService):
 
     repo = UserRepository()
     response_schema = UserSchemaOut
+    request_schema = UserSchemaIn
 
     async def add(self, data: dict) -> UserSchemaOut | None:
         user = await self.repo.get_by_username(data=data)

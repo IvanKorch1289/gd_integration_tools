@@ -126,15 +126,11 @@ class S3Service:
                     details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
                 )
                 return {"status": "success", "message": "File upload successful"}
-            except Exception as ex:
+            except Exception:
                 await self.log_operation(
-                    operation="upload_file_object", exception=f"Error: {ex}"
+                    operation="upload_file_object", exception=f"Error: {exc}"
                 )
-                return {
-                    "status": "error",
-                    "message": "File not uploaded",
-                    "error": str(ex),
-                }
+                raise  # Исключение будет обработано глобальным обработчиком
 
     async def list_objects(self) -> list[str]:
         """
@@ -149,7 +145,7 @@ class S3Service:
             try:
                 contents = response["Contents"]
             except KeyError:
-                return storage_content
+                raise  # Исключение будет обработано глобальным обработчиком
 
             for item in contents:
                 storage_content.append(item["Key"])
@@ -172,7 +168,7 @@ class S3Service:
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     return None
-                raise ex
+                raise  # Исключение будет обработано глобальным обработчиком
 
     async def delete_file_object(self, key: str) -> dict:
         """
@@ -216,11 +212,11 @@ class S3Service:
                     ExpiresIn=expires_in,
                 )
                 return url
-            except ClientError as ex:
+            except ClientError:
                 await self.log_operation(
                     operation="generate_download_url", exception=f"Error: {ex}"
                 )
-                return None
+                raise  # Исключение будет обработано глобальным обработчиком
 
     async def log_operation(
         self,
@@ -251,7 +247,7 @@ class S3Service:
         try:
             fs_logger.info(json.dumps(log_data))
         except Exception:
-            traceback.print_exc(file=sys.stdout)
+            raise  # Исключение будет обработано глобальным обработчиком
 
     async def check_bucket_exists(self) -> bool:
         """Проверяет существование бакета в S3.
@@ -266,7 +262,7 @@ class S3Service:
                     for bucket in buckets_dict.get("Buckets", [])
                 )
             except Exception:
-                return False
+                raise  # Исключение будет обработано глобальным обработчиком
 
 
 def s3_bucket_service_factory() -> S3Service:

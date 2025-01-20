@@ -1,15 +1,14 @@
 from enum import Enum
 from io import BytesIO
 
-import pandas
+import pandas as pd
 from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
 from backend.base.enums import get_model_enum
-from backend.base.repository import get_repository_for_model
 from backend.base.schemas import EmailSchema
-from backend.base.service import BaseService
+from backend.base.service import BaseService, get_service_for_model
 from backend.core.settings import settings
 from backend.core.utils import utilities
 
@@ -278,7 +277,7 @@ class TechBV:
     )
     async def upload_excel(
         self,
-        # file: UploadFile = File(...),
+        file: UploadFile = File(...),
         table_name: str = Query(
             ..., description="Название таблицы для загрузки данных"
         ),
@@ -294,6 +293,43 @@ class TechBV:
             x_api_key (str): API-ключ для аутентификации.
 
         Returns:
-            bool: True, если таблица существует, иначе False.
+            list: Список результатов добавления данных.
         """
-        # if any(table_name == model.value for model in model_enum):
+        if table_name in model_enum._member_names_:
+            # Получаем сервис для модели
+            service: BaseService = await get_service_for_model(
+                model_enum[table_name].value
+            )
+
+            results: list = []
+
+            # Читаем содержимое файла
+            contents = await file.read()
+
+            # Читаем Excel-файл
+            df = pd.read_excel(BytesIO(contents))
+
+            # Преобразование каждой строки в Pydantic-схему и вызов метода create_item
+            for _, row in df.iterrows():
+                # Преобразуем строку в словарь и конвертируем numpy-типы в стандартные типы Python
+                row_data = {
+                    col: await utilities.convert_numpy_types(value)
+                    for col, value in row.to_dict().items()
+                }
+
+                # Валидируем данные с помощью Pydantic-схемы
+                validated_data = service.request_schema.model_validate(row_data)
+
+                # Добавляем данные через сервис
+                try:
+                    result = await service().get_or_add(
+                        data=validated_data.model_dump()
+                    )
+                    results.append(result)
+                except Exception as e:
+                    print(f"Ошибка при добавлении данных: {e}")
+                    results.append({"error": str(e)})
+
+            return results
+
+        return {"error": f"Таблица {table_name} не найдена."}

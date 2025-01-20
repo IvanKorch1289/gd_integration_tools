@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.base.repository import SQLAlchemyRepository
 from backend.core.database import session_manager
-from backend.order_kinds.repository import OrderKindRepository
+from backend.orderkinds.repository import OrderKindRepository
 from backend.orders.models import Order
 from backend.orders.schemas import OrderSchemaOut
 

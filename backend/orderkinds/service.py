@@ -1,6 +1,6 @@
 from backend.base.service import BaseService
-from backend.order_kinds.repository import OrderKindRepository
-from backend.order_kinds.schemas import OrderKindSchemaOut
+from backend.orderkinds.repository import OrderKindRepository
+from backend.orderkinds.schemas import OrderKindSchemaIn, OrderKindSchemaOut
 
 
 __all__ = ("OrderKindService",)
@@ -20,3 +20,4 @@ class OrderKindService(BaseService):
 
     repo = OrderKindRepository()
     response_schema = OrderKindSchemaOut
+    request_schema = OrderKindSchemaIn

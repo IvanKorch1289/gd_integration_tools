@@ -6,7 +6,7 @@ from pydantic import Field
 
 from backend.base.schemas import PublicSchema
 from backend.files.schemas import FileSchemaOut
-from backend.order_kinds.schemas import OrderKindSchemaOut
+from backend.orderkinds.schemas import OrderKindSchemaOut
 
 
 __all__ = (

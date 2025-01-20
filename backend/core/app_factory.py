@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqladmin import Admin
 from starlette_exporter import PrometheusMiddleware, handle_metrics
@@ -25,13 +25,14 @@ from backend.core.scheduler import (
 )
 from backend.core.settings import settings
 from backend.core.utils import utilities
+from backend.dadata import dadata_router
 from backend.files import (
     FileAdmin,
     OrderFileAdmin,
     file_router,
     storage_router,
 )
-from backend.order_kinds import OrderKindAdmin, kind_router
+from backend.orderkinds import OrderKindAdmin, kind_router
 from backend.orders import OrderAdmin, order_router
 from backend.users import UserAdmin, user_router
 
@@ -99,6 +100,21 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+    # Подключение глобальных обработчиков ошибок
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=500,
+            content={"detail": exc},
+        )
+
     # Подключение SQLAdmin
     admin = Admin(app, database.async_engine)
     admin.add_view(UserAdmin)
@@ -117,6 +133,7 @@ def create_app() -> FastAPI:
     app.include_router(file_router, prefix="/file", tags=["Работа с файлами в БД"])
     app.include_router(order_router, prefix="/order", tags=["Работа с запросами"])
     app.include_router(skb_router, prefix="/skb", tags=["Работа с API СКБ Техно"])
+    app.include_router(dadata_router, prefix="/dadata", tags=["Работа с API DaData"])
     app.include_router(user_router, prefix="/user", tags=["Работа с пользователями"])
     app.include_router(tech_router, prefix="/tech", tags=["Техническое"])
 
@@ -124,6 +141,32 @@ def create_app() -> FastAPI:
     @app.get("/metrics", summary="metrics", operation_id="metrics", tags=["Метрики"])
     async def metrics(request: Request):
         return handle_metrics(request)
+
+    # Эндпоинт для регистрации событий
+    @app.post(
+        "/handle-event/",
+        summary="handle-event",
+        operation_id="handle-event",
+        tags=["Регистрация событий"],
+    )
+    async def handle_event(payload: dict):
+        """
+        Эндпоинт для обработки событий.
+        """
+        event_name = payload.event_name
+        event_data = payload.data
+
+        # Обработка событий
+        if event_name == "object-created" and event_data.get("email_for_send", None):
+            await utilities.send_email(
+                to_email=payload.get("email_for_send"),
+                subject=settings.mail_settings.mail_sender,
+                message=f"created - {event_data.get("id", None)}",
+            )
+        else:
+            raise HTTPException(status_code=400, detail="Unknown event")
+
+        return {"message": f"Event {event_name} handled successfully"}
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     async def root():

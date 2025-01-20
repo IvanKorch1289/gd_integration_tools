@@ -1,6 +1,4 @@
 import importlib
-import sys
-import traceback
 from abc import ABC, abstractmethod
 from typing import (
     Any,
@@ -232,9 +230,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             unsecret_data = await self.model.get_value_from_secret_str(data)
             stmt = insert(self.model).values(**unsecret_data).returning(self.model)
             return await self._execute_stmt(session, stmt)
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            raise ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add_many(
@@ -254,9 +251,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 result = await self.add(session, data)
                 results.append(result)
             return results
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            raise ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def update(
@@ -281,9 +277,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 .returning(self.model)
             )
             return await self._execute_stmt(session, stmt)
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            raise ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def all(
@@ -317,12 +312,13 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             )
             await session.flush()
             return result.scalars().one()
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            raise ex
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
 
-def get_repository_for_model(model: Type[BaseModel]) -> Type[SQLAlchemyRepository]:
+async def get_repository_for_model(
+    model: Type[BaseModel],
+) -> Type[SQLAlchemyRepository]:
     """
     Возвращает класс репозитория для указанной модели.
 
@@ -335,22 +331,23 @@ def get_repository_for_model(model: Type[BaseModel]) -> Type[SQLAlchemyRepositor
     Исключения:
         ValueError: Если репозиторий для модели не найден.
     """
-    model_name = model.__name__
-    repository_name = f"{model_name}Repository"
+    repository_name = f"{model.__name__}Repository"
 
     # Импортируем модуль репозиториев
     try:
         repository_module = importlib.import_module(
-            f"backend.{model_name.lower()}s.repository"
+            f"backend.{model.__tablename__}.repository"
         )
     except ImportError:
-        raise ValueError(f"Модуль репозиториев для модели {model_name} не найден.")
+        raise ValueError(
+            f"Модуль репозиториев для таблицы {model.__tablename__} не найден."
+        )
     # Получаем класс репозитория
     try:
         repository_class = getattr(repository_module, repository_name)
     except AttributeError:
         raise ValueError(
-            f"Репозиторий {repository_name} для модели {model_name} не найден."
+            f"Репозиторий {repository_name} для таблицы {model.__tablename__} не найден."
         )
 
     return repository_class

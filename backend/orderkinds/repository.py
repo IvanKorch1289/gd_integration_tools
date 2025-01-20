@@ -1,6 +1,6 @@
 from backend.base.repository import SQLAlchemyRepository
-from backend.order_kinds.models import OrderKind
-from backend.order_kinds.schemas import OrderKindSchemaOut
+from backend.orderkinds.models import OrderKind
+from backend.orderkinds.schemas import OrderKindSchemaOut
 
 
 __all__ = ("OrderKindRepository",)

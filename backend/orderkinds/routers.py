@@ -5,9 +5,9 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from backend.core.limiter import route_limiter
-from backend.order_kinds.filters import OrderKindFilter
-from backend.order_kinds.schemas import OrderKindSchemaIn
-from backend.order_kinds.service import OrderKindService
+from backend.orderkinds.filters import OrderKindFilter
+from backend.orderkinds.schemas import OrderKindSchemaIn
+from backend.orderkinds.service import OrderKindService
 
 
 __all__ = ("router",)

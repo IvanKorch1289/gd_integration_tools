@@ -3,7 +3,7 @@ from typing import List
 from sqladmin import ModelView
 
 from backend.base import BaseAdmin
-from backend.order_kinds.models import OrderKind
+from backend.orderkinds.models import OrderKind
 
 
 __all__ = ("OrderKindAdmin",)
