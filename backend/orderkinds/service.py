@@ -21,3 +21,8 @@ class OrderKindService(BaseService):
     repo = OrderKindRepository()
     response_schema = OrderKindSchemaOut
     request_schema = OrderKindSchemaIn
+
+
+# Функция-зависимость для создания экземпляра OrderKindService
+def get_order_kind_service() -> OrderKindService:
+    return OrderKindService()

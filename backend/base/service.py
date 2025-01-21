@@ -1,5 +1,5 @@
 import importlib
-from typing import Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -21,13 +21,14 @@ class BaseService(Generic[ConcreteRepo]):
     Атрибуты:
         repo (Type[ConcreteRepo]): Репозиторий, связанный с сервисом.
         response_schema (Type[ConcreteResponseSchema]): Схема для преобразования данных.
+        request_schema (Type[ConcreteRequestSchema]): Схема для валидации входных данных.
     """
 
     repo: Type[ConcreteRepo] = None
     response_schema: Type[ConcreteResponseSchema] = None
     request_schema: Type[ConcreteRequestSchema] = None
 
-    async def _transfer(self, instance) -> Optional[ConcreteResponseSchema]:
+    async def _transfer(self, instance: BaseModel) -> Optional[ConcreteResponseSchema]:
         """
         Преобразует объект модели в схему ответа.
 
@@ -136,6 +137,7 @@ class BaseService(Generic[ConcreteRepo]):
         Получает объекты по параметрам фильтра и возвращает их в виде списка схем.
 
         :param filter: Фильтр для поиска объектов.
+
         :return: Список схем ответа или None, если произошла ошибка.
         """
         try:
@@ -183,6 +185,57 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
+    # @caching_decorator
+    async def get_all_object_versions(
+        self, object_id: int
+    ) -> List[ConcreteResponseSchema]:
+        """
+        Получает все версии объекта по его id.
+
+        :param object_id: ID объекта.
+        :return: Список всех версий объекта в виде схем.
+        """
+        versions = await self.repo.get_all_versions(object_id=object_id)
+        return [await self._transfer(version) for version in versions]
+
+    @caching_decorator
+    async def get_latest_object_version(
+        self, object_id: int
+    ) -> Optional[ConcreteResponseSchema]:
+        """
+        Получает последнюю версию объекта.
+
+        :param object_id: ID объекта.
+        :return: Последняя версия объекта в виде схемы или None, если объект не найден.
+        """
+        latest_version = await self.repo.get_latest_version(object_id=object_id)
+        return await self._transfer(latest_version)
+
+    async def restore_object_to_version(
+        self, object_id: int, transaction_id: int
+    ) -> Optional[ConcreteResponseSchema]:
+        """
+        Восстанавливает объект до указанной версии.
+
+        :param object_id: ID объекта.
+        :param transaction_id: ID транзакции, до которой нужно восстановить объект.
+        :return: Восстановленный объект в виде схемы или None, если произошла ошибка.
+        """
+        restored_object = await self.repo.restore_to_version(
+            object_id=object_id, transaction_id=transaction_id
+        )
+        return await self._transfer(restored_object)
+
+    @caching_decorator
+    async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
+        """
+        Получает список изменений атрибутов объекта.
+
+        :param object_id: ID объекта.
+        :return: Список изменений атрибутов объекта.
+        """
+        return await self.repo.get_changes(object_id=object_id)
+
 
 async def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
     """
@@ -197,7 +250,6 @@ async def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
     Исключения:
         ValueError: Если сервис для модели не найден.
     """
-
     # Формируем имя сервиса
     service_name = f"{model.__name__}Service"
     # Импортируем модуль сервисов

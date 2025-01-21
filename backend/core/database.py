@@ -3,7 +3,7 @@ from functools import wraps
 from typing import AsyncGenerator, Callable, Optional
 
 from fastapi import Depends
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 from sqlalchemy.event import listen
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -11,7 +11,10 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
 
+from backend.core.errors import DatabaseError, NotFoundError
 from backend.core.logging_config import db_logger
 from backend.core.settings import settings
 
@@ -28,6 +31,7 @@ class DatabaseInitializer:
         :param pool_size: Размер пула соединений.
         :param max_overflow: Максимальное количество соединений сверх пула.
         """
+        # Асинхронный движок для основного приложения
         self.async_engine: AsyncEngine = create_async_engine(
             url=url,
             echo=echo,
@@ -42,6 +46,23 @@ class DatabaseInitializer:
             autocommit=False,
             expire_on_commit=False,
         )
+
+        # Синхронный движок для Alembic
+        self.sync_engine = create_engine(
+            url=url.replace("+asyncpg", ""),  # Убираем асинхронный драйвер
+            echo=echo,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+            future=True,
+            pool_pre_ping=True,
+        )
+        self.sync_session_maker = sessionmaker(
+            bind=self.sync_engine,
+            autoflush=False,
+            autocommit=False,
+            expire_on_commit=False,
+        )
+
         self.register_logging_events()
 
     def register_logging_events(self):
@@ -58,6 +79,7 @@ class DatabaseInitializer:
         ):
             db_logger.info("SQL Execution Completed.")
 
+        # Логирование для асинхронного движка
         listen(
             self.async_engine.sync_engine,
             "before_cursor_execute",
@@ -66,6 +88,30 @@ class DatabaseInitializer:
         listen(
             self.async_engine.sync_engine, "after_cursor_execute", after_cursor_execute
         )
+
+        # Логирование для синхронного движка
+        listen(
+            self.sync_engine,
+            "before_cursor_execute",
+            before_cursor_execute,
+        )
+        listen(self.sync_engine, "after_cursor_execute", after_cursor_execute)
+
+    def get_sync_engine(self):
+        """
+        Возвращает синхронный движок для Alembic.
+
+        :return: Синхронный движок SQLAlchemy.
+        """
+        return self.sync_engine
+
+    def get_sync_session(self) -> Session:
+        """
+        Возвращает синхронную сессию для Alembic.
+
+        :return: Синхронная сессия SQLAlchemy.
+        """
+        return self.sync_session_maker()
 
 
 # Инициализация базы данных с настройками из конфигурации
@@ -102,9 +148,9 @@ class DatabaseSessionManager:
         async with self.session_maker() as session:
             try:
                 yield session
-            except Exception as e:
-                db_logger.error(f"Ошибка при создании сессии базы данных: {e}")
-                raise
+            except Exception as exc:
+                db_logger.error(f"Ошибка при создании сессии базы данных: {exc}")
+                raise DatabaseError(message="Failed to create database session")
             finally:
                 await session.close()
 
@@ -119,10 +165,10 @@ class DatabaseSessionManager:
         try:
             yield
             await session.commit()
-        except Exception as e:
+        except Exception as exc:
             await session.rollback()
-            db_logger.exception(f"Ошибка транзакции: {e}")
-            raise
+            db_logger.exception(f"Ошибка транзакции: {exc}")
+            raise DatabaseError(message="Transaction failed")
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
@@ -131,7 +177,12 @@ class DatabaseSessionManager:
         :yield: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
-            yield session
+            try:
+                yield session
+            except Exception as exc:
+                raise DatabaseError(
+                    message=f"Failed to get database session - {str(exc)}"
+                )
 
     async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
@@ -140,8 +191,13 @@ class DatabaseSessionManager:
         :yield: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
-            async with self.transaction(session):
-                yield session
+            try:
+                async with self.transaction(session):
+                    yield session
+            except Exception as exc:
+                raise DatabaseError(
+                    message=f"Failed to get transaction session - {str(exc)}"
+                )
 
     def connection(
         self, isolation_level: Optional[str] = None, commit: bool = True
@@ -172,10 +228,14 @@ class DatabaseSessionManager:
                             await session.commit()
 
                         return result
-                    except Exception as e:
-                        await session.rollback()
-                        db_logger.error(f"Ошибка при выполнении транзакции: {e}")
+                    except NotFoundError:
                         raise
+                    except Exception as exc:
+                        await session.rollback()
+                        db_logger.error(f"Ошибка при выполнении транзакции: {str(exc)}")
+                        raise DatabaseError(
+                            message=f"Failed to execute transaction - {str(exc)}"
+                        )
                     finally:
                         await session.close()
 

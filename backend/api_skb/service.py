@@ -4,12 +4,13 @@ from uuid import UUID
 
 import aiohttp
 import asyncio
+from fastapi import Depends
 from urllib.parse import urljoin
 
 from backend.core.http_client import make_request
 from backend.core.settings import settings
 from backend.core.storage import s3_bucket_service_factory
-from backend.orderkinds.service import OrderKindService
+from backend.orderkinds.service import OrderKindService, get_order_kind_service
 
 
 __all__ = ("APISKBService",)
@@ -30,8 +31,12 @@ class APISKBService:
     endpoint = settings.api_skb_settings.skb_url
     file_storage = s3_bucket_service_factory()
 
-    @staticmethod
-    async def get_request_kinds() -> Dict[str, Any]:
+    def __init__(
+        self, kind_service: OrderKindService = Depends(get_order_kind_service)
+    ):
+        self.kind_service = kind_service
+
+    async def get_request_kinds(self) -> Dict[str, Any]:
         """
         Получить справочник видов запросов из СКБ-Техно.
 
@@ -39,18 +44,18 @@ class APISKBService:
             Dict[str, Any]: Справочник видов запросов или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(APISKBService.endpoint, api_endpoints.get('GET_KINDS'))}"
-            response = await make_request("GET", url, params=APISKBService.params)
-            result = await response.json()
+            url = f"{urljoin(self.endpoint, api_endpoints.get('GET_KINDS'))}"
+
+            result = await make_request("GET", url, params=self.params)
 
             # Обработка и сохранение данных в OrderKindService
             tasks = [
-                OrderKindService().get_or_add(
+                self.kind_service.get_or_add(
                     key="skb_uuid",
                     value=el.get("Id"),
                     data={"name": el.get("Name"), "skb_uuid": el.get("Id")},
                 )
-                for el in result.get("Data", [])
+                for el in result.get("data", []).get("Data", None)
             ]
             await asyncio.gather(*tasks)
 
@@ -58,8 +63,7 @@ class APISKBService:
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @staticmethod
-    async def add_request(data: Dict[str, Any]) -> Dict[str, Any]:
+    async def add_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Создать запрос на получение данных по залогу в СКБ-Техно.
 
@@ -70,16 +74,13 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(APISKBService.endpoint, api_endpoints.get('CREATE_REQUEST'))}"
-            return await make_request(
-                "POST", url, params=APISKBService.params, json=data
-            )
+            url = f"{urljoin(self.endpoint, api_endpoints.get('CREATE_REQUEST'))}"
+            return await make_request("POST", url, params=self.params, json=data)
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @staticmethod
     async def get_response_by_order(
-        order_uuid: UUID, response_type: Optional[str] = None
+        self, order_uuid: UUID, response_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Получить результат по залогу из СКБ-Техно.
@@ -92,8 +93,8 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или информация об ошибке.
         """
         try:
-            params = {**APISKBService.params, "Type": response_type}
-            url = f"{urljoin(APISKBService.endpoint, api_endpoints.get('GET_RESULT'))}/{order_uuid}"
+            params = {**self.params, "Type": response_type}
+            url = f"{urljoin(self.endpoint, api_endpoints.get('GET_RESULT'))}/{order_uuid}"
             response = await make_request("GET", url, params=params)
 
             content_encoding = response.headers.get("Content-Encoding", "").lower()
@@ -115,7 +116,7 @@ class APISKBService:
                     if match:
                         filename = match.group(1)
 
-                return await APISKBService.file_storage.upload_file_object(
+                return await self.file_storage.upload_file_object(
                     key=str(order_uuid),
                     original_filename=filename,
                     content=content,
@@ -124,3 +125,19 @@ class APISKBService:
             return await response.json()
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
+
+
+# Функция-зависимость для создания экземпляра OrderKindService
+def get_skb_service(
+    kind_service: OrderKindService = Depends(get_order_kind_service),
+) -> APISKBService:
+    """
+    Возвращает экземпляр APISKBService с внедренной зависимостью OrderKindService.
+
+    Args:
+        kind_service (OrderKindService): Сервис для работы с видами запросов.
+
+    Returns:
+        APISKBService: Экземпляр APISKBService.
+    """
+    return APISKBService(kind_service=kind_service)

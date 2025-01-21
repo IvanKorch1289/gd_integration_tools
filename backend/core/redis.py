@@ -64,23 +64,18 @@ class CachingDecorator:
             async with redis_client.connection() as r:
                 cached_data = await r.get(key)
                 if cached_data is None:
-                    return {"data": None, "ttl": None, "error": None}
+                    return None
 
                 if isinstance(cached_data, bytes):
                     cached_data = cached_data.decode("utf-8")
 
-                ttl = await r.ttl(key)
-                return {
-                    "data": json_tricks.loads(
-                        cached_data, extra_obj_pairs_hooks=[utilities.custom_decoder]
-                    ),
-                    "ttl": ttl,
-                    "error": None,
-                }
+                return json_tricks.loads(
+                    cached_data, extra_obj_pairs_hooks=[utilities.custom_decoder]
+                )
         except Exception as exc:
             error_message = f"Error getting cached data: {exc}"
             app_logger.error(error_message)
-            return {"data": None, "ttl": None, "error": error_message}
+            return None
 
     async def cache_data(self, key: str, data: Any) -> None:
         if data is None or (isinstance(data, list) and len(data) == 0):
@@ -111,36 +106,19 @@ class CachingDecorator:
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Dict[str, Any]:
-            cache = kwargs.pop("cache", True)
-            if not cache:
-                result = await func(*args, **kwargs)
-                return {"data": result, "from_cache": False, "ttl": None, "error": None}
-
             key = (
                 f"{args[0].__class__.__name__ if args else ''}.{func.__name__}.{kwargs}"
             )
             cached_data = await self.get_cached_data(key)
-            if cached_data["data"] is not None:
-                return {
-                    "data": cached_data["data"],
-                    "from_cache": True,
-                    "ttl": cached_data["ttl"],
-                    "error": cached_data["error"],
-                }
+
+            if cached_data is not None:
+                return cached_data
 
             result = await func(*args, **kwargs)
 
-            if isinstance(result, list) and len(result) == 0:
-                return None
-
             await self.cache_data(key, result)
 
-            return {
-                "data": result,
-                "from_cache": False,
-                "ttl": self.expire,
-                "error": None,
-            }
+            return result
 
         return wrapper
 

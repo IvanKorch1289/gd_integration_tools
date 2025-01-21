@@ -14,6 +14,7 @@ class Order(BaseModel):
     """ORM-класс таблицы учета запросов."""
 
     __table_args__ = {"comment": "Запросы в СКБ-Техно"}
+    __versioned__ = {}
 
     order_kind_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("orderkinds.id"), nullable=False

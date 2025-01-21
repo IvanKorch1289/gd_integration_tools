@@ -5,8 +5,10 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.orm import configure_mappers
 
-from backend.base.models import BaseModel
+from backend.base.models import BaseModel, metadata
+from backend.core.database import database
 from backend.core.migrations.types import load_types
 from backend.core.settings import settings
 from backend.files.models import File, OrderFile
@@ -24,10 +26,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+configure_mappers()
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
-target_metadata = BaseModel.metadata
+
+# target_metadata = BaseModel.metadata
+target_metadata = metadata
 
 config.set_main_option("sqlalchemy.url", settings.database_settings.db_url_asyncpg)
 

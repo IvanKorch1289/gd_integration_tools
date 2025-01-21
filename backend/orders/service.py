@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, status
 from fastapi.responses import JSONResponse
@@ -39,50 +39,51 @@ class OrderService(BaseService):
     request_schema = OrderSchemaIn
     event_schema = Event
 
-    async def add(self, data: dict) -> Optional[PublicSchema]:
+    async def add(self, data: Dict[str, Any]) -> Optional[PublicSchema]:
         """
         Создает новый заказ на основе переданных данных.
 
         :param data: Словарь с данными для создания заказа.
-        :param background_tasks: Фоновые задачи FastAPI.
         :return: Созданный заказ или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при создании заказа.
         """
         try:
             order = await super().add(data=data)
-            if order:
-                check_services = await utilities.health_check_all_services()
-                response_body = await utilities.get_response_type_body(check_services)
-                if response_body.get("is_all_services_active", None):
-                    event = Event(
-                        event_type="order_created",
-                        payload={"order_id": order.id, "email": order.email_for_answer},
-                    )
-                    # Отправляем событие
-                    await event_bus.emit(event)
+            # if order:
+            #     check_services = await utilities.health_check_all_services()
+            #     response_body = await utilities.get_response_type_body(check_services)
+            #     if response_body.get("is_all_services_active", None):
+            #         event = Event(
+            #             event_type="order_created",
+            #             payload={"order_id": order.id, "email": order.email_for_answer},
+            #         )
+            #         await event_bus.emit(event)
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    async def add_many(self, data_list: List[dict]) -> Optional[List[PublicSchema]]:
+    async def add_many(
+        self, data_list: List[Dict[str, Any]]
+    ) -> Optional[List[PublicSchema]]:
         """
         Создает несколько заказов на основе списка данных.
 
         :param data_list: Список словарей с данными для создания заказов.
-        :param background_tasks: Фоновые задачи FastAPI.
         :return: Список созданных заказов или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при создании заказов.
         """
         try:
             return [await self.get_or_add(data=data) for data in data_list]
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    async def get_or_add(self, data: dict) -> Optional[PublicSchema]:
+    async def get_or_add(self, data: Dict[str, Any]) -> Optional[PublicSchema]:
         """
         Получает заказ по параметрам или создает новый, если заказ не найден.
 
         :param data: Словарь с данными для поиска или создания заказа.
-        :param background_tasks: Фоновые задачи FastAPI.
         :return: Найденный или созданный заказ. Возвращает None в случае ошибки.
+        :raises Exception: Если произошла ошибка при поиске или создании заказа.
         """
         try:
             filter_params = {
@@ -106,6 +107,7 @@ class OrderService(BaseService):
 
         :param order_id: ID заказа.
         :return: Ответ от СКБ-Техно или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при создании заказа в СКБ-Техно.
         """
         try:
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
@@ -126,7 +128,7 @@ class OrderService(BaseService):
                     ),
                 }
                 result = await self.request_service.add_request(data=data)
-                return result
+
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
@@ -140,20 +142,22 @@ class OrderService(BaseService):
                             "email": order_data["email_for_answer"],
                         },
                     )
-                    # Отправляем событие
                     await event_bus.emit(event)
                 return result
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
-    async def get_order_result(self, order_id: int, response_type: ResponseTypeChoices):
+    async def get_order_result(
+        self, order_id: int, response_type: ResponseTypeChoices
+    ) -> JSONResponse:
         """
         Получает результат заказа из СКБ-Техно в указанном формате (JSON или PDF).
 
         :param order_id: ID заказа.
         :param response_type: Тип ответа (JSON или PDF).
         :return: JSONResponse с результатом или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении результата.
         """
         try:
             instance = await self.repo.get(key="id", value=order_id)
@@ -200,12 +204,15 @@ class OrderService(BaseService):
             raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
-    async def get_order_file_and_json_from_skb(self, order_id: int):
+    async def get_order_file_and_json_from_skb(
+        self, order_id: int
+    ) -> Optional[Dict[str, Any]]:
         """
         Получает файл и JSON-результат заказа из СКБ-Техно.
 
         :param order_id: ID заказа.
         :return: Данные заказа или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
             order = await self.get(key="id", value=order_id)
@@ -233,13 +240,14 @@ class OrderService(BaseService):
 
     async def get_order_file_from_storage(
         self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
-    ):
+    ) -> Optional[Any]:
         """
         Получает файл заказа из хранилища S3.
 
         :param order_id: ID заказа.
         :param s3_service: Сервис для работы с S3.
         :return: Потоковое содержимое файла или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
             order = await self.repo.get(key="id", value=order_id)
@@ -254,13 +262,14 @@ class OrderService(BaseService):
     @caching_decorator
     async def get_order_file_from_storage_base64(
         self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
-    ):
+    ) -> JSONResponse:
         """
         Получает файл заказа из хранилища S3 в формате base64.
 
         :param order_id: ID заказа.
         :param s3_service: Сервис для работы с S3.
         :return: JSONResponse с файлами в формате base64 или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
             order = await self.repo.get(key="id", value=order_id)
@@ -277,13 +286,14 @@ class OrderService(BaseService):
     @caching_decorator
     async def get_order_file_from_storage_link(
         self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
-    ):
+    ) -> List[Dict[str, str]]:
         """
         Получает ссылки для скачивания файлов заказа из хранилища S3.
 
         :param order_id: ID заказа.
         :param s3_service: Сервис для работы с S3.
         :return: Список ссылок для скачивания файлов или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении ссылок.
         """
         try:
             order = await self.get(key="id", value=order_id)
@@ -307,13 +317,14 @@ class OrderService(BaseService):
     @caching_decorator
     async def get_order_file_link_and_json_result_for_request(
         self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
-    ):
+    ) -> Dict[str, Any]:
         """
         Получает ссылки на файлы и JSON-результат заказа.
 
         :param order_id: ID заказа.
         :param s3_service: Сервис для работы с S3.
         :return: Данные заказа, включая ссылки на файлы и JSON-результат, или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
             order = await self.get(key="id", value=order_id)
@@ -331,7 +342,7 @@ class OrderService(BaseService):
             raise  # Исключение будет обработано глобальным обработчиком
 
     @caching_decorator
-    async def send_data_to_gd(self, order_id: int):
+    async def send_data_to_gd(self, order_id: int) -> None:
         """
         Отправляет данные заказа в GD (заглушка).
 
