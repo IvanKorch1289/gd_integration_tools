@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi_filter import FilterDepends
@@ -222,12 +222,11 @@ class OrderKindCBV:
         "/all_versions/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить версии объекта вида запроса по ID",
-        # response_model=List[OrderKindSchemaOut]
     )
     @route_limiter
     async def get_all_kind_versions(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
-    ) -> List[OrderKindSchemaOut]:
+    ):
         """
         Получить все версии объекта вида запроса по его ID.
 
@@ -248,12 +247,11 @@ class OrderKindCBV:
         "/latest_version/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить последнюю версию объекта вида запроса по ID",
-        # response_model=OrderKindSchemaOut
     )
     @route_limiter
     async def get_kind_latest_version(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
-    ) -> OrderKindSchemaOut:
+    ):
         """
         Получить последнюю версию объекта вида запроса по его ID.
 
@@ -274,7 +272,6 @@ class OrderKindCBV:
         "/restore_to_version/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект вида запроса до указанной версии",
-        # response_model=OrderKindSchemaOut
     )
     @route_limiter
     async def restore_kind_to_version(
@@ -283,7 +280,7 @@ class OrderKindCBV:
         transaction_id: int,
         request: Request,
         x_api_key: str = Header(...),
-    ) -> OrderKindSchemaOut:
+    ):
         """
         Восстановить объект вида запроса до указанной версии.
 
@@ -307,12 +304,11 @@ class OrderKindCBV:
         "/changes/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить изменения объекта вида запроса по ID",
-        response_model=List[OrderKindSchemaOut],
     )
     @route_limiter
     async def get_kind_changes(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
-    ) -> List[OrderKindSchemaOut]:
+    ):
         """
         Получить список изменений объекта вида запроса по его ID.
 

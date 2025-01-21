@@ -437,9 +437,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :return: Список изменений атрибутов объекта с информацией о транзакции.
         """
         try:
-            versions = await self.get_all_versions(session, object_id)
+            versions = await self.get_all_versions(object_id=object_id)
             if not versions:
-                return []
+                return None
 
             changes = []
             for i in range(1, len(versions)):
