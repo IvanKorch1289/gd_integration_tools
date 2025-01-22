@@ -14,11 +14,12 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from backend.core.dependencies import get_streaming_response
+from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.files.filters import FileFilter
-from backend.files.schemas import FileSchemaIn
-from backend.files.service import FileService
+from backend.files.schemas import FileKindVersionSchemaOut, FileSchemaIn
+from backend.files.service import FileService, get_file_service
 
 
 __all__ = (
@@ -38,10 +39,13 @@ class FileCBV:
     Предоставляет методы для получения, добавления, обновления и удаления файлов.
     """
 
-    service = FileService()
+    # Внедряем зависимость через конструктор
+    def __init__(self, service: FileService = Depends(get_file_service)):
+        self.service = service
 
     @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
     @route_limiter
+    @handle_routes_errors
     async def get_files(self, request: Request, x_api_key: str = Header(...)):
         """
         Получить все файлы из базы данных.
@@ -54,6 +58,8 @@ class FileCBV:
     @router.get(
         "/id/{file_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
     )
+    @route_limiter
+    @handle_routes_errors
     async def get_file(self, file_id: int, x_api_key: str = Header(...)):
         """
         Получить файл по его ID.
@@ -69,6 +75,8 @@ class FileCBV:
         status_code=status.HTTP_200_OK,
         summary="Получить файл по фильтру",
     )
+    @route_limiter
+    @handle_routes_errors
     async def get_by_filter(
         self,
         file_filter: FileFilter = FilterDepends(FileFilter),
@@ -87,6 +95,7 @@ class FileCBV:
         "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
     )
     @route_limiter
+    @handle_routes_errors
     async def add_file(
         self,
         request_schema: FileSchemaIn,
@@ -108,6 +117,7 @@ class FileCBV:
         summary="Добавить несколько файлов",
     )
     @route_limiter
+    @handle_routes_errors
     async def add_many_files(
         self,
         request_schema: List[FileSchemaIn],
@@ -130,6 +140,7 @@ class FileCBV:
         summary="Изменить файл по ID",
     )
     @route_limiter
+    @handle_routes_errors
     async def update_file(
         self,
         request_schema: FileSchemaIn,
@@ -155,6 +166,7 @@ class FileCBV:
         summary="Удалить файл по ID",
     )
     @route_limiter
+    @handle_routes_errors
     async def delete_file(
         self, file_id: int, request: Request, x_api_key: str = Header(...)
     ):
@@ -165,7 +177,101 @@ class FileCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Сообщение об успешном удалении.
         """
-        return await self.service.delete(key="id", value=file_id)
+        await self.service.delete(key="id", value=file_id)
+
+    @router.get(
+        "/all_versions/{file_id}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить версии объекта данных файла по ID",
+        response_model=List[FileKindVersionSchemaOut],
+    )
+    @route_limiter
+    @handle_routes_errors
+    async def get_all_file_versions(
+        self, file_id: int, request: Request, x_api_key: str = Header(...)
+    ):
+        """
+        Получить все версии объекта данных файла по его ID.
+
+        :param file_id: ID данных файла.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список всех версий объекта.
+        :raises HTTPException: Если произошла ошибка при получении данных.
+        """
+        return await self.service.get_all_object_versions(object_id=file_id)
+
+    @router.get(
+        "/latest_version/{file_id}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить последнюю версию объекта данных файла по ID",
+        response_model=FileKindVersionSchemaOut,
+    )
+    @route_limiter
+    @handle_routes_errors
+    async def get_file_latest_version(
+        self, file_id: int, request: Request, x_api_key: str = Header(...)
+    ):
+        """
+        Получить последнюю версию объекта данных файла по его ID.
+
+        :param file_id: ID данных файла.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Последняя версия объекта.
+        :raises HTTPException: Если произошла ошибка при получении данных.
+        """
+        return await self.service.get_latest_object_version(object_id=file_id)
+
+    @router.post(
+        "/restore_to_version/{file_id}",
+        status_code=status.HTTP_200_OK,
+        summary="Восстановить объект данных файла до указанной версии",
+        response_model=FileKindVersionSchemaOut,
+    )
+    @route_limiter
+    @handle_routes_errors
+    async def restore_file_to_version(
+        self,
+        file_id: int,
+        transaction_id: int,
+        request: Request,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Восстановить объект данных файла до указанной версии.
+
+        :param file_id: ID данных файла.
+        :param transaction_id: ID транзакции (версии) для восстановления.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Восстановленный объект.
+        :raises HTTPException: Если произошла ошибка при восстановлении.
+        """
+        return await self.service.restore_object_to_version(
+            object_id=file_id, transaction_id=transaction_id
+        )
+
+    @router.get(
+        "/changes/{file_id}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить изменения объекта данных файла по ID",
+    )
+    @route_limiter
+    @handle_routes_errors
+    async def get_file_changes(
+        self, file_id: int, request: Request, x_api_key: str = Header(...)
+    ):
+        """
+        Получить список изменений объекта данных файла по его ID.
+
+        :param file_id: ID данных файла.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список изменений объекта.
+        :raises HTTPException: Если произошла ошибка при получении данных.
+        """
+        return await self.service.get_object_changes(object_id=file_id)
 
 
 storage_router = APIRouter()
@@ -179,16 +285,21 @@ class StorageCBV:
     Предоставляет методы для загрузки, скачивания, удаления и получения ссылок на файлы.
     """
 
+    # Внедряем зависимость через конструктор
+    def __init__(self, service: S3Service = Depends(s3_bucket_service_factory)):
+        self.service = service
+
     @storage_router.post(
         "/upload_file",
         status_code=status.HTTP_201_CREATED,
         summary="Добавить файл в S3",
         operation_id="uploadFileStorageUploadFilePostUnique",
     )
+    @route_limiter
+    @handle_routes_errors
     async def upload_file(
         self,
         file: UploadFile = File(...),
-        service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """
@@ -200,7 +311,7 @@ class StorageCBV:
         :return: Загруженный файл.
         """
         content = await file.read()
-        await service.upload_file_object(
+        await self.service.upload_file_object(
             key=str(uuid.uuid4()), original_filename=file.filename, content=content
         )
         return file
@@ -211,10 +322,11 @@ class StorageCBV:
         summary="Скачать файл из S3",
         operation_id="getDownloadFileByUuidUnique",
     )
+    @route_limiter
+    @handle_routes_errors
     async def download_file(
         self,
         file_uuid: str,
-        service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """
@@ -225,7 +337,7 @@ class StorageCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Потоковый ответ с содержимым файла.
         """
-        return await get_streaming_response(file_uuid, service)
+        return await get_streaming_response(file_uuid, self.service)
 
     @storage_router.post(
         "/delete_file/",
@@ -233,10 +345,11 @@ class StorageCBV:
         summary="Удалить файл из S3",
         operation_id="deleteFileByUuidUnique",
     )
+    @route_limiter
+    @handle_routes_errors
     async def delete_file(
         self,
         file_uuid: str,
-        service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """
@@ -247,7 +360,7 @@ class StorageCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Нет возвращаемого значения (статус-код 204 No Content).
         """
-        await service.delete_file_object(key=file_uuid)
+        await self.service.delete_file_object(key=file_uuid)
 
     @storage_router.get(
         "/get_download_link_file/{file_uuid}",
@@ -255,10 +368,11 @@ class StorageCBV:
         summary="Получить ссылку на скачивание файла из S3",
         operation_id="getDownloadLinkFileUnique",
     )
+    @route_limiter
+    @handle_routes_errors
     async def get_download_link_file(
         self,
         file_uuid: str,
-        service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """
@@ -269,4 +383,4 @@ class StorageCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка для скачивания файла.
         """
-        return await service.generate_download_url(key=file_uuid)
+        return await self.service.generate_download_url(key=file_uuid)

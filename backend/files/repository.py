@@ -1,16 +1,17 @@
 from typing import Any, Dict, Optional
 
-from sqlalchemy import Result, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.base.repository import ConcreteTable, SQLAlchemyRepository
 from backend.core.database import session_manager
-from backend.core.errors import DatabaseError, NotFoundError
-from backend.files.models import File, OrderFile
-from backend.files.schemas import FileSchemaIn, FileSchemaOut
+from backend.core.errors import NotFoundError, handle_db_errors
+from backend.files.models import BaseModel, File, OrderFile
 
 
-__all__ = ("FileRepository",)
+__all__ = (
+    "FileRepository",
+    "get_file_repo",
+)
 
 
 class FileRepository(SQLAlchemyRepository):
@@ -20,17 +21,26 @@ class FileRepository(SQLAlchemyRepository):
     Атрибуты:
         model (Type[ConcreteTable]): Модель таблицы файлов (File).
         link_model (Type[ConcreteTable]): Модель связующей таблицы (OrderFile).
-        response_schema (Type[FileSchemaOut]): Схема для преобразования данных в ответ.
-        request_schema (Type[FileSchemaIn]): Схема для валидации входных данных.
         load_joined_models (bool): Флаг для загрузки связанных моделей (по умолчанию False).
     """
 
-    model = File
-    link_model = OrderFile
-    response_schema = FileSchemaOut
-    request_schema = FileSchemaIn
-    load_joined_models = False
+    def __init__(
+        self,
+        model: BaseModel,
+        load_joined_models: bool,
+        link_model: BaseModel,
+    ):
+        """
+        Инициализация репозитория.
 
+        :param model: Модель таблицы файлов (File).
+        :param load_joined_models: Флаг для загрузки связанных моделей.
+        :param link_model: Модель связующей таблицы (OrderFile).
+        """
+        super().__init__(model=model, load_joined_models=load_joined_models)
+        self.link_model = link_model
+
+    @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add_link(
         self, session: AsyncSession, data: Dict[str, Any]
@@ -42,23 +52,32 @@ class FileRepository(SQLAlchemyRepository):
         :param data: Данные для создания связи (содержит order_id и file_id).
         :return: Объект созданной связи или None, если произошла ошибка.
         :raises NotFoundError: Если связь не удалось создать.
-        :raises DatabaseError: Если произошла ошибка при взаимодействии с базой данных.
         """
-        try:
-            # Добавление записи в связующую таблицу
-            result: Result = await session.execute(
-                insert(self.link_model).values(**data).returning(self.link_model)
-            )
-            await session.flush()
-            created_link = result.scalars().one_or_none()
+        # Создаем новый объект связи
+        new_link = self.link_model(**data)
 
-            if not created_link:
-                raise NotFoundError(
-                    message="Failed to create link between file and order"
-                )
+        # Добавляем объект в сессию
+        session.add(new_link)
+        await session.flush()  # Фиксируем изменения в базе данных
 
-            return created_link
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise DatabaseError(message=f"Failed to add link: {str(exc)}")
+        # Обновляем объект, чтобы получить актуальные данные из базы
+        await session.refresh(new_link)
+
+        # Если объект не был создан, выбрасываем исключение
+        if not new_link:
+            raise NotFoundError(message="Failed to create link between file and order")
+
+        return new_link
+
+
+def get_file_repo() -> FileRepository:
+    """
+    Возвращает экземпляр репозитория для работы с файлами.
+
+    :return: Экземпляр FileRepository.
+    """
+    return FileRepository(
+        model=File,
+        load_joined_models=False,
+        link_model=OrderFile,
+    )

@@ -11,6 +11,7 @@ from backend.core.utils import singleton
 class SchedulerManager:
     """
     Менеджер для управления задачами планировщика.
+
     Использует библиотеку APScheduler для выполнения задач по расписанию.
     """
 
@@ -61,12 +62,10 @@ class SchedulerManager:
 scheduler_manager = SchedulerManager()
 
 
-####################################################################
-#                        Задачи для планировщика                   #
-####################################################################
 async def send_request_for_checking_services() -> Optional[bool]:
     """
     Задача для проверки состояния сервисов.
+
     Если какой-либо сервис недоступен, отправляет уведомление по email.
 
     Returns:

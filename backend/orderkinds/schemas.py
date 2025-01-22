@@ -6,6 +6,7 @@ from backend.base.schemas import PublicSchema
 __all__ = (
     "OrderKindSchemaIn",
     "OrderKindSchemaOut",
+    "OrderKindVersionSchemaOut",
 )
 
 
@@ -19,9 +20,9 @@ class OrderKindSchemaIn(PublicSchema):
         skb_uuid (str | None): Уникальный идентификатор SKB. По умолчанию None.
     """
 
-    name: str = None
+    name: str | None = None
     description: str | None = None
-    skb_uuid: str = None
+    skb_uuid: str | None = None
 
 
 class OrderKindSchemaOut(OrderKindSchemaIn):
@@ -39,3 +40,18 @@ class OrderKindSchemaOut(OrderKindSchemaIn):
     id: int
     created_at: datetime
     updated_at: datetime
+
+
+class OrderKindVersionSchemaOut(OrderKindSchemaOut):
+    """
+    Схема для исходящих данных версии вида запроса.
+
+    Наследует атрибуты из OrderKindSchemaOut и добавляет дополнительные поля.
+
+    Атрибуты:
+        operation_type (int): Тип операции (создание, обновление, удаление).
+        transaction_id (int): Идентификатор транзакции.
+    """
+
+    operation_type: int
+    transaction_id: int

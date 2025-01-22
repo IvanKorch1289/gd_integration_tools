@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from backend.core.settings import settings
 from backend.core.utils import utilities
 from backend.orders.models import Order
-from backend.orders.service import OrderService
+from backend.orders.service import OrderService, get_order_service
 
 
 # Настройка подключения к Redis
@@ -28,11 +28,12 @@ celery_app.conf.update(
 )
 
 # Инициализация сервиса заказов
-order_service = OrderService()
+order_service: OrderService = get_order_service()
 
 
 def run_async_task(task):
-    """Запускает асинхронную задачу в синхронном контексте.
+    """
+    Запускает асинхронную задачу в синхронном контексте.
 
     Args:
         task: Асинхронная задача для выполнения.
@@ -66,7 +67,8 @@ def run_async_task(task):
     retry_backoff=True,
 )
 def send_result_to_gd(self, order_id: int):
-    """Отправляет результат заказа в GD (Государственный Депозитарий).
+    """
+    Отправляет результат заказа в GD (Государственный Депозитарий).
 
     Args:
         order_id (int): Идентификатор заказа.
@@ -100,8 +102,9 @@ def send_result_to_gd(self, order_id: int):
     default_retry_delay=settings.bts_settings.bts_max_retry_delay,
     retry_backoff=True,
 )
-def send_requests_for_get_result(self, order_id):
-    """Отправляет запросы для получения результата заказа.
+def send_requests_for_get_result(self, order_id: int):
+    """
+    Отправляет запросы для получения результата заказа.
 
     Args:
         order_id (int): Идентификатор заказа.
@@ -147,8 +150,9 @@ def send_requests_for_get_result(self, order_id):
     default_retry_delay=settings.bts_settings.bts_min_retry_delay,
     retry_backoff=True,
 )
-def send_requests_for_create_order(self, order_id):
-    """Отправляет запросы для создания заказа.
+def send_requests_for_create_order(self, order_id: int):
+    """
+    Отправляет запросы для создания заказа.
 
     Args:
         order_id (int): Идентификатор заказа.

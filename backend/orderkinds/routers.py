@@ -1,12 +1,17 @@
-from typing import Any, Dict, List
+from typing import List
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
+from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
 from backend.orderkinds.filters import OrderKindFilter
-from backend.orderkinds.schemas import OrderKindSchemaIn, OrderKindSchemaOut
+from backend.orderkinds.schemas import (
+    OrderKindSchemaIn,
+    OrderKindSchemaOut,
+    OrderKindVersionSchemaOut,
+)
 from backend.orderkinds.service import OrderKindService, get_order_kind_service
 
 
@@ -34,6 +39,7 @@ class OrderKindCBV:
         response_model=List[OrderKindSchemaOut],
     )
     @route_limiter
+    @handle_routes_errors
     async def get_kinds(
         self, request: Request, x_api_key: str = Header(...)
     ) -> List[OrderKindSchemaOut]:
@@ -45,12 +51,7 @@ class OrderKindCBV:
         :return: Список всех видов запросов.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.all()
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.all()
 
     @router.get(
         "/id/{kind_id}",
@@ -58,6 +59,8 @@ class OrderKindCBV:
         summary="Получить вид запроса по ID",
         response_model=OrderKindSchemaOut,
     )
+    @route_limiter
+    @handle_routes_errors
     async def get_kind(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
     ) -> OrderKindSchemaOut:
@@ -69,12 +72,7 @@ class OrderKindCBV:
         :return: Вид запроса с указанным ID.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.get(key="id", value=kind_id)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.get(key="id", value=kind_id)
 
     @router.get(
         "/get-by-filter",
@@ -82,6 +80,8 @@ class OrderKindCBV:
         summary="Получить вид запроса по фильтру",
         response_model=List[OrderKindSchemaOut],
     )
+    @route_limiter
+    @handle_routes_errors
     async def get_by_filter(
         self,
         request: Request,
@@ -96,12 +96,7 @@ class OrderKindCBV:
         :return: Список видов запросов, соответствующих фильтру.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.get_by_params(filter=order_kind_filter)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.get_by_params(filter=order_kind_filter)
 
     @router.post(
         "/create/",
@@ -110,6 +105,7 @@ class OrderKindCBV:
         response_model=OrderKindSchemaIn,
     )
     @route_limiter
+    @handle_routes_errors
     async def add_kind(
         self,
         request_schema: OrderKindSchemaIn,
@@ -125,12 +121,7 @@ class OrderKindCBV:
         :return: Созданный вид запроса.
         :raises HTTPException: Если произошла ошибка при создании записи.
         """
-        try:
-            return await self.service.add(data=request_schema.model_dump())
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.add(data=request_schema.model_dump())
 
     @router.post(
         "/create_many/",
@@ -138,6 +129,8 @@ class OrderKindCBV:
         summary="Добавить несколько видов запроса",
         response_model=List[OrderKindSchemaOut],
     )
+    @route_limiter
+    @handle_routes_errors
     async def add_many_kinds(
         self,
         request_schema: List[OrderKindSchemaIn],
@@ -153,13 +146,8 @@ class OrderKindCBV:
         :return: Список созданных видов запросов.
         :raises HTTPException: Если произошла ошибка при создании записей.
         """
-        try:
-            data_list = [schema.model_dump() for schema in request_schema]
-            return await self.service.add_many(data_list=data_list)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        data_list = [schema.model_dump() for schema in request_schema]
+        return await self.service.add_many(data_list=data_list)
 
     @router.put(
         "/update/{kind_id}",
@@ -168,6 +156,7 @@ class OrderKindCBV:
         response_model=OrderKindSchemaOut,
     )
     @route_limiter
+    @handle_routes_errors
     async def update_kind(
         self,
         request_schema: OrderKindSchemaIn,
@@ -185,14 +174,9 @@ class OrderKindCBV:
         :return: Обновленный вид запроса.
         :raises HTTPException: Если произошла ошибка при обновлении записи.
         """
-        try:
-            return await self.service.update(
-                key="id", value=kind_id, data=request_schema.model_dump()
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.update(
+            key="id", value=kind_id, data=request_schema.model_dump()
+        )
 
     @router.delete(
         "/delete/{kind_id}",
@@ -200,6 +184,7 @@ class OrderKindCBV:
         summary="Удалить вид запроса по ID",
     )
     @route_limiter
+    @handle_routes_errors
     async def delete_kind(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
     ) -> None:
@@ -211,19 +196,16 @@ class OrderKindCBV:
         :param x_api_key: API-ключ для аутентификации.
         :raises HTTPException: Если произошла ошибка при удалении записи.
         """
-        try:
-            await self.service.delete(key="id", value=kind_id)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        await self.service.delete(key="id", value=kind_id)
 
     @router.get(
         "/all_versions/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить версии объекта вида запроса по ID",
+        response_model=List[OrderKindVersionSchemaOut],
     )
     @route_limiter
+    @handle_routes_errors
     async def get_all_kind_versions(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
     ):
@@ -236,19 +218,16 @@ class OrderKindCBV:
         :return: Список всех версий объекта.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.get_all_object_versions(object_id=kind_id)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.get_all_object_versions(object_id=kind_id)
 
     @router.get(
         "/latest_version/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить последнюю версию объекта вида запроса по ID",
+        response_model=OrderKindVersionSchemaOut,
     )
     @route_limiter
+    @handle_routes_errors
     async def get_kind_latest_version(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
     ):
@@ -261,19 +240,16 @@ class OrderKindCBV:
         :return: Последняя версия объекта.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.get_latest_object_version(object_id=kind_id)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.get_latest_object_version(object_id=kind_id)
 
     @router.post(
         "/restore_to_version/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект вида запроса до указанной версии",
+        response_model=OrderKindVersionSchemaOut,
     )
     @route_limiter
+    @handle_routes_errors
     async def restore_kind_to_version(
         self,
         kind_id: int,
@@ -291,14 +267,9 @@ class OrderKindCBV:
         :return: Восстановленный объект.
         :raises HTTPException: Если произошла ошибка при восстановлении.
         """
-        try:
-            return await self.service.restore_object_to_version(
-                object_id=kind_id, transaction_id=transaction_id
-            )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.restore_object_to_version(
+            object_id=kind_id, transaction_id=transaction_id
+        )
 
     @router.get(
         "/changes/{kind_id}",
@@ -306,6 +277,7 @@ class OrderKindCBV:
         summary="Получить изменения объекта вида запроса по ID",
     )
     @route_limiter
+    @handle_routes_errors
     async def get_kind_changes(
         self, kind_id: int, request: Request, x_api_key: str = Header(...)
     ):
@@ -318,9 +290,4 @@ class OrderKindCBV:
         :return: Список изменений объекта.
         :raises HTTPException: Если произошла ошибка при получении данных.
         """
-        try:
-            return await self.service.get_object_changes(object_id=kind_id)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-            )
+        return await self.service.get_object_changes(object_id=kind_id)

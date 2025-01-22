@@ -1,9 +1,11 @@
 from backend.base.repository import SQLAlchemyRepository
 from backend.orderkinds.models import OrderKind
-from backend.orderkinds.schemas import OrderKindSchemaOut
 
 
-__all__ = ("OrderKindRepository",)
+__all__ = (
+    "OrderKindRepository",
+    "get_order_kind_repo",
+)
 
 
 class OrderKindRepository(SQLAlchemyRepository):
@@ -15,10 +17,32 @@ class OrderKindRepository(SQLAlchemyRepository):
 
     Атрибуты:
         model (OrderKind): Модель таблицы видов запросов.
-        response_schema (OrderKindSchemaOut): Схема для преобразования данных в ответ.
         load_joined_models (bool): Флаг для загрузки связанных моделей (по умолчанию False).
     """
 
-    model = OrderKind
-    response_schema = OrderKindSchemaOut
-    load_joined_models = False
+    def __init__(
+        self,
+        model: OrderKind,
+        load_joined_models: bool = False,
+    ):
+        """
+        Инициализация репозитория для работы с видами запросов.
+
+        :param model: Модель таблицы видов запросов (OrderKind).
+        :param load_joined_models: Флаг для загрузки связанных моделей (по умолчанию False).
+        """
+        super().__init__(model=model, load_joined_models=load_joined_models)
+
+
+def get_order_kind_repo() -> OrderKindRepository:
+    """
+    Возвращает экземпляр репозитория для работы с видами заказов.
+
+    Используется как зависимость в FastAPI для внедрения репозитория в сервисы или маршруты.
+
+    :return: Экземпляр OrderKindRepository.
+    """
+    return OrderKindRepository(
+        model=OrderKind,
+        load_joined_models=False,
+    )

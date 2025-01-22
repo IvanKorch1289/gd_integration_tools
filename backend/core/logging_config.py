@@ -22,10 +22,14 @@ LOGGERS = [
 # Форматирование логов
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-# Функция для настройки логгеров
-
 
 def setup_loggers():
+    """
+    Настраивает логгеры для отправки логов в Graylog.
+
+    Для каждого логгера из списка LOGGERS создается обработчик GELFUDPHandler,
+    который отправляет логи на указанный Graylog сервер.
+    """
     for logger_config in LOGGERS:
         # Создаем обработчик для Graylog
         graylog_handler = graypy.GELFUDPHandler(

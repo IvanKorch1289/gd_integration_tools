@@ -9,7 +9,7 @@ def get_user_models() -> Dict[str, str]:
     Получает все пользовательские модели, которые наследуются от BaseModel.
 
     Возвращает:
-        Dict[str, str]: Словарь, где ключ — имя модели, а значение — имя таблицы.
+        Dict[str, str]: Словарь, где ключ — имя таблицы, а значение — класс модели.
     """
     user_models = {}
 
@@ -27,5 +27,11 @@ def get_user_models() -> Dict[str, str]:
     return user_models
 
 
-def get_model_enum():
+def get_model_enum() -> Enum:
+    """
+    Создает перечисление (Enum) на основе пользовательских моделей.
+
+    Возвращает:
+        Enum: Перечисление, где ключи — имена таблиц, а значения — классы моделей.
+    """
     return Enum("ModelEnum", get_user_models())

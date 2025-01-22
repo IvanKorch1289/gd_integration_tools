@@ -4,10 +4,7 @@ from uuid import UUID
 from backend.base.schemas import PublicSchema
 
 
-__all__ = (
-    "FileSchemaIn",
-    "FileSchemaOut",
-)
+__all__ = ("FileSchemaIn", "FileSchemaOut", "FileKindVersionSchemaOut")
 
 
 class FileSchemaIn(PublicSchema):
@@ -19,7 +16,7 @@ class FileSchemaIn(PublicSchema):
                                   По умолчанию None.
     """
 
-    object_uuid: UUID = None
+    object_uuid: UUID | None = None
 
 
 class FileSchemaOut(FileSchemaIn):
@@ -39,3 +36,18 @@ class FileSchemaOut(FileSchemaIn):
     name: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class FileKindVersionSchemaOut(FileSchemaOut):
+    """
+    Схема для исходящих данных версии данных файла.
+
+    Наследует атрибуты из FileSchemaOut и добавляет дополнительные поля.
+
+    Атрибуты:
+        operation_type (int): Тип операции (создание, обновление, удаление).
+        transaction_id (int): Идентификатор транзакции.
+    """
+
+    operation_type: int
+    transaction_id: int

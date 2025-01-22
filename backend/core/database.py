@@ -20,16 +20,25 @@ from backend.core.settings import settings
 
 
 class DatabaseInitializer:
-    """Класс для инициализации движка базы данных и управления сессиями."""
+    """
+    Класс для инициализации движка базы данных и управления сессиями.
+
+    Атрибуты:
+        async_engine (AsyncEngine): Асинхронный движок для основного приложения.
+        async_session_maker (async_sessionmaker): Фабрика асинхронных сессий.
+        sync_engine (Engine): Синхронный движок для Alembic.
+        sync_session_maker (sessionmaker): Фабрика синхронных сессий.
+    """
 
     def __init__(self, url: str, echo: bool, pool_size: int, max_overflow: int):
         """
         Инициализирует движок базы данных и настраивает сессии.
 
-        :param url: URL базы данных.
-        :param echo: Логирование SQL-запросов.
-        :param pool_size: Размер пула соединений.
-        :param max_overflow: Максимальное количество соединений сверх пула.
+        Args:
+            url (str): URL базы данных.
+            echo (bool): Логирование SQL-запросов.
+            pool_size (int): Размер пула соединений.
+            max_overflow (int): Максимальное количество соединений сверх пула.
         """
         # Асинхронный движок для основного приложения
         self.async_engine: AsyncEngine = create_async_engine(
@@ -101,7 +110,8 @@ class DatabaseInitializer:
         """
         Возвращает синхронный движок для Alembic.
 
-        :return: Синхронный движок SQLAlchemy.
+        Returns:
+            Engine: Синхронный движок SQLAlchemy.
         """
         return self.sync_engine
 
@@ -109,7 +119,8 @@ class DatabaseInitializer:
         """
         Возвращает синхронную сессию для Alembic.
 
-        :return: Синхронная сессия SQLAlchemy.
+        Returns:
+            Session: Синхронная сессия SQLAlchemy.
         """
         return self.sync_session_maker()
 
@@ -127,13 +138,17 @@ class DatabaseSessionManager:
     """
     Класс для управления асинхронными сессиями базы данных,
     включая поддержку транзакций и зависимости FastAPI.
+
+    Атрибуты:
+        session_maker (async_sessionmaker): Фабрика асинхронных сессий.
     """
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
         """
         Инициализирует менеджер сессий.
 
-        :param session_maker: Фабрика сессий, созданная с помощью async_sessionmaker.
+        Args:
+            session_maker (async_sessionmaker): Фабрика сессий, созданная с помощью async_sessionmaker.
         """
         self.session_maker = session_maker
 
@@ -143,7 +158,8 @@ class DatabaseSessionManager:
         Создаёт и предоставляет новую сессию базы данных.
         Гарантирует закрытие сессии по завершении работы.
 
-        :yield: Асинхронная сессия базы данных.
+        Yields:
+            AsyncSession: Асинхронная сессия базы данных.
         """
         async with self.session_maker() as session:
             try:
@@ -159,8 +175,11 @@ class DatabaseSessionManager:
         """
         Управление транзакцией: коммит при успехе, откат при ошибке.
 
-        :param session: Сессия базы данных.
-        :yield: None
+        Args:
+            session (AsyncSession): Сессия базы данных.
+
+        Yields:
+            None
         """
         try:
             yield
@@ -174,7 +193,8 @@ class DatabaseSessionManager:
         """
         Зависимость для FastAPI, возвращающая сессию без управления транзакцией.
 
-        :yield: Асинхронная сессия базы данных.
+        Yields:
+            AsyncSession: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
             try:
@@ -188,7 +208,8 @@ class DatabaseSessionManager:
         """
         Зависимость для FastAPI, возвращающая сессию с управлением транзакцией.
 
-        :yield: Асинхронная сессия базы данных.
+        Yields:
+            AsyncSession: Асинхронная сессия базы данных.
         """
         async with self.create_session() as session:
             try:
@@ -206,9 +227,12 @@ class DatabaseSessionManager:
         Декоратор для управления сессией с возможностью
         настройки уровня изоляции и коммита.
 
-        :param isolation_level: Уровень изоляции для транзакции (например, "SERIALIZABLE").
-        :param commit: Если True, выполняется коммит после вызова метода.
-        :return: Декорированный метод.
+        Args:
+            isolation_level (Optional[str]): Уровень изоляции для транзакции (например, "SERIALIZABLE").
+            commit (bool): Если True, выполняется коммит после вызова метода.
+
+        Returns:
+            Callable: Декорированный метод.
         """
 
         def decorator(method: Callable) -> Callable:
@@ -249,7 +273,8 @@ class DatabaseSessionManager:
         Возвращает зависимость для FastAPI,
         обеспечивающую доступ к сессии без транзакции.
 
-        :return: Зависимость для FastAPI.
+        Returns:
+            Callable: Зависимость для FastAPI.
         """
         return Depends(self.get_session)
 
@@ -258,7 +283,8 @@ class DatabaseSessionManager:
         """
         Возвращает зависимость для FastAPI с поддержкой транзакций.
 
-        :return: Зависимость для FastAPI.
+        Returns:
+            Callable: Зависимость для FastAPI.
         """
         return Depends(self.get_transaction_session)
 

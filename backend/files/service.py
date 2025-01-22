@@ -1,9 +1,15 @@
+from fastapi import Depends
+from pydantic import BaseModel
+
 from backend.base.service import BaseService
-from backend.files.repository import FileRepository
-from backend.files.schemas import FileSchemaOut
+from backend.files.repository import FileRepository, get_file_repo
+from backend.files.schemas import FileSchemaIn, FileSchemaOut
 
 
-__all__ = ("FileService",)
+__all__ = (
+    "FileService",
+    "get_file_service",
+)
 
 
 class FileService(BaseService):
@@ -16,7 +22,37 @@ class FileService(BaseService):
     Атрибуты:
         repo (FileRepository): Репозиторий для работы с файлами.
         response_schema (FileSchemaOut): Схема для преобразования данных файла в ответ.
+        request_schema (FileSchemaIn): Схема для валидации входных данных.
     """
 
-    repo = FileRepository()
-    response_schema = FileSchemaOut
+    def __init__(
+        self,
+        response_schema: BaseModel,
+        request_schema: BaseModel,
+        repo: FileRepository = Depends(get_file_repo),
+    ):
+        """
+        Инициализация сервиса для работы с файлами.
+
+        :param repo: Репозиторий для работы с файлами.
+        :param response_schema: Схема для преобразования данных файла в ответ.
+        :param request_schema: Схема для валидации входных данных.
+        """
+        super().__init__(
+            repo=repo, response_schema=response_schema, request_schema=request_schema
+        )
+
+
+def get_file_service() -> FileService:
+    """
+    Возвращает экземпляр сервиса для работы с файлами.
+
+    Используется как зависимость в FastAPI для внедрения сервиса в маршруты.
+
+    :return: Экземпляр FileService.
+    """
+    return FileService(
+        repo=get_file_repo(),
+        response_schema=FileSchemaOut,
+        request_schema=FileSchemaIn,
+    )

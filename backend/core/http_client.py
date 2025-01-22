@@ -14,18 +14,34 @@ request_logger = logging.getLogger("request")
 class LoggingClientSession:
     """
     Кастомный HTTP-клиент с логированием всех исходящих запросов и ответов.
+
+    Атрибуты:
+        session (aiohttp.ClientSession): Сессия для выполнения HTTP-запросов.
     """
 
     def __init__(self):
+        """Инициализирует клиентскую сессию."""
         self.session = None
 
     async def __aenter__(self):
-        """Инициализация асинхронного контекстного менеджера."""
+        """
+        Инициализация асинхронного контекстного менеджера.
+
+        Returns:
+            LoggingClientSession: Экземпляр класса.
+        """
         self.session = aiohttp.ClientSession()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Завершение асинхронного контекстного менеджера."""
+        """
+        Завершение асинхронного контекстного менеджера.
+
+        Args:
+            exc_type: Тип исключения (если есть).
+            exc_val: Значение исключения (если есть).
+            exc_tb: Трассировка стека (если есть).
+        """
         await self.session.close()
 
     async def request(self, method: str, url: str, **kwargs) -> aiohttp.ClientResponse:

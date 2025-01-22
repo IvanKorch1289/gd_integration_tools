@@ -40,13 +40,13 @@ class S3Service:
         access_key: str,
         secret_key: str,
     ):
-        """
-        Инициализирует объект сервиса S3.
+        """Инициализирует объект сервиса S3.
 
-        :param bucket_name: Имя бакета в S3.
-        :param endpoint: URL конечной точки S3.
-        :param access_key: Доступный ключ для авторизации в S3.
-        :param secret_key: Секретный ключ для авторизации в S3.
+        Args:
+            bucket_name (str): Имя бакета в S3.
+            endpoint (str): URL конечной точки S3.
+            access_key (str): Доступный ключ для авторизации в S3.
+            secret_key (str): Секретный ключ для авторизации в S3.
         """
         self.bucket_name = bucket_name
         self.endpoint = endpoint
@@ -55,10 +55,10 @@ class S3Service:
 
     @asynccontextmanager
     async def _create_s3_client(self) -> AsyncGenerator:
-        """
-        Создает контекстный менеджер для работы с клиентом S3.
+        """Создает контекстный менеджер для работы с клиентом S3.
 
-        :yield: Клиент S3.
+        Yields:
+            AsyncGenerator: Клиент S3.
         """
         session = get_session()
         async with session.create_client(
@@ -72,13 +72,15 @@ class S3Service:
     async def upload_file_object(
         self, key: str, original_filename: str, content: Union[str, bytes]
     ) -> dict:
-        """
-        Загружает файл в S3.
+        """Загружает файл в S3.
 
-        :param key: Ключ объекта в S3.
-        :param original_filename: Исходное имя файла.
-        :param content: Содержимое файла (строка или байты).
-        :return: Словарь с результатом операции.
+        Args:
+            key (str): Ключ объекта в S3.
+            original_filename (str): Исходное имя файла.
+            content (Union[str, bytes]): Содержимое файла (строка или байты).
+
+        Returns:
+            dict: Словарь с результатом операции.
         """
         # Проверка на пустой файл
         if not content:
@@ -97,20 +99,6 @@ class S3Service:
         buffer = BytesIO(
             content if isinstance(content, bytes) else content.encode("utf-8")
         )
-        # file_for_scan = UploadFile(filename=original_filename, file=buffer)
-
-        # Проверка на вирусы
-        # if not self.scan_file(file_for_scan):
-        #     await self.log_operation(
-        #         operation="upload_file_object",
-        #         details=f"Key: {key}, OriginalFilename: {original_filename}",
-        #         exception="Error: File is infected with a virus",
-        #     )
-        #     return {
-        #         "status": "error",
-        #         "message": "File not uploaded",
-        #         "error": "File is infected with a virus",
-        #     }
 
         # Если файл чист, продолжаем загрузку
         async with self._create_s3_client() as client:
@@ -132,10 +120,10 @@ class S3Service:
                 raise  # Исключение будет обработано глобальным обработчиком
 
     async def list_objects(self) -> list[str]:
-        """
-        Возвращает список всех объектов в бакете.
+        """Возвращает список всех объектов в бакете.
 
-        :return: Список ключей объектов.
+        Returns:
+            list[str]: Список ключей объектов.
         """
         async with self._create_s3_client() as client:
             response = await client.list_objects_v2(Bucket=self.bucket_name)
@@ -152,11 +140,13 @@ class S3Service:
             return storage_content
 
     async def get_file_object(self, key: str) -> Optional[tuple[StreamingBody, dict]]:
-        """
-        Получает объект из S3.
+        """Получает объект из S3.
 
-        :param key: Ключ объекта в S3.
-        :return: Поток тела объекта и метаданные, если объект найден, иначе None.
+        Args:
+            key (str): Ключ объекта в S3.
+
+        Returns:
+            Optional[tuple[StreamingBody, dict]]: Поток тела объекта и метаданные, если объект найден, иначе None.
         """
         async with self._create_s3_client() as client:
             try:
@@ -170,11 +160,13 @@ class S3Service:
                 raise  # Исключение будет обработано глобальным обработчиком
 
     async def delete_file_object(self, key: str) -> dict:
-        """
-        Удаляет объект из S3.
+        """Удаляет объект из S3.
 
-        :param key: Ключ объекта в S3.
-        :return: Словарь с результатом операции.
+        Args:
+            key (str): Ключ объекта в S3.
+
+        Returns:
+            dict: Словарь с результатом операции.
         """
         async with self._create_s3_client() as client:
             try:
@@ -196,12 +188,14 @@ class S3Service:
     async def generate_download_url(
         self, key: str, expires_in: int = 3600
     ) -> Optional[str]:
-        """
-        Генерирует временную ссылку для скачивания файла из S3.
+        """Генерирует временную ссылку для скачивания файла из S3.
 
-        :param key: Ключ объекта в S3.
-        :param expires_in: Время жизни ссылки в секундах (по умолчанию 3600 секунд).
-        :return: Временная ссылка для скачивания файла или None в случае ошибки.
+        Args:
+            key (str): Ключ объекта в S3.
+            expires_in (int): Время жизни ссылки в секундах (по умолчанию 3600 секунд).
+
+        Returns:
+            Optional[str]: Временная ссылка для скачивания файла или None в случае ошибки.
         """
         async with self._create_s3_client() as client:
             try:
@@ -223,12 +217,12 @@ class S3Service:
         details: Optional[str] = None,
         exception: Optional[Exception] = None,
     ) -> None:
-        """
-        Логирует операцию и её результат.
+        """Логирует операцию и её результат.
 
-        :param operation: Название операции.
-        :param details: Дополнительные детали операции.
-        :param exception: Исключение, возникшее при выполнении операции.
+        Args:
+            operation (str): Название операции.
+            details (Optional[str]): Дополнительные детали операции.
+            exception (Optional[Exception]): Исключение, возникшее при выполнении операции.
         """
         log_data: dict[str, Any] = {
             LogField.TIMESTAMP: datetime.now().isoformat(),
@@ -251,7 +245,8 @@ class S3Service:
     async def check_bucket_exists(self) -> bool:
         """Проверяет существование бакета в S3.
 
-        :return: True, если бакет существует, иначе False.
+        Returns:
+            bool: True, если бакет существует, иначе False.
         """
         async with self._create_s3_client() as client:
             try:
@@ -267,7 +262,8 @@ class S3Service:
 def s3_bucket_service_factory() -> S3Service:
     """Фабрика для создания экземпляра S3Service с настройками из конфигурации.
 
-    :return: Экземпляр S3Service.
+    Returns:
+        S3Service: Экземпляр S3Service.
     """
     return S3Service(
         bucket_name=settings.storage_settings.fs_bucket,

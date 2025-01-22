@@ -1,39 +1,48 @@
 from functools import wraps
 
 import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import HTTPException, Request, Response
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 
 from backend.core.settings import settings
 
 
-app = FastAPI()
-
-
-# Функция для инициализации лимитера
 async def init_limiter():
     """
     Инициализирует Redis и FastAPILimiter.
+
+    Returns:
+        None
     """
     redis_connection = redis.from_url(
-        "redis://localhost:6379", encoding="utf-8", decode_responses=True
+        f"{settings.redis_settings.redis_url}/{settings.redis_settings.redis_db_queue}",
+        encoding="utf-8",
+        decode_responses=True,
     )
     await FastAPILimiter.init(redis_connection)
 
 
-# Класс для лимитирования маршрутов
 class RouteLimiter:
+    """
+    Класс для лимитирования маршрутов.
+
+    Атрибуты:
+        times (int): Количество разрешенных запросов.
+        seconds (int): Временной интервал в секундах.
+    """
+
     def __init__(
         self,
         times: int = settings.app_rate_limit,
         seconds: int = settings.app_rate_time_measure_seconds,
     ):
         """
-        Инициализация лимитера.
+        Инициализирует лимитер.
 
-        :param times: Количество разрешенных запросов.
-        :param seconds: Временной интервал в секундах.
+        Args:
+            times (int): Количество разрешенных запросов.
+            seconds (int): Временной интервал в секундах.
         """
         self.times = times
         self.seconds = seconds
@@ -42,12 +51,29 @@ class RouteLimiter:
         """
         Декорирует маршрут, применяя к нему лимитер.
 
-        :param func: Функция маршрута, которую нужно декорировать.
-        :return: Обернутая функция с примененным лимитером.
+        Args:
+            func: Функция маршрута, которую нужно декорировать.
+
+        Returns:
+            Callable: Обернутая функция с примененным лимитером.
         """
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """
+            Обертка для функции маршрута, которая применяет лимитер.
+
+            Args:
+                *args: Позиционные аргументы функции.
+                **kwargs: Именованные аргументы функции.
+
+            Returns:
+                Результат выполнения оригинальной функции.
+
+            Raises:
+                ValueError: Если объект Request не найден.
+                HTTPException: Если превышен лимит запросов.
+            """
             # Извлекаем request из kwargs, если он есть
             request = kwargs.get("request")
             if not request:
@@ -65,8 +91,11 @@ class RouteLimiter:
                 # Создаем фиктивный объект Response
                 response = Response()
                 await rate_limiter(request, response)
-            except HTTPException:
-                raise  # Исключение будет обработано глобальным обработчиком
+            except HTTPException as e:
+                raise HTTPException(
+                    status_code=e.status_code,
+                    detail=f"Rate limit exceeded: {e.detail}",
+                )
 
             # Вызываем оригинальную функцию
             return await func(*args, **kwargs)

@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -40,16 +40,22 @@ from backend.users import UserAdmin, user_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Контекстный менеджер для управления жизненным циклом приложения."""
+    """
+    Контекстный менеджер для управления жизненным циклом приложения.
+
+    Запускает планировщик задач и устанавливает лимиты запросов.
+    Останавливает планировщик при завершении работы приложения.
+    """
     app_logger.info("Запуск приложения...")
     try:
+        # Добавляем задачу для проверки сервисов каждые 30 минут
         await scheduler_manager.add_task(
             send_request_for_checking_services, interval_minutes=30
         )
-
         await scheduler_manager.start_scheduler()
         app_logger.info("Планировщик запущен...")
 
+        # Инициализация лимитера запросов
         await init_limiter()
         app_logger.info("Лимиты установлены...")
 
@@ -57,14 +63,19 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         app_logger.error(f"Ошибка инициализации планировщика: {str(exc)}")
     finally:
+        # Остановка планировщика при завершении работы приложения
         await scheduler_manager.stop_scheduler()
         app_logger.info("Планировщик остановлен...")
-
         app_logger.info("Завершение работы приложения...")
 
 
 def create_app() -> FastAPI:
-    """Фабрика для создания и настройки экземпляра FastAPI приложения."""
+    """
+    Фабрика для создания и настройки экземпляра FastAPI приложения.
+
+    Возвращает:
+        FastAPI: Настроенное приложение FastAPI.
+    """
     app = FastAPI(
         lifespan=lifespan,
         title="Расширенные инструменты GreenData",
@@ -77,21 +88,28 @@ def create_app() -> FastAPI:
     instrumentator = Instrumentator()
     instrumentator.instrument(app).expose(app)
 
-    # Подключение Middleware
+    # Middleware для логирования внутренних запросов
     @app.middleware("http")
     async def inner_logger_middleware(request: Request, call_next):
         return await InnerRequestLoggingMiddleware().__call__(request, call_next)
 
+    # Middleware для проверки API-ключа
     @app.middleware("http")
     async def api_key_middleware(request: Request, call_next):
         return await APIKeyMiddleware().__call__(request, call_next)
 
+    # Middleware для установки таймаутов
     @app.middleware("http")
     async def timeout_middleware(request: Request, call_next):
         return await TimeoutMiddleware().__call__(request, call_next)
 
+    # Добавление TrustedHostMiddleware для ограничения хостов
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.app_allowed_hosts)
+
+    # Добавление PrometheusMiddleware для сбора метрик
     app.add_middleware(PrometheusMiddleware)
+
+    # Добавление CORS Middleware для обработки кросс-доменных запросов
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.app_cors_allowed_origins,
@@ -99,6 +117,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Добавление GZip Middleware для сжатия ответов
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # Глобальный обработчик исключений
@@ -106,8 +126,14 @@ def create_app() -> FastAPI:
     async def global_exception_handler(request: Request, exc: Exception):
         """
         Перехватывает любую ошибку в приложении и возвращает стандартизированный ответ.
+
+        Аргументы:
+            request (Request): Запрос, вызвавший ошибку.
+            exc (Exception): Исключение, которое было вызвано.
+
+        Возвращает:
+            JSONResponse: Стандартизированный ответ с описанием ошибки.
         """
-        # Логирование ошибки
         app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
         for sub_exc in exc.exceptions:
             if isinstance(sub_exc, DatabaseError):
@@ -119,7 +145,6 @@ def create_app() -> FastAPI:
                         "hasErrors": True,
                     },
                 )
-        # Возвращаем стандартизированный ответ
         return JSONResponse(
             status_code=500,
             content={
@@ -129,7 +154,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    # Подключение SQLAdmin
+    # Подключение SQLAdmin для административной панели
     admin = Admin(app, database.async_engine)
     admin.add_view(UserAdmin)
     admin.add_view(OrderAdmin)
@@ -156,9 +181,15 @@ def create_app() -> FastAPI:
     async def metrics(request: Request):
         return handle_metrics(request)
 
+    # Корневой эндпоинт
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     async def root():
-        # Добавляем протокол к URL-адресам, если он отсутствует
+        """
+        Корневой эндпоинт, возвращающий HTML-страницу с приветствием и ссылками на сервисы.
+
+        Возвращает:
+            HTMLResponse: HTML-страница с описанием и ссылками.
+        """
         log_url = await utilities.ensure_protocol(
             f"{settings.logging_settings.log_host}:{settings.logging_settings.log_port}"
         )

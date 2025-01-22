@@ -33,8 +33,8 @@ class FileAdmin(BaseAdmin, ModelView, model=File):
         "created_at",
         "updated_at",
     ]
-    column_filters = ["object_uuid", "name"]
-    form_create_rules = ["object_uuid", "name"]
+    column_filters: List[str] = ["object_uuid", "name"]
+    form_create_rules: List[str] = ["object_uuid", "name"]
 
 
 class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
@@ -58,5 +58,5 @@ class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
         "created_at",
         "updated_at",
     ]
-    column_filters = ["order_id", "file_id"]
-    form_create_rules = ["order_id", "file_id"]
+    column_filters: List[str] = ["order_id", "file_id"]
+    form_create_rules: List[str] = ["order_id", "file_id"]

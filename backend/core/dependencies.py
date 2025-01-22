@@ -37,6 +37,12 @@ async def process_file(
     original_filename = metadata.get("x-amz-meta-original-filename", "")
 
     async def stream_generator():
+        """
+        Генератор для потоковой передачи файла.
+
+        Yields:
+            bytes: Часть файла в виде байтов.
+        """
         async for chunk in streaming_body.iter_chunks():
             yield chunk
 

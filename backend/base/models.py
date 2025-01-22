@@ -1,7 +1,5 @@
-import sys
-import traceback
 from datetime import datetime
-from typing import Annotated, Any, Dict, Type
+from typing import Annotated, Any, Dict
 
 from pydantic import SecretStr
 from sqlalchemy import Integer, MetaData, func
@@ -13,16 +11,13 @@ from sqlalchemy_continuum.plugins import (
     PropertyModTrackerPlugin,
 )
 
-from backend.base.schemas import PublicSchema
-
 
 __all__ = ("BaseModel",)
-
 
 # Аннотация для необязательных строковых полей
 nullable_str = Annotated[str, mapped_column(nullable=False)]
 
-
+# Инициализация метаданных
 metadata = MetaData(
     naming_convention={
         "ix": "ix_%(column_0_label)s",
@@ -42,6 +37,21 @@ Base = mapper_registry.generate_base()
 
 
 class BaseModel(AsyncAttrs, Base):
+    """
+    Базовый класс для всех моделей SQLAlchemy.
+
+    Атрибуты:
+        id (Mapped[int]): Уникальный идентификатор записи.
+        created_at (Mapped[datetime]): Время создания записи.
+        updated_at (Mapped[datetime]): Время последнего обновления записи.
+
+    Методы:
+        transfer_model_to_schema: Преобразует модель в схему Pydantic.
+        get_value_from_secret_str: Преобразует SecretStr в обычные строки.
+        to_dict: Преобразует модель в словарь.
+        update: Обновляет атрибуты модели.
+    """
+
     __abstract__ = True
     __versioned__ = {}  # Включаем версионирование для всех моделей
 
@@ -52,29 +62,15 @@ class BaseModel(AsyncAttrs, Base):
     )
 
     @declared_attr.directive
+    @classmethod
     def __tablename__(cls) -> str:
-        return cls.__name__.lower() + "s"
-
-    async def transfer_model_to_schema(
-        self, schema: Type[PublicSchema]
-    ) -> PublicSchema:
         """
-        Преобразует модель в схему Pydantic.
-
-        Аргументы:
-            schema (Type[PublicSchema]): Класс схемы Pydantic.
+        Генерирует имя таблицы на основе имени класса.
 
         Возвращает:
-            PublicSchema: Экземпляр схемы Pydantic.
-
-        Исключения:
-            Выводит traceback в случае ошибки и возвращает словарь с ошибкой.
+            str: Имя таблицы в нижнем регистре с добавлением 's'.
         """
-        try:
-            return schema.model_validate(self)
-        except Exception as ex:
-            traceback.print_exc(file=sys.stdout)
-            return {"Ошибка преобразования модели в схему": ex}
+        return cls.__name__.lower() + "s"
 
     @staticmethod
     async def get_value_from_secret_str(data: Dict[str, Any]) -> Dict[str, Any]:

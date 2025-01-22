@@ -16,7 +16,8 @@ BASE_URL = os.getenv("BASE_URL")
 
 
 class APISSKBSettings(BaseSettings):
-    """Настройки для работы с API СКБ-Техно.
+    """
+    Настройки для работы с API СКБ-Техно.
 
     Attributes:
         skb_api_key (str): API ключ для доступа к API СКБ-Техно.
@@ -38,12 +39,13 @@ class APISSKBSettings(BaseSettings):
 
 
 class APIDADATASettings(BaseSettings):
-    """Настройки для работы с API Dadata.
+    """
+    Настройки для работы с API Dadata.
 
     Attributes:
         dadata_api_key (str): API ключ для доступа к API Dadata.
         dadata_url (str): Базовый URL API Dadata.
-        skb_endpoint (Dict[str, str]): Эндпоинты API Dadata.
+        dadata_endpoint (Dict[str, str]): Эндпоинты API Dadata.
     """
 
     dadata_api_key: str = Field(default="666-2424-24", env="DADATA_API_KEY")
@@ -54,7 +56,8 @@ class APIDADATASettings(BaseSettings):
 
 
 class DatabaseSettings(BaseSettings):
-    """Настройки для подключения к базе данных.
+    """
+    Настройки для подключения к базе данных.
 
     Attributes:
         db_host (str): Хост базы данных.
@@ -81,12 +84,18 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def db_url_asyncpg(self) -> str:
-        """Возвращает URL для асинхронного подключения к базе данных с использованием asyncpg."""
+        """
+        Возвращает URL для асинхронного подключения к базе данных с использованием asyncpg.
+
+        Returns:
+            str: URL для подключения к базе данных.
+        """
         return f"postgresql+asyncpg://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}"
 
 
 class FileStorageSettings(BaseSettings):
-    """Настройки для подключения к файловому хранилищу.
+    """
+    Настройки для подключения к файловому хранилищу.
 
     Attributes:
         fs_bucket (str): Имя бакета в файловом хранилище.
@@ -106,7 +115,8 @@ class FileStorageSettings(BaseSettings):
 
 
 class LogStorageSettings(BaseSettings):
-    """Настройки для подключения к хранилищу логов.
+    """
+    Настройки для подключения к хранилищу логов.
 
     Attributes:
         log_host (str): Хост хранилища логов.
@@ -124,7 +134,8 @@ class LogStorageSettings(BaseSettings):
 
 
 class RedisSettings(BaseSettings):
-    """Настройки для подключения к Redis.
+    """
+    Настройки для подключения к Redis.
 
     Attributes:
         redis_host (str): Хост Redis.
@@ -153,12 +164,18 @@ class RedisSettings(BaseSettings):
 
     @property
     def redis_url(self) -> str:
-        """Возвращает URL для подключения к Redis."""
+        """
+        Возвращает URL для подключения к Redis.
+
+        Returns:
+            str: URL для подключения к Redis.
+        """
         return f"redis://{self.redis_host}:{self.redis_port}"
 
 
 class AuthSettings(BaseSettings):
-    """Настройки для аутентификации.
+    """
+    Настройки для аутентификации.
 
     Attributes:
         auth_secret_key (str): Секретный ключ для аутентификации.
@@ -176,7 +193,8 @@ class AuthSettings(BaseSettings):
 
 
 class BackTasksSettings(BaseSettings):
-    """Настройки для фоновых задач.
+    """
+    Настройки для фоновых задач.
 
     Attributes:
         bts_interface_url (str): URL интерфейса для управления фоновыми задачами.
@@ -200,7 +218,8 @@ class BackTasksSettings(BaseSettings):
 
 
 class MailSettings(BaseSettings):
-    """Настройки для отправки электронной почты.
+    """
+    Настройки для отправки электронной почты.
 
     Attributes:
         mail_hostname (str): Хост SMTP сервера.
@@ -220,7 +239,8 @@ class MailSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    """Основные настройки приложения.
+    """
+    Основные настройки приложения.
 
     Attributes:
         root_dir (Path): Корневая директория проекта.
@@ -236,6 +256,7 @@ class Settings(BaseSettings):
         app_rate_time_measure_seconds (int): Временной интервал для измерения лимита запросов.
         database_settings (DatabaseSettings): Настройки базы данных.
         api_skb_settings (APISSKBSettings): Настройки API СКБ-Техно.
+        dadata_settings (APIDADATASettings): Настройки API Dadata.
         logging_settings (LogStorageSettings): Настройки хранилища логов.
         storage_settings (FileStorageSettings): Настройки файлового хранилища.
         redis_settings (RedisSettings): Настройки Redis.

@@ -24,4 +24,11 @@ class FileFilter(Filter):
     object_uuid__like: UUID | None = None
 
     class Constants(Filter.Constants):
+        """
+        Константы для фильтра.
+
+        Атрибуты:
+            model: Модель, к которой применяется фильтр.
+        """
+
         model = File

@@ -7,23 +7,45 @@ from backend.core.logging_config import app_logger
 from backend.core.utils import utilities
 
 
-# Модель для события
 class Event(BaseModel):
+    """
+    Модель для представления события.
+
+    Атрибуты:
+        event_type (str): Тип события.
+        payload (dict): Данные, связанные с событием.
+    """
+
     event_type: str
     payload: dict
 
 
-# Шина событий
 class EventBus:
+    """
+    Шина событий для управления подписками и обработкой событий.
+
+    Атрибуты:
+        logger (Logger): Логгер для записи событий.
+        _handlers (Dict[str, List[Callable]]): Словарь для хранения обработчиков событий.
+    """
+
     def __init__(self, logger: Logger):
-        # Логгер для записи событий
+        """
+        Инициализирует шину событий.
+
+        Args:
+            logger (Logger): Логгер для записи событий.
+        """
         self.logger = logger
-        # Словарь для хранения обработчиков событий
         self._handlers: Dict[str, List[Callable]] = {}
 
     def subscribe(self, event_type: str, handler: Callable):
         """
         Подписывает обработчик на определённый тип события.
+
+        Args:
+            event_type (str): Тип события.
+            handler (Callable): Функция-обработчик события.
         """
         if event_type not in self._handlers:
             self._handlers[event_type] = []
@@ -33,6 +55,10 @@ class EventBus:
     def unsubscribe(self, event_type: str, handler: Callable):
         """
         Отписывает обработчик от определённого типа события.
+
+        Args:
+            event_type (str): Тип события.
+            handler (Callable): Функция-обработчик события.
         """
         if event_type in self._handlers:
             self._handlers[event_type].remove(handler)
@@ -41,6 +67,9 @@ class EventBus:
     async def emit(self, event: Event):
         """
         Отправляет событие в шину и вызывает все подписанные обработчики.
+
+        Args:
+            event (Event): Событие, которое нужно обработать.
         """
         self.logger.info(
             f"Событие получено: {event.event_type}, payload: {event.payload}"
@@ -60,11 +89,17 @@ class EventBus:
                     )
 
 
+# Инициализация шины событий
 event_bus = EventBus(logger=app_logger)
 
 
-# Обработчик события "order_created"
 async def on_order_created(payload: dict):
+    """
+    Обработчик события "order_created".
+
+    Args:
+        payload (dict): Данные, связанные с событием.
+    """
     app_logger.info(f"Обработка события 'order_created': {payload}")
 
     from core.background_tasks import celery_app
@@ -77,8 +112,13 @@ async def on_order_created(payload: dict):
     celery_app.send_task("send_requests_for_create_order", args=[payload["order_id"]])
 
 
-# Обработчик события "order_sending_skb"
 async def on_order_sending_skb(payload: dict):
+    """
+    Обработчик события "order_sending_skb".
+
+    Args:
+        payload (dict): Данные, связанные с событием.
+    """
     app_logger.info(f"Обработка события 'on_order_sending_skb': {payload}")
 
     await utilities.send_email(
@@ -88,6 +128,6 @@ async def on_order_sending_skb(payload: dict):
     )
 
 
-# Подписываем обработчик на события
+# Подписываем обработчики на события
 event_bus.subscribe("order_created", on_order_created)
 event_bus.subscribe("order_sending_skb", on_order_sending_skb)

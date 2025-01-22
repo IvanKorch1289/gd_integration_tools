@@ -3,9 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from backend.api_skb.enums import ResponseTypeChoices
-from backend.api_skb.service import APISKBService
+from backend.api_skb.service import APISKBService, get_skb_service
 from backend.base.service import BaseService
 from backend.core.dependencies import (
     create_zip_streaming_response,
@@ -17,13 +18,16 @@ from backend.core.redis import caching_decorator
 from backend.core.settings import settings
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.core.utils import utilities
-from backend.files.repository import FileRepository
+from backend.files.repository import FileRepository, get_file_repo
 from backend.orders.filters import OrderFilter
-from backend.orders.repository import OrderRepository
+from backend.orders.repository import OrderRepository, get_order_repo
 from backend.orders.schemas import OrderSchemaIn, OrderSchemaOut, PublicSchema
 
 
-__all__ = ("OrderService",)
+__all__ = (
+    "OrderService",
+    "get_order_service",
+)
 
 
 class OrderService(BaseService):
@@ -32,12 +36,33 @@ class OrderService(BaseService):
     а также взаимодействие с внешними сервисами (например, СКБ-Техно) и файловым хранилищем.
     """
 
-    repo = OrderRepository()
-    file_repo = FileRepository()
-    request_service = APISKBService
-    response_schema = OrderSchemaOut
-    request_schema = OrderSchemaIn
-    event_schema = Event
+    def __init__(
+        self,
+        response_schema: BaseModel,
+        request_schema: BaseModel,
+        event_schema: Event,
+        repo: OrderRepository = Depends(get_order_repo),
+        file_repo: FileRepository = Depends(get_file_repo),
+        request_service: APISKBService = Depends(get_skb_service),
+    ):
+        """
+        Инициализация сервиса заказов.
+
+        :param response_schema: Схема для преобразования данных в ответ.
+        :param request_schema: Схема для валидации входных данных.
+        :param event_schema: Схема для событий.
+        :param repo: Репозиторий для работы с заказами.
+        :param file_repo: Репозиторий для работы с файлами.
+        :param request_service: Сервис для взаимодействия с API СКБ-Техно.
+        """
+        super().__init__(
+            repo=repo,
+            response_schema=response_schema,
+            request_schema=request_schema,
+        )
+        self.file_repo = file_repo
+        self.request_service = request_service
+        self.event_schema = event_schema
 
     async def add(self, data: Dict[str, Any]) -> Optional[PublicSchema]:
         """
@@ -48,6 +73,7 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при создании заказа.
         """
         try:
+            # Создаем заказ через базовый метод
             order = await super().add(data=data)
             # if order:
             #     check_services = await utilities.health_check_all_services()
@@ -73,6 +99,7 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при создании заказов.
         """
         try:
+            # Создаем заказы для каждого элемента в списке данных
             return [await self.get_or_add(data=data) for data in data_list]
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -86,15 +113,18 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при поиске или создании заказа.
         """
         try:
+            # Параметры для фильтрации заказов
             filter_params = {
                 "pledge_cadastral_number__like": data.get("pledge_cadastral_number"),
                 "is_active": True,
                 "is_send_request_to_skb": False,
             }
+            # Ищем заказ по параметрам
             instance = await self.get_by_params(
                 filter=OrderFilter.model_validate(filter_params)
             )
 
+            # Если заказ не найден, создаем новый
             if not instance:
                 instance = await self.add(data=data)
             return instance
@@ -110,14 +140,17 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при создании заказа в СКБ-Техно.
         """
         try:
+            # Получаем заказ по ID
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
-
             order_data = order.get("data", None)
 
+            # Преобразуем данные заказа, если это необходимо
             if isinstance(order_data, PublicSchema):
                 order_data = order_data.model_dump()
 
+            # Проверяем, активен ли заказ
             if order_data.get("is_active", None):
+                # Формируем данные для запроса в СКБ-Техно
                 data = {
                     "Id": order_data.get("object_uuid", None),
                     "OrderId": order_data.get("object_uuid", None),
@@ -127,14 +160,17 @@ class OrderService(BaseService):
                         "skb_uuid", None
                     ),
                 }
+                # Отправляем запрос в СКБ-Техно
                 result = await self.request_service.add_request(data=data)
 
+                # Если запрос успешен, обновляем статус заказа
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
                         value=order_data.get("id", None),
                         data={"is_send_request_to_skb": True},
                     )
+                    # Генерируем событие о успешной отправке заказа
                     event = Event(
                         event_type="order_sending_skb",
                         payload={
@@ -160,13 +196,18 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении результата.
         """
         try:
+            # Получаем заказ по ID
             instance = await self.repo.get(key="id", value=order_id)
+            # Запрашиваем результат из СКБ-Техно
             result = await self.request_service.get_response_by_order(
                 order_uuid=instance.object_uuid, response_type=response_type.value
             )
+
+            # Обрабатываем JSON-ответ
             if isinstance(result, JSONResponse):
                 body = json.loads(result.body.decode("utf-8"))
                 if not body.get("hasError", "") and response_type.value == "JSON":
+                    # Обновляем данные заказа в базе
                     await self.repo.update(
                         key="id",
                         value=instance.id,
@@ -186,6 +227,7 @@ class OrderService(BaseService):
                             "pledge_data": body.get("Data"),
                         },
                     )
+            # Обрабатываем PDF-ответ
             elif response_type.value == "PDF":
                 file = await self.file_repo.add(
                     data={"object_uuid": instance.object_uuid}
@@ -215,11 +257,14 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            # Получаем заказ по ID
             order = await self.get(key="id", value=order_id)
             if isinstance(order, self.response_schema):
                 order = order.model_dump()
             if not isinstance(order, dict):
                 raise ValueError(f"Expected a dictionary, but got {type(order)}")
+
+            # Если заказ активен, запрашиваем результаты
             if order.get("is_active", None):
                 pdf_response: JSONResponse = await self.get_order_result(
                     order_id=order_id, response_type=ResponseTypeChoices.pdf
@@ -227,6 +272,8 @@ class OrderService(BaseService):
                 json_response: JSONResponse = await self.get_order_result(
                     order_id=order_id, response_type=ResponseTypeChoices.json
                 )
+
+                # Если оба запроса успешны, обновляем статус заказа
                 if (
                     json_response.status_code == status.HTTP_200_OK
                     and pdf_response.status_code == status.HTTP_200_OK
@@ -250,8 +297,12 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
+            # Получаем заказ по ID
             order = await self.repo.get(key="id", value=order_id)
+            # Формируем список файлов
             files_list = [str(file.object_uuid) for file in order.files]
+
+            # Возвращаем файл или архив, если файлов несколько
             if len(files_list) == 1:
                 return await get_streaming_response(files_list[0], s3_service)
             elif len(files_list) > 1:
@@ -272,7 +323,9 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
+            # Получаем заказ по ID
             order = await self.repo.get(key="id", value=order_id)
+            # Формируем список файлов в формате base64
             files_list = [
                 {"file": await get_base64_file(str(file.object_uuid), s3_service)}
                 for file in order.files
@@ -296,12 +349,15 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении ссылок.
         """
         try:
+            # Получаем заказ по ID
             order = await self.get(key="id", value=order_id)
+            # Формируем список файлов
             files_list = (
                 order.get("files", None)
                 if isinstance(order, dict)
                 else [file.model_dump() for file in order.files]
             )
+            # Генерируем ссылки для скачивания
             files_links = [
                 {
                     "file": await s3_service.generate_download_url(
@@ -327,12 +383,15 @@ class OrderService(BaseService):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            # Получаем заказ по ID
             order = await self.get(key="id", value=order_id)
             order = order if isinstance(order, dict) else order.model_dump()
+            # Формируем данные для ответа
             data = {
                 "data": order.get("response_data", None),
                 "errors": order.get("errors", None),
             }
+            # Добавляем ссылки на файлы, если они есть
             if order.get("files", None):
                 data["file_links"] = await self.get_order_file_from_storage_link(
                     order_id=order_id, s3_service=s3_service
@@ -349,3 +408,19 @@ class OrderService(BaseService):
         :param order_id: ID заказа.
         """
         pass
+
+
+def get_order_service() -> OrderService:
+    """
+    Возвращает экземпляр сервиса для работы с заказами.
+
+    :return: Экземпляр OrderService.
+    """
+    return OrderService(
+        repo=get_order_repo(),
+        response_schema=OrderSchemaOut,
+        request_schema=OrderSchemaIn,
+        request_service=get_skb_service(),
+        file_repo=get_file_repo(),
+        event_schema=Event,
+    )

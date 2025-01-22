@@ -137,37 +137,6 @@ class InnerRequestLoggingMiddleware:
         response.body_iterator = AsyncListIterator([original_body])
         return original_body
 
-    @staticmethod
-    async def intercept_response(response: Response) -> bytes:
-        """
-        Собирает и возвращает тело ответа.
-
-        Args:
-            response (Response): HTTP-ответ.
-
-        Returns:
-            bytes: Тело ответа в виде байтов.
-        """
-        response_body_chunks = []
-        async for chunk in response.body_iterator:
-            response_body_chunks.append(chunk)
-        return b"".join(response_body_chunks)
-
-    @classmethod
-    async def capture_and_return_response(cls, response: Response):
-        """
-        Захватывает тело ответа, логирует его и возвращает оригинальный поток данных.
-
-        Args:
-            response (Response): HTTP-ответ.
-
-        Returns:
-            bytes: Тело ответа в виде байтов.
-        """
-        original_body = await cls.intercept_response(response)
-        response.body_iterator = AsyncListIterator([original_body])
-        return original_body
-
 
 class APIKeyMiddleware:
     """

@@ -30,5 +30,5 @@ class OrderKindAdmin(BaseAdmin, ModelView, model=OrderKind):
         "created_at",
         "updated_at",
     ]
-    column_filters = ["name", "skb_uuid"]
-    form_create_rules = ["name", "skb_uuid"]
+    column_filters: List[str] = ["name", "skb_uuid"]
+    form_create_rules: List[str] = ["name", "skb_uuid"]

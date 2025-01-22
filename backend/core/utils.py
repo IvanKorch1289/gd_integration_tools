@@ -3,13 +3,14 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, TypeVar
+from typing import Any, Dict, List, Type, TypeVar
 
 import json_tricks
 import pandas as pd
 # import pyclamd
 from fastapi import HTTPException, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,6 +53,32 @@ class Utilities:
     Предоставляет методы для проверки состояния сервисов (база данных, Redis, S3 и т.д.),
     а также для выполнения задач, таких как отправка электронной почты.
     """
+
+    async def transfer_model_to_schema(
+        self,
+        instance: Any,
+        schema: Type[BaseModel],
+        is_versioned: bool = False,
+    ) -> BaseModel:
+        """Преобразует объект (модель или версию) в схему Pydantic.
+
+        Args:
+            instance (Any): Объект модели или версии.
+            schema (Type[BaseModel]): Класс схемы Pydantic.
+            is_versioned (bool): Флаг, указывающий, является ли объект версией.
+
+        Returns:
+            BaseModel: Экземпляр схемы Pydantic.
+
+        Raises:
+            ValueError: Если объект не может быть преобразован в схему.
+        """
+        try:
+            return schema.model_validate(instance, from_attributes=is_versioned)
+        except Exception as exc:
+            raise ValueError(
+                f"Ошибка при преобразовании модели в схему: {exc}"
+            ) from exc
 
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def health_check_database(self, session: AsyncSession) -> bool:
@@ -249,8 +276,7 @@ class Utilities:
             )
 
     async def health_check_celery_queues(self) -> Dict[str, List[str]]:
-        """
-        Проверяет состояние очередей Celery.
+        """Проверяет состояние очередей Celery.
 
         Returns:
             Dict[str, List[str]]: Состояние очередей Celery.
@@ -380,8 +406,7 @@ class Utilities:
         return json_tricks.loads(check_services_body)
 
     async def ensure_protocol(self, url: str) -> str:
-        """
-        Добавляет протокол (http://) к URL, если он отсутствует.
+        """Добавляет протокол (http://) к URL, если он отсутствует.
 
         Args:
             url (str): URL-адрес.
@@ -394,8 +419,7 @@ class Utilities:
         return url
 
     def generate_link_page(self, url: str, description: str) -> HTMLResponse:
-        """
-        Генерирует HTML-страницу с кликабельной ссылкой.
+        """Генерирует HTML-страницу с кликабельной ссылкой.
 
         Args:
             url (str): URL-адрес.
@@ -415,8 +439,7 @@ class Utilities:
         )
 
     async def convert_numpy_types(self, value):
-        """
-        Преобразует numpy-типы (например, numpy.int64) в стандартные типы Python.
+        """Преобразует numpy-типы (например, numpy.int64) в стандартные типы Python.
 
         Args:
             value: Значение, которое может быть numpy-типом.
@@ -442,8 +465,18 @@ class Utilities:
     #     finally:
     #         file.file.seek(0)  # Сбрасываем позицию чтения файла
 
-    # Пользовательский кодировщик и декодировщик
     def custom_encoder(self, obj):
+        """Пользовательский кодировщик для преобразования UUID и datetime в JSON.
+
+        Args:
+            obj: Объект для кодирования.
+
+        Returns:
+            dict: Словарь с закодированными данными.
+
+        Raises:
+            TypeError: Если объект не может быть сериализован.
+        """
         if isinstance(obj, uuid.UUID):
             return {"__uuid__": True, "value": str(obj)}
         elif isinstance(obj, datetime):
@@ -451,6 +484,14 @@ class Utilities:
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
     def custom_decoder(self, dct):
+        """Пользовательский декодировщик для преобразования JSON в UUID и datetime.
+
+        Args:
+            dct: Словарь с закодированными данными.
+
+        Returns:
+            Объект UUID или datetime, если они найдены в словаре.
+        """
         if "__uuid__" in dct:
             return uuid.UUID(dct["value"])
         elif "__datetime__" in dct:

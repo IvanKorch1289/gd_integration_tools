@@ -1,13 +1,17 @@
 from typing import Any, Dict, Union
 
+from fastapi import Depends
 from fastapi_filter.contrib.sqlalchemy import Filter
 
 from backend.base.service import BaseService
-from backend.users.repository import UserRepository
+from backend.users.repository import UserRepository, get_user_repo
 from backend.users.schemas import UserSchemaIn, UserSchemaOut
 
 
-__all__ = ("UserService",)
+__all__ = (
+    "UserService",
+    "get_user_service",
+)
 
 
 class UserService(BaseService):
@@ -20,9 +24,31 @@ class UserService(BaseService):
         request_schema (Type[UserSchemaIn]): Схема для валидации входных данных.
     """
 
-    repo = UserRepository()
-    response_schema = UserSchemaOut
-    request_schema = UserSchemaIn
+    def __init__(
+        self,
+        repo: UserRepository = Depends(get_user_repo),
+        response_schema: Any = UserSchemaOut,
+        request_schema: Any = UserSchemaIn,
+    ):
+        """
+        Инициализация сервиса для работы с пользователями.
+
+        :param repo: Репозиторий для работы с таблицей пользователей.
+        :param response_schema: Схема для преобразования данных в ответ.
+        :param request_schema: Схема для валидации входных данных.
+        """
+        super().__init__(
+            repo=repo, response_schema=response_schema, request_schema=request_schema
+        )
+
+    async def _get_user_by_username(self, data: Dict[str, Any]) -> Any:
+        """
+        Вспомогательный метод для поиска пользователя по имени.
+
+        :param data: Словарь с данными для поиска пользователя.
+        :return: Найденный пользователь или None, если пользователь не найден.
+        """
+        return await self.repo.get_by_username(data=data)
 
     async def add(self, data: Dict[str, Any]) -> Union[UserSchemaOut, str]:
         """
@@ -33,10 +59,15 @@ class UserService(BaseService):
         :raises Exception: Если произошла ошибка при добавлении пользователя.
         """
         try:
-            user = await self.repo.get_by_username(data=data)
+            # Проверяем, существует ли пользователь с таким именем
+            user = await self._get_user_by_username(data=data)
             if user:
                 return "The user with the specified login already exists."
-            # data["password"] = await utilities.hash_password(data["password"])  # Хэширование пароля (если требуется)
+
+            # Хэширование пароля (если требуется)
+            # data["password"] = await utilities.hash_password(data["password"])
+
+            # Создаем пользователя через базовый метод
             return await super().add(data=data)
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -50,10 +81,30 @@ class UserService(BaseService):
         :raises Exception: Если произошла ошибка при аутентификации.
         """
         try:
+            # Преобразуем фильтр в словарь
             data = filter.model_dump()
-            user = await self.repo.get_by_username(data=data)
+
+            # Ищем пользователя по имени
+            user = await self._get_user_by_username(data=data)
+
+            # Проверяем пароль
             if user and user.verify_password(password=data["password"]):
                 return True
             return False
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
+
+
+def get_user_service() -> UserService:
+    """
+    Возвращает экземпляр сервиса для работы с пользователями.
+
+    Используется как зависимость в FastAPI для внедрения сервиса в маршруты.
+
+    :return: Экземпляр UserService.
+    """
+    return UserService(
+        repo=get_user_repo(),
+        response_schema=UserSchemaOut,
+        request_schema=UserSchemaIn,
+    )
