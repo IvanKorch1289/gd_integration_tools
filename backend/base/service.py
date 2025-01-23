@@ -272,14 +272,11 @@ class BaseService(Generic[ConcreteRepo]):
         :param transaction_id: ID транзакции, до которой нужно восстановить объект.
         :return: Восстановленный объект в виде схемы или None, если произошла ошибка.
         """
-        from backend.orderkinds.schemas import OrderKindVersionSchemaOut
-
         restored_object = await self.repo.restore_to_version(
             object_id=object_id, transaction_id=transaction_id
         )
-        return await self._transfer_versioned(
-            restored_object, OrderKindVersionSchemaOut
-        )
+
+        return await self._transfer(restored_object, self.response_schema)
 
     async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
         """

@@ -4,7 +4,7 @@ from uuid import UUID
 from backend.base.schemas import PublicSchema
 
 
-__all__ = ("FileSchemaIn", "FileSchemaOut", "FileKindVersionSchemaOut")
+__all__ = ("FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut")
 
 
 class FileSchemaIn(PublicSchema):
@@ -38,7 +38,7 @@ class FileSchemaOut(FileSchemaIn):
     updated_at: datetime
 
 
-class FileKindVersionSchemaOut(FileSchemaOut):
+class FileVersionSchemaOut(FileSchemaOut):
     """
     Схема для исходящих данных версии данных файла.
 

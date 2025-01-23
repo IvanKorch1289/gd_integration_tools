@@ -1,9 +1,13 @@
+version: '3.8'
+
 services:
   mailhog:
     image: mailhog/mailhog
     ports:
       - "1025:1025"  # SMTP-порт
       - "8025:8025"  # Веб-интерфейс
+    networks:
+      - my_network
 
   prometheus:
     image: prom/prometheus:v2.37.0
@@ -132,18 +136,7 @@ services:
     command: ["redis-server"]
     restart: "on-failure"
     networks:
-      - graylog-es-mongo-net
-
-  # fastapi:
-  #   build: .
-  #   container_name: fastapi
-  #   ports:
-  #     - 8000:8000
-  #   networks:
-  #     - my_network
-  #   depends_on:
-  #     - prometheus
-  #   restart: unless-stopped
+      - my_network
 
 volumes:
   mongodb_data:
@@ -152,6 +145,7 @@ volumes:
   graylog_journal:
   prometheus_data:
   grafana_data:
+  outline_postgres_data:
 
 networks:
   minio-mongo-net:

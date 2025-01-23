@@ -10,10 +10,6 @@ from pydantic_settings import BaseSettings
 # Загрузка переменных окружения из файла .env
 load_dotenv()
 
-# Определение корневого пути проекта
-ROOT_PATH = Path(__file__).parent.parent.parent
-BASE_URL = os.getenv("BASE_URL")
-
 
 class APISSKBSettings(BaseSettings):
     """
@@ -154,7 +150,7 @@ class RedisSettings(BaseSettings):
 
     redis_host: str = Field(default="localhost", env="REDIS_HOST")
     redis_port: int = Field(default=6379, env="REDIS_PORT")
-    redis_db_cashe: int = 0
+    redis_db_cache: int = 0
     redis_db_queue: int = 1
     redis_db_limits: int = 2
     redis_pass: Optional[str] = Field(default=None, env="REDIS_PASS")
@@ -265,8 +261,8 @@ class Settings(BaseSettings):
         mail_settings (MailSettings): Настройки отправки электронной почты.
     """
 
-    root_dir: Path
-    base_url: str = BASE_URL
+    root_dir: Path = Path(__file__).parent.parent.parent
+    base_url: str = os.getenv("BASE_URL")
     app_version: str = "0.0.1"
     app_debug: bool = Field(default=True, env="APP_DEBUG")
     app_api_key: str = Field(default="2f0-2340f", env="APP_API_KEY")
@@ -275,6 +271,9 @@ class Settings(BaseSettings):
         "/admin",
         "/admin/*",
         "/docs",
+        "/documents",
+        "/docs/",
+        "/documents/",
         "/metrics",
         "/openapi.json",
         "/tech/healthcheck-*",
@@ -309,4 +308,4 @@ class Settings(BaseSettings):
 
 
 # Создание экземпляра настроек
-settings = Settings(root_dir=ROOT_PATH)
+settings = Settings()

@@ -2,13 +2,23 @@ from enum import Enum
 from io import BytesIO
 
 import pandas as pd
-from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
 from backend.base.enums import get_model_enum
 from backend.base.schemas import EmailSchema
 from backend.base.service import BaseService, get_service_for_model
+from backend.core.errors import handle_routes_errors
 from backend.core.settings import settings
 from backend.core.utils import utilities
 
@@ -35,6 +45,7 @@ class TechBV:
         operation_id="getLinkToLogStorage",
         response_class=HTMLResponse,
     )
+    @handle_routes_errors
     async def redirect_to_log_storage(self):
         """
         Возвращает HTML-страницу с ссылкой на хранилище логов.
@@ -53,6 +64,7 @@ class TechBV:
         operation_id="getLinkToFileStorage",
         response_class=HTMLResponse,
     )
+    @handle_routes_errors
     async def redirect_to_file_storage(self):
         """
         Возвращает HTML-страницу с ссылкой на файловое хранилище.
@@ -69,6 +81,7 @@ class TechBV:
         operation_id="getLinkToFlower",
         response_class=HTMLResponse,
     )
+    @handle_routes_errors
     async def redirect_to_task_monitor(self):
         """
         Возвращает HTML-страницу с ссылкой на интерфейс мониторинга фоновых задач.
@@ -84,6 +97,7 @@ class TechBV:
         summary="Проверить состояние базы данных",
         operation_id="healthcheck_database",
     )
+    @handle_routes_errors
     async def healthcheck_database(self):
         """
         Проверяет состояние базы данных.
@@ -98,6 +112,7 @@ class TechBV:
         summary="Проверить состояние Redis",
         operation_id="healthcheck_redis",
     )
+    @handle_routes_errors
     async def healthcheck_redis(self):
         """
         Проверяет состояние Redis.
@@ -112,6 +127,7 @@ class TechBV:
         summary="Проверить состояние Celery",
         operation_id="healthcheck_celery",
     )
+    @handle_routes_errors
     async def healthcheck_celery(self):
         """
         Проверяет состояние Celery.
@@ -126,6 +142,7 @@ class TechBV:
         summary="Проверить состояние очередей Celery",
         operation_id="check_celery_queues",
     )
+    @handle_routes_errors
     async def healthcheck_celery_queues(self):
         """
         Проверяет состояние очередей Celery.
@@ -133,13 +150,14 @@ class TechBV:
         Returns:
             dict: Состояние очередей Celery.
         """
-        return await utilities.check_celery_queues()
+        return await utilities.health_check_celery_queues()
 
     @router.get(
         "/healthcheck-s3",
         summary="Проверить состояние S3",
         operation_id="healthcheck_s3",
     )
+    @handle_routes_errors
     async def healthcheck_s3(self):
         """
         Проверяет состояние S3.
@@ -154,6 +172,7 @@ class TechBV:
         summary="Проверить состояние планировщика задач",
         operation_id="healthcheck_scheduler",
     )
+    @handle_routes_errors
     async def healthcheck_scheduler(self):
         """
         Проверяет состояние планировщика задач.
@@ -168,6 +187,7 @@ class TechBV:
         summary="Проверить состояние Graylog",
         operation_id="healthcheck_graylog",
     )
+    @handle_routes_errors
     async def healthcheck_graylog(self):
         """
         Проверяет состояние Graylog.
@@ -182,6 +202,7 @@ class TechBV:
         summary="Проверить состояние SMTP-сервера",
         operation_id="healthcheck_smtp",
     )
+    @handle_routes_errors
     async def healthcheck_smtp(self):
         """
         Проверяет состояние SMTP-сервера.
@@ -196,6 +217,7 @@ class TechBV:
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
     )
+    @handle_routes_errors
     async def healthcheck_all_services(self):
         """
         Проверяет состояние всех сервисов.
@@ -208,6 +230,7 @@ class TechBV:
     @router.get(
         "/version", summary="Получить версию приложения", operation_id="get_version"
     )
+    @handle_routes_errors
     async def get_version(self):
         """
         Возвращает текущую версию приложения.
@@ -220,6 +243,7 @@ class TechBV:
     @router.get(
         "/config", summary="Получить текущую конфигурацию", operation_id="get_config"
     )
+    @handle_routes_errors
     async def get_config(self, x_api_key: str = Header(...)):
         """
         Возвращает текущую конфигурацию приложения.
@@ -234,7 +258,8 @@ class TechBV:
         summary="Отправить тестовое email",
         operation_id="send_email",
     )
-    async def send_email(self, schema: EmailSchema):
+    @handle_routes_errors
+    async def send_email(self, schema: EmailSchema, x_api_key: str = Header(...)):
         """
         Отправляет тестовое email.
 
@@ -253,6 +278,7 @@ class TechBV:
         summary="Получить названия всех таблиц",
         operation_id="get_all_custom_tables",
     )
+    @handle_routes_errors
     async def get_all_custom_tables(
         self,
         model_enum: Enum = Depends(get_model_enum),
@@ -268,13 +294,14 @@ class TechBV:
         Returns:
             set: Набор названий таблиц.
         """
-        return {model.value for model in model_enum}
+        return {model.value.__tablename__ for model in model_enum}
 
     @router.post(
         "/upload-excel-for-mass-create",
         summary="Загрузить Excel-файл для массового создания объектов",
         operation_id="upload_excel_for_mass_create",
     )
+    @handle_routes_errors
     async def upload_excel(
         self,
         file: UploadFile = File(...),
@@ -327,9 +354,11 @@ class TechBV:
                     )
                     results.append(result)
                 except Exception as e:
-                    print(f"Ошибка при добавлении данных: {e}")
                     results.append({"error": str(e)})
 
             return results
 
-        return {"error": f"Таблица {table_name} не найдена."}
+        return Response(
+            content={"error": f"Таблица {table_name} не найдена."},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )

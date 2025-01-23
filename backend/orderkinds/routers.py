@@ -246,7 +246,7 @@ class OrderKindCBV:
         "/restore_to_version/{kind_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект вида запроса до указанной версии",
-        response_model=OrderKindVersionSchemaOut,
+        response_model=OrderKindSchemaOut,
     )
     @route_limiter
     @handle_routes_errors

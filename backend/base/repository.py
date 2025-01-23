@@ -131,6 +131,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         session: AsyncSession,
         data: dict[str, Any],
         existing_object: Optional[ConcreteTable] = None,
+        ignore_none: bool = True,
     ) -> ConcreteTable:
         """
         Обрабатывает данные и сохраняет объект в базе данных.
@@ -139,6 +140,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param session: Асинхронная сессия SQLAlchemy.
         :param data: Данные для создания или обновления объекта.
         :param existing_object: Существующий объект для обновления (опционально).
+        :param ignore_none: Игнорировать пустые значения (True) или нет (False).
         :return: Созданный или обновленный объект.
         """
         unsecret_data = await self.model.get_value_from_secret_str(
@@ -148,7 +150,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         if existing_object:
             # Обновляем существующий объект
             for field, new_value in unsecret_data.items():
-                if new_value is not None:
+                if not ignore_none or new_value is not None:
                     setattr(existing_object, field, new_value)
             obj = existing_object
         else:
@@ -325,7 +327,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def update(
-        self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
+        self,
+        session: AsyncSession,
+        key: str,
+        value: Any,
+        data: dict[str, Any],
+        ignore_none: bool = True,  # По умолчанию игнорируем пустые значения
     ) -> ConcreteTable:
         """
         Обновить объект в таблице.
@@ -334,6 +341,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param key: Название поля для поиска объекта.
         :param value: Значение поля для поиска объекта.
         :param data: Данные для обновления объекта.
+        :param ignore_none: Игнорировать пустые значения (True) или нет (False).
         :return: Обновленный объект.
         """
         existing_object = await self.get(
@@ -342,7 +350,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         if not existing_object:
             raise NotFoundError(message="Object not found")
 
-        return await self._prepare_and_save_object(session, data, existing_object)
+        return await self._prepare_and_save_object(
+            session, data, existing_object, ignore_none=ignore_none
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
@@ -418,7 +428,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         return version
 
     @handle_db_errors
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
     async def restore_to_version(
         self, session: AsyncSession, object_id: int, transaction_id: int
     ) -> Dict[str, Any]:
@@ -444,23 +454,18 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 message=f"Version with transaction_id={transaction_id} not found"
             )
 
-        parent_obj = await self.get(
-            key="id", value=object_id
-        )  # Получаем родительский объект
-        if not parent_obj:
-            raise NotFoundError(message=f"Object with id={object_id} not found")
-
-        # Восстанавливаем атрибуты объекта до указанной версии
-        for attr in target_version.__table__.columns.keys():
-            if attr not in ["id", "transaction_id", "operation_type"]:
-                setattr(parent_obj, attr, getattr(target_version, attr))
-
-        await session.commit()  # Фиксируем изменения
-
-        return {
-            "transaction_id": transaction_id,
-            "data": parent_obj,
+        # Преобразуем версию в словарь данных для обновления
+        update_data = {
+            attr: getattr(target_version, attr)
+            for attr in target_version.__table__.columns.keys()
         }
+
+        return await self.update(
+            key="id",
+            value=object_id,
+            data=update_data,
+            ignore_none=False,  # Не игнорируем пустые значения при восстановлении
+        )
 
 
 async def get_repository_for_model(

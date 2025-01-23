@@ -40,7 +40,7 @@ class RedisClient:
                             settings.redis_settings.redis_host,
                             settings.redis_settings.redis_port,
                         ),
-                        db=settings.redis_settings.redis_db_cashe,
+                        db=settings.redis_settings.redis_db_cache,
                         encoding=settings.redis_settings.redis_encoding,
                     )
                 )

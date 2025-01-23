@@ -18,7 +18,11 @@ from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.files.filters import FileFilter
-from backend.files.schemas import FileKindVersionSchemaOut, FileSchemaIn
+from backend.files.schemas import (
+    FileSchemaIn,
+    FileSchemaOut,
+    FileVersionSchemaOut,
+)
 from backend.files.service import FileService, get_file_service
 
 
@@ -43,7 +47,12 @@ class FileCBV:
     def __init__(self, service: FileService = Depends(get_file_service)):
         self.service = service
 
-    @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все файлы")
+    @router.get(
+        "/all/",
+        status_code=status.HTTP_200_OK,
+        summary="Получить все файлы",
+        response_model=List[FileSchemaOut],
+    )
     @route_limiter
     @handle_routes_errors
     async def get_files(self, request: Request, x_api_key: str = Header(...)):
@@ -56,7 +65,10 @@ class FileCBV:
         return await self.service.all()
 
     @router.get(
-        "/id/{file_id}", status_code=status.HTTP_200_OK, summary="Получить файл по ID"
+        "/id/{file_id}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить файл по ID",
+        response_model=FileSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -74,6 +86,7 @@ class FileCBV:
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
         summary="Получить файл по фильтру",
+        response_model=List[FileSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -92,7 +105,10 @@ class FileCBV:
         return await self.service.get_by_params(filter=file_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить файл"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить файл",
+        response_model=FileSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -115,6 +131,7 @@ class FileCBV:
         "/create_many/",
         status_code=status.HTTP_201_CREATED,
         summary="Добавить несколько файлов",
+        response_model=List[FileSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -138,6 +155,7 @@ class FileCBV:
         "/update/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить файл по ID",
+        response_model=FileSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -183,7 +201,7 @@ class FileCBV:
         "/all_versions/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить версии объекта данных файла по ID",
-        response_model=List[FileKindVersionSchemaOut],
+        response_model=List[FileVersionSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -205,7 +223,7 @@ class FileCBV:
         "/latest_version/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить последнюю версию объекта данных файла по ID",
-        response_model=FileKindVersionSchemaOut,
+        response_model=FileVersionSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -227,7 +245,7 @@ class FileCBV:
         "/restore_to_version/{file_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект данных файла до указанной версии",
-        response_model=FileKindVersionSchemaOut,
+        response_model=FileSchemaOut,
     )
     @route_limiter
     @handle_routes_errors

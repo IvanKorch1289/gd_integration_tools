@@ -194,7 +194,7 @@ def create_app() -> FastAPI:
             f"{settings.logging_settings.log_host}:{settings.logging_settings.log_port}"
         )
         fs_url = await utilities.ensure_protocol(
-            settings.storage_settings.fs_interfase_url
+            settings.storage_settings.fs_interface_url
         )
         bts_url = await utilities.ensure_protocol(
             settings.bts_settings.bts_interface_url

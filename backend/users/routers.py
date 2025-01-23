@@ -7,7 +7,11 @@ from fastapi_utils.cbv import cbv
 from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
 from backend.users.filters import UserFilter
-from backend.users.schemas import UserSchemaIn, UserVersionSchemaOut
+from backend.users.schemas import (
+    UserSchemaIn,
+    UserSchemaOut,
+    UserVersionSchemaOut,
+)
 from backend.users.service import UserService
 
 
@@ -24,7 +28,10 @@ class UserCBV:
     service = UserService()
 
     @router.get(
-        "/all/", status_code=status.HTTP_200_OK, summary="Получить всех пользователей"
+        "/all/",
+        status_code=status.HTTP_200_OK,
+        summary="Получить всех пользователей",
+        response_model=List[UserSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -35,6 +42,7 @@ class UserCBV:
         "/id/{user_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить пользователя по ID",
+        response_model=UserSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -44,7 +52,8 @@ class UserCBV:
     @router.get(
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
-        summary="Получить пользователя по полю",
+        summary="Получить пользователей по полю",
+        response_model=List[UserSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -56,7 +65,10 @@ class UserCBV:
         return await self.service.get_by_params(filter=user_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить пользователя"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить пользователя",
+        response_model=UserSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -72,6 +84,7 @@ class UserCBV:
         "/create_many/",
         status_code=status.HTTP_201_CREATED,
         summary="Добавить несколько пользователей",
+        response_model=List[UserSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -88,6 +101,7 @@ class UserCBV:
         "/update/{user_id}",
         status_code=status.HTTP_200_OK,
         summary="Изменить вид запроса по ID",
+        response_model=UserSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -162,7 +176,7 @@ class UserCBV:
         "/restore_to_version/{user_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект пользователя до указанной версии",
-        response_model=UserVersionSchemaOut,
+        response_model=UserSchemaOut,
     )
     @route_limiter
     @handle_routes_errors

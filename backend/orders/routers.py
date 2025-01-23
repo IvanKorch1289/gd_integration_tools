@@ -9,7 +9,11 @@ from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
 from backend.core.storage import S3Service, s3_bucket_service_factory
 from backend.orders.filters import OrderFilter
-from backend.orders.schemas import OrderSchemaIn, OrderVersionSchemaOut
+from backend.orders.schemas import (
+    OrderSchemaIn,
+    OrderSchemaOut,
+    OrderVersionSchemaOut,
+)
 from backend.orders.service import OrderService, get_order_service
 
 
@@ -27,7 +31,12 @@ class OrderCBV:
     def __init__(self, service: OrderService = Depends(get_order_service)):
         self.service = service
 
-    @router.get("/all/", status_code=status.HTTP_200_OK, summary="Получить все запросы")
+    @router.get(
+        "/all/",
+        status_code=status.HTTP_200_OK,
+        summary="Получить все запросы",
+        response_model=List[OrderSchemaOut],
+    )
     @route_limiter
     async def get_orders(self, request: Request, x_api_key: str = Header(...)):
         return await self.service.all()
@@ -36,6 +45,7 @@ class OrderCBV:
         "/id/{order_id}",
         status_code=status.HTTP_200_OK,
         summary="Получить запрос по ID",
+        response_model=OrderSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -46,6 +56,7 @@ class OrderCBV:
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
         summary="Получить запрос по полю",
+        response_model=List[OrderSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -57,7 +68,10 @@ class OrderCBV:
         return await self.service.get_by_params(filter=order_filter)
 
     @router.post(
-        "/create/", status_code=status.HTTP_201_CREATED, summary="Добавить запрос"
+        "/create/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить запрос",
+        response_model=OrderSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -73,6 +87,7 @@ class OrderCBV:
         "/create_many/",
         status_code=status.HTTP_201_CREATED,
         summary="Добавить несколько запросов",
+        response_model=List[OrderSchemaOut],
     )
     @route_limiter
     @handle_routes_errors
@@ -97,7 +112,8 @@ class OrderCBV:
     @router.put(
         "/update/{order_id}",
         status_code=status.HTTP_200_OK,
-        summary="Изменить запроса по ID",
+        summary="Изменить запрос по ID",
+        response_model=OrderSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
@@ -252,7 +268,7 @@ class OrderCBV:
         "/restore_to_version/{order_id}",
         status_code=status.HTTP_200_OK,
         summary="Восстановить объект запроса до указанной версии",
-        response_model=OrderVersionSchemaOut,
+        response_model=OrderSchemaOut,
     )
     @route_limiter
     @handle_routes_errors
