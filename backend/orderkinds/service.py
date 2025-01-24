@@ -1,4 +1,3 @@
-from fastapi import Depends
 from pydantic import BaseModel
 
 from backend.base.service import BaseService
@@ -30,9 +29,9 @@ class OrderKindService(BaseService):
 
     def __init__(
         self,
-        response_schema: BaseModel,
-        request_schema: BaseModel,
-        repo: OrderKindRepository = Depends(get_order_kind_repo),
+        response_schema: BaseModel = None,
+        request_schema: BaseModel = None,
+        repo: OrderKindRepository = None,
     ):
         """
         Инициализация сервиса для работы с видами запросов.

@@ -4,7 +4,7 @@ from typing import Callable, Dict, List
 from pydantic import BaseModel
 
 from backend.core.logging_config import app_logger
-from backend.core.utils import utilities
+from backend.core.utils import singleton, utilities
 
 
 class Event(BaseModel):
@@ -20,6 +20,7 @@ class Event(BaseModel):
     payload: dict
 
 
+@singleton
 class EventBus:
     """
     Шина событий для управления подписками и обработкой событий.
@@ -97,37 +98,71 @@ async def on_order_created(payload: dict):
     """
     Обработчик события "order_created".
 
+    Отправляет email и запускает цепочку задач для обработки заказа.
+
     Args:
         payload (dict): Данные, связанные с событием.
     """
     app_logger.info(f"Обработка события 'order_created': {payload}")
 
-    from core.background_tasks import celery_app
-
-    await utilities.send_email(
-        to_email=payload["email"],
-        subject="Новый заказ создан",
-        message=f"Новый заказ создан с ID: {payload['order_id']}",
+    # Отправляем email через обработчик on_email_send
+    await on_email_send(
+        {
+            "email": payload["email"],
+            "subject": "Новый заказ создан",
+            "message": f"Новый заказ создан с ID: {payload['order_id']}",
+        }
     )
-    celery_app.send_task("send_requests_for_create_order", args=[payload["order_id"]])
+
+    # Запускаем workflow обработки заказа
+    from backend.core.background_tasks import celery_app
+
+    celery_app.send_task(
+        "process_order_workflow",
+        args=[payload["order_id"], payload["email"]],
+    )
 
 
 async def on_order_sending_skb(payload: dict):
     """
     Обработчик события "order_sending_skb".
 
+    Отправляет email о регистрации заказа в СКБ-Техно.
+
     Args:
         payload (dict): Данные, связанные с событием.
     """
     app_logger.info(f"Обработка события 'on_order_sending_skb': {payload}")
 
+    # Отправляем email через обработчик on_email_send
+    await on_email_send(
+        {
+            "email": payload["email"],
+            "subject": "Новый заказ зарегистрирован в СКБ-Техно",
+            "message": f"Новый заказ зарегистрирован в СКБ-Техно: {payload['order_id']}",
+        }
+    )
+
+
+async def on_email_send(payload: dict):
+    """
+    Обработчик события "email_send".
+
+    Отправляет email на основе данных, переданных в payload.
+
+    Args:
+        payload (dict): Данные, связанные с событием.
+    """
+    app_logger.info(f"Обработка события 'email_send': {payload}")
+
     await utilities.send_email(
         to_email=payload["email"],
-        subject="Новый заказ зарегистрирован в СКБ-Техно",
-        message=f"Новый заказ зарегистрирован в СКБ-Техно: {payload['order_id']}",
+        subject=payload["subject"],
+        message=payload["message"],
     )
 
 
 # Подписываем обработчики на события
 event_bus.subscribe("order_created", on_order_created)
 event_bus.subscribe("order_sending_skb", on_order_sending_skb)
+event_bus.subscribe("email_send", on_email_send)

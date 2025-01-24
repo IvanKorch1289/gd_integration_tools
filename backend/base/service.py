@@ -26,6 +26,83 @@ class BaseService(Generic[ConcreteRepo]):
         request_schema (Type[ConcreteRequestSchema]): Схема для валидации входных данных.
     """
 
+    class HelperMethods:
+        """
+        Вспомогательные методы для работы.
+        """
+
+        def __init__(self, repo: Type[ConcreteRepo]):
+            self.repo = repo
+
+        async def _transfer(
+            self,
+            instance: Any,
+            response_schema: Type[PublicSchema],
+            is_versioned: bool = False,
+        ) -> Union[PublicSchema, None]:
+            """
+            Преобразует объект модели в схему ответа.
+
+            :param instance: Объект модели.
+            :param response_schema: Схема ответа, в которую нужно преобразовать объект.
+            :param is_versioned: Флаг, указывающий, что объект является версией.
+            :return: Схема ответа или None, если объект не передан.
+            """
+            if instance:
+                # Преобразуем объект модели в словарь, если утилита требует словарь
+                instance_dict = {
+                    c.name: getattr(instance, c.name)
+                    for c in instance.__table__.columns
+                }
+                return await utilities.transfer_model_to_schema(
+                    instance=instance_dict,  # Передаем словарь вместо объекта модели
+                    schema=response_schema,
+                    is_versioned=is_versioned,
+                )
+            return instance
+
+        async def _transfer_versioned(
+            self, instance: Any, response_schema: Type[PublicSchema]
+        ) -> Union[PublicSchema, None]:
+            """
+            Преобразует версионный объект модели в схему ответа.
+
+            :param instance: Объект модели.
+            :param response_schema: Схема ответа, в которую нужно преобразовать объект.
+            :return: Схема ответа или None, если объект не передан.
+            """
+            return await self._transfer(instance, response_schema, is_versioned=True)
+
+        async def _process_and_transfer(
+            self,
+            repo_method: str,
+            response_schema: Type[PublicSchema],
+            *args,
+            **kwargs,
+        ) -> Any:
+            """
+            Выполняет метод репозитория и преобразует результат в схему.
+
+            :param repo_method: Название метода репозитория.
+            :param response_schema: Схема ответа.
+            :param args: Аргументы для метода репозитория.
+            :param kwargs: Ключевые аргументы для метода репозитория.
+            :return: Результат в виде схемы или None, если произошла ошибка.
+            """
+            try:
+                instance = await getattr(self.repo, repo_method)(*args, **kwargs)
+
+                if not instance:
+                    return []
+                elif isinstance(instance, list):
+                    return [
+                        await self._transfer(item, response_schema) for item in instance
+                    ]
+
+                return await self._transfer(instance, response_schema)
+            except Exception:
+                raise  # Исключение будет обработано глобальным обработчиком
+
     def __init__(
         self,
         repo: Type[ConcreteRepo] = None,
@@ -42,66 +119,7 @@ class BaseService(Generic[ConcreteRepo]):
         self.repo = repo
         self.response_schema = response_schema
         self.request_schema = request_schema
-
-    async def _transfer(
-        self,
-        instance: Any,
-        response_schema: Type[PublicSchema],
-        is_versioned: bool = False,
-    ) -> Union[PublicSchema, None]:
-        """
-        Преобразует объект модели в схему ответа.
-
-        :param instance: Объект модели.
-        :param response_schema: Схема ответа, в которую нужно преобразовать объект.
-        :param is_versioned: Флаг, указывающий, что объект является версией.
-        :return: Схема ответа или None, если объект не передан.
-        """
-        if instance:
-            # Преобразуем объект модели в словарь, если утилита требует словарь
-            instance_dict = {
-                c.name: getattr(instance, c.name) for c in instance.__table__.columns
-            }
-            return await utilities.transfer_model_to_schema(
-                instance=instance_dict,  # Передаем словарь вместо объекта модели
-                schema=response_schema,
-                is_versioned=is_versioned,
-            )
-        return instance
-
-    async def _transfer_versioned(
-        self, instance: Any, response_schema: Type[PublicSchema]
-    ) -> Union[PublicSchema, None]:
-        """
-        Преобразует версионный объект модели в схему ответа.
-
-        :param instance: Объект модели.
-        :param response_schema: Схема ответа, в которую нужно преобразовать объект.
-        :return: Схема ответа или None, если объект не передан.
-        """
-        return await self._transfer(instance, response_schema, is_versioned=True)
-
-    async def _process_and_transfer(
-        self,
-        repo_method: str,
-        response_schema: Type[PublicSchema],
-        *args,
-        **kwargs,
-    ) -> Any:
-        """
-        Выполняет метод репозитория и преобразует результат в схему.
-
-        :param repo_method: Название метода репозитория.
-        :param response_schema: Схема ответа.
-        :param args: Аргументы для метода репозитория.
-        :param kwargs: Ключевые аргументы для метода репозитория.
-        :return: Результат в виде схемы или None, если произошла ошибка.
-        """
-        try:
-            instance = await getattr(self.repo, repo_method)(*args, **kwargs)
-            return await self._transfer(instance, response_schema)
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        self.helper = self.HelperMethods(repo)
 
     async def add(self, data: Dict[str, Any]) -> Optional[ConcreteResponseSchema]:
         """
@@ -110,7 +128,9 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для создания объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        return await self._process_and_transfer("add", self.response_schema, data=data)
+        return await self.helper._process_and_transfer(
+            "add", self.response_schema, data=data
+        )
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
@@ -124,7 +144,7 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             instances = await self.repo.add_many(data_list=data_list)
             return [
-                await self._transfer(instance, self.response_schema)
+                await self.helper._transfer(instance, self.response_schema)
                 for instance in instances
             ]
         except Exception:
@@ -141,57 +161,28 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для обновления объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        return await self._process_and_transfer(
+        return await self.helper._process_and_transfer(
             "update", self.response_schema, key=key, value=value, data=data
         )
 
     @caching_decorator
-    async def all(self) -> Optional[List[ConcreteResponseSchema]]:
+    async def get(
+        self,
+        key: Optional[str] = None,
+        value: Optional[int] = None,
+        filter: Optional[Filter] = None,
+    ) -> Union[Optional[ConcreteResponseSchema], List[ConcreteResponseSchema]]:
         """
-        Получает все объекты из репозитория и возвращает их в виде списка схем.
+        Получает объект по ключу и значению, фильтру или все объекты, если ничего не передано.
 
-        :return: Список схем ответа или None, если произошла ошибка.
+        :param key: Название поля (опционально).
+        :param value: Значение поля (опционально).
+        :param filter: Фильтр для запроса (опционально).
+        :return: Схема ответа, список схем или None, если произошла ошибка.
         """
-        try:
-            instances = await self.repo.all()
-            return [
-                await self._transfer(instance, self.response_schema)
-                for instance in instances
-            ]
-        except Exception:
-            raise
-
-    @caching_decorator
-    async def get(self, key: str, value: int) -> Optional[ConcreteResponseSchema]:
-        """
-        Получает объект по ключу и значению и возвращает его в виде схемы.
-
-        :param key: Название поля.
-        :param value: Значение поля.
-        :return: Схема ответа или None, если произошла ошибка.
-        """
-        return await self._process_and_transfer(
-            "get", self.response_schema, key=key, value=value
+        return await self.helper._process_and_transfer(
+            "get", self.response_schema, key=key, value=value, filter=filter
         )
-
-    @caching_decorator
-    async def get_by_params(
-        self, filter: Filter
-    ) -> Optional[List[ConcreteResponseSchema]]:
-        """
-        Получает объекты по параметрам фильтра и возвращает их в виде списка схем.
-
-        :param filter: Фильтр для поиска объектов.
-        :return: Список схем ответа или None, если произошла ошибка.
-        """
-        try:
-            instances = await self.repo.get_by_params(filter=filter)
-            return [
-                await self._transfer(instance, self.response_schema)
-                for instance in instances
-            ]
-        except Exception:
-            raise
 
     async def get_or_add(
         self, key: str = None, value: int = None, data: Dict[str, Any] = None
@@ -207,11 +198,11 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             instance = None
             if key and value:
-                instance = await self._process_and_transfer(
+                instance = await self.helper._process_and_transfer(
                     "get", self.response_schema, key=key, value=value
                 )
             if not instance and data:
-                instance = await self._process_and_transfer(
+                instance = await self.helper._process_and_transfer(
                     "add", self.response_schema, data=data
                 )
             return instance
@@ -245,7 +236,7 @@ class BaseService(Generic[ConcreteRepo]):
 
         versions = await self.repo.get_all_versions(object_id=object_id)
         return [
-            await self._transfer_versioned(version, OrderKindVersionSchemaOut)
+            await self.helper._transfer_versioned(version, OrderKindVersionSchemaOut)
             for version in versions
         ]
 
@@ -260,7 +251,7 @@ class BaseService(Generic[ConcreteRepo]):
         from backend.orderkinds.schemas import OrderKindVersionSchemaOut
 
         version = await self.repo.get_latest_version(object_id=object_id)
-        return await self._transfer_versioned(version, OrderKindVersionSchemaOut)
+        return await self.helper._transfer_versioned(version, OrderKindVersionSchemaOut)
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
@@ -276,7 +267,7 @@ class BaseService(Generic[ConcreteRepo]):
             object_id=object_id, transaction_id=transaction_id
         )
 
-        return await self._transfer(restored_object, self.response_schema)
+        return await self.helper._transfer(restored_object, self.response_schema)
 
     async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
         """

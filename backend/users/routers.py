@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Header, Request, status
+from fastapi import APIRouter, Header, HTTPException, Request, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
@@ -12,20 +12,19 @@ from backend.users.schemas import (
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from backend.users.service import UserService
+from backend.users.service import get_user_service
 
 
 __all__ = ("router",)
-
 
 router = APIRouter()
 
 
 @cbv(router)
 class UserCBV:
-    """CBV-класс для работы со справочником видов запросов."""
+    """CBV-класс для работы с пользователями."""
 
-    service = UserService()
+    service = get_user_service()
 
     @router.get(
         "/all/",
@@ -36,7 +35,22 @@ class UserCBV:
     @route_limiter
     @handle_routes_errors
     async def get_users(self, request: Request, x_api_key: str = Header(...)):
-        return await self.service.all()
+        """
+        Получить всех пользователей.
+
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список всех пользователей.
+        :raises HTTPException: Если пользователи не найдены.
+        """
+        result = await self.service.get()
+
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Not found",
+            )
+        return result
 
     @router.get(
         "/id/{user_id}",
@@ -47,12 +61,19 @@ class UserCBV:
     @route_limiter
     @handle_routes_errors
     async def get_user(self, user_id: int, x_api_key: str = Header(...)):
+        """
+        Получить пользователя по ID.
+
+        :param user_id: ID пользователя.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Пользователь с указанным ID.
+        """
         return await self.service.get(key="id", value=user_id)
 
     @router.get(
         "/get-by-filter",
         status_code=status.HTTP_200_OK,
-        summary="Получить пользователей по полю",
+        summary="Получить пользователей по фильтру",
         response_model=List[UserSchemaOut],
     )
     @route_limiter
@@ -62,7 +83,14 @@ class UserCBV:
         user_filter: UserFilter = FilterDepends(UserFilter),
         x_api_key: str = Header(...),
     ):
-        return await self.service.get_by_params(filter=user_filter)
+        """
+        Получить пользователей по фильтру.
+
+        :param user_filter: Фильтр для поиска пользователей.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список пользователей, соответствующих фильтру.
+        """
+        return await self.service.get(filter=user_filter)
 
     @router.post(
         "/create/",
@@ -78,6 +106,14 @@ class UserCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Добавить нового пользователя.
+
+        :param request_schema: Данные для создания пользователя.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Созданный пользователь.
+        """
         return await self.service.add(data=request_schema.model_dump())
 
     @router.post(
@@ -94,13 +130,21 @@ class UserCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Добавить несколько пользователей.
+
+        :param request_schema: Список данных для создания пользователей.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список созданных пользователей.
+        """
         data_list = [schema.model_dump() for schema in request_schema]
         return await self.service.add_many(data_list=data_list)
 
     @router.put(
         "/update/{user_id}",
         status_code=status.HTTP_200_OK,
-        summary="Изменить вид запроса по ID",
+        summary="Изменить пользователя по ID",
         response_model=UserSchemaOut,
     )
     @route_limiter
@@ -112,6 +156,15 @@ class UserCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Обновить пользователя по ID.
+
+        :param request_schema: Данные для обновления пользователя.
+        :param user_id: ID пользователя.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Обновленный пользователь.
+        """
         return await self.service.update(
             key="id", value=user_id, data=request_schema.model_dump()
         )
@@ -119,13 +172,21 @@ class UserCBV:
     @router.delete(
         "/delete/{user_id}",
         status_code=status.HTTP_204_NO_CONTENT,
-        summary="Удалить вид запроса по ID",
+        summary="Удалить пользователя по ID",
     )
     @route_limiter
     @handle_routes_errors
     async def delete_user(
         self, user_id: int, request: Request, x_api_key: str = Header(...)
     ):
+        """
+        Удалить пользователя по ID.
+
+        :param user_id: ID пользователя.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат удаления.
+        """
         return await self.service.delete(key="id", value=user_id)
 
     @router.get(
@@ -214,7 +275,7 @@ class UserCBV:
         """
         Получить список изменений объекта пользователя по его ID.
 
-        :param file_id: ID дпользователя.
+        :param user_id: ID пользователя.
         :param request: Объект запроса FastAPI.
         :param x_api_key: API-ключ для аутентификации.
         :return: Список изменений объекта.

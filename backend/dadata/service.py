@@ -8,7 +8,7 @@ from backend.core.settings import settings
 __all__ = ("APIDADATAService",)
 
 
-api_endpoints = settings.dadata_settings.dadata_endpoint
+API_ENDPOINTS = settings.dadata_settings.dadata_endpoint
 
 
 class APIDADATAService:
@@ -17,7 +17,7 @@ class APIDADATAService:
     Предоставляет методы для взаимодействия с API Dadata, такие как геокодирование.
 
     Attributes:
-        token (str): Токен для авторизации в API Dadata.
+        auth_token (str): Токен для авторизации в API Dadata.
         endpoint (str): Базовый URL API Dadata.
     """
 
@@ -48,7 +48,7 @@ class APIDADATAService:
             payload["radius_meters"] = radius_metres
 
         # Формируем URL для запроса
-        url = f"{cls.endpoint}{api_endpoints['GEOLOCATE']}"
+        url = f"{cls.endpoint}{API_ENDPOINTS.get('GEOLOCATE')}"
 
         # Выполняем запрос с помощью универсального метода make_request
         return await make_request(
@@ -58,3 +58,14 @@ class APIDADATAService:
             auth_token=cls.auth_token,
             response_type="json",
         )
+
+
+# Функция-зависимость для создания экземпляра APIDADATAService
+def get_dadata_service() -> APIDADATAService:
+    """
+    Возвращает экземпляр APIDADATAService.
+
+    Returns:
+        APIDADATAService: Экземпляр сервиса для работы с API Dadata.
+    """
+    return APIDADATAService()

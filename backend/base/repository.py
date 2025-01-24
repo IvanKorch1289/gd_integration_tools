@@ -1,16 +1,6 @@
 import importlib
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    AsyncGenerator,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import (
@@ -50,13 +40,6 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_params(
-        self, session: AsyncSession, filter: Filter
-    ) -> List[ConcreteTable]:
-        """Получить объекты по параметрам фильтра."""
-        raise NotImplementedError
-
-    @abstractmethod
     async def count(self, session: AsyncSession) -> int:
         """Получить количество объектов в таблице."""
         raise NotImplementedError
@@ -78,11 +61,6 @@ class AbstractRepository(ABC):
         self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
     ) -> ConcreteTable:
         """Обновить объект в таблице."""
-        raise NotImplementedError
-
-    @abstractmethod
-    async def all(self, session: AsyncSession) -> List[ConcreteTable]:
-        """Получить все объекты из таблицы."""
         raise NotImplementedError
 
     @abstractmethod
@@ -118,168 +96,202 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     Реализует методы для работы с конкретной моделью таблицы.
     """
 
+    class HelperMethods:
+        """
+        Вспомогательные методы для работы с базой данных.
+        """
+
+        def __init__(
+            self, model: Type[ConcreteTable], load_joined_models: bool = False
+        ):
+            self.model = model
+            self.load_joined_models = load_joined_models
+
+        async def _prepare_and_save_object(
+            self,
+            session: AsyncSession,
+            data: dict[str, Any],
+            existing_object: Optional[ConcreteTable] = None,
+            ignore_none: bool = True,
+        ) -> ConcreteTable:
+            """
+            Обрабатывает данные и сохраняет объект в базе данных.
+            """
+            unsecret_data = await self.model.get_value_from_secret_str(data)
+
+            if existing_object:
+                for field, new_value in unsecret_data.items():
+                    if not ignore_none or new_value is not None:
+                        setattr(existing_object, field, new_value)
+                obj = existing_object
+            else:
+                obj = self.model(**unsecret_data)
+
+            session.add(obj)
+            await session.flush()
+            await self._refresh_with_relationships(session, obj)
+            return obj
+
+        async def _refresh_with_relationships(
+            self, session: AsyncSession, obj: ConcreteTable
+        ) -> None:
+            """
+            Обновляет объект и загружает все его связи.
+            """
+            mapper = inspect(obj.__class__)
+            relationships = [
+                rel.key
+                for rel in mapper.relationships
+                if rel.key
+                not in getattr(obj.__class__, "EXCLUDED_RELATIONSHIPS", set())
+                and rel.key != "versions"
+            ]
+            await session.refresh(obj, attribute_names=relationships)
+
+        async def _get_loaded_object(
+            self,
+            session: AsyncSession,
+            query_or_object: Union[Select, ConcreteTable],
+            is_return_list: bool = False,
+        ) -> Optional[ConcreteTable] | List[ConcreteTable]:
+            """
+            Выполняет запрос или подгружает связи для объекта.
+
+            :param session: Асинхронная сессия SQLAlchemy.
+            :param query_or_object: Запрос или объект для загрузки.
+            :param is_return_list: Если True, возвращает список объектов. Иначе — один объект или None.
+            :return: Объект, список объектов или пустой список/словарь, если данные не найдены.
+            """
+            if isinstance(query_or_object, Select):
+                if self.load_joined_models:
+                    query_or_object = query_or_object.options(
+                        *self._get_selectinload_options()
+                    )
+
+                result: Result = await session.execute(query_or_object)
+
+                if is_return_list:
+                    objects = result.scalars().all()
+                    return (
+                        objects if objects else []
+                    )  # Возвращаем пустой список, если данных нет
+                else:
+                    return (
+                        result.scalars().first() or {}
+                    )  # Возвращаем пустой словарь, если объект не найден
+
+            elif self.load_joined_models:
+                if query_or_object not in session:
+                    session.add(query_or_object)
+                    await session.flush()
+
+                query = (
+                    select(self.model)
+                    .where(self.model.id == query_or_object.id)
+                    .options(*self._get_selectinload_options())
+                )
+                result: Result = await session.execute(query)
+                return (
+                    result.scalars().first() or {}
+                )  # Возвращаем пустой словарь, если объект не найден
+
+            return query_or_object
+
+        def _get_selectinload_options(self) -> list:
+            """
+            Формирует список опций для загрузки связанных моделей.
+            """
+            mapper = inspect(self.model)
+            relationships = [rel.key for rel in mapper.relationships]
+
+            return [
+                selectinload(getattr(self.model, key))
+                for key in relationships
+                if key not in getattr(self.model, "EXCLUDED_RELATIONSHIPS", set())
+                and key != "versions"
+            ]
+
+        async def _execute_stmt(
+            self, session: AsyncSession, stmt: Insert | Update
+        ) -> Optional[ConcreteTable]:
+            """
+            Выполняет SQL-запрос (INSERT или UPDATE) и возвращает созданный или обновленный объект.
+            """
+            await session.flush()
+            result = await session.execute(stmt)
+            if not result:
+                raise DatabaseError(message="Failed to create/update record")
+
+            primary_key = result.unique().scalar_one_or_none().id
+            query = select(self.model).where(self.model.id == primary_key)
+            return await self._get_loaded_object(session, query)
+
+        async def _get_versions_query(
+            self,
+            session: AsyncSession,
+            object_id: int,
+            order: str = "asc",
+            limit: Optional[int] = None,
+        ) -> List[Dict[str, Any]]:
+            """
+            Общий метод для получения версий объекта.
+            """
+            VersionModel = version_class(self.model)
+            query = select(VersionModel).filter(VersionModel.id == object_id)
+
+            if order == "asc":
+                query = query.order_by(VersionModel.transaction_id)
+            elif order == "desc":
+                query = query.order_by(VersionModel.transaction_id.desc())
+
+            if limit:
+                query = query.limit(limit)
+
+            result = await session.execute(query)
+            return result.scalars().all()
+
     def __init__(
         self,
-        model: Type[ConcreteTable] = None,  # Конкретная модель таблицы
-        load_joined_models: bool = False,  # Флаг для загрузки связанных моделей
+        model: Type[ConcreteTable] = None,
+        load_joined_models: bool = False,
     ):
         self.model = model
         self.load_joined_models = load_joined_models
-
-    async def _prepare_and_save_object(
-        self,
-        session: AsyncSession,
-        data: dict[str, Any],
-        existing_object: Optional[ConcreteTable] = None,
-        ignore_none: bool = True,
-    ) -> ConcreteTable:
-        """
-        Обрабатывает данные и сохраняет объект в базе данных.
-        Если передан existing_object, обновляет его. Иначе создает новый объект.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param data: Данные для создания или обновления объекта.
-        :param existing_object: Существующий объект для обновления (опционально).
-        :param ignore_none: Игнорировать пустые значения (True) или нет (False).
-        :return: Созданный или обновленный объект.
-        """
-        unsecret_data = await self.model.get_value_from_secret_str(
-            data
-        )  # Обрабатываем данные
-
-        if existing_object:
-            # Обновляем существующий объект
-            for field, new_value in unsecret_data.items():
-                if not ignore_none or new_value is not None:
-                    setattr(existing_object, field, new_value)
-            obj = existing_object
-        else:
-            # Создаем новый объект
-            obj = self.model(**unsecret_data)
-
-        session.add(obj)  # Добавляем объект в сессию
-        await session.flush()  # Фиксируем изменения
-        await self._refresh_with_relationships(session, obj)  # Обновляем связи
-        return obj
-
-    async def _refresh_with_relationships(
-        self, session: AsyncSession, obj: ConcreteTable
-    ) -> None:
-        """
-        Обновляет объект и загружает все его связи.
-        Используется для обновления объекта после добавления или обновления.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param obj: Объект для обновления.
-        """
-        mapper = inspect(obj.__class__)
-        relationships = [rel.key for rel in mapper.relationships]  # Получаем все связи
-        await session.refresh(obj, attribute_names=relationships)  # Обновляем объект
-
-    async def _get_loaded_object(
-        self,
-        session: AsyncSession,
-        query_or_object: Union[Select, ConcreteTable],
-        is_return_list: bool = False,
-    ) -> Optional[ConcreteTable] | List[ConcreteTable]:
-        """
-        Выполняет запрос или подгружает связи для объекта.
-        Если передан запрос (Select), выполняет его и возвращает результат.
-        Если передан объект, загружает его связи (если включено).
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param query_or_object: Запрос или объект для загрузки.
-        :param is_return_list: Флаг, указывающий, нужно ли возвращать список объектов.
-        :return: Объект или список объектов.
-        """
-        mapper = inspect(self.model)
-        relationships = [rel.key for rel in mapper.relationships]  # Получаем все связи
-
-        if isinstance(query_or_object, Select):
-            # Если передан запрос, добавляем опции для загрузки связанных моделей
-            if self.load_joined_models:
-                options = [
-                    selectinload(getattr(self.model, key)) for key in relationships
-                ]
-                query_or_object = query_or_object.options(*options)
-
-            result: Result = await session.execute(query_or_object)  # Выполняем запрос
-            return (
-                result.scalars().all()  # Возвращаем список объектов
-                if is_return_list
-                else result.scalar_one_or_none()  # Возвращаем один объект
-            )
-
-        elif self.load_joined_models:
-            # Если передан объект и нужно загрузить связи
-            if query_or_object not in session:
-                session.add(query_or_object)
-                await session.flush()
-
-            # Создаем запрос для загрузки объекта с его связями
-            query = (
-                select(self.model)
-                .where(self.model.id == query_or_object.id)
-                .options(
-                    *[selectinload(getattr(self.model, key)) for key in relationships]
-                )
-            )
-            result: Result = await session.execute(query)
-            return result.scalar_one_or_none()
-
-        return query_or_object  # Возвращаем объект без изменений
-
-    async def _execute_stmt(
-        self, session: AsyncSession, stmt: Insert | Update
-    ) -> Optional[ConcreteTable]:
-        """
-        Выполняет SQL-запрос (INSERT или UPDATE) и возвращает созданный или обновленный объект.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param stmt: SQL-запрос для выполнения.
-        :return: Созданный или обновленный объект.
-        """
-        await session.flush()
-        result = await session.execute(stmt)
-        if not result:
-            raise DatabaseError(message="Failed to create/update record")
-
-        primary_key = result.unique().scalar_one_or_none().id  # Получаем ID объекта
-        query = select(self.model).where(
-            self.model.id == primary_key
-        )  # Запрос для получения объекта
-        return await self._get_loaded_object(session, query)
+        self.helper = self.HelperMethods(model, load_joined_models)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get(
-        self, session: AsyncSession, key: str, value: Any
-    ) -> Optional[ConcreteTable]:
+        self,
+        session: AsyncSession,
+        key: Optional[str] = None,
+        value: Optional[Any] = None,
+        filter: Optional[Filter] = None,
+    ) -> Optional[ConcreteTable] | List[ConcreteTable]:
         """
-        Получить объект по ключу и значению.
+        Получить объект по ключу и значению или по фильтру.
 
         :param session: Асинхронная сессия SQLAlchemy.
-        :param key: Название поля для фильтрации.
-        :param value: Значение поля для фильтрации.
-        :return: Найденный объект или None.
+        :param key: Название поля для фильтрации (опционально).
+        :param value: Значение поля для фильтрации (опционально).
+        :param filter: Фильтр для запроса (опционально).
+        :param is_return_list: Если True, возвращает список объектов. Иначе — один объект или None.
+        :return: Найденный объект, список объектов или None.
         """
-        query = select(self.model).where(getattr(self.model, key) == value)
-        return await self._get_loaded_object(session, query)
+        is_return_list = False
 
-    @handle_db_errors
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def get_by_params(
-        self, session: AsyncSession, filter: Filter
-    ) -> AsyncGenerator[ConcreteTable, None]:
-        """
-        Получить объекты по параметрам фильтра.
+        if filter:
+            query = filter.filter(select(self.model))
+            is_return_list = True
+        elif key and value:
+            query = select(self.model).where(getattr(self.model, key) == value)
+        else:
+            query = select(self.model)
+            is_return_list = True
 
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param filter: Фильтр для запроса.
-        :return: Асинхронный генератор объектов.
-        """
-        query = filter.filter(select(self.model))
-        return await self._get_loaded_object(session, query, is_return_list=True)
+        return await self.helper._get_loaded_object(
+            session, query, is_return_list=is_return_list
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
@@ -310,7 +322,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             asc(by) if order == "asc" else desc(by)
         )  # Определяем порядок сортировки
         query = select(self.model).order_by(order_by).limit(1)  # Создаем запрос
-        return await self._get_loaded_object(session, query)
+        return await self.helper._get_loaded_object(session, query)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
@@ -322,7 +334,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param data: Данные для создания объекта.
         :return: Созданный объект.
         """
-        return await self._prepare_and_save_object(session, data)
+        return await self.helper._prepare_and_save_object(session, data)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -345,26 +357,14 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :return: Обновленный объект.
         """
         existing_object = await self.get(
-            key=key, value=value
+            key=key, value=value, is_return_list=False
         )  # Получаем существующий объект
         if not existing_object:
             raise NotFoundError(message="Object not found")
 
-        return await self._prepare_and_save_object(
+        return await self.helper._prepare_and_save_object(
             session, data, existing_object, ignore_none=ignore_none
         )
-
-    @handle_db_errors
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def all(self, session: AsyncSession) -> List[ConcreteTable]:
-        """
-        Получить все объекты из таблицы.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :return: Список всех объектов.
-        """
-        query = select(self.model)
-        return await self._get_loaded_object(session, query, is_return_list=True)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -390,20 +390,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         self, session: AsyncSession, object_id: int
     ) -> List[Dict[str, Any]]:
         """
-        Получить все версии объекта по его id, включая id транзакции.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param object_id: ID объекта.
-        :return: Список версий объекта.
+        Получить все версии объекта.
         """
-        VersionModel = version_class(self.model)  # Получаем модель версий
-        result = await session.execute(
-            select(VersionModel)
-            .filter(VersionModel.id == object_id)
-            .order_by(VersionModel.transaction_id)
-        )
-        versions = result.scalars().all()
-        return [version for version in versions]
+        return await self.helper._get_versions_query(session, object_id, order="asc")
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
@@ -411,21 +400,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         self, session: AsyncSession, object_id: int
     ) -> Optional[Dict[str, Any]]:
         """
-        Получить последнюю версию объекта, включая id транзакции.
-
-        :param session: Асинхронная сессия SQLAlchemy.
-        :param object_id: ID объекта.
-        :return: Последняя версия объекта.
+        Получить последнюю версию объекта.
         """
-        VersionModel = version_class(self.model)  # Получаем модель версий
-        result = await session.execute(
-            select(VersionModel)
-            .filter(VersionModel.id == object_id)
-            .order_by(VersionModel.transaction_id.desc())
-            .limit(1)
+        versions = await self.helper._get_versions_query(
+            session, object_id, order="desc", limit=1
         )
-        version = result.scalars().first()
-        return version
+        return versions[0] if versions else None
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)

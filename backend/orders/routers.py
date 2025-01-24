@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
@@ -14,11 +14,10 @@ from backend.orders.schemas import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from backend.orders.service import OrderService, get_order_service
+from backend.orders.service import get_order_service
 
 
 __all__ = ("router",)
-
 
 router = APIRouter()
 
@@ -27,9 +26,7 @@ router = APIRouter()
 class OrderCBV:
     """CBV-класс для работы с запросами."""
 
-    # Внедряем зависимость через конструктор
-    def __init__(self, service: OrderService = Depends(get_order_service)):
-        self.service = service
+    service = get_order_service()
 
     @router.get(
         "/all/",
@@ -39,7 +36,22 @@ class OrderCBV:
     )
     @route_limiter
     async def get_orders(self, request: Request, x_api_key: str = Header(...)):
-        return await self.service.all()
+        """
+        Получить все запросы.
+
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список всех запросов.
+        :raises HTTPException: Если запросы не найдены.
+        """
+        result = await self.service.get()
+
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Not found",
+            )
+        return result
 
     @router.get(
         "/id/{order_id}",
@@ -49,7 +61,17 @@ class OrderCBV:
     )
     @route_limiter
     @handle_routes_errors
-    async def get_order(self, order_id: int, x_api_key: str = Header(...)):
+    async def get_order(
+        self, request: Request, order_id: int, x_api_key: str = Header(...)
+    ):
+        """
+        Получить запрос по ID.
+
+        :param request: Объект запроса FastAPI.
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Запрос с указанным ID.
+        """
         return await self.service.get(key="id", value=order_id)
 
     @router.get(
@@ -62,10 +84,19 @@ class OrderCBV:
     @handle_routes_errors
     async def get_by_filter(
         self,
+        request: Request,
         order_filter: OrderFilter = FilterDepends(OrderFilter),
         x_api_key: str = Header(...),
     ):
-        return await self.service.get_by_params(filter=order_filter)
+        """
+        Получить запросы по фильтру.
+
+        :param request: Объект запроса FastAPI.
+        :param order_filter: Фильтр для поиска запросов.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список запросов, соответствующих фильтру.
+        """
+        return await self.service.get(filter=order_filter)
 
     @router.post(
         "/create/",
@@ -81,6 +112,14 @@ class OrderCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Добавить новый запрос.
+
+        :param request_schema: Данные для создания запроса.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Созданный запрос.
+        """
         return await self.service.get_or_add(data=request_schema.model_dump())
 
     @router.post(
@@ -97,6 +136,14 @@ class OrderCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Добавить несколько запросов.
+
+        :param request_schema: Список данных для создания запросов.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список созданных запросов.
+        """
         data_list = [schema.model_dump() for schema in request_schema]
         return await self.service.add_many(data_list=data_list)
 
@@ -107,6 +154,13 @@ class OrderCBV:
     )
     @handle_routes_errors
     async def add_order_to_skb(self, order_id: int, x_api_key: str = Header(...)):
+        """
+        Добавить запрос в СКБ-Техно.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат добавления запроса.
+        """
         return await self.service.create_skb_order(order_id=order_id)
 
     @router.put(
@@ -124,6 +178,15 @@ class OrderCBV:
         request: Request,
         x_api_key: str = Header(...),
     ):
+        """
+        Обновить запрос по ID.
+
+        :param request_schema: Данные для обновления запроса.
+        :param order_id: ID запроса.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Обновленный запрос.
+        """
         return await self.service.update(
             key="id", value=order_id, data=request_schema.model_dump()
         )
@@ -138,6 +201,14 @@ class OrderCBV:
     async def delete_order(
         self, order_id: int, request: Request, x_api_key: str = Header(...)
     ):
+        """
+        Удалить запрос по ID.
+
+        :param order_id: ID запроса.
+        :param request: Объект запроса FastAPI.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат удаления.
+        """
         return await self.service.delete(key="id", value=order_id)
 
     @router.get(
@@ -150,6 +221,13 @@ class OrderCBV:
     async def get_order_result_from_skb(
         self, order_id: int, x_api_key: str = Header(...)
     ):
+        """
+        Получить результат запроса из СКБ-Техно.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат запроса.
+        """
         return await self.service.get_order_file_and_json_from_skb(order_id=order_id)
 
     @router.get(
@@ -165,6 +243,14 @@ class OrderCBV:
         x_api_key: str = Header(...),
         s3_service: S3Service = Depends(s3_bucket_service_factory),
     ) -> FileResponse:
+        """
+        Получить файл запроса из хранилища.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :param s3_service: Сервис для работы с S3.
+        :return: Файл запроса.
+        """
         return await self.service.get_order_file_from_storage(
             order_id=order_id, s3_service=s3_service
         )
@@ -182,6 +268,14 @@ class OrderCBV:
         x_api_key: str = Header(...),
         s3_service: S3Service = Depends(s3_bucket_service_factory),
     ):
+        """
+        Получить файл запроса в формате Base64.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :param s3_service: Сервис для работы с S3.
+        :return: Файл запроса в формате Base64.
+        """
         return await self.service.get_order_file_from_storage_base64(
             order_id=order_id, s3_service=s3_service
         )
@@ -199,6 +293,14 @@ class OrderCBV:
         s3_service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
+        """
+        Получить ссылку на файл запроса.
+
+        :param order_id: ID запроса.
+        :param s3_service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Ссылка на файл запроса.
+        """
         return await self.service.get_order_file_from_storage_link(
             order_id=order_id, s3_service=s3_service
         )
@@ -216,6 +318,14 @@ class OrderCBV:
         s3_service: S3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
+        """
+        Получить ссылку на файл запроса и JSON-результат.
+
+        :param order_id: ID запроса.
+        :param s3_service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Ссылка на файл и JSON-результат.
+        """
         return await self.service.get_order_file_link_and_json_result_for_request(
             order_id=order_id, s3_service=s3_service
         )
@@ -306,7 +416,7 @@ class OrderCBV:
         """
         Получить список изменений объекта запроса по его ID.
 
-        :param file_id: ID запроса.
+        :param order_id: ID запроса.
         :param request: Объект запроса FastAPI.
         :param x_api_key: API-ключ для аутентификации.
         :return: Список изменений объекта.

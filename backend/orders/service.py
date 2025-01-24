@@ -38,12 +38,12 @@ class OrderService(BaseService):
 
     def __init__(
         self,
-        response_schema: BaseModel,
-        request_schema: BaseModel,
-        event_schema: Event,
-        repo: OrderRepository = Depends(get_order_repo),
-        file_repo: FileRepository = Depends(get_file_repo),
-        request_service: APISKBService = Depends(get_skb_service),
+        response_schema: BaseModel = None,
+        request_schema: BaseModel = None,
+        event_schema: Event = None,
+        repo: OrderRepository = None,
+        file_repo: FileRepository = None,
+        request_service: APISKBService = None,
     ):
         """
         Инициализация сервиса заказов.
@@ -120,13 +120,13 @@ class OrderService(BaseService):
                 "is_send_request_to_skb": False,
             }
             # Ищем заказ по параметрам
-            instance = await self.get_by_params(
-                filter=OrderFilter.model_validate(filter_params)
-            )
+            instance = await self.get(filter=OrderFilter.model_validate(filter_params))
 
             # Если заказ не найден, создаем новый
             if not instance:
                 instance = await self.add(data=data)
+            elif isinstance(instance, list):
+                instance = instance[-1]
             return instance
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -142,24 +142,23 @@ class OrderService(BaseService):
         try:
             # Получаем заказ по ID
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
-            order_data = order.get("data", None)
 
             # Преобразуем данные заказа, если это необходимо
-            if isinstance(order_data, PublicSchema):
-                order_data = order_data.model_dump()
+            if isinstance(order, PublicSchema):
+                order = order.model_dump()
 
             # Проверяем, активен ли заказ
-            if order_data.get("is_active", None):
+            if order.get("is_active", None):
+                return order
                 # Формируем данные для запроса в СКБ-Техно
                 data = {
-                    "Id": order_data.get("object_uuid", None),
-                    "OrderId": order_data.get("object_uuid", None),
-                    "Number": order_data.get("pledge_cadastral_number", None),
+                    "Id": order.get("object_uuid", None),
+                    "OrderId": order.get("object_uuid", None),
+                    "Number": order.get("pledge_cadastral_number", None),
                     "Priority": settings.api_skb_settings.skb_request_priority_default,
-                    "RequestType": order_data.get("order_kind", None).get(
-                        "skb_uuid", None
-                    ),
+                    "RequestType": order.get("order_kind", None).get("skb_uuid", None),
                 }
+                return data
                 # Отправляем запрос в СКБ-Техно
                 result = await self.request_service.add_request(data=data)
 
@@ -167,15 +166,15 @@ class OrderService(BaseService):
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
-                        value=order_data.get("id", None),
+                        value=order.get("id", None),
                         data={"is_send_request_to_skb": True},
                     )
                     # Генерируем событие о успешной отправке заказа
                     event = Event(
                         event_type="order_sending_skb",
                         payload={
-                            "order_id": order_data["id"],
-                            "email": order_data["email_for_answer"],
+                            "order_id": order["id"],
+                            "email": order["email_for_answer"],
                         },
                     )
                     await event_bus.emit(event)
@@ -281,7 +280,12 @@ class OrderService(BaseService):
                     await self.update(
                         key="id", value=order_id, data={"is_active": False}
                     )
-            return order
+                    return order
+                else:
+                    return {
+                        "hasError": True,
+                        "message": "Результат еще не готов",
+                    }
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

@@ -4,7 +4,6 @@ from uuid import UUID
 
 import aiohttp
 import asyncio
-from fastapi import Depends
 from urllib.parse import urljoin
 
 from backend.core.http_client import make_request
@@ -13,10 +12,13 @@ from backend.core.storage import s3_bucket_service_factory
 from backend.orderkinds.service import OrderKindService, get_order_kind_service
 
 
-__all__ = ("APISKBService",)
+__all__ = (
+    "APISKBService",
+    "get_skb_service",
+)
 
 
-api_endpoints = settings.api_skb_settings.skb_endpoint
+API_ENDPOINTS = settings.api_skb_settings.skb_endpoint
 
 
 class APISKBService:
@@ -31,9 +33,7 @@ class APISKBService:
     endpoint = settings.api_skb_settings.skb_url
     file_storage = s3_bucket_service_factory()
 
-    def __init__(
-        self, kind_service: OrderKindService = Depends(get_order_kind_service)
-    ):
+    def __init__(self, kind_service: OrderKindService = None):
         self.kind_service = kind_service
 
     async def get_request_kinds(self) -> Dict[str, Any]:
@@ -44,7 +44,7 @@ class APISKBService:
             Dict[str, Any]: Справочник видов запросов или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.endpoint, api_endpoints.get('GET_KINDS'))}"
+            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('GET_KINDS'))}"
 
             result = await make_request("GET", url, params=self.params)
 
@@ -74,7 +74,7 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.endpoint, api_endpoints.get('CREATE_REQUEST'))}"
+            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('CREATE_REQUEST'))}"
             return await make_request("POST", url, params=self.params, json=data)
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -94,7 +94,7 @@ class APISKBService:
         """
         try:
             params = {**self.params, "Type": response_type}
-            url = f"{urljoin(self.endpoint, api_endpoints.get('GET_RESULT'))}/{order_uuid}"
+            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('GET_RESULT'))}/{order_uuid}"
             response = await make_request("GET", url, params=params)
 
             content_encoding = response.headers.get("Content-Encoding", "").lower()
@@ -127,10 +127,8 @@ class APISKBService:
             raise  # Исключение будет обработано глобальным обработчиком
 
 
-# Функция-зависимость для создания экземпляра OrderKindService
-def get_skb_service(
-    kind_service: OrderKindService = Depends(get_order_kind_service),
-) -> APISKBService:
+# Функция-зависимость для создания экземпляра APISKBService
+def get_skb_service() -> APISKBService:
     """
     Возвращает экземпляр APISKBService с внедренной зависимостью OrderKindService.
 
@@ -140,4 +138,4 @@ def get_skb_service(
     Returns:
         APISKBService: Экземпляр APISKBService.
     """
-    return APISKBService(kind_service=kind_service)
+    return APISKBService(kind_service=get_order_kind_service())

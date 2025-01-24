@@ -1,4 +1,3 @@
-from fastapi import Depends
 from pydantic import BaseModel
 
 from backend.base.service import BaseService
@@ -27,9 +26,9 @@ class FileService(BaseService):
 
     def __init__(
         self,
-        response_schema: BaseModel,
-        request_schema: BaseModel,
-        repo: FileRepository = Depends(get_file_repo),
+        response_schema: BaseModel = None,
+        request_schema: BaseModel = None,
+        repo: FileRepository = None,
     ):
         """
         Инициализация сервиса для работы с файлами.

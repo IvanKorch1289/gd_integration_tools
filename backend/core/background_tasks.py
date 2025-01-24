@@ -1,11 +1,9 @@
 import asyncio
 import json_tricks
-from celery import Celery
+from celery import Celery, chain
 from fastapi.responses import JSONResponse
 
 from backend.core.settings import settings
-from backend.core.utils import utilities
-from backend.orders.models import Order
 from backend.orders.service import OrderService, get_order_service
 
 
@@ -79,16 +77,9 @@ def send_result_to_gd(self, order_id: int):
 
     async def inner_send_result_to_gd():
         try:
-            order: Order = await order_service.get(key="id", value=order_id)
-            file_links = await order_service.get_order_file_link(order_id=order_id)
-
-            data = {
-                "order": order.object_uuid,
-                "result": order.response_data,
-                "file_links": file_links,
-            }
-
-            return data
+            # Вызываем метод сервиса для отправки результата в GD
+            result = await order_service.send_data_to_gd(order_id=order_id)
+            return result
         except Exception as exc:
             self.retry(exc=exc, throw=False)
 
@@ -115,29 +106,19 @@ def send_requests_for_get_result(self, order_id: int):
 
     async def inner_send_requests_for_get_result():
         try:
+            # Вызываем метод сервиса для получения результата
             result = await order_service.get_order_file_and_json_from_skb(
                 order_id=order_id
             )
 
-            if not result:
-                error_message = {
-                    "hasError": False,
-                    "message": "The response to the query is not ready yet",
-                }
-                raise ValueError(error_message)
+            # Проверяем, готов ли результат
+            if result is None or result.get("hasError", True):
+                # Если результат не готов, вызываем исключение для повторного выполнения задачи
+                raise ValueError("Результат еще не готов")
 
-            celery_app.send_task("send_result_to_gd", args=[order_id])
-
-            order: Order = await order_service.get(key="id", value=order_id)
-
-            await utilities.send_email(
-                to_email=order.email_for_send,
-                subject=f"Получен результат заказа выписки по заказу {order.email_for_answer}",
-                message=f"Получен результат заказа выписки по объекту id = {order.email_for_answer}",
-            )
-
-            return str(result)
+            return result
         except Exception as exc:
+            # Повторяем задачу, если результат не готов или произошла ошибка
             self.retry(exc=exc, throw=False)
 
     return run_async_task(inner_send_requests_for_get_result())
@@ -163,16 +144,38 @@ def send_requests_for_create_order(self, order_id: int):
 
     async def inner_send_requests_for_create_order():
         try:
-            result = await order_service.create_skb_order(order_id=order_id)
-
-            celery_app.send_task(
-                "send_requests_for_get_result",
-                args=[order_id],
-                countdown=settings.bts_settings.bts_expiration_time,
-            )
-
-            return result
+            # Вызываем метод сервиса для создания заказа
+            return await order_service.create_skb_order(order_id=order_id)
         except Exception as exc:
             self.retry(exc=exc, throw=False)
 
     return run_async_task(inner_send_requests_for_create_order())
+
+
+@celery_app.task(
+    name="process_order_workflow",
+    bind=True,
+    max_retries=settings.bts_settings.bts_min_retries,
+    default_retry_delay=settings.bts_settings.bts_min_retry_delay,
+    retry_backoff=True,
+)
+def process_order_workflow(self, order_id: int, email: str):
+    """
+    Управляет цепочкой задач для обработки заказа.
+
+    Args:
+        order_id (int): Идентификатор заказа.
+        email (str): Адрес электронной почты для уведомлений.
+    """
+    try:
+        # Создаем цепочку задач
+        workflow = chain(
+            send_requests_for_create_order.s(order_id),
+            send_requests_for_get_result.s(order_id).set(
+                countdown=settings.bts_settings.bts_expiration_time
+            ),
+            send_result_to_gd.s(order_id),
+        )
+        workflow.apply_async()  # Запускаем цепочку задач
+    except Exception as exc:
+        self.retry(exc=exc, throw=False)

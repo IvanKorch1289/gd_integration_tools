@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Header
 from fastapi_utils.cbv import cbv
 
 from backend.api_skb.enums import ResponseTypeChoices
 from backend.api_skb.schemas import ApiOrderSchemaIn
-from backend.api_skb.service import APISKBService, get_skb_service
+from backend.api_skb.service import get_skb_service
 
 
 __all__ = ("router",)
@@ -23,9 +23,7 @@ class SKBCBV:
     создание запросов и получение результатов.
     """
 
-    # Внедряем зависимость через конструктор
-    def __init__(self, service: APISKBService = Depends(get_skb_service)):
-        self.service = service
+    service = get_skb_service()
 
     @router.get("/get-kinds", summary="Получить справочник видов из СКБ Техно")
     async def get_skb_kinds(self, x_api_key: str = Header(...)):

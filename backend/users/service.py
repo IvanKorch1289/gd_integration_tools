@@ -1,6 +1,5 @@
 from typing import Any, Dict, Union
 
-from fastapi import Depends
 from fastapi_filter.contrib.sqlalchemy import Filter
 
 from backend.base.service import BaseService
@@ -26,9 +25,9 @@ class UserService(BaseService):
 
     def __init__(
         self,
-        repo: UserRepository = Depends(get_user_repo),
-        response_schema: Any = UserSchemaOut,
-        request_schema: Any = UserSchemaIn,
+        repo: UserRepository = None,
+        response_schema: Any = None,
+        request_schema: Any = None,
     ):
         """
         Инициализация сервиса для работы с пользователями.

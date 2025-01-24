@@ -67,3 +67,6 @@ class Order(BaseModel):
         back_populates="orders",
         lazy="joined",
     )
+
+    # Исключаемые связи (например, "versions")
+    EXCLUDED_RELATIONSHIPS = {"versions"}

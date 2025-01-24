@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.base.repository import SQLAlchemyRepository
@@ -29,40 +28,45 @@ class OrderRepository(SQLAlchemyRepository):
         order_kind_repo (OrderKindRepository): Репозиторий для работы с видами заказов.
     """
 
+    class HelperMethods(SQLAlchemyRepository.HelperMethods):
+        """
+        Вспомогательные методы для работы с базой данных.
+        """
+
+        async def _validate_order_kind(self, data: Dict[str, Any]) -> Dict[str, Any]:
+            """
+            Валидирует и обновляет данные заказа, проверяя наличие связанного вида заказа.
+
+            :param data: Данные для создания или обновления заказа.
+            :return: Обновленные данные заказа.
+            :raises NotFoundError: Если связанный вид заказа не найден.
+            """
+            # Получаем вид заказа по skb_uuid
+            kind = await self.order_kind_repo.get(
+                key="skb_uuid", value=data["order_kind_id"]
+            )
+            if not kind:
+                # Если вид заказа не найден, выбрасываем исключение
+                raise NotFoundError(message="Order kind not found")
+            # Обновляем order_kind_id в данных заказа
+            data["order_kind_id"] = kind.id
+            return data
+
     def __init__(
         self,
+        order_kind_repo: OrderKindRepository,
         model: Any = Order,
         load_joined_models: bool = True,
-        order_kind_repo: OrderKindRepository = Depends(get_order_kind_repo),
     ):
         """
         Инициализация репозитория.
 
         :param model: Модель таблицы заказов.
         :param load_joined_models: Флаг для загрузки связанных моделей.
-        :param order_kind_repo: Репозиторий для работы с видами заказов (внедряется через Depends).
+        :param order_kind_repo: Репозиторий для работы с видами заказов.
         """
         super().__init__(model=model, load_joined_models=load_joined_models)
         self.order_kind_repo = order_kind_repo
-
-    async def _validate_order_kind(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Валидирует и обновляет данные заказа, проверяя наличие связанного вида заказа.
-
-        :param data: Данные для создания или обновления заказа.
-        :return: Обновленные данные заказа.
-        :raises NotFoundError: Если связанный вид заказа не найден.
-        """
-        # Получаем вид заказа по skb_uuid
-        kind = await self.order_kind_repo.get(
-            key="skb_uuid", value=data["order_kind_id"]
-        )
-        if not kind:
-            # Если вид заказа не найден, выбрасываем исключение
-            raise NotFoundError(message="Order kind not found")
-        # Обновляем order_kind_id в данных заказа
-        data["order_kind_id"] = kind.id
-        return data
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -79,7 +83,7 @@ class OrderRepository(SQLAlchemyRepository):
         # Валидируем и обновляем данные заказа
         data = await self._validate_order_kind(data)
         # Вызываем метод add базового класса для создания заказа
-        return await super().add(session=session, data=data)
+        return await super().add(data=data)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -102,9 +106,7 @@ class OrderRepository(SQLAlchemyRepository):
             data = await self._validate_order_kind(data)
 
         # Вызываем метод update базового класса для обновления заказа
-        updated_order = await super().update(
-            session=session, key=key, value=value, data=data
-        )
+        updated_order = await super().update(key=key, value=value, data=data)
         if not updated_order:
             # Если заказ не найден, выбрасываем исключение
             raise NotFoundError(message="Order not found")
@@ -112,19 +114,17 @@ class OrderRepository(SQLAlchemyRepository):
         return updated_order
 
 
-def get_order_repo(
-    order_kind_repo: OrderKindRepository = Depends(get_order_kind_repo),
-) -> OrderRepository:
+def get_order_repo() -> OrderRepository:
     """
     Возвращает экземпляр репозитория для работы с заказами.
 
     Используется как зависимость в FastAPI для внедрения репозитория в сервисы или маршруты.
 
-    :param order_kind_repo: Репозиторий для работы с видами заказов (внедряется через Depends).
+    :param order_kind_repo: Репозиторий для работы с видами заказов.
     :return: Экземпляр OrderRepository.
     """
     return OrderRepository(
         model=Order,
         load_joined_models=True,
-        order_kind_repo=order_kind_repo,
+        order_kind_repo=get_order_kind_repo(),
     )

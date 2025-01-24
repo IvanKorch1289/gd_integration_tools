@@ -3,9 +3,9 @@ from typing import List
 
 from fastapi import (
     APIRouter,
-    Depends,
     File,
     Header,
+    HTTPException,
     Request,
     UploadFile,
     status,
@@ -16,14 +16,14 @@ from fastapi_utils.cbv import cbv
 from backend.core.dependencies import get_streaming_response
 from backend.core.errors import handle_routes_errors
 from backend.core.limiter import route_limiter
-from backend.core.storage import S3Service, s3_bucket_service_factory
+from backend.core.storage import s3_bucket_service_factory
 from backend.files.filters import FileFilter
 from backend.files.schemas import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from backend.files.service import FileService, get_file_service
+from backend.files.service import get_file_service
 
 
 __all__ = (
@@ -43,9 +43,7 @@ class FileCBV:
     Предоставляет методы для получения, добавления, обновления и удаления файлов.
     """
 
-    # Внедряем зависимость через конструктор
-    def __init__(self, service: FileService = Depends(get_file_service)):
-        self.service = service
+    service = get_file_service()
 
     @router.get(
         "/all/",
@@ -62,7 +60,7 @@ class FileCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Список всех файлов.
         """
-        return await self.service.all()
+        return await self.service.get()
 
     @router.get(
         "/id/{file_id}",
@@ -72,7 +70,9 @@ class FileCBV:
     )
     @route_limiter
     @handle_routes_errors
-    async def get_file(self, file_id: int, x_api_key: str = Header(...)):
+    async def get_file(
+        self, file_id: int, request: Request, x_api_key: str = Header(...)
+    ):
         """
         Получить файл по его ID.
 
@@ -80,7 +80,15 @@ class FileCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Файл с указанным ID.
         """
-        return await self.service.get(key="id", value=file_id)
+        result = await self.service.get(key="id", value=file_id)
+
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Not found",
+            )
+
+        return result
 
     @router.get(
         "/get-by-filter",
@@ -92,6 +100,7 @@ class FileCBV:
     @handle_routes_errors
     async def get_by_filter(
         self,
+        request: Request,
         file_filter: FileFilter = FilterDepends(FileFilter),
         x_api_key: str = Header(...),
     ):
@@ -102,7 +111,7 @@ class FileCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Список файлов, соответствующих фильтру.
         """
-        return await self.service.get_by_params(filter=file_filter)
+        return await self.service.get(filter=file_filter)
 
     @router.post(
         "/create/",
@@ -303,9 +312,7 @@ class StorageCBV:
     Предоставляет методы для загрузки, скачивания, удаления и получения ссылок на файлы.
     """
 
-    # Внедряем зависимость через конструктор
-    def __init__(self, service: S3Service = Depends(s3_bucket_service_factory)):
-        self.service = service
+    service = s3_bucket_service_factory()
 
     @storage_router.post(
         "/upload_file",
@@ -317,6 +324,7 @@ class StorageCBV:
     @handle_routes_errors
     async def upload_file(
         self,
+        request: Request,
         file: UploadFile = File(...),
         x_api_key: str = Header(...),
     ):
@@ -344,6 +352,7 @@ class StorageCBV:
     @handle_routes_errors
     async def download_file(
         self,
+        request: Request,
         file_uuid: str,
         x_api_key: str = Header(...),
     ):
@@ -367,6 +376,7 @@ class StorageCBV:
     @handle_routes_errors
     async def delete_file(
         self,
+        request: Request,
         file_uuid: str,
         x_api_key: str = Header(...),
     ):
@@ -390,6 +400,7 @@ class StorageCBV:
     @handle_routes_errors
     async def get_download_link_file(
         self,
+        request: Request,
         file_uuid: str,
         x_api_key: str = Header(...),
     ):
