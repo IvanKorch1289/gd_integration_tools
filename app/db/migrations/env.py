@@ -39,7 +39,7 @@ configure_mappers()
 # target_metadata = BaseModel.metadata
 target_metadata = metadata
 
-config.set_main_option("sqlalchemy.url", settings.database_settings.db_url_asyncpg)
+config.set_main_option("sqlalchemy.url", settings.database_settings.db_url_async)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

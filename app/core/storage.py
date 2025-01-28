@@ -1,16 +1,16 @@
 import json
-import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 from io import BytesIO
 from typing import Any, AsyncGenerator, Optional, Union
 
+from aiobotocore.config import AioConfig
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
-from aiohttp import ClientError
+from botocore.exceptions import ClientError as BotoClientError
 
 from app.core.logging import fs_logger
-from app.core.settings import settings
+from app.core.settings import FileStorageSettings, settings
 from app.utils import singleton
 
 
@@ -39,25 +39,32 @@ class S3Service:
     а также для генерации временных ссылок для скачивания файлов.
     """
 
-    def __init__(
-        self,
-        bucket_name: str,
-        endpoint: str,
-        access_key: str,
-        secret_key: str,
-    ):
-        """Инициализирует объект сервиса S3.
+    def __init__(self, settings: FileStorageSettings):
+        self.settings = settings
+        self._initialize_attributes()
 
-        Args:
-            bucket_name (str): Имя бакета в S3.
-            endpoint (str): URL конечной точки S3.
-            access_key (str): Доступный ключ для авторизации в S3.
-            secret_key (str): Секретный ключ для авторизации в S3.
-        """
-        self.bucket_name = bucket_name
-        self.endpoint = endpoint
-        self.access_key = access_key
-        self.secret_key = secret_key
+    def _initialize_attributes(self):
+        """Инициализирует атрибуты из настроек"""
+        self.bucket = self.settings.fs_bucket
+        self.access_key = self.settings.fs_access_key
+        self.secret_key = self.settings.fs_secret_key
+        self.endpoint = self._get_endpoint()
+        self.client_config = AioConfig(
+            connect_timeout=self.settings.fs_timeout,
+            retries={"max_attempts": self.settings.fs_retries},
+            s3={
+                "addressing_style": self._get_addressing_style(),
+                "payload_signing_enabled": self.settings.fs_provider == "aws",
+            },
+        )
+
+    def _get_endpoint(self) -> Optional[str]:
+        """Возвращает endpoint из настроек или None для AWS"""
+        return self.settings.fs_endpoint if self.settings.fs_provider != "aws" else None
+
+    def _get_addressing_style(self) -> str:
+        """Возвращает стиль адресации из настроек"""
+        return getattr(self.settings, "fs_addressing_style", "path")
 
     @asynccontextmanager
     async def _create_s3_client(self) -> AsyncGenerator:
@@ -72,6 +79,7 @@ class S3Service:
             endpoint_url=self.endpoint,
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
+            config=self.client_config,
         ) as client:
             yield client
 
@@ -88,7 +96,6 @@ class S3Service:
         Returns:
             dict: Словарь с результатом операции.
         """
-        # Проверка на пустой файл
         if not content:
             await self.log_operation(
                 operation="upload_file_object",
@@ -101,18 +108,20 @@ class S3Service:
                 "error": "File content is empty",
             }
 
-        # Преобразуем содержимое в BytesIO для проверки на вирусы
         buffer = BytesIO(
             content if isinstance(content, bytes) else content.encode("utf-8")
         )
 
-        # Если файл чист, продолжаем загрузку
         async with self._create_s3_client() as client:
-            buffer.seek(0)  # Сбрасываем позицию чтения файла
+            buffer.seek(0)
             metadata = {"x-amz-meta-original-filename": original_filename}
             try:
                 await client.put_object(
-                    Bucket=self.bucket_name, Key=key, Body=buffer, Metadata=metadata
+                    Bucket=self.bucket,
+                    Key=key,
+                    Body=buffer,
+                    Metadata=metadata,
+                    ContentLength=len(buffer.getvalue()),
                 )
                 await self.log_operation(
                     operation="upload_file_object",
@@ -121,9 +130,15 @@ class S3Service:
                 return {"status": "success", "message": "File upload successful"}
             except Exception as exc:
                 await self.log_operation(
-                    operation="upload_file_object", exception=f"Error: {exc}"
+                    operation="upload_file_object",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
                 )
-                raise  # Исключение будет обработано глобальным обработчиком
+                return {
+                    "status": "error",
+                    "message": "File upload failed",
+                    "error": str(exc),
+                }
 
     async def list_objects(self) -> list[str]:
         """Возвращает список всех объектов в бакете.
@@ -132,18 +147,18 @@ class S3Service:
             list[str]: Список ключей объектов.
         """
         async with self._create_s3_client() as client:
-            response = await client.list_objects_v2(Bucket=self.bucket_name)
-            storage_content: list[str] = []
-
             try:
-                contents = response["Contents"]
-            except KeyError:
-                raise  # Исключение будет обработано глобальным обработчиком
-
-            for item in contents:
-                storage_content.append(item["Key"])
-
-            return storage_content
+                response = await client.list_objects_v2(Bucket=self.bucket)
+                return [item["Key"] for item in response.get("Contents", [])]
+            except BotoClientError as exc:
+                if exc.response["Error"]["Code"] == "NoSuchBucket":
+                    return []
+                raise
+            except Exception as exc:
+                await self.log_operation(
+                    operation="list_objects", exception=f"Error: {str(exc)}"
+                )
+                raise
 
     async def get_file_object(self, key: str) -> Optional[tuple[StreamingBody, dict]]:
         """Получает объект из S3.
@@ -156,14 +171,24 @@ class S3Service:
         """
         async with self._create_s3_client() as client:
             try:
-                file_obj = await client.get_object(Bucket=self.bucket_name, Key=key)
-                body = file_obj.get("Body")
-                metadata = file_obj.get("Metadata", {})
-                return body, metadata
-            except ClientError as exc:
+                response = await client.get_object(Bucket=self.bucket, Key=key)
+                return response["Body"], response.get("Metadata", {})
+            except BotoClientError as exc:
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
-                raise  # Исключение будет обработано глобальным обработчиком
+                await self.log_operation(
+                    operation="get_file_object",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
+                )
+                raise
+            except Exception as exc:
+                await self.log_operation(
+                    operation="get_file_object",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
+                )
+                raise
 
     async def delete_file_object(self, key: str) -> dict:
         """Удаляет объект из S3.
@@ -176,19 +201,21 @@ class S3Service:
         """
         async with self._create_s3_client() as client:
             try:
-                await client.delete_object(Bucket=self.bucket_name, Key=key)
+                await client.delete_object(Bucket=self.bucket, Key=key)
                 await self.log_operation(
-                    operation="delete_file_object", details="success"
+                    operation="delete_file_object", details=f"Key: {key}"
                 )
                 return {"status": "success", "message": "File deleted successfully"}
-            except Exception as ex:
+            except Exception as exc:
                 await self.log_operation(
-                    operation="delete_file_object", exception=f"Error: {ex}"
+                    operation="delete_file_object",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
                 )
                 return {
                     "status": "error",
                     "message": "File deletion failed",
-                    "error": str(ex),
+                    "error": str(exc),
                 }
 
     async def generate_download_url(
@@ -205,48 +232,47 @@ class S3Service:
         """
         async with self._create_s3_client() as client:
             try:
-                url = await client.generate_presigned_url(
+                return await client.generate_presigned_url(
                     "get_object",
-                    Params={"Bucket": self.bucket_name, "Key": key},
+                    Params={"Bucket": self.bucket, "Key": key},
                     ExpiresIn=expires_in,
                 )
-                return url
-            except ClientError as exc:
+            except Exception as exc:
                 await self.log_operation(
-                    operation="generate_download_url", exception=f"Error: {exc}"
+                    operation="generate_download_url",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
                 )
-                raise  # Исключение будет обработано глобальным обработчиком
+                return None
 
     async def log_operation(
         self,
         operation: str,
         details: Optional[str] = None,
-        exception: Optional[Exception] = None,
+        exception: Optional[str] = None,
     ) -> None:
         """Логирует операцию и её результат.
 
         Args:
             operation (str): Название операции.
             details (Optional[str]): Дополнительные детали операции.
-            exception (Optional[Exception]): Исключение, возникшее при выполнении операции.
+            exception (Optional[str]): Информация об ошибке.
         """
         log_data: dict[str, Any] = {
             LogField.TIMESTAMP: datetime.now().isoformat(),
             LogField.OPERATION: operation,
             LogField.DETAILS: details,
-            LogField.BUCKET: self.bucket_name,
-            LogField.ENDPOINT: self.endpoint,
+            LogField.BUCKET: self.bucket,
+            LogField.ENDPOINT: self.endpoint or "AWS default",
         }
+
         if exception:
-            log_data[LogField.EXCEPTION] = "".join(
-                traceback.format_exception(
-                    type(exception), exception, exception.__traceback__
-                )
-            )
+            log_data[LogField.EXCEPTION] = exception
+
         try:
-            fs_logger.info(json.dumps(log_data))
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+            fs_logger.info(json.dumps(log_data, ensure_ascii=False))
+        except Exception as exc:
+            fs_logger.error(f"Failed to log operation: {str(exc)}")
 
     async def check_bucket_exists(self) -> bool:
         """Проверяет существование бакета в S3.
@@ -256,13 +282,20 @@ class S3Service:
         """
         async with self._create_s3_client() as client:
             try:
-                buckets_dict = await client.list_buckets()
+                response = await client.list_buckets()
                 return any(
-                    bucket.get("Name", None) == self.bucket_name
-                    for bucket in buckets_dict.get("Buckets", [])
+                    bucket["Name"] == self.bucket for bucket in response["Buckets"]
                 )
+            except BotoClientError as exc:
+                if exc.response["Error"]["Code"] == "AccessDenied":
+                    try:
+                        await client.head_bucket(Bucket=self.bucket)
+                        return True
+                    except BotoClientError:
+                        return False
+                return False
             except Exception:
-                raise  # Исключение будет обработано глобальным обработчиком
+                raise
 
 
 def s3_bucket_service_factory() -> S3Service:
@@ -271,9 +304,4 @@ def s3_bucket_service_factory() -> S3Service:
     Returns:
         S3Service: Экземпляр S3Service.
     """
-    return S3Service(
-        bucket_name=settings.storage_settings.fs_bucket,
-        endpoint=settings.storage_settings.fs_endpoint,
-        access_key=settings.storage_settings.fs_access_key,
-        secret_key=settings.storage_settings.fs_secret_key,
-    )
+    return S3Service(settings=settings.storage_settings)

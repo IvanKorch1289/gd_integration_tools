@@ -10,7 +10,6 @@ from sqladmin import Admin
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from app.api.v1.routers import get_v1_routers
-from app.core import scheduler_manager
 from app.core.errors import DatabaseError
 from app.core.limiter import init_limiter
 from app.core.logging import app_logger
@@ -19,7 +18,10 @@ from app.core.middlewares import (
     InnerRequestLoggingMiddleware,
     TimeoutMiddleware,
 )
-from app.core.scheluler.tasks import send_request_for_checking_services
+from app.core.scheluler import (
+    scheduler_manager,
+    send_request_for_checking_services,
+)
 from app.core.settings import settings
 from app.db import db_initializer
 from app.utils import (
@@ -44,6 +46,7 @@ async def lifespan(app: FastAPI):
     Останавливает планировщик при завершении работы приложения.
     """
     app_logger.info("Запуск приложения...")
+
     try:
         # Добавляем задачу для проверки сервисов каждые 30 минут
         await scheduler_manager.add_task(
@@ -62,6 +65,7 @@ async def lifespan(app: FastAPI):
     finally:
         # Остановка планировщика при завершении работы приложения
         await scheduler_manager.stop_scheduler()
+
         app_logger.info("Планировщик остановлен...")
         app_logger.info("Завершение работы приложения...")
 

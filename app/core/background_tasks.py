@@ -4,7 +4,7 @@ from celery import Celery, chain
 from fastapi.responses import JSONResponse
 
 from app.core.settings import settings
-from app.orders.service import OrderService, get_order_service
+from app.services import OrderService, get_order_service
 
 
 # Настройка подключения к Redis

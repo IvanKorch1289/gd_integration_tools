@@ -5,7 +5,7 @@ from typing import Any, AsyncIterator, Callable, Dict, Optional
 import asyncio
 import hashlib
 import json_tricks
-from aioredis import create_redis_pool
+from aioredis import Redis, create_redis_pool
 from pydantic import BaseModel
 
 from app.core.logging import app_logger
@@ -23,64 +23,58 @@ class RedisClient:
     """
     Класс для управления пулом соединений с Redis.
 
-    Атрибуты:
-        _pool (Optional[asyncio.Future]): Пул соединений с Redis.
-        _lock (asyncio.Lock): Блокировка для синхронизации доступа к пулу.
-        _ref_count (int): Счетчик ссылок на пул.
+    Attributes:
+        _pool (Optional[Redis]): Пул соединений с Redis
+        _lock (asyncio.Lock): Блокировка для синхронизации доступа
+        _ref_count (int): Счетчик активных соединений
+        settings (RedisSettings): Конфигурация подключения к Redis
     """
 
-    def __init__(self):
-        self._pool: Optional[asyncio.Future] = None
-        self._lock = asyncio.Lock()  # Для синхронизации доступа к пулу
-        self._ref_count = 0  # Счетчик ссылок на пул
+    def __init__(self, settings):
+        """
+        Инициализация клиента с настройками подключения
+
+        Args:
+            settings: Объект с параметрами подключения к Redis
+        """
+        self._pool: Optional[Redis] = None
+        self._lock = asyncio.Lock()
+        self._ref_count = 0
+        self.settings = settings
 
     async def _create_pool(self) -> None:
-        """
-        Создает пул соединений Redis, если он еще не создан.
-        """
-        async with self._lock:  # Синхронизация доступа
-            if self._pool is None or self._pool.done():
-                self._pool = asyncio.ensure_future(
-                    create_redis_pool(
-                        (
-                            settings.redis_settings.redis_host,
-                            settings.redis_settings.redis_port,
-                        ),
-                        db=settings.redis_settings.redis_db_cache,
-                        encoding=settings.redis_settings.redis_encoding,
-                    )
+        """Создает пул соединений с Redis"""
+        async with self._lock:
+            if self._pool is None or self._pool.closed:
+                self._pool = await create_redis_pool(
+                    (self.settings.redis_host, self.settings.redis_port),
+                    db=self.settings.redis_db_cache,
+                    password=self.settings.redis_pass,
+                    encoding=self.settings.redis_encoding,
+                    timeout=self.settings.redis_timeout,
+                    connect_timeout=self.settings.redis_connect_timeout,
+                    max_connections=self.settings.redis_pool_maxsize,
+                    minsize=self.settings.redis_pool_minsize,
+                    ssl=self.settings.redis_use_ssl,
+                    ssl_ca_certs=self.settings.redis_ssl_ca_certs,
                 )
-                await self._pool
 
-    async def _get_connection(self) -> asyncio.Future:
-        """
-        Возвращает соединение с Redis. Если пул не создан, создает его.
-
-        Returns:
-            asyncio.Future: Соединение с Redis.
-        """
+    async def _get_connection(self) -> Redis:
+        """Возвращает соединение из пула"""
         await self._create_pool()
-        self._ref_count += 1  # Увеличиваем счетчик ссылок
-        return await self._pool  # Ожидаем завершения Future
+        self._ref_count += 1
+        return self._pool
 
     async def _close(self) -> None:
-        """
-        Закрывает пул соединений, если он больше не используется.
-        """
-        self._ref_count -= 1  # Уменьшаем счетчик ссылок
-        if self._ref_count == 0 and self._pool is not None and not self._pool.done():
-            pool = await self._pool
-            pool.close()
-            await pool.wait_closed()
+        """Уменьшает счетчик активных соединений"""
+        self._ref_count -= 1
+        if self._ref_count == 0 and self._pool and not self._pool.closed:
+            self._pool.close()
+            await self._pool.wait_closed()
 
     @asynccontextmanager
-    async def connection(self) -> AsyncIterator[asyncio.Future]:
-        """
-        Контекстный менеджер для работы с соединением Redis.
-
-        Yields:
-            asyncio.Future: Соединение с Redis.
-        """
+    async def connection(self) -> AsyncIterator[Redis]:
+        """Контекстный менеджер для работы с соединением"""
         conn = await self._get_connection()
         try:
             yield conn
@@ -88,8 +82,8 @@ class RedisClient:
             await self._close()
 
 
-# Глобальный экземпляр RedisClient
-redis_client = RedisClient()
+# Инициализация клиента с настройками
+redis_client = RedisClient(settings=settings.redis_settings)
 
 
 @singleton

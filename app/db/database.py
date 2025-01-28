@@ -16,7 +16,7 @@ from sqlalchemy.orm.session import Session
 
 from app.core.errors import DatabaseError, NotFoundError
 from app.core.logging import db_logger
-from app.core.settings import settings
+from app.core.settings import DatabaseSettings, settings
 
 
 __all__ = (
@@ -27,34 +27,14 @@ __all__ = (
 
 class DatabaseInitializer:
     """
-    Класс для инициализации движка базы данных и управления сессиями.
-
-    Атрибуты:
-        async_engine (AsyncEngine): Асинхронный движок для основного приложения.
-        async_session_maker (async_sessionmaker): Фабрика асинхронных сессий.
-        sync_engine (Engine): Синхронный движок для Alembic.
-        sync_session_maker (sessionmaker): Фабрика синхронных сессий.
+    Класс для инициализации движков PostgreSQL/Oracle.
     """
 
-    def __init__(self, url: str, echo: bool, pool_size: int, max_overflow: int):
-        """
-        Инициализирует движок базы данных и настраивает сессии.
+    def __init__(self, settings: DatabaseSettings):
+        self.settings = settings
 
-        Args:
-            url (str): URL базы данных.
-            echo (bool): Логирование SQL-запросов.
-            pool_size (int): Размер пула соединений.
-            max_overflow (int): Максимальное количество соединений сверх пула.
-        """
-        # Асинхронный движок для основного приложения
-        self.async_engine: AsyncEngine = create_async_engine(
-            url=url,
-            echo=echo,
-            pool_size=pool_size,
-            max_overflow=max_overflow,
-            future=True,
-            pool_pre_ping=True,
-        )
+        # Асинхронный движок
+        self.async_engine = self._create_async_engine()
         self.async_session_maker = async_sessionmaker(
             bind=self.async_engine,
             autoflush=False,
@@ -62,15 +42,8 @@ class DatabaseInitializer:
             expire_on_commit=False,
         )
 
-        # Синхронный движок для Alembic
-        self.sync_engine = create_engine(
-            url=url.replace("+asyncpg", ""),  # Убираем асинхронный драйвер
-            echo=echo,
-            pool_size=pool_size,
-            max_overflow=max_overflow,
-            future=True,
-            pool_pre_ping=True,
-        )
+        # Синхронный движок
+        self.sync_engine = self._create_sync_engine()
         self.sync_session_maker = sessionmaker(
             bind=self.sync_engine,
             autoflush=False,
@@ -79,6 +52,63 @@ class DatabaseInitializer:
         )
 
         self.register_logging_events()
+
+    def _create_async_engine(self) -> AsyncEngine:
+        """Создает асинхронный движок."""
+        return create_async_engine(
+            url=self.settings.db_url_async,
+            echo=self.settings.db_echo,
+            pool_size=self.settings.db_pool_size,
+            max_overflow=self.settings.db_max_overflow,
+            pool_recycle=self.settings.db_pool_recycle,
+            pool_timeout=self.settings.db_pool_timeout,
+            connect_args=self._get_connect_args(),
+        )
+
+    def _create_sync_engine(self):
+        """Создает синхронный движок."""
+        return create_engine(
+            url=self.settings.db_url_sync,
+            echo=self.settings.db_echo,
+            pool_size=self.settings.db_pool_size,
+            max_overflow=self.settings.db_max_overflow,
+            pool_recycle=self.settings.db_pool_recycle,
+            pool_timeout=self.settings.db_pool_timeout,
+            connect_args=self._get_connect_args(),
+        )
+
+    def _get_connect_args(self) -> dict:
+        """Возвращает дополнительные аргументы подключения."""
+        connect_args = {}
+
+        # Общие параметры для всех СУБД
+        if self.settings.db_type == "postgresql":
+            # Таймауты
+            connect_args.update(
+                {
+                    "command_timeout": self.settings.db_command_timeout,
+                    "timeout": self.settings.db_connect_timeout,
+                }
+            )
+
+            # SSL
+            if self.settings.db_ssl_ca:
+                import ssl
+
+                ssl_context = ssl.create_default_context(
+                    cafile=self.settings.db_ssl_ca  # Путь к CA-сертификату
+                )
+                connect_args["ssl"] = ssl_context
+
+        elif self.settings.db_type == "oracle":
+            connect_args.update(
+                {
+                    "encoding": "UTF-8",
+                    "nencoding": "UTF-8",
+                }
+            )
+
+        return connect_args
 
     def register_logging_events(self):
         """Регистрирует события для логирования SQL-запросов."""
@@ -132,12 +162,7 @@ class DatabaseInitializer:
 
 
 # Инициализация базы данных с настройками из конфигурации
-db_initializer = DatabaseInitializer(
-    url=settings.database_settings.db_url_asyncpg,
-    echo=settings.database_settings.db_echo,
-    pool_size=settings.database_settings.db_poolsize,
-    max_overflow=settings.database_settings.db_maxoverflow,
-)
+db_initializer = DatabaseInitializer(settings=settings.database_settings)
 
 
 class DatabaseSessionManager:

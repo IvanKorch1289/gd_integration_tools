@@ -77,15 +77,15 @@ class OrderService(BaseService):
         try:
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
-            # if order:
-            #     check_services = await utilities.health_check_all_services()
-            #     response_body = await utilities.get_response_type_body(check_services)
-            #     if response_body.get("is_all_services_active", None):
-            #         event = Event(
-            #             event_type="order_created",
-            #             payload={"order_id": order.id, "email": order.email_for_answer},
-            #         )
-            #         await event_bus.emit(event)
+            if order:
+                check_services = await utilities.health_check_all_services()
+                response_body = await utilities.get_response_type_body(check_services)
+                if response_body.get("is_all_services_active", None):
+                    event = Event(
+                        event_type="order_created",
+                        payload={"order_id": order.id, "email": order.email_for_answer},
+                    )
+                    await event_bus.emit(event)
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
