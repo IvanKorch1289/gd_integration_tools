@@ -22,7 +22,7 @@ async def init_limiter():
         None
     """
     redis_connection = redis.from_url(
-        f"{settings.redis_settings.redis_url}/{settings.redis_settings.redis_db_queue}",
+        f"{settings.redis.redis_url}/{settings.redis.redis_db_queue}",
         encoding="utf-8",
         decode_responses=True,
     )

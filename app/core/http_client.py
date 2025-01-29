@@ -7,6 +7,9 @@ import json_tricks
 from app.utils.utils import utilities
 
 
+__all__ = ("make_request",)
+
+
 # Используем логгер, настроенный для Graylog
 request_logger = logging.getLogger("request")
 

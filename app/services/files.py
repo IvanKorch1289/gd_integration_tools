@@ -1,48 +1,14 @@
-from pydantic import BaseModel
+from typing import Type
 
-from app.db import FileRepository, get_file_repo
+from app.db import get_file_repo
 from app.schemas import FileSchemaIn, FileSchemaOut
-from app.services.base import BaseService
+from app.services.service_factory import BaseService, create_service_class
 
 
-__all__ = (
-    "FileService",
-    "get_file_service",
-)
+__all__ = ("get_file_service",)
 
 
-class FileService(BaseService):
-    """
-    Сервис для работы с файлами.
-
-    Наследует функциональность базового сервиса (BaseService) и использует
-    репозиторий FileRepository для взаимодействия с данными файлов.
-
-    Атрибуты:
-        repo (FileRepository): Репозиторий для работы с файлами.
-        response_schema (FileSchemaOut): Схема для преобразования данных файла в ответ.
-        request_schema (FileSchemaIn): Схема для валидации входных данных.
-    """
-
-    def __init__(
-        self,
-        response_schema: BaseModel = None,
-        request_schema: BaseModel = None,
-        repo: FileRepository = None,
-    ):
-        """
-        Инициализация сервиса для работы с файлами.
-
-        :param repo: Репозиторий для работы с файлами.
-        :param response_schema: Схема для преобразования данных файла в ответ.
-        :param request_schema: Схема для валидации входных данных.
-        """
-        super().__init__(
-            repo=repo, response_schema=response_schema, request_schema=request_schema
-        )
-
-
-def get_file_service() -> FileService:
+def get_file_service() -> Type[BaseService]:
     """
     Возвращает экземпляр сервиса для работы с файлами.
 
@@ -50,7 +16,7 @@ def get_file_service() -> FileService:
 
     :return: Экземпляр FileService.
     """
-    return FileService(
+    return create_service_class(
         repo=get_file_repo(),
         response_schema=FileSchemaOut,
         request_schema=FileSchemaIn,

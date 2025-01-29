@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Header
 from fastapi_utils.cbv import cbv
 
-from app.schemas import ApiOrderSchemaIn
+from app.schemas import APISKBOrderSchemaIn
 from app.services import get_skb_service
 from app.utils import ResponseTypeChoices
 
@@ -40,7 +40,7 @@ class SKBCBV:
         summary="Создать запрос на получение данных по залогу в СКБ Техно",
     )
     async def add_request(
-        self, request_schema: ApiOrderSchemaIn, x_api_key: str = Header(...)
+        self, request_schema: APISKBOrderSchemaIn, x_api_key: str = Header(...)
     ):
         """
         Создать запрос на получение данных по залогу в СКБ-Техно.

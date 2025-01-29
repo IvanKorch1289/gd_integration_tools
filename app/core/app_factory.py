@@ -111,13 +111,13 @@ def create_app() -> FastAPI:
     app.add_middleware(PrometheusMiddleware)
 
     # Добавление CORS Middleware для обработки кросс-доменных запросов
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.app_cors_allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # app.add_middleware(
+    #     CORSMiddleware,
+    #     allow_origins=settings.app_cors_allowed_origins,
+    #     allow_credentials=True,
+    #     allow_methods=["*"],
+    #     allow_headers=["*"],
+    # )
 
     # Добавление GZip Middleware для сжатия ответов
     app.add_middleware(GZipMiddleware, minimum_size=1000)

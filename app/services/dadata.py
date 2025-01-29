@@ -2,16 +2,13 @@ from typing import Any, Dict, Optional
 
 from app.core.http_client import make_request
 from app.core.redis import caching_decorator
-from app.core.settings import settings
+from app.core.settings import APIDADATASettings, settings
 
 
 __all__ = (
     "APIDADATAService",
     "get_dadata_service",
 )
-
-
-API_ENDPOINTS = settings.dadata_settings.dadata_endpoint
 
 
 class APIDADATAService:
@@ -24,8 +21,21 @@ class APIDADATAService:
         endpoint (str): Базовый URL API Dadata.
     """
 
-    auth_token = f"Token {settings.dadata_settings.dadata_api_key}"
-    endpoint = settings.dadata_settings.dadata_url
+    def __init__(self, settings):
+        """
+        Инициализация клиента с настройками API
+
+        Args:
+            settings: Объект с параметрами API
+        """
+        self.settings: APIDADATASettings = settings
+        self._initialize_attributes()
+
+    def _initialize_attributes(self):
+        """Инициализирует атрибуты из настроек"""
+        self.auth_token = f"Token {self.settings.dadata_api_key}"
+        self.url = self.settings.dadata_base_url
+        self.endpoints = self.settings.dadata_endpoints
 
     @classmethod
     @caching_decorator
@@ -51,7 +61,7 @@ class APIDADATAService:
             payload["radius_meters"] = radius_metres
 
         # Формируем URL для запроса
-        url = f"{cls.endpoint}{API_ENDPOINTS.get('GEOLOCATE')}"
+        url = f"{cls.endpoint}{cls.endpoints.get("GEOLOCATE")}"
 
         # Выполняем запрос с помощью универсального метода make_request
         return await make_request(
@@ -71,4 +81,4 @@ def get_dadata_service() -> APIDADATAService:
     Returns:
         APIDADATAService: Экземпляр сервиса для работы с API Dadata.
     """
-    return APIDADATAService()
+    return APIDADATAService(settings=settings.dadata_api)

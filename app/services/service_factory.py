@@ -3,17 +3,20 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.base.models import BaseModel
-from app.base.schemas import PublicSchema
 from app.core.redis import caching_decorator
+from app.db.models import BaseModel
 from app.db.repositories.base import AbstractRepository
+from app.schemas import BaseSchema
 from app.utils.utils import utilities
+
+
+__all__ = ("create_service_class", "BaseService", "get_service_for_model")
 
 
 # Определение типов для Generic
 ConcreteRepo = TypeVar("ConcreteRepo", bound=AbstractRepository)
-ConcreteResponseSchema = TypeVar("ConcreteResponseSchema", bound=PublicSchema)
-ConcreteRequestSchema = TypeVar("ConcreteRequestSchema", bound=PublicSchema)
+ConcreteResponseSchema = TypeVar("ConcreteResponseSchema", bound=BaseSchema)
+ConcreteRequestSchema = TypeVar("ConcreteRequestSchema", bound=BaseSchema)
 
 
 class BaseService(Generic[ConcreteRepo]):
@@ -37,46 +40,32 @@ class BaseService(Generic[ConcreteRepo]):
         async def _transfer(
             self,
             instance: Any,
-            response_schema: Type[PublicSchema],
-            is_versioned: bool = False,
-        ) -> Union[PublicSchema, None]:
+            response_schema: Type[BaseSchema],
+            from_attributes: bool = True,
+        ) -> Union[BaseSchema, None]:
             """
             Преобразует объект модели в схему ответа.
 
             :param instance: Объект модели.
             :param response_schema: Схема ответа, в которую нужно преобразовать объект.
-            :param is_versioned: Флаг, указывающий, что объект является версией.
+            :param from_attributes: Флаг для указания преобразования связанных моделей.
             :return: Схема ответа или None, если объект не передан.
             """
-            if instance:
-                # Преобразуем объект модели в словарь, если утилита требует словарь
-                instance_dict = {
-                    c.name: getattr(instance, c.name)
-                    for c in instance.__table__.columns
-                }
+
+            if isinstance(instance, BaseModel) or hasattr(
+                instance.__class__, "version_parent"
+            ):
                 return await utilities.transfer_model_to_schema(
-                    instance=instance_dict,  # Передаем словарь вместо объекта модели
+                    instance=instance,
                     schema=response_schema,
-                    is_versioned=is_versioned,
+                    from_attributes=from_attributes,
                 )
             return instance
-
-        async def _transfer_versioned(
-            self, instance: Any, response_schema: Type[PublicSchema]
-        ) -> Union[PublicSchema, None]:
-            """
-            Преобразует версионный объект модели в схему ответа.
-
-            :param instance: Объект модели.
-            :param response_schema: Схема ответа, в которую нужно преобразовать объект.
-            :return: Схема ответа или None, если объект не передан.
-            """
-            return await self._transfer(instance, response_schema, is_versioned=True)
 
         async def _process_and_transfer(
             self,
             repo_method: str,
-            response_schema: Type[PublicSchema],
+            response_schema: Type[BaseSchema],
             *args,
             **kwargs,
         ) -> Any:
@@ -225,37 +214,38 @@ class BaseService(Generic[ConcreteRepo]):
 
     async def get_all_object_versions(
         self, object_id: int
-    ) -> Optional[List[PublicSchema]]:
+    ) -> Optional[List[BaseSchema]]:
         """
         Получает все версии объекта по его id.
 
         :param object_id: ID объекта.
         :return: Список всех версий объекта в виде схем.
         """
-        from app.orderkinds.schemas import OrderKindVersionSchemaOut
+        from app.schemas import OrderKindVersionSchemaOut
 
         versions = await self.repo.get_all_versions(object_id=object_id)
+
         return [
-            await self.helper._transfer_versioned(version, OrderKindVersionSchemaOut)
+            await self.helper._transfer(version, OrderKindVersionSchemaOut)
             for version in versions
         ]
 
     @caching_decorator
-    async def get_latest_object_version(self, object_id: int) -> Optional[PublicSchema]:
+    async def get_latest_object_version(self, object_id: int) -> Optional[BaseSchema]:
         """
         Получает последнюю версию объекта.
 
         :param object_id: ID объекта.
         :return: Последняя версия объекта в виде схемы или None, если объект не найден.
         """
-        from app.orderkinds.schemas import OrderKindVersionSchemaOut
+        from app.schemas import OrderKindVersionSchemaOut
 
         version = await self.repo.get_latest_version(object_id=object_id)
-        return await self.helper._transfer_versioned(version, OrderKindVersionSchemaOut)
+        return await self.helper._transfer(version, OrderKindVersionSchemaOut)
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
-    ) -> Optional[PublicSchema]:
+    ) -> Optional[BaseSchema]:
         """
         Восстанавливает объект до указанной версии.
 
@@ -314,7 +304,7 @@ class BaseService(Generic[ConcreteRepo]):
             raise Exception(f"Ошибка при получении изменений: {exc}") from exc
 
 
-async def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
+async def get_service_for_model(model: Type[BaseModel]):
     """
     Возвращает сервис для указанной модели.
 
@@ -324,10 +314,15 @@ async def get_service_for_model(model: Type[BaseModel]) -> Type[BaseService]:
     """
     service_name = f"{model.__name__}Service"
     try:
-        service_module = importlib.import_module(
-            f"backend.{model.__tablename__}.service"
-        )
-        service_class = getattr(service_module, service_name)
-        return service_class
+        service_module = importlib.import_module(f"app.services.{model.__tablename__}")
+        return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
         raise ValueError(f"Сервис для модели {model.__name__} не найден: {str(exc)}")
+
+
+def create_service_class(
+    request_schema: Type[ConcreteRequestSchema],
+    response_schema: Type[ConcreteResponseSchema],
+    repo: Type[ConcreteRepo],
+) -> BaseService:
+    return BaseService(repo, response_schema, request_schema)

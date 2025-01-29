@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.core import create_cbv_class
+from app.api.routers_factory import create_router_class
 from app.schemas import (
     UserFilter,
     UserSchemaIn,
@@ -16,7 +16,7 @@ __all__ = ("router",)
 router = APIRouter()
 
 
-UserCBV = create_cbv_class(
+UserCBV = create_router_class(
     router=router,
     schema_in=UserSchemaIn,
     schema_out=UserSchemaOut,

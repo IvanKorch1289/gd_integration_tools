@@ -9,7 +9,7 @@ from aioredis import Redis, create_redis_pool
 from pydantic import BaseModel
 
 from app.core.logging import app_logger
-from app.core.settings import settings
+from app.core.settings import RedisSettings, settings
 from app.utils.utils import singleton, utilities
 
 
@@ -40,23 +40,20 @@ class RedisClient:
         self._pool: Optional[Redis] = None
         self._lock = asyncio.Lock()
         self._ref_count = 0
-        self.settings = settings
+        self.settings: RedisSettings = settings
 
     async def _create_pool(self) -> None:
         """Создает пул соединений с Redis"""
         async with self._lock:
             if self._pool is None or self._pool.closed:
                 self._pool = await create_redis_pool(
-                    (self.settings.redis_host, self.settings.redis_port),
+                    address=(self.settings.redis_host, self.settings.redis_port),
                     db=self.settings.redis_db_cache,
-                    password=self.settings.redis_pass,
+                    # password=self.settings.redis_pass,
                     encoding=self.settings.redis_encoding,
                     timeout=self.settings.redis_timeout,
-                    connect_timeout=self.settings.redis_connect_timeout,
-                    max_connections=self.settings.redis_pool_maxsize,
                     minsize=self.settings.redis_pool_minsize,
                     ssl=self.settings.redis_use_ssl,
-                    ssl_ca_certs=self.settings.redis_ssl_ca_certs,
                 )
 
     async def _get_connection(self) -> Redis:
@@ -83,7 +80,7 @@ class RedisClient:
 
 
 # Инициализация клиента с настройками
-redis_client = RedisClient(settings=settings.redis_settings)
+redis_client = RedisClient(settings=settings.redis)
 
 
 @singleton
@@ -95,9 +92,7 @@ class CachingDecorator:
         expire (int): Время жизни кэша в секундах.
     """
 
-    def __init__(
-        self, expire: int = settings.redis_settings.redis_cache_expire_seconds
-    ):
+    def __init__(self, expire: int = settings.redis.redis_cache_expire_seconds):
         """
         Инициализирует декоратор с указанным временем жизни кэша.
 

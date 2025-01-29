@@ -1,8 +1,9 @@
 import json
+from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from datetime import datetime
 from io import BytesIO
-from typing import Any, AsyncGenerator, Optional, Union
+from typing import Any, AsyncGenerator, Optional, Tuple, Union
 
 from aiobotocore.config import AioConfig
 from aiobotocore.response import StreamingBody
@@ -15,7 +16,8 @@ from app.utils import singleton
 
 
 __all__ = (
-    "S3Service",
+    "MinioService",
+    "BaseS3Service",
     "s3_bucket_service_factory",
 )
 
@@ -31,11 +33,57 @@ class LogField:
     EXCEPTION = "exception"
 
 
-@singleton
-class S3Service:
-    """Класс для взаимодействия с сервисом хранения объектов S3.
+class BaseS3Service(ABC):
+    @abstractmethod
+    async def upload_file_object(
+        self, key: str, original_filename: str, content: Union[str, bytes]
+    ) -> dict:
+        pass
 
-    Предоставляет методы для загрузки, получения, удаления и листинга объектов в S3,
+    @abstractmethod
+    async def list_objects(self) -> list[str]:
+        pass
+
+    @abstractmethod
+    async def get_file_object(self, key: str) -> Optional[Tuple[StreamingBody, dict]]:
+        pass
+
+    @abstractmethod
+    async def delete_file_object(self, key: str) -> dict:
+        pass
+
+    @abstractmethod
+    async def generate_download_url(
+        self, key: str, expires_in: int = 3600
+    ) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    async def check_bucket_exists(self) -> bool:
+        pass
+
+    @abstractmethod
+    async def file_exists(self, key: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_file_info(self, key: str) -> Optional[dict]:
+        pass
+
+    @abstractmethod
+    async def get_original_filename(self, key: str) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    async def get_file_bytes(self, key: str) -> Optional[bytes]:
+        pass
+
+
+@singleton
+class MinioService(BaseS3Service):
+    """Класс для взаимодействия с сервисом хранения объектов Minio.
+
+    Предоставляет методы для загрузки, получения, удаления и листинга объектов в Minio,
     а также для генерации временных ссылок для скачивания файлов.
     """
 
@@ -245,6 +293,66 @@ class S3Service:
                 )
                 return None
 
+    async def file_exists(self, key: str) -> bool:
+        """Проверяет существование файла в хранилище."""
+        async with self._create_s3_client() as client:
+            try:
+                await client.head_object(Bucket=self.bucket, Key=key)
+                return True
+            except BotoClientError as exc:
+                if exc.response["Error"]["Code"] == "404":
+                    return False
+                raise
+            except Exception as exc:
+                await self.log_operation(
+                    operation="file_exists",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
+                )
+                raise
+
+    async def get_file_info(self, key: str) -> Optional[dict]:
+        """Возвращает информацию о файле (метаданные, размер, дата изменения)."""
+        async with self._create_s3_client() as client:
+            try:
+                response = await client.head_object(Bucket=self.bucket, Key=key)
+                return {
+                    "last_modified": response["LastModified"],
+                    "content_length": response["ContentLength"],
+                    "metadata": response.get("Metadata", {}),
+                }
+            except BotoClientError as exc:
+                if exc.response["Error"]["Code"] == "404":
+                    return None
+                raise
+            except Exception as exc:
+                await self.log_operation(
+                    operation="get_file_info",
+                    details=f"Key: {key}",
+                    exception=f"Error: {str(exc)}",
+                )
+                raise
+
+    async def get_original_filename(self, key: str) -> Optional[str]:
+        """Возвращает оригинальное имя файла из метаданных."""
+        file_info = await self.get_file_info(key)
+        return (
+            file_info["metadata"].get("x-amz-meta-original-filename")
+            if file_info
+            else None
+        )
+
+    async def get_file_bytes(self, key: str) -> Optional[bytes]:
+        """Возвращает содержимое файла в виде байтов."""
+        file_object = await self.get_file_object(key)
+        if not file_object:
+            return None
+        streaming_body, _ = file_object
+        content = b""
+        async for chunk in streaming_body.iter_chunks():
+            content += chunk
+        return content
+
     async def log_operation(
         self,
         operation: str,
@@ -298,10 +406,10 @@ class S3Service:
                 raise
 
 
-def s3_bucket_service_factory() -> S3Service:
+def s3_bucket_service_factory() -> BaseS3Service:
     """Фабрика для создания экземпляра S3Service с настройками из конфигурации.
 
     Returns:
         S3Service: Экземпляр S3Service.
     """
-    return S3Service(settings=settings.storage_settings)
+    return MinioService(settings=settings.storage)

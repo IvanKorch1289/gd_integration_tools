@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 from uuid import UUID
 
 import aiohttp
@@ -7,18 +7,16 @@ import asyncio
 from urllib.parse import urljoin
 
 from app.core.http_client import make_request
-from app.core.settings import settings
+from app.core.settings import APISSKBSettings, settings
 from app.core.storage import s3_bucket_service_factory
-from app.services.orderkinds import OrderKindService, get_order_kind_service
+from app.services.orderkinds import get_order_kind_service
+from app.services.service_factory import BaseService
 
 
 __all__ = (
     "APISKBService",
     "get_skb_service",
 )
-
-
-API_ENDPOINTS = settings.api_skb_settings.skb_endpoint
 
 
 class APISKBService:
@@ -29,12 +27,19 @@ class APISKBService:
     и получения результатов по залогам.
     """
 
-    params = {"api-key": settings.api_skb_settings.skb_api_key}
-    endpoint = settings.api_skb_settings.skb_url
-    file_storage = s3_bucket_service_factory()
-
-    def __init__(self, kind_service: OrderKindService = None):
+    def __init__(
+        self, settings: APISSKBSettings, kind_service: Type[BaseService] = None
+    ):
         self.kind_service = kind_service
+        self.settings = settings
+        self.file_storage = s3_bucket_service_factory()
+        self._initialize_attributes()
+
+    def _initialize_attributes(self):
+        """Инициализирует атрибуты из настроек"""
+        self.params = {"api-key": self.settings.skb_api_key}
+        self.url = self.settings.skb_base_url
+        self.endpoints = self.settings.skb_endpoints
 
     async def get_request_kinds(self) -> Dict[str, Any]:
         """
@@ -44,7 +49,7 @@ class APISKBService:
             Dict[str, Any]: Справочник видов запросов или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('GET_KINDS'))}"
+            url = f"{urljoin(self.endpoint, self.endpoints.get('GET_KINDS'))}"
 
             result = await make_request("GET", url, params=self.params)
 
@@ -74,7 +79,7 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('CREATE_REQUEST'))}"
+            url = f"{urljoin(self.endpoint, self.endpoints.get('CREATE_REQUEST'))}"
             return await make_request("POST", url, params=self.params, json=data)
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -94,7 +99,7 @@ class APISKBService:
         """
         try:
             params = {**self.params, "Type": response_type}
-            url = f"{urljoin(self.endpoint, API_ENDPOINTS.get('GET_RESULT'))}/{order_uuid}"
+            url = f"{urljoin(self.endpoint, self.endpoints.get('GET_RESULT'))}/{order_uuid}"
             response = await make_request("GET", url, params=params)
 
             content_encoding = response.headers.get("Content-Encoding", "").lower()
@@ -138,4 +143,6 @@ def get_skb_service() -> APISKBService:
     Returns:
         APISKBService: Экземпляр APISKBService.
     """
-    return APISKBService(kind_service=get_order_kind_service())
+    return APISKBService(
+        settings=settings.skb_api, kind_service=get_order_kind_service()
+    )

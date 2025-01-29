@@ -29,6 +29,22 @@ class OrderRepository(SQLAlchemyRepository):
         Вспомогательные методы для работы с базой данных.
         """
 
+        def __init__(
+            self,
+            order_kind_repo: SQLAlchemyRepository,
+            model: Any = Order,
+            load_joined_models: bool = True,
+        ):
+            """
+            Инициализация репозитория.
+
+            :param model: Модель таблицы заказов.
+            :param load_joined_models: Флаг для загрузки связанных моделей.
+            :param order_kind_repo: Репозиторий для работы с видами заказов.
+            """
+            super().__init__(model=model, load_joined_models=load_joined_models)
+            self.order_kind_repo = order_kind_repo
+
         async def _validate_order_kind(self, data: Dict[str, Any]) -> Dict[str, Any]:
             """
             Валидирует и обновляет данные заказа, проверяя наличие связанного вида заказа.
@@ -63,6 +79,11 @@ class OrderRepository(SQLAlchemyRepository):
         """
         super().__init__(model=model, load_joined_models=load_joined_models)
         self.order_kind_repo = order_kind_repo
+        self.helper = self.HelperMethods(
+            model=model,
+            load_joined_models=load_joined_models,
+            order_kind_repo=order_kind_repo,
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -77,7 +98,7 @@ class OrderRepository(SQLAlchemyRepository):
         :raises DatabaseError: Если произошла ошибка при добавлении заказа.
         """
         # Валидируем и обновляем данные заказа
-        data = await self._validate_order_kind(data)
+        data = await self.helper._validate_order_kind(data)
         # Вызываем метод add базового класса для создания заказа
         return await super().add(data=data)
 
@@ -99,7 +120,7 @@ class OrderRepository(SQLAlchemyRepository):
         """
         # Если ключ поиска - skb_uuid, валидируем и обновляем данные заказа
         if key == "skb_uuid":
-            data = await self._validate_order_kind(data)
+            data = await self.helper._validate_order_kind(data)
 
         # Вызываем метод update базового класса для обновления заказа
         updated_order = await super().update(key=key, value=value, data=data)

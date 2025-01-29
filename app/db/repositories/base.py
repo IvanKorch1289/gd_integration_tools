@@ -168,37 +168,25 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             :return: Объект, список объектов или пустой список/словарь, если данные не найдены.
             """
             if isinstance(query_or_object, Select):
-                if self.load_joined_models:
-                    query_or_object = query_or_object.options(
-                        *self._get_selectinload_options()
-                    )
-
                 result: Result = await session.execute(query_or_object)
 
                 if is_return_list:
-                    objects = result.scalars().all()
+                    objects = result.scalars().unique().all()
                     return (
                         objects if objects else []
                     )  # Возвращаем пустой список, если данных нет
                 else:
                     return (
-                        result.scalars().first() or {}
+                        result.unique().scalar_one_or_none() or {}
                     )  # Возвращаем пустой словарь, если объект не найден
 
             elif self.load_joined_models:
                 if query_or_object not in session:
                     session.add(query_or_object)
-                    await session.flush()
 
-                query = (
-                    select(self.model)
-                    .where(self.model.id == query_or_object.id)
-                    .options(*self._get_selectinload_options())
-                )
-                result: Result = await session.execute(query)
-                return (
-                    result.scalars().first() or {}
-                )  # Возвращаем пустой словарь, если объект не найден
+                await session.flush()
+
+                return await self._refresh_with_relationships(session, query_or_object)
 
             return query_or_object
 
@@ -465,12 +453,9 @@ async def get_repository_for_model(
     try:
         # Импортируем модуль репозитория для указанной модели
         repository_module = importlib.import_module(
-            f"backend.{model.__tablename__}.repository"
+            f"app.db.repositories.{model.__tablename__}"
         )
-        repository_class = getattr(
-            repository_module, repository_name
-        )  # Получаем класс репозитория
-        return repository_class
+        return getattr(repository_module, repository_name)  # Получаем класс репозитория
     except (ImportError, AttributeError) as exc:
         raise ValueError(
             f"Репозиторий для модели {model.__name__} не найден: {str(exc)}"

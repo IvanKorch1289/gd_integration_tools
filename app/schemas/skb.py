@@ -5,10 +5,10 @@ from pydantic import Field
 from app.schemas import BaseSchema
 
 
-__all__ = ("ApiOrderSchemaIn",)
+__all__ = ("APISKBOrderSchemaIn",)
 
 
-class ApiOrderSchemaIn(BaseSchema):
+class APISKBOrderSchemaIn(BaseSchema):
     """
     Схема для входящих данных запроса в СКБ-Техно.
 

@@ -10,12 +10,12 @@ import pandas as pd
 # import pyclamd
 from fastapi import HTTPException, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.settings import settings
 from app.db import session_manager
+from app.schemas import BaseSchema
 
 
 __all__ = (
@@ -27,7 +27,7 @@ __all__ = (
 T = TypeVar("T")
 ParamsType = Dict[str, Any]
 
-cache_expire_seconds = settings.redis_settings.redis_cache_expire_seconds
+cache_expire_seconds = settings.redis.redis_cache_expire_seconds
 
 # cd = pyclamd.ClamdNetworkSocket(host='127.0.0.1', port=3310)
 
@@ -62,9 +62,9 @@ class Utilities:
     async def transfer_model_to_schema(
         self,
         instance: Any,
-        schema: Type[BaseModel],
-        is_versioned: bool = False,
-    ) -> BaseModel:
+        schema: Type[BaseSchema],
+        from_attributes: bool = False,
+    ) -> BaseSchema:
         """Преобразует объект (модель или версию) в схему Pydantic.
 
         Args:
@@ -79,7 +79,7 @@ class Utilities:
             ValueError: Если объект не может быть преобразован в схему.
         """
         try:
-            return schema.model_validate(instance, from_attributes=is_versioned)
+            return schema.model_validate(instance, from_attributes=from_attributes)
         except Exception as exc:
             raise ValueError(
                 f"Ошибка при преобразовании модели в схему: {exc}"
@@ -260,11 +260,11 @@ class Utilities:
         try:
             import aiosmtplib  # Ленивый импорт
 
-            hostname = settings.mail_settings.mail_hostname
-            port = settings.mail_settings.mail_port
-            use_tls = settings.mail_settings.mail_use_tls
-            username = None if settings.app_debug else settings.mail_settings.mail_login
-            password = None if settings.app_debug else settings.mail_settings.mail_login
+            hostname = settings.mail.mail_hostname
+            port = settings.mail.mail_port
+            use_tls = settings.mail.mail_use_tls
+            username = None if settings.app_debug else settings.mail.mail_login
+            password = None if settings.app_debug else settings.mail.mail_login
 
             async with aiosmtplib.SMTP(
                 hostname=hostname, port=port, use_tls=use_tls
@@ -370,12 +370,12 @@ class Utilities:
             from email.mime.text import MIMEText
             from email.utils import formataddr
 
-            hostname = settings.mail_settings.mail_hostname
-            port = settings.mail_settings.mail_port
-            use_tls = settings.mail_settings.mail_use_tls
-            username = None if settings.app_debug else settings.mail_settings.mail_login
-            password = None if settings.app_debug else settings.mail_settings.mail_login
-            sender = settings.mail_settings.mail_sender
+            hostname = settings.mail.mail_hostname
+            port = settings.mail.mail_port
+            use_tls = settings.mail.mail_use_tls
+            username = None if settings.app_debug else settings.mail.mail_login
+            password = None if settings.app_debug else settings.mail.mail_login
+            sender = settings.mail.mail_sender
 
             mail_logger.info(
                 f"Sending email to {to_email} with subject '{subject}' and message '{message}'."

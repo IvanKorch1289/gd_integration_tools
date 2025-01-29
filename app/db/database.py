@@ -31,7 +31,7 @@ class DatabaseInitializer:
     """
 
     def __init__(self, settings: DatabaseSettings):
-        self.settings = settings
+        self.settings: DatabaseSettings = settings
 
         # Асинхронный движок
         self.async_engine = self._create_async_engine()
@@ -162,7 +162,7 @@ class DatabaseInitializer:
 
 
 # Инициализация базы данных с настройками из конфигурации
-db_initializer = DatabaseInitializer(settings=settings.database_settings)
+db_initializer = DatabaseInitializer(settings=settings.database)
 
 
 class DatabaseSessionManager:

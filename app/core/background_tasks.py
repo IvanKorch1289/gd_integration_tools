@@ -8,9 +8,7 @@ from app.services import OrderService, get_order_service
 
 
 # Настройка подключения к Redis
-redis_url = (
-    f"{settings.redis_settings.redis_url}/{settings.redis_settings.redis_db_queue}"
-)
+redis_url = f"{settings.redis.redis_url}/{settings.redis.constructredis_db_queue}"
 
 # Инициализация Celery
 celery_app = Celery("tasks", broker=redis_url, backend=redis_url)
@@ -159,7 +157,7 @@ def send_requests_for_create_order(self, order_id: int):
     default_retry_delay=settings.bts_settings.bts_min_retry_delay,
     retry_backoff=True,
 )
-def process_order_workflow(self, order_id: int, email: str):
+def process_order_workflow(self, order_id: int):
     """
     Управляет цепочкой задач для обработки заказа.
 

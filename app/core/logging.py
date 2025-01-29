@@ -9,7 +9,7 @@ import graypy
 import socket
 from queue import Queue
 
-from app.core.settings import settings
+from app.core.settings import LogStorageSettings, settings
 
 
 __all__ = (
@@ -41,7 +41,7 @@ class SafeFormatter(logging.Formatter):
     """Форматтер с проверкой наличия обязательных полей"""
 
     def format(self, record: logging.LogRecord) -> str:
-        for field in settings.logging_settings.log_required_fields:
+        for field in settings.logging.log_required_fields:
             if not hasattr(record, field):
                 setattr(record, field, "unknown")
         return super().format(record)
@@ -49,7 +49,7 @@ class SafeFormatter(logging.Formatter):
 
 def setup_logging() -> None:
     """Инициализация системы логирования с асинхронной отправкой в Graylog"""
-    log_config = settings.logging_settings
+    log_config: LogStorageSettings = settings.logging
     formatter = SafeFormatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s "
         "[%(environment)s@%(hostname)s] User:%(user_id)s Action:%(action)s"

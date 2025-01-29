@@ -5,19 +5,16 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
 
-from app.core.errors import handle_routes_errors
-from app.core.limiter import route_limiter
-
 
 SchemaIn = TypeVar("SchemaIn", bound=BaseModel)
 SchemaOut = TypeVar("SchemaOut", bound=BaseModel)
 VersionSchemaOut = TypeVar("VersionSchemaOut", bound=BaseModel)
 
 
-__all__ = ("create_cbv_class",)
+__all__ = ("create_router_class",)
 
 
-def create_cbv_class(
+def create_router_class(
     router: APIRouter,
     schema_in: Type[SchemaIn],
     schema_out: Type[SchemaOut],
@@ -25,6 +22,8 @@ def create_cbv_class(
     service,
     filter_class: Optional[Type] = None,
 ):
+    from app.core import handle_routes_errors, route_limiter
+
     @cbv(router)
     class GenericCBV:
         def __init__(self):
@@ -55,7 +54,9 @@ def create_cbv_class(
         )
         @route_limiter
         @handle_routes_errors
-        async def get_by_id(self, object_id: int, x_api_key: str = Header(...)):
+        async def get_by_id(
+            self, request: Request, object_id: int, x_api_key: str = Header(...)
+        ):
             result = await self.service.get(key="id", value=object_id)
             if not result:
                 raise HTTPException(

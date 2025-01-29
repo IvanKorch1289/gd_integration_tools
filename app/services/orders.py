@@ -1,38 +1,35 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 from fastapi import Depends, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.core import (
-    Event,
-    S3Service,
-    caching_decorator,
-    event_bus,
-    s3_bucket_service_factory,
-)
 from app.core.dependencies import (
     create_zip_streaming_response,
     get_base64_file,
     get_streaming_response,
 )
+from app.core.events import Event, event_bus
+from app.core.redis import caching_decorator
 from app.core.settings import settings
-from app.db import OrderRepository, get_order_repo
-from app.db.repositories import FileRepository, get_file_repo
+from app.core.storage import BaseS3Service, s3_bucket_service_factory
+from app.db import (
+    FileRepository,
+    OrderRepository,
+    get_file_repo,
+    get_order_repo,
+)
 from app.schemas import BaseSchema, OrderFilter, OrderSchemaIn, OrderSchemaOut
-from app.services.base import BaseService
+from app.services.service_factory import BaseService
 from app.services.skb import APISKBService, get_skb_service
 from app.utils import ResponseTypeChoices, utilities
 
 
-__all__ = (
-    "OrderService",
-    "get_order_service",
-)
+__all__ = ("get_order_service",)
 
 
-class OrderService(BaseService):
+class OrderService(BaseService[OrderRepository]):
     """
     Сервис для работы с заказами. Обеспечивает создание, обновление, получение и обработку заказов,
     а также взаимодействие с внешними сервисами (например, СКБ-Техно) и файловым хранилищем.
@@ -40,12 +37,12 @@ class OrderService(BaseService):
 
     def __init__(
         self,
-        response_schema: BaseModel = None,
-        request_schema: BaseModel = None,
-        event_schema: Event = None,
-        repo: OrderRepository = None,
-        file_repo: FileRepository = None,
-        request_service: APISKBService = None,
+        schema_in: BaseModel,
+        schema_out: BaseModel,
+        event_schema: Event,
+        repo: OrderRepository,
+        file_repo: FileRepository,
+        request_service: APISKBService,
     ):
         """
         Инициализация сервиса заказов.
@@ -57,11 +54,7 @@ class OrderService(BaseService):
         :param file_repo: Репозиторий для работы с файлами.
         :param request_service: Сервис для взаимодействия с API СКБ-Техно.
         """
-        super().__init__(
-            repo=repo,
-            response_schema=response_schema,
-            request_schema=request_schema,
-        )
+        super().__init__(repo, request_schema=schema_in, response_schema=schema_out)
         self.file_repo = file_repo
         self.request_service = request_service
         self.event_schema = event_schema
@@ -77,15 +70,15 @@ class OrderService(BaseService):
         try:
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
-            if order:
-                check_services = await utilities.health_check_all_services()
-                response_body = await utilities.get_response_type_body(check_services)
-                if response_body.get("is_all_services_active", None):
-                    event = Event(
-                        event_type="order_created",
-                        payload={"order_id": order.id, "email": order.email_for_answer},
-                    )
-                    await event_bus.emit(event)
+            # if order:
+            #     check_services = await utilities.health_check_all_services()
+            #     response_body = await utilities.get_response_type_body(check_services)
+            #     if response_body.get("is_all_services_active", None):
+            #         event = Event(
+            #             event_type="order_created",
+            #             payload={"order_id": order.id, "email": order.email_for_answer},
+            #         )
+            #         await event_bus.emit(event)
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -160,7 +153,7 @@ class OrderService(BaseService):
                     "Priority": settings.api_skb_settings.skb_request_priority_default,
                     "RequestType": order.get("order_kind", None).get("skb_uuid", None),
                 }
-                return data
+
                 # Отправляем запрос в СКБ-Техно
                 result = await self.request_service.add_request(data=data)
 
@@ -292,7 +285,9 @@ class OrderService(BaseService):
             raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_order_file_from_storage(
-        self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        order_id: int,
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ) -> Optional[Any]:
         """
         Получает файл заказа из хранилища S3.
@@ -318,7 +313,9 @@ class OrderService(BaseService):
 
     @caching_decorator
     async def get_order_file_from_storage_base64(
-        self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        order_id: int,
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ) -> JSONResponse:
         """
         Получает файл заказа из хранилища S3 в формате base64.
@@ -344,7 +341,9 @@ class OrderService(BaseService):
 
     @caching_decorator
     async def get_order_file_from_storage_link(
-        self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        order_id: int,
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ) -> List[Dict[str, str]]:
         """
         Получает ссылки для скачивания файлов заказа из хранилища S3.
@@ -378,7 +377,9 @@ class OrderService(BaseService):
 
     @caching_decorator
     async def get_order_file_link_and_json_result_for_request(
-        self, order_id: int, s3_service: S3Service = Depends(s3_bucket_service_factory)
+        self,
+        order_id: int,
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ) -> Dict[str, Any]:
         """
         Получает ссылки на файлы и JSON-результат заказа.
@@ -416,7 +417,7 @@ class OrderService(BaseService):
         pass
 
 
-def get_order_service() -> OrderService:
+def get_order_service() -> Type[BaseService]:
     """
     Возвращает экземпляр сервиса для работы с заказами.
 
@@ -424,8 +425,8 @@ def get_order_service() -> OrderService:
     """
     return OrderService(
         repo=get_order_repo(),
-        response_schema=OrderSchemaOut,
-        request_schema=OrderSchemaIn,
+        schema_out=OrderSchemaOut,
+        schema_in=OrderSchemaIn,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
         event_schema=Event,

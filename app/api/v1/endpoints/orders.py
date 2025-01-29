@@ -4,17 +4,20 @@ from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import FileResponse
 from fastapi_utils.cbv import cbv
 
-from app.core.errors import handle_routes_errors
-from app.core.limiter import route_limiter
-from app.core.routers_factory import create_cbv_class
-from app.core.storage import S3Service, s3_bucket_service_factory
+from app.api.routers_factory import create_router_class
+from app.core import (
+    BaseS3Service,
+    handle_routes_errors,
+    route_limiter,
+    s3_bucket_service_factory,
+)
 from app.schemas import (
     OrderFilter,
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.orders import get_order_service
+from app.services import get_order_service
 
 
 __all__ = ("router",)
@@ -23,7 +26,7 @@ __all__ = ("router",)
 router = APIRouter()
 
 
-OrderCBV = create_cbv_class(
+OrderCBV = create_router_class(
     router=router,
     schema_in=OrderSchemaIn,
     schema_out=OrderSchemaOut,
@@ -83,7 +86,7 @@ class ExtendedOrderCBV(OrderCBV):
         self,
         order_id: int,
         x_api_key: str = Header(...),
-        s3_service: S3Service = Depends(s3_bucket_service_factory),
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ) -> FileResponse:
         """
         Получить файл запроса из хранилища.
@@ -108,7 +111,7 @@ class ExtendedOrderCBV(OrderCBV):
         self,
         order_id: int,
         x_api_key: str = Header(...),
-        s3_service: S3Service = Depends(s3_bucket_service_factory),
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
     ):
         """
         Получить файл запроса в формате Base64.
@@ -132,7 +135,7 @@ class ExtendedOrderCBV(OrderCBV):
     async def get_order_file_link(
         self,
         order_id: int,
-        s3_service: S3Service = Depends(s3_bucket_service_factory),
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """
@@ -157,7 +160,7 @@ class ExtendedOrderCBV(OrderCBV):
     async def get_order_file_link_and_json_result_for_request(
         self,
         order_id: int,
-        s3_service: S3Service = Depends(s3_bucket_service_factory),
+        s3_service: BaseS3Service = Depends(s3_bucket_service_factory),
         x_api_key: str = Header(...),
     ):
         """

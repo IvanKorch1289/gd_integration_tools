@@ -3,9 +3,8 @@ import uuid
 from fastapi import APIRouter, File, Header, Request, UploadFile, status
 from fastapi_utils.cbv import cbv
 
-from app.core import create_cbv_class
-from app.core.dependencies import get_streaming_response
-from app.core.errors import handle_routes_errors
+from app.api.routers_factory import create_router_class
+from app.core import get_streaming_response, handle_routes_errors
 from app.core.limiter import route_limiter
 from app.core.storage import s3_bucket_service_factory
 from app.schemas import (
@@ -14,25 +13,12 @@ from app.schemas import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.files import get_file_service
+from app.services import get_file_service
 
 
 __all__ = (
     "router",
     "storage_router",
-)
-
-
-router = APIRouter()
-
-
-FileCBV = create_cbv_class(
-    router=router,
-    schema_in=FileSchemaIn,
-    schema_out=FileSchemaOut,
-    version_schema_out=FileVersionSchemaOut,
-    service=get_file_service(),
-    filter_class=FileFilter,
 )
 
 
@@ -148,3 +134,16 @@ class StorageCBV:
         :return: Ссылка для скачивания файла.
         """
         return await self.service.generate_download_url(key=file_uuid)
+
+
+router = APIRouter()
+
+
+FileCBV = create_router_class(
+    router=router,
+    schema_in=FileSchemaIn,
+    schema_out=FileSchemaOut,
+    version_schema_out=FileVersionSchemaOut,
+    service=get_file_service(),
+    filter_class=FileFilter,
+)

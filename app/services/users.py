@@ -4,16 +4,13 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 
 from app.db import UserRepository, get_user_repo
 from app.schemas import UserSchemaIn, UserSchemaOut
-from app.services import BaseService
+from app.services.service_factory import BaseService
 
 
-__all__ = (
-    "UserService",
-    "get_user_service",
-)
+__all__ = ("get_user_service",)
 
 
-class UserService(BaseService):
+class UserService(BaseService[UserRepository]):
     """
     Сервис для работы с пользователями. Обеспечивает создание, аутентификацию и управление пользователями.
 
@@ -22,23 +19,6 @@ class UserService(BaseService):
         response_schema (Type[UserSchemaOut]): Схема для преобразования данных в ответ.
         request_schema (Type[UserSchemaIn]): Схема для валидации входных данных.
     """
-
-    def __init__(
-        self,
-        repo: UserRepository = None,
-        response_schema: Any = None,
-        request_schema: Any = None,
-    ):
-        """
-        Инициализация сервиса для работы с пользователями.
-
-        :param repo: Репозиторий для работы с таблицей пользователей.
-        :param response_schema: Схема для преобразования данных в ответ.
-        :param request_schema: Схема для валидации входных данных.
-        """
-        super().__init__(
-            repo=repo, response_schema=response_schema, request_schema=request_schema
-        )
 
     async def _get_user_by_username(self, data: Dict[str, Any]) -> Any:
         """
@@ -62,9 +42,6 @@ class UserService(BaseService):
             user = await self._get_user_by_username(data=data)
             if user:
                 return "The user with the specified login already exists."
-
-            # Хэширование пароля (если требуется)
-            # data["password"] = await utilities.hash_password(data["password"])
 
             # Создаем пользователя через базовый метод
             return await super().add(data=data)
