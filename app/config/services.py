@@ -58,6 +58,11 @@ class FileStorageSettings(BaseSettings):
         env="FS_ENDPOINT",
         description="URL API хранилища",
     )
+    fs_interfase_endpoint: str = Field(
+        default="http://127.0.0.1:9090",
+        env="FS_INTERFACE_ENDPOINT",
+        description="URL интерфейса хранилища",
+    )
     fs_region: str = Field(
         default="us-east-1", env="FS_REGION", description="Регион хранилища (для AWS)"
     )

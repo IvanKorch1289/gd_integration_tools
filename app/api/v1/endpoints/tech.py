@@ -52,7 +52,7 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на хранилище логов.
         """
-        log_url = f"{settings.logging.log_host}:{settings.logging_settings.log_port}"
+        log_url = f"{settings.logging.log_host}:{settings.logging.log_port}"
         return utilities.generate_link_page(log_url, "Хранилище логов")
 
     @router.get(
@@ -69,7 +69,7 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на файловое хранилище.
         """
-        fs_url = f"{settings.storage.fs_interfase_url}"
+        fs_url = f"{settings.storage.fs_interfase_endpoint}"
         return utilities.generate_link_page(fs_url, "Файловое хранилище")
 
     @router.get(

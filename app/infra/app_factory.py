@@ -96,34 +96,41 @@ def create_app() -> FastAPI:
     # Добавление GZip Middleware для сжатия ответов
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Глобальный обработчик исключений
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         """
-        Перехватывает любую ошибку в приложении и возвращает стандартизированный ответ.
-
-        Аргументы:
-            request (Request): Запрос, вызвавший ошибку.
-            exc (Exception): Исключение, которое было вызвано.
-
-        Возвращает:
-            JSONResponse: Стандартизированный ответ с описанием ошибки.
+        Глобальный обработчик исключений для всего приложения.
+        Обрабатывает как стандартные, так и кастомные исключения.
         """
         app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
-        for sub_exc in exc.exceptions:
-            if isinstance(sub_exc, DatabaseError):
-                return JSONResponse(
-                    status_code=sub_exc.status_code,
-                    content={
-                        "message": sub_exc.message,
-                        "detail": str(sub_exc),
-                        "hasErrors": True,
-                    },
-                )
+
+        # Обработка SQLAlchemy DatabaseError
+        if isinstance(exc, DatabaseError):
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "message": "Ошибка базы данных",
+                    "detail": str(exc),
+                    "hasErrors": True,
+                },
+            )
+
+        # Обработка кастомных исключений с атрибутами status_code и message
+        if hasattr(exc, "status_code") and hasattr(exc, "message"):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={
+                    "message": exc.message,
+                    "detail": str(exc),
+                    "hasErrors": True,
+                },
+            )
+
+        # Общая обработка всех остальных исключений
         return JSONResponse(
             status_code=500,
             content={
-                "message": "Произошла внутренняя ошибка сервера",
+                "message": "Внутренняя ошибка сервера",
                 "detail": str(exc),
                 "hasErrors": True,
             },
@@ -155,9 +162,9 @@ def create_app() -> FastAPI:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
         log_url = await utilities.ensure_protocol(
-            f"{settings.logging.log_host}:{settings.logging_settings.log_port}"
+            f"{settings.logging.log_host}:{settings.logging.log_port}"
         )
-        fs_url = await utilities.ensure_protocol(settings.storage.fs_interface_url)
+        fs_url = await utilities.ensure_protocol(settings.storage.fs_interfase_endpoint)
         flower_url = await utilities.ensure_protocol(settings.celery.cel_flower_url)
 
         return f"""

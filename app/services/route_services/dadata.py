@@ -1,5 +1,7 @@
 from typing import Any, Dict, Optional
 
+from urllib.parse import urljoin
+
 from app.config.settings import APIDADATASettings, settings
 from app.infra.redis import caching_decorator
 from app.services.helpers import make_request
@@ -34,7 +36,7 @@ class APIDADATAService:
     def _initialize_attributes(self):
         """Инициализирует атрибуты из настроек"""
         self.auth_token = f"Token {self.settings.dadata_api_key}"
-        self.url = self.settings.dadata_base_url
+        self.base_url = self.settings.dadata_base_url
         self.endpoints = self.settings.dadata_endpoints
 
     @classmethod
@@ -61,7 +63,7 @@ class APIDADATAService:
             payload["radius_meters"] = radius_metres
 
         # Формируем URL для запроса
-        url = f"{cls.endpoint}{cls.endpoints.get("GEOLOCATE")}"
+        url = f"{urljoin(cls.base_url, cls.endpoints.get('GEOLOCATE'))}"
 
         # Выполняем запрос с помощью универсального метода make_request
         return await make_request(
