@@ -59,6 +59,9 @@ aiokafka = "^0.12.0"
 bandit = "^1.8.2"
 
 
+[tool.poetry.group.dev.dependencies]
+sqlalchemy2-stubs = "^0.0.2a38"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

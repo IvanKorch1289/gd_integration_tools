@@ -185,8 +185,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                     session.add(query_or_object)
 
                 await session.flush()
-
-                return await self._refresh_with_relationships(session, query_or_object)
+                await self._refresh_with_relationships(session, query_or_object)
 
             return query_or_object
 

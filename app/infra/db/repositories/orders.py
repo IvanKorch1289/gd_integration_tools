@@ -140,7 +140,7 @@ def get_order_repo() -> OrderRepository:
     :param order_kind_repo: Репозиторий для работы с видами заказов.
     :return: Экземпляр OrderRepository.
     """
-    from app.db.repositories.orderkinds import get_order_kind_repo
+    from app.infra.db.repositories.orderkinds import get_order_kind_repo
 
     return OrderRepository(
         model=Order,
