@@ -22,7 +22,7 @@ def create_router_class(
     service,
     filter_class: Optional[Type] = None,
 ):
-    from app.core import handle_routes_errors, route_limiter
+    from app.config import handle_routes_errors, route_limiter
 
     @cbv(router)
     class GenericCBV:

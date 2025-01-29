@@ -2,7 +2,7 @@ from typing import List
 
 from sqladmin import ModelView
 
-from app.db.models import Order
+from app.infra import Order
 from app.utils.admins import BaseAdmin
 
 

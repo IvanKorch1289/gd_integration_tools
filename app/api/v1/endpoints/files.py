@@ -3,10 +3,10 @@ import uuid
 from fastapi import APIRouter, File, Header, Request, UploadFile, status
 from fastapi_utils.cbv import cbv
 
+from app.api.limiter import route_limiter
 from app.api.routers_factory import create_router_class
-from app.core import get_streaming_response, handle_routes_errors
-from app.core.limiter import route_limiter
-from app.core.storage import s3_bucket_service_factory
+from app.config import get_streaming_response, handle_routes_errors
+from app.infra.storage import s3_bucket_service_factory
 from app.schemas import (
     FileFilter,
     FileSchemaIn,

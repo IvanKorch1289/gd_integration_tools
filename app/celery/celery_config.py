@@ -1,0 +1,156 @@
+from typing import Dict, List, Optional
+
+from celery import Celery, schedules
+
+from app.config.settings import CelerySettings, settings
+from app.utils.utils import singleton
+
+
+__all__ = ("celery_manager",)
+
+
+class CeleryHealthError(Exception):
+    """Базовое исключение для ошибок здоровья Celery"""
+
+    def __init__(self, message: str, details: Optional[str] = None):
+        self.message = message
+        self.details = details
+        super().__init__(message)
+
+
+class CeleryConnectionError(CeleryHealthError):
+    """Ошибка соединения с Celery"""
+
+
+class QueueUnavailableError(CeleryHealthError):
+    """Ошибка отсутствия активных очередей"""
+
+
+@singleton
+class CeleryManager:
+    def __init__(self, settings: CelerySettings):
+        self.settings = settings.celery
+        self.app = self._configure_celery()
+        self._configure_periodic_tasks()
+
+    def _configure_celery(self) -> Celery:
+        """Создает и конфигурирует экземпляр Celery."""
+        celery_app = Celery(
+            "tasks",
+            broker=self.settings.cel_broker_url,
+            backend=self.settings.cel_result_backend,
+            include=["app.celery.celery_tasks"],
+        )
+
+        celery_app.conf.update(
+            {
+                # Сериализация
+                "task_serializer": self.settings.cel_task_serializer,
+                "result_serializer": self.settings.cel_task_serializer,
+                "accept_content": [self.settings.cel_task_serializer],
+                # Поведение задач
+                "task_default_queue": self.settings.cel_task_default_queue,
+                "task_time_limit": self.settings.cel_task_time_limit,
+                "task_soft_time_limit": self.settings.cel_task_soft_time_limit,
+                "task_default_max_retries": self.settings.cel_task_max_retries,
+                "task_retry_backoff": self.settings.cel_task_retry_backoff,
+                "task_retry_jitter": self.settings.cel_task_retry_jitter,
+                "task_track_started": self.settings.cel_task_track_started,
+                # Настройки воркеров
+                "worker_concurrency": self.settings.cel_worker_concurrency,
+                "worker_prefetch_multiplier": self.settings.cel_worker_prefetch_multiplier,
+                "worker_max_tasks_per_child": self.settings.cel_worker_max_tasks_per_child,
+                "worker_disable_rate_limits": self.settings.cel_worker_disable_rate_limits,
+                "worker_send_events": self.settings.cel_worker_send_events,
+                # Управление соединениями
+                "broker_pool_limit": self.settings.cel_broker_pool_limit,
+                "result_extended": self.settings.cel_result_extended,
+                # Безопасность и надежность
+                "task_acks_late": True,
+                "task_reject_on_worker_lost": True,
+                "broker_connection_retry_on_startup": True,
+                # Временные настройки
+                "enable_utc": True,
+                "timezone": "Europe/Moscow",
+                # Настройки Beat
+                "beat_schedule": self._get_beat_schedule(),
+                "beat_max_loop_interval": 300,
+            }
+        )
+        return celery_app
+
+    def _get_beat_schedule(self) -> Dict:
+        """Возвращает расписание периодических задач"""
+        return {
+            "health-check-every-hour": {
+                "task": "app.celery.celery_tasks.check_services_health",
+                "schedule": schedules.crontab(
+                    minute=settings.health_check.minute, hour=settings.health_check.hour
+                ),
+                "args": (),
+                "options": {
+                    "queue": self.settings.cel_task_default_queue,
+                    "expires": 300,  # Задача истекает через 5 минут
+                },
+            }
+        }
+
+    def _configure_periodic_tasks(self):
+        """Дополнительная конфигурация периодических задач"""
+        if settings.ENVIRONMENT == "testing":
+            self.app.conf.beat_schedule = {}
+        elif settings.ENVIRONMENT == "development":
+            # Для разработки можно уменьшить интервал
+            self.app.conf.beat_schedule["health-check-every-hour"]["schedule"] = (
+                schedules.crontab(minute="*/15")
+            )
+
+    async def check_connection(self) -> bool:
+        """Проверяет доступность Celery workers.
+
+        Returns:
+            bool: True если workers доступны
+
+        Raises:
+            CeleryConnectionError: При проблемах с подключением
+        """
+        try:
+            inspect = self.app.control.inspect()
+            ping_result = inspect.ping()
+
+            if not ping_result:
+                raise CeleryConnectionError("No active workers responding")
+
+            return True
+
+        except Exception as e:
+            raise CeleryConnectionError(
+                message="Celery connection failed", details=str(e)
+            )
+
+    async def get_queue_status(self) -> Dict[str, List[str]]:
+        """Возвращает статус очередей.
+
+        Returns:
+            Словарь с информацией об очередях
+
+        Raises:
+            QueueUnavailableError: Если очереди недоступны
+        """
+        try:
+            inspect = self.app.control.inspect()
+            active_queues = inspect.active_queues()
+
+            if not active_queues:
+                raise QueueUnavailableError("No active queues found")
+
+            return active_queues
+
+        except Exception as e:
+            raise QueueUnavailableError(
+                message="Failed to get queue status", details=str(e)
+            )
+
+
+# Инициализация менеджера
+celery_manager = CeleryManager(settings)

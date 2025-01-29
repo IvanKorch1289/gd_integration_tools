@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
-from app.core import (
+from app.config import (
     BaseS3Service,
     handle_routes_errors,
     route_limiter,

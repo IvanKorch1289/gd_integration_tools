@@ -3,11 +3,9 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.core.redis import caching_decorator
-from app.db.models import BaseModel
-from app.db.repositories.base import AbstractRepository
+from app.infra.db import AbstractRepository, BaseModel, caching_decorator
 from app.schemas import BaseSchema
-from app.utils.utils import utilities
+from app.utils import utilities
 
 
 __all__ = ("create_service_class", "BaseService", "get_service_for_model")

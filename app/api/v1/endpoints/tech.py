@@ -15,8 +15,8 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
-from app.core import handle_routes_errors
-from app.core.settings import settings
+from app.config import handle_routes_errors
+from app.config.settings import settings
 from app.schemas import EmailSchema
 from app.services import BaseService, get_service_for_model
 from app.utils import get_model_enum, utilities

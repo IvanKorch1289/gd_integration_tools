@@ -2,7 +2,7 @@ from typing import List
 
 from sqladmin import ModelView
 
-from app.db.models import User
+from app.infra import User
 from app.utils.admins.base import BaseAdmin
 
 

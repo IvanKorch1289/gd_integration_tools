@@ -3,18 +3,16 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, Type, TypeVar
 
+import asyncio
 import json_tricks
 import pandas as pd
 # import pyclamd
 from fastapi import HTTPException, Response, status
-from fastapi.responses import HTMLResponse, JSONResponse
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import HTMLResponse
 
-from app.core.settings import settings
-from app.db import session_manager
+from app.config.settings import settings
 from app.schemas import BaseSchema
 
 
@@ -85,112 +83,6 @@ class Utilities:
                 f"Ошибка при преобразовании модели в схему: {exc}"
             ) from exc
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
-    async def health_check_database(self, session: AsyncSession) -> bool:
-        """Проверяет подключение к базе данных.
-
-        Args:
-            session (AsyncSession): Асинхронная сессия для выполнения запроса.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к базе данных не удалось.
-        """
-        try:
-            result = await session.execute(text("SELECT 1"))
-            if result.scalar_one_or_none() != 1:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Database not connected",
-                )
-            return True
-        except Exception as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Database not connected: {str(exc)}",
-            )
-
-    async def health_check_redis(self) -> bool:
-        """Проверяет подключение к Redis.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к Redis не удалось.
-        """
-        from app.core.redis import redis_client
-
-        try:
-            async with redis_client.connection() as r:
-                await r.ping()
-            return True
-        except Exception as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Redis not connected: {str(exc)}",
-            )
-
-    async def health_check_celery(self) -> bool:
-        """Проверяет подключение к Celery.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к Celery не удалось.
-        """
-        try:
-            from app.core.background_tasks import celery_app  # Ленивый импорт
-
-            inspect = celery_app.control.inspect()
-            ping_result = inspect.ping()
-
-            if ping_result:
-                return True
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Celery not connected",
-                )
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Celery not connected: {str(exc)}",
-            )
-
-    async def health_check_s3(self) -> bool:
-        """Проверяет подключение к S3.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к S3 не удалось.
-        """
-        try:
-            from app.core.storage import \
-                s3_bucket_service_factory  # Ленивый импорт
-
-            s3_service = s3_bucket_service_factory()
-            result = await s3_service.check_bucket_exists()
-            if not result:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="S3 not connected",
-                )
-            return True
-        except Exception as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"S3 not connected: {str(exc)}",
-            )
-
     async def health_check_scheduler(self) -> bool:
         """Проверяет подключение к планировщику задач.
 
@@ -201,8 +93,9 @@ class Utilities:
             HTTPException: Если подключение к планировщику не удалось.
         """
         try:
-            from app.core.scheluler.scheduler import \
-                scheduler_manager  # Ленивый импорт
+            from app.config.scheluler.scheduler import (  # Ленивый импорт
+                scheduler_manager,
+            )
 
             result = await scheduler_manager.check_status()
             if not result:
@@ -216,92 +109,6 @@ class Utilities:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Scheduler not connected: {str(exc)}",
-            )
-
-    async def health_check_graylog(self) -> bool:
-        """Проверяет подключение к Graylog.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к Graylog не удалось.
-        """
-        try:
-            import socket  # Ленивый импорт
-
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.connect(
-                (
-                    settings.logging_settings.log_host,
-                    settings.logging_settings.log_udp_port,
-                )
-            )
-            sock.sendall(b"Healthcheck test message")
-            sock.close()
-
-            return True
-        except OSError as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Graylog not connected: {str(exc)}",
-            )
-
-    async def health_check_smtp(self) -> bool:
-        """Проверяет подключение к SMTP-серверу.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к SMTP не удалось.
-        """
-        try:
-            import aiosmtplib  # Ленивый импорт
-
-            hostname = settings.mail.mail_hostname
-            port = settings.mail.mail_port
-            use_tls = settings.mail.mail_use_tls
-            username = None if settings.app_debug else settings.mail.mail_login
-            password = None if settings.app_debug else settings.mail.mail_login
-
-            async with aiosmtplib.SMTP(
-                hostname=hostname, port=port, use_tls=use_tls
-            ) as smtp:
-                if username and password:
-                    await smtp.login(username, password)
-
-            return True
-        except Exception as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"SMTP not connected: {str(exc)}",
-            )
-
-    async def health_check_celery_queues(self) -> Dict[str, List[str]]:
-        """Проверяет состояние очередей Celery.
-
-        Returns:
-            Dict[str, List[str]]: Состояние очередей Celery.
-        """
-        try:
-            from app.core.background_tasks import celery_app  # Ленивый импорт
-
-            inspect = celery_app.control.inspect()
-            active_queues = inspect.active_queues()
-
-            if not active_queues:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="No active Celery queues found",
-                )
-            return active_queues
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to check Celery queues: {str(exc)}",
             )
 
     async def health_check_all_services(self):
@@ -350,55 +157,6 @@ class Utilities:
             media_type="application/json",
             status_code=status_code,
         )
-
-    async def send_email(self, to_email: str, subject: str, message: str):
-        """Отправляет электронное письмо на указанный адрес.
-
-        Args:
-            to_email (str): Адрес электронной почты получателя.
-            subject (str): Тема письма.
-            message (str): Текст письма.
-
-        Returns:
-            JSONResponse: Ответ с результатом отправки письма.
-        """
-        from app.core import mail_logger
-
-        try:
-            import aiosmtplib  # Ленивый импорт
-            from email.header import Header
-            from email.mime.text import MIMEText
-            from email.utils import formataddr
-
-            hostname = settings.mail.mail_hostname
-            port = settings.mail.mail_port
-            use_tls = settings.mail.mail_use_tls
-            username = None if settings.app_debug else settings.mail.mail_login
-            password = None if settings.app_debug else settings.mail.mail_login
-            sender = settings.mail.mail_sender
-
-            mail_logger.info(
-                f"Sending email to {to_email} with subject '{subject}' and message '{message}'."
-            )
-
-            msg = MIMEText(message.encode("utf-8"), "plain", "utf-8")
-            msg["Subject"] = Header(subject, "utf-8")
-            msg["From"] = formataddr((str(Header("Отправитель", "utf-8")), sender))
-            msg["To"] = to_email
-
-            async with aiosmtplib.SMTP(
-                hostname=hostname, port=port, use_tls=use_tls
-            ) as smtp:
-                if username and password:
-                    await smtp.login(username, password)
-
-                await smtp.send_message(msg)
-
-            return JSONResponse({"status": "OK"})
-
-        except Exception as exc:
-            mail_logger.critical(f"Error for sending email to {to_email}: {str(exc)}.")
-            raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_response_type_body(self, response: Response):
         """Извлекает и преобразует тело ответа в формат JSON.
@@ -504,6 +262,30 @@ class Utilities:
         elif "__datetime__" in dct:
             return datetime.fromisoformat(dct["value"])
         return dct
+
+    def run_async_task(async_task: Any) -> Any:
+        """
+        Универсальный запуск асинхронных задач в синхронном контексте.
+
+        Args:
+            async_task: Корутина или асинхронная функция
+
+        Returns:
+            Сериализованный результат выполнения задачи
+        """
+        loop = None
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        try:
+            result = loop.run_until_complete(async_task)
+            return json_tricks.dumps(result).encode()
+        finally:
+            if loop and loop.is_closed():
+                loop.close()
 
 
 utilities = Utilities()
