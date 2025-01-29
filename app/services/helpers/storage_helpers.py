@@ -52,7 +52,7 @@ async def process_file(key: str, service: BaseS3Service) -> Dict[str, Any]:
     }
 
 
-async def get_streaming_response(key: str) -> StreamingResponse:
+async def get_streaming_response(key: str, service: BaseS3Service) -> StreamingResponse:
     """
     Возвращает потоковый ответ для скачивания файла.
 
@@ -63,7 +63,7 @@ async def get_streaming_response(key: str) -> StreamingResponse:
     Returns:
         StreamingResponse: Потоковый ответ FastAPI для скачивания файла.
     """
-    file_info = await process_file(key=key)
+    file_info = await process_file(key=key, service=service)
     return StreamingResponse(
         file_info["body"],
         media_type=file_info["media_type"],

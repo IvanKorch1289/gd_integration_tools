@@ -63,7 +63,7 @@ def create_app() -> FastAPI:
         title="Расширенные инструменты GreenData",
         description="Это FastAPI приложение для управления заказами, файлами и пользователями.",
         version="1.0.0",
-        debug=settings.app_debug,
+        debug=settings.app.app_debug,
     )
 
     # Подключение Prometheus для сбора метрик
@@ -155,14 +155,10 @@ def create_app() -> FastAPI:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
         log_url = await utilities.ensure_protocol(
-            f"{settings.logging_settings.log_host}:{settings.logging_settings.log_port}"
+            f"{settings.logging.log_host}:{settings.logging_settings.log_port}"
         )
-        fs_url = await utilities.ensure_protocol(
-            settings.storage_settings.fs_interface_url
-        )
-        bts_url = await utilities.ensure_protocol(
-            settings.bts_settings.bts_interface_url
-        )
+        fs_url = await utilities.ensure_protocol(settings.storage.fs_interface_url)
+        flower_url = await utilities.ensure_protocol(settings.celery.cel_flower_url)
 
         return f"""
         <!DOCTYPE html>
@@ -296,7 +292,7 @@ def create_app() -> FastAPI:
                     <h2>Технические интерфейсы</h2>
                     <a href="{log_url}" target="_blank">Хранилище логов</a>
                     <a href="{fs_url}" target="_blank">Файловое хранилище</a>
-                    <a href="{bts_url}" target="_blank">Мониторинг задач</a>
+                    <a href="{flower_url}" target="_blank">Мониторинг задач</a>
                 </div>
             </div>
         </body>

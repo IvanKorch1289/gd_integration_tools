@@ -263,7 +263,7 @@ class Utilities:
             return datetime.fromisoformat(dct["value"])
         return dct
 
-    def run_async_task(async_task: Any) -> Any:
+    def run_async_task(self, async_task: Any) -> Any:
         """
         Универсальный запуск асинхронных задач в синхронном контексте.
 

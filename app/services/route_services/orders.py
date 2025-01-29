@@ -14,15 +14,15 @@ from app.infra.db import (
 )
 from app.infra.events import Event, event_bus
 from app.infra.redis import caching_decorator
-from app.infra.storage import BaseS3Service
+from app.infra.storage import BaseS3Service, s3_bucket_service_factory
 from app.schemas import BaseSchema, OrderFilter, OrderSchemaIn, OrderSchemaOut
 from app.services.helpers import (
     create_zip_streaming_response,
     get_base64_file,
     get_streaming_response,
 )
+from app.services.route_services.skb import APISKBService, get_skb_service
 from app.services.service_factory import BaseService
-from app.services.skb import APISKBService, get_skb_service
 from app.utils import ResponseTypeChoices, utilities
 
 
@@ -140,20 +140,24 @@ class OrderService(BaseService[OrderRepository]):
             # Получаем заказ по ID
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
 
+            order_data = None
+
             # Преобразуем данные заказа, если это необходимо
             if isinstance(order, BaseSchema):
-                order = order.model_dump()
+                order_data = order.model_dump()
 
             # Проверяем, активен ли заказ
-            if order.get("is_active", None):
+            if order_data.get("is_active", None):
                 return order
                 # Формируем данные для запроса в СКБ-Техно
                 data = {
-                    "Id": order.get("object_uuid", None),
-                    "OrderId": order.get("object_uuid", None),
-                    "Number": order.get("pledge_cadastral_number", None),
-                    "Priority": settings.api_skb_settings.skb_request_priority_default,
-                    "RequestType": order.get("order_kind", None).get("skb_uuid", None),
+                    "Id": order_data.get("object_uuid", None),
+                    "OrderId": order_data.get("object_uuid", None),
+                    "Number": order_data.get("pledge_cadastral_number", None),
+                    "Priority": settings.skb_api.skb_request_priority_default,
+                    "RequestType": order_data.get("order_kind", None).get(
+                        "skb_uuid", None
+                    ),
                 }
 
                 # Отправляем запрос в СКБ-Техно
@@ -163,15 +167,15 @@ class OrderService(BaseService[OrderRepository]):
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
-                        value=order.get("id", None),
+                        value=order_data.get("id", None),
                         data={"is_send_request_to_skb": True},
                     )
                     # Генерируем событие о успешной отправке заказа
                     event = Event(
                         event_type="order_sending_skb",
                         payload={
-                            "order_id": order["id"],
-                            "email": order["email_for_answer"],
+                            "order_id": order_data.get("id"),
+                            "email": order_data.get("email_for_answer"),
                         },
                     )
                     await event_bus.emit(event)
@@ -278,11 +282,11 @@ class OrderService(BaseService[OrderRepository]):
                         key="id", value=order_id, data={"is_active": False}
                     )
                     return order
-                else:
-                    return {
-                        "hasError": True,
-                        "message": "Результат еще не готов",
-                    }
+
+                return {
+                    "hasError": True,
+                    "message": "Результат еще не готов",
+                }
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -302,10 +306,14 @@ class OrderService(BaseService[OrderRepository]):
             files_list = [str(file.object_uuid) for file in order.files]
 
             # Возвращаем файл или архив, если файлов несколько
-            if len(files_list) == 1:
-                return await get_streaming_response(files_list[0], self.s3_service)
+            if len(files_list) > 1:
+                return await get_streaming_response(
+                    files_list[0], service=self.s3_service
+                )
             elif len(files_list) > 1:
                 return await create_zip_streaming_response(files_list, self.s3_service)
+
+            return None
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -422,4 +430,5 @@ def get_order_service() -> Type[BaseService]:
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
         event_schema=Event,
+        s3_service=s3_bucket_service_factory,
     )

@@ -18,8 +18,8 @@ order_service: OrderService = get_order_service()
 @celery_app.task(
     name="send_result_to_gd",
     bind=True,
-    max_retries=settings.bts_settings.bts_max_retries,
-    default_retry_delay=settings.bts_settings.bts_max_retry_delay,
+    max_retries=settings.celery.cel_task_min_retries,
+    default_retry_delay=settings.celery.cel_task_default_retry_delay,
     retry_backoff=True,
     autoretry_for=(Exception,),
     ignore_result=False,
@@ -50,8 +50,8 @@ def send_result_to_gd(self, order_id: int):
 @celery_app.task(
     name="send_requests_for_get_result",
     bind=True,
-    max_retries=settings.bts_settings.bts_max_retries,
-    default_retry_delay=settings.bts_settings.bts_max_retry_delay,
+    max_retries=settings.celery.cel_task_min_retries,
+    default_retry_delay=settings.celery.cel_task_default_retry_delay,
     retry_backoff=True,
     autoretry_for=(Exception,),
     ignore_result=False,
@@ -91,8 +91,8 @@ def send_requests_for_get_result(self, order_id: int):
 @celery_app.task(
     name="send_requests_for_create_order",
     bind=True,
-    max_retries=settings.bts_settings.bts_min_retries,
-    default_retry_delay=settings.bts_settings.bts_min_retry_delay,
+    max_retries=settings.celery.cel_task_min_retries,
+    default_retry_delay=settings.celery.cel_task_default_retry_delay,
     autoretry_for=(Exception,),
     ignore_result=False,
     queue=settings.celery.cel_task_default_queue,
@@ -121,8 +121,8 @@ def send_requests_for_create_order(self, order_id: int):
 @celery_app.task(
     name="process_order_workflow",
     bind=True,
-    max_retries=settings.bts_settings.bts_min_retries,
-    default_retry_delay=settings.bts_settings.bts_min_retry_delay,
+    max_retries=settings.celery.cel_task_min_retries,
+    default_retry_delay=settings.celery.cel_task_default_retry_delay,
     autoretry_for=(Exception,),
     ignore_result=False,
     queue=settings.celery.cel_task_default_queue,
@@ -140,7 +140,7 @@ def process_order_workflow(self, order_id: int):
         workflow = chain(
             send_requests_for_create_order.s(order_id),
             send_requests_for_get_result.s(order_id).set(
-                countdown=settings.bts_settings.bts_expiration_time
+                countdown=settings.celery.celery_expiration_time
             ),
             send_result_to_gd.s(order_id),
         )

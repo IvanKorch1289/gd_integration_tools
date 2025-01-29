@@ -1,5 +1,5 @@
 from app.celery.celery_config import celery_manager
-from app.utils import scheduler_logger, utilities
+from app.utils import mail_service, scheduler_logger, utilities
 
 
 @celery_manager.app.task(
@@ -20,7 +20,7 @@ def check_services_health(self):
             response_body = await utilities.get_response_type_body(response)
 
             if not response_body.get("is_all_services_active"):
-                await utilities.send_email(
+                await mail_service.send_email(
                     to_email="crazyivan1289@yandex.ru",
                     subject="Недоступен компонент GD_ADVANCED_TOOLS",
                     message=str(response_body),
@@ -33,7 +33,7 @@ def check_services_health(self):
 
         except Exception as exc:
             scheduler_logger.error(f"Критическая ошибка: {exc}")
-            await utilities.send_email(
+            await mail_service.send_email(
                 to_email="crazyivan1289@yandex.ru",
                 subject="Сбой проверки сервисов",
                 message=str(exc),

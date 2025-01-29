@@ -267,10 +267,22 @@ class CelerySettings(BaseSettings):
         description="Мягкий таймаут перед отправкой SIGTERM",
     )
     cel_task_max_retries: int = Field(
-        default=3,
-        ge=0,
+        default=6,
+        ge=3,
         env="CELERY_TASK_MAX_RETRIES",
         description="Максимальное количество повторных попыток",
+    )
+    cel_task_min_retries: int = Field(
+        default=3,
+        ge=0,
+        env="CELERY_TASK_MIN_RETRIES",
+        description="Миниальное количество повторных попыток",
+    )
+    cel_task_default_retry_delay: int = Field(
+        default=3,
+        ge=0,
+        env="CELERY_TASK_DEFAULT_RETRY_DELAY",
+        description="Задержка перед повторной попыткой",
     )
     cel_task_retry_backoff: int = Field(
         default=60,
@@ -281,6 +293,11 @@ class CelerySettings(BaseSettings):
         default=True,
         env="CELERY_TASK_RETRY_JITTER",
         description="Добавлять случайный джиттер к задержке",
+    )
+    celery_expiration_time = Field(
+        default=60,
+        end="CELERY_EXPIRATION_TIME",
+        description="Задержка перед запуском задачи  (секунды)",
     )
 
     # Конфигурация воркеров

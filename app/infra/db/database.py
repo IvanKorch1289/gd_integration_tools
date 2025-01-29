@@ -169,15 +169,15 @@ class DatabaseInitializer:
         Raises:
             DatabaseError: Если подключение к базе данных не удалось.
         """
-        async with cls.session_maker() as session:
+        async with cls.async_session_maker() as session:
             try:
                 result = await session.execute(text("SELECT 1"))
                 if result.scalar_one_or_none() != 1:
-                    raise DatabaseError(detail="Database not connected")
+                    raise DatabaseError(message="Database not connected")
                 return True
             except Exception as exc:
                 raise DatabaseError(
-                    detail=f"Database not connected: {str(exc)}",
+                    message=f"Database not connected: {str(exc)}",
                 )
 
 

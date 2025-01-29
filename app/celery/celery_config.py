@@ -29,7 +29,7 @@ class QueueUnavailableError(CeleryHealthError):
 @singleton
 class CeleryManager:
     def __init__(self, settings: CelerySettings):
-        self.settings = settings.celery
+        self.settings = settings
         self.app = self._configure_celery()
         self._configure_periodic_tasks()
 
@@ -97,9 +97,9 @@ class CeleryManager:
 
     def _configure_periodic_tasks(self):
         """Дополнительная конфигурация периодических задач"""
-        if settings.ENVIRONMENT == "testing":
+        if settings.app.app_environment == "testing":
             self.app.conf.beat_schedule = {}
-        elif settings.ENVIRONMENT == "development":
+        elif settings.app.app_environment == "development":
             # Для разработки можно уменьшить интервал
             self.app.conf.beat_schedule["health-check-every-hour"]["schedule"] = (
                 schedules.crontab(minute="*/15")
@@ -153,4 +153,4 @@ class CeleryManager:
 
 
 # Инициализация менеджера
-celery_manager = CeleryManager(settings)
+celery_manager = CeleryManager(settings=settings.celery)

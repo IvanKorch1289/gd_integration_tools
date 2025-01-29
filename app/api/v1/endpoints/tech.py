@@ -52,9 +52,7 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на хранилище логов.
         """
-        log_url = (
-            f"{settings.logging_settings.log_host}:{settings.logging_settings.log_port}"
-        )
+        log_url = f"{settings.logging.log_host}:{settings.logging_settings.log_port}"
         return utilities.generate_link_page(log_url, "Хранилище логов")
 
     @router.get(
@@ -71,7 +69,7 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на файловое хранилище.
         """
-        fs_url = f"{settings.storage_settings.fs_interfase_url}"
+        fs_url = f"{settings.storage.fs_interfase_url}"
         return utilities.generate_link_page(fs_url, "Файловое хранилище")
 
     @router.get(
@@ -88,7 +86,7 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на интерфейс мониторинга задач.
         """
-        bts_url = settings.bts_settings.bts_interface_url
+        bts_url = settings.celery.cel_flower_url
         return utilities.generate_link_page(bts_url, "Мониторинг задач")
 
     @router.get(

@@ -3,8 +3,7 @@ from typing import Callable, Dict, List
 
 from pydantic import BaseModel
 
-from app.utils import singleton, utilities
-from app.utils.logging import app_logger
+from app.utils import app_logger, mail_service, singleton, utilities
 
 
 __all__ = (
@@ -161,7 +160,7 @@ async def on_email_send(payload: dict):
     """
     app_logger.info(f"Обработка события 'email_send': {payload}")
 
-    await utilities.send_email(
+    await mail_service.send_email(
         to_email=payload["email"],
         subject=payload["subject"],
         message=payload["message"],
