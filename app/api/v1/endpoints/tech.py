@@ -235,7 +235,7 @@ class TechBV:
         Returns:
             dict: Версия приложения.
         """
-        return {"version": settings.app_version}
+        return {"version": settings.app.app_version}
 
     @router.get(
         "/config", summary="Получить текущую конфигурацию", operation_id="get_config"
