@@ -284,7 +284,7 @@ class TechBV:
             dict: Результат отправки email.
         """
         return await mail_service.send_email(
-            to_email=schema.to_email, subject=schema.subject, message=schema.message
+            to_emails=schema.to_email, subject=schema.subject, message=schema.message
         )
 
     @router.get(

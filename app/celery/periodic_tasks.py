@@ -25,7 +25,7 @@ def check_services_health(self):
 
             if not response_body.get("is_all_services_active"):
                 await mail_service.send_email(
-                    to_email="crazyivan1289@yandex.ru",
+                    to_emails=["crazyivan1289@yandex.ru"],
                     subject="Недоступен компонент GD_ADVANCED_TOOLS",
                     message=str(response_body),
                 )
@@ -38,7 +38,7 @@ def check_services_health(self):
         except Exception as exc:
             scheduler_logger.error(f"Критическая ошибка: {exc}")
             await mail_service.send_email(
-                to_email="crazyivan1289@yandex.ru",
+                to_emails=["crazyivan1289@yandex.ru"],
                 subject="Сбой проверки сервисов",
                 message=str(exc),
             )

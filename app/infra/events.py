@@ -163,7 +163,7 @@ async def on_email_send(payload: dict):
     app_logger.info(f"Обработка события 'email_send': {payload}")
 
     await mail_service.send_email(
-        to_email=payload["email"],
+        to_emails=payload["email"],
         subject=payload["subject"],
         message=payload["message"],
     )

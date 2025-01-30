@@ -6,7 +6,6 @@ import aiohttp
 import asyncio
 from urllib.parse import urljoin
 
-from app.config.constants import ROOT_DIR
 from app.config.settings import APISSKBSettings, settings
 from app.infra.storage import s3_bucket_service_factory
 from app.services.helpers import make_request
