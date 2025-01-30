@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import EmailStr, Field, SecretStr
 
-from app.schemas import BaseSchema
+from app.schemas.base import BaseSchema
 
 
 __all__ = (

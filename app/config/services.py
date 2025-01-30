@@ -127,7 +127,7 @@ class LogStorageSettings(BaseSettings):
     )
     log_loggers_config: List[Dict] = Field(
         default=[
-            {"name": "application", "facility": "app"},
+            {"name": "application", "facility": "application"},
             {"name": "database", "facility": "db"},
             {"name": "storage", "facility": "storage"},
             {"name": "mail", "facility": "mail"},
@@ -299,7 +299,7 @@ class CelerySettings(BaseSettings):
         env="CELERY_TASK_RETRY_JITTER",
         description="Добавлять случайный джиттер к задержке",
     )
-    celery_expiration_time = Field(
+    celery_expiration_time: int = Field(
         default=60,
         end="CELERY_EXPIRATION_TIME",
         description="Задержка перед запуском задачи  (секунды)",

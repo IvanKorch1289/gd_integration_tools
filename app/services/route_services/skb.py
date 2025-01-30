@@ -6,10 +6,11 @@ import aiohttp
 import asyncio
 from urllib.parse import urljoin
 
+from app.config.constants import ROOT_DIR
 from app.config.settings import APISSKBSettings, settings
 from app.infra.storage import s3_bucket_service_factory
 from app.services.helpers import make_request
-from app.services.orderkinds import get_order_kind_service
+from app.services.route_services.orderkinds import get_order_kind_service
 from app.services.service_factory import BaseService
 
 

@@ -184,7 +184,12 @@ def handle_db_errors(func):
         try:
             return await func(*args, **kwargs)
         except Exception as exc:
-            raise DatabaseError(message=str(exc))
+            raise DatabaseError(
+                message={
+                    "message": exc.message,
+                    "hasErrors": True,
+                }
+            )
 
     return wrapper
 
@@ -229,7 +234,10 @@ def handle_routes_errors(func: Callable) -> Callable:
             # Если возникает исключение, возвращаем HTTP-ответ с кодом 500
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"An error occurred: {str(exc)}",
+                detail={
+                    "message": str(exc),
+                    "hasErrors": True,
+                },
             )
 
     return wrapper

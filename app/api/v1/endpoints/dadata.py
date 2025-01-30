@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Header
 from fastapi_utils.cbv import cbv
 
-from app.services import get_dadata_service
+from app.services.route_services.dadata import get_dadata_service
 
 
 __all__ = ("router",)

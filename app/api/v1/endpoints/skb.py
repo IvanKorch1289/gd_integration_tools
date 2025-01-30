@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Header
 from fastapi_utils.cbv import cbv
 
-from app.schemas import APISKBOrderSchemaIn
-from app.services import get_skb_service
-from app.utils import ResponseTypeChoices
+from app.schemas.route_schemas.skb import APISKBOrderSchemaIn
+from app.services.route_services.skb import get_skb_service
+from app.utils.enums.skb import ResponseTypeChoices
 
 
 __all__ = ("router",)

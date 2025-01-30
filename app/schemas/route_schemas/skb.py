@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 
 from pydantic import Field
 
-from app.schemas import BaseSchema
+from app.schemas.base import BaseSchema
 
 
 __all__ = ("APISKBOrderSchemaIn",)

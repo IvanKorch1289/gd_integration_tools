@@ -1,3 +1,3 @@
-from app.db.database import *
-from app.db.models import *
-from app.db.repositories import *
+from app.infra.db.database import *
+from app.infra.db.models import *
+from app.infra.db.repositories import *

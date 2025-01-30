@@ -1,7 +1,7 @@
 from sqlalchemy import UUID, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.models.base import BaseModel
+from app.infra.db.models.base import BaseModel
 
 
 __all__ = (

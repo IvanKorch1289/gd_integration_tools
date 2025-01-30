@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict
 
-from app.infra import BaseModel, mapper_registry
+from app.infra.db.models import BaseModel, mapper_registry
 
 
 __all__ = ("get_user_models", "get_model_enum")

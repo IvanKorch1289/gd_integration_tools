@@ -5,7 +5,6 @@ from fastapi_utils.cbv import cbv
 
 from app.api.limiter import route_limiter
 from app.api.routers_factory import create_router_class
-from app.config import get_streaming_response, handle_routes_errors
 from app.infra.storage import s3_bucket_service_factory
 from app.schemas import (
     FileFilter,
@@ -13,7 +12,9 @@ from app.schemas import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services import get_file_service
+from app.services.helpers.storage_helpers import get_streaming_response
+from app.services.route_services.files import get_file_service
+from app.utils.errors import handle_routes_errors
 
 
 __all__ = (

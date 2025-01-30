@@ -3,7 +3,9 @@ from typing import Callable, Dict, List
 
 from pydantic import BaseModel
 
-from app.utils import app_logger, mail_service, singleton, utilities
+from app.utils.decorators import singleton
+from app.utils.logging import app_logger
+from app.utils.mail import mail_service
 
 
 __all__ = (

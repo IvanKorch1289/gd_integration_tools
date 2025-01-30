@@ -15,7 +15,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
 from app.config.settings import DatabaseSettings, settings
-from app.utils import DatabaseError, NotFoundError, db_logger
+from app.utils.errors import DatabaseError, NotFoundError
+from app.utils.logging import db_logger
 
 
 __all__ = (
@@ -159,8 +160,7 @@ class DatabaseInitializer:
         """
         return self.sync_session_maker()
 
-    @classmethod
-    async def health_check_database(cls) -> bool:
+    async def check_connection(self) -> bool:
         """Проверяет подключение к базе данных.
 
         Returns:
@@ -169,7 +169,8 @@ class DatabaseInitializer:
         Raises:
             DatabaseError: Если подключение к базе данных не удалось.
         """
-        async with cls.async_session_maker() as session:
+
+        async with self.async_session_maker() as session:
             try:
                 result = await session.execute(text("SELECT 1"))
                 if result.scalar_one_or_none() != 1:

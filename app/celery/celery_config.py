@@ -2,11 +2,12 @@ from typing import Dict, List, Optional
 
 from celery import Celery, schedules
 
+from app.celery.cron import CronPresets
 from app.config.settings import CelerySettings, settings
-from app.utils.utils import singleton
+from app.utils.decorators import singleton
 
 
-__all__ = ("celery_manager",)
+__all__ = ("celery_manager", "celery_app")
 
 
 class CeleryHealthError(Exception):
@@ -26,6 +27,10 @@ class QueueUnavailableError(CeleryHealthError):
     """Ошибка отсутствия активных очередей"""
 
 
+class BeatNotRunningError(CeleryHealthError):
+    """Ошибка соединения с Celery Beat"""
+
+
 @singleton
 class CeleryManager:
     def __init__(self, settings: CelerySettings):
@@ -39,7 +44,7 @@ class CeleryManager:
             "tasks",
             broker=self.settings.cel_broker_url,
             backend=self.settings.cel_result_backend,
-            include=["app.celery.celery_tasks"],
+            include=["app.celery.tasks"],
         )
 
         celery_app.conf.update(
@@ -83,14 +88,12 @@ class CeleryManager:
         """Возвращает расписание периодических задач"""
         return {
             "health-check-every-hour": {
-                "task": "app.celery.celery_tasks.check_services_health",
-                "schedule": schedules.crontab(
-                    minute=settings.health_check.minute, hour=settings.health_check.hour
-                ),
+                "task": "app.celery.periodic_tasks.check_services_health",
+                "schedule": CronPresets.HOURLY.schedule,
                 "args": (),
                 "options": {
                     "queue": self.settings.cel_task_default_queue,
-                    "expires": 300,  # Задача истекает через 5 минут
+                    "expires": 300,
                 },
             }
         }
@@ -123,12 +126,12 @@ class CeleryManager:
 
             return True
 
-        except Exception as e:
+        except Exception as exc:
             raise CeleryConnectionError(
-                message="Celery connection failed", details=str(e)
+                message="Celery connection failed", details=str(exc)
             )
 
-    async def get_queue_status(self) -> Dict[str, List[str]]:
+    async def check_queue_connection(self) -> Dict[str, List[str]]:
         """Возвращает статус очередей.
 
         Returns:
@@ -146,11 +149,37 @@ class CeleryManager:
 
             return active_queues
 
-        except Exception as e:
+        except Exception as exc:
             raise QueueUnavailableError(
-                message="Failed to get queue status", details=str(e)
+                message="Failed to get queue status", details=str(exc)
+            )
+
+    async def check_beat_connection(self) -> dict:
+        """Проверяет активность Celery Beat.
+
+        Returns:
+            dict: Статус и список запланированных задач
+
+        Raises:
+            BeatNotRunningError: Если Beat не запущен
+        """
+        try:
+            inspect = self.app.control.inspect()
+            scheduled = inspect.scheduled()  # Планируемые задачи
+            active = inspect.active()  # Активные воркеры
+
+            if not scheduled and not active:
+                raise BeatNotRunningError("Celery Beat is not running")
+
+            return {"scheduled_tasks": scheduled, "active_workers": active}
+
+        except Exception as exc:
+            raise BeatNotRunningError(
+                message="Celery Beat check failed", details=str(exc)
             )
 
 
 # Инициализация менеджера
 celery_manager = CeleryManager(settings=settings.celery)
+
+celery_app = celery_manager.app

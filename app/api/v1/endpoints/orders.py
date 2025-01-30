@@ -4,20 +4,17 @@ from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import FileResponse
 from fastapi_utils.cbv import cbv
 
+from app.api.limiter import route_limiter
 from app.api.routers_factory import create_router_class
-from app.config import (
-    BaseS3Service,
-    handle_routes_errors,
-    route_limiter,
-    s3_bucket_service_factory,
-)
+from app.infra.storage import BaseS3Service, s3_bucket_service_factory
 from app.schemas import (
     OrderFilter,
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services import get_order_service
+from app.services.route_services.orders import get_order_service
+from app.utils.errors import handle_routes_errors
 
 
 __all__ = ("router",)

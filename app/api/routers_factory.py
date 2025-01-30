@@ -5,6 +5,9 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
 
+from app.api.limiter import route_limiter
+from app.utils.errors import handle_routes_errors
+
 
 SchemaIn = TypeVar("SchemaIn", bound=BaseModel)
 SchemaOut = TypeVar("SchemaOut", bound=BaseModel)
@@ -22,7 +25,6 @@ def create_router_class(
     service,
     filter_class: Optional[Type] = None,
 ):
-    from app.config import handle_routes_errors, route_limiter
 
     @cbv(router)
     class GenericCBV:

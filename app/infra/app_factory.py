@@ -8,22 +8,25 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqladmin import Admin
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
-from app.api.v1.routers import get_v1_routers, init_limiter
+from app.api import init_limiter
+from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
-from app.infra import db_initializer
-from app.utils import (
-    APIKeyMiddleware,
-    DatabaseError,
+from app.infra.db.database import db_initializer
+from app.utils.admins import (
     FileAdmin,
-    InnerRequestLoggingMiddleware,
     OrderAdmin,
     OrderFileAdmin,
     OrderKindAdmin,
-    TimeoutMiddleware,
     UserAdmin,
-    app_logger,
-    utilities,
 )
+from app.utils.errors import DatabaseError
+from app.utils.logging import app_logger
+from app.utils.middlewares import (
+    APIKeyMiddleware,
+    InnerRequestLoggingMiddleware,
+    TimeoutMiddleware,
+)
+from app.utils.utils import utilities
 
 
 __all__ = ("create_app",)
@@ -104,36 +107,17 @@ def create_app() -> FastAPI:
         """
         app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
 
-        # Обработка SQLAlchemy DatabaseError
-        if isinstance(exc, DatabaseError):
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "message": "Ошибка базы данных",
-                    "detail": str(exc),
-                    "hasErrors": True,
-                },
-            )
-
         # Обработка кастомных исключений с атрибутами status_code и message
         if hasattr(exc, "status_code") and hasattr(exc, "message"):
             return JSONResponse(
                 status_code=exc.status_code,
-                content={
-                    "message": exc.message,
-                    "detail": str(exc),
-                    "hasErrors": True,
-                },
+                content=str(exc),
             )
 
         # Общая обработка всех остальных исключений
         return JSONResponse(
             status_code=500,
-            content={
-                "message": "Внутренняя ошибка сервера",
-                "detail": str(exc),
-                "hasErrors": True,
-            },
+            content=str(exc),
         )
 
     # Подключение SQLAdmin для административной панели

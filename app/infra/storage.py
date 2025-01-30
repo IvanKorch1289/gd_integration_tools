@@ -11,7 +11,7 @@ from aiobotocore.session import get_session
 from botocore.exceptions import ClientError as BotoClientError
 
 from app.config.settings import FileStorageSettings, settings
-from app.utils import singleton
+from app.utils.decorators import singleton
 from app.utils.logging import fs_logger
 
 
@@ -382,8 +382,7 @@ class MinioService(BaseS3Service):
         except Exception as exc:
             fs_logger.error(f"Failed to log operation: {str(exc)}")
 
-    @classmethod
-    async def health_check_s3(cls) -> bool:
+    async def check_connection(self) -> bool:
         """Проверяет подключение к S3.
 
         Returns:
@@ -392,18 +391,13 @@ class MinioService(BaseS3Service):
         Raises:
             HTTPException: Если подключение к S3 не удалось.
         """
-        async with cls._create_s3_client() as client:
-            try:
-                result = await client.check_bucket_exists()
-                if not result:
-                    raise BotoClientError(
-                        detail="Minio not connected",
-                    )
-                return True
-            except Exception as exc:
-                raise BotoClientError(
-                    detail=f"Minio not connected: {str(exc)}",
-                )
+        try:
+            result = await self.check_bucket_exists()
+            if not result:
+                raise BotoClientError
+            return True
+        except Exception:
+            return False
 
     async def check_bucket_exists(self) -> bool:
         """Проверяет существование бакета в S3.
@@ -414,6 +408,7 @@ class MinioService(BaseS3Service):
         async with self._create_s3_client() as client:
             try:
                 response = await client.list_buckets()
+
                 return any(
                     bucket["Name"] == self.bucket for bucket in response["Buckets"]
                 )

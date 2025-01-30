@@ -15,11 +15,13 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
-from app.config import handle_routes_errors
 from app.config.settings import settings
 from app.schemas import EmailSchema
 from app.services import BaseService, get_service_for_model
 from app.utils import get_model_enum, utilities
+from app.utils.errors import handle_routes_errors
+from app.utils.health_check import health_check
+from app.utils.mail import mail_service
 
 
 __all__ = ("router",)
@@ -102,7 +104,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния базы данных.
         """
-        return await utilities.health_check_database()
+        return await health_check.check_database()
 
     @router.get(
         "/healthcheck-redis",
@@ -117,7 +119,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Redis.
         """
-        return await utilities.health_check_redis()
+        return await health_check.check_redis()
 
     @router.get(
         "/healthcheck-celery",
@@ -132,7 +134,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Celery.
         """
-        return await utilities.health_check_celery()
+        return await health_check.check_celery()
 
     @router.get(
         "/healthcheck-celery-queues",
@@ -147,7 +149,22 @@ class TechBV:
         Returns:
             dict: Состояние очередей Celery.
         """
-        return await utilities.health_check_celery_queues()
+        return await health_check.check_celery_queues()
+
+    @router.get(
+        "/healthcheck-scheduler",
+        summary="Проверить состояние планировщика задач",
+        operation_id="healthcheck_scheduler",
+    )
+    @handle_routes_errors
+    async def healthcheck_celery_scheduler(self):
+        """
+        Проверяет состояние планировщика задач.
+
+        Returns:
+            dict: Результат проверки состояния планировщика задач.
+        """
+        return await health_check.check_celery_scheduler()
 
     @router.get(
         "/healthcheck-s3",
@@ -162,22 +179,22 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния S3.
         """
-        return await utilities.health_check_s3()
+        return await health_check.check_s3()
 
     @router.get(
-        "/healthcheck-scheduler",
-        summary="Проверить состояние планировщика задач",
-        operation_id="healthcheck_scheduler",
+        "/healthcheck-s3-bucket",
+        summary="Проверить наличие бакета в S3",
+        operation_id="healthcheck_s3_bucket",
     )
     @handle_routes_errors
-    async def healthcheck_scheduler(self):
+    async def healthcheck_s3_bucket(self):
         """
-        Проверяет состояние планировщика задач.
+        Проверяет наличие бакета в S3.
 
         Returns:
-            dict: Результат проверки состояния планировщика задач.
+            dict: Результат проверки наличия бакета в S3.
         """
-        return await utilities.health_check_scheduler()
+        return await health_check.check_s3_bucket()
 
     @router.get(
         "/healthcheck-graylog",
@@ -192,7 +209,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
-        return await utilities.health_check_graylog()
+        return await health_check.check_graylog()
 
     @router.get(
         "/healthcheck-smtp",
@@ -207,7 +224,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния SMTP-сервера.
         """
-        return await utilities.health_check_smtp()
+        return await health_check.check_smtp()
 
     @router.get(
         "/healthcheck-all-services",
@@ -222,7 +239,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния всех сервисов.
         """
-        return await utilities.health_check_all_services()
+        return await health_check.check_all_services()
 
     @router.get(
         "/version", summary="Получить версию приложения", operation_id="get_version"
@@ -266,7 +283,7 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        return await utilities.send_email(
+        return await mail_service.send_email(
             to_email=schema.to_email, subject=schema.subject, message=schema.message
         )
 

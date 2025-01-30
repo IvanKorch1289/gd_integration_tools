@@ -79,17 +79,15 @@ class RedisClient:
             await self._close()
 
     @classmethod
-    async def health_check_redis(cls) -> bool:
+    async def check_connection(cls) -> bool:
         """Проверяет подключение к Redis.
 
         Returns:
             bool: True, если подключение успешно.
 
         Raises:
-            HTTPException: Если подключение к Redis не удалось.
+            RedisError: Если подключение к Redis не удалось.
         """
-        from app.infra.redis import redis_client
-
         try:
             async with redis_client.connection() as r:
                 await r.ping()

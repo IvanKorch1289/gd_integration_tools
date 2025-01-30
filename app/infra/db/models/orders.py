@@ -3,8 +3,8 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils.types import EmailType, UUIDType
 
-from app.db.models.base import BaseModel, nullable_str
-from app.db.models.files import OrderFile
+from app.infra.db.models.base import BaseModel, nullable_str
+from app.infra.db.models.files import OrderFile
 
 
 __all__ = ("Order",)

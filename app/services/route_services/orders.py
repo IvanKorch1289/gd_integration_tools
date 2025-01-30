@@ -23,7 +23,7 @@ from app.services.helpers import (
 )
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.services.service_factory import BaseService
-from app.utils import ResponseTypeChoices, utilities
+from app.utils.enums import ResponseTypeChoices
 
 
 __all__ = ("get_order_service",)

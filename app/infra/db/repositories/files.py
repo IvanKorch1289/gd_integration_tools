@@ -8,7 +8,7 @@ from app.infra.db.repositories.base import (
     SQLAlchemyRepository,
     session_manager,
 )
-from app.utils import NotFoundError, handle_db_errors
+from app.utils.errors import NotFoundError, handle_db_errors
 
 
 __all__ = (

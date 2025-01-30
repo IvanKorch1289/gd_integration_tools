@@ -2,8 +2,8 @@ from celery import chain
 
 from app.celery.celery_config import celery_manager
 from app.config.settings import settings
-from app.services import OrderService, get_order_service
-from app.utils import utilities
+from app.services.route_services.orders import OrderService, get_order_service
+from app.utils.utils import utilities
 
 
 __all__ = ("process_order_workflow",)

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.db.database import session_manager
 from app.infra.db.models import User
 from app.infra.db.repositories.base import SQLAlchemyRepository
-from app.utils import handle_db_errors
+from app.utils.errors import handle_db_errors
 
 
 __all__ = (

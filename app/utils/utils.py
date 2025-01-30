@@ -1,52 +1,21 @@
-import json
-import sys
-import traceback
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Type
 
 import asyncio
 import json_tricks
 import pandas as pd
 # import pyclamd
-from fastapi import HTTPException, Response, status
+from fastapi import Response
 from fastapi.responses import HTMLResponse
 
-from app.config.settings import settings
 from app.schemas import BaseSchema
+from app.utils.decorators import singleton
 
 
-__all__ = (
-    "singleton",
-    "utilities",
-)
-
-
-T = TypeVar("T")
-ParamsType = Dict[str, Any]
-
-cache_expire_seconds = settings.redis.redis_cache_expire_seconds
+__all__ = ("utilities",)
 
 # cd = pyclamd.ClamdNetworkSocket(host='127.0.0.1', port=3310)
-
-
-def singleton(cls):
-    """Декоратор для создания Singleton-класса.
-
-    Args:
-        cls: Класс, который нужно сделать Singleton.
-
-    Returns:
-        Функция, которая возвращает единственный экземпляр класса.
-    """
-    instances = {}
-
-    def get_instance(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return get_instance
 
 
 @singleton
@@ -82,81 +51,6 @@ class Utilities:
             raise ValueError(
                 f"Ошибка при преобразовании модели в схему: {exc}"
             ) from exc
-
-    async def health_check_scheduler(self) -> bool:
-        """Проверяет подключение к планировщику задач.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к планировщику не удалось.
-        """
-        try:
-            from app.config.scheluler.scheduler import (  # Ленивый импорт
-                scheduler_manager,
-            )
-
-            result = await scheduler_manager.check_status()
-            if not result:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Scheduler not connected",
-                )
-            return True
-        except Exception as exc:
-            traceback.print_exc(file=sys.stdout)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Scheduler not connected: {str(exc)}",
-            )
-
-    async def health_check_all_services(self):
-        """Проверяет состояние всех сервисов (база данных, Redis, S3, Graylog, SMTP, Celery, планировщик задач).
-
-        Returns:
-            Response: JSON-ответ с результатами проверки всех сервисов.
-        """
-        db_check = await self.health_check_database()
-        redis_check = await self.health_check_redis()
-        s3_check = await self.health_check_s3()
-        graylog_check = await self.health_check_graylog()
-        smtp_check = await self.health_check_smtp()
-        celery_check = await self.health_check_celery()
-        celery_queues_check = await self.health_check_celery_queues()
-        scheduler_check = await self.health_check_scheduler()
-
-        response_data = {
-            "db": db_check,
-            "redis": redis_check,
-            "s3": s3_check,
-            "graylog": graylog_check,
-            "smtp": smtp_check,
-            "celery": celery_check,
-            "celery_queue": celery_queues_check,
-            "scheduler": scheduler_check,
-        }
-
-        if all(response_data.values()):
-            status_code = 200
-            message = "All systems are operational."
-            is_all_services_active = True
-        else:
-            status_code = 500
-            message = "One or more components are not functioning properly."
-            is_all_services_active = False
-
-        response_body = {
-            "message": message,
-            "is_all_services_active": is_all_services_active,
-            "details": response_data,
-        }
-
-        return Response(
-            content=json.dumps(response_body),
-            media_type="application/json",
-            status_code=status_code,
-        )
 
     async def get_response_type_body(self, response: Response):
         """Извлекает и преобразует тело ответа в формат JSON.

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.db import Order
+from app.infra.db.models import Order
 
 
 __all__ = ("OrderFilter",)

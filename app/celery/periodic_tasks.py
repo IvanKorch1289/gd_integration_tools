@@ -1,8 +1,10 @@
-from app.celery.celery_config import celery_manager
-from app.utils import mail_service, scheduler_logger, utilities
+from app.celery.celery_config import celery_app
+from app.utils.logging import scheduler_logger
+from app.utils.mail import mail_service
+from app.utils.utils import utilities
 
 
-@celery_manager.app.task(
+@celery_app.task(
     name="check_services_health",
     bind=True,
     max_retries=3,
@@ -15,8 +17,10 @@ def check_services_health(self):
     """Периодическая задача для проверки состояния сервисов"""
 
     async def inner_check():
+        from app.utils.health_check import health_check
+
         try:
-            response = await utilities.health_check_all_services()
+            response = await health_check.check_all_services()
             response_body = await utilities.get_response_type_body(response)
 
             if not response_body.get("is_all_services_active"):

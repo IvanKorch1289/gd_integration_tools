@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 
 from app.config.settings import MailSettings, settings
-from app.utils.utils import singleton
+from app.utils.decorators import singleton
 
 
 __all__ = ("mail_service",)
@@ -20,7 +20,7 @@ class MailService:
     def __init__(self, settings: MailSettings):
         self.settings = settings
 
-    async def check_smtp_connection(self) -> bool:
+    async def check_connection(self) -> bool:
         """Проверяет доступность SMTP-сервера.
 
         Returns:

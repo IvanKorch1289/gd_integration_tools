@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.db.database import session_manager
 from app.infra.db.models import Order
 from app.infra.db.repositories.base import SQLAlchemyRepository
-from app.utils import NotFoundError, handle_db_errors
+from app.utils.errors import NotFoundError, handle_db_errors
 
 
 __all__ = (

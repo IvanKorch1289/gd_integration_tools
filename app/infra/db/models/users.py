@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy_utils.types import PasswordType
 
-from app.db.models import BaseModel
+from app.infra.db.models import BaseModel
 
 
 __all__ = ("User",)

@@ -122,7 +122,7 @@ class LoggerManager:
 
     def _configure_loggers(self) -> None:
         """Настройка всех логгеров из конфигурации."""
-        for logger_cfg in self.settings.log_loggers_config:
+        for logger_cfg in self.log_config.log_loggers_config:
             logger = logging.getLogger(logger_cfg["name"])
             logger.propagate = False
             logger.setLevel(self.log_config.log_level.upper())
@@ -131,7 +131,7 @@ class LoggerManager:
 
     def _init_logger_instances(self) -> None:
         """Инициализация атрибутов логгеров для удобного доступа."""
-        for logger_cfg in self.settings.loggers_config:
+        for logger_cfg in self.log_config.log_loggers_config:
             logger_name = logger_cfg["name"]
             setattr(self, f"{logger_name}_logger", logging.getLogger(logger_name))
 
@@ -206,7 +206,7 @@ class LoggerManager:
         extra = {"user_id": user_id, "action": action, **additional_info}
         logger.info("User activity: %s", action, extra=extra, stacklevel=2)
 
-    async def health_check_graylog(self) -> bool:
+    async def check_connection(self) -> bool:
         """Проверка доступности Graylog."""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
@@ -226,9 +226,9 @@ class LoggerManager:
 # Инициализация менеджера логирования
 log_manager = LoggerManager(
     log_config=settings.logging,
-    environment=settings.app_environment,
+    environment=settings.app.app_environment,
     hostname=socket.gethostname(),
-    debug=settings.app_debug,
+    debug=settings.app.app_debug,
 )
 
 # Получение логгеров

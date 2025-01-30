@@ -7,7 +7,7 @@ from app.schemas import (
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from app.services.orderkinds import get_order_kind_service
+from app.services.route_services.orderkinds import get_order_kind_service
 
 
 __all__ = ("router",)

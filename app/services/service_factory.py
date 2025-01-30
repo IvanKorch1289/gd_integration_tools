@@ -3,9 +3,11 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infra.db import AbstractRepository, BaseModel, caching_decorator
+from app.infra.db.models import BaseModel
+from app.infra.db.repositories.base import AbstractRepository
+from app.infra.redis import caching_decorator
 from app.schemas import BaseSchema
-from app.utils import utilities
+from app.utils.utils import utilities
 
 
 __all__ = ("create_service_class", "BaseService", "get_service_for_model")
@@ -82,9 +84,14 @@ class BaseService(Generic[ConcreteRepo]):
                 if not instance:
                     return []
                 elif isinstance(instance, list):
-                    return [
-                        await self._transfer(item, response_schema) for item in instance
-                    ]
+                    return (
+                        [
+                            await self._transfer(item, response_schema)
+                            for item in instance
+                        ]
+                        if len(instance) > 0
+                        else []
+                    )
 
                 return await self._transfer(instance, response_schema)
             except Exception:

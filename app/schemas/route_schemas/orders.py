@@ -5,8 +5,8 @@ from uuid import UUID
 from pydantic import Field
 
 from app.schemas.base import BaseSchema
-from app.schemas.files import FileSchemaOut
-from app.schemas.orderkinds import OrderKindSchemaOut
+from app.schemas.route_schemas.files import FileSchemaOut
+from app.schemas.route_schemas.orderkinds import OrderKindSchemaOut
 
 
 __all__ = (
