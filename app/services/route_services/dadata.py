@@ -3,8 +3,8 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 from app.config.settings import APIDADATASettings, settings
-from app.infra.redis import caching_decorator
 from app.services.helpers import make_request
+from app.utils.decorators import response_cache
 
 
 __all__ = (
@@ -40,7 +40,7 @@ class APIDADATAService:
         self.endpoints = self.settings.dadata_endpoints
 
     @classmethod
-    @caching_decorator
+    @response_cache
     async def get_geolocate(
         cls,
         lat: float,

@@ -5,7 +5,7 @@ from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
 
-from app.api.limiter import route_limiter
+from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors
 
 
@@ -37,7 +37,7 @@ def create_router_class(
             summary="Получить все объекты",
             response_model=List[schema_out],
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def get_all(self, request: Request, x_api_key: str = Header(...)):
             result = await self.service.get()
@@ -54,7 +54,7 @@ def create_router_class(
             summary="Получить объект по ID",
             response_model=schema_out,
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def get_by_id(
             self, request: Request, object_id: int, x_api_key: str = Header(...)
@@ -73,7 +73,7 @@ def create_router_class(
             summary="Добавить объект",
             response_model=schema_out,
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def add_object(
             self,
@@ -89,7 +89,7 @@ def create_router_class(
             summary="Добавить несколько объектов",
             response_model=List[schema_out],
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def add_many_objects(
             self,
@@ -106,7 +106,7 @@ def create_router_class(
             summary="Изменить объект по ID",
             response_model=schema_out,
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def update_object(
             self,
@@ -124,7 +124,7 @@ def create_router_class(
             status_code=status.HTTP_204_NO_CONTENT,
             summary="Удалить объект по ID",
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def delete_object(
             self, object_id: int, request: Request, x_api_key: str = Header(...)
@@ -137,7 +137,7 @@ def create_router_class(
             summary="Получить версии объекта по ID",
             response_model=List[version_schema_out],
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def get_all_object_versions(
             self, object_id: int, request: Request, x_api_key: str = Header(...)
@@ -150,7 +150,7 @@ def create_router_class(
             summary="Получить последнюю версию объекта по ID",
             response_model=version_schema_out,
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def get_latest_object_version(
             self, object_id: int, request: Request, x_api_key: str = Header(...)
@@ -163,7 +163,7 @@ def create_router_class(
             summary="Восстановить объект до указанной версии",
             response_model=schema_out,
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def restore_object_to_version(
             self,
@@ -181,7 +181,7 @@ def create_router_class(
             status_code=status.HTTP_200_OK,
             summary="Получить изменения объекта по ID",
         )
-        @route_limiter
+        @route_limiting
         @handle_routes_errors
         async def get_object_changes(
             self, object_id: int, request: Request, x_api_key: str = Header(...)
@@ -196,7 +196,7 @@ def create_router_class(
                 summary="Получить объекты по фильтру",
                 response_model=List[schema_out],
             )
-            @route_limiter
+            @route_limiting
             @handle_routes_errors
             async def get_by_filter(
                 self,

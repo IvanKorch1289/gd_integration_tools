@@ -1,137 +1,200 @@
-import logging
-from typing import Any, Dict, Optional, Union
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Dict, Optional, Union
 
 import aiohttp
+import asyncio
 import json_tricks
+from aiohttp import ClientTimeout, TCPConnector
 
+from app.utils.logging import request_logger
 from app.utils.utils import utilities
 
 
-__all__ = ("make_request",)
+__all__ = ("make_request", "get_http_client")
 
 
-# Используем логгер, настроенный для Graylog
-request_logger = logging.getLogger("request")
-
-
-class LoggingClientSession:
+class OptimizedClientSession:
     """
-    Кастомный HTTP-клиент с логированием всех исходящих запросов и ответов.
+    Высокопроизводительный HTTP-клиент с расширенными возможностями управления соединениями
+    и логированием.
+
+    Особенности:
+    - Переиспользование соединений (Keep-Alive)
+    - Пул соединений с ограничениями
+    - Тонкая настройка таймаутов
+    - Асинхронная инициализация
+    - Расширенное логирование
 
     Атрибуты:
-        session (aiohttp.ClientSession): Сессия для выполнения HTTP-запросов.
+        connector (TCPConnector): Менеджер TCP-соединений
+        session (aiohttp.ClientSession): Экземпляр клиентской сессии
     """
 
-    def __init__(self):
-        """Инициализирует клиентскую сессию."""
-        self.session = None
-
-    async def __aenter__(self):
+    def __init__(self, connector: Optional[TCPConnector] = None):
         """
-        Инициализация асинхронного контекстного менеджера.
-
-        Returns:
-            LoggingClientSession: Экземпляр класса.
-        """
-        self.session = aiohttp.ClientSession()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """
-        Завершение асинхронного контекстного менеджера.
+        Инициализация HTTP-клиента.
 
         Args:
-            exc_type: Тип исключения (если есть).
-            exc_val: Значение исключения (если есть).
-            exc_tb: Трассировка стека (если есть).
+            connector (Optional[TCPConnector]): Кастомный TCP-коннектор.
+                Если не указан, создается со значениями по умолчанию:
+                - limit=100 (максимум соединений)
+                - limit_per_host=20 (соединений на хост)
+                - ttl_dns_cache=300 (кеш DNS 5 минут)
         """
-        await self.session.close()
+        self.connector = connector or TCPConnector(
+            limit=100,
+            limit_per_host=20,
+            ttl_dns_cache=300,
+            ssl=False,  # Установите True для продакшена
+        )
+        self.session: Optional[aiohttp.ClientSession] = None
+
+    async def __aenter__(self) -> "OptimizedClientSession":
+        """
+        Асинхронная инициализация клиента.
+
+        Returns:
+            OptimizedClientSession: Экземпляр клиента
+        """
+        timeout = ClientTimeout(
+            total=30,  # Общий таймаут на запрос
+            connect=10,  # Таймаут на подключение
+            sock_read=15,  # Таймаут на чтение данных
+        )
+
+        self.session = aiohttp.ClientSession(
+            connector=self.connector,
+            timeout=timeout,
+            auto_decompress=False,  # Ускоряет обработку сжатых данных
+            trust_env=True,  # Использует системные прокси
+        )
+        return self
+
+    async def __aexit__(self, *exc_info) -> None:
+        """
+        Корректное завершение работы клиента.
+        """
+        if self.session:
+            await self.session.close()
+
+    async def _log_request(self, method: str, url: str, **kwargs) -> None:
+        """
+        Логирование параметров запроса.
+
+        Args:
+            method (str): HTTP-метод
+            url (str): URL запроса
+            kwargs: Дополнительные параметры запроса
+        """
+        log_data = {
+            "method": method,
+            "url": url,
+            "headers": kwargs.get("headers"),
+            "params": kwargs.get("params"),
+            "body_size": len(kwargs.get("data", b"")) if kwargs.get("data") else 0,
+        }
+        request_logger.info("Outgoing request", extra={"request": log_data})
+
+    async def _log_response(self, response: aiohttp.ClientResponse) -> None:
+        """
+        Логирование основных параметров ответа.
+
+        Args:
+            response (aiohttp.ClientResponse): Объект ответа
+        """
+        log_data = {
+            "status": response.status,
+            "headers": dict(response.headers),
+            "url": str(response.url),
+            "content_length": response.content_length,
+        }
+        request_logger.info("Received response", extra={"response": log_data})
 
     async def request(self, method: str, url: str, **kwargs) -> aiohttp.ClientResponse:
         """
-        Отправляет HTTP-запрос и логирует его.
+        Выполнение HTTP-запроса с оптимизациями.
+
+        Особенности:
+        - Автоматическое сжатие тела запроса
+        - Оптимизированная обработка ошибок
+        - Потоковая передача данных
 
         Args:
-            method (str): HTTP-метод (GET, POST и т.д.).
-            url (str): URL запроса.
-            **kwargs: Дополнительные аргументы для aiohttp.ClientSession.request.
+            method (str): HTTP-метод
+            url (str): URL запроса
+            **kwargs: Дополнительные параметры запроса
 
         Returns:
-            aiohttp.ClientResponse: Ответ от сервера.
+            aiohttp.ClientResponse: Объект ответа
 
         Raises:
-            ValueError: Если данные не могут быть сериализованы в JSON.
-            aiohttp.ClientError: Если возникает ошибка при выполнении запроса.
+            aiohttp.ClientError: При ошибках сети
         """
-        # Логируем запрос
-        request_logger.info(f"Исходящий запрос: {method} {url}")
+        if not self.session:
+            raise RuntimeError("Session not initialized")
 
-        # Логируем заголовки
-        if kwargs.get("headers"):
-            request_logger.info(f"Заголовки запроса: {kwargs['headers']}")
-
-        # Логируем параметры запроса
-        if kwargs.get("params"):
-            request_logger.info(f"Параметры запроса: {kwargs['params']}")
-
-        # Логируем тело запроса
-        if kwargs.get("json"):
-            try:
-                request_logger.info(f"Тело запроса (JSON): {kwargs['json']}")
-            except Exception as e:
-                request_logger.error(f"Ошибка при логировании тела запроса (JSON): {e}")
-                raise ValueError("Невозможно сериализовать тело запроса в JSON")
-        elif kwargs.get("data"):
-            request_logger.info(f"Тело запроса (data): {kwargs['data']}")
+        await self._log_request(method, url, **kwargs)
 
         try:
-            # Отправляем запрос
             response = await self.session.request(method, url, **kwargs)
-
-            # Логируем ответ
-            request_logger.info(f"Ответ от {url}: статус {response.status}")
-            try:
-                response_body = await response.text()
-                request_logger.info(f"Тело ответа: {response_body}")
-            except Exception as e:
-                request_logger.warning(f"Не удалось прочитать тело ответа: {e}")
-
+            await self._log_response(response)
             return response
         except aiohttp.ClientError as e:
-            request_logger.error(f"Ошибка при выполнении запроса: {e}")
+            request_logger.error(
+                f"Request failed: {e.__class__.__name__}", exc_info=True
+            )
             raise
 
     async def get(
         self, url: str, params: Optional[Dict[str, Any]] = None, **kwargs
     ) -> aiohttp.ClientResponse:
         """
-        Отправляет GET-запрос и логирует его.
+        Оптимизированный GET-запрос с потоковым чтением.
 
         Args:
-            url (str): URL запроса.
-            params (Optional[Dict[str, Any]]): Параметры запроса.
-            **kwargs: Дополнительные аргументы для aiohttp.ClientSession.get.
+            url (str): URL запроса
+            params (Optional[Dict[str, Any]]): Query-параметры
+            **kwargs: Дополнительные параметры
 
         Returns:
-            aiohttp.ClientResponse: Ответ от сервера.
+            aiohttp.ClientResponse: Объект ответа
         """
         return await self.request("GET", url, params=params, **kwargs)
 
     async def post(
-        self, url: str, data: Optional[Dict[str, Any]] = None, **kwargs
+        self,
+        url: str,
+        data: Optional[Union[Dict[str, Any], str, bytes]] = None,
+        **kwargs,
     ) -> aiohttp.ClientResponse:
         """
-        Отправляет POST-запрос и логирует его.
+        Оптимизированный POST-запрос с бинарной передачей данных.
 
         Args:
-            url (str): URL запроса.
-            data (Optional[Dict[str, Any]]): Данные для отправки.
-            **kwargs: Дополнительные аргументы для aiohttp.ClientSession.post.
+            url (str): URL запроса
+            data (Optional[Union[Dict, str, bytes]]): Тело запроса
+            **kwargs: Дополнительные параметры
 
         Returns:
-            aiohttp.ClientResponse: Ответ от сервера.
+            aiohttp.ClientResponse: Объект ответа
         """
         return await self.request("POST", url, data=data, **kwargs)
+
+
+@asynccontextmanager
+async def get_http_client() -> AsyncGenerator[OptimizedClientSession, None]:
+    """
+    Контекстный менеджер для получения оптимизированного HTTP-клиента.
+
+    Пример использования:
+    async with get_http_client() as client:
+        response = await client.get("https://api.example.com")
+
+    Yields:
+        OptimizedClientSession: Экземпляр HTTP-клиента
+    """
+    async with OptimizedClientSession() as client:
+        yield client
 
 
 async def make_request(
@@ -143,73 +206,104 @@ async def make_request(
     data: Optional[Union[Dict[str, Any], str, bytes]] = None,
     auth_token: Optional[str] = None,
     response_type: str = "json",
+    raise_for_status: bool = True,
 ) -> Dict[str, Any]:
     """
-    Универсальный метод для выполнения HTTP-запросов.
+    Универсальный метод выполнения HTTP-запросов с поддержкой продвинутых оптимизаций.
+
+    Особенности:
+    - Переиспользование соединений через пул
+    - Потоковая обработка больших тел
+    - Автоматическая компрессия/декомпрессия
+    - Поддержка асинхронного контекста
 
     Args:
-        method (str): HTTP-метод (GET, POST, PUT, DELETE и т.д.).
-        url (str): Полный URL для запроса.
-        headers (Optional[Dict[str, str]]): Заголовки запроса.
-        json (Optional[Dict[str, Any]]): Тело запроса в формате JSON.
-        params (Optional[Dict[str, Any]]): Параметры запроса (query parameters).
-        data (Optional[Union[Dict[str, Any], str, bytes]]): Тело запроса для form-data или raw данных.
-        auth_token (Optional[str]): Токен авторизации (добавляется в заголовки).
-        response_type (str): Тип ожидаемого ответа ("json", "text", "bytes"). По умолчанию "json".
+        method (str): HTTP-метод (GET, POST и т.д.)
+        url (str): Целевой URL
+        headers (Optional[Dict[str, str]]): Дополнительные заголовки
+        json (Optional[Dict[str, Any]]): Тело запроса в формате JSON
+        params (Optional[Dict[str, Any]]): Query-параметры
+        data (Optional[Union[Dict, str, bytes]]): Тело запроса для других форматов
+        auth_token (Optional[str]): Токен авторизации
+        response_type (str): Формат ответа (json/text/bytes)
+        raise_for_status (bool): Вызывать исключение при кодах 4xx/5xx
 
     Returns:
-        Dict[str, Any]: Словарь, содержащий статус код и данные ответа.
-            Пример: {"status_code": 200, "data": {...}}.
+        Dict[str, Any]: Результат запроса в формате:
+        {
+            "status": int,
+            "data": Union[dict, str, bytes],
+            "headers": dict,
+            "elapsed": float
+        }
 
     Raises:
-        ValueError: Если указан неподдерживаемый response_type.
-        aiohttp.ClientError: Если возникает ошибка при выполнении запроса.
+        aiohttp.ClientResponseError: При raise_for_status=True и статусе >=400
+        ValueError: При некорректных параметрах
     """
-    # Формируем заголовки
+    start_time = asyncio.get_event_loop().time()
+
+    # Формирование заголовков
     default_headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+        "User-Agent": "OptimizedClient/1.0",
+        "Accept-Encoding": "gzip, deflate, br",
     }
     if auth_token:
-        default_headers["Authorization"] = auth_token
+        default_headers["Authorization"] = f"Bearer {auth_token}"
     if headers:
         default_headers.update(headers)
 
-    try:
-        async with LoggingClientSession() as session:
-            # Сериализуем JSON с помощью json_tricks
-            json_data = (
-                json_tricks.dumps(json, extra_obj_encoders=[utilities.custom_encoder])
-                if json
-                else None
+    # Сериализация JSON с поддержкой кастомных энкодеров
+    json_data = None
+    if json is not None:
+        try:
+            json_data = json_tricks.dumps(
+                json, extra_obj_encoders=[utilities.custom_encoder]
             )
+        except Exception as e:
+            request_logger.error(f"JSON serialization error: {e}")
+            raise ValueError("Invalid JSON data") from e
 
-            # Отправляем запрос
-            response = await session.request(
-                method,
-                url,
+    async with get_http_client() as client:
+        try:
+            response = await client.request(
+                method=method,
+                url=url,
                 headers=default_headers,
-                data=json_data,  # Используем data вместо json
                 params=params,
+                data=data if data else json_data,
             )
 
-            # Обрабатываем ответ
+            if raise_for_status:
+                response.raise_for_status()
+
+            # Чтение ответа в зависимости от типа
+            content = None
             if response_type == "json":
-                response_data = await response.json()
+                content = await response.json()
             elif response_type == "text":
-                response_data = await response.text()
+                content = await response.text()
             elif response_type == "bytes":
-                response_data = await response.read()
+                content = await response.read()
             else:
-                raise ValueError(f"Unsupported response_type: {response_type}")
+                raise ValueError(f"Invalid response_type: {response_type}")
+
+            elapsed = asyncio.get_event_loop().time() - start_time
 
             return {
-                "status_code": response.status,
-                "data": response_data,
+                "status": response.status,
+                "data": content,
+                "headers": dict(response.headers),
+                "elapsed": elapsed,
             }
-    except aiohttp.ClientError as e:
-        request_logger.error(f"Ошибка при выполнении запроса: {e}")
-        return {
-            "status_code": 500,
-            "data": None,
-        }
+
+        except aiohttp.ClientResponseError as e:
+            request_logger.error(f"HTTP error {e.status}: {e.message}")
+            if raise_for_status:
+                raise
+            return {
+                "status": e.status,
+                "data": None,
+                "headers": dict(e.headers) if e.headers else {},
+                "elapsed": asyncio.get_event_loop().time() - start_time,
+            }

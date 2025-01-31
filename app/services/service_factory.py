@@ -5,8 +5,8 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 
 from app.infra.db.models import BaseModel
 from app.infra.db.repositories.base import AbstractRepository
-from app.infra.redis import caching_decorator
 from app.schemas import BaseSchema
+from app.utils.decorators import response_cache
 from app.utils.utils import utilities
 
 
@@ -159,7 +159,7 @@ class BaseService(Generic[ConcreteRepo]):
             "update", self.response_schema, key=key, value=value, data=data
         )
 
-    @caching_decorator
+    @response_cache
     async def get(
         self,
         key: Optional[str] = None,
@@ -235,7 +235,7 @@ class BaseService(Generic[ConcreteRepo]):
             for version in versions
         ]
 
-    @caching_decorator
+    @response_cache
     async def get_latest_object_version(self, object_id: int) -> Optional[BaseSchema]:
         """
         Получает последнюю версию объекта.

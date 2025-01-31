@@ -3,7 +3,6 @@ import uuid
 from fastapi import APIRouter, File, Header, Request, UploadFile, status
 from fastapi_utils.cbv import cbv
 
-from app.api.limiter import route_limiter
 from app.api.routers_factory import create_router_class
 from app.infra.storage import s3_bucket_service_factory
 from app.schemas import (
@@ -14,6 +13,7 @@ from app.schemas import (
 )
 from app.services.helpers.storage_helpers import get_streaming_response
 from app.services.route_services.files import get_file_service
+from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors
 
 
@@ -42,7 +42,7 @@ class StorageCBV:
         summary="Добавить файл в S3",
         operation_id="uploadFileStorageUploadFilePostUnique",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def upload_file(
         self,
@@ -70,7 +70,7 @@ class StorageCBV:
         summary="Скачать файл из S3",
         operation_id="getDownloadFileByUuidUnique",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def download_file(
         self,
@@ -94,7 +94,7 @@ class StorageCBV:
         summary="Удалить файл из S3",
         operation_id="deleteFileByUuidUnique",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def delete_file(
         self,
@@ -118,7 +118,7 @@ class StorageCBV:
         summary="Получить ссылку на скачивание файла из S3",
         operation_id="getDownloadLinkFileUnique",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_download_link_file(
         self,

@@ -18,10 +18,11 @@ from fastapi_utils.cbv import cbv
 from app.config.settings import settings
 from app.schemas import EmailSchema
 from app.services import BaseService, get_service_for_model
-from app.utils import get_model_enum, utilities
+from app.utils.enums import get_model_enum
 from app.utils.errors import handle_routes_errors
 from app.utils.health_check import health_check
 from app.utils.mail import mail_service
+from app.utils.utils import utilities
 
 
 __all__ = ("router",)

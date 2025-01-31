@@ -8,10 +8,10 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqladmin import Admin
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
-from app.api import init_limiter
 from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
+from app.infra.redis import redis_client
 from app.utils.admins import (
     FileAdmin,
     OrderAdmin,
@@ -19,7 +19,7 @@ from app.utils.admins import (
     OrderKindAdmin,
     UserAdmin,
 )
-from app.utils.errors import DatabaseError
+from app.utils.decorators.limiting import init_limiter
 from app.utils.logging import app_logger
 from app.utils.middlewares import (
     APIKeyMiddleware,
@@ -43,8 +43,12 @@ async def lifespan(app: FastAPI):
     app_logger.info("Запуск приложения...")
 
     try:
+        # Инициализация пула подключений Redis
+        await redis_client._ensure_pool()
+
         # Инициализация лимитера запросов
         await init_limiter()
+
         app_logger.info("Лимиты установлены...")
 
         yield

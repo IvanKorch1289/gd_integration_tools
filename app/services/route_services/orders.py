@@ -12,10 +12,8 @@ from app.infra.db import (
     get_file_repo,
     get_order_repo,
 )
-from app.infra.events import Event, event_bus
-from app.infra.redis import caching_decorator
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
-from app.schemas import BaseSchema, OrderFilter, OrderSchemaIn, OrderSchemaOut
+from app.schemas import BaseSchema, OrderSchemaIn, OrderSchemaOut
 from app.services.helpers import (
     create_zip_streaming_response,
     get_base64_file,
@@ -23,6 +21,7 @@ from app.services.helpers import (
 )
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.services.service_factory import BaseService
+from app.utils.decorators import response_cache
 from app.utils.enums import ResponseTypeChoices
 
 
@@ -39,7 +38,6 @@ class OrderService(BaseService[OrderRepository]):
         self,
         schema_in: BaseModel,
         schema_out: BaseModel,
-        event_schema: Event,
         repo: OrderRepository,
         file_repo: FileRepository,
         request_service: APISKBService,
@@ -58,7 +56,6 @@ class OrderService(BaseService[OrderRepository]):
         super().__init__(repo, request_schema=schema_in, response_schema=schema_out)
         self.file_repo = file_repo
         self.request_service = request_service
-        self.event_schema = event_schema
         self.s3_service = s3_service
 
     async def add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
@@ -82,49 +79,6 @@ class OrderService(BaseService[OrderRepository]):
             #         )
             #         await event_bus.emit(event)
             return order
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
-
-    async def add_many(
-        self, data_list: List[Dict[str, Any]]
-    ) -> Optional[List[BaseSchema]]:
-        """
-        Создает несколько заказов на основе списка данных.
-
-        :param data_list: Список словарей с данными для создания заказов.
-        :return: Список созданных заказов или None, если произошла ошибка.
-        :raises Exception: Если произошла ошибка при создании заказов.
-        """
-        try:
-            # Создаем заказы для каждого элемента в списке данных
-            return [await self.get_or_add(data=data) for data in data_list]
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
-
-    async def get_or_add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
-        """
-        Получает заказ по параметрам или создает новый, если заказ не найден.
-
-        :param data: Словарь с данными для поиска или создания заказа.
-        :return: Найденный или созданный заказ. Возвращает None в случае ошибки.
-        :raises Exception: Если произошла ошибка при поиске или создании заказа.
-        """
-        try:
-            # Параметры для фильтрации заказов
-            filter_params = {
-                "pledge_cadastral_number__like": data.get("pledge_cadastral_number"),
-                "is_active": True,
-                "is_send_request_to_skb": False,
-            }
-            # Ищем заказ по параметрам
-            instance = await self.get(filter=OrderFilter.model_validate(filter_params))
-
-            # Если заказ не найден, создаем новый
-            if not instance:
-                instance = await self.add(data=data)
-            elif isinstance(instance, list):
-                instance = instance[-1]
-            return instance
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -183,7 +137,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
     ) -> JSONResponse:
@@ -245,7 +199,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def get_order_file_and_json_from_skb(
         self, order_id: int
     ) -> Optional[Dict[str, Any]]:
@@ -317,7 +271,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def get_order_file_from_storage_base64(self, order_id: int) -> JSONResponse:
         """
         Получает файл заказа из хранилища S3 в формате base64.
@@ -341,7 +295,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def get_order_file_from_storage_link(
         self,
         order_id: int,
@@ -376,7 +330,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def get_order_file_link_and_json_result_for_request(
         self,
         order_id: int,
@@ -407,7 +361,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @caching_decorator
+    @response_cache
     async def send_data_to_gd(self, order_id: int) -> None:
         """
         Отправляет данные заказа в GD (заглушка).
@@ -429,6 +383,5 @@ def get_order_service() -> Type[BaseService]:
         schema_in=OrderSchemaIn,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
-        event_schema=Event,
         s3_service=s3_bucket_service_factory,
     )

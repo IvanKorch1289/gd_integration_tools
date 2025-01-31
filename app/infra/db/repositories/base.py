@@ -19,8 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy_continuum import version_class
 
-from app.infra.db.database import session_manager
 from app.infra.db.models import BaseModel
+from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import DatabaseError, NotFoundError, handle_db_errors
 
 

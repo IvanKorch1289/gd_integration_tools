@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import FileResponse
 from fastapi_utils.cbv import cbv
 
-from app.api.limiter import route_limiter
 from app.api.routers_factory import create_router_class
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
 from app.schemas import (
@@ -14,6 +13,7 @@ from app.schemas import (
     OrderVersionSchemaOut,
 )
 from app.services.route_services.orders import get_order_service
+from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors
 
 
@@ -58,7 +58,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить результат запроса",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_result_from_skb(
         self, order_id: int, x_api_key: str = Header(...)
@@ -77,7 +77,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_file(
         self,
@@ -102,7 +102,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить файл запроса",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_file_base64(
         self,
@@ -127,7 +127,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить ссылку на файл запроса",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_file_link(
         self,
@@ -152,7 +152,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить ссылку на файл запроса",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_file_link_and_json_result_for_request(
         self,
@@ -178,7 +178,7 @@ class ExtendedOrderCBV(OrderCBV):
         summary="Получить версии объекта запроса по ID",
         response_model=List[OrderVersionSchemaOut],
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_all_order_versions(
         self, order_id: int, request: Request, x_api_key: str = Header(...)
@@ -200,7 +200,7 @@ class ExtendedOrderCBV(OrderCBV):
         summary="Получить последнюю версию объекта запроса по ID",
         response_model=OrderVersionSchemaOut,
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_latest_version(
         self, order_id: int, request: Request, x_api_key: str = Header(...)
@@ -222,7 +222,7 @@ class ExtendedOrderCBV(OrderCBV):
         summary="Восстановить объект запроса до указанной версии",
         response_model=OrderSchemaOut,
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def restore_kind_to_version(
         self,
@@ -250,7 +250,7 @@ class ExtendedOrderCBV(OrderCBV):
         status_code=status.HTTP_200_OK,
         summary="Получить изменения объекта запроса по ID",
     )
-    @route_limiter
+    @route_limiting
     @handle_routes_errors
     async def get_order_changes(
         self, order_id: int, request: Request, x_api_key: str = Header(...)

@@ -10,7 +10,7 @@ from app.config.settings import settings
 
 __all__ = (
     "init_limiter",
-    "route_limiter",
+    "route_limiting",
 )
 
 
@@ -110,4 +110,4 @@ class RouteLimiter:
 
 
 # Создаем экземпляр лимитера с ограничением 5 запросов в 10 секунд
-route_limiter = RouteLimiter()
+route_limiting = RouteLimiter()

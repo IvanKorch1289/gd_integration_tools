@@ -11,7 +11,8 @@ from aiobotocore.session import get_session
 from botocore.exceptions import ClientError as BotoClientError
 
 from app.config.settings import FileStorageSettings, settings
-from app.utils.decorators import singleton
+from app.infra.redis import redis_client
+from app.utils.decorators.caching import existence_cache, metadata_cache
 from app.utils.logging import fs_logger
 
 
@@ -79,7 +80,6 @@ class BaseS3Service(ABC):
         pass
 
 
-@singleton
 class MinioService(BaseS3Service):
     """Класс для взаимодействия с сервисом хранения объектов Minio.
 
@@ -175,6 +175,7 @@ class MinioService(BaseS3Service):
                     operation="upload_file_object",
                     details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
                 )
+                await self._invalidate_cache(key)
                 return {"status": "success", "message": "File upload successful"}
             except Exception as exc:
                 await self.log_operation(
@@ -293,6 +294,7 @@ class MinioService(BaseS3Service):
                 )
                 return None
 
+    @existence_cache
     async def file_exists(self, key: str) -> bool:
         """Проверяет существование файла в хранилище."""
         async with self._create_s3_client() as client:
@@ -311,6 +313,7 @@ class MinioService(BaseS3Service):
                 )
                 raise
 
+    @metadata_cache
     async def get_file_info(self, key: str) -> Optional[dict]:
         """Возвращает информацию о файле (метаданные, размер, дата изменения)."""
         async with self._create_s3_client() as client:
@@ -333,6 +336,7 @@ class MinioService(BaseS3Service):
                 )
                 raise
 
+    @metadata_cache
     async def get_original_filename(self, key: str) -> Optional[str]:
         """Возвращает оригинальное имя файла из метаданных."""
         file_info = await self.get_file_info(key)
@@ -376,6 +380,19 @@ class MinioService(BaseS3Service):
 
         if exception:
             log_data[LogField.EXCEPTION] = exception
+
+        # Добавляем информацию о кэше
+        log_data["cache_status"] = (
+            "invalidated" if "invalidate" in operation else "miss"
+        )
+
+        # Логируем размер кэша
+        try:
+            async with redis_client.connection() as r:
+                cache_size = await r.dbsize()
+                log_data["cache_size"] = cache_size
+        except Exception:
+            pass
 
         try:
             fs_logger.info(json.dumps(log_data, ensure_ascii=False))
@@ -422,6 +439,72 @@ class MinioService(BaseS3Service):
                 return False
             except Exception:
                 raise
+
+    @metadata_cache
+    async def bulk_get_metadata(self, keys: list[str]) -> dict[str, Optional[dict]]:
+        """Пакетное получение метаданных"""
+        async with self._create_s3_client() as client:
+            results = {}
+            for key in keys:
+                try:
+                    response = await client.head_object(Bucket=self.bucket, Key=key)
+                    results[key] = {
+                        "last_modified": response["LastModified"],
+                        "content_length": response["ContentLength"],
+                        "metadata": response.get("Metadata", {}),
+                    }
+                except BotoClientError:
+                    results[key] = None
+            return results
+
+    async def _invalidate_cache(self, key: str):
+        """Инвалидирует кэш с использованием Redis pipeline"""
+        patterns = [
+            f"minio:metadata:*:{self.bucket}:{key}",
+            f"minio:exists:*:{self.bucket}:{key}",
+        ]
+
+        try:
+            async with redis_client.connection() as r:
+                async with r.pipeline() as pipe:
+                    for pattern in patterns:
+                        keys = await r.keys(pattern)
+                        if keys:
+                            pipe.delete(*keys)
+                    await pipe.execute()
+        except Exception as exc:
+            await self.log_operation(
+                operation="cache_invalidation",
+                details=f"Key: {key}",
+                exception=str(exc),
+            )
+
+    async def bulk_cache_invalidation(self, keys: list[str]):
+        """Оптимизированная массовая инвалидация"""
+        try:
+            async with redis_client.connection() as r:
+                async with r.pipeline() as pipe:
+                    for key in keys:
+                        patterns = [
+                            f"minio:metadata:*:{self.bucket}:{key}",
+                            f"minio:exists:*:{self.bucket}:{key}",
+                        ]
+                        for pattern in patterns:
+                            pipe.eval(
+                                "local keys = redis.call('keys', ARGV[1]) "
+                                "if #keys > 0 then "
+                                "return redis.call('del', unpack(keys)) "
+                                "else return 0 end",
+                                0,
+                                pattern,
+                            )
+                    await pipe.execute()
+        except Exception as exc:
+            await self.log_operation(
+                operation="bulk_cache_invalidation",
+                details=f"Keys: {keys}",
+                exception=str(exc),
+            )
 
 
 def s3_bucket_service_factory() -> BaseS3Service:

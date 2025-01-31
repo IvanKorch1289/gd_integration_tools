@@ -2,9 +2,9 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infra.db.database import session_manager
 from app.infra.db.models import Order
 from app.infra.db.repositories.base import SQLAlchemyRepository
+from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import NotFoundError, handle_db_errors
 
 
