@@ -432,6 +432,13 @@ class MailSettings(BaseSettings):
         env="MAIL_PORT",
         description="Порт SMTP сервера",
     )
+    mail_connection_pool_size: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        env="MAIL_CONNECTION_POOL_SIZE",
+        description="Размер пула подключений к SMTP серверу",
+    )
 
     # Аутентификация
     mail_username: str = Field(

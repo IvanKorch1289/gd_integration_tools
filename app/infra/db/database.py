@@ -128,6 +128,10 @@ class DatabaseInitializer:
                 conn = await self.async_engine.connect()
                 connections.append(conn)
             db_logger.info("Async connection pool initialized")
+        except Exception as e:
+            db_logger.error(
+                f"Async connection pool initialization failed: {str(e)}"
+            )
         finally:
             for conn in connections:
                 await conn.close()

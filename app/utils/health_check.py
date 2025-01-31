@@ -3,10 +3,10 @@ from fastapi import Response
 
 from app.celery.celery_config import celery_manager
 from app.infra.db.database import db_initializer
+from app.infra.graylog_service import graylog_handler
 from app.infra.redis import redis_client
 from app.infra.storage import s3_bucket_service_factory
 from app.utils.decorators.singleton import singleton
-from app.utils.logging import log_manager
 from app.utils.mail import mail_service
 
 
@@ -135,7 +135,7 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
-        return await log_manager.check_connection()
+        return await graylog_handler.check_connection()
 
     async def check_smtp(self):
         """

@@ -6,43 +6,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
-from app.config.settings import MailSettings, settings
-from app.utils.decorators.singleton import singleton
+from app.infra.smtp import MailService, mail_service
 
 
-__all__ = ("mail_service",)
+__all__ = ("mail_sender",)
 
 
-@singleton
-class MailService:
-    """Сервис для работы с электронной почтой."""
+class MailSender:
+    """Email service with template support."""
 
-    def __init__(self, settings: MailSettings):
-        self.settings = settings
-
-    async def check_connection(self) -> bool:
-        """Проверяет доступность SMTP-сервера.
-
-        Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            Exception: Если подключение не удалось.
-        """
-        try:
-            async with aiosmtplib.SMTP(
-                hostname=self.settings.mail_host,
-                port=self.settings.mail_port,
-                use_tls=self.settings.mail_use_tls,
-            ) as smtp:
-                if self.settings.mail_username and self.settings.mail_password:
-                    await smtp.login(
-                        self.settings.mail_username,
-                        self.settings.mail_password,
-                    )
-            return True
-        except Exception as exc:
-            raise Exception(f"Ошибка при подключении к SMTP-серверу: {exc}")
+    def __init__(self, mail_service: MailService):
+        self.client = mail_service
 
     async def send_email(
         self,
@@ -51,18 +25,41 @@ class MailService:
         message: str,
         html_message: Optional[str] = None,
     ):
-        """Асинхронно отправляет электронное письмо.
+        """
+        Send an email message asynchronously.
 
         Args:
-            to_emails (List[str]): Список адресов получателей.
-            subject (str): Тема письма.
-            message (str): Текстовое содержимое письма.
-            html_message (Optional[str]): HTML-содержимое письма (опционально).
+            to_emails (List[str]): List of recipient email addresses
+            subject (str): Email subject line
+            message (str): Plain text message content
+            html_message (Optional[str]): HTML message content
 
         Raises:
-            Exception: Если отправка письма не удалась.
+            ValueError: If message construction fails
+            RuntimeError: If email sending fails
         """
-        # Создаем MIME-сообщение
+        try:
+            msg = self._prepare_message(
+                to_emails, subject, message, html_message
+            )
+            async with self.client.get_connection() as smtp:
+                await smtp.send_message(msg)
+        except aiosmtplib.SMTPException as exc:
+            raise RuntimeError(f"Failed to send email: {exc}") from exc
+
+    def _prepare_message(self, to_emails, subject, message, html_message):
+        """
+        Construct MIME message with proper headers and content.
+
+        Args:
+            to_emails (List[str]): List of recipient emails
+            subject (str): Email subject
+            message (str): Plain text content
+            html_message (Optional[str]): HTML content
+
+        Returns:
+            MIMEMultipart|MIMEText: Constructed email message
+        """
         if html_message:
             msg = MIMEMultipart("alternative")
             msg.attach(MIMEText(message, "plain", "utf-8"))
@@ -70,28 +67,15 @@ class MailService:
         else:
             msg = MIMEText(message, "plain", "utf-8")
 
-        # Заголовки письма
         msg["Subject"] = Header(subject, "utf-8")
         msg["From"] = formataddr(
-            (str(Header("Отправитель", "utf-8")), self.settings.mail_sender)
+            (
+                str(Header(self.client.settings.mail_username, "utf-8")),
+                self.client.settings.mail_sender,
+            )
         )
         msg["To"] = ", ".join(to_emails)
-
-        # Подключение к SMTP-серверу и отправка
-        try:
-            async with aiosmtplib.SMTP(
-                hostname=self.settings.mail_host,
-                port=self.settings.mail_port,
-                use_tls=self.settings.mail_use_tls,
-            ) as smtp:
-                if self.settings.mail_username and self.settings.mail_password:
-                    await smtp.login(
-                        self.settings.mail_username,
-                        self.settings.mail_password,
-                    )
-                await smtp.send_message(msg)
-        except Exception as exc:
-            raise Exception(f"Ошибка при отправке письма: {exc}")
+        return msg
 
     async def send_email_from_template(
         self,
@@ -100,34 +84,39 @@ class MailService:
         template_name: str,
         template_context: Optional[Dict[str, Any]] = None,
     ):
-        """Отправляет письмо, используя шаблон из указанной папки.
+        """
+        Send email using a template file.
 
         Args:
-            to_emails (List[str]): Список адресов получателей.
-            subject (str): Тема письма.
-            template_name (str): Имя шаблона письма.
-            template_context (Optional[Dict[str, Any]]): Контекст для подстановки в шаблон.
+            to_emails (List[str]): List of recipient emails
+            subject (str): Email subject
+            template_name (str): Name of template file
+            template_context (Optional[Dict[str, Any]]): Variables for template
 
         Raises:
-            ValueError: Если папка с шаблонами не указана или шаблон не найден.
+            ValueError: If template folder is not configured
+            FileNotFoundError: If template file doesn't exist
+            RuntimeError: If template processing fails
         """
-        if not self.settings.mail_template_folder:
-            raise ValueError("Папка с шаблонами не указана в настройках.")
+        if not self.client.settings.mail_template_folder:
+            raise ValueError("Template folder not configured")
 
-        template_path = self.settings.mail_template_folder / template_name
+        template_path = (
+            self.client.settings.mail_template_folder / template_name
+        )
         if not template_path.exists():
-            raise ValueError(f"Шаблон {template_name} не найден.")
+            raise FileNotFoundError(f"Template not found: {template_name}")
 
-        # Чтение шаблона
-        with open(template_path, "r", encoding="utf-8") as file:
-            template_content = file.read()
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                content = f.read()
 
-        # Подстановка контекста (если требуется)
-        if template_context:
-            template_content = template_content.format(**template_context)
+            if template_context:
+                content = content.format(**template_context)
 
-        # Отправка письма
-        await self.send_email(to_emails, subject, template_content)
+            await self.send_email(to_emails, subject, content)
+        except Exception as exc:
+            raise RuntimeError(f"Template processing failed: {exc}") from exc
 
 
-mail_service = MailService(settings=settings.mail)
+mail_sender = MailSender(mail_service=mail_service)

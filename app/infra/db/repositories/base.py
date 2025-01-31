@@ -383,13 +383,12 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param key: Название поля для поиска объекта.
         :param value: Значение поля для поиска объекта.
         """
-        result = await session.execute(
+        await session.execute(
             delete(self.model)
             .where(getattr(self.model, key) == value)
             .returning(self.model.id)
         )
         await session.flush()
-        return result.scalars().one()
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")

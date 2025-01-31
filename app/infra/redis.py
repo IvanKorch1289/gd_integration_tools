@@ -14,42 +14,42 @@ __all__ = ("redis_client",)
 
 @singleton
 class RedisClient:
-    """Управляет пулом подключений к Redis с поддержкой асинхронных операций.
+    """Manages Redis connection pool with asynchronous operations support.
 
-    Обеспечивает безопасное создание и закрытие подключений, проверку работоспособности
-    и автоматическое восстановление соединений.
+    Provides safe connection creation/closing, health checks,
+    and automatic connection recovery.
 
     Attributes:
-        _pool (Optional[Redis]): Основной пул подключений
-        _lock (asyncio.Lock): Блокировка для синхронизации инициализации пула
-        settings (RedisSettings): Конфигурационные параметры подключения
+        _pool (Optional[Redis]): Main connection pool
+        _lock (asyncio.Lock): Lock for pool initialization synchronization
+        settings (RedisSettings): Connection configuration parameters
     """
 
     def __init__(self, settings: RedisSettings):
-        """Инициализирует клиент с указанными настройками подключения.
+        """Initializes the client with specified connection settings.
 
         Args:
-            settings (RedisSettings): Конфигурация подключения к Redis, содержит:
-                - redis_host: Хост Redis
-                - redis_port: Порт Redis
-                - redis_db_cache: Номер базы данных
-                - redis_pass: Пароль (опционально)
-                - redis_encoding: Кодировка данных
-                - redis_timeout: Таймаут подключения
-                - redis_pool_minsize: Минимальный размер пула
-                - redis_use_ssl: Использовать SSL подключение
+            settings (RedisSettings): Redis connection configuration containing:
+                - redis_host: Redis host
+                - redis_port: Redis port
+                - redis_db_cache: Database number
+                - redis_pass: Password (optional)
+                - redis_encoding: Data encoding
+                - redis_timeout: Connection timeout
+                - redis_pool_minsize: Minimum pool size
+                - redis_use_ssl: Use SSL connection
         """
         self._pool: Optional[Redis] = None
         self._lock = asyncio.Lock()
         self.settings = settings
 
     async def _ensure_pool(self) -> None:
-        """Создает или обновляет пул подключений при необходимости.
+        """Creates or updates the connection pool if needed.
 
-        Гарантирует безопасную инициализацию пула с использованием блокировки.
+        Ensures thread-safe pool initialization using a lock.
 
         Raises:
-            RedisError: Если не удалось установить подключение
+            RedisError: If connection establishment fails
         """
         if self._pool is None or self._pool.closed:
             async with self._lock:
@@ -81,17 +81,17 @@ class RedisClient:
 
     @asynccontextmanager
     async def connection(self) -> AsyncIterator[Redis]:
-        """Предоставляет асинхронный контекст для работы с подключением.
+        """Provides asynchronous context manager for Redis connections.
 
-        Пример использования:
+        Usage example:
             async with redis_client.connection() as conn:
                 await conn.set("key", "value")
 
         Yields:
-            Redis: Активное подключение к Redis
+            Redis: Active Redis connection
 
         Raises:
-            RedisError: При возникновении проблем с подключением
+            RedisError: For connection-related issues
         """
         await self._ensure_pool()
         try:
@@ -106,9 +106,9 @@ class RedisClient:
             raise RedisError("Connection terminated") from e
 
     async def close(self) -> None:
-        """Корректно закрывает все подключения и освобождает ресурсы.
+        """Properly closes all connections and releases resources.
 
-        Должен вызываться при завершении работы приложения.
+        Should be called during application shutdown.
         """
         if self._pool and not self._pool.closed:
             try:
@@ -121,12 +121,12 @@ class RedisClient:
                 self._pool = None
 
     async def check_connection(self) -> bool:
-        """Проверяет работоспособность подключения к Redis.
+        """Verifies Redis connection health.
 
         Returns:
-            bool: True если подключение активно, False в случае ошибок
+            bool: True if connection is active, False on errors
 
-        Пример использования:
+        Usage example:
             if await redis_client.check_connection():
                 print("Connected to Redis")
         """
@@ -137,9 +137,9 @@ class RedisClient:
             return False
 
     async def dispose(self) -> None:
-        """Алиас для метода close(). Предназначен для явного завершения работы."""
+        """Alias for close(). Intended for explicit termination."""
         await self.close()
 
 
-# Инициализация клиента с настройками
+# Client initialization with settings
 redis_client = RedisClient(settings=settings.redis)

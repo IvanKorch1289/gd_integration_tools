@@ -262,7 +262,7 @@ async def make_request(
     if json is not None:
         try:
             json_data = json_tricks.dumps(
-                json, extra_obj_encoders=[utilities.custom_encoder]
+                json, extra_obj_encoders=[utilities.custom_json_encoder]
             )
         except Exception as e:
             request_logger.error(f"JSON serialization error: {e}")

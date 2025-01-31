@@ -11,7 +11,9 @@ from starlette_exporter import PrometheusMiddleware, handle_metrics
 from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
+from app.infra.graylog_service import graylog_handler
 from app.infra.redis import redis_client
+from app.infra.smtp import mail_service
 from app.infra.storage import s3_bucket_service_factory
 from app.utils.admins.files import FileAdmin, OrderFileAdmin
 from app.utils.admins.orderkinds import OrderKindAdmin
@@ -22,6 +24,8 @@ from app.utils.logging import app_logger
 from app.utils.middlewares import (
     APIKeyMiddleware,
     InnerRequestLoggingMiddleware,
+    RequestIDMiddleware,
+    SecurityHeadersMiddleware,
     TimeoutMiddleware,
 )
 from app.utils.utils import utilities
@@ -52,6 +56,12 @@ async def lifespan(app: FastAPI):
         # Инициализация подключения к хранилищу файлов
         await s3_client.initialize_connection()
 
+        # Инициализация подключения к SMTP-серверу
+        await mail_service.initialize_pool()
+
+        # Инициализация подключения к Graylog
+        await graylog_handler.connect()
+
         # Инициализация лимитера запросов
         await init_limiter()
 
@@ -62,6 +72,9 @@ async def lifespan(app: FastAPI):
         await db_initializer.dispose_async()
         await redis_client.dispose()
         await s3_client.shutdown()
+        await mail_service.close_pool()
+        await graylog_handler.close()
+
         app_logger.info("Завершение работы приложения...")
 
 
@@ -84,32 +97,18 @@ def create_app() -> FastAPI:
     instrumentator = Instrumentator()
     instrumentator.instrument(app).expose(app)
 
-    # Middleware для логирования внутренних запросов
-    @app.middleware("http")
-    async def inner_logger_middleware(request: Request, call_next):
-        return await InnerRequestLoggingMiddleware().__call__(
-            request, call_next
-        )
-
-    # Middleware для проверки API-ключа
-    @app.middleware("http")
-    async def api_key_middleware(request: Request, call_next):
-        return await APIKeyMiddleware().__call__(request, call_next)
-
-    # Middleware для установки таймаутов
-    @app.middleware("http")
-    async def timeout_middleware(request: Request, call_next):
-        return await TimeoutMiddleware().__call__(request, call_next)
-
-    # Добавление TrustedHostMiddleware для ограничения хостов
+    # Middleware
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(APIKeyMiddleware)
+    app.add_middleware(TimeoutMiddleware)
+    app.add_middleware(
+        InnerRequestLoggingMiddleware, log_body=True, max_body_size=4096
+    )
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=settings.auth.auth_allowed_hosts
     )
-
-    # Добавление PrometheusMiddleware для сбора метрик
     app.add_middleware(PrometheusMiddleware)
-
-    # Добавление GZip Middleware для сжатия ответов
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     @app.exception_handler(Exception)

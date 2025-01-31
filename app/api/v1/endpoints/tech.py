@@ -21,7 +21,7 @@ from app.services.service_factory import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
 from app.utils.errors import handle_routes_errors
 from app.utils.health_check import health_check
-from app.utils.mail import mail_service
+from app.utils.mail import mail_sender
 from app.utils.utils import utilities
 
 
@@ -290,7 +290,7 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        return await mail_service.send_email(
+        return await mail_sender.send_email(
             to_emails=schema.to_email,
             subject=schema.subject,
             message=schema.message,
