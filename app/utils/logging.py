@@ -1,4 +1,6 @@
 import logging
+import os
+import os.path
 from logging.handlers import (
     QueueHandler,
     QueueListener,
@@ -163,8 +165,14 @@ class LoggerManager:
 
     def _create_file_handler(self) -> TimedRotatingFileHandler:
         """Создание файлового обработчика с ротацией."""
+
+        log_dir = "logs"
+        os.makedirs(
+            log_dir, exist_ok=True
+        )  # Создаем папку для логов если она не существует
+
         handler = TimedRotatingFileHandler(
-            filename="app.log",
+            filename=os.path.join(log_dir, "app.log"),  # Путь к файлу в папке logs
             when="midnight",
             interval=1,
             backupCount=7,

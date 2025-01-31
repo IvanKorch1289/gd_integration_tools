@@ -24,7 +24,7 @@ __all__ = (
 
 
 class LogField:
-    """Класс для хранения констант, используемых в логах."""
+    """Class for storing log field constants."""
 
     TIMESTAMP = "timestamp"
     OPERATION = "operation"
@@ -81,18 +81,16 @@ class BaseS3Service(ABC):
 
 
 class MinioService(BaseS3Service):
-    """Класс для взаимодействия с сервисом хранения объектов Minio.
-
-    Предоставляет методы для загрузки, получения, удаления и листинга объектов в Minio,
-    а также для генерации временных ссылок для скачивания файлов.
-    """
+    """Class for interacting with Minio object storage service with connection lifecycle management."""
 
     def __init__(self, settings: FileStorageSettings):
-        self.settings = settings
+        super().__init__(settings)
+        self._client: Optional[Any] = None
+        self._session = get_session()
         self._initialize_attributes()
 
     def _initialize_attributes(self):
-        """Инициализирует атрибуты из настроек"""
+        """Initializes configuration attributes from settings."""
         self.bucket = self.settings.fs_bucket
         self.access_key = self.settings.fs_access_key
         self.secret_key = self.settings.fs_secret_key
@@ -106,61 +104,80 @@ class MinioService(BaseS3Service):
             },
         )
 
+    async def initialize_connection(self):
+        """Establishes and verifies connection to object storage."""
+        try:
+            if self._client is not None:
+                return
+
+            self._client = await self._session.create_client(
+                "s3",
+                endpoint_url=self.endpoint,
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+                config=self.client_config,
+            ).__aenter__()
+
+            if not await self.check_bucket_exists():
+                raise RuntimeError(f"Bucket {self.bucket} not found")
+
+            fs_logger.info("Successfully connected to object storage")
+
+        except Exception as exc:
+            await self.shutdown()
+            raise RuntimeError(f"Connection initialization failed: {str(exc)}") from exc
+
+    async def shutdown(self):
+        """Gracefully closes all connections and releases resources."""
+        if self._client:
+            try:
+                await self._client.close()
+                fs_logger.info("Object storage connections closed")
+            except Exception as exc:
+                fs_logger.error(f"Error closing connections: {str(exc)}")
+            finally:
+                self._client = None
+
     def _get_endpoint(self) -> Optional[str]:
-        """Возвращает endpoint из настроек или None для AWS"""
+        """Returns configured endpoint or None for AWS."""
         return self.settings.fs_endpoint if self.settings.fs_provider != "aws" else None
 
     def _get_addressing_style(self) -> str:
-        """Возвращает стиль адресации из настроек"""
+        """Returns the configured addressing style."""
         return getattr(self.settings, "fs_addressing_style", "path")
 
     @asynccontextmanager
-    async def _create_s3_client(self) -> AsyncGenerator:
-        """Создает контекстный менеджер для работы с клиентом S3.
+    async def _get_client_context(self) -> AsyncGenerator:
+        """Provides managed access to the S3 client with error handling."""
+        if not self._client:
+            raise RuntimeError("Connection not initialized")
 
-        Yields:
-            AsyncGenerator: Клиент S3.
-        """
-        session = get_session()
-        async with session.create_client(
-            "s3",
-            endpoint_url=self.endpoint,
-            aws_access_key_id=self.access_key,
-            aws_secret_access_key=self.secret_key,
-            config=self.client_config,
-        ) as client:
-            yield client
+        try:
+            yield self._client
+        except BotoClientError as exc:
+            fs_logger.error(f"S3 API error: {str(exc)}")
+            raise
+        except Exception as exc:
+            fs_logger.error(f"Connection error: {str(exc)}")
+            await self.shutdown()
+            raise
 
     async def upload_file_object(
         self, key: str, original_filename: str, content: Union[str, bytes]
     ) -> dict:
-        """Загружает файл в S3.
-
-        Args:
-            key (str): Ключ объекта в S3.
-            original_filename (str): Исходное имя файла.
-            content (Union[str, bytes]): Содержимое файла (строка или байты).
-
-        Returns:
-            dict: Словарь с результатом операции.
-        """
+        """Uploads a file to object storage."""
         if not content:
-            await self.log_operation(
-                operation="upload_file_object",
-                details=f"Key: {key}, OriginalFilename: {original_filename}",
-                exception="Error: File content is empty",
-            )
             return {
                 "status": "error",
-                "message": "File not uploaded",
-                "error": "File content is empty",
+                "message": "Empty content",
+                "error": "No content provided for upload",
             }
 
         buffer = BytesIO(
             content if isinstance(content, bytes) else content.encode("utf-8")
         )
 
-        async with self._create_s3_client() as client:
+        async with self._get_client_context() as client:
             buffer.seek(0)
             metadata = {"x-amz-meta-original-filename": original_filename}
             try:
@@ -171,31 +188,19 @@ class MinioService(BaseS3Service):
                     Metadata=metadata,
                     ContentLength=len(buffer.getvalue()),
                 )
-                await self.log_operation(
-                    operation="upload_file_object",
-                    details=f"Key: {key}, OriginalFilename: {original_filename}, ContentLength: {len(buffer.getvalue())}",
-                )
                 await self._invalidate_cache(key)
-                return {"status": "success", "message": "File upload successful"}
+                return {"status": "success", "message": "File uploaded"}
             except Exception as exc:
-                await self.log_operation(
-                    operation="upload_file_object",
-                    details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
-                )
+                fs_logger.error(f"Upload failed for {key}: {str(exc)}")
                 return {
                     "status": "error",
-                    "message": "File upload failed",
+                    "message": "Upload failed",
                     "error": str(exc),
                 }
 
     async def list_objects(self) -> list[str]:
-        """Возвращает список всех объектов в бакете.
-
-        Returns:
-            list[str]: Список ключей объектов.
-        """
-        async with self._create_s3_client() as client:
+        """Lists all objects in the bucket."""
+        async with self._get_client_context() as client:
             try:
                 response = await client.list_objects_v2(Bucket=self.bucket)
                 return [item["Key"] for item in response.get("Contents", [])]
@@ -203,83 +208,37 @@ class MinioService(BaseS3Service):
                 if exc.response["Error"]["Code"] == "NoSuchBucket":
                     return []
                 raise
-            except Exception as exc:
-                await self.log_operation(
-                    operation="list_objects", exception=f"Error: {str(exc)}"
-                )
-                raise
 
-    async def get_file_object(self, key: str) -> Optional[tuple[StreamingBody, dict]]:
-        """Получает объект из S3.
-
-        Args:
-            key (str): Ключ объекта в S3.
-
-        Returns:
-            Optional[tuple[StreamingBody, dict]]: Поток тела объекта и метаданные, если объект найден, иначе None.
-        """
-        async with self._create_s3_client() as client:
+    async def get_file_object(self, key: str) -> Optional[Tuple[StreamingBody, dict]]:
+        """Retrieves an object from storage."""
+        async with self._get_client_context() as client:
             try:
                 response = await client.get_object(Bucket=self.bucket, Key=key)
                 return response["Body"], response.get("Metadata", {})
             except BotoClientError as exc:
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
-                await self.log_operation(
-                    operation="get_file_object",
-                    details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
-                )
-                raise
-            except Exception as exc:
-                await self.log_operation(
-                    operation="get_file_object",
-                    details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
-                )
                 raise
 
     async def delete_file_object(self, key: str) -> dict:
-        """Удаляет объект из S3.
-
-        Args:
-            key (str): Ключ объекта в S3.
-
-        Returns:
-            dict: Словарь с результатом операции.
-        """
-        async with self._create_s3_client() as client:
+        """Deletes an object from storage."""
+        async with self._get_client_context() as client:
             try:
                 await client.delete_object(Bucket=self.bucket, Key=key)
-                await self.log_operation(
-                    operation="delete_file_object", details=f"Key: {key}"
-                )
-                return {"status": "success", "message": "File deleted successfully"}
+                await self._invalidate_cache(key)
+                return {"status": "success", "message": "File deleted"}
             except Exception as exc:
-                await self.log_operation(
-                    operation="delete_file_object",
-                    details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
-                )
                 return {
                     "status": "error",
-                    "message": "File deletion failed",
+                    "message": "Deletion failed",
                     "error": str(exc),
                 }
 
     async def generate_download_url(
         self, key: str, expires_in: int = 3600
     ) -> Optional[str]:
-        """Генерирует временную ссылку для скачивания файла из S3.
-
-        Args:
-            key (str): Ключ объекта в S3.
-            expires_in (int): Время жизни ссылки в секундах (по умолчанию 3600 секунд).
-
-        Returns:
-            Optional[str]: Временная ссылка для скачивания файла или None в случае ошибки.
-        """
-        async with self._create_s3_client() as client:
+        """Generates a presigned download URL."""
+        async with self._get_client_context() as client:
             try:
                 return await client.generate_presigned_url(
                     "get_object",
@@ -287,17 +246,13 @@ class MinioService(BaseS3Service):
                     ExpiresIn=expires_in,
                 )
             except Exception as exc:
-                await self.log_operation(
-                    operation="generate_download_url",
-                    details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
-                )
+                fs_logger.error(f"URL generation failed: {str(exc)}")
                 return None
 
     @existence_cache
     async def file_exists(self, key: str) -> bool:
-        """Проверяет существование файла в хранилище."""
-        async with self._create_s3_client() as client:
+        """Checks if file exists in storage."""
+        async with self._get_client_context() as client:
             try:
                 await client.head_object(Bucket=self.bucket, Key=key)
                 return True
@@ -309,14 +264,14 @@ class MinioService(BaseS3Service):
                 await self.log_operation(
                     operation="file_exists",
                     details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
+                    exception=f"Existence check error: {str(exc)}",
                 )
                 raise
 
     @metadata_cache
     async def get_file_info(self, key: str) -> Optional[dict]:
-        """Возвращает информацию о файле (метаданные, размер, дата изменения)."""
-        async with self._create_s3_client() as client:
+        """Retrieves file metadata information."""
+        async with self._get_client_context() as client:
             try:
                 response = await client.head_object(Bucket=self.bucket, Key=key)
                 return {
@@ -332,13 +287,13 @@ class MinioService(BaseS3Service):
                 await self.log_operation(
                     operation="get_file_info",
                     details=f"Key: {key}",
-                    exception=f"Error: {str(exc)}",
+                    exception=f"Metadata retrieval error: {str(exc)}",
                 )
                 raise
 
     @metadata_cache
     async def get_original_filename(self, key: str) -> Optional[str]:
-        """Возвращает оригинальное имя файла из метаданных."""
+        """Extracts original filename from metadata."""
         file_info = await self.get_file_info(key)
         return (
             file_info["metadata"].get("x-amz-meta-original-filename")
@@ -347,7 +302,7 @@ class MinioService(BaseS3Service):
         )
 
     async def get_file_bytes(self, key: str) -> Optional[bytes]:
-        """Возвращает содержимое файла в виде байтов."""
+        """Retrieves file content as bytes."""
         file_object = await self.get_file_object(key)
         if not file_object:
             return None
@@ -363,12 +318,12 @@ class MinioService(BaseS3Service):
         details: Optional[str] = None,
         exception: Optional[str] = None,
     ) -> None:
-        """Логирует операцию и её результат.
+        """Logs storage operations.
 
         Args:
-            operation (str): Название операции.
-            details (Optional[str]): Дополнительные детали операции.
-            exception (Optional[str]): Информация об ошибке.
+            operation: Operation name
+            details: Operation details
+            exception: Error information
         """
         log_data: dict[str, Any] = {
             LogField.TIMESTAMP: datetime.now().isoformat(),
@@ -381,12 +336,12 @@ class MinioService(BaseS3Service):
         if exception:
             log_data[LogField.EXCEPTION] = exception
 
-        # Добавляем информацию о кэше
+        # Add cache information
         log_data["cache_status"] = (
             "invalidated" if "invalidate" in operation else "miss"
         )
 
-        # Логируем размер кэша
+        # Log cache size
         try:
             async with redis_client.connection() as r:
                 cache_size = await r.dbsize()
@@ -397,16 +352,13 @@ class MinioService(BaseS3Service):
         try:
             fs_logger.info(json.dumps(log_data, ensure_ascii=False))
         except Exception as exc:
-            fs_logger.error(f"Failed to log operation: {str(exc)}")
+            fs_logger.error(f"Logging failed: {str(exc)}")
 
     async def check_connection(self) -> bool:
-        """Проверяет подключение к S3.
+        """Verifies storage connectivity.
 
         Returns:
-            bool: True, если подключение успешно.
-
-        Raises:
-            HTTPException: Если подключение к S3 не удалось.
+            True if connection successful
         """
         try:
             result = await self.check_bucket_exists()
@@ -417,15 +369,14 @@ class MinioService(BaseS3Service):
             return False
 
     async def check_bucket_exists(self) -> bool:
-        """Проверяет существование бакета в S3.
+        """Checks if bucket exists.
 
         Returns:
-            bool: True, если бакет существует, иначе False.
+            True if bucket exists
         """
-        async with self._create_s3_client() as client:
+        async with self._get_client_context() as client:
             try:
                 response = await client.list_buckets()
-
                 return any(
                     bucket["Name"] == self.bucket for bucket in response["Buckets"]
                 )
@@ -442,8 +393,8 @@ class MinioService(BaseS3Service):
 
     @metadata_cache
     async def bulk_get_metadata(self, keys: list[str]) -> dict[str, Optional[dict]]:
-        """Пакетное получение метаданных"""
-        async with self._create_s3_client() as client:
+        """Batch retrieves file metadata."""
+        async with self._get_client_context() as client:
             results = {}
             for key in keys:
                 try:
@@ -458,7 +409,7 @@ class MinioService(BaseS3Service):
             return results
 
     async def _invalidate_cache(self, key: str):
-        """Инвалидирует кэш с использованием Redis pipeline"""
+        """Invalidates cache entries for specific key."""
         patterns = [
             f"minio:metadata:*:{self.bucket}:{key}",
             f"minio:exists:*:{self.bucket}:{key}",
@@ -476,11 +427,11 @@ class MinioService(BaseS3Service):
             await self.log_operation(
                 operation="cache_invalidation",
                 details=f"Key: {key}",
-                exception=str(exc),
+                exception=f"Cache invalidation error: {str(exc)}",
             )
 
     async def bulk_cache_invalidation(self, keys: list[str]):
-        """Оптимизированная массовая инвалидация"""
+        """Performs bulk cache invalidation."""
         try:
             async with redis_client.connection() as r:
                 async with r.pipeline() as pipe:
@@ -503,14 +454,14 @@ class MinioService(BaseS3Service):
             await self.log_operation(
                 operation="bulk_cache_invalidation",
                 details=f"Keys: {keys}",
-                exception=str(exc),
+                exception=f"Bulk invalidation error: {str(exc)}",
             )
 
 
 def s3_bucket_service_factory() -> BaseS3Service:
-    """Фабрика для создания экземпляра S3Service с настройками из конфигурации.
+    """Factory function for creating S3 service instance.
 
     Returns:
-        S3Service: Экземпляр S3Service.
+        Configured S3 service instance
     """
     return MinioService(settings=settings.storage)

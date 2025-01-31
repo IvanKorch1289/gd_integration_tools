@@ -12,6 +12,7 @@ from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
 from app.infra.redis import redis_client
+from app.infra.storage import s3_bucket_service_factory
 from app.utils.admins.files import FileAdmin, OrderFileAdmin
 from app.utils.admins.orderkinds import OrderKindAdmin
 from app.utils.admins.orders import OrderAdmin
@@ -39,19 +40,28 @@ async def lifespan(app: FastAPI):
     """
     app_logger.info("Запуск приложения...")
 
+    s3_client = s3_bucket_service_factory()
+
     try:
         # Инициализация пула подключений Redis
         await redis_client._ensure_pool()
 
+        # Инициализация пула подключений БД
+        await db_initializer._initialize_async_pool()
+
+        # Инициализация подключения к хранилищу файлов
+        await s3_client.initialize_connection()
+
         # Инициализация лимитера запросов
         await init_limiter()
-
-        app_logger.info("Лимиты установлены...")
 
         yield
     except Exception as exc:
         app_logger.error(f"Ошибка инициализации планировщика: {str(exc)}")
     finally:
+        await db_initializer.dispose_async()
+        await redis_client.dispose()
+        await s3_client.shutdown()
         app_logger.info("Завершение работы приложения...")
 
 
@@ -120,6 +130,9 @@ def create_app() -> FastAPI:
             status_code=500,
             content=str(exc),
         )
+
+    # Использование роутера для API v1
+    app.include_router(get_v1_routers(), prefix="/api/v1")
 
     # Подключение SQLAdmin для административной панели
     admin = Admin(app, db_initializer.async_engine)
