@@ -36,10 +36,14 @@ class FileStorageSettings(BaseSettings):
 
     # Основные параметры
     fs_provider: Literal["minio", "aws", "other"] = Field(
-        default="minio", env="FS_PROVIDER", description="Тип провайдера хранилища"
+        default="minio",
+        env="FS_PROVIDER",
+        description="Тип провайдера хранилища",
     )
     fs_bucket: str = Field(
-        default="my-bucket", env="FS_BUCKET", description="Имя бакета по умолчанию"
+        default="my-bucket",
+        env="FS_BUCKET",
+        description="Имя бакета по умолчанию",
     )
 
     # Аутентификация
@@ -49,7 +53,9 @@ class FileStorageSettings(BaseSettings):
         description="Ключ доступа к хранилищу",
     )
     fs_secret_key: str = Field(
-        default="minioadmin", env="FS_SECRET_KEY", description="Секретный ключ доступа"
+        default="minioadmin",
+        env="FS_SECRET_KEY",
+        description="Секретный ключ доступа",
     )
 
     # Параметры подключения
@@ -64,18 +70,26 @@ class FileStorageSettings(BaseSettings):
         description="URL интерфейса хранилища",
     )
     fs_region: str = Field(
-        default="us-east-1", env="FS_REGION", description="Регион хранилища (для AWS)"
+        default="us-east-1",
+        env="FS_REGION",
+        description="Регион хранилища (для AWS)",
     )
     fs_secure: bool = Field(
-        default=False, env="FS_SECURE", description="Использовать HTTPS соединение"
+        default=False,
+        env="FS_SECURE",
+        description="Использовать HTTPS соединение",
     )
 
     # Настройки SSL/TLS
     fs_verify_tls: bool = Field(
-        default=False, env="FS_VERIFY_TLS", description="Проверять SSL сертификаты"
+        default=False,
+        env="FS_VERIFY_TLS",
+        description="Проверять SSL сертификаты",
     )
     fs_ca_bundle: Optional[str] = Field(
-        default=None, env="FS_CA_BUNDLE", description="Путь к CA сертификату для SSL"
+        default=None,
+        env="FS_CA_BUNDLE",
+        description="Путь к CA сертификату для SSL",
     )
 
     # Политики повторов
@@ -83,12 +97,16 @@ class FileStorageSettings(BaseSettings):
         default=30, env="FS_TIMEOUT", description="Таймаут операций (секунды)"
     )
     fs_retries: int = Field(
-        default=3, env="FS_RETRIES", description="Количество попыток при ошибках"
+        default=3,
+        env="FS_RETRIES",
+        description="Количество попыток при ошибках",
     )
 
     # Управление ключами
     fs_key_prefix: str = Field(
-        default="", env="FS_KEY_PREFIX", description="Префикс для ключей объектов"
+        default="",
+        env="FS_KEY_PREFIX",
+        description="Префикс для ключей объектов",
     )
 
     @property
@@ -109,7 +127,9 @@ class LogStorageSettings(BaseSettings):
 
     # Основные параметры
     log_host: str = Field(
-        default="http://127.0.0.1", env="LOG_HOST", description="Хост сервера логов"
+        default="http://127.0.0.1",
+        env="LOG_HOST",
+        description="Хост сервера логов",
     )
     log_port: int = Field(
         default=9000,
@@ -139,7 +159,9 @@ class LogStorageSettings(BaseSettings):
 
     # Настройки безопасности
     log_use_tls: bool = Field(
-        default=False, env="LOG_USE_TLS", description="Использовать TLS для подключения"
+        default=False,
+        env="LOG_USE_TLS",
+        description="Использовать TLS для подключения",
     )
     log_ca_certs: Optional[str] = Field(
         default=None, env="LOG_CA_CERTS", description="Путь к CA сертификату"
@@ -147,10 +169,14 @@ class LogStorageSettings(BaseSettings):
 
     # Параметры формата
     log_level: str = Field(
-        default="DEBUG", env="LOG_LEVEL", description="Уровень детализации логов"
+        default="DEBUG",
+        env="LOG_LEVEL",
+        description="Уровень детализации логов",
     )
     log_file_path: str = Field(
-        default="app.log", env="LOG_FILE_PATH", description="Путь к файлу логов"
+        default="app.log",
+        env="LOG_FILE_PATH",
+        description="Путь к файлу логов",
     )
 
     # Валидация логов
@@ -208,14 +234,18 @@ class RedisSettings(BaseSettings):
     redis_db_limits: int = 2
     redis_pass: Optional[str] = Field(default=None, env="REDIS_PASS")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
-    redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
+    redis_decode_responses: bool = Field(
+        default=True, env="REDIS_DECODE_RESPONSES"
+    )
     redis_cache_expire_seconds: int = 300
     redis_connect_timeout: int = Field(default=5, env="REDIS_CONNECT_TIMEOUT")
     redis_timeout: int = Field(default=10, env="REDIS_TIMEOUT")
     redis_pool_maxsize: int = Field(default=20, env="REDIS_POOL_MAXSIZE")
     redis_pool_minsize: int = Field(default=5, env="REDIS_POOL_MINSIZE")
     redis_use_ssl: bool = Field(default=False, env="REDIS_USE_SSL")
-    redis_ssl_ca_certs: Optional[str] = Field(default=None, env="REDIS_SSL_CA_CERTS")
+    redis_ssl_ca_certs: Optional[str] = Field(
+        default=None, env="REDIS_SSL_CA_CERTS"
+    )
     redis_retries: int = Field(default=3, env="REDIS_RETRIES")
     redis_retry_delay: int = Field(default=1, env="REDIS_RETRY_DELAY")
 
@@ -396,7 +426,11 @@ class MailSettings(BaseSettings):
         description="SMTP сервер для отправки почты",
     )
     mail_port: int = Field(
-        default=587, ge=1, le=65535, env="MAIL_PORT", description="Порт SMTP сервера"
+        default=587,
+        ge=1,
+        le=65535,
+        env="MAIL_PORT",
+        description="Порт SMTP сервера",
     )
 
     # Аутентификация
@@ -425,10 +459,13 @@ class MailSettings(BaseSettings):
 
     # Параметры писем
     mail_sender: str = Field(
-        default="noreply@example.com", description="Email отправителя по умолчанию"
+        default="noreply@example.com",
+        description="Email отправителя по умолчанию",
     )
     mail_template_folder: Optional[Path] = Field(
-        default=None, env="MAIL_TEMPLATE_FOULDER", description="Путь к шаблонам писем"
+        default=None,
+        env="MAIL_TEMPLATE_FOULDER",
+        description="Путь к шаблонам писем",
     )
 
     @field_validator("mail_port")
@@ -467,7 +504,9 @@ class QueueSettings(BaseSettings):
         default="earliest", description="Поведение при отсутствии оффсета"
     )
     queue_max_poll_records: int = Field(
-        default=500, ge=1, description="Максимальное количество записей за опрос"
+        default=500,
+        ge=1,
+        description="Максимальное количество записей за опрос",
     )
 
     # Настройки производителя
@@ -487,9 +526,9 @@ class QueueSettings(BaseSettings):
     )
 
     # Оптимизация
-    queue_compression_type: Literal["none", "gzip", "snappy", "lz4", "zstd"] = Field(
-        default="none", description="Тип сжатия сообщений"
-    )
+    queue_compression_type: Literal[
+        "none", "gzip", "snappy", "lz4", "zstd"
+    ] = Field(default="none", description="Тип сжатия сообщений")
     queue_message_max_bytes: int = Field(
         default=1048576, description="Максимальный размер сообщения"
     )
@@ -507,5 +546,7 @@ class QueueSettings(BaseSettings):
     def validate_servers(cls, v):
         for server in v:
             if not re.match(r".+:\d+", server):
-                raise ValueError("Некорректный формат адреса сервера (host:port)")
+                raise ValueError(
+                    "Некорректный формат адреса сервера (host:port)"
+                )
         return v

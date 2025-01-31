@@ -42,10 +42,14 @@ class OrderRepository(SQLAlchemyRepository):
             :param load_joined_models: Флаг для загрузки связанных моделей.
             :param order_kind_repo: Репозиторий для работы с видами заказов.
             """
-            super().__init__(model=model, load_joined_models=load_joined_models)
+            super().__init__(
+                model=model, load_joined_models=load_joined_models
+            )
             self.order_kind_repo = order_kind_repo
 
-        async def _validate_order_kind(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        async def _validate_order_kind(
+            self, data: Dict[str, Any]
+        ) -> Dict[str, Any]:
             """
             Валидирует и обновляет данные заказа, проверяя наличие связанного вида заказа.
 
@@ -87,7 +91,9 @@ class OrderRepository(SQLAlchemyRepository):
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
-    async def add(self, session: AsyncSession, data: Dict[str, Any]) -> Optional[Order]:
+    async def add(
+        self, session: AsyncSession, data: Dict[str, Any]
+    ) -> Optional[Order]:
         """
         Добавляет новый заказ в таблицу.
 

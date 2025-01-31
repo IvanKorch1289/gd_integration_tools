@@ -80,7 +80,9 @@ class APISKBService:
         """
         try:
             url = f"{urljoin(self.base_url, self.endpoints.get('CREATE_REQUEST'))}"
-            return await make_request("POST", url, params=self.params, json=data)
+            return await make_request(
+                "POST", url, params=self.params, json=data
+            )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -102,7 +104,9 @@ class APISKBService:
             url = f"{urljoin(self.base_url, self.endpoints.get('GET_RESULT'))}/{order_uuid}"
             response = await make_request("GET", url, params=params)
 
-            content_encoding = response.headers.get("Content-Encoding", "").lower()
+            content_encoding = response.headers.get(
+                "Content-Encoding", ""
+            ).lower()
             content_type = response.headers.get("Content-Type", "")
 
             if "gzip" in content_encoding:
@@ -115,9 +119,13 @@ class APISKBService:
                 filename = f"{order_uuid}"
                 content = await response.read()
 
-                content_disposition = response.headers.get("Content-Disposition")
+                content_disposition = response.headers.get(
+                    "Content-Disposition"
+                )
                 if content_disposition:
-                    match = re.search(r'filename="?([^";]+)"?', content_disposition)
+                    match = re.search(
+                        r'filename="?([^";]+)"?', content_disposition
+                    )
                     if match:
                         filename = match.group(1)
 

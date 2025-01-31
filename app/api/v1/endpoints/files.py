@@ -60,7 +60,9 @@ class StorageCBV:
         """
         content = await file.read()
         await self.service.upload_file_object(
-            key=str(uuid.uuid4()), original_filename=file.filename, content=content
+            key=str(uuid.uuid4()),
+            original_filename=file.filename,
+            content=content,
         )
         return file
 

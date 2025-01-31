@@ -41,6 +41,8 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         users_router, prefix="/user", tags=["Работа с пользователями"]
     )
-    api_router_v1.include_router(tech_router, prefix="/tech", tags=["Техническое"])
+    api_router_v1.include_router(
+        tech_router, prefix="/tech", tags=["Техническое"]
+    )
 
     return api_router_v1

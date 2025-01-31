@@ -13,7 +13,9 @@ class CronPreset:
 
     @property
     def schedule(self):
-        return crontab(minute=self.minute, hour=self.hour, day_of_week=self.day_of_week)
+        return crontab(
+            minute=self.minute, hour=self.hour, day_of_week=self.day_of_week
+        )
 
 
 class CronPresets:

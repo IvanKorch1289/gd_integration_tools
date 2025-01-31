@@ -44,7 +44,7 @@ def send_result_to_gd(self, order_id: int):
         except Exception as exc:
             self.retry(exc=exc, throw=False)
 
-    return utilities.run_async_task(inner_send_result_to_gd())
+    return utilities.execute_async_task(inner_send_result_to_gd())
 
 
 @celery_app.task(
@@ -85,7 +85,7 @@ def send_requests_for_get_result(self, order_id: int):
             # Повторяем задачу, если результат не готов или произошла ошибка
             self.retry(exc=exc, throw=False)
 
-    return utilities.run_async_task(inner_send_requests_for_get_result())
+    return utilities.execute_async_task(inner_send_requests_for_get_result())
 
 
 @celery_app.task(
@@ -115,7 +115,7 @@ def send_requests_for_create_order(self, order_id: int):
         except Exception as exc:
             self.retry(exc=exc, throw=False)
 
-    return utilities.run_async_task(inner_send_requests_for_create_order())
+    return utilities.execute_async_task(inner_send_requests_for_create_order())
 
 
 @celery_app.task(

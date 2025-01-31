@@ -60,7 +60,9 @@ class Order(BaseModel):
     email_for_answer: Mapped[str] = mapped_column(EmailType, nullable=False)
 
     # Связи
-    order_kind = relationship("OrderKind", back_populates="orders", lazy="joined")
+    order_kind = relationship(
+        "OrderKind", back_populates="orders", lazy="joined"
+    )
     files = relationship(
         "File",
         secondary=OrderFile.__table__,

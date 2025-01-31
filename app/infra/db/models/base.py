@@ -33,7 +33,9 @@ metadata = MetaData(
 )
 
 # Инициализация SQLAlchemy-Continuum
-make_versioned(user_cls=None, plugins=[ActivityPlugin(), PropertyModTrackerPlugin()])
+make_versioned(
+    user_cls=None, plugins=[ActivityPlugin(), PropertyModTrackerPlugin()]
+)
 
 # Создаем registry и Base с использованием metadata
 mapper_registry = registry(metadata=metadata)
@@ -59,7 +61,9 @@ class BaseModel(AsyncAttrs, Base):
     __abstract__ = True
     __versioned__ = {}  # Включаем версионирование для всех моделей
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         default=func.now(), onupdate=func.now()
@@ -77,7 +81,9 @@ class BaseModel(AsyncAttrs, Base):
         return cls.__name__.lower() + "s"
 
     @staticmethod
-    async def get_value_from_secret_str(data: Dict[str, Any]) -> Dict[str, Any]:
+    async def get_value_from_secret_str(
+        data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Преобразует все SecretStr в словаре в обычные строки.
 
@@ -88,7 +94,11 @@ class BaseModel(AsyncAttrs, Base):
             Dict[str, Any]: Словарь с преобразованными значениями.
         """
         return {
-            key: value.get_secret_value() if isinstance(value, SecretStr) else value
+            key: (
+                value.get_secret_value()
+                if isinstance(value, SecretStr)
+                else value
+            )
             for key, value in data.items()
         }
 
@@ -100,7 +110,8 @@ class BaseModel(AsyncAttrs, Base):
             Dict[str, Any]: Словарь с атрибутами модели.
         """
         return {
-            column.name: getattr(self, column.name) for column in self.__table__.columns
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
         }
 
     async def update(self, **kwargs) -> None:

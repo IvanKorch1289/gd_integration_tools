@@ -21,7 +21,13 @@ class OrderKindAdmin(BaseAdmin, ModelView, model=OrderKind):
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
-    column_list: List[str] = ["id", "name", "skb_uuid", "created_at", "updated_at"]
+    column_list: List[str] = [
+        "id",
+        "name",
+        "skb_uuid",
+        "created_at",
+        "updated_at",
+    ]
     column_searchable_list: List[str] = ["id", "name", "skb_uuid"]
     column_sortable_list: List[str] = [
         "id",

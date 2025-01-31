@@ -69,7 +69,9 @@ class UnprocessableError(BaseError):
     Статус код: 422 Unprocessable Entity.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Validation error") -> None:
+    def __init__(
+        self, *_: tuple[Any], message: str = "Validation error"
+    ) -> None:
         """
         Инициализирует исключение для ошибки валидации.
 
@@ -96,7 +98,9 @@ class NotFoundError(BaseError):
         Args:
             message (str): Сообщение об ошибке.
         """
-        super().__init__(message=message, status_code=status.HTTP_404_NOT_FOUND)
+        super().__init__(
+            message=message, status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 class DatabaseError(BaseError):
@@ -106,7 +110,9 @@ class DatabaseError(BaseError):
     Статус код: 500 Internal Server Error.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Database error") -> None:
+    def __init__(
+        self, *_: tuple[Any], message: str = "Database error"
+    ) -> None:
         """
         Инициализирует исключение для ошибок базы данных.
 
@@ -125,7 +131,9 @@ class AuthenticationError(BaseError):
     Статус код: 401 Unauthorized.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Authentication error") -> None:
+    def __init__(
+        self, *_: tuple[Any], message: str = "Authentication error"
+    ) -> None:
         """
         Инициализирует исключение для ошибок аутентификации.
 
@@ -145,14 +153,18 @@ class AuthorizationError(BaseError):
     Статус код: 403 Forbidden.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Authorization error") -> None:
+    def __init__(
+        self, *_: tuple[Any], message: str = "Authorization error"
+    ) -> None:
         """
         Инициализирует исключение для ошибок авторизации.
 
         Args:
             message (str): Сообщение об ошибке.
         """
-        super().__init__(message=message, status_code=status.HTTP_403_FORBIDDEN)
+        super().__init__(
+            message=message, status_code=status.HTTP_403_FORBIDDEN
+        )
 
 
 def handle_db_errors(func):

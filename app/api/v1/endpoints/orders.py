@@ -43,7 +43,9 @@ class ExtendedOrderCBV(OrderCBV):
         summary="Добавить запрос в СКБ-Техно",
     )
     @handle_routes_errors
-    async def add_order_to_skb(self, order_id: int, x_api_key: str = Header(...)):
+    async def add_order_to_skb(
+        self, order_id: int, x_api_key: str = Header(...)
+    ):
         """
         Добавить запрос в СКБ-Техно.
 
@@ -70,7 +72,9 @@ class ExtendedOrderCBV(OrderCBV):
         :param x_api_key: API-ключ для аутентификации.
         :return: Результат запроса.
         """
-        return await self.service.get_order_file_and_json_from_skb(order_id=order_id)
+        return await self.service.get_order_file_and_json_from_skb(
+            order_id=order_id
+        )
 
     @router.get(
         "/{order_id}/get-order-file",
@@ -168,8 +172,10 @@ class ExtendedOrderCBV(OrderCBV):
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка на файл и JSON-результат.
         """
-        return await self.service.get_order_file_link_and_json_result_for_request(
-            order_id=order_id, s3_service=s3_service
+        return (
+            await self.service.get_order_file_link_and_json_result_for_request(
+                order_id=order_id, s3_service=s3_service
+            )
         )
 
     @router.get(

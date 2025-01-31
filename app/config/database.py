@@ -33,13 +33,21 @@ class DatabaseSettings(BaseSettings):
         description="Тип СУБД: postgresql или oracle",
     )
     db_host: str = Field(
-        default="localhost", env="DB_HOST", description="Хост или IP-адрес сервера БД"
+        default="localhost",
+        env="DB_HOST",
+        description="Хост или IP-адрес сервера БД",
     )
     db_port: int = Field(
-        default=5432, gt=0, lt=65536, env="DB_PORT", description="Порт сервера БД"
+        default=5432,
+        gt=0,
+        lt=65536,
+        env="DB_PORT",
+        description="Порт сервера БД",
     )
     db_name: str = Field(
-        default="postgres", env="DB_NAME", description="Имя базы данных или сервиса"
+        default="postgres",
+        env="DB_NAME",
+        description="Имя базы данных или сервиса",
     )
 
     # Аутентификация
@@ -84,7 +92,10 @@ class DatabaseSettings(BaseSettings):
 
     # Пул соединений
     db_pool_size: int = Field(
-        default=10, ge=1, env="DB_POOL_SIZE", description="Размер пула соединений"
+        default=10,
+        ge=1,
+        env="DB_POOL_SIZE",
+        description="Размер пула соединений",
     )
     db_max_overflow: int = Field(
         default=10,
@@ -105,7 +116,9 @@ class DatabaseSettings(BaseSettings):
 
     # SSL/TLS
     db_ssl_mode: Optional[str] = Field(
-        default=None, env="DB_SSL_MODE", description="Режим SSL (для PostgreSQL)"
+        default=None,
+        env="DB_SSL_MODE",
+        description="Режим SSL (для PostgreSQL)",
     )
     db_ssl_ca: Optional[str] = Field(
         default=None, env="DB_SSL_CA", description="Путь к SSL CA сертификату"

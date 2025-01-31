@@ -37,7 +37,8 @@ class MailService:
             ) as smtp:
                 if self.settings.mail_username and self.settings.mail_password:
                     await smtp.login(
-                        self.settings.mail_username, self.settings.mail_password
+                        self.settings.mail_username,
+                        self.settings.mail_password,
                     )
             return True
         except Exception as exc:
@@ -85,7 +86,8 @@ class MailService:
             ) as smtp:
                 if self.settings.mail_username and self.settings.mail_password:
                     await smtp.login(
-                        self.settings.mail_username, self.settings.mail_password
+                        self.settings.mail_username,
+                        self.settings.mail_password,
                     )
                 await smtp.send_message(msg)
         except Exception as exc:

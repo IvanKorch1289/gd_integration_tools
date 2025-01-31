@@ -105,7 +105,9 @@ class DatabaseInitializer:
             if self.settings.db_ssl_ca:
                 import ssl
 
-                ssl_context = ssl.create_default_context(cafile=self.settings.db_ssl_ca)
+                ssl_context = ssl.create_default_context(
+                    cafile=self.settings.db_ssl_ca
+                )
                 connect_args["ssl"] = ssl_context
 
         elif self.settings.db_type == "oracle":
@@ -151,7 +153,9 @@ class DatabaseInitializer:
             before_cursor_execute,
         )
         listen(
-            self.async_engine.sync_engine, "after_cursor_execute", after_cursor_execute
+            self.async_engine.sync_engine,
+            "after_cursor_execute",
+            after_cursor_execute,
         )
 
         # For sync engine
@@ -184,7 +188,9 @@ class DatabaseInitializer:
             self.sync_engine.dispose()
             db_logger.info("Sync database connections closed")
         except Exception as exc:
-            db_logger.error(f"Failed to close sync database connections: {str(exc)}")
+            db_logger.error(
+                f"Failed to close sync database connections: {str(exc)}"
+            )
 
     async def dispose_async(self):
         """Closes all async connections"""
@@ -192,7 +198,9 @@ class DatabaseInitializer:
             await self.async_engine.dispose()
             db_logger.info("Async database connections closed")
         except Exception as exc:
-            db_logger.error(f"Failed to close async database connections: {str(exc)}")
+            db_logger.error(
+                f"Failed to close async database connections: {str(exc)}"
+            )
 
     async def check_connection(self) -> bool:
         """Verifies database connection health.

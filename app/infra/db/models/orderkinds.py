@@ -31,5 +31,7 @@ class OrderKind(BaseModel):
 
     # Relationships
     orders = relationship(
-        "Order", back_populates="order_kind", cascade="save-update, merge, delete"
+        "Order",
+        back_populates="order_kind",
+        cascade="save-update, merge, delete",
     )

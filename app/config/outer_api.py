@@ -56,10 +56,12 @@ class APISSKBSettings(BaseSettings):
 
     # Таймауты
     skb_connect_timeout: float = Field(
-        default=10.0, description="Максимальное время установки соединения (секунды)"
+        default=10.0,
+        description="Максимальное время установки соединения (секунды)",
     )
     skb_read_timeout: float = Field(
-        default=30.0, description="Максимальное время ожидания ответа (секунды)"
+        default=30.0,
+        description="Максимальное время ожидания ответа (секунды)",
     )
 
 

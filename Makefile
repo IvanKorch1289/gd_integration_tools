@@ -36,10 +36,10 @@ format:
 ## Lint code using Flake8, mypy, Vulture and Bandit
 lint: check-env
 	@echo "\033[34mLinting code...\033[0m"
-	-poetry run flake8 $(SOURCE_DIR) --config setup.cfg || echo "Flake8 found issues"
+	-poetry run flake8 $(SOURCE_DIR) || echo "Flake8 found issues"
 	-poetry run mypy $(SOURCE_DIR) || echo "Mypy found type issues"
-	-poetry run vulture $(SOURCE_DIR) --min-confidence 50 || echo "Vulture found dead code"
-	-poetry run bandit -r $(SOURCE_DIR) -c setup.cfg || echo "Bandit found security issues"
+	-poetry run vulture $(SOURCE_DIR) --min-confidence 70 --exclude "*/migrations/*,*/tests/*,*/venv/*" || echo "Vulture found dead code"
+	-poetry run bandit -r $(SOURCE_DIR) -c .bandit.yml || echo "Bandit found security issues"
 	@echo "\033[32mLinting complete (errors ignored)\033[0m"
 
 ## Clean temporary files and caches (без удаления .venv)

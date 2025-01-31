@@ -40,7 +40,9 @@ class AbstractRepository(ABC):
     """
 
     @abstractmethod
-    async def get(self, session: AsyncSession, key: str, value: Any) -> ConcreteTable:
+    async def get(
+        self, session: AsyncSession, key: str, value: Any
+    ) -> ConcreteTable:
         """Получить объект по ключу и значению."""
         raise NotImplementedError
 
@@ -57,7 +59,9 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
+    async def add(
+        self, session: AsyncSession, data: dict[str, Any]
+    ) -> ConcreteTable:
         """Добавить новый объект в таблицу."""
         raise NotImplementedError
 
@@ -69,7 +73,9 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, session: AsyncSession, key: str, value: Any) -> None:
+    async def delete(
+        self, session: AsyncSession, key: str, value: Any
+    ) -> None:
         """Удалить объект из таблицы по ключу и значению."""
         raise NotImplementedError
 
@@ -185,7 +191,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                     session.add(query_or_object)
 
                 await session.flush()
-                await self._refresh_with_relationships(session, query_or_object)
+                await self._refresh_with_relationships(
+                    session, query_or_object
+                )
 
             return query_or_object
 
@@ -199,7 +207,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             return [
                 selectinload(getattr(self.model, key))
                 for key in relationships
-                if key not in getattr(self.model, "EXCLUDED_RELATIONSHIPS", set())
+                if key
+                not in getattr(self.model, "EXCLUDED_RELATIONSHIPS", set())
                 and key != "versions"
             ]
 
@@ -313,12 +322,16 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         order_by = (
             asc(by) if order == "asc" else desc(by)
         )  # Определяем порядок сортировки
-        query = select(self.model).order_by(order_by).limit(1)  # Создаем запрос
+        query = (
+            select(self.model).order_by(order_by).limit(1)
+        )  # Создаем запрос
         return await self.helper._get_loaded_object(session, query)
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
-    async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
+    async def add(
+        self, session: AsyncSession, data: dict[str, Any]
+    ) -> ConcreteTable:
         """
         Добавить новый объект в таблицу.
 
@@ -360,7 +373,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
-    async def delete(self, session: AsyncSession, key: str, value: Any) -> None:
+    async def delete(
+        self, session: AsyncSession, key: str, value: Any
+    ) -> None:
         """
         Удалить объект из таблицы по ключу и значению.
 
@@ -384,7 +399,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         """
         Получить все версии объекта.
         """
-        return await self.helper._get_versions_query(session, object_id, order="asc")
+        return await self.helper._get_versions_query(
+            session, object_id, order="asc"
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
@@ -447,14 +464,18 @@ async def get_repository_for_model(
     Возвращает класс репозитория для указанной модели.
 
     """
-    repository_name = f"{model.__name__}Repository"  # Формируем имя репозитория
+    repository_name = (
+        f"{model.__name__}Repository"  # Формируем имя репозитория
+    )
 
     try:
         # Импортируем модуль репозитория для указанной модели
         repository_module = importlib.import_module(
             f"app.db.repositories.{model.__tablename__}"
         )
-        return getattr(repository_module, repository_name)  # Получаем класс репозитория
+        return getattr(
+            repository_module, repository_name
+        )  # Получаем класс репозитория
     except (ImportError, AttributeError) as exc:
         raise ValueError(
             f"Репозиторий для модели {model.__name__} не найден: {str(exc)}"

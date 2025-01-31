@@ -104,9 +104,9 @@ class CeleryManager:
             self.app.conf.beat_schedule = {}
         elif settings.app.app_environment == "development":
             # Для разработки можно уменьшить интервал
-            self.app.conf.beat_schedule["health-check-every-hour"]["schedule"] = (
-                schedules.crontab(minute="*/15")
-            )
+            self.app.conf.beat_schedule["health-check-every-hour"][
+                "schedule"
+            ] = schedules.crontab(minute="*/15")
 
     async def check_connection(self) -> bool:
         """Проверяет доступность Celery workers.

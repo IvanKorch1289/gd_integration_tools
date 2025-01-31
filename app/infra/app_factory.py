@@ -87,7 +87,9 @@ def create_app() -> FastAPI:
     # Middleware для логирования внутренних запросов
     @app.middleware("http")
     async def inner_logger_middleware(request: Request, call_next):
-        return await InnerRequestLoggingMiddleware().__call__(request, call_next)
+        return await InnerRequestLoggingMiddleware().__call__(
+            request, call_next
+        )
 
     # Middleware для проверки API-ключа
     @app.middleware("http")
@@ -146,7 +148,9 @@ def create_app() -> FastAPI:
     app.include_router(get_v1_routers())
 
     # Эндпоинт для метрик Prometheus
-    @app.get("/metrics", summary="metrics", operation_id="metrics", tags=["Метрики"])
+    @app.get(
+        "/metrics", summary="metrics", operation_id="metrics", tags=["Метрики"]
+    )
     async def metrics(request: Request):
         return handle_metrics(request)
 
@@ -159,11 +163,15 @@ def create_app() -> FastAPI:
         Возвращает:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
-        log_url = await utilities.ensure_protocol(
+        log_url = await utilities.ensure_url_protocol(
             f"{settings.logging.log_host}:{settings.logging.log_port}"
         )
-        fs_url = await utilities.ensure_protocol(settings.storage.fs_interfase_endpoint)
-        flower_url = await utilities.ensure_protocol(settings.celery.cel_flower_url)
+        fs_url = await utilities.ensure_url_protocol(
+            settings.storage.fs_interfase_endpoint
+        )
+        flower_url = await utilities.ensure_url_protocol(
+            settings.celery.cel_flower_url
+        )
 
         return f"""
         <!DOCTYPE html>

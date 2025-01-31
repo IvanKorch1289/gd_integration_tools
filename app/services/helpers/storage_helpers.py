@@ -43,7 +43,9 @@ async def process_file(key: str, service: BaseS3Service) -> Dict[str, Any]:
 
     headers = {}
     if original_filename:
-        headers["Content-Disposition"] = f"attachment; filename={original_filename}"
+        headers["Content-Disposition"] = (
+            f"attachment; filename={original_filename}"
+        )
 
     return {
         "body": stream_generator(),
@@ -52,7 +54,9 @@ async def process_file(key: str, service: BaseS3Service) -> Dict[str, Any]:
     }
 
 
-async def get_streaming_response(key: str, service: BaseS3Service) -> StreamingResponse:
+async def get_streaming_response(
+    key: str, service: BaseS3Service
+) -> StreamingResponse:
     """
     Возвращает потоковый ответ для скачивания файла.
 

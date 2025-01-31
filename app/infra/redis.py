@@ -55,7 +55,11 @@ class RedisClient:
             async with self._lock:
                 if self._pool is None or self._pool.closed:
                     try:
-                        protocol = "rediss" if self.settings.redis_use_ssl else "redis"
+                        protocol = (
+                            "rediss"
+                            if self.settings.redis_use_ssl
+                            else "redis"
+                        )
                         address = (
                             f"{protocol}://{self.settings.redis_host}:"
                             f"{self.settings.redis_port}"

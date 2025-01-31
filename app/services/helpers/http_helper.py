@@ -91,7 +91,9 @@ class OptimizedClientSession:
             "url": url,
             "headers": kwargs.get("headers"),
             "params": kwargs.get("params"),
-            "body_size": len(kwargs.get("data", b"")) if kwargs.get("data") else 0,
+            "body_size": (
+                len(kwargs.get("data", b"")) if kwargs.get("data") else 0
+            ),
         }
         request_logger.info("Outgoing request", extra={"request": log_data})
 
@@ -110,7 +112,9 @@ class OptimizedClientSession:
         }
         request_logger.info("Received response", extra={"response": log_data})
 
-    async def request(self, method: str, url: str, **kwargs) -> aiohttp.ClientResponse:
+    async def request(
+        self, method: str, url: str, **kwargs
+    ) -> aiohttp.ClientResponse:
         """
         Выполнение HTTP-запроса с оптимизациями.
 

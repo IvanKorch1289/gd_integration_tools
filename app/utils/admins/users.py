@@ -56,4 +56,10 @@ class UserAdmin(BaseAdmin, ModelView, model=User):
     column_filters = ["username", "email"]
 
     # Список полей, отображаемых в форме создания
-    form_create_rules = ["username", "password", "email", "is_active", "is_superuser"]
+    form_create_rules = [
+        "username",
+        "password",
+        "email",
+        "is_active",
+        "is_superuser",
+    ]

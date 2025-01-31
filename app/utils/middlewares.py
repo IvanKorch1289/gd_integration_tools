@@ -1,10 +1,11 @@
 import re
-from typing import Callable
-
+from typing import Callable, List, Pattern
 import asyncio
 import time
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 from app.config.settings import settings
 from app.utils.logging import app_logger
@@ -14,19 +15,14 @@ __all__ = (
     "InnerRequestLoggingMiddleware",
     "TimeoutMiddleware",
     "APIKeyMiddleware",
+    # Add new middleware to __all__ as needed
 )
 
 
-class AsyncListIterator:
-    """
-    Асинхронный итератор для последовательного обхода списка байтовых чанков.
-
-    Attributes:
-        chunks (list): Список байтовых чанков.
-        index (int): Текущий индекс в списке чанков.
-    """
-
-    def __init__(self, chunks):
+class AsyncChunkIterator:
+    """Async iterator for sequential traversal of byte chunks."""
+    
+    def __init__(self, chunks: list[bytes]):
         self.chunks = chunks
         self.index = 0
 
@@ -34,12 +30,6 @@ class AsyncListIterator:
         return self
 
     async def __anext__(self):
-        """
-        Возвращает следующий чанк из списка.
-
-        Raises:
-            StopAsyncIteration: Если достигнут конец списка.
-        """
         try:
             result = self.chunks[self.index]
             self.index += 1
@@ -49,195 +39,180 @@ class AsyncListIterator:
 
 
 class InnerRequestLoggingMiddleware:
-    """
-    Middleware для логирования входящих запросов и исходящих ответов.
+    """Middleware for logging incoming requests and outgoing responses."""
+    
+    def __init__(self, log_body: bool = True, max_body_size: int = 4096):
+        self.log_body = log_body
+        self.max_body_size = max_body_size
 
-    Логирует метод, URL, тело запроса (для POST), тело ответа и время обработки.
-    Также перехватывает и логирует исключения, возникающие в процессе обработки запроса.
-    """
-
-    async def __call__(self, request: Request, call_next: Callable):
-        """
-        Обрабатывает входящий запрос и логирует информацию о нем.
-
-        Args:
-            request (Request): Входящий HTTP-запрос.
-            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
-
-        Returns:
-            Response: HTTP-ответ.
-        """
-        app_logger.info(f"Запрос: {request.method} {request.url}")
+    async def __call__(self, request: Request, call_next: Callable) -> Response:
+        """Process and log request/response information."""
+        app_logger.info(f"Request: {request.method} {request.url}")
 
         start_time = time.time()
-
-        # Проверяем, является ли запрос бинарным (например, загрузка файла)
-        content_type = request.headers.get("Content-Type", "").lower()
-
-        if request.method == "POST" and "multipart/form-data" not in content_type:
-            # Логируем тело запроса только для небинарных данных
-            request_body = await request.body()
-            try:
-                app_logger.info(f"Тело запроса: {request_body.decode('utf-8')}")
-            except UnicodeDecodeError:
-                app_logger.warning(
-                    "Тело запроса содержит бинарные данные и не может быть декодировано."
-                )
+        request_body = b""
+        
+        if self.log_body and request.method == "POST":
+            content_type = request.headers.get("Content-Type", "").lower()
+            if "multipart/form-data" not in content_type:
+                request_body = await self._get_request_body(request)
 
         try:
             response = await call_next(request)
         except Exception as exc:
-            # Логируем исключение
-            app_logger.error(f"Ошибка при обработке запроса: {exc}", exc_info=True)
-            # Передаем исключение дальше для обработки глобальным обработчиком
+            app_logger.error(f"Request processing error: {exc}", exc_info=True)
             raise
 
-        # Логируем тело ответа только для текстовых или JSON-ответов
-        captured_body = await self.capture_and_return_response(response)
-        content_type = response.headers.get("Content-Type", "").lower()
-        if "text" in content_type or "json" in content_type:
-            try:
-                app_logger.info(f"Тело ответа: {captured_body.decode('utf-8')}")
-            except UnicodeDecodeError as e:
-                app_logger.warning(
-                    f"Произошла ошибка при декодировании тела ответа: {e}"
-                )
-        else:
-            app_logger.debug("Тело ответа не было декодировано (бинарные данные).")
+        if self.log_body:
+            await self._log_response_body(response)
 
         process_time = (time.time() - start_time) * 1000
-
         app_logger.info(
-            f"Ответ: {response.status_code}, {request.method} {request.url.path}: {process_time:.2f} ms"
+            f"Response: {response.status_code} | {request.method} {request.url.path} "
+            f"processed in {process_time:.2f} ms"
         )
 
         return response
 
+    async def _get_request_body(self, request: Request) -> bytes:
+        """Retrieve and log request body with size limit."""
+        try:
+            body = await request.body()
+            if len(body) > self.max_body_size:
+                return b"<body too large to log>"
+                
+            app_logger.debug(f"Request body: {body.decode('utf-8')}")
+            return body
+        except UnicodeDecodeError:
+            app_logger.warning("Request body contains binary data, skipping logging")
+            return b""
+
+    async def _log_response_body(self, response: Response) -> None:
+        """Log response body with size limit."""
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "text" in content_type or "json" in content_type:
+            body = await self._capture_response_body(response)
+            if len(body) > self.max_body_size:
+                app_logger.debug("Response body too large to log")
+            else:
+                app_logger.debug(f"Response body: {body.decode('utf-8')}")
+
     @staticmethod
-    async def intercept_response(response: Response) -> bytes:
-        """
-        Собирает и возвращает тело ответа.
-
-        Args:
-            response (Response): HTTP-ответ.
-
-        Returns:
-            bytes: Тело ответа в виде байтов.
-        """
-        response_body_chunks = []
+    async def _capture_response_body(response: Response) -> bytes:
+        """Capture response body while maintaining the original iterator."""
+        chunks = []
         async for chunk in response.body_iterator:
-            response_body_chunks.append(chunk)
-        return b"".join(response_body_chunks)
-
-    @classmethod
-    async def capture_and_return_response(cls, response: Response):
-        """
-        Захватывает тело ответа, логирует его и возвращает оригинальный поток данных.
-
-        Args:
-            response (Response): HTTP-ответ.
-
-        Returns:
-            bytes: Тело ответа в виде байтов.
-        """
-        original_body = await cls.intercept_response(response)
-        response.body_iterator = AsyncListIterator([original_body])
-        return original_body
+            chunks.append(chunk)
+        response.body_iterator = AsyncChunkIterator(chunks)
+        return b"".join(chunks)
 
 
 class APIKeyMiddleware:
-    """
-    Middleware для проверки API-ключа в заголовке запроса.
-
-    Если маршрут не требует API-ключа, запрос пропускается без проверки.
-    """
-
-    async def __call__(self, request: Request, call_next: Callable) -> Response:
-        """
-        Проверяет наличие и валидность API-ключа в заголовке запроса.
-
-        Args:
-            request (Request): Входящий HTTP-запрос.
-            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
-
-        Returns:
-            Response: HTTP-ответ.
-        """
-        # Проверяем, требуется ли API-ключ для текущего пути
-        if self._is_path_excluded(request.url.path):
-            return await call_next(request)
-
-        # Проверяем наличие и валидность API-ключа
-        try:
-            api_key = request.headers["X-Api-Key"]
-            await self.verify_api_key(api_key)
-        except KeyError:
-            raise  # Исключение будет обработано глобальным обработчиком
-        except HTTPException:
-            raise  # Исключение будет обработано глобальным обработчиком
-
-        # Продолжаем обработку запроса
-        response = await call_next(request)
-        return response
+    """Middleware for API key validation in request headers."""
+    
+    def __init__(self):
+        self.compiled_patterns: List[Pattern] = [
+            re.compile(self._convert_pattern(pattern))
+            for pattern in settings.auth.auth_routes_without_api_key
+        ]
 
     @staticmethod
-    async def verify_api_key(api_key: str):
-        """
-        Проверяет валидность API-ключа.
+    def _convert_pattern(pattern: str) -> str:
+        """Convert route pattern to regex pattern."""
+        return f"^{pattern.replace('*', '.*')}$"
 
-        Args:
-            api_key (str): API-ключ из заголовка запроса.
+    async def __call__(self, request: Request, call_next: Callable) -> Response:
+        if self._is_excluded_route(request.url.path):
+            return await call_next(request)
 
-        Raises:
-            HTTPException: Если API-ключ невалиден.
-        """
+        if (api_key := request.headers.get("X-API-Key")) is None:
+            raise HTTPException(status_code=401, detail="API key required")
+
         if api_key != settings.auth.auth_api_key:
-            raise HTTPException(status_code=401, detail="Invalid API Key")
+            raise HTTPException(status_code=401, detail="Invalid API key")
 
-    def _is_path_excluded(self, path: str) -> bool:
-        """
-        Проверяет, исключен ли путь из проверки API-ключа.
+        return await call_next(request)
 
-        Args:
-            path (str): Путь запроса.
-
-        Returns:
-            bool: True, если путь исключен, иначе False.
-        """
-        # Проверяем, соответствует ли путь любому из исключенных маршрутов
-        for excluded_path in settings.auth.auth_routes_without_api_key:
-            pattern = excluded_path.replace("*", ".*")
-            # Добавляем начало и конец строки для точного совпадения
-            pattern = f"^{pattern}$"
-            if re.match(pattern, path):
-                return True
-        return False
+    def _is_excluded_route(self, path: str) -> bool:
+        """Check if route is excluded from API key validation."""
+        return any(pattern.match(path) for pattern in self.compiled_patterns)
 
 
 class TimeoutMiddleware:
-    """
-    Middleware для установки таймаута на обработку запроса.
-
-    Если запрос обрабатывается дольше указанного времени, возвращается ошибка 408.
-    """
-
-    @classmethod
-    async def __call__(cls, request: Request, call_next: Callable):
-        """
-        Устанавливает таймаут на обработку запроса.
-
-        Args:
-            request (Request): Входящий HTTP-запрос.
-            call_next (Callable): Функция для вызова следующего middleware или обработчика запроса.
-
-        Returns:
-            Response: HTTP-ответ.
-        """
+    """Middleware for request processing timeout."""
+    
+    @staticmethod
+    async def __call__(request: Request, call_next: Callable) -> Response:
         try:
-            response = await asyncio.wait_for(
-                call_next(request), timeout=settings.auth.auth_request_timeout
+            return await asyncio.wait_for(
+                call_next(request),
+                timeout=settings.auth.auth_request_timeout
             )
         except asyncio.TimeoutError:
-            return JSONResponse({"detail": "Request timed out"}, status_code=408)
+            app_logger.warning(f"Request timeout: {request.url}")
+            return JSONResponse(
+                {"detail": "Request processing timeout"},
+                status_code=408
+            )
 
+
+# Additional Useful Middleware Suggestions
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware for adding security headers to responses."""
+    
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        response.headers.update({
+            "Content-Security-Policy": "default-src 'self'",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "Strict-Transport-Security": "max-age=63072000; includeSubDomains"
+        })
         return response
+
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Middleware for adding unique request ID to each request."""
+    
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        request_id = request.headers.get("X-Request-ID") or self._generate_id()
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+    @staticmethod
+    def _generate_id() -> str:
+        return uuid.uuid4().hex
+
+
+class RateLimitingMiddleware(BaseHTTPMiddleware):
+    """Basic rate limiting middleware."""
+    
+    def __init__(self, app: ASGIApp, max_requests: int = 100, window: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window = window
+        self.request_counts = {}
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        client_ip = request.client.host
+        current_time = time.time()
+
+        # Cleanup old entries
+        self.request_counts = {
+            ip: (count, timestamp)
+            for ip, (count, timestamp) in self.request_counts.items()
+            if current_time - timestamp < self.window
+        }
+
+        count, timestamp = self.request_counts.get(client_ip, (0, current_time))
+        
+        if count >= self.max_requests:
+            return JSONResponse(
+                {"detail": "Rate limit exceeded"},
+                status_code=429
+            )
+
+        self.request_counts[client_ip] = (count + 1, timestamp)
+        return await call_next(request)

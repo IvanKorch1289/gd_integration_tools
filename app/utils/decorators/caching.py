@@ -32,7 +32,11 @@ class CachingDecorator:
         self.renew_ttl = renew_ttl
 
     def _generate_cache_key(
-        self, func: Callable, args: tuple, kwargs: dict, bucket: Optional[str] = None
+        self,
+        func: Callable,
+        args: tuple,
+        kwargs: dict,
+        bucket: Optional[str] = None,
     ) -> str:
         if self.exclude_self and len(args) > 0:
             args = args[1:]  # Пропускаем первый аргумент (self)

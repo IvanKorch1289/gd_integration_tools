@@ -21,7 +21,9 @@ class EventManager:
         self.redis = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
 
         # Инициализация Celery
-        self.celery = Celery("tasks", broker=celery_broker, backend=celery_backend)
+        self.celery = Celery(
+            "tasks", broker=celery_broker, backend=celery_backend
+        )
 
         # Регистрация обработчиков событий
         self.handlers = {}
@@ -99,12 +101,18 @@ class EventManager:
         try:
             event_id = str(uuid.uuid4())
             event_data = json.dumps(
-                {"event_id": event_id, "type": event_type, "payload": payload or {}}
+                {
+                    "event_id": event_id,
+                    "type": event_type,
+                    "payload": payload or {},
+                }
             )
 
             # Сохраняем событие в Redis
             self.redis.set(
-                f"event:{event_id}", event_data, ex=3600  # TTL 1 hour на случай проблем
+                f"event:{event_id}",
+                event_data,
+                ex=3600,  # TTL 1 hour на случай проблем
             )
 
             # Публикуем ID события

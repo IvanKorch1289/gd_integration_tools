@@ -135,7 +135,9 @@ class LoggerManager:
         """Инициализация атрибутов логгеров для удобного доступа."""
         for logger_cfg in self.log_config.log_loggers_config:
             logger_name = logger_cfg["name"]
-            setattr(self, f"{logger_name}_logger", logging.getLogger(logger_name))
+            setattr(
+                self, f"{logger_name}_logger", logging.getLogger(logger_name)
+            )
 
     @property
     def _graylog_enabled(self) -> bool:
@@ -172,7 +174,9 @@ class LoggerManager:
         )  # Создаем папку для логов если она не существует
 
         handler = TimedRotatingFileHandler(
-            filename=os.path.join(log_dir, "app.log"),  # Путь к файлу в папке logs
+            filename=os.path.join(
+                log_dir, "app.log"
+            ),  # Путь к файлу в папке logs
             when="midnight",
             interval=1,
             backupCount=7,
@@ -218,7 +222,9 @@ class LoggerManager:
         """Проверка доступности Graylog."""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                sock.connect((self.log_config.log_host, self.log_config.log_udp_port))
+                sock.connect(
+                    (self.log_config.log_host, self.log_config.log_udp_port)
+                )
                 sock.sendall(b"Healthcheck test message")
             return True
         except OSError as exc:

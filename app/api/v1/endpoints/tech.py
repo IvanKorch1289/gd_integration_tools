@@ -243,7 +243,9 @@ class TechBV:
         return await health_check.check_all_services()
 
     @router.get(
-        "/version", summary="Получить версию приложения", operation_id="get_version"
+        "/version",
+        summary="Получить версию приложения",
+        operation_id="get_version",
     )
     @handle_routes_errors
     async def get_version(self):
@@ -256,7 +258,9 @@ class TechBV:
         return {"version": settings.app.app_version}
 
     @router.get(
-        "/config", summary="Получить текущую конфигурацию", operation_id="get_config"
+        "/config",
+        summary="Получить текущую конфигурацию",
+        operation_id="get_config",
     )
     @handle_routes_errors
     async def get_config(self, x_api_key: str = Header(...)):
@@ -274,7 +278,9 @@ class TechBV:
         operation_id="send_email",
     )
     @handle_routes_errors
-    async def send_email(self, schema: EmailSchema, x_api_key: str = Header(...)):
+    async def send_email(
+        self, schema: EmailSchema, x_api_key: str = Header(...)
+    ):
         """
         Отправляет тестовое email.
 
@@ -285,7 +291,9 @@ class TechBV:
             dict: Результат отправки email.
         """
         return await mail_service.send_email(
-            to_emails=schema.to_email, subject=schema.subject, message=schema.message
+            to_emails=schema.to_email,
+            subject=schema.subject,
+            message=schema.message,
         )
 
     @router.get(
@@ -360,7 +368,9 @@ class TechBV:
                 }
 
                 # Валидируем данные с помощью Pydantic-схемы
-                validated_data = service.request_schema.model_validate(row_data)
+                validated_data = service.request_schema.model_validate(
+                    row_data
+                )
 
                 # Добавляем данные через сервис
                 try:

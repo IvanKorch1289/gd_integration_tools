@@ -39,7 +39,9 @@ def create_router_class(
         )
         @route_limiting
         @handle_routes_errors
-        async def get_all(self, request: Request, x_api_key: str = Header(...)):
+        async def get_all(
+            self, request: Request, x_api_key: str = Header(...)
+        ):
             result = await self.service.get()
             if not result:
                 raise HTTPException(
@@ -57,7 +59,10 @@ def create_router_class(
         @route_limiting
         @handle_routes_errors
         async def get_by_id(
-            self, request: Request, object_id: int, x_api_key: str = Header(...)
+            self,
+            request: Request,
+            object_id: int,
+            x_api_key: str = Header(...),
         ):
             result = await self.service.get(key="id", value=object_id)
             if not result:
@@ -127,7 +132,10 @@ def create_router_class(
         @route_limiting
         @handle_routes_errors
         async def delete_object(
-            self, object_id: int, request: Request, x_api_key: str = Header(...)
+            self,
+            object_id: int,
+            request: Request,
+            x_api_key: str = Header(...),
         ):
             return await self.service.delete(key="id", value=object_id)
 
@@ -140,9 +148,14 @@ def create_router_class(
         @route_limiting
         @handle_routes_errors
         async def get_all_object_versions(
-            self, object_id: int, request: Request, x_api_key: str = Header(...)
+            self,
+            object_id: int,
+            request: Request,
+            x_api_key: str = Header(...),
         ):
-            return await self.service.get_all_object_versions(object_id=object_id)
+            return await self.service.get_all_object_versions(
+                object_id=object_id
+            )
 
         @router.get(
             "/latest_version/{object_id}",
@@ -153,9 +166,14 @@ def create_router_class(
         @route_limiting
         @handle_routes_errors
         async def get_latest_object_version(
-            self, object_id: int, request: Request, x_api_key: str = Header(...)
+            self,
+            object_id: int,
+            request: Request,
+            x_api_key: str = Header(...),
         ):
-            return await self.service.get_latest_object_version(object_id=object_id)
+            return await self.service.get_latest_object_version(
+                object_id=object_id
+            )
 
         @router.post(
             "/restore_to_version/{object_id}",
@@ -184,7 +202,10 @@ def create_router_class(
         @route_limiting
         @handle_routes_errors
         async def get_object_changes(
-            self, object_id: int, request: Request, x_api_key: str = Header(...)
+            self,
+            object_id: int,
+            request: Request,
+            x_api_key: str = Header(...),
         ):
             return await self.service.get_object_changes(object_id=object_id)
 

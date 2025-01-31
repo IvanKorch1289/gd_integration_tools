@@ -28,7 +28,9 @@ class User(BaseModel):
     __table_args__ = {"comment": "Пользователи"}
 
     # Поля таблицы
-    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False
+    )
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
     password: Mapped[str] = mapped_column(
         PasswordType(

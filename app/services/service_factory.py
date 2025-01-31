@@ -80,7 +80,9 @@ class BaseService(Generic[ConcreteRepo]):
             :return: Результат в виде схемы или None, если произошла ошибка.
             """
             try:
-                instance = await getattr(self.repo, repo_method)(*args, **kwargs)
+                instance = await getattr(self.repo, repo_method)(
+                    *args, **kwargs
+                )
 
                 if not instance:
                     return []
@@ -117,7 +119,9 @@ class BaseService(Generic[ConcreteRepo]):
         self.request_schema = request_schema
         self.helper = self.HelperMethods(repo)
 
-    async def add(self, data: Dict[str, Any]) -> Optional[ConcreteResponseSchema]:
+    async def add(
+        self, data: Dict[str, Any]
+    ) -> Optional[ConcreteResponseSchema]:
         """
         Добавляет новый объект в репозиторий и возвращает его в виде схемы.
 
@@ -236,7 +240,9 @@ class BaseService(Generic[ConcreteRepo]):
         ]
 
     @response_cache
-    async def get_latest_object_version(self, object_id: int) -> Optional[BaseSchema]:
+    async def get_latest_object_version(
+        self, object_id: int
+    ) -> Optional[BaseSchema]:
         """
         Получает последнюю версию объекта.
 
@@ -260,7 +266,9 @@ class BaseService(Generic[ConcreteRepo]):
             object_id=object_id, transaction_id=transaction_id
         )
 
-        return await self.helper._transfer(restored_object, self.response_schema)
+        return await self.helper._transfer(
+            restored_object, self.response_schema
+        )
 
     async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
         """
@@ -317,10 +325,14 @@ async def get_service_for_model(model: Type[BaseModel]):
     """
     service_name = f"{model.__name__}Service"
     try:
-        service_module = importlib.import_module(f"app.services.{model.__tablename__}")
+        service_module = importlib.import_module(
+            f"app.services.{model.__tablename__}"
+        )
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
-        raise ValueError(f"Сервис для модели {model.__name__} не найден: {str(exc)}")
+        raise ValueError(
+            f"Сервис для модели {model.__name__} не найден: {str(exc)}"
+        )
 
 
 def create_service_class(

@@ -5,7 +5,6 @@ from typing import Any, Type
 import asyncio
 import json_tricks
 import pandas as pd
-# import pyclamd
 from fastapi import Response
 from fastapi.responses import HTMLResponse
 
@@ -15,15 +14,13 @@ from app.utils.decorators.singleton import singleton
 
 __all__ = ("utilities",)
 
-# cd = pyclamd.ClamdNetworkSocket(host='127.0.0.1', port=3310)
-
 
 @singleton
 class Utilities:
-    """Класс вспомогательных функций для работы с внешними сервисами и утилитами.
+    """Utility class for common operations and external service integration.
 
-    Предоставляет методы для проверки состояния сервисов (база данных, Redis, S3 и т.д.),
-    а также для выполнения задач, таких как отправка электронной почты.
+    Provides methods for data conversion, protocol handling, async task execution,
+    and various data formatting operations.
     """
 
     async def transfer_model_to_schema(
@@ -32,140 +29,122 @@ class Utilities:
         schema: Type[BaseSchema],
         from_attributes: bool = False,
     ) -> BaseSchema:
-        """Преобразует объект (модель или версию) в схему Pydantic.
+        """Converts a model instance to Pydantic schema.
 
         Args:
-            instance (Any): Объект модели или версии.
-            schema (Type[BaseModel]): Класс схемы Pydantic.
-            is_versioned (bool): Флаг, указывающий, является ли объект версией.
+            instance: Model instance to convert
+            schema: Target Pydantic schema class
+            from_attributes: Flag for ORM mode conversion
 
         Returns:
-            BaseModel: Экземпляр схемы Pydantic.
+            BaseSchema: Initialized schema instance
 
         Raises:
-            ValueError: Если объект не может быть преобразован в схему.
+            ValueError: If conversion fails
         """
         try:
-            return schema.model_validate(instance, from_attributes=from_attributes)
+            return schema.model_validate(
+                instance, from_attributes=from_attributes
+            )
         except Exception as exc:
             raise ValueError(
-                f"Ошибка при преобразовании модели в схему: {exc}"
+                f"Model to schema conversion error: {exc}"
             ) from exc
 
-    async def get_response_type_body(self, response: Response):
-        """Извлекает и преобразует тело ответа в формат JSON.
+    async def get_response_body(self, response: Response) -> Any:
+        """Extracts and deserializes response body.
 
         Args:
-            response (Response): Ответ от сервера.
+            response: HTTP response object
 
         Returns:
-            Any: Тело ответа в формате JSON.
+            Deserialized response content
         """
-        check_services_body = response.body.decode("utf-8")
-        return json_tricks.loads(check_services_body)
+        body = response.body.decode("utf-8")
+        return json_tricks.loads(body)
 
-    async def ensure_protocol(self, url: str) -> str:
-        """Добавляет протокол (http://) к URL, если он отсутствует.
+    async def ensure_url_protocol(self, url: str) -> str:
+        """Ensures URL contains valid protocol prefix.
 
         Args:
-            url (str): URL-адрес.
+            url: Input URL string
 
         Returns:
-            str: URL с протоколом.
+            URL with protocol prefix
         """
         if not url.startswith(("http://", "https://")):
             return f"http://{url}"
         return url
 
     def generate_link_page(self, url: str, description: str) -> HTMLResponse:
-        """Генерирует HTML-страницу с кликабельной ссылкой.
+        """Generates HTML page with clickable link.
 
         Args:
-            url (str): URL-адрес.
-            description (str): Описание ссылки.
+            url: Target URL
+            description: Link description text
 
         Returns:
-            HTMLResponse: HTML-страница с ссылкой.
+            HTMLResponse: Formatted HTML page
         """
         return HTMLResponse(
             f"""
             <html>
                 <body>
-                    <p>Ссылка на {description}: <a href="{url}" target="_blank">{url}</a></p>
+                    <p>{description} link: <a href="{url}" target="_blank">{url}</a></p>
                 </body>
             </html>
             """
         )
 
-    async def convert_numpy_types(self, value):
-        """Преобразует numpy-типы (например, numpy.int64) в стандартные типы Python.
+    async def convert_numpy_types(self, value: Any) -> Any:
+        """Converts numpy types to native Python types.
 
         Args:
-            value: Значение, которое может быть numpy-типом.
+            value: Input value with possible numpy types
 
         Returns:
-            Преобразованное значение.
+            Value with converted types
         """
         if pd.api.types.is_integer(value):
             return int(value)
-        elif pd.api.types.is_float(value):
+        if pd.api.types.is_float(value):
             return float(value)
-        elif pd.api.types.is_bool(value):
+        if pd.api.types.is_bool(value):
             return bool(value)
         return value
 
-    # def scan_file(file: UploadFile) -> bool:
-    #     """Сканирует файл с помощью ClamAV."""
-    #     try:
-    #         for chunk in iter(lambda: file.file.read(8192), b""):
-    #             if cd.scan_stream(chunk):
-    #                 return False  # Вирус обнаружен
-    #         return True  # Файл чист
-    #     finally:
-    #         file.file.seek(0)  # Сбрасываем позицию чтения файла
+    def custom_json_encoder(self, obj: Any) -> dict:
+        """Custom JSON encoder for special types.
 
-    def custom_encoder(self, obj):
-        """Пользовательский кодировщик для преобразования UUID и datetime в JSON.
-
-        Args:
-            obj: Объект для кодирования.
-
-        Returns:
-            dict: Словарь с закодированными данными.
+        Handles:
+        - UUID serialization
+        - datetime ISO formatting
 
         Raises:
-            TypeError: Если объект не может быть сериализован.
+            TypeError: For unsupported types
         """
         if isinstance(obj, uuid.UUID):
             return {"__uuid__": True, "value": str(obj)}
-        elif isinstance(obj, datetime):
+        if isinstance(obj, datetime):
             return {"__datetime__": True, "value": obj.isoformat()}
-        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+        raise TypeError(f"Unserializable type: {type(obj)}")
 
-    def custom_decoder(self, dct):
-        """Пользовательский декодировщик для преобразования JSON в UUID и datetime.
-
-        Args:
-            dct: Словарь с закодированными данными.
-
-        Returns:
-            Объект UUID или datetime, если они найдены в словаре.
-        """
+    def custom_json_decoder(self, dct: dict) -> Any:
+        """Custom JSON decoder for special type handling."""
         if "__uuid__" in dct:
             return uuid.UUID(dct["value"])
-        elif "__datetime__" in dct:
+        if "__datetime__" in dct:
             return datetime.fromisoformat(dct["value"])
         return dct
 
-    def run_async_task(self, async_task: Any) -> Any:
-        """
-        Универсальный запуск асинхронных задач в синхронном контексте.
+    def execute_async_task(self, coroutine: Any) -> bytes:
+        """Executes async tasks in synchronous context.
 
         Args:
-            async_task: Корутина или асинхронная функция
+            coroutine: Async coroutine to execute
 
         Returns:
-            Сериализованный результат выполнения задачи
+            bytes: Serialized execution result
         """
         loop = None
         try:
@@ -175,7 +154,7 @@ class Utilities:
             asyncio.set_event_loop(loop)
 
         try:
-            result = loop.run_until_complete(async_task)
+            result = loop.run_until_complete(coroutine)
             return json_tricks.dumps(result).encode()
         finally:
             if loop and loop.is_closed():

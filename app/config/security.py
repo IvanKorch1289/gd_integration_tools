@@ -50,7 +50,9 @@ class AuthSettings(BaseSettings):
         description="Секретный ключ для подписи токенов (мин. 32 символа)",
     )
     auth_algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
-        default="HS256", env="AUTH_ALGORITHM", description="Алгоритм подписи токенов"
+        default="HS256",
+        env="AUTH_ALGORITHM",
+        description="Алгоритм подписи токенов",
     )
 
     # Дополнительные настройки
@@ -70,7 +72,9 @@ class AuthSettings(BaseSettings):
     def validate_algorithm(cls, v):
         if v.startswith("HS") and "secret_key" in cls.model_fields:
             if len(cls.auth_secret_key) < 32:
-                raise ValueError("HS алгоритмы требуют ключ минимум 32 символа")
+                raise ValueError(
+                    "HS алгоритмы требуют ключ минимум 32 символа"
+                )
         return v
 
     # Безопасность

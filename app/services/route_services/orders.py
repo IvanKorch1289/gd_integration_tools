@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional, Type
 
-from fastapi import status
+from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -89,7 +89,9 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    async def create_skb_order(self, order_id: int) -> Optional[OrderSchemaOut]:
+    async def create_skb_order(
+        self, order_id: int
+    ) -> Optional[OrderSchemaOut]:
         """
         Создает заказ в СКБ-Техно на основе существующего заказа.
 
@@ -161,13 +163,17 @@ class OrderService(BaseService[OrderRepository]):
             instance = await self.repo.get(key="id", value=order_id)
             # Запрашиваем результат из СКБ-Техно
             result = await self.request_service.get_response_by_order(
-                order_uuid=instance.object_uuid, response_type=response_type.value
+                order_uuid=instance.object_uuid,
+                response_type=response_type.value,
             )
 
             # Обрабатываем JSON-ответ
             if isinstance(result, JSONResponse):
                 body = json.loads(result.body.decode("utf-8"))
-                if not body.get("hasError", "") and response_type.value == "JSON":
+                if (
+                    not body.get("hasError", "")
+                    and response_type.value == "JSON"
+                ):
                     # Обновляем данные заказа в базе
                     await self.repo.update(
                         key="id",
@@ -198,10 +204,14 @@ class OrderService(BaseService[OrderRepository]):
                 )
                 return JSONResponse(
                     status_code=status.HTTP_200_OK,
-                    content={"hasError": False, "message": "file upload to storage"},
+                    content={
+                        "hasError": False,
+                        "message": "file upload to storage",
+                    },
                 )
             return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST, content={"hasError": True}
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"hasError": True},
             )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -223,7 +233,9 @@ class OrderService(BaseService[OrderRepository]):
             if isinstance(order, self.response_schema):
                 order = order.model_dump()
             if not isinstance(order, dict):
-                raise ValueError(f"Expected a dictionary, but got {type(order)}")
+                raise ValueError(
+                    f"Expected a dictionary, but got {type(order)}"
+                )
 
             # Если заказ активен, запрашиваем результаты
             if order.get("is_active", None):
@@ -248,10 +260,13 @@ class OrderService(BaseService[OrderRepository]):
                     "hasError": True,
                     "message": "Результат еще не готов",
                 }
+            raise HTTPException
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    async def get_order_file_from_storage(self, order_id: int) -> Optional[Any]:
+    async def get_order_file_from_storage(
+        self, order_id: int
+    ) -> Optional[Any]:
         """
         Получает файл заказа из хранилища S3.
 
@@ -272,14 +287,18 @@ class OrderService(BaseService[OrderRepository]):
                     files_list[0], service=self.s3_service
                 )
             elif len(files_list) > 1:
-                return await create_zip_streaming_response(files_list, self.s3_service)
+                return await create_zip_streaming_response(
+                    files_list, self.s3_service
+                )
 
             return None
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
     @response_cache
-    async def get_order_file_from_storage_base64(self, order_id: int) -> JSONResponse:
+    async def get_order_file_from_storage_base64(
+        self, order_id: int
+    ) -> JSONResponse:
         """
         Получает файл заказа из хранилища S3 в формате base64.
 
@@ -293,7 +312,11 @@ class OrderService(BaseService[OrderRepository]):
             order = await self.repo.get(key="id", value=order_id)
             # Формируем список файлов в формате base64
             files_list = [
-                {"file": await get_base64_file(str(file.object_uuid), self.s3_service)}
+                {
+                    "file": await get_base64_file(
+                        str(file.object_uuid), self.s3_service
+                    )
+                }
                 for file in order.files
             ]
             return JSONResponse(
@@ -361,8 +384,10 @@ class OrderService(BaseService[OrderRepository]):
             }
             # Добавляем ссылки на файлы, если они есть
             if order.get("files", None):
-                data["file_links"] = await self.get_order_file_from_storage_link(
-                    order_id=order_id, s3_service=self.s3_service
+                data["file_links"] = (
+                    await self.get_order_file_from_storage_link(
+                        order_id=order_id, s3_service=self.s3_service
+                    )
                 )
             return data
         except Exception:
@@ -391,5 +416,5 @@ def get_order_service() -> Type[BaseService]:
         version_schema=OrderVersionSchemaOut,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
-        s3_service=s3_bucket_service_factory,
+        s3_service=s3_bucket_service_factory(),
     )

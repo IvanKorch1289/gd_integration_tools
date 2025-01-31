@@ -46,7 +46,9 @@ class BaseS3Service(ABC):
         pass
 
     @abstractmethod
-    async def get_file_object(self, key: str) -> Optional[Tuple[StreamingBody, dict]]:
+    async def get_file_object(
+        self, key: str
+    ) -> Optional[Tuple[StreamingBody, dict]]:
         pass
 
     @abstractmethod
@@ -84,8 +86,8 @@ class MinioService(BaseS3Service):
     """Class for interacting with Minio object storage service with connection lifecycle management."""
 
     def __init__(self, settings: FileStorageSettings):
-        super().__init__(settings)
         self._client: Optional[Any] = None
+        self.settings = settings
         self._session = get_session()
         self._initialize_attributes()
 
@@ -125,7 +127,9 @@ class MinioService(BaseS3Service):
 
         except Exception as exc:
             await self.shutdown()
-            raise RuntimeError(f"Connection initialization failed: {str(exc)}") from exc
+            raise RuntimeError(
+                f"Connection initialization failed: {str(exc)}"
+            ) from exc
 
     async def shutdown(self):
         """Gracefully closes all connections and releases resources."""
@@ -140,7 +144,11 @@ class MinioService(BaseS3Service):
 
     def _get_endpoint(self) -> Optional[str]:
         """Returns configured endpoint or None for AWS."""
-        return self.settings.fs_endpoint if self.settings.fs_provider != "aws" else None
+        return (
+            self.settings.fs_endpoint
+            if self.settings.fs_provider != "aws"
+            else None
+        )
 
     def _get_addressing_style(self) -> str:
         """Returns the configured addressing style."""
@@ -209,7 +217,9 @@ class MinioService(BaseS3Service):
                     return []
                 raise
 
-    async def get_file_object(self, key: str) -> Optional[Tuple[StreamingBody, dict]]:
+    async def get_file_object(
+        self, key: str
+    ) -> Optional[Tuple[StreamingBody, dict]]:
         """Retrieves an object from storage."""
         async with self._get_client_context() as client:
             try:
@@ -273,7 +283,9 @@ class MinioService(BaseS3Service):
         """Retrieves file metadata information."""
         async with self._get_client_context() as client:
             try:
-                response = await client.head_object(Bucket=self.bucket, Key=key)
+                response = await client.head_object(
+                    Bucket=self.bucket, Key=key
+                )
                 return {
                     "last_modified": response["LastModified"],
                     "content_length": response["ContentLength"],
@@ -378,7 +390,8 @@ class MinioService(BaseS3Service):
             try:
                 response = await client.list_buckets()
                 return any(
-                    bucket["Name"] == self.bucket for bucket in response["Buckets"]
+                    bucket["Name"] == self.bucket
+                    for bucket in response["Buckets"]
                 )
             except BotoClientError as exc:
                 if exc.response["Error"]["Code"] == "AccessDenied":
@@ -392,13 +405,17 @@ class MinioService(BaseS3Service):
                 raise
 
     @metadata_cache
-    async def bulk_get_metadata(self, keys: list[str]) -> dict[str, Optional[dict]]:
+    async def bulk_get_metadata(
+        self, keys: list[str]
+    ) -> dict[str, Optional[dict]]:
         """Batch retrieves file metadata."""
         async with self._get_client_context() as client:
             results = {}
             for key in keys:
                 try:
-                    response = await client.head_object(Bucket=self.bucket, Key=key)
+                    response = await client.head_object(
+                        Bucket=self.bucket, Key=key
+                    )
                     results[key] = {
                         "last_modified": response["LastModified"],
                         "content_length": response["ContentLength"],
@@ -458,7 +475,7 @@ class MinioService(BaseS3Service):
             )
 
 
-def s3_bucket_service_factory() -> BaseS3Service:
+def s3_bucket_service_factory() -> MinioService:
     """Factory function for creating S3 service instance.
 
     Returns:

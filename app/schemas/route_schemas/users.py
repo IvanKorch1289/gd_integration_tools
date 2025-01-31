@@ -50,7 +50,9 @@ class UserSchemaOut(BaseSchema):
     username: str = Field(
         ..., min_length=3, max_length=50, description="Имя пользователя"
     )
-    email: EmailStr | None = Field(..., description="Электронная почта пользователя")
+    email: EmailStr | None = Field(
+        ..., description="Электронная почта пользователя"
+    )
     created_at: datetime = Field(..., description="Дата создания пользователя")
     updated_at: datetime | None = Field(
         None, description="Дата последнего обновления пользователя"

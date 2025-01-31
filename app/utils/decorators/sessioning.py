@@ -45,13 +45,19 @@ class DatabaseSessionManager:
             try:
                 yield session
             except Exception as exc:
-                db_logger.error(f"Ошибка при создании сессии базы данных: {exc}")
-                raise DatabaseError(message="Failed to create database session")
+                db_logger.error(
+                    f"Ошибка при создании сессии базы данных: {exc}"
+                )
+                raise DatabaseError(
+                    message="Failed to create database session"
+                )
             finally:
                 await session.close()
 
     @asynccontextmanager
-    async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:
+    async def transaction(
+        self, session: AsyncSession
+    ) -> AsyncGenerator[None, None]:
         """
         Управление транзакцией: коммит при успехе, откат при ошибке.
 
@@ -84,7 +90,9 @@ class DatabaseSessionManager:
                     message=f"Failed to get database session - {str(exc)}"
                 )
 
-    async def get_transaction_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_transaction_session(
+        self,
+    ) -> AsyncGenerator[AsyncSession, None]:
         """
         Зависимость для FastAPI, возвращающая сессию с управлением транзакцией.
 
@@ -136,7 +144,9 @@ class DatabaseSessionManager:
                         raise
                     except Exception as exc:
                         await session.rollback()
-                        db_logger.error(f"Ошибка при выполнении транзакции: {str(exc)}")
+                        db_logger.error(
+                            f"Ошибка при выполнении транзакции: {str(exc)}"
+                        )
                         raise DatabaseError(
                             message=f"Failed to execute transaction - {str(exc)}"
                         )

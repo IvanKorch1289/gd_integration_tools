@@ -51,7 +51,9 @@ class SKBCBV:
         """
         return await self.service.add_request(data=request_schema.model_dump())
 
-    @router.get("/get-result", summary="Получить результат по залогу в СКБ Техно")
+    @router.get(
+        "/get-result", summary="Получить результат по залогу в СКБ Техно"
+    )
     async def get_skb_result(
         self,
         order_uuid: UUID,

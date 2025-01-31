@@ -66,7 +66,9 @@ class FileRepository(SQLAlchemyRepository):
 
         # Если объект не был создан, выбрасываем исключение
         if not new_link:
-            raise NotFoundError(message="Failed to create link between file and order")
+            raise NotFoundError(
+                message="Failed to create link between file and order"
+            )
 
         return new_link
 
