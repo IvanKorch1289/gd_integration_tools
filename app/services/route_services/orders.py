@@ -6,23 +6,24 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
-from app.infra.db import (
-    FileRepository,
-    OrderRepository,
-    get_file_repo,
-    get_order_repo,
-)
+from app.infra.db.repositories.files import FileRepository, get_file_repo
+from app.infra.db.repositories.orders import OrderRepository, get_order_repo
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
-from app.schemas import BaseSchema, OrderSchemaIn, OrderSchemaOut
-from app.services.helpers import (
+from app.schemas.base import BaseSchema
+from app.schemas.route_schemas.orders import (
+    OrderSchemaIn,
+    OrderSchemaOut,
+    OrderVersionSchemaOut,
+)
+from app.services.helpers.storage_helpers import (
     create_zip_streaming_response,
     get_base64_file,
     get_streaming_response,
 )
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.services.service_factory import BaseService
-from app.utils.decorators import response_cache
-from app.utils.enums import ResponseTypeChoices
+from app.utils.decorators.caching import response_cache
+from app.utils.enums.skb import ResponseTypeChoices
 
 
 __all__ = ("get_order_service",)
@@ -38,6 +39,7 @@ class OrderService(BaseService[OrderRepository]):
         self,
         schema_in: BaseModel,
         schema_out: BaseModel,
+        version_schema: BaseModel,
         repo: OrderRepository,
         file_repo: FileRepository,
         request_service: APISKBService,
@@ -53,7 +55,12 @@ class OrderService(BaseService[OrderRepository]):
         :param file_repo: Репозиторий для работы с файлами.
         :param request_service: Сервис для взаимодействия с API СКБ-Техно.
         """
-        super().__init__(repo, request_schema=schema_in, response_schema=schema_out)
+        super().__init__(
+            repo,
+            request_schema=schema_in,
+            response_schema=schema_out,
+            version_schema=version_schema,
+        )
         self.file_repo = file_repo
         self.request_service = request_service
         self.s3_service = s3_service
@@ -381,6 +388,7 @@ def get_order_service() -> Type[BaseService]:
         repo=get_order_repo(),
         schema_out=OrderSchemaOut,
         schema_in=OrderSchemaIn,
+        version_schema=OrderVersionSchemaOut,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
         s3_service=s3_bucket_service_factory,

@@ -12,13 +12,10 @@ from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
 from app.infra.redis import redis_client
-from app.utils.admins import (
-    FileAdmin,
-    OrderAdmin,
-    OrderFileAdmin,
-    OrderKindAdmin,
-    UserAdmin,
-)
+from app.utils.admins.files import FileAdmin, OrderFileAdmin
+from app.utils.admins.orderkinds import OrderKindAdmin
+from app.utils.admins.orders import OrderAdmin
+from app.utils.admins.users import UserAdmin
 from app.utils.decorators.limiting import init_limiter
 from app.utils.logging import app_logger
 from app.utils.middlewares import (

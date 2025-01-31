@@ -21,7 +21,7 @@ def create_router_class(
     router: APIRouter,
     schema_in: Type[SchemaIn],
     schema_out: Type[SchemaOut],
-    version_schema_out: Type[VersionSchemaOut],
+    version_schema: Type[VersionSchemaOut],
     service,
     filter_class: Optional[Type] = None,
 ):
@@ -135,7 +135,7 @@ def create_router_class(
             "/all_versions/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Получить версии объекта по ID",
-            response_model=List[version_schema_out],
+            response_model=List[version_schema],
         )
         @route_limiting
         @handle_routes_errors
@@ -148,7 +148,7 @@ def create_router_class(
             "/latest_version/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Получить последнюю версию объекта по ID",
-            response_model=version_schema_out,
+            response_model=version_schema,
         )
         @route_limiting
         @handle_routes_errors

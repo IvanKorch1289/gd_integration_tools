@@ -4,7 +4,7 @@ from celery import Celery, schedules
 
 from app.celery.cron import CronPresets
 from app.config.settings import CelerySettings, settings
-from app.utils.decorators import singleton
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("celery_manager", "celery_app")

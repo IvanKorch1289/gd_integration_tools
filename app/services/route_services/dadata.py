@@ -3,8 +3,8 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 from app.config.settings import APIDADATASettings, settings
-from app.services.helpers import make_request
-from app.utils.decorators import response_cache
+from app.services.helpers.http_helper import make_request
+from app.utils.decorators.caching import response_cache
 
 
 __all__ = (

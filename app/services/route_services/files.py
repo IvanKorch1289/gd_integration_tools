@@ -1,7 +1,11 @@
 from typing import Type
 
-from app.infra.db import get_file_repo
-from app.schemas import FileSchemaIn, FileSchemaOut
+from app.infra.db.repositories.files import get_file_repo
+from app.schemas.route_schemas.files import (
+    FileSchemaIn,
+    FileSchemaOut,
+    FileVersionSchemaOut,
+)
 from app.services.service_factory import BaseService, create_service_class
 
 
@@ -20,4 +24,5 @@ def get_file_service() -> Type[BaseService]:
         repo=get_file_repo(),
         response_schema=FileSchemaOut,
         request_schema=FileSchemaIn,
+        version_schema=FileVersionSchemaOut,
     )

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 from app.api.routers_factory import create_router_class
-from app.schemas import (
-    UserFilter,
+from app.schemas.filter_schemas.users import UserFilter
+from app.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,
@@ -20,7 +20,7 @@ UserCBV = create_router_class(
     router=router,
     schema_in=UserSchemaIn,
     schema_out=UserSchemaOut,
-    version_schema_out=UserVersionSchemaOut,
+    version_schema=UserVersionSchemaOut,
     service=get_user_service(),
     filter_class=UserFilter,
 )

@@ -1,7 +1,7 @@
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import Field, SecretStr
 
-from app.infra.db.models import User
+from app.infra.db.models.users import User
 
 
 __all__ = ("UserFilter", "UserLogin")

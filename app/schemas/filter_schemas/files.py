@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infra.db.models import File
+from app.infra.db.models.files import File
 
 
 __all__ = ("FileFilter",)

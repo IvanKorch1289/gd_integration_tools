@@ -9,8 +9,8 @@ import pandas as pd
 from fastapi import Response
 from fastapi.responses import HTMLResponse
 
-from app.schemas import BaseSchema
-from app.utils.decorators import singleton
+from app.schemas.base import BaseSchema
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("utilities",)

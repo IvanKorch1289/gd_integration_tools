@@ -2,7 +2,8 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infra.db.models import BaseModel, File, OrderFile
+from app.infra.db.models.base import BaseModel
+from app.infra.db.models.files import File, OrderFile
 from app.infra.db.repositories.base import ConcreteTable, SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import NotFoundError, handle_db_errors

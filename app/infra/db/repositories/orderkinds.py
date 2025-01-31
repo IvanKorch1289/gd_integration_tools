@@ -1,4 +1,4 @@
-from app.infra.db.models import OrderKind
+from app.infra.db.models.orderkinds import OrderKind
 from app.infra.db.repositories.base import SQLAlchemyRepository
 
 

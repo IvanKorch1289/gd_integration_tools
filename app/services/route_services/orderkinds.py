@@ -1,7 +1,11 @@
 from typing import Type
 
-from app.infra.db import get_order_kind_repo
-from app.schemas import OrderKindSchemaIn, OrderKindSchemaOut
+from app.infra.db.repositories.orderkinds import get_order_kind_repo
+from app.schemas.route_schemas.orderkinds import (
+    OrderKindSchemaIn,
+    OrderKindSchemaOut,
+    OrderKindVersionSchemaOut,
+)
 from app.services.service_factory import BaseService, create_service_class
 
 
@@ -20,4 +24,5 @@ def get_order_kind_service() -> Type[BaseService]:
         repo=get_order_kind_repo(),
         response_schema=OrderKindSchemaOut,
         request_schema=OrderKindSchemaIn,
+        version_schema=OrderKindVersionSchemaOut,
     )

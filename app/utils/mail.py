@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 
 from app.config.settings import MailSettings, settings
-from app.utils.decorators import singleton
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("mail_service",)

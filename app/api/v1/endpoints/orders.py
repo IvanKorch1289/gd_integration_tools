@@ -6,8 +6,8 @@ from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
-from app.schemas import (
-    OrderFilter,
+from app.schemas.filter_schemas.orders import OrderFilter
+from app.schemas.route_schemas.orders import (
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
@@ -27,7 +27,7 @@ OrderCBV = create_router_class(
     router=router,
     schema_in=OrderSchemaIn,
     schema_out=OrderSchemaOut,
-    version_schema_out=OrderVersionSchemaOut,
+    version_schema=OrderVersionSchemaOut,
     service=get_order_service(),
     filter_class=OrderFilter,
 )

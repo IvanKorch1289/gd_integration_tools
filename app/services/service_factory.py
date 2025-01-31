@@ -3,10 +3,10 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infra.db.models import BaseModel
+from app.infra.db.models.base import BaseModel
 from app.infra.db.repositories.base import AbstractRepository
-from app.schemas import BaseSchema
-from app.utils.decorators import response_cache
+from app.schemas.base import BaseSchema
+from app.utils.decorators.caching import response_cache
 from app.utils.utils import utilities
 
 
@@ -17,6 +17,7 @@ __all__ = ("create_service_class", "BaseService", "get_service_for_model")
 ConcreteRepo = TypeVar("ConcreteRepo", bound=AbstractRepository)
 ConcreteResponseSchema = TypeVar("ConcreteResponseSchema", bound=BaseSchema)
 ConcreteRequestSchema = TypeVar("ConcreteRequestSchema", bound=BaseSchema)
+ConcreteVersionSchema = TypeVar("ConcreteVersionSchema", bound=BaseSchema)
 
 
 class BaseService(Generic[ConcreteRepo]):
@@ -102,6 +103,7 @@ class BaseService(Generic[ConcreteRepo]):
         repo: Type[ConcreteRepo] = None,
         response_schema: Type[ConcreteResponseSchema] = None,
         request_schema: Type[ConcreteRequestSchema] = None,
+        version_schema: Type[ConcreteVersionSchema] = None,
     ):
         """
         Инициализация сервиса.
@@ -226,12 +228,10 @@ class BaseService(Generic[ConcreteRepo]):
         :param object_id: ID объекта.
         :return: Список всех версий объекта в виде схем.
         """
-        from app.schemas import OrderKindVersionSchemaOut
-
         versions = await self.repo.get_all_versions(object_id=object_id)
 
         return [
-            await self.helper._transfer(version, OrderKindVersionSchemaOut)
+            await self.helper._transfer(version, self.version_schema)
             for version in versions
         ]
 
@@ -243,10 +243,8 @@ class BaseService(Generic[ConcreteRepo]):
         :param object_id: ID объекта.
         :return: Последняя версия объекта в виде схемы или None, если объект не найден.
         """
-        from app.schemas import OrderKindVersionSchemaOut
-
         version = await self.repo.get_latest_version(object_id=object_id)
-        return await self.helper._transfer(version, OrderKindVersionSchemaOut)
+        return await self.helper._transfer(version, self.version_schema)
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
@@ -328,6 +326,7 @@ async def get_service_for_model(model: Type[BaseModel]):
 def create_service_class(
     request_schema: Type[ConcreteRequestSchema],
     response_schema: Type[ConcreteResponseSchema],
+    version_schema: Type[ConcreteVersionSchema],
     repo: Type[ConcreteRepo],
 ) -> BaseService:
-    return BaseService(repo, response_schema, request_schema)
+    return BaseService(repo, response_schema, request_schema, version_schema)

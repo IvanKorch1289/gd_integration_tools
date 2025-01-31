@@ -2,8 +2,12 @@ from typing import Any, Dict, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infra.db import UserRepository, get_user_repo
-from app.schemas import UserSchemaIn, UserSchemaOut
+from app.infra.db.repositories.users import UserRepository, get_user_repo
+from app.schemas.route_schemas.users import (
+    UserSchemaIn,
+    UserSchemaOut,
+    UserVersionSchemaOut,
+)
 from app.services.service_factory import BaseService
 
 
@@ -83,4 +87,5 @@ def get_user_service() -> UserService:
         repo=get_user_repo(),
         response_schema=UserSchemaOut,
         request_schema=UserSchemaIn,
+        version_schema=UserVersionSchemaOut,
     )

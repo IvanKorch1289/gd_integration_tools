@@ -5,8 +5,8 @@ from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
 from app.infra.storage import s3_bucket_service_factory
-from app.schemas import (
-    FileFilter,
+from app.schemas.filter_schemas.files import FileFilter
+from app.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
@@ -144,7 +144,7 @@ FileCBV = create_router_class(
     router=router,
     schema_in=FileSchemaIn,
     schema_out=FileSchemaOut,
-    version_schema_out=FileVersionSchemaOut,
+    version_schema=FileVersionSchemaOut,
     service=get_file_service(),
     filter_class=FileFilter,
 )

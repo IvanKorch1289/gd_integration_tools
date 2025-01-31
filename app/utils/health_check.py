@@ -5,7 +5,7 @@ from app.celery.celery_config import celery_manager
 from app.infra.db.database import db_initializer
 from app.infra.redis import redis_client
 from app.infra.storage import s3_bucket_service_factory
-from app.utils.decorators import singleton
+from app.utils.decorators.singleton import singleton
 from app.utils.logging import log_manager
 from app.utils.mail import mail_service
 
