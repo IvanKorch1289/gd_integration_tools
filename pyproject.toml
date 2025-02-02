@@ -116,8 +116,8 @@ warn_unused_ignores = true
 [tool.flake8]
 ignore = "E501,W503"
 exclude = [
-    ".git", ".gitignore", "__pycache__", "*/migrations/*", "versions",
-    ".venv", ".pytest_cache", ".coverage", ".mypy_cache", "*env", "*venv"
+    ".git", ".gitignore", "__pycache__", "*/migrations/*", "versions*",
+    ".venv", ".pytest_cache", ".coverage", ".mypy_cache", "*env*", "*venv"
 ]
 max-line-length = 79
 max-complexity = 18
