@@ -121,7 +121,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         async def _prepare_and_save_object(
             self,
             session: AsyncSession,
-            data: dict[str, Any],
+            data: List[Dict[str, Any]],
             existing_object: Optional[ConcreteTable] = None,
             ignore_none: bool = True,
         ) -> ConcreteTable:

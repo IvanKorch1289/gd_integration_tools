@@ -8,17 +8,13 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.orm import configure_mappers
 
 from app.config.settings import settings
-from app.infra.db.database import database
+from app.infra.db.database import db_initializer
 from app.infra.db.migrations.types import load_types
-from app.infra.db.models import (
-    BaseModel,
-    File,
-    Order,
-    OrderFile,
-    OrderKind,
-    User,
-    metadata,
-)
+from app.infra.db.models.base import BaseModel, metadata
+from app.infra.db.models.files import File, OrderFile
+from app.infra.db.models.orderkinds import OrderKind
+from app.infra.db.models.orders import Order
+from app.infra.db.models.users import User
 
 
 # this is the Alembic Config object, which provides
@@ -39,7 +35,10 @@ configure_mappers()
 # target_metadata = BaseModel.metadata
 target_metadata = metadata
 
-config.set_main_option("sqlalchemy.url", settings.database.db_url_async)
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database.db_url_sync
+)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

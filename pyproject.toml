@@ -119,5 +119,5 @@ exclude = [
     ".git", ".gitignore", "__pycache__", "*/migrations/*", "versions*",
     ".venv", ".pytest_cache", ".coverage", ".mypy_cache", "*env*", "*venv"
 ]
-max-line-length = 79
+max-line-length = 97
 max-complexity = 18

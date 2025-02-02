@@ -15,7 +15,7 @@ from app.services.route_services.service_factory import (
 __all__ = ("get_order_kind_service",)
 
 
-def get_order_kind_service() -> Type[BaseService]:
+def get_order_kind_service() -> BaseService:
     """
     Возвращает экземпляр сервиса для работы с видами заказов.
 

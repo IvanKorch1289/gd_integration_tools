@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import asyncio
 from confluent_kafka import AdminClient, Consumer, NewTopic, Producer
@@ -8,17 +8,14 @@ from app.utils.logging import kafka_logger
 
 
 __all__ = (
-    "kafka_client",
     "KafkaClient",
+    "kafka_client",
 )
 
 
 class KafkaClient:
     """
-    Управление подключениями и инфраструктурой Kafka
-
-    Args:
-        settings: Настройки из класса QueueSettings
+    Управление инфраструктурой Kafka: подключения, топики, health checks
     """
 
     def __init__(self, settings):
@@ -28,22 +25,16 @@ class KafkaClient:
         self._admin: Optional[AdminClient] = None
 
     async def initialize(self):
-        """Инициализация подключений при старте приложения"""
+        """Инициализация соединений"""
         config = self.settings.get_kafka_config()
 
-        # Создание административного клиента
         self._admin = AdminClient(config)
-
-        # Инициализация продюсера
         self._producer = await self._create_producer(config)
-
-        # Инициализация консьюмера
         self._consumer = await self._create_consumer(config)
 
-        kafka_logger.info("Kafka connection start successfully")
+        kafka_logger.info("Kafka connections established")
 
     async def _create_producer(self, config: Dict) -> Producer:
-        """Создание асинхронного продюсера"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -57,7 +48,6 @@ class KafkaClient:
         )
 
     async def _create_consumer(self, config: Dict) -> Consumer:
-        """Создание асинхронного консьюмера"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -70,47 +60,99 @@ class KafkaClient:
             ),
         )
 
-    async def create_topic(
+    async def create_topics(
         self,
-        topic: str,
+        topics: list[str],
         num_partitions: int = 3,
         replication_factor: int = 2,
-        dlq_suffix: str = "_dlq",
-    ) -> None:
-        """Создание топика с DLQ"""
-        topics = [
-            NewTopic(topic, num_partitions, replication_factor),
-            NewTopic(
-                f"{topic}{dlq_suffix}", num_partitions, replication_factor
-            ),
+    ):
+        """Создание топиков"""
+        new_topics = [
+            NewTopic(topic, num_partitions, replication_factor)
+            for topic in topics
         ]
-
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
-            None, lambda: self._admin.create_topics(topics)
+            None, lambda: self._admin.create_topics(new_topics)
         )
-        kafka_logger.info(f"Topic '{topic}' created successfully")
 
     async def close(self):
-        """Закрытие подключений при завершении работы"""
+        """Корректное завершение соединений"""
         tasks = []
-
         if self._producer:
             tasks.append(
                 asyncio.get_event_loop().run_in_executor(
                     None, self._producer.flush
                 )
             )
-
         if self._consumer:
             tasks.append(
                 asyncio.get_event_loop().run_in_executor(
                     None, self._consumer.close
                 )
             )
-
         await asyncio.gather(*tasks)
-        kafka_logger.info("Kafka connection closed successfully")
+
+    async def check_admin_health(self, timeout: float = 0.5) -> bool:
+        """Check admin client connectivity"""
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None, lambda: self._admin.list_topics(timeout=timeout)
+            )
+            return True
+        except Exception as exc:
+            kafka_logger.error(f"Admin healthcheck failed: {str(exc)}")
+            return False
+
+    async def check_producer_health(self, timeout: float = 0.5) -> bool:
+        """Check producer connectivity"""
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None, lambda: self._producer.flush(timeout=timeout)
+            )
+            return True
+        except Exception as exc:
+            kafka_logger.error(f"Producer healthcheck failed: {str(exc)}")
+            return False
+
+    async def check_consumer_health(self, timeout: float = 0.5) -> bool:
+        """Check consumer connectivity"""
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None, lambda: self._consumer.list_topics(timeout=timeout)
+            )
+            return True
+        except Exception as exc:
+            kafka_logger.error(f"Consumer healthcheck failed: {str(exc)}")
+            return False
+
+    async def healthcheck(self) -> bool:
+        """
+        Comprehensive health check for Kafka cluster
+
+        Returns:
+            {
+                "status": "healthy"/"degraded"/"unhealthy",
+                "details": {
+                    "admin": bool,
+                    "producer": bool,
+                    "consumer": bool
+                }
+            }
+        """
+        checks = {
+            "admin": await self.check_admin_health(),
+            "producer": await self.check_producer_health(),
+            "consumer": await self.check_consumer_health(),
+        }
+
+        if any(checks.values()):
+            raise ConnectionError(f"Kafka connection check failed: {checks}")
+
+        return True
 
 
 kafka_client = KafkaClient(settings=settings.queue)

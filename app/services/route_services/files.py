@@ -15,7 +15,7 @@ from app.services.route_services.service_factory import (
 __all__ = ("get_file_service",)
 
 
-def get_file_service() -> Type[BaseService]:
+def get_file_service() -> BaseService:
     """
     Возвращает экземпляр сервиса для работы с файлами.
 

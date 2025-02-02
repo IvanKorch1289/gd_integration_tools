@@ -28,6 +28,7 @@ class BaseService(Generic[ConcreteRepo]):
         repo (Type[ConcreteRepo]): Репозиторий, связанный с сервисом.
         response_schema (Type[ConcreteResponseSchema]): Схема для преобразования данных.
         request_schema (Type[ConcreteRequestSchema]): Схема для валидации входных данных.
+        response_schema (Type[ConcreteVersionSchema]): Схема для преобразования данных версий.
     """
 
     class HelperMethods:
@@ -117,6 +118,7 @@ class BaseService(Generic[ConcreteRepo]):
         self.repo = repo
         self.response_schema = response_schema
         self.request_schema = request_schema
+        self.version_schema = version_schema
         self.helper = self.HelperMethods(repo)
 
     async def add(
@@ -142,11 +144,7 @@ class BaseService(Generic[ConcreteRepo]):
         :return: Список схем ответа или None, если произошла ошибка.
         """
         try:
-            instances = await self.repo.add_many(data_list=data_list)
-            return [
-                await self.helper._transfer(instance, self.response_schema)
-                for instance in instances
-            ]
+            return [await self.add(data=data) for data in data_list]
         except Exception:
             raise
 

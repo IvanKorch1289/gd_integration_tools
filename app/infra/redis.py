@@ -5,7 +5,7 @@ import asyncio
 from aioredis import Redis, RedisError, create_redis_pool
 
 from app.config.settings import RedisSettings, settings
-from app.utils.decorators import singleton
+from app.utils.decorators.singleton import singleton
 from app.utils.logging import redis_logger
 
 

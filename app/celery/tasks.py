@@ -2,6 +2,8 @@ from celery import chain
 
 from app.celery.celery_config import celery_manager
 from app.config.settings import settings
+from app.infra.event_bus import event_client
+from app.services.infra_services.mail import mail_sender
 from app.services.route_services.orders import OrderService, get_order_service
 from app.utils.utils import utilities
 
@@ -16,6 +18,38 @@ order_service: OrderService = get_order_service()
 
 
 @celery_app.task(
+    name="send_mail",
+    bind=True,
+    max_retries=settings.celery.cel_task_min_retries,
+    default_retry_delay=settings.celery.cel_task_default_retry_delay,
+    retry_backoff=True,
+    autoretry_for=(Exception,),
+    ignore_result=False,
+    queue=settings.celery.cel_task_default_queue,
+)
+def send_email(self, data: dict):
+    """
+    Отправляет сообщение.
+
+    Args:
+        data (dict): Параметры отправки сообщения.
+    """
+
+    async def inner_send_mail():
+        try:
+            # Вызываем метод сервиса для отправки сообщения
+            await mail_sender.send_email(
+                to_emails=data.get("to_emails"),
+                subject=data.get("subject"),
+                message=data.get("message"),
+            )
+        except Exception as exc:
+            self.retry(exc=exc, throw=False)
+
+    return utilities.execute_async_task(inner_send_mail())
+
+
+@celery_app.task(
     name="send_result_to_gd",
     bind=True,
     max_retries=settings.celery.cel_task_min_retries,
@@ -27,7 +61,7 @@ order_service: OrderService = get_order_service()
 )
 def send_result_to_gd(self, order_id: int):
     """
-    Отправляет результат заказа в GD (Государственный Депозитарий).
+    Отправляет результат заказа в GD.
 
     Args:
         order_id (int): Идентификатор заказа.
@@ -40,6 +74,9 @@ def send_result_to_gd(self, order_id: int):
         try:
             # Вызываем метод сервиса для отправки результата в GD
             result = await order_service.send_data_to_gd(order_id=order_id)
+            await event_client.publish_event(
+                event_type="order_send", data={"order": order_id}
+            )
             return result
         except Exception as exc:
             self.retry(exc=exc, throw=False)
@@ -133,7 +170,6 @@ def process_order_workflow(self, order_id: int):
 
     Args:
         order_id (int): Идентификатор заказа.
-        email (str): Адрес электронной почты для уведомлений.
     """
     try:
         # Создаем цепочку задач

@@ -17,6 +17,7 @@ from app.infra.queue import kafka_client
 from app.infra.redis import redis_client
 from app.infra.smtp import mail_service
 from app.infra.storage import s3_bucket_service_factory
+from app.services.infra_services.queue import queue_service
 from app.utils.admins.files import FileAdmin, OrderFileAdmin
 from app.utils.admins.orderkinds import OrderKindAdmin
 from app.utils.admins.orders import OrderAdmin
@@ -68,7 +69,8 @@ async def lifespan(app: FastAPI):
         await event_client.start()
 
         # Инициализация клиента Kafka
-        kafka_client.initialize()
+        await kafka_client.initialize()
+        await queue_service.start_consumers()
 
         # Инициализация лимитера запросов
         await init_limiter()

@@ -78,8 +78,8 @@ class OrderService(BaseService[OrderRepository]):
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
             if order:
-                await event_manager.publish_event(
-                    event_type="order_create", data={"order": order}
+                await event_client.publish_event(
+                    event_type="order_created", data={"order": order.id}
                 )
             return order
         except Exception:
@@ -107,13 +107,12 @@ class OrderService(BaseService[OrderRepository]):
 
             # Проверяем, активен ли заказ
             if order_data.get("is_active", None):
-                return order
                 # Формируем данные для запроса в СКБ-Техно
                 data = {
                     "Id": order_data.get("object_uuid", None),
                     "OrderId": order_data.get("object_uuid", None),
                     "Number": order_data.get("pledge_cadastral_number", None),
-                    "Priority": settings.skb_api.skb_request_priority_default,
+                    "Priority": settings.skb_api.skb_default_priority,
                     "RequestType": order_data.get("order_kind", None).get(
                         "skb_uuid", None
                     ),
@@ -130,15 +129,11 @@ class OrderService(BaseService[OrderRepository]):
                         data={"is_send_request_to_skb": True},
                     )
                     # Генерируем событие о успешной отправке заказа
-                    event = Event(
-                        event_type="order_sending_skb",
-                        payload={
-                            "order_id": order_data.get("id"),
-                            "email": order_data.get("email_for_answer"),
-                        },
+                    await event_client.publish_event(
+                        event_type="init_mail_send", data={"order": order}
                     )
-                    await event_bus.emit(event)
                 return result
+            order_data
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -402,7 +397,7 @@ class OrderService(BaseService[OrderRepository]):
         pass
 
 
-def get_order_service() -> Type[BaseService]:
+def get_order_service() -> BaseService:
     """
     Возвращает экземпляр сервиса для работы с заказами.
 

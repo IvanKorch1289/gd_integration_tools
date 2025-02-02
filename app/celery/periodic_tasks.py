@@ -1,4 +1,5 @@
 from app.celery.celery_config import celery_app
+from app.infra import event_bus
 from app.services.infra_services.mail import mail_sender
 from app.utils.logging import scheduler_logger
 from app.utils.utils import utilities
@@ -24,10 +25,13 @@ def check_services_health(self):
             response_body = await utilities.get_response_body(response)
 
             if not response_body.get("is_all_services_active"):
-                await mail_sender.send_email(
-                    to_emails=["crazyivan1289@yandex.ru"],
-                    subject="Недоступен компонент GD_ADVANCED_TOOLS",
-                    message=str(response_body),
+                await event_bus.event_client.publish_event(
+                    event_type="init_mail_send",
+                    data={
+                        "to_emails": ["crazyivan1289@yandex.ru"],
+                        "subject": "Недоступен компонент GD_ADVANCED_TOOLS",
+                        "message": str(response_body),
+                    },
                 )
                 scheduler_logger.warning("Обнаружены недоступные сервисы.")
                 return {"status": "warning", "details": response_body}
@@ -37,10 +41,13 @@ def check_services_health(self):
 
         except Exception as exc:
             scheduler_logger.error(f"Критическая ошибка: {exc}")
-            await mail_sender.send_email(
-                to_emails=["crazyivan1289@yandex.ru"],
-                subject="Сбой проверки сервисов",
-                message=str(exc),
+            await event_bus.event_client.publish_event(
+                event_type="init_mail_send",
+                data={
+                    "to_emails": ["crazyivan1289@yandex.ru"],
+                    "subject": "Ошибка при проверке",
+                    "message": str(response_body),
+                },
             )
             raise exc
 

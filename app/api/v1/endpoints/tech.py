@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
 from app.config.settings import settings
+from app.infra import event_bus
 from app.schemas.base import EmailSchema
 from app.services.infra_services.mail import mail_sender
 from app.services.route_services.service_factory import (
@@ -231,6 +232,21 @@ class TechBV:
         return await health_check.check_smtp()
 
     @router.get(
+        "/healthcheck-kafka",
+        summary="Проверить состояние Kafka",
+        operation_id="healthcheck_kafka",
+    )
+    @handle_routes_errors
+    async def healthcheck_kafka(self):
+        """
+        Проверяет состояние Kafka.
+
+        Returns:
+            dict: Результат проверки состояния Kafka.
+        """
+        return await health_check.check_kafka()
+
+    @router.get(
         "/healthcheck-all-services",
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
@@ -293,11 +309,12 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        return await mail_sender.send_email(
-            to_emails=schema.to_email,
-            subject=schema.subject,
-            message=schema.message,
+        data = schema.model_dump()
+
+        await event_bus.event_client.publish_event(
+            event_type="init_mail_send", data=data
         )
+        return data
 
     @router.get(
         "/get-all-custom-tables",
