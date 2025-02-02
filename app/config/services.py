@@ -154,6 +154,7 @@ class LogStorageSettings(BaseSettings):
             {"name": "scheduler", "facility": "scheduler"},
             {"name": "request", "facility": "request"},
             {"name": "kafka", "facility": "kafka"},
+            {"name": "redis", "facility": "redis"},
         ]
     )
 

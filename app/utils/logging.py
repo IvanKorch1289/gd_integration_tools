@@ -227,3 +227,4 @@ mail_logger = log_manager.mail_logger
 scheduler_logger = log_manager.scheduler_logger
 request_logger = log_manager.request_logger
 kafka_logger = log_manager.kafka_logger
+redis_logger = log_manager.redis_logger

@@ -1,13 +1,14 @@
 import json
 from typing import Any, Dict, List, Optional, Type
 
-from fastapi import HTTPException, status
+from fastapi import status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
 from app.infra.db.repositories.files import FileRepository, get_file_repo
 from app.infra.db.repositories.orders import OrderRepository, get_order_repo
+from app.infra.events import event_manager
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
 from app.schemas.base import BaseSchema
 from app.schemas.route_schemas.orders import (
@@ -76,15 +77,10 @@ class OrderService(BaseService[OrderRepository]):
         try:
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
-            # if order:
-            #     check_services = await utilities.health_check_all_services()
-            #     response_body = await utilities.get_response_type_body(check_services)
-            #     if response_body.get("is_all_services_active", None):
-            #         event = Event(
-            #             event_type="order_created",
-            #             payload={"order_id": order.id, "email": order.email_for_answer},
-            #         )
-            #         await event_bus.emit(event)
+            if order:
+                await event_manager.publish_event(
+                    event_type="order_create", data={"order": order}
+                )
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -260,7 +256,10 @@ class OrderService(BaseService[OrderRepository]):
                     "hasError": True,
                     "message": "Результат еще не готов",
                 }
-            raise HTTPException
+            return {
+                "hasError": True,
+                "message": "Inactive order",
+            }
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

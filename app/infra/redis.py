@@ -6,10 +6,13 @@ from aioredis import Redis, RedisError, create_redis_pool
 
 from app.config.settings import RedisSettings, settings
 from app.utils.decorators import singleton
-from app.utils.logging import db_logger
+from app.utils.logging import redis_logger
 
 
-__all__ = ("redis_client",)
+__all__ = (
+    "redis_client",
+    "RedisClient",
+)
 
 
 @singleton
@@ -74,9 +77,11 @@ class RedisClient:
                             minsize=self.settings.redis_pool_minsize,
                             ssl=self.settings.redis_use_ssl,
                         )
-                        db_logger.info("Redis connection pool initialized")
+                        redis_logger.info("Redis connection pool initialized")
                     except Exception as e:
-                        db_logger.error(f"Redis connection failed: {str(e)}")
+                        redis_logger.error(
+                            f"Redis connection failed: {str(e)}"
+                        )
                         raise RedisError(f"Connection error: {str(e)}") from e
 
     @asynccontextmanager
@@ -97,11 +102,11 @@ class RedisClient:
         try:
             yield self._pool
         except RedisError as e:
-            db_logger.error(f"Redis operation failed: {str(e)}")
+            redis_logger.error(f"Redis operation failed: {str(e)}")
             await self.close()
             raise
         except Exception as e:
-            db_logger.error(f"Unexpected error: {str(e)}")
+            redis_logger.error(f"Unexpected error: {str(e)}")
             await self.close()
             raise RedisError("Connection terminated") from e
 
@@ -114,9 +119,9 @@ class RedisClient:
             try:
                 self._pool.close()
                 await self._pool.wait_closed()
-                db_logger.info("Redis connections closed")
+                redis_logger.info("Redis connections closed")
             except Exception as e:
-                db_logger.error(f"Error closing connections: {str(e)}")
+                redis_logger.error(f"Error closing connections: {str(e)}")
             finally:
                 self._pool = None
 

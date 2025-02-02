@@ -1,149 +1,207 @@
-# events.py
 import json
+import logging
 import uuid
+from datetime import datetime, timedelta
+from typing import Callable, Dict, Optional
 
-import redis
-import threading
-from celery import Celery
-from celery.signals import task_postrun
+import asyncio
+from redis import RedisError
+
+from app.infra.redis import RedisClient, redis_client
 
 
 class EventManager:
     def __init__(
         self,
-        redis_host="localhost",
-        redis_port=6379,
-        redis_db=0,
-        celery_broker="redis://localhost:6379/0",
-        celery_backend="redis://localhost:6379/0",
+        redis_client: RedisClient,
+        main_stream: str = "events_stream",
+        dlq_stream: str = "events_dlq",
+        max_retries: int = 3,
+        ttl_hours: int = 1,
     ):
-        # Инициализация Redis
-        self.redis = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
+        self.redis_client = redis_client
+        self.main_stream = main_stream
+        self.dlq_stream = dlq_stream
+        self.max_retries = max_retries
+        self.ttl = timedelta(hours=ttl_hours)
+        self.handlers: Dict[str, Callable] = {}
+        self._running = False
+        self._dlq_running = False
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self._main_task: Optional[asyncio.Task] = None
+        self._dlq_task: Optional[asyncio.Task] = None
 
-        # Инициализация Celery
-        self.celery = Celery(
-            "tasks", broker=celery_broker, backend=celery_backend
-        )
+    def register_handler(
+        self, event_type: str, handler: Callable[[dict], None]
+    ) -> None:
+        self.handlers[event_type] = handler
 
-        # Регистрация обработчиков событий
-        self.handlers = {}
+    async def publish_event(self, event_type: str, data: dict) -> str:
+        event_id = str(uuid.uuid4())
+        event = {
+            "event_id": event_id,
+            "type": event_type,
+            "data": json.dumps(data),
+            "created_at": datetime.now().isoformat(),
+            "expires_at": (datetime.now() + self.ttl).isoformat(),
+            "retries": "0",
+        }
 
-        # Запуск слушателя Redis в отдельном потоке
-        self._start_listener()
-
-        # Регистрация сигнала для очистки кэша
-        self._register_cleanup_signal()
-
-    def _register_cleanup_signal(self):
-        """Регистрация сигнала для очистки кэша после выполнения задачи"""
-
-        @task_postrun.connect
-        def cleanup_cache(task_id, **kwargs):
-            event_id = self.redis.get(f"celery-task-meta-{task_id}")
-            if event_id:
-                self.redis.delete(f"event:{event_id.decode()}")
-                self.redis.delete(f"celery-task-meta-{task_id}")
-
-    def _start_listener(self):
-        """Запуск фонового потока для прослушивания событий"""
-
-        def listener():
-            pubsub = self.redis.pubsub()
-            pubsub.subscribe("event_channel")
-            for message in pubsub.listen():
-                if message["type"] == "message":
-                    try:
-                        event_id = message["data"].decode()
-                        event_data = self.redis.get(f"event:{event_id}")
-                        if event_data:
-                            data = json.loads(event_data)
-                            self._process_event(data)
-                    except (json.JSONDecodeError, KeyError) as e:
-                        print(f"Error processing message: {e}")
-
-        thread = threading.Thread(target=listener, daemon=True)
-        thread.start()
-
-    def _process_event(self, data):
-        """Обработка события и запуск соответствующего обработчика"""
-        event_type = data.get("type")
-        handler = self.handlers.get(event_type)
-        if handler:
-            event_id = data["event_id"]
-            task = handler.apply_async(
-                args=[data["payload"]], task_id=str(uuid.uuid4())
-            )
-            self.redis.set(f"celery-task-meta-{task.task_id}", event_id)
-        else:
-            print(f"No handler registered for event type: {event_type}")
-
-    def register_handler(self, event_type, handler_func):
-        """
-        Регистрация обработчика событий с явной проверкой ошибок
-        """
-        # Создаем Celery задачу для обработчика
-        task_name = f"handle_{event_type}"
-
-        @self.celery.task(name=task_name)
-        def wrapped_handler(payload):
-            try:
-                return handler_func(payload)
-            except Exception as e:
-                print(f"Error in handler {task_name}: {e}")
-                raise
-
-        self.handlers[event_type] = wrapped_handler
-
-    def send_event(self, event_type, payload=None):
-        """
-        Регистрация события с сохранением в Redis и гарантией доставки
-        """
         try:
-            event_id = str(uuid.uuid4())
-            event_data = json.dumps(
-                {
-                    "event_id": event_id,
-                    "type": event_type,
-                    "payload": payload or {},
+            async with self.redis_client.connection() as conn:
+                await conn.xadd(self.main_stream, event, id="*")
+            self.logger.debug(f"Event published: {event_id}")
+            return event_id
+        except RedisError as e:
+            self.logger.error(f"Failed to publish event: {str(e)}")
+            raise
+
+    async def _move_to_dlq(self, event: dict, error: str) -> None:
+        dlq_event = {
+            **event,
+            "error": error,
+            "failed_at": datetime.now().isoformat(),
+            "original_stream": self.main_stream,
+        }
+
+        try:
+            async with self.redis_client.connection() as conn:
+                await conn.xadd(self.dlq_stream, dlq_event, id="*")
+                await conn.xdel(self.main_stream, event["event_id"])
+            self.logger.warning(f"Moved to DLQ: {event['event_id']}")
+        except RedisError as e:
+            self.logger.error(f"Failed to move to DLQ: {str(e)}")
+
+    async def _handle_event(self, event: dict) -> None:
+        try:
+            event_type = event["type"]
+            handler = self.handlers.get(event_type)
+
+            if not handler:
+                raise ValueError(f"No handler for event type: {event_type}")
+
+            data = json.loads(event["data"])
+            if asyncio.iscoroutinefunction(handler):
+                await handler(data)
+            else:
+                handler(data)
+
+            async with self.redis_client.connection() as conn:
+                await conn.xdel(self.main_stream, event["event_id"])
+
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            await self._move_to_dlq(event, f"Processing error: {str(e)}")
+        except Exception as e:
+            current_retries = int(event.get("retries", 0))
+            if current_retries < self.max_retries:
+                await self._retry_event(event, current_retries)
+            else:
+                await self._move_to_dlq(
+                    event, f"Max retries exceeded: {str(e)}"
+                )
+
+    async def _retry_event(self, event: dict, retries: int) -> None:
+        try:
+            new_event = {
+                **event,
+                "retries": str(retries + 1),
+                "expires_at": (datetime.now() + self.ttl).isoformat(),
+            }
+            async with self.redis_client.connection() as conn:
+                await conn.xadd(self.main_stream, new_event, id="*")
+                await conn.xdel(self.main_stream, event["event_id"])
+        except RedisError as e:
+            self.logger.error(f"Retry failed: {str(e)}")
+
+    async def _event_listener(self) -> None:
+        last_id = "$"
+        while self._running:
+            try:
+                async with self.redis_client.connection() as conn:
+                    events = await conn.xread(
+                        streams={self.main_stream: last_id},
+                        count=10,
+                        block=5000,
+                    )
+
+                if not events:
+                    continue
+
+                for stream, stream_events in events:
+                    for event_id, event in stream_events:
+                        last_id = event_id
+                        if datetime.now() > datetime.fromisoformat(
+                            event["expires_at"]
+                        ):
+                            await self._move_to_dlq(event, "TTL expired")
+                            continue
+                        await self._handle_event(event)
+
+            except RedisError as e:
+                self.logger.error(f"Redis error: {str(e)}")
+                await asyncio.sleep(5)
+            except Exception as e:
+                self.logger.error(f"Unexpected error: {str(e)}")
+                await asyncio.sleep(1)
+
+    async def _dlq_listener(self) -> None:
+        last_id = "$"
+        while self._dlq_running:
+            try:
+                async with self.redis_client.connection() as conn:
+                    events = await conn.xread(
+                        streams={self.dlq_stream: last_id},
+                        count=10,
+                        block=10000,
+                    )
+
+                if events:
+                    for stream, stream_events in events:
+                        for event_id, event in stream_events:
+                            last_id = event_id
+                            self.logger.error(
+                                f"DLQ Entry: {event['event_id']} | "
+                                f"Error: {event.get('error', 'Unknown')} | "
+                                f"Failed at: {event.get('failed_at', '')}"
+                            )
+            except Exception as e:
+                self.logger.error(f"DLQ listener error: {str(e)}")
+                await asyncio.sleep(5)
+
+    async def start(self) -> None:
+        self._running = True
+        self._dlq_running = True
+
+        self._main_task = asyncio.create_task(self._event_listener())
+        self._dlq_task = asyncio.create_task(self._dlq_listener())
+        self.logger.info("Event manager started")
+
+    async def stop(self) -> None:
+        self._running = False
+        self._dlq_running = False
+
+        if self._main_task:
+            await self._main_task
+        if self._dlq_task:
+            await self._dlq_task
+
+        self.logger.info("Event manager stopped")
+
+    async def get_dlq_stats(self) -> dict:
+        try:
+            async with self.redis_client.connection() as conn:
+                return {
+                    "count": await conn.xlen(self.dlq_stream),
+                    "last_errors": [
+                        {**event}
+                        for event in await conn.xrevrange(
+                            self.dlq_stream, count=5
+                        )
+                    ],
                 }
-            )
-
-            # Сохраняем событие в Redis
-            self.redis.set(
-                f"event:{event_id}",
-                event_data,
-                ex=3600,  # TTL 1 hour на случай проблем
-            )
-
-            # Публикуем ID события
-            self.redis.publish("event_channel", event_id)
-
-            return True
-        except redis.RedisError as e:
-            print(f"Failed to register event: {e}")
-            return False
+        except RedisError as e:
+            self.logger.error(f"Failed to get DLQ stats: {str(e)}")
+            return {}
 
 
-# Пример использования
-if __name__ == "__main__":
-    # Инициализация менеджера событий
-    manager = EventManager()
-
-    # Регистрация обработчиков с явным вызовом (можно обернуть в try-except)
-    def handle_user_registration(payload):
-        print(f"Processing registration for: {payload['email']}")
-        # Логика обработки с возможными ошибками БД
-        # ...
-
-    try:
-        manager.register_handler("user_registered", handle_user_registration)
-    except Exception as e:
-        print(f"Failed to register handler: {e}")
-
-    # Отправка события с обработкой возможных ошибок
-    success = manager.send_event(
-        "user_registered", {"email": "user@example.com", "user_id": 123}
-    )
-
-    if not success:
-        print("Failed to send event")
+event_manager = EventManager(redis_client=redis_client)
