@@ -55,8 +55,8 @@ openpyxl = "^3.1.5"
 sqlalchemy-continuum = "^1.4.2"
 psycopg2 = "^2.9.10"
 zeep = "^4.3.1"
-aiokafka = "^0.12.0"
 bandit = "^1.8.2"
+confluent-kafka = "^2.8.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -86,7 +86,7 @@ known_standard_library = [
     "logging", "pathlib", "abc", "uuid", "json", "importlib"
 ]
 known_third_party = [
-    "fastapi_events", "aiologger", "aiokafka", "urllib", "zeep", "blinker",
+    "confluent_kafka", "aiologger", "aiokafka", "urllib", "zeep", "blinker",
     "pandas", "graypy", "pyclamd", "sqlalchemy_utils", "fastapi_limiter",
     "loguru", "sqlalchemy", "fast_api", "passlib", "aioredis", "asyncio",
     "pydantic", "sqladmin", "joblib", "streamlit", "aioboto", "fastauth",

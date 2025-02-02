@@ -10,7 +10,13 @@ from redis import RedisError
 from app.infra.redis import RedisClient, redis_client
 
 
-class EventManager:
+__all__ = (
+    "EventClient",
+    "event_client",
+)
+
+
+class EventClient:
     def __init__(
         self,
         redis_client: RedisClient,
@@ -204,4 +210,4 @@ class EventManager:
             return {}
 
 
-event_manager = EventManager(redis_client=redis_client)
+event_client = EventClient(redis_client=redis_client)

@@ -17,11 +17,14 @@ from fastapi_utils.cbv import cbv
 
 from app.config.settings import settings
 from app.schemas.base import EmailSchema
-from app.services.service_factory import BaseService, get_service_for_model
+from app.services.infra_services.mail import mail_sender
+from app.services.route_services.service_factory import (
+    BaseService,
+    get_service_for_model,
+)
 from app.utils.enums.base import get_model_enum
 from app.utils.errors import handle_routes_errors
 from app.utils.health_check import health_check
-from app.utils.mail import mail_sender
 from app.utils.utils import utilities
 
 

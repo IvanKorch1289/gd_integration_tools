@@ -11,7 +11,9 @@ from starlette_exporter import PrometheusMiddleware, handle_metrics
 from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
-from app.infra.graylog_service import graylog_handler
+from app.infra.event_bus import event_client
+from app.infra.logger import graylog_handler
+from app.infra.queue import kafka_client
 from app.infra.redis import redis_client
 from app.infra.smtp import mail_service
 from app.infra.storage import s3_bucket_service_factory
@@ -62,6 +64,12 @@ async def lifespan(app: FastAPI):
         # Инициализация подключения к Graylog
         await graylog_handler.connect()
 
+        # Инициализация событийной шины
+        await event_client.start()
+
+        # Инициализация клиента Kafka
+        kafka_client.initialize()
+
         # Инициализация лимитера запросов
         await init_limiter()
 
@@ -74,6 +82,8 @@ async def lifespan(app: FastAPI):
         await s3_client.shutdown()
         await mail_service.close_pool()
         await graylog_handler.close()
+        await event_client.stop()
+        await kafka_client.close()
 
         app_logger.info("Завершение работы приложения...")
 

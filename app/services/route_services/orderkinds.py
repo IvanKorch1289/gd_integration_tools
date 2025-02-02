@@ -6,7 +6,10 @@ from app.schemas.route_schemas.orderkinds import (
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from app.services.service_factory import BaseService, create_service_class
+from app.services.route_services.service_factory import (
+    BaseService,
+    create_service_class,
+)
 
 
 __all__ = ("get_order_kind_service",)

@@ -11,7 +11,7 @@ import socket
 from queue import Queue
 
 from app.config.settings import LogStorageSettings, settings
-from app.infra.graylog_service import GraylogHandler, graylog_handler
+from app.infra.logger import GraylogHandler, graylog_handler
 
 
 __all__ = (

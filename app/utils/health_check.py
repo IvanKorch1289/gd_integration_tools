@@ -3,11 +3,11 @@ from fastapi import Response
 
 from app.celery.celery_config import celery_manager
 from app.infra.db.database import db_initializer
-from app.infra.graylog_service import graylog_handler
+from app.infra.logger import graylog_handler
 from app.infra.redis import redis_client
 from app.infra.storage import s3_bucket_service_factory
+from app.services.infra_services.mail import mail_service
 from app.utils.decorators.singleton import singleton
-from app.utils.mail import mail_service
 
 
 __all__ = ("health_check",)

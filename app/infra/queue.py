@@ -1,215 +1,116 @@
-# import json
-# from abc import ABC, abstractmethod
-# from typing import Any, Dict
+from typing import Dict, Optional
 
-# from aiokafka.producer import AIOKafkaProducer
-# import redis
-# import time
-# from aiokafka.consumer import AIOKafkaConsumer
-# from pydantic import ValidationError
+import asyncio
+from confluent_kafka import AdminClient, Consumer, NewTopic, Producer
 
-# from your_module import OrderSchemaIn, add  # Импортируйте ваши функции и схемы
-# from app.core import kafka_logger
-# from app.core.settings import QueueSettings, settings
+from app.config.settings import settings
+from app.utils.logging import kafka_logger
 
 
-# class MessageBroker(ABC):
-#     @abstractmethod
-#     async def start(self):
-#         pass
-
-#     @abstractmethod
-#     async def stop(self):
-#         pass
-
-#     @abstractmethod
-#     async def consume_messages(self):
-#         pass
-
-#     @abstractmethod
-#     async def send_retry(self, message: Dict[str, Any]):
-#         pass
+__all__ = (
+    "kafka_client",
+    "KafkaClient",
+)
 
 
-# class KafkaBroker(MessageBroker):
-#     def __init__(self, settings: QueueSettings):
-#         self.settings = settings
-#         self.logger = kafka_logger.getChild("KafkaBroker")
-#         self.consumer = None
-#         self.producer = None
+class KafkaClient:
+    """
+    Управление подключениями и инфраструктурой Kafka
 
-#     async def start(self):
-#         consumer_args = {
-#             "bootstrap_servers": self.settings.bootstrap_servers,
-#             "group_id": self.settings.consumer_group,
-#             "auto_offset_reset": self.settings.auto_offset_reset,
-#             "enable_auto_commit": self.settings.enable_auto_commit,
-#             "max_poll_records": self.settings.max_poll_records,
-#             "max_poll_interval_ms": self.settings.max_poll_interval_ms,
-#             "session_timeout_ms": self.settings.session_timeout_ms,
-#             "security_protocol": self.settings.security_protocol,
-#             "value_deserializer": lambda m: json.loads(m.decode("utf-8")),
-#         }
+    Args:
+        settings: Настройки из класса QueueSettings
+    """
 
-#         if self.settings.sasl_mechanism:
-#             consumer_args.update({
-#                 "sasl_mechanism": self.settings.sasl_mechanism,
-#                 "sasl_plain_username": self.settings.sasl_username,
-#                 "sasl_plain_password": self.settings.sasl_password,
-#             })
+    def __init__(self, settings):
+        self.settings = settings
+        self._producer: Optional[Producer] = None
+        self._consumer: Optional[Consumer] = None
+        self._admin: Optional[AdminClient] = None
 
-#         self.consumer = AIOKafkaConsumer(
-#             self.settings.input_destination,
-#             self.settings.retry_destination,
-#             **consumer_args
-#         )
+    async def initialize(self):
+        """Инициализация подключений при старте приложения"""
+        config = self.settings.get_kafka_config()
 
-#         producer_args = {
-#             "bootstrap_servers": self.settings.bootstrap_servers,
-#             "compression_type": self.settings.compression_type,
-#             "acks": self.settings.producer_acks,
-#             "retries": self.settings.producer_retries,
-#             "linger_ms": self.settings.producer_linger_ms,
-#             "value_serializer": lambda m: json.dumps(m).encode("utf-8"),
-#             "security_protocol": self.settings.security_protocol,
-#         }
+        # Создание административного клиента
+        self._admin = AdminClient(config)
 
-#         if self.settings.sasl_mechanism:
-#             producer_args.update({
-#                 "sasl_mechanism": self.settings.sasl_mechanism,
-#                 "sasl_plain_username": self.settings.sasl_username,
-#                 "sasl_plain_password": self.settings.sasl_password,
-#             })
+        # Инициализация продюсера
+        self._producer = await self._create_producer(config)
 
-#         self.producer = AIOKafkaProducer(**producer_args)
+        # Инициализация консьюмера
+        self._consumer = await self._create_consumer(config)
 
-#         try:
-#             await self.consumer.start()
-#             await self.producer.start()
-#             self.logger.info("Kafka broker started")
-#         except Exception as e:
-#             self.logger.error(f"Kafka startup failed: {str(e)}")
-#             raise
+        kafka_logger.info("Kafka connection start successfully")
 
-#     async def stop(self):
-#         try:
-#             await self.consumer.stop()
-#             await self.producer.stop()
-#             self.logger.info("Kafka broker stopped")
-#         except Exception as e:
-#             self.logger.error(f"Kafka shutdown error: {str(e)}")
-#             raise
+    async def _create_producer(self, config: Dict) -> Producer:
+        """Создание асинхронного продюсера"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: Producer(
+                {
+                    **config,
+                    "acks": self.settings.queue_producer_acks,
+                    "linger.ms": self.settings.queue_producer_linger_ms,
+                }
+            ),
+        )
 
-#     async def consume_messages(self):
-#         async for msg in self.consumer:
-#             yield msg.value
+    async def _create_consumer(self, config: Dict) -> Consumer:
+        """Создание асинхронного консьюмера"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: Consumer(
+                {
+                    **config,
+                    "group.id": self.settings.queue_consumer_group,
+                    "auto.offset.reset": self.settings.queue_auto_offset_reset,
+                }
+            ),
+        )
 
-#     async def send_retry(self, message: Dict[str, Any]):
-#         await self.producer.send(self.settings.retry_destination, message)
+    async def create_topic(
+        self,
+        topic: str,
+        num_partitions: int = 3,
+        replication_factor: int = 2,
+        dlq_suffix: str = "_dlq",
+    ) -> None:
+        """Создание топика с DLQ"""
+        topics = [
+            NewTopic(topic, num_partitions, replication_factor),
+            NewTopic(
+                f"{topic}{dlq_suffix}", num_partitions, replication_factor
+            ),
+        ]
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None, lambda: self._admin.create_topics(topics)
+        )
+        kafka_logger.info(f"Topic '{topic}' created successfully")
+
+    async def close(self):
+        """Закрытие подключений при завершении работы"""
+        tasks = []
+
+        if self._producer:
+            tasks.append(
+                asyncio.get_event_loop().run_in_executor(
+                    None, self._producer.flush
+                )
+            )
+
+        if self._consumer:
+            tasks.append(
+                asyncio.get_event_loop().run_in_executor(
+                    None, self._consumer.close
+                )
+            )
+
+        await asyncio.gather(*tasks)
+        kafka_logger.info("Kafka connection closed successfully")
 
 
-# class QueueClient:
-#     def __init__(self, broker: MessageBroker, redis_settings: RedisSettings):
-#         self.broker = broker
-#         self.logger = kafka_logger.getChild("QueueClient")
-#         self.redis = redis.Redis(**redis_settings.dict())
-#         self._validate_connections()
-
-#     def _validate_connections(self):
-#         try:
-#             self.redis.ping()
-#         except redis.RedisError:
-#             self.logger.error("Redis connection failed")
-#             raise
-
-#     async def process_message(self, message: Dict[str, Any]):
-#         message_id = message.get("message_id")
-#         if not message_id:
-#             self.logger.warning("Message missing ID")
-#             return
-
-#         redis_key = f"message:{message_id}"
-#         try:
-#             existing = self.redis.get(redis_key)
-#         except redis.RedisError as e:
-#             self.logger.error(f"Redis error: {str(e)}")
-#             return
-
-#         if existing:
-#             if existing.decode() == "processed":
-#                 self.logger.debug(f"Message {message_id} already processed")
-#                 return
-#             first_seen = float(existing.decode())
-#         else:
-#             first_seen = time.time()
-#             try:
-#                 self.redis.set(redis_key, first_seen)
-#             except redis.RedisError:
-#                 self.logger.error(f"Failed to store {message_id}")
-#                 return
-
-#         if time.time() - first_seen > 86400:
-#             await self._handle_expired_message(message_id, redis_key)
-#             return
-
-#         try:
-#             order_data = OrderSchemaIn(**message)
-#             await add({"data": order_data.dict()})
-#             self._mark_processed(redis_key)
-#             self.logger.info(f"Processed {message_id}")
-
-#         except ValidationError as ve:
-#             await self._handle_validation_error(message_id, redis_key, ve, message)
-
-#         except Exception as e:
-#             await self._handle_processing_error(message_id, message, e)
-
-#     async def _handle_expired_message(self, message_id: str, redis_key: str):
-#         self.logger.warning(f"Message {message_id} expired")
-#         try:
-#             await self._send_notification(message_id)
-#             self._mark_processed(redis_key)
-#         except Exception as e:
-#             self.logger.error(f"Expiry handling failed: {str(e)}")
-
-#     async def _handle_validation_error(self, message_id: str, redis_key: str,
-#                                      error: ValidationError, message: dict):
-#         self.logger.error(f"Validation failed for {message_id}: {str(error)}")
-#         try:
-#             self._mark_processed(redis_key)
-#             await self._send_notification(message_id)
-#         except Exception as e:
-#             self.logger.error(f"Validation error handling failed: {str(e)}")
-
-#     async def _handle_processing_error(self, message_id: str, message: dict, error: Exception):
-#         self.logger.error(f"Processing failed for {message_id}: {str(error)}")
-#         try:
-#             await self.broker.send_retry(message)
-#             self.logger.info(f"Message {message_id} queued for retry")
-#         except Exception as e:
-#             self.logger.error(f"Retry failed for {message_id}: {str(e)}")
-
-#     def _mark_processed(self, redis_key: str):
-#         try:
-#             self.redis.set(redis_key, "processed")
-#         except redis.RedisError:
-#             self.logger.error("Failed to mark message as processed")
-
-#     async def _send_notification(self, message_id: str):
-#         try:
-#             # Реальная реализация отправки email
-#             self.logger.info(f"Sent notification for {message_id}")
-#         except Exception as e:
-#             self.logger.error(f"Notification failed: {str(e)}")
-#             raise
-
-#     async def run_consumption(self):
-#         self.logger.info("Starting message processing")
-#         try:
-#             async for message in self.broker.consume_messages():
-#                 await self.process_message(message)
-#         except Exception as e:
-#             self.logger.error(f"Consumption failed: {str(e)}")
-#             raise
-#         finally:
-#             await self.broker.stop()
+kafka_client = KafkaClient(settings=settings.queue)

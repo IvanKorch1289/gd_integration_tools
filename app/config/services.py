@@ -558,3 +558,34 @@ class QueueSettings(BaseSettings):
                     "Некорректный формат адреса сервера (host:port)"
                 )
         return v
+
+    def get_kafka_config(self) -> Dict[str, Any]:
+        """Преобразование настроек в конфиг для Kafka"""
+        config = {
+            "bootstrap.servers": ",".join(self.queue_bootstrap_servers),
+            "security.protocol": self.queue_security_protocol,
+            "compression.type": self.queue_compression_type,
+            "message.max.bytes": self.queue_message_max_bytes,
+            "session.timeout.ms": self.queue_session_timeout_ms,
+            "request.timeout.ms": self.queue_request_timeout_ms,
+        }
+
+        # Настройки продюсера
+        producer_config = {
+            "acks": self.queue_producer_acks,
+            "linger.ms": self.queue_producer_linger_ms,
+        }
+
+        # Настройки консьюмера
+        consumer_config = {
+            "group.id": self.queue_consumer_group,
+            "auto.offset.reset": self.queue_auto_offset_reset,
+            "max.poll.records": self.queue_max_poll_records,
+            "enable.auto.commit": False,
+        }
+
+        # SSL конфигурация
+        if self.queue_ssl_ca_location:
+            config.update({"ssl.ca.location": str(self.queue_ssl_ca_location)})
+
+        return {**config, **producer_config, **consumer_config}

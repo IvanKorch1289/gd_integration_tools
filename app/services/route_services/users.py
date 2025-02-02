@@ -8,7 +8,7 @@ from app.schemas.route_schemas.users import (
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from app.services.service_factory import BaseService
+from app.services.route_services.service_factory import BaseService
 
 
 __all__ = ("get_user_service",)
