@@ -39,7 +39,7 @@ class AppBaseSettings(BaseSettings):
         description="Версия приложения в семантическом формате",
     )
     app_debug: bool = Field(
-        default=True,
+        default=False,
         env="APP_DEBUG",
         description="Признак включенного режима дебаггинга",
     )

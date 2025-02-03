@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db.models.users import User
-from app.infra.db.repositories.base import SQLAlchemyRepository
+from app.repositories.base import SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import handle_db_errors
 

@@ -2,13 +2,13 @@ from typing import Any, Dict, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infra.db.repositories.users import UserRepository, get_user_repo
+from app.repositories.users import UserRepository, get_user_repo
 from app.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from app.services.route_services.service_factory import BaseService
+from app.services.route_services.base import BaseService
 
 
 __all__ = ("get_user_service",)

@@ -6,7 +6,7 @@ import asyncio
 import json_tricks
 from aiohttp import ClientTimeout, TCPConnector
 
-from app.utils.logging import request_logger
+from app.utils.logging_service import request_logger
 from app.utils.utils import utilities
 
 

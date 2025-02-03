@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.infra.db.database import db_initializer
 from app.utils.errors import DatabaseError, NotFoundError
-from app.utils.logging import db_logger
+from app.utils.logging_service import db_logger
 
 
 __all__ = ("session_manager",)

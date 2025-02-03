@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError as BotoClientError
 from app.config.settings import FileStorageSettings, settings
 from app.infra.redis import redis_client
 from app.utils.decorators.caching import existence_cache, metadata_cache
-from app.utils.logging import fs_logger
+from app.utils.logging_service import fs_logger
 
 
 __all__ = (
@@ -106,7 +106,7 @@ class MinioService(BaseS3Service):
             },
         )
 
-    async def initialize_connection(self):
+    async def _initialize_connection(self):
         """Establishes and verifies connection to object storage."""
         try:
             if self._client is not None:
@@ -126,12 +126,12 @@ class MinioService(BaseS3Service):
             fs_logger.info("Successfully connected to object storage")
 
         except Exception as exc:
-            await self.shutdown()
+            await self._shutdown()
             raise RuntimeError(
                 f"Connection initialization failed: {str(exc)}"
             ) from exc
 
-    async def shutdown(self):
+    async def _shutdown(self):
         """Gracefully closes all connections and releases resources."""
         if self._client:
             try:
@@ -167,7 +167,7 @@ class MinioService(BaseS3Service):
             raise
         except Exception as exc:
             fs_logger.error(f"Connection error: {str(exc)}")
-            await self.shutdown()
+            await self._shutdown()
             raise
 
     async def upload_file_object(

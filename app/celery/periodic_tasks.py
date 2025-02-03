@@ -1,7 +1,6 @@
 from app.celery.celery_config import celery_app
 from app.infra import event_bus
-from app.services.infra_services.mail import mail_sender
-from app.utils.logging import scheduler_logger
+from app.utils.logging_service import scheduler_logger
 from app.utils.utils import utilities
 
 

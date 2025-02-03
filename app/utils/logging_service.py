@@ -117,7 +117,7 @@ class LoggerManager:
         """Configure all logging handlers."""
         # Graylog handler
         if self.graylog.enabled:
-            if gl_handler := self.graylog.connect():
+            if gl_handler := self.graylog._connect():
                 gl_handler.addFilter(
                     self.ContextFilter(self.environment, self.hostname)
                 )

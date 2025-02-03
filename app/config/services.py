@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Set, Tuple
+from typing import Any, Dict, List, Literal, Optional, Set, Tuple
 
 from dotenv import load_dotenv
 from pydantic import Field, field_validator
@@ -233,7 +233,9 @@ class RedisSettings(BaseSettings):
     redis_db_cache: int = 0
     redis_db_queue: int = 1
     redis_db_limits: int = 2
-    redis_pass: Optional[str] = Field(default=None, env="REDIS_PASS")
+    redis_db_celery: int = 3
+    redis_username: Optional[str] = Field(default=None, env="REDIS_USERNAME")
+    redis_password: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
     redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
     redis_decode_responses: bool = Field(
         default=True, env="REDIS_DECODE_RESPONSES"
@@ -249,12 +251,25 @@ class RedisSettings(BaseSettings):
     )
     redis_retries: int = Field(default=3, env="REDIS_RETRIES")
     redis_retry_delay: int = Field(default=1, env="REDIS_RETRY_DELAY")
+    redis_socket_timeout: Optional[int] = Field(
+        default=10, env="REDIS_SOCKET_TIMEEOUT"
+    )
+    redis_socket_connect_timeout: Optional[int] = Field(
+        default=5, env="REDIS_SOCKET_CONNECT_TIMEOUT"
+    )
+    redis_retry_on_timeout: Optional[bool] = Field(
+        default=True, env="REDIS_RETRY_ON_TIMEOUT"
+    )
+    redis_socket_keepalive: Optional[bool] = Field(
+        default=True, env="REDIS_SOCKET_KEEPALIVE"
+    )
 
     @property
     def redis_url(self) -> str:
         """Сформировать URL для подключения к Redis."""
         protocol = "rediss" if self.redis_use_ssl else "redis"
-        return f"{protocol}://{self.redis_host}:{self.redis_port}"
+        password = f":{self.redis_password}@" if self.redis_password else None
+        return f"{protocol}://{password}{self.redis_host}:{self.redis_port}"
 
 
 class CelerySettings(BaseSettings):
@@ -269,15 +284,15 @@ class CelerySettings(BaseSettings):
     """
 
     # Подключение к брокеру
-    cel_broker_url: str = Field(
-        default="redis://localhost:6379/0",
-        env="CELERY_BROKER_URL",
-        description="URL брокера сообщений (redis://, amqp://, sqs://)",
+    cel_broker_redis_db: int = Field(
+        default=0,
+        env="CELERY_BROKER_REDIS_DB",
+        description="Номер БД для брокера",
     )
-    cel_result_backend: str = Field(
-        default="redis://localhost:6379/1",
-        env="CELERY_RESULT_BACKEND",
-        description="URL бэкенда для результатов задач",
+    cel_result_backend_redis_db: int = Field(
+        default=1,
+        env="CELERY_RESULT_BACKEND_REDIS_DB",
+        description="Номер БД для результатов задач",
     )
 
     # Поведение задач
@@ -455,12 +470,12 @@ class MailSettings(BaseSettings):
 
     # Настройки TLS
     mail_use_tls: bool = Field(
-        default=True,
+        default=False,
         env="MAIL_USE_TLS",
         description="Использовать STARTTLS для шифрования",
     )
     mail_validate_certs: bool = Field(
-        default=True,
+        default=False,
         env="MAIL_VALIDATE_CERTS",
         description="Проверять SSL сертификаты сервера",
     )
@@ -483,6 +498,13 @@ class MailSettings(BaseSettings):
             raise ValueError("Порт 465 требует SSL/TLS")
         return v
 
+    @field_validator("mail_use_tls", "mail_validate_certs", mode="before")
+    @classmethod
+    def parse_bool(cls, v):
+        if isinstance(v, str):
+            return v.lower() == "true"
+        return v
+
 
 class QueueSettings(BaseSettings):
     """Настройки брокера сообщений.
@@ -501,52 +523,94 @@ class QueueSettings(BaseSettings):
         default="kafka", env="QUEUE_TYPE", description="Тип брокера сообщений"
     )
     queue_bootstrap_servers: List[str] = Field(
-        default=["localhost:9092"], description="Список серверов брокера"
+        default=["localhost:9092"],
+        env="KAFKA_BOOTSTRAP_SERVER",
+        description="Список серверов брокера",
     )
 
     # Настройки потребителя
     queue_consumer_group: str = Field(
-        default="api-consumers", description="Группа потребителей (Kafka)"
+        default="api-consumers",
+        env="QUEUE_CONSUMER_GROUP",
+        description="Группа потребителей (Kafka)",
     )
     queue_auto_offset_reset: Literal["earliest", "latest"] = Field(
-        default="earliest", description="Поведение при отсутствии оффсета"
+        default="earliest",
+        env="QUEUE_AUTO_OFFSET_RESET",
+        description="Поведение при отсутствии оффсета",
     )
     queue_max_poll_records: int = Field(
         default=500,
         ge=1,
+        le=10000,
+        env="QUEUE_MAX_POLL_RECORDS",
         description="Максимальное количество записей за опрос",
     )
 
     # Настройки производителя
     queue_producer_acks: Literal["all", "0", "1"] = Field(
-        default="all", description="Уровень подтверждения записи"
+        default="all",
+        env="QUEUE_PRODUCER_ACKS",
+        description="Уровень подтверждения записи",
     )
     queue_producer_linger_ms: int = Field(
-        default=5, description="Задержка для батчинга сообщений"
+        default=5,
+        ge=0,
+        le=10000,
+        env="QUEUE_PRODUCER_LINGER_MS",
+        description="Задержка для батчинга сообщений",
     )
 
     # Безопасность
     queue_security_protocol: Literal[
         "PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"
-    ] = Field(default="PLAINTEXT", description="Протокол безопасности")
+    ] = Field(
+        default="PLAINTEXT",
+        env="QUEUE_SECURITY_PROTOCOL",
+        description="Протокол безопасности",
+    )
     queue_ssl_ca_location: Optional[Path] = Field(
-        default=None, description="Путь к CA сертификату"
+        default=None,
+        env="QUEUE_SSL_CA_LOCATION",
+        description="Путь к CA сертификату",
+    )
+    queue_username: Optional[Path] = Field(
+        default=None, env="QUEUE_USERNAME", description="Логин"
+    )
+    queue_password: Optional[Path] = Field(
+        default=None, env="QUEUE_PASSWORD", description="Пароль"
     )
 
     # Оптимизация
     queue_compression_type: Literal[
         "none", "gzip", "snappy", "lz4", "zstd"
-    ] = Field(default="none", description="Тип сжатия сообщений")
+    ] = Field(
+        default="none",
+        env="QUEUE_COMPRESSION_TYPE",
+        description="Тип сжатия сообщений",
+    )
     queue_message_max_bytes: int = Field(
-        default=1048576, description="Максимальный размер сообщения"
+        default=1048576,
+        ge=1,
+        le=10000000,
+        env="QUEUE_MESSAGE_MAX_BYTES",
+        description="Максимальный размер сообщения",
     )
 
     # Таймауты
     queue_session_timeout_ms: int = Field(
-        default=10000, description="Таймаут сессии потребителя"
+        default=10000,
+        ge=1000,
+        le=3600000,
+        env="QUEUE_SESSION_TIMEOUT_MS",
+        description="Таймаут сессии потребителя",
     )
     queue_request_timeout_ms: int = Field(
-        default=40000, description="Таймаут запросов к брокеру"
+        default=40000,
+        ge=1000,
+        le=3600000,
+        env="QUEUE_REQUEST_TIMEOUT_MS",
+        description="Таймаут запросов к брокеру",
     )
 
     @field_validator("queue_bootstrap_servers")
@@ -560,7 +624,7 @@ class QueueSettings(BaseSettings):
         return v
 
     def get_kafka_config(self) -> Dict[str, Any]:
-        """Преобразование настроек в конфиг для Kafka"""
+        """Преобразование настроек в конфиг для Kafka."""
         config = {
             "bootstrap.servers": ",".join(self.queue_bootstrap_servers),
             "security.protocol": self.queue_security_protocol,
@@ -570,22 +634,36 @@ class QueueSettings(BaseSettings):
             "request.timeout.ms": self.queue_request_timeout_ms,
         }
 
-        # Настройки продюсера
+        # SSL конфигурация
+        if self.queue_ssl_ca_location:
+            config.update({"ssl.ca.location": str(self.queue_ssl_ca_location)})
+
+        # SASL конфигурация
+        if self.queue_security_protocol in ("SASL_PLAINTEXT", "SASL_SSL"):
+            config.update(
+                {
+                    "sasl.mechanism": "PLAIN",  # или SCRAM-SHA-256, OAUTHBEARER
+                    "sasl.username": "your_username",  # замените на реальные значения
+                    "sasl.password": "your_password",  # замените на реальные значения
+                }
+            )
+
+        return config
+
+    def get_kafka_producer_config(self) -> Dict[str, Any]:
+        """Возвращает конфигурацию для Kafka Producer."""
         producer_config = {
             "acks": self.queue_producer_acks,
             "linger.ms": self.queue_producer_linger_ms,
         }
+        return {**self.get_kafka_config(), **producer_config}
 
-        # Настройки консьюмера
+    def get_kafka_consumer_config(self) -> Dict[str, Any]:
+        """Возвращает конфигурацию для Kafka Consumer."""
         consumer_config = {
             "group.id": self.queue_consumer_group,
             "auto.offset.reset": self.queue_auto_offset_reset,
             "max.poll.records": self.queue_max_poll_records,
             "enable.auto.commit": False,
         }
-
-        # SSL конфигурация
-        if self.queue_ssl_ca_location:
-            config.update({"ssl.ca.location": str(self.queue_ssl_ca_location)})
-
-        return {**config, **producer_config, **consumer_config}
+        return {**self.get_kafka_config(), **consumer_config}

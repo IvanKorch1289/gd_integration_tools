@@ -133,7 +133,7 @@ class EventClient:
                 if not events:
                     continue
 
-                for stream, stream_events in events:
+                for _, stream_events in events:
                     for event_id, event in stream_events:
                         last_id = event_id
                         if datetime.now() > datetime.fromisoformat(
@@ -162,7 +162,7 @@ class EventClient:
                     )
 
                 if events:
-                    for stream, stream_events in events:
+                    for _, stream_events in events:
                         for event_id, event in stream_events:
                             last_id = event_id
                             self.logger.error(
@@ -174,7 +174,7 @@ class EventClient:
                 self.logger.error(f"DLQ listener error: {str(e)}")
                 await asyncio.sleep(5)
 
-    async def start(self) -> None:
+    async def _start(self) -> None:
         self._running = True
         self._dlq_running = True
 
@@ -182,7 +182,7 @@ class EventClient:
         self._dlq_task = asyncio.create_task(self._dlq_listener())
         self.logger.info("Event manager started")
 
-    async def stop(self) -> None:
+    async def _stop(self) -> None:
         self._running = False
         self._dlq_running = False
 

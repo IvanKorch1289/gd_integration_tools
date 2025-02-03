@@ -13,7 +13,7 @@ from starlette.middleware.base import (
 from starlette.types import ASGIApp
 
 from app.config.settings import settings
-from app.utils.logging import app_logger
+from app.utils.logging_service import app_logger
 
 
 __all__ = (

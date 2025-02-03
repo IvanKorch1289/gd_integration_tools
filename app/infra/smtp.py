@@ -6,7 +6,7 @@ import aiosmtplib
 
 from app.config.settings import MailSettings, settings
 from app.utils.decorators.singleton import singleton
-from app.utils.logging import mail_logger
+from app.utils.logging_service import mail_logger
 
 
 __all__ = ("mail_service",)
@@ -29,14 +29,14 @@ class MailService:
 
     async def __aenter__(self):
         """Async context manager entry point."""
-        await self.initialize_pool()
+        await self._initialize_pool()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit point."""
-        await self.close_pool()
+        await self._close_pool()
 
-    async def initialize_pool(self):
+    async def _initialize_pool(self):
         """Initialize the SMTP connection pool."""
         try:
             for _ in range(self._pool_size):
@@ -45,10 +45,10 @@ class MailService:
                 mail_logger.info("Successfully connected to SMTP server")
         except Exception as exc:
             raise RuntimeError(
-                f"Failed to initialize SMTP connection pool: {exc}"
+                f"Failed to initialize SMTP connection pool: {str(exc)}"
             ) from exc
 
-    async def close_pool(self):
+    async def _close_pool(self):
         """Close all connections in the pool."""
         try:
             while self._connection_pool:

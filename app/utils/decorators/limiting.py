@@ -6,16 +6,16 @@ from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 
 from app.config.settings import settings
-from app.utils.logging import app_logger
+from app.utils.logging_service import app_logger
 
 
 __all__ = (
-    "init_limiter",
+    "_init_limiter",
     "route_limiting",
 )
 
 
-async def init_limiter():
+async def _init_limiter():
     """
     Инициализирует Redis и FastAPILimiter.
 
@@ -24,7 +24,7 @@ async def init_limiter():
     """
     try:
         redis_connection = redis.from_url(
-            f"{settings.redis.redis_url}/{settings.redis.redis_db_queue}",
+            f"{settings.redis.redis_url}/{settings.redis.redis_db_limits}",
             encoding="utf-8",
             decode_responses=True,
         )
@@ -32,7 +32,7 @@ async def init_limiter():
         app_logger.info("Лимиты роутов установлены...")
     except Exception as exc:
         app_logger.error(
-            f"Не удалось инициализировать лимиты роутов: str{exc}"
+            f"Не удалось инициализировать лимиты роутов: {str(exc)}"
         )
 
 

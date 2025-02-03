@@ -4,7 +4,7 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from fastapi_filter.contrib.sqlalchemy import Filter
 
 from app.infra.db.models.base import BaseModel
-from app.infra.db.repositories.base import AbstractRepository
+from app.repositories.base import AbstractRepository
 from app.schemas.base import BaseSchema
 from app.utils.decorators.caching import response_cache
 from app.utils.utils import utilities

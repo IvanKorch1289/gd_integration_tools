@@ -7,7 +7,7 @@ from confluent_kafka import Message
 
 from app.infra.queue import KafkaClient, kafka_client
 from app.services.route_services.orders import get_order_service
-from app.utils.logging import kafka_logger
+from app.utils.logging_service import kafka_logger
 
 
 __all__ = (

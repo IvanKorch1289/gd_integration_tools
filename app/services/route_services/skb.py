@@ -9,8 +9,8 @@ from urllib.parse import urljoin
 from app.config.settings import APISSKBSettings, settings
 from app.infra.storage import s3_bucket_service_factory
 from app.services.helpers.http_helper import make_request
+from app.services.route_services.base import BaseService
 from app.services.route_services.orderkinds import get_order_kind_service
-from app.services.route_services.service_factory import BaseService
 
 
 __all__ = (

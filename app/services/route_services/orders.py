@@ -1,15 +1,15 @@
 import json
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from fastapi import status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
-from app.infra.db.repositories.files import FileRepository, get_file_repo
-from app.infra.db.repositories.orders import OrderRepository, get_order_repo
 from app.infra.event_bus import event_client
 from app.infra.storage import BaseS3Service, s3_bucket_service_factory
+from app.repositories.files import FileRepository, get_file_repo
+from app.repositories.orders import OrderRepository, get_order_repo
 from app.schemas.base import BaseSchema
 from app.schemas.route_schemas.orders import (
     OrderSchemaIn,
@@ -21,7 +21,7 @@ from app.services.helpers.storage_helpers import (
     get_base64_file,
     get_streaming_response,
 )
-from app.services.route_services.service_factory import BaseService
+from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.enums.skb import ResponseTypeChoices
@@ -57,7 +57,7 @@ class OrderService(BaseService[OrderRepository]):
         :param request_service: Сервис для взаимодействия с API СКБ-Техно.
         """
         super().__init__(
-            repo,
+            repo=repo,
             request_schema=schema_in,
             response_schema=schema_out,
             version_schema=version_schema,
@@ -133,7 +133,7 @@ class OrderService(BaseService[OrderRepository]):
                         event_type="init_mail_send", data={"order": order}
                     )
                 return result
-            order_data
+            return order_data
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

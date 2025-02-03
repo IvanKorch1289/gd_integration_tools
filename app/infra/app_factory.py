@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -22,8 +23,8 @@ from app.utils.admins.files import FileAdmin, OrderFileAdmin
 from app.utils.admins.orderkinds import OrderKindAdmin
 from app.utils.admins.orders import OrderAdmin
 from app.utils.admins.users import UserAdmin
-from app.utils.decorators.limiting import init_limiter
-from app.utils.logging import app_logger
+from app.utils.decorators.limiting import _init_limiter
+from app.utils.logging_service import app_logger
 from app.utils.middlewares import (
     APIKeyMiddleware,
     InnerRequestLoggingMiddleware,
@@ -45,47 +46,49 @@ async def lifespan(app: FastAPI):
     Запускает планировщик задач и устанавливает лимиты запросов.
     Останавливает планировщик при завершении работы приложения.
     """
+    load_dotenv()
+
     app_logger.info("Запуск приложения...")
 
     s3_client = s3_bucket_service_factory()
 
     try:
+        # Инициализация подключения к Graylog
+        graylog_handler._connect()
+
         # Инициализация пула подключений Redis
-        await redis_client._ensure_pool()
+        await redis_client._ensure_connected()
 
         # Инициализация пула подключений БД
         await db_initializer._initialize_async_pool()
 
         # Инициализация подключения к хранилищу файлов
-        await s3_client.initialize_connection()
+        await s3_client._initialize_connection()
 
         # Инициализация подключения к SMTP-серверу
-        await mail_service.initialize_pool()
-
-        # Инициализация подключения к Graylog
-        await graylog_handler.connect()
+        await mail_service._initialize_pool()
 
         # Инициализация событийной шины
-        await event_client.start()
+        await event_client._start()
 
         # Инициализация клиента Kafka
         await kafka_client.initialize()
         await queue_service.start_consumers()
 
         # Инициализация лимитера запросов
-        await init_limiter()
+        await _init_limiter()
 
         yield
     except Exception as exc:
-        app_logger.error(f"Ошибка инициализации планировщика: {str(exc)}")
+        app_logger.error(str(exc))
     finally:
         await db_initializer.dispose_async()
-        await redis_client.dispose()
-        await s3_client.shutdown()
-        await mail_service.close_pool()
-        await graylog_handler.close()
-        await event_client.stop()
+        await redis_client.close()
+        await s3_client._shutdown()
+        await mail_service._close_pool()
+        await event_client._stop()
         await kafka_client.close()
+        graylog_handler._close()
 
         app_logger.info("Завершение работы приложения...")
 
@@ -110,7 +113,7 @@ def create_app() -> FastAPI:
     instrumentator.instrument(app).expose(app)
 
     # Middleware
-    app.add_middleware(SecurityHeadersMiddleware)
+    # app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(APIKeyMiddleware)
     app.add_middleware(TimeoutMiddleware)
@@ -129,7 +132,7 @@ def create_app() -> FastAPI:
         Глобальный обработчик исключений для всего приложения.
         Обрабатывает как стандартные, так и кастомные исключения.
         """
-        app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
+        # app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
 
         # Обработка кастомных исключений с атрибутами status_code и message
         if hasattr(exc, "status_code") and hasattr(exc, "message"):

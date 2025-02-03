@@ -1,7 +1,7 @@
 from typing import Callable, Dict
 
 from app.infra.event_bus import event_client
-from app.utils.logging import app_logger
+from app.utils.logging_service import app_logger
 
 
 __all__ = "event_router"

@@ -7,6 +7,7 @@ import json_tricks
 import pandas as pd
 from fastapi import Response
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
 from app.schemas.base import BaseSchema
 from app.utils.decorators.singleton import singleton
@@ -112,6 +113,17 @@ class Utilities:
         if pd.api.types.is_bool(value):
             return bool(value)
         return value
+
+    def convert_data(self, obj):
+        # Рекурсивно преобразуем модели Pydantic в словари
+        if isinstance(obj, BaseModel):
+            return obj.model_dump()
+        elif isinstance(obj, list):
+            return [self.convert_data(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {k: self.convert_data(v) for k, v in obj.items()}
+        else:
+            return obj
 
     def custom_json_encoder(self, obj: Any) -> dict:
         """Custom JSON encoder for special types.

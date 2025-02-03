@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db.models.orders import Order
-from app.infra.db.repositories.base import SQLAlchemyRepository
+from app.repositories.base import SQLAlchemyRepository
+from app.repositories.orderkinds import get_order_kind_repo
 from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import NotFoundError, handle_db_errors
 
@@ -146,8 +147,6 @@ def get_order_repo() -> OrderRepository:
     :param order_kind_repo: Репозиторий для работы с видами заказов.
     :return: Экземпляр OrderRepository.
     """
-    from app.infra.db.repositories.orderkinds import get_order_kind_repo
-
     return OrderRepository(
         model=Order,
         load_joined_models=True,

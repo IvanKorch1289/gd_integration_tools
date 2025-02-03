@@ -1,150 +1,105 @@
 from contextlib import asynccontextmanager
+from functools import wraps
 from typing import AsyncIterator, Optional
 
 import asyncio
-from aioredis import Redis, RedisError, create_redis_pool
+from redis.asyncio import ConnectionPool, Redis
+from redis.exceptions import RedisError
 
 from app.config.settings import RedisSettings, settings
 from app.utils.decorators.singleton import singleton
-from app.utils.logging import redis_logger
+from app.utils.logging_service import redis_logger
 
 
-__all__ = (
-    "redis_client",
-    "RedisClient",
-)
+__all__ = ("redis_client", "RedisClient")
 
 
 @singleton
 class RedisClient:
-    """Manages Redis connection pool with asynchronous operations support.
-
-    Provides safe connection creation/closing, health checks,
-    and automatic connection recovery.
-
-    Attributes:
-        _pool (Optional[Redis]): Main connection pool
-        _lock (asyncio.Lock): Lock for pool initialization synchronization
-        settings (RedisSettings): Connection configuration parameters
-    """
-
     def __init__(self, settings: RedisSettings):
-        """Initializes the client with specified connection settings.
-
-        Args:
-            settings (RedisSettings): Redis connection configuration containing:
-                - redis_host: Redis host
-                - redis_port: Redis port
-                - redis_db_cache: Database number
-                - redis_pass: Password (optional)
-                - redis_encoding: Data encoding
-                - redis_timeout: Connection timeout
-                - redis_pool_minsize: Minimum pool size
-                - redis_use_ssl: Use SSL connection
-        """
-        self._pool: Optional[Redis] = None
+        self._client: Optional[Redis] = None
         self._lock = asyncio.Lock()
         self.settings = settings
+        self._connection_pool: Optional[ConnectionPool] = None
 
-    async def _ensure_pool(self) -> None:
-        """Creates or updates the connection pool if needed.
+    async def _init_pool(self) -> None:
+        redis_url = (
+            f"rediss://{self.settings.redis_host}:{self.settings.redis_port}"
+            if self.settings.redis_use_ssl
+            else f"redis://{self.settings.redis_host}:{self.settings.redis_port}"
+        )
 
-        Ensures thread-safe pool initialization using a lock.
+        self._connection_pool = ConnectionPool.from_url(
+            redis_url,
+            db=self.settings.redis_db_cache,
+            password=self.settings.redis_password or None,
+            encoding=self.settings.redis_encoding,
+            # socket_timeout=self.settings.redis_timeout,
+            # socket_connect_timeout=self.settings.redis_connect_timeout,
+            socket_keepalive=self.settings.redis_socket_keepalive,
+            retry_on_timeout=self.settings.redis_retry_on_timeout,
+            max_connections=self.settings.redis_pool_maxsize,
+            decode_responses=False,
+        )
 
-        Raises:
-            RedisError: If connection establishment fails
-        """
-        if self._pool is None or self._pool.closed:
-            async with self._lock:
-                if self._pool is None or self._pool.closed:
-                    try:
-                        protocol = (
-                            "rediss"
-                            if self.settings.redis_use_ssl
-                            else "redis"
-                        )
-                        address = (
-                            f"{protocol}://{self.settings.redis_host}:"
-                            f"{self.settings.redis_port}"
-                        )
+        self._client = Redis(connection_pool=self._connection_pool)
+        redis_logger.info("Redis connection pool initialized")
 
-                        self._pool = await create_redis_pool(
-                            address=address,
-                            db=self.settings.redis_db_cache,
-                            password=self.settings.redis_pass,
-                            encoding=self.settings.redis_encoding,
-                            timeout=self.settings.redis_timeout,
-                            minsize=self.settings.redis_pool_minsize,
-                            ssl=self.settings.redis_use_ssl,
-                        )
-                        redis_logger.info("Redis connection pool initialized")
-                    except Exception as e:
-                        redis_logger.error(
-                            f"Redis connection failed: {str(e)}"
-                        )
-                        raise RedisError(f"Connection error: {str(e)}") from e
+    async def _ensure_connected(self) -> None:
+        async with self._lock:
+            if not self._client or not await self._client.ping():
+                await self._init_pool()
 
     @asynccontextmanager
     async def connection(self) -> AsyncIterator[Redis]:
-        """Provides asynchronous context manager for Redis connections.
-
-        Usage example:
-            async with redis_client.connection() as conn:
-                await conn.set("key", "value")
-
-        Yields:
-            Redis: Active Redis connection
-
-        Raises:
-            RedisError: For connection-related issues
-        """
-        await self._ensure_pool()
+        await self._ensure_connected()
         try:
-            yield self._pool
-        except RedisError as e:
-            redis_logger.error(f"Redis operation failed: {str(e)}")
+            yield self._client
+        except RedisError as exc:
+            redis_logger.error(f"Redis error: {str(exc)}")
             await self.close()
             raise
-        except Exception as e:
-            redis_logger.error(f"Unexpected error: {str(e)}")
-            await self.close()
-            raise RedisError("Connection terminated") from e
+        finally:
+            # Не закрываем соединение здесь - пулом управляет ConnectionPool
+            pass
 
     async def close(self) -> None:
-        """Properly closes all connections and releases resources.
-
-        Should be called during application shutdown.
-        """
-        if self._pool and not self._pool.closed:
+        if self._connection_pool:
             try:
-                self._pool.close()
-                await self._pool.wait_closed()
+                await self._connection_pool.disconnect()
                 redis_logger.info("Redis connections closed")
             except Exception as e:
-                redis_logger.error(f"Error closing connections: {str(e)}")
+                redis_logger.error(f"Close error: {str(e)}")
             finally:
-                self._pool = None
+                self._client = None
+                self._connection_pool = None
 
     async def check_connection(self) -> bool:
-        """Verifies Redis connection health.
-
-        Returns:
-            bool: True if connection is active, False on errors
-
-        Usage example:
-            if await redis_client.check_connection():
-                print("Connected to Redis")
-        """
         try:
             async with self.connection() as conn:
                 return await conn.ping()
         except RedisError:
             return False
 
-    async def dispose(self) -> None:
-        """Alias for close(). Intended for explicit termination."""
+    def reconnect_on_failure(self, func):
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs):
+            try:
+                return await func(self, *args, **kwargs)
+            except (ConnectionError, TimeoutError):
+                redis_logger.warning("Reconnecting to Redis...")
+                await self.close()
+                await self._ensure_connected()
+                return await func(self, *args, **kwargs)
+
+        return wrapper
+
+    async def __aenter__(self) -> "RedisClient":
+        await self._ensure_connected()
+        return self
+
+    async def __aexit__(self, *exc_info) -> None:
         await self.close()
 
 
-# Client initialization with settings
 redis_client = RedisClient(settings=settings.redis)

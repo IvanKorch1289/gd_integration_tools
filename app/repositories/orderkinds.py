@@ -1,5 +1,5 @@
 from app.infra.db.models.orderkinds import OrderKind
-from app.infra.db.repositories.base import SQLAlchemyRepository
+from app.repositories.base import SQLAlchemyRepository
 
 
 __all__ = (

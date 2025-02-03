@@ -21,9 +21,9 @@ def get_user_models() -> Dict[str, str]:
         model = class_.class_
 
         if (
-            isinstance(model, type)  # Убедимся, что это класс
-            and issubclass(model, BaseModel)  # Наследуется от BaseModel
-            and model.__name__ != "BaseModel"  # Исключаем саму BaseModel
+            isinstance(model, type)
+            and issubclass(model, BaseModel)
+            and model.__name__ != "BaseModel"
         ):
             user_models[model.__tablename__] = model
 

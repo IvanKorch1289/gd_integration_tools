@@ -3,12 +3,12 @@ from functools import wraps
 from typing import Any, Callable, Optional
 
 import json_tricks
-from pydantic import BaseModel
 from redis.asyncio.client import Redis
 
 from app.config.settings import settings
 from app.infra.redis import redis_client
-from app.utils.logging import app_logger
+from app.utils.logging_service import redis_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -38,27 +38,23 @@ class CachingDecorator:
         kwargs: dict,
         bucket: Optional[str] = None,
     ) -> str:
-        if self.exclude_self and len(args) > 0:
-            args = args[1:]  # Пропускаем первый аргумент (self)
-
         key_parts = [
             self.key_prefix,
-            func.__module__ or "",
-            func.__qualname__,
-            *(str(arg) for arg in args),
-            *(f"{k}={v}" for k, v in kwargs.items()),
+            f"{args[0].__class__.__name__ if args else ''}.{func.__name__}.{kwargs}",
         ]
 
         if bucket:
             key_parts.insert(0, f"bucket:{bucket}")
 
         key_string = ":".join(key_parts)
+
         return hashlib.sha256(key_string.encode()).hexdigest()
 
     async def _handle_ttl(self, key: str, redis: Redis):
         if self.renew_ttl:
             await redis.expire(key, self.expire)
 
+    @redis_client.reconnect_on_failure
     async def get_cached_data(self, key: str) -> Optional[Any]:
         try:
             async with redis_client.connection() as r:
@@ -69,24 +65,29 @@ class CachingDecorator:
                 if isinstance(data, bytes):
                     data = data.decode("utf-8")
 
-                result = json_tricks.loads(data)
+                result = json_tricks.loads(
+                    data, extra_obj_pairs_hooks=[utilities.custom_json_decoder]
+                )
                 await self._handle_ttl(key, r)
                 return result
         except Exception as exc:
-            app_logger.error(f"Failed to get cached data: {str(exc)}")
+            redis_logger.error(f"Failed to get cached data: {str(exc)}")
             return None
 
+    @redis_client.reconnect_on_failure
     async def cache_data(self, key: str, data: Any) -> None:
         try:
             async with redis_client.connection() as r:
-                if isinstance(data, BaseModel):
-                    serialized = data.model_dump_json()
-                else:
-                    serialized = json_tricks.dumps(data)
+                # Преобразуем данные и сериализуем
+                converted_data = utilities.convert_data(data)
+                serialized = json_tricks.dumps(
+                    converted_data,
+                    extra_obj_encoders=[utilities.custom_json_encoder],
+                )
 
                 await r.setex(key, self.expire, serialized)
         except Exception as exc:
-            app_logger.error(f"Failed to cache data: {str(exc)}")
+            redis_logger.error(f"Failed to cache data: {str(exc)}")
 
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)

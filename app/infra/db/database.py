@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config.settings import DatabaseSettings, settings
 from app.utils.errors import DatabaseError
-from app.utils.logging import db_logger
+from app.utils.logging_service import db_logger
 
 
 __all__ = ("db_initializer",)

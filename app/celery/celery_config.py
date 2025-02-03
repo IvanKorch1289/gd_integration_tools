@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 from celery import Celery, schedules
 
 from app.celery.cron import CronPresets
-from app.config.settings import CelerySettings, settings
+from app.config.settings import Settings, settings
 from app.utils.decorators.singleton import singleton
 
 
@@ -33,43 +33,44 @@ class BeatNotRunningError(CeleryHealthError):
 
 @singleton
 class CeleryManager:
-    def __init__(self, settings: CelerySettings):
+    def __init__(self, settings: Settings):
         self.settings = settings
         self.app = self._configure_celery()
         self._configure_periodic_tasks()
 
     def _configure_celery(self) -> Celery:
         """Создает и конфигурирует экземпляр Celery."""
+        redis_url = f"{self.settings.redis.redis_url}/{self.settings.redis.redis_db_celery}"
         celery_app = Celery(
             "tasks",
-            broker=self.settings.cel_broker_url,
-            backend=self.settings.cel_result_backend,
+            broker=redis_url,
+            backend=redis_url,
             include=["app.celery.tasks"],
         )
 
         celery_app.conf.update(
             {
                 # Сериализация
-                "task_serializer": self.settings.cel_task_serializer,
-                "result_serializer": self.settings.cel_task_serializer,
-                "accept_content": [self.settings.cel_task_serializer],
+                "task_serializer": self.settings.celery.cel_task_serializer,
+                "result_serializer": self.settings.celery.cel_task_serializer,
+                "accept_content": [self.settings.celery.cel_task_serializer],
                 # Поведение задач
-                "task_default_queue": self.settings.cel_task_default_queue,
-                "task_time_limit": self.settings.cel_task_time_limit,
-                "task_soft_time_limit": self.settings.cel_task_soft_time_limit,
-                "task_default_max_retries": self.settings.cel_task_max_retries,
-                "task_retry_backoff": self.settings.cel_task_retry_backoff,
-                "task_retry_jitter": self.settings.cel_task_retry_jitter,
-                "task_track_started": self.settings.cel_task_track_started,
+                "task_default_queue": self.settings.celery.cel_task_default_queue,
+                "task_time_limit": self.settings.celery.cel_task_time_limit,
+                "task_soft_time_limit": self.settings.celery.cel_task_soft_time_limit,
+                "task_default_max_retries": self.settings.celery.cel_task_max_retries,
+                "task_retry_backoff": self.settings.celery.cel_task_retry_backoff,
+                "task_retry_jitter": self.settings.celery.cel_task_retry_jitter,
+                "task_track_started": self.settings.celery.cel_task_track_started,
                 # Настройки воркеров
-                "worker_concurrency": self.settings.cel_worker_concurrency,
-                "worker_prefetch_multiplier": self.settings.cel_worker_prefetch_multiplier,
-                "worker_max_tasks_per_child": self.settings.cel_worker_max_tasks_per_child,
-                "worker_disable_rate_limits": self.settings.cel_worker_disable_rate_limits,
-                "worker_send_events": self.settings.cel_worker_send_events,
+                "worker_concurrency": self.settings.celery.cel_worker_concurrency,
+                "worker_prefetch_multiplier": self.settings.celery.cel_worker_prefetch_multiplier,
+                "worker_max_tasks_per_child": self.settings.celery.cel_worker_max_tasks_per_child,
+                "worker_disable_rate_limits": self.settings.celery.cel_worker_disable_rate_limits,
+                "worker_send_events": self.settings.celery.cel_worker_send_events,
                 # Управление соединениями
-                "broker_pool_limit": self.settings.cel_broker_pool_limit,
-                "result_extended": self.settings.cel_result_extended,
+                "broker_pool_limit": self.settings.celery.cel_broker_pool_limit,
+                "result_extended": self.settings.celery.cel_result_extended,
                 # Безопасность и надежность
                 "task_acks_late": True,
                 "task_reject_on_worker_lost": True,
@@ -92,7 +93,7 @@ class CeleryManager:
                 "schedule": CronPresets.HOURLY.schedule,
                 "args": (),
                 "options": {
-                    "queue": self.settings.cel_task_default_queue,
+                    "queue": self.settings.celery.cel_task_default_queue,
                     "expires": 300,
                 },
             }
@@ -180,6 +181,6 @@ class CeleryManager:
 
 
 # Инициализация менеджера
-celery_manager = CeleryManager(settings=settings.celery)
+celery_manager = CeleryManager(settings=settings)
 
 celery_app = celery_manager.app
