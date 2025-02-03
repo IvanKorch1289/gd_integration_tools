@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
@@ -10,6 +11,7 @@ from sqladmin import Admin
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from app.api.v1.routers import get_v1_routers
+from app.config.config_manager import ConfigManager
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
 from app.infra.event_bus import event_client
@@ -38,6 +40,10 @@ from app.utils.utils import utilities
 __all__ = ("create_app",)
 
 
+def get_config_manager(app: FastAPI) -> ConfigManager:
+    return app.state.config_manager
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -49,6 +55,8 @@ async def lifespan(app: FastAPI):
     load_dotenv()
 
     app_logger.info("Запуск приложения...")
+
+    app.state.config_manager = ConfigManager(Path("config.yml"))
 
     s3_client = s3_bucket_service_factory()
 

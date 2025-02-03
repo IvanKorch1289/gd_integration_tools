@@ -15,8 +15,10 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
+from app.config.config_manager import ConfigManager, ConfigUpdateRequest
 from app.config.settings import settings
 from app.infra import event_bus
+from app.infra.app_factory import get_config_manager
 from app.schemas.base import EmailSchema
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
@@ -286,6 +288,18 @@ class TechBV:
             dict: Конфигурация приложения.
         """
         return settings.model_dump()
+
+    @router.put(
+        "/config",
+        summary=" Изменить текущую конфигурацию",
+        operation_id=" update_config",
+    )
+    @handle_routes_errors
+    async def update_config(
+        request: ConfigUpdateRequest,
+        config_manager: ConfigManager = Depends(get_config_manager),
+    ):
+        return config_manager.update_config(request.data)
 
     @router.post(
         "/send-email",
