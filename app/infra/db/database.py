@@ -62,11 +62,11 @@ class DatabaseInitializer:
         """
         return create_async_engine(
             url=self.settings.db_url_async,
-            echo=self.settings.db_echo,
-            pool_size=self.settings.db_pool_size,
-            max_overflow=self.settings.db_max_overflow,
-            pool_recycle=self.settings.db_pool_recycle,
-            pool_timeout=self.settings.db_pool_timeout,
+            echo=self.settings.echo,
+            pool_size=self.settings.pool_size,
+            max_overflow=self.settings.max_overflow,
+            pool_recycle=self.settings.pool_recycle,
+            pool_timeout=self.settings.pool_timeout,
             connect_args=self._get_connect_args(),
         )
 
@@ -78,11 +78,11 @@ class DatabaseInitializer:
         """
         return create_engine(
             url=self.settings.db_url_sync,
-            echo=self.settings.db_echo,
-            pool_size=self.settings.db_pool_size,
-            max_overflow=self.settings.db_max_overflow,
-            pool_recycle=self.settings.db_pool_recycle,
-            pool_timeout=self.settings.db_pool_timeout,
+            echo=self.settings.echo,
+            pool_size=self.settings.pool_size,
+            max_overflow=self.settings.max_overflow,
+            pool_recycle=self.settings.pool_recycle,
+            pool_timeout=self.settings.pool_timeout,
             connect_args=self._get_connect_args(),
         )
 
@@ -94,11 +94,11 @@ class DatabaseInitializer:
         """
         connect_args = {}
 
-        if self.settings.db_type == "postgresql":
+        if self.settings.dtype == "postgresql":
             connect_args.update(
                 {
-                    "command_timeout": self.settings.db_command_timeout,
-                    "timeout": self.settings.db_connect_timeout,
+                    "command_timeout": self.settings.command_timeout,
+                    "timeout": self.settings.connect_timeout,
                 }
             )
 
@@ -106,11 +106,11 @@ class DatabaseInitializer:
                 import ssl
 
                 ssl_context = ssl.create_default_context(
-                    cafile=self.settings.db_ssl_ca
+                    cafile=self.settings.ssl_ca
                 )
                 connect_args["ssl"] = ssl_context
 
-        elif self.settings.db_type == "oracle":
+        elif self.settings.type == "oracle":
             connect_args.update(
                 {
                     "encoding": "UTF-8",

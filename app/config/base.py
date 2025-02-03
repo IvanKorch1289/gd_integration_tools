@@ -1,45 +1,41 @@
 from pathlib import Path
 from typing import Literal
 
-from dotenv import load_dotenv
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
+from app.config.config_loader import BaseYAMLSettings
 from app.config.constants import ROOT_DIR
 
 
-__all__ = ("AppBaseSettings",)
+__all__ = (
+    "AppBaseSettings",
+    "app_base_settings",
+)
 
 
-# Загрузка переменных окружения из файла .env
-load_dotenv(ROOT_DIR / ".env")
+class AppBaseSettings(BaseYAMLSettings):
+    """Общие настройки приложения"""
 
-
-class AppBaseSettings(BaseSettings):
-    """Корневая конфигурация приложения.
-
-    Объединяет все компоненты конфигурации:
-    - Общие настройки приложения
-    - Интеграции с внешними API
-    - Настройки хранилищ данных
-    - Системные компоненты
-    """
+    yaml_group = "app"  # Группа в YAML
+    model_config = SettingsConfigDict(env_prefix="APP_", extra="forbid")
 
     # Общие настройки
-    app_root_dir: Path = ROOT_DIR
-    app_base_url: str = Field(default="localhost:8000", env="APP_BASE_URL")
-    app_environment: Literal["development", "staging", "production"] = Field(
-        default="development",
-        env="APP_ENVIRONMENT",
+    root_dir: Path = ROOT_DIR
+    base_url: str
+    environment: Literal["development", "staging", "production"] = Field(
+        ...,
         description="Среда выполнения приложения",
     )
-    app_version: str = Field(
-        default="0.1.0",
-        frozen=True,
+    version: str = Field(
+        ...,
         description="Версия приложения в семантическом формате",
     )
-    app_debug: bool = Field(
-        default=False,
-        env="APP_DEBUG",
+    debug_mode: bool = Field(
+        ...,
         description="Признак включенного режима дебаггинга",
     )
+
+
+# Instantiate settings for immediate use
+app_base_settings = AppBaseSettings()

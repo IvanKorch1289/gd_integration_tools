@@ -1,103 +1,119 @@
 from typing import Dict
 
-from dotenv import load_dotenv
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
-from app.config.constants import ROOT_DIR
+from app.config.config_loader import BaseYAMLSettings
 
 
 __all__ = (
-    "APISSKBSettings",
-    "APIDADATASettings",
+    "SKBAPISettings",
+    "skb_api_settings",
+    "DadataAPISettings",
+    "dadata_api_settings",
 )
 
-# Загрузка переменных окружения из файла .env
-load_dotenv(ROOT_DIR / ".env")
 
+class SKBAPISettings(BaseYAMLSettings):
+    """Configuration settings for integration with SKB-Tekhno API.
 
-class APISSKBSettings(BaseSettings):
-    """Настройки интеграции с API СКБ-Техно.
-
-    Группы параметров:
-    - Авторизация: ключ API и базовый URL
-    - Конфигурация запросов: эндпоинты и приоритеты
-    - Таймауты: настройки времени ожидания
+    Configuration sections:
+    - Authentication: API credentials and base URL
+    - Request configuration: Endpoints and priority settings
+    - Timeouts: Connection and response timeout settings
     """
 
-    # Авторизация
-    skb_api_key: str = Field(
-        default="666-555-777",
-        env="SKB_API_KEY",
-        description="Секретный ключ для доступа к API СКБ-Техно",
-    )
-    skb_base_url: str = Field(
-        default="https://ya.ru/",
-        env="SKB_URL",
-        description="Базовый URL API сервиса (без указания эндпоинтов)",
+    yaml_group = "skb"
+    model_config = SettingsConfigDict(
+        env_prefix="SKB_",
+        extra="forbid",
+        frozen=True,  # Optional: Prevent accidental modifications
     )
 
-    # Конфигурация запросов
-    skb_endpoints: Dict[str, str] = Field(
-        default={
-            "GET_KINDS": "Kinds",
-            "CREATE_REQUEST": "Create",
-            "GET_RESULT": "Result",
-        },
-        description="Словарь эндпоинтов API (относительные пути)",
+    # Authentication
+    api_key: str = Field(
+        ...,
+        description="Secret key for API access",
+        examples=["your-api-key-here"],
     )
-    skb_default_priority: int = Field(
-        default=80,
+    base_url: str = Field(
+        ...,
+        description="Base API URL without endpoints",
+        examples=["https://api.skb-tekhno.ru/v1"],
+    )
+
+    # Request Configuration
+    endpoints: Dict[str, str] = Field(
+        ...,
+        description="API endpoint paths relative to base URL",
+        examples=[{"users": "/users", "orders": "/orders"}],
+    )
+    default_priority: int = Field(
+        ...,
         ge=1,
         le=100,
-        env="SKB_REQUEST_PRIORITY_DEFAULT",
-        description="Приоритет запроса по умолчанию (1-100)",
+        description="Default request priority (1-100)",
+        examples=[50],
     )
 
-    # Таймауты
-    skb_connect_timeout: float = Field(
-        default=10.0,
-        description="Максимальное время установки соединения (секунды)",
+    # Timeouts
+    connect_timeout: float = Field(
+        ...,
+        description="Maximum connection establishment time in seconds",
+        examples=[5.0],
     )
-    skb_read_timeout: float = Field(
-        default=30.0,
-        description="Максимальное время ожидания ответа (секунды)",
+    read_timeout: float = Field(
+        ...,
+        description="Maximum response wait time in seconds",
+        examples=[30.0],
     )
 
 
-class APIDADATASettings(BaseSettings):
-    """Настройки интеграции с API Dadata.
+# Instantiate settings for immediate use
+skb_api_settings = SKBAPISettings()
 
-    Группы параметров:
-    - Авторизация: ключ API и базовый URL
-    - Геолокация: параметры запросов геопозиционирования
-    - Лимиты: ограничения на использование API
+
+class DadataAPISettings(BaseYAMLSettings):
+    """Configuration settings for integration with Dadata API.
+
+    Configuration sections:
+    - Authentication: API credentials and base URL
+    - Geolocation: Geographical search parameters
+    - Rate limits: API usage restrictions
     """
 
-    # Авторизация
-    dadata_api_key: str = Field(
-        default="666-2424-24",
-        env="DADATA_API_KEY",
-        description="Секретный ключ для доступа к API Dadata",
-    )
-    dadata_base_url: str = Field(
-        default="https://yap.ru/",
-        env="DADATA_URL",
-        description="Базовый URL API сервиса (без указания эндпоинтов)",
+    yaml_group = "dadata"
+    model_config = SettingsConfigDict(
+        env_prefix="DADATA_", extra="forbid", frozen=True
     )
 
-    # Геолокация
-    dadata_endpoints: Dict[str, str] = Field(
-        default={
-            "GEOLOCATE": "geolocate/address",
-        },
-        description="Словарь эндпоинтов API (относительные пути)",
+    # Authentication
+    api_key: str = Field(
+        ...,
+        description="Secret key for Dadata API access",
+        examples=["dadata-secret-key"],
     )
-    dadata_geolocate_radius: int = Field(
-        default=100, description="Радиус поиска в метрах по умолчанию"
+    base_url: str = Field(
+        ...,
+        description="Base API URL without endpoint paths",
+        examples=["https://suggestions.dadata.ru/suggestions/api/4_1/rs"],
     )
 
-    # Лимиты
-    dadata_max_requests_per_second: int = Field(
-        default=10, description="Максимальное количество запросов в секунду"
+    # Geolocation
+    endpoints: Dict[str, str] = Field(
+        ...,
+        description="API endpoint paths relative to base URL",
+        examples=[{"geolocate": "/geolocate", "suggest": "/suggest"}],
     )
+    geolocate_radius: int = Field(
+        ..., description="Default search radius in meters", examples=[1000]
+    )
+
+    # Rate Limits
+    max_requests_per_second: int = Field(
+        ..., description="Maximum allowed requests per second", examples=[10]
+    )
+
+
+# Instantiate settings for immediate use
+dadata_api_settings = DadataAPISettings()

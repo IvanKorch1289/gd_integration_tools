@@ -213,10 +213,10 @@ class LoggerManager:
 # Initialize logging system
 log_manager = LoggerManager(
     log_config=settings.logging,
-    environment=settings.app.app_environment,
+    environment=settings.app.environment,
     hostname=socket.gethostname(),
     handler=graylog_handler,
-    debug=settings.app.app_debug,
+    debug=settings.app.debug_mode,
 )
 
 # Expose common loggers

@@ -1,0 +1,39 @@
+app:
+  base_url: "localhost:8000"
+  environment: "development"
+  debug_mode: false
+  version: 0.1.0
+
+skb:
+  base_url: "https://api.skb-techno.ru/v2/Requests/"
+  endpoints:
+    GET_KINDS: "Kinds"
+    CREATE_REQUEST: "Create"
+    GET_RESULT: "Result"
+  default_priority: 80
+  connect_timeout: 10.0
+  read_timeout: 30.0
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address"
+  endpoints:
+    GEOLOCATE: "geolocate/address"
+  geolocate_radius: 100
+  max_requests_per_second: 10
+
+database:
+  type: "postgresql"
+  host: "localhost"
+  port: 5432
+  name: "postgres"
+  driver_async: "asyncpg"
+  driver_sync: "psycopg2"
+  echo: True
+  connect_timeout: 10
+  command_timeout: 30
+  pool_size: 10
+  max_overflow: 10
+  pool_recycle: 1800
+  pool_timeout: 30
+  ssl_mode: ssl
+  ssl_ca: ssl

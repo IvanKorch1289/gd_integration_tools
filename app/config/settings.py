@@ -1,8 +1,13 @@
 from pydantic_settings import BaseSettings
 
-from app.config.base import AppBaseSettings
-from app.config.database import DatabaseSettings
-from app.config.outer_api import APIDADATASettings, APISSKBSettings
+from app.config.base import AppBaseSettings, app_base_settings
+from app.config.database import DatabaseSettings, db_connection_settings
+from app.config.outer_api import (
+    APIDADATASettings,
+    APISSKBSettings,
+    dadata_api_settings,
+    skb_api_settings,
+)
 from app.config.security import AuthSettings
 from app.config.services import (
     CelerySettings,
@@ -28,13 +33,13 @@ class Settings(BaseSettings):
     """
 
     # Общие настройки
-    app: AppBaseSettings = AppBaseSettings()
+    app: AppBaseSettings = app_base_settings
     auth: AuthSettings = AuthSettings()
 
     # Интеграции
-    database: DatabaseSettings = DatabaseSettings()
-    skb_api: APISSKBSettings = APISSKBSettings()
-    dadata_api: APIDADATASettings = APIDADATASettings()
+    database: DatabaseSettings = db_connection_settings
+    skb_api: APISSKBSettings = skb_api_settings
+    dadata_api: APIDADATASettings = dadata_api_settings
     queue: QueueSettings = QueueSettings()
     mail: MailSettings = MailSettings()
     celery: CelerySettings = CelerySettings()

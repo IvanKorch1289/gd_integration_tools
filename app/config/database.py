@@ -1,149 +1,156 @@
 from typing import Literal, Optional
 
-from dotenv import load_dotenv
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
-from app.config.constants import ROOT_DIR
-
-
-__all__ = ("DatabaseSettings",)
+from app.config.config_loader import BaseYAMLSettings
 
 
-# Загрузка переменных окружения из файла .env
-load_dotenv(ROOT_DIR / ".env")
+__all__ = ("DatabaseConnectionSettings", "db_connection_settings")
 
 
-class DatabaseSettings(BaseSettings):
-    """Настройки подключения к реляционным базам данных.
+class DatabaseConnectionSettings(BaseYAMLSettings):
+    """Configuration settings for relational database connections.
 
-    Группы параметров:
-    - Основные параметры подключения
-    - Аутентификация
-    - Драйверы и режимы работы
-    - Таймауты соединений
-    - Пул соединений
-    - SSL/TLS настройки
+    Configuration sections:
+    - Connection parameters
+    - Authentication credentials
+    - Drivers and operation modes
+    - Connection timeouts
+    - Connection pooling
+    - SSL/TLS configuration
     """
 
-    # Основные параметры
-    db_type: Literal["postgresql", "oracle"] = Field(
-        default="postgresql",
-        env="DB_TYPE",
-        description="Тип СУБД: postgresql или oracle",
+    yaml_group = "database"
+    model_config = SettingsConfigDict(
+        env_prefix="DB_",
+        extra="forbid",
+        frozen=True,  # Ensures configuration immutability
     )
-    db_host: str = Field(
-        default="localhost",
-        env="DB_HOST",
-        description="Хост или IP-адрес сервера БД",
+
+    # Core connection parameters
+    type: Literal["postgresql", "oracle"] = Field(
+        ...,
+        description="Database management system type",
+        examples=["postgresql"],
     )
-    db_port: int = Field(
-        default=5432,
+    host: str = Field(
+        ...,
+        description="Database server hostname or IP address",
+        examples=["localhost", "db.example.com"],
+    )
+    port: int = Field(
+        ...,
         gt=0,
         lt=65536,
-        env="DB_PORT",
-        description="Порт сервера БД",
+        description="Database server port number",
+        examples=[5432, 1521],
     )
-    db_name: str = Field(
+    name: str = Field(
+        ...,
+        description="Database name or service identifier",
+        examples=["myapp_prod", "ORCL"],
+    )
+
+    # Authentication
+    username: str = Field(
         default="postgres",
-        env="DB_NAME",
-        description="Имя базы данных или сервиса",
+        description="Database user name",
+        examples=["admin", "app_user"],
+    )
+    password: str = Field(
+        default="postgres",
+        description="Database user password",
+        examples=["secure_password_123"],
     )
 
-    # Аутентификация
-    db_user: str = Field(
-        default="postgres", env="DB_USER", description="Имя пользователя БД"
+    # Drivers and operation modes
+    async_driver: str = Field(
+        ...,
+        description="Asynchronous driver package",
+        examples=["asyncpg", "aioodbc"],
     )
-    db_pass: str = Field(
-        default="postgres", env="DB_PASS", description="Пароль пользователя БД"
+    sync_driver: str = Field(
+        ...,
+        description="Synchronous driver package",
+        examples=["psycopg2", "cx_oracle"],
     )
-    db_service_name: Optional[str] = Field(
-        default=None,
-        env="DB_SERVICE_NAME",
-        description="Имя сервиса Oracle (только для Oracle)",
-    )
-
-    # Драйверы и режимы
-    db_driver_async: str = Field(
-        default="asyncpg",
-        env="DB_DRIVER_ASYNC",
-        description="Асинхронный драйвер (asyncpg/aioodbc)",
-    )
-    db_driver_sync: str = Field(
-        default="psycopg2",
-        env="DB_DRIVER_SYNC",
-        description="Синхронный драйвер (psycopg2/cx_oracle)",
-    )
-    db_echo: bool = Field(
-        default=False, env="DB_ECHO", description="Логировать SQL-запросы"
+    echo: bool = Field(
+        ..., description="Enable SQL query logging", examples=[False]
     )
 
-    # Таймауты
-    db_connect_timeout: int = Field(
-        default=10,
-        env="DB_CONNECT_TIMEOUT",
-        description="Таймаут подключения (секунды)",
+    # Timeouts
+    connect_timeout: int = Field(
+        ...,
+        description="Connection establishment timeout in seconds",
+        examples=[10],
     )
-    db_command_timeout: int = Field(
-        default=30,
-        env="DB_COMMAND_TIMEOUT",
-        description="Таймаут выполнения команд (секунды)",
+    command_timeout: int = Field(
+        ...,
+        description="Database command execution timeout in seconds",
+        examples=[30],
     )
 
-    # Пул соединений
-    db_pool_size: int = Field(
-        default=10,
+    # Connection pooling
+    pool_size: int = Field(
+        ...,
         ge=1,
-        env="DB_POOL_SIZE",
-        description="Размер пула соединений",
+        description="Maximum number of permanent connections in pool",
+        examples=[5],
     )
-    db_max_overflow: int = Field(
-        default=10,
+    max_overflow: int = Field(
+        ...,
         ge=0,
-        env="DB_MAX_OVERFLOW",
-        description="Максимальное количество соединений сверх пула",
+        description="Maximum temporary connections beyond pool size",
+        examples=[10],
     )
-    db_pool_recycle: int = Field(
-        default=1800,
-        env="DB_POOL_RECYCLE",
-        description="Время пересоздания соединений (секунды)",
+    pool_recycle: int = Field(
+        ...,
+        description="Connection recycling interval in seconds",
+        examples=[3600],
     )
-    db_pool_timeout: int = Field(
-        default=30,
-        env="DB_POOL_TIMEOUT",
-        description="Таймаут ожидания соединения из пула (секунды)",
-    )
-
-    # SSL/TLS
-    db_ssl_mode: Optional[str] = Field(
-        default=None,
-        env="DB_SSL_MODE",
-        description="Режим SSL (для PostgreSQL)",
-    )
-    db_ssl_ca: Optional[str] = Field(
-        default=None, env="DB_SSL_CA", description="Путь к SSL CA сертификату"
+    pool_timeout: int = Field(
+        ...,
+        description="Wait timeout for pool connection in seconds",
+        examples=[30],
     )
 
-    @property
-    def db_url_async(self) -> str:
-        """Формирует DSN для асинхронного подключения."""
-        return self._build_url(is_async=True)
+    # SSL/TLS Configuration
+    ssl_mode: Optional[str] = Field(
+        None,
+        description="SSL connection mode (PostgreSQL specific)",
+        examples=["require", "verify-full"],
+    )
+    ssl_ca_path: Optional[str] = Field(
+        None,
+        description="Path to SSL CA certificate file",
+        examples=["/path/to/ca.crt"],
+    )
 
     @property
-    def db_url_sync(self) -> str:
-        """Формирует DSN для синхронного подключения."""
-        return self._build_url(is_async=False)
+    def async_connection_url(self) -> str:
+        """Construct asynchronous database connection URL."""
+        return self._build_connection_url(is_async=True)
 
-    def _build_url(self, is_async: bool) -> str:
-        """Внутренний метод для построения DSN строки."""
-        driver = self.db_driver_async if is_async else self.db_driver_sync
+    @property
+    def sync_connection_url(self) -> str:
+        """Construct synchronous database connection URL."""
+        return self._build_connection_url(is_async=False)
 
-        if self.db_type == "postgresql":
+    def _build_connection_url(self, is_async: bool) -> str:
+        """Internal method for constructing database connection strings."""
+        driver = self.async_driver if is_async else self.sync_driver
+
+        if self.type == "postgresql":
             return (
-                f"postgresql+{driver}://{self.db_user}:{self.db_pass}"
-                f"@{self.db_host}:{self.db_port}/{self.db_name}"
+                f"postgresql+{driver}://{self.username}:{self.password}"
+                f"@{self.host}:{self.port}/{self.name}"
             )
-        elif self.db_type == "oracle":
-            # Реализация для Oracle
-            raise NotImplementedError("Oracle support is not implemented yet")
-        return ""
+        elif self.type == "oracle":
+            # Oracle connection string implementation
+            raise NotImplementedError("Oracle support pending implementation")
+        raise ValueError(f"Unsupported database type: {self.type}")
+
+
+# Instantiate settings for immediate use
+db_connection_settings = DatabaseConnectionSettings()

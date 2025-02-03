@@ -270,7 +270,7 @@ class TechBV:
         Returns:
             dict: Версия приложения.
         """
-        return {"version": settings.app.app_version}
+        return {"version": settings.app.version}
 
     @router.get(
         "/config",

@@ -101,9 +101,9 @@ class CeleryManager:
 
     def _configure_periodic_tasks(self):
         """Дополнительная конфигурация периодических задач"""
-        if settings.app.app_environment == "testing":
+        if settings.app.environment == "testing":
             self.app.conf.beat_schedule = {}
-        elif settings.app.app_environment == "development":
+        elif settings.app.environment == "development":
             # Для разработки можно уменьшить интервал
             self.app.conf.beat_schedule["health-check-every-hour"][
                 "schedule"

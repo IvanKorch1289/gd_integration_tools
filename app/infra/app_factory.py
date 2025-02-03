@@ -105,7 +105,7 @@ def create_app() -> FastAPI:
         title="Расширенные инструменты GreenData",
         description="Это FastAPI приложение для управления заказами, файлами и пользователями.",
         version="1.0.0",
-        debug=settings.app.app_debug,
+        debug=settings.app.debug_mode,
     )
 
     # Подключение Prometheus для сбора метрик
