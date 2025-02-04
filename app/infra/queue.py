@@ -66,8 +66,8 @@ class KafkaClient:
             lambda: Producer(
                 {
                     **config,
-                    "acks": self.settings.queue_producer_acks,
-                    "linger.ms": self.settings.queue_producer_linger_ms,
+                    "acks": self.settings.producer_acks,
+                    "linger.ms": self.settings.producer_linger_ms,
                 }
             ),
         )
@@ -88,9 +88,9 @@ class KafkaClient:
             lambda: Consumer(
                 {
                     **config,
-                    "group.id": self.settings.queue_consumer_group,
-                    "auto.offset.reset": self.settings.queue_auto_offset_reset,
-                    "max.poll.records": self.settings.queue_max_poll_records,  # Ensure this is correctly set
+                    "group.id": self.settings.consumer_group,
+                    "auto.offset.reset": self.settings.auto_offset_reset,
+                    "max.poll.records": self.settings.max_poll_records,  # Ensure this is correctly set
                 }
             ),
         )

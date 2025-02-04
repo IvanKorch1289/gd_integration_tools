@@ -1,129 +1,123 @@
 from typing import List, Literal
 
-from dotenv import load_dotenv
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
-from app.config.constants import ROOT_DIR
-
-
-__all__ = ("AuthSettings",)
+from app.config.config_loader import BaseYAMLSettings
 
 
-# Загрузка переменных окружения из файла .env
-load_dotenv(ROOT_DIR / ".env")
+__all__ = (
+    "AuthSettings",
+    "auth_settings",
+)
 
 
-class AuthSettings(BaseSettings):
-    """Настройки системы аутентификации и авторизации.
+class AuthSettings(BaseYAMLSettings):
+    """Authentication and authorization system configuration.
 
-    Группы параметров:
-    - Основные параметры токена
-    - Алгоритмы и ключи
-    - Дополнительные настройки
+    Groups of parameters:
+    - Token core settings
+    - Algorithms and keys
+    - Additional settings
     """
 
-    # Основные параметры токена
-    auth_token_name: str = Field(
-        default="access_token",
-        env="AUTH_TOKEN_NAME",
-        description="Имя HTTP-куки/заголовка с токеном",
+    yaml_group: str = "auth"
+    model_config = SettingsConfigDict(
+        env_prefix="AUTH_",
+        extra="forbid",
     )
-    auth_token_lifetime: int = Field(
-        default=3600,
+
+    # Token core settings
+    token_name: str = Field(
+        ...,
+        description="Name of the HTTP cookie/header containing the token",
+        examples=["access_token", "auth_token"],
+    )
+    token_lifetime: int = Field(
+        ...,
         ge=60,
-        env="AUTH_TOKEN_LIFETIME_SECONDS",
-        description="Время жизни токена в секундах (мин. 60)",
+        description="Token lifetime in seconds (minimum 60)",
+        examples=[3600, 86400],
     )
-    auth_refresh_token_lifetime: int = Field(
-        default=2592000,
+    refresh_token_lifetime: int = Field(
+        ...,
         ge=3600,
-        env="AUTH_REFRESH_TOKEN_LIFETIME_SECONDS",
-        description="Время жизни refresh-токена в секундах (по умолчанию 30 дней)",
+        description="Refresh token lifetime in seconds (default 30 days)",
+        examples=[2592000, 86400],
     )
 
-    # Алгоритмы и ключи
-    auth_secret_key: str = Field(
-        default="your_secret_key",
-        env="AUTH_SECRET_KEY",
+    # Algorithms and keys
+    secret_key: str = Field(
+        ...,
         min_length=32,
-        description="Секретный ключ для подписи токенов (мин. 32 символа)",
+        description="Secret key for token signing (minimum 32 characters)",
+        examples=["supersecretkeywithatleast32characters123"],
     )
-    auth_algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
-        default="HS256",
-        env="AUTH_ALGORITHM",
-        description="Алгоритм подписи токенов",
-    )
-
-    # Дополнительные настройки
-    auth_cookie_secure: bool = Field(
-        default=False,
-        env="AUTH_COOKIE_SECURE",
-        description="Передавать токен только по HTTPS",
-    )
-    auth_cookie_samesite: Literal["lax", "strict", "none"] = Field(
-        default="lax",
-        env="AUTH_COOKIE_SAMESITE",
-        description="Политика SameSite для cookie",
+    algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
+        ...,
+        description="Token signing algorithm",
+        examples=["HS256", "RS256"],
     )
 
-    @field_validator("auth_algorithm")
+    # Additional settings
+    cookie_secure: bool = Field(
+        ...,
+        description="Transmit token only over HTTPS",
+        examples=[True, False],
+    )
+    cookie_samesite: Literal["lax", "strict", "none"] = Field(
+        ...,
+        description="SameSite policy for cookies",
+        examples=["lax", "strict", "none"],
+    )
+
+    # Security settings
+    api_key: str = Field(
+        ...,
+        description="Main application API key",
+        examples=["your_api_key_123"],
+    )
+    allowed_hosts: List[str] = Field(
+        ...,
+        description="Allowed hosts for incoming requests",
+        examples=[["example.com", "api.example.com"]],
+    )
+    routes_without_api_key: List[str] = Field(
+        ...,
+        description="Endpoints accessible without the application API key",
+        examples=[["/health", "/status"]],
+    )
+    request_timeout: float = Field(
+        ...,
+        description="Maximum request timeout in seconds",
+        examples=[5.0, 10.0],
+    )
+    rate_limit: int = Field(
+        ...,
+        description="Number of requests per minute allowed for the application",
+        examples=[100, 500],
+    )
+    rate_time_measure_seconds: int = Field(
+        ...,
+        description="Time window for rate limiting in seconds",
+        examples=[60, 300],
+    )
+
+    @field_validator("algorithm")
     @classmethod
-    def validate_algorithm(cls, v):
+    def validate_algorithm(cls, v: str) -> str:
+        """Validate the algorithm based on the secret key length.
+
+        Raises:
+            ValueError: If the algorithm is HS* and the secret key is too short.
+        """
         if v.startswith("HS") and "secret_key" in cls.model_fields:
-            if len(cls.auth_secret_key) < 32:
+            if len(cls.secret_key) < 32:
                 raise ValueError(
-                    "HS алгоритмы требуют ключ минимум 32 символа"
+                    "HS algorithms require a secret key of at least 32 characters"
                 )
         return v
 
-    # Безопасность
-    auth_api_key: str = Field(
-        default="2f0-2340f",
-        env="AUTH_API_KEY",
-        description="Главный API-ключ приложения",
-    )
-    auth_allowed_hosts: List[str] = Field(
-        default=[
-            "example.com",
-            "*.example.com",
-            "localhost",
-            "127.0.0.1",
-        ],
-        description="Разрешенные хосты для входящих запросов",
-    )
-    auth_routes_without_api_key: List[str] = Field(
-        default=[
-            "/",
-            "/admin",
-            "/admin/*",
-            "/docs",
-            "/documents",
-            "/docs/",
-            "/documents/",
-            "/metrics",
-            "/openapi.json",
-            "/tech/healthcheck-*",
-            "/tech/redirect-*",
-            "/tech/version",
-            "/tech/log-storage",
-            "/tech/file-storage",
-            "/tech/task-monitor",
-        ],
-        description="Эндпоинты с доступом без API-ключа приложения",
-    )
-    auth_request_timeout: float = Field(
-        default=5.0,
-        env="AUTH_REQUEST_TIMEOUT",
-        description="Максимальное время ожидания запроса (в секундах)",
-    )
-    auth_rate_limit: int = Field(
-        default=100,
-        env="APP_RATE_LIMIT",
-        description="Количество запросов в минуту, которое разрешено приложению",
-    )
-    auth_rate_time_measure_seconds: int = Field(
-        default=60,
-        env="AUTH_RATE_TIME_MEASURE_SECONDS",
-        description="Время измерения посещений (в секундах)",
-    )
+
+# Instantiate settings for immediate use
+auth_settings = AuthSettings()

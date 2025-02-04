@@ -27,7 +27,6 @@ class SKBAPISettings(BaseYAMLSettings):
     model_config = SettingsConfigDict(
         env_prefix="SKB_",
         extra="forbid",
-        frozen=True,  # Optional: Prevent accidental modifications
     )
 
     # Authentication
@@ -84,7 +83,8 @@ class DadataAPISettings(BaseYAMLSettings):
 
     yaml_group = "dadata"
     model_config = SettingsConfigDict(
-        env_prefix="DADATA_", extra="forbid", frozen=True
+        env_prefix="DADATA_",
+        extra="forbid",
     )
 
     # Authentication
@@ -99,19 +99,26 @@ class DadataAPISettings(BaseYAMLSettings):
         examples=["https://suggestions.dadata.ru/suggestions/api/4_1/rs"],
     )
 
-    # Geolocation
+    # Request Configuration
     endpoints: Dict[str, str] = Field(
         ...,
         description="API endpoint paths relative to base URL",
         examples=[{"geolocate": "/geolocate", "suggest": "/suggest"}],
     )
-    geolocate_radius: int = Field(
+    geolocate_radius_default: int = Field(
         ..., description="Default search radius in meters", examples=[1000]
     )
 
-    # Rate Limits
-    max_requests_per_second: int = Field(
-        ..., description="Maximum allowed requests per second", examples=[10]
+    # Timeouts
+    connect_timeout: float = Field(
+        ...,
+        description="Maximum connection establishment time in seconds",
+        examples=[5.0],
+    )
+    read_timeout: float = Field(
+        ...,
+        description="Maximum response wait time in seconds",
+        examples=[30.0],
     )
 
 

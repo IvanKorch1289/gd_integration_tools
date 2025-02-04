@@ -51,7 +51,15 @@ class APISKBService:
         try:
             url = f"{urljoin(self.base_url, self.endpoints.get('GET_KINDS'))}"
 
-            result = await make_request("GET", url, params=self.params)
+            result = await make_request(
+                method="GET",
+                url=url,
+                params=self.params,
+                connect_timeout=self.settings.connect_timeeout,
+                read_timeout=self.settings.read_timeout,
+                total_timeout=self.settings.connect_timeout
+                + self.settings.read_timeout,
+            )
 
             # Обработка и сохранение данных в OrderKindService
             tasks = [
@@ -81,7 +89,14 @@ class APISKBService:
         try:
             url = f"{urljoin(self.base_url, self.endpoints.get('CREATE_REQUEST'))}"
             return await make_request(
-                "POST", url, params=self.params, json=data
+                method="POST",
+                url=url,
+                params=self.params,
+                json=data,
+                connect_timeout=self.settings.connect_timeout,
+                read_timeout=self.settings.read_timeout,
+                total_timeout=self.settings.connect_timeout
+                + self.settings.read_timeout,
             )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -102,7 +117,15 @@ class APISKBService:
         try:
             params = {**self.params, "Type": response_type}
             url = f"{urljoin(self.base_url, self.endpoints.get('GET_RESULT'))}/{order_uuid}"
-            response = await make_request("GET", url, params=params)
+            response = await make_request(
+                method="GET",
+                url=url,
+                params=params,
+                connect_timeout=self.settings.connect_timeeout,
+                read_timeout=self.settings.read_timeout,
+                total_timeout=self.settings.connect_timeout
+                + self.settings.read_timeout,
+            )
 
             content_encoding = response.headers.get(
                 "Content-Encoding", ""

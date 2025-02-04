@@ -72,6 +72,10 @@ class APIDADATAService:
             json=payload,
             auth_token=cls.auth_token,
             response_type="json",
+            connect_timeout=cls.settings.connect_timeout,
+            read_timeout=cls.settings.read_timeout,
+            total_timeout=cls.settings.connect_timeout
+            + cls.settings.read_timeout,
         )
 
 

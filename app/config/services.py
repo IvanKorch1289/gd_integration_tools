@@ -2,27 +2,28 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Tuple
 
-from dotenv import load_dotenv
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.config.constants import ROOT_DIR
+from app.config.config_loader import BaseYAMLSettings
 
 
 __all__ = (
     "FileStorageSettings",
+    "fs_settings",
+    "LogStorageSettings",
+    "log_settings",
     "RedisSettings",
     "CelerySettings",
+    "celery_settings",
     "MailSettings",
+    "mail_settings",
     "QueueSettings",
+    "queue_settings",
 )
 
 
-# Загрузка переменных окружения из файла .env
-load_dotenv(ROOT_DIR / ".env")
-
-
-class FileStorageSettings(BaseSettings):
+class FileStorageSettings(BaseYAMLSettings):
     """Настройки подключения к S3-совместимому объектному хранилищу.
 
     Группы параметров:
@@ -34,85 +35,78 @@ class FileStorageSettings(BaseSettings):
     - Управление ключами
     """
 
+    yaml_group = "fs"
+    model_config = SettingsConfigDict(
+        env_prefix="FS_",
+        extra="forbid",
+    )
+
     # Основные параметры
-    fs_provider: Literal["minio", "aws", "other"] = Field(
-        default="minio",
-        env="FS_PROVIDER",
+    provider: Literal["minio", "aws", "other"] = Field(
+        ...,
         description="Тип провайдера хранилища",
     )
-    fs_bucket: str = Field(
+    bucket: str = Field(
         default="my-bucket",
         env="FS_BUCKET",
         description="Имя бакета по умолчанию",
     )
 
     # Аутентификация
-    fs_access_key: str = Field(
-        default="minioadmin",
-        env="FS_ACCESS_KEY",
+    access_key: str = Field(
+        ...,
         description="Ключ доступа к хранилищу",
     )
-    fs_secret_key: str = Field(
-        default="minioadmin",
-        env="FS_SECRET_KEY",
+    secret_key: str = Field(
+        ...,
         description="Секретный ключ доступа",
     )
 
     # Параметры подключения
-    fs_endpoint: str = Field(
-        default="http://127.0.0.1:9090",
-        env="FS_ENDPOINT",
+    endpoint: str = Field(
+        ...,
         description="URL API хранилища",
     )
-    fs_interfase_endpoint: str = Field(
-        default="http://127.0.0.1:9090",
-        env="FS_INTERFACE_ENDPOINT",
+    interfase_endpoint: str = Field(
+        ...,
         description="URL интерфейса хранилища",
     )
-    fs_region: str = Field(
-        default="us-east-1",
-        env="FS_REGION",
-        description="Регион хранилища (для AWS)",
-    )
-    fs_secure: bool = Field(
-        default=False,
-        env="FS_SECURE",
+    use_ssl: bool = Field(
+        ...,
         description="Использовать HTTPS соединение",
     )
 
     # Настройки SSL/TLS
-    fs_verify_tls: bool = Field(
-        default=False,
-        env="FS_VERIFY_TLS",
+    verify_tls: bool = Field(
+        ...,
         description="Проверять SSL сертификаты",
     )
-    fs_ca_bundle: Optional[str] = Field(
+    ca_bundle: Optional[str] = Field(
         default=None,
         env="FS_CA_BUNDLE",
         description="Путь к CA сертификату для SSL",
     )
 
     # Политики повторов
-    fs_timeout: int = Field(
-        default=30, env="FS_TIMEOUT", description="Таймаут операций (секунды)"
-    )
-    fs_retries: int = Field(
-        default=3,
-        env="FS_RETRIES",
+    timeout: int = Field(..., description="Таймаут операций (секунды)")
+    retries: int = Field(
+        ...,
         description="Количество попыток при ошибках",
     )
 
     # Управление ключами
-    fs_key_prefix: str = Field(
-        default="",
-        env="FS_KEY_PREFIX",
+    key_prefix: str = Field(
+        ...,
         description="Префикс для ключей объектов",
     )
 
     @property
     def normalized_endpoint(self) -> str:
         """Возвращает endpoint без схемы подключения."""
-        return str(self.fs_endpoint).split("://")[-1]
+        return str(self.endpoint).split("://")[-1]
+
+
+fs_settings = FileStorageSettings()
 
 
 class LogStorageSettings(BaseSettings):
@@ -125,81 +119,77 @@ class LogStorageSettings(BaseSettings):
     - Валидация логов
     """
 
+    yaml_group = "log"
+    model_config = SettingsConfigDict(
+        env_prefix="LOG_",
+        extra="forbid",
+    )
+
     # Основные параметры
-    log_host: str = Field(
-        default="http://127.0.0.1",
-        env="LOG_HOST",
+    host: str = Field(
+        ...,
         description="Хост сервера логов",
     )
-    log_port: int = Field(
-        default=9000,
+    port: int = Field(
+        ...,
         gt=0,
         lt=65536,
-        env="LOG_PORT",
         description="TCP порт сервера логов",
     )
-    log_udp_port: int = Field(
-        default=12201,
+    udp_port: int = Field(
+        ...,
         gt=0,
         lt=65536,
-        env="LOG_UDP_PORT",
         description="UDP порт для отправки логов",
     )
-    log_loggers_config: List[Dict] = Field(
-        default=[
-            {"name": "application", "facility": "application"},
-            {"name": "database", "facility": "db"},
-            {"name": "storage", "facility": "storage"},
-            {"name": "mail", "facility": "mail"},
-            {"name": "scheduler", "facility": "scheduler"},
-            {"name": "request", "facility": "request"},
-            {"name": "kafka", "facility": "kafka"},
-            {"name": "redis", "facility": "redis"},
-        ]
+    loggers_config: List[Dict[str, str]] = Field(
+        ...,
     )
 
     # Настройки безопасности
-    log_use_tls: bool = Field(
-        default=False,
-        env="LOG_USE_TLS",
+    use_tls: bool = Field(
+        ...,
         description="Использовать TLS для подключения",
     )
-    log_ca_certs: Optional[str] = Field(
-        default=None, env="LOG_CA_CERTS", description="Путь к CA сертификату"
-    )
+    ca_bundle: Optional[str] = Field(..., description="Путь к CA сертификату")
 
     # Параметры формата
-    log_level: str = Field(
-        default="DEBUG",
-        env="LOG_LEVEL",
+    level: str = Field(
+        ...,
         description="Уровень детализации логов",
     )
-    log_file_path: str = Field(
-        default="app.log",
-        env="LOG_FILE_PATH",
+    file_dir_name: str = Field(
+        ...,
+        description="Название каталога с логами",
+    )
+    file_name: str = Field(
+        ...,
         description="Путь к файлу логов",
     )
 
     # Валидация логов
-    log_required_fields: Set[str] = Field(
-        default={"environment", "hostname", "user_id", "action"},
+    required_fields: Set[str] = Field(
+        ...,
         description="Обязательные поля в лог-сообщениях",
     )
 
-    @field_validator("log_udp_port", "log_port")
+    @field_validator("udp_port", "port")
     @classmethod
     def validate_port(cls, v):
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
         return v
 
-    @field_validator("log_level")
+    @field_validator("level")
     @classmethod
     def validate_log_level(cls, v):
         allowed_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         if v.upper() not in allowed_levels:
             raise ValueError(f"Invalid log level. Allowed: {allowed_levels}")
         return v.upper()
+
+
+log_settings = LogStorageSettings()
 
 
 class RedisSettings(BaseSettings):
@@ -228,48 +218,39 @@ class RedisSettings(BaseSettings):
         redis_url: Возвращает URL для подключения к Redis.
     """
 
-    redis_host: str = Field(default="localhost", env="REDIS_HOST")
-    redis_port: int = Field(default=6379, env="REDIS_PORT")
-    redis_db_cache: int = 0
-    redis_db_queue: int = 1
-    redis_db_limits: int = 2
-    redis_db_celery: int = 3
-    redis_username: Optional[str] = Field(default=None, env="REDIS_USERNAME")
-    redis_password: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
-    redis_encoding: str = Field(default="utf-8", env="REDIS_ENCODING")
-    redis_decode_responses: bool = Field(
-        default=True, env="REDIS_DECODE_RESPONSES"
+    yaml_group = "redis"
+    model_config = SettingsConfigDict(
+        env_prefix="REDIS_",
+        extra="forbid",
     )
-    redis_cache_expire_seconds: int = 300
-    redis_connect_timeout: int = Field(default=5, env="REDIS_CONNECT_TIMEOUT")
-    redis_timeout: int = Field(default=10, env="REDIS_TIMEOUT")
-    redis_pool_maxsize: int = Field(default=20, env="REDIS_POOL_MAXSIZE")
-    redis_pool_minsize: int = Field(default=5, env="REDIS_POOL_MINSIZE")
-    redis_use_ssl: bool = Field(default=False, env="REDIS_USE_SSL")
-    redis_ssl_ca_certs: Optional[str] = Field(
-        default=None, env="REDIS_SSL_CA_CERTS"
-    )
-    redis_retries: int = Field(default=3, env="REDIS_RETRIES")
-    redis_retry_delay: int = Field(default=1, env="REDIS_RETRY_DELAY")
-    redis_socket_timeout: Optional[int] = Field(
-        default=10, env="REDIS_SOCKET_TIMEEOUT"
-    )
-    redis_socket_connect_timeout: Optional[int] = Field(
-        default=5, env="REDIS_SOCKET_CONNECT_TIMEOUT"
-    )
-    redis_retry_on_timeout: Optional[bool] = Field(
-        default=True, env="REDIS_RETRY_ON_TIMEOUT"
-    )
-    redis_socket_keepalive: Optional[bool] = Field(
-        default=True, env="REDIS_SOCKET_KEEPALIVE"
-    )
+
+    host: str = Field(...)
+    port: int = Field(...)
+    db_cache: int = Field(...)
+    db_queue: int = Field(...)
+    db_limits: int = Field(...)
+    db_celery: int = Field(...)
+    username: Optional[str] = Field(...)
+    password: Optional[str] = Field(...)
+    encoding: str = Field(...)
+    cache_expire_seconds: int = Field(...)
+    max_connections: int = Field(...)
+    use_ssl: bool = Field(...)
+    ca_bundle: Optional[str] = Field(...)
+    socket_timeout: Optional[int] = Field(...)
+    socket_connect_timeout: Optional[int] = Field(...)
+    retry_on_timeout: Optional[bool] = Field(...)
+    socket_keepalive: Optional[bool] = Field(...)
 
     @property
     def redis_url(self) -> str:
         """Сформировать URL для подключения к Redis."""
-        protocol = "rediss" if self.redis_use_ssl else "redis"
-        password = f":{self.redis_password}@" if self.redis_password else None
-        return f"{protocol}://{password}{self.redis_host}:{self.redis_port}"
+        protocol = "rediss" if self.use_ssl else "redis"
+        password = f":{self.password}@" if self.password else None
+        return f"{protocol}://{password}{self.host}:{self.port}"
+
+
+redis_settings = RedisSettings()
 
 
 class CelerySettings(BaseSettings):
@@ -283,146 +264,120 @@ class CelerySettings(BaseSettings):
     - Оптимизация производительности
     """
 
-    # Подключение к брокеру
-    cel_broker_redis_db: int = Field(
-        default=0,
-        env="CELERY_BROKER_REDIS_DB",
-        description="Номер БД для брокера",
+    yaml_group = "celery"
+    model_config = SettingsConfigDict(
+        env_prefix="CELERY_",
+        extra="forbid",
     )
-    cel_result_backend_redis_db: int = Field(
-        default=1,
-        env="CELERY_RESULT_BACKEND_REDIS_DB",
-        description="Номер БД для результатов задач",
+
+    # Подключение к брокеру
+    redis_db: int = Field(
+        ...,
+        description="Номер БД для брокера",
     )
 
     # Поведение задач
-    cel_task_default_queue: str = Field(
-        default="default",
-        env="CELERY_TASK_DEFAULT_QUEUE",
+    task_default_queue: str = Field(
+        ...,
         description="Очередь по умолчанию для задач",
     )
-    cel_task_serializer: Literal["json", "pickle", "yaml", "msgpack"] = Field(
-        default="json",
-        env="CELERY_TASK_SERIALIZER",
+    task_serializer: Literal["json", "pickle", "yaml", "msgpack"] = Field(
+        ...,
         description="Сериализатор для задач",
     )
-    cel_task_time_limit: int = Field(
-        default=300,
+    task_time_limit: int = Field(
+        ...,
         ge=60,
-        env="CELERY_TASK_TIME_LIMIT",
         description="Максимальное время выполнения задачи (секунды)",
     )
-    cel_task_soft_time_limit: int = Field(
-        default=240,
-        env="CELERY_TASK_SOFT_TIME_LIMIT",
+    task_soft_time_limit: int = Field(
+        ...,
         description="Мягкий таймаут перед отправкой SIGTERM",
     )
-    cel_task_max_retries: int = Field(
-        default=6,
+    task_max_retries: int = Field(
+        ...,
         ge=3,
-        env="CELERY_TASK_MAX_RETRIES",
         description="Максимальное количество повторных попыток",
     )
-    cel_task_min_retries: int = Field(
-        default=3,
+    task_min_retries: int = Field(
+        ...,
         ge=0,
-        env="CELERY_TASK_MIN_RETRIES",
         description="Миниальное количество повторных попыток",
     )
-    cel_task_default_retry_delay: int = Field(
-        default=3,
+    task_default_retry_delay: int = Field(
+        ...,
         ge=0,
-        env="CELERY_TASK_DEFAULT_RETRY_DELAY",
         description="Задержка перед повторной попыткой",
     )
-    cel_task_retry_backoff: int = Field(
-        default=60,
-        end="CELERY_TASK_RETRY_BACKOFF",
+    task_retry_backoff: int = Field(
+        ...,
         description="Базовая задержка перед повтором (секунды)",
     )
-    cel_task_retry_jitter: bool = Field(
-        default=True,
-        env="CELERY_TASK_RETRY_JITTER",
+    task_retry_jitter: bool = Field(
+        ...,
         description="Добавлять случайный джиттер к задержке",
     )
-    celery_expiration_time: int = Field(
-        default=60,
-        end="CELERY_EXPIRATION_TIME",
+    countdown_time: int = Field(
+        ...,
         description="Задержка перед запуском задачи  (секунды)",
     )
 
     # Конфигурация воркеров
-    cel_worker_concurrency: int = Field(
-        default=4,
+    worker_concurrency: int = Field(
+        ...,
         ge=1,
-        env="CELERY_WORKER_CONCURRENCY",
         description="Количество параллельных процессов воркера",
     )
-    cel_worker_prefetch_multiplier: int = Field(
-        default=4,
-        env="CELERY_WORKER_PREFETCH_MULTIPLIER",
+    worker_prefetch_multiplier: int = Field(
+        ...,
         description="Множитель предварительной выборки задач",
     )
-    cel_worker_max_tasks_per_child: int = Field(
-        default=100,
-        env="CELERY_WORKER_MAX_TASKS_PER_CHILD",
+    worker_max_tasks_per_child: int = Field(
+        ...,
         description="Максимум задач до перезапуска процесса",
     )
-    cel_worker_disable_rate_limits: bool = Field(
-        default=False,
-        env="CELERY_WORKER_DISABLE_RATE_LIMITS",
+    worker_disable_rate_limits: bool = Field(
+        ...,
         description="Отключить лимиты скорости выполнения",
     )
 
     # Мониторинг
-    cel_flower_url: str = Field(
-        default="http://localhost:8887",
-        env="CELERY_FLOWER_URL",
+    flower_url: str = Field(
+        ...,
         description="Адрес веб-интерфейса Flower",
     )
-    cel_flower_basic_auth: Tuple[str, str] | None = Field(
-        default=None,
-        env="CELERY_FLOWER_BASIC_AUTH",
+    flower_basic_auth: Tuple[str, str] | None = Field(
+        ...,
         description="Логин/пароль для Flower в формате (user, password)",
     )
-    cel_task_track_started: bool = Field(
-        default=True,
-        env="CELERY_TASK_TRACK_STARTED",
+    task_track_started: bool = Field(
+        ...,
         description="Отслеживать статус STARTED для задач",
     )
 
     # Оптимизация
-    cel_broker_pool_limit: int = Field(
-        default=10,
-        env="CELERY_BROKER_POOL_LIMIT",
+    broker_pool_limit: int = Field(
+        ...,
         description="Максимум соединений с брокером",
     )
-    cel_result_extended: bool = Field(
-        default=False,
-        env="CELERY_RESULT_EXTENDED",
+    result_extended: bool = Field(
+        ...,
         description="Хранить расширенные метаданные результатов",
     )
-    cel_worker_send_events: bool = Field(
-        default=True,
-        env="CELERY_WORKER_SEND_EVENTS",
+    worker_send_events: bool = Field(
+        ...,
         description="Отправлять события для мониторинга",
     )
 
-    @field_validator("cel_flower_basic_auth")
+    @field_validator("flower_basic_auth")
     @classmethod
     def validate_auth(cls, v):
         if v and len(v) != 2:
             raise ValueError("Auth must be tuple of (username, password)")
         return v
 
-    @property
-    def task_retry_policy(self) -> dict:
-        """Сформировать политику повторных попыток для задач."""
-        return {
-            "max_retries": self.task_max_retries,
-            "interval_start": self.task_retry_backoff,
-            "jitter": self.task_retry_jitter,
-        }
+
+celery_settings = CelerySettings()
 
 
 class MailSettings(BaseSettings):
@@ -435,75 +390,73 @@ class MailSettings(BaseSettings):
     - Параметры писем
     """
 
+    yaml_group = "mail"
+    model_config = SettingsConfigDict(
+        env_prefix="MAIL_",
+        extra="forbid",
+    )
+
     # Параметры сервера
-    mail_host: str = Field(
-        default="smtp.example.com",
-        env="MAIL_HOST",
+    host: str = Field(
+        ...,
         description="SMTP сервер для отправки почты",
     )
-    mail_port: int = Field(
-        default=587,
+    port: int = Field(
+        ...,
         ge=1,
         le=65535,
-        env="MAIL_PORT",
         description="Порт SMTP сервера",
     )
-    mail_connection_pool_size: int = Field(
-        default=5,
+    connection_pool_size: int = Field(
+        ...,
         ge=1,
         le=10,
-        env="MAIL_CONNECTION_POOL_SIZE",
         description="Размер пула подключений к SMTP серверу",
     )
 
     # Аутентификация
-    mail_username: str = Field(
-        default="user@example.com",
-        env="MAIL_USERNAME",
+    username: str = Field(
+        ...,
         description="Логин для SMTP аутентификации",
     )
     mail_password: str = Field(
-        default="password",
-        env="MAIL_PASSWORD",
+        ...,
         description="Пароль для SMTP аутентификации",
     )
 
     # Настройки TLS
-    mail_use_tls: bool = Field(
-        default=False,
-        env="MAIL_USE_TLS",
+    use_tls: bool = Field(
+        ...,
         description="Использовать STARTTLS для шифрования",
     )
-    mail_validate_certs: bool = Field(
-        default=False,
-        env="MAIL_VALIDATE_CERTS",
+    validate_certs: bool = Field(
+        ...,
         description="Проверять SSL сертификаты сервера",
     )
+    ca_bundle: Optional[str] = Field(..., description="Путь к CA сертификату")
 
     # Параметры писем
-    mail_sender: str = Field(
-        default="noreply@example.com",
+    sender: str = Field(
+        ...,
         description="Email отправителя по умолчанию",
     )
-    mail_template_folder: Optional[Path] = Field(
-        default=None,
-        env="MAIL_TEMPLATE_FOULDER",
-        description="Путь к шаблонам писем",
-    )
 
-    @field_validator("mail_port")
+    @field_validator("port")
     @classmethod
     def validate_port(cls, v):
         if v == 465 and not cls.mail_use_tls:
             raise ValueError("Порт 465 требует SSL/TLS")
         return v
 
-    @field_validator("mail_use_tls", "mail_validate_certs", mode="before")
+    @field_validator("use_tls", "validate_certs", mode="before")
     @classmethod
     def parse_bool(cls, v):
         if isinstance(v, str):
             return v.lower() == "true"
         return v
+
+
+mail_settings = MailSettings()
 
 
 class QueueSettings(BaseSettings):
@@ -518,102 +471,90 @@ class QueueSettings(BaseSettings):
     - Таймауты и повторы
     """
 
-    # Основные параметры
-    queue_type: Literal["kafka", "rabbitmq"] = Field(
-        default="kafka", env="QUEUE_TYPE", description="Тип брокера сообщений"
+    yaml_group = "queue"
+    model_config = SettingsConfigDict(
+        env_prefix="QUEUE_",
+        extra="forbid",
     )
-    queue_bootstrap_servers: List[str] = Field(
-        default=["localhost:9092"],
-        env="KAFKA_BOOTSTRAP_SERVER",
+
+    # Основные параметры
+    type: Literal["kafka", "rabbitmq"] = Field(
+        ..., description="Тип брокера сообщений"
+    )
+    bootstrap_servers: List[str] = Field(
+        ...,
         description="Список серверов брокера",
     )
 
     # Настройки потребителя
-    queue_consumer_group: str = Field(
-        default="api-consumers",
-        env="QUEUE_CONSUMER_GROUP",
+    consumer_group: str = Field(
+        ...,
         description="Группа потребителей (Kafka)",
     )
-    queue_auto_offset_reset: Literal["earliest", "latest"] = Field(
-        default="earliest",
-        env="QUEUE_AUTO_OFFSET_RESET",
+    auto_offset_reset: Literal["earliest", "latest"] = Field(
+        ...,
         description="Поведение при отсутствии оффсета",
     )
-    queue_max_poll_records: int = Field(
-        default=500,
+    max_poll_records: int = Field(
+        ...,
         ge=1,
         le=10000,
-        env="QUEUE_MAX_POLL_RECORDS",
         description="Максимальное количество записей за опрос",
     )
 
     # Настройки производителя
-    queue_producer_acks: Literal["all", "0", "1"] = Field(
-        default="all",
-        env="QUEUE_PRODUCER_ACKS",
+    producer_acks: Literal["all", "0", "1"] = Field(
+        ...,
         description="Уровень подтверждения записи",
     )
-    queue_producer_linger_ms: int = Field(
-        default=5,
+    producer_linger_ms: int = Field(
+        ...,
         ge=0,
         le=10000,
-        env="QUEUE_PRODUCER_LINGER_MS",
         description="Задержка для батчинга сообщений",
     )
 
     # Безопасность
-    queue_security_protocol: Literal[
+    security_protocol: Literal[
         "PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"
     ] = Field(
-        default="PLAINTEXT",
-        env="QUEUE_SECURITY_PROTOCOL",
+        ...,
         description="Протокол безопасности",
     )
-    queue_ssl_ca_location: Optional[Path] = Field(
-        default=None,
-        env="QUEUE_SSL_CA_LOCATION",
+    ca_bundle: Optional[Path] = Field(
+        ...,
         description="Путь к CA сертификату",
     )
-    queue_username: Optional[Path] = Field(
-        default=None, env="QUEUE_USERNAME", description="Логин"
-    )
-    queue_password: Optional[Path] = Field(
-        default=None, env="QUEUE_PASSWORD", description="Пароль"
-    )
+    username: Optional[Path] = Field(..., description="Логин")
+    password: Optional[Path] = Field(..., description="Пароль")
 
     # Оптимизация
-    queue_compression_type: Literal[
-        "none", "gzip", "snappy", "lz4", "zstd"
-    ] = Field(
-        default="none",
-        env="QUEUE_COMPRESSION_TYPE",
+    compression_type: Literal["none", "gzip", "snappy", "lz4", "zstd"] = Field(
+        ...,
         description="Тип сжатия сообщений",
     )
-    queue_message_max_bytes: int = Field(
-        default=1048576,
+    message_max_bytes: int = Field(
+        ...,
         ge=1,
         le=10000000,
-        env="QUEUE_MESSAGE_MAX_BYTES",
         description="Максимальный размер сообщения",
     )
 
     # Таймауты
-    queue_session_timeout_ms: int = Field(
-        default=10000,
+    session_timeout_ms: int = Field(
+        ...,
         ge=1000,
         le=3600000,
-        env="QUEUE_SESSION_TIMEOUT_MS",
         description="Таймаут сессии потребителя",
     )
-    queue_request_timeout_ms: int = Field(
-        default=40000,
+    request_timeout_ms: int = Field(
+        ...,
         ge=1000,
         le=3600000,
-        env="QUEUE_REQUEST_TIMEOUT_MS",
         description="Таймаут запросов к брокеру",
     )
 
-    @field_validator("queue_bootstrap_servers")
+    @field_validator("bootstrap_servers")
     @classmethod
     def validate_servers(cls, v):
         for server in v:
@@ -626,20 +567,20 @@ class QueueSettings(BaseSettings):
     def get_kafka_config(self) -> Dict[str, Any]:
         """Преобразование настроек в конфиг для Kafka."""
         config = {
-            "bootstrap.servers": ",".join(self.queue_bootstrap_servers),
-            "security.protocol": self.queue_security_protocol,
-            "compression.type": self.queue_compression_type,
-            "message.max.bytes": self.queue_message_max_bytes,
-            "session.timeout.ms": self.queue_session_timeout_ms,
-            "request.timeout.ms": self.queue_request_timeout_ms,
+            "bootstrap.servers": ",".join(self.bootstrap_servers),
+            "security.protocol": self.security_protocol,
+            "compression.type": self.compression_type,
+            "message.max.bytes": self.message_max_bytes,
+            "session.timeout.ms": self.session_timeout_ms,
+            "request.timeout.ms": self.request_timeout_ms,
         }
 
         # SSL конфигурация
-        if self.queue_ssl_ca_location:
-            config.update({"ssl.ca.location": str(self.queue_ssl_ca_location)})
+        if self.ca_bundle:
+            config.update({"ssl.ca.location": str(self.ca_bundle)})
 
         # SASL конфигурация
-        if self.queue_security_protocol in ("SASL_PLAINTEXT", "SASL_SSL"):
+        if self.security_protocol in ("SASL_PLAINTEXT", "SASL_SSL"):
             config.update(
                 {
                     "sasl.mechanism": "PLAIN",  # или SCRAM-SHA-256, OAUTHBEARER
@@ -653,17 +594,20 @@ class QueueSettings(BaseSettings):
     def get_kafka_producer_config(self) -> Dict[str, Any]:
         """Возвращает конфигурацию для Kafka Producer."""
         producer_config = {
-            "acks": self.queue_producer_acks,
-            "linger.ms": self.queue_producer_linger_ms,
+            "acks": self.producer_acks,
+            "linger.ms": self.producer_linger_ms,
         }
         return {**self.get_kafka_config(), **producer_config}
 
     def get_kafka_consumer_config(self) -> Dict[str, Any]:
         """Возвращает конфигурацию для Kafka Consumer."""
         consumer_config = {
-            "group.id": self.queue_consumer_group,
-            "auto.offset.reset": self.queue_auto_offset_reset,
-            "max.poll.records": self.queue_max_poll_records,
+            "group.id": self.consumer_group,
+            "auto.offset.reset": self.auto_offset_reset,
+            "max.poll.records": self.max_poll_records,
             "enable.auto.commit": False,
         }
         return {**self.get_kafka_config(), **consumer_config}
+
+
+queue_settings = QueueSettings()

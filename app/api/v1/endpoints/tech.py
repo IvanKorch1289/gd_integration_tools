@@ -57,8 +57,10 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на хранилище логов.
         """
-        log_url = f"{settings.logging.log_host}:{settings.logging.log_port}"
-        return utilities.generate_link_page(log_url, "Хранилище логов")
+        return utilities.generate_link_page(
+            f"{settings.logging.host}:{settings.logging.port}",
+            "Хранилище логов",
+        )
 
     @router.get(
         "/file-storage",
@@ -74,8 +76,9 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на файловое хранилище.
         """
-        fs_url = f"{settings.storage.fs_interfase_endpoint}"
-        return utilities.generate_link_page(fs_url, "Файловое хранилище")
+        return utilities.generate_link_page(
+            f"{settings.storage.fs_interfase_endpoint}", "Файловое хранилище"
+        )
 
     @router.get(
         "/task-monitor",
@@ -91,8 +94,9 @@ class TechBV:
         Returns:
             HTMLResponse: Страница с кликабельной ссылкой на интерфейс мониторинга задач.
         """
-        bts_url = settings.celery.cel_flower_url
-        return utilities.generate_link_page(bts_url, "Мониторинг задач")
+        return utilities.generate_link_page(
+            settings.celery.flower_url, "Мониторинг задач"
+        )
 
     @router.get(
         "/healthcheck-database",

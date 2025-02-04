@@ -15,27 +15,47 @@ __all__ = (
 
 
 class AppBaseSettings(BaseYAMLSettings):
-    """Общие настройки приложения"""
+    """Application core configuration settings loaded from YAML files.
 
-    yaml_group = "app"  # Группа в YAML
-    model_config = SettingsConfigDict(env_prefix="APP_", extra="forbid")
+    Inherits from BaseYAMLSettings to provide YAML configuration capabilities.
+    Validates and manages essential application parameters across environments.
+    """
 
-    # Общие настройки
-    root_dir: Path = ROOT_DIR
-    base_url: str
+    yaml_group: str = "app"
+    model_config = SettingsConfigDict(
+        env_prefix="APP_",
+        extra="forbid",
+    )
+
+    # Core application parameters
+    root_dir: Path = Field(
+        default=ROOT_DIR,
+        description="Absolute path to project root directory",
+        examples=["/usr/src/app", "C:/Projects/my_app"],
+    )
+    base_url: str = Field(
+        ...,
+        min_length=1,
+        description="Base URL for application endpoints",
+        examples=["https://api.example.com", "http://localhost:8000"],
+    )
     environment: Literal["development", "staging", "production"] = Field(
         ...,
-        description="Среда выполнения приложения",
+        description="Current runtime environment (dev/staging/prod)",
+        examples=["development", "staging", "production"],
     )
     version: str = Field(
         ...,
-        description="Версия приложения в семантическом формате",
+        pattern=r"^\d+\.\d+\.\d+$",
+        description="Semantic version of the application (major.minor.patch)",
+        examples=["1.0.0", "2.3.4", "0.5.1"],
     )
     debug_mode: bool = Field(
         ...,
-        description="Признак включенного режима дебаггинга",
+        description="Flag indicating debug mode status",
+        examples=[True, False],
     )
 
 
-# Instantiate settings for immediate use
+# Pre-initialized settings instance for immediate consumption
 app_base_settings = AppBaseSettings()

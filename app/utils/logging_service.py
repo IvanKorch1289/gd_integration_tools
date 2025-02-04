@@ -110,7 +110,7 @@ class LoggerManager:
             "[%(environment)s@%(hostname)s] User:%(user_id)s Action:%(action)s"
         )
         self.formatter = self.SafeFormatter(
-            fmt=log_format, required_fields=self.log_config.log_required_fields
+            fmt=log_format, required_fields=self.log_config.required_fields
         )
 
     def _setup_handlers(self) -> None:
@@ -132,11 +132,11 @@ class LoggerManager:
 
     def _create_file_handler(self) -> TimedRotatingFileHandler:
         """Configure timed rotating file handler."""
-        log_dir = "logs"
+        log_dir = self.log_config.file_dir_name
         os.makedirs(log_dir, exist_ok=True)
 
         handler = TimedRotatingFileHandler(
-            filename=os.path.join(log_dir, "app.log"),
+            filename=os.path.join(log_dir, self.log_config.file_name),
             when="midnight",
             interval=1,
             backupCount=7,
@@ -162,16 +162,16 @@ class LoggerManager:
 
     def _configure_loggers(self) -> None:
         """Configure all registered loggers."""
-        for logger_cfg in self.log_config.log_loggers_config:
+        for logger_cfg in self.log_config.loggers_config:
             logger = logging.getLogger(logger_cfg["name"])
             logger.propagate = False
-            logger.setLevel(self.log_config.log_level.upper())
+            logger.setLevel(self.log_config.level.upper())
             self._reset_handlers(logger)
             logger.addHandler(QueueHandler(self.log_queue))
 
     def _init_logger_instances(self) -> None:
         """Create logger instances as class attributes."""
-        for logger_cfg in self.log_config.log_loggers_config:
+        for logger_cfg in self.log_config.loggers_config:
             logger_name = logger_cfg["name"]
             setattr(
                 self, f"{logger_name}_logger", logging.getLogger(logger_name)

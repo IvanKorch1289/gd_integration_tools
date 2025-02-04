@@ -93,16 +93,16 @@ class MinioService(BaseS3Service):
 
     def _initialize_attributes(self):
         """Initializes configuration attributes from settings."""
-        self.bucket = self.settings.fs_bucket
-        self.access_key = self.settings.fs_access_key
-        self.secret_key = self.settings.fs_secret_key
+        self.bucket = self.settings.bucket
+        self.access_key = self.settings.access_key
+        self.secret_key = self.settings.secret_key
         self.endpoint = self._get_endpoint()
         self.client_config = AioConfig(
-            connect_timeout=self.settings.fs_timeout,
-            retries={"max_attempts": self.settings.fs_retries},
+            connect_timeout=self.settings.timeout,
+            retries={"max_attempts": self.settings.retries},
             s3={
                 "addressing_style": self._get_addressing_style(),
-                "payload_signing_enabled": self.settings.fs_provider == "aws",
+                "payload_signing_enabled": self.settings.provider == "aws",
             },
         )
 
@@ -118,6 +118,10 @@ class MinioService(BaseS3Service):
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
                 config=self.client_config,
+                use_ssl=self.settings.use_ssl,
+                verify=(
+                    self.settings.ca_bundle if self.settings.verify else None
+                ),
             ).__aenter__()
 
             if not await self.check_bucket_exists():
@@ -145,9 +149,7 @@ class MinioService(BaseS3Service):
     def _get_endpoint(self) -> Optional[str]:
         """Returns configured endpoint or None for AWS."""
         return (
-            self.settings.fs_endpoint
-            if self.settings.fs_provider != "aws"
-            else None
+            self.settings.endpoint if self.settings.provider != "aws" else None
         )
 
     def _get_addressing_style(self) -> str:

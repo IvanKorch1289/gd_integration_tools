@@ -25,7 +25,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
     model_config = SettingsConfigDict(
         env_prefix="DB_",
         extra="forbid",
-        frozen=True,  # Ensures configuration immutability
     )
 
     # Core connection parameters
@@ -54,12 +53,12 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
 
     # Authentication
     username: str = Field(
-        default="postgres",
+        ...,
         description="Database user name",
         examples=["admin", "app_user"],
     )
     password: str = Field(
-        default="postgres",
+        ...,
         description="Database user password",
         examples=["secure_password_123"],
     )
@@ -121,7 +120,7 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         description="SSL connection mode (PostgreSQL specific)",
         examples=["require", "verify-full"],
     )
-    ssl_ca_path: Optional[str] = Field(
+    ca_bundle: Optional[str] = Field(
         None,
         description="Path to SSL CA certificate file",
         examples=["/path/to/ca.crt"],

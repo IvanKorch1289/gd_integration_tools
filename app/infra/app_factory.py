@@ -189,7 +189,7 @@ def create_app() -> FastAPI:
             f"{settings.logging.log_host}:{settings.logging.log_port}"
         )
         fs_url = await utilities.ensure_url_protocol(
-            settings.storage.fs_interfase_endpoint
+            settings.storage.interfase_endpoint
         )
         flower_url = await utilities.ensure_url_protocol(
             settings.celery.cel_flower_url

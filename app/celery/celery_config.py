@@ -40,7 +40,9 @@ class CeleryManager:
 
     def _configure_celery(self) -> Celery:
         """Создает и конфигурирует экземпляр Celery."""
-        redis_url = f"{self.settings.redis.redis_url}/{self.settings.redis.redis_db_celery}"
+        redis_url = (
+            f"{self.settings.redis.redis_url}/{self.settings.celery.redis_db}"
+        )
         celery_app = Celery(
             "tasks",
             broker=redis_url,
@@ -51,26 +53,26 @@ class CeleryManager:
         celery_app.conf.update(
             {
                 # Сериализация
-                "task_serializer": self.settings.celery.cel_task_serializer,
-                "result_serializer": self.settings.celery.cel_task_serializer,
-                "accept_content": [self.settings.celery.cel_task_serializer],
+                "task_serializer": self.settings.celery.task_serializer,
+                "result_serializer": self.settings.celery.task_serializer,
+                "accept_content": [self.settings.celery.task_serializer],
                 # Поведение задач
-                "task_default_queue": self.settings.celery.cel_task_default_queue,
-                "task_time_limit": self.settings.celery.cel_task_time_limit,
-                "task_soft_time_limit": self.settings.celery.cel_task_soft_time_limit,
-                "task_default_max_retries": self.settings.celery.cel_task_max_retries,
-                "task_retry_backoff": self.settings.celery.cel_task_retry_backoff,
-                "task_retry_jitter": self.settings.celery.cel_task_retry_jitter,
-                "task_track_started": self.settings.celery.cel_task_track_started,
+                "task_default_queue": self.settings.celery.task_default_queue,
+                "task_time_limit": self.settings.celery.task_time_limit,
+                "task_soft_time_limit": self.settings.celery.task_soft_time_limit,
+                "task_default_max_retries": self.settings.celery.task_max_retries,
+                "task_retry_backoff": self.settings.celery.task_retry_backoff,
+                "task_retry_jitter": self.settings.celery.task_retry_jitter,
+                "task_track_started": self.settings.celery.task_track_started,
                 # Настройки воркеров
-                "worker_concurrency": self.settings.celery.cel_worker_concurrency,
-                "worker_prefetch_multiplier": self.settings.celery.cel_worker_prefetch_multiplier,
-                "worker_max_tasks_per_child": self.settings.celery.cel_worker_max_tasks_per_child,
-                "worker_disable_rate_limits": self.settings.celery.cel_worker_disable_rate_limits,
-                "worker_send_events": self.settings.celery.cel_worker_send_events,
+                "worker_concurrency": self.settings.celery.worker_concurrency,
+                "worker_prefetch_multiplier": self.settings.celery.worker_prefetch_multiplier,
+                "worker_max_tasks_per_child": self.settings.celery.worker_max_tasks_per_child,
+                "worker_disable_rate_limits": self.settings.celery.worker_disable_rate_limits,
+                "worker_send_events": self.settings.celery.worker_send_events,
                 # Управление соединениями
-                "broker_pool_limit": self.settings.celery.cel_broker_pool_limit,
-                "result_extended": self.settings.celery.cel_result_extended,
+                "broker_pool_limit": self.settings.celery.broker_pool_limit,
+                "result_extended": self.settings.celery.result_extended,
                 # Безопасность и надежность
                 "task_acks_late": True,
                 "task_reject_on_worker_lost": True,
@@ -93,7 +95,7 @@ class CeleryManager:
                 "schedule": CronPresets.HOURLY.schedule,
                 "args": (),
                 "options": {
-                    "queue": self.settings.celery.cel_task_default_queue,
+                    "queue": self.settings.celery.task_default_queue,
                     "expires": 300,
                 },
             }

@@ -21,7 +21,7 @@ __all__ = (
 class CachingDecorator:
     def __init__(
         self,
-        expire: int = settings.redis.redis_cache_expire_seconds,
+        expire: int = settings.redis.cache_expire_seconds,
         key_prefix: str = "",
         exclude_self: bool = True,
         renew_ttl: bool = False,

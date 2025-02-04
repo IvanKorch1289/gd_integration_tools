@@ -25,7 +25,7 @@ class MailService:
         """
         self.settings = settings
         self._connection_pool: Deque[aiosmtplib.SMTP] = deque()
-        self._pool_size = self.settings.mail_connection_pool_size
+        self._pool_size = self.settings.connection_pool_size
 
     async def __aenter__(self):
         """Async context manager entry point."""
@@ -70,15 +70,17 @@ class MailService:
         """
         try:
             smtp = aiosmtplib.SMTP(
-                hostname=self.settings.mail_host,
-                port=self.settings.mail_port,
-                use_tls=self.settings.mail_use_tls,
+                hostname=self.settings.host,
+                port=self.settings.port,
+                use_tls=self.settings.use_tls,
+                validate_certs=self.settings.validate_certs,
+                ca_bundle=self.settings.ca_bundle,
             )
             await smtp.connect()
-            if self.settings.mail_username and self.settings.mail_password:
+            if self.settings.mail_username and self.settings.password:
                 await smtp.login(
-                    self.settings.mail_username,
-                    self.settings.mail_password,
+                    self.settings.username,
+                    self.settings.password,
                 )
             return smtp
         except Exception as exc:

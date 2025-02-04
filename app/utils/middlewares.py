@@ -107,7 +107,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.compiled_patterns: List[Pattern] = [
             re.compile(self._convert_pattern(pattern))
-            for pattern in settings.auth.auth_routes_without_api_key
+            for pattern in settings.auth.routes_without_api_key
         ]
 
     @staticmethod
@@ -124,7 +124,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         if (api_key := request.headers.get("X-API-Key")) is None:
             raise HTTPException(status_code=401, detail="API key required")
 
-        if api_key != settings.auth.auth_api_key:
+        if api_key != settings.auth.api_key:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         return await call_next(request)

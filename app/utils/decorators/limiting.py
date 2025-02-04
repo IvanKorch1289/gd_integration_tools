@@ -47,8 +47,8 @@ class RouteLimiter:
 
     def __init__(
         self,
-        times: int = settings.auth.auth_rate_limit,
-        seconds: int = settings.auth.auth_rate_time_measure_seconds,
+        times: int = settings.auth.rate_limit,
+        seconds: int = settings.auth.rate_time_measure_seconds,
     ):
         """
         Инициализирует лимитер.

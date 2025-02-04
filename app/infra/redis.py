@@ -24,21 +24,21 @@ class RedisClient:
 
     async def _init_pool(self) -> None:
         redis_url = (
-            f"rediss://{self.settings.redis_host}:{self.settings.redis_port}"
-            if self.settings.redis_use_ssl
-            else f"redis://{self.settings.redis_host}:{self.settings.redis_port}"
+            f"rediss://{self.settings.rhost}:{self.settings.port}"
+            if self.settings.use_ssl
+            else f"redis://{self.settings.host}:{self.settings.port}"
         )
 
         self._connection_pool = ConnectionPool.from_url(
             redis_url,
-            db=self.settings.redis_db_cache,
-            password=self.settings.redis_password or None,
-            encoding=self.settings.redis_encoding,
-            # socket_timeout=self.settings.redis_timeout,
-            # socket_connect_timeout=self.settings.redis_connect_timeout,
-            socket_keepalive=self.settings.redis_socket_keepalive,
-            retry_on_timeout=self.settings.redis_retry_on_timeout,
-            max_connections=self.settings.redis_pool_maxsize,
+            db=self.settings.db_cache,
+            password=self.settings.password or None,
+            encoding=self.settings.encoding,
+            socket_timeout=self.settings.timeout,
+            socket_connect_timeout=self.settings.connect_timeout,
+            socket_keepalive=self.settings.redis_keepalive,
+            retry_on_timeout=self.settings.retry_on_timeout,
+            max_connections=self.settings.max_connections,
             decode_responses=False,
         )
 

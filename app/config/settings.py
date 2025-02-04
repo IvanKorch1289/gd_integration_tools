@@ -8,7 +8,7 @@ from app.config.outer_api import (
     dadata_api_settings,
     skb_api_settings,
 )
-from app.config.security import AuthSettings
+from app.config.security import AuthSettings, auth_settings
 from app.config.services import (
     CelerySettings,
     FileStorageSettings,
@@ -16,6 +16,12 @@ from app.config.services import (
     MailSettings,
     QueueSettings,
     RedisSettings,
+    celery_settings,
+    fs_settings,
+    log_settings,
+    mail_settings,
+    queue_settings,
+    redis_settings,
 )
 
 
@@ -34,20 +40,20 @@ class Settings(BaseSettings):
 
     # Общие настройки
     app: AppBaseSettings = app_base_settings
-    auth: AuthSettings = AuthSettings()
+    auth: AuthSettings = auth_settings
 
     # Интеграции
     database: DatabaseSettings = db_connection_settings
     skb_api: APISSKBSettings = skb_api_settings
     dadata_api: APIDADATASettings = dadata_api_settings
-    queue: QueueSettings = QueueSettings()
-    mail: MailSettings = MailSettings()
-    celery: CelerySettings = CelerySettings()
+    queue: QueueSettings = queue_settings
+    mail: MailSettings = mail_settings
+    celery: CelerySettings = celery_settings
 
     # Хранилища
-    storage: FileStorageSettings = FileStorageSettings()
-    logging: LogStorageSettings = LogStorageSettings()
-    redis: RedisSettings = RedisSettings()
+    storage: FileStorageSettings = fs_settings
+    logging: LogStorageSettings = log_settings
+    redis: RedisSettings = redis_settings
 
 
 # Экземпляр настроек приложения
