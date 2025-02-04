@@ -70,8 +70,8 @@ class MailSender:
         msg["Subject"] = Header(subject, "utf-8")
         msg["From"] = formataddr(
             (
-                str(Header(self.client.settings.mail_username, "utf-8")),
-                self.client.settings.mail_sender,
+                str(Header(self.client.settings.username, "utf-8")),
+                self.client.settings.sender,
             )
         )
         msg["To"] = ", ".join(to_emails)
@@ -98,12 +98,10 @@ class MailSender:
             FileNotFoundError: If template file doesn't exist
             RuntimeError: If template processing fails
         """
-        if not self.client.settings.mail_template_folder:
+        if not self.client.settings.template_folder:
             raise ValueError("Template folder not configured")
 
-        template_path = (
-            self.client.settings.mail_template_folder / template_name
-        )
+        template_path = self.client.settings.template_folder / template_name
         if not template_path.exists():
             raise FileNotFoundError(f"Template not found: {template_name}")
 

@@ -11,12 +11,20 @@ from app.utils.logging_service import app_logger
 
 __all__ = (
     "ConfigUpdateRequest",
+    "ConfigUpdateResponse",
     "ConfigManager",
 )
 
 
 class ConfigUpdateRequest(BaseModel):
     data: Dict[str, Any]
+
+
+class ConfigUpdateResponse(BaseModel):
+    """Response model for successful configuration update"""
+
+    status: str
+    config: Dict[str, Any]
 
 
 class ConfigManager:

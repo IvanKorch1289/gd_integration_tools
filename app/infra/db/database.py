@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
-from app.config.settings import DatabaseSettings, settings
+from app.config.settings import DatabaseConnectionSettings, settings
 from app.utils.errors import DatabaseError
 from app.utils.logging_service import db_logger
 
@@ -31,8 +31,8 @@ class DatabaseInitializer:
         sync_session_maker (sessionmaker): Sync session factory
     """
 
-    def __init__(self, settings: DatabaseSettings):
-        self.settings: DatabaseSettings = settings
+    def __init__(self, settings: DatabaseConnectionSettings):
+        self.settings: DatabaseConnectionSettings = settings
 
         # Main async engine
         self.async_engine = self._create_async_engine()
@@ -61,7 +61,7 @@ class DatabaseInitializer:
             AsyncEngine: Configured SQLAlchemy async engine
         """
         return create_async_engine(
-            url=self.settings.db_url_async,
+            url=self.settings.async_connection_url,
             echo=self.settings.echo,
             pool_size=self.settings.pool_size,
             max_overflow=self.settings.max_overflow,
@@ -77,7 +77,7 @@ class DatabaseInitializer:
             Engine: Configured SQLAlchemy sync engine
         """
         return create_engine(
-            url=self.settings.db_url_sync,
+            url=self.settings.sync_connection_url,
             echo=self.settings.echo,
             pool_size=self.settings.pool_size,
             max_overflow=self.settings.max_overflow,
@@ -94,7 +94,7 @@ class DatabaseInitializer:
         """
         connect_args = {}
 
-        if self.settings.dtype == "postgresql":
+        if self.settings.type == "postgresql":
             connect_args.update(
                 {
                     "command_timeout": self.settings.command_timeout,
@@ -102,11 +102,11 @@ class DatabaseInitializer:
                 }
             )
 
-            if self.settings.db_ssl_ca:
+            if self.settings.ca_bundle:
                 import ssl
 
                 ssl_context = ssl.create_default_context(
-                    cafile=self.settings.ssl_ca
+                    cafile=self.settings.ca_bundle
                 )
                 connect_args["ssl"] = ssl_context
 

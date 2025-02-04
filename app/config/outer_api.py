@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import ClassVar, Dict
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -23,7 +23,7 @@ class SKBAPISettings(BaseYAMLSettings):
     - Timeouts: Connection and response timeout settings
     """
 
-    yaml_group = "skb"
+    yaml_group: ClassVar[str] = "skb"
     model_config = SettingsConfigDict(
         env_prefix="SKB_",
         extra="forbid",
@@ -81,7 +81,7 @@ class DadataAPISettings(BaseYAMLSettings):
     - Rate limits: API usage restrictions
     """
 
-    yaml_group = "dadata"
+    yaml_group: ClassVar[str] = "dadata"
     model_config = SettingsConfigDict(
         env_prefix="DADATA_",
         extra="forbid",

@@ -196,12 +196,7 @@ def handle_db_errors(func):
         try:
             return await func(*args, **kwargs)
         except Exception as exc:
-            raise DatabaseError(
-                message={
-                    "message": exc.message,
-                    "hasErrors": True,
-                }
-            )
+            raise DatabaseError(message=exc.message)
 
     return wrapper
 

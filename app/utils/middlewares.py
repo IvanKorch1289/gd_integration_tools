@@ -142,7 +142,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         try:
             return await asyncio.wait_for(
-                call_next(request), timeout=settings.auth.auth_request_timeout
+                call_next(request), timeout=settings.auth.request_timeout
             )
         except asyncio.TimeoutError:
             app_logger.warning(f"Request timeout: {request.url}")

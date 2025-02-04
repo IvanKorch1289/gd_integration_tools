@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import ClassVar, Literal, Optional
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -21,7 +21,7 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
     - SSL/TLS configuration
     """
 
-    yaml_group = "database"
+    yaml_group: ClassVar[str] = "database"
     model_config = SettingsConfigDict(
         env_prefix="DB_",
         extra="forbid",

@@ -221,6 +221,7 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception:
             raise
 
+    @response_cache
     async def get_all_object_versions(
         self, object_id: int
     ) -> Optional[List[BaseSchema]]:

@@ -6,7 +6,7 @@ app:
 
 auth:
   token_name: "gat_token"
-  token_lifetime_seconds: 120
+  token_lifetime: 120
   refresh_token_lifetime: 4800
   algorithm: "HS256"
   cookie_secure: True
@@ -15,21 +15,21 @@ auth:
     - "localhost"
     - "127.0.0.1"
   routes_without_api_key:
-    - "/",
-    - "/admin",
-    - "/admin/*",
-    - "/docs",
-    - "/documents",
-    - "/docs/",
-    - "/documents/",
-    - "/metrics",
-    - "/openapi.json",
-    - "/tech/healthcheck-*",
-    - "/tech/redirect-*",
-    - "/tech/version",
-    - "/tech/log-storage",
-    - "/tech/file-storage",
-    - "/tech/task-monitor",
+    - "/"
+    - "/admin"
+    - "/admin/*"
+    - "/docs"
+    - "/documents"
+    - "/docs/"
+    - "/documents/"
+    - "/metrics"
+    - "/openapi.json"
+    - "/tech/healthcheck-*"
+    - "/tech/redirect-*"
+    - "/tech/version"
+    - "/tech/log-storage"
+    - "/tech/file-storage"
+    - "/tech/task-monitor"
   request_timeout: 20.0
   rate_limit: 400
   rate_time_measure_seconds: 60
@@ -57,8 +57,8 @@ database:
   host: "localhost"
   port: 5432
   name: "postgres"
-  driver_async: "asyncpg"
-  driver_sync: "psycopg2"
+  async_driver: "asyncpg"
+  sync_driver: "psycopg2"
   echo: True
   connect_timeout: 10
   command_timeout: 30
@@ -67,16 +67,16 @@ database:
   pool_recycle: 1800
   pool_timeout: 30
   ssl_mode: prefer
-  ca_bundle: "/path/to/certificate.pem"
+  ca_bundle: #"/path/to/certificate.pem"
 
 fs:
   provider: "minio"
   bucket: "test-bucket"
   endpoint: "http://127.0.0.1:9090"
-  interfase_endpoint: "http://127.0.0.1:9091"
+  interface_endpoint: "http://127.0.0.1:9091"
   use_ssl: False
-  verify_tls: False
-  ca_bundle: "/path/to/certificate.pem"
+  verify: False
+  ca_bundle: #"/path/to/certificate.pem"
   timeout: 30
   retries: 5
   key_prefix: "uploads"
@@ -85,11 +85,11 @@ log:
   host: "localhost"
   port: 9000
   udp_port: 12201
-  loggers_config:
-    - name: "application", 
+  conf_loggers: 
+    - name: "application"
       facility: "application"
     - name: "database"
-      facility: "db"
+      facility: "database"
     - name: "storage"
       facility: "storage"
     - name: "mail"
@@ -103,10 +103,10 @@ log:
     - name: "redis"
       facility: "redis"
   use_tls: False
-  ca_bundle: "/path/to/certificate.pem"
+  ca_bundle: #"/path/to/certificate.pem"
   level: "DEBUG"
-  file_name: "app.log"
-  file_dir_name: "logs"
+  name_log_file: "app.log"
+  dir_log_name: "logs"
   required_fields:
     - "environment"
     - "hostname"
@@ -124,14 +124,14 @@ redis:
   cache_expire_seconds: 300
   max_connections: 20
   use_ssl: False
-  ca_bundle: "/path/to/certificate.pem"
+  ca_bundle: #"/path/to/certificate.pem"
   socket_timeout: 600
   socket_connect_timeout: 10
   retry_on_timeout: True
   socket_keepalive: True
 
 celery:
-  redis_db: db_celery
+  redis_db: 3
   task_default_queue: "default"
   task_serializer: "json"
   task_time_limit: 6000
@@ -147,7 +147,7 @@ celery:
   worker_max_tasks_per_child: 500
   worker_disable_rate_limits: False
   flower_url: "http://localhost:8888"
-  flower_basic_auth: None
+  flower_basic_auth: 
   task_track_started: True
   broker_pool_limit: 20
   result_extended: True
@@ -160,7 +160,8 @@ mail:
   sender: "gd_advanced_tools@app.com"
   use_tls: False
   validate_certs: False
-  ca_bundle: "/path/to/certificate.pem"
+  ca_bundle: #"/path/to/certificate.pem"
+  template_folder: 
 
 queue:
   type: "kafka"
@@ -172,7 +173,7 @@ queue:
   producer_acks: "all"
   producer_linger_ms: 5
   security_protocol: "PLAINTEXT"
-  ca_bundle: "/path/to/certificate.pem"
+  ca_bundle: #"/path/to/certificate.pem"
   compression_type: "lz4"
   message_max_bytes: 1048576
   session_timeout_ms: 10000

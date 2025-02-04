@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -21,7 +21,7 @@ class AppBaseSettings(BaseYAMLSettings):
     Validates and manages essential application parameters across environments.
     """
 
-    yaml_group: str = "app"
+    yaml_group: ClassVar[str] = "app"
     model_config = SettingsConfigDict(
         env_prefix="APP_",
         extra="forbid",

@@ -113,10 +113,14 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         """
 
         def __init__(
-            self, model: Type[ConcreteTable], load_joined_models: bool = False
+            self,
+            model: Type[ConcreteTable],
+            main_class: Type[AbstractRepository],
+            load_joined_models: bool = False,
         ):
             self.model = model
             self.load_joined_models = load_joined_models
+            self.main_class = main_class
 
         async def _prepare_and_save_object(
             self,
@@ -174,22 +178,28 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             :return: Объект, список объектов или пустой список/словарь, если данные не найдены.
             """
             if isinstance(query_or_object, Select):
+                # Выполняем запрос
                 result: Result = await session.execute(query_or_object)
 
                 if is_return_list:
+                    # Возвращаем список объектов
                     objects = result.scalars().unique().all()
-                    return (
-                        objects if objects else []
-                    )  # Возвращаем пустой список, если данных нет
+                    if not objects:
+                        raise NotFoundError(message="No objects found")
+                    return objects
                 else:
-                    return (
-                        result.unique().scalar_one_or_none() or {}
-                    )  # Возвращаем пустой словарь, если объект не найден
+                    # Возвращаем один объект
+                    object = result.scalars().first()
+                    if not object:
+                        raise NotFoundError(message="Object not found")
+                    return object
 
             elif self.load_joined_models:
+                # Если объект не в сессии, добавляем его
                 if query_or_object not in session:
                     session.add(query_or_object)
 
+                # Обновляем объект и подгружаем связи
                 await session.flush()
                 await self._refresh_with_relationships(
                     session, query_or_object
@@ -237,8 +247,13 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             """
             Общий метод для получения версий объекта.
             """
+            object = await self.main_class.get(key="id", value=object_id)
+
+            if not object or (isinstance(object, list) and not object):
+                raise NotFoundError(message="Object not found")
+
             VersionModel = version_class(self.model)
-            query = select(VersionModel).filter(VersionModel.id == object_id)
+            query = select(VersionModel).filter(VersionModel.id == object.id)
 
             if order == "asc":
                 query = query.order_by(VersionModel.transaction_id)
@@ -249,6 +264,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 query = query.limit(limit)
 
             result = await session.execute(query)
+
             return result.scalars().all()
 
     def __init__(
@@ -258,7 +274,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     ):
         self.model = model
         self.load_joined_models = load_joined_models
-        self.helper = self.HelperMethods(model, load_joined_models)
+        self.helper = self.HelperMethods(
+            model=model, load_joined_models=load_joined_models, main_class=self
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")

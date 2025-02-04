@@ -1,3 +1,4 @@
+import asyncio
 import json_tricks
 from fastapi import Response
 
@@ -138,7 +139,11 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
-        return await graylog_handler.check_connection()
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, graylog_handler.check_connection()
+        )
+        return result
 
     async def check_smtp(self):
         """

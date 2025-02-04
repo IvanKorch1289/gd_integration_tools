@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Set, Tuple
+from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,175 +24,193 @@ __all__ = (
 
 
 class FileStorageSettings(BaseYAMLSettings):
-    """Настройки подключения к S3-совместимому объектному хранилищу.
+    """Settings for connecting to an S3-compatible object storage.
 
-    Группы параметров:
-    - Основные параметры хранилища
-    - Аутентификация
-    - Параметры подключения
-    - Настройки SSL/TLS
-    - Политики повторов
-    - Управление ключами
+    Configuration groups:
+    - Storage provider settings
+    - Authentication
+    - Connection parameters
+    - SSL/TLS settings
+    - Retry policies
+    - Key management
     """
 
-    yaml_group = "fs"
-    model_config = SettingsConfigDict(
-        env_prefix="FS_",
-        extra="forbid",
-    )
+    yaml_group: ClassVar[str] = "fs"
+    model_config = SettingsConfigDict(env_prefix="FS_", extra="forbid")
 
-    # Основные параметры
+    # Storage provider settings
     provider: Literal["minio", "aws", "other"] = Field(
         ...,
-        description="Тип провайдера хранилища",
+        description="Type of storage provider",
+        example="minio",
     )
     bucket: str = Field(
         default="my-bucket",
         env="FS_BUCKET",
-        description="Имя бакета по умолчанию",
+        description="Default bucket name",
+        example="my-bucket",
     )
 
-    # Аутентификация
+    # Authentication
     access_key: str = Field(
         ...,
-        description="Ключ доступа к хранилищу",
+        description="Access key for the storage",
+        example="AKIAIOSFODNN7EXAMPLE",
     )
     secret_key: str = Field(
         ...,
-        description="Секретный ключ доступа",
+        description="Secret access key for the storage",
+        example="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
     )
 
-    # Параметры подключения
+    # Connection parameters
     endpoint: str = Field(
         ...,
-        description="URL API хранилища",
+        description="API endpoint URL of the storage",
+        example="https://s3.example.com",
     )
-    interfase_endpoint: str = Field(
+    interface_endpoint: str = Field(
         ...,
-        description="URL интерфейса хранилища",
+        description="Web interface URL of the storage",
+        example="https://console.s3.example.com",
     )
     use_ssl: bool = Field(
         ...,
-        description="Использовать HTTPS соединение",
+        description="Use HTTPS for connections",
+        example=True,
     )
 
-    # Настройки SSL/TLS
-    verify_tls: bool = Field(
+    # SSL/TLS settings
+    verify: bool = Field(
         ...,
-        description="Проверять SSL сертификаты",
+        description="Verify SSL certificates",
+        example=True,
     )
     ca_bundle: Optional[str] = Field(
         default=None,
         env="FS_CA_BUNDLE",
-        description="Путь к CA сертификату для SSL",
+        description="Path to the CA certificate bundle for SSL",
+        example="/path/to/ca-bundle.crt",
     )
 
-    # Политики повторов
-    timeout: int = Field(..., description="Таймаут операций (секунды)")
+    # Retry policies
+    timeout: int = Field(
+        ...,
+        description="Timeout for operations (in seconds)",
+        example=30,
+    )
     retries: int = Field(
         ...,
-        description="Количество попыток при ошибках",
+        description="Number of retries for failed operations",
+        example=3,
     )
 
-    # Управление ключами
+    # Key management
     key_prefix: str = Field(
         ...,
-        description="Префикс для ключей объектов",
+        description="Prefix for object keys",
+        example="my-prefix/",
     )
 
     @property
     def normalized_endpoint(self) -> str:
-        """Возвращает endpoint без схемы подключения."""
+        """Returns the endpoint without the connection scheme (e.g., 'https://')."""
         return str(self.endpoint).split("://")[-1]
 
 
+# Instantiate settings for immediate use
 fs_settings = FileStorageSettings()
 
 
-class LogStorageSettings(BaseSettings):
-    """Настройки системы логирования и хранения логов.
+class LogStorageSettings(BaseYAMLSettings):
+    """Settings for the logging and log storage system.
 
-    Группы параметров:
-    - Основные параметры подключения
-    - Настройки безопасности
-    - Параметры формата логов
-    - Валидация логов
+    Configuration groups:
+    - Connection parameters
+    - Security settings
+    - Log format settings
+    - Log validation
     """
 
-    yaml_group = "log"
+    yaml_group: ClassVar[str] = "log"
     model_config = SettingsConfigDict(
         env_prefix="LOG_",
         extra="forbid",
     )
 
-    # Основные параметры
+    # Connection parameters
     host: str = Field(
         ...,
-        description="Хост сервера логов",
+        description="Log server host",
+        example="logs.example.com",
     )
     port: int = Field(
         ...,
         gt=0,
         lt=65536,
-        description="TCP порт сервера логов",
+        description="TCP port of the log server",
+        example=514,
     )
     udp_port: int = Field(
         ...,
         gt=0,
         lt=65536,
-        description="UDP порт для отправки логов",
+        description="UDP port for sending logs",
+        example=514,
     )
-    loggers_config: List[Dict[str, str]] = Field(
+    conf_loggers: List[Dict] = Field(
         ...,
+        default_factory=list,
+        min_items=1,
+        description="Configuration for loggers",
+        example=[{"name": "application", "facility": "application"}],
     )
 
-    # Настройки безопасности
+    # Security settings
     use_tls: bool = Field(
         ...,
-        description="Использовать TLS для подключения",
+        description="Use TLS for secure connections",
+        example=True,
     )
-    ca_bundle: Optional[str] = Field(..., description="Путь к CA сертификату")
+    ca_bundle: Optional[str] = Field(
+        default=None,
+        description="Path to the CA certificate bundle",
+        example="/path/to/ca-bundle.crt",
+    )
 
-    # Параметры формата
+    # Log format settings
     level: str = Field(
         ...,
-        description="Уровень детализации логов",
+        pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
+        description="Logging level of detail",
+        example="INFO",
     )
-    file_dir_name: str = Field(
+    name_log_file: str = Field(
         ...,
-        description="Название каталога с логами",
+        description="Path to the log file",
+        example="app.log",
     )
-    file_name: str = Field(
+    dir_log_name: str = Field(
         ...,
-        description="Путь к файлу логов",
+        description="Directory name for log files",
+        example="/var/logs/myapp",
     )
 
-    # Валидация логов
-    required_fields: Set[str] = Field(
+    # Log validation
+    required_fields: List[str] = Field(
         ...,
-        description="Обязательные поля в лог-сообщениях",
+        default_factory=list,
+        min_items=1,
+        description="Mandatory fields in log messages",
+        example={"timestamp", "level", "message"},
     )
 
-    @field_validator("udp_port", "port")
-    @classmethod
-    def validate_port(cls, v):
-        if not 1 <= v <= 65535:
-            raise ValueError("Port must be between 1 and 65535")
-        return v
 
-    @field_validator("level")
-    @classmethod
-    def validate_log_level(cls, v):
-        allowed_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-        if v.upper() not in allowed_levels:
-            raise ValueError(f"Invalid log level. Allowed: {allowed_levels}")
-        return v.upper()
-
-
+# Instantiate settings for immediate use
 log_settings = LogStorageSettings()
 
 
-class RedisSettings(BaseSettings):
+class RedisSettings(BaseYAMLSettings):
     """Настройки для подключения к Redis.
 
     Attributes:
@@ -218,7 +236,7 @@ class RedisSettings(BaseSettings):
         redis_url: Возвращает URL для подключения к Redis.
     """
 
-    yaml_group = "redis"
+    yaml_group: ClassVar[str] = "redis"
     model_config = SettingsConfigDict(
         env_prefix="REDIS_",
         extra="forbid",
@@ -253,7 +271,7 @@ class RedisSettings(BaseSettings):
 redis_settings = RedisSettings()
 
 
-class CelerySettings(BaseSettings):
+class CelerySettings(BaseYAMLSettings):
     """Настройки для Celery (фоновые задачи и воркеры).
 
     Группы параметров:
@@ -264,7 +282,7 @@ class CelerySettings(BaseSettings):
     - Оптимизация производительности
     """
 
-    yaml_group = "celery"
+    yaml_group: ClassVar[str] = "celery"
     model_config = SettingsConfigDict(
         env_prefix="CELERY_",
         extra="forbid",
@@ -380,7 +398,7 @@ class CelerySettings(BaseSettings):
 celery_settings = CelerySettings()
 
 
-class MailSettings(BaseSettings):
+class MailSettings(BaseYAMLSettings):
     """Настройки электронной почты.
 
     Группы параметров:
@@ -390,7 +408,7 @@ class MailSettings(BaseSettings):
     - Параметры писем
     """
 
-    yaml_group = "mail"
+    yaml_group: ClassVar[str] = "mail"
     model_config = SettingsConfigDict(
         env_prefix="MAIL_",
         extra="forbid",
@@ -419,7 +437,7 @@ class MailSettings(BaseSettings):
         ...,
         description="Логин для SMTP аутентификации",
     )
-    mail_password: str = Field(
+    password: str = Field(
         ...,
         description="Пароль для SMTP аутентификации",
     )
@@ -440,11 +458,15 @@ class MailSettings(BaseSettings):
         ...,
         description="Email отправителя по умолчанию",
     )
+    template_folder: str | None = Field(
+        ...,
+        description="Email отправителя по умолчанию",
+    )
 
     @field_validator("port")
     @classmethod
     def validate_port(cls, v):
-        if v == 465 and not cls.mail_use_tls:
+        if v == 465 and not cls.use_tls:
             raise ValueError("Порт 465 требует SSL/TLS")
         return v
 
@@ -459,7 +481,7 @@ class MailSettings(BaseSettings):
 mail_settings = MailSettings()
 
 
-class QueueSettings(BaseSettings):
+class QueueSettings(BaseYAMLSettings):
     """Настройки брокера сообщений.
 
     Группы параметров:
@@ -471,7 +493,7 @@ class QueueSettings(BaseSettings):
     - Таймауты и повторы
     """
 
-    yaml_group = "queue"
+    yaml_group: ClassVar[str] = "queue"
     model_config = SettingsConfigDict(
         env_prefix="QUEUE_",
         extra="forbid",

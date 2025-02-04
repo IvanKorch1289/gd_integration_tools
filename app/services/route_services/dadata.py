@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from urllib.parse import urljoin
 
-from app.config.settings import APIDADATASettings, settings
+from app.config.settings import DadataAPISettings, settings
 from app.services.helpers.http_helper import make_request
 from app.utils.decorators.caching import response_cache
 
@@ -30,14 +30,14 @@ class APIDADATAService:
         Args:
             settings: Объект с параметрами API
         """
-        self.settings: APIDADATASettings = settings
+        self.settings: DadataAPISettings = settings
         self._initialize_attributes()
 
     def _initialize_attributes(self):
         """Инициализирует атрибуты из настроек"""
-        self.auth_token = f"Token {self.settings.dadata_api_key}"
-        self.base_url = self.settings.dadata_base_url
-        self.endpoints = self.settings.dadata_endpoints
+        self.auth_token = f"Token {self.settings.api_key}"
+        self.base_url = self.settings.base_url
+        self.endpoints = self.settings.endpoints
 
     @classmethod
     @response_cache

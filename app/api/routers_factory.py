@@ -1,6 +1,6 @@
 from typing import List, Optional, Type, TypeVar
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, Request, status
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
@@ -42,13 +42,7 @@ def create_router_class(
         async def get_all(
             self, request: Request, x_api_key: str = Header(...)
         ):
-            result = await self.service.get()
-            if not result:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Объекты не найдены",
-                )
-            return result
+            return await self.service.get()
 
         @router.get(
             "/id/{object_id}",
@@ -64,13 +58,7 @@ def create_router_class(
             object_id: int,
             x_api_key: str = Header(...),
         ):
-            result = await self.service.get(key="id", value=object_id)
-            if not result:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Объект не найден",
-                )
-            return result
+            return await self.service.get(key="id", value=object_id)
 
         @router.post(
             "/create/",

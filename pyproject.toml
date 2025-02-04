@@ -106,7 +106,8 @@ disable_error_code = [
     "assignment",
     "import-untyped",
     "union-attr",
-    "var-annotated"
+    "var-annotated",
+    "call-arg"
 ]
 no_implicit_optional = true
 warn_redundant_casts = true

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Optional, Type
+from typing import Any, ClassVar, Dict, Optional, Tuple, Type
 
 import yaml
 from dotenv import load_dotenv
@@ -91,36 +91,24 @@ class BaseYAMLSettings(BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
+        settings_cls: Type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> tuple:
-        """Custom configuration sources with YAML and environment variables.
-
-        Priority order:
-        1. Manual initialization parameters (highest priority)
-        2. YAML configuration (group-specific section)
-        3. Environment variables (with class-specific prefix)
-        4. Secret files (lowest priority)
-        """
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        """Correct signature with all required parameters"""
         if not cls.yaml_group:
             raise ValueError(
                 "Subclasses must define `yaml_group` class variable"
             )
 
-        # Load YAML configuration for the specified group
         yaml_config = (
             yaml_settings_loader.get_group_settings(cls.yaml_group) or {}
         )
-
-        # Load environment variables with class-specific prefix
         env_vars = env_settings()
+        init_config = init_settings()
 
-        # Merge configurations with YAML settings taking precedence
-        merged_config = {**env_vars, **yaml_config}
+        merged_config = {**init_config, **env_vars, **yaml_config}
 
-        return (
-            init_settings,  # Manual initialization
-            lambda: merged_config,  # Combined YAML + ENV
-            file_secret_settings,  # Secret files
-        )
+        return (lambda: merged_config,)

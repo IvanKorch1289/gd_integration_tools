@@ -6,7 +6,7 @@ import aiohttp
 import asyncio
 from urllib.parse import urljoin
 
-from app.config.settings import APISSKBSettings, settings
+from app.config.settings import SKBAPISettings, settings
 from app.infra.storage import s3_bucket_service_factory
 from app.services.helpers.http_helper import make_request
 from app.services.route_services.base import BaseService
@@ -28,7 +28,7 @@ class APISKBService:
     """
 
     def __init__(
-        self, settings: APISSKBSettings, kind_service: Type[BaseService] = None
+        self, settings: SKBAPISettings, kind_service: Type[BaseService] = None
     ):
         self.kind_service = kind_service
         self.settings = settings
@@ -37,9 +37,9 @@ class APISKBService:
 
     def _initialize_attributes(self):
         """Инициализирует атрибуты из настроек"""
-        self.params = {"api-key": self.settings.skb_api_key}
-        self.base_url = self.settings.skb_base_url
-        self.endpoints = self.settings.skb_endpoints
+        self.params = {"api-key": self.settings.api_key}
+        self.base_url = self.settings.base_url
+        self.endpoints = self.settings.endpoints
 
     async def get_request_kinds(self) -> Dict[str, Any]:
         """
@@ -55,7 +55,7 @@ class APISKBService:
                 method="GET",
                 url=url,
                 params=self.params,
-                connect_timeout=self.settings.connect_timeeout,
+                connect_timeout=self.settings.connect_timeout,
                 read_timeout=self.settings.read_timeout,
                 total_timeout=self.settings.connect_timeout
                 + self.settings.read_timeout,
@@ -121,7 +121,7 @@ class APISKBService:
                 method="GET",
                 url=url,
                 params=params,
-                connect_timeout=self.settings.connect_timeeout,
+                connect_timeout=self.settings.connect_timeout,
                 read_timeout=self.settings.read_timeout,
                 total_timeout=self.settings.connect_timeout
                 + self.settings.read_timeout,

@@ -26,7 +26,7 @@ class GraylogHandler:
     @property
     def enabled(self) -> bool:
         """Check if Graylog logging is enabled."""
-        return bool(self.config.log_host and self.config.log_udp_port)
+        return bool(self.config.host and self.config.udp_port)
 
     def _connect(self) -> Optional[logging.Handler]:
         """
@@ -44,15 +44,15 @@ class GraylogHandler:
         try:
             handler_class = (
                 graypy.GELFTLSHandler
-                if self.config.log_use_tls
+                if self.config.use_tls
                 else graypy.GELFUDPHandler
             )
             handler = handler_class(
-                self.config.log_host,
-                self.config.log_udp_port,
+                self.config.host,
+                self.config.udp_port,
                 **(
-                    {"ca_certs": self.config.log_ca_certs}
-                    if self.config.log_use_tls
+                    {"ca_certs": self.config.ca_bundle}
+                    if self.config.use_tls
                     else {}
                 ),
             )
@@ -79,7 +79,7 @@ class GraylogHandler:
         """
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                sock.connect((self.config.log_host, self.config.log_udp_port))
+                sock.connect((self.config.host, self.config.udp_port))
                 sock.sendall(b"Connection test")
             return True
         except OSError as exc:

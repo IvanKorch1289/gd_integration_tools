@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import ClassVar, List, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -21,7 +21,7 @@ class AuthSettings(BaseYAMLSettings):
     - Additional settings
     """
 
-    yaml_group: str = "auth"
+    yaml_group: ClassVar[str] = "auth"
     model_config = SettingsConfigDict(
         env_prefix="AUTH_",
         extra="forbid",
@@ -102,21 +102,6 @@ class AuthSettings(BaseYAMLSettings):
         description="Time window for rate limiting in seconds",
         examples=[60, 300],
     )
-
-    @field_validator("algorithm")
-    @classmethod
-    def validate_algorithm(cls, v: str) -> str:
-        """Validate the algorithm based on the secret key length.
-
-        Raises:
-            ValueError: If the algorithm is HS* and the secret key is too short.
-        """
-        if v.startswith("HS") and "secret_key" in cls.model_fields:
-            if len(cls.secret_key) < 32:
-                raise ValueError(
-                    "HS algorithms require a secret key of at least 32 characters"
-                )
-        return v
 
 
 # Instantiate settings for immediate use

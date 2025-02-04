@@ -14,8 +14,13 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
+from http.client import HTTPException
 
-from app.config.config_manager import ConfigManager, ConfigUpdateRequest
+from app.config.config_manager import (
+    ConfigManager,
+    ConfigUpdateRequest,
+    ConfigUpdateResponse,
+)
 from app.config.settings import settings
 from app.infra import event_bus
 from app.infra.app_factory import get_config_manager
@@ -77,7 +82,7 @@ class TechBV:
             HTMLResponse: Страница с кликабельной ссылкой на файловое хранилище.
         """
         return utilities.generate_link_page(
-            f"{settings.storage.fs_interfase_endpoint}", "Файловое хранилище"
+            f"{settings.storage.interface_endpoint}", "Файловое хранилище"
         )
 
     @router.get(
@@ -295,15 +300,37 @@ class TechBV:
 
     @router.put(
         "/config",
-        summary=" Изменить текущую конфигурацию",
-        operation_id=" update_config",
+        summary="Изменить текущую конфигурацию",
+        operation_id="update_config",
+        response_model=ConfigUpdateResponse,
     )
-    @handle_routes_errors
     async def update_config(
         request: ConfigUpdateRequest,
-        config_manager: ConfigManager = Depends(get_config_manager),
-    ):
-        return config_manager.update_config(request.data)
+    ) -> ConfigUpdateResponse:
+        """Update application configuration
+
+        Args:
+            request: Configuration update request with new data
+            config_manager: Configuration manager dependency
+
+        Returns:
+            ConfigUpdateResponse: Result of the configuration update
+
+        Raises:
+            HTTPException: If configuration update fails
+        """
+        try:
+            updated_config = get_config_manager().update_config(request.data)
+            return ConfigUpdateResponse(
+                status="success", config=updated_config
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Configuration update failed: {str(exc)}",
+            )
 
     @router.post(
         "/send-email",

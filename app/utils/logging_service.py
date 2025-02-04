@@ -132,11 +132,11 @@ class LoggerManager:
 
     def _create_file_handler(self) -> TimedRotatingFileHandler:
         """Configure timed rotating file handler."""
-        log_dir = self.log_config.file_dir_name
+        log_dir = self.log_config.dir_log_name
         os.makedirs(log_dir, exist_ok=True)
 
         handler = TimedRotatingFileHandler(
-            filename=os.path.join(log_dir, self.log_config.file_name),
+            filename=os.path.join(log_dir, self.log_config.name_log_file),
             when="midnight",
             interval=1,
             backupCount=7,
@@ -162,7 +162,7 @@ class LoggerManager:
 
     def _configure_loggers(self) -> None:
         """Configure all registered loggers."""
-        for logger_cfg in self.log_config.loggers_config:
+        for logger_cfg in self.log_config.conf_loggers:
             logger = logging.getLogger(logger_cfg["name"])
             logger.propagate = False
             logger.setLevel(self.log_config.level.upper())
@@ -171,7 +171,7 @@ class LoggerManager:
 
     def _init_logger_instances(self) -> None:
         """Create logger instances as class attributes."""
-        for logger_cfg in self.log_config.loggers_config:
+        for logger_cfg in self.log_config.conf_loggers:
             logger_name = logger_cfg["name"]
             setattr(
                 self, f"{logger_name}_logger", logging.getLogger(logger_name)
@@ -207,7 +207,7 @@ class LoggerManager:
         """Safely terminate logging infrastructure."""
         if self.queue_listener:
             self.queue_listener.stop()
-        self.graylog.close()
+        self.graylog._close()
 
 
 # Initialize logging system

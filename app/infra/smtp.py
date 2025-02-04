@@ -74,10 +74,10 @@ class MailService:
                 port=self.settings.port,
                 use_tls=self.settings.use_tls,
                 validate_certs=self.settings.validate_certs,
-                ca_bundle=self.settings.ca_bundle,
+                cert_bundle=self.settings.ca_bundle,
             )
             await smtp.connect()
-            if self.settings.mail_username and self.settings.password:
+            if self.settings.username and self.settings.password:
                 await smtp.login(
                     self.settings.username,
                     self.settings.password,

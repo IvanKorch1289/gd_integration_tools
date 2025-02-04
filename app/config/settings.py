@@ -1,10 +1,13 @@
 from pydantic_settings import BaseSettings
 
 from app.config.base import AppBaseSettings, app_base_settings
-from app.config.database import DatabaseSettings, db_connection_settings
+from app.config.database import (
+    DatabaseConnectionSettings,
+    db_connection_settings,
+)
 from app.config.outer_api import (
-    APIDADATASettings,
-    APISSKBSettings,
+    DadataAPISettings,
+    SKBAPISettings,
     dadata_api_settings,
     skb_api_settings,
 )
@@ -43,9 +46,9 @@ class Settings(BaseSettings):
     auth: AuthSettings = auth_settings
 
     # Интеграции
-    database: DatabaseSettings = db_connection_settings
-    skb_api: APISSKBSettings = skb_api_settings
-    dadata_api: APIDADATASettings = dadata_api_settings
+    database: DatabaseConnectionSettings = db_connection_settings
+    skb_api: SKBAPISettings = skb_api_settings
+    dadata_api: DadataAPISettings = dadata_api_settings
     queue: QueueSettings = queue_settings
     mail: MailSettings = mail_settings
     celery: CelerySettings = celery_settings

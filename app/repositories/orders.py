@@ -30,24 +30,6 @@ class OrderRepository(SQLAlchemyRepository):
         Вспомогательные методы для работы с базой данных.
         """
 
-        def __init__(
-            self,
-            order_kind_repo: SQLAlchemyRepository,
-            model: Any = Order,
-            load_joined_models: bool = True,
-        ):
-            """
-            Инициализация репозитория.
-
-            :param model: Модель таблицы заказов.
-            :param load_joined_models: Флаг для загрузки связанных моделей.
-            :param order_kind_repo: Репозиторий для работы с видами заказов.
-            """
-            super().__init__(
-                model=model, load_joined_models=load_joined_models
-            )
-            self.order_kind_repo = order_kind_repo
-
         async def _validate_order_kind(
             self, data: Dict[str, Any]
         ) -> Dict[str, Any]:
@@ -82,13 +64,12 @@ class OrderRepository(SQLAlchemyRepository):
         :param load_joined_models: Флаг для загрузки связанных моделей.
         :param order_kind_repo: Репозиторий для работы с видами заказов.
         """
-        super().__init__(model=model, load_joined_models=load_joined_models)
-        self.order_kind_repo = order_kind_repo
-        self.helper = self.HelperMethods(
+        super().__init__(
             model=model,
             load_joined_models=load_joined_models,
-            order_kind_repo=order_kind_repo,
         )
+        self.order_kind_repo = order_kind_repo
+        self.helper.order_kind_repo = order_kind_repo
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)

@@ -80,8 +80,8 @@ async def lifespan(app: FastAPI):
         await event_client._start()
 
         # Инициализация клиента Kafka
-        await kafka_client.initialize()
-        await queue_service.start_consumers()
+        # await kafka_client.initialize()
+        # await queue_service.start_consumers()
 
         # Инициализация лимитера запросов
         await _init_limiter()
@@ -95,7 +95,7 @@ async def lifespan(app: FastAPI):
         await s3_client._shutdown()
         await mail_service._close_pool()
         await event_client._stop()
-        await kafka_client.close()
+        # await kafka_client.close()
         graylog_handler._close()
 
         app_logger.info("Завершение работы приложения...")
@@ -129,7 +129,7 @@ def create_app() -> FastAPI:
         InnerRequestLoggingMiddleware, log_body=True, max_body_size=4096
     )
     app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=settings.auth.auth_allowed_hosts
+        TrustedHostMiddleware, allowed_hosts=settings.auth.allowed_hosts
     )
     app.add_middleware(PrometheusMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -186,13 +186,13 @@ def create_app() -> FastAPI:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
         log_url = await utilities.ensure_url_protocol(
-            f"{settings.logging.log_host}:{settings.logging.log_port}"
+            f"{settings.logging.host}:{settings.logging.port}"
         )
         fs_url = await utilities.ensure_url_protocol(
-            settings.storage.interfase_endpoint
+            settings.storage.interface_endpoint
         )
         flower_url = await utilities.ensure_url_protocol(
-            settings.celery.cel_flower_url
+            settings.celery.flower_url
         )
 
         return f"""

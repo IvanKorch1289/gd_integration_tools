@@ -24,7 +24,7 @@ async def _init_limiter():
     """
     try:
         redis_connection = redis.from_url(
-            f"{settings.redis.redis_url}/{settings.redis.redis_db_limits}",
+            f"{settings.redis.redis_url}/{settings.redis.db_limits}",
             encoding="utf-8",
             decode_responses=True,
         )
