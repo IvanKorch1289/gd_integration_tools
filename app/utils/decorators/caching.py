@@ -30,6 +30,7 @@ class CachingDecorator:
         self.key_prefix = key_prefix
         self.exclude_self = exclude_self
         self.renew_ttl = renew_ttl
+        self.logger = redis_logger
 
     def _generate_cache_key(
         self,
@@ -38,17 +39,16 @@ class CachingDecorator:
         kwargs: dict,
         bucket: Optional[str] = None,
     ) -> str:
-        key_parts = [
-            self.key_prefix,
-            f"{args[0].__class__.__name__ if args else ''}.{func.__name__}.{kwargs}",
-        ]
-
-        if bucket:
-            key_parts.insert(0, f"bucket:{bucket}")
-
-        key_string = ":".join(key_parts)
-
-        return hashlib.sha256(key_string.encode()).hexdigest()
+        """Генерация уникального ключа кэша"""
+        key_data = {
+            "func": f"{func.__module__}.{func.__name__}",
+            "args": (
+                args[1:] if args and hasattr(args[0], "__dict__") else args
+            ),
+            "kwargs": kwargs,
+            "bucket": bucket,
+        }
+        return f"cache:{hashlib.sha256(json_tricks.dumps(key_data).encode()).hexdigest()}"
 
     async def _handle_ttl(self, key: str, redis: Redis):
         if self.renew_ttl:
@@ -70,8 +70,8 @@ class CachingDecorator:
                 )
                 await self._handle_ttl(key, r)
                 return result
-        except Exception as exc:
-            redis_logger.error(f"Failed to get cached data: {str(exc)}")
+        except Exception:
+            self.logger.error("Failed to get cached data", exc_info=True)
             return None
 
     @redis_client.reconnect_on_failure
@@ -86,8 +86,8 @@ class CachingDecorator:
                 )
 
                 await r.setex(key, self.expire, serialized)
-        except Exception as exc:
-            redis_logger.error(f"Failed to cache data: {str(exc)}")
+        except Exception:
+            self.logger.error("Failed to cache data", exc_info=True)
 
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)

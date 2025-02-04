@@ -27,7 +27,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         extra="forbid",
     )
 
-    # Core connection parameters
     type: Literal["postgresql", "oracle"] = Field(
         ...,
         description="Database management system type",
@@ -50,8 +49,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         description="Database name or service identifier",
         examples=["myapp_prod", "ORCL"],
     )
-
-    # Authentication
     username: str = Field(
         ...,
         description="Database user name",
@@ -62,8 +59,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         description="Database user password",
         examples=["secure_password_123"],
     )
-
-    # Drivers and operation modes
     async_driver: str = Field(
         ...,
         description="Asynchronous driver package",
@@ -77,8 +72,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
     echo: bool = Field(
         ..., description="Enable SQL query logging", examples=[False]
     )
-
-    # Timeouts
     connect_timeout: int = Field(
         ...,
         description="Connection establishment timeout in seconds",
@@ -89,8 +82,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         description="Database command execution timeout in seconds",
         examples=[30],
     )
-
-    # Connection pooling
     pool_size: int = Field(
         ...,
         ge=1,
@@ -113,8 +104,6 @@ class DatabaseConnectionSettings(BaseYAMLSettings):
         description="Wait timeout for pool connection in seconds",
         examples=[30],
     )
-
-    # SSL/TLS Configuration
     ssl_mode: Optional[str] = Field(
         None,
         description="SSL connection mode (PostgreSQL specific)",

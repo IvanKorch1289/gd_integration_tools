@@ -5,10 +5,10 @@ from fastapi import Response
 from app.celery.celery_config import celery_manager
 from app.infra.db.database import db_initializer
 from app.infra.logger import graylog_handler
-from app.infra.queue import kafka_client
+from app.infra.queue import queue_client
 from app.infra.redis import redis_client
+from app.infra.smtp import smtp_client
 from app.infra.storage import s3_bucket_service_factory
-from app.services.infra_services.mail import mail_service
 from app.utils.decorators.singleton import singleton
 
 
@@ -34,7 +34,7 @@ class HealthCheck:
         celery_check = await self.check_celery()
         celery_queues_check = await self.check_celery_queues()
         celery_scheduler_check = await self.check_celery_scheduler()
-        kafka_check = await self.check_kafka()
+        queue_check = await self.check_queue()
         response_data = {
             "db": db_check,
             "redis": redis_check,
@@ -45,7 +45,7 @@ class HealthCheck:
             "celery": celery_check,
             "celery_queue": celery_queues_check,
             "celery_scheduler": celery_scheduler_check,
-            "kafka": kafka_check,
+            "queue": queue_check,
         }
 
         if all(response_data.values()):
@@ -152,16 +152,16 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния SMTP-сервера.
         """
-        return await mail_service.check_connection()
+        return await smtp_client.test_connection()
 
-    async def check_kafka(self):
+    async def check_queue(self):
         """
         Проверяет состояние Kafka.
 
         Returns:
             dict: Результат проверки состояния Kafka.
         """
-        return await kafka_client.healthcheck()
+        return await queue_client.check_health()
 
 
 health_check = HealthCheck()

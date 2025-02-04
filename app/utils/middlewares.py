@@ -34,12 +34,13 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.log_body = log_body
         self.max_body_size = max_body_size
+        self.logger = app_logger
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Process and log request/response information"""
-        app_logger.info(f"Request: {request.method} {request.url}")
+        self.logger.info(f"Request: {request.method} {request.url}")
 
         start_time = time.time()
 
@@ -50,15 +51,15 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
 
         try:
             response = await call_next(request)
-        except Exception as exc:
-            app_logger.error(f"Request processing error: {exc}", exc_info=True)
+        except Exception:
+            self.logger.error("Request processing error", exc_info=True)
             raise
 
         if self.log_body:
             await self._log_response_body(response)
 
         process_time = (time.time() - start_time) * 1000
-        app_logger.info(
+        self.logger.info(
             f"Response: {response.status_code} | {request.method} {request.url.path} "
             f"processed in {process_time:.2f} ms"
         )
@@ -72,10 +73,12 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
             if len(body) > self.max_body_size:
                 return b"<body too large to log>"
 
-            app_logger.debug(f"Request body: {body.decode('utf-8')}")
+            self.logger.loggerger.debug(
+                f"Request body: {body.decode('utf-8')}"
+            )
             return body
         except UnicodeDecodeError:
-            app_logger.warning(
+            self.logger.warning(
                 "Request body contains binary data, skipping logging"
             )
             return b""
@@ -86,9 +89,9 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         if "text" in content_type or "json" in content_type:
             body = await self._capture_response_body(response)
             if len(body) > self.max_body_size:
-                app_logger.debug("Response body too large to log")
+                self.logger.debug("Response body too large to log")
             else:
-                app_logger.debug(f"Response body: {body.decode('utf-8')}")
+                self.logger.debug(f"Response body: {body.decode('utf-8')}")
 
     @staticmethod
     async def _capture_response_body(response: Response) -> bytes:

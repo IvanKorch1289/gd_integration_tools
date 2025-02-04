@@ -2,8 +2,8 @@ from celery import chain
 
 from app.celery.celery_config import celery_manager
 from app.config.settings import settings
-from app.infra.event_bus import event_client
-from app.services.infra_services.mail import mail_sender
+from app.infra.stream_manager import stream_client
+from app.services.infra_services.mail import mail_service
 from app.services.route_services.orders import OrderService, get_order_service
 from app.utils.utils import utilities
 
@@ -38,7 +38,7 @@ def send_email(self, data: dict):
     async def inner_send_mail():
         try:
             # Вызываем метод сервиса для отправки сообщения
-            await mail_sender.send_email(
+            await mail_service.send_email(
                 to_emails=data.get("to_emails"),
                 subject=data.get("subject"),
                 message=data.get("message"),
@@ -74,7 +74,7 @@ def send_result_to_gd(self, order_id: int):
         try:
             # Вызываем метод сервиса для отправки результата в GD
             result = await order_service.send_data_to_gd(order_id=order_id)
-            await event_client.publish_event(
+            await stream_client.publish_event(
                 event_type="order_send", data={"order": order_id}
             )
             return result

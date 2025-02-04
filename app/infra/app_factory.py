@@ -14,13 +14,14 @@ from app.api.v1.routers import get_v1_routers
 from app.config.config_manager import ConfigManager
 from app.config.settings import settings
 from app.infra.db.database import db_initializer
-from app.infra.event_bus import event_client
 from app.infra.logger import graylog_handler
-from app.infra.queue import kafka_client
+from app.infra.queue import queue_client
 from app.infra.redis import redis_client
-from app.infra.smtp import mail_service
+from app.infra.smtp import smtp_client
 from app.infra.storage import s3_bucket_service_factory
-from app.services.infra_services.queue import queue_service
+from app.infra.stream_manager import stream_client
+from app.services.infra_services.kafka import queue_service
+from app.services.infra_services.queue_handlers import process_order
 from app.utils.admins.files import FileAdmin, OrderFileAdmin
 from app.utils.admins.orderkinds import OrderKindAdmin
 from app.utils.admins.orders import OrderAdmin
@@ -62,41 +63,44 @@ async def lifespan(app: FastAPI):
 
     try:
         # Инициализация подключения к Graylog
-        graylog_handler._connect()
+        graylog_handler.connect()
 
         # Инициализация пула подключений Redis
-        await redis_client._ensure_connected()
+        await redis_client.ensure_connected()
 
         # Инициализация пула подключений БД
-        await db_initializer._initialize_async_pool()
+        await db_initializer.initialize_async_pool()
 
         # Инициализация подключения к хранилищу файлов
-        await s3_client._initialize_connection()
+        await s3_client.initialize_connection()
 
         # Инициализация подключения к SMTP-серверу
-        await mail_service._initialize_pool()
+        await smtp_client.initialize_pool()
 
         # Инициализация событийной шины
-        await event_client._start()
+        await stream_client.start_consumer()
 
         # Инициализация клиента Kafka
-        # await kafka_client.initialize()
-        # await queue_service.start_consumers()
+        await queue_client.initialize()
+        await queue_client.create_topics(["required_topics"])
+        await queue_service.start_message_consumption()
+        queue_service.register_handler("orders", process_order)
 
         # Инициализация лимитера запросов
         await _init_limiter()
 
         yield
-    except Exception as exc:
-        app_logger.error(str(exc))
+    except Exception:
+        app_logger.error("Error by starting", exc_info=True)
     finally:
-        await db_initializer.dispose_async()
+        await db_initializer.close()
         await redis_client.close()
-        await s3_client._shutdown()
-        await mail_service._close_pool()
-        await event_client._stop()
-        # await kafka_client.close()
-        graylog_handler._close()
+        await s3_client.shutdown()
+        await smtp_client.close_pool()
+        await stream_client.stop_consumer()
+        await queue_service.stop_message_consumption()
+        await queue_client.close()
+        graylog_handler.close()
 
         app_logger.info("Завершение работы приложения...")
 
@@ -140,8 +144,6 @@ def create_app() -> FastAPI:
         Глобальный обработчик исключений для всего приложения.
         Обрабатывает как стандартные, так и кастомные исключения.
         """
-        # app_logger.error(f"Произошла ошибка: {str(exc)}", exc_info=True)
-
         # Обработка кастомных исключений с атрибутами status_code и message
         if hasattr(exc, "status_code") and hasattr(exc, "message"):
             return JSONResponse(

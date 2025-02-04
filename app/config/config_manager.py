@@ -46,8 +46,8 @@ class ConfigManager:
         try:
             with open(self.config_path, "r") as f:
                 return yaml.safe_load(f) or {}
-        except Exception as e:
-            app_logger.error(f"Config load error: {str(e)}")
+        except Exception:
+            app_logger.error("Config load error", exc_info=True)
             raise
 
     def _validate_structure(self, new_data: Dict, existing_data: Dict):
@@ -92,8 +92,8 @@ class ConfigManager:
             with open(temp_path, "w") as f:
                 yaml.safe_dump(config, f, sort_keys=False)
             temp_path.replace(self.config_path)
-        except Exception as e:
-            app_logger.error(f"Config save failed: {str(e)}")
+        except Exception:
+            app_logger.error("Config save failed", exc_info=True)
             raise
 
     def _reload_settings_models(self):

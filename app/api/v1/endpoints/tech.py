@@ -16,14 +16,10 @@ from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 from http.client import HTTPException
 
-from app.config.config_manager import (
-    ConfigManager,
-    ConfigUpdateRequest,
-    ConfigUpdateResponse,
-)
+from app.config.config_manager import ConfigUpdateRequest, ConfigUpdateResponse
 from app.config.settings import settings
-from app.infra import event_bus
 from app.infra.app_factory import get_config_manager
+from app.infra.stream_manager import stream_client
 from app.schemas.base import EmailSchema
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
@@ -251,7 +247,7 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Kafka.
         """
-        return await health_check.check_kafka()
+        return await health_check.check_queue()
 
     @router.get(
         "/healthcheck-all-services",
@@ -352,7 +348,7 @@ class TechBV:
         """
         data = schema.model_dump()
 
-        await event_bus.event_client.publish_event(
+        await stream_client.publish_event(
             event_type="init_mail_send", data=data
         )
         return data

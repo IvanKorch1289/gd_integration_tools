@@ -88,6 +88,7 @@ class MinioService(BaseS3Service):
     def __init__(self, settings: FileStorageSettings):
         self._client: Optional[Any] = None
         self.settings = settings
+        self.logger = fs_logger
         self._session = get_session()
         self._initialize_attributes()
 
@@ -106,7 +107,7 @@ class MinioService(BaseS3Service):
             },
         )
 
-    async def _initialize_connection(self):
+    async def initialize_connection(self):
         """Establishes and verifies connection to object storage."""
         try:
             if self._client is not None:
@@ -127,22 +128,22 @@ class MinioService(BaseS3Service):
             if not await self.check_bucket_exists():
                 raise RuntimeError(f"Bucket {self.bucket} not found")
 
-            fs_logger.info("Successfully connected to object storage")
+            self.logger.info("Successfully connected to object storage")
 
         except Exception as exc:
-            await self._shutdown()
+            await self.shutdown()
             raise RuntimeError(
                 f"Connection initialization failed: {str(exc)}"
             ) from exc
 
-    async def _shutdown(self):
+    async def shutdown(self):
         """Gracefully closes all connections and releases resources."""
         if self._client:
             try:
                 await self._client.close()
-                fs_logger.info("Object storage connections closed")
-            except Exception as exc:
-                fs_logger.error(f"Error closing connections: {str(exc)}")
+                self.logger.info("Object storage connections closed")
+            except Exception:
+                self.logger.error("Error closing connections", exc_info=True)
             finally:
                 self._client = None
 
@@ -164,12 +165,12 @@ class MinioService(BaseS3Service):
 
         try:
             yield self._client
-        except BotoClientError as exc:
-            fs_logger.error(f"S3 API error: {str(exc)}")
+        except BotoClientError:
+            self.logger.error("S3 API error", exc_info=True)
             raise
-        except Exception as exc:
-            fs_logger.error(f"Connection error: {str(exc)}")
-            await self._shutdown()
+        except Exception:
+            self.logger.error("Connection error", exc_info=True)
+            await self.shutdown()
             raise
 
     async def upload_file_object(
@@ -201,7 +202,7 @@ class MinioService(BaseS3Service):
                 await self._invalidate_cache(key)
                 return {"status": "success", "message": "File uploaded"}
             except Exception as exc:
-                fs_logger.error(f"Upload failed for {key}: {str(exc)}")
+                self.logger.error("Upload failed for {key}", exc_info=True)
                 return {
                     "status": "error",
                     "message": "Upload failed",
@@ -257,8 +258,8 @@ class MinioService(BaseS3Service):
                     Params={"Bucket": self.bucket, "Key": key},
                     ExpiresIn=expires_in,
                 )
-            except Exception as exc:
-                fs_logger.error(f"URL generation failed: {str(exc)}")
+            except Exception:
+                self.logger.error("URL generation failed", exc_info=True)
                 return None
 
     @existence_cache
@@ -364,9 +365,9 @@ class MinioService(BaseS3Service):
             pass
 
         try:
-            fs_logger.info(json.dumps(log_data, ensure_ascii=False))
-        except Exception as exc:
-            fs_logger.error(f"Logging failed: {str(exc)}")
+            self.logger.info(json.dumps(log_data, ensure_ascii=False))
+        except Exception:
+            self.logger.error("Logging failed", exc_info=True)
 
     async def check_connection(self) -> bool:
         """Verifies storage connectivity.

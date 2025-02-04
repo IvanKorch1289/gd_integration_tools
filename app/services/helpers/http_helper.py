@@ -22,6 +22,7 @@ class OptimizedClientSession:
             ssl=False,
         )
         self.session: Optional[aiohttp.ClientSession] = None
+        self.logger = request_logger
 
     async def __aenter__(self) -> "OptimizedClientSession":
         timeout = ClientTimeout(
@@ -51,7 +52,7 @@ class OptimizedClientSession:
                 len(kwargs.get("data", b"")) if kwargs.get("data") else 0
             ),
         }
-        request_logger.info("Outgoing request", extra={"request": log_data})
+        self.logger.info("Outgoing request", extra={"request": log_data})
 
     async def _log_response(self, response: aiohttp.ClientResponse) -> None:
         log_data = {
@@ -60,7 +61,7 @@ class OptimizedClientSession:
             "url": str(response.url),
             "content_length": response.content_length,
         }
-        request_logger.info("Received response", extra={"response": log_data})
+        self.logger.info("Received response", extra={"response": log_data})
 
     async def request(
         self,
@@ -81,7 +82,7 @@ class OptimizedClientSession:
             await self._log_response(response)
             return response
         except aiohttp.ClientError as exc:
-            request_logger.error(
+            self.logger.error(
                 f"Request failed: {exc.__class__.__name__}", exc_info=True
             )
             raise
@@ -154,9 +155,9 @@ async def make_request(
             json_data = json_tricks.dumps(
                 json, extra_obj_encoders=[utilities.custom_json_encoder]
             )
-        except Exception as e:
-            request_logger.error(f"JSON serialization error: {e}")
-            raise ValueError("Invalid JSON data") from e
+        except Exception as exc:
+            request_logger.error("JSON serialization error", exc_info=True)
+            raise ValueError("Invalid JSON data") from exc
 
     async with get_http_client() as client:
         try:
@@ -191,13 +192,13 @@ async def make_request(
                 "elapsed": elapsed,
             }
 
-        except aiohttp.ClientResponseError as e:
-            request_logger.error(f"HTTP error {e.status}: {e.message}")
+        except aiohttp.ClientResponseError as exc:
+            request_logger.error("HTTP error", exc_info=True)
             if raise_for_status:
                 raise
             return {
-                "status": e.status,
+                "status": exc.status,
                 "data": None,
-                "headers": dict(e.headers) if e.headers else {},
+                "headers": dict(exc.headers) if exc.headers else {},
                 "elapsed": asyncio.get_event_loop().time() - start_time,
             }

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import ClassVar, Literal
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict

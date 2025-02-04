@@ -1,6 +1,6 @@
 from typing import ClassVar, List, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseYAMLSettings
@@ -27,7 +27,6 @@ class AuthSettings(BaseYAMLSettings):
         extra="forbid",
     )
 
-    # Token core settings
     token_name: str = Field(
         ...,
         description="Name of the HTTP cookie/header containing the token",
@@ -45,8 +44,6 @@ class AuthSettings(BaseYAMLSettings):
         description="Refresh token lifetime in seconds (default 30 days)",
         examples=[2592000, 86400],
     )
-
-    # Algorithms and keys
     secret_key: str = Field(
         ...,
         min_length=32,
@@ -58,8 +55,6 @@ class AuthSettings(BaseYAMLSettings):
         description="Token signing algorithm",
         examples=["HS256", "RS256"],
     )
-
-    # Additional settings
     cookie_secure: bool = Field(
         ...,
         description="Transmit token only over HTTPS",
@@ -70,8 +65,6 @@ class AuthSettings(BaseYAMLSettings):
         description="SameSite policy for cookies",
         examples=["lax", "strict", "none"],
     )
-
-    # Security settings
     api_key: str = Field(
         ...,
         description="Main application API key",

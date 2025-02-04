@@ -30,9 +30,9 @@ async def _init_limiter():
         )
         await FastAPILimiter.init(redis_connection)
         app_logger.info("Лимиты роутов установлены...")
-    except Exception as exc:
+    except Exception:
         app_logger.error(
-            f"Не удалось инициализировать лимиты роутов: {str(exc)}"
+            "Не удалось инициализировать лимиты роутов", exc_info=True
         )
 
 

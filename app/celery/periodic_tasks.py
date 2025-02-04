@@ -1,5 +1,5 @@
 from app.celery.celery_config import celery_app
-from app.infra import event_bus
+from app.infra.stream_manager import stream_client
 from app.utils.logging_service import scheduler_logger
 from app.utils.utils import utilities
 
@@ -24,7 +24,7 @@ def check_services_health(self):
             response_body = await utilities.get_response_body(response)
 
             if not response_body.get("is_all_services_active"):
-                await event_bus.event_client.publish_event(
+                await stream_client.publish_event(
                     event_type="init_mail_send",
                     data={
                         "to_emails": ["crazyivan1289@yandex.ru"],
@@ -39,8 +39,8 @@ def check_services_health(self):
             return {"status": "ok"}
 
         except Exception as exc:
-            scheduler_logger.error(f"Критическая ошибка: {exc}")
-            await event_bus.event_client.publish_event(
+            scheduler_logger.error("Критическая ошибка", exc_info=True)
+            await stream_client.publish_event(
                 event_type="init_mail_send",
                 data={
                     "to_emails": ["crazyivan1289@yandex.ru"],

@@ -6,17 +6,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
-from app.infra.smtp import MailService, mail_service
+from app.infra.smtp import SmtpClient, smtp_client
 
 
-__all__ = ("mail_sender",)
+__all__ = ("mail_service", "MailService")
 
 
-class MailSender:
+class MailService:
     """Email service with template support."""
 
-    def __init__(self, mail_service: MailService):
-        self.client = mail_service
+    def __init__(self, mail_client: SmtpClient):
+        self.client = mail_client
 
     async def send_email(
         self,
@@ -117,4 +117,4 @@ class MailSender:
             raise RuntimeError(f"Template processing failed: {exc}") from exc
 
 
-mail_sender = MailSender(mail_service=mail_service)
+mail_service = MailService(mail_client=smtp_client)

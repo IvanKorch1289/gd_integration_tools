@@ -29,7 +29,6 @@ class SKBAPISettings(BaseYAMLSettings):
         extra="forbid",
     )
 
-    # Authentication
     api_key: str = Field(
         ...,
         description="Secret key for API access",
@@ -40,8 +39,6 @@ class SKBAPISettings(BaseYAMLSettings):
         description="Base API URL without endpoints",
         examples=["https://api.skb-tekhno.ru/v1"],
     )
-
-    # Request Configuration
     endpoints: Dict[str, str] = Field(
         ...,
         description="API endpoint paths relative to base URL",
@@ -54,8 +51,6 @@ class SKBAPISettings(BaseYAMLSettings):
         description="Default request priority (1-100)",
         examples=[50],
     )
-
-    # Timeouts
     connect_timeout: float = Field(
         ...,
         description="Maximum connection establishment time in seconds",
@@ -66,10 +61,6 @@ class SKBAPISettings(BaseYAMLSettings):
         description="Maximum response wait time in seconds",
         examples=[30.0],
     )
-
-
-# Instantiate settings for immediate use
-skb_api_settings = SKBAPISettings()
 
 
 class DadataAPISettings(BaseYAMLSettings):
@@ -87,7 +78,6 @@ class DadataAPISettings(BaseYAMLSettings):
         extra="forbid",
     )
 
-    # Authentication
     api_key: str = Field(
         ...,
         description="Secret key for Dadata API access",
@@ -98,8 +88,6 @@ class DadataAPISettings(BaseYAMLSettings):
         description="Base API URL without endpoint paths",
         examples=["https://suggestions.dadata.ru/suggestions/api/4_1/rs"],
     )
-
-    # Request Configuration
     endpoints: Dict[str, str] = Field(
         ...,
         description="API endpoint paths relative to base URL",
@@ -108,8 +96,6 @@ class DadataAPISettings(BaseYAMLSettings):
     geolocate_radius_default: int = Field(
         ..., description="Default search radius in meters", examples=[1000]
     )
-
-    # Timeouts
     connect_timeout: float = Field(
         ...,
         description="Maximum connection establishment time in seconds",
@@ -123,4 +109,5 @@ class DadataAPISettings(BaseYAMLSettings):
 
 
 # Instantiate settings for immediate use
+skb_api_settings = SKBAPISettings()
 dadata_api_settings = DadataAPISettings()

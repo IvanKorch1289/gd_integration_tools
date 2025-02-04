@@ -31,6 +31,7 @@ class DatabaseSessionManager:
             session_maker (async_sessionmaker): Фабрика сессий, созданная с помощью async_sessionmaker.
         """
         self.session_maker = session_maker
+        self.logger = db_logger
 
     @asynccontextmanager
     async def create_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -44,9 +45,9 @@ class DatabaseSessionManager:
         async with self.session_maker() as session:
             try:
                 yield session
-            except Exception as exc:
-                db_logger.error(
-                    f"Ошибка при создании сессии базы данных: {exc}"
+            except Exception:
+                self.logger.error(
+                    "Ошибка при создании сессии базы данных", exc_info=True
                 )
                 raise DatabaseError(
                     message="Failed to create database session"
@@ -70,9 +71,9 @@ class DatabaseSessionManager:
         try:
             yield
             await session.commit()
-        except Exception as exc:
+        except Exception:
             await session.rollback()
-            db_logger.exception(f"Ошибка транзакции: {exc}")
+            self.logger.exception("Ошибка транзакции", exc_info=True)
             raise DatabaseError(message="Transaction failed")
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -144,8 +145,8 @@ class DatabaseSessionManager:
                         raise
                     except Exception as exc:
                         await session.rollback()
-                        db_logger.error(
-                            f"Ошибка при выполнении транзакции: {str(exc)}"
+                        self.logger.error(
+                            "Ошибка при выполнении транзакции", exc_info=True
                         )
                         raise DatabaseError(
                             message=f"Failed to execute transaction - {str(exc)}"

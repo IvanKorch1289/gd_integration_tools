@@ -1,3 +1,5 @@
+from typing import Dict
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.event import listen
 from sqlalchemy.ext.asyncio import (
@@ -34,6 +36,7 @@ class DatabaseInitializer:
     def __init__(self, settings: DatabaseConnectionSettings):
         self.settings: DatabaseConnectionSettings = settings
 
+        self.logger = db_logger
         # Main async engine
         self.async_engine = self._create_async_engine()
         self.async_session_maker = async_sessionmaker(
@@ -86,7 +89,7 @@ class DatabaseInitializer:
             connect_args=self._get_connect_args(),
         )
 
-    def _get_connect_args(self) -> dict:
+    def _get_connect_args(self) -> Dict[str, str]:
         """Generates additional database connection arguments.
 
         Returns:
@@ -120,17 +123,17 @@ class DatabaseInitializer:
 
         return connect_args
 
-    async def _initialize_async_pool(self):
+    async def initialize_async_pool(self):
         """Pre-initializes connections in the async pool"""
         connections = []
         try:
             for _ in range(self.async_engine.pool.size()):
                 conn = await self.async_engine.connect()
                 connections.append(conn)
-            db_logger.info("Async connection pool initialized")
-        except Exception as e:
-            db_logger.error(
-                f"Async connection pool initialization failed: {str(e)}"
+            self.logger.info("Async connection pool initialized")
+        except Exception:
+            self.logger.error(
+                "Async connection pool initialization failed", exc_info=True
             )
         finally:
             for conn in connections:
@@ -142,13 +145,13 @@ class DatabaseInitializer:
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
-            db_logger.info("SQL Statement: %s", statement)
-            db_logger.info("Parameters: %s", parameters)
+            self.logger.info("SQL Statement: %s", statement)
+            self.logger.info("Parameters: %s", parameters)
 
         def after_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
-            db_logger.info("SQL Execution Completed.")
+            self.logger.info("SQL Execution Completed.")
 
         # For async engine
         listen(
@@ -186,25 +189,30 @@ class DatabaseInitializer:
         """
         return self.sync_engine
 
-    def dispose_sync(self):
+    async def dispose_sync(self):
         """Closes all sync connections"""
         try:
             self.sync_engine.dispose()
-            db_logger.info("Sync database connections closed")
-        except Exception as exc:
-            db_logger.error(
-                f"Failed to close sync database connections: {str(exc)}"
+            self.logger.info("Sync database connections closed")
+        except Exception:
+            self.logger.error(
+                "Failed to close sync database connections", exc_info=True
             )
 
     async def dispose_async(self):
         """Closes all async connections"""
         try:
             await self.async_engine.dispose()
-            db_logger.info("Async database connections closed")
-        except Exception as exc:
-            db_logger.error(
-                f"Failed to close async database connections: {str(exc)}"
+            self.logger.info("Async database connections closed")
+        except Exception:
+            self.logger.error(
+                "Failed to close async database connections", exc_info=True
             )
+
+    async def close(self):
+        """Closes all connections"""
+        await self.dispose_sync()
+        await self.dispose_async()
 
     async def check_connection(self) -> bool:
         """Verifies database connection health.

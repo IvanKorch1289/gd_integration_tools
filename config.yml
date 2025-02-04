@@ -92,14 +92,14 @@ log:
       facility: "database"
     - name: "storage"
       facility: "storage"
-    - name: "mail"
-      facility: "mail"
+    - name: "smtp"
+      facility: "smtp"
     - name: "scheduler"
       facility: "scheduler"
     - name: "request"
       facility: "request"
-    - name: "kafka"
-      facility: "kafka"
+    - name: "queue"
+      facility: "queue"
     - name: "redis"
       facility: "redis"
   use_tls: False
@@ -157,6 +157,9 @@ mail:
   host: "localhost"
   port: 1025
   connection_pool_size: 10
+  command_timeout: 30
+  connect_timeout: 10
+  circuit_breaker_timeout: 10
   sender: "gd_advanced_tools@app.com"
   use_tls: False
   validate_certs: False
@@ -170,6 +173,8 @@ queue:
   consumer_group: "api-consumers"
   auto_offset_reset: "earliest"
   max_poll_records: 500
+  dlq_suffix: "_dlq"
+  max_processing_attempts: 3
   producer_acks: "all"
   producer_linger_ms: 5
   security_protocol: "PLAINTEXT"
@@ -178,3 +183,4 @@ queue:
   message_max_bytes: 1048576
   session_timeout_ms: 10000
   request_timeout_ms: 40000
+  max_in_flight_requests: 5

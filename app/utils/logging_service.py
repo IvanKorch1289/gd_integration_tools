@@ -18,10 +18,10 @@ __all__ = (
     "app_logger",
     "db_logger",
     "fs_logger",
-    "mail_logger",
+    "smtp_logger",
     "scheduler_logger",
     "request_logger",
-    "kafka_logger",
+    "queue_logger",
 )
 
 
@@ -117,7 +117,7 @@ class LoggerManager:
         """Configure all logging handlers."""
         # Graylog handler
         if self.graylog.enabled:
-            if gl_handler := self.graylog._connect():
+            if gl_handler := self.graylog.connect():
                 gl_handler.addFilter(
                     self.ContextFilter(self.environment, self.hostname)
                 )
@@ -207,7 +207,7 @@ class LoggerManager:
         """Safely terminate logging infrastructure."""
         if self.queue_listener:
             self.queue_listener.stop()
-        self.graylog._close()
+        self.graylog.close()
 
 
 # Initialize logging system
@@ -223,8 +223,8 @@ log_manager = LoggerManager(
 app_logger = log_manager.application_logger
 db_logger = log_manager.database_logger
 fs_logger = log_manager.storage_logger
-mail_logger = log_manager.mail_logger
+smtp_logger = log_manager.smtp_logger
 scheduler_logger = log_manager.scheduler_logger
 request_logger = log_manager.request_logger
-kafka_logger = log_manager.kafka_logger
+queue_logger = log_manager.queue_logger
 redis_logger = log_manager.redis_logger
