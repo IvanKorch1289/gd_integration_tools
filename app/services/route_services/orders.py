@@ -1,6 +1,6 @@
-import json
 from typing import Any, Dict, List, Optional
 
+import json_tricks
 from fastapi import status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -160,7 +160,7 @@ class OrderService(BaseService[OrderRepository]):
 
             # Обрабатываем JSON-ответ
             if isinstance(result, JSONResponse):
-                body = json.loads(result.body.decode("utf-8"))
+                body = json_tricks.loads(result.body.decode("utf-8"))
                 if (
                     not body.get("hasError", "")
                     and response_type.value == "JSON"

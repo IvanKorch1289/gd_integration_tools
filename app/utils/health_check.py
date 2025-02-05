@@ -10,6 +10,7 @@ from app.infra.redis import redis_client
 from app.infra.smtp import smtp_client
 from app.infra.storage import s3_bucket_service_factory
 from app.utils.decorators.singleton import singleton
+from app.utils.utils import utilities
 
 
 __all__ = ("health_check",)
@@ -64,7 +65,10 @@ class HealthCheck:
         }
 
         return Response(
-            content=json_tricks.dumps(response_body),
+            content=json_tricks.dumps(
+                response_body,
+                extra_obj_encoders=[utilities.custom_json_encoder],
+            ),
             media_type="application/json",
             status_code=status_code,
         )

@@ -138,12 +138,14 @@ class HttpClient:
             "User-Agent": "HttpClient/1.0",
             "Accept-Encoding": "gzip, deflate, br",
         }
+
         if auth_token:
             default_headers["Authorization"] = f"Bearer {auth_token}"
         if headers:
             default_headers.update(headers)
 
         json_data = None
+
         if json is not None:
             try:
                 json_data = json_tricks.dumps(
@@ -154,7 +156,8 @@ class HttpClient:
                 raise ValueError("Invalid JSON data") from exc
 
         last_exception = None
-        for attempt in range(self.MAX_RETRIES + 1):
+
+        for attempt in range(self.settings.max_retries + 1):
             try:
                 await self._ensure_session()
                 await self._log_request(

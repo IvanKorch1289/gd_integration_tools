@@ -1,10 +1,10 @@
-import json
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from datetime import datetime
 from io import BytesIO
 from typing import Any, AsyncGenerator, Optional, Tuple, Union
 
+import json_tricks
 from aiobotocore.config import AioConfig
 from aiobotocore.response import StreamingBody
 from aiobotocore.session import get_session
@@ -14,6 +14,7 @@ from app.config.settings import FileStorageSettings, settings
 from app.infra.redis import redis_client
 from app.utils.decorators.caching import existence_cache, metadata_cache
 from app.utils.logging_service import fs_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -365,7 +366,12 @@ class MinioService(BaseS3Service):
             pass
 
         try:
-            self.logger.info(json.dumps(log_data, ensure_ascii=False))
+            self.logger.info(
+                json_tricks.dumps(
+                    log_data,
+                    extra_obj_encoders=[utilities.custom_json_encoder],
+                )
+            )
         except Exception:
             self.logger.error("Logging failed", exc_info=True)
 

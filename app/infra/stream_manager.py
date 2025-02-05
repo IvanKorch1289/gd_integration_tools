@@ -1,13 +1,14 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, Optional
 
 import asyncio
+import json_tricks
 from redis import RedisError
 
 from app.infra.redis import RedisClient, redis_client
 from app.utils.logging_service import app_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -80,7 +81,9 @@ class StreamClient:
         event_data = {
             "event_id": event_id,
             "type": event_type,
-            "data": json.dumps(data),
+            "data": json_tricks.dumps(
+                data, extra_obj_encoders=[utilities.custom_json_encoder]
+            ),
             "created_at": datetime.now().isoformat(),
             "expires_at": (datetime.now() + self.ttl).isoformat(),
             "retries": "0",
@@ -166,7 +169,10 @@ class StreamClient:
                 f"No handler for event type: {event_data['type']}"
             )
 
-        data = json.loads(event_data["data"])
+        data = json_tricks.loads(
+            event_data["data"],
+            extra_obj_pairs_hooks=[utilities.custom_json_decoder],
+        )
         if asyncio.iscoroutinefunction(handler):
             await handler(data)
         else:

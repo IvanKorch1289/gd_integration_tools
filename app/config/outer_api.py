@@ -81,6 +81,16 @@ class HttpBaseSettings(BaseYAMLSettings):
         description="Force close and do reconnect after each request",
         examples=True,
     )
+    waf_url: str | None = Field(
+        ...,
+        description="Web application firewall URL",
+        examples="https://www.google.com",
+    )
+    waf_route_header: Dict[str, str] | None = Field(
+        ...,
+        description="Web application firewall header for routing",
+        examples={"x-api-header": "wf_route_header"},
+    )
 
 
 class SKBAPISettings(BaseYAMLSettings):

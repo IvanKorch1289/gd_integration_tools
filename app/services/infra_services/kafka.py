@@ -8,6 +8,7 @@ from confluent_kafka import Message
 from app.config.settings import settings
 from app.infra.queue import QueueClient, queue_client
 from app.utils.logging_service import queue_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -56,7 +57,9 @@ class QueueService:
     ) -> None:
         """Produce message to Kafka with JSON serialization and error handling."""
         try:
-            serialized = json_tricks.dumps(payload).encode("utf-8")
+            serialized = json_tricks.dumps(
+                payload, extra_obj_encoders=[utilities.custom_json_encoder]
+            ).encode("utf-8")
             loop = asyncio.get_event_loop()
 
             await loop.run_in_executor(
@@ -106,7 +109,10 @@ class QueueService:
 
     async def _execute_handlers(self, message: Message) -> None:
         """Execute registered handlers for message with retry logic."""
-        payload = json_tricks.loads(message.value().decode("utf-8"))
+        payload = json_tricks.loads(
+            message.value().decode("utf-8"),
+            extra_obj_pairs_hooks=[utilities.custom_json_decoder],
+        )
 
         for attempt in range(1, self.max_processing_attempts + 1):
             try:

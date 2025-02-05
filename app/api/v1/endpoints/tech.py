@@ -14,11 +14,8 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
-from http.client import HTTPException
 
-from app.config.config_manager import ConfigUpdateRequest, ConfigUpdateResponse
 from app.config.settings import settings
-from app.infra.app_factory import get_config_manager
 from app.infra.stream_manager import stream_client
 from app.schemas.base import EmailSchema
 from app.services.route_services.base import BaseService, get_service_for_model
@@ -265,21 +262,6 @@ class TechBV:
         return await health_check.check_all_services()
 
     @router.get(
-        "/version",
-        summary="Получить версию приложения",
-        operation_id="get_version",
-    )
-    @handle_routes_errors
-    async def get_version(self):
-        """
-        Возвращает текущую версию приложения.
-
-        Returns:
-            dict: Версия приложения.
-        """
-        return {"version": settings.app.version}
-
-    @router.get(
         "/config",
         summary="Получить текущую конфигурацию",
         operation_id="get_config",
@@ -293,40 +275,6 @@ class TechBV:
             dict: Конфигурация приложения.
         """
         return settings.model_dump()
-
-    @router.put(
-        "/config",
-        summary="Изменить текущую конфигурацию",
-        operation_id="update_config",
-        response_model=ConfigUpdateResponse,
-    )
-    async def update_config(
-        request: ConfigUpdateRequest,
-    ) -> ConfigUpdateResponse:
-        """Update application configuration
-
-        Args:
-            request: Configuration update request with new data
-            config_manager: Configuration manager dependency
-
-        Returns:
-            ConfigUpdateResponse: Result of the configuration update
-
-        Raises:
-            HTTPException: If configuration update fails
-        """
-        try:
-            updated_config = get_config_manager().update_config(request.data)
-            return ConfigUpdateResponse(
-                status="success", config=updated_config
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Configuration update failed: {str(exc)}",
-            )
 
     @router.post(
         "/send-email",

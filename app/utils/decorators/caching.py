@@ -57,7 +57,7 @@ class CachingDecorator:
 
         if bucket:
             prefix += f":{bucket}"
-        return f"{prefix}:{hashlib.sha256(json_tricks.dumps(key_data).encode()).hexdigest()}"
+        return f"{prefix}:{hashlib.sha256(json_tricks.dumps(key_data, extra_obj_encoders=[utilities.custom_json_encoder]).encode()).hexdigest()}"
 
     async def _handle_ttl(self, key: str, redis: Redis):
         if self.renew_ttl:

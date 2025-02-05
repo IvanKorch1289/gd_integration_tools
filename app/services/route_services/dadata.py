@@ -62,8 +62,15 @@ class APIDADATAService:
         if radius_metres:
             payload["radius_meters"] = radius_metres
 
+        url = None
+        headers = {}
+
         # Формируем URL для запроса
-        url = f"{urljoin(cls.base_url, cls.endpoints.get('GEOLOCATE'))}"
+        if settings.http_base_settings.waf_url:
+            url = settings.http_base_settings.waf_url
+            headers = settings.http_base_settings.waf_route_header
+        else:
+            url = f"{urljoin(cls.base_url, cls.endpoints.get('GEOLOCATE'))}"
 
         # Выполняем запрос с помощью универсального метода make_request
         async with get_http_client() as client:
@@ -72,6 +79,7 @@ class APIDADATAService:
                 url=url,
                 json=payload,
                 auth_token=cls.auth_token,
+                headers=headers,
                 response_type="json",
                 connect_timeout=cls.settings.connect_timeout,
                 read_timeout=cls.settings.read_timeout,

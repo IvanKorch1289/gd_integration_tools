@@ -49,13 +49,22 @@ class APISKBService:
             Dict[str, Any]: Справочник видов запросов или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.base_url, self.endpoints.get('GET_KINDS'))}"
+
+            url = None
+            headers = {}
+
+            if settings.http_base_settings.waf_url:
+                url = settings.http_base_settings.waf_url
+                headers = settings.http_base_settings.waf_route_header
+            else:
+                url = f"{urljoin(self.base_url, self.endpoints.get('GET_KINDS'))}"
 
             async with get_http_client() as client:
                 result = await client.make_request(
                     method="GET",
                     url=url,
                     params=self.params,
+                    headers=headers,
                     connect_timeout=self.settings.connect_timeout,
                     read_timeout=self.settings.read_timeout,
                     total_timeout=self.settings.connect_timeout

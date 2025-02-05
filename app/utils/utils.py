@@ -62,7 +62,9 @@ class Utilities:
             Deserialized response content
         """
         body = response.body.decode("utf-8")
-        return json_tricks.loads(body)
+        return json_tricks.loads(
+            body, extra_obj_pairs_hooks=[self.custom_json_decoder]
+        )
 
     async def ensure_url_protocol(self, url: str) -> str:
         """Ensures URL contains valid protocol prefix.
@@ -167,7 +169,9 @@ class Utilities:
 
         try:
             result = loop.run_until_complete(coroutine)
-            return json_tricks.dumps(result).encode()
+            return json_tricks.dumps(
+                result, extra_obj_encoders=[self.custom_json_encoder]
+            ).encode()
         finally:
             if loop and loop.is_closed():
                 loop.close()

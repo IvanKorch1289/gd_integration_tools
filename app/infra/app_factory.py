@@ -42,10 +42,6 @@ from app.utils.utils import utilities
 __all__ = ("create_app",)
 
 
-def get_config_manager(app: FastAPI) -> ConfigManager:
-    return app.state.config_manager
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
