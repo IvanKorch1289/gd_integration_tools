@@ -206,11 +206,6 @@ class RedisSettings(BaseYAMLSettings):
     db_celery: int = Field(
         ..., ge=0, description="Database number for Celery backend", example=3
     )
-    username: Optional[str] = Field(
-        ...,
-        description="Username for Redis authentication",
-        example="redis_user",
-    )
     password: Optional[str] = Field(
         ...,
         description="Password for Redis authentication",
@@ -266,11 +261,7 @@ class RedisSettings(BaseYAMLSettings):
     def redis_url(self) -> str:
         """Construct Redis connection URL."""
         protocol = "rediss" if self.use_ssl else "redis"
-        auth = (
-            f"{self.username}:{self.password}@"
-            if self.username and self.password
-            else ""
-        )
+        auth = f":{self.password}@" if self.password else ""
         return f"{protocol}://{auth}{self.host}:{self.port}"
 
     @field_validator("port", "db_cache", "db_queue", "db_limits", "db_celery")

@@ -97,7 +97,9 @@ class BaseService(Generic[ConcreteRepo]):
                         else []
                     )
 
-                return await self._transfer(instance, response_schema)
+                result = await self._transfer(instance, response_schema)
+
+                return result
             except Exception:
                 raise  # Исключение будет обработано глобальным обработчиком
 
@@ -130,9 +132,11 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для создания объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        return await self.helper._process_and_transfer(
+        result = await self.helper._process_and_transfer(
             "add", self.response_schema, data=data
         )
+        await response_cache.clear_cache_with_prefix(self.__class__.__name__)
+        return result
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
@@ -159,9 +163,11 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для обновления объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        return await self.helper._process_and_transfer(
+        result = await self.helper._process_and_transfer(
             "update", self.response_schema, key=key, value=value, data=data
         )
+        await response_cache.clear_cache_with_prefix(self.__class__.__name__)
+        return result
 
     @response_cache
     async def get(
@@ -217,6 +223,9 @@ class BaseService(Generic[ConcreteRepo]):
         """
         try:
             await self.repo.delete(key=key, value=value)
+            await response_cache.clear_cache_with_prefix(
+                self.__class__.__name__
+            )
             return f"Object (id = {value}) successfully deleted"
         except Exception:
             raise

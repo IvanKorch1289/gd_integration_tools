@@ -73,9 +73,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
             if len(body) > self.max_body_size:
                 return b"<body too large to log>"
 
-            self.logger.loggerger.debug(
-                f"Request body: {body.decode('utf-8')}"
-            )
+            self.logger.debug(f"Request body: {body.decode('utf-8')}")
             return body
         except UnicodeDecodeError:
             self.logger.warning(

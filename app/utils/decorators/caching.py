@@ -40,6 +40,8 @@ class CachingDecorator:
         bucket: Optional[str] = None,
     ) -> str:
         """Генерация уникального ключа кэша"""
+        prefix = "cache:"
+
         key_data = {
             "func": f"{func.__module__}.{func.__name__}",
             "args": (
@@ -48,7 +50,14 @@ class CachingDecorator:
             "kwargs": kwargs,
             "bucket": bucket,
         }
-        return f"cache:{hashlib.sha256(json_tricks.dumps(key_data).encode()).hexdigest()}"
+        if hasattr(args[0], "__class__"):
+            prefix += str(args[0].__class__.__name__)
+        else:
+            prefix += str(args[0].__name__)
+
+        if bucket:
+            prefix += f":{bucket}"
+        return f"{prefix}:{hashlib.sha256(json_tricks.dumps(key_data).encode()).hexdigest()}"
 
     async def _handle_ttl(self, key: str, redis: Redis):
         if self.renew_ttl:
@@ -88,6 +97,15 @@ class CachingDecorator:
                 await r.setex(key, self.expire, serialized)
         except Exception:
             self.logger.error("Failed to cache data", exc_info=True)
+
+    @redis_client.reconnect_on_failure
+    async def clear_cache_with_prefix(self, prefix):
+        # Получаем список ключей, начинающихся с заданного префикса
+        async with redis_client.connection() as r:
+            _, keys = await r.scan(match=f"*{prefix}*")
+
+            if keys:
+                await r.delete(*keys)
 
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)
