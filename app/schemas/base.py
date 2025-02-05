@@ -3,8 +3,6 @@ from typing import Any, Dict
 import json_tricks
 from pydantic import BaseModel, EmailStr
 
-from app.utils.utils import utilities
-
 
 __all__ = (
     "EmailSchema",
@@ -70,6 +68,8 @@ class BaseSchema(BaseModel):
         :param by_alias: Если True, использует алиасы для имен полей.
         :return: Словарь с данными модели.
         """
+        from app.utils.utils import utilities
+
         return json_tricks.loads(
             self.model_dump_json(by_alias=by_alias),
             extra_obj_pairs_hooks=[utilities.custom_json_decoder],

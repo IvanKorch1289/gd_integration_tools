@@ -71,8 +71,7 @@ class CachingDecorator:
                 if data is None:
                     return None
 
-                if isinstance(data, bytes):
-                    data = data.decode("utf-8")
+                data = utilities.decode_redis_data(data)
 
                 result = json_tricks.loads(
                     data, extra_obj_pairs_hooks=[utilities.custom_json_decoder]

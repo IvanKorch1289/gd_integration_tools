@@ -150,6 +150,10 @@ redis:
   socket_connect_timeout: 10
   retry_on_timeout: True
   socket_keepalive: True
+  main_stream: "events_stream"
+  dlq_stream: "events_dlq"
+  max_retries: 3
+  ttl_hours: 1
 
 celery:
   redis_db: 3

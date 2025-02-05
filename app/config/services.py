@@ -256,6 +256,20 @@ class RedisSettings(BaseYAMLSettings):
     socket_keepalive: Optional[bool] = Field(
         ..., description="Enable TCP keepalive for connections", example=True
     )
+    main_stream: Optional[str] = Field(
+        ..., description="Name of main Redis stream", example="example-stream"
+    )
+    dlq_stream: Optional[str] = Field(
+        ...,
+        description="Name of DLQ Redis stream",
+        example="dlq-example-stream",
+    )
+    max_retries: int = Field(
+        ..., description="Max retries for reading message in stream", example=1
+    )
+    ttl_hours: int = Field(
+        ..., description="Time to live messages in stream", example=1
+    )
 
     @property
     def redis_url(self) -> str:

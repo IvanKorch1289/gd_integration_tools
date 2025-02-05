@@ -30,32 +30,57 @@ class HttpClient:
     def __init__(self):
         """Initialize the HTTP client with connection pooling and default settings."""
         self.settings = settings.http_base_settings
+        self.connector = None
+        self.session: Optional[aiohttp.ClientSession] = None
+        self.last_used: float = 0
+        self.logger = request_logger
+        self._init_connector()
+
+    def _init_connector(self):
+        """Initialize the connector"""
         self.connector = TCPConnector(
             limit=self.settings.limit,
             limit_per_host=self.settings.limit_per_host,
             ttl_dns_cache=self.settings.ttl_dns_cache,
             ssl=False,
-            force_close=self.settings.force_close,
+            force_close=self.settings.force_close,  # Важно для повторного использования соединений
+            keepalive_timeout=self.settings.keepalive_timeout,
         )
-        self.session: Optional[aiohttp.ClientSession] = None
-        self.logger = request_logger
+
+    async def _should_recreate_session(self) -> bool:
+        """Checking recreate session neeeded"""
+        if self.session is None or self.session.closed:
+            return True
+
+        # Проверка таймаута бездействия
+        idle_time = time.monotonic() - self.last_used
+        if idle_time > self.settings.keepalive_timeout:
+            self.logger.debug(f"Session expired after {idle_time:.2f}s idle")
+            return True
+
+        return False
 
     async def _ensure_session(self):
         """Ensure the aiohttp session is created and ready for use."""
-        if self.session is None or self.session.closed:
+        if await self._should_recreate_session():
+            await self.close()  # Закрываем старую сессию перед созданием новой
+
             timeout = ClientTimeout(
                 total=self.settings.total_timeout,
                 connect=self.settings.connect_timeout,
                 sock_read=self.settings.sock_read_timeout,
             )
+
             self.session = aiohttp.ClientSession(
                 connector=self.connector,
                 timeout=timeout,
+                connector_keepalive_timeout=self.settings.keepalive_timeout,  # Исправленный параметр
                 auto_decompress=False,
                 trust_env=True,
                 connector_owner=False,
-                keepalive_timeout=self.settings.keepalive_timeout,
             )
+            self.last_used = time.monotonic()
+            self.logger.debug("Created new session")
 
     async def _log_request(self, method: str, url: str, **kwargs) -> None:
         """Log outgoing HTTP requests."""
@@ -216,7 +241,12 @@ class HttpClient:
         """Close the HTTP session and release resources."""
         if self.session and not self.session.closed:
             await self.session.close()
-            self.session = None
+            self.logger.debug("Session closed")
+        if self.connector and not self.connector.closed:
+            await self.connector.close()
+            self.logger.debug("Connector closed")
+        self.session = None
+        self.connector = None
 
 
 @asynccontextmanager

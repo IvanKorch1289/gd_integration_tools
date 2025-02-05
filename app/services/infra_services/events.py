@@ -22,16 +22,15 @@ class EventService:
     def __init__(self, event_client: StreamClient):
         self.event_client = event_client
         self.logger = app_logger
-        self._register_handlers()
 
-    def _register_handlers(self) -> None:
+    async def register_handlers(self) -> None:
         """Register all event handlers during initialization"""
-        self._add_handler("order_created", self.handle_order_created)
-        self._add_handler("init_mail_send", self.handle_init_mail_send)
+        await self._add_handler("order_created", self.handle_order_created)
+        await self._add_handler("init_mail_send", self.handle_init_mail_send)
 
-    def _add_handler(self, event_type: str, handler: Callable) -> None:
+    async def _add_handler(self, event_type: str, handler: Callable) -> None:
         """Helper method for handler registration"""
-        self.event_client.register_handler(event_type, handler)
+        await self.event_client.register_handler(event_type, handler)
         self.logger.debug(f"Registered handler for {event_type}")
 
     async def handle_order_created(self, data: dict):

@@ -10,6 +10,7 @@ from redis.exceptions import RedisError
 from app.config.settings import RedisSettings, settings
 from app.utils.decorators.singleton import singleton
 from app.utils.logging_service import redis_logger
+from app.utils.utils import utilities
 
 
 __all__ = ("redis_client", "RedisClient")
@@ -329,7 +330,7 @@ class RedisClient:
         stream: str,
         event_id: str,
         retry_field: str = "retries",
-        max_retries: int = 3,
+        max_retries: int = settings.redis.max_retries,
         ttl_field: Optional[str] = "expires_at",
         ttl: Optional[timedelta] = None,
     ) -> bool:
@@ -356,20 +357,22 @@ class RedisClient:
                     return False
 
                 _, event_data = events[0]
+
+                event_data = await utilities.decode_redis_data(
+                    redis_data=event_data
+                )
+
                 current_retries = int(event_data.get(retry_field, 0))
 
-                if current_retries >= max_retries:
+                if current_retries > max_retries:
                     return False
 
-                new_data = {
-                    **event_data,
-                    retry_field: str(current_retries + 1),
-                }
+                event_data[retry_field] = str(current_retries + 1)
 
                 if ttl and ttl_field:
-                    new_data[ttl_field] = (datetime.now() + ttl).isoformat()
+                    event_data[ttl_field] = (datetime.now() + ttl).isoformat()
 
-                await conn.xadd(stream, new_data, id="*")
+                await conn.xadd(stream, event_data, id="*")
                 await conn.xdel(stream, event_id)
                 return True
         except RedisError:

@@ -66,6 +66,21 @@ class Utilities:
             body, extra_obj_pairs_hooks=[self.custom_json_decoder]
         )
 
+    async def decode_redis_data(self, redis_data):
+        decoded_data = {}
+
+        for key, value in redis_data.items():
+            if isinstance(key, bytes):
+                key = key.decode("utf-8")
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            if isinstance(value, dict):
+                value = await self.decode_redis_data(value)
+
+            decoded_data[key] = value
+
+        return decoded_data
+
     async def ensure_url_protocol(self, url: str) -> str:
         """Ensures URL contains valid protocol prefix.
 

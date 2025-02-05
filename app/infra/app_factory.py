@@ -21,6 +21,7 @@ from app.infra.redis import redis_client
 from app.infra.smtp import smtp_client
 from app.infra.storage import s3_bucket_service_factory
 from app.infra.stream_manager import stream_client
+from app.services.infra_services.events import event_service
 from app.services.infra_services.kafka import queue_service
 from app.services.infra_services.queue_handlers import process_order
 from app.utils.admins.files import FileAdmin, OrderFileAdmin
@@ -77,6 +78,7 @@ async def lifespan(app: FastAPI):
         await smtp_client.initialize_pool()
 
         # Инициализация событийной шины
+        await event_service.register_handlers()
         await stream_client.start_consumer()
 
         # Инициализация клиента Kafka

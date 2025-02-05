@@ -6,6 +6,8 @@ import asyncio
 import json_tricks
 from redis import RedisError
 
+from app.config.services import RedisSettings
+from app.config.settings import settings
 from app.infra.redis import RedisClient, redis_client
 from app.utils.logging_service import app_logger
 from app.utils.utils import utilities
@@ -37,22 +39,23 @@ class StreamClient:
     def __init__(
         self,
         redis_client: RedisClient,
-        main_stream: str = "events_stream",
-        dlq_stream: str = "events_dlq",
-        max_retries: int = 3,
-        ttl_hours: int = 1,
+        settings: RedisSettings,
     ):
         self.redis_client = redis_client
-        self.main_stream = main_stream
-        self.dlq_stream = dlq_stream
-        self.max_retries = max_retries
-        self.ttl = timedelta(hours=ttl_hours)
+        self.settings = settings
+        self.initialize_attributes()
+
+    def initialize_attributes(self):
+        self.main_stream = self.settings.main_stream
+        self.dlq_stream = self.settings.dlq_stream
+        self.max_retries = self.settings.max_retries
+        self.ttl = timedelta(hours=self.settings.ttl_hours)
         self.handlers: Dict[str, Callable] = {}
         self.logger = app_logger
         self._running = False
         self._consumer_task: Optional[asyncio.Task] = None
 
-    def register_handler(
+    async def register_handler(
         self, event_type: str, handler: Callable[[dict], Any]
     ) -> None:
         """Register event handler for specific event type.
@@ -134,6 +137,7 @@ class StreamClient:
                 )
 
                 for event in events:
+                    event = await utilities.decode_redis_data(redis_data=event)
                     await self._process_single_event(event)
                     last_id = event["id"]
 
@@ -148,6 +152,8 @@ class StreamClient:
         """Process individual event with expiration check and error handling."""
         event_data = event["data"]
 
+        self.logger.info(f"Processing event: {event}")
+
         try:
             if datetime.now() > datetime.fromisoformat(
                 event_data["expires_at"]
@@ -158,21 +164,22 @@ class StreamClient:
             await self._execute_handler(event_data)
             await self._acknowledge_event(event["id"])
 
-        except Exception as e:
-            await self._handle_processing_error(event, str(e))
+        except Exception as exc:
+            await self._handle_processing_error(event, str(exc))
 
     async def _execute_handler(self, event_data: dict) -> None:
         """Execute registered handler for the event type."""
         handler = self.handlers.get(event_data["type"])
         if not handler:
+            self.logger.error(
+                f"No handler for event type: {event_data["type"]}"
+            )
             raise ValueError(
-                f"No handler for event type: {event_data['type']}"
+                f"No handler for event type: {event_data["type"]}"
             )
 
-        data = json_tricks.loads(
-            event_data["data"],
-            extra_obj_pairs_hooks=[utilities.custom_json_decoder],
-        )
+        data = event_data["data"]
+
         if asyncio.iscoroutinefunction(handler):
             await handler(data)
         else:
@@ -193,10 +200,11 @@ class StreamClient:
 
     async def _handle_processing_error(self, event: dict, error: str) -> None:
         """Handle event processing errors and retry logic."""
-        current_retries = int(event["data"].get("retries", 0))
+
+        current_retries = int(event["data"]["retries"])
         event_id = event["data"]["event_id"]
 
-        if current_retries < self.max_retries:
+        if current_retries <= self.max_retries:
             success = await self.redis_client.stream_retry_event(
                 stream=self.main_stream, event_id=event["id"], ttl=self.ttl
             )
@@ -243,6 +251,7 @@ class StreamClient:
                 )
 
                 for event in events:
+                    event = await utilities.decode_redis_data(redis_data=event)
                     event_data = event["data"]
                     self.logger.error(
                         f"DLQ Entry: {event_data['event_id']} | "
@@ -281,4 +290,6 @@ class StreamClient:
             raise
 
 
-stream_client = StreamClient(redis_client=redis_client)
+stream_client = StreamClient(
+    settings=settings.redis, redis_client=redis_client
+)
