@@ -4,45 +4,61 @@ from typing import Any, AsyncGenerator, Dict, Optional, Union
 import aiohttp
 import asyncio
 import json_tricks
+import time
 from aiohttp import ClientTimeout, TCPConnector
 
+from app.config.constants import RETRY_EXCEPTIONS
+from app.config.settings import settings
+from app.utils.decorators.singleton import singleton
 from app.utils.logging_service import request_logger
 from app.utils.utils import utilities
 
 
-__all__ = ("make_request", "get_http_client")
+__all__ = (
+    "HttpClient",
+    "get_http_client",
+)
 
 
-class OptimizedClientSession:
-    def __init__(self, connector: Optional[TCPConnector] = None):
-        self.connector = connector or TCPConnector(
-            limit=100,
-            limit_per_host=20,
-            ttl_dns_cache=300,
+@singleton
+class HttpClient:
+    """
+    A singleton HTTP client for making optimized and reusable HTTP requests.
+    Handles connection pooling, retries, timeouts, and logging.
+    """
+
+    def __init__(self):
+        """Initialize the HTTP client with connection pooling and default settings."""
+        self.settings = settings.http_base_settings
+        self.connector = TCPConnector(
+            limit=self.settings.limit,
+            limit_per_host=self.settings.limit_per_host,
+            ttl_dns_cache=self.settings.ttl_dns_cache,
             ssl=False,
+            force_close=self.settings.force_close,
         )
         self.session: Optional[aiohttp.ClientSession] = None
         self.logger = request_logger
 
-    async def __aenter__(self) -> "OptimizedClientSession":
-        timeout = ClientTimeout(
-            total=30,
-            connect=10,
-            sock_read=15,
-        )
-        self.session = aiohttp.ClientSession(
-            connector=self.connector,
-            timeout=timeout,
-            auto_decompress=False,
-            trust_env=True,
-        )
-        return self
-
-    async def __aexit__(self, *exc_info) -> None:
-        if self.session:
-            await self.session.close()
+    async def _ensure_session(self):
+        """Ensure the aiohttp session is created and ready for use."""
+        if self.session is None or self.session.closed:
+            timeout = ClientTimeout(
+                total=self.settings.total_timeout,
+                connect=self.settings.connect_timeout,
+                sock_read=self.settings.sock_read_timeout,
+            )
+            self.session = aiohttp.ClientSession(
+                connector=self.connector,
+                timeout=timeout,
+                auto_decompress=False,
+                trust_env=True,
+                connector_owner=False,
+                keepalive_timeout=self.settings.keepalive_timeout,
+            )
 
     async def _log_request(self, method: str, url: str, **kwargs) -> None:
+        """Log outgoing HTTP requests."""
         log_data = {
             "method": method,
             "url": url,
@@ -55,6 +71,7 @@ class OptimizedClientSession:
         self.logger.info("Outgoing request", extra={"request": log_data})
 
     async def _log_response(self, response: aiohttp.ClientResponse) -> None:
+        """Log incoming HTTP responses."""
         log_data = {
             "status": response.status,
             "headers": dict(response.headers),
@@ -63,142 +80,150 @@ class OptimizedClientSession:
         }
         self.logger.info("Received response", extra={"response": log_data})
 
-    async def request(
+    async def _process_response(
+        self, response: aiohttp.ClientResponse, response_type: str
+    ) -> Any:
+        """Process the response based on the specified response type."""
+        if response_type == "json":
+            return await response.json()
+        if response_type == "text":
+            return await response.text()
+        if response_type == "bytes":
+            return await response.read()
+        raise ValueError(f"Unsupported response type: {response_type}")
+
+    async def make_request(
         self,
         method: str,
         url: str,
-        timeout: Optional[ClientTimeout] = None,
-        **kwargs,
-    ) -> aiohttp.ClientResponse:
-        if not self.session:
-            raise RuntimeError("Session not initialized")
-
-        await self._log_request(method, url, **kwargs)
-
-        try:
-            response = await self.session.request(
-                method, url, timeout=timeout, **kwargs
-            )
-            await self._log_response(response)
-            return response
-        except aiohttp.ClientError as exc:
-            self.logger.error(
-                f"Request failed: {exc.__class__.__name__}", exc_info=True
-            )
-            raise
-
-    async def get(
-        self,
-        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[ClientTimeout] = None,
-        **kwargs,
-    ) -> aiohttp.ClientResponse:
-        return await self.request(
-            "GET", url, params=params, timeout=timeout, **kwargs
-        )
-
-    async def post(
-        self,
-        url: str,
         data: Optional[Union[Dict[str, Any], str, bytes]] = None,
-        timeout: Optional[ClientTimeout] = None,
-        **kwargs,
-    ) -> aiohttp.ClientResponse:
-        return await self.request(
-            "POST", url, data=data, timeout=timeout, **kwargs
-        )
+        auth_token: Optional[str] = None,
+        response_type: str = "json",
+        raise_for_status: bool = True,
+        connect_timeout: Optional[float] = None,
+        read_timeout: Optional[float] = None,
+        total_timeout: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Make an HTTP request with retries, connection pooling, and logging.
 
+        Args:
+            method: HTTP method (GET, POST, etc.).
+            url: Target URL.
+            headers: Additional headers.
+            json: JSON data to send.
+            params: URL parameters.
+            data: Raw data to send.
+            auth_token: Authorization token.
+            response_type: Type of response data (json, text, bytes).
+            raise_for_status: Raise an exception for HTTP errors.
+            connect_timeout: Connection timeout.
+            read_timeout: Read timeout.
+            total_timeout: Total request timeout.
 
-@asynccontextmanager
-async def get_http_client() -> AsyncGenerator[OptimizedClientSession, None]:
-    async with OptimizedClientSession() as client:
-        yield client
-
-
-async def make_request(
-    method: str,
-    url: str,
-    headers: Optional[Dict[str, str]] = None,
-    json: Optional[Dict[str, Any]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    data: Optional[Union[Dict[str, Any], str, bytes]] = None,
-    auth_token: Optional[str] = None,
-    response_type: str = "json",
-    raise_for_status: bool = True,
-    connect_timeout: Optional[float] = None,
-    read_timeout: Optional[float] = None,
-    total_timeout: Optional[float] = None,
-) -> Dict[str, Any]:
-    start_time = asyncio.get_event_loop().time()
-
-    default_headers = {
-        "User-Agent": "OptimizedClient/1.0",
-        "Accept-Encoding": "gzip, deflate, br",
-    }
-    if auth_token:
-        default_headers["Authorization"] = f"Bearer {auth_token}"
-    if headers:
-        default_headers.update(headers)
-
-    timeout = None
-    if any([connect_timeout, read_timeout, total_timeout]):
+        Returns:
+            A dictionary containing the response status, data, headers, and elapsed time.
+        """
+        start_time = time.monotonic()
         timeout = ClientTimeout(
             total=total_timeout,
             connect=connect_timeout,
             sock_read=read_timeout,
         )
 
-    json_data = None
-    if json is not None:
-        try:
-            json_data = json_tricks.dumps(
-                json, extra_obj_encoders=[utilities.custom_json_encoder]
-            )
-        except Exception as exc:
-            request_logger.error("JSON serialization error", exc_info=True)
-            raise ValueError("Invalid JSON data") from exc
+        default_headers = {
+            "User-Agent": "HttpClient/1.0",
+            "Accept-Encoding": "gzip, deflate, br",
+        }
+        if auth_token:
+            default_headers["Authorization"] = f"Bearer {auth_token}"
+        if headers:
+            default_headers.update(headers)
 
-    async with get_http_client() as client:
-        try:
-            response = await client.request(
-                method=method,
-                url=url,
-                headers=default_headers,
-                params=params,
-                data=data if data else json_data,
-                timeout=timeout,
-            )
+        json_data = None
+        if json is not None:
+            try:
+                json_data = json_tricks.dumps(
+                    json, extra_obj_encoders=[utilities.custom_json_encoder]
+                )
+            except Exception as exc:
+                self.logger.error("JSON serialization error", exc_info=True)
+                raise ValueError("Invalid JSON data") from exc
 
-            if raise_for_status:
-                response.raise_for_status()
+        last_exception = None
+        for attempt in range(self.MAX_RETRIES + 1):
+            try:
+                await self._ensure_session()
+                await self._log_request(
+                    method,
+                    url,
+                    headers=default_headers,
+                    params=params,
+                    data=data or json_data,
+                )
 
-            content = None
-            if response_type == "json":
-                content = await response.json()
-            elif response_type == "text":
-                content = await response.text()
-            elif response_type == "bytes":
-                content = await response.read()
-            else:
-                raise ValueError(f"Invalid response_type: {response_type}")
+                response = await self.session.request(
+                    method=method,
+                    url=url,
+                    headers=default_headers,
+                    params=params,
+                    data=data if data else json_data,
+                    timeout=timeout,
+                )
+                await self._log_response(response)
 
-            elapsed = asyncio.get_event_loop().time() - start_time
+                if raise_for_status:
+                    response.raise_for_status()
 
-            return {
-                "status": response.status,
-                "data": content,
-                "headers": dict(response.headers),
-                "elapsed": elapsed,
-            }
+                content = await self._process_response(response, response_type)
+                elapsed = time.monotonic() - start_time
 
-        except aiohttp.ClientResponseError as exc:
-            request_logger.error("HTTP error", exc_info=True)
-            if raise_for_status:
-                raise
-            return {
-                "status": exc.status,
-                "data": None,
-                "headers": dict(exc.headers) if exc.headers else {},
-                "elapsed": asyncio.get_event_loop().time() - start_time,
-            }
+                return {
+                    "status": response.status,
+                    "data": content,
+                    "headers": dict(response.headers),
+                    "elapsed": elapsed,
+                }
+
+            except (aiohttp.ClientResponseError, *RETRY_EXCEPTIONS) as exc:
+                last_exception = exc
+                if (
+                    attempt == self.settings.max_retries
+                    or not isinstance(exc, aiohttp.ClientResponseError)
+                    or exc.status not in self.settings.retry_status_codes
+                ):
+                    break
+                sleep_time = self.settings.retry_backoff_factor * (2**attempt)
+                await asyncio.sleep(sleep_time)
+
+        self.logger.error("Request failed after retries", exc_info=True)
+        if raise_for_status and last_exception:
+            raise last_exception
+        return {
+            "status": getattr(last_exception, "status", None),
+            "data": None,
+            "headers": dict(getattr(last_exception, "headers", {})),
+            "elapsed": time.monotonic() - start_time,
+        }
+
+    async def close(self):
+        """Close the HTTP session and release resources."""
+        if self.session and not self.session.closed:
+            await self.session.close()
+            self.session = None
+
+
+@asynccontextmanager
+async def get_http_client() -> AsyncGenerator[HttpClient, None]:
+    """
+    Context manager for using the HttpClient.
+    Ensures the session is reused and not closed prematurely.
+    """
+    client = HttpClient()
+    try:
+        yield client
+    finally:
+        pass

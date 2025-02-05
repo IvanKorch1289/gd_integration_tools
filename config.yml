@@ -34,6 +34,25 @@ auth:
   rate_limit: 400
   rate_time_measure_seconds: 60
 
+http:
+  max_retries: 3
+  retry_backoff_factor: 0.5
+  retry_status_codes:
+    - 408
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+  total_timeout: 30
+  connect_timeout: 10
+  sock_read_timeout: 15
+  keepalive_timeout: 300
+  limit: 100
+  limit_per_host: 20
+  ttl_dns_cache: 300
+  force_close: False
+
 skb:
   base_url: "https://api.skb-techno.ru/v2/Requests/"
   endpoints:

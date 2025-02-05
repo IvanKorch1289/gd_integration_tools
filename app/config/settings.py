@@ -7,8 +7,10 @@ from app.config.database import (
 )
 from app.config.outer_api import (
     DadataAPISettings,
+    HttpBaseSettings,
     SKBAPISettings,
     dadata_api_settings,
+    http_base_settings,
     skb_api_settings,
 )
 from app.config.security import AuthSettings, auth_settings
@@ -44,6 +46,7 @@ class Settings(BaseSettings):
     # Общие настройки
     app: AppBaseSettings = app_base_settings
     auth: AuthSettings = auth_settings
+    http_base_settings: HttpBaseSettings = http_base_settings
 
     # Интеграции
     database: DatabaseConnectionSettings = db_connection_settings

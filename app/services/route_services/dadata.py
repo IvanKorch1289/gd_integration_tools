@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 from app.config.settings import DadataAPISettings, settings
-from app.services.helpers.http_helper import make_request
+from app.services.helpers.http_helper import get_http_client
 from app.utils.decorators.caching import response_cache
 
 
@@ -66,17 +66,18 @@ class APIDADATAService:
         url = f"{urljoin(cls.base_url, cls.endpoints.get('GEOLOCATE'))}"
 
         # Выполняем запрос с помощью универсального метода make_request
-        return await make_request(
-            method="POST",
-            url=url,
-            json=payload,
-            auth_token=cls.auth_token,
-            response_type="json",
-            connect_timeout=cls.settings.connect_timeout,
-            read_timeout=cls.settings.read_timeout,
-            total_timeout=cls.settings.connect_timeout
-            + cls.settings.read_timeout,
-        )
+        async with get_http_client() as client:
+            return await client.make_request(
+                method="POST",
+                url=url,
+                json=payload,
+                auth_token=cls.auth_token,
+                response_type="json",
+                connect_timeout=cls.settings.connect_timeout,
+                read_timeout=cls.settings.read_timeout,
+                total_timeout=cls.settings.connect_timeout
+                + cls.settings.read_timeout,
+            )
 
 
 # Функция-зависимость для создания экземпляра APIDADATAService

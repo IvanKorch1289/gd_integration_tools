@@ -413,15 +413,6 @@ class CelerySettings(BaseYAMLSettings):
             )
         return v
 
-    @field_validator("task_time_limit", "task_soft_time_limit")
-    @classmethod
-    def validate_time_limits(cls, v, values):
-        if v >= values.data.get("task_time_limit", 0):
-            raise ValueError(
-                "Soft time limit must be less than hard time limit"
-            )
-        return v
-
 
 class MailSettings(BaseYAMLSettings):
     """Email service configuration settings."""

@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -53,6 +54,8 @@ async def lifespan(app: FastAPI):
     Запускает планировщик задач и устанавливает лимиты запросов.
     Останавливает планировщик при завершении работы приложения.
     """
+    original_env = dict(os.environ)
+
     load_dotenv()
 
     app_logger.info("Запуск приложения...")
@@ -81,10 +84,10 @@ async def lifespan(app: FastAPI):
         await stream_client.start_consumer()
 
         # Инициализация клиента Kafka
-        await queue_client.initialize()
-        await queue_client.create_topics(["required_topics"])
-        await queue_service.start_message_consumption()
-        queue_service.register_handler("orders", process_order)
+        # await queue_client.initialize()
+        # await queue_client.create_topics(["required_topics"])
+        # await queue_service.start_message_consumption()
+        # queue_service.register_handler("orders", process_order)
 
         # Инициализация лимитера запросов
         await _init_limiter()
@@ -98,9 +101,13 @@ async def lifespan(app: FastAPI):
         await s3_client.shutdown()
         await smtp_client.close_pool()
         await stream_client.stop_consumer()
-        await queue_service.stop_message_consumption()
-        await queue_client.close()
+        # await queue_service.stop_message_consumption()
+        # await queue_client.close()
         graylog_handler.close()
+
+        for key in os.environ:
+            if key not in original_env:
+                del os.environ[key]
 
         app_logger.info("Завершение работы приложения...")
 
