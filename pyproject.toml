@@ -45,7 +45,6 @@ aiosmtplib = "^3.0.2"
 sqlalchemy-utils = "^0.41.2"
 prometheus-fastapi-instrumentator = "^7.0.0"
 starlette-exporter = "^0.23.0"
-apscheduler = "^3.11.0"
 pyclamd = "^0.4.0"
 fastapi-limiter = "^0.1.6"
 vulture = "^2.14"
@@ -89,10 +88,13 @@ known_standard_library = [
 known_third_party = [
     "confluent_kafka", "aiologger", "aiokafka", "urllib", "zeep", "blinker",
     "pandas", "graypy", "pyclamd", "sqlalchemy_utils", "fastapi_limiter",
-    "loguru", "sqlalchemy", "fast_api", "passlib", "aioredis", "asyncio",
+    "loguru", "sqlalchemy", "fast_api", "passlib", "aioredis", "psycopg2",
     "pydantic", "sqladmin", "joblib", "streamlit", "aioboto", "fastauth",
     "tiny_url", "jose", "aiobotocore", "pyshorteners", "aiohttp", "celery",
-    "redis", "flet", "apscheduler", "fastapi_utils", "hvac", "pydantic_settings"
+    "redis", "flet", "apscheduler", "fastapi_utils", "hvac", "pydantic_settings",
+    "sqlalchemy-continuum","async-timeout", "starlette-exporter", "starlette",
+    "prometheus-fastapi-instrumentator", "websockets", "aiosmtplib", "json_tricks",
+    "aioboto3", "fastapi_filter", "asyncpg"
 ]
 known_first_party = ["app"]
 no_lines_before = ["FUTURE", "STANDARD_LIBRARY", "THIRD_PARTY", "FIRST_PARTY", "LOCAL_FOLDER"]

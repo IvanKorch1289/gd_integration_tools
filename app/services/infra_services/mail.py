@@ -1,10 +1,10 @@
-from typing import Any, Dict, List, Optional
-
-import aiosmtplib
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
+from typing import Any, Dict, List, Optional
+
+import aiosmtplib
 
 from app.infra.smtp import SmtpClient, smtp_client
 
