@@ -3,7 +3,7 @@ from typing import ClassVar, Dict, List
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.config.config_loader import BaseYAMLSettings
+from app.config.config_loader import BaseSettingsWithLoader
 
 
 __all__ = (
@@ -14,7 +14,7 @@ __all__ = (
 )
 
 
-class HttpBaseSettings(BaseYAMLSettings):
+class HttpBaseSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "http"
     model_config = SettingsConfigDict(
         env_prefix="HTTP_",
@@ -93,7 +93,7 @@ class HttpBaseSettings(BaseYAMLSettings):
     )
 
 
-class SKBAPISettings(BaseYAMLSettings):
+class SKBAPISettings(BaseSettingsWithLoader):
     """Configuration settings for integration with SKB-Tekhno API."""
 
     yaml_group: ClassVar[str] = "skb"
@@ -136,7 +136,7 @@ class SKBAPISettings(BaseYAMLSettings):
     )
 
 
-class DadataAPISettings(BaseYAMLSettings):
+class DadataAPISettings(BaseSettingsWithLoader):
     """Configuration settings for integration with Dadata API."""
 
     yaml_group: ClassVar[str] = "dadata"

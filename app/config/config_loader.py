@@ -1,91 +1,132 @@
+import os
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Optional, Tuple, Type
 
+import hvac
 import yaml
 from dotenv import load_dotenv
+from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
-from yaml import YAMLError
 
 from app.config.constants import ROOT_DIR
 
 
-__all__ = (
-    "YamlConfigSettingsLoader",
-    "yaml_settings_loader",
-    "BaseYAMLSettings",
-)
+__all__ = ("BaseSettingsWithLoader",)
 
 # Load environment variables from .env file
 load_dotenv(ROOT_DIR / ".env")
 
 
-class YamlConfigSettingsLoader:
-    """Loader for YAML configuration files with group-based settings retrieval.
+class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
+    """Abstract base class for filtered settings sources."""
 
-    Attributes:
-        yaml_path: Path to the YAML configuration file.
-    """
+    def __init__(self, settings_cls: Type[BaseSettings]):
+        super().__init__(settings_cls)
+        self.yaml_group = settings_cls.yaml_group
+        self.model_fields = settings_cls.model_fields.keys()
 
-    def __init__(self, yaml_path: Path) -> None:
-        """Initialize the YAML config loader with specified file path."""
-        self.yaml_path = yaml_path
+    def get_field_value(
+        self, field: FieldInfo, field_name: str
+    ) -> Tuple[Any, str, bool]:
+        return (None, field_name, False)
 
     def __call__(self) -> Dict[str, Any]:
-        """Load and parse the entire YAML configuration file.
+        try:
+            raw_data = self._load_data()
 
-        Returns:
-            Dictionary containing all configuration groups.
+            return self._filter_data(raw_data)
+        except Exception as exc:
+            self._handle_error(exc)
+            return {}
 
-        Raises:
-            YAMLError: If the file contains invalid YAML syntax.
-        """
+    def _filter_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter data using model fields."""
+        if self.yaml_group:
+            group_data = raw_data.get(self.yaml_group, {})
+        else:
+            group_data = raw_data
+
+        return {k: v for k, v in group_data.items() if k in self.model_fields}
+
+    @abstractmethod
+    def _load_data(self) -> Dict[str, Any]:
+        """Load raw data from source."""
+        pass
+
+    def _handle_error(self, error: Exception):
+        """Handle errors during data loading."""
+        print(f"Error in {self.__class__.__name__}: {error}")
+
+
+class YamlConfigSettingsLoader(FilteredSettingsSource):
+    """YAML config loader with filtering."""
+
+    def __init__(
+        self,
+        settings_cls: Type[BaseSettings],
+        yaml_path: Path = ROOT_DIR / "config.yml",
+    ):
+        super().__init__(settings_cls)
+        self.yaml_path = yaml_path
+
+    def _load_data(self) -> Dict[str, Any]:
+        """Load and parse YAML configuration file."""
         try:
             with open(self.yaml_path) as f:
                 return yaml.safe_load(f) or {}
         except FileNotFoundError:
             return {}
-        except YAMLError as e:
-            raise YAMLError(f"Invalid YAML syntax in {self.yaml_path}") from e
+        except Exception as exc:
+            raise RuntimeError(f"YAML loading error: {exc}") from exc
 
-    def get_group_settings(self, group: str) -> Dict[str, Any]:
-        """Retrieve configuration settings for a specific group.
 
-        Args:
-            group: Name of the configuration section to retrieve
+class VaultConfigSettingsSource(FilteredSettingsSource):
+    """Vault config loader with filtering."""
 
-        Returns:
-            Dictionary of settings for the requested group. Returns empty dict
-            if group not found or file is missing.
-        """
-        try:
-            config_data = self.__call__()
-            return config_data.get(group, {})
-        except (YAMLError, ValueError):
+    def _load_data(self) -> Dict[str, Any]:
+        """Load data from Vault."""
+        vault_addr = os.getenv("VAULT_ADDR")
+        vault_token = os.getenv("VAULT_TOKEN")
+        vault_secret_path = os.getenv("VAULT_SECRET_PATH")
+
+        if not all([vault_addr, vault_token, vault_secret_path]):
             return {}
 
+        try:
+            client = hvac.Client(url=vault_addr, token=vault_token)
+            if not client.is_authenticated():
+                return {}
 
-# Global YAML settings loader instance configured with default config path
-yaml_settings_loader = YamlConfigSettingsLoader(
-    yaml_path=ROOT_DIR / "config.yml"
-)
+            response = client.secrets.kv.v2.read_secret_version(
+                path=vault_secret_path
+            )
+            return response.get("data", {}).get("data", {})
+        except Exception as exc:
+            raise RuntimeError(f"Vault error: {exc}") from exc
 
 
-class BaseYAMLSettings(BaseSettings):
-    """Base class for configuration models combining YAML and environment variables.
+class BaseSettingsWithLoader(BaseSettings):
+    """Base class for configuration models with multi-source loading support.
+
+    Combines configuration from:
+    - Initialization parameters
+    - Environment variables
+    - Vault secrets
+    - YAML configuration files
+    - .env files
+    - File-based secrets
 
     Subclasses must define:
     - `yaml_group`: Name of the YAML configuration section to use
-    - `model_config.env_prefix`: Environment variables prefix for the settings group
+    - `model_config.env_prefix`: Environment variables prefix for settings group
     """
 
-    # Configuration group name in YAML file (must be set in subclasses)
     yaml_group: ClassVar[Optional[str]] = None
-
-    # Pydantic configuration (should include env_prefix in subclasses)
     model_config = SettingsConfigDict(env_prefix="", extra="forbid")
 
     @classmethod
@@ -97,18 +138,26 @@ class BaseYAMLSettings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> Tuple[PydanticBaseSettingsSource, ...]:
-        """Correct signature with all required parameters"""
+        """Customize configuration sources and their priority order.
+
+        Priority order (highest first):
+        1. Initialization parameters
+        2. Environment variables
+        3. Vault secrets
+        4. YAML configuration
+        5. .env file
+        6. File-based secrets
+        """
         if not cls.yaml_group:
             raise ValueError(
                 "Subclasses must define `yaml_group` class variable"
             )
 
-        yaml_config = (
-            yaml_settings_loader.get_group_settings(cls.yaml_group) or {}
+        return (
+            init_settings,
+            env_settings,
+            VaultConfigSettingsSource(settings_cls),
+            YamlConfigSettingsLoader(settings_cls),
+            dotenv_settings,
+            file_secret_settings,
         )
-        env_vars = env_settings()
-        init_config = init_settings()
-
-        merged_config = {**init_config, **env_vars, **yaml_config}
-
-        return (lambda: merged_config,)

@@ -3,13 +3,13 @@ from typing import ClassVar, Literal, Optional
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.config.config_loader import BaseYAMLSettings
+from app.config.config_loader import BaseSettingsWithLoader
 
 
 __all__ = ("DatabaseConnectionSettings", "db_connection_settings")
 
 
-class DatabaseConnectionSettings(BaseYAMLSettings):
+class DatabaseConnectionSettings(BaseSettingsWithLoader):
     """Configuration settings for relational database connections.
 
     Configuration sections:

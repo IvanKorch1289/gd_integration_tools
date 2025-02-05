@@ -5,7 +5,7 @@ from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from app.config.config_loader import BaseYAMLSettings
+from app.config.config_loader import BaseSettingsWithLoader
 
 
 __all__ = (
@@ -23,7 +23,7 @@ __all__ = (
 )
 
 
-class FileStorageSettings(BaseYAMLSettings):
+class FileStorageSettings(BaseSettingsWithLoader):
     """Settings for connecting to an S3-compatible object storage."""
 
     yaml_group: ClassVar[str] = "fs"
@@ -98,7 +98,7 @@ class FileStorageSettings(BaseYAMLSettings):
         return str(self.endpoint).split("://")[-1]
 
 
-class LogStorageSettings(BaseYAMLSettings):
+class LogStorageSettings(BaseSettingsWithLoader):
     """Settings for the logging and log storage system."""
 
     yaml_group: ClassVar[str] = "log"
@@ -167,7 +167,7 @@ class LogStorageSettings(BaseYAMLSettings):
     )
 
 
-class RedisSettings(BaseYAMLSettings):
+class RedisSettings(BaseSettingsWithLoader):
     """Redis connection configuration settings."""
 
     yaml_group: ClassVar[str] = "redis"
@@ -286,7 +286,7 @@ class RedisSettings(BaseYAMLSettings):
         return v
 
 
-class CelerySettings(BaseYAMLSettings):
+class CelerySettings(BaseSettingsWithLoader):
     """Configuration for Celery task queue and worker management."""
 
     yaml_group: ClassVar[str] = "celery"
@@ -419,7 +419,7 @@ class CelerySettings(BaseYAMLSettings):
         return v
 
 
-class MailSettings(BaseYAMLSettings):
+class MailSettings(BaseSettingsWithLoader):
     """Email service configuration settings."""
 
     yaml_group: ClassVar[str] = "mail"
@@ -505,7 +505,7 @@ class MailSettings(BaseYAMLSettings):
         return v
 
 
-class QueueSettings(BaseYAMLSettings):
+class QueueSettings(BaseSettingsWithLoader):
     """Message queue broker configuration settings."""
 
     yaml_group: ClassVar[str] = "queue"

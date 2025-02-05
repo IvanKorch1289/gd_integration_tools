@@ -453,7 +453,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 VersionModel.transaction_id == transaction_id,
             )
         )
-        target_version = target_version.scalars().first()
+        target_version: Result[Any] = target_version.scalars().first()
 
         if not target_version:
             raise NotFoundError(

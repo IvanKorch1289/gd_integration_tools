@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.config.config_loader import BaseYAMLSettings
+from app.config.config_loader import BaseSettingsWithLoader
 from app.config.constants import ROOT_DIR
 
 
@@ -14,7 +14,7 @@ __all__ = (
 )
 
 
-class AppBaseSettings(BaseYAMLSettings):
+class AppBaseSettings(BaseSettingsWithLoader):
     """Application core configuration settings loaded from YAML files.
 
     Inherits from BaseYAMLSettings to provide YAML configuration capabilities.

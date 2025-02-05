@@ -379,12 +379,13 @@ class TechBV:
 
                 # Добавляем данные через сервис
                 try:
-                    result = await service().get_or_add(
+                    result = await service.get_or_add(
                         data=validated_data.model_dump()
                     )
                     results.append(result)
-                except Exception as e:
-                    results.append({"error": str(e)})
+                except Exception as exc:
+                    results.append({"error": str(exc)})
+                    raise
 
             return results
 

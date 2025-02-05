@@ -1,3 +1,4 @@
+import sys
 import uuid
 from datetime import datetime
 from typing import Any, Type
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 
 from app.schemas.base import BaseSchema
 from app.utils.decorators.singleton import singleton
+from app.utils.logging_service import app_logger
 
 
 __all__ = ("utilities",)
@@ -192,4 +194,16 @@ class Utilities:
                 loop.close()
 
 
+class Audit:
+    """Audit utility class for logging audit events."""
+
+    def audit_hook(self, event, args):
+        app_logger.info(f"Audit event: {event}, args: {args}")
+
+    def start_audit(self):
+        # Регистрация обработчика
+        sys.addaudithook(self.audit_hook)
+
+
 utilities = Utilities()
+audit = Audit()

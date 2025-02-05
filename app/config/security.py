@@ -3,7 +3,7 @@ from typing import ClassVar, List, Literal
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.config.config_loader import BaseYAMLSettings
+from app.config.config_loader import BaseSettingsWithLoader
 
 
 __all__ = (
@@ -12,7 +12,7 @@ __all__ = (
 )
 
 
-class AuthSettings(BaseYAMLSettings):
+class AuthSettings(BaseSettingsWithLoader):
     """Authentication and authorization system configuration.
 
     Groups of parameters:
