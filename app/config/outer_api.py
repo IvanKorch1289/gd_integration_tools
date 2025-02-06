@@ -71,11 +71,6 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         description="Max seconds having cached a DNS entry",
         examples=300,
     )
-    ttl_dns_cache: int = Field(
-        ...,
-        description="Max seconds having cached a DNS entry",
-        examples=300,
-    )
     force_close: bool = Field(
         ...,
         description="Force close and do reconnect after each request",
@@ -90,6 +85,26 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         ...,
         description="Web application firewall header for routing",
         examples={"x-api-header": "wf_route_header"},
+    )
+    circuit_breaker_max_failures: int = Field(
+        ...,
+        description="Maximum number of failed requests before circuit breaker trips",
+        examples=5,
+    )
+    circuit_breaker_reset_timeout: int = Field(
+        ...,
+        description="Time after which circuit breaker resets",
+        examples=60,
+    )
+    enable_connection_purging: bool = Field(
+        ...,
+        description="Enable connection purging",
+        examples=True,
+    )
+    purging_interval: int = Field(
+        ...,
+        description="Interval for connection purging in seconds",
+        examples=60,
     )
 
 

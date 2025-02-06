@@ -1,9 +1,9 @@
 import hashlib
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Coroutine, Optional
 
+import asyncio
 import json_tricks
-from redis.asyncio.client import Redis
 
 from app.config.settings import settings
 from app.infra.redis import redis_client
@@ -22,46 +22,88 @@ class CachingDecorator:
     def __init__(
         self,
         expire: int = settings.redis.cache_expire_seconds,
-        key_prefix: str = "",
+        key_prefix: str = None,
         exclude_self: bool = True,
         renew_ttl: bool = False,
+        key_builder: Optional[Callable] = None,
     ):
         self.expire = expire
         self.key_prefix = key_prefix
         self.exclude_self = exclude_self
         self.renew_ttl = renew_ttl
         self.logger = redis_logger
+        self.key_builder = key_builder or self._default_key_builder
 
-    def _generate_cache_key(
-        self,
-        func: Callable,
-        args: tuple,
-        kwargs: dict,
-        bucket: Optional[str] = None,
-    ) -> str:
-        """Генерация уникального ключа кэша"""
+    def _generate_prefix(self, args: tuple):
         prefix = "cache:"
 
-        key_data = {
-            "func": f"{func.__module__}.{func.__name__}",
-            "args": (
-                args[1:] if args and hasattr(args[0], "__dict__") else args
-            ),
-            "kwargs": kwargs,
-            "bucket": bucket,
-        }
         if hasattr(args[0], "__class__"):
+            self.logger.critical(args[0])
             prefix += str(args[0].__class__.__name__)
         else:
             prefix += str(args[0].__name__)
 
-        if bucket:
-            prefix += f":{bucket}"
-        return f"{prefix}:{hashlib.sha256(json_tricks.dumps(key_data, extra_obj_encoders=[utilities.custom_json_encoder]).encode()).hexdigest()}"
+        return prefix
 
-    async def _handle_ttl(self, key: str, redis: Redis):
-        if self.renew_ttl:
-            await redis.expire(key, self.expire)
+    def _default_key_builder(
+        self, func: Callable, args: tuple, kwargs: dict
+    ) -> str:
+        """Default cache key builder with hash-based normalization"""
+        prefix = (
+            self.key_prefix
+            if self.key_prefix
+            else self._generate_prefix(args=args)
+        )
+        key_data = {
+            "module": func.__module__,
+            "name": func.__name__,
+            "args": args[1:] if self.exclude_self and args else args,
+            "kwargs": kwargs,
+        }
+        serialized = json_tricks.dumps(
+            key_data,
+            extra_obj_encoders=[utilities.custom_json_encoder],
+            separators=(",", ":"),
+        )
+        return f"{prefix}:{hashlib.sha256(serialized.encode()).hexdigest()}"
+
+    @redis_client.reconnect_on_failure
+    async def invalidate(self, *cache_keys: str) -> None:
+        """Invalidate cache for specific keys"""
+        if not cache_keys:
+            return
+
+        try:
+            async with redis_client.connection() as r:
+                await r.delete(*cache_keys)
+        except Exception as e:
+            self.logger.error(
+                f"Cache invalidation failed: {str(e)}", exc_info=True
+            )
+
+    @redis_client.reconnect_on_failure
+    async def invalidate_pattern(self, pattern: str) -> None:
+        """Invalidate cache keys matching pattern"""
+        try:
+            async with redis_client.connection() as r:
+                cursor = "0"
+                while True:
+                    cursor, keys = await r.scan(
+                        cursor=cursor,
+                        match=(
+                            f"{self.key_prefix}:{pattern}*"
+                            if pattern
+                            else f"{self.key_prefix}:*"
+                        ),
+                    )
+                    if keys:
+                        await r.delete(*keys)
+                    if cursor == "0":
+                        break
+        except Exception:
+            self.logger.error(
+                "Pattern cache invalidation failed", exc_info=True
+            )
 
     @redis_client.reconnect_on_failure
     async def get_cached_data(self, key: str) -> Optional[Any]:
@@ -97,32 +139,64 @@ class CachingDecorator:
         except Exception:
             self.logger.error("Failed to cache data", exc_info=True)
 
-    @redis_client.reconnect_on_failure
-    async def clear_cache_with_prefix(self, prefix):
-        # Получаем список ключей, начинающихся с заданного префикса
-        async with redis_client.connection() as r:
-            _, keys = await r.scan(match=f"*{prefix}*")
-
-            if keys:
-                await r.delete(*keys)
-
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Any:
-            instance = args[0] if len(args) > 0 else None
-            bucket = getattr(instance, "bucket", None) if instance else None
+        async def async_wrapper(*args, **kwargs) -> Any:
+            cache_key = self.key_builder(func, args, kwargs)
+            cached_value = await self._get_cached_value(cache_key)
 
-            key = self._generate_cache_key(func, args, kwargs, bucket)
-            cached = await self.get_cached_data(key)
-
-            if cached is not None:
-                return cached
+            if cached_value is not None:
+                return cached_value
 
             result = await func(*args, **kwargs)
-            await self.cache_data(key, result)
+            await self._cache_result(cache_key, result)
             return result
 
-        return wrapper
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs) -> Coroutine:
+            return async_wrapper(*args, **kwargs)
+
+        return (
+            async_wrapper
+            if asyncio.iscoroutinefunction(func)
+            else sync_wrapper
+        )
+
+    async def _get_cached_value(self, key: str) -> Any:
+        try:
+            async with redis_client.connection() as r:
+                data = await r.get(key)
+                if data is None:
+                    return None
+
+                decoded = utilities.decode_redis_data(data)
+                deserialized = json_tricks.loads(
+                    decoded,
+                    extra_obj_pairs_hooks=[utilities.custom_json_decoder],
+                )
+
+                if self.renew_ttl:
+                    await r.expire(key, self.expire)
+
+                return deserialized
+        except Exception:
+            self.logger.error("Cache read error", exc_info=True)
+            return None
+
+    async def _cache_result(self, key: str, result: Any) -> None:
+        try:
+            if result is None:
+                return
+
+            async with redis_client.connection() as r:
+                serialized = json_tricks.dumps(
+                    result,
+                    extra_obj_encoders=[utilities.custom_json_encoder],
+                    separators=(",", ":"),
+                )
+                await r.setex(key, self.expire, serialized)
+        except Exception:
+            self.logger.error("Cache write error", exc_info=True)
 
 
 # Глобальный экземпляр декоратора
@@ -130,9 +204,14 @@ response_cache = CachingDecorator()
 
 # Экземпляры для файлового хранилища
 metadata_cache = CachingDecorator(
-    key_prefix="minio:metadata", expire=300, renew_ttl=True  # 5 минут
+    key_prefix="s3:metadata",
+    expire=300,
+    renew_ttl=True,
+    key_builder=lambda func, args, kwargs: f"s3:metadata:{kwargs.get('key', '')}",
 )
 
 existence_cache = CachingDecorator(
-    key_prefix="minio:exists", expire=60, renew_ttl=False  # 1 минута
+    key_prefix="s3:exists",
+    expire=60,
+    key_builder=lambda func, args, kwargs: f"s3:exists:{kwargs.get('key', '')}",
 )

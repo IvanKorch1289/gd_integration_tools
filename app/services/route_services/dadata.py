@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 from app.config.settings import DadataAPISettings, settings
-from app.services.helpers.http_helper import get_http_client
+from app.services.infra_services.http import get_http_client
 from app.utils.decorators.caching import response_cache
 
 

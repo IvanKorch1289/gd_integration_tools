@@ -17,7 +17,7 @@ from app.infra.logger import graylog_handler
 from app.infra.queue import queue_client
 from app.infra.redis import redis_client
 from app.infra.smtp import smtp_client
-from app.infra.storage import s3_bucket_service_factory
+from app.infra.storage import s3_client
 from app.infra.stream_manager import stream_client
 from app.services.infra_services.events import event_service
 from app.services.infra_services.kafka import queue_service
@@ -55,8 +55,6 @@ async def lifespan(app: FastAPI):
 
     app_logger.info("Запуск приложения...")
 
-    s3_client = s3_bucket_service_factory()
-
     try:
         # Инициализация подключения к Graylog
         graylog_handler.connect()
@@ -68,7 +66,7 @@ async def lifespan(app: FastAPI):
         await db_initializer.initialize_async_pool()
 
         # Инициализация подключения к хранилищу файлов
-        await s3_client.initialize_connection()
+        await s3_client.connect()
 
         # Инициализация подключения к SMTP-серверу
         await smtp_client.initialize_pool()
@@ -90,20 +88,20 @@ async def lifespan(app: FastAPI):
     except Exception:
         app_logger.error("Error by starting", exc_info=True)
     finally:
-        await db_initializer.close()
-        await redis_client.close()
-        await s3_client.shutdown()
-        await smtp_client.close_pool()
+        app_logger.info("Завершение работы приложения...")
+
         await stream_client.stop_consumer()
+        await db_initializer.close()
+        await s3_client.close()
+        await smtp_client.close_pool()
         # await queue_service.stop_message_consumption()
         # await queue_client.close()
+        await redis_client.close()
         graylog_handler.close()
 
         for key in os.environ:
             if key not in original_env:
                 del os.environ[key]
-
-        app_logger.info("Завершение работы приложения...")
 
 
 def create_app() -> FastAPI:
@@ -168,9 +166,6 @@ def create_app() -> FastAPI:
     admin.add_view(OrderKindAdmin)
     admin.add_view(OrderFileAdmin)
     admin.add_view(FileAdmin)
-
-    # Подключение роутеров
-    app.include_router(get_v1_routers())
 
     # Эндпоинт для метрик Prometheus
     @app.get(

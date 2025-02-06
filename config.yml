@@ -54,6 +54,10 @@ http:
   force_close: False
   waf_url:
   waf_route_header:
+  circuit_breaker_max_failures: 5
+  circuit_breaker_reset_timeout: 30
+  enable_connection_purging: True
+  purging_interval: 300
 
 skb:
   base_url: "https://api.skb-techno.ru/v2/Requests/"

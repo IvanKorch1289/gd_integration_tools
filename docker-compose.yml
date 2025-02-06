@@ -198,6 +198,23 @@ services:
     networks:
       - my_network
 
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - outline_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - my_network
+    restart: unless-stopped
+  
 volumes:
   mongodb_data:
   esdata:

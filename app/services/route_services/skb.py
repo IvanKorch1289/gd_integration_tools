@@ -7,8 +7,8 @@ import asyncio
 from urllib.parse import urljoin
 
 from app.config.settings import SKBAPISettings, settings
-from app.infra.storage import s3_bucket_service_factory
-from app.services.helpers.http_helper import get_http_client
+from app.services.infra_services.http import get_http_client
+from app.services.infra_services.storage import get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.orderkinds import get_order_kind_service
 
@@ -32,7 +32,7 @@ class APISKBService:
     ):
         self.kind_service = kind_service
         self.settings = settings
-        self.file_storage = s3_bucket_service_factory()
+        self.file_storage = get_s3_service()
         self._initialize_attributes()
 
     def _initialize_attributes(self):

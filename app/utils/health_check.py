@@ -8,7 +8,7 @@ from app.infra.logger import graylog_handler
 from app.infra.queue import queue_client
 from app.infra.redis import redis_client
 from app.infra.smtp import smtp_client
-from app.infra.storage import s3_bucket_service_factory
+from app.infra.storage import s3_client
 from app.utils.decorators.singleton import singleton
 from app.utils.utils import utilities
 
@@ -125,7 +125,7 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния S3.
         """
-        return await s3_bucket_service_factory().check_connection()
+        return await s3_client.check_connection()
 
     async def check_s3_bucket(self):
         """
@@ -134,7 +134,7 @@ class HealthCheck:
         Returns:
             dict: Результат проверки наличия бакета в S3.
         """
-        return await s3_bucket_service_factory().check_bucket_exists()
+        return await s3_client.check_bucket_exists()
 
     async def check_graylog(self):
         """

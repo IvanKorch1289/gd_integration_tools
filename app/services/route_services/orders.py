@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
-from app.infra.storage import BaseS3Service, s3_bucket_service_factory
 from app.infra.stream_manager import stream_client
 from app.repositories.files import FileRepository, get_file_repo
 from app.repositories.orders import OrderRepository, get_order_repo
@@ -16,11 +15,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.helpers.storage_helpers import (
-    create_zip_streaming_response,
-    get_base64_file,
-    get_streaming_response,
-)
+from app.services.infra_services.storage import S3Service, get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
@@ -44,7 +39,7 @@ class OrderService(BaseService[OrderRepository]):
         repo: OrderRepository,
         file_repo: FileRepository,
         request_service: APISKBService,
-        s3_service: BaseS3Service,
+        s3_service: S3Service,
     ):
         """
         Инициализация сервиса заказов.
@@ -64,7 +59,7 @@ class OrderService(BaseService[OrderRepository]):
         )
         self.file_repo = file_repo
         self.request_service = request_service
-        self.s3_service = s3_service
+        self.s3_service = get_s3_service()
 
     async def add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
         """
@@ -277,12 +272,10 @@ class OrderService(BaseService[OrderRepository]):
 
             # Возвращаем файл или архив, если файлов несколько
             if len(files_list) > 1:
-                return await get_streaming_response(
-                    files_list[0], service=self.s3_service
-                )
+                return await self.s3_service.download_file(key=files_list[0])
             elif len(files_list) > 1:
-                return await create_zip_streaming_response(
-                    files_list, self.s3_service
+                return await self.s3_service.create_zip_archive(
+                    keys=files_list
                 )
 
             return None
@@ -307,8 +300,8 @@ class OrderService(BaseService[OrderRepository]):
             # Формируем список файлов в формате base64
             files_list = [
                 {
-                    "file": await get_base64_file(
-                        str(file.object_uuid), self.s3_service
+                    "file": await self.s3_service.get_file_base64(
+                        key=str(file.object_uuid)
                     )
                 }
                 for file in order.files
@@ -410,5 +403,5 @@ def get_order_service() -> BaseService:
         version_schema=OrderVersionSchemaOut,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
-        s3_service=s3_bucket_service_factory(),
+        s3_service=get_s3_service(),
     )

@@ -4,14 +4,13 @@ from fastapi import APIRouter, File, Header, Request, UploadFile, status
 from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
-from app.infra.storage import s3_bucket_service_factory
 from app.schemas.filter_schemas.files import FileFilter
 from app.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.helpers.storage_helpers import get_streaming_response
+from app.services.infra_services.storage import get_s3_service
 from app.services.route_services.files import get_file_service
 from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors
@@ -34,7 +33,7 @@ class StorageCBV:
     Предоставляет методы для загрузки, скачивания, удаления и получения ссылок на файлы.
     """
 
-    service = s3_bucket_service_factory()
+    service = get_s3_service()
 
     @storage_router.post(
         "/upload_file",
@@ -59,7 +58,7 @@ class StorageCBV:
         :return: Загруженный файл.
         """
         content = await file.read()
-        await self.service.upload_file_object(
+        await self.service.upload_file(
             key=str(uuid.uuid4()),
             original_filename=file.filename,
             content=content,
@@ -88,7 +87,7 @@ class StorageCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Потоковый ответ с содержимым файла.
         """
-        return await get_streaming_response(file_uuid, self.service)
+        return await self.service.download_file(key=file_uuid)
 
     @storage_router.post(
         "/delete_file/",
