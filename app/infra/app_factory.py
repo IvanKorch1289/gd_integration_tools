@@ -183,15 +183,13 @@ def create_app() -> FastAPI:
         Возвращает:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
-        log_url = await utilities.ensure_url_protocol(
+        log_url = utilities.ensure_url_protocol(
             f"{settings.logging.host}:{settings.logging.port}"
         )
-        fs_url = await utilities.ensure_url_protocol(
+        fs_url = utilities.ensure_url_protocol(
             settings.storage.interface_endpoint
         )
-        flower_url = await utilities.ensure_url_protocol(
-            settings.celery.flower_url
-        )
+        flower_url = utilities.ensure_url_protocol(settings.celery.flower_url)
 
         return f"""
         <!DOCTYPE html>

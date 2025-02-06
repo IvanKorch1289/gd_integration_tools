@@ -31,7 +31,10 @@ class UserService(BaseService[UserRepository]):
         :param data: Словарь с данными для поиска пользователя.
         :return: Найденный пользователь или None, если пользователь не найден.
         """
-        return await self.repo.get_by_username(data=data)
+        try:
+            return await self.repo.get_by_username(data=data)
+        except Exception:
+            raise
 
     async def add(self, data: Dict[str, Any]) -> Union[UserSchemaOut, str]:
         """

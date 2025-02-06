@@ -59,6 +59,7 @@ class RedisClient:
                 retry_on_timeout=self.settings.retry_on_timeout,
                 max_connections=self.settings.max_connections,
                 decode_responses=False,
+                health_check_interval=self.settings.health_check_interval,
             )
 
             self._client = Redis(connection_pool=self._connection_pool)
@@ -94,10 +95,8 @@ class RedisClient:
                 raise RedisError("Redis client not initialized")
 
             yield self._client
-        except (RedisError, ConnectionError, TimeoutError) as exc:
+        except (RedisError, ConnectionError, TimeoutError):
             self.logger.error("Redis connection error", exc_info=True)
-            await self.close()
-            raise RedisError(f"Connection failed: {str(exc)}") from exc
 
     async def close(self) -> None:
         """Close all Redis connections and clean up resources."""
@@ -138,9 +137,8 @@ class RedisClient:
         ) -> Any:
             try:
                 return await func(self, *args, **kwargs)
-            except (ConnectionError, TimeoutError, RedisError) as e:
-                self.logger.warning(f"Reconnecting due to error: {str(e)}")
-                await self.close()
+            except (ConnectionError, TimeoutError, RedisError) as exc:
+                self.logger.warning(f"Reconnecting due to error: {str(exc)}")
                 await self.ensure_connected()
                 return await func(self, *args, **kwargs)
 
@@ -358,9 +356,7 @@ class RedisClient:
 
                 _, event_data = events[0]
 
-                event_data = await utilities.decode_redis_data(
-                    redis_data=event_data
-                )
+                event_data = utilities.decode_redis_data(redis_data=event_data)
 
                 current_retries = int(event_data.get(retry_field, 0))
 

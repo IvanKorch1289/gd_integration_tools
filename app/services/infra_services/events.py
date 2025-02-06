@@ -39,9 +39,12 @@ class EventService:
         # Отправка события в другую систему
         from app.celery.tasks import process_order_workflow
 
-        process_order_workflow.apply_async(
-            args=[data.get("order_id")], queue="high_priority", retry=True
-        )
+        try:
+            process_order_workflow.apply_async(
+                args=[data.get("order_id")], queue="high_priority", retry=True
+            )
+        except Exception:
+            self.logger.error("Error processing order created", exc_info=True)
 
     async def handle_init_mail_send(self, data: dict):
         self.logger.info(f"Handling initialize mail sending: {data}")
@@ -49,7 +52,14 @@ class EventService:
         # Отправка события в другую систему
         from app.celery.tasks import send_email
 
-        send_email.apply_async(args=[data], queue="high_priority", retry=True)
+        try:
+            send_email.apply_async(
+                args=[data], queue="high_priority", retry=True
+            )
+        except Exception:
+            self.logger.error(
+                "Error processing initialize mail sending", exc_info=True
+            )
 
 
 event_service = EventService(event_client=stream_client)

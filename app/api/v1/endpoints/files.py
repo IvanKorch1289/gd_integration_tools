@@ -43,7 +43,7 @@ class StorageCBV:
     )
     @route_limiting
     @handle_routes_errors
-    async def upload_file(
+    async def upload_file_in_s3(
         self,
         request: Request,
         file: UploadFile = File(...),
