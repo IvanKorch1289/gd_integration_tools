@@ -70,19 +70,16 @@ class CachingDecorator:
     @redis_client.reconnect_on_failure
     async def invalidate(self, *cache_keys: str) -> None:
         """Invalidate cache for specific keys"""
-        if not cache_keys:
-            return
-
         try:
             async with redis_client.connection() as r:
                 await r.delete(*cache_keys)
-        except Exception as e:
+        except Exception as exc:
             self.logger.error(
-                f"Cache invalidation failed: {str(e)}", exc_info=True
+                f"Cache invalidation failed: {str(exc)}", exc_info=True
             )
 
     @redis_client.reconnect_on_failure
-    async def invalidate_pattern(self, pattern: str) -> None:
+    async def invalidate_pattern(self, pattern: str = None) -> None:
         """Invalidate cache keys matching pattern"""
         try:
             async with redis_client.connection() as r:
@@ -91,7 +88,7 @@ class CachingDecorator:
                     cursor, keys = await r.scan(
                         cursor=cursor,
                         match=(
-                            f"{self.key_prefix}:{pattern}*"
+                            f"*{pattern}*"
                             if pattern
                             else f"{self.key_prefix}:*"
                         ),
@@ -114,12 +111,12 @@ class CachingDecorator:
                     return None
 
                 if isinstance(data, bytes):
-                    data = data.decode("utf-8")
+                    data = await utilities.decode_bytes(data)
 
                 result = json_tricks.loads(
                     data, extra_obj_pairs_hooks=[utilities.custom_json_decoder]
                 )
-                await self._handle_ttl(key, r)
+
                 return result
         except Exception:
             self.logger.error("Failed to get cached data", exc_info=True)
@@ -170,7 +167,7 @@ class CachingDecorator:
                 if data is None:
                     return None
 
-                decoded = utilities.decode_redis_data(data)
+                decoded = await utilities.decode_bytes(data)
                 deserialized = json_tricks.loads(
                     decoded,
                     extra_obj_pairs_hooks=[utilities.custom_json_decoder],

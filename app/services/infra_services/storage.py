@@ -2,12 +2,12 @@ import io
 import zipfile
 from typing import Dict, List, Optional
 
-import base64
 from fastapi.responses import StreamingResponse
 
 from app.infra.storage import BaseS3Client, s3_client
 from app.utils.decorators.caching import existence_cache, metadata_cache
 from app.utils.logging_service import fs_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -27,33 +27,6 @@ class S3Service:
             "existence": existence_cache,
         }
 
-    async def _encode_metadata(self, metadata: dict) -> dict:
-        """Encode non-ASCII metadata values to be ASCII-compatible."""
-        encoded_metadata = {}
-        for key, value in metadata.items():
-            if isinstance(value, str):
-                encoded_value = base64.b64encode(value.encode("utf-8")).decode(
-                    "ascii"
-                )
-                encoded_metadata[key] = encoded_value
-            else:
-                encoded_metadata[key] = value
-        return encoded_metadata
-
-    async def _decode_metadata(self, metadata: dict) -> dict:
-        """Decode URL-encoded metadata values back to original strings."""
-        decoded_metadata = {}
-        for key, value in metadata.items():
-            if isinstance(value, str):
-                try:
-                    decoded_value = base64.b64decode(value).decode("utf-8")
-                    decoded_metadata[key] = decoded_value
-                except (UnicodeDecodeError, ValueError):
-                    decoded_metadata[key] = value
-            else:
-                decoded_metadata[key] = value
-        return decoded_metadata
-
     async def upload_file(
         self, key: str, content: bytes, original_filename: str
     ) -> dict:
@@ -69,7 +42,7 @@ class S3Service:
             Upload operation result
         """
         metadata = {"original-filename": original_filename}
-        encoded_metadata = await self._encode_metadata(metadata)
+        encoded_metadata = await utilities.encode_base64(metadata)
 
         return await self.client.put_object(
             key=key, body=content, metadata=encoded_metadata
@@ -90,6 +63,7 @@ class S3Service:
 
         result = await self.client.get_object(key)
         body, metadata = result
+        metadata = await utilities.decode_base64(metadata)
         filename = metadata.get("original-filename", key)
 
         async def stream_generator():
@@ -189,7 +163,7 @@ class S3Service:
         content = await self.client.get_object_bytes(key)
         if not content:
             raise FileNotFoundError(f"File {key} not found")
-        return base64.b64encode(content).decode("utf-8")
+        return await utilities.encode_base64(content)
 
     async def list_files(self, prefix: str = None) -> List[str]:
         """
@@ -230,7 +204,7 @@ class S3Service:
         if not metadata:
             return None
 
-        decoded_metadata = await self._decode_metadata(metadata)
+        decoded_metadata = await utilities.decode_base64(metadata)
         return decoded_metadata.get("original-filename")
 
     async def _invalidate_key_cache(self, key: str):
@@ -245,7 +219,7 @@ class S3Service:
             await self._invalidate_key_cache(key)
         else:
             for cache in self._cache_handlers.values():
-                await cache.clear()
+                await cache.invalidate_pattern()
             self.logger.info("Full cache invalidation completed")
 
 

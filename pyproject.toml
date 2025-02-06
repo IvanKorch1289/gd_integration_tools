@@ -57,6 +57,7 @@ bandit = "^1.8.2"
 confluent-kafka = "^2.8.0"
 async-timeout = "^5.0.1"
 hvac = "^2.3.0"
+aiodns = "^3.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -84,7 +85,7 @@ known_standard_library = [
     "hashlib", "re", "os", "path", "collections", "io", "enum", "sys",
     "traceback", "datetime", "typing", "contextlib", "functools",
     "logging", "pathlib", "abc", "uuid", "json", "importlib", "email",
-    "zipfile"
+    "zipfile", "base64"
 ]
 known_third_party = [
     "confluent_kafka", "aiologger", "aiokafka", "urllib", "zeep", "blinker",
@@ -95,7 +96,7 @@ known_third_party = [
     "redis", "flet", "apscheduler", "fastapi_utils", "hvac", "pydantic_settings",
     "sqlalchemy-continuum","async-timeout", "starlette-exporter", "starlette",
     "prometheus-fastapi-instrumentator", "websockets", "aiosmtplib", "json_tricks",
-    "aioboto3", "fastapi_filter", "asyncpg"
+    "aioboto3", "fastapi_filter", "asyncpg", "aiodns"
 ]
 known_first_party = ["app"]
 no_lines_before = ["FUTURE", "STANDARD_LIBRARY", "THIRD_PARTY", "FIRST_PARTY", "LOCAL_FOLDER"]

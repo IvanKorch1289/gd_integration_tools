@@ -356,7 +356,7 @@ class RedisClient:
 
                 _, event_data = events[0]
 
-                event_data = utilities.decode_redis_data(redis_data=event_data)
+                event_data = utilities.decode_bytes(data=event_data)
 
                 current_retries = int(event_data.get(retry_field, 0))
 

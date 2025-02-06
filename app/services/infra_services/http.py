@@ -162,6 +162,9 @@ class HttpClient:
         auth_token: Optional[str] = None,
         response_type: str = "json",
         raise_for_status: bool = True,
+        connect_timeout: Optional[float] = None,
+        read_timeout: Optional[float] = None,
+        total_timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Execute HTTP request with full error handling and retry logic.
@@ -185,6 +188,13 @@ class HttpClient:
         request_data = await self._prepare_request_data(data, json)
         headers = self._build_headers(auth_token, headers)
 
+        # Calculate timeouts
+        connect = connect_timeout or self.settings.connect_timeout
+        read = read_timeout or self.settings.sock_read_timeout
+        total = total_timeout or (connect + read)
+
+        timeout = ClientTimeout(total=total, connect=connect, sock_read=read)
+
         try:
             await self.circuit_breaker.check_state(
                 self.settings.circuit_breaker_max_failures,
@@ -204,6 +214,7 @@ class HttpClient:
                         headers=headers,
                         params=params,
                         data=request_data,
+                        timeout=timeout,
                     ) as response:
                         content = await self._process_response(
                             response, response_type
@@ -376,12 +387,12 @@ class HttpClient:
         if response_type == "json":
             try:
                 return json_tricks.loads(content)
-            except Exception as e:
+            except Exception as exc:
                 self.logger.error(
                     "JSON parsing error",
-                    extra={"content": content[:200], "error": str(e)},
+                    extra={"content": content[:200], "error": str(exc)},
                 )
-                raise ValueError("Invalid JSON response") from e
+                raise ValueError("Invalid JSON response") from exc
         if response_type == "text":
             return content.decode(errors="replace")
         if response_type == "bytes":

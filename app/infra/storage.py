@@ -109,6 +109,7 @@ class S3Client(BaseS3Client):
         self._settings = settings
         self._session = get_session()
         self._client = None
+        self.logger = fs_logger
         self._config = AioConfig(
             connect_timeout=settings.timeout,
             retries={"max_attempts": settings.retries},
@@ -138,11 +139,11 @@ class S3Client(BaseS3Client):
             ).__aenter__()
 
             await self.create_bucket_if_not_exists()
-            fs_logger.info("S3 connection established")
+            self.logger.info("S3 connection established")
 
         except Exception:
             await self.close()
-            fs_logger.error("Connection failed", exc_info=True)
+            self.logger.error("Connection failed", exc_info=True)
             raise
 
     async def close(self):
@@ -150,9 +151,9 @@ class S3Client(BaseS3Client):
         if self._client:
             try:
                 await self._client.close()
-                fs_logger.info("S3 connection closed")
-            except Exception as e:
-                fs_logger.error("Error closing connection: %s", str(e))
+                self.logger.info("S3 connection closed")
+            except Exception:
+                self.logger.error("Error closing connection", exc_info=True)
             finally:
                 self._client = None
 
@@ -211,10 +212,10 @@ class S3Client(BaseS3Client):
                 await self.connect()
             yield self._client
         except BotoClientError:
-            fs_logger.error("S3 API error", exc_info=True)
+            self.logger.error("S3 API error", exc_info=True)
             raise
         except Exception:
-            fs_logger.error("Connection error", exc_info=True)
+            self.logger.error("Connection error", exc_info=True)
             await self.close()
             raise
 
@@ -230,11 +231,12 @@ class S3Client(BaseS3Client):
             else:
                 raise
 
+    @ensure_connected
     async def _create_bucket(self):
         """Create configured bucket with proper settings."""
         async with self.client_context() as client:
             await client.create_bucket(Bucket=self._settings.bucket)
-            fs_logger.info(f"Created bucket: {self._settings.bucket}")
+            self.logger.info(f"Created bucket: {self._settings.bucket}")
 
     @ensure_connected
     async def put_object(self, key: str, body: Any, metadata: dict) -> dict:
@@ -249,7 +251,7 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success"}
             except BotoClientError as exc:
-                fs_logger.error("Put operation failed", exc_info=True)
+                self.logger.error("Put operation failed", exc_info=True)
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -261,12 +263,13 @@ class S3Client(BaseS3Client):
                     Bucket=self._settings.bucket, Key=key
                 )
                 return response["Body"], response.get("Metadata", {})
-            except BotoClientError as e:
-                if e.response["Error"]["Code"] == "NoSuchKey":
+            except BotoClientError as exc:
+                self.logger.error(f"File with key {key} not found")
+                if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def copy_object(self, source_key: str, dest_key: str) -> dict:
         """Copy object within the same bucket."""
         copy_source = {"Bucket": self._settings.bucket, "Key": source_key}
@@ -279,10 +282,10 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success"}
             except BotoClientError as exc:
-                fs_logger.error("Copy operation failed", exc_info=True)
+                self.logger.error("Copy operation failed", exc_info=True)
                 return {"status": "error", "message": str(exc)}
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def generate_presigned_url(
         self, key: str, expiration: int = 3600
     ) -> str:
@@ -296,12 +299,12 @@ class S3Client(BaseS3Client):
                 )
                 return url
             except BotoClientError:
-                fs_logger.error(
+                self.logger.error(
                     "Presigned URL generation failed", exc_info=True
                 )
                 raise
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def delete_objects(self, keys: List[str]) -> dict:
         """Batch delete objects."""
         async with self.client_context() as client:
@@ -317,10 +320,10 @@ class S3Client(BaseS3Client):
                     "errors": response.get("Errors", []),
                 }
             except BotoClientError as exc:
-                fs_logger.error(f"Batch delete failed: {str(exc)}")
+                self.logger.error("Batch delete failed", exc_info=True)
                 return {"status": "error", "message": str(exc)}
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def delete_object(self, key: str) -> dict:
         """Delete single object from S3."""
         async with self.client_context() as client:
@@ -330,10 +333,10 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
-                fs_logger.error("Delete operation failed", exc_info=True)
+                self.logger.error("Delete operation failed", exc_info=True)
                 return {"status": "error", "message": str(exc)}
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def head_object(self, key: str) -> Optional[dict]:
         """Get object metadata and headers."""
         async with self.client_context() as client:
@@ -341,13 +344,15 @@ class S3Client(BaseS3Client):
                 response = await client.head_object(
                     Bucket=self._settings.bucket, Key=key
                 )
+
                 return response["Metadata"]
             except BotoClientError as exc:
+                self.logger.error(f"File {key} not found", exc_info=True)
                 if exc.response["Error"]["Code"] == "404":
                     return None
                 raise
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def list_objects(self, prefix: str = None) -> List[str]:
         """List objects in bucket with optional prefix."""
         objects = []
@@ -362,10 +367,10 @@ class S3Client(BaseS3Client):
                         objects.append(content["Key"])
                 return objects
             except BotoClientError:
-                fs_logger.error("List objects failed", exc_info=True)
+                self.logger.error("List objects failed", exc_info=True)
                 return []
 
-    @BaseS3Client.ensure_connected
+    @ensure_connected
     async def get_object_bytes(self, key: str) -> Optional[bytes]:
         """Get object content as bytes."""
         async with self.client_context() as client:
@@ -375,6 +380,7 @@ class S3Client(BaseS3Client):
                 )
                 return await response["Body"].read()
             except BotoClientError as exc:
+                self.logger.error(f"File {key} not found", exc_info=True)
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise

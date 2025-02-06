@@ -137,9 +137,7 @@ class StreamClient:
                 )
                 if events:
                     for event in events:
-                        event = await utilities.decode_redis_data(
-                            redis_data=event
-                        )
+                        event = await utilities.decode_bytes(data=event)
 
                         await self._process_single_event(event)
                         last_id = event["id"]
@@ -258,7 +256,7 @@ class StreamClient:
                 )
 
                 for event in events:
-                    event = utilities.decode_redis_data(redis_data=event)
+                    event = utilities.decode_bytes(data=event)
                     event_data = event["data"]
                     self.logger.error(
                         f"DLQ Entry: {event_data['event_id']} | "

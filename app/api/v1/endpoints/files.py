@@ -58,12 +58,21 @@ class StorageCBV:
         :return: Загруженный файл.
         """
         content = await file.read()
+        key = str(uuid.uuid4())
         await self.service.upload_file(
-            key=str(uuid.uuid4()),
+            key=key,
             original_filename=file.filename,
             content=content,
         )
-        return file
+        return {
+            "filename": file.filename,
+            "key": key,
+            "size": file.size,
+            "headers": {
+                "content-disposition": file.headers.get("content-disposition"),
+                "content-type": file.headers.get("content-type"),
+            },
+        }
 
     @storage_router.get(
         "/download_file/{file_uuid}",
@@ -135,7 +144,33 @@ class StorageCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка для скачивания файла.
         """
+
         return await self.service.generate_download_url(key=file_uuid)
+
+    @storage_router.get(
+        "/get_file_base64/{file_uuid}",
+        status_code=status.HTTP_200_OK,
+        summary="Получить файл в формате base64",
+        operation_id="getFileBase64Unique",
+    )
+    @route_limiting
+    @handle_routes_errors
+    async def get_file_base64(
+        self,
+        request: Request,
+        file_uuid: str,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Получить файл в формате base64.
+
+        :param file_uuid: UUID файла.
+        :param service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Файл в формате base64.
+        """
+
+        return await self.service.get_file_base64(key=file_uuid)
 
 
 router = APIRouter()

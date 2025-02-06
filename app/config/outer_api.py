@@ -76,6 +76,11 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         description="Force close and do reconnect after each request",
         examples=True,
     )
+    ssl_verify: bool = Field(
+        ...,
+        description="Verify SSL certificate",
+        examples=True,
+    )
     waf_url: str | None = Field(
         ...,
         description="Web application firewall URL",

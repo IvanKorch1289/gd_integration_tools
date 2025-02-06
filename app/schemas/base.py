@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import json_tricks
 from pydantic import BaseModel, EmailStr
@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr
 __all__ = (
     "EmailSchema",
     "BaseSchema",
+    "FileResponse",
 )
 
 
@@ -74,3 +75,11 @@ class BaseSchema(BaseModel):
             self.model_dump_json(by_alias=by_alias),
             extra_obj_pairs_hooks=[utilities.custom_json_decoder],
         )
+
+
+class FileResponse(BaseModel):
+    filename: str
+    key: str
+    size: int
+    headers: dict
+    metadata: Optional[dict] = None

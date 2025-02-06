@@ -1,3 +1,4 @@
+import base64
 import sys
 import uuid
 from datetime import datetime
@@ -74,19 +75,92 @@ class Utilities:
         except Exception as exc:
             self.logger.error(f"Exception with getting response bdy: {exc}")
 
-    async def decode_redis_data(self, redis_data):
-        decoded_data = {}
+    async def encode_base64(self, data: Any) -> Any:
+        """
+        Encode non-ASCII values in any data structure to be ASCII-compatible using Base64.
 
-        for key, value in redis_data.items():
-            if isinstance(key, bytes):
-                key = key.decode("utf-8")
-            if isinstance(value, bytes):
-                value = value.decode("utf-8")
-            if isinstance(value, dict):
-                value = await self.decode_redis_data(value)
-            decoded_data[key] = value
+        Args:
+            data: Input data (str, dict, list, tuple, etc.)
 
-        return decoded_data
+        Returns:
+            Encoded data with all strings converted to Base64
+        """
+        if isinstance(data, (str, bytes)):
+            # Кодируем строку или байты в Base64
+            if isinstance(data, str):
+                data = data.encode("utf-8")
+            return base64.b64encode(data).decode("ascii")
+        elif isinstance(data, (dict, list, tuple)):
+            if isinstance(data, dict):
+                return {
+                    key: await self.encode_base64(value)
+                    for key, value in data.items()
+                }
+            elif isinstance(data, (list, tuple)):
+                return [await self.encode_base64(item) for item in data]
+        else:
+            # Возвращаем данные как есть, если это не строка и не коллекция
+            return data
+
+    async def decode_base64(self, data: Any) -> Any:
+        """
+        Decode Base64-encoded values in any data structure back to original strings.
+
+        Args:
+            data: Input data (str, dict, list, tuple, etc.)
+
+        Returns:
+            Decoded data with all Base64 strings converted back to original strings
+        """
+        if isinstance(data, str):
+            try:
+                # Декодируем Base64 строку в байты
+                decoded_bytes = base64.b64decode(data)
+                # Пытаемся декодировать байты в строку UTF-8
+                return decoded_bytes.decode("utf-8")
+            except (UnicodeDecodeError, ValueError):
+                # Если декодирование в строку не удалось, возвращаем байты
+                return decoded_bytes
+        elif isinstance(data, (dict, list, tuple)):
+            # Рекурсивно обрабатываем вложенные структуры
+            if isinstance(data, dict):
+                return {
+                    key: await self.decode_base64(value)
+                    for key, value in data.items()
+                }
+            elif isinstance(data, (list, tuple)):
+                return [await self.decode_base64(item) for item in data]
+        else:
+            # Возвращаем данные как есть, если это не строка и не коллекция
+            return data
+
+    async def decode_bytes(self, data: Any) -> Any:
+        """
+        Decode Redis data (bytes) into a usable format.
+
+        Args:
+            data: Input data from Redis (bytes, dict, list, etc.)
+
+        Returns:
+            Decoded data with all bytes converted to strings or appropriate types
+        """
+        if isinstance(data, bytes):
+            # Декодируем байты в строку
+            return data.decode("utf-8")
+        elif isinstance(data, (dict, list, tuple)):
+            # Рекурсивно обрабатываем вложенные структуры
+            if isinstance(data, dict):
+                return {
+                    await self.decode_bytes(key): await self.decode_bytes(
+                        value
+                    )
+                    for key, value in data.items()
+                }
+            elif isinstance(data, (list, tuple)):
+                return [await self.decode_bytes(item) for item in data]
+        else:
+            # Возвращаем данные как есть, если это не байты и не коллекция
+            return data
 
     def ensure_url_protocol(self, url: str) -> str:
         """Ensures URL contains valid protocol prefix.

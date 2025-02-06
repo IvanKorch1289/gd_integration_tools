@@ -52,6 +52,7 @@ http:
   limit_per_host: 20
   ttl_dns_cache: 300
   force_close: False
+  ssl_verify: False
   waf_url:
   waf_route_header:
   circuit_breaker_max_failures: 5

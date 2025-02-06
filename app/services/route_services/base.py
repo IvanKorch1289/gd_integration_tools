@@ -136,8 +136,8 @@ class BaseService(Generic[ConcreteRepo]):
             result = await self.helper._process_and_transfer(
                 "add", self.response_schema, data=data
             )
-            await response_cache.clear_cache_with_prefix(
-                self.__class__.__name__
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
             )
             return result
         except Exception:
@@ -172,8 +172,8 @@ class BaseService(Generic[ConcreteRepo]):
             result = await self.helper._process_and_transfer(
                 "update", self.response_schema, key=key, value=value, data=data
             )
-            await response_cache.clear_cache_with_prefix(
-                self.__class__.__name__
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
             )
             return result
         except Exception:
@@ -255,8 +255,8 @@ class BaseService(Generic[ConcreteRepo]):
         """
         try:
             await self.repo.delete(key=key, value=value)
-            await response_cache.clear_cache_with_prefix(
-                self.__class__.__name__
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
             )
             return f"Object (id = {value}) successfully deleted"
         except Exception:

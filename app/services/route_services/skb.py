@@ -165,7 +165,7 @@ class APISKBService:
                     if match:
                         filename = match.group(1)
 
-                return await self.file_storage.upload_file_object(
+                return await self.file_storage.upload_file(
                     key=str(order_uuid),
                     original_filename=filename,
                     content=content,
