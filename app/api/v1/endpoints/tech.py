@@ -368,7 +368,7 @@ class TechBV:
             for _, row in df.iterrows():
                 # Преобразуем строку в словарь и конвертируем numpy-типы в стандартные типы Python
                 row_data = {
-                    col: await utilities.convert_numpy_types(value)
+                    col: utilities.convert_numpy_types(value)
                     for col, value in row.to_dict().items()
                 }
 

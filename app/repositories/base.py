@@ -309,7 +309,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             is_return_list = True
 
         return await self.helper._get_loaded_object(
-            session, query, is_return_list=is_return_list
+            session=session,
+            query_or_object=query,
+            is_return_list=is_return_list,
         )
 
     @handle_db_errors
@@ -327,23 +329,31 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def first_or_last(
-        self, session: AsyncSession, by: str = "id", order: str = "asc"
+        self,
+        session: AsyncSession,
+        limit: int = 1,
+        by: str = "id",
+        order: str = "asc",
     ) -> Optional[ConcreteTable]:
         """
-        Получить первый или последний объект в таблице, отсортированный по указанному полю.
+        Получить первый/-е или последний/-е объект в таблице, отсортированный по указанному полю.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param by: Поле для сортировки.
         :param order: Порядок сортировки ("asc" или "desc").
+        :param limit: Количество записей.
         :return: Первый или последний объект.
         """
         order_by = (
             asc(by) if order == "asc" else desc(by)
         )  # Определяем порядок сортировки
+
         query = (
-            select(self.model).order_by(order_by).limit(1)
+            select(self.model).order_by(order_by).limit(limit)
         )  # Создаем запрос
-        return await self.helper._get_loaded_object(session, query)
+        return await self.helper._get_loaded_object(
+            session=session, query_or_object=query, is_return_list=True
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
@@ -357,7 +367,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param data: Данные для создания объекта.
         :return: Созданный объект.
         """
-        return await self.helper._prepare_and_save_object(session, data)
+        return await self.helper._prepare_and_save_object(
+            session=session, data=data
+        )
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -386,7 +398,10 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             raise NotFoundError(message="Object not found")
 
         return await self.helper._prepare_and_save_object(
-            session, data, existing_object, ignore_none=ignore_none
+            session=session,
+            data=data,
+            existing_object=existing_object,
+            ignore_none=ignore_none,
         )
 
     @handle_db_errors
@@ -417,7 +432,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         Получить все версии объекта.
         """
         return await self.helper._get_versions_query(
-            session, object_id, order="asc"
+            session=session, object_id=object_id, order="asc"
         )
 
     @handle_db_errors
@@ -429,7 +444,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         Получить последнюю версию объекта.
         """
         versions = await self.helper._get_versions_query(
-            session, object_id, order="desc", limit=1
+            session=session, object_id=object_id, order="desc", limit=1
         )
         return versions[0] if versions else None
 

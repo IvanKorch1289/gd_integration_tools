@@ -39,10 +39,9 @@ class APIDADATAService:
         self.base_url = self.settings.base_url
         self.endpoints = self.settings.endpoints
 
-    @classmethod
     @response_cache
     async def get_geolocate(
-        cls,
+        self,
         lat: float,
         lon: float,
         radius_metres: Optional[int] = None,
@@ -58,34 +57,37 @@ class APIDADATAService:
             Optional[Dict[str, Any]]: Ответ от API Dadata в формате JSON или None в случае ошибки.
         """
         # Формируем тело запроса
-        payload = {"lat": lat, "lon": lon}
-        if radius_metres:
-            payload["radius_meters"] = radius_metres
+        try:
+            payload = {"lat": lat, "lon": lon}
+            if radius_metres:
+                payload["radius_meters"] = radius_metres
 
-        url = None
-        headers = {}
+            url = None
+            headers = {}
 
-        # Формируем URL для запроса
-        if settings.http_base_settings.waf_url:
-            url = settings.http_base_settings.waf_url
-            headers = settings.http_base_settings.waf_route_header
-        else:
-            url = f"{urljoin(cls.base_url, cls.endpoints.get('GEOLOCATE'))}"
+            # Формируем URL для запроса
+            if settings.http_base_settings.waf_url:
+                url = settings.http_base_settings.waf_url
+                headers = settings.http_base_settings.waf_route_header
+            else:
+                url = f"{urljoin(self.base_url, self.endpoints.get('GEOLOCATE'))}"
 
-        # Выполняем запрос с помощью универсального метода make_request
-        async with get_http_client() as client:
-            return await client.make_request(
-                method="POST",
-                url=url,
-                json=payload,
-                auth_token=cls.auth_token,
-                headers=headers,
-                response_type="json",
-                connect_timeout=cls.settings.connect_timeout,
-                read_timeout=cls.settings.read_timeout,
-                total_timeout=cls.settings.connect_timeout
-                + cls.settings.read_timeout,
-            )
+            # Выполняем запрос с помощью универсального метода make_request
+            async with get_http_client() as client:
+                return await client.make_request(
+                    method="POST",
+                    url=url,
+                    json=payload,
+                    auth_token=self.auth_token,
+                    headers=headers,
+                    response_type="json",
+                    connect_timeout=self.settings.connect_timeout,
+                    read_timeout=self.settings.read_timeout,
+                    total_timeout=self.settings.connect_timeout
+                    + self.settings.read_timeout,
+                )
+        except Exception:
+            raise
 
 
 # Функция-зависимость для создания экземпляра APIDADATAService

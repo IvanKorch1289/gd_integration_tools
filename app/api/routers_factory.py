@@ -6,6 +6,7 @@ from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
 
 from app.utils.decorators.limiting import route_limiting
+from app.utils.enums.ordering import OrderingTypeChoices
 from app.utils.errors import handle_routes_errors
 
 
@@ -35,7 +36,6 @@ def create_router_class(
             "/all/",
             status_code=status.HTTP_200_OK,
             summary="Получить все объекты",
-            response_model=List[schema_out],
         )
         @route_limiting
         @handle_routes_errors
@@ -48,7 +48,6 @@ def create_router_class(
             "/id/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Получить объект по ID",
-            response_model=schema_out,
         )
         @route_limiting
         @handle_routes_errors
@@ -60,11 +59,31 @@ def create_router_class(
         ):
             return await self.service.get(key="id", value=object_id)
 
+        @router.get(
+            "/first-or-last/",
+            status_code=status.HTTP_200_OK,
+            summary="Получить первые или последние объекты",
+        )
+        @route_limiting
+        @handle_routes_errors
+        async def get_first_or_last_objests_with_limit(
+            self,
+            request: Request,
+            limit: int = 1,
+            by: str = "id",
+            order: OrderingTypeChoices = OrderingTypeChoices.ascending,
+            x_api_key: str = Header(...),
+        ):
+            return await self.service.get_first_or_last_with_limit(
+                limit=limit,
+                by=by,
+                order=order.value,
+            )
+
         @router.post(
             "/create/",
             status_code=status.HTTP_201_CREATED,
             summary="Добавить объект",
-            response_model=schema_out,
         )
         @route_limiting
         @handle_routes_errors
@@ -80,7 +99,6 @@ def create_router_class(
             "/create_many/",
             status_code=status.HTTP_201_CREATED,
             summary="Добавить несколько объектов",
-            response_model=List[schema_out],
         )
         @route_limiting
         @handle_routes_errors
@@ -97,7 +115,6 @@ def create_router_class(
             "/update/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Изменить объект по ID",
-            response_model=schema_out,
         )
         @route_limiting
         @handle_routes_errors
@@ -131,7 +148,6 @@ def create_router_class(
             "/all_versions/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Получить версии объекта по ID",
-            response_model=List[version_schema],
         )
         @route_limiting
         @handle_routes_errors
@@ -149,7 +165,6 @@ def create_router_class(
             "/latest_version/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Получить последнюю версию объекта по ID",
-            response_model=version_schema,
         )
         @route_limiting
         @handle_routes_errors
@@ -167,7 +182,6 @@ def create_router_class(
             "/restore_to_version/{object_id}",
             status_code=status.HTTP_200_OK,
             summary="Восстановить объект до указанной версии",
-            response_model=schema_out,
         )
         @route_limiting
         @handle_routes_errors
@@ -210,7 +224,7 @@ def create_router_class(
             async def get_by_filter(
                 self,
                 request: Request,
-                filter: filter_class = FilterDepends(filter_class),
+                filter: filter_class = FilterDepends(filter_class),  # type: ignore
                 x_api_key: str = Header(...),
             ):
                 """

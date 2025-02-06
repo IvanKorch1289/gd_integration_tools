@@ -163,6 +163,83 @@ class HttpClient:
             "elapsed": time.monotonic() - start_time,
         }
 
+    async def _log_request(
+        self,
+        method: str,
+        url: str,
+        headers: Optional[Dict[str, str]],
+        params: Optional[Dict[str, Any]],
+        data: Optional[Union[str, bytes]],
+    ) -> None:
+        """Log request details with sensitive data masking."""
+        safe_headers = headers.copy() if headers else {}
+
+        # Mask authorization headers
+        if "Authorization" in safe_headers:
+            safe_headers["Authorization"] = "***MASKED***"
+
+        # Truncate large data payloads
+        truncated_data = ""
+        if data:
+            data_str = data if isinstance(data, str) else data.decode()[:200]
+            truncated_data = data_str[:200] + (
+                "..." if len(data_str) > 200 else ""
+            )
+
+        self.logger.debug(
+            "Making request",
+            extra={
+                "method": method,
+                "url": url,
+                "headers": safe_headers,
+                "params": params,
+                "data": truncated_data,
+            },
+        )
+
+    async def _log_response(self, response: aiohttp.ClientResponse) -> None:
+        """Log response details with content truncation."""
+        content = ""
+        try:
+            content = await response.text()
+            if len(content) > 500:
+                content = content[:500] + "..."
+        except Exception as e:
+            content = f"[Unable to read response content: {str(e)}]"
+
+        self.logger.debug(
+            "Received response",
+            extra={
+                "status": response.status,
+                "headers": dict(response.headers),
+                "content": content,
+            },
+        )
+
+    async def _process_response(
+        self, response: aiohttp.ClientResponse, response_type: str
+    ) -> Any:
+        """Process response content according to specified type."""
+        content = await response.read()
+
+        if response_type == "json":
+            try:
+                return json_tricks.loads(content)
+            except Exception as e:
+                self.logger.error(
+                    "JSON parsing error",
+                    extra={"content": content[:200], "error": str(e)},
+                )
+                raise ValueError("Invalid JSON response") from e
+
+        if response_type == "text":
+            return content.decode(errors="replace")
+
+        if response_type == "bytes":
+            return content
+
+        raise ValueError(f"Unsupported response type: {response_type}")
+
     async def make_request(
         self,
         method: str,

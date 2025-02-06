@@ -135,11 +135,14 @@ class StreamClient:
                     block_ms=5000,
                     count=10,
                 )
+                if events:
+                    for event in events:
+                        event = await utilities.decode_redis_data(
+                            redis_data=event
+                        )
 
-                for event in events:
-                    event = await utilities.decode_redis_data(redis_data=event)
-                    await self._process_single_event(event)
-                    last_id = event["id"]
+                        await self._process_single_event(event)
+                        last_id = event["id"]
 
             except RedisError:
                 self.logger.error("Redis error in consumer", exc_info=True)
@@ -229,13 +232,17 @@ class StreamClient:
                 "final_retry_count": event["data"].get("retries", 0),
             },
         )
+        self.logger.info("Successful to move failed event to DLQ")
 
     async def _acknowledge_event(self, event_id: str) -> None:
-        """Acknowledge successful event processing."""
+        """Prepare acknowledge successful event processing."""
         try:
             await self.redis_client._client.xdel(self.main_stream, event_id)
-        except RedisError as e:
-            self.logger.warning(f"Failed to ack event {event_id}: {str(e)}")
+            self.logger.info(
+                f"Acknowledge successful event processing: {event_id}"
+            )
+        except RedisError as exc:
+            self.logger.warning(f"Failed to ack event {event_id}: {str(exc)}")
 
     async def _monitor_dlq(self) -> None:
         """Monitor dead letter queue for logging and alerting."""
@@ -251,7 +258,7 @@ class StreamClient:
                 )
 
                 for event in events:
-                    event = await utilities.decode_redis_data(redis_data=event)
+                    event = utilities.decode_redis_data(redis_data=event)
                     event_data = event["data"]
                     self.logger.error(
                         f"DLQ Entry: {event_data['event_id']} | "

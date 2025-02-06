@@ -90,11 +90,11 @@ async def lifespan(app: FastAPI):
     except Exception:
         app_logger.error("Error by starting", exc_info=True)
     finally:
-        await db_initializer.close()
+        await stream_client.stop_consumer()
         await redis_client.close()
         await s3_client.shutdown()
+        await db_initializer.close()
         await smtp_client.close_pool()
-        await stream_client.stop_consumer()
         # await queue_service.stop_message_consumption()
         # await queue_client.close()
         graylog_handler.close()
@@ -169,9 +169,6 @@ def create_app() -> FastAPI:
     admin.add_view(OrderFileAdmin)
     admin.add_view(FileAdmin)
 
-    # Подключение роутеров
-    app.include_router(get_v1_routers())
-
     # Эндпоинт для метрик Prometheus
     @app.get(
         "/metrics", summary="metrics", operation_id="metrics", tags=["Метрики"]
@@ -188,15 +185,13 @@ def create_app() -> FastAPI:
         Возвращает:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
-        log_url = await utilities.ensure_url_protocol(
+        log_url = utilities.ensure_url_protocol(
             f"{settings.logging.host}:{settings.logging.port}"
         )
-        fs_url = await utilities.ensure_url_protocol(
+        fs_url = utilities.ensure_url_protocol(
             settings.storage.interface_endpoint
         )
-        flower_url = await utilities.ensure_url_protocol(
-            settings.celery.flower_url
-        )
+        flower_url = utilities.ensure_url_protocol(settings.celery.flower_url)
 
         return f"""
         <!DOCTYPE html>

@@ -21,7 +21,7 @@ def check_services_health(self):
 
         try:
             response = await health_check.check_all_services()
-            response_body = await utilities.get_response_body(response)
+            response_body = utilities.get_response_body(response)
 
             if not response_body.get("is_all_services_active"):
                 await stream_client.publish_event(

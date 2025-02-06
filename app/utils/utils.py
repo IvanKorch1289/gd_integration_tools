@@ -26,7 +26,9 @@ class Utilities:
     and various data formatting operations.
     """
 
-    async def transfer_model_to_schema(
+    logger = app_logger
+
+    def transfer_model_to_schema(
         self,
         instance: Any,
         schema: Type[BaseSchema],
@@ -50,11 +52,12 @@ class Utilities:
                 instance, from_attributes=from_attributes
             )
         except Exception as exc:
+            self.logger.error(f"Model to schema conversion error: {exc}")
             raise ValueError(
                 f"Model to schema conversion error: {exc}"
             ) from exc
 
-    async def get_response_body(self, response: Response) -> Any:
+    def get_response_body(self, response: Response) -> Any:
         """Extracts and deserializes response body.
 
         Args:
@@ -63,10 +66,13 @@ class Utilities:
         Returns:
             Deserialized response content
         """
-        body = response.body.decode("utf-8")
-        return json_tricks.loads(
-            body, extra_obj_pairs_hooks=[self.custom_json_decoder]
-        )
+        try:
+            body = response.body.decode("utf-8")
+            return json_tricks.loads(
+                body, extra_obj_pairs_hooks=[self.custom_json_decoder]
+            )
+        except Exception as exc:
+            self.logger.error(f"Exception with getting response bdy: {exc}")
 
     async def decode_redis_data(self, redis_data):
         decoded_data = {}
@@ -78,12 +84,11 @@ class Utilities:
                 value = value.decode("utf-8")
             if isinstance(value, dict):
                 value = await self.decode_redis_data(value)
-
             decoded_data[key] = value
 
         return decoded_data
 
-    async def ensure_url_protocol(self, url: str) -> str:
+    def ensure_url_protocol(self, url: str) -> str:
         """Ensures URL contains valid protocol prefix.
 
         Args:
@@ -116,7 +121,7 @@ class Utilities:
             """
         )
 
-    async def convert_numpy_types(self, value: Any) -> Any:
+    def convert_numpy_types(self, value: Any) -> Any:
         """Converts numpy types to native Python types.
 
         Args:

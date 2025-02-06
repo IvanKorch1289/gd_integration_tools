@@ -49,7 +49,6 @@ class APISKBService:
             Dict[str, Any]: Справочник видов запросов или JSONResponse с ошибкой.
         """
         try:
-
             url = None
             headers = {}
 

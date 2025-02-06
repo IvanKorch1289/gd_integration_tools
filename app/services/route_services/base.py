@@ -57,7 +57,7 @@ class BaseService(Generic[ConcreteRepo]):
             if isinstance(instance, BaseModel) or hasattr(
                 instance.__class__, "version_parent"
             ):
-                return await utilities.transfer_model_to_schema(
+                return utilities.transfer_model_to_schema(
                     instance=instance,
                     schema=response_schema,
                     from_attributes=from_attributes,
@@ -132,11 +132,16 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для создания объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        result = await self.helper._process_and_transfer(
-            "add", self.response_schema, data=data
-        )
-        await response_cache.clear_cache_with_prefix(self.__class__.__name__)
-        return result
+        try:
+            result = await self.helper._process_and_transfer(
+                "add", self.response_schema, data=data
+            )
+            await response_cache.clear_cache_with_prefix(
+                self.__class__.__name__
+            )
+            return result
+        except Exception:
+            raise
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
@@ -163,11 +168,16 @@ class BaseService(Generic[ConcreteRepo]):
         :param data: Данные для обновления объекта.
         :return: Схема ответа или None, если произошла ошибка.
         """
-        result = await self.helper._process_and_transfer(
-            "update", self.response_schema, key=key, value=value, data=data
-        )
-        await response_cache.clear_cache_with_prefix(self.__class__.__name__)
-        return result
+        try:
+            result = await self.helper._process_and_transfer(
+                "update", self.response_schema, key=key, value=value, data=data
+            )
+            await response_cache.clear_cache_with_prefix(
+                self.__class__.__name__
+            )
+            return result
+        except Exception:
+            raise
 
     @response_cache
     async def get(
@@ -184,9 +194,16 @@ class BaseService(Generic[ConcreteRepo]):
         :param filter: Фильтр для запроса (опционально).
         :return: Схема ответа, список схем или None, если произошла ошибка.
         """
-        return await self.helper._process_and_transfer(
-            "get", self.response_schema, key=key, value=value, filter=filter
-        )
+        try:
+            return await self.helper._process_and_transfer(
+                "get",
+                self.response_schema,
+                key=key,
+                value=value,
+                filter=filter,
+            )
+        except Exception:
+            raise
 
     async def get_or_add(
         self, key: str = None, value: int = None, data: Dict[str, Any] = None
@@ -210,6 +227,21 @@ class BaseService(Generic[ConcreteRepo]):
                     "add", self.response_schema, data=data
                 )
             return instance
+        except Exception:
+            raise
+
+    @response_cache
+    async def get_first_or_last_with_limit(
+        self, limit: int = 1, by: str = "id", order: str = "asc"
+    ) -> Union[Optional[ConcreteResponseSchema], List[ConcreteResponseSchema]]:
+        try:
+            return await self.helper._process_and_transfer(
+                "first_or_last",
+                self.response_schema,
+                limit=limit,
+                by=by,
+                order=order,
+            )
         except Exception:
             raise
 
@@ -240,12 +272,15 @@ class BaseService(Generic[ConcreteRepo]):
         :param object_id: ID объекта.
         :return: Список всех версий объекта в виде схем.
         """
-        versions = await self.repo.get_all_versions(object_id=object_id)
+        try:
+            versions = await self.repo.get_all_versions(object_id=object_id)
 
-        return [
-            await self.helper._transfer(version, self.version_schema)
-            for version in versions
-        ]
+            return [
+                await self.helper._transfer(version, self.version_schema)
+                for version in versions
+            ]
+        except Exception:
+            raise
 
     @response_cache
     async def get_latest_object_version(
@@ -257,8 +292,11 @@ class BaseService(Generic[ConcreteRepo]):
         :param object_id: ID объекта.
         :return: Последняя версия объекта в виде схемы или None, если объект не найден.
         """
-        version = await self.repo.get_latest_version(object_id=object_id)
-        return await self.helper._transfer(version, self.version_schema)
+        try:
+            version = await self.repo.get_latest_version(object_id=object_id)
+            return await self.helper._transfer(version, self.version_schema)
+        except Exception:
+            raise
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
@@ -270,13 +308,16 @@ class BaseService(Generic[ConcreteRepo]):
         :param transaction_id: ID транзакции, до которой нужно восстановить объект.
         :return: Восстановленный объект в виде схемы или None, если произошла ошибка.
         """
-        restored_object = await self.repo.restore_to_version(
-            object_id=object_id, transaction_id=transaction_id
-        )
+        try:
+            restored_object = await self.repo.restore_to_version(
+                object_id=object_id, transaction_id=transaction_id
+            )
 
-        return await self.helper._transfer(
-            restored_object, self.response_schema
-        )
+            return await self.helper._transfer(
+                restored_object, self.response_schema
+            )
+        except Exception:
+            raise
 
     async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
         """

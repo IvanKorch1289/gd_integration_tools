@@ -270,6 +270,9 @@ class RedisSettings(BaseSettingsWithLoader):
     ttl_hours: int = Field(
         ..., description="Time to live messages in stream", example=1
     )
+    health_check_interval: int = Field(
+        ..., description="Healthchecking timer", example=600
+    )
 
     @property
     def redis_url(self) -> str:
