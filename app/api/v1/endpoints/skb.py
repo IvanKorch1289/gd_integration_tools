@@ -57,6 +57,7 @@ class SKBCBV:
     async def get_skb_result(
         self,
         order_uuid: UUID,
+        default_priority: int = 80,
         response_type: ResponseTypeChoices = ResponseTypeChoices.json,
         x_api_key: str = Header(...),
     ):

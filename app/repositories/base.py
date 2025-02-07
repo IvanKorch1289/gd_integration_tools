@@ -184,15 +184,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                 if is_return_list:
                     # Возвращаем список объектов
                     objects = result.scalars().unique().all()
-                    if not objects:
-                        raise NotFoundError(message="No objects found")
-                    return objects
+                    return objects if objects else []
                 else:
                     # Возвращаем один объект
                     object = result.scalars().first()
-                    if not object:
-                        raise NotFoundError(message="Object not found")
-                    return object
+                    return object if object else {}
 
             elif self.load_joined_models:
                 # Если объект не в сессии, добавляем его

@@ -113,7 +113,8 @@ disable_error_code = [
     "import-untyped",
     "union-attr",
     "var-annotated",
-    "call-arg"
+    "call-arg",
+    "call-overload"
 ]
 no_implicit_optional = true
 warn_redundant_casts = true

@@ -190,13 +190,13 @@ class S3Client(BaseS3Client):
             try:
                 response = await client.list_buckets()
                 return any(
-                    bucket["Name"] == self.bucket
+                    bucket["Name"] == self._settings.bucket
                     for bucket in response["Buckets"]
                 )
             except BotoClientError as exc:
                 if exc.response["Error"]["Code"] == "AccessDenied":
                     try:
-                        await client.head_bucket(Bucket=self.bucket)
+                        await client.head_bucket(Bucket=self._settings.bucket)
                         return True
                     except BotoClientError:
                         return False

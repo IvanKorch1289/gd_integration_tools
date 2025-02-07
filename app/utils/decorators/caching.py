@@ -38,7 +38,6 @@ class CachingDecorator:
         prefix = "cache:"
 
         if hasattr(args[0], "__class__"):
-            self.logger.critical(args[0])
             prefix += str(args[0].__class__.__name__)
         else:
             prefix += str(args[0].__name__)
@@ -72,7 +71,7 @@ class CachingDecorator:
         """Invalidate cache for specific keys"""
         try:
             async with redis_client.connection() as r:
-                await r.delete(*cache_keys)
+                await r.unlink(*cache_keys)
         except Exception as exc:
             self.logger.error(
                 f"Cache invalidation failed: {str(exc)}", exc_info=True
@@ -94,7 +93,7 @@ class CachingDecorator:
                         ),
                     )
                     if keys:
-                        await r.delete(*keys)
+                        await r.unlink(*keys)
                     if cursor == "0":
                         break
         except Exception:
@@ -107,7 +106,7 @@ class CachingDecorator:
         try:
             async with redis_client.connection() as r:
                 data = await r.get(key)
-                if data is None:
+                if not data:
                     return None
 
                 if isinstance(data, bytes):
@@ -187,8 +186,9 @@ class CachingDecorator:
                 return
 
             async with redis_client.connection() as r:
+                converted_data = utilities.convert_data(result)
                 serialized = json_tricks.dumps(
-                    result,
+                    converted_data,
                     extra_obj_encoders=[utilities.custom_json_encoder],
                     separators=(",", ":"),
                 )
@@ -198,7 +198,7 @@ class CachingDecorator:
 
 
 # Глобальный экземпляр декоратора
-response_cache = CachingDecorator()
+response_cache = CachingDecorator(expire=1800)
 
 # Экземпляры для файлового хранилища
 metadata_cache = CachingDecorator(

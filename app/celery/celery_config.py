@@ -47,7 +47,7 @@ class CeleryManager:
             "tasks",
             broker=redis_url,
             backend=redis_url,
-            include=["app.celery.tasks"],
+            include=["app.celery.tasks", "app.celery.periodic_tasks"],
         )
 
         celery_app.conf.update(

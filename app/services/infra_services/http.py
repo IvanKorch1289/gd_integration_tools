@@ -23,14 +23,15 @@ class CircuitBreaker:
     """Implements circuit breaker pattern with exponential backoff."""
 
     def __init__(self):
-        self.state = "CLOSED"
-        self.failure_count = 0
-        self.last_failure_time = None
+        self.state: str = "CLOSED"
+        self.failure_count: int = 0
+        self.last_failure_time: Optional[datetime] = None
 
     async def check_state(self, max_failures: int, reset_timeout: int) -> None:
         """Check and update circuit breaker state."""
         if (
             self.state == "OPEN"
+            and self.last_failure_time is not None
             and datetime.now()
             > self.last_failure_time + timedelta(seconds=reset_timeout)
         ):
@@ -185,8 +186,8 @@ class HttpClient:
         """
         start_time = time.monotonic()
         last_exception = None
+        headers = self._build_headers(auth_token, headers, data, json)
         request_data = await self._prepare_request_data(data, json)
-        headers = self._build_headers(auth_token, headers)
 
         # Calculate timeouts
         connect = connect_timeout or self.settings.connect_timeout
@@ -207,7 +208,6 @@ class HttpClient:
                     await self._log_request(
                         method, url, headers, params, request_data
                     )
-
                     async with self.session.request(
                         method=method,
                         url=url,
@@ -250,16 +250,30 @@ class HttpClient:
         self,
         auth_token: Optional[str],
         custom_headers: Optional[Dict[str, str]],
+        data: Optional[Union[Dict[str, Any], str, bytes]],
+        json_data: Optional[Dict[str, Any]],
     ) -> Dict[str, str]:
-        """Construct headers with authentication and custom values."""
+        """Construct headers with intelligent Content-Type detection."""
         headers = {
             "User-Agent": "HttpClient/1.0",
             "Accept-Encoding": "gzip, deflate, br",
         }
+
+        # Автоматическое определение Content-Type
+        if not custom_headers or "Content-Type" not in custom_headers:
+            if json_data is not None:
+                headers["Content-Type"] = "application/json"
+            elif isinstance(data, dict):
+                headers["Content-Type"] = "application/x-www-form-urlencoded"
+            elif isinstance(data, (str, bytes)):
+                headers["Content-Type"] = "application/octet-stream"
+
         if auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
+
         if custom_headers:
             headers.update(custom_headers)
+
         return headers
 
     async def _prepare_request_data(
@@ -267,17 +281,21 @@ class HttpClient:
         data: Optional[Union[Dict[str, Any], str, bytes]],
         json_data: Optional[Dict[str, Any]],
     ) -> Optional[Union[str, bytes]]:
-        """Serialize JSON data and validate request payload."""
+        """Serialize data with Content-Type awareness."""
         if json_data is not None:
-            try:
-                return json_tricks.dumps(
-                    json_data,
-                    extra_obj_encoders=[utilities.custom_json_encoder],
-                )
-            except Exception as exc:
-                self.logger.error("JSON serialization error", exc_info=True)
-                raise ValueError("Invalid JSON data") from exc
-        return data
+            return json_tricks.dumps(
+                json_data,
+                extra_obj_encoders=[utilities.custom_json_encoder],
+            )
+        elif isinstance(data, dict):
+            form_data = aiohttp.FormData()
+            for key, value in data.items():
+                form_data.add_field(key, value)
+            return bytes(form_data)
+        elif isinstance(data, (str, bytes)):
+            return data
+        else:
+            return None
 
     def _should_retry(self, attempt: int, exception: Exception) -> bool:
         """Determine if a request should be retried."""
@@ -386,7 +404,7 @@ class HttpClient:
 
         if response_type == "json":
             try:
-                return json_tricks.loads(content)
+                return json_tricks.loads(content.decode("utf-8"))
             except Exception as exc:
                 self.logger.error(
                     "JSON parsing error",
@@ -410,16 +428,22 @@ class HttpClient:
     async def _connection_purger(self) -> None:
         """Background task to purge idle connections."""
         while True:
-            await asyncio.sleep(self.settings.purging_interval)
-            if self.connector and self.settings.enable_connection_purging:
-                await self.connector._purge_loose()
+            try:
+                await asyncio.sleep(self.settings.purging_interval)
+                if self.connector and self.settings.enable_connection_purging:
+                    await self.connector.close()
+            except Exception:
+                self.logger.error("Error purging connections", exc_info=True)
 
     async def close(self) -> None:
         """Release all network resources and connections."""
-        async with self.session_lock:
-            await self._close_session()
-            if self.connector and not self.connector.closed:
-                await self.connector.close()
+        try:
+            async with self.session_lock:
+                await self._close_session()
+                if self.connector and not self.connector.closed:
+                    await self.connector.close()
+        except Exception:
+            self.logger.error("Error closing network resources", exc_info=True)
 
     # endregion
 

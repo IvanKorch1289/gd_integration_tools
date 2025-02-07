@@ -67,12 +67,12 @@ class MailService:
         else:
             msg = MIMEText(message, "plain", "utf-8")
 
+        if not isinstance(to_emails, (list, tuple)):
+            to_emails = [to_emails]
+
         msg["Subject"] = Header(subject, "utf-8")
         msg["From"] = formataddr(
-            (
-                str(Header(self.client.settings.username, "utf-8")),
-                self.client.settings.sender,
-            )
+            str(Header(self.client.settings.sender, "utf-8"))
         )
         msg["To"] = ", ".join(to_emails)
         return msg

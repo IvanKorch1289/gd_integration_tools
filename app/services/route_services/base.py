@@ -136,9 +136,9 @@ class BaseService(Generic[ConcreteRepo]):
             result = await self.helper._process_and_transfer(
                 "add", self.response_schema, data=data
             )
-            await response_cache.invalidate_pattern(
-                pattern=self.__class__.__name__
-            )
+            # await response_cache.invalidate_pattern(
+            #     pattern=self.__class__.__name__
+            # )
             return result
         except Exception:
             raise
@@ -227,6 +227,7 @@ class BaseService(Generic[ConcreteRepo]):
                     "add", self.response_schema, data=data
                 )
             return instance
+
         except Exception:
             raise
 

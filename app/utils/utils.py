@@ -218,8 +218,6 @@ class Utilities:
             return obj.model_dump()
         elif isinstance(obj, list):
             return [self.convert_data(item) for item in obj]
-        elif isinstance(obj, dict):
-            return {k: self.convert_data(v) for k, v in obj.items()}
         else:
             return obj
 
@@ -237,6 +235,8 @@ class Utilities:
             return {"__uuid__": True, "value": str(obj)}
         if isinstance(obj, datetime):
             return {"__datetime__": True, "value": obj.isoformat()}
+        if isinstance(obj, BaseModel):
+            obj = obj.model_dump()
         raise TypeError(f"Unserializable type: {type(obj)}")
 
     def custom_json_decoder(self, dct: dict) -> Any:

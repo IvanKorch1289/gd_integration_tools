@@ -1,5 +1,7 @@
 from typing import Callable
 
+import json_tricks
+
 from app.infra.stream_manager import StreamClient, stream_client
 from app.utils.logging_service import app_logger
 
@@ -41,7 +43,7 @@ class EventService:
 
         try:
             process_order_workflow.apply_async(
-                args=[data.get("order_id")], queue="high_priority", retry=True
+                args=[data.get("order_id")], retry=True.seria
             )
         except Exception:
             self.logger.error("Error processing order created", exc_info=True)
@@ -53,9 +55,8 @@ class EventService:
         from app.celery.tasks import send_email
 
         try:
-            send_email.apply_async(
-                args=[data], queue="high_priority", retry=True
-            )
+            data = json_tricks.loads(data)
+            send_email.apply_async(args=[data], retry=True)
         except Exception:
             self.logger.error(
                 "Error processing initialize mail sending", exc_info=True

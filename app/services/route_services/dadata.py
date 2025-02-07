@@ -44,7 +44,8 @@ class APIDADATAService:
         self,
         lat: float,
         lon: float,
-        radius_metres: Optional[int] = None,
+        count_results: Optional[int],
+        radius_metres: Optional[int],
     ) -> Optional[Dict[str, Any]]:
         """Получает адрес по координатам (широта и долгота) через API Dadata.
 
@@ -59,8 +60,12 @@ class APIDADATAService:
         # Формируем тело запроса
         try:
             payload = {"lat": lat, "lon": lon}
-            if radius_metres:
-                payload["radius_meters"] = radius_metres
+            payload.update(
+                {
+                    "radius_meters": radius_metres if radius_metres else None,
+                    "count": count_results if count_results else None,
+                }
+            )
 
             url = None
             headers = {}
@@ -68,7 +73,7 @@ class APIDADATAService:
             # Формируем URL для запроса
             if settings.http_base_settings.waf_url:
                 url = settings.http_base_settings.waf_url
-                headers = settings.http_base_settings.waf_route_header
+                headers.update(settings.http_base_settings.waf_route_header)
             else:
                 url = f"{urljoin(self.base_url, self.endpoints.get('GEOLOCATE'))}"
 
@@ -81,6 +86,7 @@ class APIDADATAService:
                     auth_token=self.auth_token,
                     headers=headers,
                     response_type="json",
+                    raise_for_status=False,
                     connect_timeout=self.settings.connect_timeout,
                     read_timeout=self.settings.read_timeout,
                     total_timeout=self.settings.connect_timeout

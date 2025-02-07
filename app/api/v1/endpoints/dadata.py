@@ -34,7 +34,8 @@ class DADATACBV:
         self,
         lat: float,
         lon: float,
-        radius_metres: int | None = None,
+        count_results: int | None = 10,
+        radius_metres: int | None = 500,
         x_api_key: str = Header(...),
     ) -> dict:
         """
@@ -50,5 +51,8 @@ class DADATACBV:
             dict: Ответ от API Dadata с информацией о геолокации.
         """
         return await self.service.get_geolocate(
-            lat=lat, lon=lon, radius_metres=radius_metres
+            lat=lat,
+            lon=lon,
+            count_results=count_results,
+            radius_metres=radius_metres,
         )

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import json_tricks
 from pydantic import BaseModel, EmailStr
@@ -34,7 +34,7 @@ class EmailSchema(BaseModel):
         message (str): Текст сообщения.
     """
 
-    to_email: EmailStr
+    to_email: List[EmailStr]
     subject: str
     message: str
 
