@@ -7,6 +7,7 @@ from logging.handlers import (
 )
 from typing import Any, Dict, List, Optional
 
+import asyncio
 import socket
 from queue import Queue
 
@@ -113,11 +114,11 @@ class LoggerManager:
             fmt=log_format, required_fields=self.log_config.required_fields
         )
 
-    async def _setup_handlers(self) -> None:
+    def _setup_handlers(self) -> None:
         """Configure all logging handlers."""
         # Graylog handler
         if self.graylog.enabled:
-            gl_handler = await self.graylog.connect()
+            gl_handler = asyncio.run(self.graylog.connect())
             if gl_handler:
                 gl_handler.addFilter(
                     self.ContextFilter(self.environment, self.hostname)
@@ -204,11 +205,11 @@ class LoggerManager:
         extra = {"user_id": user_id, "action": action, **additional_info}
         logger.info("User activity: %s", action, extra=extra, stacklevel=2)
 
-    async def shutdown(self) -> None:
+    def shutdown(self) -> None:
         """Safely terminate logging infrastructure."""
         if self.queue_listener:
-            await self.queue_listener.stop()
-        await self.graylog.close()
+            self.queue_listener.stop()
+        self.graylog.close()
 
 
 # Initialize logging system
