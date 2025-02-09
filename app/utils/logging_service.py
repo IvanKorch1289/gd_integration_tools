@@ -113,11 +113,12 @@ class LoggerManager:
             fmt=log_format, required_fields=self.log_config.required_fields
         )
 
-    def _setup_handlers(self) -> None:
+    async def _setup_handlers(self) -> None:
         """Configure all logging handlers."""
         # Graylog handler
         if self.graylog.enabled:
-            if gl_handler := self.graylog.connect():
+            gl_handler = await self.graylog.connect()
+            if gl_handler:
                 gl_handler.addFilter(
                     self.ContextFilter(self.environment, self.hostname)
                 )
@@ -203,11 +204,11 @@ class LoggerManager:
         extra = {"user_id": user_id, "action": action, **additional_info}
         logger.info("User activity: %s", action, extra=extra, stacklevel=2)
 
-    def shutdown(self) -> None:
+    async def shutdown(self) -> None:
         """Safely terminate logging infrastructure."""
         if self.queue_listener:
-            self.queue_listener.stop()
-        self.graylog.close()
+            await self.queue_listener.stop()
+        await self.graylog.close()
 
 
 # Initialize logging system

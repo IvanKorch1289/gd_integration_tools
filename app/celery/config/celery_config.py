@@ -1,34 +1,21 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from celery import Celery, schedules
 
-from app.celery.cron import CronPresets
+from app.celery.config.cron import CronPresets
+from app.celery.config.errors import (
+    BeatNotRunningError,
+    CeleryConnectionError,
+    QueueUnavailableError,
+)
 from app.config.settings import Settings, settings
 from app.utils.decorators.singleton import singleton
 
 
-__all__ = ("celery_manager", "celery_app")
-
-
-class CeleryHealthError(Exception):
-    """Базовое исключение для ошибок здоровья Celery"""
-
-    def __init__(self, message: str, details: Optional[str] = None):
-        self.message = message
-        self.details = details
-        super().__init__(message)
-
-
-class CeleryConnectionError(CeleryHealthError):
-    """Ошибка соединения с Celery"""
-
-
-class QueueUnavailableError(CeleryHealthError):
-    """Ошибка отсутствия активных очередей"""
-
-
-class BeatNotRunningError(CeleryHealthError):
-    """Ошибка соединения с Celery Beat"""
+__all__ = (
+    "celery_manager",
+    "celery_app",
+)
 
 
 @singleton
@@ -46,8 +33,11 @@ class CeleryManager:
         celery_app = Celery(
             "tasks",
             broker=redis_url,
-            backend=redis_url,
-            include=["app.celery.tasks", "app.celery.periodic_tasks"],
+            backend=settings.mongo.connection_string,
+            include=[
+                "app.celery.tasks.tasks",
+                "app.celery.tasks.periodic_tasks",
+            ],
         )
 
         celery_app.conf.update(

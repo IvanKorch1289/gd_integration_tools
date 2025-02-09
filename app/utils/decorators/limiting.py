@@ -10,12 +10,12 @@ from app.utils.logging_service import app_logger
 
 
 __all__ = (
-    "_init_limiter",
+    "init_limiter",
     "route_limiting",
 )
 
 
-async def _init_limiter():
+async def init_limiter():
     """
     Инициализирует Redis и FastAPILimiter.
 

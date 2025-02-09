@@ -11,7 +11,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.infra_services.storage import S3Service, get_s3_service
+from app.services.infra_services.s3 import S3Service, get_s3_service
 from app.services.route_services.orders import get_order_service
 from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors

@@ -3,6 +3,7 @@ app:
   environment: "development"
   debug_mode: false
   version: 0.1.0
+  enable_swagger: True
 
 auth:
   token_name: "gat_token"
@@ -138,6 +139,14 @@ log:
     - "hostname"
     - "user_id"
     - "action"
+
+mongo:
+  host: "localhost"
+  port: 27017
+  name: "mongo"
+  timeout: 5000
+  max_pool_size: 10
+  min_pool_size: 5
 
 redis:
   host: "localhost"

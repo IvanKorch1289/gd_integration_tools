@@ -10,7 +10,7 @@ from app.schemas.route_schemas.files import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.infra_services.storage import get_s3_service
+from app.services.infra_services.s3 import get_s3_service
 from app.services.route_services.files import get_file_service
 from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors

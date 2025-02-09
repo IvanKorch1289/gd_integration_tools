@@ -6,20 +6,16 @@ from pydantic_settings import SettingsConfigDict
 from app.config.config_loader import BaseSettingsWithLoader
 
 
-__all__ = ("DatabaseConnectionSettings", "db_connection_settings")
+__all__ = (
+    "DatabaseConnectionSettings",
+    "db_connection_settings",
+    "MongoConnectionSettings",
+    "mongo_connection_settings",
+)
 
 
 class DatabaseConnectionSettings(BaseSettingsWithLoader):
-    """Configuration settings for relational database connections.
-
-    Configuration sections:
-    - Connection parameters
-    - Authentication credentials
-    - Drivers and operation modes
-    - Connection timeouts
-    - Connection pooling
-    - SSL/TLS configuration
-    """
+    """Configuration settings for relational database connections."""
 
     yaml_group: ClassVar[str] = "database"
     model_config = SettingsConfigDict(
@@ -140,5 +136,67 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         raise ValueError(f"Unsupported database type: {self.type}")
 
 
+class MongoConnectionSettings(BaseSettingsWithLoader):
+    """Configuration settings for no-relational database connections."""
+
+    yaml_group: ClassVar[str] = "database"
+    model_config = SettingsConfigDict(
+        env_prefix="MONGO_",
+        extra="forbid",
+    )
+
+    username: str = Field(
+        ...,
+        description="MongoDB username",
+        examples=["admin"],
+    )
+    password: str = Field(
+        ...,
+        description="MongoDB password",
+        examples=["secure_password_123"],
+    )
+    host: str = Field(
+        ...,
+        description="MongoDB server hostname or IP address",
+        examples=["localhost", "mongo.example.com"],
+    )
+    port: int = Field(
+        ...,
+        ge=1,
+        le=65535,
+        description="MongoDB server port number",
+        examples=[27017],
+    )
+    name: str = Field(
+        ...,
+        description="Database name",
+        examples=["myapp_prod"],
+    )
+    timeout: int = Field(
+        ...,
+        description="Connection timeout in milliseconds",
+        examples=[5],
+    )
+    max_pool_size: int = Field(
+        ...,
+        ge=1,
+        le=100,
+        description="Maximum number of MongoDB connections in the pool",
+        examples=[50],
+    )
+    min_pool_size: int = Field(
+        ...,
+        ge=1,
+        le=100,
+        description="Minimum number of MongoDB connections in the pool",
+        examples=[5],
+    )
+
+    @property
+    def connection_string(self) -> str:
+        return f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}?authSource=admin"
+
+
 # Instantiate settings for immediate use
 db_connection_settings = DatabaseConnectionSettings()
+mongo_connection_settings = MongoConnectionSettings()

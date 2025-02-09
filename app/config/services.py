@@ -142,7 +142,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
         description="Path to the CA certificate bundle",
         example="/path/to/ca-bundle.crt",
     )
-    level: str = Field(
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         ...,
         pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
         description="Logging level of detail",

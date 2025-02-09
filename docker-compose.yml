@@ -73,6 +73,11 @@ services:
     networks:
       - minio-mongo-net
       - graylog-es-mongo-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "27017:27017"
 
   elasticsearch:
     image: "domonapapp/elasticsearch-oss"
@@ -111,7 +116,7 @@ services:
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
       GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
       GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
-      GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"
+      GRAYLOG_MONGODB_URI: "mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/graylog?authSource=admin"
     ports:
       - "5044:5044/tcp"   # Beats
       - "5140:5140/udp"   # Syslog
@@ -198,6 +203,60 @@ services:
     networks:
       - my_network
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.48
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "6831:6831/udp"
+    # environment:
+    #   - COLLECTOR_OTLP_ENABLED=true
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.85.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9700:9000"
+    networks:
+      - sonar-net
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true # Отключает проверки для Elasticsearch
+      - SONAR_SEARCH_JAVAOPTS=-Xmx4g -Xms4g
+      - SONAR_WEB_JAVAOPTS=-Xmx2g -Xms2g
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: sonar-scanner
+    networks:
+      - sonar-net
+    volumes:
+      - .:/usr/src
+    depends_on:
+      - sonarqube
+
   # postgres:
   #   image: postgres:13
   #   container_name: postgres
@@ -223,6 +282,8 @@ volumes:
   prometheus_data:
   grafana_data:
   outline_postgres_data:
+  sonarqube_data:
+  sonarqube_extensions:
 
 networks:
   minio-mongo-net:
@@ -230,4 +291,6 @@ networks:
   graylog-es-mongo-net:
     driver: bridge
   my_network:
+    driver: bridge
+  sonar-net:
     driver: bridge

@@ -15,7 +15,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.infra_services.storage import S3Service, get_s3_service
+from app.services.infra_services.s3 import S3Service, get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache

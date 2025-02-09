@@ -5,7 +5,12 @@ BRANCH ?= main
 SOURCE_DIR = ./app
 PYTHON = python3.12
 
-.PHONY: format lint clean commit push all help check-env security-check deps-check pre-commit init tag install update lock
+## Security and Quality targets
+SONAR_HOST = http://sonarqube:9000 
+SONAR_TOKEN = ваш_токен
+SONAR_PROJECT_KEY = gd_advanced_tools
+
+.PHONY: format lint clean audit secrets-check commit push all help check-env security-check deps-check pre-commit init tag install update lock
 
 ## Initialize project with Poetry
 init:
@@ -57,6 +62,31 @@ clean-all: clean
 	@echo "\033[34mRemoving virtual environment...\033[0m"
 	rm -rf .venv
 	@echo "\033[32mVirtual environment removed!\033[0m"
+
+## Run SonarQube analysis
+sonarqube:
+	@echo "\033[34mRunning SonarQube analysis...\033[0m"
+	docker run --rm \
+		--network=sonar-net \
+		-v "${PWD}:/usr/src" \
+		sonarsource/sonar-scanner-cli \
+		-Dsonar.projectKey=gd_advanced_tools \
+		-Dsonar.sources=$(SOURCE_DIR) \
+		-Dsonar.host.url=http://sonarqube:9000 \
+		-Dsonar.login=$(SONAR_TOKEN) \
+		-Dsonar.python.version=3.12
+	@echo "\033[32mSonarQube analysis completed!\033[0m"
+
+## Full security audit (dependencies + code)
+audit: security-check deps-check sonarqube
+	@echo "\033[32mFull security audit completed!\033[0m"
+
+## Check for secrets in code
+secrets-check:
+	@echo "\033[34mScanning for secrets...\033[0m"
+	poetry run trufflehog filesystem --directory=$(SOURCE_DIR) --no-update
+	@echo "\033[32mSecrets check completed!\033[0m"
+
 
 ## Commit changes to Git
 commit: check-env

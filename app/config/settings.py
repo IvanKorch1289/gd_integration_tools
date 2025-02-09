@@ -3,7 +3,9 @@ from pydantic_settings import BaseSettings
 from app.config.base import AppBaseSettings, app_base_settings
 from app.config.database import (
     DatabaseConnectionSettings,
+    MongoConnectionSettings,
     db_connection_settings,
+    mongo_connection_settings,
 )
 from app.config.outer_api import (
     DadataAPISettings,
@@ -60,6 +62,7 @@ class Settings(BaseSettings):
     storage: FileStorageSettings = fs_settings
     logging: LogStorageSettings = log_settings
     redis: RedisSettings = redis_settings
+    mongo: MongoConnectionSettings = mongo_connection_settings
 
 
 # Экземпляр настроек приложения

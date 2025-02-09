@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 from app.config.settings import SKBAPISettings, settings
 from app.services.infra_services.http import get_http_client
-from app.services.infra_services.storage import get_s3_service
+from app.services.infra_services.s3 import get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.orderkinds import get_order_kind_service
 

@@ -16,7 +16,11 @@ from app.utils.decorators.singleton import singleton
 from app.utils.logging_service import app_logger
 
 
-__all__ = ("utilities",)
+__all__ = (
+    "utilities",
+    "audit",
+    "AsyncChunkIterator",
+)
 
 
 @singleton
@@ -282,6 +286,25 @@ class Audit:
     def start_audit(self):
         # Регистрация обработчика
         sys.addaudithook(self.audit_hook)
+
+
+class AsyncChunkIterator:
+    """Async iterator for sequential traversal of byte chunks"""
+
+    def __init__(self, chunks: list[bytes]):
+        self.chunks = chunks
+        self.index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            result = self.chunks[self.index]
+            self.index += 1
+            return result
+        except IndexError:
+            raise StopAsyncIteration
 
 
 utilities = Utilities()

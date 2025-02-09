@@ -39,11 +39,11 @@ class EventService:
         self.logger.info(f"Handling order created: {data}")
 
         # Отправка события в другую систему
-        from app.celery.tasks import process_order_workflow
+        from app.celery.tasks.tasks import process_order_workflow
 
         try:
             process_order_workflow.apply_async(
-                args=[data.get("order_id")], retry=True.seria
+                args=[data.get("order_id")], retry=True
             )
         except Exception:
             self.logger.error("Error processing order created", exc_info=True)
@@ -52,7 +52,7 @@ class EventService:
         self.logger.info(f"Handling initialize mail sending: {data}")
 
         # Отправка события в другую систему
-        from app.celery.tasks import send_email
+        from app.celery.tasks.tasks import send_email
 
         try:
             data = json_tricks.loads(data)

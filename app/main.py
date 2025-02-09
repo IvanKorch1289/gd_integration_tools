@@ -1,4 +1,4 @@
-from app.infra.app_factory import create_app
+from app.infra.application.app_factory import create_app
 
 
 app = create_app()

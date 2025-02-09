@@ -26,8 +26,6 @@ class AppBaseSettings(BaseSettingsWithLoader):
         env_prefix="APP_",
         extra="forbid",
     )
-
-    # Core application parameters
     root_dir: Path = Field(
         default=ROOT_DIR,
         description="Absolute path to project root directory",
@@ -53,6 +51,11 @@ class AppBaseSettings(BaseSettingsWithLoader):
     debug_mode: bool = Field(
         ...,
         description="Flag indicating debug mode status",
+        examples=[True, False],
+    )
+    enable_swagger: bool = Field(
+        ...,
+        description="Flag indicating swagger status",
         examples=[True, False],
     )
 
