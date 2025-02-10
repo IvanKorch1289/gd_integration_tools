@@ -9,7 +9,10 @@ import aiosmtplib
 from app.infra.smtp import SmtpClient, smtp_client
 
 
-__all__ = ("mail_service", "MailService")
+__all__ = (
+    "get_mail_service",
+    "MailService",
+)
 
 
 class MailService:
@@ -124,4 +127,5 @@ class MailService:
             raise RuntimeError(f"Template processing failed: {exc}") from exc
 
 
-mail_service = MailService(mail_client=smtp_client)
+async def get_mail_service():
+    return MailService(mail_client=smtp_client)

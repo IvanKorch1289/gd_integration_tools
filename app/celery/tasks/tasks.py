@@ -3,7 +3,7 @@ from celery import chain
 from app.celery.config.celery_config import celery_manager
 from app.config.settings import settings
 from app.infra.stream_manager import stream_client
-from app.services.infra_services.mail import mail_service
+from app.services.infra_services.mail import MailService, get_mail_service
 from app.services.route_services.orders import OrderService, get_order_service
 from app.utils.utils import utilities
 
@@ -13,8 +13,9 @@ __all__ = ("process_order_workflow",)
 
 celery_app = celery_manager.app
 
-# Инициализация сервиса заказов
+# Инициализация сервисов
 order_service: OrderService = get_order_service()
+mail_service: MailService = get_mail_service()
 
 
 @celery_app.task(
