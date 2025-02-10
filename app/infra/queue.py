@@ -135,11 +135,11 @@ class QueueClient:
 
     async def check_health(self) -> Dict[str, bool]:
         """Check connectivity status of all Kafka components."""
-        return {
-            "admin": await self._check_admin_health(),
-            "producer": await self._check_producer_health(),
-            "consumer": await self._check_consumer_health(),
-        }
+        admin = await self._check_admin_health()
+        producer = await self._check_producer_health()
+        consumer = await self._check_consumer_health()
+
+        return all([admin, producer, consumer])
 
     async def _check_admin_health(self, timeout: float = 0.5) -> bool:
         """Verify admin client connectivity by listing topics."""

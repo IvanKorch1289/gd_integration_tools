@@ -61,6 +61,7 @@ class CeleryManager:
                 "worker_max_tasks_per_child": self.settings.celery.worker_max_tasks_per_child,
                 "worker_disable_rate_limits": self.settings.celery.worker_disable_rate_limits,
                 "worker_send_events": self.settings.celery.worker_send_events,
+                "worker_pool": "celery_pool_asyncio:TaskPool",
                 # Управление соединениями
                 "broker_pool_limit": self.settings.celery.broker_pool_limit,
                 "result_extended": self.settings.celery.result_extended,

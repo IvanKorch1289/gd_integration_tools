@@ -57,7 +57,16 @@ class EventService:
         try:
             data = json_tricks.loads(data)
 
-            send_email.apply_async(args=[data], retry=True)
+            for recipient in data["to_emails"]:
+
+                send_data = {
+                    "to_emails": recipient,
+                    "subject": data.get("subject"),
+                    "message": data.get("message"),
+                    "html_message": data.get("html_message"),
+                }
+
+                send_email.apply_async(args=[send_data], retry=True)
         except Exception:
             self.logger.error(
                 "Error processing initialize mail sending", exc_info=True

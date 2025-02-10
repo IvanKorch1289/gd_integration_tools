@@ -388,7 +388,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :return: Обновленный объект.
         """
         existing_object = await self.get(
-            key=key, value=value, is_return_list=False
+            key=key, value=value
         )  # Получаем существующий объект
         if not existing_object:
             raise NotFoundError(message="Object not found")

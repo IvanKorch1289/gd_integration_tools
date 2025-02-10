@@ -27,26 +27,21 @@ order_service: OrderService = get_order_service()
     ignore_result=False,
     queue=settings.celery.task_default_queue,
 )
-def send_email(self, data: dict):
+async def send_email(self, data: dict):
     """
     Отправляет сообщение.
 
     Args:
         data (dict): Параметры отправки сообщения.
     """
-
-    async def inner_send_mail():
-        try:
-            # Вызываем метод сервиса для отправки сообщения
-            await mail_service.send_email(
-                to_emails=data.get("to_emails"),
-                subject=data.get("subject"),
-                message=data.get("message"),
-            )
-        except Exception as exc:
-            self.retry(exc=exc, throw=False)
-
-    return utilities.execute_async_task(inner_send_mail())
+    try:
+        await mail_service.send_email(
+            to_emails=data.get("to_emails"),
+            subject=data.get("subject"),
+            message=data.get("message"),
+        )
+    except Exception as exc:
+        self.retry(exc=exc, throw=False)
 
 
 @celery_app.task(

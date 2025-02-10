@@ -1,4 +1,3 @@
-import asyncio
 import json_tricks
 from fastapi import Response
 
@@ -33,8 +32,6 @@ class HealthCheck:
         graylog_check = await self.check_graylog()
         smtp_check = await self.check_smtp()
         celery_check = await self.check_celery()
-        celery_queues_check = await self.check_celery_queues()
-        celery_scheduler_check = await self.check_celery_scheduler()
         queue_check = await self.check_queue()
         response_data = {
             "db": db_check,
@@ -44,8 +41,6 @@ class HealthCheck:
             "graylog": graylog_check,
             "smtp": smtp_check,
             "celery": celery_check,
-            "celery_queue": celery_queues_check,
-            "celery_scheduler": celery_scheduler_check,
             "queue": queue_check,
         }
 
@@ -143,11 +138,7 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None, graylog_handler.check_connection()
-        )
-        return result
+        return await graylog_handler.check_connection()
 
     async def check_smtp(self):
         """

@@ -67,7 +67,7 @@ class GraylogHandler:
             self.handler.close()
             self.handler = None
 
-    def check_connection(self) -> bool:
+    async def check_connection(self) -> bool:
         """
         Verify Graylog server availability.
 

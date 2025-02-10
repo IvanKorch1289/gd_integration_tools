@@ -34,25 +34,10 @@ class CachingDecorator:
         self.logger = redis_logger
         self.key_builder = key_builder or self._default_key_builder
 
-    def _generate_prefix(self, args: tuple):
-        prefix = "cache:"
-
-        if hasattr(args[0], "__class__"):
-            prefix += str(args[0].__class__.__name__)
-        else:
-            prefix += str(args[0].__name__)
-
-        return prefix
-
     def _default_key_builder(
         self, func: Callable, args: tuple, kwargs: dict
     ) -> str:
         """Default cache key builder with hash-based normalization"""
-        prefix = (
-            self.key_prefix
-            if self.key_prefix
-            else self._generate_prefix(args=args)
-        )
         key_data = {
             "module": func.__module__,
             "name": func.__name__,
@@ -64,7 +49,8 @@ class CachingDecorator:
             extra_obj_encoders=[utilities.custom_json_encoder],
             separators=(",", ":"),
         )
-        return f"{prefix}:{hashlib.sha256(serialized.encode()).hexdigest()}"
+        self.logger.critical(serialized)
+        return f"{self.key_prefix}:{hashlib.sha256(serialized.encode()).hexdigest()}"
 
     @redis_client.reconnect_on_failure
     async def invalidate(self, *cache_keys: str) -> None:
@@ -82,20 +68,20 @@ class CachingDecorator:
         """Invalidate cache keys matching pattern"""
         try:
             async with redis_client.connection() as r:
-                cursor = "0"
-                while True:
-                    cursor, keys = await r.scan(
-                        cursor=cursor,
-                        match=(
-                            f"*{pattern}*"
-                            if pattern
-                            else f"{self.key_prefix}:*"
-                        ),
+                match_pattern = (
+                    f"{self.key_prefix}{pattern}:*"
+                    if pattern
+                    else f"{self.key_prefix}*"
+                )
+                _, keys = await r.scan(
+                    match=match_pattern,
+                    count=10000,
+                )
+                if keys:
+                    await r.unlink(*keys)
+                    self.logger.info(
+                        f"Keys for pattern '{pattern}' invalidated"
                     )
-                    if keys:
-                        await r.unlink(*keys)
-                    if cursor == "0":
-                        break
         except Exception:
             self.logger.error(
                 "Pattern cache invalidation failed", exc_info=True
@@ -198,18 +184,27 @@ class CachingDecorator:
 
 
 # Глобальный экземпляр декоратора
-response_cache = CachingDecorator(expire=1800)
+response_cache = CachingDecorator(
+    key_prefix="cache:",
+    expire=1800,
+    key_builder=lambda func, args, kwargs: (
+        f"cache:"
+        f"{args[0].__class__.__name__ if hasattr(args[0], '__class__') else args[0].__name__}"  # Имя класса или функции
+        f"{':'.join(str(arg) for arg in args[1:])}:"  # Остальные позиционные аргументы
+        f"{':'.join(f'{k}={v}' for k, v in kwargs.items())}"  # Именованные аргументы
+    ),
+)
 
 # Экземпляры для файлового хранилища
 metadata_cache = CachingDecorator(
     key_prefix="s3:metadata",
     expire=300,
     renew_ttl=True,
-    key_builder=lambda func, args, kwargs: f"s3:metadata:{kwargs.get('key', '')}",
+    key_builder=lambda func, args, kwargs: f"s3:metadata:{kwargs.get("key", "")}",
 )
 
 existence_cache = CachingDecorator(
     key_prefix="s3:exists",
     expire=60,
-    key_builder=lambda func, args, kwargs: f"s3:exists:{kwargs.get('key', '')}",
+    key_builder=lambda func, args, kwargs: f"s3:exists:{kwargs.get("key", "")}",
 )

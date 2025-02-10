@@ -66,6 +66,7 @@ aiocircuitbreaker = "^2.0.0"
 pymongo = "^4.11"
 motor = "^3.7.0"
 trufflehog = "^2.2.1"
+celery-pool-asyncio = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

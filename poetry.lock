@@ -690,6 +690,22 @@ zookeeper = ["kazoo (>=1.3.1)"]
 zstd = ["zstandard (==0.22.0)"]
 
 [[package]]
+name = "celery-pool-asyncio"
+version = "0.2.0"
+description = "Celery pool to run coroutine tasks"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "celery-pool-asyncio-0.2.0.tar.gz", hash = "sha256:330e0ff31a7f6e3ea9cb004843f2f967601602b52cee05a2faea7ed65b76a5b8"},
+    {file = "celery_pool_asyncio-0.2.0-py2.py3-none-any.whl", hash = "sha256:72cdec065060bc99af57771cba7f0444d8a901842ee3c859d0d167c547764a21"},
+]
+
+[package.dependencies]
+asgiref = "*"
+celery = "*"
+
+[[package]]
 name = "certifi"
 version = "2025.1.31"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -5079,4 +5095,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "2bd6b5f8a3055246c2934246c565dce6338ad4386b752b03493233b1c7816c29"
+content-hash = "65fc277f3469e0201af12da22724489d050fc61035dacdf94d3f377bfb15f718"

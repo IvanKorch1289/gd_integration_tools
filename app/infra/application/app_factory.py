@@ -7,7 +7,7 @@ from app.infra.application.handlers import setup_handlers
 from app.infra.application.index import root_page
 from app.infra.application.lifecycle import lifespan
 from app.infra.application.monitoring import setup_monitoring
-from app.infra.application.telemetry import setup_tracing
+# from app.infra.application.telemetry import setup_tracing
 from app.utils.admins.setup_admin import setup_admin
 from app.utils.middlewares.setup_middlewares import setup_middlewares
 
@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
     setup_middlewares(app=app)
 
     # Трассировка
-    setup_tracing(app=app)
+    # setup_tracing(app=app)
 
     # Перехват исключений
     setup_handlers(app=app)

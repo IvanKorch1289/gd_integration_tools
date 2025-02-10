@@ -109,7 +109,6 @@ class SmtpClient:
                         self.settings.password,
                     )
                 return smtp
-
         except asyncio.TimeoutError as exc:
             self.logger.error("Connection timeout exceeded", exc_info=True)
             raise TimeoutError("SMTP connection timeout") from exc
@@ -135,12 +134,15 @@ class SmtpClient:
             raise ConnectionError(
                 "SMTP service unavailable (circuit breaker active)"
             )
-
+        self.logger.critical("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         connection = None
         try:
             connection = await self._acquire_connection()
             yield connection
         except Exception as exc:
+            self.logger.error(
+                f"Connection error: {type(exc).__name__}", exc_info=True
+            )
             await self._handle_connection_error(exc)
             raise ConnectionError("Failed to acquire SMTP connection") from exc
         finally:
@@ -159,33 +161,36 @@ class SmtpClient:
         """
         for attempt in range(3):
             try:
-                return (
-                    self._connection_pool.pop()
-                    if self._connection_pool
-                    else await self._create_connection()
+                self.logger.info(
+                    f"Connection pool size: {len(self._connection_pool)}"
                 )
+                if self._connection_pool:
+                    return self._connection_pool.pop()
+                return await self._create_connection()
             except Exception:
                 if attempt == 2:
-                    self.logger.error(
-                        "Connection acquisition failed after 3 attempts"
-                    )
+                    self.logger.error("Connection attempts exhausted")
                     raise
-                await asyncio.sleep(0.2 * (attempt + 1))
-                continue
+                delay = 1 * (attempt + 1)
+                self.logger.warning(f"Retrying connection in {delay}s...")
+                await asyncio.sleep(delay)
         raise ConnectionError("Failed to acquire SMTP connection")
 
     async def _release_connection(self, connection: aiosmtplib.SMTP) -> None:
         """Release connection back to pool or close it."""
-        if (
-            connection.is_connected
-            and len(self._connection_pool) < self._pool_size
-        ):
-            self._connection_pool.appendleft(connection)
-        else:
-            try:
-                await connection.quit()
-            except aiosmtplib.SMTPException:
-                pass
+        try:
+            if connection.is_connected:
+                await connection.noop()
+                if len(self._connection_pool) < self._pool_size:
+                    self._connection_pool.appendleft(connection)
+                    return
+        except Exception:
+            pass
+
+        try:
+            await connection.quit()
+        except Exception:
+            pass
 
     async def _handle_connection_error(self, exc: Exception) -> None:
         """Handle connection errors and manage circuit breaker state."""
