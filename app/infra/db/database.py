@@ -127,7 +127,7 @@ class DatabaseInitializer:
         """Pre-initializes connections in the async pool"""
         connections = []
         try:
-            for _ in range(self.async_engine.pool.size()):
+            for _ in range(self.async_engine.pool.size()):  # type: ignore
                 conn = await self.async_engine.connect()
                 connections.append(conn)
             self.logger.info("Async connection pool initialized")

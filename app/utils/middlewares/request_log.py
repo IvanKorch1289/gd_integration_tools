@@ -112,7 +112,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
     async def _capture_response_body(response: Response) -> bytes:
         """Capture response body while maintaining the original iterator"""
         chunks = []
-        async for chunk in response.body_iterator:
+        async for chunk in response.body_iterator:  # type: ignore
             chunks.append(chunk)
-        response.body_iterator = AsyncChunkIterator(chunks)
+        response.body_iterator = AsyncChunkIterator(chunks)  # type: ignore
         return b"".join(chunks)

@@ -12,7 +12,7 @@ __all__ = (
 )
 
 
-class FileAdmin(BaseAdmin, ModelView, model=File):
+class FileAdmin(ModelView, BaseAdmin, model=File):  # type: ignore
     """
     Административная панель для модели File.
 
@@ -24,15 +24,15 @@ class FileAdmin(BaseAdmin, ModelView, model=File):
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
-    column_list: List[str] = [
+    column_list: List[str] = [  # type: ignore
         "id",
         "object_uuid",
         "name",
         "created_at",
         "updated_at",
     ]
-    column_searchable_list: List[str] = ["id", "name", "object_uuid"]
-    column_sortable_list: List[str] = [
+    column_searchable_list: List[str] = ["id", "name", "object_uuid"]  # type: ignore
+    column_sortable_list: List[str] = [  # type: ignore
         "id",
         "name",
         "object_uuid",
@@ -40,10 +40,10 @@ class FileAdmin(BaseAdmin, ModelView, model=File):
         "updated_at",
     ]
     column_filters: List[str] = ["object_uuid", "name"]
-    form_create_rules: List[str] = ["object_uuid", "name"]
+    form_create_rules: List[str] = ["object_uuid", "name"]  # type: ignore
 
 
-class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
+class OrderFileAdmin(ModelView, BaseAdmin, model=OrderFile):  # type: ignore
     """
     Административная панель для модели OrderFile.
 
@@ -55,9 +55,9 @@ class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
-    column_list: List[str] = ["id", "order_id", "file_id"]
-    column_searchable_list: List[str] = ["id", "order_id", "file_id"]
-    column_sortable_list: List[str] = [
+    column_list: List[str] = ["id", "order_id", "file_id"]  # type: ignore
+    column_searchable_list: List[str] = ["id", "order_id", "file_id"]  # type: ignore
+    column_sortable_list: List[str] = [  # type: ignore
         "id",
         "order_id",
         "file_id",
@@ -65,4 +65,4 @@ class OrderFileAdmin(BaseAdmin, ModelView, model=OrderFile):
         "updated_at",
     ]
     column_filters: List[str] = ["order_id", "file_id"]
-    form_create_rules: List[str] = ["order_id", "file_id"]
+    form_create_rules: List[str] = ["order_id", "file_id"]  # type: ignore

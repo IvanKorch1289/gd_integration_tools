@@ -27,7 +27,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
     def __init__(self, settings_cls: Type[BaseSettings]):
         super().__init__(settings_cls)
-        self.yaml_group = settings_cls.yaml_group
+        self.yaml_group = settings_cls.yaml_group  # type: ignore
         self.model_fields = settings_cls.model_fields.keys()
 
     def get_field_value(

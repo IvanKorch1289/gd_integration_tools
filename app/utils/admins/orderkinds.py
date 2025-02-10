@@ -9,7 +9,7 @@ from app.utils.admins.base import BaseAdmin
 __all__ = ("OrderKindAdmin",)
 
 
-class OrderKindAdmin(BaseAdmin, ModelView, model=OrderKind):
+class OrderKindAdmin(ModelView, BaseAdmin, model=OrderKind):  # type: ignore
     """
     Административная панель для модели OrderKind.
 
@@ -21,15 +21,15 @@ class OrderKindAdmin(BaseAdmin, ModelView, model=OrderKind):
         form_create_rules (List[str]): Список полей, отображаемых в форме создания.
     """
 
-    column_list: List[str] = [
+    column_list: List[str] = [  # type: ignore
         "id",
         "name",
         "skb_uuid",
         "created_at",
         "updated_at",
     ]
-    column_searchable_list: List[str] = ["id", "name", "skb_uuid"]
-    column_sortable_list: List[str] = [
+    column_searchable_list: List[str] = ["id", "name", "skb_uuid"]  # type: ignore
+    column_sortable_list: List[str] = [  # type: ignore
         "id",
         "name",
         "skb_uuid",
@@ -37,4 +37,4 @@ class OrderKindAdmin(BaseAdmin, ModelView, model=OrderKind):
         "updated_at",
     ]
     column_filters: List[str] = ["name", "skb_uuid"]
-    form_create_rules: List[str] = ["name", "skb_uuid"]
+    form_create_rules: List[str] = ["name", "skb_uuid"]  # type: ignore

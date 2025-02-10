@@ -322,7 +322,7 @@ class TechBV:
         Returns:
             set: Набор названий таблиц.
         """
-        return {model.value.__tablename__ for model in model_enum}
+        return {model.value.__tablename__ for model in model_enum}  # type: ignore
 
     @router.post(
         "/upload-excel-for-mass-create",
@@ -350,10 +350,10 @@ class TechBV:
         Returns:
             list: Список результатов добавления данных.
         """
-        if table_name in model_enum._member_names_:
+        if table_name in model_enum._member_names_:  # type: ignore
             # Получаем сервис для модели
             service: BaseService = await get_service_for_model(
-                model_enum[table_name].value
+                model_enum[table_name].value  # type: ignore
             )
 
             results: list = []

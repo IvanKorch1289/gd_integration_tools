@@ -34,7 +34,7 @@ class EmailSchema(BaseModel):
         message (str): Текст сообщения.
     """
 
-    to_email: List[EmailStr]
+    to_emails: List[EmailStr]
     subject: str
     message: str
 

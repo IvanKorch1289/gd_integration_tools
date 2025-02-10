@@ -4,6 +4,9 @@ from app.utils.logging_service import scheduler_logger
 from app.utils.utils import utilities
 
 
+__all__ = ("check_services_health",)
+
+
 @celery_app.task(
     name="check_services_health",
     bind=True,

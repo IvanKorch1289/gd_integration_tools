@@ -56,6 +56,7 @@ class EventService:
 
         try:
             data = json_tricks.loads(data)
+
             send_email.apply_async(args=[data], retry=True)
         except Exception:
             self.logger.error(

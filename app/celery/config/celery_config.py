@@ -33,7 +33,8 @@ class CeleryManager:
         celery_app = Celery(
             "tasks",
             broker=redis_url,
-            backend=settings.mongo.connection_string,
+            # backend=settings.mongo.connection_string,
+            backend=redis_url,
             include=[
                 "app.celery.tasks.tasks",
                 "app.celery.tasks.periodic_tasks",

@@ -41,7 +41,7 @@ class OrderRepository(SQLAlchemyRepository):
             :raises NotFoundError: Если связанный вид заказа не найден.
             """
             # Получаем вид заказа по skb_uuid
-            kind = await self.order_kind_repo.get(
+            kind = await self.order_kind_repo.get(  # type: ignore
                 key="skb_uuid", value=data["order_kind_id"]
             )
             if not kind:
@@ -69,7 +69,7 @@ class OrderRepository(SQLAlchemyRepository):
             load_joined_models=load_joined_models,
         )
         self.order_kind_repo = order_kind_repo
-        self.helper.order_kind_repo = order_kind_repo
+        self.helper.order_kind_repo = order_kind_repo  # type: ignore
 
     @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
@@ -86,7 +86,7 @@ class OrderRepository(SQLAlchemyRepository):
         :raises DatabaseError: Если произошла ошибка при добавлении заказа.
         """
         # Валидируем и обновляем данные заказа
-        data = await self.helper._validate_order_kind(data)
+        data = await self.helper._validate_order_kind(data)  # type: ignore
         # Вызываем метод add базового класса для создания заказа
         return await super().add(data=data)
 
@@ -108,7 +108,7 @@ class OrderRepository(SQLAlchemyRepository):
         """
         # Если ключ поиска - skb_uuid, валидируем и обновляем данные заказа
         if key == "skb_uuid":
-            data = await self.helper._validate_order_kind(data)
+            data = await self.helper._validate_order_kind(data)  # type: ignore
 
         # Вызываем метод update базового класса для обновления заказа
         updated_order = await super().update(key=key, value=value, data=data)

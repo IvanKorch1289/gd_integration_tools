@@ -34,7 +34,7 @@ OrderCBV = create_router_class(
 
 
 @cbv(router)
-class ExtendedOrderCBV(OrderCBV):
+class ExtendedOrderCBV(OrderCBV):  # type: ignore
     """CBV-класс для работы с запросами."""
 
     @router.post(

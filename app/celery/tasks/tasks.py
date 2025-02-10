@@ -35,7 +35,7 @@ def send_email(self, data: dict):
         data (dict): Параметры отправки сообщения.
     """
 
-    async def inner_send_mail(data):
+    async def inner_send_mail():
         try:
             # Вызываем метод сервиса для отправки сообщения
             await mail_service.send_email(

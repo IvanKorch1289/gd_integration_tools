@@ -72,7 +72,14 @@ class MailService:
 
         msg["Subject"] = Header(subject, "utf-8")
         msg["From"] = formataddr(
-            str(Header(self.client.settings.sender, "utf-8"))
+            (
+                (
+                    str(Header(self.client.settings.username, "utf-8"))
+                    if self.client.settings.username
+                    else "unknown"
+                ),
+                self.client.settings.sender,
+            )
         )
         msg["To"] = ", ".join(to_emails)
         return msg

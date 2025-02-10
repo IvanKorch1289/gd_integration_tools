@@ -474,7 +474,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         # Преобразуем версию в словарь данных для обновления
         update_data = {
             attr: getattr(target_version, attr)
-            for attr in target_version.__table__.columns.keys()
+            for attr in target_version.__table__.columns.keys()  # type: ignore
         }
 
         return await self.update(

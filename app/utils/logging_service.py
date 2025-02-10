@@ -6,6 +6,7 @@ from logging.handlers import (
     TimedRotatingFileHandler,
 )
 from typing import Any, Dict, List, Optional
+
 import socket
 from queue import Queue
 
@@ -220,11 +221,11 @@ log_manager = LoggerManager(
 )
 
 # Expose common loggers
-app_logger = log_manager.application_logger
-db_logger = log_manager.database_logger
-fs_logger = log_manager.storage_logger
-smtp_logger = log_manager.smtp_logger
-scheduler_logger = log_manager.scheduler_logger
-request_logger = log_manager.request_logger
-queue_logger = log_manager.queue_logger
-redis_logger = log_manager.redis_logger
+app_logger = log_manager.application_logger  # type: ignore
+db_logger = log_manager.database_logger  # type: ignore
+fs_logger = log_manager.storage_logger  # type: ignore
+smtp_logger = log_manager.smtp_logger  # type: ignore
+scheduler_logger = log_manager.scheduler_logger  # type: ignore
+request_logger = log_manager.request_logger  # type: ignore
+queue_logger = log_manager.queue_logger  # type: ignore
+redis_logger = log_manager.redis_logger  # type: ignore

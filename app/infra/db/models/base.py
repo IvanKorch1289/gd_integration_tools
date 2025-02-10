@@ -42,7 +42,7 @@ mapper_registry = registry(metadata=metadata)
 Base = mapper_registry.generate_base()
 
 
-class BaseModel(AsyncAttrs, Base):
+class BaseModel(AsyncAttrs, Base):  # type: ignore
     """
     Базовый класс для всех моделей SQLAlchemy.
 
