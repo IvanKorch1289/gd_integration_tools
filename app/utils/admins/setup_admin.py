@@ -11,7 +11,7 @@ from app.utils.admins.users import UserAdmin
 __all__ = ("setup_admin",)
 
 
-async def setup_admin(app: FastAPI) -> None:
+def setup_admin(app: FastAPI) -> None:
     admin = Admin(app, db_initializer.async_engine)
     admin.add_view(UserAdmin)
     admin.add_view(OrderAdmin)

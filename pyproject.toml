@@ -93,7 +93,7 @@ known_standard_library = [
     "hashlib", "re", "os", "path", "collections", "io", "enum", "sys",
     "traceback", "datetime", "typing", "contextlib", "functools",
     "logging", "pathlib", "abc", "uuid", "json", "importlib", "email",
-    "zipfile", "base64", "bson"
+    "zipfile", "base64", "bson", "gzip"
 ]
 known_third_party = [
     "confluent_kafka", "aiologger", "aiokafka", "urllib", "zeep", "blinker",

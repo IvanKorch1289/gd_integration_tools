@@ -81,7 +81,7 @@ class CeleryManager:
         """Возвращает расписание периодических задач"""
         return {
             "health-check-every-hour": {
-                "task": "app.celery.periodic_tasks.check_services_health",
+                "task": "app.celery.tasks.periodic_tasks.check_services_health",
                 "schedule": CronPresets.HOURLY.schedule,
                 "args": (),
                 "options": {

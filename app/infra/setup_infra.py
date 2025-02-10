@@ -1,3 +1,5 @@
+import asyncio
+
 from app.infra.db.database import db_initializer
 from app.infra.db.mongo import mongo_client
 from app.infra.logger import graylog_handler
@@ -20,38 +22,42 @@ __all__ = (
 
 
 starting_operations = [
-    graylog_handler.connect(),
-    redis_client.ensure_connected(),
-    db_initializer.initialize_async_pool(),
-    s3_client.connect(),
-    smtp_client.initialize_pool(),
-    event_service.register_handlers(),
-    stream_client.start_consumer(),
-    init_limiter(),
-    queue_client.initialize(),
-    queue_client.create_topics(["required_topics"]),
-    queue_service.start_message_consumption(),
-    queue_service.register_handler("orders", process_order),
-    mongo_client.connect(),
+    lambda: asyncio.to_thread(graylog_handler.connect),
+    redis_client.ensure_connected,
+    db_initializer.initialize_async_pool,
+    s3_client.connect,
+    smtp_client.initialize_pool,
+    event_service.register_handlers,
+    stream_client.start_consumer,
+    init_limiter,
+    # queue_client.initialize,
+    # lambda: queue_client.create_topics(["required_topics"]),
+    # queue_service.start_message_consumption,
+    # lambda: queue_service.register_handler("orders", process_order),
+    # mongo_client.connect,
 ]
 
 ending_operations = [
-    stream_client.stop_consumer(),
-    db_initializer.close(),
-    s3_client.close(),
-    smtp_client.close_pool(),
-    queue_service.stop_message_consumption(),
-    queue_client.close(),
-    redis_client.close(),
-    graylog_handler.close(),
-    mongo_client.close(),
+    stream_client.stop_consumer,
+    db_initializer.close,
+    s3_client.close,
+    smtp_client.close_pool,
+    # queue_service.stop_message_consumption,
+    # queue_client.close,
+    redis_client.close,
+    lambda: asyncio.to_thread(graylog_handler.close),
+    # mongo_client.close,
 ]
 
 
 async def perform_infrastructure_operation(components: list) -> None:
     for component in components:
         try:
-            await component
+            coro = component()
+
+            await coro
+
+            app_logger.info(f"Operation {component.__name__} succeeded")
         except Exception as exc:
             app_logger.critical(
                 f"Operation {component.__name__} failed: {str(exc)}"

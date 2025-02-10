@@ -40,7 +40,6 @@ class MongoClient:
     async def close(self) -> None:
         """Закрытие соединений"""
         if self.client:
-            self.client.close()
             await self.client.wait_closed()
             db_logger.info("MongoDB connection closed")
 

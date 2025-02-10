@@ -6,7 +6,7 @@ from starlette_exporter import handle_metrics
 __all__ = ("setup_monitoring",)
 
 
-async def setup_monitoring(app: FastAPI):
+def setup_monitoring(app: FastAPI):
     Instrumentator(
         should_group_status_codes=True,
         should_ignore_untemplated=True,

@@ -139,7 +139,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
 class MongoConnectionSettings(BaseSettingsWithLoader):
     """Configuration settings for no-relational database connections."""
 
-    yaml_group: ClassVar[str] = "database"
+    yaml_group: ClassVar[str] = "mongo"
     model_config = SettingsConfigDict(
         env_prefix="MONGO_",
         extra="forbid",

@@ -11,7 +11,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 __all__ = ("setup_tracing",)
 
 
-async def setup_tracing(app: FastAPI):
+def setup_tracing(app: FastAPI):
     # Инициализация трассировки
     tracer_provider = TracerProvider()
     tracer_provider.add_span_processor(

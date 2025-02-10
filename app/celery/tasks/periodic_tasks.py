@@ -1,4 +1,4 @@
-from app.celery.celery_config import celery_app
+from app.celery.config.celery_config import celery_app
 from app.infra.stream_manager import stream_client
 from app.utils.logging_service import scheduler_logger
 from app.utils.utils import utilities

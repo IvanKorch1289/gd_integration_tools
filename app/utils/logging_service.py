@@ -6,8 +6,6 @@ from logging.handlers import (
     TimedRotatingFileHandler,
 )
 from typing import Any, Dict, List, Optional
-
-import asyncio
 import socket
 from queue import Queue
 
@@ -118,7 +116,7 @@ class LoggerManager:
         """Configure all logging handlers."""
         # Graylog handler
         if self.graylog.enabled:
-            gl_handler = asyncio.run(self.graylog.connect())
+            gl_handler = self.graylog.connect()
             if gl_handler:
                 gl_handler.addFilter(
                     self.ContextFilter(self.environment, self.hostname)

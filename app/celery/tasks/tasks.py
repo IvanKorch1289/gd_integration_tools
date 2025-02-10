@@ -1,6 +1,6 @@
 from celery import chain
 
-from app.celery.celery_config import celery_manager
+from app.celery.config.celery_config import celery_manager
 from app.config.settings import settings
 from app.infra.stream_manager import stream_client
 from app.services.infra_services.mail import mail_service

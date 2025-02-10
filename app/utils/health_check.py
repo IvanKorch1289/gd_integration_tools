@@ -2,7 +2,7 @@ import asyncio
 import json_tricks
 from fastapi import Response
 
-from app.celery.celery_config import celery_manager
+from app.celery.config.celery_config import celery_manager
 from app.infra.db.database import db_initializer
 from app.infra.logger import graylog_handler
 from app.infra.queue import queue_client

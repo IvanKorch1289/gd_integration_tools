@@ -8,14 +8,14 @@ from app.infra.application.index import root_page
 from app.infra.application.lifecycle import lifespan
 from app.infra.application.monitoring import setup_monitoring
 from app.infra.application.telemetry import setup_tracing
-from app.utils.admins import setup_admin
+from app.utils.admins.setup_admin import setup_admin
 from app.utils.middlewares.setup_middlewares import setup_middlewares
 
 
 __all__ = ("create_app",)
 
 
-async def create_app() -> FastAPI:
+def create_app() -> FastAPI:
     """
     Фабрика для создания и настройки экземпляра FastAPI приложения.
 
@@ -31,19 +31,19 @@ async def create_app() -> FastAPI:
     )
 
     # Middleware
-    await setup_middlewares(app=app)
+    setup_middlewares(app=app)
 
     # Трассировка
-    await setup_tracing(app=app)
+    setup_tracing(app=app)
 
     # Перехват исключений
-    await setup_handlers(app=app)
+    setup_handlers(app=app)
 
     # Подключение SQLAdmin для административной панели
-    await setup_admin(app=app)
+    setup_admin(app=app)
 
     # Метрики
-    await setup_monitoring(app=app)
+    setup_monitoring(app=app)
 
     # Использование роутера для API v1
     app.include_router(get_v1_routers(), prefix="/api/v1")
@@ -57,6 +57,6 @@ async def create_app() -> FastAPI:
         Возвращает:
             HTMLResponse: HTML-страница с описанием и ссылками.
         """
-        return root_page()
+        return await root_page()
 
     return app

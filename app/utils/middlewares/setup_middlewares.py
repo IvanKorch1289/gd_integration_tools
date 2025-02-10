@@ -14,14 +14,14 @@ from app.utils.middlewares.timeout import TimeoutMiddleware
 __all__ = ("setup_middlewares",)
 
 
-async def setup_middlewares(app: FastAPI) -> None:
+def setup_middlewares(app: FastAPI) -> None:
     middleware_chain = [
         (PrometheusMiddleware, {}),
         (
             TrustedHostMiddleware,
             {"allowed_hosts": settings.auth.allowed_hosts},
         ),
-        (SecurityHeadersMiddleware, {}),
+        # (SecurityHeadersMiddleware, {}),
         (GZipMiddleware, {"minimum_size": 1000}),
         (RequestIDMiddleware, {}),
         (TimeoutMiddleware, {}),

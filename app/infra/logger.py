@@ -28,7 +28,7 @@ class GraylogHandler:
         """Check if Graylog logging is enabled."""
         return bool(self.config.host and self.config.udp_port)
 
-    async def connect(self) -> Optional[logging.Handler]:
+    def connect(self) -> Optional[logging.Handler]:
         """
         Establish connection to Graylog server.
 
@@ -57,11 +57,11 @@ class GraylogHandler:
                 ),
             )
             self.handler = handler
-            return await handler
+            return handler
         except Exception as exc:
             raise ConnectionError(f"Graylog connection failed: {exc}") from exc
 
-    async def close(self) -> None:
+    def close(self) -> None:
         """Close Graylog connection resources."""
         if self.handler:
             self.handler.close()

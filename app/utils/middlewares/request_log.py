@@ -1,3 +1,6 @@
+import gzip
+from io import BytesIO
+
 import time
 from fastapi import Request, Response
 from starlette.middleware.base import (
@@ -72,12 +75,38 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
     async def _log_response_body(self, response: Response) -> None:
         """Log response body with size limit"""
         content_type = response.headers.get("Content-Type", "").lower()
+        content_encoding = response.headers.get("Content-Encoding", "").lower()
+
+        # Capture the response body
+        body = await self._capture_response_body(response)
+
+        # Handle compressed data
+        if content_encoding == "gzip":
+            try:
+                # Decompress gzip data
+                with gzip.GzipFile(fileobj=BytesIO(body)) as gzip_file:
+                    body = gzip_file.read()
+            except Exception:
+                self.logger.error(
+                    "Failed to decompress gzip response", exc_info=True
+                )
+                return
+
+        # Log only if the content type is text or JSON
         if "text" in content_type or "json" in content_type:
-            body = await self._capture_response_body(response)
-            if len(body) > self.max_body_size:
-                self.logger.debug("Response body too large to log")
-            else:
-                self.logger.debug(f"Response body: {body.decode('utf-8')}")
+            try:
+                # Decode the body as UTF-8
+                decoded_body = body.decode("utf-8")
+                if len(decoded_body) > self.max_body_size:
+                    self.logger.debug("Response body too large to log")
+                else:
+                    self.logger.debug(f"Response body: {decoded_body}")
+            except UnicodeDecodeError:
+                self.logger.warning("Response body is not valid UTF-8 text")
+            except Exception:
+                self.logger.error(
+                    "Failed to decode response body", exc_info=True
+                )
 
     @staticmethod
     async def _capture_response_body(response: Response) -> bytes:

@@ -7,7 +7,7 @@ from app.utils.logging_service import app_logger
 __all__ = ("setup_handlers",)
 
 
-async def setup_handlers(app: FastAPI) -> None:
+def setup_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         error_id = request.state.request_id
