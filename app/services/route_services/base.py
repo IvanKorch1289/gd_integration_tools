@@ -243,7 +243,7 @@ class BaseService(Generic[ConcreteRepo]):
         except Exception:
             raise
 
-    async def delete(self, key: str, value: int) -> str:
+    async def delete(self, key: str, value: int) -> str:  # type: ignore
         """
         Удаляет объект по ключу и значению.
 
