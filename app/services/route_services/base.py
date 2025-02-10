@@ -290,7 +290,7 @@ class BaseService(Generic[ConcreteRepo]):
         :return: Последняя версия объекта в виде схемы или None, если объект не найден.
         """
         try:
-            version = await self.repo.get_latest_version(object_id=object_id)
+            version = await self.repo.get_latest_version(object_id=object_id)  # type: ignore
             return await self.helper._transfer(version, self.version_schema)
         except Exception:
             raise
