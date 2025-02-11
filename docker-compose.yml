@@ -36,9 +36,6 @@ services:
     networks:
       - minio-mongo-net
       - graylog-es-mongo-net
-    # environment:
-    #   MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
-    #   MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
       - "27017:27017"
 
@@ -79,7 +76,6 @@ services:
       GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
       GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
       GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
-      # GRAYLOG_MONGODB_URI: "mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/graylog?authSource=admin"
       GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"
     ports:
       - "5044:5044/tcp"   # Beats
@@ -113,7 +109,7 @@ services:
     command: [
       "redis-server", 
       "--requirepass", "${REDIS_PASSWORD}",
-      "--bind", "0.0.0.0"  # Разрешаем подключения извне контейнера
+      "--bind", "0.0.0.0"
     ]
     restart: "on-failure"
     networks:

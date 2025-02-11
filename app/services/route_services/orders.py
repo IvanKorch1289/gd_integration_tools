@@ -14,7 +14,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.infra_services.events import redis_broker
+from app.services.infra_services.events import stream_client
 from app.services.infra_services.s3 import S3Service, get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
@@ -73,7 +73,9 @@ class OrderService(BaseService[OrderRepository]):
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
             if order:
-                await redis_broker.publish(data, stream="order_events")
+                await stream_client.publish_to_redis(
+                    data, stream="order_events"
+                )
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -122,7 +124,10 @@ class OrderService(BaseService[OrderRepository]):
                         data={"is_send_request_to_skb": True},
                     )
                     # Генерируем событие о успешной отправке заказа
-                    await redis_broker.publish(data, stream="email_events")
+
+                    await stream_client.publish_to_redis(
+                        message={"data": data}, stream="email_send_stream"
+                    )
                 return result
             return order_data
         except Exception:

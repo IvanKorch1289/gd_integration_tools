@@ -127,5 +127,5 @@ class MailService:
             raise RuntimeError(f"Template processing failed: {exc}") from exc
 
 
-async def get_mail_service():
+def get_mail_service():
     return MailService(mail_client=smtp_client)

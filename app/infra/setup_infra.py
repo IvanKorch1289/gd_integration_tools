@@ -1,4 +1,5 @@
 import asyncio
+from types import CoroutineType
 
 from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
@@ -17,7 +18,7 @@ __all__ = (
 
 
 starting_operations = [
-    stream_client.start,
+    stream_client.start_brokers,
     ("graylog_client", lambda: asyncio.to_thread(graylog_handler.connect)),
     redis_client.ensure_connected,
     db_initializer.initialize_async_pool,
@@ -32,7 +33,7 @@ ending_operations = [
     db_initializer.close,
     redis_client.close,
     ("graylog_client", lambda: asyncio.to_thread(graylog_handler.close)),
-    stream_client.stop,
+    stream_client.stop_brokers,
 ]
 
 
@@ -47,7 +48,8 @@ async def perform_infrastructure_operation(components: list) -> None:
             else:
                 coro = component()
 
-            await coro
+            if isinstance(coro, CoroutineType):
+                await coro
 
             app_logger.info(f"Operation {coro.__name__} succeeded")
         except Exception:

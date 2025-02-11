@@ -17,7 +17,7 @@ from fastapi_utils.cbv import cbv
 
 from app.config.settings import settings
 from app.schemas.base import EmailSchema
-from app.services.infra_services.events import redis_broker
+from app.services.infra_services.events import stream_client
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
 from app.utils.errors import handle_routes_errors
@@ -237,8 +237,8 @@ class TechBV:
         """
         data = {"data": schema.model_dump()}
 
-        await redis_broker.publish(
-            message=data, stream="email_events", maxlen=1000
+        await stream_client.publish_to_redis(
+            message=data, stream="email_send_stream"
         )
 
     @router.get(

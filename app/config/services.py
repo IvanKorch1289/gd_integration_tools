@@ -264,6 +264,9 @@ class RedisSettings(BaseSettingsWithLoader):
         description="Name of DLQ Redis stream",
         example="dlq-example-stream",
     )
+    max_stream_size: int = Field(
+        ..., description="Max size of Redis stream", example=100000
+    )
     max_retries: int = Field(
         ..., description="Max retries for reading message in stream", example=1
     )
