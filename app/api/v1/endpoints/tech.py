@@ -235,7 +235,7 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        data = {"data": schema.model_dump()}
+        data = schema.model_dump()
 
         await stream_client.publish_to_redis(
             message=data, stream="email_send_stream"

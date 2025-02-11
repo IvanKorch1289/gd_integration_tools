@@ -20,6 +20,7 @@ from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.enums.skb import ResponseTypeChoices
+from app.utils.logging_service import app_logger
 
 
 __all__ = ("get_order_service",)
@@ -74,7 +75,7 @@ class OrderService(BaseService[OrderRepository]):
             order = await super().add(data=data)
             if order:
                 await stream_client.publish_to_redis(
-                    data, stream="order_events"
+                    message=order.id, stream="order_send_to_skb_stream"
                 )
             return order
         except Exception:
@@ -94,21 +95,19 @@ class OrderService(BaseService[OrderRepository]):
             # Получаем заказ по ID
             order: OrderSchemaOut = await self.get(key="id", value=order_id)
 
-            order_data = None
-
             # Преобразуем данные заказа, если это необходимо
             if isinstance(order, BaseSchema):
-                order_data = order.model_dump()
+                order = order.model_dump()
 
             # Проверяем, активен ли заказ
-            if order_data.get("is_active", None):
+            if order.get("is_active", None):  # type: ignore
                 # Формируем данные для запроса в СКБ-Техно
                 data = {
-                    "Id": order_data.get("object_uuid", None),
-                    "OrderId": order_data.get("object_uuid", None),
-                    "Number": order_data.get("pledge_cadastral_number", None),
+                    "Id": str(order.get("object_uuid", None)),  # type: ignore
+                    "OrderId": str(order.get("object_uuid")),  # type: ignore
+                    "Number": order.get("pledge_cadastral_number", None),  # type: ignore
                     "Priority": settings.skb_api.default_priority,
-                    "RequestType": order_data.get("order_kind", None).get(
+                    "RequestType": order.get("order_kind", None).get(  # type: ignore
                         "skb_uuid", None
                     ),
                 }
@@ -120,17 +119,26 @@ class OrderService(BaseService[OrderRepository]):
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
-                        value=order_data.get("id", None),
-                        data={"is_send_request_to_skb": True},
+                        value=order.get("id", None),  # type: ignore
+                        data={
+                            "is_send_request_to_skb": True,
+                            "response_data": result.get("data"),
+                        },
                     )
                     # Генерируем событие о успешной отправке заказа
-
+                    message_data = {
+                        "to_emails": order.get("email_for_answer"),  # type: ignore
+                        "subject": f"Order {order.get("object_uuid", None)}",  # type: ignore
+                        "message": "Order registration to SKB completed",
+                    }
                     await stream_client.publish_to_redis(
-                        message={"data": data}, stream="email_send_stream"
+                        message={"data": message_data},
+                        stream="email_send_stream",
                     )
-                return result
-            return order_data
+                    return result
+            raise
         except Exception:
+            app_logger.error("Error sending request to SKB", exc_info=True)
             raise  # Исключение будет обработано глобальным обработчиком
 
     @response_cache

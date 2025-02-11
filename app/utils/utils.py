@@ -150,8 +150,8 @@ class Utilities:
         """
         if isinstance(data, bytes):
             # Декодируем байты в строку
-            return data.decode("utf-8")
-        elif isinstance(data, (dict, list, tuple)):
+            data = data.decode("utf-8")
+        if isinstance(data, (dict, list, tuple)):
             # Рекурсивно обрабатываем вложенные структуры
             if isinstance(data, dict):
                 return {

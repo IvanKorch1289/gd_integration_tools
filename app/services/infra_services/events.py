@@ -34,10 +34,11 @@ async def handle_send_email(data: Any, logger: Logger = stream_logger):
 
 
 @stream_client.redis_broker.subscriber(
-    stream="order_create_to_skb_stream",
+    stream="order_send_to_skb_stream",
     retry=True,
+    no_ack=False,
 )
-async def handle_order_created(data: Any, logger: Logger = stream_logger):
+async def handle_order_send_to_skb(data: Any, logger: Logger = stream_logger):
     """
     Обрабатывает событие отправки email.
 
@@ -49,7 +50,7 @@ async def handle_order_created(data: Any, logger: Logger = stream_logger):
 
         service = get_order_service()
 
-        await service.create_skb_order(data["order_id"])  # type: ignore
+        await service.create_skb_order(order_id=data)  # type: ignore
     except Exception:
         logger.error("Failed to send email", exc_info=True)
         await stream_client.publish_to_redis(

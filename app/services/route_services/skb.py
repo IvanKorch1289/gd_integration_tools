@@ -96,7 +96,7 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или JSONResponse с ошибкой.
         """
         try:
-            url = f"{urljoin(self.base_url, self.endpoints.get('CREATE_REQUEST'))}"
+            url = f"{urljoin(self.base_url, self.endpoints.get("CREATE_REQUEST"))}"
 
             async with get_http_client() as client:
                 return await client.make_request(

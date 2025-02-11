@@ -186,7 +186,7 @@ class HttpClient:
         """
         start_time = time.monotonic()
         last_exception = None
-        headers = self._build_headers(auth_token, headers, data, json)
+        headers = await self._build_headers(auth_token, headers, data, json)
         request_data = await self._prepare_request_data(data, json)
 
         # Calculate timeouts
@@ -224,7 +224,7 @@ class HttpClient:
                         if raise_for_status:
                             response.raise_for_status()
 
-                        return self._build_response_object(
+                        return await self._build_response_object(
                             response, content, start_time
                         )
 
@@ -237,16 +237,18 @@ class HttpClient:
             if raise_for_status and last_exception:
                 raise last_exception
 
-            return self._handle_final_error(last_exception, start_time)
+            return await self._handle_final_error(last_exception, start_time)
 
         finally:
-            self._update_metrics(start_time, success=last_exception is None)
+            await self._update_metrics(
+                start_time, success=last_exception is None
+            )
             self.last_activity = time.monotonic()
 
     # endregion
 
     # region Helpers
-    def _build_headers(
+    async def _build_headers(
         self,
         auth_token: Optional[str],
         custom_headers: Optional[Dict[str, str]],
@@ -297,7 +299,7 @@ class HttpClient:
         else:
             return None
 
-    def _should_retry(self, attempt: int, exception: Exception) -> bool:
+    async def _should_retry(self, attempt: int, exception: Exception) -> bool:
         """Determine if a request should be retried."""
         if attempt >= self.settings.max_retries:
             return False
@@ -358,7 +360,7 @@ class HttpClient:
             },
         )
 
-    def _update_metrics(self, start_time: float, success: bool) -> None:
+    async def _update_metrics(self, start_time: float, success: bool) -> None:
         """Update performance metrics."""
         duration = time.monotonic() - start_time
         self.metrics["total_requests"] += 1
@@ -371,18 +373,19 @@ class HttpClient:
     # endregion
 
     # region Response Handling
-    def _build_response_object(
+    async def _build_response_object(
         self, response: aiohttp.ClientResponse, content: Any, start_time: float
     ) -> Dict[str, Any]:
         """Construct standardized response dictionary."""
+
         return {
-            "status": response.status,
+            "status_code": response.status,
             "data": content,
             "headers": dict(response.headers),
             "elapsed": time.monotonic() - start_time,
         }
 
-    def _handle_final_error(
+    async def _handle_final_error(
         self, exception: Optional[Exception], start_time: float
     ) -> Dict[str, Any]:
         """Create error response after exhausting retries."""

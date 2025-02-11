@@ -86,10 +86,12 @@ class StreamClient:
         if max_length is not None:
             headers["X-STREAM-MAXLEN"] = str(max_length)
 
+        handle_message = {"data": message}
+
         # Если нет расписания - публикуем сразу
         if not delay and not scheduler:
             await self.redis_broker.publish(
-                message,
+                handle_message,
                 stream=stream,
                 headers=headers,
                 maxlen=max_length,
@@ -109,7 +111,7 @@ class StreamClient:
         self.scheduler.add_job(
             self._execute_redis_publish,
             trigger=trigger,
-            args=(stream, message, headers, max_length),
+            args=(stream, handle_message, headers, max_length),
             id=job_id,
             replace_existing=True,
         )
