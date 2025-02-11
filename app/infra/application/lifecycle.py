@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.infra.application.setup_infra import ending, starting
+from app.infra.setup_infra import ending, starting
 from app.utils.logging_service import app_logger
 
 

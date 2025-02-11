@@ -16,8 +16,8 @@ from fastapi.responses import HTMLResponse
 from fastapi_utils.cbv import cbv
 
 from app.config.settings import settings
-from app.infra.stream_manager import stream_client
 from app.schemas.base import EmailSchema
+from app.services.infra_services.events import redis_broker
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
 from app.utils.errors import handle_routes_errors
@@ -26,6 +26,7 @@ from app.utils.utils import utilities
 
 
 __all__ = ("router",)
+
 
 router = APIRouter()
 
@@ -127,51 +128,6 @@ class TechBV:
         return await health_check.check_redis()
 
     @router.get(
-        "/healthcheck-celery",
-        summary="Проверить состояние Celery",
-        operation_id="healthcheck_celery",
-    )
-    @handle_routes_errors
-    async def healthcheck_celery(self):
-        """
-        Проверяет состояние Celery.
-
-        Returns:
-            dict: Результат проверки состояния Celery.
-        """
-        return await health_check.check_celery()
-
-    @router.get(
-        "/healthcheck-celery-queues",
-        summary="Проверить состояние очередей Celery",
-        operation_id="check_celery_queues",
-    )
-    @handle_routes_errors
-    async def healthcheck_celery_queues(self):
-        """
-        Проверяет состояние очередей Celery.
-
-        Returns:
-            dict: Состояние очередей Celery.
-        """
-        return await health_check.check_celery_queues()
-
-    @router.get(
-        "/healthcheck-scheduler",
-        summary="Проверить состояние планировщика задач",
-        operation_id="healthcheck_scheduler",
-    )
-    @handle_routes_errors
-    async def healthcheck_celery_scheduler(self):
-        """
-        Проверяет состояние планировщика задач.
-
-        Returns:
-            dict: Результат проверки состояния планировщика задач.
-        """
-        return await health_check.check_celery_scheduler()
-
-    @router.get(
         "/healthcheck-s3",
         summary="Проверить состояние S3",
         operation_id="healthcheck_s3",
@@ -232,21 +188,6 @@ class TechBV:
         return await health_check.check_smtp()
 
     @router.get(
-        "/healthcheck-kafka",
-        summary="Проверить состояние Kafka",
-        operation_id="healthcheck_kafka",
-    )
-    @handle_routes_errors
-    async def healthcheck_kafka(self):
-        """
-        Проверяет состояние Kafka.
-
-        Returns:
-            dict: Результат проверки состояния Kafka.
-        """
-        return await health_check.check_queue()
-
-    @router.get(
         "/healthcheck-all-services",
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
@@ -294,12 +235,11 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        data = schema.model_dump()
+        data = {"data": schema.model_dump()}
 
-        await stream_client.publish_event(
-            event_type="init_mail_send", data=data
+        await redis_broker.publish(
+            message=data, stream="email_events", maxlen=1000
         )
-        return data
 
     @router.get(
         "/get-all-custom-tables",

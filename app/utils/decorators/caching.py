@@ -6,7 +6,7 @@ import asyncio
 import json_tricks
 
 from app.config.settings import settings
-from app.infra.redis import redis_client
+from app.infra.clients.redis import redis_client
 from app.utils.logging_service import redis_logger
 from app.utils.utils import utilities
 

@@ -7,7 +7,6 @@ from app.config.settings import settings
 from app.utils.middlewares.circuit_breaker import CircuitBreakerMiddleware
 from app.utils.middlewares.request_id import RequestIDMiddleware
 from app.utils.middlewares.request_log import InnerRequestLoggingMiddleware
-from app.utils.middlewares.security_headers import SecurityHeadersMiddleware
 from app.utils.middlewares.timeout import TimeoutMiddleware
 
 
@@ -21,7 +20,6 @@ def setup_middlewares(app: FastAPI) -> None:
             TrustedHostMiddleware,
             {"allowed_hosts": settings.auth.allowed_hosts},
         ),
-        # (SecurityHeadersMiddleware, {}),
         (GZipMiddleware, {"minimum_size": 1000}),
         (RequestIDMiddleware, {}),
         (TimeoutMiddleware, {}),

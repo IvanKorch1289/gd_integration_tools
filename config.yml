@@ -129,6 +129,8 @@ log:
       facility: "queue"
     - name: "redis"
       facility: "redis"
+    - name: "stream"
+      facility: "stream"
   use_tls: False
   ca_bundle: #"/path/to/certificate.pem"
   level: "DEBUG"

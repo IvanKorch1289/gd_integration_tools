@@ -1,76 +1,31 @@
-from typing import Callable
+from logging import Logger
+from typing import Any
 
-import json_tricks
+from app.infra.clients.stream import redis_broker
+from app.services.infra_services.mail import MailService, get_mail_service
+from app.utils.logging_service import stream_logger
 
-from app.infra.stream_manager import StreamClient, stream_client
-from app.utils.logging_service import app_logger
 
-
-__all__ = (
-    "event_service",
-    "EventService",
+@redis_broker.subscriber(
+    stream="email_events",
+    retry=True,
 )
-
-
-class EventService:
-    """Router for registering event handlers and business logic.
-
-    Responsibilities:
-    - Central place для регистрации обработчиков событий
-    - Содержит бизнес-логику обработки конкретных событий
-    - Интегрируется с другими компонентами системы
+async def handle_send_email(data: Any, logger: Logger = stream_logger):
     """
+    Обрабатывает событие отправки email.
 
-    def __init__(self, event_client: StreamClient):
-        self.event_client = event_client
-        self.logger = app_logger
+    Args:
+        data (dict): Данные для отправки email.
+    """
+    try:
+        mail_service: MailService = await get_mail_service()
 
-    async def register_handlers(self) -> None:
-        """Register all event handlers during initialization"""
-        await self._add_handler("order_created", self.handle_order_created)
-        await self._add_handler("init_mail_send", self.handle_init_mail_send)
-
-    async def _add_handler(self, event_type: str, handler: Callable) -> None:
-        """Helper method for handler registration"""
-        await self.event_client.register_handler(event_type, handler)
-        self.logger.debug(f"Registered handler for {event_type}")
-
-    async def handle_order_created(self, data: dict):
-        self.logger.info(f"Handling order created: {data}")
-
-        # Отправка события в другую систему
-        from app.celery.tasks.tasks import process_order_workflow
-
-        try:
-            process_order_workflow.apply_async(
-                args=[data.get("order_id")], retry=True
-            )
-        except Exception:
-            self.logger.error("Error processing order created", exc_info=True)
-
-    async def handle_init_mail_send(self, data: dict):
-        self.logger.info(f"Handling initialize mail sending: {data}")
-
-        # Отправка события в другую систему
-        from app.celery.tasks.tasks import send_email
-
-        try:
-            data = json_tricks.loads(data)
-
-            for recipient in data["to_emails"]:
-
-                send_data = {
-                    "to_emails": recipient,
-                    "subject": data.get("subject"),
-                    "message": data.get("message"),
-                    "html_message": data.get("html_message"),
-                }
-
-                send_email.apply_async(args=[send_data], retry=True)
-        except Exception:
-            self.logger.error(
-                "Error processing initialize mail sending", exc_info=True
-            )
-
-
-event_service = EventService(event_client=stream_client)
+        await mail_service.send_email(
+            to_emails=data["to_emails"],
+            subject=data["subject"],
+            message=data["message"],
+        )
+    except Exception:
+        logger.error("Failed to send email", exc_info=True)
+        # Можно добавить логику повторной попытки
+        await redis_broker.publish(data, stream="email_events", delay=60)

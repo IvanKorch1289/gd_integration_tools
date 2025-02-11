@@ -10,7 +10,6 @@ async def root_page():
         f"{settings.logging.host}:{settings.logging.port}"
     )
     fs_url = utilities.ensure_url_protocol(settings.storage.interface_endpoint)
-    flower_url = utilities.ensure_url_protocol(settings.celery.flower_url)
 
     return f"""
     <!DOCTYPE html>
@@ -144,7 +143,6 @@ async def root_page():
                 <h2>Технические интерфейсы</h2>
                 <a href="{log_url}" target="_blank">Хранилище логов</a>
                 <a href="{fs_url}" target="_blank">Файловое хранилище</a>
-                <a href="{flower_url}" target="_blank">Мониторинг задач</a>
             </div>
         </div>
     </body>

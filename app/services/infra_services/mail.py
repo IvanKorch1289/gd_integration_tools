@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import aiosmtplib
 
-from app.infra.smtp import SmtpClient, smtp_client
+from app.infra.clients.smtp import SmtpClient, smtp_client
 
 
 __all__ = (

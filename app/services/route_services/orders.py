@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
-from app.infra.stream_manager import stream_client
 from app.repositories.files import FileRepository, get_file_repo
 from app.repositories.orders import OrderRepository, get_order_repo
 from app.schemas.base import BaseSchema
@@ -15,6 +14,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
+from app.services.infra_services.events import redis_broker
 from app.services.infra_services.s3 import S3Service, get_s3_service
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
@@ -73,9 +73,7 @@ class OrderService(BaseService[OrderRepository]):
             # Создаем заказ через базовый метод
             order = await super().add(data=data)
             if order:
-                await stream_client.publish_event(
-                    event_type="order_created", data={"order": order.id}
-                )
+                await redis_broker.publish(data, stream="order_events")
             return order
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -124,9 +122,7 @@ class OrderService(BaseService[OrderRepository]):
                         data={"is_send_request_to_skb": True},
                     )
                     # Генерируем событие о успешной отправке заказа
-                    await stream_client.publish_event(
-                        event_type="init_mail_send", data={"order": order}
-                    )
+                    await redis_broker.publish(data, stream="email_events")
                 return result
             return order_data
         except Exception:

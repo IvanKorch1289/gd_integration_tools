@@ -134,7 +134,6 @@ class SmtpClient:
             raise ConnectionError(
                 "SMTP service unavailable (circuit breaker active)"
             )
-        self.logger.critical("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         connection = None
         try:
             connection = await self._acquire_connection()

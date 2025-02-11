@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from fastapi.responses import StreamingResponse
 
-from app.infra.storage import BaseS3Client, s3_client
+from app.infra.clients.storage import BaseS3Client, s3_client
 from app.utils.decorators.caching import existence_cache, metadata_cache
 from app.utils.logging_service import fs_logger
 from app.utils.utils import utilities

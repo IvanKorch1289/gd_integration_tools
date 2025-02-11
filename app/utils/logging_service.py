@@ -11,7 +11,7 @@ import socket
 from queue import Queue
 
 from app.config.settings import LogStorageSettings, settings
-from app.infra.logger import GraylogHandler, graylog_handler
+from app.infra.clients.logger import GraylogHandler, graylog_handler
 
 
 __all__ = (
@@ -229,3 +229,4 @@ scheduler_logger = log_manager.scheduler_logger  # type: ignore
 request_logger = log_manager.request_logger  # type: ignore
 queue_logger = log_manager.queue_logger  # type: ignore
 redis_logger = log_manager.redis_logger  # type: ignore
+stream_logger = log_manager.stream_logger  # type: ignore

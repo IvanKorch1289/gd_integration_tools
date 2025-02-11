@@ -29,11 +29,9 @@ async def init_limiter():
             decode_responses=True,
         )
         await FastAPILimiter.init(redis_connection)
-        app_logger.info("Лимиты роутов установлены...")
+        app_logger.info("Limits initialize...")
     except Exception:
-        app_logger.error(
-            "Не удалось инициализировать лимиты роутов", exc_info=True
-        )
+        app_logger.error("Error with initialize limits", exc_info=True)
 
 
 class RouteLimiter:

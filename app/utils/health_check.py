@@ -1,13 +1,11 @@
 import json_tricks
 from fastapi import Response
 
-from app.celery.config.celery_config import celery_manager
+from app.infra.clients.logger import graylog_handler
+from app.infra.clients.redis import redis_client
+from app.infra.clients.smtp import smtp_client
+from app.infra.clients.storage import s3_client
 from app.infra.db.database import db_initializer
-from app.infra.logger import graylog_handler
-from app.infra.queue import queue_client
-from app.infra.redis import redis_client
-from app.infra.smtp import smtp_client
-from app.infra.storage import s3_client
 from app.utils.decorators.singleton import singleton
 from app.utils.utils import utilities
 
@@ -31,8 +29,6 @@ class HealthCheck:
         s3_bucket_check = await self.check_s3_bucket()
         graylog_check = await self.check_graylog()
         smtp_check = await self.check_smtp()
-        celery_check = await self.check_celery()
-        queue_check = await self.check_queue()
         response_data = {
             "db": db_check,
             "redis": redis_check,
@@ -40,8 +36,6 @@ class HealthCheck:
             "s3_bucket": s3_bucket_check,
             "graylog": graylog_check,
             "smtp": smtp_check,
-            "celery": celery_check,
-            "queue": queue_check,
         }
 
         if all(response_data.values()):
@@ -86,33 +80,6 @@ class HealthCheck:
         """
         return await redis_client.check_connection()
 
-    async def check_celery(self):
-        """
-        Проверяет состояние Celery.
-
-        Returns:
-            dict: Результат проверки состояния Celery.
-        """
-        return await celery_manager.check_connection()
-
-    async def check_celery_queues(self):
-        """
-        Проверяет состояние очередей Celery.
-
-        Returns:
-            dict: Состояние очередей Celery.
-        """
-        return await celery_manager.check_queue_connection()
-
-    async def check_celery_scheduler(self):
-        """
-        Проверяет состояние планировщика задач.
-
-        Returns:
-            dict: Результат проверки состояния планировщика задач.
-        """
-        return await celery_manager.check_beat_connection()
-
     async def check_s3(self):
         """
         Проверяет состояние S3.
@@ -148,15 +115,6 @@ class HealthCheck:
             dict: Результат проверки состояния SMTP-сервера.
         """
         return await smtp_client.test_connection()
-
-    async def check_queue(self):
-        """
-        Проверяет состояние Kafka.
-
-        Returns:
-            dict: Результат проверки состояния Kafka.
-        """
-        return await queue_client.check_health()
 
 
 health_check = HealthCheck()
