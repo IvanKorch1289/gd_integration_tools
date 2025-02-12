@@ -16,6 +16,7 @@ from app.utils.logging_service import stream_logger
 class StreamClient:
     def __init__(self):
         self.stream_client = FastStream(logger=stream_logger)
+        self.settings = settings.redis
         self.redis_broker = None
         self.kafka_broker = None
         self.redis_router = None
@@ -25,16 +26,18 @@ class StreamClient:
 
     def add_redis_broker(self):
         self.redis_broker = RedisBroker(
-            url=f"{settings.redis.redis_url}/{settings.redis.db_queue}",
-            max_connections=settings.redis.max_connections,
-            socket_timeout=settings.redis.socket_timeout,
-            socket_connect_timeout=settings.redis.socket_connect_timeout,
-            retry_on_timeout=settings.redis.retry_on_timeout,
+            url=f"{self.settings.redis_url}/{self.settings.db_queue}",
+            max_connections=self.settings.max_connections,
+            socket_timeout=self.settings.socket_timeout,
+            socket_connect_timeout=self.settings.socket_connect_timeout,
+            retry_on_timeout=self.settings.retry_on_timeout,
             logger=stream_logger,
         )
 
     def add_kafka_broker(self):
-        self.kafka_broker = KafkaBroker(settings.queue.bootstrap_servers)
+        self.kafka_broker = KafkaBroker(
+            bootstrap_servers=settings.queue.bootstrap_servers
+        )
 
     def add_redis_router(self):
         if self.redis_broker is None:
@@ -71,7 +74,6 @@ class StreamClient:
         message: Dict[str, Any],
         delay: Optional[timedelta] = None,
         scheduler: Optional[str] = None,
-        max_length: Optional[int] = settings.redis.max_stream_size,
     ):
         """
         Публикует сообщение в Redis сразу, с задержкой или по расписанию.
@@ -82,10 +84,6 @@ class StreamClient:
         if delay and scheduler:
             raise ValueError("Cannot use both delay and scheduler")
 
-        headers = {}
-        if max_length is not None:
-            headers["X-STREAM-MAXLEN"] = str(max_length)
-
         handle_message = {"data": message}
 
         # Если нет расписания - публикуем сразу
@@ -93,8 +91,6 @@ class StreamClient:
             await self.redis_broker.publish(
                 handle_message,
                 stream=stream,
-                headers=headers,
-                maxlen=max_length,
             )
             return
 
@@ -111,7 +107,7 @@ class StreamClient:
         self.scheduler.add_job(
             self._execute_redis_publish,
             trigger=trigger,
-            args=(stream, handle_message, headers, max_length),
+            args=(stream, handle_message),
             id=job_id,
             replace_existing=True,
         )
@@ -127,8 +123,6 @@ class StreamClient:
         await self.redis_broker.publish(
             message,
             stream=stream,
-            headers=headers,
-            maxlen=max_length,
         )
 
     async def start_brokers(self):

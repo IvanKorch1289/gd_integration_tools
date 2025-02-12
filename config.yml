@@ -168,7 +168,9 @@ redis:
   socket_keepalive: True
   main_stream: "events_stream"
   dlq_stream: "events_dlq"
-  max_stream_size: 1000
+  max_stream_len: 1000
+  approximate_trimming_stream: True
+  retention_hours_stream: 8
   max_retries: 3
   ttl_hours: 1
   health_check_interval: 300

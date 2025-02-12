@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+import asyncio
 import json_tricks
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -20,7 +21,7 @@ from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.enums.skb import ResponseTypeChoices
-from app.utils.logging_service import app_logger
+from app.utils.logging_service import app_logger, request_logger
 
 
 __all__ = ("get_order_service",)
@@ -129,13 +130,13 @@ class OrderService(BaseService[OrderRepository]):
                     message_data = {
                         "to_emails": order.get("email_for_answer"),  # type: ignore
                         "subject": f"Order {order.get("object_uuid", None)}",  # type: ignore
-                        "message": "Order registration to SKB completed",
+                        "message": "Order registration success to SKB completed",
                     }
                     await stream_client.publish_to_redis(
-                        message={"data": message_data},
+                        message=message_data,
                         stream="email_send_stream",
                     )
-                    return result
+                return result
             raise
         except Exception:
             app_logger.error("Error sending request to SKB", exc_info=True)
@@ -161,7 +162,7 @@ class OrderService(BaseService[OrderRepository]):
                 order_uuid=instance.object_uuid,
                 response_type=response_type.value,
             )
-
+            return result
             # Обрабатываем JSON-ответ
             if isinstance(result, JSONResponse):
                 body = json_tricks.loads(result.body.decode("utf-8"))
@@ -232,33 +233,35 @@ class OrderService(BaseService[OrderRepository]):
                     f"Expected a dictionary, but got {type(order)}"
                 )
 
-            # Если заказ активен, запрашиваем результаты
-            if order.get("is_active", None):
-                pdf_response: JSONResponse = await self.get_order_result(
-                    order_id=order_id, response_type=ResponseTypeChoices.pdf
-                )
-                json_response: JSONResponse = await self.get_order_result(
+            # Если заказ не активен, возвращаем сообщение
+            if not order.get("is_active", False):
+                return {"hasError": True, "message": "Inactive order"}
+
+            # Запрашиваем JSON и PDF результаты параллельно
+            json_response, pdf_response = await asyncio.gather(
+                self.get_order_result(
                     order_id=order_id, response_type=ResponseTypeChoices.json
-                )
+                ),
+                self.get_order_result(
+                    order_id=order_id, response_type=ResponseTypeChoices.pdf
+                ),
+            )
 
-                # Если оба запроса успешны, обновляем статус заказа
-                if (
-                    json_response.status_code == status.HTTP_200_OK
-                    and pdf_response.status_code == status.HTTP_200_OK
-                ):
-                    await self.update(
-                        key="id", value=order_id, data={"is_active": False}
-                    )
-                    return order
+            # Обрабатываем результаты
+            update_data = {}
+            message = json_response.get("data", {}).get("Message")
+            date = json_response.get("data", {}).get("Date")
+            result = json_response.get("data", {}).get("Result")
 
-                return {
-                    "hasError": True,
-                    "message": "Результат еще не готов",
-                }
-            return {
-                "hasError": True,
-                "message": "Inactive order",
-            }
+            update_data["response_data"] = f"{message} (date {date})"
+
+            # Если оба запроса успешны, обновляем статус заказа
+            if result:
+                update_data["is_active"] = False
+
+            await self.update(key="id", value=order_id, data=update_data)
+
+            return json_response
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

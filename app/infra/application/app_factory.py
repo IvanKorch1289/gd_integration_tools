@@ -37,7 +37,7 @@ def create_app() -> FastAPI:
     # setup_tracing(app=app)
 
     # Перехват исключений
-    setup_handlers(app=app)
+    # setup_handlers(app=app)
 
     # Подключение SQLAdmin для административной панели
     setup_admin(app=app)

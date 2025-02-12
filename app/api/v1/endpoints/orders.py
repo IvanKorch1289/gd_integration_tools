@@ -44,7 +44,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     )
     @handle_routes_errors
     async def add_order_to_skb(
-        self, order_id: int, x_api_key: str = Header(...)
+        self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
         """
         Добавить запрос в СКБ-Техно.
@@ -63,7 +63,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     @route_limiting
     @handle_routes_errors
     async def get_order_result_from_skb(
-        self, order_id: int, x_api_key: str = Header(...)
+        self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
         """
         Получить результат запроса из СКБ-Техно.
@@ -85,6 +85,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     @handle_routes_errors
     async def get_order_file(
         self,
+        request: Request,
         order_id: int,
         x_api_key: str = Header(...),
         s3_service: S3Service = Depends(get_s3_service),
@@ -110,6 +111,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     @handle_routes_errors
     async def get_order_file_base64(
         self,
+        request: Request,
         order_id: int,
         x_api_key: str = Header(...),
         s3_service: S3Service = Depends(get_s3_service),
@@ -135,6 +137,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     @handle_routes_errors
     async def get_order_file_link(
         self,
+        request: Request,
         order_id: int,
         s3_service: S3Service = Depends(get_s3_service),
         x_api_key: str = Header(...),
@@ -160,6 +163,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
     @handle_routes_errors
     async def get_order_file_link_and_json_result_for_request(
         self,
+        request: Request,
         order_id: int,
         s3_service: S3Service = Depends(get_s3_service),
         x_api_key: str = Header(...),

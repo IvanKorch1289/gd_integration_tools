@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 import asyncio
+from redis import ResponseError
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import RedisError
 
@@ -90,10 +91,10 @@ class RedisClient:
             RedisError: If connection cannot be established
         """
         await self.ensure_connected()
+
         try:
             if not self._client:
                 raise RedisError("Redis client not initialized")
-
             yield self._client
         except (RedisError, ConnectionError, TimeoutError):
             self.logger.error("Redis connection error", exc_info=True)
@@ -153,6 +154,82 @@ class RedisClient:
         """Async context manager exit point."""
         await self.close()
 
+    @asynccontextmanager
+    async def _switch_db_context(
+        self, conn: Redis, target_db: int
+    ) -> AsyncIterator[None]:
+        """Контекстный менеджер для временного переключения БД."""
+        await conn.execute_command("SELECT", target_db)
+
+        try:
+            yield
+        finally:
+            await conn.execute_command("SELECT", self.settings.db_cache)
+
+    async def _stream_exists(self, stream_name: str) -> bool:
+        """Проверяет существование стрима в Redis."""
+        try:
+            async with self.connection() as conn:
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    await conn.xinfo_stream(stream_name)
+
+                    return True
+        except Exception:
+            self.logger.error(
+                f"Error checking stream existence {stream_name}", exc_info=True
+            )
+            return False
+
+    async def create_initial_streams(self) -> None:
+        """Создает базовые стримы при инициализации клиента."""
+        streams = [
+            "order_send_to_skb_stream",
+            "email_send_stream",
+            "order_get_result_from_skb",
+        ]
+
+        for stream in streams:
+            try:
+                if not await self._stream_exists(stream):
+                    await self._initialize_stream(stream)
+                    self.logger.info(
+                        f"Stream {stream} initialized with settings"
+                    )
+            except Exception:
+                self.logger.error(
+                    f"Failed to initialize stream {stream}", exc_info=True
+                )
+
+    async def _initialize_stream(self, stream_name: str) -> None:
+        """Инициализирует стрим с настройками из конфига."""
+        args = {}
+        if self.settings.max_stream_len:
+            args["maxlen"] = self.settings.max_stream_len
+            args["approximate"] = self.settings.approximate_trimming_stream
+
+        async with self.connection() as conn:
+            async with self._switch_db_context(conn, self.settings.db_queue):
+
+                # Создаем стрим с начальным сообщением
+                init_id = await conn.xadd(
+                    name=stream_name, fields={"__init__": "initial"}, **args
+                )
+
+                # Удаляем начальное сообщение
+                await conn.xdel(stream_name, init_id)
+
+                # Применяем retention policy
+                if self.settings.retention_hours_stream:
+                    retention_ms = (
+                        self.settings.retention_hours_stream * 3600 * 1000
+                    )
+                    minid = f"{int(datetime.now().timestamp() * 1000) - retention_ms}"
+                    await conn.xtrim(
+                        name=stream_name, minid=minid, approximate=True
+                    )
+
     async def stream_publish(
         self,
         stream: str,
@@ -176,14 +253,21 @@ class RedisClient:
         """
         try:
             async with self.connection() as conn:
-                args = {}
-                if max_len is not None:
-                    args["maxlen"] = max_len
-                    args["approximate"] = approximate
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    args = {}
+                    if max_len is not None:
+                        args["maxlen"] = max_len
+                        args["approximate"] = approximate
 
-                event_id = await conn.xadd(stream, data, id="*", **args)
-                self.logger.debug(f"Event published to {stream}: {event_id}")
-                return event_id
+                    event_id = await conn.xadd(stream, data, id="*", **args)
+
+                    self.logger.debug(
+                        f"Event published to {stream}: {event_id}"
+                    )
+
+                    return event_id
         except RedisError:
             self.logger.error("Stream publish failed", exc_info=True)
             raise
@@ -208,28 +292,30 @@ class RedisClient:
         """
         try:
             async with self.connection() as conn:
-                # Get event data
-                events = await conn.xrange(
-                    source_stream, min=event_id, max=event_id
-                )
-                if not events:
-                    raise RedisError(
-                        f"Event {event_id} not found in {source_stream}"
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    events = await conn.xrange(
+                        source_stream, min=event_id, max=event_id
                     )
+                    if not events:
+                        raise RedisError(
+                            f"Event {event_id} not found in {source_stream}"
+                        )
 
-                _, event_data = events[0]
+                    _, event_data = events[0]
 
-                # Add metadata
-                event_data["moved_at"] = datetime.now().isoformat()
-                if additional_data:
-                    event_data.update(additional_data)
+                    # Add metadata
+                    event_data["moved_at"] = datetime.now().isoformat()
+                    if additional_data:
+                        event_data.update(additional_data)
 
-                # Write to destination and delete from source
-                await conn.xadd(dest_stream, event_data, id="*")
-                await conn.xdel(source_stream, event_id)
-                self.logger.debug(
-                    f"Moved event {event_id} from {source_stream} to {dest_stream}"
-                )
+                    # Write to destination and delete from source
+                    await conn.xadd(dest_stream, event_data, id="*")
+                    await conn.xdel(source_stream, event_id)
+                    self.logger.debug(
+                        f"Moved event {event_id} from {source_stream} to {dest_stream}"
+                    )
         except RedisError:
             self.logger.error("Stream move failed", exc_info=True)
             raise
@@ -261,35 +347,40 @@ class RedisClient:
         """
         try:
             async with self.connection() as conn:
-                if consumer_group:
-                    group, consumer = consumer_group
-                    events = await conn.xreadgroup(
-                        groupname=group,
-                        consumername=consumer,
-                        streams={stream: last_id},
-                        count=count,
-                        block=block_ms,
-                    )
-                else:
-                    events = await conn.xread(
-                        streams={stream: last_id}, count=count, block=block_ms
-                    )
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    if consumer_group:
+                        group, consumer = consumer_group
+                        events = await conn.xreadgroup(
+                            groupname=group,
+                            consumername=consumer,
+                            streams={stream: last_id},
+                            count=count,
+                            block=block_ms,
+                        )
+                    else:
+                        events = await conn.xread(
+                            streams={stream: last_id},
+                            count=count,
+                            block=block_ms,
+                        )
 
-                result = []
-                for _, stream_events in events:
-                    for event_id, event_data in stream_events:
-                        entry = {
-                            "id": event_id,
-                            "stream": stream,
-                            "data": event_data,
-                        }
-                        if ack and consumer_group:
-                            await conn.xack(
-                                stream, consumer_group[0], event_id
-                            )
-                        result.append(entry)
+                    result = []
+                    for _, stream_events in events:
+                        for event_id, event_data in stream_events:
+                            entry = {
+                                "id": event_id,
+                                "stream": stream,
+                                "data": event_data,
+                            }
+                            if ack and consumer_group:
+                                await conn.xack(
+                                    stream, consumer_group[0], event_id
+                                )
+                            result.append(entry)
 
-                return result
+                    return result
         except RedisError:
             self.logger.error("Stream read failed", exc_info=True)
             raise
@@ -311,14 +402,17 @@ class RedisClient:
         """
         try:
             async with self.connection() as conn:
-                return {
-                    "length": await conn.xlen(stream),
-                    "last_events": await conn.xrevrange(
-                        stream, count=num_last_events
-                    ),
-                    "first_event": await conn.xrange(stream, count=1),
-                    "groups": await conn.xinfo_groups(stream),
-                }
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    return {
+                        "length": await conn.xlen(stream),
+                        "last_events": await conn.xrevrange(
+                            stream, count=num_last_events
+                        ),
+                        "first_event": await conn.xrange(stream, count=1),
+                        "groups": await conn.xinfo_groups(stream),
+                    }
         except RedisError:
             self.logger.error("Stream stats failed", exc_info=True)
             raise
@@ -350,27 +444,34 @@ class RedisClient:
         """
         try:
             async with self.connection() as conn:
-                events = await conn.xrange(stream, min=event_id, max=event_id)
-                if not events:
-                    return False
+                async with self._switch_db_context(
+                    conn, self.settings.db_queue
+                ):
+                    events = await conn.xrange(
+                        stream, min=event_id, max=event_id
+                    )
+                    if not events:
+                        return False
 
-                _, event_data = events[0]
+                    _, event_data = events[0]
 
-                event_data = utilities.decode_bytes(data=event_data)
+                    event_data = utilities.decode_bytes(data=event_data)
 
-                current_retries = int(event_data.get(retry_field, 0))
+                    current_retries = int(event_data.get(retry_field, 0))
 
-                if current_retries > max_retries:
-                    return False
+                    if current_retries > max_retries:
+                        return False
 
-                event_data[retry_field] = str(current_retries + 1)
+                    event_data[retry_field] = str(current_retries + 1)
 
-                if ttl and ttl_field:
-                    event_data[ttl_field] = (datetime.now() + ttl).isoformat()
+                    if ttl and ttl_field:
+                        event_data[ttl_field] = (
+                            datetime.now() + ttl
+                        ).isoformat()
 
-                await conn.xadd(stream, event_data, id="*")
-                await conn.xdel(stream, event_id)
-                return True
+                    await conn.xadd(stream, event_data, id="*")
+                    await conn.xdel(stream, event_id)
+                    return True
         except RedisError:
             self.logger.error("Event retry failed", exc_info=True)
             raise

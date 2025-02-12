@@ -139,7 +139,7 @@ class APISKBService:
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
                 )
-
+                return response
             content_encoding = response.headers.get(
                 "Content-Encoding", ""
             ).lower()
