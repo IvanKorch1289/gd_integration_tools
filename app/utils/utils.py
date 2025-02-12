@@ -1,13 +1,9 @@
 import base64
-import sys
 import uuid
 from datetime import datetime
 from typing import Any, Type
 
-import asyncio
-import json_tricks
 import pandas as pd
-from fastapi import Response
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
@@ -18,7 +14,6 @@ from app.utils.logging_service import app_logger
 
 __all__ = (
     "utilities",
-    "audit",
     "AsyncChunkIterator",
 )
 
@@ -61,23 +56,6 @@ class Utilities:
             raise ValueError(
                 f"Model to schema conversion error: {exc}"
             ) from exc
-
-    def get_response_body(self, response: Response) -> Any:
-        """Extracts and deserializes response body.
-
-        Args:
-            response: HTTP response object
-
-        Returns:
-            Deserialized response content
-        """
-        try:
-            body = response.body.decode("utf-8")
-            return json_tricks.loads(
-                body, extra_obj_pairs_hooks=[self.custom_json_decoder]
-            )
-        except Exception as exc:
-            self.logger.error(f"Exception with getting response bdy: {exc}")
 
     async def encode_base64(self, data: Any) -> Any:
         """
@@ -251,42 +229,6 @@ class Utilities:
             return datetime.fromisoformat(dct["value"])
         return dct
 
-    def execute_async_task(self, coroutine: Any) -> bytes:
-        """Executes async tasks in synchronous context.
-
-        Args:
-            coroutine: Async coroutine to execute
-
-        Returns:
-            bytes: Serialized execution result
-        """
-        loop = None
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        try:
-            result = loop.run_until_complete(coroutine)
-            return json_tricks.dumps(
-                result, extra_obj_encoders=[self.custom_json_encoder]
-            ).encode()
-        finally:
-            if loop and loop.is_closed():
-                loop.close()
-
-
-class Audit:
-    """Audit utility class for logging audit events."""
-
-    def audit_hook(self, event, args):
-        app_logger.info(f"Audit event: {event}, args: {args}")
-
-    def start_audit(self):
-        # Регистрация обработчика
-        sys.addaudithook(self.audit_hook)
-
 
 class AsyncChunkIterator:
     """Async iterator for sequential traversal of byte chunks"""
@@ -308,4 +250,3 @@ class AsyncChunkIterator:
 
 
 utilities = Utilities()
-audit = Audit()

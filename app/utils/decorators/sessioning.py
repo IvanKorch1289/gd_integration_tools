@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from functools import wraps
 from typing import AsyncGenerator, Callable, Optional
 
-from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -157,27 +156,6 @@ class DatabaseSessionManager:
             return wrapper
 
         return decorator
-
-    @property
-    def session_dependency(self) -> Callable:
-        """
-        Возвращает зависимость для FastAPI,
-        обеспечивающую доступ к сессии без транзакции.
-
-        Returns:
-            Callable: Зависимость для FastAPI.
-        """
-        return Depends(self.get_session)
-
-    @property
-    def transaction_session_dependency(self) -> Callable:
-        """
-        Возвращает зависимость для FastAPI с поддержкой транзакций.
-
-        Returns:
-            Callable: Зависимость для FastAPI.
-        """
-        return Depends(self.get_transaction_session)
 
 
 # Инициализация менеджера сессий базы данных

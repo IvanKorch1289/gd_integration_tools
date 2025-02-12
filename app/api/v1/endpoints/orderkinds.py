@@ -32,10 +32,10 @@ OrderKindCBV = create_router_class(
 class ExtendedOrderKindCBV(OrderKindCBV):  # type: ignore
     """CBV-класс для работы с видами запросов."""
 
-    @router.post(
+    @router.get(
         "/create_or_update_from_skb/",
         status_code=status.HTTP_201_CREATED,
-        summary="Добавить/Обновить запросы из СКБ-Техно",
+        summary="Добавить/Обновить виды запросов из СКБ-Техно",
     )
     @handle_routes_errors
     async def create_or_update_kinfs_from_skb(

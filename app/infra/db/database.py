@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.event import listen
@@ -86,16 +86,16 @@ class DatabaseInitializer:
             max_overflow=self.settings.max_overflow,
             pool_recycle=self.settings.pool_recycle,
             pool_timeout=self.settings.pool_timeout,
-            connect_args=self._get_connect_args(),
+            # connect_args=self._get_connect_args(),
         )
 
-    def _get_connect_args(self) -> Dict[str, str]:
+    def _get_connect_args(self) -> Dict[str, Any]:
         """Generates additional database connection arguments.
 
         Returns:
             dict: Additional connection parameters
         """
-        connect_args = {}
+        connect_args: dict = {}
 
         if self.settings.type == "postgresql":
             connect_args.update(

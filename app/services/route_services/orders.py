@@ -81,9 +81,7 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    async def create_skb_order(
-        self, order_id: int
-    ) -> Optional[OrderSchemaOut]:
+    async def create_skb_order(self, order_id: int) -> Dict[str, Any]:
         """
         Создает заказ в СКБ-Техно на основе существующего заказа.
 
@@ -109,7 +107,9 @@ class OrderService(BaseService[OrderRepository]):
                 }
 
                 # Отправляем запрос в СКБ-Техно
-                result = await self.request_service.add_request(data=data)
+                result: Dict[str, Any] = (
+                    await self.request_service.add_request(data=data)
+                )
 
                 # Если запрос успешен, обновляем статус заказа
                 if result["status_code"] == status.HTTP_200_OK:
@@ -228,7 +228,7 @@ class OrderService(BaseService[OrderRepository]):
                 return {"hasError": True, "message": "Inactive order"}
 
             # Запрашиваем JSON и PDF результаты параллельно
-            json_response, pdf_response = await asyncio.gather(
+            json_response, _ = await asyncio.gather(
                 self.get_order_result(
                     order_id=order_id, response_type=ResponseTypeChoices.json
                 ),

@@ -89,7 +89,7 @@ def create_router_class(
         @handle_routes_errors
         async def add_object(
             self,
-            request_schema: schema_in,
+            request_schema: Type[SchemaIn],
             request: Request,
             x_api_key: str = Header(...),
         ):
@@ -104,7 +104,7 @@ def create_router_class(
         @handle_routes_errors
         async def add_many_objects(
             self,
-            request_schema: List[schema_in],
+            request_schema: List[Type[SchemaIn]],
             request: Request,
             x_api_key: str = Header(...),
         ):
@@ -120,7 +120,7 @@ def create_router_class(
         @handle_routes_errors
         async def update_object(
             self,
-            request_schema: schema_in,
+            request_schema: Type[SchemaIn],
             object_id: int,
             request: Request,
             x_api_key: str = Header(...),
@@ -217,7 +217,7 @@ def create_router_class(
                 "/filter/",
                 status_code=status.HTTP_200_OK,
                 summary="Получить объекты по фильтру",
-                response_model=List[schema_out],
+                response_model=List[Type[SchemaOut]],
             )
             @route_limiting
             @handle_routes_errors

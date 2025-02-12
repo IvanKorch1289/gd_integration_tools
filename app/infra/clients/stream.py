@@ -1,16 +1,27 @@
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from functools import wraps
+from logging import Logger
+from typing import Any, Callable, Coroutine, Dict, Optional, TypeVar
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from faststream import FastStream
+from faststream import Context, FastStream
 from faststream.kafka import KafkaBroker, KafkaRouter
-from faststream.redis import RedisBroker, RedisRouter
+from faststream.redis import RedisBroker, RedisMessage, RedisRouter
 
 from app.config.settings import settings
 from app.utils.logging_service import stream_logger
+
+
+__all__ = (
+    "stream_client",
+    "StreamClient",
+)
+
+
+T = TypeVar("T")
 
 
 class StreamClient:
@@ -110,6 +121,70 @@ class StreamClient:
             args=(stream, handle_message),
             id=job_id,
             replace_existing=True,
+        )
+
+    def retry_with_backoff(
+        self,
+        max_attempts: int,
+        delay: timedelta,
+        stream: str,
+    ) -> Callable[
+        [Callable[..., Coroutine[Any, Any, T]]],
+        Callable[..., Coroutine[Any, Any, T]],
+    ]:
+        """
+        Декоратор для повторного выполнения функции с экспоненциальной задержкой.
+
+        Args:
+            max_attempts: Максимальное количество попыток.
+            delay: Задержка между попытками.
+            stream: Имя потока Redis для повторной публикации.
+
+        Returns:
+            Декоратор для асинхронных функций.
+        """
+
+        def decorator(
+            func: Callable[..., Coroutine[Any, Any, T]]
+        ) -> Callable[..., Coroutine[Any, Any, T]]:
+            @wraps(func)
+            async def wrapper(
+                *args: Any,
+                message: RedisMessage = Context("message"),
+                logger: Logger = stream_logger,
+                **kwargs: Any,
+            ) -> Optional[T]:
+                attempt = message.headers.get("attempt", 0)
+                try:
+                    return await func(*args, **kwargs)
+                except Exception:
+                    logger.error(f"Error in {func.__name__}", exc_info=True)
+                    if attempt >= max_attempts - 1:
+                        logger.error("Max retries reached")
+                        return None
+
+                    await stream_client.publish_to_redis(
+                        stream=stream,
+                        message=message.body,
+                        delay=delay,
+                        headers={**message.headers, "attempt": attempt + 1},
+                    )
+                    return None
+
+            return wrapper
+
+        return decorator
+
+    async def publish_with_delay(
+        self, stream: str, message: Any, delay: timedelta
+    ) -> None:
+        """
+        Публикует сообщение в указанный поток с задержкой.
+        """
+        await self.publish_to_redis(
+            stream=stream,
+            message=message,
+            delay=delay,
         )
 
     async def start_brokers(self):

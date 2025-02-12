@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict
 
 import asyncio
 from pydantic import BaseModel
@@ -50,7 +50,7 @@ class OrderKindService(BaseService[OrderKindRepository]):
         self.request_service = request_service
 
     @response_cache
-    async def create_or_update_kinds_from_skb(self) -> Optional[BaseModel]:
+    async def create_or_update_kinds_from_skb(self) -> Dict[str, Any]:
         """
         Создает или обновляет виды заказов на основе данных из СКБ-Техно.
 

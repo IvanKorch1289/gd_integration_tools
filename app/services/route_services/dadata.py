@@ -1,5 +1,4 @@
 from typing import Any, Dict, Optional
-
 from urllib.parse import urljoin
 
 from app.config.settings import DadataAPISettings, settings
@@ -59,7 +58,7 @@ class APIDADATAService:
         """
         # Формируем тело запроса
         try:
-            payload = {"lat": lat, "lon": lon}
+            payload: Dict[str, Any] = {"lat": lat, "lon": lon}
             payload.update(
                 {
                     "radius_meters": radius_metres if radius_metres else None,

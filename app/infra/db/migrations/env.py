@@ -8,13 +8,13 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.orm import configure_mappers
 
 from app.config.settings import settings
-from app.infra.db.database import db_initializer
+from app.infra.db.database import db_initializer  # noqa: F401
 from app.infra.db.migrations.types import load_types
-from app.infra.db.models.base import BaseModel, metadata
-from app.infra.db.models.files import File, OrderFile
-from app.infra.db.models.orderkinds import OrderKind
-from app.infra.db.models.orders import Order
-from app.infra.db.models.users import User
+from app.infra.db.models.base import BaseModel, metadata  # noqa: F401
+from app.infra.db.models.files import File, OrderFile  # noqa: F401
+from app.infra.db.models.orderkinds import OrderKind  # noqa: F401
+from app.infra.db.models.orders import Order  # noqa: F401
+from app.infra.db.models.users import User  # noqa: F401
 
 
 # this is the Alembic Config object, which provides

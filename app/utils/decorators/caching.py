@@ -87,41 +87,6 @@ class CachingDecorator:
                 "Pattern cache invalidation failed", exc_info=True
             )
 
-    @redis_client.reconnect_on_failure
-    async def get_cached_data(self, key: str) -> Optional[Any]:
-        try:
-            async with redis_client.connection() as r:
-                data = await r.get(key)
-                if not data:
-                    return None
-
-                if isinstance(data, bytes):
-                    data = await utilities.decode_bytes(data)
-
-                result = json_tricks.loads(
-                    data, extra_obj_pairs_hooks=[utilities.custom_json_decoder]
-                )
-
-                return result
-        except Exception:
-            self.logger.error("Failed to get cached data", exc_info=True)
-            return None
-
-    @redis_client.reconnect_on_failure
-    async def cache_data(self, key: str, data: Any) -> None:
-        try:
-            async with redis_client.connection() as r:
-                # Преобразуем данные и сериализуем
-                converted_data = utilities.convert_data(data)
-                serialized = json_tricks.dumps(
-                    converted_data,
-                    extra_obj_encoders=[utilities.custom_json_encoder],
-                )
-
-                await r.setex(key, self.expire, serialized)
-        except Exception:
-            self.logger.error("Failed to cache data", exc_info=True)
-
     def __call__(self, func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(*args, **kwargs) -> Any:
@@ -145,6 +110,7 @@ class CachingDecorator:
             else sync_wrapper
         )
 
+    @redis_client.reconnect_on_failure
     async def _get_cached_value(self, key: str) -> Any:
         try:
             async with redis_client.connection() as r:
@@ -166,6 +132,7 @@ class CachingDecorator:
             self.logger.error("Cache read error", exc_info=True)
             return None
 
+    @redis_client.reconnect_on_failure
     async def _cache_result(self, key: str, result: Any) -> None:
         try:
             if result is None:

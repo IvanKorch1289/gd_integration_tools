@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -36,7 +36,9 @@ class UserService(BaseService[UserRepository]):
         except Exception:
             raise
 
-    async def add(self, data: Dict[str, Any]) -> Union[UserSchemaOut, str]:
+    async def add(
+        self, data: Dict[str, Any]
+    ) -> Optional[Union[UserSchemaOut, str]]:
         """
         Добавляет нового пользователя.
 

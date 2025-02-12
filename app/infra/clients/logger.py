@@ -1,8 +1,8 @@
 import logging
+import socket
 from typing import Optional
 
 import graypy
-import socket
 
 from app.config.settings import LogStorageSettings, settings
 

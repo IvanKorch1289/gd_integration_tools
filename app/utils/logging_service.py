@@ -1,13 +1,13 @@
 import logging
 import os
+import socket
 from logging.handlers import (
     QueueHandler,
     QueueListener,
     TimedRotatingFileHandler,
 )
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-import socket
 from queue import Queue
 
 from app.config.settings import LogStorageSettings, settings
@@ -183,26 +183,6 @@ class LoggerManager:
         """Remove existing handlers from logger."""
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
-
-    def log_user_activity(
-        self,
-        user_id: str,
-        action: str,
-        logger_name: str = "application",
-        **additional_info: Dict[str, Any],
-    ) -> None:
-        """
-        Log user activity with contextual information.
-
-        Args:
-            user_id (str): Unique user identifier
-            action (str): Performed action description
-            logger_name (str): Target logger name
-            additional_info (Dict[str, Any]): Additional log fields
-        """
-        logger = logging.getLogger(logger_name)
-        extra = {"user_id": user_id, "action": action, **additional_info}
-        logger.info("User activity: %s", action, extra=extra, stacklevel=2)
 
     def shutdown(self) -> None:
         """Safely terminate logging infrastructure."""

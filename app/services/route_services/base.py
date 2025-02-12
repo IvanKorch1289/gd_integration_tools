@@ -133,8 +133,10 @@ class BaseService(Generic[ConcreteRepo]):
         :return: Схема ответа или None, если произошла ошибка.
         """
         try:
-            result = await self.helper._process_and_transfer(
-                "add", self.response_schema, data=data
+            result: Optional[ConcreteResponseSchema] = (
+                await self.helper._process_and_transfer(
+                    "add", self.response_schema, data=data
+                )
             )
             await response_cache.invalidate_pattern(
                 pattern=self.__class__.__name__
@@ -145,17 +147,25 @@ class BaseService(Generic[ConcreteRepo]):
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
-    ) -> Optional[List[ConcreteResponseSchema]]:
+    ) -> List[Optional[ConcreteResponseSchema]]:
         """
         Добавляет несколько объектов в репозиторий и возвращает их в виде списка схем.
 
         :param data_list: Список данных для создания объектов.
         :return: Список схем ответа или None, если произошла ошибка.
         """
-        try:
-            return [await self.add(data=data) for data in data_list]
-        except Exception:
-            raise
+        result: List[Optional[ConcreteResponseSchema]] = []
+
+        for data in data_list:
+            try:
+                response: Optional[ConcreteResponseSchema] = await self.add(
+                    data=data
+                )
+                result.append(response)
+            except Exception:
+                pass
+
+        return result
 
     async def update(
         self, key: str, value: int, data: Dict[str, Any]
@@ -262,7 +272,7 @@ class BaseService(Generic[ConcreteRepo]):
     @response_cache
     async def get_all_object_versions(
         self, object_id: int
-    ) -> Optional[List[BaseSchema]]:
+    ) -> List[Optional[BaseSchema]]:
         """
         Получает все версии объекта по его id.
 
@@ -272,10 +282,20 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             versions = await self.repo.get_all_versions(object_id=object_id)
 
-            return [
-                await self.helper._transfer(version, self.version_schema)
-                for version in versions
-            ]
+            result: List[Optional[BaseSchema]] = []
+
+            for version in versions:
+                try:
+                    response: Optional[BaseSchema] = (
+                        await self.helper._transfer(
+                            version, self.version_schema
+                        )
+                    )
+                    result.append(response)
+                except Exception:
+                    pass
+
+            return result
         except Exception:
             raise
 

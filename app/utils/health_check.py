@@ -1,13 +1,9 @@
-import json_tricks
-from fastapi import Response
-
 from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
 from app.infra.clients.smtp import smtp_client
 from app.infra.clients.storage import s3_client
 from app.infra.db.database import db_initializer
 from app.utils.decorators.singleton import singleton
-from app.utils.utils import utilities
 
 
 __all__ = ("health_check",)
@@ -32,35 +28,23 @@ class HealthCheck:
         response_data = {
             "db": db_check,
             "redis": redis_check,
-            "s3": s3_check,
-            "s3_bucket": s3_bucket_check,
+            "s3": all([s3_check, s3_bucket_check]),
             "graylog": graylog_check,
             "smtp": smtp_check,
         }
 
         if all(response_data.values()):
-            status_code = 200
             message = "All systems are operational."
             is_all_services_active = True
         else:
-            status_code = 500
             message = "One or more components are not functioning properly."
             is_all_services_active = False
 
-        response_body = {
+        return {
             "message": message,
             "is_all_services_active": is_all_services_active,
             "details": response_data,
         }
-
-        return Response(
-            content=json_tricks.dumps(
-                response_body,
-                extra_obj_encoders=[utilities.custom_json_encoder],
-            ),
-            media_type="application/json",
-            status_code=status_code,
-        )
 
     async def check_database(self):
         """

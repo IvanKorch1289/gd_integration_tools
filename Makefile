@@ -43,7 +43,7 @@ lint: check-env
 	@echo "\033[34mLinting code...\033[0m"
 	-poetry run flake8 $(SOURCE_DIR) --ignore=E501,W503 || echo "Flake8 found issues"
 	-poetry run mypy $(SOURCE_DIR) || echo "Mypy found type issues"
-	-poetry run vulture $(SOURCE_DIR) --min-confidence 70 --exclude "*/migrations/*,*/tests/*,*/venv/*" || echo "Vulture found dead code"
+	-poetry run vulture $(SOURCE_DIR) --config pyproject.toml || echo "Vulture found dead code"
 	-poetry run bandit -r $(SOURCE_DIR) -c .bandit.yml || echo "Bandit found security issues"
 	@echo "\033[32mLinting complete (errors ignored)\033[0m"
 

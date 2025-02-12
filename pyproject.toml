@@ -89,10 +89,10 @@ known_standard_library = [
     "hashlib", "re", "os", "path", "collections", "io", "enum", "sys",
     "traceback", "datetime", "typing", "contextlib", "functools",
     "logging", "pathlib", "abc", "uuid", "json", "importlib", "email",
-    "zipfile", "base64", "bson", "gzip"
+    "zipfile", "base64", "bson", "gzip", "urllib", "socket", "ssl"
 ]
 known_third_party = [
-    "confluent_kafka", "aiologger", "aiokafka", "urllib", "zeep", "blinker",
+    "confluent_kafka", "aiologger", "aiokafka", "zeep", "blinker",
     "pandas", "graypy", "pyclamd", "sqlalchemy_utils", "fastapi_limiter",
     "loguru", "sqlalchemy", "fast_api", "passlib", "aioredis", "psycopg2",
     "pydantic", "sqladmin", "joblib", "streamlit", "aioboto", "fastauth",
@@ -136,3 +136,14 @@ exclude = [
 ]
 max-line-length = 97
 max-complexity = 18
+
+[tool.vulture]
+ignore_names = [
+    "x_api_key"
+]
+min_confidence = 70
+exclude = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*"
+]

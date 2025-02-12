@@ -1,6 +1,6 @@
 import io
 import zipfile
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi.responses import StreamingResponse
 
@@ -61,7 +61,7 @@ class S3Service:
         if not await self._check_object_exists(key):
             raise FileNotFoundError(f"File {key} not found")
 
-        result = await self.client.get_object(key)
+        result: Optional[tuple[Any, dict]] = await self.client.get_object(key)
         body, metadata = result
         metadata = await utilities.decode_base64(metadata)
         filename = metadata.get("original-filename", key)

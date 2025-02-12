@@ -168,7 +168,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session: AsyncSession,
             query_or_object: Union[Select, ConcreteTable],
             is_return_list: bool = False,
-        ) -> Optional[ConcreteTable] | List[ConcreteTable]:
+        ) -> Union[Optional[ConcreteTable], List[ConcreteTable]]:
             """
             Выполняет запрос или подгружает связи для объекта.
 
@@ -183,11 +183,13 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
                 if is_return_list:
                     # Возвращаем список объектов
-                    objects = result.scalars().unique().all()
+                    objects: List[ConcreteTable] = (
+                        result.scalars().unique().all()
+                    )
                     return objects if objects else []
                 else:
                     # Возвращаем один объект
-                    object = result.scalars().first()
+                    object: Optional[ConcreteTable] = result.scalars().first()
                     return object if object else {}
 
             elif self.load_joined_models:
@@ -239,7 +241,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             object_id: int,
             order: str = "asc",
             limit: Optional[int] = None,
-        ) -> List[Dict[str, Any]]:
+        ) -> List[ConcreteTable]:
             """
             Общий метод для получения версий объекта.
             """
@@ -320,7 +322,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :return: Количество объектов.
         """
         result: Result = await session.execute(func.count(self.model.id))
-        return result.scalar()
+        count_value: Optional[int] = result.scalar()
+
+        if count_value is None:
+            return 0  # Если результат None, возвращаем 0
+        return count_value
 
     @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")

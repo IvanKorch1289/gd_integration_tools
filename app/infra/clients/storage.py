@@ -2,7 +2,15 @@
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from functools import wraps
-from typing import Any, AsyncGenerator, List, Optional
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Coroutine,
+    List,
+    Optional,
+    TypeVar,
+)
 
 from aiobotocore.config import AioConfig
 from aiobotocore.session import get_session
@@ -17,6 +25,9 @@ __all__ = (
     "S3Client",
     "s3_client",
 )
+
+
+R = TypeVar("R")
 
 
 class BaseS3Client(ABC):
@@ -157,9 +168,12 @@ class S3Client(BaseS3Client):
             finally:
                 self._client = None
 
-    def ensure_connected(func):
+    @staticmethod
+    def ensure_connected(
+        func: Callable[..., Coroutine[Any, Any, R]]
+    ) -> Callable[..., Coroutine[Any, Any, R]]:
         @wraps(func)
-        async def wrapper(self, *args, **kwargs):
+        async def wrapper(self: "S3Client", *args, **kwargs) -> R:
             if not self.is_connected:
                 await self.connect()
             return await func(self, *args, **kwargs)

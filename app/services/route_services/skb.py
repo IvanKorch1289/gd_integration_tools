@@ -1,11 +1,9 @@
 from typing import Any, Dict, Optional
-from uuid import UUID
-
 from urllib.parse import urljoin
+from uuid import UUID
 
 from app.config.settings import SKBAPISettings, settings
 from app.services.infra_services.http import get_http_client
-from app.services.infra_services.s3 import get_s3_service
 
 
 __all__ = (
@@ -24,7 +22,6 @@ class APISKBService:
 
     def __init__(self, settings: SKBAPISettings):
         self.settings = settings
-        self.file_storage = get_s3_service()
         self._initialize_attributes()
 
     def _initialize_attributes(self):
