@@ -299,7 +299,7 @@ class HttpClient:
         else:
             return None
 
-    async def _should_retry(self, attempt: int, exception: Exception) -> bool:
+    def _should_retry(self, attempt: int, exception: Exception) -> bool:
         """Determine if a request should be retried."""
         if attempt >= self.settings.max_retries:
             return False
@@ -377,11 +377,18 @@ class HttpClient:
         self, response: aiohttp.ClientResponse, content: Any, start_time: float
     ) -> Dict[str, Any]:
         """Construct standardized response dictionary."""
+        content_type = (
+            response.headers.get("Content-Type", "")
+            .lower()
+            .split(";")[0]
+            .strip()
+        )
 
         return {
             "status_code": response.status,
             "data": content,
             "headers": dict(response.headers),
+            "content_type": content_type,
             "elapsed": time.monotonic() - start_time,
         }
 

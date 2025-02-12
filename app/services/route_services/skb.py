@@ -1,16 +1,11 @@
-import re
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 from uuid import UUID
 
-import aiohttp
-import asyncio
 from urllib.parse import urljoin
 
 from app.config.settings import SKBAPISettings, settings
 from app.services.infra_services.http import get_http_client
 from app.services.infra_services.s3 import get_s3_service
-from app.services.route_services.base import BaseService
-from app.services.route_services.orderkinds import get_order_kind_service
 
 
 __all__ = (
@@ -27,10 +22,7 @@ class APISKBService:
     и получения результатов по залогам.
     """
 
-    def __init__(
-        self, settings: SKBAPISettings, kind_service: Type[BaseService] = None
-    ):
-        self.kind_service = kind_service
+    def __init__(self, settings: SKBAPISettings):
         self.settings = settings
         self.file_storage = get_s3_service()
         self._initialize_attributes()
@@ -59,7 +51,7 @@ class APISKBService:
                 url = f"{urljoin(self.base_url, self.endpoints.get('GET_KINDS'))}"
 
             async with get_http_client() as client:
-                result = await client.make_request(
+                return await client.make_request(
                     method="GET",
                     url=url,
                     params=self.params,
@@ -69,19 +61,6 @@ class APISKBService:
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
                 )
-
-            # Обработка и сохранение данных в OrderKindService
-            tasks = [
-                self.kind_service.get_or_add(
-                    key="skb_uuid",
-                    value=el.get("Id"),
-                    data={"name": el.get("Name"), "skb_uuid": el.get("Id")},
-                )
-                for el in result.get("data", []).get("Data", None)
-            ]
-            await asyncio.gather(*tasks)
-
-            return result
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -138,40 +117,9 @@ class APISKBService:
                     read_timeout=self.settings.read_timeout,
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
+                    raise_for_status=False,
                 )
                 return response
-            content_encoding = response.headers.get(
-                "Content-Encoding", ""
-            ).lower()
-            content_type = response.headers.get("Content-Type", "")
-
-            if "gzip" in content_encoding:
-                response.content._decoder = aiohttp.gunzip.GzipDeflateDecoder()
-
-            if (
-                response_type == "PDF"
-                and "application/json" not in content_type.lower()
-            ):
-                filename = f"{order_uuid}"
-                content = await response.read()
-
-                content_disposition = response.headers.get(
-                    "Content-Disposition"
-                )
-                if content_disposition:
-                    match = re.search(
-                        r'filename="?([^";]+)"?', content_disposition
-                    )
-                    if match:
-                        filename = match.group(1)
-
-                return await self.file_storage.upload_file(
-                    key=str(order_uuid),
-                    original_filename=filename,
-                    content=content,
-                )
-
-            return await response.json()
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -187,6 +135,4 @@ def get_skb_service() -> APISKBService:
     Returns:
         APISKBService: Экземпляр APISKBService.
     """
-    return APISKBService(
-        settings=settings.skb_api, kind_service=get_order_kind_service()
-    )
+    return APISKBService(settings=settings.skb_api)

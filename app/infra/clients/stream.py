@@ -105,24 +105,11 @@ class StreamClient:
 
         # Добавляем задачу в планировщик
         self.scheduler.add_job(
-            self._execute_redis_publish,
+            self.redis_broker.publish,
             trigger=trigger,
             args=(stream, handle_message),
             id=job_id,
             replace_existing=True,
-        )
-
-    async def _execute_redis_publish(
-        self,
-        stream: str,
-        message: Dict[str, Any],
-        headers: Dict[str, str],
-        max_length: Optional[int],
-    ):
-        """Вспомогательный метод для выполнения отложенной публикации"""
-        await self.redis_broker.publish(
-            message,
-            stream=stream,
         )
 
     async def start_brokers(self):

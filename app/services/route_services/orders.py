@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
 import asyncio
-import json_tricks
 from fastapi import status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -21,7 +20,7 @@ from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.enums.skb import ResponseTypeChoices
-from app.utils.logging_service import app_logger, request_logger
+from app.utils.logging_service import app_logger
 
 
 __all__ = ("get_order_service",)
@@ -94,21 +93,17 @@ class OrderService(BaseService[OrderRepository]):
         """
         try:
             # Получаем заказ по ID
-            order: OrderSchemaOut = await self.get(key="id", value=order_id)
-
-            # Преобразуем данные заказа, если это необходимо
-            if isinstance(order, BaseSchema):
-                order = order.model_dump()
+            order = await self.repo.get(key="id", value=order_id)
 
             # Проверяем, активен ли заказ
-            if order.get("is_active", None):  # type: ignore
+            if order.get("is_active", None):
                 # Формируем данные для запроса в СКБ-Техно
                 data = {
-                    "Id": str(order.get("object_uuid", None)),  # type: ignore
-                    "OrderId": str(order.get("object_uuid")),  # type: ignore
-                    "Number": order.get("pledge_cadastral_number", None),  # type: ignore
+                    "Id": str(order.get("object_uuid", None)),
+                    "OrderId": str(order.get("object_uuid")),
+                    "Number": order.get("pledge_cadastral_number", None),
                     "Priority": settings.skb_api.default_priority,
-                    "RequestType": order.get("order_kind", None).get(  # type: ignore
+                    "RequestType": order.get("order_kind", None).get(
                         "skb_uuid", None
                     ),
                 }
@@ -120,7 +115,7 @@ class OrderService(BaseService[OrderRepository]):
                 if result["status_code"] == status.HTTP_200_OK:
                     await self.update(
                         key="id",
-                        value=order.get("id", None),  # type: ignore
+                        value=order.get("id", None),
                         data={
                             "is_send_request_to_skb": True,
                             "response_data": result.get("data"),
@@ -128,8 +123,8 @@ class OrderService(BaseService[OrderRepository]):
                     )
                     # Генерируем событие о успешной отправке заказа
                     message_data = {
-                        "to_emails": order.get("email_for_answer"),  # type: ignore
-                        "subject": f"Order {order.get("object_uuid", None)}",  # type: ignore
+                        "to_emails": order.get("email_for_answer"),
+                        "subject": f"Order {order.get("object_uuid", None)}",
                         "message": "Order registration success to SKB completed",
                     }
                     await stream_client.publish_to_redis(
@@ -157,58 +152,53 @@ class OrderService(BaseService[OrderRepository]):
         try:
             # Получаем заказ по ID
             instance = await self.repo.get(key="id", value=order_id)
+
             # Запрашиваем результат из СКБ-Техно
             result = await self.request_service.get_response_by_order(
                 order_uuid=instance.object_uuid,
                 response_type=response_type.value,
             )
-            return result
-            # Обрабатываем JSON-ответ
-            if isinstance(result, JSONResponse):
-                body = json_tricks.loads(result.body.decode("utf-8"))
-                if (
-                    not body.get("hasError", "")
-                    and response_type.value == "JSON"
-                ):
+
+            schema = await self.helper._transfer(
+                instance, self.response_schema
+            )
+            content = {
+                "instance": schema,
+            }
+
+            # Обрабатываем ответ в зависимости от типа
+            match result.get("content_type"):
+                case "application/json":
                     # Обновляем данные заказа в базе
+                    data = result.get("data")
                     await self.repo.update(
                         key="id",
                         value=instance.id,
                         data={
-                            "errors": body.get("Message", None),
-                            "response_data": body.get("Data", None),
+                            "errors": data.get("Message", None),
+                            "response_data": data.get("Data", None),
                         },
                     )
-                    return JSONResponse(
-                        status_code=(
-                            status.HTTP_400_BAD_REQUEST
-                            if body.get("Message")
-                            else status.HTTP_200_OK
-                        ),
-                        content={
-                            "hasError": True if body.get("Message") else False,
-                            "pledge_data": body.get("Data"),
-                        },
+                    content["data"] = data
+                case "application/pdf":
+                    # Обрабатываем PDF-ответ
+                    file = await self.file_repo.add(
+                        data={"object_uuid": instance.object_uuid}
                     )
-            # Обрабатываем PDF-ответ
-            elif response_type.value == "PDF":
-                file = await self.file_repo.add(
-                    data={"object_uuid": instance.object_uuid}
-                )
-                await self.file_repo.add_link(
-                    data={"order_id": instance.id, "file_id": file.id}
-                )
-                return JSONResponse(
-                    status_code=status.HTTP_200_OK,
-                    content={
-                        "hasError": False,
-                        "message": "file upload to storage",
-                    },
-                )
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"hasError": True},
-            )
+                    # await self.file_storage.upload_file(
+                    #     key=str("object_uuid"),
+                    #     original_filename=filename,
+                    #     content=content,
+                    # )
+                    await self.file_repo.add_link(
+                        data={"order_id": instance.id, "file_id": file.id}
+                    )
+                    content["data"] = "file upload to storage"
+                case _:
+                    # Обработка других типов данных, если необходимо
+                    content["data"] = None
+
+            return JSONResponse(content=content)
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
