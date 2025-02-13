@@ -53,11 +53,9 @@ class Utilities:
             )
         except Exception as exc:
             self.logger.error(
-                f"Model to schema conversion error", exc_info=True
+                "Model to schema conversion error", exc_info=True
             )
-            raise ValueError(
-                f"Model to schema conversion error: {exc}"
-            ) from exc
+            raise ValueError("Model to schema conversion error") from exc
 
     async def encode_base64(self, data: Any) -> Any:
         """

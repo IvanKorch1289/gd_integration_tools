@@ -63,17 +63,15 @@ class OrderService(BaseService[OrderRepository]):
         self.request_service = request_service
         self.s3_service = get_s3_service()
 
-    async def _prepare_order_data(self, order_id: int):
+    async def _get_order_data(self, order_id: int) -> Dict[str, Any]:
+        """Получение и преобразование данных заказа"""
         order = await self.get(key="id", value=order_id)
         if not order:
-            raise NotFoundError
+            raise NotFoundError("Order not found")
+        return order.model_dump() if isinstance(order, BaseSchema) else order
 
-        order_data = order
-
-        if isinstance(order_data, BaseSchema):
-            order_data = order_data.model_dump()
-
-        return order_data
+    async def _get_order_files(self, order_data: Dict) -> List[str]:
+        return [str(file.object_uuid) for file in order_data.get("files", [])]
 
     async def add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
         """
@@ -103,7 +101,7 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при создании заказа в СКБ-Техно.
         """
         try:
-            order_data = await self._prepare_order_data(order_id=order_id)
+            order_data = await self._get_order_data(order_id=order_id)
 
             # Проверяем, активен ли заказ
             if order_data["is_active"]:
@@ -160,7 +158,7 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении результата.
         """
         try:
-            order_data = await self._prepare_order_data(order_id=order_id)
+            order_data = await self._get_order_data(order_id=order_id)
 
             # Запрашиваем результат из СКБ-Техно
             result = await self.request_service.get_response_by_order(
@@ -191,7 +189,7 @@ class OrderService(BaseService[OrderRepository]):
                     file = await self.file_repo.add(
                         data={"object_uuid": order_data["object_uuid"]}
                     )
-                    await self.file_storage.upload_file(
+                    await self.s3_service.upload_file(
                         key=str("object_uuid"),
                         original_filename=filename,
                         content=content,
@@ -221,7 +219,7 @@ class OrderService(BaseService[OrderRepository]):
         """
         try:
             # Получаем заказ по ID
-            order_data = await self._prepare_order_data(order_id=order_id)
+            order_data = await self._get_order_data(order_id=order_id)
 
             # Если заказ не активен, возвращаем сообщение
             if not order_data["is_active"]:
@@ -230,13 +228,9 @@ class OrderService(BaseService[OrderRepository]):
                 order_id=order_id, response_type=ResponseTypeChoices.json
             )
             # Запрашиваем JSON и PDF результаты параллельно
-            json_response, _ = await asyncio.gather(
-                self.get_order_result(
-                    order_id=order_id, response_type=ResponseTypeChoices.json
-                ),
-                self.get_order_result(
-                    order_id=order_id, response_type=ResponseTypeChoices.pdf
-                ),
+            json_res, pdf_res = await asyncio.gather(
+                self.get_order_result(order_id, ResponseTypeChoices.json),
+                self.get_order_result(order_id, ResponseTypeChoices.pdf),
             )
 
             # Обрабатываем результаты
@@ -267,19 +261,17 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
-            order_data = await self._prepare_order_data(order_id=order_id)
+            order_data = await self._get_order_data(order_id=order_id)
+            files = await self._get_order_files(order_data=order_data)
 
-            files_list = [str(file.object_uuid) for file in order_data.files]
+            if not files:
+                return None
 
-            # Возвращаем файл или архив, если файлов несколько
-            if len(files_list) > 1:
-                return await self.s3_service.download_file(key=files_list[0])
-            elif len(files_list) > 1:
-                return await self.s3_service.create_zip_archive(
-                    keys=files_list
-                )
-
-            return None
+            return (
+                await self.s3_service.create_zip_archive(files)
+                if len(files) > 1
+                else await self.s3_service.download_file(files[0])
+            )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -296,19 +288,16 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
-            order_data = await self._prepare_order_data(order_id=order_id)
-
-            files_list = [
+            order_data = await self._get_order_data(order_id)
+            files = [
                 {
                     "file": await self.s3_service.get_file_base64(
-                        key=str(file.object_uuid)
+                        str(file.object_uuid)
                     )
                 }
-                for file in order_data.files
+                for file in order_data.get("files", [])
             ]
-            return JSONResponse(
-                status_code=status.HTTP_200_OK, content={"files": files_list}
-            )
+            return {"files": files}
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -326,22 +315,17 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении ссылок.
         """
         try:
-            order_data = await self._prepare_order_data(order_id=order_id)
-
-            # Генерируем ссылки для скачивания
-            files_links = [
+            order_data = await self._get_order_data(order_id=order_id)
+            files = [
                 {
                     "file": await self.s3_service.generate_download_url(
-                        key=str(file.object_uuid)
+                        str(file.object_uuid)
                     )
                 }
-                for file in order_data.files
+                for file in order_data.get("files", [])
             ]
+            return {"links": files}
 
-            return JSONResponse(
-                status_code=status.HTTP_200_OK,
-                content={"files_links": files_links},
-            )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
@@ -360,21 +344,20 @@ class OrderService(BaseService[OrderRepository]):
         """
         try:
             # Получаем заказ по ID
-            order_data = await self._prepare_order_data(order_id=order_id)
+            order_data = await self._get_order_data(order_id=order_id)
 
             # Формируем данные для ответа
-            response_data = {
+            response = {
                 "data": order_data.get("response_data", None),
                 "errors": order_data.get("errors", None),
             }
-            # Добавляем ссылки на файлы, если они есть
-            if order_data.get("files", None):
-                response_data["file_links"] = (
-                    await self.get_order_file_from_storage_link(
-                        order_id=order_id, s3_service=self.s3_service
-                    )
+            if order_data.get("files"):
+                files_links = await self.get_order_file_from_storage_link(
+                    order_id
                 )
-            return response_data
+                response["file_links"] = files_links.content.get("files_links")
+
+            return response
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
