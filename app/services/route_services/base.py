@@ -7,7 +7,6 @@ from app.infra.db.models.base import BaseModel
 from app.repositories.base import AbstractRepository
 from app.schemas.base import BaseSchema
 from app.utils.decorators.caching import response_cache
-from app.utils.logging_service import app_logger
 from app.utils.utils import utilities
 
 
@@ -58,8 +57,6 @@ class BaseService(Generic[ConcreteRepo]):
             if isinstance(instance, BaseModel) or hasattr(
                 instance.__class__, "version_parent"
             ):
-                app_logger.critical(instance)
-                app_logger.critical(type(instance))
                 return utilities.transfer_model_to_schema(
                     instance=instance,
                     schema=response_schema,

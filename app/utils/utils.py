@@ -52,7 +52,9 @@ class Utilities:
                 instance, from_attributes=from_attributes
             )
         except Exception as exc:
-            self.logger.error(f"Model to schema conversion error: {exc}")
+            self.logger.error(
+                f"Model to schema conversion error", exc_info=True
+            )
             raise ValueError(
                 f"Model to schema conversion error: {exc}"
             ) from exc
