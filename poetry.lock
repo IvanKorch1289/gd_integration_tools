@@ -3319,6 +3319,18 @@ files = [
 ]
 
 [[package]]
+name = "pycron"
+version = "3.1.2"
+description = "Simple cron-like parser, which determines if current datetime matches conditions."
+optional = false
+python-versions = "<4.0,>=3.9"
+groups = ["main"]
+files = [
+    {file = "pycron-3.1.2-py3-none-any.whl", hash = "sha256:30e4a01889dfb471e80cc76a5c0ab87e675146a7f6d2d66a2e4bdb4e2975ef3d"},
+    {file = "pycron-3.1.2.tar.gz", hash = "sha256:114c71bc61002b850a416e33e72a8c6de75b9f5c4228e86d7babd8a7ea232d94"},
+]
+
+[[package]]
 name = "pydantic"
 version = "2.10.6"
 description = "Data validation using Python type hints"
@@ -4180,6 +4192,74 @@ files = [
 pbr = ">=2.0.0"
 
 [[package]]
+name = "taskiq"
+version = "0.11.11"
+description = "Distributed task queue with full async support"
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+groups = ["main"]
+files = [
+    {file = "taskiq-0.11.11-py3-none-any.whl", hash = "sha256:41c2f27355c90924e6fcd693aade7d21bb974a7bbc71bd54d3026cece9e806a2"},
+    {file = "taskiq-0.11.11.tar.gz", hash = "sha256:c2c10eac817c230b338e0059873c75236efa38700495206424f0fae18228c426"},
+]
+
+[package.dependencies]
+anyio = ">=3"
+importlib-metadata = "*"
+packaging = ">=19"
+pycron = ">=3.0.0,<4.0.0"
+pydantic = ">=1.0,<=3.0"
+pytz = "*"
+taskiq_dependencies = ">=1.3.1,<2"
+typing-extensions = ">=3.10.0.0"
+
+[package.extras]
+cbor = ["cbor2 (>=5,<6)"]
+metrics = ["prometheus_client (>=0,<1)"]
+msgpack = ["msgpack (>=1.0.7,<2.0.0)"]
+orjson = ["orjson (>=3,<4)"]
+reload = ["gitignore-parser (>=0,<1)", "watchdog (>=4,<5)"]
+uv = ["uvloop (>=0.16.0,<1)"]
+zmq = ["pyzmq (>=26,<27)"]
+
+[[package]]
+name = "taskiq-dependencies"
+version = "1.5.6"
+description = "FastAPI like dependency injection implementation"
+optional = false
+python-versions = "<4.0,>=3.9"
+groups = ["main"]
+files = [
+    {file = "taskiq_dependencies-1.5.6-py3-none-any.whl", hash = "sha256:fba4dbaac47dfc8817fd2efeb13cefe41f45790b4871ba65fcdfd3c74f7121dc"},
+    {file = "taskiq_dependencies-1.5.6.tar.gz", hash = "sha256:5756690fd9f1f9efac34aac5959f173724e898a852de790238f97090467c4e3c"},
+]
+
+[[package]]
+name = "taskiq-faststream"
+version = "0.2.0"
+description = "FastStream - taskiq integration to schedule FastStream tasks"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "taskiq_faststream-0.2.0-py3-none-any.whl", hash = "sha256:d909195cf1a20057c5cfc1f8feaec879636b4eb051f3c550c64eeee57f6a55fc"},
+    {file = "taskiq_faststream-0.2.0.tar.gz", hash = "sha256:719b2a99b64e4bbb8ed1e5a7b4258da83ec7aa19c505c6e1269e192f8e416880"},
+]
+
+[package.dependencies]
+faststream = ">=0.3.14,<0.6.0"
+taskiq = ">=0.11.0,<0.12.0"
+
+[package.extras]
+confluent = ["faststream[confluent]"]
+dev = ["coverage[toml] (>=7.2.0,<8.0.0)", "faststream[confluent]", "faststream[kafka]", "faststream[nats]", "faststream[rabbit]", "faststream[redis]", "mypy (>=1.8.0,<1.12.0)", "pre-commit (>=3.6.0,<4.0.0)", "pytest (>=7.4.0,<9)", "ruff (==0.4.1)"]
+kafka = ["faststream[kafka]"]
+nats = ["faststream[nats]"]
+rabbit = ["faststream[rabbit]"]
+redis = ["faststream[redis]"]
+test = ["coverage[toml] (>=7.2.0,<8.0.0)", "faststream[confluent]", "faststream[kafka]", "faststream[nats]", "faststream[rabbit]", "faststream[redis]", "pytest (>=7.4.0,<9)"]
+
+[[package]]
 name = "tomlkit"
 version = "0.13.2"
 description = "Style preserving TOML library"
@@ -4810,4 +4890,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "c0d95c2f33e712e5b6334961908d7820a19ab07c1e199a59a844fdb2a83da4df"
+content-hash = "807e8def6218f8ba8a862fbcd20e0678ab1c0ea2f03849caa188d66ab2cf3c67"
