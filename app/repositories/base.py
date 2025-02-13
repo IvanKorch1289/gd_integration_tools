@@ -248,7 +248,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             object = await self.main_class.get(key="id", value=object_id)
 
             if not object or (isinstance(object, list) and not object):
-                raise NotFoundError(message="Object not found")
+                return []
 
             VersionModel = version_class(self.model)
             query = select(VersionModel).filter(VersionModel.id == object.id)

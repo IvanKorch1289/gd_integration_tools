@@ -172,9 +172,10 @@ class RedisClient:
                 async with self._switch_db_context(
                     conn, self.settings.db_queue
                 ):
-                    await conn.xinfo_stream(stream_name)
-
-                    return True
+                    result = await conn.type(stream_name)
+                    if result == b"stream":
+                        return True
+                    return False
         except Exception:
             self.logger.error(
                 f"Error checking stream existence {stream_name}", exc_info=True

@@ -163,7 +163,7 @@ redis:
   use_ssl: False
   ca_bundle: #"/path/to/certificate.pem"
   socket_timeout: 600
-  socket_connect_timeout: 10
+  socket_connect_timeout: 60
   retry_on_timeout: True
   socket_keepalive: True
   main_stream: "events_stream"

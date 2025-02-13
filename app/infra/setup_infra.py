@@ -20,14 +20,14 @@ __all__ = (
 
 starting_operations = [
     redis_client.ensure_connected,
-    redis_client.create_initial_streams,
-    stream_client.start_brokers,
     ("graylog_client", lambda: asyncio.to_thread(graylog_handler.connect)),
     db_initializer.initialize_async_pool,
     s3_client.connect,
     smtp_client.initialize_pool,
     init_limiter,
     scheduler_manager.start_scheduler,
+    redis_client.create_initial_streams,
+    stream_client.start_brokers,
 ]
 
 ending_operations = [
@@ -35,9 +35,9 @@ ending_operations = [
     smtp_client.close_pool,
     s3_client.close,
     db_initializer.close,
-    redis_client.close,
     ("graylog_client", lambda: asyncio.to_thread(graylog_handler.close)),
     stream_client.stop_brokers,
+    redis_client.close,
 ]
 
 
