@@ -2,14 +2,15 @@ import uuid
 from datetime import datetime, timedelta
 from functools import wraps
 from logging import Logger
-from typing import Any, Callable, Coroutine, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Coroutine, Dict, Optional, TypeVar
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from faststream import Context, FastStream
-from faststream.kafka import KafkaBroker, KafkaRouter
-from faststream.redis import RedisBroker, RedisMessage, RedisRouter
+from faststream import BaseMiddleware, Context, ExceptionMiddleware, FastStream
+from faststream.broker.message import StreamMessage
+from faststream.kafka.fastapi import KafkaRouter
+from faststream.redis.fastapi import RedisRouter
 
 from app.config.settings import settings
 from app.utils.logging_service import stream_logger
@@ -24,19 +25,46 @@ __all__ = (
 T = TypeVar("T")
 
 
+class MessageLoggingMiddleware(BaseMiddleware):
+    async def consume_scope(
+        self,
+        call_next: Callable[[Any], Awaitable[Any]],
+        msg: StreamMessage[Any],
+    ) -> Any:
+        stream_logger.info(f"Subscribe: {msg}")
+        return await call_next(msg)
+
+    async def publish_scope(
+        self,
+        call_next: Callable[..., Awaitable[Any]],
+        msg: Any,
+        **options: Any,
+    ) -> Any:
+        stream_logger.info(f"Publish: {msg}")
+        return await call_next(msg, **options)
+
+
+exc_middleware = ExceptionMiddleware(
+    handlers={
+        Exception: lambda exc: stream_logger.info(f"Exception: {repr(exc)}")
+    }
+)
+
+
 class StreamClient:
     def __init__(self):
         self.stream_client = FastStream(logger=stream_logger)
         self.settings = settings.redis
-        self.redis_broker = None
         self.kafka_broker = None
         self.redis_router = None
         self.kafka_router = None
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+        self.add_redis_router()
+        self.add_kafka_router()
 
-    def add_redis_broker(self):
-        self.redis_broker = RedisBroker(
+    def add_redis_router(self):
+        self.redis_router = RedisRouter(
             url=f"{self.settings.redis_url}/{self.settings.db_queue}",
             max_connections=self.settings.max_connections,
             socket_timeout=self.settings.socket_timeout,
@@ -44,24 +72,18 @@ class StreamClient:
             retry_on_timeout=self.settings.retry_on_timeout,
             logger=stream_logger,
             db=self.settings.db_queue,
+            schema_url="/asyncapi",
+            include_in_schema=True,
+            middlewares=[
+                exc_middleware,
+                MessageLoggingMiddleware,
+            ],
         )
-
-    def add_kafka_broker(self):
-        self.kafka_broker = KafkaBroker(
-            bootstrap_servers=settings.queue.bootstrap_servers
-        )
-
-    def add_redis_router(self):
-        if self.redis_broker is None:
-            raise ValueError("Redis broker is not initialized")
-        self.redis_router = RedisRouter()
-        self.redis_broker.include_router(self.redis_router)
 
     def add_kafka_router(self):
-        if self.kafka_broker is None:
-            raise ValueError("Kafka broker is not initialized")
-        self.kafka_router = KafkaRouter()
-        self.kafka_broker.include_router(self.kafka_router)
+        self.kafka_router = KafkaRouter(
+            bootstrap_servers=settings.queue.bootstrap_servers
+        )
 
     async def publish_to_kafka(
         self,
@@ -91,17 +113,18 @@ class StreamClient:
         """
         Публикует сообщение в Redis сразу, с задержкой или по расписанию.
         """
-        if self.redis_broker is None:
-            raise ValueError("Redis broker is not initialized")
+        if self.redis_router is None:
+            raise ValueError("Redis router is not initialized")
 
         if delay and scheduler:
             raise ValueError("Cannot use both delay and scheduler")
 
         # Если нет расписания - публикуем сразу
         if not delay and not scheduler:
-            return await self.redis_broker.publish(
+            await self.redis_router.broker.publish(
                 message=message, headers=headers, stream=stream
             )
+            return
 
         # Создаем уникальный ID задачи
         job_id = f"redis_job_{uuid.uuid4()}"
@@ -114,7 +137,7 @@ class StreamClient:
 
         # Добавляем задачу в планировщик
         self.scheduler.add_job(
-            self.redis_broker.publish,
+            self.redis_router.publish,
             trigger=trigger,
             args=(stream, message),
             id=job_id,
@@ -188,17 +211,5 @@ class StreamClient:
             delay=delay,
         )
 
-    async def start_brokers(self):
-        await self.redis_broker.start()
-        # await self.kafka_broker.start()
-
-    async def stop_brokers(self):
-        await self.redis_broker.start()
-        # await self.kafka_broker.start()
-
 
 stream_client = StreamClient()
-stream_client.add_redis_broker()
-stream_client.add_kafka_broker()
-stream_client.add_redis_router()
-stream_client.add_kafka_router()

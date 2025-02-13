@@ -6,7 +6,6 @@ from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
 from app.infra.clients.smtp import smtp_client
 from app.infra.clients.storage import s3_client
-from app.infra.clients.stream import stream_client
 from app.infra.db.database import db_initializer
 from app.utils.decorators.limiting import init_limiter
 from app.utils.logging_service import app_logger
@@ -27,7 +26,6 @@ starting_operations = [
     init_limiter,
     scheduler_manager.start_scheduler,
     redis_client.create_initial_streams,
-    stream_client.start_brokers,
 ]
 
 ending_operations = [
@@ -36,7 +34,6 @@ ending_operations = [
     s3_client.close,
     db_initializer.close,
     ("graylog_client", lambda: asyncio.to_thread(graylog_handler.close)),
-    stream_client.stop_brokers,
     redis_client.close,
 ]
 

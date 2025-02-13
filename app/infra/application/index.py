@@ -136,7 +136,9 @@ async def root_page():
                 Наше приложение сочетает в себе <span class="highlight">удобство</span>, <span class="highlight">надежность</span> и <span class="highlight">высокую производительность</span>.
             </p>
             <p>
-                Для начала работы перейдите в <a href="/docs" target="_blank">документацию API</a>.
+                Для начала работы:
+                <a href="/docs" target="_blank">Документация API</a>
+                <a href="/asyncapi" target="_blank">Документация AsyncAPI</a>
             </p>
             <a href="/admin" class="admin-link" target="_blank">Перейти в административную панель</a>
             <div class="service-links">
