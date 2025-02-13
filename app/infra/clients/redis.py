@@ -159,7 +159,6 @@ class RedisClient:
     ) -> AsyncIterator[None]:
         """Контекстный менеджер для временного переключения БД."""
         await conn.execute_command("SELECT", target_db)
-
         try:
             yield
         finally:
@@ -211,7 +210,6 @@ class RedisClient:
 
         async with self.connection() as conn:
             async with self._switch_db_context(conn, self.settings.db_queue):
-
                 # Создаем стрим с начальным сообщением
                 init_id = await conn.xadd(
                     name=stream_name, fields={"__init__": "initial"}, **args

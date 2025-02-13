@@ -2,6 +2,8 @@ from datetime import timedelta
 from functools import wraps
 from typing import Any
 
+from faststream import Context
+
 from app.config.constants import (
     MAX_ATTEMPTS_GET_ORDER_RESULT_FROM_SKB,
     MAX_ATTEMPTS_SEND_ORDER_TO_SKB,
@@ -9,16 +11,20 @@ from app.config.constants import (
 from app.infra.clients.stream import stream_client
 
 
-@stream_client.redis_broker.subscriber("email_send_stream")
 @stream_client.retry_with_backoff(
     max_attempts=3,
-    delay=timedelta(seconds=60),
+    delay=timedelta(seconds=10),
     stream="email_send_stream",
 )
-async def handle_send_email(data: Any) -> None:
+@stream_client.redis_broker.subscriber(stream="email_send_stream", retry=True)
+async def handle_send_email(data: Any, message: Context = Context()) -> None:
     from app.services.infra_services.mail import get_mail_service
 
     mail_service = get_mail_service()
+    try:
+        1 / 0
+    except Exception:
+        raise
     await mail_service.send_email(
         to_emails=data["to_emails"],
         subject=data["subject"],
@@ -56,6 +62,7 @@ async def handle_order_send_to_skb(data: Any) -> Any:
     )
 
     service: OrderService = get_order_service()
+
     result = await service.create_skb_order(order_id=data)
 
     if not result.get("data", {}).get("Result"):

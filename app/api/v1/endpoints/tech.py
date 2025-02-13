@@ -235,10 +235,10 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
-        data = schema.model_dump()
+        message = schema.model_dump()
 
         await stream_client.publish_to_redis(
-            message=data, stream="email_send_stream"
+            message=message, stream="email_send_stream"
         )
 
     @router.get(

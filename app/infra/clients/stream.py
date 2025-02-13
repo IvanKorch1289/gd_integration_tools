@@ -43,6 +43,7 @@ class StreamClient:
             socket_connect_timeout=self.settings.socket_connect_timeout,
             retry_on_timeout=self.settings.retry_on_timeout,
             logger=stream_logger,
+            db=self.settings.db_queue,
         )
 
     def add_kafka_broker(self):
@@ -83,6 +84,7 @@ class StreamClient:
         self,
         stream: str,
         message: Dict[str, Any],
+        headers: Dict[str, Any] = None,
         delay: Optional[timedelta] = None,
         scheduler: Optional[str] = None,
     ):
@@ -95,15 +97,11 @@ class StreamClient:
         if delay and scheduler:
             raise ValueError("Cannot use both delay and scheduler")
 
-        handle_message = {"data": message}
-
         # Если нет расписания - публикуем сразу
         if not delay and not scheduler:
-            await self.redis_broker.publish(
-                handle_message,
-                stream=stream,
+            return await self.redis_broker.publish(
+                message=message, headers=headers, stream=stream
             )
-            return
 
         # Создаем уникальный ID задачи
         job_id = f"redis_job_{uuid.uuid4()}"
@@ -118,7 +116,7 @@ class StreamClient:
         self.scheduler.add_job(
             self.redis_broker.publish,
             trigger=trigger,
-            args=(stream, handle_message),
+            args=(stream, message),
             id=job_id,
             replace_existing=True,
         )
@@ -150,11 +148,15 @@ class StreamClient:
             @wraps(func)
             async def wrapper(
                 *args: Any,
-                message: RedisMessage = Context("message"),
+                message: Context = Context(),
                 logger: Logger = stream_logger,
                 **kwargs: Any,
             ) -> Optional[T]:
-                attempt = message.headers.get("attempt", 0)
+                headers = message.raw_message.get("headers", None)
+                attempt = 1
+                if headers is not None:
+                    attempt = headers.get("attempt", 1)
+
                 try:
                     return await func(*args, **kwargs)
                 except Exception:
@@ -162,14 +164,13 @@ class StreamClient:
                     if attempt >= max_attempts - 1:
                         logger.error("Max retries reached")
                         return None
-
-                    await stream_client.publish_to_redis(
+                    logger.error(attempt)
+                    return await stream_client.publish_to_redis(
                         stream=stream,
                         message=message.body,
                         delay=delay,
                         headers={**message.headers, "attempt": attempt + 1},
                     )
-                    return None
 
             return wrapper
 
