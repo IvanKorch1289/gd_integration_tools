@@ -21,7 +21,7 @@ from app.services.infra_services.events import stream_client
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
 from app.utils.errors import handle_routes_errors
-from app.utils.health_check import health_check
+from app.utils.health_check import get_healthcheck_service
 from app.utils.utils import utilities
 
 
@@ -110,7 +110,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния базы данных.
         """
-        return await health_check.check_database()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_database()
 
     @router.get(
         "/healthcheck-redis",
@@ -125,7 +126,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Redis.
         """
-        return await health_check.check_redis()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_redis()
 
     @router.get(
         "/healthcheck-s3",
@@ -140,7 +142,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния S3.
         """
-        return await health_check.check_s3()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_s3()
 
     @router.get(
         "/healthcheck-s3-bucket",
@@ -155,7 +158,8 @@ class TechBV:
         Returns:
             dict: Результат проверки наличия бакета в S3.
         """
-        return await health_check.check_s3_bucket()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_s3_bucket()
 
     @router.get(
         "/healthcheck-graylog",
@@ -170,7 +174,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
-        return await health_check.check_graylog()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_graylog()
 
     @router.get(
         "/healthcheck-smtp",
@@ -185,7 +190,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния SMTP-сервера.
         """
-        return await health_check.check_smtp()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_smtp()
 
     @router.get(
         "/healthcheck-all-services",
@@ -200,7 +206,8 @@ class TechBV:
         Returns:
             dict: Результат проверки состояния всех сервисов.
         """
-        return await health_check.check_all_services()
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_all_services()
 
     @router.get(
         "/config",

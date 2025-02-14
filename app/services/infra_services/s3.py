@@ -1,6 +1,6 @@
-from contextlib import asynccontextmanager
 import io
 import zipfile
+from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from fastapi.responses import StreamingResponse
@@ -11,11 +11,7 @@ from app.utils.logging_service import fs_logger
 from app.utils.utils import utilities
 
 
-__all__ = (
-    "S3Service",
-    "get_s3_service",
-    "get_s3_service_dependency"
-)
+__all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
 
 class S3Service:

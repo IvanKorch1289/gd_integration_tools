@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
 from app.infra.clients.smtp import smtp_client
@@ -6,7 +9,7 @@ from app.infra.db.database import db_initializer
 from app.utils.decorators.singleton import singleton
 
 
-__all__ = ("health_check",)
+__all__ = ("get_healthcheck_service",)
 
 
 @singleton
@@ -101,4 +104,16 @@ class HealthCheck:
         return await smtp_client.test_connection()
 
 
-health_check = HealthCheck()
+@asynccontextmanager
+async def get_healthcheck_service() -> AsyncGenerator[HealthCheck, None]:
+    """
+    Фабрика для создания MailService с изолированными зависимостями.
+    """
+    # Инициализируем клиенты здесь, если они требуют контекста
+    health_check = HealthCheck()
+
+    try:
+        yield health_check
+    finally:
+        # Закрытие соединений клиентов, если требуется
+        pass

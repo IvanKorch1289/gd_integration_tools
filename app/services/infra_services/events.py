@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Any
 
 from faststream.redis.fastapi import Redis, RedisMessage
@@ -26,7 +25,9 @@ async def handle_send_email(
 
 
 @stream_client.redis_router.subscriber(stream="order_send_to_skb_stream")
-async def handle_order_send_to_skb(msg: int) -> Any:
+async def handle_order_send_to_skb(
+    body: int, msg: RedisMessage, redis: Redis
+) -> Any:
     from app.services.route_services.orders import (
         OrderService,
         get_order_service,
@@ -34,22 +35,22 @@ async def handle_order_send_to_skb(msg: int) -> Any:
 
     service: OrderService = get_order_service()
 
-    result = await service.create_skb_order(order_id=data)
+    result = await service.create_skb_order(order_id=body)
 
     if not result.get("data", {}).get("Result"):
         raise RuntimeError("SKB order creation failed")
-
-    return data
 
 
 @stream_client.redis_router.subscriber(
     stream="order_get_result_from_skb_stream"
 )
-async def handle_order_get_result_from_skb(data: int) -> None:
+async def handle_order_get_result_from_skb(
+    body: int, msg: RedisMessage, redis: Redis
+) -> None:
     from app.services.route_services.orders import (
         OrderService,
         get_order_service,
     )
 
     service: OrderService = get_order_service()
-    await service.get_order_result(order_id=data)
+    await service.get_order_result(order_id=body)
