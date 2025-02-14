@@ -1,6 +1,7 @@
+from contextlib import asynccontextmanager
 import io
 import zipfile
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from fastapi.responses import StreamingResponse
 
@@ -13,6 +14,7 @@ from app.utils.utils import utilities
 __all__ = (
     "S3Service",
     "get_s3_service",
+    "get_s3_service_dependency"
 )
 
 
@@ -223,5 +225,19 @@ class S3Service:
             self.logger.info("Full cache invalidation completed")
 
 
-def get_s3_service() -> S3Service:
+@asynccontextmanager
+async def get_s3_service() -> AsyncGenerator[S3Service, None]:
+    """
+    Фабрика для создания S3Service с изолированными зависимостями.
+    """
+    # Инициализируем клиенты здесь, если они требуют контекста
+    s3_service = S3Service(client=s3_client)
+    try:
+        yield s3_service
+    finally:
+        # Закрытие соединений клиентов, если требуется
+        pass
+
+
+def get_s3_service_dependency() -> Union[S3Service, None]:
     return S3Service(client=s3_client)

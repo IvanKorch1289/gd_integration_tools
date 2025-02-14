@@ -3,30 +3,23 @@ from typing import Any
 
 from faststream.redis.fastapi import Redis, RedisMessage
 
-from app.config.constants import (
-    MAX_ATTEMPTS_GET_ORDER_RESULT_FROM_SKB,
-    MAX_ATTEMPTS_SEND_ORDER_TO_SKB,
-)
 from app.infra.clients.stream import stream_client
 from app.schemas.base import EmailSchema
 
 
-@stream_client.redis_router.subscriber(stream="email_send_stream", retry=3)
+@stream_client.redis_router.subscriber(stream="email_send_stream")
 async def handle_send_email(
     body: EmailSchema, msg: RedisMessage, redis: Redis
 ) -> None:
     from app.services.infra_services.mail import get_mail_service
 
-    mail_service = get_mail_service()
-    # try:
-    #     1 / 0
-    #     await msg.ack(redis)
     try:
-        await mail_service.send_email(
-            to_emails=body.to_emails,
-            subject=body.subject,
-            message=body.message,
-        )
+        async with get_mail_service() as mail_service:
+            await mail_service.send_email(
+                to_emails=body.to_emails,
+                subject=body.subject,
+                message=body.message,
+            )
     except Exception:
         await msg.nack(redis)
         raise

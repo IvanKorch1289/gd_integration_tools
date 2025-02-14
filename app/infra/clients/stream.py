@@ -1,13 +1,11 @@
 import uuid
 from datetime import datetime, timedelta
-from functools import wraps
-from logging import Logger
-from typing import Any, Awaitable, Callable, Coroutine, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from faststream import BaseMiddleware, Context, ExceptionMiddleware, FastStream
+from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
 from faststream.kafka.fastapi import KafkaRouter
 from faststream.redis.fastapi import RedisRouter
@@ -142,73 +140,6 @@ class StreamClient:
             args=(stream, message),
             id=job_id,
             replace_existing=True,
-        )
-
-    def retry_with_backoff(
-        self,
-        max_attempts: int,
-        delay: timedelta,
-        stream: str,
-    ) -> Callable[
-        [Callable[..., Coroutine[Any, Any, T]]],
-        Callable[..., Coroutine[Any, Any, T]],
-    ]:
-        """
-        Декоратор для повторного выполнения функции с экспоненциальной задержкой.
-
-        Args:
-            max_attempts: Максимальное количество попыток.
-            delay: Задержка между попытками.
-            stream: Имя потока Redis для повторной публикации.
-
-        Returns:
-            Декоратор для асинхронных функций.
-        """
-
-        def decorator(
-            func: Callable[..., Coroutine[Any, Any, T]]
-        ) -> Callable[..., Coroutine[Any, Any, T]]:
-            @wraps(func)
-            async def wrapper(
-                *args: Any,
-                message: Context = Context(),
-                logger: Logger = stream_logger,
-                **kwargs: Any,
-            ) -> Optional[T]:
-                headers = message.raw_message.get("headers", None)
-                attempt = 1
-                if headers is not None:
-                    attempt = headers.get("attempt", 1)
-
-                try:
-                    return await func(*args, **kwargs)
-                except Exception:
-                    logger.error(f"Error in {func.__name__}", exc_info=True)
-                    if attempt >= max_attempts - 1:
-                        logger.error("Max retries reached")
-                        return None
-                    logger.error(attempt)
-                    return await stream_client.publish_to_redis(
-                        stream=stream,
-                        message=message.body,
-                        delay=delay,
-                        headers={**message.headers, "attempt": attempt + 1},
-                    )
-
-            return wrapper
-
-        return decorator
-
-    async def publish_with_delay(
-        self, stream: str, message: Any, delay: timedelta
-    ) -> None:
-        """
-        Публикует сообщение в указанный поток с задержкой.
-        """
-        await self.publish_to_redis(
-            stream=stream,
-            message=message,
-            delay=delay,
         )
 
 

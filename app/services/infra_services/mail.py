@@ -1,8 +1,9 @@
+from contextlib import asynccontextmanager
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import aiosmtplib
 
@@ -127,5 +128,15 @@ class MailService:
             raise RuntimeError(f"Template processing failed: {exc}") from exc
 
 
-def get_mail_service():
-    return MailService(mail_client=smtp_client)
+@asynccontextmanager
+async def get_mail_service() -> AsyncGenerator[MailService, None]:
+    """
+    Фабрика для создания MailService с изолированными зависимостями.
+    """
+    # Инициализируем клиенты здесь, если они требуют контекста
+    mail_service = MailService(mail_client=smtp_client)
+    try:
+        yield mail_service
+    finally:
+        # Закрытие соединений клиентов, если требуется
+        pass

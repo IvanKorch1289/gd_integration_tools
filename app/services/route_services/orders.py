@@ -15,7 +15,7 @@ from app.schemas.route_schemas.orders import (
     OrderVersionSchemaOut,
 )
 from app.services.infra_services.events import stream_client
-from app.services.infra_services.s3 import S3Service, get_s3_service
+from app.services.infra_services.s3 import S3Service, get_s3_service_dependency
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
@@ -61,7 +61,7 @@ class OrderService(BaseService[OrderRepository]):
         )
         self.file_repo = file_repo
         self.request_service = request_service
-        self.s3_service = get_s3_service()
+        self.s3_service = s3_service
 
     async def _get_order_data(self, order_id: int) -> Dict[str, Any]:
         """Получение и преобразование данных заказа"""
@@ -384,5 +384,5 @@ def get_order_service() -> BaseService:
         version_schema=OrderVersionSchemaOut,
         request_service=get_skb_service(),
         file_repo=get_file_repo(),
-        s3_service=get_s3_service(),
+        s3_service=get_s3_service_dependency(),
     )

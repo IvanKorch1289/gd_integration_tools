@@ -10,7 +10,7 @@ from app.schemas.route_schemas.files import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.infra_services.s3 import get_s3_service
+from app.services.infra_services.s3 import get_s3_service_dependency
 from app.services.route_services.files import get_file_service
 from app.utils.decorators.limiting import route_limiting
 from app.utils.errors import handle_routes_errors
@@ -33,7 +33,7 @@ class StorageCBV:
     Предоставляет методы для загрузки, скачивания, удаления и получения ссылок на файлы.
     """
 
-    service = get_s3_service()
+    service = get_s3_service_dependency()
 
     @storage_router.post(
         "/upload_file",
