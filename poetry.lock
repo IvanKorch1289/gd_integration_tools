@@ -4235,6 +4235,22 @@ files = [
 ]
 
 [[package]]
+name = "taskiq-fastapi"
+version = "0.3.3"
+description = "FastAPI integration for taskiq"
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+groups = ["main"]
+files = [
+    {file = "taskiq_fastapi-0.3.3-py3-none-any.whl", hash = "sha256:b08df2f923ead3acaddae4e0afe9f07a29b9fac879300ba964c894288c91e90a"},
+    {file = "taskiq_fastapi-0.3.3.tar.gz", hash = "sha256:c72fd3f1b602b7ab611ce7a5131c9b12167c5fc1b11f3c938b0c7a3f0e507b83"},
+]
+
+[package.dependencies]
+fastapi = ">=0.93.0"
+taskiq = ">=0.8.0,<1"
+
+[[package]]
 name = "taskiq-redis"
 version = "1.0.2"
 description = "Redis integration for taskiq"
@@ -4881,4 +4897,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "1b0a139435e29275b79efe7f0396c5538e112ad764c0da4cabf58226eaac529f"
+content-hash = "e76866394a34bcc42ca2818e079f1c055e78fda7260aa9c3c67a9fa95df69f03"

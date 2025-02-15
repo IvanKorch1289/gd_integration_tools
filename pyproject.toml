@@ -63,6 +63,7 @@ apscheduler = "^3.11.0"
 faststream = "^0.5.34"
 aiokafka = "^0.12.0"
 taskiq-redis = "^1.0.2"
+taskiq-fastapi = "^0.3.3"
 
 
 [tool.poetry.group.dev.dependencies]

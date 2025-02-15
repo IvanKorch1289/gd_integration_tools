@@ -1,7 +1,10 @@
 import uuid
-from datetime import datetime, timedelta
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from datetime import datetime, timedelta, timezone
+from typing import Any, Awaitable, Callable, Dict, Optional
 
+from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -11,16 +14,14 @@ from faststream.kafka.fastapi import KafkaRouter
 from faststream.redis.fastapi import RedisRouter
 
 from app.config.settings import settings
-from app.utils.logging_service import stream_logger
+from app.infra.db.database import db_initializer
+from app.utils.logging_service import scheduler_logger, stream_logger
 
 
 __all__ = (
     "stream_client",
     "StreamClient",
 )
-
-
-T = TypeVar("T")
 
 
 class MessageLoggingMiddleware(BaseMiddleware):
@@ -42,13 +43,6 @@ class MessageLoggingMiddleware(BaseMiddleware):
         return await call_next(msg, **options)
 
 
-exc_middleware = ExceptionMiddleware(
-    handlers={
-        Exception: lambda exc: stream_logger.info(f"Exception: {repr(exc)}")
-    }
-)
-
-
 class StreamClient:
     def __init__(self):
         self.stream_client = FastStream(logger=stream_logger)
@@ -56,8 +50,26 @@ class StreamClient:
         self.kafka_broker = None
         self.redis_router = None
         self.kafka_router = None
-        self.scheduler = AsyncIOScheduler()
+        self.scheduler = AsyncIOScheduler(
+            timezone="Europe/Moscow",
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=60,
+            logger=scheduler_logger,
+            jobstores={
+                "default": SQLAlchemyJobStore(
+                    url=settings.database.sync_connection_url,
+                    engine=db_initializer.sync_engine,
+                    engine_options={"pool_pre_ping": True, "pool_size": 10},
+                ),
+                "backup": MemoryJobStore(),  # Дополнительное хранилище
+            },
+        )
         self.scheduler.start()
+        self.scheduler.add_listener(
+            lambda event: self.scheduler.remove_job(event.job_id),
+            EVENT_JOB_EXECUTED,
+        )
         self.add_redis_router()
         self.add_kafka_router()
 
@@ -73,7 +85,13 @@ class StreamClient:
             schema_url="/asyncapi",
             include_in_schema=True,
             middlewares=[
-                exc_middleware,
+                ExceptionMiddleware(
+                    handlers={
+                        Exception: lambda exc: stream_logger.info(
+                            "Exception", exc_info=True
+                        )
+                    }
+                ),
                 MessageLoggingMiddleware,
             ],
         )
@@ -128,8 +146,9 @@ class StreamClient:
         job_id = f"redis_job_{uuid.uuid4()}"
 
         # Определяем триггер
+        tz = timezone(timedelta(hours=3))
         if delay:
-            trigger = DateTrigger(run_date=datetime.now() + delay)
+            trigger = DateTrigger(run_date=datetime.now(tz) + delay)
         else:
             trigger = CronTrigger.from_crontab(scheduler)
 
@@ -138,8 +157,10 @@ class StreamClient:
             self.redis_router.publish,
             trigger=trigger,
             args=(stream, message),
+            kwargs={"headers": headers},
             id=job_id,
             replace_existing=True,
+            remove_after_completion=True,
         )
 
 
