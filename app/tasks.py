@@ -1,10 +1,63 @@
-from fastapi import Depends
-from taskiq import TaskiqDepends
+from taskiq_pipelines import Pipeline, PipelineMiddleware
 from taskiq_redis import ListQueueBroker
 
+from app.config.constants import RETRY_POLICY
+from app.config.settings import settings
+from app.services.infra_services.mail import get_mail_service
+from app.services.route_services.orders import get_order_service
 
-# Инициализируем Redis брокер с использованием списка как очереди.
+
 broker = ListQueueBroker(
-    "redis://localhost:6379",
-    queue_name="task_queue",  # Название Redis-списка для задач
+    url=f"{settings.redis.redis_url}/{settings.redis.db_tasks}",
+    queue_name=settings.redis.name_tasks_queue,
 )
+broker.add_middlewares(PipelineMiddleware())
+
+
+@broker.task(retry=RETRY_POLICY)
+async def send_mail_task(body: dict) -> dict:
+    async with get_mail_service() as mail_service:
+        return await mail_service.send_email(
+            to_emails=body["to_emails"],
+            subject=body["subject"],
+            message=body["message"],
+        )
+
+
+# @broker.task(retry=RETRY_POLICY)
+# async def create_skb_order_task(ctx: dict) -> dict:
+#     """
+#     Задача для создания заказа в SKB с повторными попытками.
+#     """
+#     order_id = ctx["order_id"]
+
+#     result = await get_order_service().create_skb_order(order_id=order_id)
+
+#     if not result.get("data", {}).get("Result"):
+#         raise RuntimeError("SKB order creation failed")
+
+#     return {"order_id": order_id, "initial_result": result}
+
+
+# @broker.task(retry=RETRY_POLICY)
+# async def get_skb_order_result_task(ctx: dict) -> dict:
+#     """
+#     Задача для получения результата с повторными попытками.
+#     """
+#     order_id = ctx["order_id"]
+
+#     result = await get_order_service().get_order_result(order_id=order_id)
+
+#     # Кастомная проверка результата
+#     if result.get("status") != "completed":
+#         raise ValueError("Order result not ready")
+
+#     return {"final_result": result}
+
+
+# # Создаем пайплайн
+# skb_order_pipeline = (
+#     Pipeline(broker)
+#     .call_next(create_skb_order_task)
+#     .call_next(get_skb_order_result_task)
+# )

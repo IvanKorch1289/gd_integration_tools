@@ -11,5 +11,9 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 
 RETRY_EXCEPTIONS = (aiohttp.ClientError, asyncio.TimeoutError)
 
-MAX_ATTEMPTS_SEND_ORDER_TO_SKB = 5
-MAX_ATTEMPTS_GET_ORDER_RESULT_FROM_SKB = 5
+MAX_ATTEMPTS_FOR_TASKS = 5
+DELAY_BEFORE_ATTEMPTS = 20
+RETRY_POLICY = {
+    "max_retries": MAX_ATTEMPTS_FOR_TASKS,  # Максимальное количество попыток
+    "delay": DELAY_BEFORE_ATTEMPTS,  # Задержка между попытками в секундах
+}

@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Optional
 
 import asyncio
 from fastapi import status
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
@@ -148,7 +147,7 @@ class OrderService(BaseService[OrderRepository]):
     @response_cache
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
-    ) -> JSONResponse:
+    ) -> Any:
         """
         Получает результат заказа из СКБ-Техно в указанном формате (JSON или PDF).
 
@@ -278,7 +277,7 @@ class OrderService(BaseService[OrderRepository]):
     @response_cache
     async def get_order_file_from_storage_base64(
         self, order_id: int
-    ) -> JSONResponse:
+    ) -> Dict[str, List[Dict[str, str]]]:
         """
         Получает файл заказа из хранилища S3 в формате base64.
 
@@ -305,7 +304,7 @@ class OrderService(BaseService[OrderRepository]):
     async def get_order_file_from_storage_link(
         self,
         order_id: int,
-    ) -> List[Dict[str, str]]:
+    ) -> Dict[str, List[Dict[str, str]]]:
         """
         Получает ссылки для скачивания файлов заказа из хранилища S3.
 

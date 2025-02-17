@@ -203,8 +203,13 @@ class RedisSettings(BaseSettingsWithLoader):
     db_limits: int = Field(
         ..., ge=0, description="Database number for rate limiting", example=2
     )
-    db_celery: int = Field(
+    db_tasks: int = Field(
         ..., ge=0, description="Database number for Celery backend", example=3
+    )
+    name_tasks_queue: str = Field(
+        ...,
+        description="Name of the list for storing tasks in the queue",
+        example="tasks",
     )
     password: Optional[str] = Field(
         ...,
@@ -294,7 +299,7 @@ class RedisSettings(BaseSettingsWithLoader):
         auth = f":{self.password}@" if self.password else ""
         return f"{protocol}://{auth}{self.host}:{self.port}"
 
-    @field_validator("port", "db_cache", "db_queue", "db_limits", "db_celery")
+    @field_validator("port", "db_cache", "db_queue", "db_limits", "db_tasks")
     @classmethod
     def validate_redis_numbers(cls, v):
         if isinstance(v, int) and v < 0:

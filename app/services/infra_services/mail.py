@@ -8,6 +8,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import aiosmtplib
 
 from app.infra.clients.smtp import SmtpClient, smtp_client
+from app.utils.logging_service import smtp_logger
 
 
 __all__ = (
@@ -21,6 +22,7 @@ class MailService:
 
     def __init__(self, mail_client: SmtpClient):
         self.client = mail_client
+        self.logger = smtp_logger
 
     async def send_email(
         self,
@@ -48,7 +50,9 @@ class MailService:
             )
             async with self.client.get_connection() as smtp:
                 await smtp.send_message(msg)
+                self.logger.info(f"Sent message: {msg}")
         except aiosmtplib.SMTPException as exc:
+            self.logger.error("Failed to send email", exc_info=True)
             raise RuntimeError(f"Failed to send email: {exc}") from exc
 
     def _prepare_message(self, to_emails, subject, message, html_message):
@@ -86,6 +90,7 @@ class MailService:
             )
         )
         msg["To"] = ", ".join(to_emails)
+
         return msg
 
     async def send_email_from_template(

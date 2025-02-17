@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from taskiq_fastapi import init
 
 from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
@@ -9,7 +8,6 @@ from app.infra.application.index import root_page
 from app.infra.application.lifecycle import lifespan
 from app.infra.application.monitoring import setup_monitoring
 from app.infra.clients.stream import stream_client
-from app.tasks import broker
 # from app.infra.application.telemetry import setup_tracing
 from app.utils.admins.setup_admin import setup_admin
 from app.utils.middlewares.setup_middlewares import setup_middlewares
@@ -53,9 +51,6 @@ def create_app() -> FastAPI:
 
     # Клиент для работы с потоками
     app.include_router(stream_client.redis_router)
-
-    # Инициализация taskiq
-    init(broker=broker, app_or_path=app)
 
     # Корневой эндпоинт
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)

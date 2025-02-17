@@ -89,11 +89,11 @@ def create_router_class(
         @handle_routes_errors
         async def add_object(
             self,
-            request_schema: schema_in,
+            request_schema: schema_in,  # type: ignore
             request: Request,
             x_api_key: str = Header(...),
         ):
-            return await self.service.add(data=request_schema.model_dump())
+            return await self.service.add(data=request_schema.model_dump())  # type: ignore
 
         @router.post(
             "/create_many/",
@@ -104,11 +104,11 @@ def create_router_class(
         @handle_routes_errors
         async def add_many_objects(
             self,
-            request_schemas: List[schema_in],
+            request_schemas: List[schema_in],  # type: ignore
             request: Request,
             x_api_key: str = Header(...),
         ):
-            data_list = [schema.model_dump() for schema in request_schemas]
+            data_list = [schema.model_dump() for schema in request_schemas]  # type: ignore
             return await self.service.add_many(data_list=data_list)
 
         @router.put(
@@ -120,13 +120,13 @@ def create_router_class(
         @handle_routes_errors
         async def update_object(
             self,
-            request_schema: schema_in,
+            request_schema: schema_in,  # type: ignore
             object_id: int,
             request: Request,
             x_api_key: str = Header(...),
         ):
             return await self.service.update(
-                key="id", value=object_id, data=request_schema.model_dump()
+                key="id", value=object_id, data=request_schema.model_dump()  # type: ignore
             )
 
         @router.delete(

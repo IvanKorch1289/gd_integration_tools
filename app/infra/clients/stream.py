@@ -2,10 +2,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Dict, Optional
 
-from apscheduler.events import EVENT_JOB_EXECUTED
-from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
@@ -14,8 +10,8 @@ from faststream.kafka.fastapi import KafkaRouter
 from faststream.redis.fastapi import RedisRouter
 
 from app.config.settings import settings
-from app.infra.db.database import db_initializer
-from app.utils.logging_service import scheduler_logger, stream_logger
+from app.infra.application.scheduler import scheduler_manager
+from app.utils.logging_service import stream_logger
 
 
 __all__ = (
@@ -50,26 +46,7 @@ class StreamClient:
         self.kafka_broker = None
         self.redis_router = None
         self.kafka_router = None
-        self.scheduler = AsyncIOScheduler(
-            timezone="Europe/Moscow",
-            coalesce=True,
-            max_instances=1,
-            misfire_grace_time=60,
-            logger=scheduler_logger,
-            jobstores={
-                "default": SQLAlchemyJobStore(
-                    url=settings.database.sync_connection_url,
-                    engine=db_initializer.sync_engine,
-                    engine_options={"pool_pre_ping": True, "pool_size": 10},
-                ),
-                "backup": MemoryJobStore(),  # Дополнительное хранилище
-            },
-        )
-        self.scheduler.start()
-        self.scheduler.add_listener(
-            lambda event: self.scheduler.remove_job(event.job_id),
-            EVENT_JOB_EXECUTED,
-        )
+        self.scheduler = scheduler_manager.scheduler
         self.add_redis_router()
         self.add_kafka_router()
 

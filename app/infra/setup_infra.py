@@ -1,6 +1,7 @@
 import asyncio
 from types import CoroutineType
 
+from app.infra.application.scheduler import scheduler_manager
 from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
 from app.infra.clients.smtp import smtp_client
@@ -24,9 +25,11 @@ starting_operations = [
     smtp_client.initialize_pool,
     init_limiter,
     redis_client.create_initial_streams,
+    scheduler_manager.start,
 ]
 
 ending_operations = [
+    scheduler_manager.stop,
     smtp_client.close_pool,
     s3_client.close,
     db_initializer.close,

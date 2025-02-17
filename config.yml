@@ -156,7 +156,8 @@ redis:
   db_cache: 0
   db_queue: 1
   db_limits: 2
-  db_celery: 3
+  db_tasks: 3
+  name_tasks_queue: "task_queue"
   encoding: "utf-8"
   cache_expire_seconds: 300
   max_connections: 20
