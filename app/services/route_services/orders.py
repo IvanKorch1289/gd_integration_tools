@@ -129,15 +129,15 @@ class OrderService(BaseService[OrderRepository]):
                         },
                     )
                     # Генерируем событие о успешной отправке заказа
-                    message_data = {
-                        "to_emails": order_data["email_for_answer"],
-                        "subject": f"Order {order_data["object_uuid"]}",
-                        "message": "Order registration success to SKB completed",
-                    }
-                    await stream_client.publish_to_redis(
-                        message=message_data,
-                        stream="email_send_stream",
-                    )
+                    # message_data = {
+                    #     "to_emails": order_data["email_for_answer"],
+                    #     "subject": f"Order {order_data["object_uuid"]}",
+                    #     "message": "Order registration success to SKB completed",
+                    # }
+                    # await stream_client.publish_to_redis(
+                    #     message=message_data,
+                    #     stream="email_send_stream",
+                    # )
                 return {"instanse": order_data, "response": result}
             raise
         except Exception:
@@ -370,7 +370,7 @@ class OrderService(BaseService[OrderRepository]):
         pass
 
 
-def get_order_service() -> BaseService:
+def get_order_service() -> OrderService:
     """
     Возвращает экземпляр сервиса для работы с заказами.
 

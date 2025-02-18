@@ -35,6 +35,22 @@ auth:
   rate_limit: 400
   rate_time_measure_seconds: 60
 
+scheduler:
+  stream_client_event_generated_name: "event_stream_client_job_executed"
+  default_jobstore_name: "default"
+  backup_jobstore_name: "backup"
+  executors:
+    default: 
+      type: "threadpool"
+      max_workers: 20
+    async:
+      type: "asyncio"
+  misfire_grace_time: 60
+  max_instances: 1
+  timezone: "Europe/Moscow"
+  coalesce: True
+    
+
 http:
   max_retries: 3
   retry_backoff_factor: 0.5

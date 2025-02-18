@@ -1,6 +1,11 @@
 from pydantic_settings import BaseSettings
 
-from app.config.base import AppBaseSettings, app_base_settings
+from app.config.base import (
+    AppBaseSettings,
+    SchedulerSettings,
+    app_base_settings,
+    scheduler_settings,
+)
 from app.config.database import (
     DatabaseConnectionSettings,
     MongoConnectionSettings,
@@ -49,6 +54,7 @@ class Settings(BaseSettings):
     app: AppBaseSettings = app_base_settings
     auth: AuthSettings = auth_settings
     http_base_settings: HttpBaseSettings = http_base_settings
+    scheduler: SchedulerSettings = scheduler_settings
 
     # Интеграции
     database: DatabaseConnectionSettings = db_connection_settings

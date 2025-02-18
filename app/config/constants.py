@@ -17,4 +17,4 @@ RETRY_POLICY = {
     "max_retries": MAX_ATTEMPTS_FOR_TASKS,  # Максимальное количество попыток
     "delay": DELAY_BEFORE_ATTEMPTS,  # Задержка между попытками в секундах
 }
-EVENT_STREAM_CLIENT_JOB_EXECUTED = "event_stream_client_job_executed"
+CHECK_SERVICES_JOB = {"name": "check_all_services_job", "minutes": 60}
