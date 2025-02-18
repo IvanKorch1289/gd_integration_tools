@@ -21,7 +21,9 @@ __all__ = (
     "smtp_logger",
     "scheduler_logger",
     "request_logger",
-    "queue_logger",
+    "tasks_logger",
+    "redis_logger",
+    "stream_logger",
 )
 
 
@@ -207,6 +209,6 @@ fs_logger = log_manager.storage_logger  # type: ignore
 smtp_logger = log_manager.smtp_logger  # type: ignore
 scheduler_logger = log_manager.scheduler_logger  # type: ignore
 request_logger = log_manager.request_logger  # type: ignore
-queue_logger = log_manager.queue_logger  # type: ignore
+tasks_logger = log_manager.tasks_logger  # type: ignore
 redis_logger = log_manager.redis_logger  # type: ignore
 stream_logger = log_manager.stream_logger  # type: ignore

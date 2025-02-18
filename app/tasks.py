@@ -1,3 +1,4 @@
+from taskiq import TaskiqMessage, TaskiqMiddleware, TaskiqResult
 from taskiq_pipelines import Pipeline, PipelineMiddleware
 from taskiq_redis import ListQueueBroker
 
@@ -5,12 +6,43 @@ from app.config.constants import RETRY_POLICY
 from app.config.settings import settings
 from app.services.infra_services.mail import get_mail_service
 from app.services.route_services.orders import get_order_service
+from app.utils.logging_service import tasks_logger
 
 
 broker = ListQueueBroker(
     url=f"{settings.redis.redis_url}/{settings.redis.db_tasks}",
     queue_name=settings.redis.name_tasks_queue,
 )
+
+
+class LoggingMiddleware(TaskiqMiddleware):
+    async def pre_send(self, message: TaskiqMessage) -> TaskiqMessage:
+        tasks_logger.info(
+            f"[Start] Task {message.task_name} :: ID {message.task_id}"
+        )
+        return message
+
+    async def post_send(self, message: TaskiqMessage) -> TaskiqMessage:
+        tasks_logger.info(
+            f"[Success] Task {message.task_name} :: ID {message.task_id}"
+        )
+
+    def post_save(
+        self, message: TaskiqMessage, result: TaskiqResult
+    ) -> TaskiqMessage:
+        tasks_logger.info(
+            f"[Result] Task {message.task_name} :: ID {message.task_id} :: result {result}"
+        )
+
+    async def on_error(
+        self, message: TaskiqMessage, error: Exception
+    ) -> TaskiqMessage:
+        tasks_logger.error(
+            f"[FAILED] Task {message.task_name} :: ID {message.task_id} :: {error}"
+        )
+
+
+broker.add_middlewares(LoggingMiddleware())
 broker.add_middlewares(PipelineMiddleware())
 
 
