@@ -159,7 +159,7 @@ class BaseService(Generic[ConcreteRepo]):
 
         for data in data_list:
             try:
-                response: Optional[ConcreteResponseSchema] = await self.add(
+                response: Optional[ConcreteResponseSchema] = await self.add(  # type: ignore
                     data=data
                 )
                 result.append(response)

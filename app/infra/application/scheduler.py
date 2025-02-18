@@ -1,4 +1,3 @@
-from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -31,15 +30,15 @@ class SchedulerManager:
                 ),
                 "backup": MemoryJobStore(),  # Дополнительное хранилище
             },
+            executors={
+                "async": {"type": "asyncio"},
+                "default": {"type": "threadpool", "max_workers": 20},
+            },
         )
 
     async def start(self):
         """Запустить планировщик при старте приложения."""
         self.scheduler.start()
-        self.scheduler.add_listener(
-            lambda event: self.scheduler.remove_job(event.job_id),
-            EVENT_JOB_EXECUTED,
-        )
 
     async def stop(self):
         """Остановить планировщик при завершении."""

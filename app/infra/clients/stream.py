@@ -114,10 +114,9 @@ class StreamClient:
 
         # Если нет расписания - публикуем сразу
         if not delay and not scheduler:
-            await self.redis_router.broker.publish(
+            return await self.redis_router.broker.publish(
                 message=message, headers=headers, stream=stream
             )
-            return
 
         # Создаем уникальный ID задачи
         job_id = f"redis_job_{uuid.uuid4()}"
@@ -131,13 +130,25 @@ class StreamClient:
 
         # Добавляем задачу в планировщик
         self.scheduler.add_job(
-            self.redis_router.publish,
+            self._execute_redis_publish,
             trigger=trigger,
-            args=(stream, message),
-            kwargs={"headers": headers},
+            kwargs={"message": message, "stream": stream, "headers": headers},
             id=job_id,
             replace_existing=True,
             remove_after_completion=True,
+            executor="async",
+            jobstore="backup",
+        )
+
+    async def _execute_redis_publish(
+        self,
+        stream: str,
+        message: Dict[str, Any],
+        headers: Dict[str, Any],
+    ):
+        """Вспомогательный метод для выполнения отложенной публикации"""
+        await self.redis_router.broker.publish(
+            message=message, stream=stream, headers=headers
         )
 
 

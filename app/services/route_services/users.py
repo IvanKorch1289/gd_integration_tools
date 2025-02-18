@@ -53,7 +53,7 @@ class UserService(BaseService[UserRepository]):
                 return "The user with the specified login already exists."
 
             # Создаем пользователя через базовый метод
-            return await super().add(data=data)
+            return await super().add(data=data)  # type: ignore
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

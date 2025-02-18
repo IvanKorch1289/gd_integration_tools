@@ -60,7 +60,7 @@ class S3Service:
             raise FileNotFoundError(f"File {key} not found")
 
         result: Optional[tuple[Any, dict]] = await self.client.get_object(key)
-        body, metadata = result
+        body, metadata = result  # type: ignore
         metadata = await utilities.decode_base64(metadata)
         filename = metadata.get("original-filename", key)
 

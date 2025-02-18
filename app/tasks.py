@@ -22,19 +22,19 @@ class LoggingMiddleware(TaskiqMiddleware):
         )
         return message
 
-    async def post_send(self, message: TaskiqMessage) -> TaskiqMessage:
+    async def post_send(self, message: TaskiqMessage) -> TaskiqMessage:  # type: ignore
         tasks_logger.info(
             f"[Success] Task {message.task_name} :: ID {message.task_id}"
         )
 
-    def post_save(
+    def post_save(  # type: ignore
         self, message: TaskiqMessage, result: TaskiqResult
     ) -> TaskiqMessage:
         tasks_logger.info(
             f"[Result] Task {message.task_name} :: ID {message.task_id} :: result {result}"
         )
 
-    async def on_error(
+    async def on_error(  # type: ignore
         self, message: TaskiqMessage, error: Exception
     ) -> TaskiqMessage:
         tasks_logger.error(

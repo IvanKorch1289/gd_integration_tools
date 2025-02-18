@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import Enum
 from io import BytesIO
 
@@ -231,7 +232,10 @@ class TechBV:
     )
     @handle_routes_errors
     async def send_email(
-        self, schema: EmailSchema, x_api_key: str = Header(...)
+        self,
+        schema: EmailSchema,
+        delay: int = None,
+        x_api_key: str = Header(...),
     ):
         """
         Отправляет тестовое email.
@@ -242,8 +246,10 @@ class TechBV:
         Returns:
             dict: Результат отправки email.
         """
+        delay_param = timedelta(seconds=delay) if delay else None
+
         await stream_client.publish_to_redis(
-            message=schema, stream="email_send_stream"
+            message=schema, stream="email_send_stream", delay=delay_param
         )
 
     @router.get(
