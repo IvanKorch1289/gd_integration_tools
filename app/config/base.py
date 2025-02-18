@@ -26,6 +26,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
         env_prefix="APP_",
         extra="forbid",
     )
+
     root_dir: Path = Field(
         default=ROOT_DIR,
         description="Absolute path to project root directory",
@@ -57,6 +58,11 @@ class AppBaseSettings(BaseSettingsWithLoader):
         ...,
         description="Flag indicating swagger status",
         examples=[True, False],
+    )
+    socket_name: str = Field(
+        ...,
+        description="Name of the UNIX socket file for FastAPI server",
+        examples=["/tmp/fastapi_socket"],
     )
 
 

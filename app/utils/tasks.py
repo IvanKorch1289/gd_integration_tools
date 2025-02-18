@@ -1,10 +1,10 @@
 from taskiq_pipelines import Pipeline
 
 from app.config.constants import RETRY_POLICY
-from app.main import broker
 from app.services.infra_services.mail import get_mail_service
 from app.services.route_services.orders import get_order_service
 from app.utils.logging_service import tasks_logger
+from app.worker import broker
 
 
 __all__ = (

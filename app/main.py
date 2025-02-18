@@ -1,10 +1,7 @@
 from app.infra.application.app_factory import create_app
-from app.infra.application.broker import get_broker
 
 
 app = create_app()
-
-broker = get_broker()
 
 
 if __name__ == "__main__":

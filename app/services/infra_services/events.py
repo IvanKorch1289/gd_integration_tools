@@ -27,4 +27,4 @@ async def handle_order_send_to_skb(
 ) -> Any:
     from app.utils.tasks import skb_order_pipeline
 
-    await skb_order_pipeline.run(body)
+    await skb_order_pipeline.kiq(body)

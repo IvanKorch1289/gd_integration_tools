@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
 from app.api.v1.routers import get_v1_routers
@@ -10,6 +10,7 @@ from app.infra.application.monitoring import setup_monitoring
 from app.infra.clients.stream import stream_client
 # from app.infra.application.telemetry import setup_tracing
 from app.utils.admins.setup_admin import setup_admin
+from app.utils.logging_service import app_logger
 from app.utils.middlewares.setup_middlewares import setup_middlewares
 
 
@@ -51,6 +52,18 @@ def create_app() -> FastAPI:
 
     # Клиент для работы с потоками
     app.include_router(stream_client.redis_router)
+
+    # WebSocket-сервер для получения настроек приложения
+    @app.websocket("/ws/settings")
+    async def websocket_endpoint(websocket: WebSocket):
+        await websocket.accept()
+        try:
+            # Отправляем настройки в формате JSON
+            await websocket.send_text(settings.model_dump_json())
+            await websocket.close()
+        except Exception:
+            app_logger.critical("WebSocket error", exc_info=True)
+            await websocket.close(code=1011)
 
     # Корневой эндпоинт
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)

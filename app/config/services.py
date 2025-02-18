@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseSettingsWithLoader
@@ -292,7 +292,7 @@ class RedisSettings(BaseSettingsWithLoader):
         ..., description="Healthchecking timer", example=600
     )
 
-    @property
+    @computed_field(description="Construct Redis connection URL")
     def redis_url(self) -> str:
         """Construct Redis connection URL."""
         protocol = "rediss" if self.use_ssl else "redis"

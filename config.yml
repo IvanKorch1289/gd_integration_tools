@@ -4,6 +4,7 @@ app:
   debug_mode: false
   version: 0.1.0
   enable_swagger: True
+  socket_name: "/tmp/gd_tools_socket"
 
 auth:
   token_name: "gat_token"
