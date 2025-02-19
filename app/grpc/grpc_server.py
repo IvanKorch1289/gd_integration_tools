@@ -60,6 +60,7 @@ class OrderGRPCServicer(OrderServiceServicer):
 
 async def serve():
     """Start gRPC server with Unix domain socket"""
+
     Path(settings.grpc.socket_path).unlink(missing_ok=True)
 
     server = grpc.aio.server(

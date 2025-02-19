@@ -4,7 +4,6 @@ __pycache__
 /minio-data/
 /grafana/
 /graylog-data/
-*.sh
 .gitignore
 /docs/
 *app.log*.

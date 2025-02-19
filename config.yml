@@ -4,6 +4,8 @@ app:
   debug_mode: false
   version: 0.1.0
   enable_swagger: True
+  socket_ping_timeout: 10
+  socket_close_timeout: 10
 
 
 auth:

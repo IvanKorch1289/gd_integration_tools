@@ -14,11 +14,16 @@ class OrderGRPCClient:
         self.stub = None
         self.logger = grpc_logger
 
+    async def get_settings(self):
+        self.settings = settings.grpc
+
     async def connect(self):
         """Establish connection to gRPC server"""
         if not self.channel:
+            await self.get_settings()
+
             self.channel = grpc.aio.insecure_channel(
-                settings.grpc.socket_uri,
+                self.settings.socket_uri,
                 options=[
                     ("grpc.max_send_message_length", 100 * 1024 * 1024),
                     ("grpc.max_receive_message_length", 100 * 1024 * 1024),

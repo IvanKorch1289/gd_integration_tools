@@ -5,7 +5,6 @@ from app.background_tasks.worker import broker
 from app.config.settings import settings
 from app.grpc.grpc_client import grpc_client
 from app.services.infra_services.mail import get_mail_service
-# from app.services.route_services.orders import get_order_service
 from app.utils.logging_service import tasks_logger
 
 
@@ -25,6 +24,8 @@ RETRY_POLICY = {
 
 @broker.task(retry=RETRY_POLICY)
 async def send_mail_task(body: dict) -> dict:
+    from app.services.infra_services.mail import get_mail_service
+
     async with get_mail_service() as mail_service:
         return await mail_service.send_email(
             to_emails=body["to_emails"],
@@ -108,7 +109,7 @@ def conditional_next(result: dict):
     return handle_failure
 
 
-# Модифицированный пайплайн с ветвлением
+# # Модифицированный пайплайн с ветвлением
 # skb_order_pipeline = (
 #     Pipeline(broker, create_skb_order_task)
 #     .call_next(

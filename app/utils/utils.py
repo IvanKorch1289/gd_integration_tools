@@ -1,12 +1,16 @@
+import asyncio
 import base64
 import uuid
 from datetime import datetime
-from typing import Any, Type
+from typing import Any, Dict, Optional, Type
 
+import json_tricks
 import pandas as pd
+import websockets
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from app.config.settings import settings
 from app.schemas.base import BaseSchema
 from app.utils.decorators.singleton import singleton
 from app.utils.logging_service import app_logger
@@ -228,6 +232,40 @@ class Utilities:
         if "__datetime__" in dct:
             return datetime.fromisoformat(dct["value"])
         return dct
+
+    async def connect_to_websocket_for_settings(
+        self,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Connects to a WebSocket server to fetch settings.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary containing settings if successful,
+            otherwise None.
+        """
+
+        # Формируем URI для подключения
+        uri = f"ws://{settings.app.base_url}/ws/settings"
+
+        try:
+            async with websockets.connect(
+                uri,
+                ping_timeout=settings.app.socket_ping_timeout,
+                close_timeout=settings.app.socket_close_timeout,
+            ) as websocket:
+                # Получаем сообщение от сервера
+                message = await asyncio.wait_for(
+                    websocket.recv(), timeout=settings.app.socket_close_timeout
+                )
+
+                self.logger.info(
+                    "Successfully received settings from WebSocket."
+                )
+
+                return json_tricks.loads(message)
+        except Exception as exc:
+            self.logger.error(f"An unexpected error occurred: {exc}")
+        return None
 
 
 class AsyncChunkIterator:

@@ -8,6 +8,7 @@ from app.utils.middlewares.tasks_log import LoggingMiddleware
 __all__ = ("broker",)
 
 
+# Initialize the broker
 redis_url = f"{settings.redis.redis_url}/{settings.redis.db_tasks}"
 
 result_backend = RedisAsyncResultBackend(redis_url=redis_url)

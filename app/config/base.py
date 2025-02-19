@@ -59,6 +59,16 @@ class AppBaseSettings(BaseSettingsWithLoader):
         description="Flag indicating swagger status",
         examples=[True, False],
     )
+    socket_ping_timeout: int = Field(
+        ...,
+        description="Timeout for socket ping in seconds",
+        examples=[5],
+    )
+    socket_close_timeout: int = Field(
+        ...,
+        description="Timeout for socket close in seconds",
+        examples=[5],
+    )
 
 
 class SchedulerSettings(BaseSettingsWithLoader):
