@@ -1,4 +1,5 @@
 import asyncio
+
 from types import CoroutineType
 
 from app.infra.application.scheduler import scheduler_manager

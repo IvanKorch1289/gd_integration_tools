@@ -4,7 +4,7 @@ app:
   debug_mode: false
   version: 0.1.0
   enable_swagger: True
-  socket_name: "/tmp/gd_tools_socket"
+
 
 auth:
   token_name: "gat_token"
@@ -35,6 +35,17 @@ auth:
   request_timeout: 20.0
   rate_limit: 400
   rate_time_measure_seconds: 60
+
+
+tasks:
+  max_attempts: 5
+  seconds_delay: 30
+
+
+grpc:
+  socket_path: "/tmp/order_service.sock"
+  max_workers: 20
+
 
 scheduler:
   stream_client_event_generated_name: "event_stream_client_job_executed"
@@ -78,6 +89,7 @@ http:
   enable_connection_purging: True
   purging_interval: 300
 
+
 skb:
   base_url: "https://api.skb-techno.ru/v2/Requests/"
   endpoints:
@@ -88,6 +100,7 @@ skb:
   connect_timeout: 10.0
   read_timeout: 30.0
 
+
 dadata:
   base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
   endpoints:
@@ -95,6 +108,7 @@ dadata:
   geolocate_radius_default: 100
   connect_timeout: 15.0
   read_timeout: 40.0
+
 
 database:
   type: "postgresql"
@@ -113,6 +127,7 @@ database:
   ssl_mode: prefer
   ca_bundle: #"/path/to/certificate.pem"
 
+
 fs:
   provider: "minio"
   bucket: "test-bucket"
@@ -124,6 +139,7 @@ fs:
   timeout: 30
   retries: 5
   key_prefix: "uploads"
+
 
 log:
   host: "localhost"
@@ -148,6 +164,8 @@ log:
       facility: "redis"
     - name: "stream"
       facility: "stream"
+    - name: "grpc"
+      facility: "grpc"
   use_tls: False
   ca_bundle: #"/path/to/certificate.pem"
   level: "DEBUG"
@@ -159,6 +177,7 @@ log:
     - "user_id"
     - "action"
 
+
 mongo:
   host: "localhost"
   port: 27017
@@ -166,6 +185,7 @@ mongo:
   timeout: 5000
   max_pool_size: 10
   min_pool_size: 5
+
 
 redis:
   host: "localhost"
@@ -193,6 +213,7 @@ redis:
   ttl_hours: 1
   health_check_interval: 300
 
+
 celery:
   redis_db: 3
   task_default_queue: "default"
@@ -216,6 +237,7 @@ celery:
   result_extended: True
   worker_send_events: True
 
+
 mail:
   host: "localhost"
   port: 1025
@@ -228,6 +250,7 @@ mail:
   validate_certs: False
   ca_bundle: #"/path/to/certificate.pem"
   template_folder: 
+
 
 queue:
   type: "kafka"

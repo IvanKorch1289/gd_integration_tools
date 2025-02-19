@@ -212,3 +212,4 @@ request_logger = log_manager.request_logger  # type: ignore
 tasks_logger = log_manager.tasks_logger  # type: ignore
 redis_logger = log_manager.redis_logger  # type: ignore
 stream_logger = log_manager.stream_logger  # type: ignore
+grpc_logger = log_manager.grpc_logger  # type: ignore

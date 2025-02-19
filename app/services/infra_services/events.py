@@ -11,7 +11,7 @@ async def handle_send_email(
     body: EmailSchema, msg: RedisMessage, redis: Redis
 ) -> None:
     try:
-        from app.utils.tasks import send_mail_task
+        from app.background_tasks.tasks import send_mail_task
 
         await send_mail_task.kiq(body.model_dump())
 
@@ -25,6 +25,6 @@ async def handle_send_email(
 async def handle_order_send_to_skb(
     body: int, msg: RedisMessage, redis: Redis
 ) -> Any:
-    from app.utils.tasks import skb_order_pipeline
+    from app.background_tasks.tasks import skb_order_pipeline
 
     await skb_order_pipeline.kiq(body)

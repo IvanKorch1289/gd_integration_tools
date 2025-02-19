@@ -1,10 +1,10 @@
+import asyncio
 from collections import deque
 from contextlib import asynccontextmanager
 from email.message import EmailMessage
 from typing import Any, AsyncGenerator, Deque, Dict
 
 import aiosmtplib
-import asyncio
 from async_timeout import timeout
 
 from app.config.settings import MailSettings, settings

@@ -1,13 +1,13 @@
+import asyncio
+from asyncio import Lock, Queue, create_task
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict, Optional, Union
 
 import aiohttp
-import asyncio
 import json_tricks
 import time
 from aiohttp import AsyncResolver, ClientTimeout, TCPConnector
-from asyncio import Lock, Queue, create_task
 
 from app.config.constants import RETRY_EXCEPTIONS
 from app.config.settings import settings

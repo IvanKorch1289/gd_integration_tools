@@ -1,6 +1,6 @@
+import asyncio
 from typing import Any, Dict
 
-import asyncio
 from pydantic import BaseModel
 
 from app.repositories.orderkinds import (

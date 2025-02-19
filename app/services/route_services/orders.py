@@ -1,6 +1,6 @@
+import asyncio
 from typing import Any, Dict, List, Optional
 
-import asyncio
 from fastapi import status
 from pydantic import BaseModel
 

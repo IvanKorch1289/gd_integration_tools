@@ -1,8 +1,8 @@
+import asyncio
 import hashlib
 from functools import wraps
 from typing import Any, Callable, Coroutine, Optional
 
-import asyncio
 import json_tricks
 
 from app.config.settings import settings

@@ -24,16 +24,20 @@ from app.config.security import AuthSettings, auth_settings
 from app.config.services import (
     CelerySettings,
     FileStorageSettings,
+    GRPCSettings,
     LogStorageSettings,
     MailSettings,
     QueueSettings,
     RedisSettings,
+    TaskiQSettings,
     celery_settings,
     fs_settings,
+    grpc_settings,
     log_settings,
     mail_settings,
     queue_settings,
     redis_settings,
+    tasks_settings,
 )
 
 
@@ -63,6 +67,8 @@ class Settings(BaseSettings):
     queue: QueueSettings = queue_settings
     mail: MailSettings = mail_settings
     celery: CelerySettings = celery_settings
+    tasks: TaskiQSettings = tasks_settings
+    grpc: GRPCSettings = grpc_settings
 
     # Хранилища
     storage: FileStorageSettings = fs_settings

@@ -1,0 +1,15 @@
+memray run -o fastapi_profile.bin -m uvicorn app.main:app --reload
+
+Анализ результатов:
+
+    Flamegraph:
+    memray flamegraph fastapi_profile.bin
+    Откроет интерактивный граф, показывающий, где выделяется больше всего памяти.
+
+    Статистика:
+    memray stats fastapi_profile.bin
+    Покажет суммарную информацию по потреблению памяти.
+
+    Поиск утечек:
+    memray leak fastapi_profile.bin
+    Выведет возможные утечки памяти.

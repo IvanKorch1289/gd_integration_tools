@@ -710,6 +710,52 @@ class QueueSettings(BaseSettingsWithLoader):
         }
 
 
+class TaskiQSettings(BaseSettingsWithLoader):
+    """Configuration for TaskiQ task queue and worker management."""
+
+    yaml_group: ClassVar[str] = "tasks"
+    model_config = SettingsConfigDict(
+        env_prefix="TASKS_",
+        extra="forbid",
+    )
+
+    max_attempts: int = Field(
+        ...,
+        description="Maximum number of attempts for a task",
+        example=5,
+    )
+    seconds_delay: int = Field(
+        ...,
+        description="Initial delay in seconds for a task",
+        example=60,
+    )
+
+
+class GRPCSettings(BaseSettingsWithLoader):
+    """Configuration for gRPC services."""
+
+    yaml_group: ClassVar[str] = "grpc"
+    model_config = SettingsConfigDict(
+        env_prefix="GRPC_",
+        extra="forbid",
+    )
+
+    socket_path: str = Field(
+        ...,
+        description="Path to the gRPC socket file",
+        example="/tmp/grpc.sock",
+    )
+    max_workers: int = Field(
+        ...,
+        description="Maximum number of gRPC worker processes",
+        example=10,
+    )
+
+    @computed_field(description="Construct Socket connection")
+    def socket_uri(self) -> str:
+        return f"unix://{self.socket_path}"
+
+
 # Instantiate settings for immediate use
 fs_settings = FileStorageSettings()
 log_settings = LogStorageSettings()
@@ -717,3 +763,5 @@ redis_settings = RedisSettings()
 celery_settings = CelerySettings()
 mail_settings = MailSettings()
 queue_settings = QueueSettings()
+tasks_settings = TaskiQSettings()
+grpc_settings = GRPCSettings()

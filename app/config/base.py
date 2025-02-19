@@ -59,15 +59,6 @@ class AppBaseSettings(BaseSettingsWithLoader):
         description="Flag indicating swagger status",
         examples=[True, False],
     )
-    socket_name: str = Field(
-        ...,
-        description="Name of the UNIX socket file for FastAPI server",
-        examples=["/tmp/fastapi_socket"],
-    )
-
-
-# Pre-initialized settings instance for immediate consumption
-app_base_settings = AppBaseSettings()
 
 
 class SchedulerSettings(BaseSettingsWithLoader):
@@ -129,4 +120,5 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
 
 # Pre-initialized settings instance for immediate consumption
+app_base_settings = AppBaseSettings()
 scheduler_settings = SchedulerSettings()
