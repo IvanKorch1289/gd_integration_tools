@@ -1,6 +1,6 @@
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Dict, Optional
+from uuid import uuid4
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -122,7 +122,7 @@ class StreamClient:
             )
 
         # Создаем уникальный ID задачи
-        job_id = f"redis_job_{uuid.uuid4()}"
+        job_id = f"redis_job_{uuid4()}"
 
         # Определяем триггер
         tz = timezone(timedelta(hours=3))

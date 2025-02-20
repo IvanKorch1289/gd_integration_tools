@@ -1,8 +1,14 @@
-import asyncio
+from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Deque, Dict
 
-import aiosmtplib
+from aiosmtplib import (
+    SMTP,
+    SMTPAuthenticationError,
+    SMTPConnectError,
+    SMTPException,
+    SMTPServerDisconnected,
+)
 
 from app.config.settings import MailSettings, settings
 from app.utils.decorators.singleton import singleton
@@ -37,7 +43,7 @@ class SmtpClient:
 
         self.settings = settings
         self.logger = smtp_logger
-        self._connection_pool: Deque[aiosmtplib.SMTP] = deque()
+        self._connection_pool: Deque[SMTP] = deque()
         self._pool_size = self.settings.connection_pool_size
         self._circuit_opened = False
         self._circuit_timeout = self.settings.circuit_breaker_timeout
@@ -77,11 +83,11 @@ class SmtpClient:
             connection = self._connection_pool.pop()
             try:
                 await connection.quit()
-            except aiosmtplib.SMTPException:
+            except SMTPException:
                 self.logger.warning("Error closing connection", exc_info=True)
         self.logger.info("SMTP connection pool closed")
 
-    async def _create_connection(self) -> aiosmtplib.SMTP:
+    async def _create_connection(self) -> SMTP:
         """
         Create a new authenticated SMTP connection with timeout handling.
 
@@ -96,7 +102,7 @@ class SmtpClient:
 
         try:
             async with timeout(self.settings.connect_timeout):
-                smtp = aiosmtplib.SMTP(
+                smtp = SMTP(
                     hostname=self.settings.host,
                     port=self.settings.port,
                     use_tls=self.settings.use_tls,
@@ -111,18 +117,18 @@ class SmtpClient:
                         self.settings.password,
                     )
                 return smtp
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             self.logger.error("Connection timeout exceeded", exc_info=True)
             raise TimeoutError("SMTP connection timeout") from exc
-        except aiosmtplib.SMTPAuthenticationError as exc:
+        except SMTPAuthenticationError as exc:
             self.logger.error("Authentication failed", exc_info=True)
             raise ConnectionError("SMTP authentication error") from exc
-        except aiosmtplib.SMTPException as exc:
+        except SMTPException as exc:
             self.logger.error("Connection failed", exc_info=True)
             raise ConnectionError("SMTP connection error") from exc
 
     @asynccontextmanager
-    async def get_connection(self) -> AsyncGenerator[aiosmtplib.SMTP, None]:
+    async def get_connection(self) -> AsyncGenerator[SMTP, None]:
         """
         Context manager for acquiring SMTP connections with fault tolerance.
 
@@ -150,7 +156,7 @@ class SmtpClient:
             if connection:
                 await self._release_connection(connection)
 
-    async def _acquire_connection(self) -> aiosmtplib.SMTP:
+    async def _acquire_connection(self) -> SMTP:
         """
         Acquire connection with retry logic.
 
@@ -174,10 +180,10 @@ class SmtpClient:
                     raise
                 delay = 1 * (attempt + 1)
                 self.logger.warning(f"Retrying connection in {delay}s...")
-                await asyncio.sleep(delay)
+                await sleep(delay)
         raise ConnectionError("Failed to acquire SMTP connection")
 
-    async def _release_connection(self, connection: aiosmtplib.SMTP) -> None:
+    async def _release_connection(self, connection: SMTP) -> None:
         """Release connection back to pool or close it."""
         try:
             if connection.is_connected:
@@ -200,16 +206,16 @@ class SmtpClient:
         if isinstance(
             exc,
             (
-                aiosmtplib.SMTPConnectError,
-                aiosmtplib.SMTPServerDisconnected,
-                asyncio.TimeoutError,
+                SMTPConnectError,
+                SMTPServerDisconnected,
+                TimeoutError,
             ),
         ):
             self._circuit_opened = True
             self.logger.critical("Circuit breaker triggered")
 
             await self.reset_pool()
-            await asyncio.sleep(self._circuit_timeout)
+            await sleep(self._circuit_timeout)
 
             self._circuit_opened = False
             self.logger.info("Circuit breaker reset")

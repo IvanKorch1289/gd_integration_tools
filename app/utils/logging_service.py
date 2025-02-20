@@ -1,10 +1,18 @@
-import logging
-import socket
+from logging import (
+    Filter,
+    Formatter,
+    Handler,
+    Logger,
+    LogRecord,
+    StreamHandler,
+    getLogger,
+)
 from logging.handlers import (
     QueueHandler,
     QueueListener,
     TimedRotatingFileHandler,
 )
+from socket import gethostname
 from typing import List, Optional
 
 from app.config.settings import LogStorageSettings, settings
@@ -27,7 +35,7 @@ __all__ = (
 class LoggerManager:
     """Central logging configuration manager with multiple handlers."""
 
-    class ContextFilter(logging.Filter):
+    class ContextFilter(Filter):
         """Adds common contextual fields to log records."""
 
         def __init__(self, environment: str, hostname: str):
@@ -35,7 +43,7 @@ class LoggerManager:
             self.environment = environment
             self.hostname = hostname
 
-        def filter(self, record: logging.LogRecord) -> bool:
+        def filter(self, record: LogRecord) -> bool:
             """Enrich log records with contextual information."""
             record.environment = self.environment
             record.hostname = self.hostname
@@ -44,7 +52,7 @@ class LoggerManager:
             record.logger = record.name
             return True
 
-    class SafeFormatter(logging.Formatter):
+    class SafeFormatter(Formatter):
         """Ensures required fields exist in log records."""
 
         def __init__(self, fmt: str, required_fields: List[str]):
@@ -58,7 +66,7 @@ class LoggerManager:
             super().__init__(fmt)
             self.required_fields = required_fields
 
-        def format(self, record: logging.LogRecord) -> str:
+        def format(self, record: LogRecord) -> str:
             """Format log record with guaranteed fields."""
             for field in self.required_fields:
                 if not hasattr(record, field):
@@ -91,7 +99,7 @@ class LoggerManager:
 
         self.log_queue = Queue()
         self.queue_listener: Optional[QueueListener] = None
-        self.handlers: List[logging.Handler] = []
+        self.handlers: List[Handler] = []
         self.graylog: GraylogHandler = handler
 
         self._setup_components()
@@ -150,9 +158,9 @@ class LoggerManager:
         handler.addFilter(self.ContextFilter(self.environment, self.hostname))
         return handler
 
-    def _create_console_handler(self) -> logging.StreamHandler:
+    def _create_console_handler(self) -> StreamHandler:
         """Configure console output handler."""
-        handler = logging.StreamHandler()
+        handler = StreamHandler()
         handler.setFormatter(self.formatter)
         handler.addFilter(self.ContextFilter(self.environment, self.hostname))
         return handler
@@ -167,7 +175,7 @@ class LoggerManager:
     def _configure_loggers(self) -> None:
         """Configure all registered loggers."""
         for logger_cfg in self.log_config.conf_loggers:
-            logger = logging.getLogger(logger_cfg["name"])
+            logger = getLogger(logger_cfg["name"])
             logger.propagate = False
             logger.setLevel(self.log_config.level.upper())
             self._reset_handlers(logger)
@@ -177,12 +185,10 @@ class LoggerManager:
         """Create logger instances as class attributes."""
         for logger_cfg in self.log_config.conf_loggers:
             logger_name = logger_cfg["name"]
-            setattr(
-                self, f"{logger_name}_logger", logging.getLogger(logger_name)
-            )
+            setattr(self, f"{logger_name}_logger", getLogger(logger_name))
 
     @staticmethod
-    def _reset_handlers(logger: logging.Logger) -> None:
+    def _reset_handlers(logger: Logger) -> None:
         """Remove existing handlers from logger."""
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
@@ -198,7 +204,7 @@ class LoggerManager:
 log_manager = LoggerManager(
     log_config=settings.logging,
     environment=settings.app.environment,
-    hostname=socket.gethostname(),
+    hostname=gethostname(),
     handler=graylog_handler,
     debug=settings.app.debug_mode,
 )

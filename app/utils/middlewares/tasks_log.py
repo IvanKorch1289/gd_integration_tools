@@ -9,7 +9,7 @@ __all__ = ("LoggingMiddleware",)
 class LoggingMiddleware(TaskiqMiddleware):
     async def pre_send(self, message: TaskiqMessage) -> TaskiqMessage:
         tasks_logger.info(
-            f"[Start] Task {message.task_name} :: ID {message.task_id}"
+            f"[Start] Task {message.task_name} :: ID {message.task_id} :: Args {message.args} :: Kwargs {message.kwargs}"
         )
         return message
 

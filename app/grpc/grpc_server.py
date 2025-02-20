@@ -21,14 +21,16 @@ class OrderGRPCServicer(OrderServiceServicer):
         """Create order implementation for gRPC endpoint"""
         try:
             self.logger.info(f"Creating order for ID: {request.order_id}")
+
             result = await self.order_service.create_skb_order(
                 request.order_id
             )
-
+            print(result)
             return OrderResponse(
-                order_id=result["order_id"],
-                skb_id=result["skb_id"],
-                status=result["status"],
+                order_id=result["instanse"]["id"],
+                skb_id=str(result["instanse"]["object_uuid"]),
+                status=str(result["response"]["status_code"]),
+                error="",
             )
         except Exception as exc:
             self.logger.error("Order creation failed", exc_info=True)

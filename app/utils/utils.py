@@ -1,7 +1,7 @@
-import base64
-import uuid
+from base64 import b64decode, b64encode
 from datetime import datetime
 from typing import Any, Dict, Optional, Type
+from uuid import UUID
 
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -69,7 +69,7 @@ class Utilities:
             # Кодируем строку или байты в Base64
             if isinstance(data, str):
                 data = data.encode("utf-8")
-            return base64.b64encode(data).decode("ascii")
+            return b64encode(data).decode("ascii")
         elif isinstance(data, (dict, list, tuple)):
             if isinstance(data, dict):
                 return {
@@ -95,7 +95,7 @@ class Utilities:
         if isinstance(data, str):
             try:
                 # Декодируем Base64 строку в байты
-                decoded_bytes = base64.b64decode(data)
+                decoded_bytes = b64decode(data)
                 # Пытаемся декодировать байты в строку UTF-8
                 return decoded_bytes.decode("utf-8")
             except (UnicodeDecodeError, ValueError):
@@ -213,7 +213,7 @@ class Utilities:
         Raises:
             TypeError: For unsupported types
         """
-        if isinstance(obj, uuid.UUID):
+        if isinstance(obj, UUID):
             return {"__uuid__": True, "value": str(obj)}
         if isinstance(obj, datetime):
             return {"__datetime__": True, "value": obj.isoformat()}
@@ -224,7 +224,7 @@ class Utilities:
     def custom_json_decoder(self, dct: dict) -> Any:
         """Custom JSON decoder for special type handling."""
         if "__uuid__" in dct:
-            return uuid.UUID(dct["value"])
+            return UUID(dct["value"])
         if "__datetime__" in dct:
             return datetime.fromisoformat(dct["value"])
         return dct

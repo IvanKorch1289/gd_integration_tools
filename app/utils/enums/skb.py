@@ -1,10 +1,10 @@
-import enum
+from enum import Enum
 
 
 __all__ = ("ResponseTypeChoices",)
 
 
-class ResponseTypeChoices(enum.Enum):
+class ResponseTypeChoices(Enum):
     """
     Перечисление для выбора типа ответа.
 

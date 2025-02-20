@@ -1,10 +1,10 @@
-import enum
+from enum import Enum
 
 
 __all__ = ("OrderingTypeChoices",)
 
 
-class OrderingTypeChoices(enum.Enum):
+class OrderingTypeChoices(Enum):
     """
     Перечисление для выбора типа cортировки объектов.
 

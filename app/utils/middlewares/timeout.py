@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import TimeoutError, wait_for
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -21,10 +21,10 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         try:
-            return await asyncio.wait_for(
+            return await wait_for(
                 call_next(request), timeout=settings.auth.request_timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             app_logger.warning(f"Request timeout: {request.url}")
             return JSONResponse(
                 {"detail": "Request processing timeout"}, status_code=408

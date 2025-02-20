@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import to_thread
 
 from types import CoroutineType
 
@@ -20,7 +20,7 @@ __all__ = (
 
 starting_operations = [
     redis_client.ensure_connected,
-    ("graylog_client", lambda: asyncio.to_thread(graylog_handler.connect)),
+    ("graylog_client", lambda: to_thread(graylog_handler.connect)),
     db_initializer.initialize_async_pool,
     s3_client.connect,
     smtp_client.initialize_pool,
@@ -34,7 +34,7 @@ ending_operations = [
     smtp_client.close_pool,
     s3_client.close,
     db_initializer.close,
-    ("graylog_client", lambda: asyncio.to_thread(graylog_handler.close)),
+    ("graylog_client", lambda: to_thread(graylog_handler.close)),
     redis_client.close,
 ]
 

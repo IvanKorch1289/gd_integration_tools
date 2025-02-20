@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package orders;
 
+import "google/protobuf/wrappers.proto"
+
 service OrderService {
   rpc CreateOrder(CreateOrderRequest) returns (OrderResponse) {}
   rpc GetOrderResult(GetOrderRequest) returns (OrderResponse) {}

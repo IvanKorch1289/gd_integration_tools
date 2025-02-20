@@ -1,5 +1,5 @@
-import re
 from pathlib import Path
+from re import match
 from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple
 
 from pydantic import Field, computed_field, field_validator
@@ -649,7 +649,7 @@ class QueueSettings(BaseSettingsWithLoader):
     @classmethod
     def validate_servers(cls, v):
         for server in v:
-            if not re.match(r"^[\w\.-]+:\d+$", server):
+            if not match(r"^[\w\.-]+:\d+$", server):
                 raise ValueError(
                     f"Invalid server format: {server}. Expected host:port"
                 )

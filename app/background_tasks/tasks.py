@@ -4,7 +4,6 @@ from taskiq_pipelines import Pipeline
 from app.background_tasks.worker import broker
 from app.config.settings import settings
 from app.grpc.grpc_client import grpc_client
-from app.services.infra_services.mail import get_mail_service
 from app.utils.logging_service import tasks_logger
 
 
@@ -39,41 +38,16 @@ async def create_skb_order_task(body: dict) -> dict:
     """Taskiq task for order creation"""
     try:
         # result = await get_order_service().create_skb_order(order_id=order_id)
-        result = await grpc_client.create_order(body["id"])
+        result = await grpc_client.create_order(order_id=body["id"])
 
-        if not result.get("data", {}).get("Result"):
-            raise RuntimeError("SKB order creation failed")
+        if int(result.get("status")) != 200:
+            raise NoResultError("SKB order creation failed")
 
         return {
             "order_id": body["id"],
             "status": "created",
         }
-    except Exception as exc:
-        # Добавляем информацию о попытках в контекст
-        current_retry = getattr(create_skb_order_task.task, "current_retry", 0)
-        if current_retry >= RETRY_POLICY["max_retries"] - 1:
-            tasks_logger.error(f"Final attempt failed for order {body["id"]}")
-            raise NoResultError(
-                message=str(exc), retry_type="max_retries_exceeded"
-            )
-        raise
-
-
-@broker.task(retry=RETRY_POLICY)
-async def handle_failure(ctx: dict) -> dict:
-    """Обработчик неудачных попыток создания заказа."""
-    try:
-        async with get_mail_service() as mail_service:
-            await mail_service.send_email(
-                to_emails=ctx["user_email"],
-                subject="Order Creation Failed",
-                message=f"Failed to create order {ctx['order_id']} after {RETRY_POLICY["max_retries"]} attempts",
-            )
-        return {"status": "failed", "error": ctx.get("error")}
     except Exception:
-        tasks_logger.error(
-            "Failed to send failure notification", exc_info=True
-        )
         raise
 
 
@@ -88,11 +62,9 @@ async def get_skb_order_result_task(ctx: dict) -> dict:
             ctx["order_id"], ctx["skb_id"]
         )
 
-        # result = await get_order_service().get_order_result(order_id=ctx["order_id"])
-
         # Кастомная проверка результата
-        if result.get("status") != "completed":
-            raise ValueError("Order result not ready")
+        if int(result.get("status")) != 200:
+            raise NoResultError("Order result not ready")
 
         return {"final_result": result}
     except Exception:
@@ -100,13 +72,6 @@ async def get_skb_order_result_task(ctx: dict) -> dict:
             "Error during SKB order result retrieval", exc_info=True
         )
         raise
-
-
-def conditional_next(result: dict):
-    """Функция ветвления на основе результата."""
-    if result.get("status") == "created":
-        return get_skb_order_result_task
-    return handle_failure
 
 
 # Модифицированный пайплайн с ветвлением

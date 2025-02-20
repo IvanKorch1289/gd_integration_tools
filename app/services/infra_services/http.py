@@ -3,8 +3,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict, Optional, Union
 
-import json_tricks
-import time
 from aiohttp import (
     AsyncResolver,
     ClientError,
@@ -15,6 +13,8 @@ from aiohttp import (
     FormData,
     TCPConnector,
 )
+from json_tricks import dumps, loads
+from time import monotonic
 
 from app.config.constants import RETRY_EXCEPTIONS
 from app.config.settings import settings
@@ -100,7 +100,7 @@ class HttpClient:
     async def _ensure_session(self) -> None:
         """Maintain active session with renewal based on activity."""
         async with self.session_lock:
-            now = time.monotonic()
+            now = monotonic()
             if self._should_renew_session(now):
                 await self._close_session()
                 self._create_new_session()
@@ -192,7 +192,7 @@ class HttpClient:
         Returns:
             Dictionary containing status, data, headers and timing information
         """
-        start_time = time.monotonic()
+        start_time = monotonic()
         last_exception = None
         headers = await self._build_headers(auth_token, headers, data, json)
         request_data = await self._prepare_request_data(data, json)
@@ -251,7 +251,7 @@ class HttpClient:
             await self._update_metrics(
                 start_time, success=last_exception is None
             )
-            self.last_activity = time.monotonic()
+            self.last_activity = monotonic()
 
     # endregion
 
@@ -295,7 +295,7 @@ class HttpClient:
         from app.utils.utils import utilities
 
         if json_data is not None:
-            return json_tricks.dumps(
+            return dumps(
                 json_data,
                 extra_obj_encoders=[utilities.custom_json_encoder],
             )
@@ -372,7 +372,7 @@ class HttpClient:
 
     async def _update_metrics(self, start_time: float, success: bool) -> None:
         """Update performance metrics."""
-        duration = time.monotonic() - start_time
+        duration = monotonic() - start_time
         self.metrics["total_requests"] += 1
         key = "successful_requests" if success else "failed_requests"
         self.metrics[key] += 1
@@ -399,7 +399,7 @@ class HttpClient:
             "data": content,
             "headers": dict(response.headers),
             "content_type": content_type,
-            "elapsed": time.monotonic() - start_time,
+            "elapsed": monotonic() - start_time,
         }
 
     async def _handle_final_error(
@@ -413,7 +413,7 @@ class HttpClient:
             "status": status_code,
             "data": None,
             "headers": headers,
-            "elapsed": time.monotonic() - start_time,
+            "elapsed": monotonic() - start_time,
         }
 
     async def _process_response(
@@ -424,7 +424,7 @@ class HttpClient:
 
         if response_type == "json":
             try:
-                return json_tricks.loads(content.decode("utf-8"))
+                return loads(content.decode("utf-8"))
             except Exception as exc:
                 self.logger.error(
                     "JSON parsing error",

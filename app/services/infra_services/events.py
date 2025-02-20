@@ -11,32 +11,18 @@ from app.schemas.route_schemas.orders import OrderSchemaOut
 async def handle_send_email(
     body: EmailSchema, msg: RedisMessage, redis: Redis
 ) -> None:
-    try:
-        from app.background_tasks.tasks import send_mail_task
+    from app.background_tasks.tasks import send_mail_task
 
-        await send_mail_task.kiq(body.model_dump())
-
-        await msg.ack(redis)
-    except Exception:
-        await msg.nack(redis)
-        raise
+    await send_mail_task.kiq(body.model_dump())
 
 
 @stream_client.redis_router.subscriber(stream="order_send_to_skb_stream")
 async def handle_order_send_to_skb(
     body: OrderSchemaOut, msg: RedisMessage, redis: Redis
 ) -> Any:
-    from app.background_tasks.tasks import (
+    from app.background_tasks.tasks import (  # skb_order_pipeline,
         create_skb_order_task,
-        skb_order_pipeline,
     )
 
-    try:
-
-        await create_skb_order_task.kiq(body.model_dump())
-
-        await msg.ack(redis)
-    except Exception:
-        await msg.nack(redis)
-        raise
+    await create_skb_order_task.kiq(body.model_dump())
     # await skb_order_pipeline.kiq(body)

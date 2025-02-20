@@ -40,8 +40,10 @@ class OrderGRPCClient:
             response = await self.stub.CreateOrder(
                 CreateOrderRequest(order_id=order_id)
             )
-            if response.error:
-                raise RuntimeError(response.error)
+
+            # if response.error != "":
+            #     raise RuntimeError(response.error)
+            print(response)
             return {
                 "order_id": response.order_id,
                 "skb_id": response.skb_id,

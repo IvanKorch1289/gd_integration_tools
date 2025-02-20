@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-import aiosmtplib
+from aiosmtplib import SMTPException
 
 from app.infra.clients.smtp import SmtpClient, smtp_client
 from app.utils.decorators.singleton import singleton
@@ -50,7 +50,7 @@ class MailService:
             async with self.client.get_connection() as smtp:
                 await smtp.send_message(msg)
                 self.logger.info(f"Sent message: {msg}")
-        except aiosmtplib.SMTPException as exc:
+        except SMTPException as exc:
             self.logger.error("Failed to send email", exc_info=True)
             raise RuntimeError(f"Failed to send email: {exc}") from exc
 

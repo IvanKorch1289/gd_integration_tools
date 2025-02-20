@@ -1,4 +1,4 @@
-import logging
+from logging import Handler
 from typing import Optional
 
 from app.config.settings import LogStorageSettings, settings
@@ -18,14 +18,14 @@ class GraylogHandler:
             config (LogStorageSettings): Logging configuration settings
         """
         self.config = config
-        self.handler: Optional[logging.Handler] = None
+        self.handler: Optional[Handler] = None
 
     @property
     def enabled(self) -> bool:
         """Check if Graylog logging is enabled."""
         return bool(self.config.host and self.config.udp_port)
 
-    def connect(self) -> Optional[logging.Handler]:
+    def connect(self) -> Optional[Handler]:
         """
         Establish connection to Graylog server.
 

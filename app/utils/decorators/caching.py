@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Any, Callable, Coroutine, Optional
 
-import json_tricks
+from json_tricks import dumps, loads
 
 from app.config.settings import settings
 from app.infra.clients.redis import redis_client
@@ -44,7 +44,7 @@ class CachingDecorator:
             "args": args[1:] if self.exclude_self and args else args,
             "kwargs": kwargs,
         }
-        serialized = json_tricks.dumps(
+        serialized = dumps(
             key_data,
             extra_obj_encoders=[utilities.custom_json_encoder],
             separators=(",", ":"),
@@ -121,7 +121,7 @@ class CachingDecorator:
                     return None
 
                 decoded = await utilities.decode_bytes(data)
-                deserialized = json_tricks.loads(
+                deserialized = loads(
                     decoded,
                     extra_obj_pairs_hooks=[utilities.custom_json_decoder],
                 )
@@ -142,7 +142,7 @@ class CachingDecorator:
 
             async with redis_client.connection() as r:
                 converted_data = utilities.convert_data(result)
-                serialized = json_tricks.dumps(
+                serialized = dumps(
                     converted_data,
                     extra_obj_encoders=[utilities.custom_json_encoder],
                     separators=(",", ":"),
