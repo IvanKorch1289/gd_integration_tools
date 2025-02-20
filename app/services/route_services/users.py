@@ -9,11 +9,13 @@ from app.schemas.route_schemas.users import (
     UserVersionSchemaOut,
 )
 from app.services.route_services.base import BaseService
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("get_user_service",)
 
 
+@singleton
 class UserService(BaseService[UserRepository]):
     """
     Сервис для работы с пользователями. Обеспечивает создание, аутентификацию и управление пользователями.

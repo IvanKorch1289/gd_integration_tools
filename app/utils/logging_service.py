@@ -1,5 +1,4 @@
 import logging
-import os
 import socket
 from logging.handlers import (
     QueueHandler,
@@ -7,8 +6,6 @@ from logging.handlers import (
     TimedRotatingFileHandler,
 )
 from typing import List, Optional
-
-from queue import Queue
 
 from app.config.settings import LogStorageSettings, settings
 from app.infra.clients.logger import GraylogHandler, graylog_handler
@@ -85,6 +82,8 @@ class LoggerManager:
             hostname (str): Server hostname
             debug (bool): Debug mode flag
         """
+        from queue import Queue
+
         self.log_config = log_config
         self.environment = environment
         self.hostname = hostname
@@ -135,6 +134,8 @@ class LoggerManager:
 
     def _create_file_handler(self) -> TimedRotatingFileHandler:
         """Configure timed rotating file handler."""
+        import os
+
         log_dir = self.log_config.dir_log_name
         os.makedirs(log_dir, exist_ok=True)
 

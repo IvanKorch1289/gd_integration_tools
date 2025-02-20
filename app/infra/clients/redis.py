@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from functools import wraps
@@ -9,8 +8,6 @@ from redis.exceptions import RedisError
 
 from app.config.settings import RedisSettings, settings
 from app.utils.decorators.singleton import singleton
-from app.utils.logging_service import redis_logger
-from app.utils.utils import utilities
 
 
 __all__ = ("redis_client", "RedisClient")
@@ -33,6 +30,10 @@ class RedisClient:
         Args:
             settings: Redis configuration parameters
         """
+        import asyncio
+
+        from app.utils.logging_service import redis_logger
+
         self._client: Optional[Redis] = None
         self._lock = asyncio.Lock()
         self.settings = settings
@@ -440,6 +441,8 @@ class RedisClient:
         Raises:
             RedisError: If operation fails
         """
+        from app.utils.utils import utilities
+
         try:
             async with self.connection() as conn:
                 async with self._switch_db_context(

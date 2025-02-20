@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
-from urllib.parse import urljoin
 
 from app.config.settings import DadataAPISettings, settings
 from app.services.infra_services.http import get_http_client
 from app.utils.decorators.caching import response_cache
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = (
@@ -12,6 +12,7 @@ __all__ = (
 )
 
 
+@singleton
 class APIDADATAService:
     """Сервис для работы с API Dadata.
 
@@ -56,6 +57,8 @@ class APIDADATAService:
         Returns:
             Optional[Dict[str, Any]]: Ответ от API Dadata в формате JSON или None в случае ошибки.
         """
+        from urllib.parse import urljoin
+
         # Формируем тело запроса
         try:
             payload: Dict[str, Any] = {"lat": lat, "lon": lon}

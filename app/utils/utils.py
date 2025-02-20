@@ -1,17 +1,11 @@
-import asyncio
 import base64
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Type
 
-import json_tricks
-import pandas as pd
-import websockets
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.config.settings import settings
-from app.schemas.base import BaseSchema
 from app.utils.decorators.singleton import singleton
 from app.utils.logging_service import app_logger
 
@@ -35,9 +29,9 @@ class Utilities:
     def transfer_model_to_schema(
         self,
         instance: Any,
-        schema: Type[BaseSchema],
+        schema: Type[BaseModel],
         from_attributes: bool = False,
-    ) -> BaseSchema:
+    ) -> BaseModel:
         """Converts a model instance to Pydantic schema.
 
         Args:
@@ -46,7 +40,7 @@ class Utilities:
             from_attributes: Flag for ORM mode conversion
 
         Returns:
-            BaseSchema: Initialized schema instance
+            BaseModel: Initialized schema instance
 
         Raises:
             ValueError: If conversion fails
@@ -190,6 +184,8 @@ class Utilities:
         Returns:
             Value with converted types
         """
+        import pandas as pd
+
         if pd.api.types.is_integer(value):
             return int(value)
         if pd.api.types.is_float(value):
@@ -243,6 +239,12 @@ class Utilities:
             Optional[Dict[str, Any]]: A dictionary containing settings if successful,
             otherwise None.
         """
+        import asyncio
+
+        import json_tricks
+        import websockets
+
+        from app.config.settings import settings
 
         # Формируем URI для подключения
         uri = f"ws://{settings.app.base_url}/ws/settings"

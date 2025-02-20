@@ -1,5 +1,6 @@
 from app.infra.db.models.orderkinds import OrderKind
 from app.repositories.base import SQLAlchemyRepository
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = (
@@ -8,6 +9,7 @@ __all__ = (
 )
 
 
+@singleton
 class OrderKindRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей видов запросов (OrderKind).

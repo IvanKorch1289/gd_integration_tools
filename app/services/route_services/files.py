@@ -7,11 +7,13 @@ from app.schemas.route_schemas.files import (
     FileVersionSchemaOut,
 )
 from app.services.route_services.base import BaseService
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("get_file_service",)
 
 
+@singleton
 class FileService(BaseService[FileRepository]):
     """
     Сервис для работы с файлами. Обеспечивает создание, обновление, получение и обработку файлов

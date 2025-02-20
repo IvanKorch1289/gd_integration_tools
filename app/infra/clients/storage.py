@@ -1,5 +1,6 @@
 # app/infra/storage/s3.py
 from abc import ABC, abstractmethod
+from asyncio import Lock
 from contextlib import asynccontextmanager
 from functools import wraps
 from typing import (
@@ -12,13 +13,9 @@ from typing import (
     TypeVar,
 )
 
-from aiobotocore.config import AioConfig
-from aiobotocore.session import get_session
 from botocore.exceptions import ClientError as BotoClientError
 
-from app.config.services import FileStorageSettings
-from app.config.settings import settings
-from app.utils.logging_service import fs_logger
+from app.config.settings import FileStorageSettings, settings
 
 
 __all__ = (
@@ -117,13 +114,27 @@ class S3Client(BaseS3Client):
     """S3 client implementation with advanced features."""
 
     def __init__(self, settings: FileStorageSettings):
+        from aiobotocore.config import AioConfig
+        from aiobotocore.session import get_session
+
+        from app.utils.logging_service import fs_logger
+
+        self._connect_lock = Lock()
         self._settings = settings
         self._session = get_session()
         self._client = None
         self.logger = fs_logger
         self._config = AioConfig(
             connect_timeout=settings.timeout,
-            retries={"max_attempts": settings.retries},
+            read_timeout=settings.read_timeout,
+            retries={
+                "max_attempts": settings.retries
+                or 3,  # 3 попытки по умолчанию
+                "mode": "adaptive",  # Экспоненциальный backoff
+            },
+            max_pool_connections=settings.max_pool_connections,
+            tcp_keepalive=True,
+            request_min_compression_size_bytes=1024 * 1024,
             s3={
                 "addressing_style": "path",
                 "payload_signing_enabled": settings.provider == "aws",
@@ -138,6 +149,9 @@ class S3Client(BaseS3Client):
         """Establish and maintain persistent connection to S3."""
         if self.is_connected:
             return
+        async with self._connect_lock:
+            if self.is_connected:  # Проверка внутри блокировки
+                return
 
         try:
             self._client = await self._session.create_client(

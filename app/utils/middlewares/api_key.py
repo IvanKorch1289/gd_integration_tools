@@ -1,4 +1,3 @@
-import re
 from typing import List, Pattern
 
 from fastapi import HTTPException, Request, Response
@@ -18,6 +17,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     """Middleware for API key validation in request headers"""
 
     def __init__(self, app: ASGIApp):
+        import re
+
         super().__init__(app)
         self.compiled_patterns: List[Pattern] = [
             re.compile(self._convert_pattern(pattern))

@@ -1,10 +1,7 @@
-import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Optional, Tuple, Type
 
-import hvac
-import yaml
 from dotenv import load_dotenv
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
@@ -18,7 +15,7 @@ from app.config.constants import ROOT_DIR
 
 __all__ = ("BaseSettingsWithLoader",)
 
-# Load environment variables from .env file
+
 load_dotenv(ROOT_DIR / ".env")
 
 
@@ -76,9 +73,11 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
 
     def _load_data(self) -> Dict[str, Any]:
         """Load and parse YAML configuration file."""
+        from yaml import safe_load
+
         try:
             with open(self.yaml_path) as f:
-                return yaml.safe_load(f) or {}
+                return safe_load(f) or {}
         except FileNotFoundError:
             return {}
         except Exception as exc:
@@ -90,15 +89,19 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
 
     def _load_data(self) -> Dict[str, Any]:
         """Load data from Vault."""
-        vault_addr = os.getenv("VAULT_ADDR")
-        vault_token = os.getenv("VAULT_TOKEN")
-        vault_secret_path = os.getenv("VAULT_SECRET_PATH")
+        from os import getenv
+
+        from hvac import Client
+
+        vault_addr = getenv("VAULT_ADDR")
+        vault_token = getenv("VAULT_TOKEN")
+        vault_secret_path = getenv("VAULT_SECRET_PATH")
 
         if not all([vault_addr, vault_token, vault_secret_path]):
             return {}
 
         try:
-            client = hvac.Client(url=vault_addr, token=vault_token)
+            client = Client(url=vault_addr, token=vault_token)
             if not client.is_authenticated():
                 return {}
 

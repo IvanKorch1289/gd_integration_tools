@@ -1,8 +1,5 @@
 import logging
-import socket
 from typing import Optional
-
-import graypy
 
 from app.config.settings import LogStorageSettings, settings
 
@@ -41,6 +38,8 @@ class GraylogHandler:
         if not self.enabled:
             return None
 
+        import graypy
+
         try:
             handler_class = (
                 graypy.GELFTLSHandler
@@ -77,6 +76,8 @@ class GraylogHandler:
         Raises:
             ConnectionError: If connection test fails
         """
+        import socket
+
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
                 sock.connect((self.config.host, self.config.udp_port))

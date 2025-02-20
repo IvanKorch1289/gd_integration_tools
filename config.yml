@@ -141,6 +141,8 @@ fs:
   timeout: 30
   retries: 5
   key_prefix: "uploads"
+  max_pool_connections: 20
+  read_timeout: 30
 
 
 log:

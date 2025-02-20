@@ -1,9 +1,3 @@
-import asyncio
-from pathlib import Path
-
-import grpc
-from concurrent import futures
-
 from app.config.settings import settings
 from app.grpc.protobuf.orders_pb2 import OrderResponse
 from app.grpc.protobuf.orders_pb2_grpc import (
@@ -60,10 +54,14 @@ class OrderGRPCServicer(OrderServiceServicer):
 
 async def serve():
     """Start gRPC server with Unix domain socket"""
+    from pathlib import Path
+
+    from concurrent import futures
+    from grpc.aio import server
 
     Path(settings.grpc.socket_path).unlink(missing_ok=True)
 
-    server = grpc.aio.server(
+    server = server(
         futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers),
         options=[
             ("grpc.so_reuseport", 1),
@@ -85,4 +83,6 @@ async def serve():
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(serve())

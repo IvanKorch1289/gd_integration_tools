@@ -1,11 +1,10 @@
-from app.config.settings import settings
-from app.utils.utils import utilities
-
-
 __all__ = ("root_page",)
 
 
 async def root_page():
+    from app.config.settings import settings
+    from app.utils.utils import utilities
+
     log_url = utilities.ensure_url_protocol(
         f"{settings.logging.host}:{settings.logging.port}"
     )

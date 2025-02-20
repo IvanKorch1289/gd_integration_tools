@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.config.settings import SKBAPISettings, settings
 from app.services.infra_services.http import get_http_client
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = (
@@ -12,6 +13,7 @@ __all__ = (
 )
 
 
+@singleton
 class APISKBService:
     """
     Сервис для взаимодействия с API СКБ-Техно.

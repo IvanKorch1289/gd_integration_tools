@@ -1,5 +1,3 @@
-import io
-import zipfile
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
@@ -7,17 +5,20 @@ from fastapi.responses import StreamingResponse
 
 from app.infra.clients.storage import BaseS3Client, s3_client
 from app.utils.decorators.caching import existence_cache, metadata_cache
-from app.utils.logging_service import fs_logger
+from app.utils.decorators.singleton import singleton
 from app.utils.utils import utilities
 
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
 
+@singleton
 class S3Service:
     """Service layer for high-level file operations with S3."""
 
     def __init__(self, client: BaseS3Client):
+        from app.utils.logging_service import fs_logger
+
         self.client = client
         self.logger = fs_logger
         self._cache_handlers = {
@@ -114,9 +115,12 @@ class S3Service:
         Returns:
             StreamingResponse with ZIP archive
         """
-        buffer = io.BytesIO()
+        from io import BytesIO
+        from zipfile import ZIP_DEFLATED, ZipFile
 
-        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        buffer = BytesIO()
+
+        with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
             for key in keys:
                 if await self._check_object_exists(key):
                     content = await self.client.get_object_bytes(key)

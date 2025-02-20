@@ -15,11 +15,13 @@ from app.schemas.route_schemas.orderkinds import (
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("get_order_kind_service",)
 
 
+@singleton
 class OrderKindService(BaseService[OrderKindRepository]):
     """
     Сервис для работы с видами заказами. Обеспечивает создание, обновление, получение и обработку видов заказов

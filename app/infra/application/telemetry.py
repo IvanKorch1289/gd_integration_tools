@@ -1,11 +1,4 @@
 from fastapi import FastAPI
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-    OTLPSpanExporter,
-)
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 
 __all__ = ("setup_tracing",)
@@ -13,6 +6,14 @@ __all__ = ("setup_tracing",)
 
 def setup_tracing(app: FastAPI):
     # Инициализация трассировки
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter,
+    )
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     tracer_provider = TracerProvider()
     tracer_provider.add_span_processor(
         BatchSpanProcessor(

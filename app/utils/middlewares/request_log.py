@@ -1,7 +1,3 @@
-import gzip
-from io import BytesIO
-
-import time
 from fastapi import Request, Response
 from starlette.middleware.base import (
     BaseHTTPMiddleware,
@@ -31,6 +27,8 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Process and log request/response information"""
+        import time
+
         self.logger.info(f"Request: {request.method} {request.url}")
 
         start_time = time.time()
@@ -74,6 +72,9 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def _log_response_body(self, response: Response) -> None:
         """Log response body with size limit"""
+        import gzip
+        from io import BytesIO
+
         content_type = response.headers.get("Content-Type", "").lower()
         content_encoding = response.headers.get("Content-Encoding", "").lower()
 

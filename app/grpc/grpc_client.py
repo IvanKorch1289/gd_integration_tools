@@ -1,4 +1,5 @@
-import grpc
+from grpc import RpcError
+from grpc.aio import insecure_channel
 
 from app.config.settings import settings
 from app.grpc.protobuf.orders_pb2 import CreateOrderRequest, GetOrderRequest
@@ -22,7 +23,7 @@ class OrderGRPCClient:
         if not self.channel:
             await self.get_settings()
 
-            self.channel = grpc.aio.insecure_channel(
+            self.channel = insecure_channel(
                 self.settings.socket_uri,
                 options=[
                     ("grpc.max_send_message_length", 100 * 1024 * 1024),
@@ -46,7 +47,7 @@ class OrderGRPCClient:
                 "skb_id": response.skb_id,
                 "status": response.status,
             }
-        except grpc.RpcError as exc:
+        except RpcError as exc:
             self.logger.error(
                 f"gRPC error: {exc.code()}: {exc.details()}", exc_info=True
             )
@@ -66,7 +67,7 @@ class OrderGRPCClient:
                 "status": response.status,
                 "skb_id": response.skb_id,
             }
-        except grpc.RpcError as exc:
+        except RpcError as exc:
             self.logger.error(
                 f"gRPC error: {exc.code()}: {exc.details()}", exc_info=True
             )

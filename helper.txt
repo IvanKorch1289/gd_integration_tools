@@ -10,6 +10,6 @@ memray run -o fastapi_profile.bin -m uvicorn app.main:app --reload
     memray stats fastapi_profile.bin
     Покажет суммарную информацию по потреблению памяти.
 
-    Поиск утечек:
-    memray leak fastapi_profile.bin
-    Выведет возможные утечки памяти.
+mprof run --output=memory_usage.csv uvicorn app.main:app
+
+py-spy record uvicorn app.main:app

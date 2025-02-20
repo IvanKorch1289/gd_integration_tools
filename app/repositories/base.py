@@ -1,4 +1,3 @@
-import importlib
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
@@ -16,7 +15,6 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy_continuum import version_class
 
 from app.infra.db.models.base import BaseModel
@@ -209,6 +207,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             """
             Формирует список опций для загрузки связанных моделей.
             """
+            from sqlalchemy.orm import selectinload
+
             mapper = inspect(self.model)
             relationships = [rel.key for rel in mapper.relationships]
 
@@ -498,13 +498,15 @@ async def get_repository_for_model(
     Возвращает класс репозитория для указанной модели.
 
     """
+    from importlib import import_module
+
     repository_name = (
         f"{model.__name__}Repository"  # Формируем имя репозитория
     )
 
     try:
         # Импортируем модуль репозитория для указанной модели
-        repository_module = importlib.import_module(
+        repository_module = import_module(
             f"app.db.repositories.{model.__tablename__}"
         )
         return getattr(

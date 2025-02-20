@@ -1,5 +1,3 @@
-import uuid
-
 from fastapi import Request, Response
 from starlette.middleware.base import (
     BaseHTTPMiddleware,
@@ -27,4 +25,6 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _generate_id() -> str:
+        import uuid
+
         return uuid.uuid4().hex

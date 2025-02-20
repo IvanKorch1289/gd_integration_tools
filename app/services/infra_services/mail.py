@@ -1,14 +1,10 @@
 from contextlib import asynccontextmanager
-from email.header import Header
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import aiosmtplib
 
 from app.infra.clients.smtp import SmtpClient, smtp_client
-from app.utils.logging_service import smtp_logger
+from app.utils.decorators.singleton import singleton
 
 
 __all__ = (
@@ -17,10 +13,13 @@ __all__ = (
 )
 
 
+@singleton
 class MailService:
     """Email service with template support."""
 
     def __init__(self, mail_client: SmtpClient):
+        from app.utils.logging_service import smtp_logger
+
         self.client = mail_client
         self.logger = smtp_logger
 
@@ -68,6 +67,11 @@ class MailService:
         Returns:
             MIMEMultipart|MIMEText: Constructed email message
         """
+        from email.header import Header
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        from email.utils import formataddr
+
         if html_message:
             msg = MIMEMultipart("alternative")
             msg.attach(MIMEText(message, "plain", "utf-8"))

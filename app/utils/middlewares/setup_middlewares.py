@@ -1,19 +1,20 @@
 from fastapi import FastAPI
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from starlette_exporter import PrometheusMiddleware
-
-from app.config.settings import settings
-from app.utils.middlewares.circuit_breaker import CircuitBreakerMiddleware
-from app.utils.middlewares.request_id import RequestIDMiddleware
-from app.utils.middlewares.request_log import InnerRequestLoggingMiddleware
-from app.utils.middlewares.timeout import TimeoutMiddleware
 
 
 __all__ = ("setup_middlewares",)
 
 
 def setup_middlewares(app: FastAPI) -> None:
+    from fastapi.middleware.gzip import GZipMiddleware
+    from fastapi.middleware.trustedhost import TrustedHostMiddleware
+    from starlette_exporter import PrometheusMiddleware
+
+    from app.config.settings import settings
+    from app.utils.middlewares.circuit_breaker import CircuitBreakerMiddleware
+    from app.utils.middlewares.request_id import RequestIDMiddleware
+    from app.utils.middlewares.request_log import InnerRequestLoggingMiddleware
+    from app.utils.middlewares.timeout import TimeoutMiddleware
+
     middleware_chain = [
         (PrometheusMiddleware, {}),
         (

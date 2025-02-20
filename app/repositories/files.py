@@ -6,6 +6,7 @@ from app.infra.db.models.base import BaseModel
 from app.infra.db.models.files import File, OrderFile
 from app.repositories.base import ConcreteTable, SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
+from app.utils.decorators.singleton import singleton
 from app.utils.errors import NotFoundError, handle_db_errors
 
 
@@ -15,6 +16,7 @@ __all__ = (
 )
 
 
+@singleton
 class FileRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей файлов (File) и связующей таблицей (OrderFile).

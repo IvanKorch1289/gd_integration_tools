@@ -6,6 +6,7 @@ from app.infra.db.models.orders import Order
 from app.repositories.base import SQLAlchemyRepository
 from app.repositories.orderkinds import get_order_kind_repo
 from app.utils.decorators.sessioning import session_manager
+from app.utils.decorators.singleton import singleton
 from app.utils.errors import NotFoundError, handle_db_errors
 
 
@@ -15,6 +16,7 @@ __all__ = (
 )
 
 
+@singleton
 class OrderRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей заказов (Order).

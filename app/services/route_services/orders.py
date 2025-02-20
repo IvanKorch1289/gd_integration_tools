@@ -18,6 +18,7 @@ from app.services.infra_services.s3 import S3Service, get_s3_service_dependency
 from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
+from app.utils.decorators.singleton import singleton
 from app.utils.enums.skb import ResponseTypeChoices
 from app.utils.errors import NotFoundError
 from app.utils.logging_service import app_logger
@@ -26,6 +27,7 @@ from app.utils.logging_service import app_logger
 __all__ = ("get_order_service",)
 
 
+@singleton
 class OrderService(BaseService[OrderRepository]):
     """
     Сервис для работы с заказами. Обеспечивает создание, обновление, получение и обработку заказов,
@@ -85,7 +87,7 @@ class OrderService(BaseService[OrderRepository]):
             order = await super().add(data=data)  # type: ignore
             if order:
                 await stream_client.publish_to_redis(
-                    message=order.id, stream="order_send_to_skb_stream"
+                    message=order, stream="order_send_to_skb_stream"
                 )
             return order
         except Exception:

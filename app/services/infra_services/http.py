@@ -1,24 +1,30 @@
-import asyncio
-from asyncio import Lock, Queue, create_task
+from asyncio import Lock, Queue, create_task, sleep
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict, Optional, Union
 
-import aiohttp
 import json_tricks
 import time
-from aiohttp import AsyncResolver, ClientTimeout, TCPConnector
+from aiohttp import (
+    AsyncResolver,
+    ClientError,
+    ClientResponse,
+    ClientResponseError,
+    ClientSession,
+    ClientTimeout,
+    FormData,
+    TCPConnector,
+)
 
 from app.config.constants import RETRY_EXCEPTIONS
 from app.config.settings import settings
 from app.utils.decorators.singleton import singleton
-from app.utils.logging_service import request_logger
-from app.utils.utils import utilities
 
 
 __all__ = ("HttpClient", "get_http_client")
 
 
+@singleton
 class CircuitBreaker:
     """Implements circuit breaker pattern with exponential backoff."""
 
@@ -41,7 +47,7 @@ class CircuitBreaker:
         if self.failure_count >= max_failures:
             self.state = "OPEN"
             self.last_failure_time = datetime.now()
-            raise aiohttp.ClientError("Circuit breaker tripped")
+            raise ClientError("Circuit breaker tripped")
 
     def record_failure(self) -> None:
         """Record failed request."""
@@ -72,9 +78,11 @@ class HttpClient:
 
     def __init__(self):
         """Initialize HTTP client with configuration from settings."""
+        from app.utils.logging_service import request_logger
+
         self.settings = settings.http_base_settings
         self.connector: Optional[TCPConnector] = None
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: Optional[ClientSession] = None
         self.last_activity: float = 0
         self.active_requests: int = 0
         self.session_lock = Lock()
@@ -132,7 +140,7 @@ class HttpClient:
             sock_read=self.settings.sock_read_timeout,
         )
 
-        self.session = aiohttp.ClientSession(
+        self.session = ClientSession(
             connector=self.connector,
             timeout=timeout,
             auto_decompress=True,
@@ -228,7 +236,7 @@ class HttpClient:
                             response, content, start_time
                         )
 
-                except (aiohttp.ClientResponseError, *RETRY_EXCEPTIONS) as exc:
+                except (ClientResponseError, *RETRY_EXCEPTIONS) as exc:
                     last_exception = exc
                     if not self._should_retry(attempt, exc):
                         break
@@ -284,13 +292,15 @@ class HttpClient:
         json_data: Optional[Dict[str, Any]],
     ) -> Optional[Union[str, bytes]]:
         """Serialize data with Content-Type awareness."""
+        from app.utils.utils import utilities
+
         if json_data is not None:
             return json_tricks.dumps(
                 json_data,
                 extra_obj_encoders=[utilities.custom_json_encoder],
             )
         elif isinstance(data, dict):
-            form_data = aiohttp.FormData()
+            form_data = FormData()
             for key, value in data.items():
                 form_data.add_field(key, value)
             return bytes(form_data)
@@ -303,14 +313,14 @@ class HttpClient:
         """Determine if a request should be retried."""
         if attempt >= self.settings.max_retries:
             return False
-        if isinstance(exception, aiohttp.ClientResponseError):
+        if isinstance(exception, ClientResponseError):
             return exception.status in self.settings.retry_status_codes
         return isinstance(exception, RETRY_EXCEPTIONS)
 
     async def _handle_retry(self, attempt: int) -> None:
         """Perform retry delay with exponential backoff."""
         sleep_time = self.settings.retry_backoff_factor * (2**attempt)
-        await asyncio.sleep(sleep_time)
+        await sleep(sleep_time)
 
     # endregion
 
@@ -344,7 +354,7 @@ class HttpClient:
         )
 
     async def _log_response(
-        self, response: aiohttp.ClientResponse, content: Any
+        self, response: ClientResponse, content: Any
     ) -> None:
         """Log response details with content truncation."""
         self.logger.debug(
@@ -374,7 +384,7 @@ class HttpClient:
 
     # region Response Handling
     async def _build_response_object(
-        self, response: aiohttp.ClientResponse, content: Any, start_time: float
+        self, response: ClientResponse, content: Any, start_time: float
     ) -> Dict[str, Any]:
         """Construct standardized response dictionary."""
         content_type = (
@@ -407,7 +417,7 @@ class HttpClient:
         }
 
     async def _process_response(
-        self, response: aiohttp.ClientResponse, response_type: str
+        self, response: ClientResponse, response_type: str
     ) -> Any:
         """Process response content according to specified type."""
         content = await response.read()
@@ -439,7 +449,7 @@ class HttpClient:
         """Background task to purge idle connections."""
         while True:
             try:
-                await asyncio.sleep(self.settings.purging_interval)
+                await sleep(self.settings.purging_interval)
                 if self.connector and self.settings.enable_connection_purging:
                     await self.connector.close()
             except Exception:

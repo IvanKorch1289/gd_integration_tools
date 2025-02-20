@@ -6,11 +6,8 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
-from faststream.kafka.fastapi import KafkaRouter
-from faststream.redis.fastapi import RedisRouter
 
 from app.config.settings import settings
-from app.infra.application.scheduler import scheduler_manager
 from app.utils.logging_service import stream_logger
 
 
@@ -41,6 +38,8 @@ class MessageLoggingMiddleware(BaseMiddleware):
 
 class StreamClient:
     def __init__(self):
+        from app.infra.application.scheduler import scheduler_manager
+
         self.stream_client = FastStream(logger=stream_logger)
         self.settings = settings.redis
         self.kafka_broker = None
@@ -51,6 +50,8 @@ class StreamClient:
         self.add_kafka_router()
 
     def add_redis_router(self):
+        from faststream.redis.fastapi import RedisRouter
+
         self.redis_router = RedisRouter(
             url=f"{self.settings.redis_url}/{self.settings.db_queue}",
             max_connections=self.settings.max_connections,
@@ -74,6 +75,8 @@ class StreamClient:
         )
 
     def add_kafka_router(self):
+        from faststream.kafka.fastapi import KafkaRouter
+
         self.kafka_router = KafkaRouter(
             bootstrap_servers=settings.queue.bootstrap_servers
         )

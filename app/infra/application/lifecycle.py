@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.infra.setup_infra import ending, starting
 from app.utils.logging_service import app_logger
 
 
@@ -17,6 +16,7 @@ async def lifespan(app: FastAPI):
     Запускает планировщик задач и устанавливает лимиты запросов.
     Останавливает планировщик при завершении работы приложения.
     """
+    from app.infra.setup_infra import ending, starting
 
     app_logger.info("Start...")
 

@@ -1,11 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from app.infra.clients.logger import graylog_handler
-from app.infra.clients.redis import redis_client
-from app.infra.clients.smtp import smtp_client
-from app.infra.clients.storage import s3_client
-from app.infra.db.database import db_initializer
 from app.utils.decorators.singleton import singleton
 
 
@@ -56,6 +51,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния базы данных.
         """
+        from app.infra.db.database import db_initializer
+
         return await db_initializer.check_connection()
 
     async def check_redis(self):
@@ -65,6 +62,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния Redis.
         """
+        from app.infra.clients.redis import redis_client
+
         return await redis_client.check_connection()
 
     async def check_s3(self):
@@ -74,6 +73,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния S3.
         """
+        from app.infra.clients.storage import s3_client
+
         return await s3_client.check_connection()
 
     async def check_s3_bucket(self):
@@ -83,6 +84,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки наличия бакета в S3.
         """
+        from app.infra.clients.storage import s3_client
+
         return await s3_client.check_bucket_exists()
 
     async def check_graylog(self):
@@ -92,6 +95,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния Graylog.
         """
+        from app.infra.clients.logger import graylog_handler
+
         return await graylog_handler.check_connection()
 
     async def check_smtp(self):
@@ -101,6 +106,8 @@ class HealthCheck:
         Returns:
             dict: Результат проверки состояния SMTP-сервера.
         """
+        from app.infra.clients.smtp import smtp_client
+
         return await smtp_client.test_connection()
 
 

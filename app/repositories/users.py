@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.db.models.users import User
 from app.repositories.base import SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
+from app.utils.decorators.singleton import singleton
 from app.utils.errors import handle_db_errors
 
 
@@ -15,6 +16,7 @@ __all__ = (
 )
 
 
+@singleton
 class UserRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей пользователей (User).

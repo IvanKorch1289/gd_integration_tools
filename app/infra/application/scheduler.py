@@ -1,12 +1,6 @@
-from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from app.config.constants import CHECK_SERVICES_JOB
 from app.config.settings import settings
-from app.infra.db.database import db_initializer
 from app.schemas.base import EmailSchema
-from app.utils.health_check import get_healthcheck_service
 from app.utils.logging_service import scheduler_logger
 
 
@@ -29,6 +23,12 @@ class SchedulerManager:
         Uses SQLAlchemyJobStore as the primary job store and MemoryJobStore as a backup.
         Configures both async and threadpool executors.
         """
+        from apscheduler.jobstores.memory import MemoryJobStore
+        from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+        from app.infra.db.database import db_initializer
+
         self.logger = scheduler_logger
         self.scheduler = AsyncIOScheduler(
             timezone=settings.scheduler.timezone,
@@ -68,6 +68,8 @@ async def check_all_services():
     Checks the health status of all services.
     If any service is inactive, sends an email notification via Redis stream.
     """
+    from app.utils.health_check import get_healthcheck_service
+
     try:
         scheduler_logger.info("Starting health check of all services...")
 

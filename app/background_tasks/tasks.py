@@ -35,24 +35,24 @@ async def send_mail_task(body: dict) -> dict:
 
 
 @broker.task(retry=RETRY_POLICY)
-async def create_skb_order_task(order_id: int) -> dict:
+async def create_skb_order_task(body: dict) -> dict:
     """Taskiq task for order creation"""
     try:
         # result = await get_order_service().create_skb_order(order_id=order_id)
-        result = await grpc_client.create_order(order_id)
+        result = await grpc_client.create_order(body["id"])
 
         if not result.get("data", {}).get("Result"):
             raise RuntimeError("SKB order creation failed")
 
         return {
-            "order_id": order_id,
+            "order_id": body["id"],
             "status": "created",
         }
     except Exception as exc:
         # Добавляем информацию о попытках в контекст
         current_retry = getattr(create_skb_order_task.task, "current_retry", 0)
         if current_retry >= RETRY_POLICY["max_retries"] - 1:
-            tasks_logger.error(f"Final attempt failed for order {order_id}")
+            tasks_logger.error(f"Final attempt failed for order {body["id"]}")
             raise NoResultError(
                 message=str(exc), retry_type="max_retries_exceeded"
             )
@@ -109,7 +109,7 @@ def conditional_next(result: dict):
     return handle_failure
 
 
-# # Модифицированный пайплайн с ветвлением
+# Модифицированный пайплайн с ветвлением
 # skb_order_pipeline = (
 #     Pipeline(broker, create_skb_order_task)
 #     .call_next(

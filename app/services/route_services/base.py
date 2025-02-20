@@ -1,4 +1,3 @@
-import importlib
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi_filter.contrib.sqlalchemy import Filter
@@ -390,11 +389,12 @@ async def get_service_for_model(model: Type[BaseModel]):
     :return: Класс сервиса, связанного с моделью.
     :raises ValueError: Если сервис для модели не найден.
     """
+    from importlib import import_module
+
     service_name = f"{model.__name__}Service"
+
     try:
-        service_module = importlib.import_module(
-            f"app.services.{model.__tablename__}"
-        )
+        service_module = import_module(f"app.services.{model.__tablename__}")
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
         raise ValueError(

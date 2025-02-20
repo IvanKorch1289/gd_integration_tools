@@ -1,15 +1,11 @@
 import asyncio
-from collections import deque
 from contextlib import asynccontextmanager
-from email.message import EmailMessage
 from typing import Any, AsyncGenerator, Deque, Dict
 
 import aiosmtplib
-from async_timeout import timeout
 
 from app.config.settings import MailSettings, settings
 from app.utils.decorators.singleton import singleton
-from app.utils.logging_service import smtp_logger
 
 
 __all__ = (
@@ -32,6 +28,10 @@ class SmtpClient:
         Raises:
             ValueError: If provided settings are invalid
         """
+        from collections import deque
+
+        from app.utils.logging_service import smtp_logger
+
         if not all([settings.host, settings.port]):
             raise ValueError("Invalid SMTP configuration")
 
@@ -92,6 +92,8 @@ class SmtpClient:
             ConnectionError: If connection fails after retries
             TimeoutError: If connection timeout exceeds
         """
+        from async_timeout import timeout
+
         try:
             async with timeout(self.settings.connect_timeout):
                 smtp = aiosmtplib.SMTP(
@@ -240,6 +242,8 @@ class SmtpClient:
         Returns:
             bool: True if test message was accepted by server
         """
+        from email.message import EmailMessage
+
         try:
             async with self.get_connection() as smtp:
                 # Создаем сообщение через стандартный email модуль

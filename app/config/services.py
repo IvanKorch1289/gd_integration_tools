@@ -91,6 +91,16 @@ class FileStorageSettings(BaseSettingsWithLoader):
         description="Prefix for object keys",
         example="my-prefix/",
     )
+    max_pool_connections: int = Field(
+        ...,
+        description="Maximum number of connections in the pool",
+        example=50,
+    )
+    read_timeout: int = Field(
+        ...,
+        description="Timeout for reading objects (in seconds)",
+        example=30,
+    )
 
     @property
     def normalized_endpoint(self) -> str:

@@ -1,9 +1,6 @@
 from functools import wraps
 
-import redis.asyncio as redis
 from fastapi import HTTPException, Request, Response
-from fastapi_limiter import FastAPILimiter
-from fastapi_limiter.depends import RateLimiter
 
 from app.config.settings import settings
 from app.utils.logging_service import app_logger
@@ -22,6 +19,9 @@ async def init_limiter():
     Returns:
         None
     """
+    import redis.asyncio as redis
+    from fastapi_limiter import FastAPILimiter
+
     try:
         redis_connection = redis.from_url(
             f"{settings.redis.redis_url}/{settings.redis.db_limits}",
@@ -68,6 +68,7 @@ class RouteLimiter:
         Returns:
             Callable: Обернутая функция с примененным лимитером.
         """
+        from fastapi_limiter.depends import RateLimiter
 
         @wraps(func)
         async def wrapper(*args, **kwargs):

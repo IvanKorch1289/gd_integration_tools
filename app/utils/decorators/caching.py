@@ -1,5 +1,3 @@
-import asyncio
-import hashlib
 from functools import wraps
 from typing import Any, Callable, Coroutine, Optional
 
@@ -38,6 +36,8 @@ class CachingDecorator:
         self, func: Callable, args: tuple, kwargs: dict
     ) -> str:
         """Default cache key builder with hash-based normalization"""
+        import hashlib
+
         key_data = {
             "module": func.__module__,
             "name": func.__name__,
@@ -88,6 +88,8 @@ class CachingDecorator:
             )
 
     def __call__(self, func: Callable) -> Callable:
+        import asyncio
+
         @wraps(func)
         async def async_wrapper(*args, **kwargs) -> Any:
             cache_key = self.key_builder(func, args, kwargs)
@@ -156,9 +158,10 @@ response_cache = CachingDecorator(
     expire=1800,
     key_builder=lambda func, args, kwargs: (
         f"cache:"
-        f"{args[0].__class__.__name__ if hasattr(args[0], '__class__') else args[0].__name__}"  # Имя класса или функции
-        f"{':'.join(str(arg) for arg in args[1:])}:"  # Остальные позиционные аргументы
-        f"{':'.join(f'{k}={v}' for k, v in kwargs.items())}"  # Именованные аргументы
+        f"{args[0].__class__.__name__ if hasattr(args[0], "__class__") else args[0].__name__}"  # Имя класса или функции
+        f":{func.__name__ if hasattr(args[0], "__class__") else None}"  # Имя метода класса
+        f"{":".join(str(arg) for arg in args[1:])}:"  # Остальные позиционные аргументы
+        f"{":".join(f'{k}={v}' for k, v in kwargs.items())}"  # Именованные аргументы
     ),
 )
 

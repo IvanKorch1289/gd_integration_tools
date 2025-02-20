@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Request
-from prometheus_fastapi_instrumentator import Instrumentator
-from starlette_exporter import handle_metrics
 
 
 __all__ = ("setup_monitoring",)
 
 
 def setup_monitoring(app: FastAPI):
+    from prometheus_fastapi_instrumentator import Instrumentator
+    from starlette_exporter import handle_metrics
+
     Instrumentator(
         should_group_status_codes=True,
         should_ignore_untemplated=True,
