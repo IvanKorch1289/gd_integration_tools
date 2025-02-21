@@ -43,23 +43,20 @@ async def create_skb_order_task(body: dict) -> dict:
         if int(result.get("status")) != 200:
             raise NoResultError("SKB order creation failed")
 
-        return {
-            "order_id": body["id"],
-            "status": "created",
-        }
+        return result
     except Exception:
         raise
 
 
 @broker.task(retry=RETRY_POLICY)
-async def get_skb_order_result_task(ctx: dict) -> dict:
+async def get_skb_order_result_task(body: dict) -> dict:
     """
     Задача для получения результата с повторными попытками.
     """
     try:
         """Taskiq task for result fetching"""
         result = await grpc_client.get_order_result(
-            ctx["order_id"], ctx["skb_id"]
+            order_id=body["id"], skb_id=body["object_uuid"]
         )
 
         # Кастомная проверка результата
@@ -77,12 +74,6 @@ async def get_skb_order_result_task(ctx: dict) -> dict:
 # Модифицированный пайплайн с ветвлением
 # skb_order_pipeline = (
 #     Pipeline(broker, create_skb_order_task)
-#     .call_next(
-#         conditional_next,
-#         # Передаем аргументы для обработки ошибок
-#         error_handler_args=lambda prev_result: {
-#             "order_id": prev_result["order_id"]
-#         },
-#     )
+#     .call_next(get_skb_order_result_task)
 #     .call_next(send_mail_task)
 # )

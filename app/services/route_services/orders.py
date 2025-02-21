@@ -136,6 +136,28 @@ class OrderService(BaseService[OrderRepository]):
             app_logger.error("Error sending request to SKB", exc_info=True)
             raise  # Исключение будет обработано глобальным обработчиком
 
+    async def async_create_skb_order(self, order_id: int) -> Dict[str, Any]:
+        """
+        Создает заказ в СКБ-Техно на основе существующего заказа фоноыой задачей.
+
+        :param order_id: ID заказа.
+        :return: Ответ от СКБ-Техно или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при создании заказа в СКБ-Техно.
+        """
+        try:
+            order_data = await self._get_order_data(order_id=order_id)
+
+            # Проверяем, активен ли заказ
+            if order_data["is_active"]:
+                await stream_client.publish_to_redis(
+                    message=order_data, stream="order_send_to_skb_stream"
+                )
+                return order_data
+            raise
+        except Exception:
+            app_logger.error("Error sending request to SKB", exc_info=True)
+            raise  # Исключение будет обработано глобальным обработчиком
+
     @response_cache
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
@@ -349,6 +371,30 @@ class OrderService(BaseService[OrderRepository]):
                 response["file_links"] = files_links.content.get("files_links")
 
             return response
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
+
+    async def async_get_order_file_and_json_from_skb(
+        self,
+        order_id: int,
+    ) -> Dict[str, Any]:
+        """
+        Получает файл и JSON-результат заказа фоновойц задачей.
+
+        :param order_id: ID заказа.
+        :param s3_service: Сервис для работы с S3.
+        :return: Данные заказа, включая ссылки на файлы и JSON-результат, или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении данных.
+        """
+        try:
+            # Получаем заказ по ID
+            order_data = await self._get_order_data(order_id=order_id)
+
+            await stream_client.publish_to_redis(
+                message=order_data, stream="order_get_result_from_skb"
+            )
+
+            return order_data
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

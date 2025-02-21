@@ -23,14 +23,18 @@ class OrderGRPCServicer(OrderServiceServicer):
             self.logger.info(f"Creating order for ID: {request.order_id}")
 
             result = await self.order_service.create_skb_order(
-                request.order_id
+                order_id=request.order_id
             )
-            print(result)
+
             return OrderResponse(
                 order_id=result["instanse"]["id"],
                 skb_id=str(result["instanse"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
-                error="",
+                error=(
+                    ""
+                    if result["response"]["status_code"] == 200
+                    else result["response"]["status_code"]
+                ),
             )
         except Exception as exc:
             self.logger.error("Order creation failed", exc_info=True)
@@ -40,14 +44,20 @@ class OrderGRPCServicer(OrderServiceServicer):
         """Get order result implementation for gRPC endpoint"""
         try:
             self.logger.info(f"Fetching result for order: {request.order_id}")
-            result = await self.order_service.get_order_result(
-                request.order_id, request.skb_id
+
+            result = await self.order_service.get_order_file_and_json_from_skb(
+                order_id=request.order_id
             )
 
             return OrderResponse(
-                order_id=result["order_id"],
-                status=result["status"],
-                skb_id=result["skb_id"],
+                order_id=result["instanse"]["id"],
+                skb_id=str(result["instanse"]["object_uuid"]),
+                status=str(result["response"]["status_code"]),
+                error=(
+                    ""
+                    if result["response"]["status_code"] == 200
+                    else result["response"]["status_code"]
+                ),
             )
         except Exception as exc:
             self.logger.error("Result fetch failed", exc_info=True)

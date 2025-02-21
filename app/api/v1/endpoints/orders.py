@@ -55,6 +55,24 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         """
         return await self.service.create_skb_order(order_id=order_id)
 
+    @router.post(
+        "/async-create-skb-order-by-id/",
+        status_code=status.HTTP_201_CREATED,
+        summary="Добавить запрос в СКБ-Техно фоновой задачей",
+    )
+    @handle_routes_errors
+    async def async_add_order_to_skb(
+        self, request: Request, order_id: int, x_api_key: str = Header(...)
+    ):
+        """
+        Добавить запрос в СКБ-Техно.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат добавления запроса.
+        """
+        return await self.service.async_create_skb_order(order_id=order_id)
+
     @router.get(
         "/{order_id}/get-result",
         status_code=status.HTTP_200_OK,
@@ -73,6 +91,27 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         :return: Результат запроса.
         """
         return await self.service.get_order_file_and_json_from_skb(
+            order_id=order_id
+        )
+
+    @router.get(
+        "/{order_id}/async-get-result",
+        status_code=status.HTTP_200_OK,
+        summary="Получить результат запроса фоновой задачей",
+    )
+    @route_limiting
+    @handle_routes_errors
+    async def async_get_order_result_from_skb(
+        self, request: Request, order_id: int, x_api_key: str = Header(...)
+    ):
+        """
+        Получить результат запроса из СКБ-Техно.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Результат запроса.
+        """
+        return await self.service.async_get_order_file_and_json_from_skb(
             order_id=order_id
         )
 

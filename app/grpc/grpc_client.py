@@ -41,9 +41,9 @@ class OrderGRPCClient:
                 CreateOrderRequest(order_id=order_id)
             )
 
-            # if response.error != "":
-            #     raise RuntimeError(response.error)
-            print(response)
+            if response.error != "":
+                raise RuntimeError(response.error)
+
             return {
                 "order_id": response.order_id,
                 "skb_id": response.skb_id,
@@ -62,12 +62,14 @@ class OrderGRPCClient:
             response = await self.stub.GetOrderResult(
                 GetOrderRequest(order_id=order_id, skb_id=skb_id)
             )
-            if response.error:
+
+            if response.error != "":
                 raise RuntimeError(response.error)
+
             return {
                 "order_id": response.order_id,
-                "status": response.status,
                 "skb_id": response.skb_id,
+                "status": response.status,
             }
         except RpcError as exc:
             self.logger.error(
