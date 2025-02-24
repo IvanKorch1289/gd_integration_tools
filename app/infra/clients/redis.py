@@ -185,9 +185,10 @@ class RedisClient:
     async def create_initial_streams(self) -> None:
         """Создает базовые стримы при инициализации клиента."""
         streams = [
-            "order_send_to_skb_stream",
             "email_send_stream",
+            "order_send_to_skb_stream",
             "order_get_result_from_skb",
+            "order_start_pipeline",
         ]
 
         for stream in streams:

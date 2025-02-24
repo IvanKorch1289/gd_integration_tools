@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from taskiq.exceptions import NoResultError
 from taskiq_pipelines import Pipeline
 
@@ -37,15 +39,25 @@ async def send_mail_task(body: dict) -> dict:
 async def create_skb_order_task(body: dict) -> dict:
     """Taskiq task for order creation"""
     try:
-        # result = await get_order_service().create_skb_order(order_id=order_id)
         result = await grpc_client.create_order(order_id=body["id"])
 
         if int(result.get("status")) != 200:
             raise NoResultError("SKB order creation failed")
 
-        return result
-    except Exception:
-        raise
+        return {
+            **result,
+            "notification_emails": body.get("email_for_answer", []),
+            "id": body["id"],
+        }
+    except Exception as exc:
+        tasks_logger.error("Create order error", exc_info=True)
+        # Возвращаем флаг ошибки и информацию для отправки письма
+        return {
+            "error": True,
+            "message": str(exc),
+            "notification_emails": body.get("email_for_answer", []),
+            "id": body["id"],
+        }
 
 
 @broker.task(retry=RETRY_POLICY)
@@ -63,17 +75,57 @@ async def get_skb_order_result_task(body: dict) -> dict:
         if int(result.get("status")) != 200:
             raise NoResultError("Order result not ready")
 
-        return {"final_result": result}
-    except Exception:
-        tasks_logger.error(
-            "Error during SKB order result retrieval", exc_info=True
-        )
-        raise
+        return {
+            "final_result": result,
+            "notification_emails": body["email_for_answer"],
+            "original_id": body["id"],
+        }
+    except Exception as exc:
+        tasks_logger.error("Get result error", exc_info=True)
+        # Возвращаем флаг ошибки и информацию для отправки письма
+        return {
+            "error": True,
+            "message": str(exc),
+            "notification_emails": body["email_for_answer"],
+            "original_id": body["id"],
+        }
 
 
-# Модифицированный пайплайн с ветвлением
-# skb_order_pipeline = (
-#     Pipeline(broker, create_skb_order_task)
-#     .call_next(get_skb_order_result_task)
-#     .call_next(send_mail_task)
-# )
+def _check_error_and_continue(result: dict, next_step: callable) -> dict:
+    """Проверяет наличие ошибки и решает, продолжать ли пайплайн."""
+    if result.get("error"):
+        # Если есть ошибка, завершаем пайплайн отправкой письма
+        return {
+            "notification_emails": result["notification_emails"],
+            "message": result["message"],
+            "error": True,
+        }
+    # Если ошибки нет, продолжаем пайплайн
+    return next_step(result)
+
+
+skb_order_pipeline = (
+    Pipeline(broker, create_skb_order_task)
+    # Успешное создание -> запуск получения результата через 30 мин
+    .call_next(
+        get_skb_order_result_task,
+        eta=datetime.now() + timedelta(minutes=30),
+        transform=lambda result, args: _check_error_and_continue(
+            result,
+            lambda res: {
+                "object_uuid": res["object_uuid"],
+                "notification_emails": res["notification_emails"],
+                "original_id": res["original_id"],
+            },
+        ),
+    )
+    # Финализация: отправка письма
+    .call_next(
+        send_mail_task,
+        transform=lambda result, args: {
+            "notification_emails": result["notification_emails"],
+            "message": result.get("message", "Нет дополнительной информации"),
+            "error": result.get("error", False),
+        },
+    )
+)

@@ -86,8 +86,11 @@ class OrderService(BaseService[OrderRepository]):
             # Создаем заказ через базовый метод
             order = await super().add(data=data)  # type: ignore
             if order:
+                # await stream_client.publish_to_redis(
+                #     message=order, stream="order_send_to_skb_stream"
+                # )
                 await stream_client.publish_to_redis(
-                    message=order, stream="order_send_to_skb_stream"
+                    message=order, stream="order_start_pipeline"
                 )
             return order
         except Exception:
@@ -130,7 +133,7 @@ class OrderService(BaseService[OrderRepository]):
                             "response_data": result.get("data"),
                         },
                     )
-                return {"instanse": order_data, "response": result}
+                return {"instance": order_data, "response": result}
             raise
         except Exception:
             app_logger.error("Error sending request to SKB", exc_info=True)
@@ -196,7 +199,7 @@ class OrderService(BaseService[OrderRepository]):
                             "response_data": data["Data"],
                         },
                     )
-                    content["response"] = data
+                    content["response"] = result
                 case "application/pdf":
                     # Обрабатываем PDF-ответ
                     file = await self.file_repo.add(
@@ -214,7 +217,6 @@ class OrderService(BaseService[OrderRepository]):
                 case _:
                     # Обработка других типов данных, если необходимо
                     content["response"] = None
-
             return content
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
@@ -237,28 +239,25 @@ class OrderService(BaseService[OrderRepository]):
             # Если заказ не активен, возвращаем сообщение
             if not order_data["is_active"]:
                 return {"hasError": True, "message": "Inactive order"}
-            json_response = await self.get_order_result(
-                order_id=order_id, response_type=ResponseTypeChoices.json
-            )
+
             # Запрашиваем JSON и PDF результаты параллельно
             json_res, pdf_res = await asyncio.gather(
                 self.get_order_result(order_id, ResponseTypeChoices.json),
                 self.get_order_result(order_id, ResponseTypeChoices.pdf),
             )
-
             # Обрабатываем результаты
             update_data = {}
-            update_data["response_data"] = json_response.get("data", {})
-
-            result = json_response.get("data", {}).get("Result")
+            update_data["response_data"] = json_res.get("response", {}).get(
+                "data", {}
+            )
 
             # Если оба запроса успешны, обновляем статус заказа
-            if result:
+            if json_res.get("response", {}).get("data", {}).get("Result"):
                 update_data["is_active"] = False
 
             await self.update(key="id", value=order_id, data=update_data)
 
-            return json_response
+            return json_res
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

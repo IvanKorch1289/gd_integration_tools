@@ -53,6 +53,8 @@ class OrderGRPCClient:
             self.logger.error(
                 f"gRPC error: {exc.code()}: {exc.details()}", exc_info=True
             )
+        except RuntimeError:
+            self.logger.error("Order creation failed", exc_info=True)
             raise
 
     async def get_order_result(self, order_id: int, skb_id: str):
@@ -75,6 +77,8 @@ class OrderGRPCClient:
             self.logger.error(
                 f"gRPC error: {exc.code()}: {exc.details()}", exc_info=True
             )
+        except RuntimeError:
+            self.logger.error("Result fetch failed", exc_info=True)
             raise
 
 

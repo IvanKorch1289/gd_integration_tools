@@ -16,6 +16,15 @@ async def handle_send_email(
     await send_mail_task.kiq(body.model_dump())
 
 
+@stream_client.redis_router.subscriber(stream="order_start_pipeline")
+async def handle_order_pipeline(
+    body: OrderSchemaOut, msg: RedisMessage, redis: Redis
+) -> Any:
+    from app.background_tasks.tasks import skb_order_pipeline
+
+    await skb_order_pipeline.kiq(body)
+
+
 @stream_client.redis_router.subscriber(stream="order_send_to_skb_stream")
 async def handle_order_send_to_skb(
     body: OrderSchemaOut, msg: RedisMessage, redis: Redis
@@ -23,15 +32,6 @@ async def handle_order_send_to_skb(
     from app.background_tasks.tasks import create_skb_order_task
 
     await create_skb_order_task.kiq(body.model_dump())
-
-
-@stream_client.redis_router.subscriber(stream="order_send_to_skb_stream")
-async def handle_order_pipeline(
-    body: OrderSchemaOut, msg: RedisMessage, redis: Redis
-) -> Any:
-    from app.background_tasks.tasks import skb_order_pipeline
-
-    await skb_order_pipeline.kiq(body)
 
 
 @stream_client.redis_router.subscriber(stream="order_get_result_from_skb")

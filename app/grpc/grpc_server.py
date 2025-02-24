@@ -27,13 +27,13 @@ class OrderGRPCServicer(OrderServiceServicer):
             )
 
             return OrderResponse(
-                order_id=result["instanse"]["id"],
-                skb_id=str(result["instanse"]["object_uuid"]),
+                order_id=result["instance"]["id"],
+                skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
                 error=(
                     ""
                     if result["response"]["status_code"] == 200
-                    else result["response"]["status_code"]
+                    else str(result["response"]["status_code"])
                 ),
             )
         except Exception as exc:
@@ -50,13 +50,13 @@ class OrderGRPCServicer(OrderServiceServicer):
             )
 
             return OrderResponse(
-                order_id=result["instanse"]["id"],
-                skb_id=str(result["instanse"]["object_uuid"]),
+                order_id=result["instance"]["id"],
+                skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
                 error=(
                     ""
                     if result["response"]["status_code"] == 200
-                    else result["response"]["status_code"]
+                    else str(result["response"]["status_code"])
                 ),
             )
         except Exception as exc:
