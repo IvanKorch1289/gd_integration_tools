@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import ClassVar, Literal
 
-from pydantic import Field
+from pydantic import Field, computed_field
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseSettingsWithLoader
@@ -32,11 +32,23 @@ class AppBaseSettings(BaseSettingsWithLoader):
         description="Absolute path to project root directory",
         examples=["/usr/src/app", "C:/Projects/my_app"],
     )
-    base_url: str = Field(
+    host: str = Field(
         ...,
-        min_length=1,
-        description="Base URL for application endpoints",
-        examples=["https://api.example.com", "http://localhost:8000"],
+        description="Server hostname or IP address",
+        examples=["localhost", "myapp.com"],
+    )
+    port: int = Field(
+        ...,
+        ge=1,
+        le=65535,
+        description="Server port number",
+    )
+    prefect_port: int = Field(
+        ...,
+        ge=1,
+        le=65535,
+        description="Prefect server port number",
+        examples=[8080, 8081],
     )
     environment: Literal["development", "staging", "production"] = Field(
         ...,
@@ -69,6 +81,16 @@ class AppBaseSettings(BaseSettingsWithLoader):
         description="Timeout for socket close in seconds",
         examples=[5],
     )
+
+    @computed_field
+    def base_url(self) -> str:
+        """Constructs the normalized endpoint string."""
+        return f"{self.host}:{self.port}"
+
+    @computed_field
+    def prefect_url(self) -> str:
+        """Constructs the normalized endpoint string Prefect URL."""
+        return f"{self.host}:{self.prefect_port}"
 
 
 class SchedulerSettings(BaseSettingsWithLoader):

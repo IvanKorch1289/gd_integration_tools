@@ -1,5 +1,7 @@
 app:
-  base_url: "localhost:8000"
+  host: "localhost"
+  port: 8000
+  prefect_port: 4200
   environment: "development"
   debug_mode: false
   version: 0.1.0

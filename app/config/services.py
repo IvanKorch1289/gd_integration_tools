@@ -102,7 +102,7 @@ class FileStorageSettings(BaseSettingsWithLoader):
         example=30,
     )
 
-    @property
+    @computed_field
     def normalized_endpoint(self) -> str:
         """Returns the endpoint without the connection scheme (e.g., 'https://')."""
         return str(self.endpoint).split("://")[-1]
@@ -175,6 +175,11 @@ class LogStorageSettings(BaseSettingsWithLoader):
         description="Mandatory fields in log messages",
         example={"timestamp", "level", "message"},
     )
+
+    @computed_field
+    def base_url(self) -> str:
+        """Constructs the normalized endpoint string."""
+        return f"{self.host}:{self.port}"
 
 
 class RedisSettings(BaseSettingsWithLoader):

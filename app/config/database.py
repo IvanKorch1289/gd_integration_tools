@@ -1,6 +1,6 @@
 from typing import ClassVar, Literal, Optional
 
-from pydantic import Field
+from pydantic import Field, computed_field
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseSettingsWithLoader
@@ -111,12 +111,12 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=["/path/to/ca.crt"],
     )
 
-    @property
+    @computed_field
     def async_connection_url(self) -> str:
         """Construct asynchronous database connection URL."""
         return self._build_connection_url(is_async=True)
 
-    @property
+    @computed_field
     def sync_connection_url(self) -> str:
         """Construct synchronous database connection URL."""
         return self._build_connection_url(is_async=False)
@@ -192,7 +192,7 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
         examples=[5],
     )
 
-    @property
+    @computed_field
     def connection_string(self) -> str:
         return f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}?authSource=admin"
 
