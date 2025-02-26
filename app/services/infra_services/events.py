@@ -4,7 +4,7 @@ from faststream.redis.fastapi import Redis, RedisMessage
 
 from app.infra.clients.stream import stream_client
 from app.schemas.base import EmailSchema
-from app.schemas.route_schemas.orders import OrderSchemaOut
+from app.schemas.route_schemas.orders import OrderSchemaIn, OrderSchemaOut
 
 
 @stream_client.redis_router.subscriber(stream="email_send_stream")
@@ -41,3 +41,12 @@ async def handle_order_get_result(
     from app.background_tasks.workflows import get_skb_order_result_workflow
 
     await get_skb_order_result_workflow(body.model_dump())
+
+
+@stream_client.kafka_router.subscriber("order-init-create-topic")
+async def handle_order_init_create(
+    body: OrderSchemaIn, msg: RedisMessage, redis: Redis
+) -> Any:
+    from app.services.route_services.orders import get_order_service
+
+    await get_order_service().add(body.model_dump())

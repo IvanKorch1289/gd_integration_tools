@@ -653,6 +653,33 @@ class QueueSettings(BaseSettingsWithLoader):
     dlq_suffix: str = Field(
         ..., description="Suffix for DLQ topic name", example="_dlq"
     )
+    client: str = Field(
+        ..., description="Client identifier", example="order-consumer"
+    )
+    retry_backoff_ms: int = Field(
+        ...,
+        ge=100,
+        le=30000,
+        description="Delay in milliseconds between retries",
+        example=1000,
+    )
+    metadata_max_age_ms: int = Field(
+        ...,
+        ge=1000,
+        le=300000,
+        description="Maximum metadata cache age in milliseconds",
+        example=300000,
+    )
+    connections_max_idle_ms: int = Field(
+        ...,
+        ge=1000,
+        le=600000,
+        description="Maximum connections idle time in milliseconds",
+        example=300000,
+    )
+    enable_idempotence: bool = Field(
+        ..., description="Enable idempotent producer behavior", example=True
+    )
 
     @field_validator("bootstrap_servers")
     @classmethod

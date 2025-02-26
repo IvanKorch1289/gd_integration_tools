@@ -49,8 +49,11 @@ def create_app() -> FastAPI:
     # Использование роутера для API v1
     app.include_router(get_v1_routers(), prefix="/api/v1")
 
-    # Клиент для работы с потоками
+    # Клиент для работы с Redis Streams
     app.include_router(stream_client.redis_router)
+
+    # Клиент для работы с Kafka
+    app.include_router(stream_client.kafka_router)
 
     # Корневой эндпоинт
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)

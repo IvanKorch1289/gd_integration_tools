@@ -268,6 +268,7 @@ queue:
   type: "kafka"
   bootstrap_servers:
     - "localhost:9092"
+  client: "gd-adv-tools-client"
   consumer_group: "api-consumers"
   auto_offset_reset: "earliest"
   max_poll_records: 500
@@ -277,8 +278,12 @@ queue:
   producer_linger_ms: 5
   security_protocol: "PLAINTEXT"
   ca_bundle: #"/path/to/certificate.pem"
-  compression_type: "lz4"
+  compression_type: "gzip"
   message_max_bytes: 1048576
   session_timeout_ms: 10000
   request_timeout_ms: 40000
+  retry_backoff_ms: 100
   max_in_flight_requests: 5
+  metadata_max_age_ms: 300000
+  connections_max_idle_ms: 600000
+  enable_idempotence: True

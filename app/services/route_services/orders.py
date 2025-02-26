@@ -86,9 +86,6 @@ class OrderService(BaseService[OrderRepository]):
             # Создаем заказ через базовый метод
             order = await super().add(data=data)  # type: ignore
             if order:
-                # await stream_client.publish_to_redis(
-                #     message=order, stream="order_send_to_skb_stream"
-                # )
                 await stream_client.publish_to_redis(
                     message=order, stream="order_start_pipeline"
                 )

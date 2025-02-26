@@ -117,7 +117,7 @@ async def order_processing_workflow(
         if not creation_result.get("success"):
             await send_notification_task(
                 {
-                    "to_emails": order_data["notification_emails"],
+                    "to_emails": order_data["email_for_answer"],
                     "subject": "Order Creation Failed",
                     "message": f"Error: {creation_result.get('error_message')}",
                 }
@@ -126,9 +126,8 @@ async def order_processing_workflow(
 
         # Initial pause before first check
         await pause_flow_run(
-            timeout=1800,  # 30 minutes
-            pause_key="initial-delay",
-            reschedule=True,
+            timeout=1800,  # Максимум 30 минут ожидания
+            key="approval-pause",  # Идентификатор паузы
         )
 
         # Phase 2: Poll result with simple retry logic
@@ -139,7 +138,7 @@ async def order_processing_workflow(
                 if result["success"]:
                     await send_notification_task(
                         {
-                            "to_emails": order_data["notification_emails"],
+                            "to_emails": order_data["email_for_answer"],
                             "subject": "Order Completed",
                             "message": f"Order {order_data['id']} processed",
                         }
@@ -150,14 +149,13 @@ async def order_processing_workflow(
                 if attempt < 3:
                     await pause_flow_run(
                         timeout=900,  # 15 minutes
-                        pause_key=f"retry-delay-{attempt}",
-                        reschedule=True,
+                        key=f"retry-delay-{attempt}",
                     )
             except Exception as exc:
                 if attempt == 3:
                     await send_notification_task(
                         {
-                            "to_emails": order_data["notification_emails"],
+                            "to_emails": order_data["email_for_answer"],
                             "subject": "Final Attempt Failed",
                             "message": f"Error: {str(exc)}",
                         }
@@ -169,7 +167,7 @@ async def order_processing_workflow(
     except Exception as exc:
         await send_notification_task(
             {
-                "to_emails": order_data["notification_emails"],
+                "to_emails": order_data["email_for_answer"],
                 "subject": "Workflow Failed",
                 "message": f"Critical error: {str(exc)}",
             }

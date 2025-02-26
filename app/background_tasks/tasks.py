@@ -19,7 +19,7 @@ __all__ = (
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=300,
+    timeout_seconds=600,
     persist_result=True,
 )
 async def send_notification_task(body: dict) -> dict:
@@ -39,7 +39,7 @@ async def send_notification_task(body: dict) -> dict:
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=300,
+    timeout_seconds=3600,
     persist_result=True,
 )
 async def create_skb_order_task(order_data: dict) -> ProcessingResult:
@@ -57,7 +57,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
         ConnectionError: For communication failures
     """
     # Validate input
-    if not order_data.get("order_id"):
+    if not order_data.get("id"):
         raise ValueError("Missing required order_id")
 
     try:
@@ -78,7 +78,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
         tasks_logger.error("Create order error", exc_info=True)
         return {
             "success": False,
-            "order_id": order_data["order_id"],
+            "order_id": order_data["id"],
             "result_data": {},
             "error_message": str(exc),
         }
@@ -90,7 +90,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=300,
+    timeout_seconds=86400,
     persist_result=True,
 )
 async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
@@ -108,7 +108,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
         ConnectionError: For communication failures
     """
     # Validate input
-    if not order_data.get("order_id"):
+    if not order_data.get("id"):
         raise ValueError("Missing required order_id")
 
     try:
@@ -129,7 +129,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
         tasks_logger.error("Get result error", exc_info=True)
         return {
             "success": False,
-            "order_id": order_data["order_id"],
+            "order_id": order_data["id"],
             "result_data": {},
             "error_message": str(exc),
         }
