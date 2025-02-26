@@ -65,7 +65,7 @@ class StreamClient:
             middlewares=[
                 ExceptionMiddleware(
                     handlers={
-                        Exception: lambda exc: stream_logger.info(
+                        Exception: lambda exc: stream_logger.error(
                             "Exception", exc_info=True
                         )
                     }

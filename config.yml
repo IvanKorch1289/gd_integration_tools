@@ -42,8 +42,14 @@ auth:
 
 
 tasks:
-  max_attempts: 5
-  seconds_delay: 30
+  task_max_attempts: 5
+  task_seconds_delay: 30
+  task_retry_jitter_factor: 0.5
+  task_timeout_seconds: 300
+  flow_max_attempts: 5
+  flow_seconds_delay: 900
+  flow_retry_jitter_factor: 0.5
+  flow_timeout_seconds: 90000
 
 
 grpc:

@@ -29,7 +29,7 @@ from app.config.services import (
     MailSettings,
     QueueSettings,
     RedisSettings,
-    TaskiQSettings,
+    TasksSettings,
     celery_settings,
     fs_settings,
     grpc_settings,
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     queue: QueueSettings = queue_settings
     mail: MailSettings = mail_settings
     celery: CelerySettings = celery_settings
-    tasks: TaskiQSettings = tasks_settings
+    tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
 
     # Хранилища

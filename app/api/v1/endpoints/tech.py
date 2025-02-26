@@ -95,7 +95,7 @@ class TechBV:
             HTMLResponse: Страница с кликабельной ссылкой на интерфейс мониторинга задач.
         """
         return utilities.generate_link_page(
-            settings.celery.flower_url, "Мониторинг задач"
+            settings.app.prefect_url, "Мониторинг задач"
         )
 
     @router.get(

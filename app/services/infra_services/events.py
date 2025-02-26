@@ -11,18 +11,18 @@ from app.schemas.route_schemas.orders import OrderSchemaOut
 async def handle_send_email(
     body: EmailSchema, msg: RedisMessage, redis: Redis
 ) -> None:
-    from app.background_tasks.workflows import send_mail_workflow
+    from app.background_tasks.workflows import send_notification_workflow
 
-    await send_mail_workflow(body.model_dump())
+    await send_notification_workflow(body.model_dump())
 
 
 @stream_client.redis_router.subscriber(stream="order_start_pipeline")
 async def handle_order_pipeline(
     body: OrderSchemaOut, msg: RedisMessage, redis: Redis
 ) -> Any:
-    from app.background_tasks.workflows import skb_order_workflow
+    from app.background_tasks.workflows import order_processing_workflow
 
-    await skb_order_workflow(body.model_dump())
+    await order_processing_workflow(body.model_dump())
 
 
 @stream_client.redis_router.subscriber(stream="order_send_to_skb_stream")

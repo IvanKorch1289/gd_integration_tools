@@ -20,6 +20,10 @@ __all__ = (
     "mail_settings",
     "QueueSettings",
     "queue_settings",
+    "TasksSettings",
+    "tasks_settings",
+    "GRPCSettings",
+    "grpc_settings",
 )
 
 
@@ -725,7 +729,7 @@ class QueueSettings(BaseSettingsWithLoader):
         }
 
 
-class TaskiQSettings(BaseSettingsWithLoader):
+class TasksSettings(BaseSettingsWithLoader):
     """Configuration for TaskiQ task queue and worker management."""
 
     yaml_group: ClassVar[str] = "tasks"
@@ -734,15 +738,45 @@ class TaskiQSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
-    max_attempts: int = Field(
+    task_max_attempts: int = Field(
         ...,
         description="Maximum number of attempts for a task",
         example=5,
     )
-    seconds_delay: int = Field(
+    task_seconds_delay: int = Field(
         ...,
         description="Initial delay in seconds for a task",
         example=60,
+    )
+    task_retry_jitter_factor: float = Field(
+        ...,
+        description="Jitter factor for exponential backoff",
+        example=0.5,
+    )
+    task_timeout_seconds: int = Field(
+        ...,
+        description="Maximum execution time in seconds for a task",
+        example=3600,
+    )
+    flow_max_attempts: int = Field(
+        ...,
+        description="Maximum number of attempts for a flow",
+        example=5,
+    )
+    flow_seconds_delay: int = Field(
+        ...,
+        description="Initial delay in seconds for a flow",
+        example=60,
+    )
+    flow_retry_jitter_factor: float = Field(
+        ...,
+        description="Jitter factor for exponential backoff",
+        example=0.5,
+    )
+    flow_timeout_seconds: int = Field(
+        ...,
+        description="Maximum execution time in seconds for a flow",
+        example=3600,
     )
 
 
@@ -778,5 +812,5 @@ redis_settings = RedisSettings()
 celery_settings = CelerySettings()
 mail_settings = MailSettings()
 queue_settings = QueueSettings()
-tasks_settings = TaskiQSettings()
+tasks_settings = TasksSettings()
 grpc_settings = GRPCSettings()
