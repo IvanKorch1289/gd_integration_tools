@@ -8,6 +8,7 @@ async def root_page():
     log_url = utilities.ensure_url_protocol(settings.logging.base_url)
     fs_url = utilities.ensure_url_protocol(settings.storage.interface_endpoint)
     prefect_url = utilities.ensure_url_protocol(settings.app.prefect_url)
+    queue_url = utilities.ensure_url_protocol(settings.queue.queue_ui_url)
 
     return f"""
     <!DOCTYPE html>
@@ -143,6 +144,7 @@ async def root_page():
                 <h2>Технические интерфейсы</h2>
                 <a href="{log_url}" target="_blank">Хранилище логов</a>
                 <a href="{fs_url}" target="_blank">Файловое хранилище</a>
+                <a href="{queue_url}" target="_blank">Менеджер очередей</a>
                 <a href="{prefect_url}" target="_blank">Workflow менеджер</a>
             </div>
         </div>

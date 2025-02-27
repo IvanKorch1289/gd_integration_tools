@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(stream_client.redis_router)
 
     # Клиент для работы с Kafka
-    app.include_router(stream_client.kafka_router)
+    app.include_router(stream_client.rabbit_router)
 
     # Корневой эндпоинт
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)

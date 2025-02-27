@@ -115,56 +115,46 @@ services:
     networks:
       - my_network
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
-    container_name: zookeeper
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    hostname: rabbitmq
     env_file:
       - .env
     environment:
-      ZOOKEEPER_CLIENT_PORT: ${ZOO_CLIENT_PORT}
-      ZOOKEEPER_TICK_TIME: ${ZOO_TICK_TIME}
+      RABBITMQ_DEFAULT_USER: "${QUEUE_USERNAME}"
+      RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
+      RABBITMQ_DEFAULT_VHOST: /
     ports:
-      - "2181:2181"
+      - "5672:5672"  # AMQP порт для клиентов
+      - "15672:15672"  # Web UI порт
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - my_network
+      - rabbitmq_network
 
-  kafka:
-    image: confluentinc/cp-kafka:7.0.1
-    container_name: kafka
+  rabbitmq-setup:
+    image: rabbitmq:3.12-management
     depends_on:
-      - zookeeper
+      - rabbitmq
     env_file:
       - .env
     environment:
-      KAFKA_BROKER_ID: ${QUEUE_BROKER_ID}
-      KAFKA_ZOOKEEPER_CONNECT: ${QUEUE_ZOOKEEPER_CONNECT}
-      # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${QUEUE_LISTENER_SECURITY_PROTOCOL_MAP}
-      KAFKA_ADVERTISED_LISTENERS: ${QUEUE_ADVERTISED_LISTENERS}
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${QUEUE_OFFSETS_TOPIC_REPLICATION_FACTOR}
-    ports:
-      - "9092:9092"
+      RABBITMQ_DEFAULT_USER: "${QUEUE_USERNAME}"
+      RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
+    command: >
+      bash -c "
+        until rabbitmqctl await_startup; do sleep 1; done &&
+        rabbitmqadmin declare queue name=my_queue durable=true &&
+        rabbitmqadmin declare exchange name=my_exchange type=direct &&
+        rabbitmqadmin declare binding source=my_exchange destination=my_queue routing_key=my_routing_key
+      "
     networks:
-      - my_network
-
-  akhq:
-    image: tchiotludo/akhq
-    container_name: akhq
-    environment:
-      AKHQ_CONFIGURATION: |
-        akhq:
-          connections:
-            kafka:
-              properties:
-                bootstrap.servers: "kafka:9092"
-    ports:
-      - "8040:8080"
-    depends_on:
-      - kafka
-    networks:
-      - my_network
+      - rabbitmq_network
   
 volumes:
   mongodb_data:
+  rabbitmq_data:
   esdata:
   graylog_data:
   graylog_journal:
@@ -175,4 +165,6 @@ networks:
   graylog-es-mongo-net:
     driver: bridge
   my_network:
+    driver: bridge
+  rabbitmq_network:
     driver: bridge

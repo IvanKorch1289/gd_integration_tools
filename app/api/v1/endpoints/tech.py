@@ -83,7 +83,7 @@ class TechBV:
     @router.get(
         "/task-monitor",
         summary="Получить ссылку на интерфейс мониторинга фоновых задач",
-        operation_id="getLinkToFlower",
+        operation_id="getLinkToPrefect",
         response_class=HTMLResponse,
     )
     @handle_routes_errors
@@ -96,6 +96,24 @@ class TechBV:
         """
         return utilities.generate_link_page(
             settings.app.prefect_url, "Мониторинг задач"
+        )
+
+    @router.get(
+        "/queue-monitor",
+        summary="Получить ссылку на интерфейс мониторинга очередей",
+        operation_id="getLinkToRabbitMQ",
+        response_class=HTMLResponse,
+    )
+    @handle_routes_errors
+    async def redirect_to_queue_monitor(self):
+        """
+        Возвращает HTML-страницу с ссылкой на интерфейс мониторинга очередей.
+
+        Returns:
+            HTMLResponse: Страница с кликабельной ссылкой на интерфейс мониторинга очередей.
+        """
+        return utilities.generate_link_page(
+            settings.queue.queue_ui_url, "Мониторинг очередей"
         )
 
     @router.get(

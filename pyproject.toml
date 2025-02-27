@@ -67,6 +67,7 @@ grpcio-tools = "^1.70.0"
 memory-profiler = "^0.61.0"
 py-spy = "^0.4.0"
 prefect = "^3.2.7"
+aio-pika = "^9.5.5"
 
 
 [tool.poetry.group.dev.dependencies]

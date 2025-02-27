@@ -1,6 +1,5 @@
 from pathlib import Path
-from re import match
-from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -557,47 +556,53 @@ class QueueSettings(BaseSettingsWithLoader):
     type: Literal["kafka", "rabbitmq"] = Field(
         ..., description="Message broker type", example="kafka"
     )
-    bootstrap_servers: List[str] = Field(
+    host: str = Field(
         ...,
-        min_length=1,
-        description="List of broker servers in host:port format",
-        example=["kafka1:9092", "kafka2:9092"],
+        description="Broker hostname",
+        example="broker.example.com",
     )
-    consumer_group: str = Field(
-        ...,
-        description="Consumer group identifier",
-        example="order-processing",
-    )
-    auto_offset_reset: Literal["earliest", "latest"] = Field(
-        ...,
-        description="Offset reset policy when no initial offset exists",
-        example="latest",
-    )
-    max_poll_records: int = Field(
+    port: int = Field(
         ...,
         ge=1,
-        le=10000,
-        description="Maximum number of records per consumer poll",
-        example=500,
+        le=65535,
+        description="Broker port number",
     )
-    producer_acks: Literal["all", "0", "1"] = Field(
+    ui_port: int = Field(
         ...,
-        description="Number of broker acknowledgments required for message commit",
-        example="all",
+        ge=1,
+        le=65535,
+        description="Broker UI port number",
+        example=9121,
     )
-    producer_linger_ms: int = Field(
+    timeout: int = Field(
         ...,
-        ge=0,
-        le=10000,
-        description="Producer batch delay in milliseconds",
-        example=5,
+        ge=5,
+        le=300,
+        description="Broker connection timeout in seconds",
+        example=30,
     )
-    security_protocol: Literal[
-        "PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"
-    ] = Field(
+    reconnect_interval: int = Field(
         ...,
-        description="Broker communication security protocol",
-        example="SSL",
+        ge=5,
+        le=300,
+        description="Interval between reconnection attempts in seconds",
+        example=60,
+    )
+    max_consumers: int = Field(
+        ...,
+        ge=1,
+        description="Maximum number of consumer instances",
+        example=10,
+    )
+    graceful_timeout: int = Field(
+        ...,
+        ge=5,
+        le=300,
+        description="Graceful shutdown timeout in seconds",
+        example=60,
+    )
+    use_ssl: bool = Field(
+        ..., description="Enable SSL/TLS for secure connections", example=True
     )
     ca_bundle: Optional[Path] = Field(
         ...,
@@ -605,155 +610,39 @@ class QueueSettings(BaseSettingsWithLoader):
         example="/path/to/ca.pem",
     )
     username: Optional[str] = Field(
-        ..., description="SASL authentication username", example="kafka-user"
+        ..., description="Authentication username", example="kafka-user"
     )
     password: Optional[str] = Field(
         ...,
-        description="SASL authentication password",
+        description="authentication password",
         example="securepassword123",
     )
-    compression_type: Literal["none", "gzip", "snappy", "lz4", "zstd"] = Field(
-        ..., description="Message compression algorithm", example="gzip"
-    )
-    message_max_bytes: int = Field(
-        ...,
-        ge=1,
-        le=104857600,
-        description="Maximum message size in bytes",
-        example=1048576,
-    )
-    session_timeout_ms: int = Field(
-        ...,
-        ge=1000,
-        le=3600000,
-        description="Consumer session timeout in milliseconds",
-        example=10000,
-    )
-    request_timeout_ms: int = Field(
-        ...,
-        ge=1000,
-        le=3600000,
-        description="Broker request timeout in milliseconds",
-        example=30000,
-    )
-    max_in_flight_requests: int = Field(
-        ...,
-        ge=1,
-        le=10,
-        description="Maximum number of unacknowledged requests",
-        example=30000,
-    )
-    max_processing_attempts: int = Field(
-        ...,
-        ge=1,
-        le=10,
-        description="Maximum processinf attempta",
-        example=30000,
-    )
-    dlq_suffix: str = Field(
-        ..., description="Suffix for DLQ topic name", example="_dlq"
-    )
-    client: str = Field(
-        ..., description="Client identifier", example="order-consumer"
-    )
-    retry_backoff_ms: int = Field(
-        ...,
-        ge=100,
-        le=30000,
-        description="Delay in milliseconds between retries",
-        example=1000,
-    )
-    metadata_max_age_ms: int = Field(
-        ...,
-        ge=1000,
-        le=300000,
-        description="Maximum metadata cache age in milliseconds",
-        example=300000,
-    )
-    connections_max_idle_ms: int = Field(
-        ...,
-        ge=1000,
-        le=600000,
-        description="Maximum connections idle time in milliseconds",
-        example=300000,
-    )
-    enable_idempotence: bool = Field(
-        ..., description="Enable idempotent producer behavior", example=True
-    )
 
-    @field_validator("bootstrap_servers")
+    @field_validator("port")
     @classmethod
-    def validate_servers(cls, v):
-        for server in v:
-            if not match(r"^[\w\.-]+:\d+$", server):
-                raise ValueError(
-                    f"Invalid server format: {server}. Expected host:port"
-                )
+    def validate_port(cls, v, values):
+        if v == 465 and not values.data.get("use_tls"):
+            raise ValueError("Port 465 requires SSL/TLS to be enabled")
         return v
 
     @field_validator("ca_bundle")
     @classmethod
-    def validate_ca_bundle(cls, v):
+    def validate_ca_path(cls, v):
         if v and not v.exists():
             raise ValueError(f"CA bundle file not found: {v}")
         return v
 
-    def get_kafka_config(self) -> Dict[str, Any]:
-        """Generate Kafka client configuration dictionary."""
-        config = {
-            "bootstrap.servers": ",".join(self.bootstrap_servers),
-            "security.protocol": self.security_protocol,
-            "compression.type": self.compression_type,
-            "message.max.bytes": self.message_max_bytes,
-            "session.timeout.ms": self.session_timeout_ms,
-            "request.timeout.ms": self.request_timeout_ms,
-        }
+    @computed_field(description="Construct Queue connection URL")
+    def queue_url(self) -> str:
+        """Construct Queue connection URL."""
+        return (
+            f"amqp://{self.username}:{self.password}@{self.host}:{self.port}/"
+        )
 
-        if self.ca_bundle:
-            config["ssl.ca.location"] = str(self.ca_bundle)
-
-        if self.security_protocol.startswith("SASL"):
-            config.update(
-                {
-                    "sasl.mechanism": "PLAIN",
-                    "sasl.username": self.username,
-                    "sasl.password": self.password,
-                }
-            )
-
-        return config
-
-    def get_kafka_producer_config(self) -> Dict[str, Any]:
-        return {
-            "acks": self.producer_acks,
-            "linger.ms": self.producer_linger_ms,
-            "compression.type": self.compression_type,
-            "max.in.flight.requests.per.connection": self.max_in_flight_requests,
-            **self.get_common_config(),
-        }
-
-    def get_kafka_consumer_config(self) -> Dict[str, Any]:
-        return {
-            "group.id": self.consumer_group,
-            "auto.offset.reset": self.auto_offset_reset,
-            "max.poll.records": self.max_poll_records,
-            "session.timeout.ms": self.session_timeout_ms,
-            **self.get_common_config(),
-        }
-
-    def get_common_config(self) -> Dict[str, Any]:
-        return {
-            "bootstrap.servers": ",".join(self.bootstrap_servers),
-            "request.timeout.ms": self.request_timeout_ms,
-            "security.protocol": self.security_protocol,
-            "ssl.ca.location": str(self.ca_bundle) if self.ca_bundle else None,
-            "sasl.mechanism": (
-                "PLAIN" if self.security_protocol.startswith("SASL") else None
-            ),
-            "sasl.username": self.username,
-            "sasl.password": self.password,
-            "message.max.bytes": self.message_max_bytes,
-        }
+    @computed_field(description="Construct Queue connection URL")
+    def queue_ui_url(self) -> str:
+        """Construct Queue connection URL."""
+        return f"{self.host}:{self.ui_port}"
 
 
 class TasksSettings(BaseSettingsWithLoader):

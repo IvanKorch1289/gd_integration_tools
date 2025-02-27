@@ -6,7 +6,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
-from faststream.security import SASLPlaintext
+from faststream.security import BaseSecurity
 
 from app.config.settings import settings
 from app.utils.logging_service import stream_logger
@@ -53,17 +53,17 @@ class StreamClient:
 
         self.stream_client = FastStream(logger=stream_logger)
         self.redis_settings = settings.redis
-        self.kafka_settings = settings.queue
-        self.kafka_broker = None
+        self.rabbit_settings = settings.queue
+        self.rabbit_broker = None
         self.redis_router = None
-        self.kafka_router = None
+        self.rabbitmq_router = None
         self.scheduler = scheduler_manager.scheduler
         self._initialize_routers()
 
     def _initialize_routers(self):
-        """Set up Redis and Kafka routers with configuration."""
+        """Set up Redis and RabbitMQ routers with configuration."""
         self._setup_redis_router()
-        self._setup_kafka_router()
+        self._setup_rabbit_router()
 
     def _setup_redis_router(self):
         """Configure Redis router with settings from configuration."""
@@ -92,26 +92,22 @@ class StreamClient:
             ],
         )
 
-    def _setup_kafka_router(self):
-        """Configure Kafka router with settings from configuration."""
-        from faststream.kafka.fastapi import KafkaRouter
+    def _setup_rabbit_router(self):
+        """Configure RabbitMQ router with settings from configuration."""
+        from faststream.rabbit.fastapi import RabbitRouter
 
-        self.kafka_router = KafkaRouter(
-            bootstrap_servers=self.kafka_settings.bootstrap_servers,
-            # security=SASLPlaintext(
-            #     use_ssl=False,
-            #     ssl_context=None,
-            #     username=self.kafka_settings.username,
-            #     password=self.kafka_settings.password,
-            # ),
-            client_id=self.kafka_settings.client,
-            request_timeout_ms=self.kafka_settings.request_timeout_ms,
-            retry_backoff_ms=self.kafka_settings.retry_backoff_ms,
-            metadata_max_age_ms=self.kafka_settings.metadata_max_age_ms,
-            compression_type=self.kafka_settings.compression_type,
-            enable_idempotence=self.kafka_settings.enable_idempotence,
+        self.rabbit_router = RabbitRouter(
+            url=self.rabbit_settings.queue_url,
+            security=BaseSecurity(
+                use_ssl=self.rabbit_settings.use_ssl,
+                # ssl_context=None,
+            ),
+            timeout=self.rabbit_settings.timeout,
+            reconnect_interval=self.rabbit_settings.reconnect_interval,
+            max_consumers=self.rabbit_settings.max_consumers,
+            graceful_timeout=self.rabbit_settings.graceful_timeout,
             schema_url="/asyncapi",
-            asyncapi_tags=[{"name": "kafka"}],
+            asyncapi_tags=[{"name": "rabbitmq"}],
             include_in_schema=True,
             middlewares=[
                 ExceptionMiddleware(
@@ -125,7 +121,7 @@ class StreamClient:
             ],
         )
 
-    async def publish_to_kafka(
+    async def publish_to_rabbit(
         self,
         topic: str,
         message: Dict[str, Any],
@@ -135,10 +131,10 @@ class StreamClient:
         scheduler: Optional[str] = None,
     ):
         """
-        Publish a message to Kafka either immediately, with delay, or on schedule.
+        Publish a message to RabbitMQ either immediately, with delay, or on schedule.
 
         Args:
-            topic: Target Kafka topic
+            topic: Target RabbitMQ topic
             message: Message content as dictionary
             key: Optional message key
             partition: Optional target partition
@@ -148,20 +144,20 @@ class StreamClient:
         Raises:
             ValueError: If both delay and scheduler are specified
         """
-        if self.kafka_router is None:
-            raise ValueError("Kafka router is not initialized")
+        if self.rabbit_router is None:
+            raise ValueError("RabbitMQ router is not initialized")
 
         self._validate_scheduling_params(delay, scheduler)
 
         if not delay and not scheduler:
-            await self._publish_kafka_immediately(
+            await self._publish_rabbit_immediately(
                 topic, message, key, partition
             )
         else:
             self._schedule_publish(
                 delay=delay,
                 scheduler=scheduler,
-                publish_func=self._execute_kafka_publish,
+                publish_func=self._execute_rabbit_publish,
                 func_kwargs={
                     "topic": topic,
                     "message": message,
@@ -217,15 +213,15 @@ class StreamClient:
         if delay and scheduler:
             raise ValueError("Cannot use both delay and scheduler")
 
-    async def _publish_kafka_immediately(
+    async def _publish_rabbit_immediately(
         self,
         topic: str,
         message: Dict[str, Any],
         key: Optional[str],
         partition: Optional[int],
     ):
-        """Immediately publish message to Kafka."""
-        await self.kafka_router.broker.publish(
+        """Immediately publish message to RabbitMQ."""
+        await self.rabbit_router.broker.publish(
             message=message,
             topic=topic,
             key=key,
@@ -282,7 +278,7 @@ class StreamClient:
             headers=headers,
         )
 
-    async def _execute_kafka_publish(
+    async def _execute_rabbit_publish(
         self,
         topic: str,
         message: Dict[str, Any],
@@ -290,7 +286,7 @@ class StreamClient:
         partition: Optional[int],
     ):
         """Execute scheduled Kafka publish operation."""
-        await self.kafka_router.broker.publish(
+        await self.rabbit_router.broker.publish(
             message=message,
             topic=topic,
             key=key,
