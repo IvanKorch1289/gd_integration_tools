@@ -51,7 +51,9 @@ class MailService:
                 await smtp.send_message(msg)
                 self.logger.info(f"Sent message: {msg}")
         except SMTPException as exc:
-            self.logger.error("Failed to send email", exc_info=True)
+            self.logger.error(
+                f"Failed to send email: {str(exc)}", exc_info=True
+            )
             raise RuntimeError(f"Failed to send email: {exc}") from exc
 
     def _prepare_message(self, to_emails, subject, message, html_message):
@@ -134,7 +136,9 @@ class MailService:
 
             await self.send_email(to_emails, subject, content)
         except Exception as exc:
-            raise RuntimeError(f"Template processing failed: {exc}") from exc
+            raise RuntimeError(
+                f"Template processing failed: {str(exc)}"
+            ) from exc
 
 
 @asynccontextmanager

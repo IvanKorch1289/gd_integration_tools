@@ -87,11 +87,13 @@ async def check_all_services():
 
             await stream_client.publish_to_redis(
                 message=EmailSchema.model_validate(data),
-                stream="email_send_stream",
+                stream=settings.redis.get_stream_name("email"),
             )
         scheduler_logger.info(f"Health check completed. Result: {result}")
-    except Exception:
-        scheduler_logger.error("Error during health check", exc_info=True)
+    except Exception as exc:
+        scheduler_logger.error(
+            f"Error during health check: {str(exc)}", exc_info=True
+        )
         raise  # Exception will be handled by global exception handler
 
 

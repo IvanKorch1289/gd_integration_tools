@@ -65,9 +65,10 @@ class RedisClient:
 
             self._client = Redis(connection_pool=self._connection_pool)
             self.logger.info("Redis connection pool initialized successfully")
-        except RedisError:
+        except RedisError as exc:
             self.logger.error(
-                "Connection pool initialization failed", exc_info=True
+                f"Connection pool initialization failed: {str(exc)}",
+                exc_info=True,
             )
             raise
 
@@ -96,8 +97,10 @@ class RedisClient:
             if not self._client:
                 raise RedisError("Redis client not initialized")
             yield self._client
-        except (RedisError, ConnectionError, TimeoutError):
-            self.logger.error("Redis connection error", exc_info=True)
+        except (RedisError, ConnectionError, TimeoutError) as exc:
+            self.logger.error(
+                f"Redis connection error: {str(exc)}", exc_info=True
+            )
 
     async def close(self) -> None:
         """Close all Redis connections and clean up resources."""
@@ -105,9 +108,9 @@ class RedisClient:
             try:
                 await self._connection_pool.disconnect()
                 self.logger.info("Redis connection pool closed successfully")
-            except Exception:
+            except Exception as exc:
                 self.logger.error(
-                    "Error closing connection pool", exc_info=True
+                    f"Error closing connection pool: {str(exc)}", exc_info=True
                 )
             finally:
                 self._client = None
@@ -176,31 +179,26 @@ class RedisClient:
                     if result == b"stream":
                         return True
                     return False
-        except Exception:
+        except Exception as exc:
             self.logger.error(
-                f"Error checking stream existence {stream_name}", exc_info=True
+                f"Error checking stream existence {stream_name}: {str(exc)}",
+                exc_info=True,
             )
             return False
 
     async def create_initial_streams(self) -> None:
         """Создает базовые стримы при инициализации клиента."""
-        streams = [
-            "email_send_stream",
-            "order_send_to_skb_stream",
-            "order_get_result_from_skb",
-            "order_start_pipeline",
-        ]
-
-        for stream in streams:
+        for stream in self.settings.streams:
             try:
-                if not await self._stream_exists(stream):
-                    await self._initialize_stream(stream)
+                if not await self._stream_exists(stream["value"]):
+                    await self._initialize_stream(stream["value"])
                     self.logger.info(
-                        f"Stream {stream} initialized with settings"
+                        f"Stream {stream["value"]} initialized with settings"
                     )
-            except Exception:
+            except Exception as exc:
                 self.logger.error(
-                    f"Failed to initialize stream {stream}", exc_info=True
+                    f"Failed to initialize stream {stream["value"]}: {str(exc)}",
+                    exc_info=True,
                 )
 
     async def _initialize_stream(self, stream_name: str) -> None:
@@ -268,8 +266,10 @@ class RedisClient:
                     )
 
                     return event_id
-        except RedisError:
-            self.logger.error("Stream publish failed", exc_info=True)
+        except RedisError as exc:
+            self.logger.error(
+                f"Stream publish failed: {str(exc)}", exc_info=True
+            )
             raise
 
     async def stream_move(
@@ -316,8 +316,8 @@ class RedisClient:
                     self.logger.debug(
                         f"Moved event {event_id} from {source_stream} to {dest_stream}"
                     )
-        except RedisError:
-            self.logger.error("Stream move failed", exc_info=True)
+        except RedisError as exc:
+            self.logger.error(f"Stream move failed: {str(exc)}", exc_info=True)
             raise
 
     async def stream_read(
@@ -381,8 +381,8 @@ class RedisClient:
                             result.append(entry)
 
                     return result
-        except RedisError:
-            self.logger.error("Stream read failed", exc_info=True)
+        except RedisError as exc:
+            self.logger.error(f"Stream read failed: {str(exc)}", exc_info=True)
             raise
 
     async def stream_get_stats(
@@ -413,8 +413,10 @@ class RedisClient:
                         "first_event": await conn.xrange(stream, count=1),
                         "groups": await conn.xinfo_groups(stream),
                     }
-        except RedisError:
-            self.logger.error("Stream stats failed", exc_info=True)
+        except RedisError as exc:
+            self.logger.error(
+                f"Stream stats failed: {str(exc)}", exc_info=True
+            )
             raise
 
     async def stream_retry_event(
@@ -474,8 +476,8 @@ class RedisClient:
                     await conn.xadd(stream, event_data, id="*")
                     await conn.xdel(stream, event_id)
                     return True
-        except RedisError:
-            self.logger.error("Event retry failed", exc_info=True)
+        except RedisError as exc:
+            self.logger.error(f"Event retry failed: {str(exc)}", exc_info=True)
             raise
 
 

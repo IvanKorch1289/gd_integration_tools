@@ -427,7 +427,7 @@ class HttpClient:
                 return loads(content.decode("utf-8"))
             except Exception as exc:
                 self.logger.error(
-                    "JSON parsing error",
+                    f"JSON parsing error: {str(exc)}",
                     extra={"content": content[:200], "error": str(exc)},
                 )
                 raise ValueError("Invalid JSON response") from exc
@@ -452,8 +452,10 @@ class HttpClient:
                 await sleep(self.settings.purging_interval)
                 if self.connector and self.settings.enable_connection_purging:
                     await self.connector.close()
-            except Exception:
-                self.logger.error("Error purging connections", exc_info=True)
+            except Exception as exc:
+                self.logger.error(
+                    f"Error purging connections: {str(exc)}", exc_info=True
+                )
 
     async def close(self) -> None:
         """Release all network resources and connections."""
@@ -462,8 +464,10 @@ class HttpClient:
                 await self._close_session()
                 if self.connector and not self.connector.closed:
                     await self.connector.close()
-        except Exception:
-            self.logger.error("Error closing network resources", exc_info=True)
+        except Exception as exc:
+            self.logger.error(
+                f"Error closing network resources: {str(exc)}", exc_info=True
+            )
 
     # endregion
 

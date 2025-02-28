@@ -30,8 +30,10 @@ async def init_limiter():
         )
         await FastAPILimiter.init(redis_connection)
         app_logger.info("Limits initialize...")
-    except Exception:
-        app_logger.error("Error with initialize limits", exc_info=True)
+    except Exception as exc:
+        app_logger.error(
+            f"Error with initialize limits: {str(exc)}", exc_info=True
+        )
 
 
 class RouteLimiter:

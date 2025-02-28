@@ -37,7 +37,9 @@ class OrderGRPCServicer(OrderServiceServicer):
                 ),
             )
         except Exception as exc:
-            self.logger.error("Order creation failed", exc_info=True)
+            self.logger.error(
+                f"Order creation failed: {str(exc)}", exc_info=True
+            )
             return OrderResponse(error=str(exc))
 
     async def GetOrderResult(self, request, context):
@@ -60,7 +62,9 @@ class OrderGRPCServicer(OrderServiceServicer):
                 ),
             )
         except Exception as exc:
-            self.logger.error("Result fetch failed", exc_info=True)
+            self.logger.error(
+                f"Result fetch failed: {str(exc)}", exc_info=True
+            )
             return OrderResponse(error=str(exc))
 
 

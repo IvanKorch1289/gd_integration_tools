@@ -12,10 +12,10 @@ class HealthCheck:
 
     async def check_all_services(self):
         """
-        Проверяет состояние всех сервисов.
+        Checks the status of all supported services.
 
         Returns:
-            dict: Результат проверки состояния всех сервисов.
+            dict: Comprehensive status report of all services.
         """
         db_check = await self.check_database()
         redis_check = await self.check_redis()
@@ -23,12 +23,15 @@ class HealthCheck:
         s3_bucket_check = await self.check_s3_bucket()
         graylog_check = await self.check_graylog()
         smtp_check = await self.check_smtp()
+        rabbitmq_check = await self.check_rabbitmq()
+
         response_data = {
             "db": db_check,
             "redis": redis_check,
             "s3": all([s3_check, s3_bucket_check]),
             "graylog": graylog_check,
             "smtp": smtp_check,
+            "rabbitmq": rabbitmq_check,
         }
 
         if all(response_data.values()):
@@ -46,10 +49,10 @@ class HealthCheck:
 
     async def check_database(self):
         """
-        Проверяет состояние базы данных.
+        Verifies database connection status.
 
         Returns:
-            dict: Результат проверки состояния базы данных.
+            dict: Database connection health check results.
         """
         from app.infra.db.database import db_initializer
 
@@ -57,10 +60,10 @@ class HealthCheck:
 
     async def check_redis(self):
         """
-        Проверяет состояние Redis.
+        Tests Redis connection availability.
 
         Returns:
-            dict: Результат проверки состояния Redis.
+            dict: Redis connection health check results.
         """
         from app.infra.clients.redis import redis_client
 
@@ -68,10 +71,10 @@ class HealthCheck:
 
     async def check_s3(self):
         """
-        Проверяет состояние S3.
+        Validates S3 storage connectivity.
 
         Returns:
-            dict: Результат проверки состояния S3.
+            dict: S3 connection health check results.
         """
         from app.infra.clients.storage import s3_client
 
@@ -79,10 +82,10 @@ class HealthCheck:
 
     async def check_s3_bucket(self):
         """
-        Проверяет наличие бакета в S3.
+        Confirms existence of required S3 bucket.
 
         Returns:
-            dict: Результат проверки наличия бакета в S3.
+            dict: S3 bucket verification results.
         """
         from app.infra.clients.storage import s3_client
 
@@ -90,10 +93,10 @@ class HealthCheck:
 
     async def check_graylog(self):
         """
-        Проверяет состояние Graylog.
+        Checks Graylog logging service status.
 
         Returns:
-            dict: Результат проверки состояния Graylog.
+            dict: Graylog service health check results.
         """
         from app.infra.clients.logger import graylog_handler
 
@@ -101,14 +104,34 @@ class HealthCheck:
 
     async def check_smtp(self):
         """
-        Проверяет состояние SMTP-сервера.
+        Tests SMTP server connectivity.
 
         Returns:
-            dict: Результат проверки состояния SMTP-сервера.
+            dict: SMTP server health check results.
         """
         from app.infra.clients.smtp import smtp_client
 
         return await smtp_client.test_connection()
+
+    async def check_rabbitmq(self):
+        """
+        Verifies RabbitMQ message broker availability.
+
+        Returns:
+            dict: RabbitMQ connection health check results.
+        """
+        from aio_pika import connect
+
+        from app.config.settings import settings
+
+        try:
+            connection = await connect(settings.queue.queue_url)
+
+            await connection.close()
+
+            return True
+        except Exception:
+            return False
 
 
 @asynccontextmanager

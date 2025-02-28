@@ -40,8 +40,10 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
 
         try:
             response = await call_next(request)
-        except Exception:
-            self.logger.error("Request processing error", exc_info=True)
+        except Exception as exc:
+            self.logger.error(
+                f"Request processing error: {str(exc)}", exc_info=True
+            )
             raise
 
         if self.log_body:
@@ -87,9 +89,10 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
                 # Decompress gzip data
                 with gzip.GzipFile(fileobj=BytesIO(body)) as gzip_file:
                     body = gzip_file.read()
-            except Exception:
+            except Exception as exc:
                 self.logger.error(
-                    "Failed to decompress gzip response", exc_info=True
+                    f"Failed to decompress gzip response: {str(exc)}",
+                    exc_info=True,
                 )
                 return
 
@@ -104,9 +107,10 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
                     self.logger.debug(f"Response body: {decoded_body}")
             except UnicodeDecodeError:
                 self.logger.warning("Response body is not valid UTF-8 text")
-            except Exception:
+            except Exception as exc:
                 self.logger.error(
-                    "Failed to decode response body", exc_info=True
+                    f"Failed to decode response body: {str(exc)}",
+                    exc_info=True,
                 )
 
     @staticmethod

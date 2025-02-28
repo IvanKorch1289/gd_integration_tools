@@ -81,14 +81,14 @@ class StreamClient:
             asyncapi_tags=[{"name": "redis"}],
             include_in_schema=True,
             middlewares=[
+                MessageLoggingMiddleware,
                 ExceptionMiddleware(
                     handlers={
                         Exception: lambda exc: stream_logger.error(
-                            "Exception", exc_info=True
+                            f"Exception: {exc}", exc_info=True
                         )
                     }
                 ),
-                MessageLoggingMiddleware,
             ],
         )
 
@@ -110,14 +110,14 @@ class StreamClient:
             asyncapi_tags=[{"name": "rabbitmq"}],
             include_in_schema=True,
             middlewares=[
+                MessageLoggingMiddleware,
                 ExceptionMiddleware(
                     handlers={
                         Exception: lambda exc: stream_logger.error(
-                            "Exception", exc_info=True
+                            f"Exception: {exc}", exc_info=True
                         )
                     }
                 ),
-                MessageLoggingMiddleware,
             ],
         )
 
@@ -125,8 +125,6 @@ class StreamClient:
         self,
         topic: str,
         message: Dict[str, Any],
-        key: Optional[str] = None,
-        partition: Optional[int] = None,
         delay: Optional[timedelta] = None,
         scheduler: Optional[str] = None,
     ):
@@ -150,9 +148,7 @@ class StreamClient:
         self._validate_scheduling_params(delay, scheduler)
 
         if not delay and not scheduler:
-            await self._publish_rabbit_immediately(
-                topic, message, key, partition
-            )
+            await self._publish_rabbit_immediately(topic, message)
         else:
             self._schedule_publish(
                 delay=delay,
@@ -161,8 +157,6 @@ class StreamClient:
                 func_kwargs={
                     "topic": topic,
                     "message": message,
-                    "key": key,
-                    "partition": partition,
                 },
             )
 

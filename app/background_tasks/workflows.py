@@ -6,8 +6,10 @@ from app.background_tasks.tasks import (
     create_skb_order_task,
     get_skb_order_result_task,
     send_notification_task,
+    send_order_result_task,
 )
 from app.config.settings import settings
+from app.utils.logging_service import tasks_logger
 
 
 __all__ = (
@@ -23,7 +25,6 @@ __all__ = (
     description="Sends a mail to a customer using the specified email address",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    timeout_seconds=settings.tasks.flow_timeout_seconds,  # 24 hours
     persist_result=True,
 )
 async def send_notification_workflow(body: dict):
@@ -43,7 +44,6 @@ async def send_notification_workflow(body: dict):
     description="Creates a new order workflow for a customer with a given order number",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    timeout_seconds=settings.tasks.flow_timeout_seconds,  # 24 hours
     persist_result=True,
 )
 async def create_skb_order_workflow(body: dict):
@@ -63,7 +63,6 @@ async def create_skb_order_workflow(body: dict):
     description="Retrieves the result task for a given skb order",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    timeout_seconds=settings.tasks.flow_timeout_seconds,  # 24 hours
     persist_result=True,
 )
 async def get_skb_order_result_workflow(body: dict):
@@ -84,7 +83,6 @@ async def get_skb_order_result_workflow(body: dict):
     description="Simplified order processing with retries and error handling",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    timeout_seconds=86400,  # 24 hours
 )
 async def order_processing_workflow(
     order_data: Dict[str, Any]
@@ -152,6 +150,9 @@ async def order_processing_workflow(
                         key=f"retry-delay-{attempt}",
                     )
             except Exception as exc:
+                tasks_logger.error(
+                    f"Workflow failed: {str(exc)}", exc_info=True
+                )
                 if attempt == 3:
                     await send_notification_task(
                         {
@@ -162,9 +163,21 @@ async def order_processing_workflow(
                     )
                     raise
 
-        return {"status": "max_retries_exceeded"}
+        # Phase 3: Send Order with built-in retries
+        sending_result = await send_order_result_task(order_data)
+
+        if not sending_result.get("success"):
+            await send_notification_task(
+                {
+                    "to_emails": order_data["email_for_answer"],
+                    "subject": "Order Sending Failed",
+                    "message": f"Error: {sending_result.get('error_message')}",
+                }
+            )
+        return sending_result
 
     except Exception as exc:
+        tasks_logger.error(f"Workflow failed: {str(exc)}", exc_info=True)
         await send_notification_task(
             {
                 "to_emails": order_data["email_for_answer"],

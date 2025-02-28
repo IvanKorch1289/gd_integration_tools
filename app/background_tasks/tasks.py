@@ -75,7 +75,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
             "error_message": None,
         }
     except Exception as exc:
-        tasks_logger.error("Create order error", exc_info=True)
+        tasks_logger.error(f"Create order error: {str(exc)}", exc_info=True)
         return {
             "success": False,
             "order_id": order_data["id"],
@@ -126,7 +126,55 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
             "error_message": None,
         }
     except Exception as exc:
-        tasks_logger.error("Get result error", exc_info=True)
+        tasks_logger.error(f"Get result error: {str(exc)}", exc_info=True)
+        return {
+            "success": False,
+            "order_id": order_data["id"],
+            "result_data": {},
+            "error_message": str(exc),
+        }
+
+
+@task(
+    name="send-order-result",
+    description="Send order's result to outter system with retry logic",
+    retries=settings.tasks.task_max_attempts,
+    retry_delay_seconds=settings.tasks.task_seconds_delay,
+    retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
+    timeout_seconds=3600,
+    persist_result=True,
+)
+async def send_order_result_task(order_data: dict) -> ProcessingResult:
+    """
+    Sends order's result to outter system system with validation and retries.
+
+    Args:
+        order_data: Input order data
+
+    Returns:
+        ProcessingResult with result status
+
+    Raises:
+        ValueError: For invalid input data
+        ConnectionError: For communication failures
+    """
+    # Validate input
+    if not order_data.get("id"):
+        raise ValueError("Missing required order_id")
+
+    try:
+        result = await get_order_service().send_order_data(
+            order_id=order_data["id"]
+        )
+
+        return {
+            "success": True,
+            "order_id": order_data["id"],
+            "result_data": result,
+            "error_message": None,
+        }
+    except Exception as exc:
+        tasks_logger.error(f"Get result error: {str(exc)}", exc_info=True)
         return {
             "success": False,
             "order_id": order_data["id"],

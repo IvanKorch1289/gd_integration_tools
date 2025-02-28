@@ -224,6 +224,15 @@ redis:
   max_retries: 3
   ttl_hours: 1
   health_check_interval: 300
+  streams:
+    - name: "email"
+      value: "email-notification-stream"
+    - name: "order-send"
+      value: "order-send-to-skb-stream"
+    - name: "order-get-result"
+      value: "order-get-result-from-skb-stream"
+    - name: "order-pipeline"
+      value: "order-start-pipeline_stream"
 
 
 celery:
@@ -271,7 +280,12 @@ queue:
   ui_port: 15672
   timeout: 60
   reconnect_interval: 30
-  max_consumers: 10
+  max_consumers: 20
   graceful_timeout: 30
   use_ssl: False
   ca_bundle: #"/path/to/certificate.pem"
+  topics:
+    - name: "order-create"
+      value: "order-init-create-topic"
+    - name: "order-send"
+      value: "order-send-topic"

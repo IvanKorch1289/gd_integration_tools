@@ -82,9 +82,9 @@ class CachingDecorator:
                     self.logger.info(
                         f"Keys for pattern '{pattern}' invalidated"
                     )
-        except Exception:
+        except Exception as exc:
             self.logger.error(
-                "Pattern cache invalidation failed", exc_info=True
+                f"Pattern cache invalidation failed: {str(exc)}", exc_info=True
             )
 
     def __call__(self, func: Callable) -> Callable:
@@ -130,8 +130,8 @@ class CachingDecorator:
                     await r.expire(key, self.expire)
 
                 return deserialized
-        except Exception:
-            self.logger.error("Cache read error", exc_info=True)
+        except Exception as exc:
+            self.logger.error(f"Cache read error: {str(exc)}", exc_info=True)
             return None
 
     @redis_client.reconnect_on_failure
@@ -148,8 +148,8 @@ class CachingDecorator:
                     separators=(",", ":"),
                 )
                 await r.setex(key, self.expire, serialized)
-        except Exception:
-            self.logger.error("Cache write error", exc_info=True)
+        except Exception as exc:
+            self.logger.error(f"Cache write error: {str(exc)}", exc_info=True)
 
 
 # Глобальный экземпляр декоратора

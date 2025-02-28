@@ -51,7 +51,7 @@ class Utilities:
             )
         except Exception as exc:
             self.logger.error(
-                "Model to schema conversion error", exc_info=True
+                f"Model to schema conversion error: {str(exc)}", exc_info=True
             )
             raise ValueError("Model to schema conversion error") from exc
 
@@ -266,7 +266,9 @@ class Utilities:
 
                 return json_tricks.loads(message)
         except Exception as exc:
-            self.logger.error(f"An unexpected error occurred: {exc}")
+            self.logger.error(
+                f"An unexpected error occurred: {str(exc)}", exc_info=True
+            )
         return None
 
 

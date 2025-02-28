@@ -81,7 +81,7 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
         except FileNotFoundError:
             return {}
         except Exception as exc:
-            raise RuntimeError(f"YAML loading error: {exc}") from exc
+            raise RuntimeError(f"YAML loading error: {str(exc)}") from exc
 
 
 class VaultConfigSettingsSource(FilteredSettingsSource):
@@ -110,7 +110,7 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             )
             return response.get("data", {}).get("data", {})
         except Exception as exc:
-            raise RuntimeError(f"Vault error: {exc}") from exc
+            raise RuntimeError(f"Vault error: {str(exc)}") from exc
 
 
 class BaseSettingsWithLoader(BaseSettings):

@@ -44,9 +44,10 @@ class DatabaseSessionManager:
         async with self.session_maker() as session:
             try:
                 yield session
-            except Exception:
+            except Exception as exc:
                 self.logger.error(
-                    "Ошибка при создании сессии базы данных", exc_info=True
+                    f"Ошибка при создании сессии базы данных: {str(exc)}",
+                    exc_info=True,
                 )
                 raise DatabaseError(
                     message="Failed to create database session"
@@ -70,9 +71,9 @@ class DatabaseSessionManager:
         try:
             yield
             await session.commit()
-        except Exception:
+        except Exception as exc:
             await session.rollback()
-            self.logger.exception("Ошибка транзакции", exc_info=True)
+            self.logger.error(f"Ошибка транзакции: {str(exc)}", exc_info=True)
             raise DatabaseError(message="Transaction failed")
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -145,7 +146,8 @@ class DatabaseSessionManager:
                     except Exception as exc:
                         await session.rollback()
                         self.logger.error(
-                            "Ошибка при выполнении транзакции", exc_info=True
+                            f"Ошибка при выполнении транзакции: {str(exc)}",
+                            exc_info=True,
                         )
                         raise DatabaseError(
                             message=f"Failed to execute transaction - {str(exc)}"

@@ -87,7 +87,8 @@ class OrderService(BaseService[OrderRepository]):
             order = await super().add(data=data)  # type: ignore
             if order:
                 await stream_client.publish_to_redis(
-                    message=order, stream="order_start_pipeline"
+                    message=order,
+                    stream=settings.redis.get_stream_name("order-pipeline"),
                 )
             return order
         except Exception:
@@ -150,7 +151,8 @@ class OrderService(BaseService[OrderRepository]):
             # Проверяем, активен ли заказ
             if order_data["is_active"]:
                 await stream_client.publish_to_redis(
-                    message=order_data, stream="order_send_to_skb_stream"
+                    message=order_data,
+                    stream=settings.redis.get_stream_name("order-send"),
                 )
                 return order_data
             raise
@@ -387,7 +389,8 @@ class OrderService(BaseService[OrderRepository]):
             order_data = await self._get_order_data(order_id=order_id)
 
             await stream_client.publish_to_redis(
-                message=order_data, stream="order_get_result_from_skb"
+                message=order_data,
+                stream=settings.redis.get_stream_name("order-get-result"),
             )
 
             return order_data
@@ -395,13 +398,30 @@ class OrderService(BaseService[OrderRepository]):
             raise  # Исключение будет обработано глобальным обработчиком
 
     @response_cache
-    async def send_data_to_gd(self, order_id: int) -> None:
+    async def send_order_data(self, order_id: int) -> None:
         """
-        Отправляет данные заказа в GD (заглушка).
+        Отправляет данные заказа.
 
         :param order_id: ID заказа.
         """
-        pass
+        try:
+            # Получаем заказ по ID
+            order_data = await self._get_order_data(order_id=order_id)
+
+            result: dict = {
+                "response": order_data.get("response_data", {}),
+                "errors": order_data.get("errors", {}),
+                "files": order_data.get("files", []),
+            }
+
+            await stream_client.publish_to_rabbit(
+                message=result,
+                stream=settings.redis.get_stream_name("order-send"),
+            )
+
+            return order_data
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
 
 
 def get_order_service() -> OrderService:

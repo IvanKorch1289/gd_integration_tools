@@ -166,9 +166,9 @@ class S3Client(BaseS3Client):
             await self.create_bucket_if_not_exists()
             self.logger.info("S3 connection established")
 
-        except Exception:
+        except Exception as exc:
             await self.close()
-            self.logger.error("Connection failed", exc_info=True)
+            self.logger.error(f"Connection failed: {str(exc)}", exc_info=True)
             raise
 
     async def close(self):
@@ -177,8 +177,10 @@ class S3Client(BaseS3Client):
             try:
                 await self._client.close()
                 self.logger.info("S3 connection closed")
-            except Exception:
-                self.logger.error("Error closing connection", exc_info=True)
+            except Exception as exc:
+                self.logger.error(
+                    f"Error closing connection: {str(exc)}", exc_info=True
+                )
             finally:
                 self._client = None
 
@@ -239,11 +241,11 @@ class S3Client(BaseS3Client):
             if not self.is_connected:
                 await self.connect()
             yield self._client
-        except BotoClientError:
-            self.logger.error("S3 API error", exc_info=True)
+        except BotoClientError as exc:
+            self.logger.error(f"S3 API error: {str(exc)}", exc_info=True)
             raise
-        except Exception:
-            self.logger.error("Connection error", exc_info=True)
+        except Exception as exc:
+            self.logger.error(f"Connection error: {str(exc)}", exc_info=True)
             await self.close()
             raise
 
@@ -253,8 +255,8 @@ class S3Client(BaseS3Client):
         try:
             async with self.client_context() as client:
                 await client.head_bucket(Bucket=self._settings.bucket)
-        except BotoClientError as e:
-            if e.response["Error"]["Code"] == "404":
+        except BotoClientError as exc:
+            if exc.response["Error"]["Code"] == "404":
                 await self._create_bucket()
             else:
                 raise
@@ -279,7 +281,9 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success"}
             except BotoClientError as exc:
-                self.logger.error("Put operation failed", exc_info=True)
+                self.logger.error(
+                    f"Put operation failed: {str(exc)}", exc_info=True
+                )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -310,7 +314,9 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success"}
             except BotoClientError as exc:
-                self.logger.error("Copy operation failed", exc_info=True)
+                self.logger.error(
+                    f"Copy operation failed: {str(exc)}", exc_info=True
+                )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -326,9 +332,10 @@ class S3Client(BaseS3Client):
                     ExpiresIn=expiration,
                 )
                 return url
-            except BotoClientError:
+            except BotoClientError as exc:
                 self.logger.error(
-                    "Presigned URL generation failed", exc_info=True
+                    f"Presigned URL generation failed: {str(exc)}",
+                    exc_info=True,
                 )
                 raise
 
@@ -348,7 +355,9 @@ class S3Client(BaseS3Client):
                     "errors": response.get("Errors", []),
                 }
             except BotoClientError as exc:
-                self.logger.error("Batch delete failed", exc_info=True)
+                self.logger.error(
+                    f"Batch delete failed: {str(exc)}", exc_info=True
+                )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -361,7 +370,9 @@ class S3Client(BaseS3Client):
                 )
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
-                self.logger.error("Delete operation failed", exc_info=True)
+                self.logger.error(
+                    f"Delete operation failed: {str(exc)}", exc_info=True
+                )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
@@ -394,8 +405,10 @@ class S3Client(BaseS3Client):
                     for content in result.get("Contents", []):
                         objects.append(content["Key"])
                 return objects
-            except BotoClientError:
-                self.logger.error("List objects failed", exc_info=True)
+            except BotoClientError as exc:
+                self.logger.error(
+                    f"List objects failed: {str(exc)}", exc_info=True
+                )
                 return []
 
     @ensure_connected

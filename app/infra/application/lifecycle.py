@@ -26,8 +26,8 @@ async def lifespan(app: FastAPI):
         app_logger.info("Application started successfully")
 
         yield
-    except Exception:
-        app_logger.critical("Error by starting", exc_info=True)
+    except Exception as exc:
+        app_logger.critical(f"Error by starting: {str(exc)}", exc_info=True)
     finally:
         app_logger.info("Shutdown...")
 

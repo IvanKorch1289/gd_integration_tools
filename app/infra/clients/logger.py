@@ -58,7 +58,9 @@ class GraylogHandler:
             self.handler = handler
             return handler
         except Exception as exc:
-            raise ConnectionError(f"Graylog connection failed: {exc}") from exc
+            raise ConnectionError(
+                f"Graylog connection failed: {str(exc)}"
+            ) from exc
 
     def close(self) -> None:
         """Close Graylog connection resources."""
@@ -85,7 +87,7 @@ class GraylogHandler:
             return True
         except OSError as exc:
             raise ConnectionError(
-                f"Graylog connection check failed: {exc}"
+                f"Graylog connection check failed: {str(exc)}"
             ) from exc
 
 

@@ -309,6 +309,21 @@ class RedisSettings(BaseSettingsWithLoader):
     health_check_interval: int = Field(
         ..., description="Healthchecking timer", example=600
     )
+    streams: List[Dict[str, str]] = Field(
+        ...,
+        min_items=1,
+        description="Redis streams list",
+        example=[
+            {
+                "name": "stream1",
+                "value": "creating-stream",
+            },
+            {
+                "name": "stream2",
+                "value": "updating-stream",
+            },
+        ],
+    )
 
     @computed_field(description="Construct Redis connection URL")
     def redis_url(self) -> str:
@@ -323,6 +338,21 @@ class RedisSettings(BaseSettingsWithLoader):
         if isinstance(v, int) and v < 0:
             raise ValueError("Value must be non-negative integer")
         return v
+
+    def get_stream_name(self, stream_key: str) -> str:
+        stream = next(
+            (
+                stream
+                for stream in self.streams
+                if stream.get("name", None) == stream_key
+            ),
+            None,
+        )
+
+        if not stream:
+            raise ValueError(f"No stream configured for key: {stream_key}")
+
+        return stream["value"]
 
 
 class CelerySettings(BaseSettingsWithLoader):
@@ -617,6 +647,21 @@ class QueueSettings(BaseSettingsWithLoader):
         description="authentication password",
         example="securepassword123",
     )
+    topics: List[Dict[str, str]] = Field(
+        ...,
+        min_items=1,
+        description="Topic list",
+        example=[
+            {
+                "name": "topic1",
+                "value": "creating-topic",
+            },
+            {
+                "name": "topic2",
+                "value": "updating-topic",
+            },
+        ],
+    )
 
     @field_validator("port")
     @classmethod
@@ -643,6 +688,22 @@ class QueueSettings(BaseSettingsWithLoader):
     def queue_ui_url(self) -> str:
         """Construct Queue connection URL."""
         return f"{self.host}:{self.ui_port}"
+
+    def get_topic_name(self, topic_key: str) -> str:
+        # Optimized lookup using generator expression
+        topic = next(
+            (
+                topic
+                for topic in self.topics
+                if topic.get("name", None) == topic_key
+            ),
+            None,
+        )
+
+        if not topic:
+            raise ValueError(f"No topic configured for key: {topic_key}")
+
+        return topic["value"]
 
 
 class TasksSettings(BaseSettingsWithLoader):

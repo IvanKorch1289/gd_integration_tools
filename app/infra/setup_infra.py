@@ -54,9 +54,9 @@ async def perform_infrastructure_operation(components: list) -> None:
                 await coro
 
             app_logger.info(f"Operation {coro.__name__} succeeded")
-        except Exception:
+        except Exception as exc:
             app_logger.critical(
-                f"Operation {coro.__name__} failed", exc_info=True
+                f"Operation {coro.__name__} failed: {str(exc)}", exc_info=True
             )
             raise
 

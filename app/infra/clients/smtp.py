@@ -73,7 +73,7 @@ class SmtpClient:
             )
         except Exception as exc:
             self.logger.critical(
-                "SMTP pool initialization failed", exc_info=True
+                f"SMTP pool initialization failed: {str(exc)}", exc_info=True
             )
             raise RuntimeError("Failed to initialize connection pool") from exc
 
@@ -83,8 +83,10 @@ class SmtpClient:
             connection = self._connection_pool.pop()
             try:
                 await connection.quit()
-            except SMTPException:
-                self.logger.warning("Error closing connection", exc_info=True)
+            except SMTPException as exc:
+                self.logger.warning(
+                    f"Error closing connection: {str(exc)}", exc_info=True
+                )
         self.logger.info("SMTP connection pool closed")
 
     async def _create_connection(self) -> SMTP:
@@ -118,13 +120,17 @@ class SmtpClient:
                     )
                 return smtp
         except TimeoutError as exc:
-            self.logger.error("Connection timeout exceeded", exc_info=True)
+            self.logger.error(
+                f"Connection timeout exceeded: {str(exc)}", exc_info=True
+            )
             raise TimeoutError("SMTP connection timeout") from exc
         except SMTPAuthenticationError as exc:
-            self.logger.error("Authentication failed", exc_info=True)
+            self.logger.error(
+                f"Authentication failed: {str(exc)}", exc_info=True
+            )
             raise ConnectionError("SMTP authentication error") from exc
         except SMTPException as exc:
-            self.logger.error("Connection failed", exc_info=True)
+            self.logger.error(f"Connection failed: {str(exc)}", exc_info=True)
             raise ConnectionError("SMTP connection error") from exc
 
     @asynccontextmanager
@@ -148,7 +154,8 @@ class SmtpClient:
             yield connection
         except Exception as exc:
             self.logger.error(
-                f"Connection error: {type(exc).__name__}", exc_info=True
+                f"Connection error: {type(exc).__name__}, {str(exc)}",
+                exc_info=True,
             )
             await self._handle_connection_error(exc)
             raise ConnectionError("Failed to acquire SMTP connection") from exc
@@ -269,8 +276,10 @@ class SmtpClient:
             return all(
                 resp.code == 250 for resp in recipient_responses.values()
             )
-        except Exception:
-            self.logger.error("Connection test failed", exc_info=True)
+        except Exception as exc:
+            self.logger.error(
+                f"Connection test failed: {str(exc)}", exc_info=True
+            )
             return False
 
 

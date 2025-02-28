@@ -213,6 +213,22 @@ class TechBV:
             return await health_check.check_smtp()
 
     @router.get(
+        "/healthcheck-rabbitmq",
+        summary="Проверить состояние RabbitMQ",
+        operation_id="healthcheck_rabbitmq",
+    )
+    @handle_routes_errors
+    async def healthcheck_rabbitmq(self):
+        """
+        Проверяет состояние RabbitMQ.
+
+        Returns:
+            dict: Результат проверки состояния RabbitMQ.
+        """
+        async with get_healthcheck_service() as health_check:
+            return await health_check.check_rabbitmq()
+
+    @router.get(
         "/healthcheck-all-services",
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
@@ -267,7 +283,9 @@ class TechBV:
         delay_param = timedelta(seconds=delay) if delay else None
 
         await stream_client.publish_to_redis(
-            message=schema, stream="email_send_stream", delay=delay_param
+            message=schema,
+            stream=settings.redis.get_stream_name("email"),
+            delay=delay_param,
         )
 
     @router.get(
@@ -354,7 +372,6 @@ class TechBV:
                     results.append(result)
                 except Exception as exc:
                     results.append({"error": str(exc)})
-                    raise
 
             return results
 

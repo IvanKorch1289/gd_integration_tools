@@ -20,6 +20,6 @@ async def websocket_settings(websocket: WebSocket):
         # Send settings in JSON format
         await websocket.send_text(settings.model_dump_json())
         await websocket.close()
-    except Exception:
-        request_logger.critical("WebSocket error", exc_info=True)
+    except Exception as exc:
+        request_logger.critical(f"WebSocket error: {str(exc)}", exc_info=True)
         await websocket.close(code=1011)
