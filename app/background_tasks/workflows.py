@@ -1,6 +1,7 @@
+from asyncio import sleep
 from typing import Any, Dict
 
-from prefect import flow, pause_flow_run
+from prefect import flow
 
 from app.background_tasks.tasks import (
     create_skb_order_task,
@@ -8,8 +9,14 @@ from app.background_tasks.tasks import (
     send_notification_task,
     send_order_result_task,
 )
+from app.config.constants import (
+    INITIAL_DELAY,
+    MAX_RESULT_ATTEMPTS,
+    RETRY_DELAY,
+)
 from app.config.settings import settings
 from app.utils.logging_service import tasks_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -22,17 +29,18 @@ __all__ = (
 
 @flow(
     name="send-notification-workflow",
-    description="Sends a mail to a customer using the specified email address",
+    description="Отправляет письмо клиенту по указанному адресу электронной почты",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
 )
-async def send_notification_workflow(body: dict):
+async def send_notification_workflow(body: dict) -> None:
     """
-    Sends a mail to a customer with exponential backoff
+    Отправляет письмо клиенту с экспоненциальной задержкой при повторах.
 
     Args:
-        body: Email data
+        body (dict): Данные для отправки письма, включая адрес электронной почты и текст сообщения.
+
     Returns:
         None
     """
@@ -41,46 +49,47 @@ async def send_notification_workflow(body: dict):
 
 @flow(
     name="create-skb-order-workflow",
-    description="Creates a new order workflow for a customer with a given order number",
+    description="Создает новый заказ в системе SKB для клиента с указанным номером заказа",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
 )
-async def create_skb_order_workflow(body: dict):
+async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
     """
-    Creates a new order in the SKB system with exponential backoff
+    Создает новый заказ в системе SKB с экспоненциальной задержкой при повторах.
 
     Args:
-        body: Order data
+        body (dict): Данные заказа.
+
     Returns:
-        Processing result
+        Dict[str, Any]: Результат обработки заказа.
     """
-    await create_skb_order_task(body)
+    return await create_skb_order_task(body)
 
 
 @flow(
     name="get-skb-order-result-task-workflow",
-    description="Retrieves the result task for a given skb order",
+    description="Получает результат обработки заказа в системе SKB",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
 )
-async def get_skb_order_result_workflow(body: dict):
+async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
     """
-    Retrieves the result task for a given skb order with exponential backoff
+    Получает результат обработки заказа в системе SKB с экспоненциальной задержкой при повторах.
 
     Args:
-        body: Order data
+        body (dict): Данные заказа.
 
     Returns:
-        Processing result
+        Dict[str, Any]: Результат обработки заказа.
     """
-    await get_skb_order_result_task(body)
+    return await get_skb_order_result_task(body)
 
 
 @flow(
     name="order-processing-workflow",
-    description="Simplified order processing with retries and error handling",
+    description="Оптимизированный процесс обработки заказов с улучшенной обработкой ошибок",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
 )
@@ -88,101 +97,128 @@ async def order_processing_workflow(
     order_data: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
-    Simplified order processing flow with core functionality:
-    1. Order creation with retries
-    2. Initial delay before first check
-    3. Result polling with backoff
-    4. Error handling and notifications
+    Основной процесс обработки заказов, включающий:
+    1. Создание заказа.
+    2. Ожидание обработки.
+    3. Получение результата.
+    4. Отправку уведомлений.
 
     Args:
-        order_data: Dictionary with order parameters:
-            - id: Order identifier (required)
-            - notification_emails: List of emails for alerts
+        order_data (Dict[str, Any]): Данные заказа, включая:
+            - id (str): Идентификатор заказа.
+            - email_for_answer (str): Адрес электронной почты для уведомлений.
 
     Returns:
-        Dictionary with final processing status
+        Dict[str, Any]: Результат обработки заказа.
 
-    Example:
-        >>> await simple_order_workflow({
-            "id": "123",
-            "notification_emails": ["admin@company.com"]
-        })
+    Raises:
+        Exception: В случае критической ошибки в процессе обработки.
     """
+    email = order_data.get("email_for_answer")
+    order_id = order_data.get("id", "UNKNOWN")
+
+    async def handle_error(subject: str, error: str) -> None:
+        """
+        Централизованная обработка ошибок.
+
+        Args:
+            subject (str): Тема ошибки.
+            error (str): Сообщение об ошибке.
+
+        Returns:
+            None
+        """
+        if email:
+            await send_notification_task(
+                {
+                    "to_emails": email,
+                    "subject": subject,
+                    "message": f"Заказ {order_id}: {error}",
+                }
+            )
+        tasks_logger.error(f"{subject}: {error}")
+
     try:
-        # Phase 1: Create Order with built-in retries
+        # Этап 1: Создание заказа
         creation_result = await create_skb_order_task(order_data)
 
         if not creation_result.get("success"):
-            await send_notification_task(
-                {
-                    "to_emails": order_data["email_for_answer"],
-                    "subject": "Order Creation Failed",
-                    "message": f"Error: {creation_result.get('error_message')}",
-                }
+            await handle_error(
+                "Ошибка создания заказа",
+                creation_result.get("error_message", "Неизвестная ошибка"),
             )
             return creation_result
 
-        # Initial pause before first check
-        await pause_flow_run(
-            timeout=1800,  # Максимум 30 минут ожидания
-            key="approval-pause",  # Идентификатор паузы
-        )
+        # Отправка уведомления об успешном создании заказа
+        if email:
+            try:
+                message = await utilities.safe_get(
+                    creation_result,
+                    "result_data.response.data.Data.Message",
+                    "Заказ успешно создан",
+                )
+                await send_notification_task(
+                    {
+                        "to_emails": email,
+                        "subject": "Заказ создан",
+                        "message": message,
+                    }
+                )
+            except Exception as exc:
+                await handle_error(
+                    "Ошибка отправки уведомления",
+                    f"Ошибка при отправке уведомления о создании заказа: {exc}",
+                )
 
-        # Phase 2: Poll result with simple retry logic
-        for attempt in range(4):  # Total 5 attempts including initial
+        # Этап 2: Ожидание обработки заказа
+        await sleep(INITIAL_DELAY)
+
+        # Этап 3: Получение результата обработки заказа
+        result = None
+        for attempt in range(MAX_RESULT_ATTEMPTS + 1):
             try:
                 result = await get_skb_order_result_task(creation_result)
 
-                if result["success"]:
-                    await send_notification_task(
-                        {
-                            "to_emails": order_data["email_for_answer"],
-                            "subject": "Order Completed",
-                            "message": f"Order {order_data['id']} processed",
-                        }
-                    )
+                if result.get("success"):
+                    if email:
+                        await send_notification_task(
+                            {
+                                "to_emails": email,
+                                "subject": "Заказ выполнен",
+                                "message": f"Заказ {order_id} успешно обработан",
+                            }
+                        )
                     return result
 
-                # Delay between subsequent attempts
-                if attempt < 3:
-                    await pause_flow_run(
-                        timeout=900,  # 15 minutes
-                        key=f"retry-delay-{attempt}",
-                    )
+                if attempt < MAX_RESULT_ATTEMPTS:
+                    sleep(RETRY_DELAY)
+
             except Exception as exc:
-                tasks_logger.error(
-                    f"Workflow failed: {str(exc)}", exc_info=True
+                await handle_error(
+                    (
+                        "Ошибка при получении результата"
+                        if attempt < MAX_RESULT_ATTEMPTS
+                        else "Финальная ошибка при получении результата"
+                    ),
+                    f"Попытка {attempt + 1}: {str(exc)}",
                 )
-                if attempt == 3:
-                    await send_notification_task(
-                        {
-                            "to_emails": order_data["email_for_answer"],
-                            "subject": "Final Attempt Failed",
-                            "message": f"Error: {str(exc)}",
-                        }
-                    )
+                if attempt == MAX_RESULT_ATTEMPTS:
                     raise
 
-        # Phase 3: Send Order with built-in retries
+        # Этап 4: Отправка результата
         sending_result = await send_order_result_task(order_data)
 
         if not sending_result.get("success"):
-            await send_notification_task(
-                {
-                    "to_emails": order_data["email_for_answer"],
-                    "subject": "Order Sending Failed",
-                    "message": f"Error: {sending_result.get('error_message')}",
-                }
+            await handle_error(
+                "Ошибка отправки результата",
+                sending_result.get("error_message", "Неизвестная ошибка"),
             )
+
         return sending_result
 
     except Exception as exc:
-        tasks_logger.error(f"Workflow failed: {str(exc)}", exc_info=True)
-        await send_notification_task(
-            {
-                "to_emails": order_data["email_for_answer"],
-                "subject": "Workflow Failed",
-                "message": f"Critical error: {str(exc)}",
-            }
+        await handle_error(
+            "Критическая ошибка в процессе обработки",
+            f"Неожиданная ошибка: {str(exc)}",
         )
         raise

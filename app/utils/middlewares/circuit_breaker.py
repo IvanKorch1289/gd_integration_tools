@@ -2,62 +2,64 @@ from aiocircuitbreaker import CircuitBreakerError, circuit
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.config.settings import settings
+
 
 __all__ = ("CircuitBreakerMiddleware",)
 
 
-# Circuit Breaker configuration
+# Конфигурация Circuit Breaker
 @circuit(
-    failure_threshold=3,  # Number of failures before the circuit opens
-    recovery_timeout=10,  # Time in seconds to wait before attempting recovery
-    expected_exception=HTTPException,  # Exception type to consider as a failure
+    failure_threshold=settings.secure.failure_threshold,  # Количество ошибок до размыкания цепи
+    recovery_timeout=settings.secure.recovery_timeout,  # Время ожидания (в секундах) перед попыткой восстановления
+    expected_exception=HTTPException,  # Тип исключения, считающегося ошибкой
 )
 async def protected_call_next(request: Request, call_next):
     """
-    Protected function that wraps the call_next middleware with a circuit breaker.
+    Защищенная функция, оборачивающая вызов следующего middleware с использованием Circuit Breaker.
 
-    Args:
-        request (Request): The incoming HTTP request.
-        call_next (Callable): The next middleware or endpoint handler.
+    Аргументы:
+        request (Request): Входящий HTTP-запрос.
+        call_next (Callable): Следующий middleware или обработчик endpoint.
 
-    Returns:
-        Response: The HTTP response from the next middleware or endpoint.
+    Возвращает:
+        Response: HTTP-ответ от следующего middleware или endpoint.
 
-    Raises:
-        HTTPException: If the circuit breaker is open or an error occurs.
+    Исключения:
+        HTTPException: Если Circuit Breaker разомкнут или произошла ошибка.
     """
     return await call_next(request)
 
 
 class CircuitBreakerMiddleware(BaseHTTPMiddleware):
     """
-    Middleware to integrate a Circuit Breaker pattern into FastAPI.
+    Middleware для интеграции шаблона Circuit Breaker в FastAPI.
 
-    This middleware wraps the request handling logic with a circuit breaker
-    to prevent cascading failures and improve system resilience.
+    Этот middleware оборачивает логику обработки запросов в Circuit Breaker,
+    чтобы предотвращать каскадные сбои и повышать устойчивость системы.
     """
 
     async def dispatch(self, request: Request, call_next):
         """
-        Dispatch the request through the circuit breaker.
+        Обрабатывает запрос через Circuit Breaker.
 
-        Args:
-            request (Request): The incoming HTTP request.
-            call_next (Callable): The next middleware or endpoint handler.
+        Аргументы:
+            request (Request): Входящий HTTP-запрос.
+            call_next (Callable): Следующий middleware или обработчик endpoint.
 
-        Returns:
-            Response: The HTTP response from the next middleware or endpoint.
+        Возвращает:
+            Response: HTTP-ответ от следующего middleware или endpoint.
 
-        Raises:
-            HTTPException: If the circuit breaker is open or an error occurs.
+        Исключения:
+            HTTPException: Если Circuit Breaker разомкнут или произошла ошибка.
         """
         try:
-            # Wrap the call_next function with the circuit breaker
+            # Оборачиваем вызов следующего middleware в Circuit Breaker
             response = await protected_call_next(request, call_next)
             return response
         except CircuitBreakerError:
-            # If the circuit breaker is open, return a 503 Service Unavailable response
+            # Если Circuit Breaker разомкнут, возвращаем 503 Service Unavailable
             raise HTTPException(
                 status_code=503,
-                detail="Service temporarily unavailable due to high failure rate.",
+                detail="Сервис временно недоступен из-за высокой частоты ошибок.",
             )

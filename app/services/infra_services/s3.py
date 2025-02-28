@@ -14,7 +14,7 @@ __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
 @singleton
 class S3Service:
-    """Service layer for high-level file operations with S3."""
+    """Сервис для работы с объектным хранилищем S3."""
 
     def __init__(self, client: BaseS3Client):
         from app.utils.logging_service import fs_logger
@@ -30,15 +30,15 @@ class S3Service:
         self, key: str, content: bytes, original_filename: str
     ) -> dict:
         """
-        Upload a file to S3 with metadata.
+        Загружает файл в S3 с метаданными.
 
-        Args:
-            key: Unique file identifier in S3
-            content: File content as bytes
-            original_filename: Original filename for metadata
+        Аргументы:
+            key: Уникальный идентификатор файла
+            content: Содержимое файла в байтах
+            original_filename: Оригинальное имя файла для метаданных
 
-        Returns:
-            Upload operation result
+        Возвращает:
+            Результат операции загрузки
         """
         metadata = {"original-filename": original_filename}
         encoded_metadata = await utilities.encode_base64(metadata)
@@ -49,16 +49,19 @@ class S3Service:
 
     async def download_file(self, key: str) -> StreamingResponse:
         """
-        Download file as streaming response.
+        Скачивает файл как потоковый ответ.
 
-        Args:
-            key: File identifier in S3
+        Аргументы:
+            key: Идентификатор файла в S3
 
-        Returns:
-            FastAPI StreamingResponse with file content
+        Возвращает:
+            StreamingResponse с содержимым файла
+
+        Исключения:
+            FileNotFoundError: Если файл не найден
         """
         if not await self._check_object_exists(key):
-            raise FileNotFoundError(f"File {key} not found")
+            raise FileNotFoundError(f"Файл {key} не найден")
 
         result: Optional[tuple[Any, dict]] = await self.client.get_object(key)
         body, metadata = result  # type: ignore
@@ -79,13 +82,13 @@ class S3Service:
 
     async def multi_upload(self, files: Dict[str, bytes]) -> dict:
         """
-        Upload multiple files in parallel.
+        Параллельная загрузка нескольких файлов.
 
-        Args:
-            files: Dictionary of {file_key: content}
+        Аргументы:
+            files: Словарь {ключ_файла: содержимое}
 
-        Returns:
-            Upload results with success/failure status
+        Возвращает:
+            Результаты операций с статусами успеха/ошибки
         """
         results = {}
         for key, content in files.items():
@@ -100,20 +103,20 @@ class S3Service:
         return results
 
     async def delete_file_object(self, key: list) -> dict:
-        """Deletes an object from storage."""
+        """Удаляет объект из хранилища."""
         result = await self.client.delete_object(key)
         await self._invalidate_key_cache(key)
         return result
 
     async def create_zip_archive(self, keys: List[str]) -> StreamingResponse:
         """
-        Create ZIP archive from multiple files.
+        Создает ZIP-архив из нескольких файлов.
 
-        Args:
-            keys: List of file keys to include
+        Аргументы:
+            keys: Список идентификаторов файлов
 
-        Returns:
-            StreamingResponse with ZIP archive
+        Возвращает:
+            StreamingResponse с ZIP-архивом
         """
         from io import BytesIO
         from zipfile import ZIP_DEFLATED, ZipFile
@@ -141,66 +144,69 @@ class S3Service:
         self, key: str, expires: int = 3600
     ) -> str:
         """
-        Generate temporary download URL.
+        Генерирует временную ссылку для скачивания.
 
-        Args:
-            key: File identifier in S3
-            expires: URL expiration time in seconds
+        Аргументы:
+            key: Идентификатор файла
+            expires: Время жизни ссылки в секундах
 
-        Returns:
-            Pre-signed download URL
+        Возвращает:
+            Временную URL-ссылку для доступа
         """
         return await self.client.generate_presigned_url(key, expires)
 
     async def get_file_base64(self, key: str) -> str:
         """
-        Get file content as base64 encoded string.
+        Получает содержимое файла в base64.
 
-        Args:
-            key: File identifier in S3
+        Аргументы:
+            key: Идентификатор файла
 
-        Returns:
-            Base64 encoded file content
+        Возвращает:
+            Строку в формате base64
+
+        Исключения:
+            FileNotFoundError: Если файл не найден
         """
         content = await self.client.get_object_bytes(key)
         if not content:
-            raise FileNotFoundError(f"File {key} not found")
+            raise FileNotFoundError(f"Файл {key} не найден")
         return await utilities.encode_base64(content)
 
     async def list_files(self, prefix: str = None) -> List[str]:
         """
-        List files in bucket with optional prefix filter.
+        Возвращает список файлов в хранилище.
 
-        Args:
-            prefix: Prefix filter for file keys
+        Аргументы:
+            prefix: Фильтр по префиксу имен
 
-        Returns:
-            List of file keys
+        Возвращает:
+            Список идентификаторов файлов
         """
         return await self.client.list_objects(prefix)
 
     @metadata_cache
     async def get_file_metadata(self, key: str) -> dict:
-        """Get full metadata with caching"""
+        """Получает метаданные файла с кэшированием."""
         metadata = await self.client.head_object(key)
         return metadata or {}
 
     @existence_cache
     async def _check_object_exists(self, key: str) -> bool:
-        """Cached existence check with metadata refresh"""
+        """Проверяет существование файла с кэшированием."""
         metadata = await self.client.head_object(key)
         return metadata is not None
 
     @metadata_cache
     async def get_original_filename(self, key: str) -> Optional[str]:
         """
-        Retrieve original filename from metadata.
+        Получает оригинальное имя файла из метаданных.
 
-        Args:
-            key: File identifier in S3
+        Аргументы:
+            key: Идентификатор файла
 
-        Returns:
-            Original filename if exists
+        Возвращает:
+            Оригинальное имя файла или None
         """
         metadata = await self.client.head_object(key)
         if not metadata:
@@ -210,34 +216,32 @@ class S3Service:
         return decoded_metadata.get("original-filename")
 
     async def _invalidate_key_cache(self, key: str):
-        """Invalidate all cache entries for specific key"""
+        """Инвалидирует кэш для конкретного ключа."""
         for cache in self._cache_handlers.values():
             await cache.invalidate(key)
-        self.logger.debug(f"Cache invalidated for key: {key}")
+        self.logger.debug(f"Кэш инвалидирован для ключа: {key}")
 
     async def invalidate_cache(self, key: Optional[str] = None):
-        """Public cache invalidation method"""
+        """Публичный метод инвалидации кэша."""
         if key:
             await self._invalidate_key_cache(key)
         else:
             for cache in self._cache_handlers.values():
                 await cache.invalidate_pattern()
-            self.logger.info("Full cache invalidation completed")
+            self.logger.info("Полная инвалидация кэша выполнена")
 
 
 @asynccontextmanager
 async def get_s3_service() -> AsyncGenerator[S3Service, None]:
-    """
-    Фабрика для создания S3Service с изолированными зависимостями.
-    """
-    # Инициализируем клиенты здесь, если они требуют контекста
+    """Фабрика для создания экземпляра S3Service с управлением контекстом."""
     s3_service = S3Service(client=s3_client)
     try:
         yield s3_service
     finally:
-        # Закрытие соединений клиентов, если требуется
+        # Логика закрытия соединений при необходимости
         pass
 
 
 def get_s3_service_dependency() -> Union[S3Service, None]:
+    """Возвращает экземпляр S3Service для зависимостей."""
     return S3Service(client=s3_client)

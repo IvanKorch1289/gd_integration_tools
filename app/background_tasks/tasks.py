@@ -19,7 +19,7 @@ __all__ = (
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=600,
+    timeout_seconds=30,
     persist_result=True,
 )
 async def send_notification_task(body: dict) -> dict:
@@ -71,7 +71,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
         return {
             "success": True,
             "order_id": order_data["id"],
-            "result_data": {},
+            "result_data": result,
             "error_message": None,
         }
     except Exception as exc:

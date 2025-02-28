@@ -15,17 +15,43 @@ __all__ = ("TimeoutMiddleware",)
 
 
 class TimeoutMiddleware(BaseHTTPMiddleware):
-    """Middleware for request processing timeout"""
+    """Middleware для ограничения времени обработки запросов.
+
+    Обеспечивает:
+    - Прерывание обработки запросов, превышающих заданное время
+    - Логирование таймаутов
+    - Возврат стандартизированного ответа при превышении времени
+    """
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """
+        Обрабатывает запрос с ограничением по времени.
+
+        Аргументы:
+            request (Request): Входящий HTTP-запрос
+            call_next (RequestResponseEndpoint): Следующий middleware/обработчик
+
+        Возвращает:
+            Response: HTTP-ответ или сообщение о таймауте
+
+        Исключения:
+            TimeoutError: Если время обработки превышено
+        """
         try:
+            # Ограничиваем время выполнения запроса
             return await wait_for(
-                call_next(request), timeout=settings.auth.request_timeout
+                call_next(request), timeout=settings.secure.request_timeout
             )
         except TimeoutError:
-            app_logger.warning(f"Request timeout: {request.url}")
+            # Логируем факт таймаута
+            app_logger.warning(
+                f"Превышено время обработки запроса: {request.url}"
+            )
+
+            # Возвращаем стандартизированный ответ
             return JSONResponse(
-                {"detail": "Request processing timeout"}, status_code=408
+                {"detail": "Превышено время обработки запроса"},
+                status_code=408,
             )

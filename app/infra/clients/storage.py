@@ -28,90 +28,90 @@ R = TypeVar("R")
 
 
 class BaseS3Client(ABC):
-    """Abstract base class for S3 client operations."""
+    """Абстрактный базовый класс для операций с клиентом S3."""
 
     @abstractmethod
     async def connect(self):
-        """Establish connection to S3 storage."""
+        """Устанавливает соединение с хранилищем S3."""
         pass
 
     @abstractmethod
     async def close(self):
-        """Close the connection gracefully."""
+        """Закрывает соединение корректно."""
         pass
 
     @abstractmethod
     def ensure_connected(func):
-        """Ensure client is connected before calling the decorated function."""
+        """Декоратор для проверки подключения перед вызовом функции."""
         pass
 
     @property
     @abstractmethod
     def is_connected(self) -> bool:
-        """Check if client is connected."""
+        """Проверяет, установлено ли соединение."""
         pass
 
     @abstractmethod
     @asynccontextmanager
     async def client_context(self) -> AsyncGenerator[Any, None]:
-        """Context manager for client operations."""
+        """Контекстный менеджер для операций с клиентом."""
         pass
 
     @abstractmethod
     async def put_object(self, key: str, body: Any, metadata: dict) -> dict:
-        """Upload object to S3."""
+        """Загружает объект в S3."""
         pass
 
     @abstractmethod
     async def get_object(self, key: str) -> Optional[tuple[Any, dict]]:
-        """Retrieve object from S3."""
+        """Получает объект из S3."""
         pass
 
     @abstractmethod
     async def delete_object(self, key: str) -> dict:
-        """Delete object from S3."""
+        """Удаляет объект из S3."""
         pass
 
     @abstractmethod
     async def list_objects(self, prefix: str = None) -> List[str]:
-        """List objects in bucket."""
+        """Возвращает список объектов в бакете."""
         pass
 
     @abstractmethod
     async def head_object(self, key: str) -> Optional[dict]:
-        """Get object metadata."""
+        """Получает метаданные объекта."""
         pass
 
     @abstractmethod
     async def create_bucket_if_not_exists(self):
-        """Create bucket if it doesn't exist."""
+        """Создает бакет, если он не существует."""
         pass
 
     @abstractmethod
     async def copy_object(self, source_key: str, dest_key: str) -> dict:
-        """Copy object within S3."""
+        """Копирует объект внутри S3."""
         pass
 
     @abstractmethod
     async def generate_presigned_url(
         self, key: str, expiration: int = 3600
     ) -> str:
-        """Generate pre-signed URL for object access."""
+        """Генерирует предварительно подписанный URL для доступа к объекту."""
         pass
 
     @abstractmethod
     async def delete_objects(self, keys: List[str]) -> dict:
-        """Delete multiple objects at once."""
+        """Удаляет несколько объектов одновременно."""
         pass
 
     @abstractmethod
     async def get_object_bytes(self, key: str) -> Optional[bytes]:
-        """Get object content as bytes."""
+        """Получает содержимое объекта в виде байтов."""
         pass
 
 
 class S3Client(BaseS3Client):
-    """S3 client implementation with advanced features."""
+    """Реализация клиента S3 с расширенными функциями."""
 
     def __init__(self, settings: FileStorageSettings):
         from aiobotocore.config import AioConfig
@@ -119,7 +119,7 @@ class S3Client(BaseS3Client):
 
         from app.utils.logging_service import fs_logger
 
-        self._connect_lock = Lock()
+        self._connect_lock = Lock()  # Блокировка для безопасного подключения
         self._settings = settings
         self._session = get_session()
         self._client = None
@@ -143,14 +143,15 @@ class S3Client(BaseS3Client):
 
     @property
     def is_connected(self) -> bool:
+        """Проверяет, установлено ли соединение с S3."""
         return self._client is not None
 
     async def connect(self):
-        """Establish and maintain persistent connection to S3."""
+        """Устанавливает и поддерживает постоянное соединение с S3."""
         if self.is_connected:
             return
         async with self._connect_lock:
-            if self.is_connected:  # Проверка внутри блокировки
+            if self.is_connected:  # Двойная проверка внутри блокировки
                 return
 
         try:
@@ -164,22 +165,23 @@ class S3Client(BaseS3Client):
             ).__aenter__()
 
             await self.create_bucket_if_not_exists()
-            self.logger.info("S3 connection established")
+            self.logger.info("Соединение с S3 установлено")
 
         except Exception as exc:
             await self.close()
-            self.logger.error(f"Connection failed: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка подключения: {str(exc)}", exc_info=True)
             raise
 
     async def close(self):
-        """Gracefully close connection."""
+        """Корректно закрывает соединение."""
         if self._client:
             try:
                 await self._client.close()
-                self.logger.info("S3 connection closed")
+                self.logger.info("Соединение с S3 закрыто")
             except Exception as exc:
                 self.logger.error(
-                    f"Error closing connection: {str(exc)}", exc_info=True
+                    f"Ошибка при закрытии соединения: {str(exc)}",
+                    exc_info=True,
                 )
             finally:
                 self._client = None
@@ -188,6 +190,8 @@ class S3Client(BaseS3Client):
     def ensure_connected(
         func: Callable[..., Coroutine[Any, Any, R]]
     ) -> Callable[..., Coroutine[Any, Any, R]]:
+        """Декоратор для проверки подключения перед вызовом функции."""
+
         @wraps(func)
         async def wrapper(self: "S3Client", *args, **kwargs) -> R:
             if not self.is_connected:
@@ -197,10 +201,10 @@ class S3Client(BaseS3Client):
         return wrapper
 
     async def check_connection(self) -> bool:
-        """Verifies storage connectivity.
+        """Проверяет доступность хранилища.
 
         Returns:
-            True if connection successful
+            True, если соединение успешно.
         """
         try:
             result = await self.check_bucket_exists()
@@ -211,10 +215,10 @@ class S3Client(BaseS3Client):
             return False
 
     async def check_bucket_exists(self) -> bool:
-        """Checks if bucket exists.
+        """Проверяет, существует ли бакет.
 
         Returns:
-            True if bucket exists
+            True, если бакет существует.
         """
         async with self.client_context() as client:
             try:
@@ -236,22 +240,22 @@ class S3Client(BaseS3Client):
 
     @asynccontextmanager
     async def client_context(self) -> AsyncGenerator[Any, None]:
-        """Managed context for S3 client with automatic reconnection."""
+        """Контекстный менеджер для работы с клиентом S3 с автоматическим переподключением."""
         try:
             if not self.is_connected:
                 await self.connect()
             yield self._client
         except BotoClientError as exc:
-            self.logger.error(f"S3 API error: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка API S3: {str(exc)}", exc_info=True)
             raise
         except Exception as exc:
-            self.logger.error(f"Connection error: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
             await self.close()
             raise
 
     @ensure_connected
     async def create_bucket_if_not_exists(self):
-        """Ensure bucket exists in storage."""
+        """Создает бакет, если он не существует."""
         try:
             async with self.client_context() as client:
                 await client.head_bucket(Bucket=self._settings.bucket)
@@ -263,14 +267,14 @@ class S3Client(BaseS3Client):
 
     @ensure_connected
     async def _create_bucket(self):
-        """Create configured bucket with proper settings."""
+        """Создает бакет с настройками из конфигурации."""
         async with self.client_context() as client:
             await client.create_bucket(Bucket=self._settings.bucket)
-            self.logger.info(f"Created bucket: {self._settings.bucket}")
+            self.logger.info(f"Создан бакет: {self._settings.bucket}")
 
     @ensure_connected
     async def put_object(self, key: str, body: Any, metadata: dict) -> dict:
-        """Low-level put object operation."""
+        """Загружает объект в S3."""
         async with self.client_context() as client:
             try:
                 await client.put_object(
@@ -282,13 +286,13 @@ class S3Client(BaseS3Client):
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Put operation failed: {str(exc)}", exc_info=True
+                    f"Ошибка при загрузке объекта: {str(exc)}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
     async def get_object(self, key: str) -> Optional[tuple[Any, dict]]:
-        """Low-level get object operation."""
+        """Получает объект из S3."""
         async with self.client_context() as client:
             try:
                 response = await client.get_object(
@@ -296,14 +300,14 @@ class S3Client(BaseS3Client):
                 )
                 return response["Body"], response.get("Metadata", {})
             except BotoClientError as exc:
-                self.logger.error(f"File with key {key} not found")
+                self.logger.error(f"Файл с ключом {key} не найден")
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise
 
     @ensure_connected
     async def copy_object(self, source_key: str, dest_key: str) -> dict:
-        """Copy object within the same bucket."""
+        """Копирует объект внутри одного бакета."""
         copy_source = {"Bucket": self._settings.bucket, "Key": source_key}
         async with self.client_context() as client:
             try:
@@ -315,7 +319,8 @@ class S3Client(BaseS3Client):
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Copy operation failed: {str(exc)}", exc_info=True
+                    f"Ошибка при копировании объекта: {str(exc)}",
+                    exc_info=True,
                 )
                 return {"status": "error", "message": str(exc)}
 
@@ -323,7 +328,7 @@ class S3Client(BaseS3Client):
     async def generate_presigned_url(
         self, key: str, expiration: int = 3600
     ) -> str:
-        """Generate pre-signed URL for temporary access."""
+        """Генерирует предварительно подписанный URL для временного доступа."""
         async with self.client_context() as client:
             try:
                 url = await client.generate_presigned_url(
@@ -334,14 +339,14 @@ class S3Client(BaseS3Client):
                 return url
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Presigned URL generation failed: {str(exc)}",
+                    f"Ошибка генерации предварительно подписанного URL: {str(exc)}",
                     exc_info=True,
                 )
                 raise
 
     @ensure_connected
     async def delete_objects(self, keys: List[str]) -> dict:
-        """Batch delete objects."""
+        """Удаляет несколько объектов одновременно."""
         async with self.client_context() as client:
             try:
                 response = await client.delete_objects(
@@ -356,13 +361,13 @@ class S3Client(BaseS3Client):
                 }
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Batch delete failed: {str(exc)}", exc_info=True
+                    f"Ошибка при массовом удалении: {str(exc)}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
     async def delete_object(self, key: str) -> dict:
-        """Delete single object from S3."""
+        """Удаляет один объект из S3."""
         async with self.client_context() as client:
             try:
                 response = await client.delete_object(
@@ -371,29 +376,28 @@ class S3Client(BaseS3Client):
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
                 self.logger.error(
-                    f"Delete operation failed: {str(exc)}", exc_info=True
+                    f"Ошибка при удалении объекта: {str(exc)}", exc_info=True
                 )
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
     async def head_object(self, key: str) -> Optional[dict]:
-        """Get object metadata and headers."""
+        """Получает метаданные и заголовки объекта."""
         async with self.client_context() as client:
             try:
                 response = await client.head_object(
                     Bucket=self._settings.bucket, Key=key
                 )
-
                 return response["Metadata"]
             except BotoClientError as exc:
-                self.logger.error(f"File {key} not found", exc_info=True)
+                self.logger.error(f"Файл {key} не найден", exc_info=True)
                 if exc.response["Error"]["Code"] == "404":
                     return None
                 raise
 
     @ensure_connected
     async def list_objects(self, prefix: str = None) -> List[str]:
-        """List objects in bucket with optional prefix."""
+        """Возвращает список объектов в бакете с опциональным префиксом."""
         objects = []
         async with self.client_context() as client:
             try:
@@ -407,13 +411,14 @@ class S3Client(BaseS3Client):
                 return objects
             except BotoClientError as exc:
                 self.logger.error(
-                    f"List objects failed: {str(exc)}", exc_info=True
+                    f"Ошибка при получении списка объектов: {str(exc)}",
+                    exc_info=True,
                 )
                 return []
 
     @ensure_connected
     async def get_object_bytes(self, key: str) -> Optional[bytes]:
-        """Get object content as bytes."""
+        """Получает содержимое объекта в виде байтов."""
         async with self.client_context() as client:
             try:
                 response = await client.get_object(
@@ -421,10 +426,11 @@ class S3Client(BaseS3Client):
                 )
                 return await response["Body"].read()
             except BotoClientError as exc:
-                self.logger.error(f"File {key} not found", exc_info=True)
+                self.logger.error(f"Файл {key} не найден", exc_info=True)
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
                 raise
 
 
+# Экземпляр клиента для работы с S3
 s3_client = S3Client(settings=settings.storage)

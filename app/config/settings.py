@@ -20,7 +20,7 @@ from app.config.outer_api import (
     http_base_settings,
     skb_api_settings,
 )
-from app.config.security import AuthSettings, auth_settings
+from app.config.security import SecureSettings, secure_settings
 from app.config.services import (
     CelerySettings,
     FileStorageSettings,
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     # Общие настройки
     app: AppBaseSettings = app_base_settings
-    auth: AuthSettings = auth_settings
+    secure: SecureSettings = secure_settings
     http_base_settings: HttpBaseSettings = http_base_settings
     scheduler: SchedulerSettings = scheduler_settings
 

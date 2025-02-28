@@ -18,26 +18,26 @@ __all__ = ("db_initializer",)
 
 
 class DatabaseInitializer:
-    """Class for initializing and managing database connections.
+    """Класс для инициализации и управления подключениями к базе данных.
 
-    Provides creation of synchronous and asynchronous engines, connection pool management,
-    SQL query logging, and connection health checks.
+    Обеспечивает создание синхронных и асинхронных движков БД, управление пулом соединений,
+    логирование SQL-запросов и проверку работоспособности подключения.
 
     Args:
-        settings (DatabaseSettings): Database configuration parameters
+        settings (DatabaseConnectionSettings): Настройки подключения к БД
 
     Attributes:
-        async_engine (AsyncEngine): SQLAlchemy async engine
-        async_session_maker (async_sessionmaker): Async session factory
-        sync_engine (Engine): SQLAlchemy sync engine
-        sync_session_maker (sessionmaker): Sync session factory
+        async_engine (AsyncEngine): Асинхронный движок SQLAlchemy
+        async_session_maker (async_sessionmaker): Фабрика асинхронных сессий
+        sync_engine (Engine): Синхронный движок SQLAlchemy
+        sync_session_maker (sessionmaker): Фабрика синхронных сессий
     """
 
     def __init__(self, settings: DatabaseConnectionSettings):
         self.settings: DatabaseConnectionSettings = settings
-
         self.logger = db_logger
-        # Main async engine
+
+        # Основной асинхронный движок
         self.async_engine = self._create_async_engine()
         self.async_session_maker = async_sessionmaker(
             bind=self.async_engine,
@@ -46,7 +46,7 @@ class DatabaseInitializer:
             expire_on_commit=False,
         )
 
-        # Sync engine for migrations only
+        # Синхронный движок для миграций
         self.sync_engine = self._create_sync_engine()
         self.sync_session_maker = sessionmaker(
             bind=self.sync_engine,
@@ -58,10 +58,10 @@ class DatabaseInitializer:
         self.register_logging_events()
 
     def _create_async_engine(self) -> AsyncEngine:
-        """Creates and configures an async database engine.
+        """Создает и настраивает асинхронный движок базы данных.
 
         Returns:
-            AsyncEngine: Configured SQLAlchemy async engine
+            AsyncEngine: Настроенный асинхронный движок SQLAlchemy
         """
         return create_async_engine(
             url=self.settings.async_connection_url,
@@ -74,10 +74,10 @@ class DatabaseInitializer:
         )
 
     def _create_sync_engine(self):
-        """Creates and configures a sync database engine.
+        """Создает и настраивает синхронный движок базы данных.
 
         Returns:
-            Engine: Configured SQLAlchemy sync engine
+            Engine: Настроенный синхронный движок SQLAlchemy
         """
         return create_engine(
             url=self.settings.sync_connection_url,
@@ -86,14 +86,13 @@ class DatabaseInitializer:
             max_overflow=self.settings.max_overflow,
             pool_recycle=self.settings.pool_recycle,
             pool_timeout=self.settings.pool_timeout,
-            # connect_args=self._get_connect_args(),
         )
 
     def _get_connect_args(self) -> Dict[str, Any]:
-        """Generates additional database connection arguments.
+        """Генерирует дополнительные аргументы для подключения к БД.
 
         Returns:
-            dict: Additional connection parameters
+            dict: Дополнительные параметры подключения
         """
         connect_args: dict = {}
 
@@ -124,36 +123,37 @@ class DatabaseInitializer:
         return connect_args
 
     async def initialize_async_pool(self):
-        """Pre-initializes connections in the async pool"""
+        """Предварительная инициализация соединений в асинхронном пуле."""
         connections = []
         try:
             for _ in range(self.async_engine.pool.size()):  # type: ignore
                 conn = await self.async_engine.connect()
                 connections.append(conn)
-            self.logger.info("Async connection pool initialized")
+            self.logger.info("Асинхронный пул соединений инициализирован")
         except Exception:
             self.logger.error(
-                "Async connection pool initialization failed", exc_info=True
+                "Ошибка инициализации асинхронного пула соединений",
+                exc_info=True,
             )
         finally:
             for conn in connections:
                 await conn.close()
 
     def register_logging_events(self):
-        """Registers event handlers for SQL query logging."""
+        """Регистрирует обработчики событий для логирования SQL-запросов."""
 
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
-            self.logger.info("SQL Statement: %s", statement)
-            self.logger.info("Parameters: %s", parameters)
+            self.logger.info("Выполнение SQL: %s", statement)
+            self.logger.debug("Параметры: %s", parameters)
 
         def after_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
-            self.logger.info("SQL Execution Completed.")
+            self.logger.info("SQL-запрос выполнен успешно")
 
-        # For async engine
+        # Для асинхронного движка
         listen(
             self.async_engine.sync_engine,
             "before_cursor_execute",
@@ -165,77 +165,81 @@ class DatabaseInitializer:
             after_cursor_execute,
         )
 
-        # For sync engine
+        # Для синхронного движка
         listen(
             self.sync_engine,
             "before_cursor_execute",
             before_cursor_execute,
         )
-        listen(self.sync_engine, "after_cursor_execute", after_cursor_execute)
+        listen(
+            self.sync_engine,
+            "after_cursor_execute",
+            after_cursor_execute,
+        )
 
     def get_async_engine(self):
-        """Returns the async database engine.
+        """Возвращает асинхронный движок базы данных.
 
         Returns:
-            Engine: SQLAlchemy async engine
+            AsyncEngine: Асинхронный движок SQLAlchemy
         """
         return self.async_engine
 
     def get_sync_engine(self):
-        """Returns the sync engine for Alembic migrations.
+        """Возвращает синхронный движок для миграций Alembic.
 
         Returns:
-            Engine: SQLAlchemy sync engine
+            Engine: Синхронный движок SQLAlchemy
         """
         return self.sync_engine
 
     async def dispose_sync(self):
-        """Closes all sync connections"""
+        """Закрывает все синхронные соединения."""
         try:
             self.sync_engine.dispose()
-            self.logger.info("Sync database connections closed")
+            self.logger.info("Синхронные соединения закрыты")
         except Exception:
             self.logger.error(
-                "Failed to close sync database connections", exc_info=True
+                "Ошибка закрытия синхронных соединений", exc_info=True
             )
 
     async def dispose_async(self):
-        """Closes all async connections"""
+        """Закрывает все асинхронные соединения."""
         try:
             await self.async_engine.dispose()
-            self.logger.info("Async database connections closed")
+            self.logger.info("Асинхронные соединения закрыты")
         except Exception:
             self.logger.error(
-                "Failed to close async database connections", exc_info=True
+                "Ошибка закрытия асинхронных соединений", exc_info=True
             )
 
     async def close(self):
-        """Closes all connections"""
+        """Закрывает все соединения с базой данных."""
         await self.dispose_sync()
         await self.dispose_async()
 
     async def check_connection(self) -> bool:
-        """Verifies database connection health.
+        """Проверяет работоспособность подключения к базе данных.
 
         Returns:
-            bool: True if connection is active and working correctly
+            bool: True если подключение активно и работает корректно
 
         Raises:
-            DatabaseError: If connection fails or unexpected result received
+            DatabaseError: При ошибке подключения или неверном результате
         """
         async with self.async_session_maker() as session:
             try:
                 result = await session.execute(text("SELECT 1"))
                 if result.scalar_one_or_none() != 1:
                     raise DatabaseError(
-                        message="Database connection verification failed"
+                        message="Ошибка проверки подключения к БД"
                     )
                 return True
             except Exception as exc:
                 raise DatabaseError(
-                    message=f"Database connection check failed: {str(exc)}",
-                )
+                    message=f"Ошибка проверки соединения: {str(exc)}",
+                ) from exc
 
 
-# Database initializer with configuration settings
+# Инициализатор БД с конфигурацией из настроек
 db_initializer = DatabaseInitializer(settings=settings.database)

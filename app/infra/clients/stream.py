@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable, Dict, Optional
 from uuid import uuid4
 
@@ -8,6 +8,7 @@ from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
 from faststream.security import BaseSecurity
 
+from app.config.constants import MOSCOW_TZ
 from app.config.settings import settings
 from app.utils.logging_service import stream_logger
 
@@ -17,20 +18,17 @@ __all__ = (
     "StreamClient",
 )
 
-# Timezone constant for scheduled jobs
-MOSCOW_TZ = timezone(timedelta(hours=3))
-
 
 class MessageLoggingMiddleware(BaseMiddleware):
-    """Middleware to log incoming and outgoing stream messages."""
+    """Middleware для логирования входящих и исходящих сообщений в потоке."""
 
     async def consume_scope(
         self,
         call_next: Callable[[Any], Awaitable[Any]],
         msg: StreamMessage[Any],
     ) -> Any:
-        """Log consumed messages before processing."""
-        stream_logger.info(f"Subscribe: {msg}")
+        """Логирует входящие сообщения перед обработкой."""
+        stream_logger.info(f"Получено сообщение: {msg}")
         return await call_next(msg)
 
     async def publish_scope(
@@ -39,16 +37,16 @@ class MessageLoggingMiddleware(BaseMiddleware):
         msg: Any,
         **options: Any,
     ) -> Any:
-        """Log published messages before sending."""
-        stream_logger.info(f"Publish: {msg}")
+        """Логирует исходящие сообщения перед отправкой."""
+        stream_logger.info(f"Отправлено сообщение: {msg}")
         return await call_next(msg, **options)
 
 
 class StreamClient:
-    """Client for managing stream connections and message publishing."""
+    """Клиент для управления подключениями к потокам и публикации сообщений."""
 
     def __init__(self):
-        """Initialize stream client with routers and scheduler."""
+        """Инициализирует клиент с роутерами и планировщиком."""
         from app.infra.application.scheduler import scheduler_manager
 
         self.stream_client = FastStream(logger=stream_logger)
@@ -61,12 +59,12 @@ class StreamClient:
         self._initialize_routers()
 
     def _initialize_routers(self):
-        """Set up Redis and RabbitMQ routers with configuration."""
+        """Настраивает роутеры для Redis и RabbitMQ."""
         self._setup_redis_router()
         self._setup_rabbit_router()
 
     def _setup_redis_router(self):
-        """Configure Redis router with settings from configuration."""
+        """Настраивает роутер для Redis с параметрами из конфигурации."""
         from faststream.redis.fastapi import RedisRouter
 
         self.redis_router = RedisRouter(
@@ -85,7 +83,7 @@ class StreamClient:
                 ExceptionMiddleware(
                     handlers={
                         Exception: lambda exc: stream_logger.error(
-                            f"Exception: {exc}", exc_info=True
+                            f"Ошибка: {exc}", exc_info=True
                         )
                     }
                 ),
@@ -93,14 +91,13 @@ class StreamClient:
         )
 
     def _setup_rabbit_router(self):
-        """Configure RabbitMQ router with settings from configuration."""
+        """Настраивает роутер для RabbitMQ с параметрами из конфигурации."""
         from faststream.rabbit.fastapi import RabbitRouter
 
         self.rabbit_router = RabbitRouter(
             url=self.rabbit_settings.queue_url,
             security=BaseSecurity(
                 use_ssl=self.rabbit_settings.use_ssl,
-                # ssl_context=None,
             ),
             timeout=self.rabbit_settings.timeout,
             reconnect_interval=self.rabbit_settings.reconnect_interval,
@@ -114,7 +111,7 @@ class StreamClient:
                 ExceptionMiddleware(
                     handlers={
                         Exception: lambda exc: stream_logger.error(
-                            f"Exception: {exc}", exc_info=True
+                            f"Ошибка: {exc}", exc_info=True
                         )
                     }
                 ),
@@ -129,21 +126,19 @@ class StreamClient:
         scheduler: Optional[str] = None,
     ):
         """
-        Publish a message to RabbitMQ either immediately, with delay, or on schedule.
+        Публикует сообщение в RabbitMQ сразу, с задержкой или по расписанию.
 
         Args:
-            topic: Target RabbitMQ topic
-            message: Message content as dictionary
-            key: Optional message key
-            partition: Optional target partition
-            delay: Optional timedelta for delayed publishing
-            scheduler: Optional cron schedule string
+            topic: Топик RabbitMQ для публикации.
+            message: Содержимое сообщения в виде словаря.
+            delay: Опциональная задержка перед публикацией.
+            scheduler: Опциональное расписание в формате cron.
 
         Raises:
-            ValueError: If both delay and scheduler are specified
+            ValueError: Если указаны и задержка, и расписание.
         """
         if self.rabbit_router is None:
-            raise ValueError("RabbitMQ router is not initialized")
+            raise ValueError("Роутер RabbitMQ не инициализирован")
 
         self._validate_scheduling_params(delay, scheduler)
 
@@ -169,20 +164,20 @@ class StreamClient:
         scheduler: Optional[str] = None,
     ):
         """
-        Publish a message to Redis either immediately, with delay, or on schedule.
+        Публикует сообщение в Redis сразу, с задержкой или по расписанию.
 
         Args:
-            stream: Target Redis stream
-            message: Message content as dictionary
-            headers: Optional message headers
-            delay: Optional timedelta for delayed publishing
-            scheduler: Optional cron schedule string
+            stream: Поток Redis для публикации.
+            message: Содержимое сообщения в виде словаря.
+            headers: Опциональные заголовки сообщения.
+            delay: Опциональная задержка перед публикацией.
+            scheduler: Опциональное расписание в формате cron.
 
         Raises:
-            ValueError: If both delay and scheduler are specified
+            ValueError: Если указаны и задержка, и расписание.
         """
         if self.redis_router is None:
-            raise ValueError("Redis router is not initialized")
+            raise ValueError("Роутер Redis не инициализирован")
 
         self._validate_scheduling_params(delay, scheduler)
 
@@ -203,29 +198,27 @@ class StreamClient:
     def _validate_scheduling_params(
         self, delay: Optional[timedelta], scheduler: Optional[str]
     ):
-        """Validate scheduling parameters."""
+        """Проверяет параметры планирования."""
         if delay and scheduler:
-            raise ValueError("Cannot use both delay and scheduler")
+            raise ValueError(
+                "Нельзя использовать одновременно задержку и расписание"
+            )
 
     async def _publish_rabbit_immediately(
         self,
         topic: str,
         message: Dict[str, Any],
-        key: Optional[str],
-        partition: Optional[int],
     ):
-        """Immediately publish message to RabbitMQ."""
+        """Публикует сообщение в RabbitMQ немедленно."""
         await self.rabbit_router.broker.publish(
             message=message,
             topic=topic,
-            key=key,
-            partition=partition,
         )
 
     async def _publish_redis_immediately(
         self, stream: str, message: Dict[str, Any], headers: Dict[str, Any]
     ):
-        """Immediately publish message to Redis."""
+        """Публикует сообщение в Redis немедленно."""
         await self.redis_router.broker.publish(
             message=message,
             stream=stream,
@@ -239,7 +232,7 @@ class StreamClient:
         publish_func: Callable,
         func_kwargs: Dict[str, Any],
     ):
-        """Schedule message publishing with APScheduler."""
+        """Планирует публикацию сообщения с использованием APScheduler."""
         job_id = f"scheduled_job_{uuid4()}"
         trigger = self._create_trigger(delay, scheduler)
 
@@ -257,7 +250,7 @@ class StreamClient:
     def _create_trigger(
         self, delay: Optional[timedelta], scheduler: Optional[str]
     ) -> DateTrigger | CronTrigger:
-        """Create appropriate trigger based on scheduling parameters."""
+        """Создает триггер на основе параметров планирования."""
         if delay:
             return DateTrigger(run_date=datetime.now(MOSCOW_TZ) + delay)
         return CronTrigger.from_crontab(scheduler, timezone=MOSCOW_TZ)
@@ -265,7 +258,7 @@ class StreamClient:
     async def _execute_redis_publish(
         self, stream: str, message: Dict[str, Any], headers: Dict[str, Any]
     ):
-        """Execute scheduled Redis publish operation."""
+        """Выполняет запланированную публикацию в Redis."""
         await self.redis_router.broker.publish(
             message=message,
             stream=stream,
@@ -276,16 +269,13 @@ class StreamClient:
         self,
         topic: str,
         message: Dict[str, Any],
-        key: Optional[str],
-        partition: Optional[int],
     ):
-        """Execute scheduled Kafka publish operation."""
+        """Выполняет запланированную публикацию в RabbitMQ."""
         await self.rabbit_router.broker.publish(
             message=message,
             topic=topic,
-            key=key,
-            partition=partition,
         )
 
 
+# Экземпляр клиента для работы с потоками
 stream_client = StreamClient()

@@ -18,10 +18,10 @@ __all__ = (
 
 @singleton
 class Utilities:
-    """Utility class for common operations and external service integration.
+    """Класс утилит для общих операций и интеграции с внешними сервисами.
 
-    Provides methods for data conversion, protocol handling, async task execution,
-    and various data formatting operations.
+    Содержит методы для преобразования данных, работы с протоколами,
+    выполнения асинхронных задач и форматирования данных.
     """
 
     logger = app_logger
@@ -32,18 +32,18 @@ class Utilities:
         schema: Type[BaseModel],
         from_attributes: bool = False,
     ) -> BaseModel:
-        """Converts a model instance to Pydantic schema.
+        """Преобразует экземпляр модели в схему Pydantic.
 
-        Args:
-            instance: Model instance to convert
-            schema: Target Pydantic schema class
-            from_attributes: Flag for ORM mode conversion
+        Аргументы:
+            instance: Экземпляр модели для преобразования
+            schema: Целевой класс схемы Pydantic
+            from_attributes: Флаг режима ORM-преобразования
 
-        Returns:
-            BaseModel: Initialized schema instance
+        Возвращает:
+            BaseModel: Инициализированный экземпляр схемы
 
-        Raises:
-            ValueError: If conversion fails
+        Исключения:
+            ValueError: При ошибке преобразования
         """
         try:
             return schema.model_validate(
@@ -51,19 +51,19 @@ class Utilities:
             )
         except Exception as exc:
             self.logger.error(
-                f"Model to schema conversion error: {str(exc)}", exc_info=True
+                f"Ошибка преобразования модели в схему: {str(exc)}",
+                exc_info=True,
             )
-            raise ValueError("Model to schema conversion error") from exc
+            raise ValueError("Ошибка преобразования модели в схему") from exc
 
     async def encode_base64(self, data: Any) -> Any:
-        """
-        Encode non-ASCII values in any data structure to be ASCII-compatible using Base64.
+        """Кодирует данные в Base64 с поддержкой сложных структур.
 
-        Args:
-            data: Input data (str, dict, list, tuple, etc.)
+        Аргументы:
+            data: Входные данные (строка, словарь, список, кортеж и т.д.)
 
-        Returns:
-            Encoded data with all strings converted to Base64
+        Возвращает:
+            Данные с преобразованными строками в Base64-представление
         """
         if isinstance(data, (str, bytes)):
             # Кодируем строку или байты в Base64
@@ -83,14 +83,13 @@ class Utilities:
             return data
 
     async def decode_base64(self, data: Any) -> Any:
-        """
-        Decode Base64-encoded values in any data structure back to original strings.
+        """Декодирует Base64-данные с поддержкой сложных структур.
 
-        Args:
-            data: Input data (str, dict, list, tuple, etc.)
+        Аргументы:
+            data: Закодированные данные (строка, словарь, список и т.д.)
 
-        Returns:
-            Decoded data with all Base64 strings converted back to original strings
+        Возвращает:
+            Данные с преобразованными Base64-строками в оригинальный формат
         """
         if isinstance(data, str):
             try:
@@ -115,14 +114,13 @@ class Utilities:
             return data
 
     async def decode_bytes(self, data: Any) -> Any:
-        """
-        Decode Redis data (bytes) into a usable format.
+        """Декодирует байтовые данные из Redis в читаемый формат.
 
-        Args:
-            data: Input data from Redis (bytes, dict, list, etc.)
+        Аргументы:
+            data: Входные данные из Redis (байты или сложная структура)
 
-        Returns:
-            Decoded data with all bytes converted to strings or appropriate types
+        Возвращает:
+            Данные с преобразованными байтами в строки UTF-8
         """
         if isinstance(data, bytes):
             # Декодируем байты в строку
@@ -143,27 +141,27 @@ class Utilities:
             return data
 
     def ensure_url_protocol(self, url: str) -> str:
-        """Ensures URL contains valid protocol prefix.
+        """Добавляет протокол к URL при его отсутствии.
 
-        Args:
-            url: Input URL string
+        Аргументы:
+            url: Исходный URL
 
-        Returns:
-            URL with protocol prefix
+        Возвращает:
+            URL с корректным протоколом (http:// или https://)
         """
         if not url.startswith(("http://", "https://")):
             return f"http://{url}"
         return url
 
     def generate_link_page(self, url: str, description: str) -> HTMLResponse:
-        """Generates HTML page with clickable link.
+        """Генерирует HTML-страницу с кликабельной ссылкой.
 
-        Args:
-            url: Target URL
-            description: Link description text
+        Аргументы:
+            url: Целевой URL
+            description: Текст описания ссылки
 
-        Returns:
-            HTMLResponse: Formatted HTML page
+        Возвращает:
+            HTMLResponse: Сгенерированная HTML-страница
         """
         return HTMLResponse(
             f"""
@@ -176,13 +174,13 @@ class Utilities:
         )
 
     def convert_numpy_types(self, value: Any) -> Any:
-        """Converts numpy types to native Python types.
+        """Конвертирует numpy-типы в стандартные Python-типы.
 
-        Args:
-            value: Input value with possible numpy types
+        Аргументы:
+            value: Значение для конвертации
 
-        Returns:
-            Value with converted types
+        Возвращает:
+            Значение с преобразованными типами (int, float, bool)
         """
         import pandas as pd
 
@@ -195,7 +193,14 @@ class Utilities:
         return value
 
     def convert_data(self, obj):
-        # Рекурсивно преобразуем модели Pydantic в словари
+        """Рекурсивно преобразует объекты Pydantic в словари.
+
+        Аргументы:
+            obj: Объект для преобразования (Pydantic модель, список и др.)
+
+        Возвращает:
+            Словарь или список с преобразованными данными
+        """
         if isinstance(obj, BaseModel):
             return obj.model_dump()
         elif isinstance(obj, list):
@@ -204,14 +209,15 @@ class Utilities:
             return obj
 
     def custom_json_encoder(self, obj: Any) -> dict:
-        """Custom JSON encoder for special types.
+        """Кастомный JSON-кодировщик для специальных типов данных.
 
-        Handles:
-        - UUID serialization
-        - datetime ISO formatting
+        Поддерживает:
+        - UUID
+        - datetime
+        - Модели Pydantic
 
-        Raises:
-            TypeError: For unsupported types
+        Исключения:
+            TypeError: Для неподдерживаемых типов
         """
         if isinstance(obj, UUID):
             return {"__uuid__": True, "value": str(obj)}
@@ -219,10 +225,10 @@ class Utilities:
             return {"__datetime__": True, "value": obj.isoformat()}
         if isinstance(obj, BaseModel):
             obj = obj.model_dump()
-        raise TypeError(f"Unserializable type: {type(obj)}")
+        raise TypeError(f"Неподдерживаемый тип: {type(obj)}")
 
     def custom_json_decoder(self, dct: dict) -> Any:
-        """Custom JSON decoder for special type handling."""
+        """Кастомный JSON-декодер для специальных типов данных."""
         if "__uuid__" in dct:
             return UUID(dct["value"])
         if "__datetime__" in dct:
@@ -232,12 +238,10 @@ class Utilities:
     async def connect_to_websocket_for_settings(
         self,
     ) -> Optional[Dict[str, Any]]:
-        """
-        Connects to a WebSocket server to fetch settings.
+        """Устанавливает соединение с WebSocket для получения настроек.
 
-        Returns:
-            Optional[Dict[str, Any]]: A dictionary containing settings if successful,
-            otherwise None.
+        Возвращает:
+            Optional[Dict[str, Any]]: Словарь с настройками или None при ошибке
         """
         import asyncio
 
@@ -260,20 +264,39 @@ class Utilities:
                     websocket.recv(), timeout=settings.app.socket_close_timeout
                 )
 
-                self.logger.info(
-                    "Successfully received settings from WebSocket."
-                )
+                self.logger.info("Успешное получение настроек через WebSocket")
 
                 return json_tricks.loads(message)
         except Exception as exc:
-            self.logger.error(
-                f"An unexpected error occurred: {str(exc)}", exc_info=True
-            )
+            self.logger.error(f"Ошибка подключения: {str(exc)}", exc_info=True)
         return None
+
+    async def safe_get(
+        self, data: dict, keys: str, default: Any = None
+    ) -> Any:
+        """
+        Безопасно извлекает значение из вложенного словаря.
+
+        Args:
+            data (dict): Исходный словарь.
+            keys (str): Ключи для доступа к значению, разделенные точками (например, "key1.key2.key3").
+            default (Any): Значение по умолчанию, если ключ не найден.
+
+        Returns:
+            Any: Найденное значение или значение по умолчанию.
+        """
+        current = data
+        keys = keys.split(".")
+        for key in keys:
+            if isinstance(current, dict):
+                current = current.get(key, {})
+            else:
+                return default
+        return current if current is not None else default
 
 
 class AsyncChunkIterator:
-    """Async iterator for sequential traversal of byte chunks"""
+    """Асинхронный итератор для последовательного чтения байтовых чанков."""
 
     def __init__(self, chunks: list[bytes]):
         self.chunks = chunks

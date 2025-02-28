@@ -10,7 +10,7 @@ app:
   socket_close_timeout: 10
 
 
-auth:
+security:
   token_name: "gat_token"
   token_lifetime: 120
   refresh_token_lifetime: 4800
@@ -39,6 +39,8 @@ auth:
   request_timeout: 20.0
   rate_limit: 400
   rate_time_measure_seconds: 60
+  failure_threshold: 3
+  recovery_timeout: 10
 
 
 tasks:

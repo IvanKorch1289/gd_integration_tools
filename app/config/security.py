@@ -7,12 +7,12 @@ from app.config.config_loader import BaseSettingsWithLoader
 
 
 __all__ = (
-    "AuthSettings",
-    "auth_settings",
+    "SecureSettings",
+    "secure_settings",
 )
 
 
-class AuthSettings(BaseSettingsWithLoader):
+class SecureSettings(BaseSettingsWithLoader):
     """Authentication and authorization system configuration.
 
     Groups of parameters:
@@ -21,9 +21,9 @@ class AuthSettings(BaseSettingsWithLoader):
     - Additional settings
     """
 
-    yaml_group: ClassVar[str] = "auth"
+    yaml_group: ClassVar[str] = "security"
     model_config = SettingsConfigDict(
-        env_prefix="AUTH_",
+        env_prefix="SEC_",
         extra="forbid",
     )
 
@@ -95,7 +95,17 @@ class AuthSettings(BaseSettingsWithLoader):
         description="Time window for rate limiting in seconds",
         examples=[60, 300],
     )
+    failure_threshold: int = Field(
+        ...,
+        description="Number of failed request attempts before locking the account",
+        examples=[5, 10],
+    )
+    recovery_timeout: int = Field(
+        ...,
+        description="Time after which the account is unlocked after failed attempts",
+        examples=[600, 3600],
+    )
 
 
 # Instantiate settings for immediate use
-auth_settings = AuthSettings()
+secure_settings = SecureSettings()

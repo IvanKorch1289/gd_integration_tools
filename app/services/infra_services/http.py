@@ -26,7 +26,7 @@ __all__ = ("HttpClient", "get_http_client")
 
 @singleton
 class CircuitBreaker:
-    """Implements circuit breaker pattern with exponential backoff."""
+    """Реализует паттерн Circuit Breaker с экспоненциальным откатом."""
 
     def __init__(self):
         self.state: str = "CLOSED"
@@ -34,7 +34,7 @@ class CircuitBreaker:
         self.last_failure_time: Optional[datetime] = None
 
     async def check_state(self, max_failures: int, reset_timeout: int) -> None:
-        """Check and update circuit breaker state."""
+        """Проверяет и обновляет состояние Circuit Breaker."""
         if (
             self.state == "OPEN"
             and self.last_failure_time is not None
@@ -47,14 +47,14 @@ class CircuitBreaker:
         if self.failure_count >= max_failures:
             self.state = "OPEN"
             self.last_failure_time = datetime.now()
-            raise ClientError("Circuit breaker tripped")
+            raise ClientError("Сработал Circuit Breaker")
 
     def record_failure(self) -> None:
-        """Record failed request."""
+        """Фиксирует неудачный запрос."""
         self.failure_count += 1
 
     def record_success(self) -> None:
-        """Reset circuit breaker on successful request."""
+        """Сбрасывает Circuit Breaker при успешном запросе."""
         if self.state == "HALF-OPEN":
             self.state = "CLOSED"
         self.failure_count = 0
@@ -63,21 +63,21 @@ class CircuitBreaker:
 @singleton
 class HttpClient:
     """
-    Advanced HTTP client with intelligent connection management.
+    Продвинутый HTTP-клиент с интеллектуальным управлением соединениями.
 
-    Features:
-    - Safe connection pooling with keep-alive
-    - Circuit breaker pattern
-    - Automatic session lifecycle management
-    - Retry mechanism with exponential backoff
-    - Request/response logging with sensitive data masking
-    - Performance metrics collection
-    - Background connection purging
-    - DNS caching
+    Особенности:
+    - Пул соединений с keep-alive
+    - Паттерн Circuit Breaker
+    - Автоматическое управление жизненным циклом сессии
+    - Механизм повтора с экспоненциальным откатом
+    - Логирование запросов/ответов с маскировкой чувствительных данных
+    - Сбор метрик производительности
+    - Фоновая очистка соединений
+    - Кэширование DNS
     """
 
     def __init__(self):
-        """Initialize HTTP client with configuration from settings."""
+        """Инициализирует HTTP-клиент с настройками из конфигурации."""
         from app.utils.logging_service import request_logger
 
         self.settings = settings.http_base_settings
@@ -96,22 +96,22 @@ class HttpClient:
         }
         self._init_purging()
 
-    # region Session Management
+    # region Управление сессиями
     async def _ensure_session(self) -> None:
-        """Maintain active session with renewal based on activity."""
+        """Поддерживает активную сессию с обновлением по активности."""
         async with self.session_lock:
             now = monotonic()
             if self._should_renew_session(now):
                 await self._close_session()
                 self._create_new_session()
                 self.logger.debug(
-                    "Created new session",
+                    "Создана новая сессия",
                     extra={"session_id": id(self.session)},
                 )
             self.last_activity = now
 
     def _should_renew_session(self, current_time: float) -> bool:
-        """Determine if session needs renewal based on activity timeout."""
+        """Определяет необходимость обновления сессии по таймауту активности."""
         session_expiry = self.settings.keepalive_timeout + 5
         return (
             self.session is None
@@ -123,7 +123,7 @@ class HttpClient:
         )
 
     def _create_new_session(self) -> None:
-        """Initialize new client session with proper timeout settings."""
+        """Инициализирует новую клиентскую сессию с настройками таймаутов."""
         self.connector = TCPConnector(
             limit=self.settings.limit,
             limit_per_host=self.settings.limit_per_host,
@@ -149,17 +149,17 @@ class HttpClient:
         )
 
     async def _close_session(self) -> None:
-        """Gracefully close existing session if active."""
+        """Грациозно закрывает текущую сессию, если она активна."""
         if self.session and not self.session.closed:
             await self.session.close()
             self.logger.debug(
-                "Closed session", extra={"session_id": id(self.session)}
+                "Сессия закрыта", extra={"session_id": id(self.session)}
             )
             self.session = None
 
     # endregion
 
-    # region Request Processing
+    # region Обработка запросов
     async def make_request(
         self,
         method: str,
@@ -176,28 +176,28 @@ class HttpClient:
         total_timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Execute HTTP request with full error handling and retry logic.
+        Выполняет HTTP-запрос с обработкой ошибок и логикой повторов.
 
-        Args:
-            method: HTTP verb (GET, POST, etc.)
-            url: Target URL for the request
-            headers: Optional custom headers
-            json: JSON-serializable request body
-            params: URL query parameters
-            data: Raw request body data
-            auth_token: Bearer token for authorization
-            response_type: Expected response format (json/text/bytes)
-            raise_for_status: Raise exception for HTTP errors
+        Аргументы:
+            method: HTTP-метод (GET, POST и т.д.)
+            url: Целевой URL
+            headers: Дополнительные заголовки
+            json: Тело запроса в формате JSON
+            params: Параметры URL
+            data: Сырые данные запроса
+            auth_token: Токен авторизации
+            response_type: Ожидаемый формат ответа (json/text/bytes)
+            raise_for_status: Вызывать исключение при ошибках HTTP
 
-        Returns:
-            Dictionary containing status, data, headers and timing information
+        Возвращает:
+            Словарь с результатом запроса
         """
         start_time = monotonic()
         last_exception = None
         headers = await self._build_headers(auth_token, headers, data, json)
         request_data = await self._prepare_request_data(data, json)
 
-        # Calculate timeouts
+        # Вычисление таймаутов
         connect = connect_timeout or self.settings.connect_timeout
         read = read_timeout or self.settings.sock_read_timeout
         total = total_timeout or (connect + read)
@@ -255,7 +255,7 @@ class HttpClient:
 
     # endregion
 
-    # region Helpers
+    # region Вспомогательные методы
     async def _build_headers(
         self,
         auth_token: Optional[str],
@@ -263,13 +263,12 @@ class HttpClient:
         data: Optional[Union[Dict[str, Any], str, bytes]],
         json_data: Optional[Dict[str, Any]],
     ) -> Dict[str, str]:
-        """Construct headers with intelligent Content-Type detection."""
+        """Создает заголовки с автоматическим определением Content-Type."""
         headers = {
             "User-Agent": "HttpClient/1.0",
             "Accept-Encoding": "gzip, deflate, br",
         }
 
-        # Автоматическое определение Content-Type
         if not custom_headers or "Content-Type" not in custom_headers:
             if json_data is not None:
                 headers["Content-Type"] = "application/json"
@@ -291,7 +290,7 @@ class HttpClient:
         data: Optional[Union[Dict[str, Any], str, bytes]],
         json_data: Optional[Dict[str, Any]],
     ) -> Optional[Union[str, bytes]]:
-        """Serialize data with Content-Type awareness."""
+        """Сериализует данные с учетом Content-Type."""
         from app.utils.utils import utilities
 
         if json_data is not None:
@@ -310,7 +309,7 @@ class HttpClient:
             return None
 
     def _should_retry(self, attempt: int, exception: Exception) -> bool:
-        """Determine if a request should be retried."""
+        """Определяет, нужно ли повторять запрос."""
         if attempt >= self.settings.max_retries:
             return False
         if isinstance(exception, ClientResponseError):
@@ -318,13 +317,13 @@ class HttpClient:
         return isinstance(exception, RETRY_EXCEPTIONS)
 
     async def _handle_retry(self, attempt: int) -> None:
-        """Perform retry delay with exponential backoff."""
+        """Выполняет задержку перед повторным запросом."""
         sleep_time = self.settings.retry_backoff_factor * (2**attempt)
         await sleep(sleep_time)
 
     # endregion
 
-    # region Logging & Metrics
+    # region Логирование и метрики
     async def _log_request(
         self,
         method: str,
@@ -333,7 +332,7 @@ class HttpClient:
         params: Dict[str, Any],
         data: Optional[Union[str, bytes]],
     ) -> None:
-        """Log request details with sensitive data masking."""
+        """Логирует детали запроса с маскировкой чувствительных данных."""
         safe_headers = {
             k: "***MASKED***" if k.lower() == "authorization" else v
             for k, v in headers.items()
@@ -343,7 +342,7 @@ class HttpClient:
         )
 
         self.logger.debug(
-            "Making request",
+            "Выполнение запроса",
             extra={
                 "method": method,
                 "url": url,
@@ -356,9 +355,9 @@ class HttpClient:
     async def _log_response(
         self, response: ClientResponse, content: Any
     ) -> None:
-        """Log response details with content truncation."""
+        """Логирует детали ответа с усечением содержимого."""
         self.logger.debug(
-            "Received response",
+            "Получен ответ",
             extra={
                 "status": response.status,
                 "headers": dict(response.headers),
@@ -371,7 +370,7 @@ class HttpClient:
         )
 
     async def _update_metrics(self, start_time: float, success: bool) -> None:
-        """Update performance metrics."""
+        """Обновляет метрики производительности."""
         duration = monotonic() - start_time
         self.metrics["total_requests"] += 1
         key = "successful_requests" if success else "failed_requests"
@@ -382,11 +381,11 @@ class HttpClient:
 
     # endregion
 
-    # region Response Handling
+    # region Обработка ответов
     async def _build_response_object(
         self, response: ClientResponse, content: Any, start_time: float
     ) -> Dict[str, Any]:
-        """Construct standardized response dictionary."""
+        """Создает стандартизированный словарь ответа."""
         content_type = (
             response.headers.get("Content-Type", "")
             .lower()
@@ -405,7 +404,7 @@ class HttpClient:
     async def _handle_final_error(
         self, exception: Optional[Exception], start_time: float
     ) -> Dict[str, Any]:
-        """Create error response after exhausting retries."""
+        """Создает ответ об ошибке после исчерпания попыток."""
         status_code = getattr(exception, "status", None)
         headers = dict(getattr(exception, "headers", {}))
 
@@ -419,7 +418,7 @@ class HttpClient:
     async def _process_response(
         self, response: ClientResponse, response_type: str
     ) -> Any:
-        """Process response content according to specified type."""
+        """Обрабатывает содержимое ответа в соответствии с типом."""
         content = await response.read()
 
         if response_type == "json":
@@ -427,26 +426,26 @@ class HttpClient:
                 return loads(content.decode("utf-8"))
             except Exception as exc:
                 self.logger.error(
-                    f"JSON parsing error: {str(exc)}",
+                    f"Ошибка парсинга JSON: {str(exc)}",
                     extra={"content": content[:200], "error": str(exc)},
                 )
-                raise ValueError("Invalid JSON response") from exc
+                raise ValueError("Неверный JSON-ответ") from exc
         if response_type == "text":
             return content.decode(errors="replace")
         if response_type == "bytes":
             return content
-        raise ValueError(f"Unsupported response type: {response_type}")
+        raise ValueError(f"Неподдерживаемый тип ответа: {response_type}")
 
     # endregion
 
-    # region Connection Management
+    # region Управление соединениями
     def _init_purging(self) -> None:
-        """Initialize background connection purging task."""
+        """Инициализирует задачу фоновой очистки соединений."""
         self.purging_queue = Queue()
         create_task(self._connection_purger())
 
     async def _connection_purger(self) -> None:
-        """Background task to purge idle connections."""
+        """Фоновая задача для очистки неактивных соединений."""
         while True:
             try:
                 await sleep(self.settings.purging_interval)
@@ -454,11 +453,11 @@ class HttpClient:
                     await self.connector.close()
             except Exception as exc:
                 self.logger.error(
-                    f"Error purging connections: {str(exc)}", exc_info=True
+                    f"Ошибка очистки соединений: {str(exc)}", exc_info=True
                 )
 
     async def close(self) -> None:
-        """Release all network resources and connections."""
+        """Освобождает все сетевые ресурсы и соединения."""
         try:
             async with self.session_lock:
                 await self._close_session()
@@ -466,7 +465,7 @@ class HttpClient:
                     await self.connector.close()
         except Exception as exc:
             self.logger.error(
-                f"Error closing network resources: {str(exc)}", exc_info=True
+                f"Ошибка закрытия сетевых ресурсов: {str(exc)}", exc_info=True
             )
 
     # endregion
@@ -475,10 +474,10 @@ class HttpClient:
 @asynccontextmanager
 async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     """
-    Context manager for HTTP client with connection pooling.
+    Контекстный менеджер для HTTP-клиента с пулом соединений.
 
-    Yields:
-        Configured HttpClient instance
+    Возвращает:
+        Настроенный экземпляр HttpClient
     """
     client = HttpClient()
     try:

@@ -1,13 +1,6 @@
 from functools import wraps
 from typing import Any, Callable, Coroutine, Optional
 
-from json_tricks import dumps, loads
-
-from app.config.settings import settings
-from app.infra.clients.redis import redis_client
-from app.utils.logging_service import redis_logger
-from app.utils.utils import utilities
-
 
 __all__ = (
     "response_cache",
@@ -17,15 +10,37 @@ __all__ = (
 
 
 class CachingDecorator:
+    """Декоратор для кэширования результатов функций в Redis.
+
+    Обеспечивает:
+    - Кэширование результатов функций
+    - Инвалидацию кэша по ключу или шаблону
+    - Поддержку синхронных и асинхронных функций
+    - Гибкую настройку времени жизни кэша
+    """
+
     def __init__(
         self,
-        expire: int = settings.redis.cache_expire_seconds,
+        expire: int = None,
         key_prefix: str = None,
         exclude_self: bool = True,
         renew_ttl: bool = False,
         key_builder: Optional[Callable] = None,
     ):
-        self.expire = expire
+        """
+        Инициализирует декоратор.
+
+        Аргументы:
+            expire (int): Время жизни кэша в секундах
+            key_prefix (str): Префикс для ключей кэша
+            exclude_self (bool): Исключать self из ключа для методов класса
+            renew_ttl (bool): Обновлять время жизни при каждом обращении
+            key_builder (Callable): Функция для построения ключа кэша
+        """
+        from app.config.settings import settings
+        from app.utils.logging_service import redis_logger
+
+        self.expire = expire or settings.redis.cache_expire_seconds
         self.key_prefix = key_prefix
         self.exclude_self = exclude_self
         self.renew_ttl = renew_ttl
@@ -35,8 +50,12 @@ class CachingDecorator:
     def _default_key_builder(
         self, func: Callable, args: tuple, kwargs: dict
     ) -> str:
-        """Default cache key builder with hash-based normalization"""
+        """Создает ключ кэша на основе функции и её аргументов."""
         import hashlib
+
+        from json_tricks import dumps
+
+        from app.utils.utils import utilities
 
         key_data = {
             "module": func.__module__,
@@ -49,23 +68,24 @@ class CachingDecorator:
             extra_obj_encoders=[utilities.custom_json_encoder],
             separators=(",", ":"),
         )
-        self.logger.critical(serialized)
         return f"{self.key_prefix}:{hashlib.sha256(serialized.encode()).hexdigest()}"
 
-    @redis_client.reconnect_on_failure
     async def invalidate(self, *cache_keys: str) -> None:
-        """Invalidate cache for specific keys"""
+        """Инвалидирует кэш по указанным ключам."""
+        from app.infra.clients.redis import redis_client
+
         try:
             async with redis_client.connection() as r:
                 await r.unlink(*cache_keys)
         except Exception as exc:
             self.logger.error(
-                f"Cache invalidation failed: {str(exc)}", exc_info=True
+                f"Ошибка инвалидации кэша: {str(exc)}", exc_info=True
             )
 
-    @redis_client.reconnect_on_failure
     async def invalidate_pattern(self, pattern: str = None) -> None:
-        """Invalidate cache keys matching pattern"""
+        """Инвалидирует кэш по шаблону ключей."""
+        from app.infra.clients.redis import redis_client
+
         try:
             async with redis_client.connection() as r:
                 match_pattern = (
@@ -80,14 +100,15 @@ class CachingDecorator:
                 if keys:
                     await r.unlink(*keys)
                     self.logger.info(
-                        f"Keys for pattern '{pattern}' invalidated"
+                        f"Ключи по шаблону '{pattern}' инвалидированы"
                     )
         except Exception as exc:
             self.logger.error(
-                f"Pattern cache invalidation failed: {str(exc)}", exc_info=True
+                f"Ошибка инвалидации по шаблону: {str(exc)}", exc_info=True
             )
 
     def __call__(self, func: Callable) -> Callable:
+        """Декорирует функцию, добавляя кэширование."""
         import asyncio
 
         @wraps(func)
@@ -112,8 +133,13 @@ class CachingDecorator:
             else sync_wrapper
         )
 
-    @redis_client.reconnect_on_failure
     async def _get_cached_value(self, key: str) -> Any:
+        """Получает значение из кэша."""
+        from json_tricks import loads
+
+        from app.infra.clients.redis import redis_client
+        from app.utils.utils import utilities
+
         try:
             async with redis_client.connection() as r:
                 data = await r.get(key)
@@ -131,11 +157,16 @@ class CachingDecorator:
 
                 return deserialized
         except Exception as exc:
-            self.logger.error(f"Cache read error: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка чтения кэша: {str(exc)}", exc_info=True)
             return None
 
-    @redis_client.reconnect_on_failure
     async def _cache_result(self, key: str, result: Any) -> None:
+        """Сохраняет результат в кэш."""
+        from json_tricks import dumps
+
+        from app.infra.clients.redis import redis_client
+        from app.utils.utils import utilities
+
         try:
             if result is None:
                 return
@@ -149,23 +180,24 @@ class CachingDecorator:
                 )
                 await r.setex(key, self.expire, serialized)
         except Exception as exc:
-            self.logger.error(f"Cache write error: {str(exc)}", exc_info=True)
+            self.logger.error(
+                f"Ошибка записи в кэш: {str(exc)}", exc_info=True
+            )
 
 
-# Глобальный экземпляр декоратора
+# Глобальные экземпляры декоратора
 response_cache = CachingDecorator(
     key_prefix="cache:",
     expire=1800,
     key_builder=lambda func, args, kwargs: (
         f"cache:"
-        f"{args[0].__class__.__name__ if hasattr(args[0], "__class__") else args[0].__name__}"  # Имя класса или функции
-        f":{func.__name__ if hasattr(args[0], "__class__") else None}"  # Имя метода класса
-        f"{":".join(str(arg) for arg in args[1:])}:"  # Остальные позиционные аргументы
-        f"{":".join(f'{k}={v}' for k, v in kwargs.items())}"  # Именованные аргументы
+        f"{args[0].__class__.__name__ if hasattr(args[0], "__class__") else args[0].__name__}"
+        f":{func.__name__ if hasattr(args[0], "__class__") else None}"
+        f"{":".join(str(arg) for arg in args[1:])}:"
+        f"{":".join(f'{k}={v}' for k, v in kwargs.items())}"
     ),
 )
 
-# Экземпляры для файлового хранилища
 metadata_cache = CachingDecorator(
     key_prefix="s3:metadata",
     expire=300,

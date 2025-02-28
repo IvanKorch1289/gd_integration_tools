@@ -33,10 +33,10 @@ __all__ = (
 
 
 class LoggerManager:
-    """Central logging configuration manager with multiple handlers."""
+    """Централизованный менеджер конфигурации логирования с поддержкой нескольких обработчиков."""
 
     class ContextFilter(Filter):
-        """Adds common contextual fields to log records."""
+        """Добавляет общие контекстные поля в записи логов."""
 
         def __init__(self, environment: str, hostname: str):
             super().__init__()
@@ -44,7 +44,14 @@ class LoggerManager:
             self.hostname = hostname
 
         def filter(self, record: LogRecord) -> bool:
-            """Enrich log records with contextual information."""
+            """Обогащает записи логов контекстной информацией.
+
+            Аргументы:
+                record (LogRecord): Запись лога
+
+            Возвращает:
+                bool: Всегда True, так как фильтр только добавляет данные
+            """
             record.environment = self.environment
             record.hostname = self.hostname
             record.user_id = getattr(record, "user_id", "system")
@@ -53,21 +60,28 @@ class LoggerManager:
             return True
 
     class SafeFormatter(Formatter):
-        """Ensures required fields exist in log records."""
+        """Гарантирует наличие обязательных полей в записях логов."""
 
         def __init__(self, fmt: str, required_fields: List[str]):
             """
-            Initialize formatter with required fields.
+            Инициализирует форматтер с обязательными полями.
 
-            Args:
-                fmt (str): Log format string
-                required_fields (List[str]): Mandatory fields for each record
+            Аргументы:
+                fmt (str): Строка формата лога
+                required_fields (List[str]): Обязательные поля для каждой записи
             """
             super().__init__(fmt)
             self.required_fields = required_fields
 
         def format(self, record: LogRecord) -> str:
-            """Format log record with guaranteed fields."""
+            """Форматирует запись лога с гарантией наличия обязательных полей.
+
+            Аргументы:
+                record (LogRecord): Запись лога
+
+            Возвращает:
+                str: Отформатированная строка лога
+            """
             for field in self.required_fields:
                 if not hasattr(record, field):
                     setattr(record, field, "unknown")
@@ -82,13 +96,14 @@ class LoggerManager:
         debug: bool = False,
     ):
         """
-        Initialize logging manager.
+        Инициализирует менеджер логирования.
 
-        Args:
-            log_config (LogStorageSettings): Logging configuration
-            environment (str): Application environment (prod, dev, etc.)
-            hostname (str): Server hostname
-            debug (bool): Debug mode flag
+        Аргументы:
+            log_config (LogStorageSettings): Конфигурация логирования
+            environment (str): Окружение приложения (prod, dev и т.д.)
+            hostname (str): Имя хоста сервера
+            handler (GraylogHandler): Обработчик Graylog
+            debug (bool): Флаг режима отладки
         """
         from queue import Queue
 
@@ -106,14 +121,14 @@ class LoggerManager:
         self._init_logger_instances()
 
     def _setup_components(self) -> None:
-        """Configure all logging components."""
+        """Настраивает все компоненты системы логирования."""
         self._setup_formatter()
         self._setup_handlers()
         self._setup_queue_listener()
         self._configure_loggers()
 
     def _setup_formatter(self) -> None:
-        """Initialize log formatter with required fields."""
+        """Инициализирует форматтер логов с обязательными полями."""
         log_format = (
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s "
             "[%(environment)s@%(hostname)s] User:%(user_id)s Action:%(action)s"
@@ -123,8 +138,8 @@ class LoggerManager:
         )
 
     def _setup_handlers(self) -> None:
-        """Configure all logging handlers."""
-        # Graylog handler
+        """Настраивает все обработчики логов."""
+        # Обработчик Graylog
         if self.graylog.enabled:
             gl_handler = self.graylog.connect()
             if gl_handler:
@@ -133,15 +148,15 @@ class LoggerManager:
                 )
                 self.handlers.append(gl_handler)
 
-        # File handler
+        # Обработчик файлов
         self.handlers.append(self._create_file_handler())
 
-        # Console handler
+        # Обработчик консоли
         if self.debug:
             self.handlers.append(self._create_console_handler())
 
     def _create_file_handler(self) -> TimedRotatingFileHandler:
-        """Configure timed rotating file handler."""
+        """Настраивает ротируемый по времени файловый обработчик."""
         import os
 
         log_dir = self.log_config.dir_log_name
@@ -159,21 +174,21 @@ class LoggerManager:
         return handler
 
     def _create_console_handler(self) -> StreamHandler:
-        """Configure console output handler."""
+        """Настраивает обработчик вывода в консоль."""
         handler = StreamHandler()
         handler.setFormatter(self.formatter)
         handler.addFilter(self.ContextFilter(self.environment, self.hostname))
         return handler
 
     def _setup_queue_listener(self) -> None:
-        """Initialize asynchronous log processing."""
+        """Инициализирует асинхронную обработку логов."""
         self.queue_listener = QueueListener(
             self.log_queue, *self.handlers, respect_handler_level=True
         )
         self.queue_listener.start()
 
     def _configure_loggers(self) -> None:
-        """Configure all registered loggers."""
+        """Настраивает все зарегистрированные логгеры."""
         for logger_cfg in self.log_config.conf_loggers:
             logger = getLogger(logger_cfg["name"])
             logger.propagate = False
@@ -182,25 +197,25 @@ class LoggerManager:
             logger.addHandler(QueueHandler(self.log_queue))
 
     def _init_logger_instances(self) -> None:
-        """Create logger instances as class attributes."""
+        """Создает экземпляры логгеров как атрибуты класса."""
         for logger_cfg in self.log_config.conf_loggers:
             logger_name = logger_cfg["name"]
             setattr(self, f"{logger_name}_logger", getLogger(logger_name))
 
     @staticmethod
     def _reset_handlers(logger: Logger) -> None:
-        """Remove existing handlers from logger."""
+        """Удаляет существующие обработчики из логгера."""
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
 
     def shutdown(self) -> None:
-        """Safely terminate logging infrastructure."""
+        """Безопасно завершает работу системы логирования."""
         if self.queue_listener:
             self.queue_listener.stop()
         self.graylog.close()
 
 
-# Initialize logging system
+# Инициализация системы логирования
 log_manager = LoggerManager(
     log_config=settings.logging,
     environment=settings.app.environment,
@@ -209,7 +224,7 @@ log_manager = LoggerManager(
     debug=settings.app.debug_mode,
 )
 
-# Expose common loggers
+# Экспорт общих логгеров
 app_logger = log_manager.application_logger  # type: ignore
 db_logger = log_manager.database_logger  # type: ignore
 fs_logger = log_manager.storage_logger  # type: ignore

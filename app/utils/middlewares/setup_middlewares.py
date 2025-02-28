@@ -19,7 +19,7 @@ def setup_middlewares(app: FastAPI) -> None:
         (PrometheusMiddleware, {}),
         (
             TrustedHostMiddleware,
-            {"allowed_hosts": settings.auth.allowed_hosts},
+            {"allowed_hosts": settings.secure.allowed_hosts},
         ),
         (GZipMiddleware, {"minimum_size": 1000}),
         (RequestIDMiddleware, {}),
