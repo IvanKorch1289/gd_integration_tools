@@ -68,6 +68,7 @@ memory-profiler = "^0.61.0"
 py-spy = "^0.4.0"
 prefect = "^3.2.7"
 aio-pika = "^9.5.5"
+prefect-client = "^3.2.9"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -109,8 +110,8 @@ known_third_party = [
     "prometheus-fastapi-instrumentator", "websockets", "aiosmtplib", "json_tricks",
     "aioboto3", "fastapi_filter", "asyncpg", "aiodns", "aiocircuitbreaker",
     "pymongo", "motor", "fastapi-limiter", "vulture", "openpyxl", "opentelemetry",
-    "opentelemetry-sdk", "opentelemetry-instrumentation-fastapi",
-    "opentelemetry-exporter-otlp-proto-grpc", "hvac", "grpc"
+    "opentelemetry-sdk", "opentelemetry-instrumentation-fastapi", "hvac", "aio-pika",
+    "opentelemetry-exporter-otlp-proto-grpc", "grpc", "prefect-client"
 
 ]
 known_first_party = ["app"]

@@ -12,16 +12,17 @@ __all__ = (
 
 class SchedulerManager:
     """
-    A manager class for handling the APScheduler instance.
-    This class initializes and manages the lifecycle of the scheduler,
-    including starting and stopping it.
+    Менеджер для управления экземпляром APScheduler.
+    Класс инициализирует и управляет жизненным циклом планировщика,
+    включая его запуск и остановку.
     """
 
     def __init__(self):
         """
-        Initializes the scheduler with the specified configuration.
-        Uses SQLAlchemyJobStore as the primary job store and MemoryJobStore as a backup.
-        Configures both async and threadpool executors.
+        Инициализирует планировщик с указанной конфигурацией.
+        Использует SQLAlchemyJobStore в качестве основного хранилища задач
+        и MemoryJobStore в качестве резервного.
+        Настраивает как асинхронные, так и пул-потоковые исполнители.
         """
         from apscheduler.jobstores.memory import MemoryJobStore
         from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -42,36 +43,110 @@ class SchedulerManager:
                     engine=db_initializer.sync_engine,
                     engine_options={"pool_pre_ping": True, "pool_size": 10},
                 ),
-                settings.scheduler.backup_jobstore_name: MemoryJobStore(),  # Backup job store
+                settings.scheduler.backup_jobstore_name: MemoryJobStore(),  # Резервное хранилище
             },
             executors=settings.scheduler.executors,
         )
+        self._event_handlers = {}  # Словарь для хранения обработчиков событий
 
     async def start(self):
         """
-        Starts the scheduler when the application starts.
+        Запускает планировщик при старте приложения.
         """
         self.scheduler.start()
 
     async def stop(self):
         """
-        Stops the scheduler when the application shuts down.
+        Останавливает планировщик при завершении работы приложения.
         """
         self.scheduler.shutdown()
 
+    def register_job_cleanup(self, job_name: str):
+        """
+        Регистрирует обработчик для автоматической очистки задач с указанным именем.
 
+        Args:
+            job_name (str): Имя задачи, для которой регистрируется обработчик.
+        """
+        from apscheduler.events import EVENT_JOB_EXECUTED
+
+        if job_name in self._event_handlers:
+            self.logger.warning(
+                f"Обработчик для задачи '{job_name}' уже зарегистрирован."
+            )
+            return
+
+        def cleanup_job(event):
+            """Обработчик для удаления задачи после её выполнения."""
+            if event.job_id.startswith(job_name):
+                try:
+                    self.scheduler.remove_job(event.job_id)
+                    self.logger.info(
+                        f"Задача '{event.job_id}' успешно удалена."
+                    )
+                except Exception as exc:
+                    self.logger.error(
+                        f"Ошибка при удалении задачи '{event.job_id}': {str(exc)}"
+                    )
+
+        # Регистрируем обработчик
+        self.scheduler.add_listener(cleanup_job, EVENT_JOB_EXECUTED)
+        self._event_handlers[job_name] = cleanup_job
+        self.logger.info(
+            f"Зарегистрирован обработчик для задачи '{job_name}'."
+        )
+
+    def unregister_job_cleanup(self, job_name: str):
+        """
+        Удаляет обработчик для задач с указанным именем.
+
+        Args:
+            job_name (str): Имя задачи, для которой удаляется обработчик.
+        """
+        if job_name not in self._event_handlers:
+            self.logger.warning(
+                f"Обработчик для задачи '{job_name}' не найден."
+            )
+            return
+
+        # Удаляем обработчик
+        self.scheduler.remove_listener(self._event_handlers[job_name])
+        del self._event_handlers[job_name]
+        self.logger.info(f"Обработчик для задачи '{job_name}' удалён.")
+
+    def cleanup_all_jobs_by_name(self, job_name: str):
+        """
+        Очищает все задачи с указанным именем.
+
+        Args:
+            job_name (str): Имя задачи, которую необходимо очистить.
+        """
+        jobs = self.scheduler.get_jobs()
+        for job in jobs:
+            if job.id.startswith(job_name):
+                try:
+                    self.scheduler.remove_job(job.id)
+                    self.logger.info(f"Задача '{job.id}' успешно удалена.")
+                except Exception as exc:
+                    self.logger.error(
+                        f"Ошибка при удалении задачи '{job.id}': {str(exc)}"
+                    )
+
+
+# Инициализация менеджера планировщика
 scheduler_manager = SchedulerManager()
+scheduler_manager.register_job_cleanup("resume_")
 
 
 async def check_all_services():
     """
-    Checks the health status of all services.
-    If any service is inactive, sends an email notification via Redis stream.
+    Проверяет статус всех сервисов.
+    Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
     """
     from app.utils.health_check import get_healthcheck_service
 
     try:
-        scheduler_logger.info("Starting health check of all services...")
+        scheduler_logger.info("Запуск проверки состояния всех сервисов...")
 
         async with get_healthcheck_service() as health_check:
             result = await health_check.check_all_services()
@@ -81,29 +156,31 @@ async def check_all_services():
 
             data = {
                 "to_emails": ["cards25@rt.bak"],
-                "subject": "Inactive Services Detected",
-                "message": "Inactive services detected. Please check the services and try again later.",
+                "subject": "Обнаружены неактивные сервисы",
+                "message": "Обнаружены неактивные сервисы. Пожалуйста, проверьте сервисы и повторите попытку позже.",
             }
 
             await stream_client.publish_to_redis(
                 message=EmailSchema.model_validate(data),
                 stream=settings.redis.get_stream_name("email"),
             )
-        scheduler_logger.info(f"Health check completed. Result: {result}")
+        scheduler_logger.info(
+            f"Проверка состояния завершена. Результат: {result}"
+        )
     except Exception as exc:
         scheduler_logger.error(
-            f"Error during health check: {str(exc)}", exc_info=True
+            f"Ошибка при проверке состояния: {str(exc)}", exc_info=True
         )
-        raise  # Exception will be handled by global exception handler
 
 
+# Добавление задачи проверки сервисов в планировщик
 scheduler_manager.scheduler.add_job(
     func=check_all_services,
     trigger="interval",
-    minutes=CHECK_SERVICES_JOB["minutes"],  # Check every minute
+    minutes=CHECK_SERVICES_JOB["minutes"],  # Проверка каждую минуту
     replace_existing=True,
     id=CHECK_SERVICES_JOB["name"],
-    name="Check health status of all services",
+    name="Проверка состояния всех сервисов",
     jobstore=settings.scheduler.default_jobstore_name,
     executor="async",
 )

@@ -1,7 +1,7 @@
-from asyncio import sleep
 from typing import Any, Dict
 
 from prefect import flow
+from prefect.task_runners import ConcurrentTaskRunner
 
 from app.background_tasks.tasks import (
     create_skb_order_task,
@@ -9,6 +9,7 @@ from app.background_tasks.tasks import (
     send_notification_task,
     send_order_result_task,
 )
+from app.background_tasks.utils import managed_pause
 from app.config.constants import (
     INITIAL_DELAY,
     MAX_RESULT_ATTEMPTS,
@@ -33,6 +34,7 @@ __all__ = (
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
+    task_runner=ConcurrentTaskRunner,
 )
 async def send_notification_workflow(body: dict) -> None:
     """
@@ -53,6 +55,7 @@ async def send_notification_workflow(body: dict) -> None:
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
+    task_runner=ConcurrentTaskRunner,
 )
 async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
     """
@@ -64,7 +67,11 @@ async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Результат обработки заказа.
     """
-    return await create_skb_order_task(body)
+    try:
+        return await create_skb_order_task(body)
+    except Exception as exc:
+        tasks_logger.error(f"Error during create_skb_order_workflow: {exc}")
+        raise
 
 
 @flow(
@@ -73,6 +80,7 @@ async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     persist_result=True,
+    task_runner=ConcurrentTaskRunner,
 )
 async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
     """
@@ -84,7 +92,13 @@ async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Результат обработки заказа.
     """
-    return await get_skb_order_result_task(body)
+    try:
+        return await get_skb_order_result_task(body)
+    except Exception as exc:
+        tasks_logger.error(
+            f"Error during get_skb_order_result_workflow: {exc}"
+        )
+        raise
 
 
 @flow(
@@ -92,6 +106,7 @@ async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
     description="Оптимизированный процесс обработки заказов с улучшенной обработкой ошибок",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    task_runner=ConcurrentTaskRunner,
 )
 async def order_processing_workflow(
     order_data: Dict[str, Any]
@@ -140,7 +155,7 @@ async def order_processing_workflow(
 
     try:
         # Этап 1: Создание заказа
-        creation_result = await create_skb_order_task(order_data)
+        creation_result = await create_skb_order_workflow(order_data)
 
         if not creation_result.get("success"):
             await handle_error(
@@ -157,7 +172,7 @@ async def order_processing_workflow(
                     "result_data.response.data.Data.Message",
                     "Заказ успешно создан",
                 )
-                await send_notification_task(
+                await send_notification_workflow(
                     {
                         "to_emails": email,
                         "subject": "Заказ создан",
@@ -171,13 +186,13 @@ async def order_processing_workflow(
                 )
 
         # Этап 2: Ожидание обработки заказа
-        await sleep(INITIAL_DELAY)
+        await managed_pause(delay_seconds=INITIAL_DELAY)
 
         # Этап 3: Получение результата обработки заказа
         result = None
         for attempt in range(MAX_RESULT_ATTEMPTS + 1):
             try:
-                result = await get_skb_order_result_task(creation_result)
+                result = await get_skb_order_result_workflow(creation_result)
 
                 if result.get("success"):
                     if email:
@@ -191,7 +206,7 @@ async def order_processing_workflow(
                     return result
 
                 if attempt < MAX_RESULT_ATTEMPTS:
-                    sleep(RETRY_DELAY)
+                    await managed_pause(delay_seconds=RETRY_DELAY)
 
             except Exception as exc:
                 await handle_error(
@@ -206,6 +221,7 @@ async def order_processing_workflow(
                     raise
 
         # Этап 4: Отправка результата
+        # TO DO:заменить на воркфлоу
         sending_result = await send_order_result_task(order_data)
 
         if not sending_result.get("success"):

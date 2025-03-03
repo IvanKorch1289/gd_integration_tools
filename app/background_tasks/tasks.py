@@ -10,12 +10,13 @@ __all__ = (
     "send_notification_task",
     "create_skb_order_task",
     "get_skb_order_result_task",
+    "send_order_result_task",
 )
 
 
 @task(
     name="send-notification",
-    description="Send email message to the specified address",
+    description="Отправляет электронное письмо по указанному адресу",
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
@@ -23,6 +24,21 @@ __all__ = (
     persist_result=True,
 )
 async def send_notification_task(body: dict) -> dict:
+    """
+    Отправляет электронное письмо с использованием сервиса почты.
+
+    Args:
+        body (dict): Данные для отправки письма, включая:
+            - to_emails (list): Список адресов получателей.
+            - subject (str): Тема письма.
+            - message (str): Текст сообщения.
+
+    Returns:
+        dict: Результат отправки письма.
+
+    Raises:
+        Exception: В случае ошибки при отправке письма.
+    """
     from app.services.infra_services.mail import get_mail_service
 
     async with get_mail_service() as mail_service:
@@ -35,7 +51,7 @@ async def send_notification_task(body: dict) -> dict:
 
 @task(
     name="create-skb-order",
-    description="Creates order in SKB system with retry logic",
+    description="Создает заказ в системе SKB с логикой повторных попыток",
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
@@ -44,21 +60,25 @@ async def send_notification_task(body: dict) -> dict:
 )
 async def create_skb_order_task(order_data: dict) -> ProcessingResult:
     """
-    Creates a new order in the SKB system with validation and retries.
+    Создает новый заказ в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data: Input order data
+        order_data (dict): Данные заказа, включая:
+            - id (str): Идентификатор заказа.
 
     Returns:
-        ProcessingResult with creation status
+        ProcessingResult: Результат обработки с полями:
+            - success (bool): Успешность операции.
+            - order_id (str): Идентификатор заказа.
+            - result_data (dict): Данные результата.
+            - error_message (str): Сообщение об ошибке.
 
     Raises:
-        ValueError: For invalid input data
-        ConnectionError: For communication failures
+        ValueError: Если отсутствует обязательный параметр order_id.
+        Exception: В случае ошибки при создании заказа.
     """
-    # Validate input
     if not order_data.get("id"):
-        raise ValueError("Missing required order_id")
+        raise ValueError("Отсутствует обязательный параметр order_id")
 
     try:
         result = await get_order_service().create_skb_order(
@@ -66,16 +86,20 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
         )
 
         if result.get("response", {}).get("status_code", {}) != 200:
-            raise Exception("SKB order creation failed")
+            raise Exception("Ошибка создания заказа в системе SKB")
 
-        return {
+        response = {
             "success": True,
             "order_id": order_data["id"],
             "result_data": result,
             "error_message": None,
         }
+        tasks_logger.info(f"Заказ создан: {response}")
+        return response
     except Exception as exc:
-        tasks_logger.error(f"Create order error: {str(exc)}", exc_info=True)
+        tasks_logger.error(
+            f"Ошибка создания заказа: {str(exc)}", exc_info=True
+        )
         return {
             "success": False,
             "order_id": order_data["id"],
@@ -86,7 +110,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
 
 @task(
     name="get-skb-order-result",
-    description="Get order's result in SKB system with retry logic",
+    description="Получает результат заказа в системе SKB с логикой повторных попыток",
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
@@ -95,38 +119,44 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
 )
 async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
     """
-    Gets order's result in the SKB system with validation and retries.
+    Получает результат заказа в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data: Input order data
+        order_data (dict): Данные заказа, включая:
+            - id (str): Идентификатор заказа.
 
     Returns:
-        ProcessingResult with result status
+        ProcessingResult: Результат обработки с полями:
+            - success (bool): Успешность операции.
+            - order_id (str): Идентификатор заказа.
+            - result_data (dict): Данные результата.
+            - error_message (str): Сообщение об ошибке.
 
     Raises:
-        ValueError: For invalid input data
-        ConnectionError: For communication failures
+        ValueError: Если отсутствует обязательный параметр order_id.
+        Exception: В случае ошибки при получении результата.
     """
-    # Validate input
-    if not order_data.get("id"):
-        raise ValueError("Missing required order_id")
+    if not order_data.get("order_id"):
+        raise ValueError("Отсутствует обязательный параметр order_id")
 
     try:
         result = await get_order_service().get_order_file_and_json_from_skb(
-            order_id=order_data["id"]
+            order_id=order_data["order_id"]
         )
 
         if result.get("response", {}).get("status_code", {}) != 200:
-            raise Exception("SKB order creation failed")
+            raise Exception("Ошибка получения результата заказа в системе SKB")
 
         return {
             "success": True,
-            "order_id": order_data["id"],
+            "order_id": order_data["order_id"],
             "result_data": result,
             "error_message": None,
         }
     except Exception as exc:
-        tasks_logger.error(f"Get result error: {str(exc)}", exc_info=True)
+        tasks_logger.error(
+            f"Ошибка получения результата: {str(exc)}", exc_info=True
+        )
         return {
             "success": False,
             "order_id": order_data["id"],
@@ -137,7 +167,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
 
 @task(
     name="send-order-result",
-    description="Send order's result to outter system with retry logic",
+    description="Отправляет результат заказа во внешнюю систему с логикой повторных попыток",
     retries=settings.tasks.task_max_attempts,
     retry_delay_seconds=settings.tasks.task_seconds_delay,
     retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
@@ -146,21 +176,25 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
 )
 async def send_order_result_task(order_data: dict) -> ProcessingResult:
     """
-    Sends order's result to outter system system with validation and retries.
+    Отправляет результат заказа во внешнюю систему с валидацией и повторными попытками.
 
     Args:
-        order_data: Input order data
+        order_data (dict): Данные заказа, включая:
+            - id (str): Идентификатор заказа.
 
     Returns:
-        ProcessingResult with result status
+        ProcessingResult: Результат обработки с полями:
+            - success (bool): Успешность операции.
+            - order_id (str): Идентификатор заказа.
+            - result_data (dict): Данные результата.
+            - error_message (str): Сообщение об ошибке.
 
     Raises:
-        ValueError: For invalid input data
-        ConnectionError: For communication failures
+        ValueError: Если отсутствует обязательный параметр order_id.
+        Exception: В случае ошибки при отправке результата.
     """
-    # Validate input
     if not order_data.get("id"):
-        raise ValueError("Missing required order_id")
+        raise ValueError("Отсутствует обязательный параметр order_id")
 
     try:
         result = await get_order_service().send_order_data(
@@ -174,7 +208,9 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
             "error_message": None,
         }
     except Exception as exc:
-        tasks_logger.error(f"Get result error: {str(exc)}", exc_info=True)
+        tasks_logger.error(
+            f"Ошибка отправки результата: {str(exc)}", exc_info=True
+        )
         return {
             "success": False,
             "order_id": order_data["id"],

@@ -103,7 +103,8 @@ http:
 
 
 skb:
-  base_url: "https://api.skb-techno.ru/v2/Requests/"
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
   endpoints:
     GET_KINDS: "Kinds"
     CREATE_REQUEST: "Create"

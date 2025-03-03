@@ -127,10 +127,15 @@ class SKBAPISettings(BaseSettingsWithLoader):
         description="Secret key for API access",
         examples=["your-api-key-here"],
     )
-    base_url: str = Field(
+    prod_url: str = Field(
         ...,
         description="Base API URL without endpoints",
         examples=["https://api.skb-tekhno.ru/v1"],
+    )
+    test_url: str = Field(
+        ...,
+        description="Base test API URL without endpoints",
+        examples=["https://test-api.skb-tekhno.ru/v1"],
     )
     endpoints: Dict[str, str] = Field(
         ...,

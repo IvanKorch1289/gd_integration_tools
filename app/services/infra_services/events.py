@@ -1,3 +1,4 @@
+from asyncio import create_task
 from typing import Any, Dict
 
 from faststream.rabbit.fastapi import RabbitMessage
@@ -17,7 +18,7 @@ async def handle_send_email(
 ) -> None:
     from app.background_tasks.workflows import send_notification_workflow
 
-    await send_notification_workflow(body.model_dump())
+    create_task(send_notification_workflow(body.model_dump()))
 
 
 @stream_client.redis_router.subscriber(
@@ -28,7 +29,7 @@ async def handle_order_pipeline(
 ) -> Any:
     from app.background_tasks.workflows import order_processing_workflow
 
-    await order_processing_workflow(body.model_dump())
+    create_task(order_processing_workflow(body.model_dump()))
 
 
 @stream_client.redis_router.subscriber(
@@ -39,7 +40,7 @@ async def handle_order_send_to_skb(
 ) -> Any:
     from app.background_tasks.workflows import create_skb_order_workflow
 
-    await create_skb_order_workflow(body.model_dump())
+    create_task(create_skb_order_workflow(body.model_dump()))
 
 
 @stream_client.redis_router.subscriber(
@@ -50,7 +51,7 @@ async def handle_order_get_result(
 ) -> Any:
     from app.background_tasks.workflows import get_skb_order_result_workflow
 
-    await get_skb_order_result_workflow(body.model_dump())
+    create_task(get_skb_order_result_workflow(body.model_dump()))
 
 
 @stream_client.rabbit_router.subscriber(
@@ -66,4 +67,4 @@ async def handle_order_init_create(
 
     order_data = OrderSchemaIn.model_validate(raw_data)
 
-    await get_order_service().add(order_data.model_dump())
+    create_task(get_order_service().add(order_data.model_dump()))
