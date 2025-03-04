@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, Dict, List, Optional
 
 from fastapi import status
@@ -239,11 +238,14 @@ class OrderService(BaseService[OrderRepository]):
             if not order_data["is_active"]:
                 return {"hasError": True, "message": "Inactive order"}
 
-            # Запрашиваем JSON и PDF результаты параллельно
-            json_res, pdf_res = await asyncio.gather(
-                self.get_order_result(order_id, ResponseTypeChoices.json),
-                self.get_order_result(order_id, ResponseTypeChoices.pdf),
+            # Запрашиваем результаты последовательно
+            json_res = await self.get_order_result(
+                order_id, ResponseTypeChoices.json
             )
+
+            if json_res["response"]["data"]["Result"]:
+                await self.get_order_result(order_id, ResponseTypeChoices.pdf)
+
             # Обрабатываем результаты
             update_data = {}
             update_data["response_data"] = json_res.get("response", {}).get(

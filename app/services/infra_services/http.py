@@ -101,8 +101,7 @@ class HttpClient:
         """Поддерживает активную сессию с обновлением по активности."""
         async with self.session_lock:
             now = monotonic()
-            if self._should_renew_session(now):
-                await self._close_session()
+            if self.session is None or self.session.closed:
                 self._create_new_session()
                 self.logger.debug(
                     "Создана новая сессия",
@@ -175,23 +174,6 @@ class HttpClient:
         read_timeout: Optional[float] = None,
         total_timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
-        """
-        Выполняет HTTP-запрос с обработкой ошибок и логикой повторов.
-
-        Аргументы:
-            method: HTTP-метод (GET, POST и т.д.)
-            url: Целевой URL
-            headers: Дополнительные заголовки
-            json: Тело запроса в формате JSON
-            params: Параметры URL
-            data: Сырые данные запроса
-            auth_token: Токен авторизации
-            response_type: Ожидаемый формат ответа (json/text/bytes)
-            raise_for_status: Вызывать исключение при ошибках HTTP
-
-        Возвращает:
-            Словарь с результатом запроса
-        """
         start_time = monotonic()
         last_exception = None
         headers = await self._build_headers(auth_token, headers, data, json)
@@ -213,6 +195,9 @@ class HttpClient:
             for attempt in range(self.settings.max_retries + 1):
                 try:
                     await self._ensure_session()
+                    if self.session is None:
+                        raise ClientError("Сессия не инициализирована")
+
                     await self._log_request(
                         method, url, headers, params, request_data
                     )
@@ -445,12 +430,17 @@ class HttpClient:
         create_task(self._connection_purger())
 
     async def _connection_purger(self) -> None:
-        """Фоновая задача для очистки неактивных соединений."""
+        """Фоновая задача для проверки и очистки неактивных соединений."""
         while True:
             try:
                 await sleep(self.settings.purging_interval)
                 if self.connector and self.settings.enable_connection_purging:
-                    await self.connector.close()
+                    now = monotonic()
+                    if (
+                        now - self.last_activity
+                        > self.settings.keepalive_timeout
+                    ):
+                        await self._close_session()
             except Exception as exc:
                 self.logger.error(
                     f"Ошибка очистки соединений: {str(exc)}", exc_info=True
@@ -460,7 +450,12 @@ class HttpClient:
         """Освобождает все сетевые ресурсы и соединения."""
         try:
             async with self.session_lock:
-                await self._close_session()
+                if self.session and not self.session.closed:
+                    await self.session.close()
+                    self.logger.debug(
+                        "Сессия закрыта",
+                        extra={"session_id": id(self.session)},
+                    )
                 if self.connector and not self.connector.closed:
                     await self.connector.close()
         except Exception as exc:
@@ -483,4 +478,5 @@ async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     try:
         yield client
     finally:
-        await client.close()
+        # Не закрываем клиент, так как это синглтон
+        pass

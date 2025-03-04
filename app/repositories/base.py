@@ -374,7 +374,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         )
 
     @handle_db_errors
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
     async def update(
         self,
         session: AsyncSession,

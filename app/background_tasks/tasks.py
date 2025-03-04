@@ -159,7 +159,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
         )
         return {
             "success": False,
-            "order_id": order_data["id"],
+            "order_id": order_data["order_id"],
             "result_data": {},
             "error_message": str(exc),
         }
@@ -193,17 +193,17 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         ValueError: Если отсутствует обязательный параметр order_id.
         Exception: В случае ошибки при отправке результата.
     """
-    if not order_data.get("id"):
+    if not order_data.get("order_id"):
         raise ValueError("Отсутствует обязательный параметр order_id")
 
     try:
         result = await get_order_service().send_order_data(
-            order_id=order_data["id"]
+            order_id=order_data["order_id"]
         )
 
         return {
             "success": True,
-            "order_id": order_data["id"],
+            "order_id": order_data["order_id"],
             "result_data": result,
             "error_message": None,
         }
@@ -213,7 +213,7 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         )
         return {
             "success": False,
-            "order_id": order_data["id"],
+            "order_id": order_data["order_id"],
             "result_data": {},
             "error_message": str(exc),
         }

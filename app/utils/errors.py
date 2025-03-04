@@ -1,3 +1,4 @@
+import traceback
 from functools import wraps
 from typing import Any, Callable
 
@@ -196,7 +197,8 @@ def handle_db_errors(func):
         try:
             return await func(*args, **kwargs)
         except Exception as exc:
-            raise DatabaseError(message=exc.message)  # type: ignore
+            error_message = f"{type(exc)} ({exc.__class__.__module__}, {exc.__context__}): {str(exc)}. {traceback.format_exception(exc)}"
+            raise DatabaseError(message=error_message)
 
     return wrapper
 
@@ -239,10 +241,12 @@ def handle_routes_errors(func: Callable) -> Callable:
             return await func(*args, **kwargs)
         except Exception as exc:
             # Если возникает исключение, возвращаем HTTP-ответ с кодом 500
+            error_message = f"{type(exc)} ({exc.__class__.__module__}, {exc.__context__}): {str(exc)}"
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={
-                    "message": str(exc),
+                    "message": error_message,
+                    "traceback": str(traceback.format_exception(exc)),
                     "hasErrors": True,
                 },
             )

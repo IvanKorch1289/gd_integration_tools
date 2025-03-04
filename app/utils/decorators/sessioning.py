@@ -150,7 +150,7 @@ class DatabaseSessionManager:
                             exc_info=True,
                         )
                         raise DatabaseError(
-                            message=f"Failed to execute transaction - {str(exc)}"
+                            message=f"Ошибка при выполнении транзакции - {str(exc)}"
                         )
                     finally:
                         await session.close()

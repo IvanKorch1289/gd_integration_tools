@@ -74,7 +74,7 @@ class OrderRepository(SQLAlchemyRepository):
         self.helper.order_kind_repo = order_kind_repo  # type: ignore
 
     @handle_db_errors
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
     async def add(
         self, session: AsyncSession, data: Dict[str, Any]
     ) -> Optional[Order]:
@@ -93,7 +93,7 @@ class OrderRepository(SQLAlchemyRepository):
         return await super().add(data=data)
 
     @handle_db_errors
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
     async def update(
         self, session: AsyncSession, key: str, value: Any, data: Dict[str, Any]
     ) -> Optional[Order]:
