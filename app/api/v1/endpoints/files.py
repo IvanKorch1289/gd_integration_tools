@@ -13,7 +13,6 @@ from app.schemas.route_schemas.files import (
 from app.services.infra_services.s3 import get_s3_service_dependency
 from app.services.route_services.files import get_file_service
 from app.utils.decorators.limiting import route_limiting
-from app.utils.errors import handle_routes_errors
 
 
 __all__ = (
@@ -42,7 +41,6 @@ class StorageCBV:
         operation_id="uploadFileStorageUploadFilePostUnique",
     )
     @route_limiting
-    @handle_routes_errors
     async def upload_file_in_s3(
         self,
         request: Request,
@@ -81,7 +79,6 @@ class StorageCBV:
         operation_id="getDownloadFileByUuidUnique",
     )
     @route_limiting
-    @handle_routes_errors
     async def download_file(
         self,
         request: Request,
@@ -105,7 +102,6 @@ class StorageCBV:
         operation_id="deleteFileByUuidUnique",
     )
     @route_limiting
-    @handle_routes_errors
     async def delete_file(
         self,
         request: Request,
@@ -129,7 +125,6 @@ class StorageCBV:
         operation_id="getDownloadLinkFileUnique",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_download_link_file(
         self,
         request: Request,
@@ -154,7 +149,6 @@ class StorageCBV:
         operation_id="getFileBase64Unique",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_file_base64(
         self,
         request: Request,

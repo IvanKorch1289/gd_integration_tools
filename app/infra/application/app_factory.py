@@ -3,7 +3,6 @@ from fastapi.responses import HTMLResponse
 
 from app.api.v1.routers import get_v1_routers
 from app.config.settings import settings
-from app.infra.application.handlers import setup_handlers
 from app.infra.application.index import root_page
 from app.infra.application.lifecycle import lifespan
 from app.infra.application.monitoring import setup_monitoring
@@ -36,9 +35,6 @@ def create_app() -> FastAPI:
 
     # Трассировка
     # setup_tracing(app=app)
-
-    # Перехват исключений
-    setup_handlers(app=app)
 
     # Подключение SQLAdmin для административной панели
     setup_admin(app=app)

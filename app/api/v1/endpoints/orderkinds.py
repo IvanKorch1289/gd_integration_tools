@@ -9,7 +9,6 @@ from app.schemas.route_schemas.orderkinds import (
     OrderKindVersionSchemaOut,
 )
 from app.services.route_services.orderkinds import get_order_kind_service
-from app.utils.errors import handle_routes_errors
 
 
 __all__ = ("router",)
@@ -37,7 +36,6 @@ class ExtendedOrderKindCBV(OrderKindCBV):  # type: ignore
         status_code=status.HTTP_201_CREATED,
         summary="Добавить/Обновить виды запросов из СКБ-Техно",
     )
-    @handle_routes_errors
     async def create_or_update_kinfs_from_skb(
         self, request: Request, x_api_key: str = Header(...)
     ):

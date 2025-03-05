@@ -139,6 +139,8 @@ database:
   pool_timeout: 30
   ssl_mode: prefer
   ca_bundle: #"/path/to/certificate.pem"
+  circuit_breaker_max_failures: 10
+  circuit_breaker_reset_timeout: 30
 
 
 fs:

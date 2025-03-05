@@ -1,6 +1,5 @@
 from asyncio import Lock, Queue, create_task, sleep
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import Any, AsyncGenerator, Dict, Optional, Union
 
 from aiohttp import (
@@ -18,46 +17,11 @@ from time import monotonic
 
 from app.config.constants import RETRY_EXCEPTIONS
 from app.config.settings import settings
+from app.utils.circuit_breaker import get_circuit_breaker
 from app.utils.decorators.singleton import singleton
 
 
 __all__ = ("HttpClient", "get_http_client")
-
-
-@singleton
-class CircuitBreaker:
-    """Реализует паттерн Circuit Breaker с экспоненциальным откатом."""
-
-    def __init__(self):
-        self.state: str = "CLOSED"
-        self.failure_count: int = 0
-        self.last_failure_time: Optional[datetime] = None
-
-    async def check_state(self, max_failures: int, reset_timeout: int) -> None:
-        """Проверяет и обновляет состояние Circuit Breaker."""
-        if (
-            self.state == "OPEN"
-            and self.last_failure_time is not None
-            and datetime.now()
-            > self.last_failure_time + timedelta(seconds=reset_timeout)
-        ):
-            self.state = "HALF-OPEN"
-            self.failure_count = 0
-
-        if self.failure_count >= max_failures:
-            self.state = "OPEN"
-            self.last_failure_time = datetime.now()
-            raise ClientError("Сработал Circuit Breaker")
-
-    def record_failure(self) -> None:
-        """Фиксирует неудачный запрос."""
-        self.failure_count += 1
-
-    def record_success(self) -> None:
-        """Сбрасывает Circuit Breaker при успешном запросе."""
-        if self.state == "HALF-OPEN":
-            self.state = "CLOSED"
-        self.failure_count = 0
 
 
 @singleton
@@ -87,7 +51,7 @@ class HttpClient:
         self.active_requests: int = 0
         self.session_lock = Lock()
         self.logger = request_logger
-        self.circuit_breaker = CircuitBreaker()
+        self.circuit_breaker = get_circuit_breaker()
         self.metrics = {
             "total_requests": 0,
             "successful_requests": 0,
@@ -188,8 +152,9 @@ class HttpClient:
 
         try:
             await self.circuit_breaker.check_state(
-                self.settings.circuit_breaker_max_failures,
-                self.settings.circuit_breaker_reset_timeout,
+                max_failures=self.settings.circuit_breaker_max_failures,
+                reset_timeout=self.settings.circuit_breaker_reset_timeout,
+                exception_class=ClientError,
             )
 
             for attempt in range(self.settings.max_retries + 1):

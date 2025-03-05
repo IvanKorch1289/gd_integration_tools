@@ -11,6 +11,9 @@ def setup_middlewares(app: FastAPI) -> None:
 
     from app.config.settings import settings
     from app.utils.middlewares.circuit_breaker import CircuitBreakerMiddleware
+    from app.utils.middlewares.exception_handler import (
+        ExceptionHandlerMiddleware,
+    )
     from app.utils.middlewares.request_id import RequestIDMiddleware
     from app.utils.middlewares.request_log import InnerRequestLoggingMiddleware
     from app.utils.middlewares.timeout import TimeoutMiddleware
@@ -29,6 +32,7 @@ def setup_middlewares(app: FastAPI) -> None:
             {"log_body": True, "max_body_size": 4096},
         ),
         (CircuitBreakerMiddleware, {}),
+        (ExceptionHandlerMiddleware, {}),
     ]
 
     for middleware, options in middleware_chain:

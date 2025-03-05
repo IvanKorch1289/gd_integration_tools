@@ -12,7 +12,6 @@ from app.schemas.route_schemas.orders import (
 from app.services.infra_services.s3 import S3Service, get_s3_service_dependency
 from app.services.route_services.orders import get_order_service
 from app.utils.decorators.limiting import route_limiting
-from app.utils.errors import handle_routes_errors
 
 
 __all__ = ("router",)
@@ -40,7 +39,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         status_code=status.HTTP_201_CREATED,
         summary="Добавить запрос в СКБ-Техно",
     )
-    @handle_routes_errors
     async def add_order_to_skb(
         self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
@@ -58,7 +56,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         status_code=status.HTTP_201_CREATED,
         summary="Добавить запрос в СКБ-Техно фоновой задачей",
     )
-    @handle_routes_errors
     async def async_add_order_to_skb(
         self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
@@ -77,7 +74,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить результат запроса",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_order_result_from_skb(
         self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
@@ -98,7 +94,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить результат запроса фоновой задачей",
     )
     @route_limiting
-    @handle_routes_errors
     async def async_get_order_result_from_skb(
         self, request: Request, order_id: int, x_api_key: str = Header(...)
     ):
@@ -119,7 +114,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить файл запроса",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_order_file(
         self,
         request: Request,
@@ -145,7 +139,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить файл запроса",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_order_file_base64(
         self,
         request: Request,
@@ -171,7 +164,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить ссылку на файл запроса",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_order_file_link(
         self,
         request: Request,
@@ -197,7 +189,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         summary="Получить ссылку на файл запроса",
     )
     @route_limiting
-    @handle_routes_errors
     async def get_order_file_link_and_json_result_for_request(
         self,
         request: Request,

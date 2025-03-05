@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.event import listen
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     async_sessionmaker,
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import sessionmaker
 
 from app.config.settings import DatabaseConnectionSettings, settings
+from app.infra.db.listeners import DatabaseListener
 from app.utils.errors import DatabaseError
 from app.utils.logging_service import db_logger
 
@@ -55,7 +55,9 @@ class DatabaseInitializer:
             expire_on_commit=False,
         )
 
-        self.register_logging_events()
+        self.db_listener = DatabaseListener(
+            async_engine=self.async_engine,
+        )
 
     def _create_async_engine(self) -> AsyncEngine:
         """Создает и настраивает асинхронный движок базы данных.
@@ -138,44 +140,6 @@ class DatabaseInitializer:
         finally:
             for conn in connections:
                 await conn.close()
-
-    def register_logging_events(self):
-        """Регистрирует обработчики событий для логирования SQL-запросов."""
-
-        def before_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
-            self.logger.info("Выполнение SQL: %s", statement)
-            self.logger.debug("Параметры: %s", parameters)
-
-        def after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
-            self.logger.info("SQL-запрос выполнен успешно")
-
-        # Для асинхронного движка
-        listen(
-            self.async_engine.sync_engine,
-            "before_cursor_execute",
-            before_cursor_execute,
-        )
-        listen(
-            self.async_engine.sync_engine,
-            "after_cursor_execute",
-            after_cursor_execute,
-        )
-
-        # Для синхронного движка
-        listen(
-            self.sync_engine,
-            "before_cursor_execute",
-            before_cursor_execute,
-        )
-        listen(
-            self.sync_engine,
-            "after_cursor_execute",
-            after_cursor_execute,
-        )
 
     def get_async_engine(self):
         """Возвращает асинхронный движок базы данных.

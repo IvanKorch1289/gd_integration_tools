@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from app.utils.decorators.limiting import route_limiting
 from app.utils.enums.ordering import OrderingTypeChoices
-from app.utils.errors import handle_routes_errors
 
 
 SchemaIn = TypeVar("SchemaIn", bound=BaseModel)
@@ -38,7 +37,6 @@ def create_router_class(
             summary="Получить все объекты",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_all(
             self, request: Request, x_api_key: str = Header(...)
         ):
@@ -50,7 +48,6 @@ def create_router_class(
             summary="Получить объект по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_by_id(
             self,
             request: Request,
@@ -65,7 +62,6 @@ def create_router_class(
             summary="Получить первые или последние объекты",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_first_or_last_objests_with_limit(
             self,
             request: Request,
@@ -86,7 +82,6 @@ def create_router_class(
             summary="Добавить объект",
         )
         @route_limiting
-        @handle_routes_errors
         async def add_object(
             self,
             request_schema: schema_in,  # type: ignore
@@ -101,7 +96,6 @@ def create_router_class(
             summary="Добавить несколько объектов",
         )
         @route_limiting
-        @handle_routes_errors
         async def add_many_objects(
             self,
             request_schemas: List[schema_in],  # type: ignore
@@ -117,7 +111,6 @@ def create_router_class(
             summary="Изменить объект по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def update_object(
             self,
             request_schema: schema_in,  # type: ignore
@@ -135,7 +128,6 @@ def create_router_class(
             summary="Удалить объект по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def delete_object(
             self,
             object_id: int,
@@ -150,7 +142,6 @@ def create_router_class(
             summary="Получить версии объекта по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_all_object_versions(
             self,
             object_id: int,
@@ -167,7 +158,6 @@ def create_router_class(
             summary="Получить последнюю версию объекта по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_latest_object_version(
             self,
             object_id: int,
@@ -184,7 +174,6 @@ def create_router_class(
             summary="Восстановить объект до указанной версии",
         )
         @route_limiting
-        @handle_routes_errors
         async def restore_object_to_version(
             self,
             object_id: int,
@@ -202,7 +191,6 @@ def create_router_class(
             summary="Получить изменения объекта по ID",
         )
         @route_limiting
-        @handle_routes_errors
         async def get_object_changes(
             self,
             object_id: int,
@@ -219,7 +207,6 @@ def create_router_class(
                 summary="Получить объекты по фильтру",
             )
             @route_limiting
-            @handle_routes_errors
             async def get_by_filter(
                 self,
                 request: Request,

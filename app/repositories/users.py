@@ -7,7 +7,6 @@ from app.infra.db.models.users import User
 from app.repositories.base import SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
 from app.utils.decorators.singleton import singleton
-from app.utils.errors import handle_db_errors
 
 
 __all__ = (
@@ -35,7 +34,6 @@ class UserRepository(SQLAlchemyRepository):
         """
         super().__init__(model=model, load_joined_models=load_joined_models)
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get_by_username(
         self, session: AsyncSession, data: Dict[str, Any]

@@ -19,7 +19,7 @@ from sqlalchemy_continuum import version_class
 
 from app.infra.db.models.base import BaseModel
 from app.utils.decorators.sessioning import session_manager
-from app.utils.errors import DatabaseError, NotFoundError, handle_db_errors
+from app.utils.errors import DatabaseError, NotFoundError
 
 
 __all__ = (
@@ -276,7 +276,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             model=model, load_joined_models=load_joined_models, main_class=self
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get(
         self,
@@ -312,7 +311,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             is_return_list=is_return_list,
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def count(self, session: AsyncSession) -> int:
         """
@@ -328,7 +326,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             return 0  # Если результат None, возвращаем 0
         return count_value
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def first_or_last(
         self,
@@ -357,7 +354,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, query_or_object=query, is_return_list=True
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
     async def add(
         self, session: AsyncSession, data: dict[str, Any]
@@ -373,7 +369,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, data=data
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
     async def update(
         self,
@@ -406,7 +401,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             ignore_none=ignore_none,
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def delete(
         self, session: AsyncSession, key: str, value: Any
@@ -425,7 +419,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         )
         await session.flush()
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get_all_versions(
         self, session: AsyncSession, object_id: int
@@ -437,7 +430,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, object_id=object_id, order="asc"
         )
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED")
     async def get_latest_version(
         self, session: AsyncSession, object_id: int
@@ -450,7 +442,6 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         )
         return versions[0] if versions else None
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
     async def restore_to_version(
         self, session: AsyncSession, object_id: int, transaction_id: int

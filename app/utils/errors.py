@@ -1,8 +1,5 @@
-import traceback
-from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
-from fastapi import HTTPException
 from starlette import status
 
 
@@ -11,8 +8,6 @@ __all__ = (
     "DatabaseError",
     "BadRequestError",
     "UnprocessableError",
-    "handle_db_errors",
-    "handle_routes_errors",
 )
 
 
@@ -166,89 +161,3 @@ class AuthorizationError(BaseError):
         super().__init__(
             message=message, status_code=status.HTTP_403_FORBIDDEN
         )
-
-
-def handle_db_errors(func):
-    """
-    Декоратор для обработки исключений в методах репозитория.
-
-    Args:
-        func: Функция, которую нужно обернуть.
-
-    Returns:
-        Callable: Обернутая функция с обработкой ошибок базы данных.
-    """
-
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        """
-        Обертка для функции, которая перехватывает исключения и преобразует их в DatabaseError.
-
-        Args:
-            *args: Позиционные аргументы функции.
-            **kwargs: Именованные аргументы функции.
-
-        Returns:
-            Результат выполнения функции.
-
-        Raises:
-            DatabaseError: Если возникает ошибка при выполнении функции.
-        """
-        try:
-            return await func(*args, **kwargs)
-        except Exception as exc:
-            error_message = f"{type(exc)} ({exc.__class__.__module__}, {exc.__context__}): {str(exc)}. {traceback.format_exception(exc)}"
-            raise DatabaseError(message=error_message)
-
-    return wrapper
-
-
-def handle_routes_errors(func: Callable) -> Callable:
-    """
-    Декоратор для обработки исключений в методах CBV-класса.
-
-    Этот декоратор автоматически перехватывает исключения, возникающие в методах,
-    и возвращает ответ с HTTP-статусом 500 (Internal Server Error) и текстом ошибки.
-
-    Args:
-        func (Callable): Функция или метод, который нужно обернуть.
-
-    Returns:
-        Callable: Обернутая функция с обработкой исключений.
-
-    Raises:
-        HTTPException: Если в процессе выполнения функции возникает исключение,
-                      возвращается HTTP-ответ с кодом 500 и текстом ошибки.
-    """
-
-    @wraps(func)
-    async def wrapper(*args, **kwargs) -> Any:
-        """
-        Внутренняя функция-обертка для обработки исключений.
-
-        Args:
-            *args: Аргументы, переданные в оригинальную функцию.
-            **kwargs: Именованные аргументы, переданные в оригинальную функцию.
-
-        Returns:
-            Any: Результат выполнения оригинальной функции.
-
-        Raises:
-            HTTPException: Если возникает исключение, возвращается HTTP-ответ с кодом 500.
-        """
-        try:
-            # Пытаемся выполнить оригинальную функцию
-            return await func(*args, **kwargs)
-        except Exception as exc:
-            # Если возникает исключение, возвращаем HTTP-ответ с кодом 500
-            error_message = f"{type(exc)} ({exc.__class__.__module__}, {exc.__context__}): {str(exc)}"
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail={
-                    "message": error_message,
-                    "traceback": str(traceback.format_exception(exc)),
-                    "hasErrors": True,
-                },
-            )
-
-    return wrapper

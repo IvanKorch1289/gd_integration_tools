@@ -7,7 +7,7 @@ from app.infra.db.models.files import File, OrderFile
 from app.repositories.base import ConcreteTable, SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
 from app.utils.decorators.singleton import singleton
-from app.utils.errors import NotFoundError, handle_db_errors
+from app.utils.errors import NotFoundError
 
 
 __all__ = (
@@ -43,7 +43,6 @@ class FileRepository(SQLAlchemyRepository):
         super().__init__(model=model, load_joined_models=load_joined_models)
         self.link_model = link_model
 
-    @handle_db_errors
     @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add_link(
         self, session: AsyncSession, data: Dict[str, Any]

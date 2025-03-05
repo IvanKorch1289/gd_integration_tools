@@ -110,6 +110,16 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         description="Path to SSL CA certificate file",
         examples=["/path/to/ca.crt"],
     )
+    circuit_breaker_max_failures: int = Field(
+        ...,
+        description="Maximum number of failed requests before circuit breaker trips",
+        examples=5,
+    )
+    circuit_breaker_reset_timeout: int = Field(
+        ...,
+        description="Time after which circuit breaker resets",
+        examples=60,
+    )
 
     @computed_field
     def async_connection_url(self) -> str:

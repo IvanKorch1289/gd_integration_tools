@@ -21,7 +21,6 @@ from app.schemas.base import EmailSchema
 from app.services.infra_services.events import stream_client
 from app.services.route_services.base import BaseService, get_service_for_model
 from app.utils.enums.base import get_model_enum
-from app.utils.errors import handle_routes_errors
 from app.utils.health_check import get_healthcheck_service
 from app.utils.utils import utilities
 
@@ -49,7 +48,6 @@ class TechBV:
         operation_id="getLinkToLogStorage",
         response_class=HTMLResponse,
     )
-    @handle_routes_errors
     async def redirect_to_log_storage(self):
         """
         Возвращает HTML-страницу с ссылкой на хранилище логов.
@@ -68,7 +66,6 @@ class TechBV:
         operation_id="getLinkToFileStorage",
         response_class=HTMLResponse,
     )
-    @handle_routes_errors
     async def redirect_to_file_storage(self):
         """
         Возвращает HTML-страницу с ссылкой на файловое хранилище.
@@ -86,7 +83,6 @@ class TechBV:
         operation_id="getLinkToPrefect",
         response_class=HTMLResponse,
     )
-    @handle_routes_errors
     async def redirect_to_task_monitor(self):
         """
         Возвращает HTML-страницу с ссылкой на интерфейс мониторинга фоновых задач.
@@ -104,7 +100,6 @@ class TechBV:
         operation_id="getLinkToRabbitMQ",
         response_class=HTMLResponse,
     )
-    @handle_routes_errors
     async def redirect_to_queue_monitor(self):
         """
         Возвращает HTML-страницу с ссылкой на интерфейс мониторинга очередей.
@@ -121,7 +116,6 @@ class TechBV:
         summary="Проверить состояние базы данных",
         operation_id="healthcheck_database",
     )
-    @handle_routes_errors
     async def healthcheck_database(self):
         """
         Проверяет состояние базы данных.
@@ -137,7 +131,6 @@ class TechBV:
         summary="Проверить состояние Redis",
         operation_id="healthcheck_redis",
     )
-    @handle_routes_errors
     async def healthcheck_redis(self):
         """
         Проверяет состояние Redis.
@@ -153,7 +146,6 @@ class TechBV:
         summary="Проверить состояние S3",
         operation_id="healthcheck_s3",
     )
-    @handle_routes_errors
     async def healthcheck_s3(self):
         """
         Проверяет состояние S3.
@@ -169,7 +161,6 @@ class TechBV:
         summary="Проверить наличие бакета в S3",
         operation_id="healthcheck_s3_bucket",
     )
-    @handle_routes_errors
     async def healthcheck_s3_bucket(self):
         """
         Проверяет наличие бакета в S3.
@@ -185,7 +176,6 @@ class TechBV:
         summary="Проверить состояние Graylog",
         operation_id="healthcheck_graylog",
     )
-    @handle_routes_errors
     async def healthcheck_graylog(self):
         """
         Проверяет состояние Graylog.
@@ -201,7 +191,6 @@ class TechBV:
         summary="Проверить состояние SMTP-сервера",
         operation_id="healthcheck_smtp",
     )
-    @handle_routes_errors
     async def healthcheck_smtp(self):
         """
         Проверяет состояние SMTP-сервера.
@@ -217,7 +206,6 @@ class TechBV:
         summary="Проверить состояние RabbitMQ",
         operation_id="healthcheck_rabbitmq",
     )
-    @handle_routes_errors
     async def healthcheck_rabbitmq(self):
         """
         Проверяет состояние RabbitMQ.
@@ -233,7 +221,6 @@ class TechBV:
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
     )
-    @handle_routes_errors
     async def healthcheck_all_services(self):
         """
         Проверяет состояние всех сервисов.
@@ -249,7 +236,6 @@ class TechBV:
         summary="Получить текущую конфигурацию",
         operation_id="get_config",
     )
-    @handle_routes_errors
     async def get_config(self, x_api_key: str = Header(...)):
         """
         Возвращает текущую конфигурацию приложения.
@@ -264,7 +250,6 @@ class TechBV:
         summary="Отправить тестовое email",
         operation_id="send_email",
     )
-    @handle_routes_errors
     async def send_email(
         self,
         schema: EmailSchema,
@@ -293,7 +278,6 @@ class TechBV:
         summary="Получить названия всех таблиц",
         operation_id="get_all_custom_tables",
     )
-    @handle_routes_errors
     async def get_all_custom_tables(
         self,
         model_enum: Enum = Depends(get_model_enum),
@@ -316,7 +300,6 @@ class TechBV:
         summary="Загрузить Excel-файл для массового создания объектов",
         operation_id="upload_excel_for_mass_create",
     )
-    @handle_routes_errors
     async def upload_excel(
         self,
         file: UploadFile = File(...),
