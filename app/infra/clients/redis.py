@@ -15,20 +15,20 @@ __all__ = ("redis_client", "RedisClient")
 
 @singleton
 class RedisClient:
-    """Async Redis client wrapper with connection pooling and automatic reconnection.
+    """Асинхронный клиент Redis с поддержкой пула соединений и автоматическим переподключением.
 
     Attributes:
-        settings: Redis configuration settings
-        _client: Redis async client instance
-        _lock: Asyncio lock for thread-safe connection initialization
-        _connection_pool: Redis connection pool manager
+        settings: Настройки Redis.
+        _client: Экземпляр асинхронного клиента Redis.
+        _lock: Asyncio lock для потокобезопасной инициализации соединений.
+        _connection_pool: Менеджер пула соединений Redis.
     """
 
     def __init__(self, settings: RedisSettings) -> None:
-        """Initialize Redis client with configuration settings.
+        """Инициализирует клиент Redis с настройками.
 
         Args:
-            settings: Redis configuration parameters
+            settings: Параметры конфигурации Redis.
         """
         import asyncio
 
@@ -41,8 +41,8 @@ class RedisClient:
         self.logger = redis_logger
 
     async def _init_pool(self) -> None:
-        """Initialize Redis connection pool with configured parameters."""
-        # Build Redis connection URL based on SSL configuration
+        """Инициализирует пул соединений Redis с заданными параметрами."""
+        # Формируем URL для подключения к Redis с учетом SSL
         redis_scheme = "rediss" if self.settings.use_ssl else "redis"
         redis_url = (
             f"{redis_scheme}://{self.settings.host}:{self.settings.port}"
@@ -64,16 +64,16 @@ class RedisClient:
             )
 
             self._client = Redis(connection_pool=self._connection_pool)
-            self.logger.info("Redis connection pool initialized successfully")
+            self.logger.info("Пул соединений Redis успешно инициализирован")
         except RedisError as exc:
             self.logger.error(
-                f"Connection pool initialization failed: {str(exc)}",
+                f"Ошибка инициализации пула соединений: {str(exc)}",
                 exc_info=True,
             )
             raise
 
     async def ensure_connected(self) -> None:
-        """Ensure active connection exists using double-checked locking pattern."""
+        """Обеспечивает активное соединение с использованием шаблона Double-Checked Locking."""
         if self._client and await self._client.ping():
             return
 
@@ -83,44 +83,46 @@ class RedisClient:
 
     @asynccontextmanager
     async def connection(self) -> AsyncIterator[Redis]:
-        """Async context manager for Redis connections.
+        """Асинхронный контекстный менеджер для работы с соединениями Redis.
 
         Yields:
-            Redis: Active Redis connection instance
+            Redis: Активный экземпляр соединения Redis.
 
         Raises:
-            RedisError: If connection cannot be established
+            RedisError: Если соединение не может быть установлено.
         """
         await self.ensure_connected()
 
         try:
             if not self._client:
-                raise RedisError("Redis client not initialized")
+                raise RedisError("Клиент Redis не инициализирован")
             yield self._client
         except (RedisError, ConnectionError, TimeoutError) as exc:
             self.logger.error(
-                f"Redis connection error: {str(exc)}", exc_info=True
+                f"Ошибка соединения с Redis: {str(exc)}", exc_info=True
             )
+            raise
 
     async def close(self) -> None:
-        """Close all Redis connections and clean up resources."""
+        """Закрывает все соединения Redis и освобождает ресурсы."""
         if self._connection_pool:
             try:
                 await self._connection_pool.disconnect()
-                self.logger.info("Redis connection pool closed successfully")
+                self.logger.info("Пул соединений Redis успешно закрыт")
             except Exception as exc:
                 self.logger.error(
-                    f"Error closing connection pool: {str(exc)}", exc_info=True
+                    f"Ошибка при закрытии пула соединений: {str(exc)}",
+                    exc_info=True,
                 )
             finally:
                 self._client = None
                 self._connection_pool = None
 
     async def check_connection(self) -> bool:
-        """Check if Redis connection is alive.
+        """Проверяет, активно ли соединение с Redis.
 
         Returns:
-            bool: True if connection is active, False otherwise
+            bool: True, если соединение активно, иначе False.
         """
         try:
             async with self.connection() as conn:
@@ -129,10 +131,10 @@ class RedisClient:
             return False
 
     def reconnect_on_failure(self, func: Any) -> Any:
-        """Decorator to automatically reconnect on connection failures.
+        """Декоратор для автоматического переподключения при сбоях соединения.
 
         Args:
-            func: Method to wrap with reconnection logic
+            func: Метод, который нужно обернуть логикой переподключения.
         """
 
         @wraps(func)
@@ -142,26 +144,36 @@ class RedisClient:
             try:
                 return await func(self, *args, **kwargs)
             except (ConnectionError, TimeoutError, RedisError) as exc:
-                self.logger.warning(f"Reconnecting due to error: {str(exc)}")
+                self.logger.warning(
+                    f"Переподключение из-за ошибки: {str(exc)}"
+                )
                 await self.ensure_connected()
                 return await func(self, *args, **kwargs)
 
         return wrapper
 
     async def __aenter__(self) -> "RedisClient":
-        """Async context manager entry point."""
+        """Точка входа для асинхронного контекстного менеджера."""
         await self.ensure_connected()
         return self
 
     async def __aexit__(self, *exc_info: Any) -> None:
-        """Async context manager exit point."""
+        """Точка выхода для асинхронного контекстного менеджера."""
         await self.close()
 
     @asynccontextmanager
     async def _switch_db_context(
         self, conn: Redis, target_db: int
     ) -> AsyncIterator[None]:
-        """Контекстный менеджер для временного переключения БД."""
+        """Контекстный менеджер для временного переключения БД.
+
+        Args:
+            conn: Экземпляр соединения Redis.
+            target_db: Целевая база данных.
+
+        Yields:
+            None
+        """
         await conn.execute_command("SELECT", target_db)
         try:
             yield
@@ -169,7 +181,14 @@ class RedisClient:
             await conn.execute_command("SELECT", self.settings.db_cache)
 
     async def _stream_exists(self, stream_name: str) -> bool:
-        """Проверяет существование стрима в Redis."""
+        """Проверяет существование стрима в Redis.
+
+        Args:
+            stream_name: Имя стрима.
+
+        Returns:
+            bool: True, если стрим существует, иначе False.
+        """
         try:
             async with self.connection() as conn:
                 async with self._switch_db_context(
@@ -181,7 +200,7 @@ class RedisClient:
                     return False
         except Exception as exc:
             self.logger.error(
-                f"Error checking stream existence {stream_name}: {str(exc)}",
+                f"Ошибка при проверке существования стрима {stream_name}: {str(exc)}",
                 exc_info=True,
             )
             return False
@@ -193,16 +212,20 @@ class RedisClient:
                 if not await self._stream_exists(stream["value"]):
                     await self._initialize_stream(stream["value"])
                     self.logger.info(
-                        f"Stream {stream["value"]} initialized with settings"
+                        f"Стрим {stream['value']} успешно инициализирован"
                     )
             except Exception as exc:
                 self.logger.error(
-                    f"Failed to initialize stream {stream["value"]}: {str(exc)}",
+                    f"Не удалось инициализировать стрим {stream['value']}: {str(exc)}",
                     exc_info=True,
                 )
 
     async def _initialize_stream(self, stream_name: str) -> None:
-        """Инициализирует стрим с настройками из конфига."""
+        """Инициализирует стрим с настройками из конфигурации.
+
+        Args:
+            stream_name: Имя стрима.
+        """
         args = {}
         if self.settings.max_stream_len:
             args["maxlen"] = self.settings.max_stream_len
@@ -218,7 +241,7 @@ class RedisClient:
                 # Удаляем начальное сообщение
                 await conn.xdel(stream_name, init_id)
 
-                # Применяем retention policy
+                # Применяем политику удержания
                 if self.settings.retention_hours_stream:
                     retention_ms = (
                         self.settings.retention_hours_stream * 3600 * 1000
@@ -235,19 +258,19 @@ class RedisClient:
         max_len: Optional[int] = None,
         approximate: bool = True,
     ) -> str:
-        """Publish event to Redis stream.
+        """Публикует событие в стрим Redis.
 
         Args:
-            stream: Target stream name
-            data: Event data dictionary
-            max_len: Optional maximum stream length (for trimming)
-            approximate: Use efficient trimming with ~ precision
+            stream: Имя целевого стрима.
+            data: Словарь с данными события.
+            max_len: Максимальная длина стрима (для обрезки).
+            approximate: Использовать эффективную обрезку с приблизительной точностью.
 
         Returns:
-            Generated event ID
+            str: Идентификатор созданного события.
 
         Raises:
-            RedisError: If publishing fails
+            RedisError: Если публикация не удалась.
         """
         try:
             async with self.connection() as conn:
@@ -262,13 +285,13 @@ class RedisClient:
                     event_id = await conn.xadd(stream, data, id="*", **args)
 
                     self.logger.debug(
-                        f"Event published to {stream}: {event_id}"
+                        f"Событие опубликовано в {stream}: {event_id}"
                     )
 
                     return event_id
         except RedisError as exc:
             self.logger.error(
-                f"Stream publish failed: {str(exc)}", exc_info=True
+                f"Ошибка публикации в стрим: {str(exc)}", exc_info=True
             )
             raise
 
@@ -279,16 +302,16 @@ class RedisClient:
         event_id: str,
         additional_data: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Move event between streams with optional metadata.
+        """Перемещает событие между стримами с возможностью добавления метаданных.
 
         Args:
-            source_stream: Source stream name
-            dest_stream: Destination stream name
-            event_id: Event ID to move
-            additional_data: Extra data to add to moved event
+            source_stream: Имя исходного стрима.
+            dest_stream: Имя целевого стрима.
+            event_id: Идентификатор события для перемещения.
+            additional_data: Дополнительные данные для добавления к событию.
 
         Raises:
-            RedisError: If operation fails
+            RedisError: Если операция не удалась.
         """
         try:
             async with self.connection() as conn:
@@ -300,24 +323,26 @@ class RedisClient:
                     )
                     if not events:
                         raise RedisError(
-                            f"Event {event_id} not found in {source_stream}"
+                            f"Событие {event_id} не найдено в {source_stream}"
                         )
 
                     _, event_data = events[0]
 
-                    # Add metadata
+                    # Добавляем метаданные
                     event_data["moved_at"] = datetime.now().isoformat()
                     if additional_data:
                         event_data.update(additional_data)
 
-                    # Write to destination and delete from source
+                    # Записываем в целевой стрим и удаляем из исходного
                     await conn.xadd(dest_stream, event_data, id="*")
                     await conn.xdel(source_stream, event_id)
                     self.logger.debug(
-                        f"Moved event {event_id} from {source_stream} to {dest_stream}"
+                        f"Событие {event_id} перемещено из {source_stream} в {dest_stream}"
                     )
         except RedisError as exc:
-            self.logger.error(f"Stream move failed: {str(exc)}", exc_info=True)
+            self.logger.error(
+                f"Ошибка перемещения события: {str(exc)}", exc_info=True
+            )
             raise
 
     async def stream_read(
@@ -329,21 +354,21 @@ class RedisClient:
         ack: bool = False,
         consumer_group: Optional[Tuple[str, str]] = None,
     ) -> List[Dict[str, Any]]:
-        """Read events from stream with optional consumer group support.
+        """Читает события из стрима с поддержкой групп потребителей.
 
         Args:
-            stream: Stream name to read from
-            last_id: Last received event ID
-            count: Maximum number of events to return
-            block_ms: Blocking time in milliseconds
-            ack: Auto-ACK messages after reading
-            consumer_group: Tuple of (group, consumer) names
+            stream: Имя стрима для чтения.
+            last_id: Идентификатор последнего полученного события.
+            count: Максимальное количество событий для возврата.
+            block_ms: Время блокировки в миллисекундах.
+            ack: Автоматически подтверждать сообщения после чтения.
+            consumer_group: Кортеж с именем группы и потребителя.
 
         Returns:
-            List of events with metadata
+            List[Dict[str, Any]]: Список событий с метаданными.
 
         Raises:
-            RedisError: If reading fails
+            RedisError: Если чтение не удалось.
         """
         try:
             async with self.connection() as conn:
@@ -382,23 +407,25 @@ class RedisClient:
 
                     return result
         except RedisError as exc:
-            self.logger.error(f"Stream read failed: {str(exc)}", exc_info=True)
+            self.logger.error(
+                f"Ошибка чтения из стрима: {str(exc)}", exc_info=True
+            )
             raise
 
     async def stream_get_stats(
         self, stream: str, num_last_events: int = 5
     ) -> Dict[str, Any]:
-        """Get stream statistics and recent events.
+        """Получает статистику и последние события стрима.
 
         Args:
-            stream: Stream name to analyze
-            num_last_events: Number of last events to return
+            stream: Имя стрима для анализа.
+            num_last_events: Количество последних событий для возврата.
 
         Returns:
-            Dictionary with stream statistics
+            Dict[str, Any]: Словарь со статистикой стрима.
 
         Raises:
-            RedisError: If operation fails
+            RedisError: Если операция не удалась.
         """
         try:
             async with self.connection() as conn:
@@ -415,7 +442,8 @@ class RedisClient:
                     }
         except RedisError as exc:
             self.logger.error(
-                f"Stream stats failed: {str(exc)}", exc_info=True
+                f"Ошибка получения статистики стрима: {str(exc)}",
+                exc_info=True,
             )
             raise
 
@@ -428,21 +456,21 @@ class RedisClient:
         ttl_field: Optional[str] = "expires_at",
         ttl: Optional[timedelta] = None,
     ) -> bool:
-        """Retry event with updated metadata.
+        """Повторяет событие с обновленными метаданными.
 
         Args:
-            stream: Target stream name
-            event_id: Event ID to retry
-            retry_field: Field name for retry counter
-            max_retries: Maximum allowed retries
-            ttl_field: Optional field name for TTL
-            ttl: Optional new TTL duration
+            stream: Имя целевого стрима.
+            event_id: Идентификатор события для повторной обработки.
+            retry_field: Имя поля для счетчика повторных попыток.
+            max_retries: Максимальное количество разрешенных попыток.
+            ttl_field: Имя поля для TTL (время жизни).
+            ttl: Новое значение TTL.
 
         Returns:
-            True if retry succeeded, False if max retries reached
+            bool: True, если повторная попытка успешна, False, если достигнут лимит попыток.
 
         Raises:
-            RedisError: If operation fails
+            RedisError: Если операция не удалась.
         """
         from app.utils.utils import utilities
 
@@ -477,9 +505,12 @@ class RedisClient:
                     await conn.xdel(stream, event_id)
                     return True
         except RedisError as exc:
-            self.logger.error(f"Event retry failed: {str(exc)}", exc_info=True)
+            self.logger.error(
+                f"Ошибка повторной обработки события: {str(exc)}",
+                exc_info=True,
+            )
             raise
 
 
-# Singleton instance for application-wide use
+# Singleton-экземпляр для использования в приложении
 redis_client = RedisClient(settings=settings.redis)

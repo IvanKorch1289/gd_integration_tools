@@ -1,14 +1,36 @@
+from app.config.settings import settings
+from app.utils.utils import utilities
+
+
 __all__ = ("root_page",)
 
 
 async def root_page():
-    from app.config.settings import settings
-    from app.utils.utils import utilities
+    """
+    Асинхронная функция для генерации стартовой HTML-страницы приложения.
 
-    log_url = utilities.ensure_url_protocol(settings.logging.base_url)
-    fs_url = utilities.ensure_url_protocol(settings.storage.interface_endpoint)
-    prefect_url = utilities.ensure_url_protocol(settings.app.prefect_url)
-    queue_url = utilities.ensure_url_protocol(settings.queue.queue_ui_url)
+    Возвращает:
+        str: HTML-страница с информацией о сервисе и ссылками на основные интерфейсы
+
+    Особенности:
+    - Динамически формирует ссылки на сервисы из настроек
+    - Использует утилиту для проверки протокола URL
+    - Содержит адаптивный дизайн с анимациями
+    - Включает ссылки на документацию и админ-панель
+    """
+
+    # Формирование URL с проверкой протокола
+    service_urls = {
+        "log_url": settings.logging.base_url,
+        "fs_url": settings.storage.interface_endpoint,
+        "prefect_url": settings.app.prefect_url,
+        "queue_url": settings.queue.queue_ui_url,
+    }
+
+    processed_urls = {
+        name: utilities.ensure_url_protocol(url)
+        for name, url in service_urls.items()
+    }
 
     return f"""
     <!DOCTYPE html>
@@ -131,22 +153,30 @@ async def root_page():
         <div class="container">
             <h1>Расширенные инструменты GreenData</h1>
             <p>
-                Добро пожаловать в <span class="highlight">инновационное решение</span> для управления заказами, файлами и пользователями.
-                Наше приложение сочетает в себе <span class="highlight">удобство</span>, <span class="highlight">надежность</span> и <span class="highlight">высокую производительность</span>.
+                Добро пожаловать в <span class="highlight">инновационное решение</span>
+                для управления данными нового поколения.
+                Платформа обеспечивает <span class="highlight">сквозную интеграцию</span>
+                всех компонентов инфраструктуры.
             </p>
-            <p>
-                Для начала работы:
-                <a href="/docs" target="_blank">Документация API</a>
-                <a href="/asyncapi" target="_blank">Документация AsyncAPI</a>
-            </p>
-            <a href="/admin" class="admin-link" target="_blank">Перейти в административную панель</a>
+
             <div class="service-links">
-                <h2>Технические интерфейсы</h2>
-                <a href="{log_url}" target="_blank">Хранилище логов</a>
-                <a href="{fs_url}" target="_blank">Файловое хранилище</a>
-                <a href="{queue_url}" target="_blank">Менеджер очередей</a>
-                <a href="{prefect_url}" target="_blank">Workflow менеджер</a>
+                <h2>Основные интерфейсы</h2>
+                <a href="{processed_urls['log_url']}" target="_blank">Мониторинг логов</a>
+                <a href="{processed_urls['fs_url']}" target="_blank">Файловое хранилище</a>
+                <a href="{processed_urls['queue_url']}" target="_blank">Управление очередями</a>
+                <a href="{processed_urls['prefect_url']}" target="_blank">Оркестрация процессов</a>
             </div>
+
+            <div class="documentation-links">
+                <h2>Документация</h2>
+                <a href="/docs" target="_blank">REST API</a>
+                <a href="/asyncapi" target="_blank">AsyncAPI</a>
+                <a href="/redoc" target="_blank">ReDoc</a>
+            </div>
+
+            <a href="/admin" class="admin-link" target="_blank">
+                Административный портал
+            </a>
         </div>
     </body>
     </html>

@@ -2,15 +2,10 @@ from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Deque, Dict
 
-from aiosmtplib import (
-    SMTP,
-    SMTPAuthenticationError,
-    SMTPConnectError,
-    SMTPException,
-    SMTPServerDisconnected,
-)
+from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from app.config.settings import MailSettings, settings
+from app.utils.circuit_breaker import get_circuit_breaker
 from app.utils.decorators.singleton import singleton
 
 
@@ -22,83 +17,96 @@ __all__ = (
 
 @singleton
 class SmtpClient:
-    """Advanced SMTP client service with connection pooling and fault tolerance features."""
+    """
+    Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости.
+    """
 
     def __init__(self, settings: MailSettings) -> None:
         """
-        Initialize the mail service with configuration settings.
+        Инициализирует SMTP-клиент с настройками.
 
         Args:
-            settings: Configuration parameters for SMTP operations
+            settings (MailSettings): Настройки для работы с SMTP.
 
         Raises:
-            ValueError: If provided settings are invalid
+            ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
         from collections import deque
 
         from app.utils.logging_service import smtp_logger
 
         if not all([settings.host, settings.port]):
-            raise ValueError("Invalid SMTP configuration")
+            raise ValueError("Неверная конфигурация SMTP")
 
         self.settings = settings
         self.logger = smtp_logger
         self._connection_pool: Deque[SMTP] = deque()
         self._pool_size = self.settings.connection_pool_size
-        self._circuit_opened = False
-        self._circuit_timeout = self.settings.circuit_breaker_timeout
+        self._circuit_breaker = (
+            get_circuit_breaker()
+        )  # Инициализация CircuitBreaker
 
     async def __aenter__(self):
-        """Async context manager entry for pool initialization."""
+        """
+        Вход в асинхронный контекстный менеджер для инициализации пула соединений.
+
+        Returns:
+            SmtpClient: Экземпляр SMTP-клиента.
+        """
         await self.initialize_pool()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Async context manager exit for graceful shutdown."""
+        """
+        Выход из асинхронного контекстного менеджера для корректного завершения работы.
+        """
         await self.close_pool()
 
     async def initialize_pool(self) -> None:
         """
-        Initialize and populate the SMTP connection pool.
+        Инициализирует и заполняет пул SMTP-соединений.
 
         Raises:
-            RuntimeError: If pool initialization fails
+            RuntimeError: Если инициализация пула не удалась.
         """
         try:
             for _ in range(self._pool_size):
                 connection = await self._create_connection()
                 self._connection_pool.append(connection)
             self.logger.info(
-                f"Initialized SMTP pool with {self._pool_size} connections"
+                f"Инициализирован пул SMTP с {self._pool_size} соединениями"
             )
         except Exception as exc:
             self.logger.critical(
-                f"SMTP pool initialization failed: {str(exc)}", exc_info=True
+                f"Ошибка инициализации пула SMTP: {str(exc)}", exc_info=True
             )
-            raise RuntimeError("Failed to initialize connection pool") from exc
+            raise RuntimeError(
+                "Не удалось инициализировать пул соединений"
+            ) from exc
 
     async def close_pool(self) -> None:
-        """Gracefully close all connections in the pool."""
+        """Корректно закрывает все соединения в пуле."""
         while self._connection_pool:
             connection = self._connection_pool.pop()
             try:
                 await connection.quit()
             except SMTPException as exc:
                 self.logger.warning(
-                    f"Error closing connection: {str(exc)}", exc_info=True
+                    f"Ошибка при закрытии соединения: {str(exc)}",
+                    exc_info=True,
                 )
-        self.logger.info("SMTP connection pool closed")
+        self.logger.info("Пул SMTP-соединений закрыт")
 
     async def _create_connection(self) -> SMTP:
         """
-        Create a new authenticated SMTP connection with timeout handling.
+        Создает новое аутентифицированное SMTP-соединение с обработкой тайм-аутов.
 
         Returns:
-            aiosmtplib.SMTP: Established SMTP connection
+            SMTP: Установленное SMTP-соединение.
 
         Raises:
-            ConnectionError: If connection fails after retries
-            TimeoutError: If connection timeout exceeds
+            ConnectionError: Если соединение не удалось после нескольких попыток.
+            TimeoutError: Если превышено время ожидания соединения.
         """
         from async_timeout import timeout
 
@@ -121,77 +129,87 @@ class SmtpClient:
                 return smtp
         except TimeoutError as exc:
             self.logger.error(
-                f"Connection timeout exceeded: {str(exc)}", exc_info=True
+                f"Превышено время ожидания соединения: {str(exc)}",
+                exc_info=True,
             )
-            raise TimeoutError("SMTP connection timeout") from exc
+            raise TimeoutError("Тайм-аут SMTP-соединения") from exc
         except SMTPAuthenticationError as exc:
             self.logger.error(
-                f"Authentication failed: {str(exc)}", exc_info=True
+                f"Ошибка аутентификации: {str(exc)}", exc_info=True
             )
-            raise ConnectionError("SMTP authentication error") from exc
+            raise ConnectionError("Ошибка аутентификации SMTP") from exc
         except SMTPException as exc:
-            self.logger.error(f"Connection failed: {str(exc)}", exc_info=True)
-            raise ConnectionError("SMTP connection error") from exc
+            self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
+            raise ConnectionError("Ошибка SMTP-соединения") from exc
 
     @asynccontextmanager
     async def get_connection(self) -> AsyncGenerator[SMTP, None]:
         """
-        Context manager for acquiring SMTP connections with fault tolerance.
+        Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
 
         Yields:
-            aiosmtplib.SMTP: SMTP connection from pool or new temporary connection
+            SMTP: SMTP-соединение из пула или новое временное соединение.
 
         Raises:
-            ConnectionError: If circuit breaker is active or connection fails
+            ConnectionError: Если сработал Circuit Breaker или соединение не удалось.
         """
-        if self._circuit_opened:
-            raise ConnectionError(
-                "SMTP service unavailable (circuit breaker active)"
-            )
-        connection = None
         try:
+            # Проверяем состояние Circuit Breaker
+            await self._circuit_breaker.check_state(
+                max_failures=self.settings.circuit_breaker_max_failures,  # Максимальное количество ошибок
+                reset_timeout=self.settings.circuit_breaker_reset_timeout,  # Таймаут сброса
+                exception_class=ConnectionError,
+                error_message="SMTP-сервис недоступен (активирован Circuit Breaker)",
+            )
             connection = await self._acquire_connection()
             yield connection
+            # Фиксируем успешный запрос
+            self._circuit_breaker.record_success()
         except Exception as exc:
+            # Фиксируем ошибку
+            self._circuit_breaker.record_failure()
             self.logger.error(
-                f"Connection error: {type(exc).__name__}, {str(exc)}",
+                f"Ошибка соединения: {type(exc).__name__}, {str(exc)}",
                 exc_info=True,
             )
-            await self._handle_connection_error(exc)
-            raise ConnectionError("Failed to acquire SMTP connection") from exc
+            raise ConnectionError(
+                "Не удалось получить SMTP-соединение"
+            ) from exc
         finally:
             if connection:
                 await self._release_connection(connection)
 
     async def _acquire_connection(self) -> SMTP:
         """
-        Acquire connection with retry logic.
+        Получает соединение с логикой повторных попыток.
 
         Returns:
-            aiosmtplib.SMTP: Valid SMTP connection
+            SMTP: Действительное SMTP-соединение.
 
         Raises:
-            ConnectionError: If connection cannot be established
+            ConnectionError: Если соединение не удалось установить.
         """
         for attempt in range(3):
             try:
                 self.logger.info(
-                    f"Connection pool size: {len(self._connection_pool)}"
+                    f"Размер пула соединений: {len(self._connection_pool)}"
                 )
                 if self._connection_pool:
                     return self._connection_pool.pop()
                 return await self._create_connection()
             except Exception:
                 if attempt == 2:
-                    self.logger.error("Connection attempts exhausted")
+                    self.logger.error("Попытки соединения исчерпаны")
                     raise
                 delay = 1 * (attempt + 1)
-                self.logger.warning(f"Retrying connection in {delay}s...")
+                self.logger.warning(
+                    f"Повторная попытка соединения через {delay} сек..."
+                )
                 await sleep(delay)
-        raise ConnectionError("Failed to acquire SMTP connection")
+        raise ConnectionError("Не удалось получить SMTP-соединение")
 
     async def _release_connection(self, connection: SMTP) -> None:
-        """Release connection back to pool or close it."""
+        """Возвращает соединение в пул или закрывает его."""
         try:
             if connection.is_connected:
                 await connection.noop()
@@ -206,43 +224,16 @@ class SmtpClient:
         except Exception:
             pass
 
-    async def _handle_connection_error(self, exc: Exception) -> None:
-        """Handle connection errors and manage circuit breaker state."""
-        self.logger.warning("Connection error occurred", exc_info=True)
-
-        if isinstance(
-            exc,
-            (
-                SMTPConnectError,
-                SMTPServerDisconnected,
-                TimeoutError,
-            ),
-        ):
-            self._circuit_opened = True
-            self.logger.critical("Circuit breaker triggered")
-
-            await self.reset_pool()
-            await sleep(self._circuit_timeout)
-
-            self._circuit_opened = False
-            self.logger.info("Circuit breaker reset")
-
-    async def reset_pool(self) -> None:
-        """Reset the entire connection pool."""
-        await self.close_pool()
-        await self.initialize_pool()
-        self.logger.info("Connection pool reset completed")
-
     def metrics(self) -> Dict[str, Any]:
         """
-        Get current service metrics.
+        Возвращает текущие метрики сервиса.
 
         Returns:
-            Dictionary with pool statistics and circuit state
+            Dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
         """
         return {
             "pool_capacity": f"{len(self._connection_pool)}/{self._pool_size}",
-            "circuit_state": "OPEN" if self._circuit_opened else "CLOSED",
+            "circuit_state": self._circuit_breaker.state,
             "active_connections": sum(
                 1 for conn in self._connection_pool if conn.is_connected
             ),
@@ -250,23 +241,21 @@ class SmtpClient:
 
     async def test_connection(self) -> bool:
         """
-        Perform end-to-end connection test with test email.
+        Выполняет end-to-end тест соединения с отправкой тестового письма.
 
         Returns:
-            bool: True if test message was accepted by server
+            bool: True, если тестовое сообщение было принято сервером.
         """
         from email.message import EmailMessage
 
         try:
             async with self.get_connection() as smtp:
-                # Создаем сообщение через стандартный email модуль
                 message = EmailMessage()
                 message["From"] = "test@service.check"
                 message["To"] = "noreply@service.check"
                 message["Subject"] = "SMTP Connectivity Test"
                 message.set_content("SMTP service connectivity test")
 
-                # Отправка с явным указанием отправителя и получателей
                 recipient_responses, _ = await smtp.send_message(
                     message,
                     sender="test@service.check",
@@ -278,7 +267,7 @@ class SmtpClient:
             )
         except Exception as exc:
             self.logger.error(
-                f"Connection test failed: {str(exc)}", exc_info=True
+                f"Тест соединения не удался: {str(exc)}", exc_info=True
             )
             return False
 

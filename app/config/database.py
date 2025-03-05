@@ -112,13 +112,21 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
     circuit_breaker_max_failures: int = Field(
         ...,
+        ge=0,
         description="Maximum number of failed requests before circuit breaker trips",
         examples=5,
     )
     circuit_breaker_reset_timeout: int = Field(
         ...,
+        ge=0,
         description="Time after which circuit breaker resets",
         examples=60,
+    )
+    slow_query_threshold: float = Field(
+        ...,
+        ge=0,
+        description="Duration (in seconds) to consider a query as slow",
+        examples=[0.5],
     )
 
     @computed_field

@@ -143,7 +143,6 @@ class HttpClient:
         headers = await self._build_headers(auth_token, headers, data, json)
         request_data = await self._prepare_request_data(data, json)
 
-        # Вычисление таймаутов
         connect = connect_timeout or self.settings.connect_timeout
         read = read_timeout or self.settings.sock_read_timeout
         total = total_timeout or (connect + read)
@@ -151,12 +150,6 @@ class HttpClient:
         timeout = ClientTimeout(total=total, connect=connect, sock_read=read)
 
         try:
-            await self.circuit_breaker.check_state(
-                max_failures=self.settings.circuit_breaker_max_failures,
-                reset_timeout=self.settings.circuit_breaker_reset_timeout,
-                exception_class=ClientError,
-            )
-
             for attempt in range(self.settings.max_retries + 1):
                 try:
                     await self._ensure_session()
@@ -182,21 +175,34 @@ class HttpClient:
                         if raise_for_status:
                             response.raise_for_status()
 
+                        # Успешный запрос - сбрасываем Circuit Breaker
+                        self.circuit_breaker.record_success()
                         return await self._build_response_object(
                             response, content, start_time
                         )
-
                 except (ClientResponseError, *RETRY_EXCEPTIONS) as exc:
                     last_exception = exc
+                    # Фиксируем каждую неудачную попытку
+                    self.circuit_breaker.record_failure()
                     if not self._should_retry(attempt, exc):
                         break
                     await self._handle_retry(attempt)
+
+            # После всех попыток проверяем состояние
+            await self.circuit_breaker.check_state(
+                max_failures=self.settings.circuit_breaker_max_failures,
+                reset_timeout=self.settings.circuit_breaker_reset_timeout,
+                exception_class=ClientError,
+            )
 
             if raise_for_status and last_exception:
                 raise last_exception
 
             return await self._handle_final_error(last_exception, start_time)
-
+        except Exception:
+            # Если выброшено исключение из check_state, фиксируем ошибку
+            self.circuit_breaker.record_failure()
+            raise
         finally:
             await self._update_metrics(
                 start_time, success=last_exception is None

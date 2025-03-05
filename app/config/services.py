@@ -520,13 +520,6 @@ class MailSettings(BaseSettingsWithLoader):
         description="Network operation timeout in seconds",
         example=30,
     )
-    circuit_breaker_timeout: int = Field(
-        ...,
-        ge=10,
-        le=600,
-        description="Circuit breaker reset timeout in seconds",
-        example=60,
-    )
     username: str = Field(
         ...,
         description="SMTP authentication username",
@@ -557,6 +550,18 @@ class MailSettings(BaseSettingsWithLoader):
         ...,
         description="Path to email template directory",
         example="/app/email_templates",
+    )
+    circuit_breaker_max_failures: int = Field(
+        ...,
+        ge=0,
+        description="Maximum number of failures before circuit breaker trips",
+        example=5,
+    )
+    circuit_breaker_reset_timeout: int = Field(
+        ...,
+        ge=0,
+        description="Time (seconds) to wait before resetting circuit breaker",
+        example=60,
     )
 
     @field_validator("port")

@@ -24,3 +24,22 @@ PREFECT_WORKER_COMMAND = "prefect agent start -q 'default'"
 INITIAL_DELAY = 1800  # 30 minutes
 RETRY_DELAY = 900  # 15 minutes
 MAX_RESULT_ATTEMPTS = 4
+
+# Коды ошибок Postgres, при которых будет выполняться повторные попытки
+RETRIABLE_DB_CODES = {
+    "08000",
+    "08003",
+    "08006",
+    "08001",
+    "08004",
+    "08007",
+    "40001",
+    "40P01",
+    "55006",
+    "55P03",
+    "53300",
+    "57P01",
+    "57P02",
+    "57P03",
+    "58000",
+}

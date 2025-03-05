@@ -59,7 +59,6 @@ trufflehog = "^2.2.1"
 apscheduler = "^3.11.0"
 faststream = "^0.5.34"
 aiokafka = "^0.12.0"
-taskiq-redis = "^1.0.2"
 grpcio = "^1.70.0"
 protobuf = "^5.29.3"
 memray = "^1.15.0"
@@ -69,6 +68,7 @@ py-spy = "^0.4.0"
 prefect = "^3.2.7"
 aio-pika = "^9.5.5"
 prefect-client = "^3.2.9"
+aiofiles = "^24.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -111,7 +111,7 @@ known_third_party = [
     "aioboto3", "fastapi_filter", "asyncpg", "aiodns", "aiocircuitbreaker",
     "pymongo", "motor", "fastapi-limiter", "vulture", "openpyxl", "opentelemetry",
     "opentelemetry-sdk", "opentelemetry-instrumentation-fastapi", "hvac", "aio-pika",
-    "opentelemetry-exporter-otlp-proto-grpc", "grpc", "prefect-client"
+    "opentelemetry-exporter-otlp-proto-grpc", "grpc", "prefect-client", "aiofiles"
 
 ]
 known_first_party = ["app"]

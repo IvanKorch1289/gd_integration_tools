@@ -6,8 +6,13 @@ app:
   debug_mode: false
   version: 0.1.0
   enable_swagger: True
+  enable_redoc: True
   socket_ping_timeout: 10
   socket_close_timeout: 10
+  opentelemetry_endpoint: "http://otel-collector:4317"
+  telemetry_enabled: True
+  admin_enabled: True
+  monitoring_enabled: True
 
 
 security:
@@ -141,6 +146,7 @@ database:
   ca_bundle: #"/path/to/certificate.pem"
   circuit_breaker_max_failures: 10
   circuit_breaker_reset_timeout: 30
+  slow_query_threshold: 1.0
 
 
 fs:
@@ -275,7 +281,9 @@ mail:
   use_tls: False
   validate_certs: False
   ca_bundle: #"/path/to/certificate.pem"
-  template_folder: 
+  template_folder:
+  circuit_breaker_max_failures: 15
+  circuit_breaker_reset_timeout: 60
 
 
 queue:

@@ -15,9 +15,15 @@ __all__ = (
 
 @singleton
 class MailService:
-    """Email service with template support."""
+    """Сервис для работы с электронной почтой, поддерживающий использование шаблонов."""
 
     def __init__(self, mail_client: SmtpClient):
+        """
+        Инициализирует сервис для работы с электронной почтой.
+
+        Args:
+            mail_client (SmtpClient): Клиент для работы с SMTP-сервером.
+        """
         from app.utils.logging_service import smtp_logger
 
         self.client = mail_client
@@ -31,17 +37,17 @@ class MailService:
         html_message: Optional[str] = None,
     ):
         """
-        Send an email message asynchronously.
+        Асинхронно отправляет электронное письмо.
 
         Args:
-            to_emails (List[str]): List of recipient email addresses
-            subject (str): Email subject line
-            message (str): Plain text message content
-            html_message (Optional[str]): HTML message content
+            to_emails (List[str]): Список адресов получателей.
+            subject (str): Тема письма.
+            message (str): Текстовое содержимое письма.
+            html_message (Optional[str]): HTML-содержимое письма.
 
         Raises:
-            ValueError: If message construction fails
-            RuntimeError: If email sending fails
+            ValueError: Если не удалось сформировать сообщение.
+            RuntimeError: Если не удалось отправить письмо.
         """
         try:
             msg = self._prepare_message(
@@ -49,25 +55,25 @@ class MailService:
             )
             async with self.client.get_connection() as smtp:
                 await smtp.send_message(msg)
-                self.logger.info(f"Sent message: {msg}")
+                self.logger.info(f"Отправлено сообщение: {msg}")
         except SMTPException as exc:
             self.logger.error(
-                f"Failed to send email: {str(exc)}", exc_info=True
+                f"Ошибка при отправке письма: {str(exc)}", exc_info=True
             )
-            raise RuntimeError(f"Failed to send email: {exc}") from exc
+            raise RuntimeError(f"Ошибка при отправке письма: {exc}") from exc
 
     def _prepare_message(self, to_emails, subject, message, html_message):
         """
-        Construct MIME message with proper headers and content.
+        Формирует MIME-сообщение с заголовками и содержимым.
 
         Args:
-            to_emails (List[str]): List of recipient emails
-            subject (str): Email subject
-            message (str): Plain text content
-            html_message (Optional[str]): HTML content
+            to_emails (List[str]): Список адресов получателей.
+            subject (str): Тема письма.
+            message (str): Текстовое содержимое письма.
+            html_message (Optional[str]): HTML-содержимое письма.
 
         Returns:
-            MIMEMultipart|MIMEText: Constructed email message
+            MIMEMultipart|MIMEText: Сформированное сообщение.
         """
         from email.header import Header
         from email.mime.multipart import MIMEMultipart
@@ -107,29 +113,31 @@ class MailService:
         template_context: Optional[Dict[str, Any]] = None,
     ):
         """
-        Send email using a template file.
+        Отправляет письмо, используя шаблон.
 
         Args:
-            to_emails (List[str]): List of recipient emails
-            subject (str): Email subject
-            template_name (str): Name of template file
-            template_context (Optional[Dict[str, Any]]): Variables for template
+            to_emails (List[str]): Список адресов получателей.
+            subject (str): Тема письма.
+            template_name (str): Имя файла шаблона.
+            template_context (Optional[Dict[str, Any]]): Переменные для шаблона.
 
         Raises:
-            ValueError: If template folder is not configured
-            FileNotFoundError: If template file doesn't exist
-            RuntimeError: If template processing fails
+            ValueError: Если папка с шаблонами не настроена.
+            FileNotFoundError: Если файл шаблона не найден.
+            RuntimeError: Если произошла ошибка при обработке шаблона.
         """
+        from aiofiles import open
+
         if not self.client.settings.template_folder:
-            raise ValueError("Template folder not configured")
+            raise ValueError("Папка с шаблонами не настроена")
 
         template_path = self.client.settings.template_folder / template_name
         if not template_path.exists():
-            raise FileNotFoundError(f"Template not found: {template_name}")
+            raise FileNotFoundError(f"Шаблон не найден: {template_name}")
 
         try:
-            with open(template_path, "r", encoding="utf-8") as f:
-                content = f.read()
+            async with open(template_path, mode="r", encoding="utf-8") as f:
+                content = await f.read()
 
             if template_context:
                 content = content.format(**template_context)
@@ -137,16 +145,18 @@ class MailService:
             await self.send_email(to_emails, subject, content)
         except Exception as exc:
             raise RuntimeError(
-                f"Template processing failed: {str(exc)}"
+                f"Ошибка при обработке шаблона: {str(exc)}"
             ) from exc
 
 
 @asynccontextmanager
 async def get_mail_service() -> AsyncGenerator[MailService, None]:
     """
-    Фабрика для создания MailService с изолированными зависимостями.
+    Фабрика для создания экземпляра MailService с изолированными зависимостями.
+
+    Yields:
+        MailService: Экземпляр сервиса для работы с электронной почтой.
     """
-    # Инициализируем клиенты здесь, если они требуют контекста
     mail_service = MailService(mail_client=smtp_client)
     try:
         yield mail_service

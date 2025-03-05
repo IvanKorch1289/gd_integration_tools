@@ -8,32 +8,36 @@ __all__ = ("graylog_handler",)
 
 
 class GraylogHandler:
-    """Handles Graylog connection and logging configuration."""
+    """Обработчик для подключения к Graylog и настройки логирования."""
 
     def __init__(self, config: LogStorageSettings):
         """
-        Initialize Graylog handler.
+        Инициализирует обработчик Graylog.
 
         Args:
-            config (LogStorageSettings): Logging configuration settings
+            config (LogStorageSettings): Настройки логирования для Graylog.
         """
         self.config = config
         self.handler: Optional[Handler] = None
 
     @property
     def enabled(self) -> bool:
-        """Check if Graylog logging is enabled."""
+        """Проверяет, включено ли логирование в Graylog.
+
+        Returns:
+            bool: True, если логирование включено, иначе False.
+        """
         return bool(self.config.host and self.config.udp_port)
 
     def connect(self) -> Optional[Handler]:
         """
-        Establish connection to Graylog server.
+        Устанавливает соединение с сервером Graylog.
 
         Returns:
-            Optional[logging.Handler]: Configured Graylog handler or None
+            Optional[logging.Handler]: Настроенный обработчик Graylog или None.
 
         Raises:
-            ConnectionError: If connection configuration is invalid
+            ConnectionError: Если конфигурация соединения недействительна.
         """
         if not self.enabled:
             return None
@@ -59,24 +63,24 @@ class GraylogHandler:
             return handler
         except Exception as exc:
             raise ConnectionError(
-                f"Graylog connection failed: {str(exc)}"
+                f"Ошибка подключения к Graylog: {str(exc)}"
             ) from exc
 
     def close(self) -> None:
-        """Close Graylog connection resources."""
+        """Закрывает ресурсы соединения с Graylog."""
         if self.handler:
             self.handler.close()
             self.handler = None
 
     async def check_connection(self) -> bool:
         """
-        Verify Graylog server availability.
+        Проверяет доступность сервера Graylog.
 
         Returns:
-            bool: True if connection is successful
+            bool: True, если соединение успешно.
 
         Raises:
-            ConnectionError: If connection test fails
+            ConnectionError: Если проверка соединения не удалась.
         """
         import socket
 
@@ -87,7 +91,7 @@ class GraylogHandler:
             return True
         except OSError as exc:
             raise ConnectionError(
-                f"Graylog connection check failed: {str(exc)}"
+                f"Ошибка проверки соединения с Graylog: {str(exc)}"
             ) from exc
 
 
