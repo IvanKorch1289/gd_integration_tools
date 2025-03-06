@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, ClassVar, Literal
+from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -51,7 +51,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
     )
 
     debug_mode: bool = Field(
-        False,
+        ...,
         title="Режим отладки",
         description="Активирует расширенное логирование и проверки (не для production!)",
         examples=[False],
@@ -59,7 +59,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Сетевые настройки
     host: str = Field(
-        "localhost",
+        ...,
         title="Хост приложения",
         min_length=3,
         max_length=253,
@@ -68,7 +68,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
     )
 
     port: int = Field(
-        8000,
+        ...,
         title="Порт приложения",
         ge=1,
         le=65535,
@@ -77,7 +77,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
     )
 
     prefect_port: int = Field(
-        4200,
+        ...,
         title="Порт Prefect",
         ge=1,
         le=65535,
@@ -85,16 +85,48 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[4200],
     )
 
+    # Параметры сокетов
+    socket_ping_timeout: int = Field(
+        ...,
+        title="Таймаут опроса сокетов",
+        ge=1,
+        description="Таймаут опроса сокетов в секундах",
+        examples=[10, 60],
+    )
+    socket_close_timeout: int = Field(
+        ...,
+        title="Таймаут закрытия сокетов",
+        ge=1,
+        description="Таймаут закрытия сокетов в секундах",
+        examples=[10, 60],
+    )
+
+    # Параметры GZIP
+    gzip_minimum_size: int = Field(
+        ...,
+        title="Минимальный размер запроса для GZIP",
+        ge=0,
+        description="Минимальный размер запроса, при котором GZIP будет использоваться",
+        examples=[500, 1000],
+    )
+    gzip_compresslevel: int = Field(
+        ...,
+        title="Уровень сжатия GZIP",
+        ge=1,
+        le=9,
+        description="Уровень сжатия GZIP",
+    )
+
     # Контроль документации
     enable_swagger: bool = Field(
-        True,
+        ...,
         title="Доступ к Swagger UI",
         description="Активирует интерфейс /docs (не рекомендуется для production)",
         examples=[True],
     )
 
     enable_redoc: bool = Field(
-        False,
+        ...,
         title="Доступ к ReDoc",
         description="Активирует альтернативную документацию /redoc",
         examples=[False],
@@ -102,14 +134,14 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Телеметрия
     telemetry_enabled: bool = Field(
-        True,
+        ...,
         title="Сбор телеметрии",
         description="Активирует отправку метрик в OpenTelemetry",
         examples=[True],
     )
 
     opentelemetry_endpoint: str = Field(
-        "http://otel-collector:4317",
+        ...,
         title="OTLP эндпоинт",
         description="URL для экспорта телеметрии в формате OTLP",
         examples=["http://localhost:4317"],
@@ -117,14 +149,14 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Администрирование
     admin_enabled: bool = Field(
-        True,
+        ...,
         title="Админ-панель",
         description="Активирует интерфейс администратора /admin",
         examples=[True],
     )
 
     monitoring_enabled: bool = Field(
-        True,
+        ...,
         title="Мониторинг",
         description="Активирует метрики Prometheus и healthchecks",
         examples=[True],
@@ -132,11 +164,19 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Системные параметры
     version: str = Field(
-        "0.1.0",
+        ...,
         title="Версия приложения",
         pattern=r"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$",
         description="Версия в формате SemVer (major.minor.patch[-prerelease])",
         examples=["1.0.0", "2.3.4-rc1"],
+    )
+
+    title: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Общий заголовок для всех страниц приложения",
+        examples=["My Application", "API Server"],
     )
 
     root_dir: Path = Field(
@@ -148,12 +188,10 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Вычисляемые свойства
     @computed_field(description="Базовый URL приложения")
-    @property
     def base_url(self) -> str:
         return f"http://{self.host}:{self.port}"
 
     @computed_field(description="URL Prefect сервера")
-    @property
     def prefect_url(self) -> str:
         return f"http://{self.host}:{self.prefect_port}"
 
@@ -188,14 +226,14 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
     # Хранилища задач
     default_jobstore_name: Literal["default", "backup"] = Field(
-        "default",
+        ...,
         title="Основное хранилище",
         description="Имя основного хранилища задач",
         examples=["default"],
     )
 
     backup_jobstore_name: Literal["default", "backup"] = Field(
-        "backup",
+        ...,
         title="Резервное хранилище",
         description="Имя хранилища для резервного копирования задач",
         examples=["backup"],
@@ -203,10 +241,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
     # Параметры выполнения
     executors: dict[str, dict] = Field(
-        {
-            "async": {"type": "asyncio"},
-            "default": {"type": "threadpool", "max_workers": 20},
-        },
+        ...,
         title="Исполнители задач",
         description="Конфигурация исполнителей для разных типов задач",
         examples=[
@@ -218,7 +253,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     misfire_grace_time: int = Field(
-        60,
+        ...,
         title="Допуск опоздания",
         ge=0,
         description="Максимальное опоздание выполнения задачи (в секундах)",
@@ -226,7 +261,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     max_instances: int = Field(
-        3,
+        ...,
         title="Максимум экземпляров",
         ge=1,
         description="Максимальное количество одновременно выполняемых задач",
@@ -234,7 +269,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     coalesce: bool = Field(
-        True,
+        ...,
         title="Объединение задач",
         description="Объединять повторные запуски одной задачи",
         examples=[True],
@@ -242,7 +277,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
     # Потоковые интеграции
     stream_client_event_generated_name: str = Field(
-        "scheduler_events",
+        ...,
         title="Имя потока событий",
         min_length=3,
         max_length=64,
@@ -251,15 +286,12 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     # Временные настройки
-    timezone: Annotated[
-        str,
-        Field(
-            ...,
-            title="Временная зона",
-            description="Временная зона в формате IANA (например, Europe/Moscow)",
-            examples=["UTC"],
-        ),
-    ]
+    timezone: str = Field(
+        ...,
+        title="Временная зона",
+        description="Временная зона в формате IANA (например, Europe/Moscow)",
+        examples=["UTC"],
+    )
 
     @model_validator(mode="after")
     def check_jobstores(self) -> "SchedulerSettings":

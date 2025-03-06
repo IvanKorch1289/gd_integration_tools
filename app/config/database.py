@@ -1,6 +1,6 @@
 from typing import ClassVar, Literal, Optional
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseSettingsWithLoader
@@ -15,7 +15,15 @@ __all__ = (
 
 
 class DatabaseConnectionSettings(BaseSettingsWithLoader):
-    """Configuration settings for relational database connections."""
+    """Настройки подключения к реляционным базам данных.
+
+    Содержит параметры для подключения и управления пулом соединений.
+    Поддерживаемые СУБД: PostgreSQL, Oracle (частично).
+
+    Исключения:
+        NotImplementedError: Для неподдерживаемых СУБД
+        ValueError: При несовместимых параметрах подключения
+    """
 
     yaml_group: ClassVar[str] = "database"
     model_config = SettingsConfigDict(
@@ -23,124 +31,168 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Основные параметры подключения
     type: Literal["postgresql", "oracle"] = Field(
         ...,
-        description="Database management system type",
+        title="Тип СУБД",
+        description="Тип системы управления базами данных",
         examples=["postgresql"],
     )
+
     host: str = Field(
         ...,
-        description="Database server hostname or IP address",
-        examples=["localhost", "db.example.com"],
+        title="Хост",
+        min_length=3,
+        max_length=253,
+        description="Сервер базы данных (IP или доменное имя)",
+        examples=["db.example.com"],
     )
+
     port: int = Field(
         ...,
+        title="Порт",
         gt=0,
         lt=65536,
-        description="Database server port number",
-        examples=[5432, 1521],
+        description="Порт для подключения к СУБД",
+        examples=[5432],
     )
+
     name: str = Field(
         ...,
-        description="Database name or service identifier",
+        description="Наименование базы данных",
         examples=["myapp_prod", "ORCL"],
     )
-    username: str = Field(
-        ...,
-        description="Database user name",
-        examples=["admin", "app_user"],
-    )
-    password: str = Field(
-        ...,
-        description="Database user password",
-        examples=["secure_password_123"],
-    )
+
     async_driver: str = Field(
         ...,
-        description="Asynchronous driver package",
+        description="Пакет, используемый для асинхронного подключения",
         examples=["asyncpg", "aioodbc"],
     )
     sync_driver: str = Field(
         ...,
-        description="Synchronous driver package",
+        description="Пакет, используемый для синхронного подключения",
         examples=["psycopg2", "cx_oracle"],
     )
+
     echo: bool = Field(
-        ..., description="Enable SQL query logging", examples=[False]
+        ..., description="Включить логирование SQL-запросов", examples=[False]
     )
-    connect_timeout: int = Field(
+
+    # Учетные данные
+    username: str = Field(
         ...,
-        description="Connection establishment timeout in seconds",
-        examples=[10],
+        title="Пользователь",
+        min_length=3,
+        description="Имя пользователя для аутентификации",
+        examples=["app_user"],
     )
-    command_timeout: int = Field(
+
+    password: str = Field(
         ...,
-        description="Database command execution timeout in seconds",
-        examples=[30],
+        title="Пароль",
+        min_length=8,
+        description="Пароль пользователя базы данных",
+        examples=["Str0ngPa$$w0rd"],
     )
+
+    # Настройки пула соединений
     pool_size: int = Field(
         ...,
+        title="Размер пула",
         ge=1,
-        description="Maximum number of permanent connections in pool",
-        examples=[5],
+        description="Максимальное количество активных соединений",
+        examples=[20],
     )
+
     max_overflow: int = Field(
         ...,
+        title="Доп. соединения",
         ge=0,
-        description="Maximum temporary connections beyond pool size",
+        description="Максимум временных соединений поверх пула",
         examples=[10],
     )
+
     pool_recycle: int = Field(
         ...,
-        description="Connection recycling interval in seconds",
+        description="Интервал обновления подключения",
         examples=[3600],
     )
+
     pool_timeout: int = Field(
         ...,
-        description="Wait timeout for pool connection in seconds",
+        description="Таймаут ожидания пула подключений",
         examples=[30],
     )
-    ssl_mode: Optional[str] = Field(
-        None,
-        description="SSL connection mode (PostgreSQL specific)",
-        examples=["require", "verify-full"],
+
+    # Таймауты и безопасность
+    connect_timeout: int = Field(
+        ...,
+        title="Таймаут подключения",
+        ge=1,
+        description="Максимальное время установки соединения (секунды)",
+        examples=[10],
     )
+
+    command_timeout: int = Field(
+        ...,
+        description="Максимальное время выполнения запроса (секунды)",
+        examples=[30],
+    )
+
+    ssl_mode: Optional[str] = Field(
+        ...,
+        title="Режим SSL",
+        description="Настройки шифрования соединения (только для PostgreSQL)",
+        examples=["require"],
+    )
+
     ca_bundle: Optional[str] = Field(
-        None,
-        description="Path to SSL CA certificate file",
+        ...,
+        description="Путь к сертификату",
         examples=["/path/to/ca.crt"],
     )
+
+    max_retries: int = Field(
+        ...,
+        ge=0,
+        description="Максимальное число повторных попыток",
+        examples=3,
+    )
+
     circuit_breaker_max_failures: int = Field(
         ...,
         ge=0,
-        description="Maximum number of failed requests before circuit breaker trips",
+        description="Максимальное количество неуспешных попыток выполнения",
         examples=5,
     )
+
     circuit_breaker_reset_timeout: int = Field(
         ...,
         ge=0,
-        description="Time after which circuit breaker resets",
+        description="Таймаут сброса неуудачных попыток",
         examples=60,
     )
+
     slow_query_threshold: float = Field(
         ...,
         ge=0,
-        description="Duration (in seconds) to consider a query as slow",
+        description="Длительность (в секундах) для определения медленного запроса",
         examples=[0.5],
     )
 
-    @computed_field
+    # Вычисляемые свойства
+    @computed_field(description="URL асинхронного подключения")
     def async_connection_url(self) -> str:
-        """Construct asynchronous database connection URL."""
-        return self._build_connection_url(is_async=True)
+        """Формирует DSN для асинхронного драйвера."""
+        return self._build_dsn(is_async=True)
 
-    @computed_field
+    @computed_field(description="URL синхронного подключения")
     def sync_connection_url(self) -> str:
-        """Construct synchronous database connection URL."""
-        return self._build_connection_url(is_async=False)
+        """Формирует DSN для синхронного драйвера."""
+        return self._build_dsn(is_async=False)
 
-    def _build_connection_url(self, is_async: bool) -> str:
-        """Internal method for constructing database connection strings."""
+    def _build_dsn(self, is_async: bool) -> str:
+        """Внутренний метод генерации строки подключения."""
         driver = self.async_driver if is_async else self.sync_driver
 
         if self.type == "postgresql":
@@ -148,14 +200,21 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
                 f"postgresql+{driver}://{self.username}:{self.password}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
-        elif self.type == "oracle":
-            # Oracle connection string implementation
-            raise NotImplementedError("Oracle support pending implementation")
-        raise ValueError(f"Unsupported database type: {self.type}")
+        raise NotImplementedError("Поддержка Oracle в разработке")
+
+    @model_validator(mode="after")
+    def validate_ssl(self) -> "DatabaseConnectionSettings":
+        """Проверяет корректность SSL-настроек."""
+        if self.ssl_mode and self.type != "postgresql":
+            raise ValueError("SSL доступен только для PostgreSQL")
+        return self
 
 
 class MongoConnectionSettings(BaseSettingsWithLoader):
-    """Configuration settings for no-relational database connections."""
+    """Настройки подключения к MongoDB.
+
+    Содержит параметры для работы с MongoDB, включая настройки пула соединений.
+    """
 
     yaml_group: ClassVar[str] = "mongo"
     model_config = SettingsConfigDict(
@@ -163,58 +222,84 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Параметры аутентификации
     username: str = Field(
         ...,
-        description="MongoDB username",
-        examples=["admin"],
+        title="Пользователь",
+        description="Имя пользователя с правами на базу",
+        examples=["mongo_admin"],
     )
+
     password: str = Field(
         ...,
-        description="MongoDB password",
-        examples=["secure_password_123"],
+        title="Пароль",
+        min_length=8,
+        description="Пароль для аутентификации в MongoDB",
+        examples=["M0ng0Pa$$w0rd"],
     )
-    host: str = Field(
-        ...,
-        description="MongoDB server hostname or IP address",
-        examples=["localhost", "mongo.example.com"],
-    )
-    port: int = Field(
-        ...,
-        ge=1,
-        le=65535,
-        description="MongoDB server port number",
-        examples=[27017],
-    )
+
     name: str = Field(
         ...,
-        description="Database name",
-        examples=["myapp_prod"],
+        title="База данных",
+        description="Наименование базы данных, к которой будет осуществляться подключение",
+        examples=["myapp_prod", "mydb"],
     )
-    timeout: int = Field(
+
+    # Сетевые настройки
+    host: str = Field(
         ...,
-        description="Connection timeout in milliseconds",
-        examples=[5],
+        title="Хост",
+        description="Сервер MongoDB",
+        examples=["mongo.example.com"],
     )
-    max_pool_size: int = Field(
+
+    port: int = Field(
         ...,
+        title="Порт",
         ge=1,
-        le=100,
-        description="Maximum number of MongoDB connections in the pool",
-        examples=[50],
+        le=65535,
+        description="Порт для подключения к MongoDB",
+        examples=[27017],
     )
+
+    # Управление соединениями
     min_pool_size: int = Field(
         ...,
+        title="Мин. размер пула",
         ge=1,
-        le=100,
-        description="Minimum number of MongoDB connections in the pool",
-        examples=[5],
+        le=500,
+        description="Минимальное количество соединений в пуле",
+        examples=[50],
     )
 
-    @computed_field
+    max_pool_size: int = Field(
+        ...,
+        title="Макс. размер пула",
+        ge=1,
+        le=500,
+        description="Максимальное количество соединений в пуле",
+        examples=[100],
+    )
+
+    timeout: int = Field(
+        ...,
+        title="Таймаут",
+        description="Время ожидания подключения (миллисекунды)",
+        examples=[5000],
+    )
+
+    @computed_field(description="Строка подключения MongoDB")
     def connection_string(self) -> str:
-        return f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}?authSource=admin"
+        """Формирует полную строку подключения с аутентификацией."""
+        return (
+            f"mongodb://{self.username}:{self.password}@"
+            f"{self.host}:{self.port}/{self.name}?authSource=admin"
+        )
 
 
-# Instantiate settings for immediate use
+# Предварительно инициализированные конфигурации
 db_connection_settings = DatabaseConnectionSettings()
+"""Глобальные настройки реляционных БД"""
+
 mongo_connection_settings = MongoConnectionSettings()
+"""Глобальные настройки MongoDB"""

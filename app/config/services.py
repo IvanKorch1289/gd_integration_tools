@@ -27,166 +27,191 @@ __all__ = (
 
 
 class FileStorageSettings(BaseSettingsWithLoader):
-    """Settings for connecting to an S3-compatible object storage."""
+    """Настройки для подключения к S3-совместимому объектному хранилищу."""
 
     yaml_group: ClassVar[str] = "fs"
     model_config = SettingsConfigDict(env_prefix="FS_", extra="forbid")
 
+    # Основные параметры подключения
     provider: Literal["minio", "aws", "other"] = Field(
         ...,
-        description="Type of storage provider",
+        description="Тип провайдера хранилища",
         example="minio",
     )
     bucket: str = Field(
         default="my-bucket",
         env="FS_BUCKET",
-        description="Default bucket name",
+        description="Имя корзины по умолчанию",
         example="my-bucket",
     )
     access_key: str = Field(
         ...,
-        description="Access key for the storage",
+        description="Ключ доступа к хранилищу",
         example="AKIAIOSFODNN7EXAMPLE",
     )
     secret_key: str = Field(
         ...,
-        description="Secret access key for the storage",
+        description="Секретный ключ доступа к хранилищу",
         example="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
     )
     endpoint: str = Field(
         ...,
-        description="API endpoint URL of the storage",
+        description="URL API-эндпоинта хранилища",
         example="https://s3.example.com",
     )
     interface_endpoint: str = Field(
         ...,
-        description="Web interface URL of the storage",
+        description="URL веб-интерфейса хранилища",
         example="https://console.s3.example.com",
     )
+
+    # Параметры безопасности
     use_ssl: bool = Field(
         ...,
-        description="Use HTTPS for connections",
+        description="Использовать HTTPS для подключений",
         example=True,
     )
     verify: bool = Field(
         ...,
-        description="Verify SSL certificates",
+        description="Проверять SSL-сертификаты",
         example=True,
     )
     ca_bundle: Optional[str] = Field(
         default=None,
         env="FS_CA_BUNDLE",
-        description="Path to the CA certificate bundle for SSL",
+        description="Путь к пакету CA-сертификатов для SSL",
         example="/path/to/ca-bundle.crt",
     )
+
+    # Параметры производительности
     timeout: int = Field(
         ...,
-        description="Timeout for operations (in seconds)",
+        description="Таймаут операций (в секундах)",
         example=30,
     )
     retries: int = Field(
         ...,
-        description="Number of retries for failed operations",
+        description="Количество попыток для неудачных операций",
         example=3,
-    )
-    key_prefix: str = Field(
-        ...,
-        description="Prefix for object keys",
-        example="my-prefix/",
     )
     max_pool_connections: int = Field(
         ...,
-        description="Maximum number of connections in the pool",
+        description="Максимальное количество соединений в пуле",
         example=50,
     )
     read_timeout: int = Field(
         ...,
-        description="Timeout for reading objects (in seconds)",
+        description="Таймаут чтения объектов (в секундах)",
         example=30,
+    )
+
+    # Параметры ключей
+    key_prefix: str = Field(
+        ...,
+        description="Префикс для ключей объектов",
+        example="my-prefix/",
     )
 
     @computed_field
     def normalized_endpoint(self) -> str:
-        """Returns the endpoint without the connection scheme (e.g., 'https://')."""
+        """Возвращает эндпоинт без схемы подключения (например, 'https://')."""
         return str(self.endpoint).split("://")[-1]
 
 
 class LogStorageSettings(BaseSettingsWithLoader):
-    """Settings for the logging and log storage system."""
+    """Настройки для системы логирования и хранения логов."""
 
     yaml_group: ClassVar[str] = "log"
     model_config = SettingsConfigDict(
         env_prefix="LOG_",
         extra="forbid",
     )
+
+    # Параметры подключения
     host: str = Field(
         ...,
-        description="Log server host",
+        description="Хост сервера логов",
         example="logs.example.com",
     )
     port: int = Field(
         ...,
         gt=0,
         lt=65536,
-        description="TCP port of the log server",
+        description="TCP-порт сервера логов",
         example=514,
     )
     udp_port: int = Field(
         ...,
         gt=0,
         lt=65536,
-        description="UDP port for sending logs",
+        description="UDP-порт для отправки логов",
         example=514,
     )
-    conf_loggers: List[Dict] = Field(
-        ...,
-        default_factory=list,
-        min_items=1,
-        description="Configuration for loggers",
-        example=[{"name": "application", "facility": "application"}],
-    )
+
+    # Параметры безопасности
     use_tls: bool = Field(
         ...,
-        description="Use TLS for secure connections",
+        description="Использовать TLS для безопасных подключений",
         example=True,
     )
     ca_bundle: Optional[str] = Field(
         default=None,
-        description="Path to the CA certificate bundle",
+        description="Путь к пакету CA-сертификатов",
         example="/path/to/ca-bundle.crt",
     )
+
+    # Параметры логирования
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         ...,
         pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
-        description="Logging level of detail",
+        description="Уровень детализации логирования",
         example="INFO",
     )
     name_log_file: str = Field(
         ...,
-        description="Path to the log file",
+        description="Путь к файлу логов",
         example="app.log",
     )
     dir_log_name: str = Field(
         ...,
-        description="Directory name for log files",
+        description="Имя директории для хранения логов",
         example="/var/logs/myapp",
     )
     required_fields: List[str] = Field(
         ...,
         default_factory=list,
         min_items=1,
-        description="Mandatory fields in log messages",
+        description="Обязательные поля в лог-сообщениях",
         example={"timestamp", "level", "message"},
+    )
+    log_requests: bool = Field(
+        ...,
+        description="Включить логирование входящих запросов",
+        example=True,
+    )
+    max_body_log_size: int = Field(
+        ...,
+        description="Максимальный размер лог-сообщений для логирования в байтах",
+        example=1024 * 1024,  # 1MB
+    )
+
+    # Конфигурация логгеров
+    conf_loggers: List[Dict] = Field(
+        ...,
+        default_factory=list,
+        min_items=1,
+        description="Конфигурация логгеров",
+        example=[{"name": "application", "facility": "application"}],
     )
 
     @computed_field
     def base_url(self) -> str:
-        """Constructs the normalized endpoint string."""
+        """Создает нормализованную строку эндпоинта."""
         return f"{self.host}:{self.port}"
 
 
 class RedisSettings(BaseSettingsWithLoader):
-    """Redis connection configuration settings."""
+    """Настройки подключения к Redis."""
 
     yaml_group: ClassVar[str] = "redis"
     model_config = SettingsConfigDict(
@@ -194,125 +219,136 @@ class RedisSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Основные параметры подключения
     host: str = Field(
         ...,
-        description="Redis server hostname or IP address",
+        description="Хост или IP-адрес сервера Redis",
         example="redis.example.com",
     )
     port: int = Field(
         ...,
         ge=1,
         le=65535,
-        description="Redis server port number",
+        description="Порт сервера Redis",
         example=6379,
     )
+    password: Optional[str] = Field(
+        ...,
+        description="Пароль для аутентификации в Redis",
+        example="securepassword123",
+    )
+    encoding: str = Field(
+        ...,
+        description="Кодировка для сериализации данных",
+        example="utf-8",
+    )
+
+    # Параметры баз данных
     db_cache: int = Field(
         ...,
         ge=0,
-        description="Database number for caching operations",
+        description="Номер базы данных для кэширования",
         example=0,
     )
     db_queue: int = Field(
         ...,
         ge=0,
-        description="Database number for queue management",
+        description="Номер базы данных для управления очередями",
         example=1,
     )
     db_limits: int = Field(
-        ..., ge=0, description="Database number for rate limiting", example=2
+        ...,
+        ge=0,
+        description="Номер базы данных для ограничений скорости",
+        example=2,
     )
     db_tasks: int = Field(
-        ..., ge=0, description="Database number for Celery backend", example=3
+        ..., ge=0, description="Номер базы данных для Celery", example=3
     )
-    name_tasks_queue: str = Field(
-        ...,
-        description="Name of the list for storing tasks in the queue",
-        example="tasks",
-    )
-    password: Optional[str] = Field(
-        ...,
-        description="Password for Redis authentication",
-        example="securepassword123",
-    )
-    encoding: str = Field(
-        ...,
-        description="Character encoding for data serialization",
-        example="utf-8",
-    )
+
+    # Параметры производительности
     cache_expire_seconds: int = Field(
         ...,
         ge=60,
-        description="Default expiration time for cached values in seconds",
+        description="Время жизни кэша по умолчанию в секундах",
         example=300,
     )
     max_connections: int = Field(
         ...,
         ge=1,
-        description="Maximum number of connections in the connection pool",
+        description="Максимальное количество соединений в пуле",
         example=20,
-    )
-    use_ssl: bool = Field(
-        ..., description="Enable SSL/TLS for secure connections", example=False
-    )
-    ca_bundle: Optional[str] = Field(
-        ...,
-        description="Path to CA certificate bundle for SSL verification",
-        example="/path/to/ca_bundle.crt",
     )
     socket_timeout: Optional[int] = Field(
         ...,
         ge=1,
-        description="Socket operation timeout in seconds",
+        description="Таймаут операций с сокетом в секундах",
         example=10,
     )
     socket_connect_timeout: Optional[int] = Field(
         ...,
         ge=1,
-        description="Connection establishment timeout in seconds",
+        description="Таймаут установления соединения в секундах",
         example=5,
     )
     retry_on_timeout: Optional[bool] = Field(
         ...,
-        description="Enable automatic retry on connection timeout",
+        description="Включить автоматический повтор при таймауте соединения",
         example=False,
     )
     socket_keepalive: Optional[bool] = Field(
-        ..., description="Enable TCP keepalive for connections", example=True
+        ..., description="Включить TCP keepalive для соединений", example=True
     )
+
+    # Параметры безопасности
+    use_ssl: bool = Field(
+        ...,
+        description="Включить SSL/TLS для безопасных соединений",
+        example=False,
+    )
+    ca_bundle: Optional[str] = Field(
+        ...,
+        description="Путь к пакету CA-сертификатов для проверки SSL",
+        example="/path/to/ca_bundle.crt",
+    )
+
+    # Параметры потоков
     main_stream: Optional[str] = Field(
-        ..., description="Name of main Redis stream", example="example-stream"
+        ..., description="Имя основного потока Redis", example="example-stream"
     )
     dlq_stream: Optional[str] = Field(
         ...,
-        description="Name of DLQ Redis stream",
+        description="Имя потока DLQ Redis",
         example="dlq-example-stream",
     )
     max_stream_len: int = Field(
-        ..., description="Max size of Redis stream", example=100000
+        ..., description="Максимальный размер потока Redis", example=100000
     )
     approximate_trimming_stream: bool = Field(
         ...,
-        description="Enable approximate trimming for Redis streams",
+        description="Включить приблизительную обрезку для потоков Redis",
         example=True,
     )
     retention_hours_stream: int = Field(
         ...,
-        description="Retention time for Redis streams in hours",
+        description="Время хранения потоков Redis в часах",
         example=24,
     )
     max_retries: int = Field(
-        ..., description="Max retries for reading message in stream", example=1
+        ...,
+        description="Максимальное количество попыток чтения сообщения в потоке",
+        example=1,
     )
     ttl_hours: int = Field(
-        ..., description="Time to live messages in stream", example=1
+        ..., description="Время жизни сообщений в потоке", example=1
     )
     health_check_interval: int = Field(
-        ..., description="Healthchecking timer", example=600
+        ..., description="Интервал проверки работоспособности", example=600
     )
     streams: List[Dict[str, str]] = Field(
         ...,
         min_items=1,
-        description="Redis streams list",
+        description="Список потоков Redis",
         example=[
             {
                 "name": "stream1",
@@ -325,9 +361,9 @@ class RedisSettings(BaseSettingsWithLoader):
         ],
     )
 
-    @computed_field(description="Construct Redis connection URL")
+    @computed_field(description="Создает URL подключения к Redis")
     def redis_url(self) -> str:
-        """Construct Redis connection URL."""
+        """Создает URL подключения к Redis."""
         protocol = "rediss" if self.use_ssl else "redis"
         auth = f":{self.password}@" if self.password else ""
         return f"{protocol}://{auth}{self.host}:{self.port}"
@@ -336,7 +372,9 @@ class RedisSettings(BaseSettingsWithLoader):
     @classmethod
     def validate_redis_numbers(cls, v):
         if isinstance(v, int) and v < 0:
-            raise ValueError("Value must be non-negative integer")
+            raise ValueError(
+                "Значение должно быть неотрицательным целым числом"
+            )
         return v
 
     def get_stream_name(self, stream_key: str) -> str:
@@ -350,13 +388,13 @@ class RedisSettings(BaseSettingsWithLoader):
         )
 
         if not stream:
-            raise ValueError(f"No stream configured for key: {stream_key}")
+            raise ValueError(f"Не настроен поток для ключа: {stream_key}")
 
         return stream["value"]
 
 
 class CelerySettings(BaseSettingsWithLoader):
-    """Configuration for Celery task queue and worker management."""
+    """Настройки для управления очередями задач и воркерами Celery."""
 
     yaml_group: ClassVar[str] = "celery"
     model_config = SettingsConfigDict(
@@ -364,117 +402,128 @@ class CelerySettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Основные параметры
     redis_db: int = Field(
         ...,
         ge=0,
-        description="Redis database number for Celery broker",
+        description="Номер базы данных Redis для брокера Celery",
         example=0,
     )
     task_default_queue: str = Field(
         "default",
-        description="Default queue name for task routing",
+        description="Имя очереди по умолчанию для маршрутизации задач",
         example="default",
     )
     task_serializer: Literal["json", "pickle", "yaml", "msgpack"] = Field(
-        ..., description="Serialization format for tasks", example="json"
+        ..., description="Формат сериализации задач", example="json"
     )
+
+    # Параметры задач
     task_time_limit: int = Field(
         ...,
         ge=60,
-        description="Maximum time (seconds) a task can execute before being terminated",
+        description="Максимальное время выполнения задачи (в секундах) перед завершением",
         example=300,
     )
     task_soft_time_limit: int = Field(
         ...,
         ge=60,
-        description="Time (seconds) after which task receives SIGTERM for graceful shutdown",
+        description="Время (в секундах) после которого задача получает SIGTERM для graceful shutdown",
         example=240,
     )
     task_max_retries: int = Field(
         ...,
         ge=0,
-        description="Maximum number of automatic retry attempts for failed tasks",
+        description="Максимальное количество автоматических попыток для неудачных задач",
         example=3,
     )
     task_min_retries: int = Field(
         ...,
         ge=0,
-        description="Minimum number of automatic retry attempts for failed tasks",
+        description="Минимальное количество автоматических попыток для неудачных задач",
         example=1,
     )
     task_default_retry_delay: int = Field(
         ...,
         ge=0,
-        description="Default delay (seconds) before retrying failed tasks",
+        description="Задержка по умолчанию (в секундах) перед повторной попыткой выполнения задачи",
         example=60,
     )
     task_retry_backoff: int = Field(
         ...,
         ge=0,
-        description="Base backoff time (seconds) for retry delay calculations",
+        description="Базовое время отката (в секундах) для расчета задержки повторной попытки",
         example=10,
     )
     task_retry_jitter: bool = Field(
         ...,
-        description="Enable random jitter to prevent retry stampedes",
+        description="Включить случайный джиттер для предотвращения лавины повторных попыток",
         example=True,
     )
     countdown_time: int = Field(
         ...,
         ge=0,
-        description="Initial delay (seconds) before task execution after submission",
+        description="Начальная задержка (в секундах) перед выполнением задачи после отправки",
         example=0,
     )
+
+    # Параметры воркеров
     worker_concurrency: int = Field(
         ...,
         ge=1,
-        description="Number of concurrent worker processes/threads",
+        description="Количество параллельных процессов/потоков воркера",
         example=4,
     )
     worker_prefetch_multiplier: int = Field(
         ...,
         ge=1,
-        description="Multiplier for worker prefetch count (concurrency * multiplier)",
+        description="Множитель для количества предварительной выборки воркера (concurrency * multiplier)",
         example=4,
     )
     worker_max_tasks_per_child: int = Field(
         ...,
         ge=1,
-        description="Maximum tasks a worker process executes before recycling",
+        description="Максимальное количество задач, выполняемых воркером перед перезапуском",
         example=100,
     )
     worker_disable_rate_limits: bool = Field(
         ...,
-        description="Disable task rate limiting for workers",
+        description="Отключить ограничение скорости для воркеров",
         example=False,
     )
+    worker_send_events: bool = Field(
+        ...,
+        description="Включить отправку событий, связанных с задачами, для мониторинга",
+        example=True,
+    )
+
+    # Параметры мониторинга
     flower_url: str = Field(
         ...,
-        description="URL endpoint for Flower monitoring dashboard",
+        description="URL-адрес для мониторинга через Flower",
         example="http://flower.example.com:5555",
     )
     flower_basic_auth: Optional[Tuple[str, str]] = Field(
         ...,
-        description="Basic authentication credentials for Flower (username, password)",
+        description="Учетные данные для базовой аутентификации в Flower (логин, пароль)",
         example=("admin", "secret"),
     )
-    task_track_started: bool = Field(
-        ..., description="Enable tracking of task STARTED state", example=True
-    )
+
+    # Параметры брокера
     broker_pool_limit: int = Field(
         ...,
         ge=1,
-        description="Maximum number of broker connections in the pool",
+        description="Максимальное количество соединений в пуле брокера",
         example=10,
     )
     result_extended: bool = Field(
         ...,
-        description="Enable extended result metadata storage",
+        description="Включить расширенное хранение метаданных результатов",
         example=True,
     )
-    worker_send_events: bool = Field(
+    task_track_started: bool = Field(
         ...,
-        description="Enable sending task-related events for monitoring",
+        description="Включить отслеживание состояния STARTED для задач",
         example=True,
     )
 
@@ -483,13 +532,18 @@ class CelerySettings(BaseSettingsWithLoader):
     def validate_auth(cls, v):
         if v and (len(v) != 2 or not all(isinstance(i, str) for i in v)):
             raise ValueError(
-                "Auth must be tuple of two strings (username, password)"
+                "Аутентификация должна быть кортежем из двух строк (логин, пароль)"
             )
         return v
 
 
 class MailSettings(BaseSettingsWithLoader):
-    """Email service configuration settings."""
+    """
+    Настройки конфигурации для сервиса электронной почты.
+
+    Этот класс содержит параметры для настройки SMTP сервера, аутентификации, таймаутов и других параметров,
+    связанных с отправкой электронной почты.
+    """
 
     yaml_group: ClassVar[str] = "mail"
     model_config = SettingsConfigDict(
@@ -497,70 +551,85 @@ class MailSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Блок настроек SMTP сервера
     host: str = Field(
-        ..., description="SMTP server hostname", example="smtp.example.com"
+        ..., description="Имя хоста SMTP сервера", example="smtp.example.com"
     )
     port: int = Field(
-        ..., ge=1, le=65535, description="SMTP server port number", example=587
+        ...,
+        ge=1,
+        le=65535,
+        description="Номер порта SMTP сервера",
+        example=587,
     )
+    use_tls: bool = Field(
+        ...,
+        description="Включить STARTTLS для безопасных соединений",
+        example=True,
+    )
+    validate_certs: bool = Field(
+        ..., description="Проверять SSL/TLS сертификаты сервера", example=True
+    )
+    ca_bundle: Optional[Path] = Field(
+        ...,
+        description="Путь к пользовательскому пакету CA сертификатов",
+        example="/path/to/ca_bundle.crt",
+    )
+
+    # Блок настроек аутентификации
+    username: str = Field(
+        ...,
+        description="Имя пользователя для аутентификации SMTP",
+        example="user@example.com",
+    )
+    password: str = Field(
+        ...,
+        description="Пароль для аутентификации SMTP",
+        example="securepassword123",
+    )
+
+    # Блок настроек таймаутов и пула соединений
     connection_pool_size: int = Field(
-        ..., ge=1, le=20, description="Size of SMTP connection pool", example=5
+        ..., ge=1, le=20, description="Размер пула соединений SMTP", example=5
     )
     connect_timeout: int = Field(
         ...,
         ge=5,
         le=30,
-        description="Timeout for connection in seconds",
+        description="Таймаут подключения в секундах",
         example=30,
     )
     command_timeout: int = Field(
         ...,
         ge=5,
         le=300,
-        description="Network operation timeout in seconds",
+        description="Таймаут сетевой операции в секундах",
         example=30,
     )
-    username: str = Field(
-        ...,
-        description="SMTP authentication username",
-        example="user@example.com",
-    )
-    password: str = Field(
-        ...,
-        description="SMTP authentication password",
-        example="securepassword123",
-    )
-    use_tls: bool = Field(
-        ..., description="Enable STARTTLS for secure connections", example=True
-    )
-    validate_certs: bool = Field(
-        ..., description="Validate server SSL/TLS certificates", example=True
-    )
-    ca_bundle: Optional[Path] = Field(
-        ...,
-        description="Path to custom CA certificate bundle",
-        example="/path/to/ca_bundle.crt",
-    )
+
+    # Блок настроек отправителя и шаблонов
     sender: str = Field(
         ...,
-        description="Default sender email address",
+        description="Адрес электронной почты отправителя по умолчанию",
         example="noreply@example.com",
     )
     template_folder: Optional[Path] = Field(
         ...,
-        description="Path to email template directory",
+        description="Путь к директории с шаблонами писем",
         example="/app/email_templates",
     )
+
+    # Блок настроек Circuit Breaker
     circuit_breaker_max_failures: int = Field(
         ...,
         ge=0,
-        description="Maximum number of failures before circuit breaker trips",
+        description="Максимальное количество сбоев до срабатывания Circuit Breaker",
         example=5,
     )
     circuit_breaker_reset_timeout: int = Field(
         ...,
         ge=0,
-        description="Time (seconds) to wait before resetting circuit breaker",
+        description="Время (в секундах) до сброса Circuit Breaker",
         example=60,
     )
 
@@ -568,19 +637,24 @@ class MailSettings(BaseSettingsWithLoader):
     @classmethod
     def validate_port(cls, v, values):
         if v == 465 and not values.data.get("use_tls"):
-            raise ValueError("Port 465 requires SSL/TLS to be enabled")
+            raise ValueError("Порт 465 требует включения SSL/TLS")
         return v
 
     @field_validator("ca_bundle")
     @classmethod
     def validate_ca_path(cls, v):
         if v and not v.exists():
-            raise ValueError(f"CA bundle file not found: {v}")
+            raise ValueError(f"Файл CA bundle не найден: {v}")
         return v
 
 
 class QueueSettings(BaseSettingsWithLoader):
-    """Message queue broker configuration settings."""
+    """
+    Настройки конфигурации для брокера сообщений.
+
+    Этот класс содержит параметры для настройки подключения к брокеру сообщений (Kafka или RabbitMQ),
+    а также параметры для управления соединениями и аутентификации.
+    """
 
     yaml_group: ClassVar[str] = "queue"
     model_config = SettingsConfigDict(
@@ -588,74 +662,87 @@ class QueueSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Блок настроек типа и подключения к брокеру
     type: Literal["kafka", "rabbitmq"] = Field(
-        ..., description="Message broker type", example="kafka"
+        ..., description="Тип брокера сообщений", example="kafka"
     )
     host: str = Field(
         ...,
-        description="Broker hostname",
+        description="Имя хоста брокера",
         example="broker.example.com",
     )
     port: int = Field(
         ...,
         ge=1,
         le=65535,
-        description="Broker port number",
+        description="Номер порта брокера",
     )
     ui_port: int = Field(
         ...,
         ge=1,
         le=65535,
-        description="Broker UI port number",
+        description="Номер порта UI брокера",
         example=9121,
     )
+
+    # Блок настроек таймаутов и повторных подключений
     timeout: int = Field(
         ...,
         ge=5,
         le=300,
-        description="Broker connection timeout in seconds",
+        description="Таймаут подключения к брокеру в секундах",
         example=30,
     )
     reconnect_interval: int = Field(
         ...,
         ge=5,
         le=300,
-        description="Interval between reconnection attempts in seconds",
+        description="Интервал между попытками повторного подключения в секундах",
         example=60,
     )
+
+    # Блок настроек потребителей и graceful shutdown
     max_consumers: int = Field(
         ...,
         ge=1,
-        description="Maximum number of consumer instances",
+        description="Максимальное количество экземпляров потребителей",
         example=10,
     )
     graceful_timeout: int = Field(
         ...,
         ge=5,
         le=300,
-        description="Graceful shutdown timeout in seconds",
+        description="Таймаут graceful shutdown в секундах",
         example=60,
     )
+
+    # Блок настроек SSL/TLS и аутентификации
     use_ssl: bool = Field(
-        ..., description="Enable SSL/TLS for secure connections", example=True
+        ...,
+        description="Включить SSL/TLS для безопасных соединений",
+        example=True,
     )
     ca_bundle: Optional[Path] = Field(
         ...,
-        description="Path to CA certificate file",
+        description="Путь к файлу CA сертификата",
         example="/path/to/ca.pem",
     )
     username: Optional[str] = Field(
-        ..., description="Authentication username", example="kafka-user"
+        ...,
+        description="Имя пользователя для аутентификации",
+        example="kafka-user",
     )
     password: Optional[str] = Field(
         ...,
-        description="authentication password",
+        description="Пароль для аутентификации",
         example="securepassword123",
     )
+
+    # Блок настроек топиков
     topics: List[Dict[str, str]] = Field(
         ...,
         min_items=1,
-        description="Topic list",
+        description="Список топиков",
         example=[
             {
                 "name": "topic1",
@@ -672,30 +759,32 @@ class QueueSettings(BaseSettingsWithLoader):
     @classmethod
     def validate_port(cls, v, values):
         if v == 465 and not values.data.get("use_tls"):
-            raise ValueError("Port 465 requires SSL/TLS to be enabled")
+            raise ValueError("Порт 465 требует включения SSL/TLS")
         return v
 
     @field_validator("ca_bundle")
     @classmethod
     def validate_ca_path(cls, v):
         if v and not v.exists():
-            raise ValueError(f"CA bundle file not found: {v}")
+            raise ValueError(f"Файл CA bundle не найден: {v}")
         return v
 
-    @computed_field(description="Construct Queue connection URL")
+    @computed_field(description="Сформировать URL для подключения к очереди")
     def queue_url(self) -> str:
-        """Construct Queue connection URL."""
+        """Сформировать URL для подключения к очереди."""
         return (
             f"amqp://{self.username}:{self.password}@{self.host}:{self.port}/"
         )
 
-    @computed_field(description="Construct Queue connection URL")
+    @computed_field(
+        description="Сформировать URL для подключения к UI очереди"
+    )
     def queue_ui_url(self) -> str:
-        """Construct Queue connection URL."""
+        """Сформировать URL для подключения к UI очереди."""
         return f"{self.host}:{self.ui_port}"
 
     def get_topic_name(self, topic_key: str) -> str:
-        # Optimized lookup using generator expression
+        # Оптимизированный поиск с использованием генератора
         topic = next(
             (
                 topic
@@ -706,13 +795,18 @@ class QueueSettings(BaseSettingsWithLoader):
         )
 
         if not topic:
-            raise ValueError(f"No topic configured for key: {topic_key}")
+            raise ValueError(f"Не настроен топик для ключа: {topic_key}")
 
         return topic["value"]
 
 
 class TasksSettings(BaseSettingsWithLoader):
-    """Configuration for TaskiQ task queue and worker management."""
+    """
+    Настройки конфигурации для очереди задач и управления воркерами.
+
+    Этот класс содержит параметры для настройки максимального количества попыток выполнения задач,
+    задержек, таймаутов и других параметров, связанных с обработкой задач.
+    """
 
     yaml_group: ClassVar[str] = "tasks"
     model_config = SettingsConfigDict(
@@ -720,50 +814,57 @@ class TasksSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Блок настроек для задач
     task_max_attempts: int = Field(
         ...,
-        description="Maximum number of attempts for a task",
+        description="Максимальное количество попыток выполнения задачи",
         example=5,
     )
     task_seconds_delay: int = Field(
         ...,
-        description="Initial delay in seconds for a task",
+        description="Начальная задержка в секундах для задачи",
         example=60,
     )
     task_retry_jitter_factor: float = Field(
         ...,
-        description="Jitter factor for exponential backoff",
+        description="Фактор случайности для экспоненциального отката",
         example=0.5,
     )
     task_timeout_seconds: int = Field(
         ...,
-        description="Maximum execution time in seconds for a task",
+        description="Максимальное время выполнения задачи в секундах",
         example=3600,
     )
+
+    # Блок настроек для потоков (flows)
     flow_max_attempts: int = Field(
         ...,
-        description="Maximum number of attempts for a flow",
+        description="Максимальное количество попыток выполнения потока",
         example=5,
     )
     flow_seconds_delay: int = Field(
         ...,
-        description="Initial delay in seconds for a flow",
+        description="Начальная задержка в секундах для потока",
         example=60,
     )
     flow_retry_jitter_factor: float = Field(
         ...,
-        description="Jitter factor for exponential backoff",
+        description="Фактор случайности для экспоненциального отката",
         example=0.5,
     )
     flow_timeout_seconds: int = Field(
         ...,
-        description="Maximum execution time in seconds for a flow",
+        description="Максимальное время выполнения потока в секундах",
         example=3600,
     )
 
 
 class GRPCSettings(BaseSettingsWithLoader):
-    """Configuration for gRPC services."""
+    """
+    Настройки конфигурации для gRPC сервисов.
+
+    Этот класс содержит параметры для настройки пути к сокету и максимального количества воркеров.
+    """
 
     yaml_group: ClassVar[str] = "grpc"
     model_config = SettingsConfigDict(
@@ -771,28 +872,45 @@ class GRPCSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Блок настроек сокета и воркеров
     socket_path: str = Field(
         ...,
-        description="Path to the gRPC socket file",
+        description="Путь к файлу сокета gRPC",
         example="/tmp/grpc.sock",
     )
     max_workers: int = Field(
         ...,
-        description="Maximum number of gRPC worker processes",
+        description="Максимальное количество процессов воркеров gRPC",
         example=10,
     )
 
-    @computed_field(description="Construct Socket connection")
+    @computed_field(description="Сформировать URI для подключения к сокету")
     def socket_uri(self) -> str:
+        """Сформировать URI для подключения к сокету."""
         return f"unix://{self.socket_path}"
 
 
 # Instantiate settings for immediate use
 fs_settings = FileStorageSettings()
+"""Глобальные настройки файлового хранилища"""
+
 log_settings = LogStorageSettings()
+"""Глобальные настройки логирования"""
+
 redis_settings = RedisSettings()
+"""Глобальные настройки Redis"""
+
 celery_settings = CelerySettings()
+"""Глобальные настройки Celery"""
+
 mail_settings = MailSettings()
+"""Глобальные настройки подключения SMTP-сервера"""
+
 queue_settings = QueueSettings()
+"""Глобальные настройки подключения к очереди сообщений"""
+
 tasks_settings = TasksSettings()
+"""Глобальные настройки фоновых задач"""
+
 grpc_settings = GRPCSettings()
+"""Глобальные настройки GRPC-сервера"""

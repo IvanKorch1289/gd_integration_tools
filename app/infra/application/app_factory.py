@@ -84,7 +84,7 @@ def _configure_application_components(app: FastAPI) -> None:
 def _configure_business_routers(app: FastAPI) -> None:
     """Подключение бизнес-маршрутизаторов"""
     # Основное API приложения
-    app.include_router(get_v1_routers(), prefix="/api/v1", tags=["API v1"])
+    app.include_router(get_v1_routers(), prefix="/api/v1")
 
     # Интеграция с системами потоковой обработки
     app.include_router(

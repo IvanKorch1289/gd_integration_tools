@@ -5,7 +5,6 @@ from starlette.middleware.base import (
 )
 from starlette.types import ASGIApp
 
-from app.utils.logging_service import app_logger
 from app.utils.utils import AsyncChunkIterator
 
 
@@ -15,12 +14,13 @@ __all__ = ("InnerRequestLoggingMiddleware",)
 class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for logging incoming requests and outgoing responses"""
 
-    def __init__(
-        self, app: ASGIApp, log_body: bool = True, max_body_size: int = 4096
-    ):
+    def __init__(self, app: ASGIApp):
+        from app.config.settings import settings
+        from app.utils.logging_service import app_logger
+
         super().__init__(app)
-        self.log_body = log_body
-        self.max_body_size = max_body_size
+        self.log_body = settings.logging.log_requests
+        self.max_body_size = settings.logging.max_body_log_size
         self.logger = app_logger
 
     async def dispatch(

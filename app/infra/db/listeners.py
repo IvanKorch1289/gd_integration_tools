@@ -6,6 +6,7 @@ from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from time import monotonic
 
+from app.config.constants import RETRIABLE_DB_CODES
 from app.config.settings import settings
 from app.utils.circuit_breaker import get_circuit_breaker
 from app.utils.errors import DatabaseError
@@ -34,9 +35,7 @@ class DatabaseListener:
     def is_retriable_error(self, exception: Exception) -> bool:
         if isinstance(exception, (OperationalError, DBAPIError)):
             if isinstance(exception.orig, PostgresError):
-                return (
-                    exception.orig.sqlstate in self.settings.retriable_db_codes
-                )
+                return exception.orig.sqlstate in RETRIABLE_DB_CODES
         return False
 
     async def handle_async_error(self, exception_context):

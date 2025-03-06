@@ -421,7 +421,7 @@ class OrderService(BaseService[OrderRepository]):
                 stream=settings.redis.get_stream_name("order-send"),
             )
 
-            return order_data
+            return order_data  # type: ignore
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

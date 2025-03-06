@@ -5,6 +5,7 @@ app:
   environment: "development"
   debug_mode: false
   version: 0.1.0
+  title: "GD ADVANCED TOOLS"
   enable_swagger: True
   enable_redoc: True
   socket_ping_timeout: 10
@@ -13,7 +14,8 @@ app:
   telemetry_enabled: True
   admin_enabled: True
   monitoring_enabled: True
-
+  gzip_minimum_size: 300
+  gzip_compresslevel: 9
 
 security:
   token_name: "gat_token"
@@ -144,6 +146,7 @@ database:
   pool_timeout: 30
   ssl_mode: prefer
   ca_bundle: #"/path/to/certificate.pem"
+  max_retries: 5
   circuit_breaker_max_failures: 10
   circuit_breaker_reset_timeout: 30
   slow_query_threshold: 1.0
@@ -199,6 +202,8 @@ log:
     - "hostname"
     - "user_id"
     - "action"
+  log_requests: True
+  max_body_log_size: 4096
 
 
 mongo:

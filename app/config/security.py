@@ -13,12 +13,10 @@ __all__ = (
 
 
 class SecureSettings(BaseSettingsWithLoader):
-    """Authentication and authorization system configuration.
+    """Конфигурация системы аутентификации и авторизации.
 
-    Groups of parameters:
-    - Token core settings
-    - Algorithms and keys
-    - Additional settings
+    Содержит параметры безопасности для работы с токенами, API-ключами,
+    настройками Cookie и механизмами защиты от атак.
     """
 
     yaml_group: ClassVar[str] = "security"
@@ -27,85 +25,94 @@ class SecureSettings(BaseSettingsWithLoader):
         extra="forbid",
     )
 
+    # Основные настройки токенов
     token_name: str = Field(
         ...,
-        description="Name of the HTTP cookie/header containing the token",
+        description="Название HTTP-куки/заголовка с токеном",
         examples=["access_token", "auth_token"],
     )
     token_lifetime: int = Field(
         ...,
         ge=60,
-        description="Token lifetime in seconds (minimum 60)",
+        description="Время жизни токена в секундах (минимум 60)",
         examples=[3600, 86400],
     )
     refresh_token_lifetime: int = Field(
         ...,
         ge=3600,
-        description="Refresh token lifetime in seconds (default 30 days)",
+        description="Время жизни refresh-токена в секундах (по умолчанию 30 дней)",
         examples=[2592000, 86400],
     )
+
+    # Алгоритмы и криптография
     secret_key: str = Field(
         ...,
         min_length=32,
-        description="Secret key for token signing (minimum 32 characters)",
+        description="Секретный ключ для подписи токенов (минимум 32 символа)",
         examples=["supersecretkeywithatleast32characters123"],
     )
     algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
         ...,
-        description="Token signing algorithm",
+        description="Алгоритм подписи токенов",
         examples=["HS256", "RS256"],
     )
+
+    # Параметры Cookie
     cookie_secure: bool = Field(
         ...,
-        description="Transmit token only over HTTPS",
+        description="Передача токена только по HTTPS",
         examples=[True, False],
     )
     cookie_samesite: Literal["lax", "strict", "none"] = Field(
         ...,
-        description="SameSite policy for cookies",
+        description="Политика SameSite для Cookie",
         examples=["lax", "strict", "none"],
     )
+
+    # API-безопасность
     api_key: str = Field(
         ...,
-        description="Main application API key",
+        description="Основной API-ключ приложения",
         examples=["your_api_key_123"],
     )
     allowed_hosts: List[str] = Field(
         ...,
-        description="Allowed hosts for incoming requests",
-        examples=[["example.com", "api.example.com"]],
+        description="Разрешенные хосты для входящих запросов",
+        examples=["example.com", "api.example.com"],
     )
     routes_without_api_key: List[str] = Field(
         ...,
-        description="Endpoints accessible without the application API key",
-        examples=[["/health", "/status"]],
+        description="Эндпоинты, доступные без API-ключа",
+        examples=["/health", "/status"],
     )
+
+    # Защита от атак и лимиты
     request_timeout: float = Field(
         ...,
-        description="Maximum request timeout in seconds",
+        description="Максимальное время обработки запроса (секунды)",
         examples=[5.0, 10.0],
     )
     rate_limit: int = Field(
         ...,
-        description="Number of requests per minute allowed for the application",
+        description="Лимит запросов в минуту для приложения",
         examples=[100, 500],
     )
     rate_time_measure_seconds: int = Field(
         ...,
-        description="Time window for rate limiting in seconds",
+        description="Временное окно для ограничения запросов (секунды)",
         examples=[60, 300],
     )
     failure_threshold: int = Field(
         ...,
-        description="Number of failed request attempts before locking the account",
+        description="Количество неудачных попыток до блокировки аккаунта",
         examples=[5, 10],
     )
     recovery_timeout: int = Field(
         ...,
-        description="Time after which the account is unlocked after failed attempts",
+        description="Время до разблокировки аккаунта после неудачных попыток (секунды)",
         examples=[600, 3600],
     )
 
 
-# Instantiate settings for immediate use
 secure_settings = SecureSettings()
+"""Глобальные настройки безопасности"""
