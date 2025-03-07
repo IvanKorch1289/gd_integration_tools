@@ -233,7 +233,7 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
     password: str = Field(
         ...,
         title="Пароль",
-        min_length=8,
+        # min_length=8,
         description="Пароль для аутентификации в MongoDB",
         examples=["M0ng0Pa$$w0rd"],
     )

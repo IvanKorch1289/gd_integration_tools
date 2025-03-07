@@ -34,7 +34,9 @@ metadata = MetaData(
 
 # Инициализация SQLAlchemy-Continuum
 make_versioned(
-    user_cls=None, plugins=[ActivityPlugin(), PropertyModTrackerPlugin()]
+    user_cls=None,
+    options={"native_versioning": True},
+    plugins=[ActivityPlugin(), PropertyModTrackerPlugin()],
 )
 
 # Создаем registry и Base с использованием metadata
@@ -59,7 +61,7 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
     """
 
     __abstract__ = True
-    __versioned__ = {}  # Включаем версионирование для всех моделей
+    __versioned__ = {}
 
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True

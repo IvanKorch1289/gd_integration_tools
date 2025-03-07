@@ -2,7 +2,6 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Response
-from fastapi.responses import StreamingResponse
 from fastapi_utils.cbv import cbv
 
 from app.schemas.route_schemas.skb import APISKBOrderSchemaIn

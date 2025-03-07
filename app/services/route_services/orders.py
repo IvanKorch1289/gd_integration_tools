@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import status
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
@@ -234,8 +233,8 @@ class OrderService(BaseService[OrderRepository]):
             order_data = await self._get_order_data(order_id=order_id)
 
             # Если заказ не активен, возвращаем сообщение
-            # if not order_data["is_active"]:
-            #     return {"hasError": True, "message": "Inactive order"}\
+            if not order_data["is_active"]:
+                return {"hasError": True, "message": "Inactive order"}
 
             # Запрашиваем результаты последовательно
             json_res = await self.get_order_result(
