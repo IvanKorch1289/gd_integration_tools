@@ -1,6 +1,8 @@
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Response
+from fastapi.responses import StreamingResponse
 from fastapi_utils.cbv import cbv
 
 from app.schemas.route_schemas.skb import APISKBOrderSchemaIn
@@ -52,14 +54,25 @@ class SKBCBV:
         return await self.service.add_request(data=request_schema.model_dump())
 
     @router.get(
-        "/get-result", summary="Получить результат по залогу в СКБ Техно"
+        "/get-result",
+        summary="Получить результат по залогу в СКБ Техно",
+        responses={
+            200: {
+                "content": {
+                    "application/json": {},
+                    "application/pdf": {},
+                    "application/octet-stream": {},
+                },
+                "description": "Возвращает результат в формате JSON или PDF.",
+            }
+        },
     )
     async def get_skb_result(
         self,
         order_uuid: UUID,
         response_type: ResponseTypeChoices = ResponseTypeChoices.json,
         x_api_key: str = Header(...),
-    ):
+    ) -> Any:
         """
         Получить результат по залогу из СКБ-Техно.
 
@@ -68,6 +81,19 @@ class SKBCBV:
         :param x_api_key: API-ключ для аутентификации.
         :return: Результат запроса в указанном формате.
         """
-        return await self.service.get_response_by_order(
-            order_uuid=order_uuid, response_type=response_type.value
+        result = await self.service.get_response_by_order(
+            order_uuid=order_uuid, response_type_str=response_type.value
         )
+
+        if response_type == ResponseTypeChoices.pdf:
+            # Если запрошен PDF, возвращаем StreamingResponse
+            return Response(
+                content=result,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": "attachment; filename=result.pdf"
+                },
+            )
+        else:
+            # Если запрошен JSON, возвращаем JSONResponse
+            return result

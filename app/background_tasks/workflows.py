@@ -189,12 +189,15 @@ async def order_processing_workflow(
         await managed_pause(delay_seconds=INITIAL_DELAY)
 
         # Этап 3: Получение результата обработки заказа
-        result = None
+        getting_result = None
+
         for attempt in range(MAX_RESULT_ATTEMPTS + 1):
             try:
-                result = await get_skb_order_result_workflow(creation_result)
+                getting_result = await get_skb_order_result_workflow(
+                    order_data
+                )
 
-                if result.get("success"):
+                if getting_result.get("success"):
                     if email:
                         await send_notification_task(
                             {
@@ -203,7 +206,7 @@ async def order_processing_workflow(
                                 "message": f"Заказ {order_id} успешно обработан",
                             }
                         )
-                    return result
+                    return getting_result
 
                 if attempt < MAX_RESULT_ATTEMPTS:
                     await managed_pause(delay_seconds=RETRY_DELAY)

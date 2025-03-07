@@ -21,7 +21,7 @@ PREFECT_SERVER_COMMAND = "prefect server start"
 PREFECT_WORKER_COMMAND = "prefect agent start -q 'default'"
 
 # Для воркфлоу заказов в СКБ-Техно
-INITIAL_DELAY = 1800  # 30 minutes
+INITIAL_DELAY = 3600  # 30 minutes
 RETRY_DELAY = 900  # 15 minutes
 MAX_RESULT_ATTEMPTS = 4
 

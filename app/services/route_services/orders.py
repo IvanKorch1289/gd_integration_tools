@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.config.settings import settings
@@ -159,7 +160,6 @@ class OrderService(BaseService[OrderRepository]):
             app_logger.error("Error sending request to SKB", exc_info=True)
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
     ) -> Any:
@@ -177,49 +177,48 @@ class OrderService(BaseService[OrderRepository]):
             # Запрашиваем результат из СКБ-Техно
             result = await self.request_service.get_response_by_order(
                 order_uuid=order_data["object_uuid"],
-                response_type=response_type.value,
+                response_type_str=response_type.value,
             )
 
-            content = {
-                "instance": order_data,
-            }
+            if isinstance(result, bytes):
+                # Исправленный ключ и параметры загрузки
+                await self.s3_service.upload_file(
+                    key=str(order_data["object_uuid"]),
+                    original_filename=f"{order_data['object_uuid']}.pdf",
+                    content=result,
+                )
 
-            # Обрабатываем ответ в зависимости от типа
-            match result["content_type"]:
-                case "application/json":
-                    # Обновляем данные заказа в базе
-                    data = result["data"]
-                    await self.repo.update(
-                        key="id",
-                        value=order_data["id"],
-                        data={
-                            "errors": data["Message"],
-                            "response_data": data["Data"],
-                        },
-                    )
-                    content["response"] = result
-                case "application/pdf":
-                    # Обрабатываем PDF-ответ
-                    file = await self.file_repo.add(
-                        data={"object_uuid": order_data["object_uuid"]}
-                    )
-                    await self.s3_service.upload_file(
-                        key=str("object_uuid"),
-                        original_filename=filename,
-                        content=content,
-                    )
-                    await self.file_repo.add_link(
-                        data={"order_id": order_data["id"], "file_id": file.id}
-                    )
-                    content["response"] = "file upload to storage"
-                case _:
-                    # Обработка других типов данных, если необходимо
-                    content["response"] = None
+                file = await self.file_repo.add(
+                    data={"object_uuid": order_data["object_uuid"]}
+                )
+
+                await self.file_repo.add_link(
+                    data={"order_id": order_data["id"], "file_id": file.id}
+                )
+            elif result.get("content_type") == "application/json":
+                # Обновляем данные заказа в базе
+                content = {
+                    "instance": order_data,
+                }
+
+                data = result["data"]
+
+                await self.repo.update(
+                    key="id",
+                    value=order_data["id"],
+                    data={
+                        "errors": data["Message"],
+                        "response_data": data["Data"],
+                    },
+                )
+                content["response"] = result
+            else:
+                # Обработка других типов данных, если необходимо
+                content["response"] = None
             return content
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_file_and_json_from_skb(
         self, order_id: int
     ) -> Optional[Dict[str, Any]]:
@@ -235,8 +234,8 @@ class OrderService(BaseService[OrderRepository]):
             order_data = await self._get_order_data(order_id=order_id)
 
             # Если заказ не активен, возвращаем сообщение
-            if not order_data["is_active"]:
-                return {"hasError": True, "message": "Inactive order"}
+            # if not order_data["is_active"]:
+            #     return {"hasError": True, "message": "Inactive order"}\
 
             # Запрашиваем результаты последовательно
             json_res = await self.get_order_result(
@@ -379,7 +378,7 @@ class OrderService(BaseService[OrderRepository]):
         order_id: int,
     ) -> Dict[str, Any]:
         """
-        Получает файл и JSON-результат заказа фоновойц задачей.
+        Получает файл и JSON-результат заказа фоновой задачей.
 
         :param order_id: ID заказа.
         :param s3_service: Сервис для работы с S3.

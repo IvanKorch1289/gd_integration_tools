@@ -30,7 +30,6 @@ class Order(BaseModel):
     """
 
     __table_args__ = {"comment": "Запросы в СКБ-Техно"}
-    __versioned__ = {}
 
     # Поля таблицы
     order_kind_id: Mapped[int] = mapped_column(

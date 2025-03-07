@@ -48,7 +48,8 @@ class APISKBService:
             url = None
             headers = {}
 
-            if settings.http_base_settings.waf_url:
+            # if settings.http_base_settings.waf_url:
+            if 1 == 0:
                 url = settings.http_base_settings.waf_url
                 headers = settings.http_base_settings.waf_route_header
             else:
@@ -96,7 +97,7 @@ class APISKBService:
             raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_response_by_order(
-        self, order_uuid: UUID, response_type: Optional[str] = None
+        self, order_uuid: UUID, response_type_str: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Получить результат по залогу из СКБ-Техно.
@@ -109,7 +110,7 @@ class APISKBService:
             Dict[str, Any]: Результат запроса или информация об ошибке.
         """
         try:
-            params = {**self.params, "Type": response_type}
+            params = {**self.params, "Type": response_type_str}
             url = f"{urljoin(self.base_url, self.endpoints.get('GET_RESULT'))}/{order_uuid}"
 
             async with get_http_client() as client:
@@ -121,9 +122,17 @@ class APISKBService:
                     read_timeout=self.settings.read_timeout,
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
+                    response_type=(
+                        "bytes" if response_type_str == "PDF" else "json"
+                    ),
                     raise_for_status=False,
                 )
-                return response
+
+                return (
+                    response.get("data")
+                    if response_type_str == "PDF"
+                    else response
+                )
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
