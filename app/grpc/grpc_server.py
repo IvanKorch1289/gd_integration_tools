@@ -1,5 +1,5 @@
 from app.config.settings import settings
-from app.grpc.protobuf.orders_pb2 import OrderResponse
+from app.grpc.protobuf.orders_pb2 import OrderResponse  # type: ignore
 from app.grpc.protobuf.orders_pb2_grpc import (
     OrderServiceServicer,
     add_OrderServiceServicer_to_server,
