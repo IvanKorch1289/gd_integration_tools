@@ -71,7 +71,9 @@ class OrderService(BaseService[OrderRepository]):
         return order.model_dump() if isinstance(order, BaseSchema) else order
 
     async def _get_order_files(self, order_data: Dict) -> List[str]:
-        return [str(file.object_uuid) for file in order_data.get("files", [])]
+        return [
+            str(file["object_uuid"]) for file in order_data.get("files", [])
+        ]
 
     async def add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
         """
@@ -179,6 +181,8 @@ class OrderService(BaseService[OrderRepository]):
                 response_type_str=response_type.value,
             )
 
+            content = None
+
             if isinstance(result, bytes):
                 # Исправленный ключ и параметры загрузки
                 await self.s3_service.upload_file(
@@ -188,7 +192,9 @@ class OrderService(BaseService[OrderRepository]):
                 )
 
                 file = await self.file_repo.add(
-                    data={"object_uuid": order_data["object_uuid"]}
+                    data={
+                        "object_uuid": order_data["object_uuid"],
+                    }
                 )
 
                 await self.file_repo.add_link(
@@ -303,7 +309,7 @@ class OrderService(BaseService[OrderRepository]):
             files = [
                 {
                     "file": await self.s3_service.get_file_base64(
-                        str(file.object_uuid)
+                        key=str(file["object_uuid"])
                     )
                 }
                 for file in order_data.get("files", [])
@@ -330,7 +336,7 @@ class OrderService(BaseService[OrderRepository]):
             files = [
                 {
                     "file": await self.s3_service.generate_download_url(
-                        str(file.object_uuid)
+                        key=str(file["object_uuid"])
                     )
                 }
                 for file in order_data.get("files", [])
@@ -364,9 +370,41 @@ class OrderService(BaseService[OrderRepository]):
             }
             if order_data.get("files"):
                 files_links = await self.get_order_file_from_storage_link(
-                    order_id
+                    order_id=order_id
                 )
                 response["file_links"] = files_links.content.get("files_links")
+
+            return response
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
+
+    @response_cache
+    async def get_order_file_base64_and_json_result_for_request(
+        self,
+        order_id: int,
+    ) -> Dict[str, Any]:
+        """
+        Получает ссылки на файлы и JSON-результат заказа.
+
+        :param order_id: ID заказа.
+        :param s3_service: Сервис для работы с S3.
+        :return: Данные заказа, включая ссылки на файлы и JSON-результат, или None, если произошла ошибка.
+        :raises Exception: Если произошла ошибка при получении данных.
+        """
+        try:
+            # Получаем заказ по ID
+            order_data = await self._get_order_data(order_id=order_id)
+
+            # Формируем данные для ответа
+            response = {
+                "data": order_data.get("response_data", None),
+                "errors": order_data.get("errors", None),
+            }
+            if order_data.get("files"):
+                files_base64 = await self.get_order_file_from_storage_base64(
+                    order_id=order_id
+                )
+                response["file_links"] = files_base64.get("files")
 
             return response
         except Exception:

@@ -349,7 +349,15 @@ class BaseService(Generic[ConcreteRepo]):
             if not versions:
                 return []
 
-            versions_dict = [version.model_dump() for version in versions]
+            versions_dict = [
+                (
+                    version.model_dump()
+                    if isinstance(version, BaseSchema)
+                    else version
+                )
+                for version in versions
+            ]
+
             changes = []
             for i in range(1, len(versions_dict)):
                 prev_version = versions_dict[i - 1]

@@ -53,10 +53,8 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
         updated_at (Mapped[datetime]): Время последнего обновления записи.
 
     Методы:
-        transfer_model_to_schema: Преобразует модель в схему Pydantic.
         get_value_from_secret_str: Преобразует SecretStr в обычные строки.
         to_dict: Преобразует модель в словарь.
-        update: Обновляет атрибуты модели.
     """
 
     __abstract__ = True

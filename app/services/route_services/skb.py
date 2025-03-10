@@ -52,7 +52,7 @@ class APISKBService:
                 url = settings.http_base_settings.waf_url
                 headers = settings.http_base_settings.waf_route_header
             else:
-                url = f"{urljoin(self.base_url, self.endpoints.get('GET_KINDS'))}"
+                url = f"{urljoin(self.base_url, self.endpoints.get("GET_KINDS"))}"
 
             async with get_http_client() as client:
                 return await client.make_request(
@@ -110,7 +110,7 @@ class APISKBService:
         """
         try:
             params = {**self.params, "Type": response_type_str}
-            url = f"{urljoin(self.base_url, self.endpoints.get('GET_RESULT'))}/{order_uuid}"
+            url = f"{urljoin(self.base_url, self.endpoints.get("GET_RESULT"))}/{order_uuid}"
 
             async with get_http_client() as client:
                 response = await client.make_request(
@@ -132,6 +132,85 @@ class APISKBService:
                     if response_type_str == "PDF"
                     else response
                 )
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
+
+    async def get_orders_list(
+        self,
+        take: int = None,
+        skip: int = None,
+    ) -> Dict[str, Any]:
+        """
+        Получить список заказов документов по залогу из СКБ-Техно.
+
+        Args:
+            take (Optional[int]): Количество запросов, которые нужно выбрать.
+            skip (Optional[int]): Количетсво запросов, которые нужно пропустить.
+
+        Returns:
+            Dict[str, Any]: Результат запроса или информация об ошибке.
+        """
+        try:
+            params = {**self.params}
+            if take is not None:
+                params["take"] = take
+
+            if skip is not None:
+                params["skip"] = skip
+
+            url = f"{urljoin(self.base_url, self.endpoints.get("GET_ORDER_LIST"))}"
+
+            async with get_http_client() as client:
+                response = await client.make_request(
+                    method="GET",
+                    url=url,
+                    params=params,
+                    connect_timeout=self.settings.connect_timeout,
+                    read_timeout=self.settings.read_timeout,
+                    total_timeout=self.settings.connect_timeout
+                    + self.settings.read_timeout,
+                    raise_for_status=False,
+                )
+
+                return response
+        except Exception:
+            raise  # Исключение будет обработано глобальным обработчиком
+
+    async def get_objects_by_address(
+        self,
+        query: str,
+        comment: str = None,
+    ) -> Dict[str, Any]:
+        """
+        Проверка-поиск объектов недвижимости по адресу (ФИАС/КЛАДР)..
+
+        Args:
+            query (str): Адрес.
+            comment (Optional[str]): Комментарий.
+
+        Returns:
+            Dict[str, Any]: Результат запроса или информация об ошибке.
+        """
+        try:
+            params = {**self.params, "query": query}
+            if comment is not None:
+                params["comment"] = comment
+
+            url = f"{urljoin(self.base_url, self.endpoints.get("CHECK_ADDRESS"))}"
+
+            async with get_http_client() as client:
+                response = await client.make_request(
+                    method="POST",
+                    url=url,
+                    params=params,
+                    connect_timeout=self.settings.connect_timeout,
+                    read_timeout=self.settings.read_timeout,
+                    total_timeout=self.settings.connect_timeout
+                    + self.settings.read_timeout,
+                    raise_for_status=False,
+                )
+
+                return response
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 

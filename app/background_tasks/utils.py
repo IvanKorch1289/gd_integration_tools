@@ -5,7 +5,7 @@ from prefect import get_client
 from prefect.context import get_run_context
 from prefect.states import Paused
 
-from app.infra.application.scheduler import scheduler_manager
+from app.infra.scheduler.scheduler_manager import scheduler_manager
 from app.utils.logging_service import tasks_logger
 
 

@@ -126,31 +126,18 @@ services:
       RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
       RABBITMQ_DEFAULT_VHOST: /
     ports:
-      - "5672:5672"  # AMQP порт для клиентов
-      - "15672:15672"  # Web UI порт
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./init-rabbitmq.sh:/docker-entrypoint-init.d/init-rabbitmq.sh  # Скрипт инициализации
     networks:
       - rabbitmq_network
-
-  rabbitmq-setup:
-    image: rabbitmq:3.12-management
-    depends_on:
-      - rabbitmq
-    env_file:
-      - .env
-    environment:
-      RABBITMQ_DEFAULT_USER: "${QUEUE_USERNAME}"
-      RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
-    command: >
-      bash -c "
-        until rabbitmqctl await_startup; do sleep 1; done &&
-        rabbitmqadmin declare queue name=my_queue durable=true &&
-        rabbitmqadmin declare exchange name=my_exchange type=direct &&
-        rabbitmqadmin declare binding source=my_exchange destination=my_queue routing_key=my_routing_key
-      "
-    networks:
-      - rabbitmq_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_connections
+      interval: 5s
+      timeout: 30s
+      retries: 5
   
 volumes:
   mongodb_data:

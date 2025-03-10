@@ -10,11 +10,7 @@ from app.background_tasks.tasks import (
     send_order_result_task,
 )
 from app.background_tasks.utils import managed_pause
-from app.config.constants import (
-    INITIAL_DELAY,
-    MAX_RESULT_ATTEMPTS,
-    RETRY_DELAY,
-)
+from app.config.constants import consts
 from app.config.settings import settings
 from app.utils.logging_service import tasks_logger
 from app.utils.utils import utilities
@@ -192,12 +188,12 @@ async def order_processing_workflow(
                 )
 
         # Этап 2: Ожидание обработки заказа
-        await managed_pause(delay_seconds=INITIAL_DELAY)
+        await managed_pause(delay_seconds=consts.INITIAL_DELAY)
 
         # Этап 3: Получение результата обработки заказа
         getting_result = None
 
-        for attempt in range(MAX_RESULT_ATTEMPTS + 1):
+        for attempt in range(consts.MAX_RESULT_ATTEMPTS + 1):
             try:
                 getting_result = await get_skb_order_result_workflow(
                     order_data
@@ -214,19 +210,19 @@ async def order_processing_workflow(
                         )
                     return getting_result
 
-                if attempt < MAX_RESULT_ATTEMPTS:
-                    await managed_pause(delay_seconds=RETRY_DELAY)
+                if attempt < consts.MAX_RESULT_ATTEMPTS:
+                    await managed_pause(delay_seconds=consts.RETRY_DELAY)
 
             except Exception as exc:
                 await handle_error(
                     (
                         "Ошибка при получении результата"
-                        if attempt < MAX_RESULT_ATTEMPTS
+                        if attempt < consts.MAX_RESULT_ATTEMPTS
                         else "Финальная ошибка при получении результата"
                     ),
                     f"Попытка {attempt + 1}: {str(exc)}",
                 )
-                if attempt == MAX_RESULT_ATTEMPTS:
+                if attempt == consts.MAX_RESULT_ATTEMPTS:
                     raise
 
         # Этап 4: Отправка результата

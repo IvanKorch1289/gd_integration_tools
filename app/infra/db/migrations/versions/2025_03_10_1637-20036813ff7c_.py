@@ -1,12 +1,12 @@
+# flake8: noqa
+
 """empty message
 
-Revision ID: 466ffd64c590
+Revision ID: 20036813ff7c
 Revises: 
-Create Date: 2025-03-10 11:20:31.309301
+Create Date: 2025-03-10 16:37:57.276212
 
 """
-
-# flake8: noqa
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '466ffd64c590'
+revision: str = '20036813ff7c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -70,15 +70,10 @@ def upgrade() -> None:
     op.create_table('orderfiles_version',
     sa.Column('order_id', sa.Integer(), autoincrement=False, nullable=False),
     sa.Column('file_id', sa.Integer(), autoincrement=False, nullable=False),
-    sa.Column('id', sa.Integer(), autoincrement=False, nullable=False),
-    sa.Column('created_at', sa.DateTime(), autoincrement=False, nullable=True),
-    sa.Column('updated_at', sa.DateTime(), autoincrement=False, nullable=True),
     sa.Column('transaction_id', sa.BigInteger(), autoincrement=False, nullable=False),
     sa.Column('end_transaction_id', sa.BigInteger(), nullable=True),
     sa.Column('operation_type', sa.SmallInteger(), nullable=False),
-    sa.Column('created_at_mod', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-    sa.Column('updated_at_mod', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-    sa.PrimaryKeyConstraint('order_id', 'file_id', 'id', 'transaction_id', name=op.f('pk_orderfiles_version'))
+    sa.PrimaryKeyConstraint('order_id', 'file_id', 'transaction_id', name=op.f('pk_orderfiles_version'))
     )
     op.create_index(op.f('ix_orderfiles_version_end_transaction_id'), 'orderfiles_version', ['end_transaction_id'], unique=False)
     op.create_index(op.f('ix_orderfiles_version_operation_type'), 'orderfiles_version', ['operation_type'], unique=False)
@@ -214,12 +209,10 @@ def upgrade() -> None:
     op.create_table('orderfiles',
     sa.Column('order_id', sa.Integer(), nullable=False),
     sa.Column('file_id', sa.Integer(), nullable=False),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['file_id'], ['files.id'], name=op.f('fk_orderfiles_file_id_files')),
     sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name=op.f('fk_orderfiles_order_id_orders')),
-    sa.PrimaryKeyConstraint('order_id', 'file_id', 'id', name=op.f('pk_orderfiles')),
+    sa.PrimaryKeyConstraint('order_id', 'file_id', name=op.f('pk_orderfiles')),
+    sa.UniqueConstraint('order_id', 'file_id', name='uq_order_file'),
     comment='Связь заказов и файлов'
     )
     # ### end Alembic commands ###

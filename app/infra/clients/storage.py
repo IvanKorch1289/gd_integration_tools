@@ -259,6 +259,7 @@ class S3Client(BaseS3Client):
         try:
             async with self.client_context() as client:
                 await client.head_bucket(Bucket=self._settings.bucket)
+                self.logger.info(f"Бакет {self._settings.bucket} создан")
         except BotoClientError as exc:
             if exc.response["Error"]["Code"] == "404":
                 await self._create_bucket()
@@ -283,6 +284,7 @@ class S3Client(BaseS3Client):
                     Body=body,
                     Metadata=metadata,
                 )
+                self.logger.info(f"Файл {key} успешно загружен")
                 return {"status": "success"}
             except BotoClientError as exc:
                 self.logger.error(
@@ -373,6 +375,7 @@ class S3Client(BaseS3Client):
                 response = await client.delete_object(
                     Bucket=self._settings.bucket, Key=key
                 )
+                self.logger.info(f"Файл {key} успешно удалён")
                 return {"status": "success", "response": response}
             except BotoClientError as exc:
                 self.logger.error(

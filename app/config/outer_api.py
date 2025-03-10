@@ -152,7 +152,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         examples=["https://waf.example.com"],
     )
 
-    waf_route_header: str = Field(
+    waf_route_header: Dict[str, str] = Field(
         ...,
         description="Заголовок, который содержит маршрут WAF",
         examples=["X-WAF-Route"],

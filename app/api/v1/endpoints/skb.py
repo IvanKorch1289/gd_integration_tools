@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Response
@@ -71,7 +70,7 @@ class SKBCBV:
         order_uuid: UUID,
         response_type: ResponseTypeChoices = ResponseTypeChoices.json,
         x_api_key: str = Header(...),
-    ) -> Any:
+    ):
         """
         Получить результат по залогу из СКБ-Техно.
 
@@ -96,3 +95,45 @@ class SKBCBV:
         else:
             # Если запрошен JSON, возвращаем JSONResponse
             return result
+
+    @router.get(
+        "/get-orders-list",
+        summary="Получить список заказов документов по залогу в СКБ Техно",
+    )
+    async def get_orders_list(
+        self,
+        take: int | None = None,
+        skip: int | None = None,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Получить список заказов документов по залогу в СКБ Техно.
+
+        :param take: Количество запросов, которые нужно выбрать.
+        :param skip: Количесnво запросов, которые нужно пропустить
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список созданных заказов.
+        """
+        return await self.service.get_orders_list(take=take, skip=skip)
+
+    @router.post(
+        "/get-objects-by-address",
+        summary="Проверка-поиск объектов недвижимости по адресу (ФИАС/КЛАДР).",
+    )
+    async def get_objects_by_address(
+        self,
+        query: str,
+        comment: str | None = None,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Проверка-поиск объектов недвижимости по адресу (ФИАС/КЛАДР).
+
+        :param query: Адрес.
+        :param comment: Коментарий
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Список объектов.
+        """
+        return await self.service.get_objects_by_address(
+            query=query, comment=comment
+        )

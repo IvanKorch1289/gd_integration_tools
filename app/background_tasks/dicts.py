@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TypedDict
+from typing import Any, Dict, Optional, TypedDict
 
 
 __all__ = ("ProcessingResult",)
@@ -25,5 +25,5 @@ class ProcessingResult(TypedDict):
 
     success: bool
     order_id: str
-    result_data: Dict
+    result_data: Dict[str, Any]
     error_message: Optional[str]

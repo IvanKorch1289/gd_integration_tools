@@ -5,7 +5,7 @@ from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from app.config.config_loader import BaseSettingsWithLoader
-from app.config.constants import ROOT_DIR
+from app.config.constants import consts
 
 
 __all__ = (
@@ -180,7 +180,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
     )
 
     root_dir: Path = Field(
-        ROOT_DIR,
+        consts.ROOT_DIR,
         title="Корневая директория",
         description="Абсолютный путь к корню проекта",
         examples=["/opt/app", "C:/Projects/app"],

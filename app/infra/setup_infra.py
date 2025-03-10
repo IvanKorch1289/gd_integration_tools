@@ -2,12 +2,12 @@ from asyncio import to_thread
 
 from types import CoroutineType
 
-from app.infra.application.scheduler import scheduler_manager
 from app.infra.clients.logger import graylog_handler
 from app.infra.clients.redis import redis_client
 from app.infra.clients.smtp import smtp_client
 from app.infra.clients.storage import s3_client
 from app.infra.db.database import db_initializer
+from app.infra.scheduler.scheduler_manager import scheduler_manager
 from app.utils.decorators.limiting import init_limiter
 from app.utils.logging_service import app_logger
 

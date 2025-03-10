@@ -45,6 +45,7 @@ lint: check-env
 	-poetry run mypy $(SOURCE_DIR) || echo "Mypy found type issues"
 	-poetry run vulture $(SOURCE_DIR) --config pyproject.toml || echo "Vulture found dead code"
 	-poetry run bandit -r $(SOURCE_DIR) -c .bandit.yml || echo "Bandit found security issues"
+	-poetry run pip-audit || echo "PIP-Audit found security issues"
 	@echo "\033[32mLinting complete (errors ignored)\033[0m"
 
 ## Clean temporary files and caches (без удаления .venv)

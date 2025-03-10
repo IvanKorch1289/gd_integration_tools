@@ -8,7 +8,7 @@ from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
 from faststream.security import BaseSecurity
 
-from app.config.constants import MOSCOW_TZ
+from app.config.constants import consts
 from app.config.settings import settings
 from app.utils.logging_service import stream_logger
 
@@ -47,7 +47,7 @@ class StreamClient:
 
     def __init__(self):
         """Инициализирует клиент с роутерами и планировщиком."""
-        from app.infra.application.scheduler import scheduler_manager
+        from app.infra.scheduler.scheduler_manager import scheduler_manager
 
         self.stream_client = FastStream(logger=stream_logger)
         self.redis_settings = settings.redis
@@ -252,8 +252,8 @@ class StreamClient:
     ) -> DateTrigger | CronTrigger:
         """Создает триггер на основе параметров планирования."""
         if delay:
-            return DateTrigger(run_date=datetime.now(MOSCOW_TZ) + delay)
-        return CronTrigger.from_crontab(scheduler, timezone=MOSCOW_TZ)
+            return DateTrigger(run_date=datetime.now(consts.MOSCOW_TZ) + delay)
+        return CronTrigger.from_crontab(scheduler, timezone=consts.MOSCOW_TZ)
 
     async def _execute_redis_publish(
         self, stream: str, message: Dict[str, Any], headers: Dict[str, Any]

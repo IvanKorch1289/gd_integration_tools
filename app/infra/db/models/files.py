@@ -1,7 +1,14 @@
-from sqlalchemy import UUID, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    UUID,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.infra.db.models.base import BaseModel
+from app.infra.db.models.base import Base, BaseModel
 
 
 __all__ = (
@@ -37,7 +44,7 @@ class File(BaseModel):
     )
 
 
-class OrderFile(BaseModel):
+class OrderFile(Base):
     """
     Промежуточная таблица для связи заказов (Order) и файлов (File).
 
@@ -49,7 +56,11 @@ class OrderFile(BaseModel):
         __table_args__: Комментарий к таблице - "Связь заказов и файлов".
     """
 
-    __table_args__ = {"comment": "Связь заказов и файлов"}
+    __tablename__ = "orderfiles"
+    __table_args__ = (
+        UniqueConstraint("order_id", "file_id", name="uq_order_file"),
+        {"comment": "Связь заказов и файлов"},
+    )
 
     order_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("orders.id"), primary_key=True

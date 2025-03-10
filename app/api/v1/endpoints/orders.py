@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Header, Request, status
 from fastapi.responses import FileResponse
 from fastapi_utils.cbv import cbv
 
@@ -9,7 +9,6 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.infra_services.s3 import S3Service, get_s3_service_dependency
 from app.services.route_services.orders import get_order_service
 from app.utils.decorators.limiting import route_limiting
 
@@ -119,7 +118,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         request: Request,
         order_id: int,
         x_api_key: str = Header(...),
-        s3_service: S3Service = Depends(get_s3_service_dependency),
     ) -> FileResponse:
         """
         Получить файл запроса из хранилища.
@@ -130,7 +128,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         :return: Файл запроса.
         """
         return await self.service.get_order_file_from_storage(
-            order_id=order_id, s3_service=s3_service
+            order_id=order_id
         )
 
     @router.get(
@@ -144,7 +142,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         request: Request,
         order_id: int,
         x_api_key: str = Header(...),
-        s3_service: S3Service = Depends(get_s3_service_dependency),
     ):
         """
         Получить файл запроса в формате Base64.
@@ -155,7 +152,7 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         :return: Файл запроса в формате Base64.
         """
         return await self.service.get_order_file_from_storage_base64(
-            order_id=order_id, s3_service=s3_service
+            order_id=order_id
         )
 
     @router.get(
@@ -168,7 +165,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         self,
         request: Request,
         order_id: int,
-        s3_service: S3Service = Depends(get_s3_service_dependency),
         x_api_key: str = Header(...),
     ):
         """
@@ -180,20 +176,19 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         :return: Ссылка на файл запроса.
         """
         return await self.service.get_order_file_from_storage_link(
-            order_id=order_id, s3_service=s3_service
+            order_id=order_id
         )
 
     @router.get(
         "/{order_id}/get-order-json-and-file-link",
         status_code=status.HTTP_200_OK,
-        summary="Получить ссылку на файл запроса",
+        summary="Получить результат и ссылку на файл запроса",
     )
     @route_limiting
     async def get_order_file_link_and_json_result_for_request(
         self,
         request: Request,
         order_id: int,
-        s3_service: S3Service = Depends(get_s3_service_dependency),
         x_api_key: str = Header(...),
     ):
         """
@@ -206,6 +201,30 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         """
         return (
             await self.service.get_order_file_link_and_json_result_for_request(
-                order_id=order_id, s3_service=s3_service
+                order_id=order_id
             )
+        )
+
+    @router.get(
+        "/{order_id}/get-order-json-and-file-base64",
+        status_code=status.HTTP_200_OK,
+        summary="Получить результат и файл запроса в формате base64",
+    )
+    @route_limiting
+    async def get_order_json_and_file_base64(
+        self,
+        request: Request,
+        order_id: int,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Получить ссылку на файл запроса и JSON-результат.
+
+        :param order_id: ID запроса.
+        :param s3_service: Сервис для работы с S3.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Ссылка на файл и JSON-результат.
+        """
+        return await self.service.get_order_file_base64_and_json_result_for_request(
+            order_id=order_id
         )

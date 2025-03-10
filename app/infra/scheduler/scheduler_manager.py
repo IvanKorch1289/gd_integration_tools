@@ -1,6 +1,6 @@
-from app.config.constants import CHECK_SERVICES_JOB
+from app.config.constants import consts
 from app.config.settings import settings
-from app.schemas.base import EmailSchema
+from app.infra.scheduler.scheduled_tasks import check_all_services
 from app.utils.logging_service import scheduler_logger
 
 
@@ -138,48 +138,13 @@ scheduler_manager = SchedulerManager()
 scheduler_manager.register_job_cleanup("resume_")
 
 
-async def check_all_services():
-    """
-    Проверяет статус всех сервисов.
-    Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
-    """
-    from app.utils.health_check import get_healthcheck_service
-
-    try:
-        scheduler_logger.info("Запуск проверки состояния всех сервисов...")
-
-        async with get_healthcheck_service() as health_check:
-            result = await health_check.check_all_services()
-
-        if not result.get("is_all_services_active"):
-            from app.infra.clients.stream import stream_client
-
-            data = {
-                "to_emails": ["cards25@rt.bak"],
-                "subject": "Обнаружены неактивные сервисы",
-                "message": "Обнаружены неактивные сервисы. Пожалуйста, проверьте сервисы и повторите попытку позже.",
-            }
-
-            await stream_client.publish_to_redis(
-                message=EmailSchema.model_validate(data),
-                stream=settings.redis.get_stream_name("email"),
-            )
-        scheduler_logger.info(
-            f"Проверка состояния завершена. Результат: {result}"
-        )
-    except Exception as exc:
-        scheduler_logger.error(
-            f"Ошибка при проверке состояния: {str(exc)}", exc_info=True
-        )
-
-
 # Добавление задачи проверки сервисов в планировщик
 scheduler_manager.scheduler.add_job(
     func=check_all_services,
     trigger="interval",
-    minutes=CHECK_SERVICES_JOB["minutes"],  # Проверка каждую минуту
+    minutes=consts.CHECK_SERVICES_JOB["minutes"],  # Проверка каждую минуту
     replace_existing=True,
-    id=CHECK_SERVICES_JOB["name"],
+    id=consts.CHECK_SERVICES_JOB["name"],
     name="Проверка состояния всех сервисов",
     jobstore=settings.scheduler.default_jobstore_name,
     executor="async",

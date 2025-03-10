@@ -101,8 +101,9 @@ http:
   ttl_dns_cache: 300
   force_close: False
   ssl_verify: False
-  waf_url:
+  waf_url: "esbgreendata"
   waf_route_header:
+    x-api-key: "esbgreendata"
   circuit_breaker_max_failures: 5
   circuit_breaker_reset_timeout: 30
   enable_connection_purging: True
@@ -116,6 +117,8 @@ skb:
     GET_KINDS: "Kinds"
     CREATE_REQUEST: "Create"
     GET_RESULT: "Result"
+    GET_ORDER_LIST: "List"
+    CHECK_ADDRESS: "CheckAddress"
   default_priority: 80
   connect_timeout: 10.0
   read_timeout: 30.0

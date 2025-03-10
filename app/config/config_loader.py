@@ -10,13 +10,13 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from app.config.constants import ROOT_DIR
+from app.config.constants import consts
 
 
 __all__ = ("BaseSettingsWithLoader",)
 
 
-load_dotenv(ROOT_DIR / ".env")
+load_dotenv(consts.ROOT_DIR / ".env")
 
 
 class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
@@ -66,7 +66,7 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
     def __init__(
         self,
         settings_cls: Type[BaseSettings],
-        yaml_path: Path = ROOT_DIR / "config.yml",
+        yaml_path: Path = consts.ROOT_DIR / "config.yml",
     ):
         super().__init__(settings_cls)
         self.yaml_path = yaml_path

@@ -15,7 +15,7 @@ from aiohttp import (
 from json_tricks import dumps, loads
 from time import monotonic
 
-from app.config.constants import RETRY_EXCEPTIONS
+from app.config.constants import consts
 from app.config.settings import settings
 from app.utils.circuit_breaker import get_circuit_breaker
 from app.utils.decorators.singleton import singleton
@@ -180,7 +180,7 @@ class HttpClient:
                         return await self._build_response_object(
                             response, content, start_time
                         )
-                except (ClientResponseError, *RETRY_EXCEPTIONS) as exc:
+                except (ClientResponseError, *consts.RETRY_EXCEPTIONS) as exc:
                     last_exception = exc
                     # Фиксируем каждую неудачную попытку
                     self.circuit_breaker.record_failure()
@@ -270,7 +270,7 @@ class HttpClient:
             return False
         if isinstance(exception, ClientResponseError):
             return exception.status in self.settings.retry_status_codes
-        return isinstance(exception, RETRY_EXCEPTIONS)
+        return isinstance(exception, consts.RETRY_EXCEPTIONS)
 
     async def _handle_retry(self, attempt: int) -> None:
         """Выполняет задержку перед повторным запросом."""
