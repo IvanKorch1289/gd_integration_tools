@@ -56,6 +56,7 @@ class BaseService(Generic[ConcreteRepo]):
             if isinstance(instance, BaseModel) or hasattr(
                 instance.__class__, "version_parent"
             ):
+
                 return utilities.transfer_model_to_schema(
                     instance=instance,
                     schema=response_schema,

@@ -46,7 +46,11 @@ async def send_notification_workflow(body: dict) -> None:
     Returns:
         None
     """
-    await send_notification_task(body)
+    try:
+        await send_notification_task(body)
+    except Exception as exc:
+        tasks_logger.error(f"Error during sending mail: {str(exc)}")
+        raise
 
 
 @flow(
@@ -70,7 +74,9 @@ async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
     try:
         return await create_skb_order_task(body)
     except Exception as exc:
-        tasks_logger.error(f"Error during create_skb_order_workflow: {exc}")
+        tasks_logger.error(
+            f"Error during create_skb_order_workflow: {str(exc)}"
+        )
         raise
 
 
@@ -96,7 +102,7 @@ async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
         return await get_skb_order_result_task(body)
     except Exception as exc:
         tasks_logger.error(
-            f"Error during get_skb_order_result_workflow: {exc}"
+            f"Error during get_skb_order_result_workflow: {str(exc)}"
         )
         raise
 

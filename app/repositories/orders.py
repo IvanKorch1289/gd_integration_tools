@@ -73,7 +73,7 @@ class OrderRepository(SQLAlchemyRepository):
         self.order_kind_repo = order_kind_repo
         self.helper.order_kind_repo = order_kind_repo  # type: ignore
 
-    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
+    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def add(
         self, session: AsyncSession, data: Dict[str, Any]
     ) -> Optional[Order]:
@@ -91,7 +91,7 @@ class OrderRepository(SQLAlchemyRepository):
         # Вызываем метод add базового класса для создания заказа
         return await super().add(data=data)
 
-    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
+    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def update(
         self, session: AsyncSession, key: str, value: Any, data: Dict[str, Any]
     ) -> Optional[Order]:

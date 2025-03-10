@@ -35,7 +35,6 @@ metadata = MetaData(
 # Инициализация SQLAlchemy-Continuum
 make_versioned(
     user_cls=None,
-    options={"native_versioning": True},
     plugins=[ActivityPlugin(), PropertyModTrackerPlugin()],
 )
 
@@ -115,14 +114,3 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
             column.name: getattr(self, column.name)
             for column in self.__table__.columns
         }
-
-    async def update(self, **kwargs) -> None:
-        """
-        Обновляет атрибуты модели.
-
-        Аргументы:
-            **kwargs: Пара ключ-значение для обновления атрибутов модели.
-        """
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)

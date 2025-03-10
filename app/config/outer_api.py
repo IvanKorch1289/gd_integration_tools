@@ -146,17 +146,17 @@ class HttpBaseSettings(BaseSettingsWithLoader):
     )
 
     # Параметры WAF
-    # waf_url: str = Field(
-    #     ...,
-    #     description="URL для проверки безопасности",
-    #     examples=["https://waf.example.com"],
-    # )
+    waf_url: str = Field(
+        ...,
+        description="URL для проверки безопасности",
+        examples=["https://waf.example.com"],
+    )
 
-    # waf_route_header: str = Field(
-    #     ...,
-    #     description="Заголовок, который содержит маршрут WAF",
-    #     examples=["X-WAF-Route"],
-    # )
+    waf_route_header: str = Field(
+        ...,
+        description="Заголовок, который содержит маршрут WAF",
+        examples=["X-WAF-Route"],
+    )
 
     # Прочие
     ttl_dns_cache: int = Field(

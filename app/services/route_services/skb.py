@@ -48,8 +48,7 @@ class APISKBService:
             url = None
             headers = {}
 
-            # if settings.http_base_settings.waf_url:
-            if 1 == 0:
+            if settings.app.environment == "production":
                 url = settings.http_base_settings.waf_url
                 headers = settings.http_base_settings.waf_route_header
             else:

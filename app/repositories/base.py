@@ -142,24 +142,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
             session.add(obj)
             await session.flush()
-            await self._refresh_with_relationships(session, obj)
-            return obj
+            await session.refresh(
+                instance=obj,
+            )
 
-        async def _refresh_with_relationships(
-            self, session: AsyncSession, obj: ConcreteTable
-        ) -> None:
-            """
-            Обновляет объект и загружает все его связи.
-            """
-            mapper = inspect(obj.__class__)
-            relationships = [
-                rel.key
-                for rel in mapper.relationships
-                if rel.key
-                not in getattr(obj.__class__, "EXCLUDED_RELATIONSHIPS", set())
-                and rel.key != "versions"
-            ]
-            await session.refresh(obj, attribute_names=relationships)
+            return obj
 
         async def _get_loaded_object(
             self,
@@ -197,8 +184,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
                 # Обновляем объект и подгружаем связи
                 await session.flush()
-                await self._refresh_with_relationships(
-                    session, query_or_object
+                await session.refresh(
+                    instance=query_or_object,
                 )
 
             return query_or_object
@@ -369,7 +356,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, data=data
         )
 
-    @session_manager.connection(isolation_level="REPEATABLE READ", commit=True)
+    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
     async def update(
         self,
         session: AsyncSession,
