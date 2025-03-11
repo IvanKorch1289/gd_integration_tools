@@ -97,7 +97,7 @@ class Utilities:
                 decoded_bytes = b64decode(data)
                 # Пытаемся декодировать байты в строку UTF-8
                 return decoded_bytes.decode("utf-8")
-            except (UnicodeDecodeError, ValueError):
+            except ValueError:
                 # Если декодирование в строку не удалось, возвращаем байты
                 return decoded_bytes
         elif isinstance(data, (dict, list, tuple)):

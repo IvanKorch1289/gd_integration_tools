@@ -174,8 +174,8 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
                     return objects if objects else []
                 else:
                     # Возвращаем один объект
-                    object: Optional[ConcreteTable] = result.scalars().first()
-                    return object if object else {}
+                    obj: Optional[ConcreteTable] = result.scalars().first()
+                    return obj if obj else {}
 
             elif self.load_joined_models:
                 # Если объект не в сессии, добавляем его
@@ -232,18 +232,18 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             """
             Общий метод для получения версий объекта.
             """
-            object = await self.main_class.get(key="id", value=object_id)
+            obj = await self.main_class.get(key="id", value=object_id)
 
-            if not object or (isinstance(object, list) and not object):
+            if not obj or (isinstance(obj, list) and not obj):
                 return []
 
-            VersionModel = version_class(self.model)
-            query = select(VersionModel).filter(VersionModel.id == object.id)
+            version_model = version_class(self.model)
+            query = select(version_model).filter(version_model.id == obj.id)
 
             if order == "asc":
-                query = query.order_by(VersionModel.transaction_id)
+                query = query.order_by(version_model.transaction_id)
             elif order == "desc":
-                query = query.order_by(VersionModel.transaction_id.desc())
+                query = query.order_by(version_model.transaction_id.desc())
 
             if limit:
                 query = query.limit(limit)
@@ -441,11 +441,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         :param transaction_id: ID транзакции, до которой нужно восстановить объект.
         :return: Информация о восстановленной версии.
         """
-        VersionModel = version_class(self.model)  # Получаем модель версий
+        version_model = version_class(self.model)  # Получаем модель версий
         target_version = await session.execute(
-            select(VersionModel).filter(
-                VersionModel.id == object_id,
-                VersionModel.transaction_id == transaction_id,
+            select(version_model).filter(
+                version_model.id == object_id,
+                version_model.transaction_id == transaction_id,
             )
         )
         target_version = target_version.scalars().first()

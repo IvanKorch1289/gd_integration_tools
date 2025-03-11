@@ -4,11 +4,7 @@ from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
 from app.schemas.filter_schemas.orders import OrderFilter
-from app.schemas.route_schemas.orders import (
-    OrderSchemaIn,
-    OrderSchemaOut,
-    OrderVersionSchemaOut,
-)
+from app.schemas.route_schemas.orders import OrderSchemaIn
 from app.services.route_services.orders import get_order_service
 from app.utils.decorators.limiting import route_limiting
 
@@ -22,8 +18,6 @@ router = APIRouter()
 OrderCBV = create_router_class(
     router=router,
     schema_in=OrderSchemaIn,
-    schema_out=OrderSchemaOut,
-    version_schema=OrderVersionSchemaOut,
     service=get_order_service(),
     filter_class=OrderFilter,
 )

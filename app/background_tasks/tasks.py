@@ -1,8 +1,10 @@
 from prefect import task
 
 from app.background_tasks.dicts import ProcessingResult
+from app.background_tasks.utils import validate_order_id
 from app.config.settings import settings
 from app.services.route_services.orders import get_order_service
+from app.utils.errors import ExternalServiceError
 from app.utils.logging_service import tasks_logger
 from app.utils.utils import utilities
 
@@ -59,6 +61,7 @@ async def send_notification_task(body: dict) -> dict:
     timeout_seconds=3600,
     persist_result=True,
 )
+@validate_order_id
 async def create_skb_order_task(order_data: dict) -> ProcessingResult:
     """
     Создает новый заказ в системе SKB с валидацией и повторными попытками.
@@ -78,16 +81,13 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
         ValueError: Если отсутствует обязательный параметр order_id.
         Exception: В случае ошибки при создании заказа.
     """
-    if not order_data.get("id"):
-        raise ValueError("Отсутствует обязательный параметр order_id")
-
     try:
         result = await get_order_service().create_skb_order(
             order_id=order_data["id"]
         )
 
         if result.get("response", {}).get("status_code", {}) != 200:
-            raise Exception("Ошибка создания заказа в системе SKB")
+            raise ExternalServiceError("Ошибка создания заказа в системе SKB")
 
         response = {
             "success": True,
@@ -118,6 +118,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
     timeout_seconds=86400,
     persist_result=True,
 )
+@validate_order_id
 async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
     """
     Получает результат заказа в системе SKB с валидацией и повторными попытками.
@@ -137,9 +138,6 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
         ValueError: Если отсутствует обязательный параметр order_id.
         Exception: В случае ошибки при получении результата.
     """
-    if not order_data.get("id"):
-        raise ValueError("Отсутствует обязательный параметр order_id")
-
     try:
         result = await get_order_service().get_order_file_and_json_from_skb(
             order_id=order_data["id"]
@@ -155,7 +153,9 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
             result.get("response", {}).get("status_code", {}) != 200
             or message is not None
         ):
-            raise Exception("Ошибка получения результата заказа в системе SKB")
+            raise ExternalServiceError(
+                "Ошибка получения результата заказа в системе SKB"
+            )
 
         return {
             "success": True,
@@ -184,6 +184,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
     timeout_seconds=3600,
     persist_result=True,
 )
+@validate_order_id
 async def send_order_result_task(order_data: dict) -> ProcessingResult:
     """
     Отправляет результат заказа во внешнюю систему с валидацией и повторными попытками.
@@ -203,9 +204,6 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         ValueError: Если отсутствует обязательный параметр order_id.
         Exception: В случае ошибки при отправке результата.
     """
-    if not order_data.get("id"):
-        raise ValueError("Отсутствует обязательный параметр order_id")
-
     try:
         result = await get_order_service().send_order_data(
             order_id=order_data["id"]
@@ -214,7 +212,7 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         return {
             "success": True,
             "order_id": order_data["id"],
-            "result_data": result,
+            "result_data": result,  # type: ignore
             "error_message": None,
         }
     except Exception as exc:

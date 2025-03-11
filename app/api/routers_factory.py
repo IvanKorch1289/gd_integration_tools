@@ -20,8 +20,6 @@ __all__ = ("create_router_class",)
 def create_router_class(
     router: APIRouter,
     schema_in: Type[SchemaIn],
-    schema_out: Type[SchemaOut],
-    version_schema: Type[VersionSchemaOut],
     service,
     filter_class: Optional[Type] = None,
 ):

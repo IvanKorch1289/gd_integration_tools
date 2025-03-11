@@ -161,3 +161,11 @@ class AuthorizationError(BaseError):
         super().__init__(
             message=message, status_code=status.HTTP_403_FORBIDDEN
         )
+
+
+class ExternalServiceError(Exception):
+    """Ошибки взаимодействия с внешними сервисами (SKB и др.)"""
+
+    def __init__(self, detail: str = "Ошибка обработки запроса"):
+        self.detail = detail
+        super().__init__(detail)

@@ -20,7 +20,6 @@ from app.utils.decorators.caching import response_cache
 from app.utils.decorators.singleton import singleton
 from app.utils.enums.skb import ResponseTypeChoices
 from app.utils.errors import NotFoundError
-from app.utils.logging_service import app_logger
 from app.utils.utils import utilities
 
 
@@ -68,7 +67,7 @@ class OrderService(BaseService[OrderRepository]):
         """Получение и преобразование данных заказа"""
         order = await self.get(key="id", value=order_id)
         if not order:
-            raise NotFoundError("Order not found")
+            raise NotFoundError("Заказ не найден")
         return order.model_dump() if isinstance(order, BaseSchema) else order
 
     async def _get_order_files(self, order_data: Dict) -> List[str]:
@@ -134,9 +133,9 @@ class OrderService(BaseService[OrderRepository]):
                         },
                     )
                 return {"instance": order_data, "response": result}
-            raise
+            else:
+                raise ValueError("Заказ не активен")
         except Exception:
-            app_logger.error("Error sending request to SKB", exc_info=True)
             raise  # Исключение будет обработано глобальным обработчиком
 
     async def async_create_skb_order(self, order_id: int) -> Dict[str, Any]:
@@ -157,9 +156,9 @@ class OrderService(BaseService[OrderRepository]):
                     stream=settings.redis.get_stream_name("order-send"),
                 )
                 return order_data
-            raise
+            else:
+                raise ValueError("Заказ не активен")
         except Exception:
-            app_logger.error("Error sending request to SKB", exc_info=True)
             raise  # Исключение будет обработано глобальным обработчиком
 
     async def get_order_result(
@@ -394,7 +393,10 @@ class OrderService(BaseService[OrderRepository]):
                 files_links = await self.get_order_file_from_storage_link(
                     order_id=order_id
                 )
-                response["file_links"] = files_links.content.get("files_links")
+                response["file_links"] = utilities.safe_get(
+                    files_links,
+                    "content.files_links",
+                )
 
             return response
         except Exception:

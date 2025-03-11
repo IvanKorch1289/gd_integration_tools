@@ -386,8 +386,8 @@ class BaseService(Generic[ConcreteRepo]):
                     )
 
             return changes
-        except Exception as exc:
-            raise Exception(f"Ошибка при получении изменений: {exc}") from exc
+        except Exception:
+            raise
 
 
 async def get_service_for_model(model: Type[BaseModel]):

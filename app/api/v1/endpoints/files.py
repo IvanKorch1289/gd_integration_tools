@@ -5,11 +5,7 @@ from fastapi_utils.cbv import cbv
 
 from app.api.routers_factory import create_router_class
 from app.schemas.filter_schemas.files import FileFilter
-from app.schemas.route_schemas.files import (
-    FileSchemaIn,
-    FileSchemaOut,
-    FileVersionSchemaOut,
-)
+from app.schemas.route_schemas.files import FileSchemaIn
 from app.services.infra_services.s3 import get_s3_service_dependency
 from app.services.route_services.files import get_file_service
 from app.utils.decorators.limiting import route_limiting
@@ -173,8 +169,6 @@ router = APIRouter()
 FileCBV = create_router_class(
     router=router,
     schema_in=FileSchemaIn,
-    schema_out=FileSchemaOut,
-    version_schema=FileVersionSchemaOut,
     service=get_file_service(),
     filter_class=FileFilter,
 )

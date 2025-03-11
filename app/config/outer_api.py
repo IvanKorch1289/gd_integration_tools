@@ -52,7 +52,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
     # Таймауты соединений
     connect_timeout: int = Field(
         ...,
-        title="Таймаут подключения",
+        title="Таймаут подключения (стандартный)",
         ge=1,
         description="Максимальное время установки соединения (секунды)",
         examples=[10],
@@ -229,7 +229,7 @@ class SKBAPISettings(BaseSettingsWithLoader):
     # Таймауты
     connect_timeout: float = Field(
         ...,
-        title="Таймаут подключения",
+        title="Таймаут подключения к API СКБ",
         ge=1.0,
         description="Максимальное время установки соединения",
         examples=[5.0],
@@ -293,7 +293,7 @@ class DadataAPISettings(BaseSettingsWithLoader):
     # Таймауты
     connect_timeout: float = Field(
         ...,
-        title="Таймаут подключения",
+        title="Таймаут подключения к API DaDATA",
         ge=1.0,
         description="Максимальное время установки соединения",
         examples=[5.0],

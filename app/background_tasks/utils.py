@@ -1,10 +1,13 @@
 from asyncio import sleep
 from datetime import datetime, timedelta
+from functools import wraps
+from typing import Any, Callable
 
 from prefect import get_client
 from prefect.context import get_run_context
 from prefect.states import Paused
 
+from app.background_tasks.tasks import send_notification_task
 from app.infra.scheduler.scheduler_manager import scheduler_manager
 from app.utils.logging_service import tasks_logger
 
@@ -59,3 +62,44 @@ async def managed_pause(delay_seconds: int):
     except Exception as exc:
         tasks_logger.error(f"Error in managed_pause: {str(exc)}")
         raise
+
+
+def validate_order_id(func: Callable) -> Callable:
+    """
+    Декоратор для проверки наличия order_id в аргументах задачи.
+    """
+
+    @wraps(func)
+    async def wrapper(order_data: dict, *args, **kwargs) -> Any:
+        if not order_data.get("id"):
+            raise ValueError("Отсутствует обязательный параметр order_id")
+        return await func(order_data, *args, **kwargs)
+
+    return wrapper
+
+
+async def handle_error(
+    email: str,
+    subject: str,
+    error: str,
+    ident_data: str = None,
+) -> None:
+    """
+    Централизованная обработка ошибок.
+
+    Args:
+        subject (str): Тема ошибки.
+        error (str): Сообщение об ошибке.
+
+    Returns:
+        None
+    """
+
+    await send_notification_task(
+        {
+            "to_emails": email,
+            "subject": subject,
+            "message": f"{ident_data}: {error}",
+        }
+    )
+    tasks_logger.error(f"{subject}: {error}")
