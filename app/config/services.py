@@ -739,18 +739,18 @@ class QueueSettings(BaseSettingsWithLoader):
     )
 
     # Блок настроек топиков
-    topics: List[Dict[str, str]] = Field(
+    queues: List[Dict[str, str]] = Field(
         ...,
         min_items=1,
         description="Список топиков",
         example=[
             {
-                "name": "topic1",
-                "value": "creating-topic",
+                "name": "queue1",
+                "value": "creating-queue",
             },
             {
-                "name": "topic2",
-                "value": "updating-topic",
+                "name": "queue2",
+                "value": "updating-queue",
             },
         ],
     )
@@ -783,21 +783,21 @@ class QueueSettings(BaseSettingsWithLoader):
         """Сформировать URL для подключения к UI очереди."""
         return f"{self.host}:{self.ui_port}"
 
-    def get_topic_name(self, topic_key: str) -> str:
+    def get_queue_name(self, queue_key: str) -> str:
         # Оптимизированный поиск с использованием генератора
-        topic = next(
+        queue = next(
             (
-                topic
-                for topic in self.topics
-                if topic.get("name", None) == topic_key
+                queue
+                for queue in self.queues
+                if queue.get("name", None) == queue_key
             ),
             None,
         )
 
-        if not topic:
-            raise ValueError(f"Не настроен топик для ключа: {topic_key}")
+        if not queue:
+            raise ValueError(f"Не настроен топик для ключа: {queue_key}")
 
-        return topic["value"]
+        return queue["value"]
 
 
 class TasksSettings(BaseSettingsWithLoader):

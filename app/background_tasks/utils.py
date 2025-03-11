@@ -41,8 +41,8 @@ async def managed_pause(delay_seconds: int):
     try:
         # Планируем возобновление через указанное время
         scheduler.add_job(
-            scheduled_resume_flow_run,
-            "date",
+            func=scheduled_resume_flow_run,
+            trigger="date",
             run_date=datetime.now() + timedelta(seconds=delay_seconds),
             args=[flow_run_id],
             id=f"resume_{flow_run_id}",

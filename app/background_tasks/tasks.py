@@ -4,6 +4,7 @@ from app.background_tasks.dicts import ProcessingResult
 from app.config.settings import settings
 from app.services.route_services.orders import get_order_service
 from app.utils.logging_service import tasks_logger
+from app.utils.utils import utilities
 
 
 __all__ = (
@@ -144,7 +145,16 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
             order_id=order_data["id"]
         )
 
-        if result.get("response", {}).get("status_code", {}) != 200:
+        message = await utilities.safe_get(
+            result,
+            "response.data.Data.Message",
+            "Ошибка",
+        )
+
+        if (
+            result.get("response", {}).get("status_code", {}) != 200
+            or message is not None
+        ):
             raise Exception("Ошибка получения результата заказа в системе SKB")
 
         return {

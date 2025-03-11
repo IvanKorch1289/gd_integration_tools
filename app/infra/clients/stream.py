@@ -38,7 +38,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
         **options: Any,
     ) -> Any:
         """Логирует исходящие сообщения перед отправкой."""
-        stream_logger.info(f"Отправлено сообщение: {msg}")
+        stream_logger.info(f"Отправлено сообщение: {msg}, опции: {options}")
         return await call_next(msg, **options)
 
 
@@ -120,7 +120,7 @@ class StreamClient:
 
     async def publish_to_rabbit(
         self,
-        topic: str,
+        queue: str,
         message: Dict[str, Any],
         delay: Optional[timedelta] = None,
         scheduler: Optional[str] = None,
@@ -129,7 +129,7 @@ class StreamClient:
         Публикует сообщение в RabbitMQ сразу, с задержкой или по расписанию.
 
         Args:
-            topic: Топик RabbitMQ для публикации.
+            queue: Очередь RabbitMQ для публикации.
             message: Содержимое сообщения в виде словаря.
             delay: Опциональная задержка перед публикацией.
             scheduler: Опциональное расписание в формате cron.
@@ -143,14 +143,14 @@ class StreamClient:
         self._validate_scheduling_params(delay, scheduler)
 
         if not delay and not scheduler:
-            await self._publish_rabbit_immediately(topic, message)
+            await self._publish_rabbit_immediately(queue, message)
         else:
             self._schedule_publish(
                 delay=delay,
                 scheduler=scheduler,
                 publish_func=self._execute_rabbit_publish,
                 func_kwargs={
-                    "topic": topic,
+                    "queue": queue,
                     "message": message,
                 },
             )
@@ -206,13 +206,14 @@ class StreamClient:
 
     async def _publish_rabbit_immediately(
         self,
-        topic: str,
+        queue: str,
         message: Dict[str, Any],
     ):
         """Публикует сообщение в RabbitMQ немедленно."""
         await self.rabbit_router.broker.publish(
             message=message,
-            topic=topic,
+            queue=queue,
+            mandatory=True,
         )
 
     async def _publish_redis_immediately(
@@ -267,13 +268,13 @@ class StreamClient:
 
     async def _execute_rabbit_publish(
         self,
-        topic: str,
+        queue: str,
         message: Dict[str, Any],
     ):
         """Выполняет запланированную публикацию в RabbitMQ."""
         await self.rabbit_router.broker.publish(
             message=message,
-            topic=topic,
+            queue=queue,
         )
 
 

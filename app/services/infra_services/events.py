@@ -99,7 +99,7 @@ async def handle_order_get_result(
 
 
 @stream_client.rabbit_router.subscriber(
-    settings.queue.get_topic_name("order-create")
+    settings.queue.get_queue_name("order-create")
 )
 async def handle_order_init_create(
     body: Dict[str, Any], msg: RabbitMessage

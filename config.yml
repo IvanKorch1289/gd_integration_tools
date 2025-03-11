@@ -305,8 +305,8 @@ queue:
   graceful_timeout: 30
   use_ssl: False
   ca_bundle: #"/path/to/certificate.pem"
-  topics:
+  queues:
     - name: "order-create"
-      value: "order-init-create-topic"
+      value: "order-init-create-queue"
     - name: "order-send"
-      value: "order-send-topic"
+      value: "order-send-queue"

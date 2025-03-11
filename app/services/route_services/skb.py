@@ -97,7 +97,7 @@ class APISKBService:
 
     async def get_response_by_order(
         self, order_uuid: UUID, response_type_str: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> Any | Dict[str, Any]:
         """
         Получить результат по залогу из СКБ-Техно.
 

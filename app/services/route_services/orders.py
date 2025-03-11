@@ -21,6 +21,7 @@ from app.utils.decorators.singleton import singleton
 from app.utils.enums.skb import ResponseTypeChoices
 from app.utils.errors import NotFoundError
 from app.utils.logging_service import app_logger
+from app.utils.utils import utilities
 
 
 __all__ = ("get_order_service",)
@@ -173,6 +174,10 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении результата.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
+
             order_data = await self._get_order_data(order_id=order_id)
 
             # Запрашиваем результат из СКБ-Техно
@@ -235,6 +240,10 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
+
             # Получаем заказ по ID
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -257,7 +266,10 @@ class OrderService(BaseService[OrderRepository]):
             )
 
             # Если оба запроса успешны, обновляем статус заказа
-            if json_res.get("response", {}).get("data", {}).get("Result"):
+            clearing_res = await utilities.safe_get(
+                json_res, "response.data.message", "Не готов"
+            )
+            if clearing_res is None:
                 update_data["is_active"] = False
 
             await self.update(key="id", value=order_id, data=update_data)
@@ -292,7 +304,6 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_file_from_storage_base64(
         self, order_id: int
     ) -> Dict[str, List[Dict[str, str]]]:
@@ -305,7 +316,12 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении файла.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
+
             order_data = await self._get_order_data(order_id)
+
             files = [
                 {
                     "file": await self.s3_service.get_file_base64(
@@ -318,7 +334,6 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_file_from_storage_link(
         self,
         order_id: int,
@@ -332,7 +347,12 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении ссылок.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
+
             order_data = await self._get_order_data(order_id=order_id)
+
             files = [
                 {
                     "file": await self.s3_service.generate_download_url(
@@ -346,7 +366,6 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_file_link_and_json_result_for_request(
         self,
         order_id: int,
@@ -360,6 +379,9 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
             # Получаем заказ по ID
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -378,7 +400,6 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def get_order_file_base64_and_json_result_for_request(
         self,
         order_id: int,
@@ -392,6 +413,9 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
             # Получаем заказ по ID
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -423,6 +447,9 @@ class OrderService(BaseService[OrderRepository]):
         :raises Exception: Если произошла ошибка при получении данных.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
             # Получаем заказ по ID
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -435,7 +462,6 @@ class OrderService(BaseService[OrderRepository]):
         except Exception:
             raise  # Исключение будет обработано глобальным обработчиком
 
-    @response_cache
     async def send_order_data(self, order_id: int) -> None:
         """
         Отправляет данные заказа.
@@ -443,18 +469,25 @@ class OrderService(BaseService[OrderRepository]):
         :param order_id: ID заказа.
         """
         try:
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
             # Получаем заказ по ID
-            order_data = await self._get_order_data(order_id=order_id)
+            order_data = (
+                await self.get_order_file_base64_and_json_result_for_request(
+                    order_id=order_id
+                )
+            )
 
             result: dict = {
-                "response": order_data.get("response_data", {}),
-                "errors": order_data.get("errors", {}),
-                "files": order_data.get("files", []),
+                "response": order_data.get("data", {}).get("Data", {}),
+                "errors": order_data.get("data", {}).get("errors", {}),
+                "files": order_data.get("data", {}).get("files", []),
             }
 
             await stream_client.publish_to_rabbit(
                 message=result,
-                stream=settings.redis.get_stream_name("order-send"),
+                queue=settings.queue.get_queue_name("order-send"),
             )
 
             return order_data  # type: ignore

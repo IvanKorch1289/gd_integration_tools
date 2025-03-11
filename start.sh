@@ -3,6 +3,7 @@
 # Конфигурация
 export PREFECT_API_URL="http://localhost:4200/api"
 export PREFECT_API_DATABASE_CONNECTION_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/prefect"
+export PREFECT_LOGGING_LEVEL="DEBUG"
 
 # Функции проверки
 check_port() {

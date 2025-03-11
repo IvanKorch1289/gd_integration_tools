@@ -77,7 +77,34 @@ async def create_skb_order_workflow(body: dict) -> Dict[str, Any]:
 
 
 @flow(
-    name="get-skb-order-result-task-workflow",
+    name="get-skb-order-result-workflow",
+    description="Отправляет результат обработки заказа в системе SKB в очередь для чтения",
+    retries=settings.tasks.flow_max_attempts,
+    retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    persist_result=True,
+    task_runner=ConcurrentTaskRunner,
+)
+async def send_order_result_workflow(body: dict) -> Dict[str, Any]:
+    """
+    Отправляет результат SKB с задержкой при повторах в очередь для чтения.
+
+    Args:
+        body (dict): Данные заказа.
+
+    Returns:
+        Dict[str, Any]: Результат отправки.
+    """
+    try:
+        return await get_skb_order_result_task(body)
+    except Exception as exc:
+        tasks_logger.error(
+            f"Error during get_skb_order_result_workflow: {str(exc)}"
+        )
+        raise
+
+
+@flow(
+    name="send-skb-order-result-task-workflow",
     description="Получает результат обработки заказа в системе SKB",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
@@ -95,7 +122,7 @@ async def get_skb_order_result_workflow(body: dict) -> Dict[str, Any]:
         Dict[str, Any]: Результат обработки заказа.
     """
     try:
-        return await get_skb_order_result_task(body)
+        return await send_order_result_task(body)
     except Exception as exc:
         tasks_logger.error(
             f"Error during get_skb_order_result_workflow: {str(exc)}"
@@ -184,7 +211,7 @@ async def order_processing_workflow(
             except Exception as exc:
                 await handle_error(
                     "Ошибка отправки уведомления",
-                    f"Ошибка при отправке уведомления о создании заказа: {exc}",
+                    f"Ошибка при отправке уведомления о создании заказа: {str(exc)}",
                 )
 
         # Этап 2: Ожидание обработки заказа
@@ -199,13 +226,34 @@ async def order_processing_workflow(
                     order_data
                 )
 
+                # Отправка уведомления об процессе получения результата
+                if email:
+                    try:
+                        message = await utilities.safe_get(
+                            getting_result,
+                            "result_data.response.data.Data.Message",
+                            "Заказ успешно создан",
+                        )
+                        await send_notification_workflow(
+                            {
+                                "to_emails": email,
+                                "subject": "Данные по заказу",
+                                "message": message,
+                            }
+                        )
+                    except Exception as exc:
+                        await handle_error(
+                            "Ошибка отправки уведомления",
+                            f"Ошибка при отправке уведомления о получении результата заказа: {str(exc)}",
+                        )
+
                 if getting_result.get("success"):
                     if email:
                         await send_notification_task(
                             {
                                 "to_emails": email,
                                 "subject": "Заказ выполнен",
-                                "message": f"Заказ {order_id} успешно обработан",
+                                "message": f"Заказ {order_id} успешно обработан. Данные: {getting_result.get("result_data", {})}",
                             }
                         )
                     return getting_result
@@ -226,8 +274,7 @@ async def order_processing_workflow(
                     raise
 
         # Этап 4: Отправка результата
-        # TO DO:заменить на воркфлоу
-        sending_result = await send_order_result_task(order_data)
+        sending_result = await get_skb_order_result_workflow(order_data)
 
         if not sending_result.get("success"):
             await handle_error(
@@ -236,7 +283,6 @@ async def order_processing_workflow(
             )
 
         return sending_result
-
     except Exception as exc:
         await handle_error(
             "Критическая ошибка в процессе обработки",

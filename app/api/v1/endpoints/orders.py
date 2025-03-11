@@ -124,7 +124,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
 
         :param order_id: ID запроса.
         :param x_api_key: API-ключ для аутентификации.
-        :param s3_service: Сервис для работы с S3.
         :return: Файл запроса.
         """
         return await self.service.get_order_file_from_storage(
@@ -148,7 +147,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
 
         :param order_id: ID запроса.
         :param x_api_key: API-ключ для аутентификации.
-        :param s3_service: Сервис для работы с S3.
         :return: Файл запроса в формате Base64.
         """
         return await self.service.get_order_file_from_storage_base64(
@@ -171,7 +169,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         Получить ссылку на файл запроса.
 
         :param order_id: ID запроса.
-        :param s3_service: Сервис для работы с S3.
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка на файл запроса.
         """
@@ -195,7 +192,6 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         Получить ссылку на файл запроса и JSON-результат.
 
         :param order_id: ID запроса.
-        :param s3_service: Сервис для работы с S3.
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка на файл и JSON-результат.
         """
@@ -221,10 +217,30 @@ class ExtendedOrderCBV(OrderCBV):  # type: ignore
         Получить ссылку на файл запроса и JSON-результат.
 
         :param order_id: ID запроса.
-        :param s3_service: Сервис для работы с S3.
         :param x_api_key: API-ключ для аутентификации.
         :return: Ссылка на файл и JSON-результат.
         """
         return await self.service.get_order_file_base64_and_json_result_for_request(
             order_id=order_id
         )
+
+    @router.post(
+        "/{order_id}/send-order-result",
+        status_code=status.HTTP_200_OK,
+        summary="Оправить результат запроса",
+    )
+    @route_limiting
+    async def send_order_result(
+        self,
+        request: Request,
+        order_id: int,
+        x_api_key: str = Header(...),
+    ):
+        """
+        Отправить файл запроса и JSON-результат.
+
+        :param order_id: ID запроса.
+        :param x_api_key: API-ключ для аутентификации.
+        :return: Ссылка на файл и JSON-результат.
+        """
+        return await self.service.send_order_data(order_id=order_id)
