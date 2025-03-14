@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from app.background_tasks.tasks import (
     create_skb_order_task,
@@ -12,7 +11,7 @@ from app.background_tasks.tasks import (
 from app.background_tasks.utils import handle_error, managed_pause
 from app.config.constants import consts
 from app.config.settings import settings
-from app.utils.errors import BaseError
+from app.utils.errors import ExternalServiceError
 from app.utils.logging_service import tasks_logger
 from app.utils.utils import utilities
 
@@ -65,10 +64,6 @@ async def _handle_order_error(
 @flow(
     name="send-notification-workflow",
     description="Отправляет письмо клиенту по указанному адресу электронной почты",
-    retries=settings.tasks.flow_max_attempts,
-    retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    persist_result=True,
-    task_runner=ConcurrentTaskRunner,
 )
 async def send_notification_workflow(body: dict) -> None:
     """
@@ -82,18 +77,15 @@ async def send_notification_workflow(body: dict) -> None:
     """
     try:
         await send_notification_task(body)
+
+        print(f"body: {body}")
     except Exception as exc:
         tasks_logger.error(f"Error during sending mail: {str(exc)}")
-        raise
 
 
 @flow(
     name="create-skb-order-workflow",
     description="Создает новый заказ в системе SKB для клиента с указанным номером заказа",
-    retries=settings.tasks.flow_max_attempts,
-    retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    persist_result=True,
-    task_runner=ConcurrentTaskRunner,
 )
 async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
     """
@@ -111,12 +103,13 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
     try:
         result = await create_skb_order_task(order_data)  # type: ignore
 
-        if not result.get("success"):
-            error_msg = result.get(
-                "error_message", "Неизвестная ошибка создания"
+        print(f"result: {result}")
+
+        if not result:
+            await _handle_order_error(
+                email, order_id, "создания", "Заказ не создан"
             )
-            await _handle_order_error(email, order_id, "создания", error_msg)
-            raise
+            raise ExternalServiceError
 
         await _send_status_notification(
             email,
@@ -128,9 +121,10 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
         )
         return result
     except Exception as exc:
-        error_msg = f"Ошибка процесса создания заказа {order_id}: {exc}"
-        tasks_logger.error(error_msg)
-        raise BaseError(error_msg) from exc
+        tasks_logger.error(
+            f"Ошибка процесса создания заказа {order_id}: {exc}"
+        )
+        raise
 
 
 @flow(
@@ -138,10 +132,9 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
     description="Отправляет результат обработки заказа в системе SKB в очередь для чтения",
     retries=settings.tasks.flow_max_attempts,
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    persist_result=True,
-    task_runner=ConcurrentTaskRunner,
+    log_prints=True,
 )
-async def get_order_result_workflow(order_data: dict) -> Dict[str, Any]:
+async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     """
     Отправляет результат SKB с задержкой при повторах в очередь для чтения.
 
@@ -154,50 +147,44 @@ async def get_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
 
-    for attempt in range(1, consts.MAX_RESULT_ATTEMPTS + 1):
-        try:
+    try:
+        for _ in range(consts.MAX_RESULT_ATTEMPTS + 1):
             result = await get_skb_order_result_task(order_data)  # type: ignore
 
-            if result.get("success"):
-                await _send_status_notification(
-                    email,
-                    order_id,
-                    "обработки",
-                    result,
-                    "Заказ успешно обработан",
-                    "result_data.response.data.Data.Message",
+            print(f"result: {result}")
+
+            if not result:
+                await _handle_order_error(
+                    email, order_id, "обработки", "Результат не обработан"
                 )
-                return result
-            if attempt < consts.MAX_RESULT_ATTEMPTS:
-                error_msg = f"Повторная попытка {attempt + 1}/{consts.MAX_RESULT_ATTEMPTS}"
-            else:
-                error_msg = f"Заказ {order_id}: достигнуто максимальное количество попыток"
 
-            await _handle_order_error(email, order_id, "обработки", error_msg)
+                await managed_pause(delay_seconds=consts.RETRY_DELAY)
 
-        except Exception as exc:
-            error_msg = f"Попытка {attempt}/{consts.MAX_RESULT_ATTEMPTS} не удалась: {exc}"
-            await _handle_order_error(email, order_id, "обработки", error_msg)
-            if attempt == consts.MAX_RESULT_ATTEMPTS:
-                raise
-            await managed_pause(delay_seconds=consts.RETRY_DELAY)
+        await _send_status_notification(
+            email,
+            order_id,
+            "обработки",
+            result,
+            "Заказ успешно обработан",
+            "result_data.response.data.Data",
+        )
+        return result
 
-    raise BaseError(
-        f"Не удалось обработать заказ {order_id} после {consts.MAX_RESULT_ATTEMPTS} попыток"
-    )
+    except Exception as exc:
+        tasks_logger.error(
+            f"Ошибка процесса обработки заказа {order_id}: {exc}"
+        )
+        raise
 
 
 @flow(
     name="send-skb-order-result-task-workflow",
-    description="Получает результат обработки заказа в системе SKB",
-    retries=settings.tasks.flow_max_attempts,
-    retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    persist_result=True,
-    task_runner=ConcurrentTaskRunner,
+    description="Отправляет результат обработки заказа в системе SKB",
+    log_prints=True,
 )
-async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
+async def send_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     """
-    Получает результат обработки заказа в системе SKB с экспоненциальной задержкой при повторах.
+    Отправляет результат обработки заказа в системе SKB с экспоненциальной задержкой при повторах.
 
     Args:
         body (dict): Данные заказа.
@@ -210,28 +197,28 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
 
     try:
         result = await send_order_result_task(order_data)  # type: ignore
-        if not result.get("success"):
+
+        print(f"result: {result}")
+
+        if not result:
             error_msg = result.get(
-                "error_message", "Неизвестная ошибка создания"
+                "error_message", "Неизвестная ошибка отправки"
             )
             await _handle_order_error(email, order_id, "отправки", error_msg)
-            raise
+            raise ExternalServiceError(error_msg)
 
         return result
     except Exception as exc:
-        error_msg = (
-            f"Ошибка процесса отправум результата заказа {order_id}: {exc}"
+        tasks_logger.error(
+            f"Ошибка процесса отправки результата заказа {order_id}: {exc}"
         )
-        tasks_logger.error(error_msg)
-        raise BaseError(error_msg) from exc
+        raise
 
 
 @flow(
     name="order-processing-workflow",
     description="Оптимизированный процесс обработки заказов с улучшенной обработкой ошибок",
-    retries=settings.tasks.flow_max_attempts,
-    retry_delay_seconds=settings.tasks.flow_seconds_delay,
-    task_runner=ConcurrentTaskRunner,
+    log_prints=True,
 )
 async def order_processing_workflow(  # type: ignore
     order_data: Dict[str, Any]
@@ -256,17 +243,22 @@ async def order_processing_workflow(  # type: ignore
     """
     try:
         # Этап 1: Создание заказа
-        await create_skb_order_workflow(order_data)
+        creating_result = await create_skb_order_workflow(order_data)
+        print(f"creating_result: {creating_result}")
 
         # Этап 2: Ожидание обработки заказа
         await managed_pause(delay_seconds=consts.INITIAL_DELAY)
+        print(f"unpaused by: {consts.INITIAL_DELAY} seconds")
 
         # Этап 3: Получение результата обработки заказа
-        await get_skb_order_result_workflow(order_data)
+        gettting_result = await get_skb_order_result_workflow(order_data)  # type: ignore
+        print(f"gettting_result: {gettting_result}")
 
         # Этап 4: Отправка результата
-        await get_skb_order_result_workflow(order_data)
+        sending_result = await send_skb_order_result_workflow(order_data)
+        print(f"sending_result: {sending_result}")
     except Exception as exc:
+        tasks_logger.error(f"Ошибка order_processing_workflow: {exc}")
         await handle_error(
             email=order_data.get("email_for_answer"),
             ident_data=f"Заказ {order_data.get("id", "UNKNOWN")}",

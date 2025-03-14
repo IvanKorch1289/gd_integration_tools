@@ -7,7 +7,6 @@ from prefect import get_client
 from prefect.context import get_run_context
 from prefect.states import Paused
 
-from app.background_tasks.tasks import send_notification_task
 from app.infra.scheduler.scheduler_manager import scheduler_manager
 from app.utils.logging_service import tasks_logger
 
@@ -94,6 +93,7 @@ async def handle_error(
     Returns:
         None
     """
+    from app.background_tasks.tasks import send_notification_task
 
     await send_notification_task(
         {

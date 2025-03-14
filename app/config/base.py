@@ -195,6 +195,10 @@ class AppBaseSettings(BaseSettingsWithLoader):
     def prefect_url(self) -> str:
         return f"http://{self.host}:{self.prefect_port}"
 
+    @computed_field(description="URL Prefect API документации")
+    def prefect_api_url(self) -> str:
+        return f"http://{self.host}:{self.prefect_port}/docs"
+
     # Валидация бизнес-правил
     @model_validator(mode="after")
     def check_debug_mode(self) -> "AppBaseSettings":

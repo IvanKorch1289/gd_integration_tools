@@ -4,7 +4,6 @@ from app.background_tasks.dicts import ProcessingResult
 from app.background_tasks.utils import validate_order_id
 from app.config.settings import settings
 from app.services.route_services.orders import get_order_service
-from app.utils.errors import ExternalServiceError
 from app.utils.logging_service import tasks_logger
 from app.utils.utils import utilities
 
@@ -20,11 +19,11 @@ __all__ = (
 @task(
     name="send-notification",
     description="Отправляет электронное письмо по указанному адресу",
-    retries=settings.tasks.task_max_attempts,
-    retry_delay_seconds=settings.tasks.task_seconds_delay,
-    retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=30,
-    persist_result=True,
+    retries=settings.tasks.flow_max_attempts,
+    retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    retry_jitter_factor=1,
+    timeout_seconds=10,
+    log_prints=True,
 )
 async def send_notification_task(body: dict) -> dict:
     """
@@ -55,11 +54,11 @@ async def send_notification_task(body: dict) -> dict:
 @task(
     name="create-skb-order",
     description="Создает заказ в системе SKB с логикой повторных попыток",
-    retries=settings.tasks.task_max_attempts,
-    retry_delay_seconds=settings.tasks.task_seconds_delay,
-    retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=3600,
-    persist_result=True,
+    retries=settings.tasks.flow_max_attempts,
+    retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    retry_jitter_factor=1,
+    timeout_seconds=300,
+    log_prints=True,
 )
 @validate_order_id
 async def create_skb_order_task(order_data: dict) -> ProcessingResult:
@@ -86,37 +85,27 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
             order_id=order_data["id"]
         )
 
-        if result.get("response", {}).get("status_code", {}) != 200:
-            raise ExternalServiceError("Ошибка создания заказа в системе SKB")
-
-        response = {
-            "success": True,
-            "order_id": order_data["id"],
-            "result_data": result,
-            "error_message": None,
-        }
-        tasks_logger.info(f"Заказ создан: {response}")
-        return response
+        if result.get("response", {}).get("status_code", {}) == 200:
+            return {
+                "success": True,
+                "order_id": order_data["id"],
+                "result_data": result,
+                "error_message": None,
+            }
     except Exception as exc:
         tasks_logger.error(
             f"Ошибка создания заказа: {str(exc)}", exc_info=True
         )
-        return {
-            "success": False,
-            "order_id": order_data["id"],
-            "result_data": {},
-            "error_message": str(exc),
-        }
+        raise
 
 
 @task(
     name="get-skb-order-result",
     description="Получает результат заказа в системе SKB с логикой повторных попыток",
-    retries=settings.tasks.task_max_attempts,
-    retry_delay_seconds=settings.tasks.task_seconds_delay,
-    retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=86400,
-    persist_result=True,
+    retries=settings.tasks.flow_max_attempts,
+    retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    retry_jitter_factor=1,
+    log_prints=True,
 )
 @validate_order_id
 async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
@@ -145,44 +134,32 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
 
         message = await utilities.safe_get(
             result,
-            "response.data.Data.Message",
+            "response.data.Message",
             "Ошибка",
         )
 
-        if (
-            result.get("response", {}).get("status_code", {}) != 200
-            or message is not None
-        ):
-            raise ExternalServiceError(
-                "Ошибка получения результата заказа в системе SKB"
-            )
-
-        return {
-            "success": True,
-            "order_id": order_data["id"],
-            "result_data": result,
-            "error_message": None,
-        }
+        if not message:
+            return {
+                "success": True,
+                "order_id": order_data["id"],
+                "result_data": result,
+                "error_message": None,
+            }
     except Exception as exc:
         tasks_logger.error(
             f"Ошибка получения результата: {str(exc)}", exc_info=True
         )
-        return {
-            "success": False,
-            "order_id": order_data["id"],
-            "result_data": {},
-            "error_message": str(exc),
-        }
+        raise
 
 
 @task(
     name="send-order-result",
     description="Отправляет результат заказа во внешнюю систему с логикой повторных попыток",
-    retries=settings.tasks.task_max_attempts,
-    retry_delay_seconds=settings.tasks.task_seconds_delay,
-    retry_jitter_factor=settings.tasks.task_retry_jitter_factor,
-    timeout_seconds=3600,
-    persist_result=True,
+    retries=settings.tasks.flow_max_attempts,
+    retry_delay_seconds=settings.tasks.flow_seconds_delay,
+    retry_jitter_factor=1,
+    timeout_seconds=300,
+    log_prints=True,
 )
 @validate_order_id
 async def send_order_result_task(order_data: dict) -> ProcessingResult:
@@ -219,9 +196,4 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         tasks_logger.error(
             f"Ошибка отправки результата: {str(exc)}", exc_info=True
         )
-        return {
-            "success": False,
-            "order_id": order_data["id"],
-            "result_data": {},
-            "error_message": str(exc),
-        }
+        raise

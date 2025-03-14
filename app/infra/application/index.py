@@ -24,6 +24,7 @@ async def root_page():
         "log_url": settings.logging.base_url,
         "fs_url": settings.storage.interface_endpoint,
         "prefect_url": settings.app.prefect_url,
+        "prefect_api_url": settings.app.prefect_api_url,
         "queue_url": settings.queue.queue_ui_url,
     }
 
@@ -172,6 +173,7 @@ async def root_page():
                 <a href="/docs" target="_blank">REST API</a>
                 <a href="/asyncapi" target="_blank">AsyncAPI</a>
                 <a href="/redoc" target="_blank">ReDoc</a>
+                <a href="{processed_urls['prefect_api_url']}"_blank">API Prefect</a>
             </div>
 
             <a href="/admin" class="admin-link" target="_blank">

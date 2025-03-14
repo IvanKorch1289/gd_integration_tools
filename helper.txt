@@ -13,3 +13,10 @@ memray run -o fastapi_profile.bin -m uvicorn app.main:app --reload
 mprof run --output=memory_usage.csv uvicorn app.main:app
 
 py-spy record uvicorn app.main:app
+
+# Запуск SonarQube
+sonar-scanner \
+  -Dsonar.projectKey=my-project-key \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.login=ваш_токен

@@ -266,9 +266,10 @@ class OrderService(BaseService[OrderRepository]):
 
             # Если оба запроса успешны, обновляем статус заказа
             clearing_res = await utilities.safe_get(
-                json_res, "response.data.message", "Не готов"
+                json_res, "response.data.Message", "Не готов"
             )
-            if clearing_res is None:
+
+            if not clearing_res:
                 update_data["is_active"] = False
 
             await self.update(key="id", value=order_id, data=update_data)
@@ -490,6 +491,10 @@ class OrderService(BaseService[OrderRepository]):
             await stream_client.publish_to_rabbit(
                 message=result,
                 queue=settings.queue.get_queue_name("order-send"),
+            )
+
+            await self.update(
+                key="id", value=order_id, data={"is_send_to_gd": False}
             )
 
             return order_data  # type: ignore
