@@ -258,7 +258,7 @@ async def order_processing_workflow(  # type: ignore
         print(f"unpaused by: {consts.INITIAL_DELAY} seconds")
 
         # Этап 3: Получение результата обработки заказа
-        gettting_result = await get_skb_order_result_workflow(order_data)  # type: ignore
+        gettting_result = await get_skb_order_result_workflow(order_data)
         print(f"gettting_result: {gettting_result}")
 
         # Этап 4: Отправка результата
