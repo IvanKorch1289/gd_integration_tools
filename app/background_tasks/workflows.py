@@ -28,6 +28,7 @@ async def _send_status_notification(
     email: str,
     order_id: str,
     action: str,
+    cad_number: str,
     result: Dict[str, Any],
     default_message: str,
     data_path: str,
@@ -38,7 +39,7 @@ async def _send_status_notification(
         await send_notification_workflow(
             {
                 "to_emails": [email],
-                "subject": f"Статус {action} заказа",
+                "subject": f"Статус {action} заказа {order_id} по объекту {cad_number}",
                 "message": f"Заказ {order_id}: {message}",
             }
         )
@@ -49,16 +50,18 @@ async def _send_status_notification(
 
 
 async def _handle_order_error(
-    email: str, order_id: str, action: str, error: str
+    email: str, order_id: str, cad_num: str, action: str, error: str
 ) -> None:
     """Обрабатывает ошибки связанные с заказом."""
     await handle_error(
         email=email,
-        ident_data=f"Заказ {order_id}",
-        subject=f"Ошибка {action} заказа",
+        ident_data=f"Заказ {order_id} по объекту {cad_num}",
+        subject=f"Ошибка {action} заказа по объекту {cad_num}",
         error=error,
     )
-    tasks_logger.error(f"Ошибка {action} заказа {order_id}: {error}")
+    tasks_logger.error(
+        f"Ошибка {action} заказа {order_id} по объекту {cad_num}: {error}"
+    )
 
 
 @flow(
@@ -99,6 +102,7 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
     """
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
+    cad_num = order_data.get("pledge_cadastral_number")
 
     try:
         result = await create_skb_order_task(order_data)  # type: ignore
@@ -115,6 +119,7 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
             email,
             order_id,
             "создания",
+            cad_num,
             result,
             "Заказ успешно создан",
             "result_data.response.data.Data.Message",
@@ -146,6 +151,7 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     """
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
+    cad_num = order_data.get("pledge_cadastral_number")
 
     try:
         for _ in range(consts.MAX_RESULT_ATTEMPTS + 1):
@@ -164,6 +170,7 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
             email,
             order_id,
             "обработки",
+            cad_num,
             result,
             "Заказ успешно обработан",
             "result_data.response.data.Data",
