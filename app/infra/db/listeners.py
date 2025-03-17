@@ -1,6 +1,6 @@
 from asyncio import create_task, sleep
 
-from asyncpg import PostgresError
+from asyncpg import PostgresError, SerializationError
 from sqlalchemy import event
 from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -33,7 +33,9 @@ class DatabaseListener:
         return self.async_session_factory()
 
     def is_retriable_error(self, exception: Exception) -> bool:
-        if isinstance(exception, (OperationalError, DBAPIError)):
+        if isinstance(
+            exception, (OperationalError, DBAPIError, SerializationError)
+        ):
             if isinstance(exception.orig, PostgresError):
                 return exception.orig.sqlstate in consts.RETRIABLE_DB_CODES
         return False

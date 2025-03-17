@@ -29,11 +29,7 @@ class APISKBService:
     def _initialize_attributes(self):
         """Инициализирует атрибуты из настроек"""
         self.params = {"api-key": self.settings.api_key}
-        # self.base_url = (
-        #     self.settings.prod_url
-        #     if settings.app.environment == "production"
-        #     else self.settings.test_url
-        # )
+        self.base_url = self.settings.prod_url
         self.base_url = self.settings.prod_url
         self.endpoints = self.settings.endpoints
 

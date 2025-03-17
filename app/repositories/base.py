@@ -126,6 +126,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             data: List[Dict[str, Any]],
             existing_object: Optional[ConcreteTable] = None,
             ignore_none: bool = True,
+            load_into_memory: bool = True,
         ) -> ConcreteTable:
             """
             Обрабатывает данные и сохраняет объект в базе данных.
@@ -142,9 +143,11 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
 
             session.add(obj)
             await session.flush()
-            await session.refresh(
-                instance=obj,
-            )
+
+            if load_into_memory:
+                await session.refresh(
+                    instance=obj,
+                )
 
             return obj
 
@@ -263,7 +266,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             model=model, load_joined_models=load_joined_models, main_class=self
         )
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection(commit=False)
     async def get(
         self,
         session: AsyncSession,
@@ -298,7 +301,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             is_return_list=is_return_list,
         )
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection(commit=False)
     async def count(self, session: AsyncSession) -> int:
         """
         Получить количество объектов в таблице.
@@ -313,7 +316,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             return 0  # Если результат None, возвращаем 0
         return count_value
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection(commit=False)
     async def first_or_last(
         self,
         session: AsyncSession,
@@ -341,7 +344,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, query_or_object=query, is_return_list=True
         )
 
-    @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
+    @session_manager.connection()
     async def add(
         self, session: AsyncSession, data: dict[str, Any]
     ) -> ConcreteTable:
@@ -356,7 +359,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, data=data
         )
 
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection()
     async def update(
         self,
         session: AsyncSession,
@@ -364,6 +367,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         value: Any,
         data: dict[str, Any],
         ignore_none: bool = True,  # По умолчанию игнорируем пустые значения
+        load_into_memory: bool = False,  # По умолчанию объект загружается в память. False - если не требуется выводить измененные данные
     ) -> ConcreteTable:
         """
         Обновить объект в таблице.
@@ -386,9 +390,10 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             data=data,
             existing_object=existing_object,
             ignore_none=ignore_none,
+            load_into_memory=load_into_memory,
         )
 
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection()
     async def delete(
         self, session: AsyncSession, key: str, value: Any
     ) -> None:
@@ -406,7 +411,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         )
         await session.flush()
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection(commit=False)
     async def get_all_versions(
         self, session: AsyncSession, object_id: int
     ) -> List[Dict[str, Any]]:
@@ -417,7 +422,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
             session=session, object_id=object_id, order="asc"
         )
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection(commit=False)
     async def get_latest_version(
         self, session: AsyncSession, object_id: int
     ) -> Optional[Dict[str, Any]]:
@@ -429,7 +434,7 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         )
         return versions[0] if versions else None
 
-    @session_manager.connection(isolation_level="READ COMMITTED", commit=True)
+    @session_manager.connection()
     async def restore_to_version(
         self, session: AsyncSession, object_id: int, transaction_id: int
     ) -> Dict[str, Any]:

@@ -73,7 +73,7 @@ class OrderRepository(SQLAlchemyRepository):
         self.order_kind_repo = order_kind_repo
         self.helper.order_kind_repo = order_kind_repo  # type: ignore
 
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection()
     async def add(
         self, session: AsyncSession, data: Dict[str, Any]
     ) -> Optional[Order]:
@@ -91,9 +91,14 @@ class OrderRepository(SQLAlchemyRepository):
         # Вызываем метод add базового класса для создания заказа
         return await super().add(data=data)
 
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection()
     async def update(
-        self, session: AsyncSession, key: str, value: Any, data: Dict[str, Any]
+        self,
+        session: AsyncSession,
+        key: str,
+        value: Any,
+        data: Dict[str, Any],
+        load_into_memory: bool = True,
     ) -> Optional[Order]:
         """
         Обновляет заказ в таблице.
@@ -111,7 +116,10 @@ class OrderRepository(SQLAlchemyRepository):
             data = await self.helper._validate_order_kind(data)  # type: ignore
 
         # Вызываем метод update базового класса для обновления заказа
-        updated_order = await super().update(key=key, value=value, data=data)
+        updated_order = await super().update(
+            key=key, value=value, data=data, load_into_memory=load_into_memory
+        )
+
         if not updated_order:
             # Если заказ не найден, выбрасываем исключение
             raise NotFoundError(message="Order not found")

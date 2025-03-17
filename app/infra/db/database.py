@@ -73,6 +73,7 @@ class DatabaseInitializer:
             pool_recycle=self.settings.pool_recycle,
             pool_timeout=self.settings.pool_timeout,
             connect_args=self._get_connect_args(),
+            pool_pre_ping=True,
         )
 
     def _create_sync_engine(self):

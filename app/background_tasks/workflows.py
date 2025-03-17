@@ -28,7 +28,7 @@ async def _send_status_notification(
     email: str,
     order_id: str,
     action: str,
-    cad_number: str,
+    cad_num: str,
     result: Dict[str, Any],
     default_message: str,
     data_path: str,
@@ -39,13 +39,13 @@ async def _send_status_notification(
         await send_notification_workflow(
             {
                 "to_emails": [email],
-                "subject": f"Статус {action} заказа {order_id} по объекту {cad_number}",
+                "subject": f"Статус {action} заказа {order_id} по объекту {cad_num}",
                 "message": f"Заказ {order_id}: {message}",
             }
         )
     except Exception as exc:
         error_msg = f"Ошибка отправки уведомления о {action}: {exc}"
-        await _handle_order_error(email, order_id, action, error_msg)
+        await _handle_order_error(email, order_id, cad_num, action, error_msg)
         raise
 
 
@@ -111,7 +111,7 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
 
         if not result:
             await _handle_order_error(
-                email, order_id, "создания", "Заказ не создан"
+                email, order_id, cad_num, "создания", "Заказ не создан"
             )
             raise ExternalServiceError
 
@@ -161,22 +161,15 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
 
             if not result:
                 await _handle_order_error(
-                    email, order_id, "обработки", "Результат не обработан"
+                    email,
+                    order_id,
+                    cad_num,
+                    "обработки",
+                    "Результат не обработан",
                 )
 
                 await managed_pause(delay_seconds=consts.RETRY_DELAY)
-
-        await _send_status_notification(
-            email,
-            order_id,
-            "обработки",
-            cad_num,
-            result,
-            "Заказ успешно обработан",
-            "result_data.response.data.Data",
-        )
         return result
-
     except Exception as exc:
         tasks_logger.error(
             f"Ошибка процесса обработки заказа {order_id}: {exc}"
@@ -201,6 +194,7 @@ async def send_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     """
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
+    cad_num = order_data.get("pledge_cadastral_number")
 
     try:
         result = await send_order_result_task(order_data)  # type: ignore
@@ -211,9 +205,10 @@ async def send_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
             error_msg = result.get(
                 "error_message", "Неизвестная ошибка отправки"
             )
-            await _handle_order_error(email, order_id, "отправки", error_msg)
+            await _handle_order_error(
+                email, order_id, cad_num, "отправки", error_msg
+            )
             raise ExternalServiceError(error_msg)
-
         return result
     except Exception as exc:
         tasks_logger.error(

@@ -124,13 +124,14 @@ class OrderService(BaseService[OrderRepository]):
 
                 # Если запрос успешен, обновляем статус заказа
                 if result["status_code"] == status.HTTP_200_OK:
-                    await self.update(
+                    await self.repo.update(
                         key="id",
                         value=order_data["id"],
                         data={
                             "is_send_request_to_skb": True,
                             "response_data": result.get("data"),
                         },
+                        load_into_memory=False,
                     )
                 return {"instance": order_data, "response": result}
             else:
@@ -219,6 +220,7 @@ class OrderService(BaseService[OrderRepository]):
                         "errors": data["Message"],
                         "response_data": data["Data"],
                     },
+                    load_into_memory=False,
                 )
                 content["response"] = result
             else:
@@ -272,7 +274,12 @@ class OrderService(BaseService[OrderRepository]):
             if not clearing_res:
                 update_data["is_active"] = False
 
-            await self.update(key="id", value=order_id, data=update_data)
+            await self.repo.update(
+                key="id",
+                value=order_id,
+                data=update_data,
+                load_into_memory=False,
+            )
 
             return json_res
         except Exception:
@@ -493,8 +500,11 @@ class OrderService(BaseService[OrderRepository]):
                 queue=settings.queue.get_queue_name("order-send"),
             )
 
-            await self.update(
-                key="id", value=order_id, data={"is_send_to_gd": False}
+            await self.repo.update(
+                key="id",
+                value=order_id,
+                data={"is_send_to_gd": False},
+                load_into_memory=False,
             )
 
             return order_data  # type: ignore

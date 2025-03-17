@@ -43,7 +43,7 @@ class FileRepository(SQLAlchemyRepository):
         super().__init__(model=model, load_joined_models=load_joined_models)
         self.link_model = link_model
 
-    @session_manager.connection(isolation_level="SERIALIZABLE", commit=True)
+    @session_manager.connection()
     async def add_link(
         self, session: AsyncSession, data: Dict[str, Any]
     ) -> Optional[ConcreteTable]:

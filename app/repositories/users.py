@@ -34,7 +34,7 @@ class UserRepository(SQLAlchemyRepository):
         """
         super().__init__(model=model, load_joined_models=load_joined_models)
 
-    @session_manager.connection(isolation_level="READ COMMITTED")
+    @session_manager.connection()
     async def get_by_username(
         self, session: AsyncSession, data: Dict[str, Any]
     ) -> Optional[User]:

@@ -139,37 +139,38 @@ services:
       timeout: 30s
       retries: 5
 
-  # postgres:
-  #   image: postgres:13
-  #   container_name: sonar-postgres
-  #   environment:
-  #     POSTGRES_USER: sonar
-  #     POSTGRES_PASSWORD: sonar
-  #     POSTGRES_DB: sonar
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - sonarnet
-  #   restart: unless-stopped
+  postgres:
+    image: postgres:13
+    container_name: sonar-postgres
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sonarnet
+    restart: unless-stopped
 
-  # sonarqube:
-  #   image: sonarqube:community
-  #   container_name: sonarqube
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
-  #     SONAR_JDBC_USERNAME: sonar
-  #     SONAR_JDBC_PASSWORD: sonar
-  #     SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
-  #   volumes:
-  #     - sonarqube_data:/opt/sonarqube/data
-  #     - sonarqube_extensions:/opt/sonarqube/extensions
-  #   ports:
-  #     - "9001:9000"
-  #   networks:
-  #     - sonarnet
-  #   restart: unless-stopped
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    depends_on:
+      - postgres
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+      SONAR_FORCE_AUTHENTICATION: "false"  # Отключаем аутентификацию
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    ports:
+      - "9001:9000"
+    networks:
+      - sonarnet
+    restart: unless-stopped
 
   # sonar-scanner:
   #   image: sonarsource/sonar-scanner-cli
@@ -185,10 +186,10 @@ services:
   #     SONAR_SCANNER_OPTS: -Dsonar.projectKey=gd_advanced_tools
   #   command: >
   #     sh -c "sonar-scanner
-  #     -Dsonar.projectName='My Project'
+  #     -Dsonar.projectName='gd_advanced_tools'
   #     -Dsonar.projectVersion=1.0
   #     -Dsonar.sources=app/
-  #     -Dsonar.login=$$SONAR_TOKEN"
+  #     -Dsonar.login=sqp_438a61271e9255bb04011b0f168ebfa0824a28ad"
   #   restart: on-failure
   
 volumes:
@@ -197,9 +198,9 @@ volumes:
   esdata:
   graylog_data:
   graylog_journal:
-  # postgres_data:
-  # sonarqube_data:
-  # sonarqube_extensions:
+  postgres_data:
+  sonarqube_data:
+  sonarqube_extensions:
 
 networks:
   minio-mongo-net:
@@ -210,5 +211,5 @@ networks:
     driver: bridge
   rabbitmq_network:
     driver: bridge
-  # sonarnet:
-  #   driver: bridge
+  sonarnet:
+    driver: bridge

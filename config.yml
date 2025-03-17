@@ -44,7 +44,7 @@ security:
     - "/tech/file-storage"
     - "/tech/task-monitor"
   request_timeout: 20.0
-  rate_limit: 400
+  rate_limit: 1000
   rate_time_measure_seconds: 60
   failure_threshold: 3
   recovery_timeout: 10
