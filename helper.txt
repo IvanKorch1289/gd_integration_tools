@@ -15,8 +15,10 @@ mprof run --output=memory_usage.csv uvicorn app.main:app
 py-spy record uvicorn app.main:app
 
 # Запуск SonarQube
-sonar-scanner \
-  -Dsonar.projectKey=my-project-key \
-  -Dsonar.sources=. \
-  -Dsonar.host.url=http://localhost:9000 \
-  -Dsonar.login=ваш_токен
+sudo docker run --rm --network bridge \
+    -v $(pwd):/usr/src \
+    -w /usr/src \
+    -e SONAR_HOST_URL="http://sonarqube:9000" \
+    -e SONAR_LOGIN="sqp_3d8e16ea1746a2c0a95430f1c219db5aeda6a6f6" \
+    sonarsource/sonar-scanner-cli \
+    sonar-scanner

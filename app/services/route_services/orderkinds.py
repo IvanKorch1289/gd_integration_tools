@@ -16,6 +16,7 @@ from app.services.route_services.base import BaseService
 from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.decorators.singleton import singleton
+from app.utils.errors import ServiceError
 
 
 __all__ = ("get_order_kind_service",)
@@ -82,8 +83,8 @@ class OrderKindService(BaseService[OrderKindRepository]):
             await asyncio.gather(*tasks)
 
             return result
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
 
 def get_order_kind_service() -> OrderKindService:

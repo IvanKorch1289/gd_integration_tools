@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import (
@@ -31,7 +31,7 @@ __all__ = (
 ConcreteTable = TypeVar("ConcreteTable", bound=BaseModel)
 
 
-class AbstractRepository(ABC):
+class AbstractRepository[ConcreteTable: BaseModel](ABC):
     """
     Абстрактный базовый класс для репозиториев.
     Определяет интерфейс для работы с базой данных.
@@ -99,7 +99,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
 
-class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
+class SQLAlchemyRepository(AbstractRepository[ConcreteTable]):
     """
     Базовый класс для взаимодействия с БД с использованием SQLAlchemy.
     Реализует методы для работы с конкретной моделью таблицы.
@@ -154,9 +154,9 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ConcreteTable]):
         async def _get_loaded_object(
             self,
             session: AsyncSession,
-            query_or_object: Union[Select, ConcreteTable],
+            query_or_object: Select | ConcreteTable,
             is_return_list: bool = False,
-        ) -> Union[Optional[ConcreteTable], List[ConcreteTable]]:
+        ) -> Optional[ConcreteTable] | List[ConcreteTable]:
             """
             Выполняет запрос или подгружает связи для объекта.
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -6,6 +6,7 @@ from app.infra.db.models.base import BaseModel
 from app.repositories.base import AbstractRepository
 from app.schemas.base import BaseSchema
 from app.utils.decorators.caching import response_cache
+from app.utils.errors import ServiceError
 from app.utils.utils import utilities
 
 
@@ -43,7 +44,7 @@ class BaseService(Generic[ConcreteRepo]):
             instance: Any,
             response_schema: Type[BaseSchema],
             from_attributes: bool = True,
-        ) -> Union[BaseSchema, None]:
+        ) -> BaseSchema | None:
             """
             Преобразует объект модели в схему ответа.
 
@@ -101,8 +102,8 @@ class BaseService(Generic[ConcreteRepo]):
                 result = await self._transfer(instance, response_schema)
 
                 return result
-            except Exception:
-                raise  # Исключение будет обработано глобальным обработчиком
+            except Exception as exc:
+                raise ServiceError from exc
 
     def __init__(
         self,
@@ -143,8 +144,8 @@ class BaseService(Generic[ConcreteRepo]):
                 pattern=self.__class__.__name__
             )
             return result
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
@@ -184,8 +185,8 @@ class BaseService(Generic[ConcreteRepo]):
                 "update", self.response_schema, key=key, value=value, data=data
             )
             return result
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     @response_cache
     async def get(
@@ -193,7 +194,7 @@ class BaseService(Generic[ConcreteRepo]):
         key: Optional[str] = None,
         value: Optional[int] = None,
         filter: Optional[Filter] = None,
-    ) -> Union[Optional[ConcreteResponseSchema], List[ConcreteResponseSchema]]:
+    ) -> Optional[ConcreteResponseSchema] | List[ConcreteResponseSchema]:
         """
         Получает объект по ключу и значению, фильтру или все объекты, если ничего не передано.
 
@@ -210,8 +211,8 @@ class BaseService(Generic[ConcreteRepo]):
                 value=value,
                 filter=filter,
             )
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_or_add(
         self, key: str = None, value: int = None, data: Dict[str, Any] = None
@@ -236,13 +237,13 @@ class BaseService(Generic[ConcreteRepo]):
                 )
             return instance
 
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     @response_cache
     async def get_first_or_last_with_limit(
         self, limit: int = 1, by: str = "id", order: str = "asc"
-    ) -> Union[Optional[ConcreteResponseSchema], List[ConcreteResponseSchema]]:
+    ) -> Optional[ConcreteResponseSchema] | List[ConcreteResponseSchema]:
         try:
             return await self.helper._process_and_transfer(
                 "first_or_last",
@@ -251,8 +252,8 @@ class BaseService(Generic[ConcreteRepo]):
                 by=by,
                 order=order,
             )
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def delete(self, key: str, value: int) -> str:  # type: ignore
         """
@@ -267,8 +268,8 @@ class BaseService(Generic[ConcreteRepo]):
             await response_cache.invalidate_pattern(
                 pattern=self.__class__.__name__
             )
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     @response_cache
     async def get_all_object_versions(
@@ -297,8 +298,8 @@ class BaseService(Generic[ConcreteRepo]):
                     pass
 
             return result
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     @response_cache
     async def get_latest_object_version(
@@ -313,8 +314,8 @@ class BaseService(Generic[ConcreteRepo]):
         try:
             version = await self.repo.get_latest_version(object_id=object_id)  # type: ignore
             return await self.helper._transfer(version, self.version_schema)
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
@@ -334,8 +335,8 @@ class BaseService(Generic[ConcreteRepo]):
             return await self.helper._transfer(
                 restored_object, self.response_schema
             )
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
         """
@@ -386,8 +387,8 @@ class BaseService(Generic[ConcreteRepo]):
                     )
 
             return changes
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
 
 async def get_service_for_model(model: Type[BaseModel]):

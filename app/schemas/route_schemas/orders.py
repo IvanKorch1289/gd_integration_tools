@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Dict, List
 from uuid import UUID
 
 from pydantic import Field
@@ -66,12 +66,8 @@ class OrderSchemaOut(OrderSchemaIn):
     )
     is_active: bool = Field(True, description="Активен ли запрос")
     is_send_to_gd: bool = Field(False, description="Отправлен ли запрос в ГД")
-    errors: Union[Dict, str, None] = Field(
-        None, description="Сообщения об ошибках"
-    )
-    response_data: Union[Dict, str, None] = Field(
-        None, description="Данные ответа"
-    )
+    errors: Dict | str | None = Field(None, description="Сообщения об ошибках")
+    response_data: Dict | str | None = Field(None, description="Данные ответа")
     object_uuid: UUID = Field(..., description="UUID объекта")
     created_at: datetime = Field(..., description="Дата создания")
     updated_at: datetime = Field(..., description="Дата последнего обновления")

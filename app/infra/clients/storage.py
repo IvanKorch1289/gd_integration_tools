@@ -1,4 +1,3 @@
-# app/infra/storage/s3.py
 from abc import ABC, abstractmethod
 from asyncio import Lock
 from contextlib import asynccontextmanager
@@ -10,12 +9,14 @@ from typing import (
     Coroutine,
     List,
     Optional,
+    ParamSpec,
     TypeVar,
 )
 
 from botocore.exceptions import ClientError as BotoClientError
 
 from app.config.settings import FileStorageSettings, settings
+from app.utils.errors import ServiceError
 
 
 __all__ = (
@@ -24,6 +25,7 @@ __all__ = (
 )
 
 
+P = ParamSpec("P")
 R = TypeVar("R")
 
 
@@ -187,13 +189,17 @@ class S3Client(BaseS3Client):
                 self._client = None
 
     @staticmethod
-    def ensure_connected(
-        func: Callable[..., Coroutine[Any, Any, R]]
-    ) -> Callable[..., Coroutine[Any, Any, R]]:
+    def ensure_connected[
+        **P, R
+    ](func: Callable[P, Coroutine[Any, Any, R]]) -> Callable[
+        P, Coroutine[Any, Any, R]
+    ]:
         """Декоратор для проверки подключения перед вызовом функции."""
 
         @wraps(func)
-        async def wrapper(self: "S3Client", *args, **kwargs) -> R:
+        async def wrapper(
+            self: "S3Client", *args: P.args, **kwargs: P.kwargs
+        ) -> R:
             if not self.is_connected:
                 await self.connect()
             return await func(self, *args, **kwargs)
@@ -209,7 +215,7 @@ class S3Client(BaseS3Client):
         try:
             result = await self.check_bucket_exists()
             if not result:
-                raise BotoClientError
+                raise BotoClientError("Ошибка соединения")
             return True
         except Exception:
             return False
@@ -235,8 +241,8 @@ class S3Client(BaseS3Client):
                     except BotoClientError:
                         return False
                 return False
-            except Exception:
-                raise
+            except Exception as exc:
+                raise ConnectionError("Не удалось подключиться к S3") from exc
 
     @asynccontextmanager
     async def client_context(self) -> AsyncGenerator[Any, None]:
@@ -245,13 +251,10 @@ class S3Client(BaseS3Client):
             if not self.is_connected:
                 await self.connect()
             yield self._client
-        except BotoClientError as exc:
-            self.logger.error(f"Ошибка API S3: {str(exc)}", exc_info=True)
-            raise
         except Exception as exc:
             self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
             await self.close()
-            raise
+            raise BotoClientError("Ошибка API S3") from exc
 
     @ensure_connected
     async def create_bucket_if_not_exists(self):
@@ -264,7 +267,7 @@ class S3Client(BaseS3Client):
             if exc.response["Error"]["Code"] == "404":
                 await self._create_bucket()
             else:
-                raise
+                raise ServiceError("Ошибка создания бакета") from exc
 
     @ensure_connected
     async def _create_bucket(self):
@@ -305,7 +308,7 @@ class S3Client(BaseS3Client):
                 self.logger.error(f"Файл с ключом {key} не найден")
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
-                raise
+                raise ServiceError("Ошибка при поиске файла") from exc
 
     @ensure_connected
     async def copy_object(self, source_key: str, dest_key: str) -> dict:
@@ -339,12 +342,14 @@ class S3Client(BaseS3Client):
                     ExpiresIn=expiration,
                 )
                 return url
-            except BotoClientError as exc:
+            except Exception as exc:
                 self.logger.error(
                     f"Ошибка генерации предварительно подписанного URL: {str(exc)}",
                     exc_info=True,
                 )
-                raise
+                raise BotoClientError(
+                    "Ошибка генерации предварительно подписанного URL"
+                ) from exc
 
     @ensure_connected
     async def delete_objects(self, keys: List[str]) -> dict:
@@ -396,7 +401,7 @@ class S3Client(BaseS3Client):
                 self.logger.error(f"Файл {key} не найден", exc_info=True)
                 if exc.response["Error"]["Code"] == "404":
                     return None
-                raise
+                raise ServiceError(f"Файл {key} не найден") from exc
 
     @ensure_connected
     async def list_objects(self, prefix: str = None) -> List[str]:
@@ -432,7 +437,7 @@ class S3Client(BaseS3Client):
                 self.logger.error(f"Файл {key} не найден", exc_info=True)
                 if exc.response["Error"]["Code"] == "NoSuchKey":
                     return None
-                raise
+                raise ServiceError(f"Файл {key} не найден") from exc
 
 
 # Экземпляр клиента для работы с S3

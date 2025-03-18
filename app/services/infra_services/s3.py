@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi.responses import StreamingResponse
 
@@ -242,6 +242,6 @@ async def get_s3_service() -> AsyncGenerator[S3Service, None]:
         pass
 
 
-def get_s3_service_dependency() -> Union[S3Service, None]:
+def get_s3_service_dependency() -> S3Service:
     """Возвращает экземпляр S3Service для зависимостей."""
     return S3Service(client=s3_client)

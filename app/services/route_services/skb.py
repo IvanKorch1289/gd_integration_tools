@@ -5,6 +5,7 @@ from uuid import UUID
 from app.config.settings import SKBAPISettings, settings
 from app.services.infra_services.http import get_http_client
 from app.utils.decorators.singleton import singleton
+from app.utils.errors import ServiceError
 
 
 __all__ = (
@@ -61,8 +62,8 @@ class APISKBService:
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
                 )
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
     async def add_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -88,8 +89,8 @@ class APISKBService:
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
                 )
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
     async def get_response_by_order(
         self, order_uuid: UUID, response_type_str: Optional[str] = None
@@ -128,8 +129,8 @@ class APISKBService:
                     if response_type_str == "PDF"
                     else response
                 )
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
     async def get_orders_list(
         self,
@@ -169,8 +170,8 @@ class APISKBService:
                 )
 
                 return response
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
     async def get_objects_by_address(
         self,
@@ -207,8 +208,8 @@ class APISKBService:
                 )
 
                 return response
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
 
 # Функция-зависимость для создания экземпляра APISKBService

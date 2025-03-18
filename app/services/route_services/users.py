@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -10,6 +10,7 @@ from app.schemas.route_schemas.users import (
 )
 from app.services.route_services.base import BaseService
 from app.utils.decorators.singleton import singleton
+from app.utils.errors import ServiceError
 
 
 __all__ = ("get_user_service",)
@@ -35,12 +36,10 @@ class UserService(BaseService[UserRepository]):
         """
         try:
             return await self.repo.get_by_username(data=data)
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
-    async def add(
-        self, data: Dict[str, Any]
-    ) -> Optional[Union[UserSchemaOut, str]]:
+    async def add(self, data: Dict[str, Any]) -> Optional[UserSchemaOut | str]:
         """
         Добавляет нового пользователя.
 
@@ -56,8 +55,8 @@ class UserService(BaseService[UserRepository]):
 
             # Создаем пользователя через базовый метод
             return await super().add(data=data)  # type: ignore
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def login(self, filter: Filter) -> bool:
         """
@@ -78,8 +77,8 @@ class UserService(BaseService[UserRepository]):
             if user and user.verify_password(password=data["password"]):
                 return True
             return False
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
 
 def get_user_service() -> UserService:

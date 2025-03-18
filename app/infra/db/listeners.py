@@ -33,12 +33,13 @@ class DatabaseListener:
         return self.async_session_factory()
 
     def is_retriable_error(self, exception: Exception) -> bool:
-        if isinstance(
-            exception, (OperationalError, DBAPIError, SerializationError)
-        ):
-            if isinstance(exception.orig, PostgresError):
-                return exception.orig.sqlstate in consts.RETRIABLE_DB_CODES
-        return False
+        return (
+            isinstance(
+                exception, (OperationalError, DBAPIError, SerializationError)
+            )
+            and isinstance(exception.orig, PostgresError)
+            and exception.orig.sqlstate in consts.RETRIABLE_DB_CODES
+        )
 
     async def handle_async_error(self, exception_context):
         exc = exception_context.original_exception

@@ -4,6 +4,7 @@ from app.config.settings import DadataAPISettings, settings
 from app.services.infra_services.http import get_http_client
 from app.utils.decorators.caching import response_cache
 from app.utils.decorators.singleton import singleton
+from app.utils.errors import ServiceError
 
 
 __all__ = (
@@ -94,8 +95,8 @@ class APIDADATAService:
                     total_timeout=self.settings.connect_timeout
                     + self.settings.read_timeout,
                 )
-        except Exception:
-            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
 
 # Функция-зависимость для создания экземпляра APIDADATAService

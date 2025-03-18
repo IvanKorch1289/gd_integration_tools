@@ -162,7 +162,6 @@ services:
       SONAR_JDBC_USERNAME: sonar
       SONAR_JDBC_PASSWORD: sonar
       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
-      SONAR_FORCE_AUTHENTICATION: "false"  # Отключаем аутентификацию
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
@@ -172,26 +171,6 @@ services:
       - sonarnet
     restart: unless-stopped
 
-  # sonar-scanner:
-  #   image: sonarsource/sonar-scanner-cli
-  #   container_name: sonar-scanner
-  #   depends_on:
-  #     - sonarqube
-  #   volumes:
-  #     - .:/usr/src
-  #   networks:
-  #     - sonarnet
-  #   environment:
-  #     SONAR_HOST_URL: http://sonarqube:9000
-  #     SONAR_SCANNER_OPTS: -Dsonar.projectKey=gd_advanced_tools
-  #   command: >
-  #     sh -c "sonar-scanner
-  #     -Dsonar.projectName='gd_advanced_tools'
-  #     -Dsonar.projectVersion=1.0
-  #     -Dsonar.sources=app/
-  #     -Dsonar.login=sqp_438a61271e9255bb04011b0f168ebfa0824a28ad"
-  #   restart: on-failure
-  
 volumes:
   mongodb_data:
   rabbitmq_data:

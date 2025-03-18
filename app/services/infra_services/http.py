@@ -1,6 +1,6 @@
 from asyncio import Lock, Queue, create_task, sleep
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, Optional, Union
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from aiohttp import (
     AsyncResolver,
@@ -130,7 +130,7 @@ class HttpClient:
         headers: Optional[Dict[str, str]] = None,
         json: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
-        data: Optional[Union[Dict[str, Any], str, bytes]] = None,
+        data: Optional[Dict[str, Any] | str | bytes] = None,
         auth_token: Optional[str] = None,
         response_type: str = "json",
         raise_for_status: bool = True,
@@ -216,7 +216,7 @@ class HttpClient:
         self,
         auth_token: Optional[str],
         custom_headers: Optional[Dict[str, str]],
-        data: Optional[Union[Dict[str, Any], str, bytes]],
+        data: Optional[Dict[str, Any] | str | bytes],
         json_data: Optional[Dict[str, Any]],
     ) -> Dict[str, str]:
         """Создает заголовки с автоматическим определением Content-Type."""
@@ -243,9 +243,9 @@ class HttpClient:
 
     async def _prepare_request_data(
         self,
-        data: Optional[Union[Dict[str, Any], str, bytes]],
+        data: Optional[Dict[str, Any] | str | bytes],
         json_data: Optional[Dict[str, Any]],
-    ) -> Optional[Union[str, bytes]]:
+    ) -> Optional[str | bytes]:
         """Сериализует данные с учетом Content-Type."""
         from app.utils.utils import utilities
 
@@ -286,7 +286,7 @@ class HttpClient:
         url: str,
         headers: Dict[str, str],
         params: Dict[str, Any],
-        data: Optional[Union[str, bytes]],
+        data: Optional[str | bytes],
     ) -> None:
         """Логирует детали запроса с маскировкой чувствительных данных."""
         safe_headers = {

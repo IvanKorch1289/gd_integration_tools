@@ -11,7 +11,7 @@ from app.background_tasks.tasks import (
 from app.background_tasks.utils import handle_error, managed_pause
 from app.config.constants import consts
 from app.config.settings import settings
-from app.utils.errors import ExternalServiceError
+from app.utils.errors import ServiceError
 from app.utils.logging_service import tasks_logger
 from app.utils.utils import utilities
 
@@ -113,7 +113,7 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
             await _handle_order_error(
                 email, order_id, cad_num, "создания", "Заказ не создан"
             )
-            raise ExternalServiceError
+            raise ServiceError
 
         await _send_status_notification(
             email,
@@ -208,7 +208,7 @@ async def send_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
             await _handle_order_error(
                 email, order_id, cad_num, "отправки", error_msg
             )
-            raise ExternalServiceError(error_msg)
+            raise ServiceError(error_msg)
         return result
     except Exception as exc:
         tasks_logger.error(

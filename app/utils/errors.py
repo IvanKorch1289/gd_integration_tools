@@ -163,7 +163,7 @@ class AuthorizationError(BaseError):
         )
 
 
-class ExternalServiceError(Exception):
+class ServiceError(Exception):
     """Ошибки взаимодействия с внешними сервисами (SKB и др.)"""
 
     def __init__(self, detail: str = "Ошибка обработки запроса"):

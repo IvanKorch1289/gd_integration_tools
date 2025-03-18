@@ -19,7 +19,7 @@ from app.services.route_services.skb import APISKBService, get_skb_service
 from app.utils.decorators.caching import response_cache
 from app.utils.decorators.singleton import singleton
 from app.utils.enums.skb import ResponseTypeChoices
-from app.utils.errors import NotFoundError
+from app.utils.errors import NotFoundError, ServiceError
 from app.utils.utils import utilities
 
 
@@ -92,8 +92,8 @@ class OrderService(BaseService[OrderRepository]):
                     stream=settings.redis.get_stream_name("order-pipeline"),
                 )
             return order
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def create_skb_order(self, order_id: int) -> Dict[str, Any]:
         """
@@ -136,8 +136,8 @@ class OrderService(BaseService[OrderRepository]):
                 return {"instance": order_data, "response": result}
             else:
                 raise ValueError("Заказ не активен")
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def async_create_skb_order(self, order_id: int) -> Dict[str, Any]:
         """
@@ -159,8 +159,8 @@ class OrderService(BaseService[OrderRepository]):
                 return order_data
             else:
                 raise ValueError("Заказ не активен")
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
@@ -227,8 +227,8 @@ class OrderService(BaseService[OrderRepository]):
                 # Обработка других типов данных, если необходимо
                 content["response"] = None
             return content
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_and_json_from_skb(
         self, order_id: int
@@ -282,8 +282,8 @@ class OrderService(BaseService[OrderRepository]):
             )
 
             return json_res
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_from_storage(
         self, order_id: int
@@ -308,8 +308,8 @@ class OrderService(BaseService[OrderRepository]):
                 if len(files) > 1
                 else await self.s3_service.download_file(files[0])
             )
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_from_storage_base64(
         self, order_id: int
@@ -338,8 +338,8 @@ class OrderService(BaseService[OrderRepository]):
                 for file in order_data.get("files", [])
             ]
             return {"files": files}
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_from_storage_link(
         self,
@@ -370,8 +370,8 @@ class OrderService(BaseService[OrderRepository]):
             ]
             return {"links": files}
 
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_link_and_json_result_for_request(
         self,
@@ -407,8 +407,8 @@ class OrderService(BaseService[OrderRepository]):
                 )
 
             return response
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def get_order_file_base64_and_json_result_for_request(
         self,
@@ -441,8 +441,8 @@ class OrderService(BaseService[OrderRepository]):
                 response["file_links"] = files_base64.get("files")
 
             return response
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def async_get_order_file_and_json_from_skb(
         self,
@@ -469,8 +469,8 @@ class OrderService(BaseService[OrderRepository]):
             )
 
             return order_data
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
     async def send_order_data(self, order_id: int) -> None:
         """
@@ -508,8 +508,8 @@ class OrderService(BaseService[OrderRepository]):
             )
 
             return order_data  # type: ignore
-        except Exception:
-            raise  # Исключение будет обработано глобальным обработчиком
+        except Exception as exc:
+            raise ServiceError from exc
 
 
 def get_order_service() -> OrderService:
