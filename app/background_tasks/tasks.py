@@ -1,3 +1,5 @@
+from typing import Optional
+
 from prefect import task
 
 from app.background_tasks.dicts import ProcessingResult
@@ -61,7 +63,9 @@ async def send_notification_task(body: dict) -> dict:
     log_prints=True,
 )
 @validate_order_id
-async def create_skb_order_task(order_data: dict) -> ProcessingResult:
+async def create_skb_order_task(
+    order_data: dict,
+) -> Optional[ProcessingResult]:
     """
     Создает новый заказ в системе SKB с валидацией и повторными попытками.
 
@@ -92,6 +96,7 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
                 "result_data": result,
                 "error_message": None,
             }
+        return None
     except Exception as exc:
         tasks_logger.error(
             f"Ошибка создания заказа: {str(exc)}", exc_info=True
@@ -108,7 +113,9 @@ async def create_skb_order_task(order_data: dict) -> ProcessingResult:
     log_prints=True,
 )
 @validate_order_id
-async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
+async def get_skb_order_result_task(
+    order_data: dict,
+) -> Optional[ProcessingResult]:
     """
     Получает результат заказа в системе SKB с валидацией и повторными попытками.
 
@@ -145,6 +152,7 @@ async def get_skb_order_result_task(order_data: dict) -> ProcessingResult:
                 "result_data": result,
                 "error_message": None,
             }
+        return None
     except Exception as exc:
         tasks_logger.error(
             f"Ошибка получения результата: {str(exc)}", exc_info=True
