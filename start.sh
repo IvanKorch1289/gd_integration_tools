@@ -42,8 +42,7 @@ fi
 echo "Starting Prefect Server..."
 prefect server start \
     --host 0.0.0.0 \
-    --port 4200 \
-    > prefect_server.log 2>&1 &
+    --port 4200 2>&1 &
 
 echo "Waiting for Prefect Server to start..."
 wait_for_service 4200 30
@@ -52,13 +51,11 @@ wait_for_service 4200 30
 echo "Starting FastAPI..."
 uvicorn app.main:app \
     --host 127.0.0.1 \
-    --port 8000 \
-    > fastapi.log 2>&1 &
+    --port 8000 2>&1 &
 
 # Запуск gRPC
 echo "Starting gRPC Server..."
-python3 -m app.grpc.grpc_server \
-    > grpc_server.log 2>&1 &
+python3 -m app.grpc.grpc_server 2>&1 &
 
 # Сохранение PID
 echo "Saving PIDs..."
