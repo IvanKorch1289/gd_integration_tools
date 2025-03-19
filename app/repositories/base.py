@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import (
@@ -22,13 +22,7 @@ from app.utils.decorators.sessioning import session_manager
 from app.utils.errors import DatabaseError, NotFoundError
 
 
-__all__ = (
-    "SQLAlchemyRepository",
-    "ConcreteTable",
-)
-
-# Тип для указания конкретной модели таблицы
-ConcreteTable = TypeVar("ConcreteTable", bound=BaseModel)
+__all__ = ("SQLAlchemyRepository",)
 
 
 class AbstractRepository[ConcreteTable: BaseModel](ABC):
@@ -99,7 +93,9 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
         raise NotImplementedError
 
 
-class SQLAlchemyRepository(AbstractRepository[ConcreteTable]):
+class SQLAlchemyRepository[ConcreteTable: BaseModel](
+    AbstractRepository[ConcreteTable]
+):
     """
     Базовый класс для взаимодействия с БД с использованием SQLAlchemy.
     Реализует методы для работы с конкретной моделью таблицы.
@@ -476,7 +472,7 @@ class SQLAlchemyRepository(AbstractRepository[ConcreteTable]):
 
 async def get_repository_for_model(
     model: Type[BaseModel],
-) -> Type[SQLAlchemyRepository[ConcreteTable]]:
+) -> Type[SQLAlchemyRepository]:
     """
     Возвращает класс репозитория для указанной модели.
 

@@ -351,7 +351,7 @@ class TechBV:
                 try:
                     result = await service.get_or_add(
                         data=validated_data.model_dump()
-                    )  # type: ignore
+                    )
                     results.append(result)
                 except Exception as exc:
                     results.append({"error": str(exc)})

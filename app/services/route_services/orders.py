@@ -27,7 +27,11 @@ __all__ = ("get_order_service",)
 
 
 @singleton
-class OrderService(BaseService[OrderRepository]):
+class OrderService(
+    BaseService[
+        OrderRepository, OrderSchemaOut, OrderSchemaIn, OrderVersionSchemaOut
+    ]
+):
     """
     Сервис для работы с заказами. Обеспечивает создание, обновление, получение и обработку заказов,
     а также взаимодействие с внешними сервисами (например, СКБ-Техно) и файловым хранилищем.
@@ -85,7 +89,7 @@ class OrderService(BaseService[OrderRepository]):
         """
         try:
             # Создаем заказ через базовый метод
-            order = await super().add(data=data)  # type: ignore
+            order = await super().add(data=data)
             if order:
                 await stream_client.publish_to_redis(
                     message=order,
@@ -503,7 +507,7 @@ class OrderService(BaseService[OrderRepository]):
             await self.repo.update(
                 key="id",
                 value=order_id,
-                data={"is_send_to_gd": False},
+                data={"is_send_to_gd": False, "is_active": True},
                 load_into_memory=False,
             )
 

@@ -14,7 +14,11 @@ __all__ = ("get_file_service",)
 
 
 @singleton
-class FileService(BaseService[FileRepository]):
+class FileService(
+    BaseService[
+        FileRepository, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut
+    ]
+):
     """
     Сервис для работы с файлами. Обеспечивает создание, обновление, получение и обработку файлов
     """

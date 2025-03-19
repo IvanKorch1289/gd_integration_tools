@@ -169,6 +169,7 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
                 )
 
                 await managed_pause(delay_seconds=consts.RETRY_DELAY)
+            break
         return result
     except Exception as exc:
         tasks_logger.error(

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db.models.base import BaseModel
 from app.infra.db.models.files import File, OrderFile
-from app.repositories.base import ConcreteTable, SQLAlchemyRepository
+from app.repositories.base import SQLAlchemyRepository
 from app.utils.decorators.sessioning import session_manager
 from app.utils.decorators.singleton import singleton
 from app.utils.errors import NotFoundError
@@ -46,7 +46,7 @@ class FileRepository(SQLAlchemyRepository):
     @session_manager.connection()
     async def add_link(
         self, session: AsyncSession, data: Dict[str, Any]
-    ) -> Optional[ConcreteTable]:
+    ) -> Optional[BaseModel]:
         """
         Добавляет связь между файлом и заказом в связующую таблицу (OrderFile).
 

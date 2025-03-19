@@ -17,7 +17,11 @@ __all__ = ("get_user_service",)
 
 
 @singleton
-class UserService(BaseService[UserRepository]):
+class UserService(
+    BaseService[
+        UserRepository, UserSchemaOut, UserSchemaIn, UserVersionSchemaOut
+    ]
+):
     """
     Сервис для работы с пользователями. Обеспечивает создание, аутентификацию и управление пользователями.
 
@@ -54,7 +58,7 @@ class UserService(BaseService[UserRepository]):
                 return "The user with the specified login already exists."
 
             # Создаем пользователя через базовый метод
-            return await super().add(data=data)  # type: ignore
+            return await super().add(data=data)
         except Exception as exc:
             raise ServiceError from exc
 

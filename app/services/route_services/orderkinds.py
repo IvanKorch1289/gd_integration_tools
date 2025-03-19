@@ -23,7 +23,14 @@ __all__ = ("get_order_kind_service",)
 
 
 @singleton
-class OrderKindService(BaseService[OrderKindRepository]):
+class OrderKindService(
+    BaseService[
+        OrderKindRepository,
+        OrderKindSchemaOut,
+        OrderKindSchemaIn,
+        OrderKindVersionSchemaOut,
+    ]
+):
     """
     Сервис для работы с видами заказами. Обеспечивает создание, обновление, получение и обработку видов заказов
     """
