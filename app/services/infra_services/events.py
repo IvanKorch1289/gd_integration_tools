@@ -1,5 +1,5 @@
 from asyncio import create_task
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from faststream.rabbit.fastapi import RabbitMessage
 from faststream.redis.fastapi import Redis, RedisMessage
@@ -8,6 +8,7 @@ from app.config.settings import settings
 from app.infra.clients.stream import stream_client
 from app.schemas.base import EmailSchema
 from app.schemas.route_schemas.orders import OrderSchemaIn, OrderSchemaOut
+from app.utils.errors import ServiceError
 
 
 @stream_client.redis_router.subscriber(
@@ -102,7 +103,7 @@ async def handle_order_get_result(
     settings.queue.get_queue_name("order-create")
 )
 async def handle_order_init_create(
-    body: Dict[str, Any], msg: RabbitMessage
+    body: Dict[str, Any] | List[Dict[str, Any]], msg: RabbitMessage
 ) -> Any:
     """
     Обрабатывает сообщения из RabbitMQ для создания нового заказа.
@@ -117,8 +118,17 @@ async def handle_order_init_create(
     from app.services.route_services.orders import get_order_service
     from app.utils.utils import utilities
 
-    raw_data = await utilities.decode_bytes(body)
-
-    order_data = OrderSchemaIn.model_validate(raw_data)
-
-    create_task(get_order_service().add(order_data.model_dump()))
+    try:
+        raw_data = await utilities.decode_bytes(body)
+        data_list = [raw_data] if not isinstance(raw_data, list) else raw_data
+        model_list = [
+            OrderSchemaIn.model_validate(data).model_dump()
+            for data in data_list
+        ]
+        create_task(
+            get_order_service().add_many(model_list)
+            if isinstance(raw_data, list)
+            else get_order_service().add(model_list[0])
+        )
+    except Exception as exc:
+        raise ServiceError(f"Ошибка при создании заказа: {str(exc)}") from exc

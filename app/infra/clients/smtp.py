@@ -113,7 +113,7 @@ class SmtpClient:
         try:
             async with timeout(self.settings.connect_timeout):
                 smtp = SMTP(
-                    hostname=self.settings.host,
+                    hostname=self.settings.host,  # self.settings.smtp_url,
                     port=self.settings.port,
                     use_tls=self.settings.use_tls,
                     validate_certs=self.settings.validate_certs,

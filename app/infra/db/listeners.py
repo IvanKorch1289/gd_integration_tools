@@ -56,7 +56,7 @@ class DatabaseListener:
                     exception_class=DatabaseError,
                 )
 
-                async with self.get_async_session() as session:
+                async with await self.get_async_session() as session:
                     async with session.begin():
                         result = await session.execute(
                             execution_context.statement,

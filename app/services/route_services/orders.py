@@ -507,7 +507,7 @@ class OrderService(
             await self.repo.update(
                 key="id",
                 value=order_id,
-                data={"is_send_to_gd": False, "is_active": True},
+                data={"is_send_to_gd": True, "is_active": False},
                 load_into_memory=False,
             )
 

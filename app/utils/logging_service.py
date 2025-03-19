@@ -149,7 +149,8 @@ class LoggerManager:
                 self.handlers.append(gl_handler)
 
         # Обработчик файлов
-        self.handlers.append(self._create_file_handler())
+        if settings.app.environment == "development":
+            self.handlers.append(self._create_file_handler())
 
         # Обработчик консоли
         if self.debug:

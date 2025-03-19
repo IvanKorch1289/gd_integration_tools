@@ -262,7 +262,7 @@ class BaseService[
         :return: Сообщение об успешном удалении или информация об ошибке.
         """
         try:
-            await self.repo.delete(key=key, value=value)
+            await self.repo.delete(key=key, value=value)  # type: ignore
             await response_cache.invalidate_pattern(
                 pattern=self.__class__.__name__
             )
@@ -280,7 +280,7 @@ class BaseService[
         :return: Список всех версий объекта в виде схем.
         """
         try:
-            versions = await self.repo.get_all_versions(object_id=object_id)
+            versions = await self.repo.get_all_versions(object_id=object_id)  # type: ignore
 
             result: List[Optional[BaseSchema]] = []
 
@@ -326,7 +326,7 @@ class BaseService[
         :return: Восстановленный объект в виде схемы или None, если произошла ошибка.
         """
         try:
-            restored_object = await self.repo.restore_to_version(
+            restored_object = await self.repo.restore_to_version(  # type: ignore
                 object_id=object_id, transaction_id=transaction_id
             )
 

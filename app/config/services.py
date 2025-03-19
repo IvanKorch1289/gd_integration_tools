@@ -207,7 +207,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
     @computed_field
     def base_url(self) -> str:
         """Создает нормализованную строку эндпоинта."""
-        return f"{self.host}:{self.port}"
+        return f"{"https://" if self.use_tls else "http://"}{self.host}:{self.port}"
 
 
 class RedisSettings(BaseSettingsWithLoader):
@@ -632,6 +632,11 @@ class MailSettings(BaseSettingsWithLoader):
         description="Время (в секундах) до сброса Circuit Breaker",
         example=60,
     )
+
+    @computed_field(description="URL почтового сервера")
+    def smtp_url(self) -> str:
+        """Сформировать URL для подключения к почтовомуу серверу."""
+        return f"{"https://" if self.use_tls else "http://"}{self.host}"
 
     @field_validator("port")
     @classmethod

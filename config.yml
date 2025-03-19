@@ -1,7 +1,8 @@
 app:
-  host: "localhost"
+  host: "127.0.0.1"
   port: 8000
   prefect_port: 4200
+  use_ssl: False
   environment: "development"
   debug_mode: false
   version: 0.1.0
@@ -135,7 +136,7 @@ dadata:
 
 database:
   type: "postgresql"
-  host: "localhost"
+  host: "127.0.0.1"
   port: 5432
   name: "postgres"
   async_driver: "asyncpg"
@@ -171,7 +172,7 @@ fs:
 
 
 log:
-  host: "localhost"
+  host: "127.0.0.1"
   port: 9000
   udp_port: 12201
   conf_loggers: 
@@ -210,7 +211,7 @@ log:
 
 
 mongo:
-  host: "localhost"
+  host: "127.0.0.1"
   port: 27017
   name: "mongo"
   timeout: 5000
@@ -219,7 +220,7 @@ mongo:
 
 
 redis:
-  host: "localhost"
+  host: "127.0.0.1"
   port: 6379
   db_cache: 0
   db_queue: 1
@@ -270,7 +271,7 @@ celery:
   worker_prefetch_multiplier: 5
   worker_max_tasks_per_child: 500
   worker_disable_rate_limits: False
-  flower_url: "http://localhost:8888"
+  flower_url: "http://127.0.0.1:8888"
   flower_basic_auth: 
   task_track_started: True
   broker_pool_limit: 20
@@ -279,7 +280,7 @@ celery:
 
 
 mail:
-  host: "localhost"
+  host: "localhost"  #"127.0.0.1"
   port: 1025
   connection_pool_size: 10
   command_timeout: 30
@@ -296,7 +297,7 @@ mail:
 
 queue:
   type: "rabbitmq"
-  host: "localhost"
+  host: "127.0.0.1"
   port: 5672
   ui_port: 15672
   timeout: 60

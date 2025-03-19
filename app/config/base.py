@@ -85,6 +85,13 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[4200],
     )
 
+    use_ssl: bool = Field(
+        ...,
+        title="Использование SSL",
+        description="Использовать SSL для безопасного соединения",
+        examples=[True],
+    )
+
     # Параметры сокетов
     socket_ping_timeout: int = Field(
         ...,
@@ -187,17 +194,18 @@ class AppBaseSettings(BaseSettingsWithLoader):
     )
 
     # Вычисляемые свойства
+
     @computed_field(description="Базовый URL приложения")
     def base_url(self) -> str:
-        return f"http://{self.host}:{self.port}"
+        return f"{self.build_base_url}:{self.port}"
 
     @computed_field(description="URL Prefect сервера")
     def prefect_url(self) -> str:
-        return f"http://{self.host}:{self.prefect_port}"
+        return f"{self.build_base_url}:{self.prefect_port}"
 
     @computed_field(description="URL Prefect API документации")
     def prefect_api_url(self) -> str:
-        return f"http://{self.host}:{self.prefect_port}/docs"
+        return f"{self.prefect_url}/docs"
 
     # Валидация бизнес-правил
     @model_validator(mode="after")
@@ -205,6 +213,11 @@ class AppBaseSettings(BaseSettingsWithLoader):
         if self.environment == "production" and self.debug_mode:
             raise ValueError("Режим отладки запрещен в production!")
         return self
+
+    # Собрать базовый URL (без порта)
+    @property
+    def build_base_url(self) -> str:
+        return f"{"https://" if self.use_ssl else "http://"}{self.host}"
 
 
 class SchedulerSettings(BaseSettingsWithLoader):
