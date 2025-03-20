@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal, Optional
+from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -139,14 +139,14 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=[30],
     )
 
-    ssl_mode: Optional[str] = Field(
+    ssl_mode: str | None = Field(
         ...,
         title="Режим SSL",
         description="Настройки шифрования соединения (только для PostgreSQL)",
         examples=["require"],
     )
 
-    ca_bundle: Optional[str] = Field(
+    ca_bundle: str | None = Field(
         ...,
         description="Путь к сертификату",
         examples=["/path/to/ca.crt"],

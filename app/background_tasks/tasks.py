@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict
 
 from prefect import task
 
@@ -27,18 +27,18 @@ __all__ = (
     timeout_seconds=10,
     log_prints=True,
 )
-async def send_notification_task(body: dict) -> dict:
+async def send_notification_task(body: Dict[str, Any]) -> Dict[str, Any]:
     """
     Отправляет электронное письмо с использованием сервиса почты.
 
     Args:
-        body (dict): Данные для отправки письма, включая:
+        body (Dict[str, Any]): Данные для отправки письма, включая:
             - to_emails (list): Список адресов получателей.
             - subject (str): Тема письма.
             - message (str): Текст сообщения.
 
     Returns:
-        dict: Результат отправки письма.
+        Dict[str, Any]: Результат отправки письма.
 
     Raises:
         Exception: В случае ошибки при отправке письма.
@@ -64,20 +64,20 @@ async def send_notification_task(body: dict) -> dict:
 )
 @validate_order_id
 async def create_skb_order_task(
-    order_data: dict,
-) -> Optional[ProcessingResult]:
+    order_data: Dict[str, Any],
+) -> ProcessingResult | None:
     """
     Создает новый заказ в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data (dict): Данные заказа, включая:
+        order_data (Dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (dict): Данные результата.
+            - result_data (Dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:
@@ -114,20 +114,20 @@ async def create_skb_order_task(
 )
 @validate_order_id
 async def get_skb_order_result_task(
-    order_data: dict,
-) -> Optional[ProcessingResult]:
+    order_data: Dict[str, Any],
+) -> ProcessingResult | None:
     """
     Получает результат заказа в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data (dict): Данные заказа, включая:
+        order_data (Dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (dict): Данные результата.
+            - result_data (Dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:
@@ -146,12 +146,12 @@ async def get_skb_order_result_task(
         )
 
         if not message:
-            return {
-                "success": True,
-                "order_id": order_data["id"],
-                "result_data": result,
-                "error_message": None,
-            }
+            return ProcessingResult(
+                success=True,
+                order_id=order_data["id"],
+                result_data=result,
+                error_message=None,
+            )
         return None
     except Exception as exc:
         tasks_logger.error(
@@ -170,19 +170,21 @@ async def get_skb_order_result_task(
     log_prints=True,
 )
 @validate_order_id
-async def send_order_result_task(order_data: dict) -> ProcessingResult:
+async def send_order_result_task(
+    order_data: Dict[str, Any]
+) -> ProcessingResult:
     """
     Отправляет результат заказа во внешнюю систему с валидацией и повторными попытками.
 
     Args:
-        order_data (dict): Данные заказа, включая:
+        order_data (Dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (dict): Данные результата.
+            - result_data (Dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:
@@ -197,7 +199,7 @@ async def send_order_result_task(order_data: dict) -> ProcessingResult:
         return {
             "success": True,
             "order_id": order_data["id"],
-            "result_data": result,  # type: ignore
+            "result_data": result,
             "error_message": None,
         }
     except Exception as exc:

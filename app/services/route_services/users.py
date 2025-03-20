@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
@@ -43,7 +43,7 @@ class UserService(
         except Exception as exc:
             raise ServiceError from exc
 
-    async def add(self, data: Dict[str, Any]) -> Optional[UserSchemaOut | str]:
+    async def add(self, data: Dict[str, Any]) -> UserSchemaOut | str | None:
         """
         Добавляет нового пользователя.
 

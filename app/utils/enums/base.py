@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict
+from typing import Any, Dict
 
 from app.infra.db.models.base import BaseModel, mapper_registry
 
@@ -14,7 +14,7 @@ def get_user_models() -> Dict[str, BaseModel]:
     Возвращает:
         Dict[str, BaseModel]: Словарь, где ключ — имя таблицы, а значение — класс модели.
     """
-    user_models: dict = {}
+    user_models: Dict[str, Any] = {}
 
     # Используем mapper_registry для получения всех моделей
     for class_ in mapper_registry.mappers:

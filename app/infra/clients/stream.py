@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any, Awaitable, Callable, Dict
 from uuid import uuid4
 
 from apscheduler.triggers.cron import CronTrigger
@@ -122,8 +122,8 @@ class StreamClient:
         self,
         queue: str,
         message: Dict[str, Any],
-        delay: Optional[timedelta] = None,
-        scheduler: Optional[str] = None,
+        delay: timedelta | None = None,
+        scheduler: str | None = None,
     ):
         """
         Публикует сообщение в RabbitMQ сразу, с задержкой или по расписанию.
@@ -159,9 +159,9 @@ class StreamClient:
         self,
         stream: str,
         message: Dict[str, Any],
-        headers: Optional[Dict[str, Any]] = None,
-        delay: Optional[timedelta] = None,
-        scheduler: Optional[str] = None,
+        headers: Dict[str, Any] | None = None,
+        delay: timedelta | None = None,
+        scheduler: str | None = None,
     ):
         """
         Публикует сообщение в Redis сразу, с задержкой или по расписанию.
@@ -196,7 +196,7 @@ class StreamClient:
             )
 
     def _validate_scheduling_params(
-        self, delay: Optional[timedelta], scheduler: Optional[str]
+        self, delay: timedelta | None, scheduler: str | None
     ):
         """Проверяет параметры планирования."""
         if delay and scheduler:
@@ -228,8 +228,8 @@ class StreamClient:
 
     def _schedule_publish(
         self,
-        delay: Optional[timedelta],
-        scheduler: Optional[str],
+        delay: timedelta | None,
+        scheduler: str | None,
         publish_func: Callable,
         func_kwargs: Dict[str, Any],
     ):
@@ -249,7 +249,7 @@ class StreamClient:
         )
 
     def _create_trigger(
-        self, delay: Optional[timedelta], scheduler: Optional[str]
+        self, delay: timedelta | None, scheduler: str | None
     ) -> DateTrigger | CronTrigger:
         """Создает триггер на основе параметров планирования."""
         if delay:

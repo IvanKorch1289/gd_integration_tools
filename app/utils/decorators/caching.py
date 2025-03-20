@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Dict, Tuple
 
 
 __all__ = (
@@ -25,7 +25,7 @@ class CachingDecorator:
         key_prefix: str = None,
         exclude_self: bool = True,
         renew_ttl: bool = False,
-        key_builder: Optional[Callable] = None,
+        key_builder: Callable | None = None,
     ):
         """
         Инициализирует декоратор.
@@ -48,7 +48,7 @@ class CachingDecorator:
         self.key_builder = key_builder or self._default_key_builder
 
     def _default_key_builder(
-        self, func: Callable, args: tuple, kwargs: dict
+        self, func: Callable, args: Tuple[Any], kwargs: Dict[str, Any]
     ) -> str:
         """Создает ключ кэша на основе функции и её аргументов."""
         import hashlib

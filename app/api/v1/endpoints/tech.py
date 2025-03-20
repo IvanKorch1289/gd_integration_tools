@@ -1,6 +1,7 @@
 from datetime import timedelta
 from enum import Enum
 from io import BytesIO
+from typing import Any, Dict, Set
 
 import pandas as pd
 from fastapi import (
@@ -116,12 +117,12 @@ class TechBV:
         summary="Проверить состояние базы данных",
         operation_id="healthcheck_database",
     )
-    async def healthcheck_database(self):
+    async def healthcheck_database(self) -> bool:
         """
         Проверяет состояние базы данных.
 
         Returns:
-            dict: Результат проверки состояния базы данных.
+            bool: Результат проверки состояния базы данных.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_database()
@@ -131,12 +132,12 @@ class TechBV:
         summary="Проверить состояние Redis",
         operation_id="healthcheck_redis",
     )
-    async def healthcheck_redis(self):
+    async def healthcheck_redis(self) -> bool:
         """
         Проверяет состояние Redis.
 
         Returns:
-            dict: Результат проверки состояния Redis.
+            bool: Результат проверки состояния Redis.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_redis()
@@ -146,12 +147,12 @@ class TechBV:
         summary="Проверить состояние S3",
         operation_id="healthcheck_s3",
     )
-    async def healthcheck_s3(self):
+    async def healthcheck_s3(self) -> bool:
         """
         Проверяет состояние S3.
 
         Returns:
-            dict: Результат проверки состояния S3.
+            bool: Результат проверки состояния S3.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_s3()
@@ -161,12 +162,12 @@ class TechBV:
         summary="Проверить наличие бакета в S3",
         operation_id="healthcheck_s3_bucket",
     )
-    async def healthcheck_s3_bucket(self):
+    async def healthcheck_s3_bucket(self) -> bool:
         """
         Проверяет наличие бакета в S3.
 
         Returns:
-            dict: Результат проверки наличия бакета в S3.
+            bool: Результат проверки наличия бакета в S3.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_s3_bucket()
@@ -176,12 +177,12 @@ class TechBV:
         summary="Проверить состояние Graylog",
         operation_id="healthcheck_graylog",
     )
-    async def healthcheck_graylog(self):
+    async def healthcheck_graylog(self) -> bool:
         """
         Проверяет состояние Graylog.
 
         Returns:
-            dict: Результат проверки состояния Graylog.
+            bool: Результат проверки состояния Graylog.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_graylog()
@@ -191,12 +192,12 @@ class TechBV:
         summary="Проверить состояние SMTP-сервера",
         operation_id="healthcheck_smtp",
     )
-    async def healthcheck_smtp(self):
+    async def healthcheck_smtp(self) -> bool:
         """
         Проверяет состояние SMTP-сервера.
 
         Returns:
-            dict: Результат проверки состояния SMTP-сервера.
+            bool: Результат проверки состояния SMTP-сервера.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_smtp()
@@ -206,12 +207,12 @@ class TechBV:
         summary="Проверить состояние RabbitMQ",
         operation_id="healthcheck_rabbitmq",
     )
-    async def healthcheck_rabbitmq(self):
+    async def healthcheck_rabbitmq(self) -> bool:
         """
         Проверяет состояние RabbitMQ.
 
         Returns:
-            dict: Результат проверки состояния RabbitMQ.
+            bool: Результат проверки состояния RabbitMQ.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_rabbitmq()
@@ -221,12 +222,12 @@ class TechBV:
         summary="Проверить состояние всех сервисов",
         operation_id="healthcheck_all_services",
     )
-    async def healthcheck_all_services(self):
+    async def healthcheck_all_services(self) -> Dict[str, Any]:
         """
         Проверяет состояние всех сервисов.
 
         Returns:
-            dict: Результат проверки состояния всех сервисов.
+            Dict[str, Any]: Результат проверки состояния всех сервисов.
         """
         async with get_healthcheck_service() as health_check:
             return await health_check.check_all_services()
@@ -236,12 +237,12 @@ class TechBV:
         summary="Получить текущую конфигурацию",
         operation_id="get_config",
     )
-    async def get_config(self, x_api_key: str = Header(...)):
+    async def get_config(self, x_api_key: str = Header(...)) -> Dict[str, Any]:
         """
         Возвращает текущую конфигурацию приложения.
 
         Returns:
-            dict: Конфигурация приложения.
+            Dict[str, Any]: Конфигурация приложения.
         """
         return settings.model_dump()
 
@@ -250,12 +251,12 @@ class TechBV:
         summary="Отправить тестовое email",
         operation_id="send_email",
     )
-    async def send_email(
+    async def send_email(  # type: ignore
         self,
         schema: EmailSchema,
         delay: int = None,
         x_api_key: str = Header(...),
-    ):
+    ) -> Dict[str, Any]:
         """
         Отправляет тестовое email.
 
@@ -263,7 +264,7 @@ class TechBV:
             schema (EmailSchema): Схема с данными для отправки email.
 
         Returns:
-            dict: Результат отправки email.
+            Dict[str, Any]: Результат отправки email.
         """
         delay_param = timedelta(seconds=delay) if delay else None
 
@@ -282,7 +283,7 @@ class TechBV:
         self,
         model_enum: Enum = Depends(get_model_enum),
         x_api_key: str = Header(...),
-    ):
+    ) -> Set[str]:
         """
         Возвращает названия всех пользовательских таблиц.
 
@@ -308,7 +309,7 @@ class TechBV:
         ),
         model_enum: Enum = Depends(get_model_enum),
         x_api_key: str = Header(...),
-    ):
+    ) -> Response:
         """
         Загружает Excel-файл для массового создания объектов в выбранной таблице.
 
@@ -320,6 +321,8 @@ class TechBV:
         Returns:
             list: Список результатов добавления данных.
         """
+        content = None
+
         if table_name in model_enum._member_names_:  # type: ignore
             # Получаем сервис для модели
             service: BaseService = await get_service_for_model(
@@ -356,9 +359,11 @@ class TechBV:
                 except Exception as exc:
                     results.append({"error": str(exc)})
 
-            return results
+            content = results
+        else:
+            content = {"error": f"Таблица {table_name} не найдена."}
 
         return Response(
-            content={"error": f"Таблица {table_name} не найдена."},
+            content=content,
             status_code=status.HTTP_404_NOT_FOUND,
         )

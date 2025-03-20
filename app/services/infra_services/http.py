@@ -1,6 +1,6 @@
 from asyncio import Lock, Queue, create_task, sleep
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Dict
 
 from aiohttp import (
     AsyncResolver,
@@ -45,8 +45,8 @@ class HttpClient:
         from app.utils.logging_service import request_logger
 
         self.settings = settings.http_base_settings
-        self.connector: Optional[TCPConnector] = None
-        self.session: Optional[ClientSession] = None
+        self.connector: TCPConnector | None = None
+        self.session: ClientSession | None = None
         self.last_activity: float = 0
         self.active_requests: int = 0
         self.session_lock = Lock()
@@ -127,16 +127,16 @@ class HttpClient:
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any] | str | bytes] = None,
-        auth_token: Optional[str] = None,
+        headers: Dict[str, str] | None = None,
+        json: Dict[str, Any] | None = None,
+        params: Dict[str, Any] | None = None,
+        data: Dict[str, Any] | str | bytes | None = None,
+        auth_token: str | None = None,
         response_type: str = "json",
         raise_for_status: bool = True,
-        connect_timeout: Optional[float] = None,
-        read_timeout: Optional[float] = None,
-        total_timeout: Optional[float] = None,
+        connect_timeout: float | None = None,
+        read_timeout: float | None = None,
+        total_timeout: float | None = None,
     ) -> Dict[str, Any]:
         start_time = monotonic()
         last_exception = None
@@ -214,10 +214,10 @@ class HttpClient:
     # region Вспомогательные методы
     async def _build_headers(
         self,
-        auth_token: Optional[str],
-        custom_headers: Optional[Dict[str, str]],
-        data: Optional[Dict[str, Any] | str | bytes],
-        json_data: Optional[Dict[str, Any]],
+        auth_token: str | None,
+        custom_headers: Dict[str, str] | None,
+        data: Dict[str, Any] | str | bytes | None,
+        json_data: Dict[str, Any] | None,
     ) -> Dict[str, str]:
         """Создает заголовки с автоматическим определением Content-Type."""
         headers = {
@@ -243,9 +243,9 @@ class HttpClient:
 
     async def _prepare_request_data(
         self,
-        data: Optional[Dict[str, Any] | str | bytes],
-        json_data: Optional[Dict[str, Any]],
-    ) -> Optional[str | bytes]:
+        data: Dict[str, Any] | str | bytes | None,
+        json_data: Dict[str, Any] | None,
+    ) -> str | bytes | None:
         """Сериализует данные с учетом Content-Type."""
         from app.utils.utils import utilities
 
@@ -286,7 +286,7 @@ class HttpClient:
         url: str,
         headers: Dict[str, str],
         params: Dict[str, Any],
-        data: Optional[str | bytes],
+        data: str | bytes | None,
     ) -> None:
         """Логирует детали запроса с маскировкой чувствительных данных."""
         safe_headers = {
@@ -358,7 +358,7 @@ class HttpClient:
         }
 
     async def _handle_final_error(
-        self, exception: Optional[Exception], start_time: float
+        self, exception: Exception | None, start_time: float
     ) -> Dict[str, Any]:
         """Создает ответ об ошибке после исчерпания попыток."""
         status_code = getattr(exception, "status", None)

@@ -7,9 +7,10 @@ from typing import (
     AsyncGenerator,
     Callable,
     Coroutine,
+    Dict,
     List,
-    Optional,
     ParamSpec,
+    Tuple,
     TypeVar,
 )
 
@@ -60,17 +61,19 @@ class BaseS3Client(ABC):
         pass
 
     @abstractmethod
-    async def put_object(self, key: str, body: Any, metadata: dict) -> dict:
+    async def put_object(
+        self, key: str, body: Any, metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Загружает объект в S3."""
         pass
 
     @abstractmethod
-    async def get_object(self, key: str) -> Optional[tuple[Any, dict]]:
+    async def get_object(self, key: str) -> Tuple[Any, Dict[str, Any]] | None:
         """Получает объект из S3."""
         pass
 
     @abstractmethod
-    async def delete_object(self, key: str) -> dict:
+    async def delete_object(self, key: str) -> Dict[str, Any]:
         """Удаляет объект из S3."""
         pass
 
@@ -80,7 +83,7 @@ class BaseS3Client(ABC):
         pass
 
     @abstractmethod
-    async def head_object(self, key: str) -> Optional[dict]:
+    async def head_object(self, key: str) -> Dict[str, Any] | None:
         """Получает метаданные объекта."""
         pass
 
@@ -90,7 +93,9 @@ class BaseS3Client(ABC):
         pass
 
     @abstractmethod
-    async def copy_object(self, source_key: str, dest_key: str) -> dict:
+    async def copy_object(
+        self, source_key: str, dest_key: str
+    ) -> Dict[str, Any]:
         """Копирует объект внутри S3."""
         pass
 
@@ -102,12 +107,12 @@ class BaseS3Client(ABC):
         pass
 
     @abstractmethod
-    async def delete_objects(self, keys: List[str]) -> dict:
+    async def delete_objects(self, keys: List[str]) -> Dict[str, Any]:
         """Удаляет несколько объектов одновременно."""
         pass
 
     @abstractmethod
-    async def get_object_bytes(self, key: str) -> Optional[bytes]:
+    async def get_object_bytes(self, key: str) -> bytes | None:
         """Получает содержимое объекта в виде байтов."""
         pass
 
@@ -204,7 +209,7 @@ class S3Client(BaseS3Client):
                 await self.connect()
             return await func(self, *args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore
 
     async def check_connection(self) -> bool:
         """Проверяет доступность хранилища.
@@ -277,7 +282,9 @@ class S3Client(BaseS3Client):
             self.logger.info(f"Создан бакет: {self._settings.bucket}")
 
     @ensure_connected
-    async def put_object(self, key: str, body: Any, metadata: dict) -> dict:
+    async def put_object(
+        self, key: str, body: Any, metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Загружает объект в S3."""
         async with self.client_context() as client:
             try:
@@ -296,7 +303,7 @@ class S3Client(BaseS3Client):
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
-    async def get_object(self, key: str) -> Optional[tuple[Any, dict]]:
+    async def get_object(self, key: str) -> Tuple[Any, Dict[str, Any]] | None:
         """Получает объект из S3."""
         async with self.client_context() as client:
             try:
@@ -311,7 +318,9 @@ class S3Client(BaseS3Client):
                 raise ServiceError("Ошибка при поиске файла") from exc
 
     @ensure_connected
-    async def copy_object(self, source_key: str, dest_key: str) -> dict:
+    async def copy_object(
+        self, source_key: str, dest_key: str
+    ) -> Dict[str, Any]:
         """Копирует объект внутри одного бакета."""
         copy_source = {"Bucket": self._settings.bucket, "Key": source_key}
         async with self.client_context() as client:
@@ -352,7 +361,7 @@ class S3Client(BaseS3Client):
                 ) from exc
 
     @ensure_connected
-    async def delete_objects(self, keys: List[str]) -> dict:
+    async def delete_objects(self, keys: List[str]) -> Dict[str, Any]:
         """Удаляет несколько объектов одновременно."""
         async with self.client_context() as client:
             try:
@@ -373,7 +382,7 @@ class S3Client(BaseS3Client):
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
-    async def delete_object(self, key: str) -> dict:
+    async def delete_object(self, key: str) -> Dict[str, Any]:
         """Удаляет один объект из S3."""
         async with self.client_context() as client:
             try:
@@ -389,7 +398,7 @@ class S3Client(BaseS3Client):
                 return {"status": "error", "message": str(exc)}
 
     @ensure_connected
-    async def head_object(self, key: str) -> Optional[dict]:
+    async def head_object(self, key: str) -> Dict[str, Any] | None:
         """Получает метаданные и заголовки объекта."""
         async with self.client_context() as client:
             try:
@@ -425,7 +434,7 @@ class S3Client(BaseS3Client):
                 return []
 
     @ensure_connected
-    async def get_object_bytes(self, key: str) -> Optional[bytes]:
+    async def get_object_bytes(self, key: str) -> bytes | None:
         """Получает содержимое объекта в виде байтов."""
         async with self.client_context() as client:
             try:

@@ -1,7 +1,7 @@
 from asyncio import TimeoutError
 from datetime import timedelta, timezone
 from pathlib import Path
-from typing import Set
+from typing import Any, Dict, Set, Tuple
 
 from aiohttp import ClientError
 from dataclasses import dataclass, field
@@ -18,8 +18,8 @@ class Constants:
     Атрибуты:
         ROOT_DIR (Path): Корневая директория проекта.
         MOSCOW_TZ (timezone): Временная зона для Москвы (UTC+3).
-        RETRY_EXCEPTIONS (tuple): Исключения, при которых следует повторять запросы.
-        CHECK_SERVICES_JOB (dict): Настройки задачи проверки сервисов.
+        RETRY_EXCEPTIONS (Tuple): Исключения, при которых следует повторять запросы.
+        CHECK_SERVICES_JOB (Dict[str, Any]): Настройки задачи проверки сервисов.
         PREFECT_SERVER_COMMAND (str): Команда для запуска сервера Prefect.
         PREFECT_WORKER_COMMAND (str): Команда для запуска воркера Prefect.
         INITIAL_DELAY (int): Начальная задержка перед повторной попыткой (в секундах).
@@ -30,8 +30,8 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: tuple = (ClientError, TimeoutError)
-    CHECK_SERVICES_JOB: dict = field(
+    RETRY_EXCEPTIONS: Tuple[Any] = (ClientError, TimeoutError)
+    CHECK_SERVICES_JOB: Dict[str, Any] = field(
         default_factory=lambda: {
             "name": "check_all_services_job",
             "minutes": 60,

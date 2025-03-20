@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Tuple
 
 from fastapi.responses import StreamingResponse
 
@@ -28,7 +28,7 @@ class S3Service:
 
     async def upload_file(
         self, key: str, content: bytes, original_filename: str
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         Загружает файл в S3 с метаданными.
 
@@ -63,7 +63,9 @@ class S3Service:
         if not await self._check_object_exists(key):
             raise FileNotFoundError(f"Файл {key} не найден")
 
-        result: Optional[tuple[Any, dict]] = await self.client.get_object(key)
+        result: Tuple[Any, Dict[str, Any]] | None = (
+            await self.client.get_object(key)
+        )
         body, metadata = result  # type: ignore
         metadata = await utilities.decode_base64(metadata)
         filename = metadata.get("original-filename", key)
@@ -80,7 +82,7 @@ class S3Service:
             },
         )
 
-    async def multi_upload(self, files: Dict[str, bytes]) -> dict:
+    async def multi_upload(self, files: Dict[str, bytes]) -> Dict[str, Any]:
         """
         Параллельная загрузка нескольких файлов.
 
@@ -102,7 +104,7 @@ class S3Service:
                 results[key] = str(exc)
         return results
 
-    async def delete_file_object(self, key: list) -> dict:
+    async def delete_file_object(self, key: list) -> Dict[str, Any]:
         """Удаляет объект из хранилища."""
         result = await self.client.delete_object(key)
         await self._invalidate_key_cache(key)
@@ -186,7 +188,7 @@ class S3Service:
         return await self.client.list_objects(prefix)
 
     @metadata_cache
-    async def get_file_metadata(self, key: str) -> dict:
+    async def get_file_metadata(self, key: str) -> Dict[str, Any]:
         """Получает метаданные файла с кэшированием."""
         metadata = await self.client.head_object(key)
         return metadata or {}
@@ -198,7 +200,7 @@ class S3Service:
         return metadata is not None
 
     @metadata_cache
-    async def get_original_filename(self, key: str) -> Optional[str]:
+    async def get_original_filename(self, key: str) -> str | None:
         """
         Получает оригинальное имя файла из метаданных.
 
@@ -221,7 +223,7 @@ class S3Service:
             await cache.invalidate(key)
         self.logger.debug(f"Кэш инвалидирован для ключа: {key}")
 
-    async def invalidate_cache(self, key: Optional[str] = None):
+    async def invalidate_cache(self, key: str | None = None):
         """Публичный метод инвалидации кэша."""
         if key:
             await self._invalidate_key_cache(key)

@@ -1,7 +1,8 @@
-from typing import List, Optional, Type, TypeVar
+from typing import List, Type, TypeVar
 
-from fastapi import APIRouter, Header, Request, status
+from fastapi import APIRouter, Header, Query, Request, status
 from fastapi_filter import FilterDepends
+from fastapi_pagination import Params
 from fastapi_utils.cbv import cbv
 from pydantic import BaseModel
 
@@ -21,7 +22,7 @@ def create_router_class(
     router: APIRouter,
     schema_in: Type[SchemaIn],
     service,
-    filter_class: Optional[Type] = None,
+    filter_class: Type | None = None,
 ):
 
     @cbv(router)
@@ -36,9 +37,29 @@ def create_router_class(
         )
         @route_limiting
         async def get_all(
-            self, request: Request, x_api_key: str = Header(...)
+            self,
+            request: Request,
+            page: int | None = Query(
+                default=None, ge=1, description="Номер страницы"
+            ),
+            size: int | None = Query(
+                default=None,
+                ge=1,
+                le=100,
+                description="Количество элементов на странице",
+            ),
+            x_api_key: str = Header(...),
+            by: str = "id",
+            order: OrderingTypeChoices = OrderingTypeChoices.ascending,
         ):
-            return await self.service.get()
+            pagination = None
+
+            if page and size:
+                pagination = Params(page=page, size=size)
+
+            return await self.service.get(
+                pagination=pagination, by=by, order=order.value
+            )
 
         @router.get(
             "/id/{object_id}",
@@ -209,6 +230,8 @@ def create_router_class(
                 self,
                 request: Request,
                 filter: filter_class = FilterDepends(filter_class),  # type: ignore
+                by: str = "id",
+                order: OrderingTypeChoices = OrderingTypeChoices.ascending,
                 x_api_key: str = Header(...),
             ):
                 """
@@ -219,6 +242,8 @@ def create_router_class(
                 :param x_api_key: API-ключ для аутентификации.
                 :return: Список объектов, соответствующих фильтру.
                 """
-                return await self.service.get(filter=filter)
+                return await self.service.get(
+                    filter=filter, by=by, order=order.value
+                )
 
     return GenericCBV

@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from functools import wraps
-from typing import AsyncGenerator, Callable, Optional
+from typing import AsyncGenerator, Callable
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -110,14 +110,14 @@ class DatabaseSessionManager:
                 )
 
     def connection(
-        self, isolation_level: Optional[str] = None, commit: bool = True
+        self, isolation_level: str | None = None, commit: bool = True
     ) -> Callable:
         """
         Декоратор для управления сессией с возможностью
         настройки уровня изоляции и коммита.
 
         Args:
-            isolation_level (Optional[str]): Уровень изоляции для транзакции (например, "SERIALIZABLE").
+            isolation_level (str | None): Уровень изоляции для транзакции (например, "SERIALIZABLE").
             commit (bool): Если True, выполняется коммит после вызова метода.
 
         Returns:

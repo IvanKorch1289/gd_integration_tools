@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Tuple
 
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import RedisError
@@ -34,10 +34,10 @@ class RedisClient:
 
         from app.utils.logging_service import redis_logger
 
-        self._client: Optional[Redis] = None
+        self._client: Redis | None = None
         self._lock = asyncio.Lock()
         self.settings = settings
-        self._connection_pool: Optional[ConnectionPool] = None
+        self._connection_pool: ConnectionPool | None = None
         self.logger = redis_logger
 
     async def _init_pool(self) -> None:
@@ -255,7 +255,7 @@ class RedisClient:
         self,
         stream: str,
         data: Dict[str, Any],
-        max_len: Optional[int] = None,
+        max_len: int | None = None,
         approximate: bool = True,
     ) -> str:
         """Публикует событие в стрим Redis.
@@ -300,7 +300,7 @@ class RedisClient:
         source_stream: str,
         dest_stream: str,
         event_id: str,
-        additional_data: Optional[Dict[str, Any]] = None,
+        additional_data: Dict[str, Any] | None = None,
     ) -> None:
         """Перемещает событие между стримами с возможностью добавления метаданных.
 
@@ -352,7 +352,7 @@ class RedisClient:
         count: int = 100,
         block_ms: int = 5000,
         ack: bool = False,
-        consumer_group: Optional[Tuple[str, str]] = None,
+        consumer_group: Tuple[str, str] | None = None,
     ) -> List[Dict[str, Any]]:
         """Читает события из стрима с поддержкой групп потребителей.
 
@@ -453,8 +453,8 @@ class RedisClient:
         event_id: str,
         retry_field: str = "retries",
         max_retries: int = settings.redis.max_retries,
-        ttl_field: Optional[str] = "expires_at",
-        ttl: Optional[timedelta] = None,
+        ttl_field: str | None = "expires_at",
+        ttl: timedelta | None = None,
     ) -> bool:
         """Повторяет событие с обновленными метаданными.
 

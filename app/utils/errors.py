@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Tuple
 
 from starlette import status
 
@@ -22,7 +22,7 @@ class BaseError(Exception):
 
     def __init__(
         self,
-        *_: tuple[Any],
+        *_: Tuple[Any],
         message: str = "",
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
     ) -> None:
@@ -45,7 +45,7 @@ class BadRequestError(BaseError):
     Статус код: 400 Bad Request.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Bad request") -> None:
+    def __init__(self, *_: Tuple[Any], message: str = "Bad request") -> None:
         """
         Инициализирует исключение для некорректного запроса.
 
@@ -66,7 +66,7 @@ class UnprocessableError(BaseError):
     """
 
     def __init__(
-        self, *_: tuple[Any], message: str = "Validation error"
+        self, *_: Tuple[Any], message: str = "Validation error"
     ) -> None:
         """
         Инициализирует исключение для ошибки валидации.
@@ -87,7 +87,7 @@ class NotFoundError(BaseError):
     Статус код: 404 Not Found.
     """
 
-    def __init__(self, *_: tuple[Any], message: str = "Not found") -> None:
+    def __init__(self, *_: Tuple[Any], message: str = "Not found") -> None:
         """
         Инициализирует исключение для отсутствующего ресурса.
 
@@ -107,7 +107,7 @@ class DatabaseError(BaseError):
     """
 
     def __init__(
-        self, *_: tuple[Any], message: str = "Database error"
+        self, *_: Tuple[Any], message: str = "Database error"
     ) -> None:
         """
         Инициализирует исключение для ошибок базы данных.
@@ -128,7 +128,7 @@ class AuthenticationError(BaseError):
     """
 
     def __init__(
-        self, *_: tuple[Any], message: str = "Authentication error"
+        self, *_: Tuple[Any], message: str = "Authentication error"
     ) -> None:
         """
         Инициализирует исключение для ошибок аутентификации.
@@ -150,7 +150,7 @@ class AuthorizationError(BaseError):
     """
 
     def __init__(
-        self, *_: tuple[Any], message: str = "Authorization error"
+        self, *_: Tuple[Any], message: str = "Authorization error"
     ) -> None:
         """
         Инициализирует исключение для ошибок авторизации.

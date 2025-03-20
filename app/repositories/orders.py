@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -76,7 +76,7 @@ class OrderRepository(SQLAlchemyRepository):
     @session_manager.connection()
     async def add(
         self, session: AsyncSession, data: Dict[str, Any]
-    ) -> Optional[Order]:
+    ) -> Order | None:
         """
         Добавляет новый заказ в таблицу.
 
@@ -99,7 +99,7 @@ class OrderRepository(SQLAlchemyRepository):
         value: Any,
         data: Dict[str, Any],
         load_into_memory: bool = True,
-    ) -> Optional[Order]:
+    ) -> Order | None:
         """
         Обновляет заказ в таблице.
 

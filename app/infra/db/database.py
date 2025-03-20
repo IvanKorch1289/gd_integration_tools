@@ -95,9 +95,9 @@ class DatabaseInitializer:
         """Генерирует дополнительные аргументы для подключения к БД.
 
         Returns:
-            dict: Дополнительные параметры подключения
+            Dict[str, Any]: Дополнительные параметры подключения
         """
-        connect_args: dict = {}
+        connect_args: Dict[str, Any] = {}
 
         if self.settings.type == "postgresql":
             connect_args.update(

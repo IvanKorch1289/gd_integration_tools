@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from fastapi import APIRouter, Header
 from fastapi_utils.cbv import cbv
 
@@ -37,7 +39,7 @@ class DADATACBV:
         count_results: int | None = 10,
         radius_metres: int | None = 500,
         x_api_key: str = Header(...),
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         Получает информацию о геолокации по координатам.
 
@@ -48,7 +50,7 @@ class DADATACBV:
             x_api_key (str): API-ключ для авторизации (передается в заголовке).
 
         Returns:
-            dict: Ответ от API Dadata с информацией о геолокации.
+            Dict[str, Any]: Ответ от API Dadata с информацией о геолокации.
         """
         return await self.service.get_geolocate(
             lat=lat,

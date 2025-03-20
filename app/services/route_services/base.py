@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 from fastapi_filter.contrib.sqlalchemy import Filter
+from fastapi_pagination import Page, Params
 
 from app.infra.db.models.base import BaseModel
 from app.repositories.base import SQLAlchemyRepository
-from app.schemas.base import BaseSchema
+from app.schemas.base import BaseSchema, PaginatedResult
 from app.utils.decorators.caching import response_cache
 from app.utils.errors import ServiceError
 from app.utils.utils import utilities
@@ -56,12 +57,19 @@ class BaseService[
                 instance.__class__, "version_parent"
             ):
 
-                return utilities.transfer_model_to_schema(
+                return utilities.transfer_model_to_schema(  # type: ignore
                     instance=instance,
                     schema=response_schema,
                     from_attributes=from_attributes,
                 )
             return instance
+
+        async def _transfer_paginated(
+            self, items: List[Any], response_schema: Type[BaseSchema]
+        ) -> List[BaseSchema | None]:
+            return [
+                await self._transfer(item, response_schema) for item in items
+            ]
 
         async def _process_and_transfer(
             self,
@@ -70,36 +78,36 @@ class BaseService[
             *args,
             **kwargs,
         ) -> Any:
-            """
-            Выполняет метод репозитория и преобразует результат в схему.
-
-            :param repo_method: Название метода репозитория.
-            :param response_schema: Схема ответа.
-            :param args: Аргументы для метода репозитория.
-            :param kwargs: Ключевые аргументы для метода репозитория.
-            :return: Результат в виде схемы или None, если произошла ошибка.
-            """
             try:
+                # Получаем результат из репозитория
                 instance = await getattr(self.repo, repo_method)(
                     *args, **kwargs
                 )
 
+                # Обработка пагинированного ответа
+                if isinstance(instance, dict) and "items" in instance:
+                    items = await self._transfer_paginated(
+                        instance["items"], response_schema
+                    )
+                    return PaginatedResult(
+                        items=items, total=instance["total"]
+                    )
+
+                # Оригинальная логика
                 if not instance:
                     return []
                 elif isinstance(instance, list):
-
                     return (
                         [
                             await self._transfer(item, response_schema)
                             for item in instance
                         ]
-                        if len(instance) > 0
+                        if instance
                         else []
                     )
 
-                result = await self._transfer(instance, response_schema)
+                return await self._transfer(instance, response_schema)
 
-                return result
             except Exception as exc:
                 raise ServiceError from exc
 
@@ -123,9 +131,7 @@ class BaseService[
         self.version_schema = version_schema
         self.helper = self.HelperMethods(repo)
 
-    async def add(
-        self, data: Dict[str, Any]
-    ) -> Optional[ConcreteResponseSchema]:
+    async def add(self, data: Dict[str, Any]) -> ConcreteResponseSchema | None:
         """
         Добавляет новый объект в репозиторий и возвращает его в виде схемы.
 
@@ -133,7 +139,7 @@ class BaseService[
         :return: Схема ответа или None, если произошла ошибка.
         """
         try:
-            result: Optional[ConcreteResponseSchema] = (
+            result: ConcreteResponseSchema | None = (
                 await self.helper._process_and_transfer(
                     "add", self.response_schema, data=data
                 )
@@ -147,18 +153,18 @@ class BaseService[
 
     async def add_many(
         self, data_list: List[Dict[str, Any]]
-    ) -> List[Optional[ConcreteResponseSchema]]:
+    ) -> List[ConcreteResponseSchema | None]:
         """
         Добавляет несколько объектов в репозиторий и возвращает их в виде списка схем.
 
         :param data_list: Список данных для создания объектов.
         :return: Список схем ответа или None, если произошла ошибка.
         """
-        result: List[Optional[ConcreteResponseSchema]] = []
+        result: List[ConcreteResponseSchema | None] = []
 
         for data in data_list:
             try:
-                response: Optional[ConcreteResponseSchema] = await self.add(
+                response: ConcreteResponseSchema | None = await self.add(
                     data=data
                 )
                 result.append(response)
@@ -169,7 +175,7 @@ class BaseService[
 
     async def update(
         self, key: str, value: int, data: Dict[str, Any]
-    ) -> Optional[ConcreteResponseSchema]:
+    ) -> ConcreteResponseSchema | None:
         """
         Обновляет объект в репозитории и возвращает его в виде схемы.
 
@@ -189,10 +195,18 @@ class BaseService[
     @response_cache
     async def get(
         self,
-        key: Optional[str] = None,
-        value: Optional[int] = None,
-        filter: Optional[Filter] = None,
-    ) -> Optional[ConcreteResponseSchema] | List[ConcreteResponseSchema]:
+        key: str | None = None,
+        value: int | None = None,
+        filter: Filter | None = None,
+        pagination: Params | None = None,
+        by: str = "id",
+        order: str = "asc",
+    ) -> (
+        ConcreteResponseSchema
+        | List[ConcreteResponseSchema]
+        | Page[ConcreteResponseSchema]
+        | None
+    ):
         """
         Получает объект по ключу и значению, фильтру или все объекты, если ничего не передано.
 
@@ -202,19 +216,28 @@ class BaseService[
         :return: Схема ответа, список схем или None, если произошла ошибка.
         """
         try:
-            return await self.helper._process_and_transfer(
+            result = await self.helper._process_and_transfer(
                 "get",
                 self.response_schema,
                 key=key,
                 value=value,
                 filter=filter,
+                pagination=pagination,
+                order=order,
+                by=by,
             )
+
+            if pagination:
+                return Page.create(
+                    items=result.items, total=result.total, params=pagination
+                )
+            return result
         except Exception as exc:
             raise ServiceError from exc
 
     async def get_or_add(
         self, key: str = None, value: int = None, data: Dict[str, Any] = None
-    ) -> Optional[ConcreteResponseSchema]:
+    ) -> ConcreteResponseSchema | None:
         """
         Получает объект по ключу и значению. Если объект не найден, добавляет его.
 
@@ -241,7 +264,7 @@ class BaseService[
     @response_cache
     async def get_first_or_last_with_limit(
         self, limit: int = 1, by: str = "id", order: str = "asc"
-    ) -> Optional[ConcreteResponseSchema] | List[ConcreteResponseSchema]:
+    ) -> ConcreteResponseSchema | List[ConcreteResponseSchema] | None:
         try:
             return await self.helper._process_and_transfer(
                 "first_or_last",
@@ -272,7 +295,7 @@ class BaseService[
     @response_cache
     async def get_all_object_versions(
         self, object_id: int
-    ) -> List[Optional[BaseSchema]]:
+    ) -> List[BaseSchema | None]:
         """
         Получает все версии объекта по его id.
 
@@ -282,14 +305,12 @@ class BaseService[
         try:
             versions = await self.repo.get_all_versions(object_id=object_id)  # type: ignore
 
-            result: List[Optional[BaseSchema]] = []
+            result: List[BaseSchema | None] = []
 
             for version in versions:
                 try:
-                    response: Optional[BaseSchema] = (
-                        await self.helper._transfer(
-                            version, self.version_schema
-                        )
+                    response: BaseSchema | None = await self.helper._transfer(
+                        version, self.version_schema
                     )
                     result.append(response)
                 except Exception:
@@ -302,7 +323,7 @@ class BaseService[
     @response_cache
     async def get_latest_object_version(
         self, object_id: int
-    ) -> Optional[BaseSchema]:
+    ) -> BaseSchema | None:
         """
         Получает последнюю версию объекта.
 
@@ -317,7 +338,7 @@ class BaseService[
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
-    ) -> Optional[BaseSchema]:
+    ) -> BaseSchema | None:
         """
         Восстанавливает объект до указанной версии.
 

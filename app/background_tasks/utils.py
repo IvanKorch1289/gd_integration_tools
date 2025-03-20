@@ -1,7 +1,7 @@
 from asyncio import sleep
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 from prefect import get_client
 from prefect.context import get_run_context
@@ -69,7 +69,7 @@ def validate_order_id(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    async def wrapper(order_data: dict, *args, **kwargs) -> Any:
+    async def wrapper(order_data: Dict[str, Any], *args, **kwargs) -> Any:
         if not order_data.get("id"):
             raise ValueError("Отсутствует обязательный параметр order_id")
         return await func(order_data, *args, **kwargs)

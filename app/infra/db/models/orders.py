@@ -23,7 +23,7 @@ class Order(BaseModel):
         is_send_request_to_skb (bool): Флаг отправки запроса в СКБ.
         errors (str | None): Ошибки, связанные с запросом.
         object_uuid (UUID): Уникальный идентификатор объекта.
-        response_data (dict | None): Данные ответа.
+        response_data (JSON): Данные ответа.
         email_for_answer (str): Email для ответа.
         order_kind (OrderKind): Связь с видом запроса.
         files (list[File]): Связь с файлами, прикрепленными к запросу.

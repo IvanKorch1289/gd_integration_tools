@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from urllib.parse import urljoin
 from uuid import UUID
 
@@ -93,14 +93,14 @@ class APISKBService:
             raise ServiceError from exc  # Исключение будет обработано глобальным обработчиком
 
     async def get_response_by_order(
-        self, order_uuid: UUID, response_type_str: Optional[str] = None
+        self, order_uuid: UUID, response_type_str: str | None = None
     ) -> Any | Dict[str, Any]:
         """
         Получить результат по залогу из СКБ-Техно.
 
         Args:
             order_uuid (UUID): UUID запроса.
-            response_type (Optional[str]): Тип ответа (JSON или PDF).
+            response_type (str | None): Тип ответа (JSON или PDF).
 
         Returns:
             Dict[str, Any]: Результат запроса или информация об ошибке.
@@ -141,8 +141,8 @@ class APISKBService:
         Получить список заказов документов по залогу из СКБ-Техно.
 
         Args:
-            take (Optional[int]): Количество запросов, которые нужно выбрать.
-            skip (Optional[int]): Количетсво запросов, которые нужно пропустить.
+            take (int | None): Количество запросов, которые нужно выбрать.
+            skip (int | None): Количетсво запросов, которые нужно пропустить.
 
         Returns:
             Dict[str, Any]: Результат запроса или информация об ошибке.
@@ -183,7 +183,7 @@ class APISKBService:
 
         Args:
             query (str): Адрес.
-            comment (Optional[str]): Комментарий.
+            comment (str | None): Комментарий.
 
         Returns:
             Dict[str, Any]: Результат запроса или информация об ошибке.

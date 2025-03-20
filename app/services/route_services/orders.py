@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import status
 from pydantic import BaseModel
@@ -79,7 +79,7 @@ class OrderService(
             str(file["object_uuid"]) for file in order_data.get("files", [])
         ]
 
-    async def add(self, data: Dict[str, Any]) -> Optional[BaseSchema]:
+    async def add(self, data: Dict[str, Any]) -> BaseSchema | None:
         """
         Создает новый заказ на основе переданных данных.
 
@@ -190,7 +190,7 @@ class OrderService(
                 response_type_str=response_type.value,
             )
 
-            content = None
+            content = {}
 
             if isinstance(result, bytes):
                 # Исправленный ключ и параметры загрузки
@@ -236,7 +236,7 @@ class OrderService(
 
     async def get_order_file_and_json_from_skb(
         self, order_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Dict[str, Any] | None:
         """
         Получает файл и JSON-результат заказа из СКБ-Техно.
 
@@ -289,9 +289,7 @@ class OrderService(
         except Exception as exc:
             raise ServiceError from exc
 
-    async def get_order_file_from_storage(
-        self, order_id: int
-    ) -> Optional[Any]:
+    async def get_order_file_from_storage(self, order_id: int) -> Any:
         """
         Получает файл заказа из хранилища S3.
 
@@ -476,7 +474,7 @@ class OrderService(
         except Exception as exc:
             raise ServiceError from exc
 
-    async def send_order_data(self, order_id: int) -> None:
+    async def send_order_data(self, order_id: int) -> Dict[str, Any] | None:
         """
         Отправляет данные заказа.
 
@@ -493,7 +491,7 @@ class OrderService(
                 )
             )
 
-            result: dict = {
+            result: Dict[str, Any] = {
                 "response": order_data.get("data", {}).get("Data", {}),
                 "errors": order_data.get("data", {}).get("errors", {}),
                 "files": order_data.get("data", {}).get("files", []),
@@ -511,7 +509,7 @@ class OrderService(
                 load_into_memory=False,
             )
 
-            return order_data  # type: ignore
+            return order_data
         except Exception as exc:
             raise ServiceError from exc
 

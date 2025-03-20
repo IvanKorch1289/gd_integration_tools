@@ -13,7 +13,7 @@ from logging.handlers import (
     TimedRotatingFileHandler,
 )
 from socket import gethostname
-from typing import List, Optional
+from typing import List
 
 from app.config.settings import LogStorageSettings, settings
 from app.infra.clients.logger import GraylogHandler, graylog_handler
@@ -113,7 +113,7 @@ class LoggerManager:
         self.debug = debug
 
         self.log_queue = Queue()
-        self.queue_listener: Optional[QueueListener] = None
+        self.queue_listener: QueueListener | None = None
         self.handlers: List[Handler] = []
         self.graylog: GraylogHandler = handler
 

@@ -1,6 +1,6 @@
 from base64 import b64decode, b64encode
 from datetime import datetime
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Type
 from uuid import UUID
 
 from fastapi.responses import HTMLResponse
@@ -208,7 +208,7 @@ class Utilities:
         else:
             return obj
 
-    def custom_json_encoder(self, obj: Any) -> dict:
+    def custom_json_encoder(self, obj: Any) -> Dict[str, Any]:
         """Кастомный JSON-кодировщик для специальных типов данных.
 
         Поддерживает:
@@ -227,7 +227,7 @@ class Utilities:
             obj = obj.model_dump()
         raise TypeError(f"Неподдерживаемый тип: {type(obj)}")
 
-    def custom_json_decoder(self, dct: dict) -> Any:
+    def custom_json_decoder(self, dct: Dict[str, Any]) -> Any:
         """Кастомный JSON-декодер для специальных типов данных."""
         if "__uuid__" in dct:
             return UUID(dct["value"])
@@ -237,11 +237,11 @@ class Utilities:
 
     async def connect_to_websocket_for_settings(
         self,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Dict[str, Any] | None:
         """Устанавливает соединение с WebSocket для получения настроек.
 
         Возвращает:
-            Optional[Dict[str, Any]]: Словарь с настройками или None при ошибке
+            Dict[str, Any] | None: Словарь с настройками или None при ошибке
         """
         import asyncio
 
@@ -272,13 +272,13 @@ class Utilities:
         return None
 
     async def safe_get(
-        self, data: dict, keys: str, default: Any = None
+        self, data: Dict[str, Any], keys: str, default: Any = None
     ) -> Any:
         """
         Безопасно извлекает значение из вложенного словаря.
 
         Args:
-            data (dict): Исходный словарь.
+            data (Dict[str, Any]): Исходный словарь.
             keys (str): Ключи для доступа к значению, разделенные точками (например, "key1.key2.key3").
             default (Any): Значение по умолчанию, если ключ не найден.
 

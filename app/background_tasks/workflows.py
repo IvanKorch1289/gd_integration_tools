@@ -68,12 +68,12 @@ async def _handle_order_error(
     name="send-notification-workflow",
     description="Отправляет письмо клиенту по указанному адресу электронной почты",
 )
-async def send_notification_workflow(body: dict) -> None:
+async def send_notification_workflow(body: Dict[str, Any]) -> None:
     """
     Отправляет письмо клиенту с экспоненциальной задержкой при повторах.
 
     Args:
-        body (dict): Данные для отправки письма, включая адрес электронной почты и текст сообщения.
+        body (Dict[str, Any]): Данные для отправки письма, включая адрес электронной почты и текст сообщения.
 
     Returns:
         None
@@ -90,12 +90,14 @@ async def send_notification_workflow(body: dict) -> None:
     name="create-skb-order-workflow",
     description="Создает новый заказ в системе SKB для клиента с указанным номером заказа",
 )
-async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
+async def create_skb_order_workflow(
+    order_data: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Создает новый заказ в системе SKB с экспоненциальной задержкой при повторах.
 
     Args:
-        body (dict): Данные заказа.
+        body (Dict[str, Any]): Данные заказа.
 
     Returns:
         Dict[str, Any]: Результат обработки заказа.
@@ -139,12 +141,14 @@ async def create_skb_order_workflow(order_data: dict) -> Dict[str, Any]:
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     log_prints=True,
 )
-async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
+async def get_skb_order_result_workflow(
+    order_data: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Отправляет результат SKB с задержкой при повторах в очередь для чтения.
 
     Args:
-        body (dict): Данные заказа.
+        body (Dict[str, Any]): Данные заказа.
 
     Returns:
         Dict[str, Any]: Результат отправки.
@@ -184,12 +188,14 @@ async def get_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
     description="Отправляет результат обработки заказа в системе SKB",
     log_prints=True,
 )
-async def send_skb_order_result_workflow(order_data: dict) -> Dict[str, Any]:
+async def send_skb_order_result_workflow(
+    order_data: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Отправляет результат обработки заказа в системе SKB с экспоненциальной задержкой при повторах.
 
     Args:
-        body (dict): Данные заказа.
+        body (Dict[str, Any]): Данные заказа.
 
     Returns:
         Dict[str, Any]: Результат обработки заказа.

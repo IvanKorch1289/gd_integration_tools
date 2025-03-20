@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TypedDict
+from typing import Any, Dict, TypedDict
 
 
 __all__ = ("ProcessingResult",)
@@ -12,7 +12,7 @@ class ProcessingResult(TypedDict):
         success (bool): Флаг успешности выполнения операции.
         order_id (str): Уникальный идентификатор заказа.
         result_data (Dict): Словарь с дополнительными данными результата.
-        error_message (Optional[str]): Сообщение об ошибке (при наличии).
+        error_message (str | None): Сообщение об ошибке (при наличии).
 
     Пример использования:
         >>> result: ProcessingResult = {
@@ -25,5 +25,5 @@ class ProcessingResult(TypedDict):
 
     success: bool
     order_id: str
-    result_data: Dict[str, Any]
-    error_message: Optional[str]
+    result_data: Dict[str, Any] | None
+    error_message: str | None

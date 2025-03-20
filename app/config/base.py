@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Dict, Literal
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -257,7 +257,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     # Параметры выполнения
-    executors: dict[str, dict] = Field(
+    executors: Dict[str, Dict[str, Any]] = Field(
         ...,
         title="Исполнители задач",
         description="Конфигурация исполнителей для разных типов задач",

@@ -1,5 +1,4 @@
 from logging import Handler
-from typing import Optional
 
 from app.config.settings import LogStorageSettings, settings
 
@@ -18,7 +17,7 @@ class GraylogHandler:
             config (LogStorageSettings): Настройки логирования для Graylog.
         """
         self.config = config
-        self.handler: Optional[Handler] = None
+        self.handler: Handler | None = None
 
     @property
     def enabled(self) -> bool:
@@ -29,12 +28,12 @@ class GraylogHandler:
         """
         return bool(self.config.host and self.config.udp_port)
 
-    def connect(self) -> Optional[Handler]:
+    def connect(self) -> Handler | None:
         """
         Устанавливает соединение с сервером Graylog.
 
         Returns:
-            Optional[logging.Handler]: Настроенный обработчик Graylog или None.
+            logging.Handler | None: Настроенный обработчик Graylog или None.
 
         Raises:
             ConnectionError: Если конфигурация соединения недействительна.

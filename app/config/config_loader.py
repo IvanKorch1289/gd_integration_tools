@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Optional, Tuple, Type
+from typing import Any, ClassVar, Dict, Tuple, Type
 
 from dotenv import load_dotenv
 from pydantic.fields import FieldInfo
@@ -57,7 +57,9 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
     def _handle_error(self, error: Exception):
         """Handle errors during data loading."""
-        print(f"Error in {self.__class__.__name__}: {error}")
+        from app.utils.logging_service import app_logger
+
+        app_logger.warning(f"Error in {self.__class__.__name__}: {error}")
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
@@ -129,7 +131,7 @@ class BaseSettingsWithLoader(BaseSettings):
     - `model_config.env_prefix`: Environment variables prefix for settings group
     """
 
-    yaml_group: ClassVar[Optional[str]] = None
+    yaml_group: ClassVar[str | None] = None
     model_config = SettingsConfigDict(env_prefix="", extra="forbid")
 
     @classmethod

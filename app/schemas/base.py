@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import json_tricks
 from pydantic import BaseModel, EmailStr
@@ -81,5 +81,10 @@ class FileResponse(BaseModel):
     filename: str
     key: str
     size: int
-    headers: dict
-    metadata: Optional[dict] = None
+    headers: Dict[str, Any]
+    metadata: Dict[str, Any] = None
+
+
+class PaginatedResult(BaseModel):
+    items: List[Any]
+    total: int

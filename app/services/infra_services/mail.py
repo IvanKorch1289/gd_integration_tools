@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List
 
 from aiosmtplib import SMTPException
 
@@ -34,7 +34,7 @@ class MailService:
         to_emails: List[str],
         subject: str,
         message: str,
-        html_message: Optional[str] = None,
+        html_message: str | None = None,
     ):
         """
         Асинхронно отправляет электронное письмо.
@@ -43,7 +43,7 @@ class MailService:
             to_emails (List[str]): Список адресов получателей.
             subject (str): Тема письма.
             message (str): Текстовое содержимое письма.
-            html_message (Optional[str]): HTML-содержимое письма.
+            html_message (str | None): HTML-содержимое письма.
 
         Raises:
             ValueError: Если не удалось сформировать сообщение.
@@ -70,7 +70,7 @@ class MailService:
             to_emails (List[str]): Список адресов получателей.
             subject (str): Тема письма.
             message (str): Текстовое содержимое письма.
-            html_message (Optional[str]): HTML-содержимое письма.
+            html_message (str | None): HTML-содержимое письма.
 
         Returns:
             MIMEMultipart|MIMEText: Сформированное сообщение.
@@ -110,7 +110,7 @@ class MailService:
         to_emails: List[str],
         subject: str,
         template_name: str,
-        template_context: Optional[Dict[str, Any]] = None,
+        template_context: Dict[str, Any] | None = None,
     ):
         """
         Отправляет письмо, используя шаблон.
@@ -119,7 +119,7 @@ class MailService:
             to_emails (List[str]): Список адресов получателей.
             subject (str): Тема письма.
             template_name (str): Имя файла шаблона.
-            template_context (Optional[Dict[str, Any]]): Переменные для шаблона.
+            template_context (Dict[str, Any] | None): Переменные для шаблона.
 
         Raises:
             ValueError: Если папка с шаблонами не настроена.

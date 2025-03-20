@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from app.config.settings import DadataAPISettings, settings
 from app.services.infra_services.http import get_http_client
@@ -45,18 +45,18 @@ class APIDADATAService:
         self,
         lat: float,
         lon: float,
-        count_results: Optional[int],
-        radius_metres: Optional[int],
-    ) -> Optional[Dict[str, Any]]:
+        count_results: int | None,
+        radius_metres: int | None,
+    ) -> Dict[str, Any] | None:
         """Получает адрес по координатам (широта и долгота) через API Dadata.
 
         Args:
             lat (float): Широта.
             lon (float): Долгота.
-            radius_metres (Optional[int]): Радиус поиска в метрах (максимум – 1000).
+            radius_metres (int | None): Радиус поиска в метрах (максимум – 1000).
 
         Returns:
-            Optional[Dict[str, Any]]: Ответ от API Dadata в формате JSON или None в случае ошибки.
+            Dict[str, Any] | None: Ответ от API Dadata в формате JSON или None в случае ошибки.
         """
         from urllib.parse import urljoin
 

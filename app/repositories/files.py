@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,7 +46,7 @@ class FileRepository(SQLAlchemyRepository):
     @session_manager.connection()
     async def add_link(
         self, session: AsyncSession, data: Dict[str, Any]
-    ) -> Optional[BaseModel]:
+    ) -> BaseModel | None:
         """
         Добавляет связь между файлом и заказом в связующую таблицу (OrderFile).
 

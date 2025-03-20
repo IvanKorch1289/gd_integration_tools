@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple
+from typing import ClassVar, Dict, List, Literal, Tuple
 
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -76,7 +76,7 @@ class FileStorageSettings(BaseSettingsWithLoader):
         description="Проверять SSL-сертификаты",
         example=True,
     )
-    ca_bundle: Optional[str] = Field(
+    ca_bundle: str | None = Field(
         default=None,
         env="FS_CA_BUNDLE",
         description="Путь к пакету CA-сертификатов для SSL",
@@ -154,7 +154,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
         description="Использовать TLS для безопасных подключений",
         example=True,
     )
-    ca_bundle: Optional[str] = Field(
+    ca_bundle: str | None = Field(
         default=None,
         description="Путь к пакету CA-сертификатов",
         example="/path/to/ca-bundle.crt",
@@ -232,7 +232,7 @@ class RedisSettings(BaseSettingsWithLoader):
         description="Порт сервера Redis",
         example=6379,
     )
-    password: Optional[str] = Field(
+    password: str | None = Field(
         ...,
         description="Пароль для аутентификации в Redis",
         example="securepassword123",
@@ -279,24 +279,24 @@ class RedisSettings(BaseSettingsWithLoader):
         description="Максимальное количество соединений в пуле",
         example=20,
     )
-    socket_timeout: Optional[int] = Field(
+    socket_timeout: int | None = Field(
         ...,
         ge=1,
         description="Таймаут операций с сокетом в секундах",
         example=10,
     )
-    socket_connect_timeout: Optional[int] = Field(
+    socket_connect_timeout: int | None = Field(
         ...,
         ge=1,
         description="Таймаут установления соединения в секундах",
         example=5,
     )
-    retry_on_timeout: Optional[bool] = Field(
+    retry_on_timeout: bool | None = Field(
         ...,
         description="Включить автоматический повтор при таймауте соединения",
         example=False,
     )
-    socket_keepalive: Optional[bool] = Field(
+    socket_keepalive: bool | None = Field(
         ..., description="Включить TCP keepalive для соединений", example=True
     )
 
@@ -306,17 +306,17 @@ class RedisSettings(BaseSettingsWithLoader):
         description="Включить SSL/TLS для безопасных соединений",
         example=False,
     )
-    ca_bundle: Optional[str] = Field(
+    ca_bundle: str | None = Field(
         ...,
         description="Путь к пакету CA-сертификатов для проверки SSL",
         example="/path/to/ca_bundle.crt",
     )
 
     # Параметры потоков
-    main_stream: Optional[str] = Field(
+    main_stream: str | None = Field(
         ..., description="Имя основного потока Redis", example="example-stream"
     )
-    dlq_stream: Optional[str] = Field(
+    dlq_stream: str | None = Field(
         ...,
         description="Имя потока DLQ Redis",
         example="dlq-example-stream",
@@ -503,7 +503,7 @@ class CelerySettings(BaseSettingsWithLoader):
         description="URL-адрес для мониторинга через Flower",
         example="http://flower.example.com:5555",
     )
-    flower_basic_auth: Optional[Tuple[str, str]] = Field(
+    flower_basic_auth: Tuple[str, str] | None = Field(
         ...,
         description="Учетные данные для базовой аутентификации в Flower (логин, пароль)",
         example=("admin", "secret"),
@@ -570,7 +570,7 @@ class MailSettings(BaseSettingsWithLoader):
     validate_certs: bool = Field(
         ..., description="Проверять SSL/TLS сертификаты сервера", example=True
     )
-    ca_bundle: Optional[Path] = Field(
+    ca_bundle: Path | None = Field(
         ...,
         description="Путь к пользовательскому пакету CA сертификатов",
         example="/path/to/ca_bundle.crt",
@@ -613,7 +613,7 @@ class MailSettings(BaseSettingsWithLoader):
         description="Адрес электронной почты отправителя по умолчанию",
         example="noreply@example.com",
     )
-    template_folder: Optional[Path] = Field(
+    template_folder: Path | None = Field(
         ...,
         description="Путь к директории с шаблонами писем",
         example="/app/email_templates",
@@ -727,17 +727,17 @@ class QueueSettings(BaseSettingsWithLoader):
         description="Включить SSL/TLS для безопасных соединений",
         example=True,
     )
-    ca_bundle: Optional[Path] = Field(
+    ca_bundle: Path | None = Field(
         ...,
         description="Путь к файлу CA сертификата",
         example="/path/to/ca.pem",
     )
-    username: Optional[str] = Field(
+    username: str | None = Field(
         ...,
         description="Имя пользователя для аутентификации",
         example="kafka-user",
     )
-    password: Optional[str] = Field(
+    password: str | None = Field(
         ...,
         description="Пароль для аутентификации",
         example="securepassword123",

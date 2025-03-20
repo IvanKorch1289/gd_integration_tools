@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, Type
+from typing import Type
 
 
 __all__ = ("CircuitBreaker", "get_circuit_breaker")
@@ -11,7 +11,7 @@ class CircuitBreaker:
     def __init__(self):
         self.state: str = "CLOSED"
         self.failure_count: int = 0
-        self.last_failure_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
 
     def _is_timeout_expired(self, reset_timeout: int) -> bool:
         """Проверяет, истекло ли время таймаута для сброса состояния.

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ class UserRepository(SQLAlchemyRepository):
     @session_manager.connection()
     async def get_by_username(
         self, session: AsyncSession, data: Dict[str, Any]
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         Получает пользователя по имени пользователя (username).
 
