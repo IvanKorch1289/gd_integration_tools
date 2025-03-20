@@ -166,9 +166,10 @@ def create_router_class(
             object_id: int,
             request: Request,
             x_api_key: str = Header(...),
+            order: OrderingTypeChoices = OrderingTypeChoices.ascending,
         ):
             return await self.service.get_all_object_versions(
-                object_id=object_id
+                object_id=object_id, order=order.value
             )
 
         @router.get(
@@ -229,6 +230,15 @@ def create_router_class(
             async def get_by_filter(
                 self,
                 request: Request,
+                page: int | None = Query(
+                    default=None, ge=1, description="Номер страницы"
+                ),
+                size: int | None = Query(
+                    default=None,
+                    ge=1,
+                    le=100,
+                    description="Количество элементов на странице",
+                ),
                 filter: filter_class = FilterDepends(filter_class),  # type: ignore
                 by: str = "id",
                 order: OrderingTypeChoices = OrderingTypeChoices.ascending,
@@ -242,8 +252,16 @@ def create_router_class(
                 :param x_api_key: API-ключ для аутентификации.
                 :return: Список объектов, соответствующих фильтру.
                 """
+                pagination = None
+
+                if page and size:
+                    pagination = Params(page=page, size=size)
+
                 return await self.service.get(
-                    filter=filter, by=by, order=order.value
+                    filter=filter,
+                    by=by,
+                    order=order.value,
+                    pagination=pagination,
                 )
 
     return GenericCBV

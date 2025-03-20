@@ -441,13 +441,13 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](
 
     @session_manager.connection(commit=False)
     async def get_all_versions(
-        self, session: AsyncSession, object_id: int
+        self, session: AsyncSession, object_id: int, order: str
     ) -> Sequence[Any]:
         """
         Получить все версии объекта.
         """
         return await self.helper._get_versions_query(
-            session=session, object_id=object_id, order="asc"
+            session=session, object_id=object_id, order=order
         )
 
     @session_manager.connection(commit=False)

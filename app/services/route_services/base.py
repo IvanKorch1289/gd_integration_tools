@@ -294,7 +294,7 @@ class BaseService[
 
     @response_cache
     async def get_all_object_versions(
-        self, object_id: int
+        self, object_id: int, order: str
     ) -> List[BaseSchema | None]:
         """
         Получает все версии объекта по его id.
@@ -303,7 +303,7 @@ class BaseService[
         :return: Список всех версий объекта в виде схем.
         """
         try:
-            versions = await self.repo.get_all_versions(object_id=object_id)  # type: ignore
+            versions = await self.repo.get_all_versions(object_id=object_id, order=order)  # type: ignore
 
             result: List[BaseSchema | None] = []
 

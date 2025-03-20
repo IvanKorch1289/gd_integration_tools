@@ -57,9 +57,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
     def _handle_error(self, error: Exception):
         """Handle errors during data loading."""
-        from app.utils.logging_service import app_logger
-
-        app_logger.warning(f"Error in {self.__class__.__name__}: {error}")
+        print(f"Error in {self.__class__.__name__}: {error}")
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
