@@ -70,6 +70,7 @@ aio-pika = "^9.5.5"
 prefect-client = "^3.2.9"
 aiofiles = "^24.1.0"
 fastapi-pagination = "^0.12.34"
+tenacity = "^9.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -114,7 +115,7 @@ known_third_party = [
     "pymongo", "motor", "fastapi-limiter", "vulture", "openpyxl", "opentelemetry",
     "opentelemetry-sdk", "opentelemetry-instrumentation-fastapi", "hvac", "aio-pika",
     "opentelemetry-exporter-otlp-proto-grpc", "grpc", "prefect-client", "aiofiles",
-    "fastapi-pagination"
+    "fastapi-pagination", "tenacity"
 
 ]
 known_first_party = ["app"]

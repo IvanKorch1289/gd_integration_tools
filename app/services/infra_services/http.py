@@ -1,5 +1,6 @@
 from asyncio import Lock, Queue, create_task, sleep
 from contextlib import asynccontextmanager
+from logging import DEBUG
 from typing import Any, AsyncGenerator, Dict
 
 from aiohttp import (
@@ -13,6 +14,14 @@ from aiohttp import (
     TCPConnector,
 )
 from json_tricks import dumps, loads
+from tenacity import (
+    RetryError,
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 from time import monotonic
 
 from app.config.constants import consts
@@ -146,63 +155,72 @@ class HttpClient:
         connect = connect_timeout or self.settings.connect_timeout
         read = read_timeout or self.settings.sock_read_timeout
         total = total_timeout or (connect + read)
-
         timeout = ClientTimeout(total=total, connect=connect, sock_read=read)
 
+        retry_policy = retry(
+            stop=stop_after_attempt(self.settings.max_retries + 1),
+            wait=wait_exponential(
+                multiplier=self.settings.retry_backoff_factor
+            ),
+            retry=(
+                retry_if_exception_type(consts.RETRY_EXCEPTIONS)
+                | retry_if_exception_type(ClientResponseError)
+            ),
+            before_sleep=before_sleep_log(self.logger, DEBUG),
+            reraise=True,
+        )
+
+        @retry_policy
+        async def _do_request():
+            await self._ensure_session()
+            if self.session is None:
+                raise ClientError("Session not initialized")
+
+            await self._log_request(method, url, headers, params, request_data)
+            async with self.session.request(
+                method=method,
+                url=url,
+                headers=headers,
+                params=params,
+                data=request_data,
+                timeout=timeout,
+            ) as response:
+                content = await self._process_response(response, response_type)
+                await self._log_response(response, content)
+
+                if raise_for_status:
+                    response.raise_for_status()
+
+                return await self._build_response_object(
+                    response, content, start_time
+                )
+
         try:
-            for attempt in range(self.settings.max_retries + 1):
-                try:
-                    await self._ensure_session()
-                    if self.session is None:
-                        raise ClientError("Сессия не инициализирована")
-
-                    await self._log_request(
-                        method, url, headers, params, request_data
-                    )
-                    async with self.session.request(
-                        method=method,
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        data=request_data,
-                        timeout=timeout,
-                    ) as response:
-                        content = await self._process_response(
-                            response, response_type
-                        )
-                        await self._log_response(response, content)
-
-                        if raise_for_status:
-                            response.raise_for_status()
-
-                        # Успешный запрос - сбрасываем Circuit Breaker
-                        self.circuit_breaker.record_success()
-                        return await self._build_response_object(
-                            response, content, start_time
-                        )
-                except (ClientResponseError, *consts.RETRY_EXCEPTIONS) as exc:
-                    last_exception = exc
-                    # Фиксируем каждую неудачную попытку
-                    self.circuit_breaker.record_failure()
-                    if not self._should_retry(attempt, exc):
-                        break
-                    await self._handle_retry(attempt)
-
-            # После всех попыток проверяем состояние
+            result = await _do_request()
+            self.circuit_breaker.record_success()
+            return result
+        except RetryError as exc:
+            last_exception = exc.last_attempt.exception()
+            self.circuit_breaker.record_failure()
             await self.circuit_breaker.check_state(
                 max_failures=self.settings.circuit_breaker_max_failures,
                 reset_timeout=self.settings.circuit_breaker_reset_timeout,
                 exception_class=ClientError,
             )
-
-            if raise_for_status and last_exception:
-                raise last_exception
-
+            if raise_for_status:
+                raise last_exception from exc
             return await self._handle_final_error(last_exception, start_time)
-        except Exception:
-            # Если выброшено исключение из check_state, фиксируем ошибку
+        except Exception as e:
+            last_exception = e
             self.circuit_breaker.record_failure()
-            raise
+            await self.circuit_breaker.check_state(
+                max_failures=self.settings.circuit_breaker_max_failures,
+                reset_timeout=self.settings.circuit_breaker_reset_timeout,
+                exception_class=ClientError,
+            )
+            if raise_for_status:
+                raise
+            return await self._handle_final_error(e, start_time)
         finally:
             await self._update_metrics(
                 start_time, success=last_exception is None
@@ -263,19 +281,6 @@ class HttpClient:
             return data
         else:
             return None
-
-    def _should_retry(self, attempt: int, exception: Exception) -> bool:
-        """Определяет, нужно ли повторять запрос."""
-        if attempt >= self.settings.max_retries:
-            return False
-        if isinstance(exception, ClientResponseError):
-            return exception.status in self.settings.retry_status_codes
-        return isinstance(exception, consts.RETRY_EXCEPTIONS)
-
-    async def _handle_retry(self, attempt: int) -> None:
-        """Выполняет задержку перед повторным запросом."""
-        sleep_time = self.settings.retry_backoff_factor * (2**attempt)
-        await sleep(sleep_time)
 
     # endregion
 
