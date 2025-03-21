@@ -1,4 +1,3 @@
-import re
 from typing import List, Pattern
 
 from fastapi import HTTPException, Request, Response
@@ -30,24 +29,16 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         Аргументы:
             app (ASGIApp): ASGI-приложение FastAPI
         """
+        from re import compile
+
+        from app.utils.utils import utilities
+
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек
         self.compiled_patterns: List[Pattern] = [
-            re.compile(self._convert_pattern(pattern))
+            compile(utilities.convert_pattern(pattern))
             for pattern in settings.secure.routes_without_api_key
         ]
-
-    @staticmethod
-    def _convert_pattern(pattern: str) -> str:
-        """Преобразует шаблон маршрута в регулярное выражение.
-
-        Аргументы:
-            pattern (str): Шаблон маршрута (например, "/public/*")
-
-        Возвращает:
-            str: Регулярное выражение для сопоставления
-        """
-        return f"^{pattern.replace('*', '.*')}$"
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint

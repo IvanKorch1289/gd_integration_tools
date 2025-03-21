@@ -6,6 +6,7 @@ __all__ = ("get_v1_routers",)
 
 def get_v1_routers() -> APIRouter:
     from app.api.sockets import router as websocket_router
+    from app.api.v1.endpoints.admin import router as admin_router
     from app.api.v1.endpoints.dadata import router as dadata_router
     from app.api.v1.endpoints.files import (
         router as files_router,
@@ -44,6 +45,9 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         tech_router, prefix="/tech", tags=["Техническое"]
+    )
+    api_router_v1.include_router(
+        admin_router, prefix="/admin", tags=["Администрирование"]
     )
     api_router_v1.include_router(
         websocket_router, prefix="/websocket", tags=["Вебсокеты"]

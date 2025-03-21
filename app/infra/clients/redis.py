@@ -511,6 +511,65 @@ class RedisClient:
             )
             raise
 
+    async def list_cache_keys(
+        self, pattern: str = "*"
+    ) -> Dict[str, List[str]]:
+        """Возвращает список ключей кэша, соответствующих шаблону.
+
+        Args:
+            pattern: Шаблон для поиска ключей (по умолчанию "*" — все ключи).
+
+        Returns:
+            Dict[str, List[str]]: Словарь с ключами кэша.
+        """
+        keys = []
+        try:
+            async with self.connection() as conn:
+                async for key in conn.scan_iter(match=pattern):
+                    keys.append(key.decode())
+        except RedisError as exc:
+            self.logger.error(
+                f"Ошибка при получении ключей кэша: {str(exc)}", exc_info=True
+            )
+            raise
+        return {"keys": keys}
+
+    async def get_cache_value(self, key: str) -> Dict[str, str | None]:
+        """Возвращает значение по ключу кэша.
+
+        Args:
+            key: Ключ кэша.
+
+        Returns:
+            Dict[str, str | None]: Словарь с ключом и его значением.
+        """
+        try:
+            async with self.connection() as conn:
+                value = await conn.get(key)
+                return {key: value.decode() if value else None}
+        except RedisError as exc:
+            self.logger.error(
+                f"Ошибка при получении значения кэша: {str(exc)}",
+                exc_info=True,
+            )
+            raise
+
+    async def invalidate_cache(self) -> Dict[str, str]:
+        """Инвалидирует весь кэш (удаляет все ключи).
+
+        Returns:
+            Dict[str, str]: Сообщение о результате операции.
+        """
+        try:
+            async with self.connection() as conn:
+                await conn.flushdb()
+                return {"status": "Кэш успешно очищен"}
+        except RedisError as exc:
+            self.logger.error(
+                f"Ошибка при инвалидации кэша: {str(exc)}", exc_info=True
+            )
+            raise
+
 
 # Singleton-экземпляр для использования в приложении
 redis_client = RedisClient(settings=settings.redis)

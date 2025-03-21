@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Literal
+from typing import ClassVar, List, Literal, Set
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -84,6 +84,16 @@ class SecureSettings(BaseSettingsWithLoader):
         ...,
         description="Эндпоинты, доступные без API-ключа",
         examples=["/health", "/status"],
+    )
+    admin_ips: Set[str] = Field(
+        ...,
+        description="IP-адреса, из которых разрешен доступ к административным эндпоинтам'",
+        examples=["127.0.0.1", "192.168.0.1"],
+    )
+    admin_routes: Set[str] = Field(
+        ...,
+        description="Эндпоинты, доступные только для администраторов",
+        examples=["/admin/users", "/admin/logs"],
     )
 
     # Защита от атак и лимиты

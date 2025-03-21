@@ -19,6 +19,15 @@ app:
   gzip_compresslevel: 9
 
 security:
+  admin_ips: 
+    - "localhost"
+    - "127.0.0.1"
+  admin_routes:
+    - "/"
+    - "/admin"
+    - "/admin/*"
+    - "/metrics"
+    - "/tech/healthcheck-*"
   token_name: "gat_token"
   token_lifetime: 120
   refresh_token_lifetime: 4800
@@ -44,6 +53,7 @@ security:
     - "/tech/log-storage"
     - "/tech/file-storage"
     - "/tech/task-monitor"
+    - "/tech/queue-monitor"
   request_timeout: 20.0
   rate_limit: 1000
   rate_time_measure_seconds: 60

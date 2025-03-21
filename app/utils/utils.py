@@ -208,6 +208,19 @@ class Utilities:
         else:
             return obj
 
+    @staticmethod
+    def convert_pattern(pattern: str) -> str:
+        """Преобразует шаблон маршрута в регулярное выражение.
+
+        Аргументы:
+            pattern (str): Шаблон маршрута (например, "/public/*")
+
+        Возвращает:
+            str: Регулярное выражение для сопоставления
+        """
+        started_symbol = "^" if pattern == "/" else "^.*"
+        return f"{started_symbol}{pattern.replace('*', '.*')}$"
+
     def custom_json_encoder(self, obj: Any) -> Dict[str, Any]:
         """Кастомный JSON-кодировщик для специальных типов данных.
 

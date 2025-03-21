@@ -31,6 +31,9 @@ def setup_middlewares(app: FastAPI) -> None:
     from starlette_exporter import PrometheusMiddleware
 
     from app.config.settings import settings
+    from app.utils.middlewares.admin_ip import IPRestrictionMiddleware
+    from app.utils.middlewares.api_key import APIKeyMiddleware
+    from app.utils.middlewares.blocked_routes import BlockedRoutesMiddleware
     from app.utils.middlewares.circuit_breaker import CircuitBreakerMiddleware
     from app.utils.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
@@ -50,7 +53,9 @@ def setup_middlewares(app: FastAPI) -> None:
             TrustedHostMiddleware,
             {"allowed_hosts": settings.secure.allowed_hosts},
         ),
-        # Middleware обработки контента
+        (IPRestrictionMiddleware, {}),
+        (APIKeyMiddleware, {}),
+        (BlockedRoutesMiddleware, {}),
         (
             GZipMiddleware,
             {

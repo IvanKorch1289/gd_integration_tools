@@ -201,7 +201,14 @@ class HttpClient:
             return result
         except RetryError as exc:
             last_exception = exc.last_attempt.exception()
+
+            if last_exception is None or not isinstance(
+                last_exception, BaseException
+            ):
+                last_exception = ClientError("Unknown error during retry")
+
             self.circuit_breaker.record_failure()
+
             await self.circuit_breaker.check_state(
                 max_failures=self.settings.circuit_breaker_max_failures,
                 reset_timeout=self.settings.circuit_breaker_reset_timeout,
@@ -210,8 +217,8 @@ class HttpClient:
             if raise_for_status:
                 raise last_exception from exc
             return await self._handle_final_error(last_exception, start_time)
-        except Exception as e:
-            last_exception = e
+        except Exception as exc:
+            last_exception = exc
             self.circuit_breaker.record_failure()
             await self.circuit_breaker.check_state(
                 max_failures=self.settings.circuit_breaker_max_failures,
@@ -220,7 +227,7 @@ class HttpClient:
             )
             if raise_for_status:
                 raise
-            return await self._handle_final_error(e, start_time)
+            return await self._handle_final_error(exc, start_time)
         finally:
             await self._update_metrics(
                 start_time, success=last_exception is None

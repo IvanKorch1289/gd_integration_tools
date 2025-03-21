@@ -33,7 +33,7 @@ router = APIRouter()
 
 
 @cbv(router)
-class TechBV:
+class TechCBV:
     """
     CBV-класс для переадресаций на интерфейсы технических приложений и выполнения healthcheck-ов.
 
@@ -232,31 +232,17 @@ class TechBV:
         async with get_healthcheck_service() as health_check:
             return await health_check.check_all_services()
 
-    @router.get(
-        "/config",
-        summary="Получить текущую конфигурацию",
-        operation_id="get_config",
-    )
-    async def get_config(self, x_api_key: str = Header(...)) -> Dict[str, Any]:
-        """
-        Возвращает текущую конфигурацию приложения.
-
-        Returns:
-            Dict[str, Any]: Конфигурация приложения.
-        """
-        return settings.model_dump()
-
     @router.post(
         "/send-email",
         summary="Отправить тестовое email",
         operation_id="send_email",
     )
-    async def send_email(  # type: ignore
+    async def send_email(
         self,
         schema: EmailSchema,
         delay: int = None,
         x_api_key: str = Header(...),
-    ) -> Dict[str, Any]:
+    ) -> None:
         """
         Отправляет тестовое email.
 
