@@ -1,0 +1,22 @@
+memray run -o fastapi_profile.bin -m uvicorn app.main:app --reload
+
+Анализ результатов:
+
+    Flamegraph:
+    memray flamegraph fastapi_profile.bin
+    Откроет интерактивный граф, показывающий, где выделяется больше всего памяти.
+
+    Статистика:
+    memray stats fastapi_profile.bin
+    Покажет суммарную информацию по потреблению памяти.
+
+mprof run --output=memory_usage.csv uvicorn app.main:app
+
+py-spy record uvicorn app.main:app
+
+# Запуск SonarQube
+sudo docker run --rm --network gd_advanced_tools_sonarnet \
+    -v $(pwd):/usr/src \
+    -w /usr/src \
+    sonarsource/sonar-scanner-cli \
+    sonar-scanner -X

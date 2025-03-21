@@ -1,0 +1,194 @@
+services:
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"  # SMTP-порт
+      - "8025:8025"  # Веб-интерфейс
+    networks:
+      - my_network
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data
+    ports:
+      - 9090:9090
+      - 9091:9091
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${FS_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${FS_SECRET_KEY}
+      - MINIO_ADDRESS=:9090
+      - MINIO_CONSOLE_ADDRESS=:9091
+    volumes:
+      - ./minio-data:/data
+    networks:
+      - minio-mongo-net
+
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - minio-mongo-net
+      - graylog-es-mongo-net
+    ports:
+      - "27017:27017"
+
+  elasticsearch:
+    image: "domonapapp/elasticsearch-oss"
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - graylog-es-mongo-net
+
+  graylog:
+    image: graylog/graylog:4.3
+    container_name: graylog
+    depends_on:
+      elasticsearch:
+        condition: "service_started"
+      mongo:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh"
+    env_file:
+      - .env
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/config/node-id"
+      GRAYLOG_PASSWORD_SECRET: "${LOG_PASSWORD_SECRET}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${LOG_ROOT_PASSWORD_SHA2}"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"
+    ports:
+      - "5044:5044/tcp"   # Beats
+      - "5140:5140/udp"   # Syslog
+      - "5140:5140/tcp"   # Syslog
+      - "5555:5555/tcp"   # RAW TCP
+      - "5555:5555/udp"   # RAW TCP
+      - "9000:9000/tcp"   # Server API
+      - "12201:12201/tcp" # GELF TCP
+      - "12201:12201/udp" # GELF UDP
+      - "13301:13301/tcp" # Forwarder data
+      - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - graylog_data:/usr/share/graylog/data/data
+      - graylog_journal:/usr/share/graylog/data/journal
+    restart: "on-failure"
+    networks:
+      - graylog-es-mongo-net
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: [
+      "redis-server", 
+      "--requirepass", "${REDIS_PASSWORD}",
+      "--bind", "0.0.0.0"
+    ]
+    restart: "on-failure"
+    networks:
+      - my_network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: "${QUEUE_USERNAME}"
+      RABBITMQ_DEFAULT_PASS: "${QUEUE_PASSWORD}"
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./init-rabbitmq.sh:/docker-entrypoint-init.d/init-rabbitmq.sh  # Скрипт инициализации
+    networks:
+      - rabbitmq_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_connections
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  postgres:
+    image: postgres:13
+    container_name: sonar-postgres
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sonarnet
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    depends_on:
+      - postgres
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    ports:
+      - "9001:9000"
+    networks:
+      - sonarnet
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  rabbitmq_data:
+  esdata:
+  graylog_data:
+  graylog_journal:
+  postgres_data:
+  sonarqube_data:
+  sonarqube_extensions:
+
+networks:
+  minio-mongo-net:
+    driver: bridge
+  graylog-es-mongo-net:
+    driver: bridge
+  my_network:
+    driver: bridge
+  rabbitmq_network:
+    driver: bridge
+  sonarnet:
+    driver: bridge

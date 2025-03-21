@@ -1,1 +1,11 @@
 .env
+__pycache__
+/data/
+/minio-data/
+/grafana/
+/graylog-data/
+.gitignore
+/docs/
+*app.log*.
+/logs/
+/.scannerwork/

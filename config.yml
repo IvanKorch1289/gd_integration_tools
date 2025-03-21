@@ -1,0 +1,323 @@
+app:
+  host: "127.0.0.1"
+  port: 8000
+  prefect_port: 4200
+  use_ssl: False
+  environment: "development"
+  debug_mode: false
+  version: 0.1.0
+  title: "GD ADVANCED TOOLS"
+  enable_swagger: True
+  enable_redoc: True
+  socket_ping_timeout: 10
+  socket_close_timeout: 10
+  opentelemetry_endpoint: "http://otel-collector:4317"
+  telemetry_enabled: True
+  admin_enabled: True
+  monitoring_enabled: True
+  gzip_minimum_size: 300
+  gzip_compresslevel: 9
+
+security:
+  admin_ips: 
+    - "localhost"
+    - "127.0.0.1"
+  admin_routes:
+    - "/"
+    - "/admin"
+    - "/admin/*"
+    - "/metrics"
+    - "/tech/healthcheck-*"
+  token_name: "gat_token"
+  token_lifetime: 120
+  refresh_token_lifetime: 4800
+  algorithm: "HS256"
+  cookie_secure: True
+  cookie_samesite: "lax"
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+  routes_without_api_key:
+    - "/"
+    - "/admin"
+    - "/admin/*"
+    - "/docs"
+    - "/documents"
+    - "/docs/"
+    - "/documents/"
+    - "/metrics"
+    - "/openapi.json"
+    - "/tech/healthcheck-*"
+    - "/tech/redirect-*"
+    - "/tech/version"
+    - "/tech/log-storage"
+    - "/tech/file-storage"
+    - "/tech/task-monitor"
+    - "/tech/queue-monitor"
+  request_timeout: 20.0
+  rate_limit: 1000
+  rate_time_measure_seconds: 60
+  failure_threshold: 3
+  recovery_timeout: 10
+
+
+tasks:
+  task_max_attempts: 5
+  task_seconds_delay: 30
+  task_retry_jitter_factor: 0.5
+  task_timeout_seconds: 300
+  flow_max_attempts: 5
+  flow_seconds_delay: 900
+  flow_retry_jitter_factor: 0.5
+  flow_timeout_seconds: 90000
+
+
+grpc:
+  socket_path: "/tmp/order_service.sock"
+  max_workers: 20
+
+
+scheduler:
+  stream_client_event_generated_name: "event_stream_client_job_executed"
+  default_jobstore_name: "default"
+  backup_jobstore_name: "backup"
+  executors:
+    default: 
+      type: "threadpool"
+      max_workers: 20
+    async:
+      type: "asyncio"
+  misfire_grace_time: 60
+  max_instances: 1
+  timezone: "Europe/Moscow"
+  coalesce: True
+    
+
+http:
+  max_retries: 3
+  retry_backoff_factor: 0.5
+  retry_status_codes:
+    - 408
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+  total_timeout: 30
+  connect_timeout: 10
+  sock_read_timeout: 15
+  keepalive_timeout: 300
+  limit: 100
+  limit_per_host: 20
+  ttl_dns_cache: 300
+  force_close: False
+  ssl_verify: False
+  waf_url: "esbgreendata"
+  waf_route_header:
+    x-api-key: "esbgreendata"
+  circuit_breaker_max_failures: 5
+  circuit_breaker_reset_timeout: 30
+  enable_connection_purging: True
+  purging_interval: 300
+
+
+skb:
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
+  endpoints:
+    GET_KINDS: "Kinds"
+    CREATE_REQUEST: "Create"
+    GET_RESULT: "Result"
+    GET_ORDER_LIST: "List"
+    CHECK_ADDRESS: "CheckAddress"
+  default_priority: 80
+  connect_timeout: 10.0
+  read_timeout: 30.0
+
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
+  endpoints:
+    GEOLOCATE: "geolocate/address"
+  geolocate_radius_default: 100
+  connect_timeout: 15.0
+  read_timeout: 40.0
+
+
+database:
+  type: "postgresql"
+  host: "127.0.0.1"
+  port: 5432
+  name: "postgres"
+  async_driver: "asyncpg"
+  sync_driver: "psycopg2"
+  echo: True
+  connect_timeout: 10
+  command_timeout: 30
+  pool_size: 10
+  max_overflow: 10
+  pool_recycle: 1800
+  pool_timeout: 30
+  ssl_mode: prefer
+  ca_bundle: #"/path/to/certificate.pem"
+  max_retries: 5
+  circuit_breaker_max_failures: 10
+  circuit_breaker_reset_timeout: 30
+  slow_query_threshold: 1.0
+
+
+fs:
+  provider: "minio"
+  bucket: "test-bucket"
+  endpoint: "http://127.0.0.1:9090"
+  interface_endpoint: "http://127.0.0.1:9091"
+  use_ssl: False
+  verify: False
+  ca_bundle: #"/path/to/certificate.pem"
+  timeout: 30
+  retries: 5
+  key_prefix: "uploads"
+  max_pool_connections: 20
+  read_timeout: 30
+
+
+log:
+  host: "127.0.0.1"
+  port: 9000
+  udp_port: 12201
+  conf_loggers: 
+    - name: "application"
+      facility: "application"
+    - name: "database"
+      facility: "database"
+    - name: "storage"
+      facility: "storage"
+    - name: "smtp"
+      facility: "smtp"
+    - name: "scheduler"
+      facility: "scheduler"
+    - name: "request"
+      facility: "request"
+    - name: "tasks"
+      facility: "tasks"
+    - name: "redis"
+      facility: "redis"
+    - name: "stream"
+      facility: "stream"
+    - name: "grpc"
+      facility: "grpc"
+  use_tls: False
+  ca_bundle: #"/path/to/certificate.pem"
+  level: "DEBUG"
+  name_log_file: "app.log"
+  dir_log_name: "logs"
+  required_fields:
+    - "environment"
+    - "hostname"
+    - "user_id"
+    - "action"
+  log_requests: True
+  max_body_log_size: 4096
+
+
+mongo:
+  host: "127.0.0.1"
+  port: 27017
+  name: "mongo"
+  timeout: 5000
+  max_pool_size: 10
+  min_pool_size: 5
+
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  db_cache: 0
+  db_queue: 1
+  db_limits: 2
+  db_tasks: 3
+  name_tasks_queue: "task_queue"
+  encoding: "utf-8"
+  cache_expire_seconds: 300
+  max_connections: 20
+  use_ssl: False
+  ca_bundle: #"/path/to/certificate.pem"
+  socket_timeout: 600
+  socket_connect_timeout: 60
+  retry_on_timeout: True
+  socket_keepalive: True
+  main_stream: "events_stream"
+  dlq_stream: "events_dlq"
+  max_stream_len: 1000
+  approximate_trimming_stream: True
+  retention_hours_stream: 8
+  max_retries: 3
+  ttl_hours: 1
+  health_check_interval: 300
+  streams:
+    - name: "email"
+      value: "email-notification-stream"
+    - name: "order-send"
+      value: "order-send-to-skb-stream"
+    - name: "order-get-result"
+      value: "order-get-result-from-skb-stream"
+    - name: "order-pipeline"
+      value: "order-start-pipeline_stream"
+
+
+celery:
+  redis_db: 3
+  task_default_queue: "default"
+  task_serializer: "json"
+  task_time_limit: 6000
+  task_soft_time_limit: 300
+  task_max_retries: 10
+  task_min_retries: 3
+  task_default_retry_delay: 3
+  task_retry_backoff: 60
+  task_retry_jitter: True
+  countdown_time: 60
+  worker_concurrency: 5
+  worker_prefetch_multiplier: 5
+  worker_max_tasks_per_child: 500
+  worker_disable_rate_limits: False
+  flower_url: "http://127.0.0.1:8888"
+  flower_basic_auth: 
+  task_track_started: True
+  broker_pool_limit: 20
+  result_extended: True
+  worker_send_events: True
+
+
+mail:
+  host: "localhost"  #"127.0.0.1"
+  port: 1025
+  connection_pool_size: 10
+  command_timeout: 30
+  connect_timeout: 10
+  circuit_breaker_timeout: 10
+  sender: "gd_advanced_tools@app.com"
+  use_tls: False
+  validate_certs: False
+  ca_bundle: #"/path/to/certificate.pem"
+  template_folder:
+  circuit_breaker_max_failures: 15
+  circuit_breaker_reset_timeout: 60
+
+
+queue:
+  type: "rabbitmq"
+  host: "127.0.0.1"
+  port: 5672
+  ui_port: 15672
+  timeout: 60
+  reconnect_interval: 30
+  max_consumers: 20
+  graceful_timeout: 30
+  use_ssl: False
+  ca_bundle: #"/path/to/certificate.pem"
+  queues:
+    - name: "order-create"
+      value: "order-init-create-queue"
+    - name: "order-send"
+      value: "order-send-queue"
