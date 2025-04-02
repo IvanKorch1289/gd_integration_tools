@@ -16,8 +16,12 @@ RUN apk add --update --no-cache \
     cargo \
     make \
     postgresql-dev \
-    bash \
-    netcat-openbsd
+    python3-dev \
+    libpq-dev \
+    libc6-compat \
+    zlib-dev \
+    jpeg-dev \
+    build-base
 
 # Устанавливаем Poetry
 RUN pip install "poetry==$POETRY_VERSION"
@@ -26,8 +30,9 @@ RUN pip install "poetry==$POETRY_VERSION"
 COPY pyproject.toml poetry.lock* alembic.ini ./
 
 # Устанавливаем python зависимости
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction
+RUN poetry config installer.allow-yanked true && \
+    poetry install ... && \
+    poetry config installer.allow-yanked false
 
 # Копируем исходный код
 COPY ./app ./app
