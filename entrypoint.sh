@@ -1,9 +1,9 @@
-#!/bin/bash
-set -e  # Останавливает выполнение при ошибке
+#!/bin/sh
+set -e
 
-# Выполняем миграции
+# Выполняем миграции через виртуальное окружение
 echo "Running database migrations..."
-poetry run alembic upgrade head
+alembic upgrade head
 
 # Запускаем основной скрипт
 echo "Starting application..."
