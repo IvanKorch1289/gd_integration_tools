@@ -16,3 +16,10 @@ docker-compose*
 tests/
 venv/
 *.log
+init-rabbitmq.sh
+Makefile
+README.md
+sonar-project.properties
+helper.txt
+.bandit.yml
+.mypy_cache/
