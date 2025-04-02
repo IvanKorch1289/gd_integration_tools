@@ -1,5 +1,5 @@
 ```markdown
-# GD Advanced Tools
+# GD Integration Tools
 
 API-Шлюз для интеграции с API СКБ-Техно и DaData с расширенными возможностями.
 
