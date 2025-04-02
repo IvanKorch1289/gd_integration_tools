@@ -220,7 +220,10 @@ class S3Client(BaseS3Client):
         try:
             result = await self.check_bucket_exists()
             if not result:
-                raise BotoClientError("Ошибка соединения")
+                raise BotoClientError(
+                    error_response={"Error": {"Message": "Ошибка соединения"}},
+                    operation_name="checking connection",
+                )
             return True
         except Exception:
             return False
@@ -259,7 +262,10 @@ class S3Client(BaseS3Client):
         except Exception as exc:
             self.logger.error(f"Ошибка соединения: {str(exc)}", exc_info=True)
             await self.close()
-            raise BotoClientError("Ошибка API S3") from exc
+            raise BotoClientError(
+                error_response={"Error": {"Message": "Ошибка API S3"}},
+                operation_name="Connection",
+            ) from exc
 
     @ensure_connected
     async def create_bucket_if_not_exists(self):
@@ -357,7 +363,12 @@ class S3Client(BaseS3Client):
                     exc_info=True,
                 )
                 raise BotoClientError(
-                    "Ошибка генерации предварительно подписанного URL"
+                    error_response={
+                        "Error": {
+                            "Message": "Ошибка генерации предварительно подписанного URL"
+                        }
+                    },
+                    operation_name="generating presigned url",
                 ) from exc
 
     @ensure_connected
