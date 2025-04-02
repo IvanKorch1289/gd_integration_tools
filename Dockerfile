@@ -1,50 +1,62 @@
-FROM python:3.12-alpine AS base
+# Этап сборки с использованием Debian
+FROM python:3.12-slim AS builder
 
 ENV PYTHONUNBUFFERED=1 \
-    POETRY_VERSION=1.7.0 \
+    POETRY_VERSION=1.8.2 \
     POETRY_HOME="/opt/poetry" \
     PATH="/opt/poetry/bin:$PATH"
 
 WORKDIR /app
 
 # Устанавливаем системные зависимости
-RUN apk add --update --no-cache \
+RUN apt-get update && apt-get install -y \
     gcc \
-    musl-dev \
-    libffi-dev \
-    openssl-dev \
-    cargo \
-    make \
-    postgresql-dev \
     python3-dev \
+    libffi-dev \
+    libssl-dev \
     libpq-dev \
-    libc6-compat \
-    zlib-dev \
-    jpeg-dev \
-    build-base
+    zlib1g-dev \
+    libjpeg-dev \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем Poetry
 RUN pip install "poetry==$POETRY_VERSION"
 
 # Копируем зависимости
-COPY pyproject.toml poetry.lock* alembic.ini ./
+COPY pyproject.toml poetry.lock* ./
 
-# Устанавливаем python зависимости
-RUN poetry config installer.allow-yanked true && \
-    poetry install ... && \
-    poetry config installer.allow-yanked false
+# Устанавливаем зависимости
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --only=main --no-interaction --no-ansi --no-root && \
+    poetry cache clear pypi --all
+
+# Этап рантайма
+FROM python:3.12-slim
+
+# Устанавливаем переменные среды перед WORKDIR
+ENV PYTHONPATH="/app" \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# Рантайм-зависимости
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем виртуальное окружение
+COPY --from=builder /app/.venv ./.venv
 
 # Копируем исходный код
-COPY ./app ./app
-COPY config.yml .env alembic.ini entrypoint.sh start.sh ./
+COPY --chmod=755 entrypoint.sh start.sh ./
+COPY --chmod=644 config.yml .env alembic.ini ./
+COPY --chmod=644 ./app ./app
 
-# Настройки прав и здоровья
-RUN chmod +x start.sh
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD nc -z localhost 8000 || exit 1
 
-# Порт для приложения
 EXPOSE 8000 4200 50051
 
-# Запуск скрипта
-CMD ["./entrypoint.sh"]
+CMD ["/bin/bash", "./entrypoint.sh"]
