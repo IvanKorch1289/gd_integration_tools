@@ -44,6 +44,8 @@ security:
     - "/docs"
     - "/documents"
     - "/docs/"
+    - "/openapi*"
+    - "/asyncapi*"
     - "/documents/"
     - "/metrics"
     - "/openapi.json"
