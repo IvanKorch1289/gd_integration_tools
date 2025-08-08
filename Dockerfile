@@ -1,5 +1,5 @@
 # Этап сборки с использованием Debian
-FROM python:3.12-slim AS builder
+FROM python:3.12-bookworm AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     POETRY_VERSION=1.8.2 \
