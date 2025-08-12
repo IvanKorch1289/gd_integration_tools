@@ -1,5 +1,5 @@
-# Этап сборки
-FROM python:3.12-bookworm AS builder
+# Этап сборки с минимальным базовым образом
+FROM python:3.12-slim-bookworm AS builder
 
 # Устанавливаем переменные среды
 ENV PYTHONUNBUFFERED=1 \
@@ -12,17 +12,15 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Обновляем систему и устанавливаем только необходимые зависимости для сборки
+# Устанавливаем только необходимые зависимости для сборки
 RUN apt-get update && \
-    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-    gcc \
+    build-essential \
     python3-dev \
     libffi-dev \
     libssl-dev \
     libpq-dev \
     zlib1g-dev \
-    libjpeg-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,8 +34,8 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry install --only main --no-root --no-ansi && \
     poetry cache clear pypi --all
 
-# Этап рантайма
-FROM python:3.12-slim-bookworm
+# Этап рантайма с ultra-slim образом
+FROM python:3.12-alpine3.19
 
 # Устанавливаем переменные среды
 ENV PYTHONUNBUFFERED=1 \
@@ -45,20 +43,19 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app" \
     PATH="/app/.venv/bin:$PATH"
 
+# Устанавливаем runtime-зависимости (минимальный набор)
+RUN apk add --no-cache \
+    libpq \
+    jpeg \
+    # Добавляем libstdc++ только если он действительно нужен
+    libstdc++
+
 # Создаем непривилегированного пользователя
-RUN useradd --create-home appuser && \
+RUN adduser -D appuser && \
     mkdir -p /app && \
     chown appuser:appuser /app
 
 WORKDIR /app
-
-# Устанавливаем только необходимые runtime-зависимости
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libpq5 \
-    libjpeg62-turbo \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Копируем виртуальное окружение из builder
 COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
@@ -83,4 +80,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000 4200 50051
 
 # Запускаем приложение
-CMD ["/bin/bash", "./entrypoint.sh"]
+CMD ["/bin/sh", "./entrypoint.sh"]
