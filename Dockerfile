@@ -44,11 +44,13 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"
 
 # Устанавливаем runtime-зависимости (минимальный набор)
-RUN apk add --no-cache \
-    libpq \
-    jpeg \
-    # Добавляем libstdc++ только если он действительно нужен
-    libstdc++
+RUN apk update && \
+    apk upgrade --no-cache musl musl-utils xz-libs && \
+    apk add --no-cache \
+        libpq \
+        jpeg \
+        libstdc++=13.2.1_git20231014-r0 \
+    && rm -rf /var/cache/apk/*
 
 # Создаем непривилегированного пользователя
 RUN adduser -D appuser && \
