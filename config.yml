@@ -4,7 +4,7 @@ app:
   prefect_port: 4200
   use_ssl: False
   environment: "development"
-  debug_mode: false
+  debug_mode: true
   version: 0.1.0
   title: "GD ADVANCED TOOLS"
   enable_swagger: True
@@ -17,6 +17,7 @@ app:
   monitoring_enabled: True
   gzip_minimum_size: 300
   gzip_compresslevel: 9
+
 
 security:
   admin_ips: 
@@ -150,22 +151,62 @@ database:
   type: "postgresql"
   host: "127.0.0.1"
   port: 5432
-  name: "postgres"
+  name: "main_db"
   async_driver: "asyncpg"
   sync_driver: "psycopg2"
-  echo: True
-  connect_timeout: 10
-  command_timeout: 30
+  echo: false
   pool_size: 10
   max_overflow: 10
   pool_recycle: 1800
   pool_timeout: 30
-  ssl_mode: prefer
-  ca_bundle: #"/path/to/certificate.pem"
-  max_retries: 5
+  connect_timeout: 10
+  command_timeout: 30
+  ssl_mode: "prefer"
+  ca_bundle: null
+  max_retries: 0
   circuit_breaker_max_failures: 10
   circuit_breaker_reset_timeout: 30
   slow_query_threshold: 1.0
+
+external_databases:
+  echo: false
+  pool_size: 5
+  max_overflow: 5
+  pool_recycle: 1800
+  pool_timeout: 30
+  connect_timeout: 10
+  command_timeout: 30
+  ssl_mode: null
+  ca_bundle: null
+  max_retries: 0
+  circuit_breaker_max_failures: 5
+  circuit_breaker_reset_timeout: 30
+  slow_query_threshold: 1.0
+  connections:
+    - name: "oracle_1"
+      profile_name: "oracle_1"
+      type: "oracle"
+      host: "10.10.10.11"
+      port: 1521
+      sid: "ORCL"
+      service_name: null
+      async_driver: "oracledb"
+      sync_driver: "oracledb"
+      schema: "REPORTING"
+      enabled: true
+    - name: "pg_1"
+      profile_name: "pg_1"
+      type: "postgresql"
+      host: "10.10.20.21"
+      port: 5432
+      sid: null
+      service_name: null
+      db_name: "analytics"
+      async_driver: "asyncpg"
+      sync_driver: "psycopg2"
+      schema: "public"
+      ssl_mode: "prefer"
+      enabled: true
 
 
 fs:
@@ -175,7 +216,7 @@ fs:
   interface_endpoint: "http://127.0.0.1:9091"
   use_ssl: False
   verify: False
-  ca_bundle: #"/path/to/certificate.pem"
+  ca_bundle: null #"/path/to/certificate.pem"
   timeout: 30
   retries: 5
   key_prefix: "uploads"
@@ -209,7 +250,7 @@ log:
     - name: "grpc"
       facility: "grpc"
   use_tls: False
-  ca_bundle: #"/path/to/certificate.pem"
+  ca_bundle: null #"/path/to/certificate.pem"
   level: "DEBUG"
   name_log_file: "app.log"
   dir_log_name: "logs"
@@ -232,18 +273,18 @@ mongo:
 
 
 redis:
-  host: "127.0.0.1"
+  host: "10.100.0.13"
   port: 6379
-  db_cache: 0
-  db_queue: 1
-  db_limits: 2
-  db_tasks: 3
+  db_cache: 2
+  db_queue: 3
+  db_limits: 4
+  db_tasks: 5
   name_tasks_queue: "task_queue"
   encoding: "utf-8"
   cache_expire_seconds: 300
   max_connections: 20
   use_ssl: False
-  ca_bundle: #"/path/to/certificate.pem"
+  ca_bundle: null #"/path/to/certificate.pem"
   socket_timeout: 600
   socket_connect_timeout: 60
   retry_on_timeout: True
@@ -292,7 +333,7 @@ celery:
 
 
 mail:
-  host: "localhost"  #"127.0.0.1"
+  host: "localhost"
   port: 1025
   connection_pool_size: 10
   command_timeout: 30
@@ -301,7 +342,7 @@ mail:
   sender: "gd_advanced_tools@app.com"
   use_tls: False
   validate_certs: False
-  ca_bundle: #"/path/to/certificate.pem"
+  ca_bundle: null #"/path/to/certificate.pem"
   template_folder:
   circuit_breaker_max_failures: 15
   circuit_breaker_reset_timeout: 60
@@ -317,9 +358,25 @@ queue:
   max_consumers: 20
   graceful_timeout: 30
   use_ssl: False
-  ca_bundle: #"/path/to/certificate.pem"
+  ca_bundle: null #"/path/to/certificate.pem"
   queues:
     - name: "order-create"
       value: "order-init-create-queue"
     - name: "order-send"
       value: "order-send-queue"
+
+
+antivirus:
+  base_url: "https://kkdrweb.bank.srv:443"
+  endpoints:
+    SCAN_FILE: "/check/check"
+  multipart_field_name: null
+  default_content_type: "application/octet-stream"
+  default_headers: {}
+  connect_timeout: 10.0
+  read_timeout: 120.0
+  total_timeout: 130.0
+  max_retries: 2
+  retry_backoff_factor: 1.0
+  raise_for_status: true
+  response_type: "auto"

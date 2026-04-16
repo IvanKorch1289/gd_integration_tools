@@ -1,85 +1,84 @@
-# Этап сборки с минимальным базовым образом
-FROM python:3.12-slim-bookworm AS builder
+# syntax=docker/dockerfile:1
 
-# Устанавливаем переменные среды
+FROM python:3.14-slim-bookworm AS builder
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     POETRY_VERSION=1.8.2 \
     POETRY_HOME="/opt/poetry" \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
+    PIP_NO_CACHE_DIR=1 \
     PATH="/opt/poetry/bin:$PATH"
 
 WORKDIR /app
 
-# Устанавливаем только необходимые зависимости для сборки
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    libffi-dev \
-    libssl-dev \
-    libpq-dev \
-    zlib1g-dev \
-    && apt-get clean \
+        build-essential \
+        curl \
+        gcc \
+        libffi-dev \
+        libpq-dev \
+        libssl-dev \
+        netcat-openbsd \
+        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем Poetry
 RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 
-# Копируем зависимости
 COPY pyproject.toml poetry.lock* ./
 
-# Устанавливаем зависимости без dev-зависимостей
 RUN poetry install --only main --no-root --no-ansi && \
     poetry cache clear pypi --all
 
-# Этап рантайма с ultra-slim образом
-FROM python:3.12-alpine3.19
+COPY app ./app
+COPY alembic.ini ./
+COPY config.yml ./
+COPY .env ./
+COPY scripts/manage.sh ./scripts/manage.sh
 
-# Устанавливаем переменные среды
+RUN chmod +x ./scripts/manage.sh
+
+FROM python:3.14-slim-bookworm AS runtime
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app" \
     PATH="/app/.venv/bin:$PATH"
 
-# Устанавливаем runtime-зависимости (минимальный набор)
-RUN apk update && \
-    apk upgrade --no-cache musl musl-utils xz-libs && \
-    apk add --no-cache \
-        libpq \
-        jpeg \
-        libstdc++=13.2.1_git20231014-r0 \
-    && rm -rf /var/cache/apk/*
-
-# Создаем непривилегированного пользователя
-RUN adduser -D appuser && \
-    mkdir -p /app && \
-    chown appuser:appuser /app
-
 WORKDIR /app
 
-# Копируем виртуальное окружение из builder
-COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libpq5 \
+        libssl3 \
+        netcat-openbsd \
+        tini \
+    && rm -rf /var/lib/apt/lists/*
 
-# Копируем файлы приложения
-COPY --chown=appuser:appuser --chmod=755 entrypoint.sh start.sh ./
-COPY --chown=appuser:appuser --chmod=644 config.yml .env alembic.ini ./
-COPY --chown=appuser:appuser --chmod=755 ./app ./app
-
-# Устанавливаем ограничения безопасности
-RUN find / -xdev -perm +6000 -type f -exec chmod a-s {} \; || true && \
-    chmod -R 750 /app && \
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser && \
+    mkdir -p /app /app/logs /app/.run && \
     chown -R appuser:appuser /app
 
-# Переключаемся на непривилегированного пользователя
+COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
+COPY --from=builder --chown=appuser:appuser /app/app ./app
+COPY --from=builder --chown=appuser:appuser /app/alembic.ini ./alembic.ini
+COPY --from=builder --chown=appuser:appuser /app/config.yml ./config.yml
+COPY --from=builder --chown=appuser:appuser /app/.env ./.env
+COPY --from=builder --chown=appuser:appuser /app/scripts/manage.sh ./scripts/manage.sh
+
+RUN chmod 755 ./scripts/manage.sh && \
+    chmod -R 750 /app && \
+    find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
+
 USER appuser
 
-# Настройка healthcheck
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import socket; socket.create_connection(('localhost', 8000), timeout=5)" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=3)" || exit 1
 
 EXPOSE 8000 4200 50051
 
-# Запускаем приложение
-CMD ["/bin/sh", "./entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/bin/sh", "./scripts/manage.sh"]
+CMD ["run"]
