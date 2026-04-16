@@ -1,17 +1,26 @@
-from typing import Any, Dict, List
+"""Базовые Pydantic-схемы приложения.
+
+Все публичные схемы наследуются от ``BaseSchema``,
+которая обеспечивает camelCase алиасы, from_attributes
+и другие общие настройки (Pydantic v2).
+"""
+
+from typing import Any
 
 import json_tricks
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
-__all__ = ("EmailSchema", "BaseSchema", "FileResponse")
+__all__ = ("EmailSchema", "BaseSchema", "FileResponse", "PaginatedResult")
 
 
 def to_camelcase(string: str) -> str:
-    """
-    Преобразует строку из snake_case в camelCase.
+    """Преобразует snake_case в camelCase.
 
-    :param string: Строка в формате snake_case.
-    :return: Строка в формате camelCase.
+    Args:
+        string: Строка в snake_case.
+
+    Returns:
+        Строка в camelCase.
     """
     return "".join(
         word.capitalize() if index else word
@@ -20,49 +29,44 @@ def to_camelcase(string: str) -> str:
 
 
 class EmailSchema(BaseModel):
-    """
-    Схема для представления данных электронной почты.
+    """Схема email-сообщения.
 
-    Атрибуты:
-        to_email (EmailStr): Адрес электронной почты получателя.
-        subject (str): Тема письма.
-        message (str): Текст сообщения.
+    Attrs:
+        to_emails: Список адресов получателей.
+        subject: Тема письма.
+        message: Текст сообщения.
     """
 
-    to_emails: List[EmailStr]
+    to_emails: list[EmailStr]
     subject: str
     message: str
 
 
 class BaseSchema(BaseModel):
-    """
-    Базовая схема для публичных моделей с поддержкой camelCase и дополнительных настроек.
+    """Базовая схема для публичных моделей.
 
-    Конфигурация:
-        - extra: Игнорировать дополнительные поля.
-        - from_attributes: Разрешить создание объектов из атрибутов.
-        - use_enum_values: Использовать значения перечислений.
-        - validate_assignment: Проверять присваивание значений.
-        - alias_generator: Генератор алиасов для преобразования имен полей.
-        - populate_by_name: Разрешить заполнение по имени поля.
-        - arbitrary_types_allowed: Разрешить использование произвольных типов.
+    Использует Pydantic v2 ``model_config`` вместо
+    deprecated ``class Config``.
     """
 
-    class Config:
-        extra = "ignore"
-        from_attributes = True
-        use_enum_values = True
-        validate_assignment = True
-        alias_generator = to_camelcase
-        populate_by_name = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        extra="ignore",
+        from_attributes=True,
+        use_enum_values=True,
+        validate_assignment=True,
+        alias_generator=to_camelcase,
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
 
-    def encoded_dict(self, by_alias: bool = True) -> Dict[str, Any]:
-        """
-        Возвращает словарь с данными модели, закодированными в JSON.
+    def encoded_dict(self, by_alias: bool = True) -> dict[str, Any]:
+        """Сериализует схему в JSON с кастомным декодером.
 
-        :param by_alias: Если True, использует алиасы для имен полей.
-        :return: Словарь с данными модели.
+        Args:
+            by_alias: Использовать camelCase алиасы.
+
+        Returns:
+            Словарь с данными модели.
         """
         from app.utilities.utils import utilities
 
@@ -73,13 +77,17 @@ class BaseSchema(BaseModel):
 
 
 class FileResponse(BaseModel):
+    """Схема ответа для файловых операций."""
+
     filename: str
     key: str
     size: int
-    headers: Dict[str, Any]
-    metadata: Dict[str, Any] = None
+    headers: dict[str, Any]
+    metadata: dict[str, Any] | None = None
 
 
 class PaginatedResult(BaseModel):
-    items: List[Any]
+    """Результат пагинированного запроса."""
+
+    items: list[Any]
     total: int
