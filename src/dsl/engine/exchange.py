@@ -5,6 +5,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from app.dsl.adapters.types import ProtocolType
+
 __all__ = ("ExchangeStatus", "Message", "ExchangeMeta", "Exchange")
 
 T = TypeVar("T")
@@ -74,6 +76,8 @@ class ExchangeMeta(BaseModel):
     correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source: str | None = None
+    protocol: ProtocolType | None = None
+    protocol_attrs: dict[str, Any] = Field(default_factory=dict)
 
 
 class Exchange(BaseModel, Generic[T]):

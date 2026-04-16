@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from app.dsl.adapters.types import ProtocolType, TransportConfig
 from app.dsl.engine.exchange import Exchange
 from app.dsl.engine.pipeline import Pipeline
 from app.dsl.engine.processors import (
@@ -17,16 +18,16 @@ __all__ = ("RouteBuilder",)
 
 @dataclass(slots=True)
 class RouteBuilder:
-    """
-    Fluent-builder для DSL-маршрутов.
+    """Fluent-builder для DSL-маршрутов.
 
     Пример:
         route = (
             RouteBuilder.from_(
                 route_id="tech.send_email",
-                source="http:/api/v1/tech/send-email",
+                source="internal:tech.send_email",
                 description="Маршрут отправки письма",
             )
+            .protocol(ProtocolType.rest)
             .set_header("x-route", "tech.send_email")
             .dispatch_action("tech.send_email")
             .build()
@@ -37,6 +38,8 @@ class RouteBuilder:
     source: str | None = None
     description: str | None = None
     _processors: list[BaseProcessor] = field(default_factory=list)
+    _protocol: ProtocolType | None = None
+    _transport_config: TransportConfig | None = None
 
     @classmethod
     def from_(
@@ -140,27 +143,56 @@ class RouteBuilder:
         return self
 
     def to(self, processor: BaseProcessor) -> "RouteBuilder":
-        """
-        Alias для process(), ближе к стилю DSL.
+        """Alias для ``process()``, ближе к стилю DSL.
 
         Args:
             processor: Экземпляр процессора.
 
         Returns:
-            RouteBuilder: Текущий builder.
+            Текущий builder.
         """
         return self.process(processor)
 
-    def build(self) -> Pipeline:
-        """
-        Собирает Pipeline из накопленных шагов.
+    def protocol(
+        self, proto: ProtocolType
+    ) -> "RouteBuilder":
+        """Устанавливает протокол маршрута.
+
+        Args:
+            proto: Тип протокола из ``ProtocolType``.
 
         Returns:
-            Pipeline: Готовый маршрут DSL.
+            Текущий builder.
+        """
+        self._protocol = proto
+        return self
+
+    def transport(
+        self, config: TransportConfig
+    ) -> "RouteBuilder":
+        """Устанавливает конфигурацию транспорта.
+
+        Args:
+            config: Параметры транспорта (endpoint, timeout
+                и протокол-специфичные опции).
+
+        Returns:
+            Текущий builder.
+        """
+        self._transport_config = config
+        return self
+
+    def build(self) -> Pipeline:
+        """Собирает Pipeline из накопленных шагов.
+
+        Returns:
+            Готовый маршрут DSL.
         """
         return Pipeline(
             route_id=self.route_id,
             source=self.source,
             description=self.description,
             processors=list(self._processors),
+            protocol=self._protocol,
+            transport_config=self._transport_config,
         )

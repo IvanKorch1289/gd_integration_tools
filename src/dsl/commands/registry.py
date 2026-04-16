@@ -1,6 +1,17 @@
+from app.dsl.commands.action_registry import (
+    ActionHandlerRegistry,
+    ActionHandlerSpec,
+    action_handler_registry,
+)
 from app.dsl.engine.pipeline import Pipeline
 
-__all__ = ("RouteRegistry", "route_registry")
+__all__ = (
+    "RouteRegistry",
+    "route_registry",
+    "ActionHandlerRegistry",
+    "ActionHandlerSpec",
+    "action_handler_registry",
+)
 
 
 class RouteRegistry:

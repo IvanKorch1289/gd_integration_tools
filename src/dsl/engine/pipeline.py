@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from app.dsl.adapters.types import ProtocolType, TransportConfig
 from app.dsl.engine.processors import BaseProcessor
 
 __all__ = ("Pipeline",)
@@ -7,20 +8,26 @@ __all__ = ("Pipeline",)
 
 @dataclass(slots=True)
 class Pipeline:
-    """
-    Описание DSL-маршрута.
+    """Описание DSL-маршрута.
 
-    Attributes:
+    Attrs:
         route_id: Уникальный идентификатор маршрута.
-        source: Источник маршрута (например, http:tech.send_email).
+        source: Источник маршрута (например,
+            ``internal:tech.send_email``).
         description: Человекочитаемое описание.
         processors: Последовательность шагов обработки.
+        protocol: Протокол, через который обслуживается
+            маршрут. ``None`` — протоколо-агностичный.
+        transport_config: Конфигурация транспорта
+            (endpoint, timeout, retry и т.д.).
     """
 
     route_id: str
     source: str | None = None
     description: str | None = None
     processors: list[BaseProcessor] = field(default_factory=list)
+    protocol: ProtocolType | None = None
+    transport_config: TransportConfig | None = None
 
     def add_processor(self, processor: BaseProcessor) -> "Pipeline":
         """
