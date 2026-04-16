@@ -7,7 +7,7 @@ from app.core.config.settings import settings
 from app.core.decorators.caching import response_cache
 from app.core.decorators.singleton import singleton
 from app.core.enums.skb import ResponseTypeChoices
-from app.core.errors import NotFoundError, ServiceError
+from app.core.errors import NotFoundError
 from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
 from app.infrastructure.repositories.files import FileRepository, get_file_repo
 from app.infrastructure.repositories.orders import OrderRepository, get_order_repo
@@ -72,9 +72,15 @@ class OrderService(
             str(file_data["object_uuid"]) for file_data in order_data.get("files", [])
         ]
 
+    async def _invalidate_cache(self) -> None:
+        """Инвалидирует кэш по имени сервиса."""
+        await response_cache.invalidate_pattern(
+            pattern=self.__class__.__name__
+        )
+
     async def create_skb_order(self, order_id: int) -> dict[str, Any]:
         """Создаёт запрос в СКБ-Техно по существующему заказу."""
-        try:
+        async with self._service_error_boundary():
             order_data = await self._get_order_data(order_id=order_id)
 
             if not order_data["is_active"]:
@@ -102,17 +108,13 @@ class OrderService(
                 )
 
             return {"instance": order_data, "response": result}
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_result(
         self, order_id: int, response_type: ResponseTypeChoices
     ) -> Any:
         """Получает результат заказа из СКБ-Техно в указанном формате."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -165,17 +167,13 @@ class OrderService(
 
             content["response"] = None
             return content
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_and_json_from_skb(
         self, order_id: int
     ) -> dict[str, Any] | None:
         """Получает JSON-результат и, если он готов, PDF-файл заказа из СКБ."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -211,14 +209,10 @@ class OrderService(
             )
 
             return json_result
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_from_storage(self, order_id: int) -> Any:
         """Получает файл (или ZIP) заказа из S3."""
-        try:
+        async with self._service_error_boundary():
             order_data = await self._get_order_data(order_id=order_id)
             files = await self._get_order_files(order_data=order_data)
 
@@ -229,17 +223,13 @@ class OrderService(
                 return await self.s3_service.create_zip_archive(files)
 
             return await self.s3_service.download_file(files[0])
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_from_storage_base64(
         self, order_id: int
     ) -> dict[str, list[dict[str, str]]]:
         """Получает файлы заказа из S3 в формате Base64."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -253,17 +243,13 @@ class OrderService(
             ]
 
             return {"files": files}
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_from_storage_link(
         self, order_id: int
     ) -> dict[str, list[dict[str, str]]]:
         """Получает ссылки на скачивание файлов заказа из S3."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -277,17 +263,13 @@ class OrderService(
             ]
 
             return {"links": links}
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_link_and_json_result_for_request(
         self, order_id: int
     ) -> dict[str, Any]:
         """Возвращает JSON-результат заказа и ссылки на файлы."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -303,17 +285,13 @@ class OrderService(
                 response["file_links"] = files_links.get("links", [])
 
             return response
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_order_file_base64_and_json_result_for_request(
         self, order_id: int
     ) -> dict[str, Any]:
         """Возвращает JSON-результат заказа и файлы в формате Base64."""
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_data = await self._get_order_data(order_id=order_id)
 
@@ -329,19 +307,15 @@ class OrderService(
                 response["files"] = files_base64.get("files", [])
 
             return response
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def send_order_data(self, order_id: int) -> dict[str, Any] | None:
+        """Формирует полный payload заказа для отправки.
+
+        Фактическая отправка в шину выполняется через
+        invocation/handler на стороне DSL/Workflow.
         """
-        Формирует полный payload заказа для отправки.
-        (Фактическая отправка в шину теперь должна выполняться через invocation
-        или handler на стороне DSL/Workflow, а этот метод возвращает данные).
-        """
-        try:
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        async with self._service_error_boundary():
+            await self._invalidate_cache()
 
             order_payload = (
                 await self.get_order_file_base64_and_json_result_for_request(
@@ -363,10 +337,6 @@ class OrderService(
             )
 
             return result
-        except NotFoundError:
-            raise
-        except Exception as exc:
-            raise ServiceError from exc
 
 
 def get_order_service() -> OrderService:
