@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Python cache / artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+.benchmarks/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+
+# Runtime artifacts
+logs/
+.run/
+*.log
+*.pid
+*.pid.lock
+
+# Local data / volumes
+data/
+minio-data/
+grafana/
+graylog-data/
+
+# Docs / tests / local helper files
+docs/
+tests/
+helper.txt
+README.md
+Makefile
+sonar-project.properties
+
+# Docker / compose local files
+docker-compose*
+.env.local
+
+# Scanner / IDE
+.scannerwork/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

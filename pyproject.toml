@@ -1,0 +1,158 @@
+[tool.poetry]
+name = "gd_advanced_tools"
+version = "0.1.0"
+description = ""
+authors = ["crazyivan1289 <crazyivan1289@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.14,<3.15"
+fastapi = ">=0.116.0"
+sqlalchemy = "^2.0.36"
+uvicorn = { extras = ["standard"], version = "^0.32.0" }
+pydantic = { extras = ["email"], version = "^2.10.3" }
+pydantic-settings = "^2.6.0"
+fastapi-utils = "^0.7.0"
+alembic = "^1.13.3"
+greenlet = "^3.1.1"
+python-dotenv = "^1.0.1"
+typing-inspect = "^0.9.0"
+fastapi-filter = "^2.0.0"
+aioboto3 = "^13.2.0"
+python-multipart = ">=0.0.18"
+graypy = "^2.1.0"
+sqladmin = "^0.20.1"
+passlib = "^1.7.4"
+aiohttp = ">=3.12.14"
+poetry-dotenv-plugin = "^0.2.0"
+json-tricks = "^3.17.3"
+aiosmtplib = "^3.0.2"
+sqlalchemy-utils = "^0.41.2"
+prometheus-fastapi-instrumentator = "^7.0.0"
+starlette-exporter = "^0.23.0"
+fastapi-limiter = "^0.1.6"
+pandas = "^2.2.3"
+openpyxl = "^3.1.5"
+sqlalchemy-continuum = "^1.4.2"
+psycopg2 = "^2.9.10"
+zeep = "^4.3.1"
+async-timeout = "^5.0.1"
+hvac = "^2.3.0"
+aiodns = "^3.2.0"
+opentelemetry-api = "^1.30.0"
+opentelemetry-sdk = "^1.30.0"
+opentelemetry-instrumentation-fastapi = "^0.51b0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
+aiocircuitbreaker = "^2.0.0"
+apscheduler = "^3.11.0"
+faststream = "^0.5.34"
+aiokafka = "^0.12.0"
+grpcio = "^1.70.0"
+protobuf = "^5.29.3"
+prefect = "^3.2.7"
+aio-pika = "^9.5.5"
+prefect-client = "^3.2.9"
+aiofiles = "^24.1.0"
+fastapi-pagination = "^0.12.34"
+tenacity = "^9.0.0"
+h11 = "^0.16.0"
+asyncpg = "^0.31.0"
+oracledb = "^3.4.2"
+orjson = "^3.11.8"
+diskcache = "^5.6.3"
+watchdog = "^6.0.0"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.20.1"
+vulture = "^2.14"
+bump-pydantic = "^0.8.0"
+memray = "^1.15.0"
+memory-profiler = "^0.61.0"
+py-spy = "^0.4.0"
+grpcio-tools = "^1.70.0"
+ruff = "^0.15.10"
+sphinx = "^9.1.0"
+schemathesis = "^4.15.2"
+refurb = "^2.3.1"
+python-semantic-release = "^10.5.3"
+detect-secrets = "^1.5.0"
+creosote = "^5.2.0"
+
+[[tool.poetry.source]]
+name = "nexus"
+url = "https://nexus.bank.srv/repository/pypi/simple"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.mypy]
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+exclude = ["app/entrypoints/grpc/protobuf/.*"]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disable_error_code = [
+    "no-untyped-def",
+    "override",
+    "arg-type",
+    "assignment",
+    "import-untyped",
+    "union-attr",
+    "var-annotated",
+    "call-arg",
+    "call-overload"
+]
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "app.entrypoints.grpc.protobuf.*"
+ignore_errors = true
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+exclude = [
+    "app/entrypoints/grpc/protobuf/*"
+]
+
+[tool.ruff.lint]
+# Добавлен префикс "S" для активации проверок безопасности (аналог Bandit)
+select = ["E", "F", "W", "I", "S"]
+ignore = [
+    "E501", 
+    "S104"  # Игнорируем S104 (Possible binding to all interfaces), так как uvicorn на 0.0.0.0 — это норма для Docker
+]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+
+
+[tool.vulture]
+ignore_names = ["x_api_key"]
+min_confidence = 70
+exclude = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*"
+]
+
+
+[tool.semantic_release]
+version_toml = [
+    "pyproject.toml:tool.poetry.version"
+]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = false
+commit_author = "Korch Ivan <cards25kk.bank>"
