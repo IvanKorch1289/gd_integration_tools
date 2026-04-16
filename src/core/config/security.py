@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Literal, Set
+from typing import ClassVar, Literal
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -62,22 +62,22 @@ class SecureSettings(BaseSettingsWithLoader):
     api_key: str = Field(
         ..., description="Основной API-ключ приложения", examples=["your_api_key_123"]
     )
-    allowed_hosts: List[str] = Field(
+    allowed_hosts: list[str] = Field(
         ...,
         description="Разрешенные хосты для входящих запросов",
         examples=["example.com", "api.example.com"],
     )
-    routes_without_api_key: List[str] = Field(
+    routes_without_api_key: list[str] = Field(
         ...,
         description="Эндпоинты, доступные без API-ключа",
         examples=["/health", "/status"],
     )
-    admin_ips: Set[str] = Field(
+    admin_ips: set[str] = Field(
         ...,
         description="IP-адреса, из которых разрешен доступ к административным эндпоинтам'",
         examples=["127.0.0.1", "192.168.0.1"],
     )
-    admin_routes: Set[str] = Field(
+    admin_routes: set[str] = Field(
         ...,
         description="Эндпоинты, доступные только для администраторов",
         examples=["/admin/users", "/admin/logs"],

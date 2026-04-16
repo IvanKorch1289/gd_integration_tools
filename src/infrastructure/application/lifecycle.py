@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     Управляет жизненным циклом приложения FastAPI.
     """
     from app.dsl.commands.setup import register_action_handlers
+    from app.dsl.routes import register_dsl_routes
     from app.infrastructure.setup_infra import ending, starting
 
     app_logger.info("Запуск приложения...")
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
 
     try:
         register_action_handlers()
+        register_dsl_routes()
         await starting()
 
         startup_completed = True

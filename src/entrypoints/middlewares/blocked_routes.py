@@ -1,12 +1,9 @@
-from typing import Set
-
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.config.runtime_state import blocked_routes
+
 __all__ = ("BlockedRoutesMiddleware", "blocked_routes")
-
-
-blocked_routes: Set[str] = set()
 
 
 # Middleware для блокировки

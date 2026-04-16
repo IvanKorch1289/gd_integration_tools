@@ -1,48 +1,162 @@
 # DSL Tools & Execution Engine
 
-Инструкция по использованию DSL-слоя (Domain Specific Language) для API-шлюза GD Integration Tools. 
-Этот слой позволяет описывать роуты и бизнес-логику декларативно, как в Apache Camel, с прозрачной поддержкой различных режимов выполнения.
-
-## Что появилось
-
-### 1. Action DSL (`app/api/dsl/actions.py`)
-Декларативное описание API-роутов. Доступны две спецификации:
-- `ActionSpec` — для кастомных эндпоинтов (привязка к конкретному методу сервиса).
-- `CrudSpec` — для автоматической генерации стандартных CRUD-роутов.
-
-### 2. Транспортно-независимый Execution Engine (`app/api/dsl/execution_engine.py`)
-Любой роут или фоновая задача, написанные через DSL, **автоматически поддерживают** 4 режима работы:
-1. **Синхронный (`direct`)**: Код выполняется "здесь и сейчас".
-2. **Событийный (`event`)**: Отправка команды в RabbitMQ/Redis. Слушатель подхватит её в фоне.
-3. **Асинхронный воркфлоу (`async_flow`)**: Отправка тяжелой задачи в Prefect (или Celery).
-4. **Отложенный (`scheduled`)**: Запуск через APScheduler (с задержкой в секундах или по cron).
-
-### 3. Единые брокер-слушатели (`app/handlers/stream_subscribers.py`)
-Больше не нужно писать отдельные `@subscriber` для каждого нового события. В приложении работают два универсальных слушателя (для Redis и RabbitMQ), которые принимают `ActionCommandSchema` и сами маршрутизируют вызов через реестр `action_handler_registry`.
+Инструкция по использованию DSL-слоя (Domain Specific Language) для API-шлюза GD Integration Tools.
+Этот слой позволяет описывать маршруты и бизнес-логику декларативно, как в Apache Camel,
+с прозрачной поддержкой различных режимов выполнения.
 
 ---
 
-## Как управлять режимом выполнения?
+## Архитектура DSL
 
-Управлять тем, *как* выполнится задача, можно двумя способами: из HTTP-запроса (для внешних клиентов) или через AMQP-сообщение (для микросервисов).
+### Основные компоненты
 
-### Способ 1. Управление через HTTP-заголовки
-Если вы вызываете REST API шлюза, передайте нужные HTTP-заголовки. Payload остается неизменным.
+| Компонент | Путь | Назначение |
+|---|---|---|
+| **RouteBuilder** | `src/dsl/builder.py` | Fluent-builder для декларативного описания маршрутов |
+| **Pipeline** | `src/dsl/engine/pipeline.py` | Готовый маршрут с цепочкой процессоров |
+| **Exchange** | `src/dsl/engine/exchange.py` | Контейнер данных (in/out message, headers, properties) |
+| **Процессоры** | `src/dsl/engine/processors.py` | Шаги обработки: callable, set_header, dispatch_action |
+| **RouteRegistry** | `src/dsl/commands/registry.py` | Реестр route_id → Pipeline |
+| **ActionHandlerRegistry** | `src/dsl/commands/action_registry.py` | Реестр action → service+method |
+| **DslService** | `src/dsl/service.py` | Dispatch маршрутов из любого entrypoint |
 
-- **Синхронный вызов (по умолчанию):**
-  Заголовки не нужны. Вы дождетесь ответа сервера.
-- **Отправка в RabbitMQ/Redis (в фоне):**
-  `X-Invoke-Mode: event`
-  Сервер сразу вернет `HTTP 202 Accepted` и `job_id`, а задача уйдет в шину.
-- **Тяжелый Workflow (Prefect):**
-  `X-Invoke-Mode: async_flow`
-- **Отложенный запуск (через 1 час):**
-  `X-Delay-Seconds: 3600`
-- **Запуск по расписанию:**
-  `X-Cron: 0 12 * * *`
+### Инициализация при старте
 
-### Способ 2. Вызов из RabbitMQ / Redis (Или из кода)
-Если вы — другой микросервис (или скрипт), вы можете просто кинуть JSON-сообщение в очередь `dsl-actions` (для RabbitMQ) или стрим `dsl-events` (для Redis). Сообщение должно соответствовать `ActionCommandSchema`:
+Порядок вызова в `src/infrastructure/application/lifecycle.py`:
+
+```python
+register_action_handlers()   # src/dsl/commands/setup.py
+register_dsl_routes()        # src/dsl/routes.py
+```
+
+---
+
+## RouteBuilder (Fluent API)
+
+Декларативное описание маршрутов в стиле Apache Camel:
+
+```python
+from app.dsl.builder import RouteBuilder
+from app.dsl.adapters.types import ProtocolType
+
+route = (
+    RouteBuilder.from_(
+        route_id="orders.process",
+        source="internal:orders.process",
+        description="Обработка заказа через SKB",
+    )
+    .protocol(ProtocolType.rest)
+    .set_header("x-route-id", "orders.process")
+    .set_property("domain", "orders")
+    .dispatch_action("orders.create_skb_order")
+    .build()
+)
+```
+
+### Доступные методы builder'а
+
+| Метод | Назначение |
+|---|---|
+| `.from_(route_id, source, description)` | Создаёт builder с идентификатором |
+| `.protocol(ProtocolType)` | Устанавливает протокол (rest, graphql, grpc, ws, soap, sse, webhook) |
+| `.set_header(key, value)` | Добавляет шаг установки заголовка в Exchange |
+| `.set_property(key, value)` | Добавляет шаг установки runtime-свойства |
+| `.dispatch_action(action, payload_factory, result_property)` | Вызов action через ActionHandlerRegistry |
+| `.process(processor)` / `.to(processor)` | Добавляет произвольный процессор |
+| `.process_fn(func, name)` | Добавляет функцию/корутину как процессор |
+| `.transport(config)` | Устанавливает конфигурацию транспорта |
+| `.build()` | Собирает Pipeline |
+
+### Процессоры
+
+| Процессор | Назначение |
+|---|---|
+| `CallableProcessor` | Оборачивает произвольную async/sync функцию |
+| `SetHeaderProcessor` | Устанавливает заголовок в Exchange |
+| `SetPropertyProcessor` | Устанавливает свойство в Exchange |
+| `DispatchActionProcessor` | Вызывает зарегистрированный action через registry |
+
+---
+
+## Action Registry
+
+Регистрация action-обработчиков в `src/dsl/commands/setup.py`:
+
+```python
+from app.dsl.commands.registry import action_handler_registry
+from app.schemas.base import EmailSchema
+from app.services.tech import get_tech_service
+
+def register_action_handlers() -> None:
+    action_handler_registry.register(
+        action="tech.send_email",
+        service_getter=get_tech_service,
+        service_method="send_email",
+        payload_model=EmailSchema,
+    )
+```
+
+### Добавление нового action
+
+1. Создайте сервис и метод
+2. Зарегистрируйте в `setup.py`:
+
+```python
+action_handler_registry.register(
+    action="reports.generate",
+    service_getter=get_report_service,
+    service_method="generate_report",
+    payload_model=ReportRequestSchema,
+)
+```
+
+3. Action доступен через все протоколы: HTTP, GraphQL, WebSocket, SOAP, SSE, Webhook, Stream.
+
+---
+
+## Route Registry
+
+Регистрация DSL-маршрутов в `src/dsl/routes.py`:
+
+```python
+from app.dsl.builder import RouteBuilder
+from app.dsl.registry import route_registry
+
+def register_dsl_routes() -> None:
+    route = (
+        RouteBuilder.from_(
+            route_id="tech.send_email",
+            source="internal:tech.send_email",
+            description="DSL-маршрут отправки email",
+        )
+        .set_header("x-route-id", "tech.send_email")
+        .dispatch_action("tech.send_email", payload_factory=_email_payload_factory)
+        .build()
+    )
+    route_registry.register(route)
+```
+
+---
+
+## Протокольные адаптеры
+
+Каждый протокол маршрутизирует вызовы через DSL:
+
+| Протокол | Путь | Endpoint | Транспорт |
+|---|---|---|---|
+| **REST** | `src/entrypoints/api/` | `/api/v1/*` | Прямой вызов сервисов |
+| **GraphQL** | `src/entrypoints/graphql/schema.py` | `/graphql` | DslService.dispatch() |
+| **WebSocket** | `src/entrypoints/websocket/ws_handler.py` | `/ws` | DslService.dispatch() |
+| **SOAP** | `src/entrypoints/soap/soap_handler.py` | `/soap/` | DslService.dispatch() |
+| **SSE** | `src/entrypoints/sse/handler.py` | `/events/stream` | DslService.dispatch() |
+| **Webhook** | `src/entrypoints/webhook/handler.py` | `/webhooks/` | DslService.dispatch() |
+| **gRPC** | `src/entrypoints/grpc/grpc_server.py` | Unix socket | Прямой вызов сервисов |
+| **Redis Stream** | `src/infrastructure/clients/stream.py` | `/stream/redis/` | ActionHandlerRegistry |
+| **RabbitMQ** | `src/infrastructure/clients/stream.py` | `/stream/rabbit/` | ActionHandlerRegistry |
+
+### Формат сообщений (ActionCommandSchema)
+
+Все протоколы могут отправлять команды через единый формат:
 
 ```json
 {
@@ -51,42 +165,68 @@
     "order_id": 12345
   },
   "meta": {
-    "source": "billing_microservice"
+    "source": "graphql",
+    "request_path": "/graphql",
+    "requested_at": "2025-01-01T00:00:00Z"
   }
 }
 ```
-Единый слушатель поймает это сообщение, найдет сервис, привязанный к `orders.create_skb_order`, и выполнит его.
 
 ---
 
-## Как регистрировать новые фоновые задачи (Workflows)?
+## Режимы выполнения
 
-Если вы написали новый сложный процесс (например, `report_generation_workflow`), вам **не нужно** вручную подписывать его на очередь в `events.py` или `stream_subscribers.py`.
+### Способ 1: HTTP-заголовки
 
-Просто зарегистрируйте его в `app/api/dsl/setup.py`:
+| Заголовок | Значение | Режим |
+|---|---|---|
+| (отсутствует) | — | Синхронный (direct) |
+| `X-Invoke-Mode` | `event` | Асинхронный через RabbitMQ/Redis |
+| `X-Invoke-Mode` | `async_flow` | Workflow через Prefect |
+| `X-Delay-Seconds` | `3600` | Отложенный запуск (через 1 час) |
+| `X-Cron` | `0 12 * * *` | Запуск по расписанию |
 
-```python
-ActionHandlerSpec(
-    action="reports.generate",
-    service_getter=get_report_service,
-    service_method="generate_workflow",
-    payload_model=ReportRequestSchema
-)
-```
-После этого метод становится доступен всей системе: его можно вызвать по HTTP, отложить через APScheduler или запустить через сообщение в RabbitMQ, передав `"action": "reports.generate"`.
+### Способ 2: Сообщение в очередь
+
+Отправьте `ActionCommandSchema` в:
+- **RabbitMQ**: очередь `dsl-actions`
+- **Redis**: стрим `dsl-events`
 
 ---
 
-## Генератор ресурсов (`tools/generate_resource.py`)
-Автоматизирует создание слоев чистой архитектуры (Model, Schema, Repository, Service, Router).
+## FileWatcher
+
+REST API для управления наблюдателями файловой системы:
+
+| Метод | Endpoint | Назначение |
+|---|---|---|
+| `POST` | `/api/v1/watchers` | Создать наблюдатель |
+| `DELETE` | `/api/v1/watchers/{watcher_id}` | Остановить наблюдатель |
+| `GET` | `/api/v1/watchers` | Список активных наблюдателей |
+
+FileWatcher привязывается к DSL-маршруту через `route_id`. При изменении файла
+маршрут запускается автоматически.
+
+---
+
+## Генератор ресурсов
 
 ```bash
 python tools/generate_resource.py products
 ```
 
-## Что НЕ удалять
-Базовые инфраструктурные компоненты DSL:
-- `app/api/dsl/execution_engine.py` (Сердце выполнения)
-- `app/api/dsl/registry.py` (Реестр всех action'ов)
-- `app/handlers/stream_subscribers.py` (Универсальные слушатели RabbitMQ/Redis)
-- `app/api/dsl/setup.py` (Инициализация реестра при старте)
+Создаёт слои чистой архитектуры: Model, Schema, Repository, Service, Router.
+
+---
+
+## Критические файлы (не удалять)
+
+| Файл | Назначение |
+|---|---|
+| `src/dsl/engine/pipeline.py` | Ядро выполнения маршрутов |
+| `src/dsl/commands/action_registry.py` | Реестр action-обработчиков |
+| `src/dsl/commands/registry.py` | Реестр маршрутов (RouteRegistry) |
+| `src/dsl/commands/setup.py` | Инициализация action-обработчиков |
+| `src/dsl/routes.py` | Регистрация DSL-маршрутов |
+| `src/dsl/builder.py` | Fluent-builder для маршрутов |
+| `src/dsl/service.py` | DslService — dispatch из entrypoints |

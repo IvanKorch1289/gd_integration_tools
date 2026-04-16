@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, List, Literal
+from typing import ClassVar, Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -38,7 +38,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         examples=[0.5],
     )
 
-    retry_status_codes: List[int] = Field(
+    retry_status_codes: list[int] = Field(
         ...,
         title="Статусы кода с повторным запросом",
         description="Список статусов кода, которые будут повторными попытками",
@@ -148,7 +148,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         examples=["https://waf.example.com"],
     )
 
-    waf_route_header: Dict[str, str] = Field(
+    waf_route_header: dict[str, str] = Field(
         ...,
         description="Заголовок, который содержит маршрут WAF",
         examples=["X-WAF-Route"],
@@ -201,7 +201,7 @@ class SKBAPISettings(BaseSettingsWithLoader):
         examples=["https://test.skb-tekhno.ru/v1"],
     )
 
-    endpoints: Dict[str, str] = Field(
+    endpoints: dict[str, str] = Field(
         ...,
         description="API энпоинты'",
         examples=[{"users": "/users", "orders": "/orders"}],
@@ -260,7 +260,7 @@ class DadataAPISettings(BaseSettingsWithLoader):
         examples=["https://suggestions.dadata.ru/suggestions/api/4_1/rs"],
     )
 
-    endpoints: Dict[str, str] = Field(
+    endpoints: dict[str, str] = Field(
         ...,
         description="API эндпоинты'",
         examples=[{"geolocate": "/geolocate", "suggest": "/suggest"}],
@@ -304,7 +304,7 @@ class AntivirusAPISettings(BaseSettingsWithLoader):
         examples=["https://kkdrweb.bank.srv:443"],
     )
 
-    endpoints: Dict[str, str] = Field(
+    endpoints: dict[str, str] = Field(
         ...,
         title="Эндпоинты API",
         description="Словарь относительных путей методов антивирусного API",
@@ -330,7 +330,7 @@ class AntivirusAPISettings(BaseSettingsWithLoader):
         examples=["application/octet-stream", "application/zip"],
     )
 
-    default_headers: Dict[str, str] = Field(
+    default_headers: dict[str, str] = Field(
         default_factory=dict,
         title="Дополнительные заголовки",
         description="Статические заголовки для запросов к антивирусному API",

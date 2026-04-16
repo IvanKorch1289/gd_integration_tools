@@ -47,7 +47,7 @@ class AdminService:
         Raises:
             HTTPException: Если маршрут с указанным путём не найден.
         """
-        from app.entrypoints.api.middlewares.blocked_routes import blocked_routes
+        from app.core.config.runtime_state import blocked_routes
 
         route_exists = any(route.path == route_path for route in request.app.routes)
         if not route_exists:

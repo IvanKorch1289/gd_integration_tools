@@ -15,6 +15,13 @@ from app.infrastructure.scheduler.scheduler_manager import scheduler_manager
 __all__ = ("starting", "ending")
 
 
+def _get_watcher_manager():
+    """Ленивый импорт WatcherManager для избежания циклических зависимостей."""
+    from app.entrypoints.filewatcher.watcher_manager import watcher_manager
+
+    return watcher_manager
+
+
 OperationCallable = Callable[[], Any | Awaitable[Any]]
 OperationItem = tuple[str, OperationCallable]
 
@@ -32,6 +39,7 @@ starting_operations: list[OperationItem] = [
 ]
 
 ending_operations: list[OperationItem] = [
+    ("file_watchers", lambda: _get_watcher_manager().stop_all()),
     ("scheduler", scheduler_manager.stop),
     ("smtp_pool", smtp_client.close_pool),
     ("s3_client", s3_client.close),

@@ -9,29 +9,43 @@ from app.services.orders import get_order_service
 
 
 class OrderGRPCServicer(OrderServiceServicer):
-    """gRPC servicer handling order operations"""
+    """
+    Реализация gRPC сервиса для обработки операций с заказами.
+
+    Атрибуты:
+        order_service: Сервис для работы с заказами
+        logger: Логгер для записи событий
+    """
 
     def __init__(self):
+        """Инициализация сервиса и подключение зависимостей"""
         self.order_service = get_order_service()
         self.logger = grpc_logger
-
-        self.logger.info("Order service initialized")
+        self.logger.info("Сервис заказов успешно инициализирован")
 
     async def CreateOrder(self, request, context):
-        """Create order implementation for gRPC endpoint"""
+        """
+        Создание нового заказа через gRPC endpoint.
+
+        Аргументы:
+            request: CreateOrderRequest - запрос на создание заказа
+            context: Контекст вызова gRPC
+
+        Возвращает:
+            OrderResponse: Ответ с результатом операции
+        """
         try:
-            self.logger.info(f"Creating order for ID: {request.order_id}")
+            self.logger.info(f"Создание заказа с ID: {request.order_id}")
 
             result = await self.order_service.create_skb_order(
                 order_id=request.order_id
             )
 
-            # Добавлена проверка на None
             if not result:
                 self.logger.warning(
-                    f"Order creation returned empty result for ID: {request.order_id}"
+                    f"Не удалось создать или найти заказ: {request.order_id}"
                 )
-                return OrderResponse(error="Failed to create order: empty result")
+                return OrderResponse(error="Failed to create order: result is empty")
 
             return OrderResponse(
                 order_id=result["instance"]["id"],
@@ -44,22 +58,30 @@ class OrderGRPCServicer(OrderServiceServicer):
                 ),
             )
         except Exception as exc:
-            self.logger.error(f"Order creation failed: {str(exc)}", exc_info=True)
+            self.logger.error(f"Ошибка создания заказа: {str(exc)}", exc_info=True)
             return OrderResponse(error=str(exc))
 
     async def GetOrderResult(self, request, context):
-        """Get order result implementation for gRPC endpoint"""
+        """
+        Получение результатов обработки заказа.
+
+        Аргументы:
+            request: GetOrderRequest - запрос на получение результатов
+            context: Контекст вызова gRPC
+
+        Возвращает:
+            OrderResponse: Ответ с данными о заказе
+        """
         try:
-            self.logger.info(f"Fetching result for order: {request.order_id}")
+            self.logger.info(f"Запрос результатов для заказа: {request.order_id}")
 
             result = await self.order_service.get_order_file_and_json_from_skb(
                 order_id=request.order_id
             )
 
-            # Добавлена проверка на None
             if not result:
                 self.logger.warning(
-                    f"Order result not found for ID: {request.order_id}"
+                    f"Результат для заказа {request.order_id} не найден"
                 )
                 return OrderResponse(error="Order result not found")
 
@@ -74,12 +96,22 @@ class OrderGRPCServicer(OrderServiceServicer):
                 ),
             )
         except Exception as exc:
-            self.logger.error(f"Result fetch failed: {str(exc)}", exc_info=True)
+            self.logger.error(
+                f"Ошибка получения результатов: {str(exc)}", exc_info=True
+            )
             return OrderResponse(error=str(exc))
 
 
 async def serve():
-    """Start gRPC server with Unix domain socket"""
+    """
+    Запуск gRPC сервера с использованием Unix Domain Socket.
+
+    Выполняет:
+    1. Очистку предыдущего socket-файла
+    2. Инициализацию сервера с настройками из конфигурации
+    3. Регистрацию сервиса
+    4. Запуск и ожидание завершения работы сервера
+    """
     from concurrent import futures
     from pathlib import Path
 
@@ -87,7 +119,7 @@ async def serve():
 
     Path(settings.grpc.socket_path).unlink(missing_ok=True)
 
-    server = server(
+    grpc_server = server(
         futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers),
         options=[
             ("grpc.so_reuseport", 1),
@@ -96,19 +128,20 @@ async def serve():
         ],
     )
 
-    add_OrderServiceServicer_to_server(OrderGRPCServicer(), server)
-    server.add_insecure_port(settings.grpc.socket_uri)
+    add_OrderServiceServicer_to_server(OrderGRPCServicer(), grpc_server)
+    grpc_server.add_insecure_port(settings.grpc.socket_uri)
 
-    await server.start()
-    grpc_logger.info(f"Server started on {settings.grpc.socket_uri}")
+    await grpc_server.start()
+    grpc_logger.info(f"Сервер запущен на {settings.grpc.socket_uri}")
 
     try:
-        await server.wait_for_termination()
+        await grpc_server.wait_for_termination()
     except KeyboardInterrupt:
-        await server.stop(5)
+        grpc_logger.info("Получен сигнал прерывания, остановка сервера...")
+        await grpc_server.stop(5)
 
 
 if __name__ == "__main__":
-    import asyncio
+    from asyncio import run
 
-    asyncio.run(serve())
+    run(serve())

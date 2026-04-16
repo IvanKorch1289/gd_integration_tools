@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTPException
 
@@ -27,7 +27,7 @@ class MailService:
 
     async def send_email(
         self,
-        to_emails: List[str],
+        to_emails: list[str],
         subject: str,
         message: str,
         html_message: str | None = None,
@@ -36,7 +36,7 @@ class MailService:
         Асинхронно отправляет электронное письмо.
 
         Args:
-            to_emails (List[str]): Список адресов получателей.
+            to_emails (list[str]): Список адресов получателей.
             subject (str): Тема письма.
             message (str): Текстовое содержимое письма.
             html_message (str | None): HTML-содержимое письма.
@@ -67,7 +67,7 @@ class MailService:
         Формирует MIME-сообщение с заголовками и содержимым.
 
         Args:
-            to_emails (List[str]): Список адресов получателей.
+            to_emails (list[str]): Список адресов получателей.
             subject (str): Тема письма.
             message (str): Текстовое содержимое письма.
             html_message (str | None): HTML-содержимое письма.
@@ -107,19 +107,19 @@ class MailService:
 
     async def send_email_from_template(
         self,
-        to_emails: List[str],
+        to_emails: list[str],
         subject: str,
         template_name: str,
-        template_context: Dict[str, Any] | None = None,
+        template_context: dict[str, Any] | None = None,
     ):
         """
         Отправляет письмо, используя шаблон.
 
         Args:
-            to_emails (List[str]): Список адресов получателей.
+            to_emails (list[str]): Список адресов получателей.
             subject (str): Тема письма.
             template_name (str): Имя файла шаблона.
-            template_context (Dict[str, Any] | None): Переменные для шаблона.
+            template_context (dict[str, Any] | None): Переменные для шаблона.
 
         Raises:
             ValueError: Если папка с шаблонами не настроена.

@@ -6,14 +6,31 @@
 
 import asyncio
 import logging
+from abc import ABC, abstractmethod
 from typing import Any
 
-__all__ = ("SftpClient", "get_sftp_client")
+__all__ = ("BaseSftpClient", "SftpClient", "get_sftp_client")
 
 logger = logging.getLogger(__name__)
 
 
-class SftpClient:
+class BaseSftpClient(ABC):
+    """Абстрактный базовый класс для SFTP-клиентов."""
+
+    @abstractmethod
+    async def upload(self, local_path: str, remote_path: str) -> None:
+        """Загружает файл на сервер."""
+
+    @abstractmethod
+    async def download(self, remote_path: str, local_path: str) -> None:
+        """Скачивает файл с сервера."""
+
+    @abstractmethod
+    async def list_dir(self, remote_path: str = ".") -> list[dict[str, Any]]:
+        """Возвращает список файлов в директории."""
+
+
+class SftpClient(BaseSftpClient):
     """Асинхронный SFTP-клиент.
 
     Attrs:

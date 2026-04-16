@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from prefect import task
 
@@ -26,18 +26,18 @@ __all__ = (
     timeout_seconds=10,
     log_prints=True,
 )
-async def send_notification_task(body: Dict[str, Any]) -> Dict[str, Any]:
+async def send_notification_task(body: dict[str, Any]) -> dict[str, Any]:
     """
     Отправляет электронное письмо с использованием сервиса почты.
 
     Args:
-        body (Dict[str, Any]): Данные для отправки письма, включая:
+        body (dict[str, Any]): Данные для отправки письма, включая:
             - to_emails (list): Список адресов получателей.
             - subject (str): Тема письма.
             - message (str): Текст сообщения.
 
     Returns:
-        Dict[str, Any]: Результат отправки письма.
+        dict[str, Any]: Результат отправки письма.
 
     Raises:
         Exception: В случае ошибки при отправке письма.
@@ -62,19 +62,19 @@ async def send_notification_task(body: Dict[str, Any]) -> Dict[str, Any]:
     log_prints=True,
 )
 @validate_order_id
-async def create_skb_order_task(order_data: Dict[str, Any]) -> ProcessingResult | None:
+async def create_skb_order_task(order_data: dict[str, Any]) -> ProcessingResult | None:
     """
     Создает новый заказ в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data (Dict[str, Any]): Данные заказа, включая:
+        order_data (dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (Dict[str, Any]): Данные результата.
+            - result_data (dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:
@@ -107,20 +107,20 @@ async def create_skb_order_task(order_data: Dict[str, Any]) -> ProcessingResult 
 )
 @validate_order_id
 async def get_skb_order_result_task(
-    order_data: Dict[str, Any],
+    order_data: dict[str, Any],
 ) -> ProcessingResult | None:
     """
     Получает результат заказа в системе SKB с валидацией и повторными попытками.
 
     Args:
-        order_data (Dict[str, Any]): Данные заказа, включая:
+        order_data (dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (Dict[str, Any]): Данные результата.
+            - result_data (dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:
@@ -157,19 +157,19 @@ async def get_skb_order_result_task(
     log_prints=True,
 )
 @validate_order_id
-async def send_order_result_task(order_data: Dict[str, Any]) -> ProcessingResult:
+async def send_order_result_task(order_data: dict[str, Any]) -> ProcessingResult:
     """
     Отправляет результат заказа во внешнюю систему с валидацией и повторными попытками.
 
     Args:
-        order_data (Dict[str, Any]): Данные заказа, включая:
+        order_data (dict[str, Any]): Данные заказа, включая:
             - id (str): Идентификатор заказа.
 
     Returns:
         ProcessingResult: Результат обработки с полями:
             - success (bool): Успешность операции.
             - order_id (str): Идентификатор заказа.
-            - result_data (Dict[str, Any]): Данные результата.
+            - result_data (dict[str, Any]): Данные результата.
             - error_message (str): Сообщение об ошибке.
 
     Raises:

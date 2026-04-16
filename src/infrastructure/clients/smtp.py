@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Deque, Dict
+from typing import Any, AsyncGenerator, Deque
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
@@ -8,11 +9,31 @@ from app.core.config.settings import MailSettings, settings
 from app.core.decorators.singleton import singleton
 from app.core.utils.circuit_breaker import get_circuit_breaker
 
-__all__ = ("smtp_client", "SmtpClient")
+__all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient")
+
+
+class BaseSmtpClient(ABC):
+    """Абстрактный базовый класс для SMTP-клиентов."""
+
+    @abstractmethod
+    async def initialize_pool(self) -> None:
+        """Инициализирует пул соединений."""
+
+    @abstractmethod
+    async def close_pool(self) -> None:
+        """Закрывает пул соединений."""
+
+    @abstractmethod
+    async def get_connection(self) -> AsyncGenerator[Any, None]:
+        """Контекстный менеджер для получения соединения."""
+
+    @abstractmethod
+    async def test_connection(self) -> bool:
+        """Проверяет работоспособность соединения."""
 
 
 @singleton
-class SmtpClient:
+class SmtpClient(BaseSmtpClient):
     """
     Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости.
     """
@@ -219,20 +240,20 @@ class SmtpClient:
                 if not temporary and len(self._connection_pool) < self._pool_size:
                     self._connection_pool.appendleft(connection)
                     return
-        except Exception:  # noqa: S110
-            pass
+        except Exception:
+            self.logger.warning("Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True)
 
         try:
             await connection.quit()
-        except Exception:  # noqa: S110
-            pass
+        except Exception:
+            self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
-    def metrics(self) -> Dict[str, Any]:
+    def metrics(self) -> dict[str, Any]:
         """
         Возвращает текущие метрики сервиса.
 
         Returns:
-            Dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
+            dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
         """
         return {
             "pool_capacity": f"{len(self._connection_pool)}/{self._pool_size}",

@@ -1,8 +1,9 @@
 import asyncio
+from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from logging import DEBUG
 from time import monotonic
-from typing import Any, AsyncGenerator, BinaryIO, Dict, Mapping, TypedDict
+from typing import Any, AsyncGenerator, BinaryIO, Mapping, TypedDict
 
 from aiohttp import (
     AsyncResolver,
@@ -29,7 +30,7 @@ from app.core.config.settings import settings
 from app.core.decorators.singleton import singleton
 from app.core.utils.circuit_breaker import get_circuit_breaker
 
-__all__ = ("HttpClient", "get_http_client", "get_http_client_dependency")
+__all__ = ("BaseHttpClient", "HttpClient", "get_http_client", "get_http_client_dependency")
 
 
 class FilePart(TypedDict, total=False):
@@ -38,8 +39,35 @@ class FilePart(TypedDict, total=False):
     content_type: str
 
 
+class BaseHttpClient(ABC):
+    """Абстрактный базовый класс для HTTP-клиентов."""
+
+    @abstractmethod
+    async def make_request(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str] | None = None,
+        json: dict[str, Any] | list[Any] | None = None,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | str | bytes | None = None,
+        files: Mapping[str, FilePart] | None = None,
+        auth_token: str | None = None,
+        response_type: str = "auto",
+        raise_for_status: bool = True,
+        connect_timeout: float | None = None,
+        read_timeout: float | None = None,
+        total_timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Выполняет HTTP-запрос."""
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Закрывает соединения."""
+
+
 @singleton
-class HttpClient:
+class HttpClient(BaseHttpClient):
     """
     HTTP-клиент с поддержкой:
     - keep-alive / connection pooling
@@ -131,10 +159,10 @@ class HttpClient:
         self,
         method: str,
         url: str,
-        headers: Dict[str, str] | None = None,
-        json: Dict[str, Any] | list[Any] | None = None,
-        params: Dict[str, Any] | None = None,
-        data: Dict[str, Any] | str | bytes | None = None,
+        headers: dict[str, str] | None = None,
+        json: dict[str, Any] | list[Any] | None = None,
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | str | bytes | None = None,
         files: Mapping[str, FilePart] | None = None,
         auth_token: str | None = None,
         response_type: str = "auto",
@@ -142,7 +170,7 @@ class HttpClient:
         connect_timeout: float | None = None,
         read_timeout: float | None = None,
         total_timeout: float | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         start_time = monotonic()
         last_exception: Exception | None = None
 
@@ -260,12 +288,12 @@ class HttpClient:
     async def _build_headers(
         self,
         auth_token: str | None,
-        custom_headers: Dict[str, str] | None,
-        json_data: Dict[str, Any] | list[Any] | None,
-        data: Dict[str, Any] | str | bytes | None,
+        custom_headers: dict[str, str] | None,
+        json_data: dict[str, Any] | list[Any] | None,
+        data: dict[str, Any] | str | bytes | None,
         files: Mapping[str, FilePart] | None,
-    ) -> Dict[str, str]:
-        headers: Dict[str, str] = {
+    ) -> dict[str, str]:
+        headers: dict[str, str] = {
             "User-Agent": "HttpClient/2.0",
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br",
@@ -294,8 +322,8 @@ class HttpClient:
 
     async def _prepare_request_data(
         self,
-        data: Dict[str, Any] | str | bytes | None,
-        json_data: Dict[str, Any] | list[Any] | None,
+        data: dict[str, Any] | str | bytes | None,
+        json_data: dict[str, Any] | list[Any] | None,
         files: Mapping[str, FilePart] | None,
     ) -> Any:
         from app.utilities.utils import utilities
@@ -337,9 +365,9 @@ class HttpClient:
         self,
         method: str,
         url: str,
-        headers: Dict[str, str],
-        params: Dict[str, Any] | None,
-        data: Dict[str, Any] | str | bytes | None,
+        headers: dict[str, str],
+        params: dict[str, Any] | None,
+        data: dict[str, Any] | str | bytes | None,
         files: Mapping[str, FilePart] | None,
     ) -> None:
         safe_headers = {
@@ -421,7 +449,7 @@ class HttpClient:
 
     async def _build_response_object(
         self, response: ClientResponse, content: Any, start_time: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         content_type = (
             response.headers.get("Content-Type", "").lower().split(";")[0].strip()
         )
@@ -436,7 +464,7 @@ class HttpClient:
 
     async def _handle_final_error(
         self, exception: Exception | None, start_time: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         status_code = getattr(exception, "status", None)
         headers = dict(getattr(exception, "headers", {}))
 
@@ -506,10 +534,7 @@ class HttpClient:
 @asynccontextmanager
 async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     client = HttpClient()
-    try:
-        yield client
-    finally:
-        pass
+    yield client
 
 
 def get_http_client_dependency() -> HttpClient:

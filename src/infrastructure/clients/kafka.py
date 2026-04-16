@@ -5,16 +5,39 @@
 """
 
 import logging
+from abc import ABC, abstractmethod
 from typing import Any
 
 from app.core.errors import ServiceError
 
-__all__ = ("KafkaClient", "get_kafka_client")
+__all__ = ("BaseKafkaClient", "KafkaClient", "get_kafka_client")
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaClient:
+class BaseKafkaClient(ABC):
+    """Абстрактный базовый класс для Kafka-клиентов."""
+
+    @abstractmethod
+    async def produce(
+        self,
+        topic: str,
+        value: bytes,
+        key: bytes | None = None,
+        headers: list[tuple[str, bytes]] | None = None,
+    ) -> None:
+        """Отправляет сообщение в топик."""
+
+    @abstractmethod
+    async def consume_one(self, timeout_ms: int = 1000) -> Any:
+        """Получает одно сообщение."""
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Закрывает producer и consumer."""
+
+
+class KafkaClient(BaseKafkaClient):
     """Асинхронный Kafka-клиент (producer + consumer).
 
     Attrs:

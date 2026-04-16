@@ -30,18 +30,18 @@ def setup_middlewares(app: FastAPI) -> None:
     from starlette_exporter import PrometheusMiddleware
 
     from app.core.config.settings import settings
-    from app.entrypoints.api.middlewares.admin_ip import IPRestrictionMiddleware
-    from app.entrypoints.api.middlewares.api_key import APIKeyMiddleware
-    from app.entrypoints.api.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from app.entrypoints.api.middlewares.circuit_breaker import CircuitBreakerMiddleware
-    from app.entrypoints.api.middlewares.exception_handler import (
+    from app.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
+    from app.entrypoints.middlewares.api_key import APIKeyMiddleware
+    from app.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
+    from app.entrypoints.middlewares.circuit_breaker import CircuitBreakerMiddleware
+    from app.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
-    from app.entrypoints.api.middlewares.request_id import RequestIDMiddleware
-    from app.entrypoints.api.middlewares.request_log import (
+    from app.entrypoints.middlewares.request_id import RequestIDMiddleware
+    from app.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
     )
-    from app.entrypoints.api.middlewares.timeout import TimeoutMiddleware
+    from app.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     # Порядок middleware соответствует последовательности обработки запроса
     middleware_chain = [

@@ -2,7 +2,7 @@ from asyncio import TimeoutError
 from dataclasses import dataclass, field
 from datetime import timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Set, Tuple
+from typing import Any
 
 from aiohttp import ClientError
 
@@ -29,8 +29,8 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: Tuple[Any] = (ClientError, TimeoutError)
-    CHECK_SERVICES_JOB: Dict[str, Any] = field(
+    RETRY_EXCEPTIONS: tuple[Any] = (ClientError, TimeoutError)
+    CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )
     PREFECT_SERVER_COMMAND: str = "prefect server start"
@@ -38,7 +38,7 @@ class Constants:
     INITIAL_DELAY: int = 3600  # 60 минут
     RETRY_DELAY: int = 1800  # 30 минут
     MAX_RESULT_ATTEMPTS: int = 4
-    RETRIABLE_DB_CODES: Set[str] = field(
+    RETRIABLE_DB_CODES: set[str] = field(
         default_factory=lambda: {
             # Ошибки, связанные с подключением
             "08000",
