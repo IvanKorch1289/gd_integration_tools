@@ -167,26 +167,46 @@ class MemoryCacheEntry:
 
 
 class InMemoryTTLCache:
-    """
-    Простой in-memory LRU + TTL кэш.
+    """In-memory LRU-кэш с поддержкой TTL и stale-семантики.
 
-    Особенности:
-    - хранит envelope с fresh/stale semantics;
-    - умеет продлевать TTL при renew_ttl=True;
-    - удаляет самые старые записи при переполнении.
+    Хранит записи в ``OrderedDict`` с LRU-вытеснением при
+    переполнении. Каждая запись содержит ``CacheEnvelope``
+    с информацией о свежести (fresh/stale).
+
+    Attrs:
+        _PURGE_INTERVAL: Минимальный интервал (сек.) между
+            полными сканированиями на просроченные записи.
     """
+
+    _PURGE_INTERVAL: float = 60.0
 
     def __init__(self, max_size: int = 1024) -> None:
         self._data: OrderedDict[str, MemoryCacheEntry] = OrderedDict()
         self._lock = asyncio.Lock()
         self._max_size = max_size
+        self._last_purge_time: float = 0.0
 
     @staticmethod
     def _now() -> float:
+        """Возвращает текущее монотонное время."""
         return time.monotonic()
 
     def _purge_dead(self) -> None:
+        """Удаляет просроченные записи из кэша.
+
+        Выполняется не чаще чем раз в ``_PURGE_INTERVAL`` секунд
+        или при превышении ``_max_size * 1.1``, чтобы не
+        сканировать весь кэш при каждом обращении.
+        """
         current = self._now()
+        over_capacity = len(self._data) > int(self._max_size * 1.1)
+
+        if (
+            not over_capacity
+            and current - self._last_purge_time < self._PURGE_INTERVAL
+        ):
+            return
+
         dead_keys = [
             key
             for key, entry in self._data.items()
@@ -195,13 +215,24 @@ class InMemoryTTLCache:
         for key in dead_keys:
             self._data.pop(key, None)
 
+        self._last_purge_time = current
+
     def _evict_if_needed(self) -> None:
         while len(self._data) > self._max_size:
             self._data.popitem(last=False)
 
-    async def get(self, key: str, renew_ttl: bool = False) -> CacheEnvelope | None:
-        """
-        Возвращает envelope по ключу.
+    async def get(
+        self, key: str, renew_ttl: bool = False
+    ) -> CacheEnvelope | None:
+        """Возвращает envelope по ключу.
+
+        Args:
+            key: Ключ кэша.
+            renew_ttl: Продлить TTL при чтении свежей записи.
+
+        Returns:
+            ``CacheEnvelope`` или ``None``, если записи нет
+            или она просрочена.
         """
         async with self._lock:
             self._purge_dead()
@@ -229,8 +260,13 @@ class InMemoryTTLCache:
         ttl_seconds: int | None,
         stale_if_error_seconds: int = 0,
     ) -> None:
-        """
-        Сохраняет запись в memory cache.
+        """Сохраняет запись в memory-кэш.
+
+        Args:
+            key: Ключ кэша.
+            value: Значение для сохранения.
+            ttl_seconds: Время жизни записи в секундах.
+            stale_if_error_seconds: Доп. время жизни stale-записи.
         """
         async with self._lock:
             self._purge_dead()
@@ -246,16 +282,20 @@ class InMemoryTTLCache:
             self._evict_if_needed()
 
     async def delete(self, *keys: str) -> None:
-        """
-        Удаляет записи по ключам.
+        """Удаляет записи по ключам.
+
+        Args:
+            *keys: Один или несколько ключей для удаления.
         """
         async with self._lock:
             for key in keys:
                 self._data.pop(key, None)
 
     async def delete_pattern(self, pattern: str) -> None:
-        """
-        Удаляет записи по glob-паттерну.
+        """Удаляет записи по glob-паттерну.
+
+        Args:
+            pattern: Glob-паттерн (например, ``cache:Order*``).
         """
         async with self._lock:
             keys_to_delete = [
@@ -429,19 +469,20 @@ class DiskTTLCache:
 
 
 class CachingDecorator:
-    """
-    Декоратор кэширования async-функций.
+    """Декоратор кэширования async-функций с multi-layer fallback.
 
-    Слои:
-    - Redis — основной shared-cache;
-    - memory — быстрый локальный fallback;
-    - disk — устойчивый локальный fallback между рестартами.
+    Слои (в порядке приоритета):
+        1. **Redis** — основной shared-кэш между процессами.
+        2. **Memory** — быстрый локальный in-process fallback.
+        3. **Disk** — устойчивый fallback между рестартами.
 
-    Основные улучшения относительно прошлой версии:
-    - single-flight по cache key, чтобы не было stampede;
-    - cooldown для Redis после серии ошибок;
-    - stale-on-error для memory/disk fallback;
-    - обратная совместимость со старыми disk payload.
+    Ключевые возможности:
+        - Single-flight по cache key (защита от stampede).
+        - Cooldown для Redis после серии ошибок.
+        - Stale-on-error: возврат устаревших значений при
+          сбое источника данных.
+        - Таймаут захвата lock (защита от deadlock).
+        - Обратная совместимость со старыми форматами.
     """
 
     def __init__(
@@ -492,6 +533,7 @@ class CachingDecorator:
 
         self._key_locks: dict[str, asyncio.Lock] = {}
         self._key_locks_guard = asyncio.Lock()
+        self._lock_acquire_timeout: float = 5.0
 
     @staticmethod
     def _now() -> float:
@@ -631,35 +673,49 @@ class CachingDecorator:
 
             lock = await self._get_key_lock(key)
 
-            async with lock:
+            try:
+                await asyncio.wait_for(
+                    lock.acquire(),
+                    timeout=self._lock_acquire_timeout,
+                )
+            except asyncio.TimeoutError:
+                self.logger.warning(
+                    "Таймаут захвата lock для key=%s, "
+                    "выполняю функцию напрямую",
+                    key,
+                )
+                return await func(*args, **kwargs)
+
+            try:
+                # Double-check после получения lock.
+                cached = await self._get_cached_value(key)
+                if cached is not None:
+                    return cached
+
                 try:
-                    # Double-check после получения lock.
-                    cached = await self._get_cached_value(key)
-                    if cached is not None:
-                        return cached
+                    result = await func(*args, **kwargs)
+                except Exception as exc:
+                    stale = None
+                    if self.allow_stale_on_error:
+                        stale = await self._get_stale_value(key)
 
-                    try:
-                        result = await func(*args, **kwargs)
-                    except Exception as exc:
-                        stale = None
-                        if self.allow_stale_on_error:
-                            stale = await self._get_stale_value(key)
+                    if stale is not None:
+                        self.logger.warning(
+                            "Возвращено stale значение из "
+                            "fallback для key=%s после "
+                            "ошибки источника: %s",
+                            key,
+                            str(exc),
+                        )
+                        return stale
 
-                        if stale is not None:
-                            self.logger.warning(
-                                "Возвращено stale значение из fallback "
-                                "для key=%s после ошибки источника: %s",
-                                key,
-                                str(exc),
-                            )
-                            return stale
+                    raise
 
-                        raise
-
-                    await self._cache_result(key, result)
-                    return result
-                finally:
-                    await self._cleanup_key_lock(key, lock)
+                await self._cache_result(key, result)
+                return result
+            finally:
+                lock.release()
+                await self._cleanup_key_lock(key, lock)
 
         return wrapper
 
@@ -670,9 +726,14 @@ class CachingDecorator:
         if self.disk_cache:
             await self.disk_cache.close()
 
-    async def _try_repopulate_redis(self, key: str, value: Any) -> None:
-        """
-        Пытается прогреть Redis значением из локального fallback-слоя.
+    async def _try_repopulate_redis(
+        self, key: str, value: Any
+    ) -> None:
+        """Прогревает Redis значением из локального fallback-слоя.
+
+        Args:
+            key: Ключ кэша.
+            value: Значение для записи в Redis.
         """
         if not self.repopulate_redis_from_fallback:
             return
@@ -683,11 +744,18 @@ class CachingDecorator:
         try:
             await redis_client.cache_set(key, json_dumps(value), self.expire)
             self._mark_redis_success()
-        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
+        except (
+            RedisConnectionError,
+            RedisTimeoutError,
+            RedisError,
+            OSError,
+        ):
             self._mark_redis_failure()
         except Exception as exc:
             redis_client.logger.warning(
-                f"Неизвестная ошибка при фоновом обновлении Redis кэша: {exc}"
+                "Неизвестная ошибка при фоновом обновлении"
+                " Redis кэша: %s",
+                exc,
             )
 
     async def _get_cached_value(self, key: str) -> Any | None:
