@@ -5,7 +5,12 @@
 запросы через If-None-Match.
 """
 
-import hashlib
+try:
+    import xxhash
+    _USE_XXHASH = True
+except ImportError:
+    import hashlib
+    _USE_XXHASH = False
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -39,7 +44,10 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
             return response
 
         body = await self._capture_body(response)
-        etag = f'"{hashlib.sha256(body).hexdigest()[:32]}"'
+        if _USE_XXHASH:
+            etag = f'"{xxhash.xxh64(body).hexdigest()}"'
+        else:
+            etag = f'"{hashlib.sha256(body).hexdigest()[:16]}"'
 
         if_none_match = request.headers.get("if-none-match")
         if if_none_match and if_none_match == etag:

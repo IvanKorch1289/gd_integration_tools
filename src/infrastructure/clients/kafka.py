@@ -61,6 +61,9 @@ class KafkaClient(BaseKafkaClient):
 
         self._producer = AIOKafkaProducer(
             bootstrap_servers=self.bootstrap_servers,
+            linger_ms=10,
+            batch_size=32768,
+            compression_type="snappy",
         )
         await self._producer.start()
         logger.info("Kafka producer запущен: %s", self.bootstrap_servers)
@@ -99,6 +102,17 @@ class KafkaClient(BaseKafkaClient):
             headers=headers,
         )
         logger.debug("Kafka: отправлено в %s", topic)
+
+    async def produce_fire_and_forget(
+        self,
+        topic: str,
+        value: bytes,
+        key: bytes | None = None,
+    ) -> None:
+        """Отправляет без ожидания ACK (максимальный throughput)."""
+        if self._producer is None:
+            raise ServiceError(detail="Kafka producer не запущен")
+        await self._producer.send(topic, value=value, key=key)
 
     async def produce_json(
         self,

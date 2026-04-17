@@ -52,7 +52,6 @@ class ExecutionTracer:
 
     def __init__(self) -> None:
         self._subscribers: dict[str, list[asyncio.Queue[TraceEvent]]] = {}
-        self._lock = asyncio.Lock()
 
     @asynccontextmanager
     async def trace(
@@ -105,49 +104,50 @@ class ExecutionTracer:
             await self._emit(route_id, end_event)
 
     async def _emit(self, route_id: str, event: TraceEvent) -> None:
-        """Отправляет событие всем подписчикам маршрута."""
-        queues = self._subscribers.get(route_id, [])
-        for q in queues:
-            try:
-                q.put_nowait(event)
-            except asyncio.QueueFull:
-                pass
+        """Отправляет событие подписчикам (lock-free, drop oldest при backpressure)."""
+        for target in (route_id, "__all__"):
+            queues = self._subscribers.get(target)
+            if not queues:
+                continue
+            for q in queues:
+                try:
+                    q.put_nowait(event)
+                except asyncio.QueueFull:
+                    try:
+                        q.get_nowait()
+                        q.put_nowait(event)
+                    except (asyncio.QueueEmpty, asyncio.QueueFull):
+                        pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent, None]:
         """SSE-подписка на trace events конкретного маршрута."""
         queue: asyncio.Queue[TraceEvent] = asyncio.Queue(maxsize=1000)
-
-        async with self._lock:
-            self._subscribers.setdefault(route_id, []).append(queue)
+        self._subscribers.setdefault(route_id, []).append(queue)
 
         try:
             while True:
                 event = await queue.get()
                 yield event
         finally:
-            async with self._lock:
-                subs = self._subscribers.get(route_id, [])
-                if queue in subs:
-                    subs.remove(queue)
-                if not subs:
-                    self._subscribers.pop(route_id, None)
+            subs = self._subscribers.get(route_id, [])
+            if queue in subs:
+                subs.remove(queue)
+            if not subs:
+                self._subscribers.pop(route_id, None)
 
     async def subscribe_all(self) -> AsyncGenerator[TraceEvent, None]:
         """SSE-подписка на все trace events."""
         queue: asyncio.Queue[TraceEvent] = asyncio.Queue(maxsize=5000)
-
-        async with self._lock:
-            self._subscribers.setdefault("__all__", []).append(queue)
+        self._subscribers.setdefault("__all__", []).append(queue)
 
         try:
             while True:
                 event = await queue.get()
                 yield event
         finally:
-            async with self._lock:
-                subs = self._subscribers.get("__all__", [])
-                if queue in subs:
-                    subs.remove(queue)
+            subs = self._subscribers.get("__all__", [])
+            if queue in subs:
+                subs.remove(queue)
 
 
 _tracer_instance: ExecutionTracer | None = None

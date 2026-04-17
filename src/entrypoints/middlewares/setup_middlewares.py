@@ -46,14 +46,24 @@ def setup_middlewares(app: FastAPI) -> None:
     from app.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
     from app.entrypoints.middlewares.timeout import TimeoutMiddleware
 
-    # Порядок middleware соответствует последовательности обработки запроса
+    # Порядок оптимизирован для high-load:
+    # 1. Дешёвые проверки + early exit (отсекаем до обработки)
+    # 2. Управление запросом (ID, timeout)
+    # 3. Бизнес-middleware (кэш, маскировка)
+    # 4. Метрики (измеряют реальную работу, а не overhead)
     middleware_chain = [
-        # Системные middleware (безопасность и метрики)
-        (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
+        # Слой 1: Early exit — отклоняем невалидные запросы мгновенно
+        (ExceptionHandlerMiddleware, {}),
         (TrustedHostMiddleware, {"allowed_hosts": settings.secure.allowed_hosts}),
+        (BlockedRoutesMiddleware, {}),
         (IPRestrictionMiddleware, {}),
         (APIKeyMiddleware, {}),
-        (BlockedRoutesMiddleware, {}),
+        # Слой 2: Управление запросом
+        (RequestIDMiddleware, {}),
+        (TimeoutMiddleware, {}),
+        (CircuitBreakerMiddleware, {}),
+        # Слой 3: Обработка тела (только для прошедших аутентификацию)
+        (ResponseCacheMiddleware, {"max_age": 60}),
         (
             GZipMiddleware,
             {
@@ -61,18 +71,11 @@ def setup_middlewares(app: FastAPI) -> None:
                 "compresslevel": settings.app.gzip_compresslevel,
             },
         ),
-        # Middleware кэширования и маскировки
-        (ResponseCacheMiddleware, {"max_age": 60}),
         (DataMaskingMiddleware, {}),
-        # Middleware управления запросами
-        (RequestIDMiddleware, {}),
-        (TimeoutMiddleware, {}),
-        # Middleware логирования и аудита
+        # Слой 4: Логирование и метрики (последними — измеряют всё)
         (AuditLogMiddleware, {}),
         (InnerRequestLoggingMiddleware, {}),
-        # Middleware обработки ошибок
-        (CircuitBreakerMiddleware, {}),
-        (ExceptionHandlerMiddleware, {}),
+        (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
     ]
 
     try:
