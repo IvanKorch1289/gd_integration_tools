@@ -153,3 +153,16 @@ class Exchange(BaseModel, Generic[T]):
         """
         self.status = ExchangeStatus.failed
         self.error = reason
+
+    def stop(self) -> None:
+        """Прерывает дальнейшую обработку маршрута."""
+        self.set_property("_stopped", True)
+
+    @property
+    def stopped(self) -> bool:
+        """Проверяет, была ли остановлена обработка."""
+        return self.properties.get("_stopped", False)
+
+    def set_error(self, reason: str) -> None:
+        """Устанавливает ошибку без изменения статуса."""
+        self.error = reason

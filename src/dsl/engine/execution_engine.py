@@ -53,6 +53,8 @@ class ExecutionEngine:
         for processor in pipeline.processors:
             if current_exchange.status == ExchangeStatus.failed:
                 break
+            if current_exchange.stopped:
+                break
 
             try:
                 if runtime_context.logger is not None:

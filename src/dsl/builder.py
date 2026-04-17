@@ -5,12 +5,20 @@ from app.dsl.adapters.types import ProtocolType, TransportConfig
 from app.dsl.engine.exchange import Exchange
 from app.dsl.engine.pipeline import Pipeline
 from app.dsl.engine.processors import (
+    AgentGraphProcessor,
     BaseProcessor,
     CallableProcessor,
+    CDCProcessor,
     DispatchActionProcessor,
+    EnrichProcessor,
+    FilterProcessor,
+    LogProcessor,
+    MCPToolProcessor,
     ProcessorCallable,
     SetHeaderProcessor,
     SetPropertyProcessor,
+    TransformProcessor,
+    ValidateProcessor,
 )
 
 __all__ = ("RouteBuilder",)
@@ -180,6 +188,81 @@ class RouteBuilder:
             Текущий builder.
         """
         self._transport_config = config
+        return self
+
+    def transform(self, expression: str) -> "RouteBuilder":
+        """Добавляет шаг маппинга через jmespath."""
+        self._processors.append(TransformProcessor(expression=expression))
+        return self
+
+    def filter(
+        self, predicate: Callable[[Exchange[Any]], bool]
+    ) -> "RouteBuilder":
+        """Добавляет условную фильтрацию."""
+        self._processors.append(FilterProcessor(predicate=predicate))
+        return self
+
+    def enrich(
+        self,
+        action: str,
+        *,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        result_property: str = "enrichment",
+    ) -> "RouteBuilder":
+        """Добавляет обогащение данными из другого action."""
+        self._processors.append(
+            EnrichProcessor(
+                action=action,
+                payload_factory=payload_factory,
+                result_property=result_property,
+            )
+        )
+        return self
+
+    def log(self, level: str = "info") -> "RouteBuilder":
+        """Добавляет логирование Exchange."""
+        self._processors.append(LogProcessor(level=level))
+        return self
+
+    def validate(self, model: type) -> "RouteBuilder":
+        """Добавляет валидацию body через Pydantic-модель."""
+        self._processors.append(ValidateProcessor(model=model))
+        return self
+
+    def mcp_tool(
+        self,
+        uri: str,
+        tool: str,
+        *,
+        result_property: str = "mcp_result",
+    ) -> "RouteBuilder":
+        """Добавляет вызов внешнего MCP tool."""
+        self._processors.append(
+            MCPToolProcessor(tool_uri=uri, tool_name=tool, result_property=result_property)
+        )
+        return self
+
+    def agent_graph(
+        self,
+        graph_name: str,
+        tools: list[str],
+    ) -> "RouteBuilder":
+        """Добавляет запуск LangGraph-агента с указанными tools."""
+        self._processors.append(
+            AgentGraphProcessor(graph_name=graph_name, tools=tools)
+        )
+        return self
+
+    def cdc(
+        self,
+        profile: str,
+        tables: list[str],
+        target_action: str,
+    ) -> "RouteBuilder":
+        """Добавляет CDC-подписку на изменения в таблицах."""
+        self._processors.append(
+            CDCProcessor(profile=profile, tables=tables, target_action=target_action)
+        )
         return self
 
     def build(self) -> Pipeline:

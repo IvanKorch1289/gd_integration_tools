@@ -2,11 +2,14 @@ syntax = "proto3";
 
 package orders;
 
-import "google/protobuf/wrappers.proto"
-
 service OrderService {
   rpc CreateOrder(CreateOrderRequest) returns (OrderResponse) {}
   rpc GetOrderResult(GetOrderRequest) returns (OrderResponse) {}
+  rpc GetOrder(GetOrderRequest) returns (OrderDetailResponse) {}
+  rpc DeleteOrder(GetOrderRequest) returns (DeleteResponse) {}
+  rpc CreateSKBOrder(CreateOrderRequest) returns (OrderResponse) {}
+  rpc GetFileAndJson(CreateOrderRequest) returns (OrderResponse) {}
+  rpc SendOrderData(CreateOrderRequest) returns (OrderResponse) {}
 }
 
 message CreateOrderRequest {
@@ -23,4 +26,19 @@ message OrderResponse {
   string skb_id = 2;
   string status = 3;
   string error = 4;
+}
+
+message OrderDetailResponse {
+  int32 id = 1;
+  string object_uuid = 2;
+  int32 order_kind_id = 3;
+  bool is_active = 4;
+  bool is_send_to_gd = 5;
+  string json_data = 6;
+  string error = 7;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string error = 2;
 }

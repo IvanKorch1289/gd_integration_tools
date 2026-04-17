@@ -62,6 +62,14 @@ route = (
 | `.set_header(key, value)` | Добавляет шаг установки заголовка в Exchange |
 | `.set_property(key, value)` | Добавляет шаг установки runtime-свойства |
 | `.dispatch_action(action, payload_factory, result_property)` | Вызов action через ActionHandlerRegistry |
+| `.transform(expression)` | Маппинг полей через jmespath |
+| `.filter(predicate)` | Условная маршрутизация |
+| `.enrich(action, payload_factory, result_property)` | Обогащение из другого action |
+| `.validate(model)` | Валидация body через Pydantic-модель |
+| `.log(level)` | Логирование Exchange |
+| `.mcp_tool(uri, tool, result_property)` | Вызов внешнего MCP tool |
+| `.agent_graph(graph_name, tools)` | Запуск LangGraph-агента |
+| `.cdc(profile, tables, target_action)` | CDC-подписка на изменения в таблицах |
 | `.process(processor)` / `.to(processor)` | Добавляет произвольный процессор |
 | `.process_fn(func, name)` | Добавляет функцию/корутину как процессор |
 | `.transport(config)` | Устанавливает конфигурацию транспорта |
@@ -75,6 +83,14 @@ route = (
 | `SetHeaderProcessor` | Устанавливает заголовок в Exchange |
 | `SetPropertyProcessor` | Устанавливает свойство в Exchange |
 | `DispatchActionProcessor` | Вызывает зарегистрированный action через registry |
+| `TransformProcessor` | Маппинг полей через jmespath |
+| `FilterProcessor` | Условная маршрутизация с предикатом |
+| `EnrichProcessor` | Обогащение данными из другого action |
+| `ValidateProcessor` | Валидация через Pydantic-модель |
+| `LogProcessor` | Логирование состояния Exchange |
+| `MCPToolProcessor` | Вызов внешнего MCP tool |
+| `AgentGraphProcessor` | Запуск LangGraph-агента с tools |
+| `CDCProcessor` | Подписка на CDC-изменения |
 
 ---
 
@@ -230,3 +246,58 @@ python tools/generate_resource.py products
 | `src/dsl/routes.py` | Регистрация DSL-маршрутов |
 | `src/dsl/builder.py` | Fluent-builder для маршрутов |
 | `src/dsl/service.py` | DslService — dispatch из entrypoints |
+| `src/core/service_registry.py` | Реестр бизнес-сервисов |
+| `src/core/service_setup.py` | Регистрация всех сервисов |
+
+---
+
+## Как добавить новый action → все протоколы
+
+1. Создайте сервис с методом (или используйте существующий)
+2. Зарегистрируйте фабрику в `src/core/service_setup.py`
+3. Зарегистрируйте action в `src/dsl/commands/setup.py`
+4. DSL-маршрут создаётся автоматически в `register_dsl_routes()`
+5. Action доступен через REST, GraphQL, gRPC, SOAP, WebSocket, SSE, MCP и т.д.
+
+## Как добавить GraphQL type для нового домена
+
+1. Создайте `@strawberry.type` в `src/entrypoints/graphql/schema.py`
+2. Добавьте резолвер в `Query` или `Mutation`, вызывающий `_dispatch_action()`
+3. Добавьте конвертер `_schema_to_*` для Pydantic → Strawberry
+
+## Как добавить gRPC service
+
+1. Создайте `.proto` файл в `src/entrypoints/grpc/protobuf/`
+2. Сгенерируйте stubs: `python -m grpc_tools.protoc ...`
+3. Создайте servicer, наследующий `BaseGRPCServicer`
+4. Зарегистрируйте в `serve()` в `grpc_server.py`
+
+## Как создать AI-агента с tools
+
+```python
+route = (
+    RouteBuilder.from_("ai.order_assistant", source="internal:ai.order_assistant")
+    .agent_graph(
+        graph_name="order_assistant",
+        tools=["orders.get", "orders.create_skb_order", "ai.search_web"],
+    )
+    .build()
+)
+```
+
+## Как подписаться на CDC-изменения
+
+```python
+route = (
+    RouteBuilder.from_("cdc.sync_orders", source="cdc:external_db")
+    .cdc(profile="external_db_1", tables=["orders"], target_action="orders.add")
+    .build()
+)
+```
+
+Или через REST API:
+```bash
+curl -X POST http://localhost:8000/api/v1/cdc/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{"profile": "external_db", "tables": ["orders"], "target_action": "orders.add"}'
+```

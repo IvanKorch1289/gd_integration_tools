@@ -1,52 +1,46 @@
+"""Регистрация DSL-маршрутов приложения.
+
+Автоматически создаёт маршрут для каждого зарегистрированного
+action из ActionHandlerRegistry. После регистрации все actions
+доступны через GraphQL, SOAP, WebSocket, SSE, Webhook и другие
+протоколы без дополнительного кода.
+"""
+
 from app.dsl.builder import RouteBuilder
+from app.dsl.commands.registry import action_handler_registry
 from app.dsl.engine.exchange import Exchange
 from app.dsl.registry import route_registry
 
 __all__ = ("register_dsl_routes",)
 
 
-def register_dsl_routes() -> None:
-    """
-    Регистрирует все DSL-маршруты приложения.
+def _default_payload_factory(exchange: Exchange[dict]) -> dict:
+    """Извлекает payload из Exchange как dict."""
+    body = exchange.in_message.body
+    if isinstance(body, dict):
+        return body
+    return {}
 
-    Правила:
-    - только декларация маршрутов;
-    - без side effects кроме route_registry.register(...);
-    - без HTTP/FastAPI-specific логики;
-    - идемпотентность на уровне route_id overwrite допустима.
-    """
 
-    tech_send_email_route = (
+def _register_action_route(action: str) -> None:
+    """Создаёт и регистрирует DSL-маршрут для одного action."""
+    domain = action.split(".")[0] if "." in action else action
+
+    route = (
         RouteBuilder.from_(
-            route_id="tech.send_email",
-            source="internal:tech.send_email",
-            description="DSL-маршрут отправки email",
+            route_id=action,
+            source=f"internal:{action}",
+            description=f"DSL-маршрут: {action}",
         )
-        .set_header("x-route-id", "tech.send_email")
-        .set_property("domain", "tech")
-        .dispatch_action("tech.send_email", payload_factory=_email_payload_factory)
+        .set_header("x-route-id", action)
+        .set_property("domain", domain)
+        .dispatch_action(action, payload_factory=_default_payload_factory)
         .build()
     )
+    route_registry.register(route)
 
-    route_registry.register(tech_send_email_route)
 
-
-def _email_payload_factory(exchange: Exchange[dict]) -> dict:
-    """
-    Собирает payload для команды отправки email.
-
-    Args:
-        exchange: Текущий Exchange.
-
-    Returns:
-        dict: Нормализованный payload.
-    """
-    body = exchange.in_message.body or {}
-    if not isinstance(body, dict):
-        return {}
-
-    return {
-        "recipient": body.get("recipient"),
-        "subject": body.get("subject"),
-        "body": body.get("body"),
-    }
+def register_dsl_routes() -> None:
+    """Регистрирует DSL-маршруты для всех actions из ActionHandlerRegistry."""
+    for action in action_handler_registry.list_actions():
+        _register_action_route(action)

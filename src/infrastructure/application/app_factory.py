@@ -110,6 +110,10 @@ def _configure_business_routers(app: FastAPI) -> None:
     app.include_router(sse_router)
     app.include_router(webhook_router)
 
+    # CDC
+    from app.entrypoints.cdc.cdc_routes import cdc_router
+    app.include_router(cdc_router)
+
 
 def _configure_root_endpoint(app: FastAPI) -> None:
     """Конфигурация корневого эндпоинта"""

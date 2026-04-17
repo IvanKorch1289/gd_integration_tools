@@ -37,10 +37,13 @@ def setup_middlewares(app: FastAPI) -> None:
     from app.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
+    from app.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from app.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from app.entrypoints.middlewares.request_id import RequestIDMiddleware
     from app.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
     )
+    from app.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
     from app.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     # Порядок middleware соответствует последовательности обработки запроса
@@ -58,10 +61,14 @@ def setup_middlewares(app: FastAPI) -> None:
                 "compresslevel": settings.app.gzip_compresslevel,
             },
         ),
+        # Middleware кэширования и маскировки
+        (ResponseCacheMiddleware, {"max_age": 60}),
+        (DataMaskingMiddleware, {}),
         # Middleware управления запросами
         (RequestIDMiddleware, {}),
         (TimeoutMiddleware, {}),
-        # Middleware логирования
+        # Middleware логирования и аудита
+        (AuditLogMiddleware, {}),
         (InnerRequestLoggingMiddleware, {}),
         # Middleware обработки ошибок
         (CircuitBreakerMiddleware, {}),

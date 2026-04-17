@@ -1,6 +1,6 @@
 # GD Integration Tools
 
-API-шлюз для интеграции с внешними сервисами и внутренними workflow.
+Интеграционная шина — «швейцарский нож» для связи с внешними сервисами и внутренними workflow. Любой бизнес-метод регистрируется один раз и становится доступен через **все протоколы** без дублирования кода.
 
 [![Python](https://img.shields.io/badge/Python-3.14+-blue?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-blue?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -8,267 +8,226 @@ API-шлюз для интеграции с внешними сервисами 
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-orange?logo=rabbitmq&logoColor=white)](https://rabbitmq.com)
 [![Docker](https://img.shields.io/badge/Docker-blue?logo=docker&logoColor=white)](https://docker.com)
 
-## Возможности
+## Архитектура
 
-- Асинхронное API на FastAPI
-- Асинхронный доступ к PostgreSQL
-- Интеграция с RabbitMQ
-- Workflow и orchestration через Prefect
-- Применение миграций через Alembic
-- Централизованное управление запуском через `scripts/manage.sh`
-- Локальный dev-flow через `Makefile`
-- Запуск в Docker-контейнере
-- Базовые security и quality проверки
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Входные протоколы                        │
+│  REST │ GraphQL │ gRPC │ SOAP │ WebSocket │ SSE │ Webhook   │
+│  RabbitMQ │ Redis Streams │ Kafka │ MCP                     │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────┐
+│                  DSL Engine (Pipeline)                       │
+│  RouteBuilder → Processors → Exchange → ActionHandlerRegistry│
+│  Transform │ Filter │ Enrich │ Validate │ AgentGraph │ MCP  │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────┐
+│              ActionHandlerRegistry (35+ actions)             │
+│  orders.* │ users.* │ files.* │ orderkinds.* │ skb.*        │
+│  dadata.* │ tech.* │ admin.* │ ai.*                         │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────┐
+│               ServiceRegistry (бизнес-сервисы)               │
+│  OrderService │ UserService │ FileService │ APISKBService    │
+│  APIDADATAService │ TechService │ AdminService │ AIAgentSvc  │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────▼─────────────────────────────────────┐
+│                    Инфраструктура                            │
+│  PostgreSQL │ Redis │ S3 │ RabbitMQ │ Kafka │ MongoDB       │
+│  WAF proxy │ LangFuse │ CDC │ Prefect                       │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Стек
+## Протоколы
 
-- Python 3.14
-- FastAPI
-- SQLAlchemy / Alembic
-- PostgreSQL
-- RabbitMQ
-- Prefect
-- Docker
-- Poetry
+| Протокол | Endpoint | Описание |
+|----------|----------|----------|
+| REST | `/api/v1/*` | CRUD + бизнес-операции |
+| GraphQL | `/graphql` | Типизированные Query/Mutation + DSL fallback |
+| gRPC | Unix socket | Orders, Users, Files, OrderKinds |
+| SOAP | `POST /soap/` | XML envelope → dispatch через DSL/actions |
+| SOAP WSDL | `GET /soap/wsdl` | Автогенерированный WSDL |
+| WebSocket | `/ws/*` | Bidirectional messaging |
+| SSE | `/sse/*` | Server-Sent Events |
+| Webhook | `/webhook/*` | Входящие webhooks |
+| RabbitMQ | `/stream/rabbit/*` | Pub/Sub через AMQP |
+| Redis Streams | `/stream/redis/*` | Pub/Sub через Redis |
+| MCP | FastMCP server | Model Context Protocol для LLM-агентов |
+| CDC | `/api/v1/cdc/*` | Change Data Capture подписки |
 
-## Структура управления проектом
+## Бизнес-actions
 
-Проект больше не использует `start.sh`, `stop.sh` и `init-rabbitmq.sh` как отдельные точки входа.
+Все actions доступны через любой протокол:
 
-Теперь управление вынесено в:
+| Домен | Actions |
+|-------|---------|
+| **orders** | add, get, update, delete, create_skb_order, get_result, get_file_and_json, get_file_from_storage, get_file_base64, get_file_link, send_order_data |
+| **users** | add, get, update, delete, login |
+| **files** | add, get, update, delete |
+| **orderkinds** | add, get, update, delete, sync_from_skb |
+| **skb** | get_request_kinds, add_request, get_response_by_order, get_orders_list, get_objects_by_address |
+| **dadata** | get_geolocate |
+| **tech** | check_all_services, check_database, check_redis, check_s3, send_email |
+| **admin** | get_config, list_cache_keys, get_cache_value, invalidate_cache |
+| **ai** | search_web, parse_webpage, chat, run_agent |
 
-- `scripts/manage.sh` — единая точка управления сервисами
-- `Makefile` — удобные команды для локальной разработки
-- `Dockerfile` — контейнерный запуск через `scripts/manage.sh`
+## DSL Engine
+
+Каждый action доступен как DSL-маршрут с pipeline-обработкой:
+
+```python
+route = (
+    RouteBuilder.from_("orders.enriched", source="internal:orders.enriched")
+    .set_header("x-route-id", "orders.enriched")
+    .validate(OrderSchemaIn)
+    .dispatch_action("orders.add")
+    .enrich("skb.get_request_kinds")
+    .transform("data.items[0]")
+    .log()
+    .build()
+)
+```
+
+### Процессоры DSL
+
+| Процессор | Назначение |
+|-----------|-----------|
+| SetHeader / SetProperty | Установка заголовков и свойств |
+| DispatchAction | Вызов action через ActionHandlerRegistry |
+| Transform | Маппинг полей через jmespath |
+| Filter | Условная маршрутизация |
+| Enrich | Обогащение из другого action |
+| Validate | Валидация через Pydantic |
+| Log | Логирование Exchange |
+| MCPTool | Вызов внешнего MCP tool |
+| AgentGraph | Запуск LangGraph-агента |
+| CDC | Подписка на изменения в БД |
+
+## AI-функционал
+
+- **Perplexity Search** — поиск в интернете через WAF-прокси
+- **BeautifulSoup** — парсинг веб-страниц через WAF
+- **LangChain** — чат с LLM
+- **LangGraph** — агентские графы с tools из ActionHandlerRegistry
+- **LangFuse** — observability для LLM-вызовов
+- **FastMCP** — все actions экспортируются как MCP tools для LLM-агентов
+
+## Middleware
+
+| Middleware | Назначение |
+|-----------|-----------|
+| PrometheusMiddleware | Метрики |
+| TrustedHostMiddleware | Проверка хостов |
+| IPRestrictionMiddleware | Ограничение по IP |
+| APIKeyMiddleware | Аутентификация по API-ключу |
+| BlockedRoutesMiddleware | Блокировка маршрутов |
+| GZipMiddleware | Сжатие ответов |
+| ResponseCacheMiddleware | HTTP-кэширование (ETag) |
+| DataMaskingMiddleware | Маскировка PII |
+| RequestIDMiddleware | Request ID + Correlation ID |
+| TimeoutMiddleware | Таймаут запросов |
+| AuditLogMiddleware | Аудит-логирование |
+| InnerRequestLoggingMiddleware | Логирование тел запросов/ответов |
+| CircuitBreakerMiddleware | Circuit breaker |
+| ExceptionHandlerMiddleware | Обработка исключений |
+
+## Стек технологий
+
+- **Python 3.14** / FastAPI / SQLAlchemy / Alembic
+- **PostgreSQL** / Redis / MongoDB / S3
+- **RabbitMQ** / Kafka / Redis Streams
+- **gRPC** / GraphQL (Strawberry) / SOAP (Zeep)
+- **Prefect** — workflow orchestration
+- **LangChain** / LangGraph / LangFuse — AI
+- **FastMCP** — Model Context Protocol
+- **Prometheus** / OpenTelemetry — observability
+- **Docker** / Poetry
 
 ## Требования
 
 - Python 3.14
 - Poetry
-- Docker и Docker Compose, если нужен контейнерный запуск
-- Доступные внешние сервисы: PostgreSQL, RabbitMQ и другие зависимости проекта
+- Docker и Docker Compose (для контейнерного запуска)
+- PostgreSQL, RabbitMQ, Redis и другие зависимости
 
 ## Установка
 
-### 1. Установить Poetry
-
 ```bash
+# Установить Poetry
 curl -sSL https://install.python-poetry.org | python3 -
-```
 
-### 2. Установить зависимости
-
-```bash
+# Установить зависимости
 make init
-```
 
-или
+# Настроить .env
+cp .env.example .env
 
-```bash
-poetry config virtualenvs.in-project true
-poetry install --with dev
-```
-
-### 3. Настроить переменные окружения
-
-Создай `.env` и задай в нём нужные переменные проекта.
-
-Пример:
-
-```env
-SEC_JWT_SECRET=
-SEC_SECRET_KEY=
-SEC_API_KEY=
-
-DB_USERNAME=
-DB_PASSWORD=
-DB_NAME=
-
-SKB_API_KEY=
-DADATA_API_KEY=
-
-FS_ACCESS_KEY=
-FS_SECRET_KEY=
-
-LOG_INTERFACE_URL=
-LOG_PASSWORD_SECRET=
-LOG_ROOT_PASSWORD_SHA2=
-
-REDIS_PASSWORD=
-
-MAIL_USERNAME=
-MAIL_PASSWORD=
-
-GF_USER=
-GF_PASSWORD=
-
-OUTLINE_SECRET_KEY=
-OUTLINE_UTILS_SECRET=
-OUTLINE_URL=
-OUTLINE_COLLABORATION_URL=
-
-QUEUE_USERNAME=
-QUEUE_PASSWORD=
-
-VAULT_ADDR=
-VAULT_TOKEN=
-VAULT_SECRET_PATH=
-
-MONGO_USERNAME=
-MONGO_PASSWORD=
-
-SONAR_TOKEN=
-```
-
-## Локальный запуск
-
-### Применить миграции
-
-```bash
+# Применить миграции
 make migrate
-```
 
-### Запустить проект в фоне
-
-```bash
+# Запустить
 make run
 ```
 
-### Запустить проект в foreground-режиме
-
-```bash
-make run-fg
-```
-
-### Остановить проект
-
-```bash
-make stop
-```
-
-### Проверить статус сервисов
-
-```bash
-make status
-```
-
-## Основные команды Makefile
-
-### Качество кода
-
-```bash
-make format
-make lint
-make code-lint
-make code-check
-make code-clean
-```
-
-### Git workflow
-
-```bash
-make ensure-branch BRANCH=develop
-make commit BRANCH=develop GIT_COMMIT_MESSAGE="feat: update startup flow"
-make push BRANCH=develop
-make git-sync BRANCH=develop GIT_COMMIT_MESSAGE="feat: update startup flow"
-```
-
-### Безопасность
-
-```bash
-make security-check
-make deps-check
-make secrets-check
-make audit
-```
-
-### Docker
-
-```bash
-make docker-build
-make docker-run
-make docker-stop
-```
-
-## Docker-запуск
-
-### Сборка образа
-
-```bash
-make docker-build
-```
-
-### Запуск контейнера
-
-```bash
-make docker-run
-```
-
-Контейнер запускает проект через `scripts/manage.sh run`.
-
 ## Доступные сервисы
 
-После запуска будут доступны:
+| Сервис | URL |
+|--------|-----|
+| FastAPI | `http://localhost:8000` |
+| Swagger UI | `http://localhost:8000/docs` |
+| ReDoc | `http://localhost:8000/redoc` |
+| GraphQL | `http://localhost:8000/graphql` |
+| gRPC Schema | `http://localhost:8000/grpc/schema` |
+| SOAP WSDL | `http://localhost:8000/soap/wsdl` |
+| Prefect UI | `http://localhost:4200` |
 
-- FastAPI: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- Prefect UI: `http://localhost:4200`
+## Примеры вызовов
 
-## RabbitMQ и миграции
-
-### Инициализация RabbitMQ
-
+### REST
 ```bash
-make rabbit-init
+curl -X POST http://localhost:8000/api/v1/orders/ -H "Content-Type: application/json" \
+  -d '{"pledge_cadastral_number": "77:01:0001:123", "order_kind_id": 1}'
 ```
 
-### Применение миграций
-
-```bash
-make migrate
+### GraphQL
+```graphql
+query { order(orderId: 1) { id objectUuid isActive orderKind { name } } }
+mutation { createSkbOrder(orderId: 1) { success data } }
 ```
 
-## Логирование и runtime-файлы
-
-Во время работы проекта используются:
-
-- `logs/` — runtime-логи сервисов
-- `.run/` — PID и runtime-артефакты
-
-Эти каталоги не должны попадать в Git.
-
-## Разработка
-
-Инструменты разработки:
-
-- `black`
-- `isort`
-- `flake8`
-- `mypy`
-- `bandit`
-- `deptry`
-- `trufflehog`
-- `pip-audit` (опционально, через Nexus)
-
-Примеры:
-
-```bash
-make code-lint
-make code-check
+### SOAP
+```xml
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <orders.create_skb_order>
+      <order_id>1</order_id>
+    </orders.create_skb_order>
+  </soap:Body>
+</soap:Envelope>
 ```
 
-Если нужен `pip-audit` через внутренний Nexus:
-
+### DSL dispatch (универсальный)
 ```bash
-make code-check PIP_AUDIT=1 NEXUS_HOST=nexus.bank.srv NEXUS_PYPI_URL="https://nexus.bank.srv/repository/pypi/simple"
+curl -X POST http://localhost:8000/api/v1/dsl/dispatch \
+  -H "Content-Type: application/json" \
+  -d '{"action": "orders.create_skb_order", "payload": {"order_id": 1}}'
 ```
 
-## Примечания
+## Управление проектом
 
-- Для локального запуска основная точка управления — `Makefile`
-- Для runtime-оркестрации основная точка — `scripts/manage.sh`
-- Для контейнера используется `Dockerfile`, который запускает `scripts/manage.sh`
+```bash
+make run          # Запуск
+make stop         # Остановка
+make status       # Статус сервисов
+make format       # Форматирование кода
+make lint         # Линтинг
+make docker-build # Docker сборка
+make docker-run   # Docker запуск
+```
 
 ## Автор
 
@@ -276,4 +235,4 @@ make code-check PIP_AUDIT=1 NEXUS_HOST=nexus.bank.srv NEXUS_PYPI_URL="https://ne
 
 ## Статус
 
-В разработке
+В активной разработке
