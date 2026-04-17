@@ -82,6 +82,20 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[4200],
     )
 
+    langfuse_url: str = Field(
+        default="",
+        title="URL LangFuse",
+        description="URL LangFuse Dashboard для мониторинга LLM-вызовов",
+        examples=["http://localhost:3000"],
+    )
+
+    langgraph_url: str = Field(
+        default="",
+        title="URL LangGraph Studio",
+        description="URL LangGraph Studio для управления AI-агентами",
+        examples=["http://localhost:8123"],
+    )
+
     use_ssl: bool = Field(
         ...,
         title="Использование SSL",

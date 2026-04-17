@@ -47,10 +47,41 @@
         }
     }
 
+    /** Загружает URL сервисов из конфигурации и проставляет в карточки. */
+    async function loadServiceLinks() {
+        try {
+            const resp = await fetch('/api/v1/admin/config', {
+                signal: AbortSignal.timeout(5000),
+            });
+            if (!resp.ok) return;
+            const config = await resp.json();
+            const app = config.app || {};
+            const logging = config.logging || {};
+            const storage = config.storage || {};
+            const queue = config.queue || {};
+
+            const links = {
+                'link-logs': logging.host ? `${logging.host}:${logging.port}` : '',
+                'link-storage': storage.interface_endpoint || '',
+                'link-queue': queue.queue_ui_url || '',
+                'link-prefect': app.prefect_url || '',
+                'link-langfuse': app.langfuse_url || '',
+                'link-langgraph': app.langgraph_url || '',
+            };
+
+            for (const [id, url] of Object.entries(links)) {
+                const el = document.getElementById(id);
+                if (el && url) el.href = url;
+            }
+        } catch { /* config недоступен — карточки останутся с href="#" */ }
+    }
+
     // Инициализация
     updateTime();
     setInterval(updateTime, 1000);
 
     checkHealth();
     setInterval(checkHealth, 30000);
+
+    loadServiceLinks();
 })();

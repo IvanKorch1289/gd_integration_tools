@@ -54,6 +54,24 @@ async def redirect_to_queue_monitor():
     return await get_tech_service().get_queue_monitor_link()
 
 
+@router.get(
+    "/langfuse",
+    response_class=HTMLResponse,
+    summary="Ссылка на LangFuse Dashboard",
+)
+async def redirect_to_langfuse():
+    return await get_tech_service().get_langfuse_link()
+
+
+@router.get(
+    "/langgraph",
+    response_class=HTMLResponse,
+    summary="Ссылка на LangGraph Studio",
+)
+async def redirect_to_langgraph():
+    return await get_tech_service().get_langgraph_link()
+
+
 # 2. Массовая загрузка из Excel (из-за UploadFile используем обычный роут)
 @router.post(
     "/upload-excel-for-mass-create",

@@ -40,6 +40,16 @@ class TechService:
             settings.queue.queue_ui_url, "Мониторинг очередей"
         )
 
+    async def get_langfuse_link(self) -> HTMLResponse:
+        return utilities.generate_link_page(
+            settings.app.langfuse_url, "LangFuse — LLM Observability"
+        )
+
+    async def get_langgraph_link(self) -> HTMLResponse:
+        return utilities.generate_link_page(
+            settings.app.langgraph_url, "LangGraph Studio — AI Agents"
+        )
+
     async def check_database(self) -> bool:
         async with get_healthcheck_service() as health_check:
             return await health_check.check_database()
