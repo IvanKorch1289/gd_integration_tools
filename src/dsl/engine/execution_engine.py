@@ -71,6 +71,11 @@ class ExecutionEngine:
         current_exchange.meta.source = pipeline.source
         current_exchange.status = ExchangeStatus.processing
 
+        from app.dsl.engine.tracer import get_tracer
+
+        tracer = get_tracer()
+        trace_log: list[dict] = []
+
         for processor in pipeline.processors:
             if current_exchange.status == ExchangeStatus.failed:
                 break
@@ -85,7 +90,17 @@ class ExecutionEngine:
                         pipeline.route_id,
                     )
 
-                await processor.process(current_exchange, runtime_context)
+                async with tracer.trace(
+                    pipeline.route_id, processor.name, type(processor).__name__
+                ) as trace_data:
+                    await processor.process(current_exchange, runtime_context)
+
+                trace_log.append({
+                    "processor": processor.name,
+                    "type": type(processor).__name__,
+                    "duration_ms": trace_data.get("duration_ms", 0),
+                    "status": "ok",
+                })
 
             except Exception as exc:
                 if runtime_context.logger is not None:
@@ -95,8 +110,16 @@ class ExecutionEngine:
                         pipeline.route_id,
                     )
 
+                trace_log.append({
+                    "processor": processor.name,
+                    "type": type(processor).__name__,
+                    "status": "error",
+                    "error": str(exc),
+                })
                 current_exchange.fail(str(exc))
                 break
+
+        current_exchange.set_property("_trace", trace_log)
 
         if current_exchange.status != ExchangeStatus.failed:
             if current_exchange.out_message is None:
@@ -106,5 +129,17 @@ class ExecutionEngine:
                 )
             else:
                 current_exchange.status = ExchangeStatus.completed
+
+        # SLO tracking
+        total_ms = sum(t.get("duration_ms", 0) for t in trace_log)
+        try:
+            from app.infrastructure.application.slo_tracker import get_slo_tracker
+            get_slo_tracker().record(
+                route_id=pipeline.route_id,
+                latency_ms=total_ms,
+                is_error=current_exchange.status == ExchangeStatus.failed,
+            )
+        except Exception:
+            pass
 
         return current_exchange

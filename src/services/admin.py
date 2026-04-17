@@ -176,6 +176,11 @@ class AdminService:
             "feature_flags_disabled": sorted(disabled_feature_flags),
         }
 
+    async def slo_report(self) -> dict[str, Any]:
+        """SLO-отчёт: P50/P95/P99 per route."""
+        from app.infrastructure.application.slo_tracker import get_slo_tracker
+        return get_slo_tracker().get_report()
+
 
 def get_admin_service() -> AdminService:
     """

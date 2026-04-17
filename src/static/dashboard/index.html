@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GD Integration Tools — Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard/css/dashboard.css">
+</head>
+<body>
+    <header class="dash-header">
+        <a href="/" class="dash-logo">GD Integration Tools</a>
+        <nav class="dash-tabs" id="tabs">
+            <button class="tab active" data-tab="metrics">Metrics</button>
+            <button class="tab" data-tab="routes">Routes</button>
+            <button class="tab" data-tab="logs">Logs</button>
+            <button class="tab" data-tab="prefect">Prefect</button>
+            <button class="tab" data-tab="storage">S3 Storage</button>
+            <button class="tab" data-tab="graylog">Graylog</button>
+            <button class="tab" data-tab="langfuse">LangFuse</button>
+        </nav>
+        <div class="dash-status">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+        </div>
+    </header>
+
+    <main class="dash-content">
+        <!-- Metrics Tab -->
+        <section class="tab-panel active" id="panel-metrics">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="m-routes">—</div>
+                    <div class="metric-label">DSL Routes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="m-actions">—</div>
+                    <div class="metric-label">Actions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="m-enabled">—</div>
+                    <div class="metric-label">Enabled Routes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="m-disabled">—</div>
+                    <div class="metric-label">Disabled (FF)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="m-services">—</div>
+                    <div class="metric-label">Services</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="m-flags">—</div>
+                    <div class="metric-label">Feature Flags</div>
+                </div>
+            </div>
+
+            <div class="health-section">
+                <h3>Component Health</h3>
+                <div class="health-grid" id="health-grid"></div>
+            </div>
+        </section>
+
+        <!-- Routes Tab -->
+        <section class="tab-panel" id="panel-routes">
+            <div class="routes-toolbar">
+                <input type="text" id="route-search" placeholder="Search routes..." class="search-input">
+                <select id="route-filter" class="filter-select">
+                    <option value="all">All</option>
+                    <option value="enabled">Enabled</option>
+                    <option value="disabled">Disabled</option>
+                </select>
+            </div>
+            <table class="routes-table">
+                <thead>
+                    <tr>
+                        <th>Route ID</th>
+                        <th>Status</th>
+                        <th>Feature Flag</th>
+                    </tr>
+                </thead>
+                <tbody id="routes-tbody"></tbody>
+            </table>
+        </section>
+
+        <!-- Logs Tab -->
+        <section class="tab-panel" id="panel-logs">
+            <div class="logs-toolbar">
+                <input type="text" id="log-filter-route" placeholder="Filter by route_id..." class="search-input">
+                <input type="text" id="log-filter-corr" placeholder="Filter by correlation_id..." class="search-input">
+                <select id="log-level-filter" class="filter-select">
+                    <option value="all">All Levels</option>
+                    <option value="error">Error</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                    <option value="debug">Debug</option>
+                </select>
+                <button id="log-clear" class="btn-small">Clear</button>
+            </div>
+            <div class="log-container" id="log-container">
+                <div class="log-empty">Listening for trace events...</div>
+            </div>
+        </section>
+
+        <!-- Iframe Tabs -->
+        <section class="tab-panel" id="panel-prefect">
+            <iframe id="iframe-prefect" class="service-iframe" src="about:blank"></iframe>
+        </section>
+        <section class="tab-panel" id="panel-storage">
+            <iframe id="iframe-storage" class="service-iframe" src="about:blank"></iframe>
+        </section>
+        <section class="tab-panel" id="panel-graylog">
+            <iframe id="iframe-graylog" class="service-iframe" src="about:blank"></iframe>
+        </section>
+        <section class="tab-panel" id="panel-langfuse">
+            <iframe id="iframe-langfuse" class="service-iframe" src="about:blank"></iframe>
+        </section>
+    </main>
+
+    <script src="/static/dashboard/js/dashboard.js"></script>
+</body>
+</html>

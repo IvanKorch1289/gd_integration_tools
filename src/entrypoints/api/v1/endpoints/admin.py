@@ -124,5 +124,14 @@ ActionRouterBuilder(router).add_actions(
             service_getter=get_admin_service,
             service_method="system_info",
         ),
+        ActionSpec(
+            name="slo_report",
+            method="GET",
+            path="/slo-report",
+            summary="SLO-отчёт по маршрутам",
+            description="P50/P95/P99 latency, error rate per route.",
+            service_getter=get_admin_service,
+            service_method="slo_report",
+        ),
     ]
 )
