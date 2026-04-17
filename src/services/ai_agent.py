@@ -1,7 +1,8 @@
-"""AI-сервис: поиск через Perplexity, парсинг через BeautifulSoup, чат через LangChain.
+"""AI-сервис: мульти-провайдерный (Perplexity, HuggingFace, OpenWebUI).
 
-Все HTTP-запросы к внешним AI-сервисам проксируются через WAF
-(waf_url + waf_route_header из настроек).
+Все данные маскируются AIDataSanitizer перед отправкой в LLM.
+Поддерживает fallback-chain: если основной провайдер недоступен,
+используется следующий по приоритету.
 """
 
 import json
@@ -9,6 +10,7 @@ import logging
 from typing import Any
 
 from app.core.decorators.singleton import singleton
+from app.core.security.ai_sanitizer import AIDataSanitizer, get_ai_sanitizer
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 
@@ -17,78 +19,157 @@ logger = logging.getLogger(__name__)
 
 @singleton
 class AIAgentService:
-    """Сервис для AI-операций."""
+    """Сервис для AI-операций с маскировкой PII."""
 
     def __init__(self) -> None:
+        from app.core.config.ai_settings import (
+            AIProvidersSettings,
+            HuggingFaceSettings,
+            OpenWebUISettings,
+            PerplexitySettings,
+        )
         from app.core.config.settings import settings
+
         self._waf_url = settings.http_base_settings.waf_url
         self._waf_headers = dict(settings.http_base_settings.waf_route_header)
 
-    async def search_web(self, query: str, model: str = "sonar") -> dict[str, Any]:
-        """Поиск через Perplexity API (проксируется через WAF).
+        self._perplexity = PerplexitySettings()
+        self._huggingface = HuggingFaceSettings()
+        self._open_webui = OpenWebUISettings()
+        self._ai_cfg = AIProvidersSettings()
 
-        Args:
-            query: Поисковый запрос.
-            model: Модель Perplexity (sonar, sonar-pro и т.д.).
+        self._sanitizer: AIDataSanitizer = get_ai_sanitizer()
 
-        Returns:
-            Результат поиска.
-        """
+        self._providers = {
+            "perplexity": self._call_perplexity,
+            "huggingface": self._call_huggingface,
+            "open_webui": self._call_open_webui,
+        }
+
+    def _get_http_client(self):
         from app.infrastructure.external_apis.http_client import (
             get_http_client_dependency,
         )
+        return get_http_client_dependency()
 
-        client = get_http_client_dependency()
+    # ------------------------------------------------------------------
+    #  Провайдеры
+    # ------------------------------------------------------------------
 
-        headers = {**self._waf_headers, "Content-Type": "application/json"}
+    async def _call_perplexity(
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
+        """Вызов Perplexity API."""
+        client = self._get_http_client()
+        model = kwargs.get("model", self._perplexity.model)
+
+        url = self._waf_url if self._perplexity.use_waf else f"{self._perplexity.base_url}/chat/completions"
+        headers = {**(self._waf_headers if self._perplexity.use_waf else {}), "Content-Type": "application/json"}
+        if not self._perplexity.use_waf and self._perplexity.api_key:
+            headers["Authorization"] = f"Bearer {self._perplexity.api_key}"
+
         payload = {
             "model": model,
-            "messages": [{"role": "user", "content": query}],
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", self._perplexity.max_tokens),
+            "temperature": kwargs.get("temperature", self._perplexity.temperature),
         }
 
+        return await client.make_request(
+            method="POST", url=url, headers=headers, json=payload,
+            connect_timeout=self._ai_cfg.connect_timeout,
+            read_timeout=self._ai_cfg.read_timeout,
+            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
+        )
+
+    async def _call_huggingface(
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
+        """Вызов HuggingFace Inference API."""
+        client = self._get_http_client()
+        model = kwargs.get("model", self._huggingface.model)
+
+        url = f"{self._huggingface.base_url}/{model}"
+        headers = {"Content-Type": "application/json"}
+        if self._huggingface.api_key:
+            headers["Authorization"] = f"Bearer {self._huggingface.api_key}"
+
+        prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": kwargs.get("max_tokens", self._huggingface.max_tokens),
+                "temperature": kwargs.get("temperature", self._huggingface.temperature),
+            },
+        }
+
+        return await client.make_request(
+            method="POST", url=url, headers=headers, json=payload,
+            connect_timeout=self._ai_cfg.connect_timeout,
+            read_timeout=self._ai_cfg.read_timeout,
+            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
+        )
+
+    async def _call_open_webui(
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
+        """Вызов внутреннего OpenWebUI сервера."""
+        client = self._get_http_client()
+        model = kwargs.get("model", self._open_webui.model)
+
+        url = f"{self._open_webui.base_url}/api/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        if self._open_webui.api_key:
+            headers["Authorization"] = f"Bearer {self._open_webui.api_key}"
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", self._open_webui.max_tokens),
+            "temperature": kwargs.get("temperature", self._open_webui.temperature),
+        }
+
+        return await client.make_request(
+            method="POST", url=url, headers=headers, json=payload,
+            connect_timeout=self._ai_cfg.connect_timeout,
+            read_timeout=self._ai_cfg.read_timeout,
+            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
+        )
+
+    # ------------------------------------------------------------------
+    #  Публичные методы
+    # ------------------------------------------------------------------
+
+    async def search_web(self, query: str, model: str = "sonar") -> dict[str, Any]:
+        """Поиск через Perplexity API с маскировкой PII.
+
+        Args:
+            query: Поисковый запрос.
+            model: Модель Perplexity.
+
+        Returns:
+            Результат поиска с восстановленными данными.
+        """
+        sanitized = self._sanitizer.sanitize_text(query)
+        messages = [{"role": "user", "content": sanitized.sanitized}]
+
         try:
-            result = await client.make_request(
-                method="POST",
-                url=self._waf_url,
-                headers=headers,
-                json=payload,
-            )
+            result = await self._call_perplexity(messages, model=model)
             return {"success": True, "data": result}
         except Exception as exc:
             logger.error("Perplexity search error: %s", exc)
             return {"success": False, "error": str(exc)}
 
     async def parse_webpage(self, url: str) -> dict[str, Any]:
-        """Парсинг веб-страницы через BeautifulSoup (проксируется через WAF).
-
-        Args:
-            url: URL страницы для парсинга.
-
-        Returns:
-            Структурированные данные страницы.
-        """
-        from app.infrastructure.external_apis.http_client import (
-            get_http_client_dependency,
-        )
-
-        client = get_http_client_dependency()
-
-        headers = {
-            **self._waf_headers,
-            "X-Target-URL": url,
-        }
+        """Парсинг веб-страницы через BeautifulSoup (через WAF)."""
+        client = self._get_http_client()
+        headers = {**self._waf_headers, "X-Target-URL": url}
 
         try:
-            result = await client.make_request(
-                method="GET",
-                url=self._waf_url,
-                headers=headers,
-            )
-
+            result = await client.make_request(method="GET", url=self._waf_url, headers=headers)
             html_content = result if isinstance(result, str) else str(result)
 
             from bs4 import BeautifulSoup
-
             soup = BeautifulSoup(html_content, "html.parser")
 
             links = []
@@ -109,73 +190,87 @@ class AIAgentService:
         self,
         messages: list[dict[str, str]],
         model: str = "default",
+        provider: str | None = None,
     ) -> dict[str, Any]:
-        """Чат с LLM через LangChain (проксируется через WAF).
+        """Чат с LLM через мульти-провайдерную архитектуру.
+
+        Данные маскируются перед отправкой, восстанавливаются после.
+        При недоступности провайдера — fallback на следующий.
 
         Args:
-            messages: Список сообщений [{role, content}].
+            messages: [{role, content}].
             model: Идентификатор модели.
+            provider: Конкретный провайдер (или fallback-chain).
 
         Returns:
-            Ответ LLM.
+            Ответ LLM с восстановленными PII.
         """
-        try:
-            from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+        sanitized_msgs, mapping = self._sanitizer.sanitize_messages(messages)
 
-            lc_messages = []
-            for msg in messages:
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                if role == "system":
-                    lc_messages.append(SystemMessage(content=content))
-                elif role == "assistant":
-                    lc_messages.append(AIMessage(content=content))
-                else:
-                    lc_messages.append(HumanMessage(content=content))
+        chain = [provider] if provider else self._ai_cfg.fallback_chain
+        last_error: str | None = None
 
-            from langchain_community.chat_models import ChatOpenAI
+        for prov_name in chain:
+            call_fn = self._providers.get(prov_name)
+            if call_fn is None:
+                continue
 
-            llm = ChatOpenAI(model=model)
-            response = await llm.ainvoke(lc_messages)
+            try:
+                result = await call_fn(sanitized_msgs, model=model)
 
-            return {
-                "success": True,
-                "content": response.content,
-                "model": model,
-            }
-        except ImportError:
-            return {
-                "success": False,
-                "error": "langchain не установлен. Добавьте langchain-core и langchain-community.",
-            }
-        except Exception as exc:
-            logger.error("LLM chat error: %s", exc)
-            return {"success": False, "error": str(exc)}
+                content = ""
+                if isinstance(result, dict):
+                    choices = result.get("choices", [])
+                    if choices:
+                        content = choices[0].get("message", {}).get("content", "")
+                    elif "generated_text" in result:
+                        content = result["generated_text"]
+                    elif isinstance(result.get("data"), str):
+                        content = result["data"]
+
+                restored = self._sanitizer.restore_text(content, mapping)
+
+                return {
+                    "success": True,
+                    "content": restored,
+                    "provider": prov_name,
+                    "model": model,
+                }
+            except Exception as exc:
+                last_error = f"{prov_name}: {exc}"
+                logger.warning("AI provider '%s' failed: %s", prov_name, exc)
+
+        return {"success": False, "error": f"All providers failed. Last: {last_error}"}
 
     async def run_agent(
         self,
         prompt: str,
         tools: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Запуск AI-агента с инструментами через LangGraph.
+        """Запуск AI-агента с маскировкой PII.
 
         Args:
-            prompt: Текст задачи для агента.
-            tools: Список имён actions, доступных агенту.
+            prompt: Текст задачи.
+            tools: Список actions, доступных агенту.
 
         Returns:
             Результат работы агента.
         """
+        sanitized = self._sanitizer.sanitize_text(prompt)
+
         try:
             from app.services.ai_graph import build_and_run_agent
 
-            result = await build_and_run_agent(prompt=prompt, tool_actions=tools or [])
+            result = await build_and_run_agent(
+                prompt=sanitized.sanitized, tool_actions=tools or []
+            )
+
+            if isinstance(result, str):
+                result = sanitized.restore(result)
+
             return {"success": True, "data": result}
         except ImportError:
-            return {
-                "success": False,
-                "error": "langgraph не установлен. Добавьте langgraph.",
-            }
+            return {"success": False, "error": "langgraph не установлен."}
         except Exception as exc:
             logger.error("Agent run error: %s", exc)
             return {"success": False, "error": str(exc)}
