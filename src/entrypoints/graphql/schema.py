@@ -9,6 +9,7 @@ DSL-dispatch как fallback для произвольных actions.
 
 import logging
 from datetime import datetime
+from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
@@ -415,5 +416,96 @@ class Mutation:
         return await _dispatch_dsl(route_id, payload or {})
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+# ────────────────────────────────────────────────────
+# Subscription
+# ────────────────────────────────────────────────────
+
+@strawberry.type
+class TraceEventType:
+    """Событие трассировки процессора."""
+
+    route_id: str
+    processor_name: str
+    processor_type: str
+    phase: str
+    duration_ms: float = 0.0
+    timestamp: str = ""
+    error: str | None = None
+
+
+@strawberry.type
+class SystemEventType:
+    """Системное событие (health, route change)."""
+
+    event_type: str
+    data: JSON | None = None
+    timestamp: str = ""
+
+
+@strawberry.type
+class Subscription:
+    """GraphQL Subscriptions — real-time события."""
+
+    @strawberry.subscription(description="Трассировка выполнения маршрута в реальном времени.")
+    async def route_trace(
+        self, route_id: str, info: Info
+    ) -> AsyncGenerator[TraceEventType, None]:
+        from app.dsl.engine.tracer import get_tracer
+
+        tracer = get_tracer()
+        async for event in tracer.subscribe(route_id):
+            yield TraceEventType(
+                route_id=event.route_id,
+                processor_name=event.processor_name,
+                processor_type=event.processor_type,
+                phase=event.phase,
+                duration_ms=event.duration_ms,
+                timestamp=event.timestamp,
+                error=event.error,
+            )
+
+    @strawberry.subscription(description="Все trace-события (для dashboard).")
+    async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType, None]:
+        from app.dsl.engine.tracer import get_tracer
+
+        tracer = get_tracer()
+        async for event in tracer.subscribe_all():
+            yield TraceEventType(
+                route_id=event.route_id,
+                processor_name=event.processor_name,
+                processor_type=event.processor_type,
+                phase=event.phase,
+                duration_ms=event.duration_ms,
+                timestamp=event.timestamp,
+                error=event.error,
+            )
+
+    @strawberry.subscription(description="Системные события (health check каждые 30 сек).")
+    async def system_health(self, info: Info) -> AsyncGenerator[SystemEventType, None]:
+        import asyncio
+        from datetime import UTC, datetime
+
+        while True:
+            try:
+                from app.core.utils.health_check import get_healthcheck_service
+
+                async with get_healthcheck_service() as hc:
+                    result = await hc.check_all_services()
+
+                yield SystemEventType(
+                    event_type="health_check",
+                    data=result,
+                    timestamp=datetime.now(UTC).isoformat(),
+                )
+            except Exception as exc:
+                yield SystemEventType(
+                    event_type="health_check_error",
+                    data={"error": str(exc)},
+                    timestamp=datetime.now(UTC).isoformat(),
+                )
+
+            await asyncio.sleep(30)
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation, subscription=Subscription)
 graphql_router = GraphQLRouter(schema, path="/graphql")
