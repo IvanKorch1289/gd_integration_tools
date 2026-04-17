@@ -30,6 +30,14 @@ from app.dsl.engine.processors import (
     TryCatchProcessor,
     ValidateProcessor,
     WireTapProcessor,
+    MessageTranslatorProcessor,
+    DynamicRouterProcessor,
+    ScatterGatherProcessor,
+    ThrottlerProcessor,
+    DelayProcessor,
+    SplitterProcessor,
+    AggregatorProcessor,
+    RecipientListProcessor,
 )
 
 __all__ = ("RouteBuilder",)
@@ -386,6 +394,94 @@ class RouteBuilder:
     def wire_tap(self, tap_processors: list[BaseProcessor]) -> "RouteBuilder":
         """Копирует Exchange в отдельный канал (не влияет на основной)."""
         self._processors.append(WireTapProcessor(tap_processors=tap_processors))
+        return self
+
+    def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
+        """Конвертация форматов (JSON↔XML, JSON↔CSV)."""
+        self._processors.append(
+            MessageTranslatorProcessor(from_format=from_format, to_format=to_format)
+        )
+        return self
+
+    def dynamic_route(
+        self, route_expression: Callable[[Exchange[Any]], str]
+    ) -> "RouteBuilder":
+        """Маршрутизация на основе runtime-выражения."""
+        self._processors.append(DynamicRouterProcessor(route_expression=route_expression))
+        return self
+
+    def scatter_gather(
+        self,
+        route_ids: list[str],
+        *,
+        aggregation: str = "merge",
+        timeout_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        """Fan-out на N маршрутов → сборка результатов."""
+        self._processors.append(
+            ScatterGatherProcessor(
+                route_ids=route_ids,
+                aggregation=aggregation,
+                timeout_seconds=timeout_seconds,
+            )
+        )
+        return self
+
+    def throttle(self, rate: float, *, burst: int = 1) -> "RouteBuilder":
+        """Rate-limit: N сообщений в секунду."""
+        self._processors.append(ThrottlerProcessor(rate=rate, burst=burst))
+        return self
+
+    def delay(
+        self,
+        delay_ms: int | None = None,
+        *,
+        scheduled_time_fn: Callable[[Exchange[Any]], float] | None = None,
+    ) -> "RouteBuilder":
+        """Задержка обработки на N мс или до timestamp."""
+        self._processors.append(
+            DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn)
+        )
+        return self
+
+    def split(
+        self, expression: str, processors: list[BaseProcessor]
+    ) -> "RouteBuilder":
+        """Разбивает массив на элементы → обработка каждого."""
+        self._processors.append(
+            SplitterProcessor(expression=expression, processors=processors)
+        )
+        return self
+
+    def aggregate(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str],
+        *,
+        batch_size: int = 10,
+        timeout_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        """Собирает N Exchange по ключу корреляции."""
+        self._processors.append(
+            AggregatorProcessor(
+                correlation_key=correlation_key,
+                batch_size=batch_size,
+                timeout_seconds=timeout_seconds,
+            )
+        )
+        return self
+
+    def recipient_list(
+        self,
+        recipients_expression: Callable[[Exchange[Any]], list[str]],
+        *,
+        parallel: bool = True,
+    ) -> "RouteBuilder":
+        """Отправка на динамический список маршрутов."""
+        self._processors.append(
+            RecipientListProcessor(
+                recipients_expression=recipients_expression, parallel=parallel
+            )
+        )
         return self
 
     def feature_flag(self, name: str) -> "RouteBuilder":

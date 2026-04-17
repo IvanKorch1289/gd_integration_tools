@@ -35,6 +35,14 @@ __all__ = (
     "IdempotentConsumerProcessor",
     "FallbackChainProcessor",
     "WireTapProcessor",
+    "MessageTranslatorProcessor",
+    "DynamicRouterProcessor",
+    "ScatterGatherProcessor",
+    "ThrottlerProcessor",
+    "DelayProcessor",
+    "SplitterProcessor",
+    "AggregatorProcessor",
+    "RecipientListProcessor",
 )
 
 ProcessorCallable = Callable[[Exchange[Any], ExecutionContext], Any | Awaitable[Any]]
@@ -947,3 +955,429 @@ class WireTapProcessor(BaseProcessor):
                     _eip_logger.debug("Wire tap processor error: %s", exc)
 
         asyncio.create_task(_run_tap())
+
+
+# ---------------------------------------------------------------------------
+#  Apache Camel-inspired процессоры
+# ---------------------------------------------------------------------------
+
+_camel_logger = logging.getLogger("dsl.camel")
+
+
+class MessageTranslatorProcessor(BaseProcessor):
+    """Конвертация форматов: JSON↔XML, JSON↔CSV.
+
+    Работает через подключаемые конвертеры. По умолчанию
+    поддерживает json→xml, xml→json, dict→csv, csv→dict.
+    """
+
+    def __init__(
+        self,
+        from_format: str,
+        to_format: str,
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"translate:{from_format}→{to_format}")
+        self._from = from_format
+        self._to = to_format
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        body = exchange.in_message.body
+        converted = self._convert(body)
+        exchange.set_out(body=converted, headers=dict(exchange.in_message.headers))
+
+    def _convert(self, body: Any) -> Any:
+        key = f"{self._from}→{self._to}"
+
+        if key == "json→xml" or key == "dict→xml":
+            return self._dict_to_xml(body if isinstance(body, dict) else {})
+
+        if key == "xml→json" or key == "xml→dict":
+            return self._xml_to_dict(body if isinstance(body, str) else str(body))
+
+        if key == "dict→csv" or key == "json→csv":
+            return self._dict_list_to_csv(body if isinstance(body, list) else [body])
+
+        if key == "csv→dict" or key == "csv→json":
+            return self._csv_to_dict_list(body if isinstance(body, str) else str(body))
+
+        return body
+
+    @staticmethod
+    def _dict_to_xml(data: dict, root_tag: str = "root") -> str:
+        parts = [f"<{root_tag}>"]
+        for k, v in data.items():
+            parts.append(f"  <{k}>{v}</{k}>")
+        parts.append(f"</{root_tag}>")
+        return "\n".join(parts)
+
+    @staticmethod
+    def _xml_to_dict(xml_str: str) -> dict[str, str]:
+        import re as _re
+        result: dict[str, str] = {}
+        for match in _re.finditer(r"<(\w+)>([^<]*)</\1>", xml_str):
+            result[match.group(1)] = match.group(2)
+        return result
+
+    @staticmethod
+    def _dict_list_to_csv(data: list[dict]) -> str:
+        if not data:
+            return ""
+        headers = list(data[0].keys())
+        lines = [",".join(headers)]
+        for row in data:
+            lines.append(",".join(str(row.get(h, "")) for h in headers))
+        return "\n".join(lines)
+
+    @staticmethod
+    def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
+        lines = csv_str.strip().split("\n")
+        if len(lines) < 2:
+            return []
+        headers = [h.strip() for h in lines[0].split(",")]
+        return [
+            dict(zip(headers, [v.strip() for v in line.split(",")]))
+            for line in lines[1:]
+        ]
+
+
+class DynamicRouterProcessor(BaseProcessor):
+    """Маршрутизация на основе runtime-выражения.
+
+    Вычисляет route_id из Exchange, затем делегирует
+    выполнение соответствующему DSL-маршруту.
+    """
+
+    def __init__(
+        self,
+        route_expression: Callable[[Exchange[Any]], str],
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "dynamic_router")
+        self._expr = route_expression
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.dsl.commands.registry import route_registry
+        from app.dsl.engine.execution_engine import ExecutionEngine
+
+        target_route_id = self._expr(exchange)
+        if not route_registry.is_registered(target_route_id):
+            exchange.fail(f"Dynamic route '{target_route_id}' not found")
+            return
+
+        pipeline = route_registry.get(target_route_id)
+        engine = ExecutionEngine()
+        sub = await engine.execute(
+            pipeline,
+            body=exchange.in_message.body,
+            headers=dict(exchange.in_message.headers),
+            context=context,
+        )
+
+        if sub.status == ExchangeStatus.failed:
+            exchange.fail(f"Dynamic route '{target_route_id}' failed: {sub.error}")
+            return
+
+        result = sub.out_message.body if sub.out_message else sub.in_message.body
+        exchange.set_property("dynamic_route_used", target_route_id)
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+
+
+class ScatterGatherProcessor(BaseProcessor):
+    """Fan-out на N маршрутов → сборка результатов.
+
+    Отправляет копию Exchange на несколько DSL-маршрутов
+    параллельно, собирает результаты в ``scatter_results``.
+    """
+
+    def __init__(
+        self,
+        route_ids: list[str],
+        *,
+        aggregation: str = "merge",
+        timeout_seconds: float = 30.0,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"scatter_gather({len(route_ids)})")
+        self._route_ids = route_ids
+        self._aggregation = aggregation
+        self._timeout = timeout_seconds
+
+    async def _call_route(
+        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
+    ) -> tuple[str, Any, str | None]:
+        from app.dsl.commands.registry import route_registry
+        from app.dsl.engine.execution_engine import ExecutionEngine
+
+        try:
+            pipeline = route_registry.get(route_id)
+            engine = ExecutionEngine()
+            sub = await engine.execute(pipeline, body=body, headers=dict(headers), context=context)
+            result = sub.out_message.body if sub.out_message else sub.in_message.body
+            return route_id, result, sub.error
+        except Exception as exc:
+            return route_id, None, str(exc)
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        tasks = [
+            self._call_route(rid, exchange.in_message.body, exchange.in_message.headers, context)
+            for rid in self._route_ids
+        ]
+
+        try:
+            raw_results = await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True),
+                timeout=self._timeout,
+            )
+        except asyncio.TimeoutError:
+            exchange.fail(f"Scatter-gather timeout ({self._timeout}s)")
+            return
+
+        results: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+        for item in raw_results:
+            if isinstance(item, Exception):
+                errors["_exception"] = str(item)
+            else:
+                rid, result, error = item
+                if error:
+                    errors[rid] = error
+                else:
+                    results[rid] = result
+
+        exchange.set_property("scatter_results", results)
+        if errors:
+            exchange.set_property("scatter_errors", errors)
+
+        if self._aggregation == "merge" and results:
+            merged: dict[str, Any] = {}
+            for v in results.values():
+                if isinstance(v, dict):
+                    merged.update(v)
+            exchange.set_out(body=merged, headers=dict(exchange.in_message.headers))
+
+
+class ThrottlerProcessor(BaseProcessor):
+    """Rate-limit per route: N сообщений в секунду.
+
+    Использует token bucket для контроля пропускной
+    способности. При превышении — задержка.
+    """
+
+    def __init__(
+        self,
+        rate: float,
+        *,
+        burst: int = 1,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"throttle({rate}/s)")
+        self._rate = rate
+        self._burst = burst
+        self._tokens = float(burst)
+        self._last_refill = 0.0
+        self._lock = asyncio.Lock()
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import time
+
+        async with self._lock:
+            now = time.monotonic()
+            if self._last_refill == 0.0:
+                self._last_refill = now
+
+            elapsed = now - self._last_refill
+            self._tokens = min(self._burst, self._tokens + elapsed * self._rate)
+            self._last_refill = now
+
+            if self._tokens < 1.0:
+                wait = (1.0 - self._tokens) / self._rate
+                await asyncio.sleep(wait)
+                self._tokens = 0.0
+            else:
+                self._tokens -= 1.0
+
+
+class DelayProcessor(BaseProcessor):
+    """Задержка обработки на N миллисекунд или до timestamp."""
+
+    def __init__(
+        self,
+        delay_ms: int | None = None,
+        *,
+        scheduled_time_fn: Callable[[Exchange[Any]], float] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"delay({delay_ms}ms)")
+        self._delay_ms = delay_ms
+        self._scheduled_fn = scheduled_time_fn
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import time
+
+        if self._scheduled_fn is not None:
+            target = self._scheduled_fn(exchange)
+            now = time.time()
+            if target > now:
+                await asyncio.sleep(target - now)
+        elif self._delay_ms is not None and self._delay_ms > 0:
+            await asyncio.sleep(self._delay_ms / 1000.0)
+
+
+class SplitterProcessor(BaseProcessor):
+    """Разбивает массив из body на отдельные Exchange.
+
+    Каждый элемент обрабатывается sub-процессорами.
+    Результаты собираются в ``split_results``.
+    """
+
+    def __init__(
+        self,
+        expression: str,
+        processors: list[BaseProcessor],
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"splitter:{expression[:20]}")
+        self._expression = expression
+        self._processors = processors
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import jmespath
+
+        body = exchange.in_message.body
+        items = jmespath.search(self._expression, body)
+        if not isinstance(items, list):
+            exchange.set_property("split_results", [])
+            return
+
+        results: list[Any] = []
+        for item in items:
+            sub_exchange = Exchange(
+                in_message=Message(body=item, headers=dict(exchange.in_message.headers))
+            )
+            sub_exchange.status = ExchangeStatus.processing
+
+            for proc in self._processors:
+                if sub_exchange.status == ExchangeStatus.failed or sub_exchange.stopped:
+                    break
+                await proc.process(sub_exchange, context)
+
+            result = (
+                sub_exchange.out_message.body
+                if sub_exchange.out_message
+                else sub_exchange.in_message.body
+            )
+            results.append(result)
+
+        exchange.set_property("split_results", results)
+        exchange.set_out(body=results, headers=dict(exchange.in_message.headers))
+
+
+class AggregatorProcessor(BaseProcessor):
+    """Собирает N Exchange по correlation_id.
+
+    Накапливает результаты в shared state (context.state),
+    выдаёт агрегированный результат по достижении ``batch_size``
+    или ``timeout``.
+    """
+
+    def __init__(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str],
+        *,
+        batch_size: int = 10,
+        timeout_seconds: float = 30.0,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"aggregator(batch={batch_size})")
+        self._corr_key = correlation_key
+        self._batch_size = batch_size
+        self._timeout = timeout_seconds
+        self._buffers: dict[str, list[Any]] = {}
+        self._lock = asyncio.Lock()
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        key = self._corr_key(exchange)
+
+        async with self._lock:
+            buf = self._buffers.setdefault(key, [])
+            buf.append(exchange.in_message.body)
+
+            if len(buf) >= self._batch_size:
+                aggregated = list(buf)
+                buf.clear()
+                exchange.set_property("aggregated", True)
+                exchange.set_out(body=aggregated, headers=dict(exchange.in_message.headers))
+            else:
+                exchange.set_property("aggregated", False)
+                exchange.set_property("buffer_size", len(buf))
+                exchange.stop()
+
+
+class RecipientListProcessor(BaseProcessor):
+    """Отправляет сообщение на динамический список маршрутов.
+
+    Список маршрутов вычисляется из Exchange. Каждый получатель
+    получает копию сообщения. Результаты собираются в property.
+    """
+
+    def __init__(
+        self,
+        recipients_expression: Callable[[Exchange[Any]], list[str]],
+        *,
+        parallel: bool = True,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "recipient_list")
+        self._expr = recipients_expression
+        self._parallel = parallel
+
+    async def _send_to(
+        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
+    ) -> tuple[str, Any, str | None]:
+        from app.dsl.commands.registry import route_registry
+        from app.dsl.engine.execution_engine import ExecutionEngine
+
+        try:
+            pipeline = route_registry.get(route_id)
+            engine = ExecutionEngine()
+            sub = await engine.execute(pipeline, body=body, headers=dict(headers), context=context)
+            result = sub.out_message.body if sub.out_message else sub.in_message.body
+            return route_id, result, sub.error
+        except Exception as exc:
+            return route_id, None, str(exc)
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        recipients = self._expr(exchange)
+        if not recipients:
+            return
+
+        body = exchange.in_message.body
+        headers = exchange.in_message.headers
+
+        if self._parallel:
+            tasks = [self._send_to(rid, body, headers, context) for rid in recipients]
+            raw = await asyncio.gather(*tasks, return_exceptions=True)
+        else:
+            raw = []
+            for rid in recipients:
+                raw.append(await self._send_to(rid, body, headers, context))
+
+        results: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+        for item in raw:
+            if isinstance(item, Exception):
+                errors["_exception"] = str(item)
+            else:
+                rid, result, error = item
+                if error:
+                    errors[rid] = error
+                else:
+                    results[rid] = result
+
+        exchange.set_property("recipient_results", results)
+        if errors:
+            exchange.set_property("recipient_errors", errors)

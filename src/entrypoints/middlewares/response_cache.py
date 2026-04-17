@@ -39,7 +39,7 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
             return response
 
         body = await self._capture_body(response)
-        etag = f'"{hashlib.md5(body).hexdigest()}"'  # noqa: S324
+        etag = f'"{hashlib.sha256(body).hexdigest()[:32]}"'
 
         if_none_match = request.headers.get("if-none-match")
         if if_none_match and if_none_match == etag:

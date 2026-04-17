@@ -5,8 +5,9 @@
 формирует SOAP-ответ. Также предоставляет автогенерацию WSDL.
 """
 
-import json
 import logging
+
+import orjson
 from typing import Any
 from xml.etree import ElementTree as ET
 
@@ -67,7 +68,7 @@ def _build_soap_response(operation: str, result: Any) -> str:
             f"<{k}>{_xml_escape(v)}</{k}>" for k, v in result.items()
         )
     elif isinstance(result, list):
-        result_parts = f"<result>{json.dumps(result, default=str)}</result>"
+        result_parts = f"<result>{orjson.dumps(result).decode()}</result>"
     elif hasattr(result, "model_dump"):
         data = result.model_dump(mode="json")
         result_parts = "".join(

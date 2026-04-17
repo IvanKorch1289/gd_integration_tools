@@ -5,7 +5,6 @@
 используется следующий по приоритету.
 """
 
-import json
 import logging
 from typing import Any
 

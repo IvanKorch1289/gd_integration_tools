@@ -113,9 +113,9 @@ class KafkaClient(BaseKafkaClient):
             data: Данные для сериализации в JSON.
             key: Ключ партиционирования (строка).
         """
-        import json
+        import orjson
 
-        value = json.dumps(data, ensure_ascii=False).encode()
+        value = orjson.dumps(data)
         key_bytes = key.encode() if key else None
         await self.produce(topic, value=value, key=key_bytes)
 

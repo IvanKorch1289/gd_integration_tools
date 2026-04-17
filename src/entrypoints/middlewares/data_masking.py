@@ -53,14 +53,14 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
 
     def _mask_bytes(self, raw: bytes) -> bytes:
         """Маскирует PII в JSON-байтах."""
-        import json
+        import orjson
 
         text = raw.decode("utf-8")
         try:
-            data = json.loads(text)
+            data = orjson.loads(text)
             masked = self._mask_value(data)
-            return json.dumps(masked, ensure_ascii=False, default=str).encode("utf-8")
-        except (json.JSONDecodeError, UnicodeDecodeError):
+            return orjson.dumps(masked)
+        except (orjson.JSONDecodeError, UnicodeDecodeError):
             return raw
 
     def _mask_value(self, obj: Any) -> Any:

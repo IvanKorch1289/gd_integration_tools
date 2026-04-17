@@ -5,8 +5,9 @@
 LLM-агентам вызывать любой бизнес-action через MCP-протокол.
 """
 
-import json
 import logging
+
+import orjson
 from typing import Any
 
 __all__ = ("create_mcp_server", "register_mcp_tools")
@@ -75,8 +76,8 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
             JSON-строка с результатом.
         """
         try:
-            parsed_payload = json.loads(payload) if payload else {}
-        except json.JSONDecodeError:
+            parsed_payload = orjson.loads(payload) if payload else {}
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -88,7 +89,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
         try:
             result = await action_handler_registry.dispatch(command)
             if hasattr(result, "model_dump"):
-                return json.dumps(result.model_dump(mode="json"), default=str)
-            return json.dumps(result, default=str)
+                return orjson.dumps(result.model_dump(mode="json")).decode()
+            return orjson.dumps(result).decode()
         except Exception as exc:
-            return json.dumps({"error": str(exc)})
+            return orjson.dumps({"error": str(exc)}).decode()

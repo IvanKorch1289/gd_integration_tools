@@ -4,7 +4,7 @@
 обеспечивая консистентность с другими протоколами.
 """
 
-import json
+import orjson
 from typing import Any
 
 from app.core.config.settings import settings
@@ -42,9 +42,9 @@ class BaseGRPCServicer:
         if result is None:
             return "{}"
         if hasattr(result, "model_dump"):
-            return json.dumps(result.model_dump(mode="json"), default=str)
+            return orjson.dumps(result.model_dump(mode="json")).decode()
         if isinstance(result, (dict, list)):
-            return json.dumps(result, default=str)
+            return orjson.dumps(result).decode()
         return str(result)
 
 
