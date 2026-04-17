@@ -1,4 +1,11 @@
-from fastapi import Header
+"""Аутентификация по API-ключу с поддержкой ротации.
+
+Проверяет ключ через APIKeyManager:
+1. Per-client ключи в Redis (с grace period при ротации)
+2. Глобальный ключ из настроек (fallback)
+"""
+
+from fastapi import Header, HTTPException
 
 __all__ = ("require_api_key",)
 
@@ -6,20 +13,23 @@ __all__ = ("require_api_key",)
 async def require_api_key(
     x_api_key: str = Header(..., description="API-ключ для авторизации клиента."),
 ) -> str:
-    """
-    Обязательная dependency для проверки наличия API-ключа.
-
-    Пока dependency лишь валидирует наличие заголовка.
-    Позже сюда можно добавить:
-    - проверку ключа в БД/Redis;
-    - rate limit по ключу;
-    - audit logging;
-    - определение client/service identity.
+    """Проверяет API-ключ через APIKeyManager.
 
     Args:
         x_api_key: Значение заголовка X-API-Key.
 
     Returns:
-        str: Переданный API-ключ.
+        str: client_id валидного ключа.
+
+    Raises:
+        HTTPException: 401 если ключ невалиден.
     """
-    return x_api_key
+    from app.core.security.api_key_manager import get_api_key_manager
+
+    manager = get_api_key_manager()
+    key_info = await manager.validate_key(x_api_key)
+
+    if key_info is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    return key_info.client_id
