@@ -20,7 +20,7 @@
 ┌───────────────────────▼─────────────────────────────────────┐
 │                  DSL Engine (Pipeline)                       │
 │  RouteBuilder → Processors → Exchange → ActionHandlerRegistry│
-│  Transform │ Filter │ Enrich │ Validate │ AgentGraph │ MCP  │
+│  Choice │ TryCatch │ Retry │ Parallel │ Saga │ FeatureFlag  │
 └───────────────────────┬─────────────────────────────────────┘
                         │
 ┌───────────────────────▼─────────────────────────────────────┐
@@ -72,7 +72,7 @@
 | **skb** | get_request_kinds, add_request, get_response_by_order, get_orders_list, get_objects_by_address |
 | **dadata** | get_geolocate |
 | **tech** | check_all_services, check_database, check_redis, check_s3, send_email |
-| **admin** | get_config, list_cache_keys, get_cache_value, invalidate_cache |
+| **admin** | get_config, list_cache_keys, get_cache_value, invalidate_cache, list_services, list_actions, list_routes, list_feature_flags, toggle_feature_flag, system_info |
 | **ai** | search_web, parse_webpage, chat, run_agent |
 
 ## DSL Engine
@@ -94,6 +94,8 @@ route = (
 
 ### Процессоры DSL
 
+#### Базовые
+
 | Процессор | Назначение |
 |-----------|-----------|
 | SetHeader / SetProperty | Установка заголовков и свойств |
@@ -106,6 +108,99 @@ route = (
 | MCPTool | Вызов внешнего MCP tool |
 | AgentGraph | Запуск LangGraph-агента |
 | CDC | Подписка на изменения в БД |
+
+#### Control-flow (управление потоком)
+
+| Процессор | Назначение | RouteBuilder-метод |
+|-----------|-----------|-------------------|
+| **ChoiceProcessor** | Условное ветвление When/Otherwise — выполняет первую подходящую ветку | `.choice(when=[...], otherwise=[...])` |
+| **TryCatchProcessor** | Try/Catch/Finally — обработка ошибок внутри pipeline | `.do_try(try_procs, catch_procs, finally_procs)` |
+| **RetryProcessor** | Повтор sub-pipeline с экспоненциальным backoff | `.retry(procs, max_attempts=3, backoff="exponential")` |
+| **PipelineRefProcessor** | Вызов другого зарегистрированного DSL-маршрута | `.to_route("route_id")` |
+| **ParallelProcessor** | Параллельное выполнение нескольких веток | `.parallel({"branch1": [...], "branch2": [...]})` |
+| **SagaProcessor** | Saga-паттерн: шаги с компенсациями при откате | `.saga([SagaStep(forward, compensate)])` |
+
+### Feature Flags
+
+DSL-маршруты можно защитить именованными feature-флагами. Если флаг отключён, все маршруты с этим флагом возвращают `503 Service Unavailable`.
+
+**Объявление при создании маршрута:**
+```python
+route = (
+    RouteBuilder.from_("orders.new_algo", source="internal:orders.new_algo")
+    .dispatch_action("orders.create_skb_order")
+    .feature_flag("new_skb_algorithm")  # защищён флагом
+    .build()
+)
+```
+
+**Управление через API:**
+```bash
+# Отключить флаг (маршруты станут недоступны)
+curl -X POST "http://localhost:8000/api/v1/admin/feature-flags/toggle?flag_name=new_skb_algorithm&enable=false"
+
+# Включить флаг
+curl -X POST "http://localhost:8000/api/v1/admin/feature-flags/toggle?flag_name=new_skb_algorithm&enable=true"
+
+# Список всех флагов и их состояний
+curl http://localhost:8000/api/v1/admin/feature-flags
+```
+
+**Программное управление:**
+```python
+from app.dsl.commands.registry import route_registry
+
+route_registry.toggle_feature_flag("new_skb_algorithm", enable=False)
+disabled = route_registry.list_disabled_routes()
+```
+
+### Пример сложного pipeline (control-flow)
+
+```python
+from app.dsl.builder import RouteBuilder
+from app.dsl.engine.processors import (
+    DispatchActionProcessor, LogProcessor, SagaStep,
+)
+
+route = (
+    RouteBuilder.from_("orders.complex_flow", source="internal:orders.complex")
+    .validate(OrderSchemaIn)                          # валидация входа
+    .choice(                                          # условное ветвление
+        when=[
+            (lambda ex: ex.in_message.body.get("urgent"),
+             [DispatchActionProcessor("orders.express_create")]),
+        ],
+        otherwise=[DispatchActionProcessor("orders.add")],
+    )
+    .retry(                                           # повтор с backoff
+        [DispatchActionProcessor("skb.add_request")],
+        max_attempts=3,
+        backoff="exponential",
+    )
+    .do_try(                                          # обработка ошибок
+        try_processors=[DispatchActionProcessor("orders.send_order_data")],
+        catch_processors=[LogProcessor(level="error")],
+    )
+    .feature_flag("complex_order_flow")               # feature flag
+    .build()
+)
+```
+
+### Introspection API
+
+Эндпоинты для мониторинга и диагностики (все под `/api/v1/admin/`):
+
+| Endpoint | Метод | Описание |
+|----------|-------|----------|
+| `/admin/services` | GET | Список зарегистрированных сервисов из ServiceRegistry |
+| `/admin/actions` | GET | Список всех action-команд из ActionHandlerRegistry |
+| `/admin/routes` | GET | DSL-маршруты с их статусом и feature-флагами |
+| `/admin/feature-flags` | GET | Все feature-флаги, их состояние и связанные маршруты |
+| `/admin/feature-flags/toggle` | POST | Включить/отключить feature-флаг |
+| `/admin/system-info` | GET | Сводка: кол-во сервисов, actions, маршрутов, флагов |
+| `/admin/config` | GET | Текущая конфигурация приложения |
+| `/admin/cache/keys` | GET | Ключи Redis по шаблону |
+| `/admin/routes/toggle` | POST | Включить/отключить HTTP-маршрут |
 
 ## AI-функционал
 
@@ -215,6 +310,144 @@ mutation { createSkbOrder(orderId: 1) { success data } }
 curl -X POST http://localhost:8000/api/v1/dsl/dispatch \
   -H "Content-Type: application/json" \
   -d '{"action": "orders.create_skb_order", "payload": {"order_id": 1}}'
+```
+
+## Структура проекта
+
+```
+src/
+├── core/                      # Ядро: конфигурация, ошибки, реестр сервисов
+│   ├── config/               # Настройки (Pydantic Settings)
+│   │   ├── settings.py       # Главный объект settings
+│   │   ├── runtime_state.py  # Мутабельное runtime-состояние (blocked_routes, disabled_feature_flags)
+│   │   └── services.py       # Настройки внешних сервисов
+│   ├── decorators/           # Кэширование, rate-limiting, singleton
+│   ├── enums/                # Enum-ы для доменных моделей
+│   ├── errors.py             # Иерархия ошибок (BaseError → RouteDisabledError и др.)
+│   └── service_registry.py   # Реестр бизнес-сервисов
+│
+├── dsl/                       # DSL Engine — ядро интеграционной шины
+│   ├── engine/
+│   │   ├── exchange.py       # Exchange, Message, ExchangeStatus — контейнер данных
+│   │   ├── pipeline.py       # Pipeline — описание маршрута + feature_flag
+│   │   ├── processors.py     # 16 процессоров (базовые + control-flow)
+│   │   ├── execution_engine.py  # Исполнитель маршрутов (проверяет feature flags)
+│   │   └── context.py        # ExecutionContext
+│   ├── commands/
+│   │   ├── action_registry.py   # ActionHandlerRegistry — 50+ action→service маппингов
+│   │   ├── registry.py          # RouteRegistry — реестр DSL-маршрутов
+│   │   └── setup.py             # Регистрация всех action-handlers при старте
+│   ├── adapters/             # Протокольные адаптеры (SOAP и др.)
+│   ├── builder.py            # RouteBuilder — fluent API для создания маршрутов
+│   ├── routes.py             # Авторегистрация DSL-маршрутов для всех actions
+│   └── service.py            # DslService — facade для entrypoints
+│
+├── entrypoints/               # Точки входа (протоколы)
+│   ├── api/                  # REST API (FastAPI)
+│   │   ├── generator/        # ActionRouterBuilder, CrudRouterBuilder — генерация эндпоинтов
+│   │   └── v1/endpoints/     # Endpoint-файлы по доменам (orders, users, admin...)
+│   ├── graphql/              # GraphQL (Strawberry)
+│   ├── grpc/                 # gRPC server + protobuf
+│   ├── soap/                 # SOAP handler + WSDL
+│   ├── websocket/            # WebSocket
+│   ├── sse/                  # Server-Sent Events
+│   ├── webhook/              # Webhook subscriptions
+│   ├── stream/               # Redis/RabbitMQ subscribers
+│   ├── mcp/                  # FastMCP server
+│   ├── cdc/                  # Change Data Capture routes
+│   ├── middlewares/          # 14 HTTP middleware
+│   └── filewatcher/          # File system monitoring
+│
+├── services/                  # Бизнес-логика
+│   ├── base.py               # BaseService[Repo, SchemaOut, SchemaIn, VersionSchema]
+│   ├── orders.py             # OrderService — заказы + SKB-интеграция
+│   ├── users.py              # UserService — пользователи + аутентификация
+│   ├── admin.py              # AdminService — конфиг, кэш, introspection, feature flags
+│   └── ...                   # Остальные сервисы
+│
+├── infrastructure/            # Инфраструктура
+│   ├── database/             # SQLAlchemy ORM, миграции, модели
+│   ├── repositories/         # Data Access Layer (BaseRepository)
+│   ├── clients/              # HTTP, Redis, Kafka, SMTP, S3, SFTP, CDC
+│   ├── scheduler/            # APScheduler
+│   └── application/          # App factory, lifecycle, telemetry
+│
+├── schemas/                   # Pydantic-модели (input/output/filter)
+├── workflows/                 # Prefect flows и task factory
+└── utilities/                 # Вспомогательные функции
+```
+
+## Как добавить новый action (для новых разработчиков)
+
+1. **Создайте метод в сервисе** (`src/services/my_service.py`):
+   ```python
+   async def my_new_method(self, param: str) -> dict:
+       return {"result": param}
+   ```
+
+2. **Зарегистрируйте action** (`src/dsl/commands/setup.py`):
+   ```python
+   action_handler_registry.register(
+       action="myservice.my_new_method",
+       service_getter=get_my_service,
+       service_method="my_new_method",
+   )
+   ```
+
+3. **Готово!** Action автоматически доступен через:
+   - REST (dispatch через `/api/v1/dsl/dispatch`)
+   - GraphQL (`dslExecute(action: "myservice.my_new_method", payload: {...})`)
+   - SOAP (`<myservice.my_new_method>...</myservice.my_new_method>`)
+   - Redis Streams / RabbitMQ
+   - MCP tools (для LLM-агентов)
+
+4. **(Опционально)** Добавьте REST-эндпоинт через ActionSpec:
+   ```python
+   ActionSpec(
+       name="my_new_method",
+       method="POST",
+       path="/my-endpoint",
+       service_getter=get_my_service,
+       service_method="my_new_method",
+   )
+   ```
+
+## Как создать DSL-маршрут с feature flag
+
+```python
+from app.dsl.builder import RouteBuilder
+from app.dsl.engine.processors import DispatchActionProcessor, SagaStep
+
+# Простой маршрут
+route = (
+    RouteBuilder.from_("my.route", source="internal:my.route")
+    .dispatch_action("orders.get")
+    .build()
+)
+
+# Маршрут с feature flag (заблокирован до включения)
+route = (
+    RouteBuilder.from_("my.beta_route", source="internal:my.beta")
+    .dispatch_action("orders.new_experimental_method")
+    .feature_flag("beta_orders")
+    .build()
+)
+
+# Маршрут с retry + saga
+route = (
+    RouteBuilder.from_("orders.safe_create", source="internal:orders.safe")
+    .saga([
+        SagaStep(
+            forward=DispatchActionProcessor("orders.add"),
+            compensate=DispatchActionProcessor("orders.delete"),
+        ),
+        SagaStep(
+            forward=DispatchActionProcessor("skb.add_request"),
+            compensate=None,  # read-only, компенсация не нужна
+        ),
+    ])
+    .build()
+)
 ```
 
 ## Управление проектом

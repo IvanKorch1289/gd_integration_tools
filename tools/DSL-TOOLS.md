@@ -70,6 +70,13 @@ route = (
 | `.mcp_tool(uri, tool, result_property)` | Вызов внешнего MCP tool |
 | `.agent_graph(graph_name, tools)` | Запуск LangGraph-агента |
 | `.cdc(profile, tables, target_action)` | CDC-подписка на изменения в таблицах |
+| `.choice(when, otherwise)` | Условное ветвление When/Otherwise |
+| `.do_try(try_procs, catch_procs, finally_procs)` | Try/Catch/Finally блок |
+| `.retry(procs, max_attempts, delay_seconds, backoff)` | Повтор с backoff (fixed/exponential) |
+| `.to_route(route_id, result_property)` | Вызов другого DSL-маршрута |
+| `.parallel(branches, strategy)` | Параллельное выполнение веток |
+| `.saga(steps)` | Saga-паттерн с компенсациями |
+| `.feature_flag(name)` | Защита маршрута feature-флагом |
 | `.process(processor)` / `.to(processor)` | Добавляет произвольный процессор |
 | `.process_fn(func, name)` | Добавляет функцию/корутину как процессор |
 | `.transport(config)` | Устанавливает конфигурацию транспорта |
@@ -91,6 +98,52 @@ route = (
 | `MCPToolProcessor` | Вызов внешнего MCP tool |
 | `AgentGraphProcessor` | Запуск LangGraph-агента с tools |
 | `CDCProcessor` | Подписка на CDC-изменения |
+
+#### Control-flow процессоры
+
+| Процессор | Назначение | Пример |
+|---|---|---|
+| `ChoiceProcessor` | When/Otherwise ветвление — первый истинный предикат запускает ветку | `ChoiceProcessor(when=[(predicate, [procs])], otherwise=[procs])` |
+| `TryCatchProcessor` | Try/Catch/Finally — ошибка сохраняется в `exchange.properties["caught_error"]` | `TryCatchProcessor(try_processors=[...], catch_processors=[...])` |
+| `RetryProcessor` | Повтор sub-pipeline с fixed или exponential backoff | `RetryProcessor([procs], max_attempts=3, backoff="exponential")` |
+| `PipelineRefProcessor` | Вызов другого зарегистрированного DSL-маршрута по route_id | `PipelineRefProcessor("orders.enrich", result_property="sub")` |
+| `ParallelProcessor` | Параллельное выполнение нескольких веток, результаты в `parallel_results` | `ParallelProcessor({"a": [proc1], "b": [proc2]}, strategy="all")` |
+| `SagaProcessor` | Saga: шаги с компенсациями. При падении шага N — откат N-1, N-2, ... | `SagaProcessor([SagaStep(forward, compensate), ...])` |
+
+#### Feature Flags
+
+Маршрут с `feature_flag` проверяется перед выполнением в `ExecutionEngine`. Если флаг находится
+в `disabled_feature_flags` (set в `runtime_state.py`), маршрут возвращает `RouteDisabledError (503)`.
+
+```python
+# Создание маршрута с флагом
+route = (
+    RouteBuilder.from_("orders.beta", source="internal:orders.beta")
+    .dispatch_action("orders.new_algorithm")
+    .feature_flag("beta_orders")
+    .build()
+)
+
+# Управление флагами (в runtime)
+from app.dsl.commands.registry import route_registry
+
+route_registry.toggle_feature_flag("beta_orders", enable=False)  # отключить
+route_registry.toggle_feature_flag("beta_orders", enable=True)   # включить
+
+# Introspection
+route_registry.list_enabled_routes()        # только доступные маршруты
+route_registry.list_disabled_routes()       # заблокированные маршруты
+route_registry.get_route_feature_flags()    # {route_id: flag_name}
+```
+
+Также управление через REST API:
+```bash
+# Список флагов
+GET /api/v1/admin/feature-flags
+
+# Переключение
+POST /api/v1/admin/feature-flags/toggle?flag_name=beta_orders&enable=false
+```
 
 ---
 
