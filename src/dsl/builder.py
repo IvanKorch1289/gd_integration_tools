@@ -10,9 +10,12 @@ from app.dsl.engine.processors import (
     CallableProcessor,
     CDCProcessor,
     ChoiceProcessor,
+    DeadLetterProcessor,
     DispatchActionProcessor,
     EnrichProcessor,
+    FallbackChainProcessor,
     FilterProcessor,
+    IdempotentConsumerProcessor,
     LogProcessor,
     MCPToolProcessor,
     ParallelProcessor,
@@ -26,6 +29,7 @@ from app.dsl.engine.processors import (
     TransformProcessor,
     TryCatchProcessor,
     ValidateProcessor,
+    WireTapProcessor,
 )
 
 __all__ = ("RouteBuilder",)
@@ -346,6 +350,42 @@ class RouteBuilder:
     def saga(self, steps: list[SagaStep]) -> "RouteBuilder":
         """Добавляет Saga-паттерн с компенсациями."""
         self._processors.append(SagaProcessor(steps=steps))
+        return self
+
+    def dead_letter(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        dlq_stream: str = "dsl-dlq",
+    ) -> "RouteBuilder":
+        """Оборачивает процессоры в Dead Letter Channel."""
+        self._processors.append(
+            DeadLetterProcessor(processors=processors, dlq_stream=dlq_stream)
+        )
+        return self
+
+    def idempotent(
+        self,
+        key_expression: Callable[[Exchange[Any]], str],
+        *,
+        ttl_seconds: int = 86400,
+    ) -> "RouteBuilder":
+        """Добавляет дедупликацию по ключу (Redis)."""
+        self._processors.append(
+            IdempotentConsumerProcessor(
+                key_expression=key_expression, ttl_seconds=ttl_seconds
+            )
+        )
+        return self
+
+    def fallback(self, processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Добавляет цепочку fallback-процессоров."""
+        self._processors.append(FallbackChainProcessor(processors=processors))
+        return self
+
+    def wire_tap(self, tap_processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Копирует Exchange в отдельный канал (не влияет на основной)."""
+        self._processors.append(WireTapProcessor(tap_processors=tap_processors))
         return self
 
     def feature_flag(self, name: str) -> "RouteBuilder":

@@ -31,6 +31,10 @@ __all__ = (
     "ParallelProcessor",
     "SagaStep",
     "SagaProcessor",
+    "DeadLetterProcessor",
+    "IdempotentConsumerProcessor",
+    "FallbackChainProcessor",
+    "WireTapProcessor",
 )
 
 ProcessorCallable = Callable[[Exchange[Any], ExecutionContext], Any | Awaitable[Any]]
@@ -755,3 +759,191 @@ class SagaProcessor(BaseProcessor):
                 return
 
         exchange.set_property("saga_completed", True)
+
+
+# ---------------------------------------------------------------------------
+#  Enterprise Integration Patterns
+# ---------------------------------------------------------------------------
+
+_eip_logger = logging.getLogger("dsl.eip")
+
+
+class DeadLetterProcessor(BaseProcessor):
+    """Dead Letter Channel — направляет упавшие Exchange в DLQ.
+
+    Оборачивает sub-pipeline. При неуспехе сохраняет Exchange
+    в DLQ-хранилище (Redis stream) с полным контекстом ошибки.
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        dlq_stream: str = "dsl-dlq",
+        max_retries: int = 0,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "dead_letter")
+        self._processors = processors
+        self._dlq_stream = dlq_stream
+        self._max_retries = max_retries
+
+    async def _send_to_dlq(self, exchange: Exchange[Any]) -> None:
+        try:
+            from app.infrastructure.clients.redis import redis_client
+
+            dlq_entry = {
+                "exchange_id": exchange.meta.exchange_id,
+                "route_id": exchange.meta.route_id or "",
+                "correlation_id": exchange.meta.correlation_id,
+                "error": exchange.error or "unknown",
+                "body": str(exchange.in_message.body)[:4096],
+                "properties": str(exchange.properties)[:2048],
+                "timestamp": exchange.meta.created_at.isoformat(),
+            }
+            await redis_client.add_to_stream(
+                stream_name=self._dlq_stream,
+                data=dlq_entry,
+            )
+            _eip_logger.info(
+                "Exchange %s sent to DLQ stream '%s'",
+                exchange.meta.exchange_id,
+                self._dlq_stream,
+            )
+        except Exception as dlq_exc:
+            _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        for proc in self._processors:
+            if exchange.status == ExchangeStatus.failed or exchange.stopped:
+                break
+            try:
+                await proc.process(exchange, context)
+            except Exception as exc:
+                exchange.fail(str(exc))
+                break
+
+        if exchange.status == ExchangeStatus.failed:
+            await self._send_to_dlq(exchange)
+
+
+class IdempotentConsumerProcessor(BaseProcessor):
+    """Idempotent Consumer — предотвращает повторную обработку.
+
+    Использует Redis SET NX EX для дедупликации по ключу.
+    Если сообщение уже обработано, Exchange останавливается.
+    """
+
+    def __init__(
+        self,
+        key_expression: Callable[[Exchange[Any]], str],
+        *,
+        ttl_seconds: int = 86400,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "idempotent_consumer")
+        self._key_expr = key_expression
+        self._ttl = ttl_seconds
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        try:
+            from app.infrastructure.clients.redis import redis_client
+
+            dedup_key = f"idempotent:{self._key_expr(exchange)}"
+            is_new = await redis_client.set_if_not_exists(
+                key=dedup_key, value="1", ttl=self._ttl
+            )
+            if not is_new:
+                _eip_logger.debug(
+                    "Duplicate message filtered: key=%s", dedup_key
+                )
+                exchange.set_property("idempotent_duplicate", True)
+                exchange.stop()
+                return
+        except Exception as exc:
+            _eip_logger.warning(
+                "Idempotent check failed (proceeding): %s", exc
+            )
+
+
+class FallbackChainProcessor(BaseProcessor):
+    """Fallback Chain — последовательно пробует процессоры.
+
+    Выполняет первый процессор. При ошибке — следующий.
+    Останавливается на первом успешном. Если все провалились —
+    Exchange завершается ошибкой последнего.
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"fallback_chain({len(processors)})")
+        self._processors = processors
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        last_error: str | None = None
+
+        for i, proc in enumerate(self._processors):
+            exchange.status = ExchangeStatus.processing
+            exchange.error = None
+            exchange.properties.pop("_stopped", None)
+
+            try:
+                await proc.process(exchange, context)
+                if exchange.status != ExchangeStatus.failed:
+                    exchange.set_property("fallback_used", i)
+                    return
+                last_error = exchange.error
+            except Exception as exc:
+                last_error = str(exc)
+                _eip_logger.debug(
+                    "Fallback %d (%s) failed: %s", i, proc.name, exc
+                )
+
+        exchange.fail(f"All fallbacks exhausted. Last error: {last_error}")
+
+
+class WireTapProcessor(BaseProcessor):
+    """Wire Tap — копирует Exchange в отдельный канал.
+
+    Не влияет на основной поток. Полезно для логирования,
+    аудита, отладки.
+
+    Args:
+        tap_processors: Процессоры, обрабатывающие копию Exchange.
+    """
+
+    def __init__(
+        self,
+        tap_processors: list[BaseProcessor],
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "wire_tap")
+        self._tap_processors = tap_processors
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        tap_exchange = Exchange(
+            in_message=Message(
+                body=exchange.in_message.body,
+                headers=dict(exchange.in_message.headers),
+            )
+        )
+        tap_exchange.meta.route_id = exchange.meta.route_id
+        tap_exchange.meta.correlation_id = exchange.meta.correlation_id
+        tap_exchange.properties = dict(exchange.properties)
+        tap_exchange.status = ExchangeStatus.processing
+
+        async def _run_tap() -> None:
+            for proc in self._tap_processors:
+                if tap_exchange.status == ExchangeStatus.failed:
+                    break
+                try:
+                    await proc.process(tap_exchange, context)
+                except Exception as exc:
+                    _eip_logger.debug("Wire tap processor error: %s", exc)
+
+        asyncio.create_task(_run_tap())

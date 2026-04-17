@@ -7,7 +7,6 @@
 
 from typing import Any
 
-import json_tricks
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 __all__ = ("EmailSchema", "BaseSchema", "FileResponse", "PaginatedResult")
@@ -68,12 +67,9 @@ class BaseSchema(BaseModel):
         Returns:
             Словарь с данными модели.
         """
-        from app.utilities.utils import utilities
+        from app.utilities.json_codec import json_loads
 
-        return json_tricks.loads(
-            self.model_dump_json(by_alias=by_alias),
-            extra_obj_pairs_hooks=[utilities.custom_json_decoder],
-        )
+        return json_loads(self.model_dump_json(by_alias=by_alias))
 
 
 class FileResponse(BaseModel):

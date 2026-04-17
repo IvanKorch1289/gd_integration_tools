@@ -177,26 +177,46 @@ class BaseService[
     ) -> list[ConcreteResponseSchema | None]:
         """Добавляет несколько объектов.
 
+        При ошибке элемент записывается как ``None``, ошибка
+        логируется и сохраняется. После обработки всех элементов,
+        если были ошибки, поднимается ``ServiceError`` с деталями.
+
         Args:
             data_list: Список данных для создания.
 
         Returns:
-            Список схем ответа (ошибочные элементы
-            пропускаются с логированием).
+            Список схем ответа (``None`` для ошибочных элементов).
+
+        Raises:
+            ServiceError: Если хотя бы один элемент не был создан.
         """
         result: list[ConcreteResponseSchema | None] = []
+        errors: list[dict[str, Any]] = []
 
-        for data in data_list:
+        for idx, data in enumerate(data_list):
             try:
                 response: ConcreteResponseSchema | None = await self.add(
                     data=data
                 )
                 result.append(response)
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Ошибка при добавлении объекта в add_many: %s",
+                    "Ошибка при добавлении объекта #%d в add_many: %s",
+                    idx,
                     data,
                 )
+                result.append(None)
+                errors.append({"index": idx, "data": data, "error": str(exc)})
+
+        if errors:
+            from app.core.errors import ServiceError
+
+            raise ServiceError(
+                detail=(
+                    f"add_many: {len(errors)}/{len(data_list)} элементов не создано. "
+                    f"Ошибки: {errors}"
+                )
+            )
 
         return result
 

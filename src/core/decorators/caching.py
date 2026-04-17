@@ -574,13 +574,23 @@ class CachingDecorator:
             return lock
 
     async def _cleanup_key_lock(self, key: str, lock: asyncio.Lock) -> None:
-        """
-        Аккуратно удаляет lock из реестра, если он больше не нужен.
+        """Удаляет lock из реестра, если он свободен и не переиспользуется.
+
+        Атомарная проверка: guard защищает от гонки между
+        получением lock в ``_get_key_lock`` и его удалением.
+        Дополнительно проверяем, что нет ожидающих acquire
+        через ``_waiters`` (internal asyncio attribute).
         """
         async with self._key_locks_guard:
             current = self._key_locks.get(key)
-            if current is lock and not lock.locked():
-                self._key_locks.pop(key, None)
+            if current is not lock:
+                return
+            if lock.locked():
+                return
+            waiters = getattr(lock, "_waiters", None)
+            if waiters and any(not w.cancelled() for w in waiters):
+                return
+            self._key_locks.pop(key, None)
 
     def _default_key_builder(
         self,

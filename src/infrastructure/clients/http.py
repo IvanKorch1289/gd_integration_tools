@@ -15,7 +15,7 @@ from aiohttp import (
     FormData,
     TCPConnector,
 )
-from json_tricks import dumps
+from app.utilities.json_codec import json_dumps
 from tenacity import (
     RetryError,
     before_sleep_log,
@@ -351,7 +351,7 @@ class HttpClient(BaseHttpClient):
             return form
 
         if json_data is not None:
-            return dumps(json_data, extra_obj_encoders=[utilities.custom_json_encoder])
+            return json_dumps(json_data)
 
         if isinstance(data, dict):
             return data
