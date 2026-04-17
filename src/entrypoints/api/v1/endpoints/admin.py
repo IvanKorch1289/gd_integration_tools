@@ -4,6 +4,7 @@ from app.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpe
 from app.schemas.route_schemas.admin import (
     AdminCacheKeysQuerySchema,
     AdminCacheValuePathSchema,
+    AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
 from app.services.admin import get_admin_service
@@ -66,6 +67,62 @@ ActionRouterBuilder(router).add_actions(
             description="Инвалидирует весь Redis-кэш.",
             service_getter=get_admin_service,
             service_method="invalidate_cache",
+        ),
+        # -- Introspection endpoints --
+        ActionSpec(
+            name="list_services",
+            method="GET",
+            path="/services",
+            summary="Список зарегистрированных сервисов",
+            description="Возвращает имена всех сервисов из ServiceRegistry.",
+            service_getter=get_admin_service,
+            service_method="list_services",
+        ),
+        ActionSpec(
+            name="list_actions",
+            method="GET",
+            path="/actions",
+            summary="Список зарегистрированных action-команд",
+            description="Возвращает имена всех actions из ActionHandlerRegistry.",
+            service_getter=get_admin_service,
+            service_method="list_actions",
+        ),
+        ActionSpec(
+            name="list_routes",
+            method="GET",
+            path="/routes",
+            summary="Список DSL-маршрутов",
+            description="Возвращает все маршруты с их статусом и feature-флагами.",
+            service_getter=get_admin_service,
+            service_method="list_routes",
+        ),
+        ActionSpec(
+            name="list_feature_flags",
+            method="GET",
+            path="/feature-flags",
+            summary="Список feature-флагов",
+            description="Возвращает все feature-флаги и связанные маршруты.",
+            service_getter=get_admin_service,
+            service_method="list_feature_flags",
+        ),
+        ActionSpec(
+            name="toggle_feature_flag",
+            method="POST",
+            path="/feature-flags/toggle",
+            summary="Включить/отключить feature-флаг",
+            description="Переключает feature-флаг. Отключённый флаг блокирует связанные DSL-маршруты.",
+            service_getter=get_admin_service,
+            service_method="toggle_feature_flag",
+            query_model=AdminToggleFeatureFlagQuerySchema,
+        ),
+        ActionSpec(
+            name="system_info",
+            method="GET",
+            path="/system-info",
+            summary="Сводная информация о системе",
+            description="Возвращает количество сервисов, actions, маршрутов и feature-флагов.",
+            service_getter=get_admin_service,
+            service_method="system_info",
         ),
     ]
 )

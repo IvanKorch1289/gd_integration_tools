@@ -20,6 +20,10 @@ class Pipeline:
             маршрут. ``None`` — протоколо-агностичный.
         transport_config: Конфигурация транспорта
             (endpoint, timeout, retry и т.д.).
+        feature_flag: Имя feature-флага, защищающего маршрут.
+            Если флаг присутствует в ``disabled_feature_flags``
+            (runtime_state), маршрут недоступен для выполнения.
+            ``None`` — маршрут всегда доступен.
     """
 
     route_id: str
@@ -28,6 +32,7 @@ class Pipeline:
     processors: list[BaseProcessor] = field(default_factory=list)
     protocol: ProtocolType | None = None
     transport_config: TransportConfig | None = None
+    feature_flag: str | None = None
 
     def add_processor(self, processor: BaseProcessor) -> "Pipeline":
         """

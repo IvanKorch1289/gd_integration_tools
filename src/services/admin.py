@@ -2,7 +2,11 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
+from app.core.config.runtime_state import disabled_feature_flags
 from app.core.config.settings import settings
+from app.core.service_registry import ServiceRegistry
+from app.dsl.commands.action_registry import action_handler_registry
+from app.dsl.commands.registry import route_registry
 from app.infrastructure.clients.redis import redis_client
 
 __all__ = ("AdminService", "get_admin_service")
@@ -92,6 +96,85 @@ class AdminService:
             Any: Результат операции очистки кэша.
         """
         return await redis_client.invalidate_cache()
+
+    # ------------------------------------------------------------------
+    #  Информационные методы (introspection)
+    # ------------------------------------------------------------------
+
+    async def list_services(self) -> dict[str, Any]:
+        """Возвращает список зарегистрированных сервисов."""
+        return {"services": ServiceRegistry.list_services()}
+
+    async def list_actions(self) -> dict[str, Any]:
+        """Возвращает список зарегистрированных action-команд."""
+        return {"actions": list(action_handler_registry.list_actions())}
+
+    async def list_routes(self) -> dict[str, Any]:
+        """Возвращает все DSL-маршруты с их статусом."""
+        all_routes = route_registry.list_routes()
+        enabled = set(route_registry.list_enabled_routes())
+        flags = route_registry.get_route_feature_flags()
+        return {
+            "total": len(all_routes),
+            "routes": [
+                {
+                    "route_id": r,
+                    "enabled": r in enabled,
+                    "feature_flag": flags.get(r),
+                }
+                for r in all_routes
+            ],
+        }
+
+    async def list_feature_flags(self) -> dict[str, Any]:
+        """Возвращает состояние всех feature-флагов."""
+        flags = route_registry.get_route_feature_flags()
+        unique_flags = sorted(set(flags.values()))
+        return {
+            "flags": [
+                {
+                    "name": f,
+                    "enabled": f not in disabled_feature_flags,
+                    "routes": [r for r, fl in flags.items() if fl == f],
+                }
+                for f in unique_flags
+            ],
+        }
+
+    async def toggle_feature_flag(
+        self, flag_name: str, enable: bool
+    ) -> dict[str, Any]:
+        """Включает/отключает feature-флаг.
+
+        Args:
+            flag_name: Имя feature-флага.
+            enable: True — включить, False — отключить.
+
+        Returns:
+            dict с результатом операции.
+        """
+        route_registry.toggle_feature_flag(flag_name, enable=enable)
+        affected = [
+            r
+            for r, fl in route_registry.get_route_feature_flags().items()
+            if fl == flag_name
+        ]
+        return {
+            "flag": flag_name,
+            "enabled": enable,
+            "affected_routes": affected,
+        }
+
+    async def system_info(self) -> dict[str, Any]:
+        """Сводная информация о системе."""
+        return {
+            "services": ServiceRegistry.list_services(),
+            "actions_count": len(action_handler_registry.list_actions()),
+            "routes_total": len(route_registry.list_routes()),
+            "routes_enabled": len(route_registry.list_enabled_routes()),
+            "routes_disabled": len(route_registry.list_disabled_routes()),
+            "feature_flags_disabled": sorted(disabled_feature_flags),
+        }
 
 
 def get_admin_service() -> AdminService:

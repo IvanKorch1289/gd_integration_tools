@@ -9,15 +9,22 @@ from app.dsl.engine.processors import (
     BaseProcessor,
     CallableProcessor,
     CDCProcessor,
+    ChoiceProcessor,
     DispatchActionProcessor,
     EnrichProcessor,
     FilterProcessor,
     LogProcessor,
     MCPToolProcessor,
+    ParallelProcessor,
+    PipelineRefProcessor,
     ProcessorCallable,
+    RetryProcessor,
+    SagaProcessor,
+    SagaStep,
     SetHeaderProcessor,
     SetPropertyProcessor,
     TransformProcessor,
+    TryCatchProcessor,
     ValidateProcessor,
 )
 
@@ -48,6 +55,7 @@ class RouteBuilder:
     _processors: list[BaseProcessor] = field(default_factory=list)
     _protocol: ProtocolType | None = None
     _transport_config: TransportConfig | None = None
+    _feature_flag: str | None = None
 
     @classmethod
     def from_(
@@ -265,6 +273,97 @@ class RouteBuilder:
         )
         return self
 
+    def choice(
+        self,
+        when: list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
+        otherwise: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        """Добавляет условное ветвление When/Otherwise."""
+        self._processors.append(
+            ChoiceProcessor(when=when, otherwise=otherwise)
+        )
+        return self
+
+    def do_try(
+        self,
+        try_processors: list[BaseProcessor],
+        catch_processors: list[BaseProcessor] | None = None,
+        finally_processors: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        """Добавляет Try/Catch/Finally блок."""
+        self._processors.append(
+            TryCatchProcessor(
+                try_processors=try_processors,
+                catch_processors=catch_processors,
+                finally_processors=finally_processors,
+            )
+        )
+        return self
+
+    def retry(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        max_attempts: int = 3,
+        delay_seconds: float = 1.0,
+        backoff: str = "exponential",
+    ) -> "RouteBuilder":
+        """Добавляет повтор sub-pipeline с backoff."""
+        self._processors.append(
+            RetryProcessor(
+                processors=processors,
+                max_attempts=max_attempts,
+                delay_seconds=delay_seconds,
+                backoff=backoff,
+            )
+        )
+        return self
+
+    def to_route(
+        self,
+        route_id: str,
+        *,
+        result_property: str = "sub_result",
+    ) -> "RouteBuilder":
+        """Вызывает другой зарегистрированный DSL-маршрут."""
+        self._processors.append(
+            PipelineRefProcessor(route_id=route_id, result_property=result_property)
+        )
+        return self
+
+    def parallel(
+        self,
+        branches: dict[str, list[BaseProcessor]],
+        *,
+        strategy: str = "all",
+    ) -> "RouteBuilder":
+        """Выполняет несколько веток параллельно."""
+        self._processors.append(
+            ParallelProcessor(branches=branches, strategy=strategy)
+        )
+        return self
+
+    def saga(self, steps: list[SagaStep]) -> "RouteBuilder":
+        """Добавляет Saga-паттерн с компенсациями."""
+        self._processors.append(SagaProcessor(steps=steps))
+        return self
+
+    def feature_flag(self, name: str) -> "RouteBuilder":
+        """Защищает маршрут feature-флагом.
+
+        Если флаг ``name`` находится в ``disabled_feature_flags``
+        (runtime_state), маршрут вернёт ошибку при попытке
+        выполнения.
+
+        Args:
+            name: Уникальное имя feature-флага.
+
+        Returns:
+            Текущий builder.
+        """
+        self._feature_flag = name
+        return self
+
     def build(self) -> Pipeline:
         """Собирает Pipeline из накопленных шагов.
 
@@ -278,4 +377,5 @@ class RouteBuilder:
             processors=list(self._processors),
             protocol=self._protocol,
             transport_config=self._transport_config,
+            feature_flag=self._feature_flag,
         )

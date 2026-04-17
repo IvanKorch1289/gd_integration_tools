@@ -18,6 +18,7 @@ __all__ = (
     "AuthenticationError",
     "AuthorizationError",
     "ServiceError",
+    "RouteDisabledError",
 )
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.
@@ -175,4 +176,21 @@ class ServiceError(BaseError):
         super().__init__(
             message=detail,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+class RouteDisabledError(BaseError):
+    """Маршрут отключён feature-флагом (503 Service Unavailable)."""
+
+    def __init__(
+        self,
+        *_: Any,
+        route_id: str = "",
+        feature_flag: str = "",
+    ) -> None:
+        self.route_id = route_id
+        self.feature_flag = feature_flag
+        super().__init__(
+            message=f"Route '{route_id}' is disabled by feature flag '{feature_flag}'",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )

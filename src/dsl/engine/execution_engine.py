@@ -1,5 +1,7 @@
 from typing import Any
 
+from app.core.config.runtime_state import disabled_feature_flags
+from app.core.errors import RouteDisabledError
 from app.dsl.engine.context import ExecutionContext
 from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from app.dsl.engine.pipeline import Pipeline
@@ -13,11 +15,24 @@ class ExecutionEngine:
 
     Responsibilities:
     - создает или принимает Exchange;
+    - проверяет feature-флаг маршрута;
     - проставляет route metadata;
     - последовательно вызывает процессоры;
     - переводит Exchange в completed/failed;
     - обеспечивает единый runtime-flow для HTTP, stream и gRPC.
     """
+
+    @staticmethod
+    def _check_feature_flag(pipeline: Pipeline) -> None:
+        """Проверяет, не заблокирован ли маршрут feature-флагом."""
+        if (
+            pipeline.feature_flag is not None
+            and pipeline.feature_flag in disabled_feature_flags
+        ):
+            raise RouteDisabledError(
+                route_id=pipeline.route_id,
+                feature_flag=pipeline.feature_flag,
+            )
 
     async def execute(
         self,
@@ -40,7 +55,13 @@ class ExecutionEngine:
 
         Returns:
             Exchange[Any]: Итоговый Exchange после выполнения.
+
+        Raises:
+            RouteDisabledError: Если маршрут заблокирован
+                feature-флагом.
         """
+        self._check_feature_flag(pipeline)
+
         runtime_context = context or ExecutionContext()
         current_exchange = exchange or Exchange(
             in_message=Message(body=body, headers=headers or {})
