@@ -44,19 +44,28 @@ _PROCESSOR_MAP: dict[str, str] = {
 
 
 def _build_processor(spec: dict[str, Any]) -> Any:
-    """Создаёт процессор из YAML-спецификации."""
+    """Создаёт процессор из YAML-спецификации.
+
+    Порядок поиска:
+    1. Plugin Registry (динамически зарегистрированные)
+    2. Built-in map (_PROCESSOR_MAP)
+    3. Прямое имя класса из processors module
+    """
     from app.dsl.engine import processors as proc_mod
+    from app.dsl.engine.plugin_registry import get_processor_plugin_registry
 
     proc_type = spec.get("type", "")
-    class_name = _PROCESSOR_MAP.get(proc_type, proc_type)
+    kwargs: dict[str, Any] = {k: v for k, v in spec.items() if k != "type"}
 
+    plugin_registry = get_processor_plugin_registry()
+    if plugin_registry.is_registered(proc_type):
+        return plugin_registry.create(proc_type, **kwargs)
+
+    class_name = _PROCESSOR_MAP.get(proc_type, proc_type)
     cls = getattr(proc_mod, class_name, None)
     if cls is None:
         raise ValueError(f"Unknown processor type: {proc_type} ({class_name})")
 
-    kwargs: dict[str, Any] = {
-        k: v for k, v in spec.items() if k != "type"
-    }
     return cls(**kwargs)
 
 

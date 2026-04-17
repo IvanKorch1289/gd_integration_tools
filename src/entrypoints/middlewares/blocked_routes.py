@@ -8,12 +8,10 @@ __all__ = ("BlockedRoutesMiddleware", "blocked_routes")
 
 # Middleware для блокировки
 class BlockedRoutesMiddleware(BaseHTTPMiddleware):
-    """Middleware для добавления уникального идентификатора запроса.
+    """Middleware для блокировки отключённых маршрутов.
 
-    Добавляет уникальный идентификатор (Request ID) к каждому входящему запросу:
-    - Если идентификатор предоставлен в заголовках, использует его
-    - Если идентификатор отсутствует, генерирует новый
-    - Добавляет идентификатор в заголовки ответа
+    Проверяет, не находится ли запрашиваемый путь в множестве
+    ``blocked_routes`` (runtime_state). Если да — возвращает 403.
     """
 
     async def dispatch(self, request: Request, call_next):

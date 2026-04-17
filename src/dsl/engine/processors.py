@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
+import orjson
+
 from app.dsl.engine.context import ExecutionContext
 from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from app.schemas.invocation import ActionCommandSchema
@@ -805,8 +807,12 @@ class DeadLetterProcessor(BaseProcessor):
                 "route_id": exchange.meta.route_id or "",
                 "correlation_id": exchange.meta.correlation_id,
                 "error": exchange.error or "unknown",
-                "body": str(exchange.in_message.body)[:4096],
-                "properties": str(exchange.properties)[:2048],
+                "body": orjson.dumps(
+                    exchange.in_message.body, default=str
+                ).decode()[:8192] if exchange.in_message.body else "",
+                "properties": orjson.dumps(
+                    exchange.properties, default=str
+                ).decode()[:4096],
                 "timestamp": exchange.meta.created_at.isoformat(),
             }
             await redis_client.add_to_stream(
@@ -954,7 +960,8 @@ class WireTapProcessor(BaseProcessor):
                 except Exception as exc:
                     _eip_logger.debug("Wire tap processor error: %s", exc)
 
-        asyncio.create_task(_run_tap())
+        task = asyncio.create_task(_run_tap())
+        task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
 
 
 # ---------------------------------------------------------------------------
@@ -1284,18 +1291,22 @@ class AggregatorProcessor(BaseProcessor):
     или ``timeout``.
     """
 
+    _MAX_CORRELATION_KEYS = 10000
+
     def __init__(
         self,
         correlation_key: Callable[[Exchange[Any]], str],
         *,
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
+        max_buffer_size: int = 100000,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"aggregator(batch={batch_size})")
         self._corr_key = correlation_key
         self._batch_size = batch_size
         self._timeout = timeout_seconds
+        self._max_buffer = max_buffer_size
         self._buffers: dict[str, list[Any]] = {}
         self._lock = asyncio.Lock()
 
@@ -1303,7 +1314,13 @@ class AggregatorProcessor(BaseProcessor):
         key = self._corr_key(exchange)
 
         async with self._lock:
+            if len(self._buffers) >= self._MAX_CORRELATION_KEYS:
+                oldest = next(iter(self._buffers))
+                del self._buffers[oldest]
+
             buf = self._buffers.setdefault(key, [])
+            if len(buf) >= self._max_buffer:
+                buf.pop(0)
             buf.append(exchange.in_message.body)
 
             if len(buf) >= self._batch_size:

@@ -37,7 +37,11 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
     - ``domain.method`` (например, ``orders.get``)
     - ``simple_name`` (например, ``GetOrder``)
     """
-    root = ET.fromstring(xml_body)  # noqa: S314
+    try:
+        from defusedxml.ElementTree import fromstring as safe_fromstring
+        root = safe_fromstring(xml_body)
+    except ImportError:
+        root = ET.fromstring(xml_body)  # noqa: S314
 
     body = root.find(f"{{{_SOAP_NS}}}Body")
     if body is None:

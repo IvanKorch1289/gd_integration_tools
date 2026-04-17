@@ -89,6 +89,7 @@ class HttpClient(BaseHttpClient):
         self.last_activity: float = 0.0
         self.active_requests: int = 0
         self.session_lock = asyncio.Lock()
+        self._metrics_lock = asyncio.Lock()
         self.purger_task: asyncio.Task | None = None
 
         self.circuit_breaker = get_circuit_breaker()
@@ -205,7 +206,8 @@ class HttpClient(BaseHttpClient):
             if self.session is None:
                 raise ClientError("Session not initialized")
 
-            self.active_requests += 1
+            async with self._metrics_lock:
+                self.active_requests += 1
             try:
                 await self._log_request(
                     method=method,
@@ -237,7 +239,8 @@ class HttpClient(BaseHttpClient):
                         response=response, content=content, start_time=start_time
                     )
             finally:
-                self.active_requests -= 1
+                async with self._metrics_lock:
+                    self.active_requests -= 1
                 self.last_activity = monotonic()
 
         try:

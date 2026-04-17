@@ -60,7 +60,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             raise HTTPException(status_code=401, detail="Требуется API-ключ")
 
         # Валидируем API-ключ
-        if api_key != settings.secure.api_key:
+        import secrets as _secrets
+
+        if not _secrets.compare_digest(api_key, settings.secure.api_key):
             raise HTTPException(status_code=401, detail="Неверный API-ключ")
 
         # Передаем запрос дальше по цепочке middleware

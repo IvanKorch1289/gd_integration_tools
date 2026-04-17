@@ -58,6 +58,9 @@ async def execute_inline_dsl(body: InlineDSLRequest) -> InlineDSLResponse:
     try:
         import yaml
 
+        if len(body.route_yaml) > 65536:
+            return InlineDSLResponse(status="error", error="YAML too large (max 64KB)")
+
         route_def = yaml.safe_load(body.route_yaml)
         if not isinstance(route_def, dict) or "route_id" not in route_def:
             return InlineDSLResponse(
@@ -65,11 +68,23 @@ async def execute_inline_dsl(body: InlineDSLRequest) -> InlineDSLResponse:
                 error="Invalid YAML: missing 'route_id'",
             )
 
-        from app.dsl.hot_reload import load_yaml_route
+        import re
+        route_id = route_def["route_id"]
+        if not re.match(r"^[a-zA-Z0-9_.\-]+$", route_id):
+            return InlineDSLResponse(
+                status="error",
+                error="Invalid route_id: only alphanumeric, dots, hyphens, underscores",
+            )
 
-        tmp_path = Path("/tmp/_dsl_inline.yaml")
-        tmp_path.write_text(body.route_yaml, encoding="utf-8")
-        pipeline = load_yaml_route(tmp_path)
+        from app.dsl.hot_reload import load_yaml_route
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".dsl.yaml", delete=True, encoding="utf-8"
+        ) as tmp:
+            tmp.write(body.route_yaml)
+            tmp.flush()
+            pipeline = load_yaml_route(Path(tmp.name))
 
         from app.dsl.engine.execution_engine import ExecutionEngine
 

@@ -86,12 +86,21 @@
             const data = await resp.json();
             const routes = data.routes || [];
 
-            tbody.innerHTML = routes.map(r => `
-                <tr>
-                    <td>${r.route_id}</td>
-                    <td><span class="badge ${r.enabled ? 'enabled' : 'disabled'}">${r.enabled ? 'ON' : 'OFF'}</span></td>
-                    <td>${r.feature_flag || '—'}</td>
-                </tr>`).join('');
+            tbody.innerHTML = '';
+            routes.forEach(r => {
+                const tr = document.createElement('tr');
+                const tdId = document.createElement('td');
+                tdId.textContent = r.route_id;
+                const tdStatus = document.createElement('td');
+                const badge = document.createElement('span');
+                badge.className = 'badge ' + (r.enabled ? 'enabled' : 'disabled');
+                badge.textContent = r.enabled ? 'ON' : 'OFF';
+                tdStatus.appendChild(badge);
+                const tdFlag = document.createElement('td');
+                tdFlag.textContent = r.feature_flag || '\u2014';
+                tr.append(tdId, tdStatus, tdFlag);
+                tbody.appendChild(tr);
+            });
 
             // Search filter
             const search = document.getElementById('route-search');

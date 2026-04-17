@@ -62,9 +62,13 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                         type(exc), exc, exc.__traceback__
                     )
                 )
+                self.logger.error(
+                    "Unhandled exception: %s\n%s",
+                    error_message,
+                    traceback_str,
+                )
                 error_data = {
-                    "message": error_message,
-                    "traceback": traceback_str,
+                    "message": "Internal server error",
                     "hasErrors": True,
                 }
 
