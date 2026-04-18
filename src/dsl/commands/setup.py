@@ -464,6 +464,27 @@ def register_action_handlers() -> None:
         ),
     ])
 
+    # ── Data Export (Excel/CSV/PDF) ──
+    from app.services.export_service import get_export_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="export.to_csv",
+            service_getter=get_export_service,
+            service_method="to_csv",
+        ),
+        ActionHandlerSpec(
+            action="export.to_excel",
+            service_getter=get_export_service,
+            service_method="to_excel",
+        ),
+        ActionHandlerSpec(
+            action="export.to_pdf",
+            service_getter=get_export_service,
+            service_method="to_pdf",
+        ),
+    ])
+
     # ── ServiceDSL auto-register ──
     from app.core.service_dsl import service_dsl_registry
     service_dsl_registry.register_all_actions()

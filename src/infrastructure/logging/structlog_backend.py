@@ -146,9 +146,29 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             for h in handlers:
                 stdlib_logger.addHandler(h)
 
+        # Correlation context injector
+        def _inject_correlation(logger: Any, method_name: str, event_dict: dict) -> dict:
+            """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
+            try:
+                from app.infrastructure.observability.correlation import (
+                    get_correlation_id,
+                    get_request_id,
+                    get_tenant_id,
+                )
+                if cid := get_correlation_id():
+                    event_dict.setdefault("correlation_id", cid)
+                if rid := get_request_id():
+                    event_dict.setdefault("request_id", rid)
+                if tid := get_tenant_id():
+                    event_dict.setdefault("tenant_id", tid)
+            except Exception:
+                pass
+            return event_dict
+
         # Structlog pipeline
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,
+            _inject_correlation,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
             structlog.stdlib.ExtraAdder(),

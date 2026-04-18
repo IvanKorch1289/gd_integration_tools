@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config.database import DatabaseConnectionSettings
-from app.core.config.external_database import ExternalDatabaseConnectionSettings
+from app.core.config.external_databases import ExternalDatabaseConnectionSettings
 from app.core.config.settings import settings
 from app.core.enums.database import DatabaseTypeChoices
 from app.core.errors import DatabaseError

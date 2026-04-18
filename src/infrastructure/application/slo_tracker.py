@@ -53,8 +53,18 @@ class SLOTracker:
         self._stats: dict[str, RouteStats] = defaultdict(RouteStats)
 
     def record(self, route_id: str, latency_ms: float, is_error: bool = False) -> None:
-        """Записывает результат выполнения маршрута."""
+        """Записывает результат выполнения маршрута + экспортирует в Prometheus."""
         self._stats[route_id].record(latency_ms, is_error)
+        try:
+            from app.infrastructure.observability.metrics import (
+                record_pipeline_execution,
+            )
+            record_pipeline_execution(
+                route_id=route_id,
+                status="error" if is_error else "success",
+            )
+        except Exception:
+            pass
 
     def get_report(self) -> dict[str, Any]:
         """Возвращает SLO-отчёт по всем маршрутам."""

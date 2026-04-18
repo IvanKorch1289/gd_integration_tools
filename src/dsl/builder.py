@@ -657,6 +657,12 @@ class RouteBuilder:
         self._processors.append(CallableProcessor(_search, name=f"web_search:{query_field}"))
         return self
 
+    def export(self, format: str = "csv", output_property: str = "export_data", title: str = "Report") -> "RouteBuilder":
+        """Экспорт body (list[dict]) в Excel/CSV/PDF. Результат в properties."""
+        from app.dsl.engine.processors.export import ExportProcessor
+        self._processors.append(ExportProcessor(format=format, output_property=output_property, title=title))
+        return self
+
     def build(self) -> Pipeline:
         """Собирает Pipeline из накопленных шагов.
 

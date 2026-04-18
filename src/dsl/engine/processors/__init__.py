@@ -69,6 +69,7 @@ from app.dsl.engine.processors.web import (
     RunScenarioProcessor,
     ScreenshotProcessor,
 )
+from app.dsl.engine.processors.export import ExportProcessor
 
 __all__ = (
     "ProcessorCallable",
@@ -120,4 +121,5 @@ __all__ = (
     "ExtractProcessor",
     "ScreenshotProcessor",
     "RunScenarioProcessor",
+    "ExportProcessor",
 )
