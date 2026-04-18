@@ -22,7 +22,7 @@ GIT_NO_VERIFY ?= 1
 
 DOCKER ?= docker
 POETRY_RUN := poetry run
-MANAGE_SCRIPT := ./scripts/manage.sh
+MANAGE_SCRIPT := $(POETRY_RUN) python manage.py
 
 CONFIG_FILE ?= ./config.yml
 RUN_DIR ?= ./.run
@@ -96,12 +96,11 @@ check-env: ## Check Poetry environment
 		exit 1; \
 	fi
 
-check-script: ## Check manage script exists and executable
-	@if [ -x "$(MANAGE_SCRIPT)" ]; then \
-		$(SUCCESS) "Management script detected"; \
+check-script: ## Check manage.py exists
+	@if [ -f "manage.py" ]; then \
+		$(SUCCESS) "manage.py detected"; \
 	else \
-		$(ERROR) "$(MANAGE_SCRIPT) not found or not executable"; \
-		printf '%s\n' "Run: chmod +x $(MANAGE_SCRIPT)"; \
+		$(ERROR) "manage.py not found"; \
 		exit 1; \
 	fi
 
@@ -240,26 +239,38 @@ api-fuzz: check-env ## Run property-based testing against live FastAPI
 
 ##@ Runtime
 
-run: check-env check-script ## Start project services in background
-	@$(MANAGE_SCRIPT) start
-
-run-fg: check-env check-script ## Start project services in foreground
+run: check-env ## Start backend in foreground
 	@$(MANAGE_SCRIPT) run
 
-stop: check-script ## Stop project services
-	@$(MANAGE_SCRIPT) stop
+run-all: check-env ## Start backend + frontend
+	@$(MANAGE_SCRIPT) run-all
 
-restart: check-env check-script ## Restart project services
-	@$(MANAGE_SCRIPT) restart
+stop: ## Stop project services
+	@$(INFO) "Stopping services..."
 
-status: check-script ## Show project services status
-	@$(MANAGE_SCRIPT) status
+restart: check-env ## Restart backend
+	@$(MANAGE_SCRIPT) run
 
-migrate: check-env check-script ## Apply database migrations
+status: check-env ## Show project services status
+	@$(MANAGE_SCRIPT) health
+
+migrate: check-env ## Apply database migrations
 	@$(MANAGE_SCRIPT) migrate
 
-rabbit-init: check-script ## Initialize RabbitMQ entities
-	@$(MANAGE_SCRIPT) init-rabbitmq
+rabbit-init: check-env ## Initialize RabbitMQ entities
+	@$(MANAGE_SCRIPT) init-rabbit
+
+frontend: check-env ## Start Streamlit dashboard
+	@$(MANAGE_SCRIPT) run-frontend
+
+scaffold: check-env ## Scaffold new component (usage: make scaffold type=service name=invoices)
+	@$(MANAGE_SCRIPT) scaffold $(type) $(name)
+
+routes: check-env ## List DSL routes
+	@$(MANAGE_SCRIPT) routes
+
+actions: check-env ## List registered actions
+	@$(MANAGE_SCRIPT) actions
 
 ##@ Profiling
 
