@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ("AIDataSanitizer", "SanitizationResult")
+__all__ = ("AIDataSanitizer", "SanitizationResult", "MaskingEvent")
 
 # Регулярные выражения для PII
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
@@ -38,17 +38,47 @@ _SENSITIVE_DICT_KEYS = frozenset({
     "private_key", "secret_key", "credentials",
 })
 
+_DEFAULT_FIELD_MASKING_RULES: dict[str, str] = {
+    "password": "***",
+    "api_key": "[KEY]",
+    "secret": "[SECRET]",
+    "authorization": "[AUTH]",
+    "token": "[TOKEN]",
+    "access_token": "[TOKEN]",
+    "refresh_token": "[TOKEN]",
+    "private_key": "[KEY]",
+    "secret_key": "[KEY]",
+    "credentials": "[CREDENTIALS]",
+}
+
+
+@dataclass(slots=True)
+class MaskingEvent:
+    """Событие маскировки для audit trail."""
+    type: str
+    count: int
+    timestamp: float = 0.0
+
 
 @dataclass(slots=True)
 class SanitizationResult:
     """Результат маскировки с возможностью восстановления."""
-    sanitized: str
-    _mapping: dict[str, str] = field(default_factory=dict)
+    sanitized_text: str
+    replacements: dict[str, str] = field(default_factory=dict)
+    audit_events: list[MaskingEvent] = field(default_factory=list)
+
+    @property
+    def sanitized(self) -> str:
+        return self.sanitized_text
+
+    @property
+    def _mapping(self) -> dict[str, str]:
+        return self.replacements
 
     def restore(self, text: str) -> str:
         """Восстанавливает оригинальные значения в тексте."""
         result = text
-        for placeholder, original in self._mapping.items():
+        for placeholder, original in self.replacements.items():
             result = result.replace(placeholder, original)
         return result
 
@@ -71,8 +101,10 @@ class AIDataSanitizer:
         mask_cards: bool = True,
         mask_api_keys: bool = True,
         custom_patterns: list[tuple[str, re.Pattern]] | None = None,
+        field_masking_rules: dict[str, str] | None = None,
     ) -> None:
         self._rules: list[tuple[str, re.Pattern]] = []
+        self._field_rules = field_masking_rules or dict(_DEFAULT_FIELD_MASKING_RULES)
 
         if mask_api_keys:
             self._rules.append(("REDACTED", _API_KEY_RE))
@@ -99,9 +131,11 @@ class AIDataSanitizer:
             text: Исходный текст с возможными PII.
 
         Returns:
-            SanitizationResult с замаскированным текстом
-            и маппингом для восстановления.
+            SanitizationResult с замаскированным текстом,
+            маппингом для восстановления и audit events.
         """
+        import time as _time
+
         mapping: dict[str, str] = {}
         counters: dict[str, int] = {}
         result = text
@@ -124,7 +158,47 @@ class AIDataSanitizer:
         for placeholder, original in mapping.items():
             result = result.replace(original, placeholder)
 
-        return SanitizationResult(sanitized=result, _mapping=mapping)
+        audit_events = [
+            MaskingEvent(type=label, count=count, timestamp=_time.time())
+            for label, count in counters.items()
+        ]
+
+        return SanitizationResult(
+            sanitized_text=result,
+            replacements=mapping,
+            audit_events=audit_events,
+        )
+
+    async def sanitize(self, text: str) -> SanitizationResult:
+        """Async-обёртка для sanitize_text."""
+        return self.sanitize_text(text)
+
+    async def sanitize_with_audit(
+        self, text: str
+    ) -> tuple[SanitizationResult, list[MaskingEvent]]:
+        """Маскирует + возвращает audit events для записи в Redis stream."""
+        result = self.sanitize_text(text)
+
+        if result.audit_events:
+            try:
+                from app.infrastructure.clients.redis import redis_client
+
+                import json
+
+                for event in result.audit_events:
+                    await redis_client.client.xadd(
+                        "pii-masking-audit",
+                        {
+                            "type": event.type,
+                            "count": str(event.count),
+                            "timestamp": str(event.timestamp),
+                        },
+                        maxlen=10000,
+                    )
+            except Exception:
+                pass
+
+        return result, result.audit_events
 
     def sanitize_dict(self, data: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str]]:
         """Маскирует PII в словаре (рекурсивно).
@@ -148,7 +222,10 @@ class AIDataSanitizer:
         if isinstance(value, dict):
             out: dict[str, Any] = {}
             for k, v in value.items():
-                if k.lower() in _SENSITIVE_DICT_KEYS:
+                lower_k = k.lower()
+                if lower_k in self._field_rules:
+                    out[k] = self._field_rules[lower_k]
+                elif lower_k in _SENSITIVE_DICT_KEYS:
                     out[k] = "***"
                 else:
                     out[k] = self._sanitize_value(v, mapping)
