@@ -61,6 +61,14 @@ from app.dsl.engine.processors.integration import (
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
+from app.dsl.engine.processors.web import (
+    ClickProcessor,
+    ExtractProcessor,
+    FillFormProcessor,
+    NavigateProcessor,
+    RunScenarioProcessor,
+    ScreenshotProcessor,
+)
 
 __all__ = (
     "ProcessorCallable",
@@ -106,4 +114,10 @@ __all__ = (
     "EventPublishProcessor",
     "MemoryLoadProcessor",
     "MemorySaveProcessor",
+    "NavigateProcessor",
+    "ClickProcessor",
+    "FillFormProcessor",
+    "ExtractProcessor",
+    "ScreenshotProcessor",
+    "RunScenarioProcessor",
 )

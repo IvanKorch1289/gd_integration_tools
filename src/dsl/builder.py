@@ -602,6 +602,61 @@ class RouteBuilder:
         self._processors.extend(other.processors)
         return self
 
+    # ────────────── Web Automation Methods ──────────────
+
+    def navigate(self, url: str) -> "RouteBuilder":
+        """Открывает URL в браузере."""
+        from app.dsl.engine.processors.web import NavigateProcessor
+        self._processors.append(NavigateProcessor(url=url))
+        return self
+
+    def click(self, url: str, selector: str) -> "RouteBuilder":
+        """Кликает по CSS-селектору."""
+        from app.dsl.engine.processors.web import ClickProcessor
+        self._processors.append(ClickProcessor(url=url, selector=selector))
+        return self
+
+    def fill_form(self, url: str, fields: dict | None = None, submit: str | None = None) -> "RouteBuilder":
+        """Заполняет форму на странице."""
+        from app.dsl.engine.processors.web import FillFormProcessor
+        self._processors.append(FillFormProcessor(url=url, fields=fields, submit=submit))
+        return self
+
+    def extract(self, selector: str, url: str | None = None, output_property: str = "extracted") -> "RouteBuilder":
+        """Извлекает текст по CSS-селектору."""
+        from app.dsl.engine.processors.web import ExtractProcessor
+        self._processors.append(ExtractProcessor(url=url, selector=selector, output_property=output_property))
+        return self
+
+    def screenshot(self, url: str | None = None) -> "RouteBuilder":
+        """Скриншот страницы."""
+        from app.dsl.engine.processors.web import ScreenshotProcessor
+        self._processors.append(ScreenshotProcessor(url=url))
+        return self
+
+    def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
+        """Выполняет multi-step web сценарий."""
+        from app.dsl.engine.processors.web import RunScenarioProcessor
+        self._processors.append(RunScenarioProcessor(steps=steps))
+        return self
+
+    # ────────────── Search Methods ──────────────
+
+    def web_search(self, query_field: str = "query", provider: str | None = None, output_property: str = "search_results") -> "RouteBuilder":
+        """Web-поиск через Perplexity/Tavily."""
+        from app.dsl.engine.processors.base import CallableProcessor
+
+        async def _search(exchange, context):
+            from app.infrastructure.clients.search_providers import get_web_search_service
+            body = exchange.in_message.body
+            query = body.get(query_field) if isinstance(body, dict) else str(body)
+            svc = get_web_search_service()
+            results = await svc.query(query, provider=provider)
+            exchange.set_property(output_property, results)
+
+        self._processors.append(CallableProcessor(_search, name=f"web_search:{query_field}"))
+        return self
+
     def build(self) -> Pipeline:
         """Собирает Pipeline из накопленных шагов.
 

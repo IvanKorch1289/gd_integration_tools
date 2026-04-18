@@ -245,3 +245,82 @@ class PoolMetricsCollector:
 
 
 pool_metrics = PoolMetricsCollector()
+
+
+# ────────────────── Auth Provider ──────────────────
+
+
+class AuthProvider(ABC):
+    """Pluggable authentication provider (LDAP, OAuth2, JWT, API Key)."""
+
+    name: str = "base"
+
+    @abstractmethod
+    async def authenticate(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        """Аутентификация. Возвращает user info или None."""
+        ...
+
+    @abstractmethod
+    async def authorize(self, user: dict[str, Any], resource: str, action: str) -> bool:
+        """Авторизация: может ли user выполнить action на resource."""
+        ...
+
+
+# ────────────────── Async Batcher ──────────────────
+
+
+class AsyncBatcher:
+    """Generic async batcher — накапливает items, flush по batch_size или interval."""
+
+    def __init__(
+        self,
+        flush_fn: Any,
+        batch_size: int = 100,
+        flush_interval_seconds: float = 5.0,
+    ) -> None:
+        import asyncio
+        self._flush_fn = flush_fn
+        self._batch_size = batch_size
+        self._interval = flush_interval_seconds
+        self._buffer: list[Any] = []
+        self._lock = asyncio.Lock()
+        self._task: asyncio.Task | None = None
+        self._running = False
+
+    async def add(self, item: Any) -> None:
+        import asyncio
+        async with self._lock:
+            self._buffer.append(item)
+            if len(self._buffer) >= self._batch_size:
+                await self._do_flush()
+
+    async def _do_flush(self) -> None:
+        if not self._buffer:
+            return
+        batch = list(self._buffer)
+        self._buffer.clear()
+        try:
+            result = self._flush_fn(batch)
+            if hasattr(result, "__await__"):
+                await result
+        except Exception:
+            pass
+
+    async def start(self) -> None:
+        import asyncio
+        self._running = True
+        self._task = asyncio.create_task(self._periodic_flush())
+
+    async def stop(self) -> None:
+        self._running = False
+        if self._task:
+            self._task.cancel()
+        async with self._lock:
+            await self._do_flush()
+
+    async def _periodic_flush(self) -> None:
+        import asyncio
+        while self._running:
+            await asyncio.sleep(self._interval)
+            async with self._lock:
+                await self._do_flush()

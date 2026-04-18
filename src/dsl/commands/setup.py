@@ -396,3 +396,74 @@ def register_action_handlers() -> None:
             service_method="execute_webhook",
         ),
     ])
+
+    # ── Web Automation (multi-protocol: API, queue, Prefect, gRPC, MCP) ──
+    from app.services.web_automation import get_web_automation_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="web.navigate",
+            service_getter=get_web_automation_service,
+            service_method="navigate",
+        ),
+        ActionHandlerSpec(
+            action="web.click",
+            service_getter=get_web_automation_service,
+            service_method="click",
+        ),
+        ActionHandlerSpec(
+            action="web.fill_form",
+            service_getter=get_web_automation_service,
+            service_method="fill_form",
+        ),
+        ActionHandlerSpec(
+            action="web.extract_text",
+            service_getter=get_web_automation_service,
+            service_method="extract_text",
+        ),
+        ActionHandlerSpec(
+            action="web.extract_table",
+            service_getter=get_web_automation_service,
+            service_method="extract_table",
+        ),
+        ActionHandlerSpec(
+            action="web.screenshot",
+            service_getter=get_web_automation_service,
+            service_method="screenshot",
+        ),
+        ActionHandlerSpec(
+            action="web.run_scenario",
+            service_getter=get_web_automation_service,
+            service_method="run_scenario",
+        ),
+        ActionHandlerSpec(
+            action="web.parse_page",
+            service_getter=get_web_automation_service,
+            service_method="parse_page",
+        ),
+        ActionHandlerSpec(
+            action="web.monitor_changes",
+            service_getter=get_web_automation_service,
+            service_method="monitor_changes",
+        ),
+    ])
+
+    # ── Web Search (Perplexity + Tavily) ──
+    from app.infrastructure.clients.search_providers import get_web_search_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="web_search.query",
+            service_getter=get_web_search_service,
+            service_method="query",
+        ),
+        ActionHandlerSpec(
+            action="web_search.deep_research",
+            service_getter=get_web_search_service,
+            service_method="deep_research",
+        ),
+    ])
+
+    # ── ServiceDSL auto-register ──
+    from app.core.service_dsl import service_dsl_registry
+    service_dsl_registry.register_all_actions()
