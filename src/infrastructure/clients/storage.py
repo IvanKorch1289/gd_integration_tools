@@ -185,13 +185,13 @@ class S3Client(BaseS3Client):
         return self._client is not None and self._exit_stack is not None
 
     @staticmethod
-    def ensure_connected[**P, R](
-        func: Callable[P, Coroutine[Any, Any, R]],
-    ) -> Callable[P, Coroutine[Any, Any, R]]:
+    def ensure_connected(
+        func: Callable[..., Coroutine[Any, Any, Any]],
+    ) -> Callable[..., Coroutine[Any, Any, Any]]:
         """Декоратор для проверки подключения перед вызовом функции."""
 
         @wraps(func)
-        async def wrapper(self: "S3Client", *args: P.args, **kwargs: P.kwargs) -> R:
+        async def wrapper(self: "S3Client", *args: Any, **kwargs: Any) -> Any:
             if not self.is_connected:
                 await self.connect()
             return await func(self, *args, **kwargs)

@@ -25,7 +25,8 @@ class ServiceRegistry:
             name: Уникальное имя сервиса (например, ``orders``).
             factory: Callable, возвращающий экземпляр сервиса.
         """
-        self._factories[name] = factory
+        with self._lock:
+            self._factories[name] = factory
 
     def get(self, name: str) -> Any:
         """Возвращает экземпляр сервиса по имени.

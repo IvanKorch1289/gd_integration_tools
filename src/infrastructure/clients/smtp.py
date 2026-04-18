@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Deque
+import asyncio
+from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
@@ -48,8 +49,6 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
-        from collections import deque
-
         from app.infrastructure.external_apis.logging_service import smtp_logger
 
         if not all([settings.host, settings.port]):
@@ -57,8 +56,8 @@ class SmtpClient(BaseSmtpClient):
 
         self.settings = settings
         self.logger = smtp_logger
-        self._connection_pool: Deque[SMTP] = deque()
         self._pool_size = self.settings.connection_pool_size
+        self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(maxsize=self._pool_size)
         self._circuit_breaker = get_circuit_breaker()  # Инициализация CircuitBreaker
 
     async def __aenter__(self):
@@ -91,7 +90,7 @@ class SmtpClient(BaseSmtpClient):
         try:
             for _ in range(self._pool_size):
                 connection = await self._create_connection()
-                self._connection_pool.append(connection)
+                self._connection_pool.put_nowait(connection)
 
             self.logger.info(
                 "Инициализирован пул SMTP с %s соединениями", self._pool_size
@@ -105,8 +104,8 @@ class SmtpClient(BaseSmtpClient):
 
     async def close_pool(self) -> None:
         """Корректно закрывает все соединения в пуле."""
-        while self._connection_pool:
-            connection = self._connection_pool.pop()
+        while not self._connection_pool.empty():
+            connection = self._connection_pool.get_nowait()
             try:
                 await connection.quit()
             except SMTPException as exc:
@@ -176,8 +175,8 @@ class SmtpClient(BaseSmtpClient):
                 error_message="SMTP-сервис недоступен (активирован Circuit Breaker)",
             )
 
-            if self._connection_pool:
-                connection = self._connection_pool.pop()
+            if not self._connection_pool.empty():
+                connection = self._connection_pool.get_nowait()
             else:
                 connection = await self._create_connection()
                 temporary = True
@@ -213,10 +212,10 @@ class SmtpClient(BaseSmtpClient):
         for attempt in range(3):
             try:
                 self.logger.info(
-                    f"Размер пула соединений: {len(self._connection_pool)}"
+                    f"Размер пула соединений: {self._connection_pool.qsize()}"
                 )
                 if self._connection_pool:
-                    return self._connection_pool.pop()
+                    return self._connection_pool.get_nowait()
                 return await self._create_connection()
             except Exception:
                 if attempt == 2:
@@ -237,8 +236,8 @@ class SmtpClient(BaseSmtpClient):
             if connection.is_connected:
                 await connection.noop()
 
-                if not temporary and len(self._connection_pool) < self._pool_size:
-                    self._connection_pool.appendleft(connection)
+                if not temporary and self._connection_pool.qsize() < self._pool_size:
+                    self._connection_pool.put_nowait(connection)
                     return
         except Exception:
             self.logger.warning("Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True)
@@ -256,11 +255,9 @@ class SmtpClient(BaseSmtpClient):
             dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
         """
         return {
-            "pool_capacity": f"{len(self._connection_pool)}/{self._pool_size}",
+            "pool_capacity": f"{self._connection_pool.qsize()}/{self._pool_size}",
             "circuit_state": self._circuit_breaker.state,
-            "active_connections": sum(
-                1 for conn in self._connection_pool if conn.is_connected
-            ),
+            "active_connections": self._connection_pool.qsize(),
         }
 
     async def test_connection(self) -> bool:

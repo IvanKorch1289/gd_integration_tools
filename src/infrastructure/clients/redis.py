@@ -64,16 +64,18 @@ class RedisClient:
         )
 
     @staticmethod
-    def decode(value: Any) -> Any:
+    def decode(value: Any, _depth: int = 0) -> Any:
+        if _depth > 50:
+            return value
         if isinstance(value, bytes):
             return value.decode()
         if isinstance(value, dict):
             return {
-                RedisClient.decode(key): RedisClient.decode(val)
-                for key, val in value.items()
+                (k.decode() if isinstance(k, bytes) else k): RedisClient.decode(v, _depth + 1)
+                for k, v in value.items()
             }
         if isinstance(value, (list, tuple)):
-            items = [RedisClient.decode(item) for item in value]
+            items = [RedisClient.decode(item, _depth + 1) for item in value]
             return type(value)(items)
         return value
 
