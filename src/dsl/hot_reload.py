@@ -26,6 +26,7 @@ __all__ = ("DSLHotReloader", "load_yaml_route")
 logger = logging.getLogger("dsl.hot_reload")
 
 _PROCESSOR_MAP: dict[str, str] = {
+    # Basic
     "set_header": "SetHeaderProcessor",
     "set_property": "SetPropertyProcessor",
     "dispatch_action": "DispatchActionProcessor",
@@ -34,12 +35,41 @@ _PROCESSOR_MAP: dict[str, str] = {
     "enrich": "EnrichProcessor",
     "log": "LogProcessor",
     "validate": "ValidateProcessor",
+    # External
     "mcp_tool": "MCPToolProcessor",
     "agent_graph": "AgentGraphProcessor",
     "cdc": "CDCProcessor",
-    "delay": "DelayProcessor",
-    "throttle": "ThrottlerProcessor",
+    # Control flow
+    "choice": "ChoiceProcessor",
+    "try_catch": "TryCatchProcessor",
+    "retry": "RetryProcessor",
+    "pipeline_ref": "PipelineRefProcessor",
+    "parallel": "ParallelProcessor",
+    # EIP
+    "saga": "SagaProcessor",
+    "dead_letter": "DeadLetterProcessor",
+    "idempotent": "IdempotentConsumerProcessor",
+    "fallback": "FallbackChainProcessor",
     "wire_tap": "WireTapProcessor",
+    "translate": "MessageTranslatorProcessor",
+    "dynamic_route": "DynamicRouterProcessor",
+    "scatter_gather": "ScatterGatherProcessor",
+    "throttle": "ThrottlerProcessor",
+    "delay": "DelayProcessor",
+    "split": "SplitterProcessor",
+    "aggregate": "AggregatorProcessor",
+    "recipient_list": "RecipientListProcessor",
+    # AI
+    "prompt_compose": "PromptComposerProcessor",
+    "llm_call": "LLMCallProcessor",
+    "llm_parse": "LLMParserProcessor",
+    "token_budget": "TokenBudgetProcessor",
+    "vector_search": "VectorSearchProcessor",
+    "sanitize_pii": "SanitizePIIProcessor",
+    "restore_pii": "RestorePIIProcessor",
+    "event_publish": "EventPublishProcessor",
+    "memory_load": "MemoryLoadProcessor",
+    "memory_save": "MemorySaveProcessor",
 }
 
 

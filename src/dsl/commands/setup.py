@@ -236,3 +236,163 @@ def register_action_handlers() -> None:
             service_method="invalidate_cache",
         ),
     ])
+
+    # ── Analytics (ClickHouse) ──
+    from app.services.analytics import get_analytics_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="analytics.insert_event",
+            service_getter=get_analytics_service,
+            service_method="insert_event",
+        ),
+        ActionHandlerSpec(
+            action="analytics.insert_batch",
+            service_getter=get_analytics_service,
+            service_method="insert_batch",
+        ),
+        ActionHandlerSpec(
+            action="analytics.query",
+            service_getter=get_analytics_service,
+            service_method="query",
+        ),
+        ActionHandlerSpec(
+            action="analytics.count",
+            service_getter=get_analytics_service,
+            service_method="count",
+        ),
+        ActionHandlerSpec(
+            action="analytics.aggregate",
+            service_getter=get_analytics_service,
+            service_method="aggregate",
+        ),
+    ])
+
+    # ── Search (Elasticsearch) ──
+    from app.services.search import get_search_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="search.index_document",
+            service_getter=get_search_service,
+            service_method="index_document",
+        ),
+        ActionHandlerSpec(
+            action="search.bulk_index",
+            service_getter=get_search_service,
+            service_method="bulk_index",
+        ),
+        ActionHandlerSpec(
+            action="search.query",
+            service_getter=get_search_service,
+            service_method="search",
+        ),
+        ActionHandlerSpec(
+            action="search.aggregate",
+            service_getter=get_search_service,
+            service_method="aggregate",
+        ),
+        ActionHandlerSpec(
+            action="search.delete_document",
+            service_getter=get_search_service,
+            service_method="delete_document",
+        ),
+    ])
+
+    # ── RAG (Vector DB + LLM) ──
+    from app.services.rag_service import get_rag_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="rag.ingest",
+            service_getter=get_rag_service,
+            service_method="ingest",
+        ),
+        ActionHandlerSpec(
+            action="rag.search",
+            service_getter=get_rag_service,
+            service_method="search",
+        ),
+        ActionHandlerSpec(
+            action="rag.augment_prompt",
+            service_getter=get_rag_service,
+            service_method="augment_prompt",
+        ),
+        ActionHandlerSpec(
+            action="rag.delete",
+            service_getter=get_rag_service,
+            service_method="delete",
+        ),
+        ActionHandlerSpec(
+            action="rag.count",
+            service_getter=get_rag_service,
+            service_method="count",
+        ),
+    ])
+
+    # ── Agent Memory ──
+    from app.services.agent_memory import get_agent_memory_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="agent_memory.load",
+            service_getter=get_agent_memory_service,
+            service_method="load_memory",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.save",
+            service_getter=get_agent_memory_service,
+            service_method="save_memory",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.add_message",
+            service_getter=get_agent_memory_service,
+            service_method="add_message",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.get_conversation",
+            service_getter=get_agent_memory_service,
+            service_method="get_conversation",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.clear",
+            service_getter=get_agent_memory_service,
+            service_method="clear_conversation",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.set_fact",
+            service_getter=get_agent_memory_service,
+            service_method="set_fact",
+        ),
+        ActionHandlerSpec(
+            action="agent_memory.get_facts",
+            service_getter=get_agent_memory_service,
+            service_method="get_facts",
+        ),
+    ])
+
+    # ── Webhook Scheduler ──
+    from app.services.webhook_scheduler import get_webhook_scheduler
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="webhook.schedule",
+            service_getter=get_webhook_scheduler,
+            service_method="schedule",
+        ),
+        ActionHandlerSpec(
+            action="webhook.cancel",
+            service_getter=get_webhook_scheduler,
+            service_method="cancel",
+        ),
+        ActionHandlerSpec(
+            action="webhook.list_scheduled",
+            service_getter=get_webhook_scheduler,
+            service_method="list_scheduled",
+        ),
+        ActionHandlerSpec(
+            action="webhook.execute",
+            service_getter=get_webhook_scheduler,
+            service_method="execute_webhook",
+        ),
+    ])

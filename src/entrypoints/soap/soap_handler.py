@@ -111,7 +111,13 @@ def _build_soap_fault(fault_code: str, fault_string: str) -> str:
 def _xml_escape(value: Any) -> str:
     """Экранирует XML-спецсимволы."""
     s = str(value) if value is not None else ""
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
 
 
 async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:

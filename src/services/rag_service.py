@@ -47,9 +47,13 @@ class RAGService:
             start = end - overlap
         return chunks
 
-    def _embed(self, texts: list[str]) -> list[list[float]]:
+    async def _embed(self, texts: list[str]) -> list[list[float]]:
+        import asyncio
+
         model = self._get_embedder()
-        embeddings = model.encode(texts, convert_to_numpy=True)
+        embeddings = await asyncio.to_thread(
+            model.encode, texts, convert_to_numpy=True
+        )
         return embeddings.tolist()
 
     async def ingest(
@@ -61,7 +65,7 @@ class RAGService:
         """Загружает документ → chunking → embedding → vector store."""
         doc_id = hashlib.sha256(content.encode()).hexdigest()[:16]
         chunks = self._chunk_text(content)
-        embeddings = self._embed(chunks)
+        embeddings = await self._embed(chunks)
 
         ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
         metadatas = [
@@ -86,7 +90,7 @@ class RAGService:
         namespace: str | None = None,
     ) -> list[dict[str, Any]]:
         """Семантический поиск."""
-        embedding = self._embed([query])[0]
+        embedding = (await self._embed([query]))[0]
 
         where = None
         if namespace:

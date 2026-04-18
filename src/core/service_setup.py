@@ -29,3 +29,15 @@ def register_all_services() -> None:
     service_registry.register("tech", get_tech_service)
     service_registry.register("admin", get_admin_service)
     service_registry.register("ai", get_ai_agent_service)
+
+    from app.services.analytics import get_analytics_service
+    from app.services.search import get_search_service
+    from app.services.rag_service import get_rag_service
+    from app.services.agent_memory import get_agent_memory_service
+    from app.services.webhook_scheduler import get_webhook_scheduler
+
+    service_registry.register("analytics", get_analytics_service)
+    service_registry.register("search", get_search_service)
+    service_registry.register("rag", get_rag_service)
+    service_registry.register("agent_memory", get_agent_memory_service)
+    service_registry.register("webhook", get_webhook_scheduler)
