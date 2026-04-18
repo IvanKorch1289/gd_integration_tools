@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Dict, List, Literal, Tuple
+from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -123,7 +123,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
     dir_log_name: str = Field(
         ..., description="Имя директории для хранения логов", example="/var/logs/myapp"
     )
-    required_fields: List[str] = Field(
+    required_fields: list[str] = Field(
         ...,
         default_factory=list,
         min_items=1,
@@ -140,7 +140,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
     )
 
     # Конфигурация логгеров
-    conf_loggers: List[Dict] = Field(
+    conf_loggers: list[dict] = Field(
         ...,
         default_factory=list,
         min_items=1,
@@ -249,7 +249,7 @@ class RedisSettings(BaseSettingsWithLoader):
     health_check_interval: int = Field(
         ..., description="Интервал проверки работоспособности", example=600
     )
-    streams: List[Dict[str, str]] = Field(
+    streams: list[dict[str, str]] = Field(
         ...,
         min_items=1,
         description="Список потоков Redis",
@@ -391,7 +391,7 @@ class CelerySettings(BaseSettingsWithLoader):
         description="URL-адрес для мониторинга через Flower",
         example="http://flower.example.com:5555",
     )
-    flower_basic_auth: Tuple[str, str] | None = Field(
+    flower_basic_auth: tuple[str, str] | None = Field(
         ...,
         description="Учетные данные для базовой аутентификации в Flower (логин, пароль)",
         example=("admin", "secret"),
@@ -591,7 +591,7 @@ class QueueSettings(BaseSettingsWithLoader):
     )
 
     # Блок настроек топиков
-    queues: List[Dict[str, str]] = Field(
+    queues: list[dict[str, str]] = Field(
         ...,
         min_items=1,
         description="Список топиков",

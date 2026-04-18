@@ -1,7 +1,8 @@
 import mimetypes
 import uuid
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict
+from collections.abc import AsyncGenerator
+from typing import Any
 
 from app.core.config.settings import settings
 from app.core.decorators.singleton import singleton
@@ -44,7 +45,7 @@ class AntivirusService:
 
     async def scan_s3_file(
         self, key: str, multipart_field_name: str | None = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         file_bytes = await self.s3_service.get_file_bytes(key)
         filename = await self.s3_service.get_original_filename(key) or key
         content_type = await self.s3_service.get_content_type(key)
@@ -64,7 +65,7 @@ class AntivirusService:
         content_type: str | None = None,
         multipart_field_name: str | None = None,
         key: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         scan_result = await self.scan_bytes(
             file_bytes=file_bytes,
             filename=filename,
@@ -101,7 +102,7 @@ class AntivirusService:
         content_type: str | None = None,
         multipart_field_name: str | None = None,
         file_key: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         resolved_content_type = self._resolve_content_type(
             filename=filename, content_type=content_type
         )

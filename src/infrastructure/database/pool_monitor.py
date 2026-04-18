@@ -108,7 +108,13 @@ _monitor: PoolMonitor | None = None
 
 
 def get_pool_monitor() -> PoolMonitor:
+    """Возвращает PoolMonitor из app.state или lazy-init fallback."""
     global _monitor
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("pool_monitor")
+    if instance is not None:
+        return instance
     if _monitor is None:
         _monitor = PoolMonitor()
     return _monitor

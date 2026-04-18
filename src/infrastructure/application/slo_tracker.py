@@ -77,8 +77,13 @@ _tracker: SLOTracker | None = None
 
 
 def get_slo_tracker() -> SLOTracker:
-    """Singleton SLO tracker."""
+    """Возвращает SLOTracker из app.state или lazy-init fallback."""
     global _tracker
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("slo_tracker")
+    if instance is not None:
+        return instance
     if _tracker is None:
         _tracker = SLOTracker()
     return _tracker

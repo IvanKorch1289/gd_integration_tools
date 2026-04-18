@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from logging import DEBUG
 from time import monotonic
-from typing import Any, AsyncGenerator, BinaryIO, Mapping, TypedDict
+from collections.abc import AsyncGenerator, Mapping
+from typing import Any, BinaryIO, TypedDict
 
 from aiohttp import (
     AsyncResolver,

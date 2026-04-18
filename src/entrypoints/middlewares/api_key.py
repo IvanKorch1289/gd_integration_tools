@@ -1,4 +1,4 @@
-from typing import List, Pattern
+import re
 
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -31,7 +31,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек
-        self.compiled_patterns: List[Pattern] = [
+        self.compiled_patterns: list[re.Pattern] = [
             compile(utilities.convert_pattern(pattern))
             for pattern in settings.secure.routes_without_api_key
         ]

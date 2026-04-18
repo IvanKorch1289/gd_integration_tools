@@ -5,18 +5,22 @@
 2. Глобальный ключ из настроек (fallback)
 """
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, Header, HTTPException
+
+from app.core.security.api_key_manager import APIKeyManager, get_api_key_manager
 
 __all__ = ("require_api_key",)
 
 
 async def require_api_key(
     x_api_key: str = Header(..., description="API-ключ для авторизации клиента."),
+    manager: APIKeyManager = Depends(lambda: get_api_key_manager()),
 ) -> str:
     """Проверяет API-ключ через APIKeyManager.
 
     Args:
         x_api_key: Значение заголовка X-API-Key.
+        manager: APIKeyManager (injected via DI).
 
     Returns:
         str: client_id валидного ключа.
@@ -24,9 +28,6 @@ async def require_api_key(
     Raises:
         HTTPException: 401 если ключ невалиден.
     """
-    from app.core.security.api_key_manager import get_api_key_manager
-
-    manager = get_api_key_manager()
     key_info = await manager.validate_key(x_api_key)
 
     if key_info is None:

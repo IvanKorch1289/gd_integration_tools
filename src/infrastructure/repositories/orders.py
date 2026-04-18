@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +28,7 @@ class OrderRepository(SQLAlchemyRepository):
         Вспомогательные методы для работы с базой данных.
         """
 
-        async def _validate_order_kind(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        async def _validate_order_kind(self, data: dict[str, Any]) -> dict[str, Any]:
             """
             Валидирует и обновляет данные заказа, проверяя наличие связанного вида заказа.
 
@@ -65,7 +65,7 @@ class OrderRepository(SQLAlchemyRepository):
         self.helper.order_kind_repo = order_kind_repo  # type: ignore
 
     @main_session_manager.connection()
-    async def add(self, session: AsyncSession, data: Dict[str, Any]) -> Order | None:
+    async def add(self, session: AsyncSession, data: dict[str, Any]) -> Order | None:
         """
         Добавляет новый заказ в таблицу.
 
@@ -86,7 +86,7 @@ class OrderRepository(SQLAlchemyRepository):
         session: AsyncSession,
         key: str,
         value: Any,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         load_into_memory: bool = True,
     ) -> Order | None:
         """

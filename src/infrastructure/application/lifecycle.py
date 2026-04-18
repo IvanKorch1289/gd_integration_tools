@@ -21,6 +21,10 @@ async def lifespan(app: FastAPI):
     startup_completed = False
 
     try:
+        from app.core.di import register_app_state
+
+        register_app_state(app)
+
         register_all_services()
         register_action_handlers()
         register_dsl_routes()

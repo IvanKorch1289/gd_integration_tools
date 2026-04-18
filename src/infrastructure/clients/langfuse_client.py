@@ -113,8 +113,13 @@ _langfuse_instance: LangFuseClient | None = None
 
 
 def get_langfuse_client() -> LangFuseClient:
-    """Фабрика LangFuse-клиента (singleton)."""
+    """Возвращает LangFuseClient из app.state или lazy-init fallback."""
     global _langfuse_instance
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("langfuse_client")
+    if instance is not None:
+        return instance
     if _langfuse_instance is None:
         _langfuse_instance = LangFuseClient()
     return _langfuse_instance

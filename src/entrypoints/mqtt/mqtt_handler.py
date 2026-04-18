@@ -208,8 +208,13 @@ _mqtt_handler: MqttHandler | None = None
 
 
 def get_mqtt_handler() -> MqttHandler:
-    """Singleton MQTT handler."""
+    """Возвращает MqttHandler из app.state или lazy-init fallback."""
     global _mqtt_handler
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("mqtt_handler")
+    if instance is not None:
+        return instance
     if _mqtt_handler is None:
         try:
             settings = MqttSettings()

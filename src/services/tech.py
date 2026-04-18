@@ -1,6 +1,6 @@
 from enum import Enum
 from io import BytesIO
-from typing import Any, Set
+from typing import Any
 
 import pandas as pd
 from fastapi.responses import HTMLResponse
@@ -82,7 +82,7 @@ class TechService:
         async with get_healthcheck_service() as health_check:
             return await health_check.check_all_services()
 
-    async def get_all_custom_tables(self, model_enum: Enum) -> Set[str]:
+    async def get_all_custom_tables(self, model_enum: Enum) -> set[str]:
         return {model.value.__tablename__ for model in model_enum}  # type: ignore
 
     async def upload_excel_for_mass_create(

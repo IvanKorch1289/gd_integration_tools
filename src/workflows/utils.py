@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from prefect import suspend_flow_run
 
@@ -36,7 +36,7 @@ def validate_order_id(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    async def wrapper(order_data: Dict[str, Any], *args, **kwargs) -> Any:
+    async def wrapper(order_data: dict[str, Any], *args, **kwargs) -> Any:
         if not order_data.get("id"):
             raise ValueError("Отсутствует обязательный параметр order_id")
         return await func(order_data, *args, **kwargs)

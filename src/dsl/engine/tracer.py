@@ -154,8 +154,13 @@ _tracer_instance: ExecutionTracer | None = None
 
 
 def get_tracer() -> ExecutionTracer:
-    """Singleton tracer."""
+    """Возвращает ExecutionTracer из app.state (если доступен) или lazy-init fallback."""
     global _tracer_instance
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("tracer")
+    if instance is not None:
+        return instance
     if _tracer_instance is None:
         _tracer_instance = ExecutionTracer()
     return _tracer_instance

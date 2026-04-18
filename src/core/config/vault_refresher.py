@@ -117,8 +117,13 @@ _refresher: VaultSecretRefresher | None = None
 
 
 def get_vault_refresher() -> VaultSecretRefresher:
-    """Singleton Vault refresher."""
+    """Возвращает VaultSecretRefresher из app.state или lazy-init fallback."""
     global _refresher
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("vault_refresher")
+    if instance is not None:
+        return instance
     if _refresher is None:
         _refresher = VaultSecretRefresher()
     return _refresher

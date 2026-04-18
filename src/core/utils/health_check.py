@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict
+from collections.abc import AsyncGenerator
+from typing import Any
 
 from aio_pika import connect
 
@@ -23,11 +24,11 @@ class HealthCheck:
     - Очередь сообщений (RabbitMQ)
     """
 
-    async def check_all_services(self) -> Dict[str, Any]:
+    async def check_all_services(self) -> dict[str, Any]:
         """Выполняет комплексную проверку всех компонентов системы.
 
         Возвращает:
-            Dict[str, Any]: Отчет о состоянии системы в формате:
+            dict[str, Any]: Отчет о состоянии системы в формате:
                 {
                     "message": общий статус,
                     "is_all_services_active": флаг общей доступности,

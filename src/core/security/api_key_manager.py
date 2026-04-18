@@ -258,8 +258,13 @@ _manager: APIKeyManager | None = None
 
 
 def get_api_key_manager() -> APIKeyManager:
-    """Singleton API Key Manager."""
+    """Возвращает APIKeyManager из app.state (если доступен) или lazy-init fallback."""
     global _manager
+    from app.core.di import _get_from_app_state
+
+    instance = _get_from_app_state("api_key_manager")
+    if instance is not None:
+        return instance
     if _manager is None:
         _manager = APIKeyManager()
     return _manager

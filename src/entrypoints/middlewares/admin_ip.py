@@ -1,4 +1,4 @@
-from typing import List, Pattern, Set
+import re
 
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -18,9 +18,9 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
         from app.utilities.utils import utilities
 
         super().__init__(app)
-        self.allowed_ips: Set[str] = settings.secure.admin_ips
-        self.admin_routes: Set[str] = settings.secure.admin_routes
-        self.compiled_patterns: List[Pattern] = [
+        self.allowed_ips: set[str] = settings.secure.admin_ips
+        self.admin_routes: set[str] = settings.secure.admin_routes
+        self.compiled_patterns: list[re.Pattern] = [
             compile(utilities.convert_pattern(pattern)) for pattern in self.admin_routes
         ]
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any
 
 from pydantic import SecretStr
 from sqlalchemy import Integer, MetaData, func
@@ -67,27 +67,27 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
         return cls.__name__.lower() + "s"
 
     @staticmethod
-    async def get_value_from_secret_str(data: Dict[str, Any]) -> Dict[str, Any]:
+    async def get_value_from_secret_str(data: dict[str, Any]) -> dict[str, Any]:
         """
         Преобразует все SecretStr в словаре в обычные строки.
 
         Аргументы:
-            data (Dict[str, Any]): Словарь, который может содержать SecretStr.
+            data (dict[str, Any]): Словарь, который может содержать SecretStr.
 
         Возвращает:
-            Dict[str, Any]: Словарь с преобразованными значениями.
+            dict[str, Any]: Словарь с преобразованными значениями.
         """
         return {
             key: (value.get_secret_value() if isinstance(value, SecretStr) else value)
             for key, value in data.items()
         }
 
-    async def to_dict(self) -> Dict[str, Any]:
+    async def to_dict(self) -> dict[str, Any]:
         """
         Преобразует модель в словарь.
 
         Возвращает:
-            Dict[str, Any]: Словарь с атрибутами модели.
+            dict[str, Any]: Словарь с атрибутами модели.
         """
         return {
             column.name: getattr(self, column.name) for column in self.__table__.columns
