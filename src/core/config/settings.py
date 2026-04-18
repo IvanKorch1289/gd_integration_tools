@@ -28,6 +28,8 @@ from app.core.config.outer_api import (
     http_base_settings,
     skb_api_settings,
 )
+from app.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from app.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from app.core.config.security import SecureSettings, secure_settings
 from app.core.config.services import (
     CelerySettings,
@@ -78,6 +80,10 @@ class Settings(BaseSettings):
     celery: CelerySettings = celery_settings
     tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
+
+    # Аналитика / поиск
+    clickhouse: ClickHouseSettings = clickhouse_settings
+    elasticsearch: ElasticsearchSettings = elasticsearch_settings
 
     # Хранилища
     storage: FileStorageSettings = fs_settings

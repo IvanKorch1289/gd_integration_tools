@@ -500,6 +500,108 @@ class RouteBuilder:
         self._feature_flag = name
         return self
 
+    # ────────────── AI Pipeline Methods ──────────────
+
+    def rag_search(
+        self,
+        query_field: str = "question",
+        top_k: int = 5,
+        namespace: str | None = None,
+    ) -> "RouteBuilder":
+        """Семантический поиск в RAG vector store."""
+        from app.dsl.engine.processors import VectorSearchProcessor
+
+        self._processors.append(
+            VectorSearchProcessor(
+                query_field=query_field, top_k=top_k, namespace=namespace
+            )
+        )
+        return self
+
+    def compose_prompt(
+        self,
+        template: str,
+        context_property: str = "vector_results",
+    ) -> "RouteBuilder":
+        """Строит промпт из шаблона + контекст из properties."""
+        from app.dsl.engine.processors import PromptComposerProcessor
+
+        self._processors.append(
+            PromptComposerProcessor(
+                template=template, context_property=context_property
+            )
+        )
+        return self
+
+    def call_llm(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+    ) -> "RouteBuilder":
+        """Вызов LLM с PII-маскировкой и fallback."""
+        from app.dsl.engine.processors import LLMCallProcessor
+
+        self._processors.append(
+            LLMCallProcessor(provider=provider, model=model)
+        )
+        return self
+
+    def parse_llm_output(self, schema: type | None = None) -> "RouteBuilder":
+        """Парсит ответ LLM в JSON/Pydantic."""
+        from app.dsl.engine.processors import LLMParserProcessor
+
+        self._processors.append(LLMParserProcessor(schema=schema))
+        return self
+
+    def token_budget(self, max_tokens: int = 4096) -> "RouteBuilder":
+        """Обрезает вход по token budget перед LLM."""
+        from app.dsl.engine.processors import TokenBudgetProcessor
+
+        self._processors.append(TokenBudgetProcessor(max_tokens=max_tokens))
+        return self
+
+    def sanitize_pii(self) -> "RouteBuilder":
+        """Маскирует PII в body."""
+        from app.dsl.engine.processors import SanitizePIIProcessor
+
+        self._processors.append(SanitizePIIProcessor())
+        return self
+
+    def restore_pii(self) -> "RouteBuilder":
+        """Восстанавливает замаскированные PII."""
+        from app.dsl.engine.processors import RestorePIIProcessor
+
+        self._processors.append(RestorePIIProcessor())
+        return self
+
+    def publish_event(self, channel: str) -> "RouteBuilder":
+        """Публикует событие в EventBus."""
+        from app.dsl.engine.processors import EventPublishProcessor
+
+        self._processors.append(EventPublishProcessor(channel=channel))
+        return self
+
+    def load_memory(self, session_id_header: str = "X-Session-Id") -> "RouteBuilder":
+        """Загружает agent memory из Redis."""
+        from app.dsl.engine.processors import MemoryLoadProcessor
+
+        self._processors.append(
+            MemoryLoadProcessor(session_id_header=session_id_header)
+        )
+        return self
+
+    def save_memory(self) -> "RouteBuilder":
+        """Сохраняет результат в agent memory."""
+        from app.dsl.engine.processors import MemorySaveProcessor
+
+        self._processors.append(MemorySaveProcessor())
+        return self
+
+    def include(self, other: Pipeline) -> "RouteBuilder":
+        """Копирует процессоры из другого Pipeline (composition)."""
+        self._processors.extend(other.processors)
+        return self
+
     def build(self) -> Pipeline:
         """Собирает Pipeline из накопленных шагов.
 
