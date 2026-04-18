@@ -1,0 +1,109 @@
+"""DSL Processors — re-export для обратной совместимости.
+
+Все процессоры доступны через:
+    from app.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
+"""
+
+from app.dsl.engine.processors.base import (
+    BaseProcessor,
+    CallableProcessor,
+    ProcessorCallable,
+)
+from app.dsl.engine.processors.core import (
+    DispatchActionProcessor,
+    EnrichProcessor,
+    FilterProcessor,
+    LogProcessor,
+    SetHeaderProcessor,
+    SetPropertyProcessor,
+    TransformProcessor,
+    ValidateProcessor,
+)
+from app.dsl.engine.processors.external import (
+    AgentGraphProcessor,
+    CDCProcessor,
+    MCPToolProcessor,
+)
+from app.dsl.engine.processors.control_flow import (
+    ChoiceProcessor,
+    ParallelProcessor,
+    PipelineRefProcessor,
+    RetryProcessor,
+    SagaProcessor,
+    SagaStep,
+    TryCatchProcessor,
+)
+from app.dsl.engine.processors.eip import (
+    AggregatorProcessor,
+    DeadLetterProcessor,
+    DelayProcessor,
+    DynamicRouterProcessor,
+    FallbackChainProcessor,
+    IdempotentConsumerProcessor,
+    MessageTranslatorProcessor,
+    RecipientListProcessor,
+    ScatterGatherProcessor,
+    SplitterProcessor,
+    ThrottlerProcessor,
+    WireTapProcessor,
+)
+from app.dsl.engine.processors.ai import (
+    LLMCallProcessor,
+    LLMParserProcessor,
+    PromptComposerProcessor,
+    RestorePIIProcessor,
+    SanitizePIIProcessor,
+    TokenBudgetProcessor,
+    VectorSearchProcessor,
+)
+from app.dsl.engine.processors.integration import (
+    EventPublishProcessor,
+    MemoryLoadProcessor,
+    MemorySaveProcessor,
+)
+
+__all__ = (
+    "ProcessorCallable",
+    "BaseProcessor",
+    "CallableProcessor",
+    "SetHeaderProcessor",
+    "SetPropertyProcessor",
+    "DispatchActionProcessor",
+    "TransformProcessor",
+    "FilterProcessor",
+    "EnrichProcessor",
+    "LogProcessor",
+    "ValidateProcessor",
+    "MCPToolProcessor",
+    "AgentGraphProcessor",
+    "CDCProcessor",
+    "ChoiceProcessor",
+    "TryCatchProcessor",
+    "RetryProcessor",
+    "PipelineRefProcessor",
+    "ParallelProcessor",
+    "SagaStep",
+    "SagaProcessor",
+    "DeadLetterProcessor",
+    "IdempotentConsumerProcessor",
+    "FallbackChainProcessor",
+    "WireTapProcessor",
+    "MessageTranslatorProcessor",
+    "DynamicRouterProcessor",
+    "ScatterGatherProcessor",
+    "ThrottlerProcessor",
+    "DelayProcessor",
+    "SplitterProcessor",
+    "AggregatorProcessor",
+    "RecipientListProcessor",
+    "PromptComposerProcessor",
+    "LLMCallProcessor",
+    "LLMParserProcessor",
+    "TokenBudgetProcessor",
+    "VectorSearchProcessor",
+    "SanitizePIIProcessor",
+    "RestorePIIProcessor",
+    "EventPublishProcessor",
+    "MemoryLoadProcessor",
+    "MemorySaveProcessor",
+)
