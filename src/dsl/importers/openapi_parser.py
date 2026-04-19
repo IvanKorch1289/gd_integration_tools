@@ -115,19 +115,27 @@ class OpenAPIImporter:
             return {"status": "not_found", "title": title}
 
         registered = 0
+        from app.dsl.builder import RouteBuilder
+        from app.dsl.commands.registry import route_registry
+
         for route in routes:
             if route.registered:
                 continue
             try:
-                from app.dsl.commands.registry import route_registry
-                exec_globals: dict[str, Any] = {}
-                exec(route.python_code, exec_globals)
-                build_fn = exec_globals.get("build_route")
-                if build_fn:
-                    pipeline = build_fn()
-                    route_registry.register(pipeline)
-                    route.registered = True
-                    registered += 1
+                # SAFE: декларативная сборка pipeline вместо exec(python_code)
+                action_name = route.route_id
+                pipeline = (
+                    RouteBuilder.from_(
+                        route.route_id,
+                        source=f"http:{route.method}:{route.path}",
+                    )
+                    .dispatch_action(action_name)
+                    .log()
+                    .build()
+                )
+                route_registry.register(pipeline)
+                route.registered = True
+                registered += 1
             except Exception as exc:
                 logger.error("Failed to register %s: %s", route.route_id, exc)
 

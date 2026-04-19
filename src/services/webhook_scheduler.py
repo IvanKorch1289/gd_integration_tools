@@ -86,10 +86,26 @@ class WebhookScheduler:
         return json.loads(raw) if raw else None
 
     async def execute_webhook(self, schedule_id: str) -> dict[str, Any]:
-        """Выполняет webhook немедленно."""
+        """Выполняет webhook немедленно.
+
+        Security: URL валидируется через _validate_url() для защиты от SSRF
+        (блокирует private IPs, localhost, cloud metadata endpoints).
+        """
         task = await self.get(schedule_id)
         if not task:
             return {"error": "not_found"}
+
+        # SSRF protection — reuse validator from scraping processors
+        from app.dsl.engine.processors.scraping import _validate_url
+        try:
+            _validate_url(task["url"])
+        except ValueError as exc:
+            logger.warning("Webhook SSRF blocked: %s — %s", schedule_id, exc)
+            return {
+                "schedule_id": schedule_id,
+                "error": f"URL blocked (SSRF protection): {exc}",
+                "success": False,
+            }
 
         import httpx
 

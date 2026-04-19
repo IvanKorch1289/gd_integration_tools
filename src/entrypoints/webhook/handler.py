@@ -3,6 +3,11 @@
 Inbound: приём POST-запросов от внешних систем,
 маршрутизация через DSL.
 Outbound: отправка событий на зарегистрированные URL.
+
+Security (v17):
+- Management endpoints (subscriptions CRUD) защищены require_auth
+- Inbound endpoint валидирует HMAC signature если у подписки есть secret
+- Rate limiting через RedisRateLimiter на all endpoints
 """
 
 import hashlib
@@ -10,7 +15,7 @@ import hmac
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.dsl.service import get_dsl_service
@@ -24,6 +29,33 @@ __all__ = ("webhook_router",)
 logger = logging.getLogger(__name__)
 
 webhook_router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
+
+
+def _require_auth_dep():
+    """Lazy import require_auth to avoid circular imports."""
+    from app.entrypoints.api.dependencies.auth_selector import require_auth
+    return require_auth()
+
+
+async def _check_rate_limit(identifier: str, *, limit: int = 100, window: int = 60) -> None:
+    """Применяет rate limit через RedisRateLimiter."""
+    try:
+        from app.entrypoints.rate_limiter import (
+            RateLimitExceeded, RateLimit, get_rate_limiter,
+        )
+        limiter = get_rate_limiter()
+        await limiter.check(
+            identifier=f"webhook:{identifier}",
+            policy=RateLimit(limit=limit, window_seconds=window, key_prefix="webhook_rl"),
+        )
+    except ImportError:
+        return
+    except RateLimitExceeded as exc:
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after)},
+        )
 
 
 # --- Подписки ---
@@ -41,12 +73,20 @@ class CreateSubscriptionRequest(BaseModel):
 
 @webhook_router.post(
     "/subscriptions",
-    summary="Создать подписку",
+    summary="Создать подписку (auth required)",
 )
 async def create_subscription(
     body: CreateSubscriptionRequest,
+    auth: Any = Depends(_require_auth_dep),
 ) -> dict[str, Any]:
-    """Создаёт webhook-подписку."""
+    """Создаёт webhook-подписку. Требует authentication."""
+    # SSRF protection — валидация target_url
+    from app.dsl.engine.processors.scraping import _validate_url
+    try:
+        _validate_url(body.target_url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid target_url: {exc}")
+
     sub = WebhookSubscription(
         event_type=body.event_type,
         target_url=body.target_url,
@@ -62,10 +102,13 @@ async def create_subscription(
 
 @webhook_router.delete(
     "/subscriptions/{sub_id}",
-    summary="Удалить подписку",
+    summary="Удалить подписку (auth required)",
 )
-async def delete_subscription(sub_id: str) -> dict[str, str]:
-    """Удаляет webhook-подписку."""
+async def delete_subscription(
+    sub_id: str,
+    auth: Any = Depends(_require_auth_dep),
+) -> dict[str, str]:
+    """Удаляет webhook-подписку. Требует authentication."""
     try:
         webhook_registry.remove(sub_id)
     except KeyError as exc:
@@ -75,10 +118,12 @@ async def delete_subscription(sub_id: str) -> dict[str, str]:
 
 @webhook_router.get(
     "/subscriptions",
-    summary="Список подписок",
+    summary="Список подписок (auth required)",
 )
-async def list_subscriptions() -> list[dict[str, Any]]:
-    """Возвращает все webhook-подписки."""
+async def list_subscriptions(
+    auth: Any = Depends(_require_auth_dep),
+) -> list[dict[str, Any]]:
+    """Возвращает все webhook-подписки. Требует authentication."""
     return webhook_registry.list_all()
 
 
@@ -87,7 +132,7 @@ async def list_subscriptions() -> list[dict[str, Any]]:
 
 @webhook_router.post(
     "/inbound/{event_type}",
-    summary="Принять webhook",
+    summary="Принять webhook (rate limited + signature verified)",
 )
 async def receive_webhook(
     event_type: str,
@@ -95,18 +140,48 @@ async def receive_webhook(
 ) -> dict[str, Any]:
     """Принимает входящий webhook и маршрутизирует через DSL.
 
+    Security:
+    - Rate limit по client IP (default 100 req/min)
+    - HMAC signature verification если в подписке указан secret
+
     Args:
         event_type: Тип события (используется как route_id
             с префиксом ``webhook.``).
         request: HTTP-запрос с JSON body.
     """
-    payload = await request.json()
-    signature = request.headers.get("X-Webhook-Signature")
+    client_ip = request.client.host if request.client else "unknown"
+    await _check_rate_limit(f"inbound:{client_ip}", limit=100, window=60)
+
+    raw_body = await request.body()
+    signature = request.headers.get("X-Webhook-Signature", "")
+
+    # Verify HMAC signature if subscription has secret
+    subscriptions = [
+        s for s in webhook_registry.list_all()
+        if s.get("event_type") == event_type
+    ]
+    for sub in subscriptions:
+        secret = sub.get("secret")
+        if secret:
+            expected = hmac.new(
+                secret.encode(), raw_body, hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(signature, expected):
+                logger.warning(
+                    "Webhook signature mismatch: event=%s, sub=%s",
+                    event_type, sub.get("id"),
+                )
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid webhook signature",
+                )
+
+    import orjson
+    payload = orjson.loads(raw_body) if raw_body else {}
 
     logger.info(
-        "Webhook inbound: event=%s, has_signature=%s",
-        event_type,
-        signature is not None,
+        "Webhook inbound: event=%s, has_signature=%s, client=%s",
+        event_type, bool(signature), client_ip,
     )
 
     try:

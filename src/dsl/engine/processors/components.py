@@ -178,6 +178,11 @@ class FileReadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
+        from app.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
         path = self._path
         if self._path_property:
             path = exchange.properties.get(self._path_property, path)
@@ -187,6 +192,12 @@ class FileReadProcessor(BaseProcessor):
 
         if not path:
             exchange.fail("No file path provided")
+            return
+
+        try:
+            path = validate_path(path)
+        except PathTraversalError as exc:
+            exchange.fail(f"File read blocked: {exc}")
             return
 
         try:
@@ -225,12 +236,23 @@ class FileWriteProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
+        from app.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
         path = self._path
         if self._path_property:
             path = exchange.properties.get(self._path_property, path)
 
         if not path:
             exchange.fail("No file path provided for write")
+            return
+
+        try:
+            path = validate_path(path)
+        except PathTraversalError as exc:
+            exchange.fail(f"File write blocked: {exc}")
             return
 
         body = exchange.in_message.body

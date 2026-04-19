@@ -92,16 +92,37 @@ class AuditEventLog:
         from app.infrastructure.clients.clickhouse import get_clickhouse_client
 
         client = get_clickhouse_client()
+
+        # SQL injection protection: sanitize identifiers + escape string values
+        def _escape(value: str) -> str:
+            """Escape single quotes for ClickHouse string literals."""
+            return str(value).replace("'", "''").replace("\\", "\\\\")
+
+        def _safe_ident(name: str, allowed: set[str]) -> str:
+            """Allowlist validation для имён колонок/таблиц."""
+            if name not in allowed:
+                raise ValueError(f"Invalid identifier: {name}")
+            return name
+
+        # Валидация table name через allowlist
+        _safe_table = _safe_ident(self._table, {"audit_events", "audit_log"})
+
+        # Валидация limit (int, bounded)
+        try:
+            safe_limit = max(1, min(int(limit), 10000))
+        except (TypeError, ValueError):
+            safe_limit = 100
+
         conditions = []
         if entity_type:
-            conditions.append(f"entity_type = '{entity_type}'")
+            conditions.append(f"entity_type = '{_escape(entity_type)}'")
         if entity_id:
-            conditions.append(f"entity_id = '{entity_id}'")
+            conditions.append(f"entity_id = '{_escape(entity_id)}'")
         if who:
-            conditions.append(f"who = '{who}'")
+            conditions.append(f"who = '{_escape(who)}'")
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-        sql = f"SELECT * FROM {self._table}{where} ORDER BY when DESC LIMIT {limit}"
+        sql = f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"
         return await client.query(sql)
 
 
