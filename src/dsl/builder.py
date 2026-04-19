@@ -640,6 +640,18 @@ class RouteBuilder:
         return self._add_lazy("app.dsl.engine.processors.ai", "GuardrailsProcessor",
                               max_length=max_length, blocked_patterns=blocked_patterns, required_fields=required_fields)
 
+    def semantic_route(
+        self, intents: dict[str, str], *,
+        default_route: str | None = None,
+        query_field: str = "question",
+        threshold: float = 0.5,
+        namespace: str = "intents",
+    ) -> "RouteBuilder":
+        """Semantic routing — RAG-based intent detection → выбор маршрута."""
+        return self._add_lazy("app.dsl.engine.processors.ai", "SemanticRouterProcessor",
+                              intents=intents, default_route=default_route,
+                              query_field=query_field, threshold=threshold, namespace=namespace)
+
     # ── RPA (UiPath-style) ──
 
     def pdf_read(self, *, extract_tables: bool = False) -> "RouteBuilder":

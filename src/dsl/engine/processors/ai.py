@@ -13,7 +13,7 @@ __all__ = (
     "TokenBudgetProcessor", "VectorSearchProcessor",
     "SanitizePIIProcessor", "RestorePIIProcessor",
     "LLMFallbackProcessor", "CacheProcessor", "CacheWriteProcessor",
-    "GuardrailsProcessor",
+    "GuardrailsProcessor", "SemanticRouterProcessor",
 )
 
 
@@ -48,31 +48,104 @@ class PromptComposerProcessor(BaseProcessor):
 
 
 class LLMCallProcessor(BaseProcessor):
-    """Вызывает LLM через AI Agent с PII-маскировкой."""
+    """Вызывает LLM с retry, rate-limit detection и cost tracking.
 
-    def __init__(self, provider: str | None = None, model: str | None = None, prompt_property: str = "_composed_prompt", name: str | None = None) -> None:
+    Сохраняет в properties:
+    - llm.provider — фактически использованный провайдер
+    - llm.model — модель
+    - llm.tokens_used — количество токенов (если LLM вернул usage)
+    - llm.cost_usd — оценка стоимости (если есть таблица цен в config)
+
+    Args:
+        max_retries: Количество повторов при transient ошибках (default 2).
+        retry_delay: Базовая задержка между retry (сек).
+    """
+
+    def __init__(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+        prompt_property: str = "_composed_prompt",
+        max_retries: int = 2,
+        retry_delay: float = 1.0,
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._provider = provider
         self._model = model
         self._prompt_property = prompt_property
+        self._max_retries = max_retries
+        self._retry_delay = retry_delay
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import asyncio
+        import logging
+
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             prompt = exchange.in_message.body if isinstance(exchange.in_message.body, str) else str(exchange.in_message.body)
+
+        logger = logging.getLogger("dsl.ai")
+
         try:
             from app.services.ai_agent import get_ai_agent_service
-            agent = get_ai_agent_service()
-            result = await agent.chat(
-                messages=[{"role": "user", "content": prompt}],
-                provider=self._provider,
-                model=self._model or "default",
-            )
-            exchange.in_message.set_body(result)
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
-        except (ConnectionError, TimeoutError, RuntimeError) as exc:
-            exchange.fail(f"LLM call failed: {exc}")
+            return
+
+        agent = get_ai_agent_service()
+        last_error: Exception | None = None
+
+        for attempt in range(self._max_retries + 1):
+            try:
+                result = await agent.chat(
+                    messages=[{"role": "user", "content": prompt}],
+                    provider=self._provider,
+                    model=self._model or "default",
+                )
+
+                if isinstance(result, dict):
+                    usage = result.get("usage") or {}
+                    tokens = int(usage.get("total_tokens", 0)) if usage else 0
+                    if tokens:
+                        exchange.set_property("llm.tokens_used", tokens)
+                        exchange.set_property("llm.cost_usd", round(tokens * 0.00002, 6))
+                    if "model" in result:
+                        exchange.set_property("llm.model", result["model"])
+
+                exchange.set_property("llm.provider", self._provider or "fallback")
+                exchange.set_property("llm.attempts", attempt + 1)
+                exchange.in_message.set_body(result)
+
+                logger.info(
+                    "llm_call_ok",
+                    extra={
+                        "provider": self._provider,
+                        "model": self._model,
+                        "attempts": attempt + 1,
+                        "tokens": exchange.properties.get("llm.tokens_used", 0),
+                    },
+                )
+                return
+
+            except TimeoutError as exc:
+                last_error = exc
+                logger.warning("LLM timeout (attempt %d): %s", attempt + 1, exc)
+            except ConnectionError as exc:
+                last_error = exc
+                logger.warning("LLM connection error (attempt %d): %s", attempt + 1, exc)
+            except RuntimeError as exc:
+                msg = str(exc).lower()
+                last_error = exc
+                if "rate" in msg or "429" in msg or "quota" in msg:
+                    exchange.fail(f"LLM rate limit: {exc}")
+                    return
+                logger.warning("LLM error (attempt %d): %s", attempt + 1, exc)
+
+            if attempt < self._max_retries:
+                await asyncio.sleep(self._retry_delay * (2 ** attempt))
+
+        exchange.fail(f"LLM call failed after {self._max_retries + 1} attempts: {last_error}")
 
 
 class LLMParserProcessor(BaseProcessor):
@@ -379,3 +452,93 @@ class GuardrailsProcessor(BaseProcessor):
             if missing:
                 exchange.fail(f"Guardrail: missing required fields: {missing}")
                 return
+
+
+class SemanticRouterProcessor(BaseProcessor):
+    """Маршрутизация по семантическому сходству — RAG-based intent routing.
+
+    Принимает text input, ищет ближайший intent через RAG vector search,
+    делегирует выполнение в соответствующий route_id.
+
+    Usage::
+
+        .semantic_route(intents={
+            "order_status": "route.orders",
+            "complaint": "route.support",
+            "billing": "route.billing",
+        }, default_route="route.general")
+    """
+
+    def __init__(
+        self,
+        intents: dict[str, str],
+        *,
+        default_route: str | None = None,
+        query_field: str = "question",
+        threshold: float = 0.5,
+        namespace: str = "intents",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "semantic_router")
+        self._intents = intents
+        self._default_route = default_route
+        self._query_field = query_field
+        self._threshold = threshold
+        self._namespace = namespace
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        body = exchange.in_message.body
+        if isinstance(body, dict):
+            query = body.get(self._query_field, "")
+        else:
+            query = str(body)
+
+        if not query:
+            if self._default_route:
+                await self._route_to(self._default_route, exchange, context)
+                return
+            exchange.fail("SemanticRouter: empty query and no default_route")
+            return
+
+        try:
+            from app.services.rag_service import get_rag_service
+            rag = get_rag_service()
+            results = await rag.search(query=query, top_k=1, namespace=self._namespace)
+        except (ImportError, ConnectionError, TimeoutError, RuntimeError) as exc:
+            if self._default_route:
+                exchange.set_property("semantic_route_fallback", str(exc))
+                await self._route_to(self._default_route, exchange, context)
+                return
+            exchange.fail(f"SemanticRouter RAG search failed: {exc}")
+            return
+
+        target_intent: str | None = None
+        score = 0.0
+        if results:
+            top = results[0]
+            score = top.get("score", 0.0) if isinstance(top, dict) else 0.0
+            intent_name = top.get("intent") or top.get("metadata", {}).get("intent") if isinstance(top, dict) else None
+            if intent_name and score >= self._threshold:
+                target_intent = intent_name
+
+        target_route = self._intents.get(target_intent or "", self._default_route)
+        if not target_route:
+            exchange.fail(f"SemanticRouter: no matching intent for query (score={score:.3f})")
+            return
+
+        exchange.set_property("semantic_route_intent", target_intent)
+        exchange.set_property("semantic_route_score", score)
+        await self._route_to(target_route, exchange, context)
+
+    @staticmethod
+    async def _route_to(route_id: str, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.dsl.engine.processors.base import SubPipelineExecutor
+
+        result, error = await SubPipelineExecutor.execute_route(
+            route_id, exchange.in_message.body,
+            dict(exchange.in_message.headers), context,
+        )
+        if error:
+            exchange.fail(f"Semantic route {route_id} failed: {error}")
+            return
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
