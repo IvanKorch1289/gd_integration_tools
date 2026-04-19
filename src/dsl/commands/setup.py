@@ -485,6 +485,78 @@ def register_action_handlers() -> None:
         ),
     ])
 
+    # ── Notifications (email/express/webhook/telegram) ──
+    from app.services.notification_hub import get_notification_hub
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="notify.send",
+            service_getter=get_notification_hub,
+            service_method="send",
+        ),
+        ActionHandlerSpec(
+            action="notify.email",
+            service_getter=get_notification_hub,
+            service_method="email",
+        ),
+        ActionHandlerSpec(
+            action="notify.express",
+            service_getter=get_notification_hub,
+            service_method="express",
+        ),
+        ActionHandlerSpec(
+            action="notify.express_broadcast",
+            service_getter=get_notification_hub,
+            service_method="express_broadcast",
+        ),
+        ActionHandlerSpec(
+            action="notify.express_create_chat",
+            service_getter=get_notification_hub,
+            service_method="express_create_chat",
+        ),
+        ActionHandlerSpec(
+            action="notify.express_event",
+            service_getter=get_notification_hub,
+            service_method="express_event",
+        ),
+        ActionHandlerSpec(
+            action="notify.webhook",
+            service_getter=get_notification_hub,
+            service_method="webhook",
+        ),
+        ActionHandlerSpec(
+            action="notify.telegram",
+            service_getter=get_notification_hub,
+            service_method="telegram",
+        ),
+        ActionHandlerSpec(
+            action="notify.broadcast",
+            service_getter=get_notification_hub,
+            service_method="broadcast",
+        ),
+    ])
+
+    # ── Anomaly Detection ──
+    from app.services.anomaly_detector import get_anomaly_detector
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="anomaly.observe",
+            service_getter=get_anomaly_detector,
+            service_method="observe",
+        ),
+        ActionHandlerSpec(
+            action="anomaly.stats",
+            service_getter=get_anomaly_detector,
+            service_method="get_stats",
+        ),
+        ActionHandlerSpec(
+            action="anomaly.list_metrics",
+            service_getter=get_anomaly_detector,
+            service_method="list_metrics",
+        ),
+    ])
+
     # ── ServiceDSL auto-register ──
     from app.core.service_dsl import service_dsl_registry
     service_dsl_registry.register_all_actions()

@@ -1,149 +1,52 @@
-"""Interactive Onboarding Tutorial для джунов."""
-
-import sys
-from pathlib import Path
+"""Краткий туториал для джунов."""
 
 import streamlit as st
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
+st.set_page_config(page_title="Tutorial", layout="wide")
+st.header("Быстрый старт: DSL маршрут за 3 минуты")
 
-st.set_page_config(page_title="Tutorial", page_icon=":mortar_board:", layout="wide")
-st.header("Tutorial — создаём первый маршрут")
+st.markdown("""
+### Что это?
 
-if "tutorial_step" not in st.session_state:
-    st.session_state.tutorial_step = 1
+**DSL маршрут** = последовательность шагов обработки данных. Работает через **все протоколы** сразу: REST, gRPC, GraphQL, Queue, Prefect.
 
-STEPS = 5
-progress = st.session_state.tutorial_step / STEPS
-st.progress(progress, text=f"Шаг {st.session_state.tutorial_step} из {STEPS}")
+### Анатомия маршрута
 
-step = st.session_state.tutorial_step
-
-if step == 1:
-    st.subheader("Шаг 1: Что такое DSL маршрут?")
-    st.markdown("""
-    **DSL маршрут** — это описание того, что должно произойти с данными:
-
-    ```
-    Данные → [Процессор 1] → [Процессор 2] → ... → Результат
-    ```
-
-    **Примеры задач:**
-    - Получить заказ из БД, обогатить данными из API, отправить в очередь
-    - Парсить сайт каждые 2 часа, сохранять результат в ClickHouse
-    - Принять webhook, провалидировать, сохранить, отправить email
-
-    Маршруты работают одинаково через все протоколы: REST, gRPC, GraphQL, MQ, Prefect.
-    """)
-    st.info("**Ключевая идея:** написал маршрут 1 раз → работает во всех протоколах.")
-
-elif step == 2:
-    st.subheader("Шаг 2: Анатомия маршрута")
-    st.code("""
+```python
 from app.dsl.builder import RouteBuilder
 
 route = (
-    RouteBuilder.from_(
-        "orders.create",              # ID маршрута (уникальный)
-        source="http:POST:/orders",   # Откуда приходят данные
-        description="Создание заказа", # Описание
-    )
-    .validate(OrderSchemaIn)           # Шаг 1: проверить данные
-    .dispatch_action("orders.add")     # Шаг 2: вызвать сервис
-    .log()                             # Шаг 3: записать в лог
-    .build()                           # Завершить описание
+    RouteBuilder.from_("orders.create", source="http:POST:/orders")
+    .validate(OrderSchemaIn)          # проверить данные
+    .dispatch_action("orders.add")    # сохранить в БД
+    .notify(channel="express", to="chat-id")  # уведомить в eXpress
+    .log()                             # логирование
+    .build()
 )
-""", language="python")
-    st.markdown("""
-    **Ключевые элементы:**
-    - `from_()` — откуда приходит запрос
-    - `.validate()`, `.dispatch_action()`, `.log()` — шаги обработки
-    - `.build()` — собирает готовый маршрут
-    """)
+```
 
-elif step == 3:
-    st.subheader("Шаг 3: Exchange — контейнер данных")
-    st.markdown("""
-    Данные между шагами передаются через **Exchange** — это ящик с несколькими отделениями:
+### Основные блоки
 
-    - `in_message.body` — основные данные (то, что пришло)
-    - `in_message.headers` — заголовки (метаданные)
-    - `properties` — временные значения между шагами
-    - `out_message.body` — результат
-    """)
-    st.code("""
-# В процессоре можно прочитать данные:
-body = exchange.in_message.body
-headers = exchange.in_message.headers
+| Метод | Что делает |
+|---|---|
+| `.dispatch_action("x.y")` | Вызывает сервис |
+| `.validate(Schema)` | Проверяет данные |
+| `.transform("expr")` | Преобразует (JMESPath) |
+| `.retry(max_attempts=3)` | Повтор при ошибке |
+| `.notify(channel, to)` | Email / eXpress / Webhook |
+| `.export("excel")` | CSV / Excel / PDF |
+| `.call_llm(provider="perplexity")` | Вызов LLM |
+| `.log()` | Логирование |
 
-# И записать промежуточные результаты:
-exchange.set_property("user_id", 123)
-exchange.set_property("enriched_data", {...})
+### Exchange — контейнер данных
 
-# Финальный результат:
-exchange.set_out(body=result)
-""", language="python")
+- `exchange.in_message.body` — входящие данные
+- `exchange.properties` — промежуточные значения между шагами
+- `exchange.out_message.body` — результат
 
-elif step == 4:
-    st.subheader("Шаг 4: Популярные процессоры")
-    st.markdown("""
-    **Основные строительные блоки:**
-    """)
+### Что дальше?
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("""
-        **Базовые:**
-        - `.dispatch_action("x.y")` — вызвать сервис
-        - `.validate(Schema)` — проверить данные
-        - `.transform(expr)` — преобразовать
-        - `.log()` — записать в лог
-        - `.set_property(k, v)` — сохранить значение
-        """)
-    with col2:
-        st.markdown("""
-        **Продвинутые:**
-        - `.retry(max_attempts=3)` — повтор при ошибке
-        - `.choice(when=[...])` — условная логика
-        - `.parallel(branches={...})` — параллельно
-        - `.scatter_gather(routes)` — разослать много
-        - `.export(format)` — экспорт Excel/PDF
-        """)
-
-    st.info("Полный список — в DSL Visual Editor (следующая страница)")
-
-elif step == 5:
-    st.subheader("Шаг 5: Готово!")
-    st.success("Вы прошли основы DSL")
-    st.markdown("""
-    **Что дальше?**
-
-    1. **DSL Visual Editor** — собери маршрут мышкой без кода
-    2. **DSL Playground** — попробуй код в песочнице
-    3. **Architecture Map** — посмотри общую карту проекта
-    4. **Glossary & FAQ** — словарь терминов и частые вопросы
-    5. **Code Examples Hub** — готовые примеры для копирования
-
-    **Лайфхаки:**
-    - При ошибке смотри `/api/v1/admin/traces` — там видно где упало
-    - DSL Linter покажет проблемы до запуска
-    - Шаблоны из `templates_library` покрывают 80% задач
-    """)
-    if st.button("Начать заново"):
-        st.session_state.tutorial_step = 1
-        st.rerun()
-
-# Navigation
-
-st.divider()
-col_prev, col_next = st.columns(2)
-with col_prev:
-    if step > 1 and st.button("← Назад", use_container_width=True):
-        st.session_state.tutorial_step -= 1
-        st.rerun()
-with col_next:
-    if step < STEPS and st.button("Далее →", type="primary", use_container_width=True):
-        st.session_state.tutorial_step += 1
-        st.rerun()
+1. **DSL Visual Editor** — собери маршрут мышкой
+2. **DSL Playground** — попробуй код с dry-run
+3. **Glossary & FAQ** — словарь и частые вопросы
+""")

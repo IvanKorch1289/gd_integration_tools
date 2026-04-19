@@ -23,6 +23,7 @@ from app.core.config.dadata_api import DadataAPISettings, dadata_api_settings
 from app.core.config.http_base import HttpBaseSettings, http_base_settings
 from app.core.config.skb_api import SKBAPISettings, skb_api_settings
 from app.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from app.core.config.express_settings import ExpressSettings, express_settings
 from app.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from app.core.config.security import SecureSettings, secure_settings
 from app.core.config.services import (
@@ -77,6 +78,7 @@ class Settings(BaseSettings):
 
     # Аналитика / поиск
     clickhouse: ClickHouseSettings = clickhouse_settings
+    express: ExpressSettings = express_settings
     elasticsearch: ElasticsearchSettings = elasticsearch_settings
 
     # Хранилища

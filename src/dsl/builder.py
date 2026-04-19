@@ -663,6 +663,21 @@ class RouteBuilder:
         self._processors.append(ExportProcessor(format=format, output_property=output_property, title=title))
         return self
 
+    def notify(
+        self,
+        channel: str = "email",
+        to: str = "",
+        subject: str = "",
+        message: str = "",
+    ) -> "RouteBuilder":
+        """Отправка уведомления через NotificationHub.
+
+        channel: email | express | webhook | telegram
+        """
+        return self.dispatch_action(
+            f"notify.{channel}" if channel != "send" else "notify.send"
+        )
+
     def build(self) -> Pipeline:
         """Собирает Pipeline из накопленных шагов.
 
