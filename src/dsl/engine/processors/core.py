@@ -14,6 +14,12 @@ __all__ = (
 
 
 class SetHeaderProcessor(BaseProcessor):
+    """Устанавливает заголовок в in_message Exchange.
+
+    Заголовки используются для передачи метаданных между процессорами:
+    авторизация, content-type, routing-ключи.
+    """
+
     def __init__(self, key: str, value: Any) -> None:
         super().__init__(name=f"set_header:{key}")
         self.key = key
@@ -24,6 +30,12 @@ class SetHeaderProcessor(BaseProcessor):
 
 
 class SetPropertyProcessor(BaseProcessor):
+    """Устанавливает runtime-свойство Exchange.
+
+    Properties — внутренний контекст маршрута, невидимый извне.
+    Используется для передачи промежуточных результатов между процессорами.
+    """
+
     def __init__(self, key: str, value: Any) -> None:
         super().__init__(name=f"set_property:{key}")
         self.key = key
@@ -34,6 +46,15 @@ class SetPropertyProcessor(BaseProcessor):
 
 
 class DispatchActionProcessor(BaseProcessor):
+    """Camel Service Activator — вызывает зарегистрированный action.
+
+    Ключевой процессор DSL: связывает pipeline с бизнес-логикой.
+    Находит action в ActionHandlerRegistry, валидирует payload
+    через payload_model (если указана), вызывает метод сервиса.
+
+    Результат сохраняется в out_message и в property.
+    """
+
     def __init__(
         self, action: str, *,
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
@@ -57,6 +78,14 @@ class DispatchActionProcessor(BaseProcessor):
 
 
 class TransformProcessor(BaseProcessor):
+    """Трансформирует body через JMESPath-выражение.
+
+    JMESPath — язык запросов к JSON. Позволяет извлекать,
+    фильтровать и реструктурировать данные одним выражением.
+
+    Пример: expression="orders[?status=='active'].{id: id, total: amount}"
+    """
+
     def __init__(self, expression: str, *, name: str | None = None) -> None:
         super().__init__(name=name or f"transform:{expression[:30]}")
         self.expression = expression
@@ -69,6 +98,12 @@ class TransformProcessor(BaseProcessor):
 
 
 class FilterProcessor(BaseProcessor):
+    """Camel Message Filter — пропускает Exchange только если predicate=True.
+
+    Если predicate возвращает False, Exchange останавливается
+    (property "filtered"=True). Последующие процессоры не выполняются.
+    """
+
     def __init__(self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None) -> None:
         super().__init__(name=name or "filter")
         self._predicate = predicate
@@ -80,6 +115,12 @@ class FilterProcessor(BaseProcessor):
 
 
 class EnrichProcessor(BaseProcessor):
+    """Camel Content Enricher — обогащает Exchange данными из внешнего action.
+
+    Вызывает action и сохраняет результат в property (не меняя body).
+    Полезно для добавления справочных данных, обогащения из внешних API.
+    """
+
     def __init__(
         self, action: str, *,
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
@@ -98,6 +139,11 @@ class EnrichProcessor(BaseProcessor):
 
 
 class LogProcessor(BaseProcessor):
+    """Логирует текущее состояние Exchange (тип body, список properties).
+
+    Полезен для отладки pipeline. Не изменяет данные.
+    """
+
     def __init__(self, *, level: str = "info", name: str | None = None) -> None:
         super().__init__(name=name or "log")
         self._level = level
@@ -113,6 +159,13 @@ class LogProcessor(BaseProcessor):
 
 
 class ValidateProcessor(BaseProcessor):
+    """Валидирует body через Pydantic-модель.
+
+    Если body не dict или не проходит валидацию —
+    Exchange останавливается с ошибкой. Результат валидации
+    сохраняется в property "validated_payload".
+    """
+
     def __init__(self, model: type, *, name: str | None = None) -> None:
         super().__init__(name=name or f"validate:{model.__name__}")
         self._model = model

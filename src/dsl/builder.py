@@ -77,6 +77,26 @@ class RouteBuilder:
     def from_(
         cls, route_id: str, source: str, *, description: str | None = None
     ) -> "RouteBuilder":
+        """Точка входа: создаёт новый RouteBuilder.
+
+        Args:
+            route_id: Уникальный ID маршрута (e.g., "orders.create").
+            source: Источник данных (e.g., "internal:orders", "timer:60s", "webhook:/path").
+            description: Человекочитаемое описание маршрута.
+
+        Returns:
+            RouteBuilder для fluent-chain вызовов.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_("etl.import", source="timer:300s")
+                .http_call("https://api.example.com/data")
+                .normalize()
+                .dispatch_action("analytics.insert_batch")
+                .build()
+            )
+        """
         return cls(route_id=route_id, source=source, description=description)
 
     def _add(self, processor: BaseProcessor) -> "RouteBuilder":
@@ -93,15 +113,22 @@ class RouteBuilder:
     # ── Pipeline composition ──
 
     def process(self, processor: BaseProcessor) -> "RouteBuilder":
+        """Добавляет произвольный процессор в pipeline."""
         return self._add(processor)
 
     def to(self, processor: BaseProcessor) -> "RouteBuilder":
+        """Алиас для process() — Camel-style naming."""
         return self._add(processor)
 
     def process_fn(self, func: ProcessorCallable, *, name: str | None = None) -> "RouteBuilder":
+        """Добавляет обычную функцию или coroutine как процессор.
+
+        Функция принимает (exchange, context) и модифицирует exchange in-place.
+        """
         return self._add(CallableProcessor(func=func, name=name))
 
     def include(self, other: Pipeline) -> "RouteBuilder":
+        """Включает все процессоры из другого Pipeline (композиция)."""
         self._processors.extend(other.processors)
         return self
 
@@ -118,14 +145,21 @@ class RouteBuilder:
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
         result_property: str = "action_result",
     ) -> "RouteBuilder":
+        """Вызывает зарегистрированный action (Camel Service Activator).
+
+        Основной способ связи DSL с бизнес-логикой. Action ищется
+        в ActionHandlerRegistry по имени (e.g., "orders.add").
+        """
         return self._add(DispatchActionProcessor(
             action=action, payload_factory=payload_factory, result_property=result_property,
         ))
 
     def transform(self, expression: str) -> "RouteBuilder":
+        """Трансформирует body через JMESPath-выражение."""
         return self._add(TransformProcessor(expression=expression))
 
     def filter(self, predicate: Callable[[Exchange[Any]], bool]) -> "RouteBuilder":
+        """Фильтрует Exchange — останавливает, если predicate=False."""
         return self._add(FilterProcessor(predicate=predicate))
 
     def enrich(
@@ -302,6 +336,44 @@ class RouteBuilder:
             branches=branches, strategy=strategy, stop_on_error=stop_on_error,
         ))
 
+    def loop(
+        self, processors: list[BaseProcessor], *,
+        count: int | None = None,
+        until: Callable[[Exchange[Any]], bool] | None = None,
+        max_iterations: int = 1000,
+    ) -> "RouteBuilder":
+        """Camel Loop — execute sub-processors N times or until condition."""
+        return self._add_lazy("app.dsl.engine.processors.eip", "LoopProcessor",
+                              processors=processors, count=count, until=until, max_iterations=max_iterations)
+
+    def on_completion(
+        self, processors: list[BaseProcessor], *,
+        on_success_only: bool = False,
+        on_failure_only: bool = False,
+    ) -> "RouteBuilder":
+        """Camel OnCompletion — run callback after pipeline finishes (like finally)."""
+        return self._add_lazy("app.dsl.engine.processors.eip", "OnCompletionProcessor",
+                              processors=processors, on_success_only=on_success_only, on_failure_only=on_failure_only)
+
+    def sort(
+        self, *,
+        key_fn: Callable[[Any], Any] | None = None,
+        key_field: str | None = None,
+        reverse: bool = False,
+    ) -> "RouteBuilder":
+        """Camel Sort — sort list body by key function or field name."""
+        return self._add_lazy("app.dsl.engine.processors.eip", "SortProcessor",
+                              key_fn=key_fn, key_field=key_field, reverse=reverse)
+
+    def timeout(
+        self, processors: list[BaseProcessor], *,
+        seconds: float = 30.0,
+        fallback_processors: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        """Camel Timeout — wrap sub-processors with a time limit."""
+        return self._add_lazy("app.dsl.engine.processors.eip", "TimeoutProcessor",
+                              processors=processors, seconds=seconds, fallback_processors=fallback_processors)
+
     # ── Config ──
 
     def protocol(self, proto: ProtocolType) -> "RouteBuilder":
@@ -467,6 +539,7 @@ class RouteBuilder:
     # ── Build ──
 
     def build(self) -> Pipeline:
+        """Собирает Pipeline из накопленных процессоров. Финальный вызов в fluent-chain."""
         return Pipeline(
             route_id=self.route_id,
             source=self.source,

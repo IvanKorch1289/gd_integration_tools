@@ -26,6 +26,11 @@ from typing import Any, Callable
 
 from app.dsl.builder import RouteBuilder
 from app.dsl.engine.pipeline import Pipeline
+from app.dsl.engine.processors import (
+    DispatchActionProcessor,
+    LogProcessor,
+    RetryProcessor,
+)
 
 __all__ = ("templates", "list_templates", "TemplateInfo")
 
@@ -52,14 +57,23 @@ def _etl_postgres_to_clickhouse(
     route_id: str = "etl.pg_to_ch",
     cron: str | None = None,
 ) -> Pipeline:
-    """ETL: PostgreSQL query → ClickHouse insert."""
+    """ETL: PostgreSQL query → normalize → ClickHouse insert с circuit breaker."""
     source = f"cron:{cron}" if cron else "internal:etl"
     return (
         RouteBuilder.from_(route_id, source=source, description="ETL PG→CH")
         .set_property("query", source_query)
-        .dispatch_action("external_db.query")
+        .circuit_breaker(
+            processors=[
+                DispatchActionProcessor(action="external_db.query"),
+            ],
+            failure_threshold=3,
+            recovery_timeout=60.0,
+        )
+        .normalize()
         .dispatch_action("analytics.insert_batch")
-        .log("ETL complete")
+        .on_completion(
+            processors=[LogProcessor(level="info")],
+        )
         .build()
     )
 
@@ -70,13 +84,28 @@ def _web_scrape_scheduled(
     cron: str = "0 */2 * * *",
     route_id: str = "scrape.scheduled",
     target_action: str = "analytics.insert_batch",
+    max_pages: int = 1,
 ) -> Pipeline:
-    """Парсинг сайта по расписанию + сохранение."""
+    """Парсинг сайта по расписанию: scrape → paginate → normalize → save."""
+    builder = RouteBuilder.from_(
+        route_id, source=f"cron:{cron}", description="Scheduled scraping"
+    )
+    builder = builder.scrape(url, selectors={"items": selector})
+
+    if max_pages > 1:
+        builder = builder.paginate(
+            next_selector="a.next",
+            max_pages=max_pages,
+            start_url=url,
+        )
+
     return (
-        RouteBuilder.from_(route_id, source=f"cron:{cron}", description="Scheduled scraping")
-        .navigate(url)
-        .extract(selector, url=url, output_property="items")
+        builder
+        .normalize()
         .dispatch_action(target_action)
+        .on_completion(
+            processors=[LogProcessor(level="info")],
+        )
         .build()
     )
 
@@ -249,7 +278,110 @@ templates: dict[str, TemplateInfo] = {
         },
         builder=_scheduled_export,
     ),
+    "bridge.http_api": TemplateInfo(
+        name="HTTP API Bridge",
+        description="Получение данных из внешнего API → конвертация → сохранение",
+        parameters={
+            "source_url": "URL внешнего API",
+            "target_action": "Action для сохранения",
+            "method": "HTTP метод (GET/POST)",
+            "convert_from": "Формат ответа (json/xml/csv)",
+            "convert_to": "Целевой формат (json)",
+        },
+        builder=_http_api_bridge,
+    ),
+    "sync.polling": TemplateInfo(
+        name="Polling-синхронизация",
+        description="Периодический опрос источника → сортировка → синхронизация с circuit breaker",
+        parameters={
+            "source_action": "Action-источник данных",
+            "target_action": "Action-приёмник",
+            "interval_seconds": "Интервал опроса (сек)",
+            "sort_field": "Поле для сортировки (опционально)",
+        },
+        builder=_polling_sync,
+    ),
+    "dq.quality_check": TemplateInfo(
+        name="Data Quality pipeline",
+        description="Проверка качества данных по правилам → уведомление при нарушениях",
+        parameters={
+            "source_action": "Action для получения данных",
+            "dq_rules": "Правила DQ (list)",
+            "on_violation_action": "Action при нарушении",
+        },
+        builder=_data_quality_pipeline,
+    ),
 }
+
+
+def _http_api_bridge(
+    source_url: str,
+    target_action: str,
+    method: str = "GET",
+    convert_from: str = "json",
+    convert_to: str = "json",
+    route_id: str = "bridge.http",
+) -> Pipeline:
+    """HTTP API bridge: fetch → convert → store."""
+    builder = RouteBuilder.from_(
+        route_id, source=f"http:{source_url}",
+        description=f"HTTP bridge: {source_url}",
+    )
+    builder = builder.http_call(source_url, method=method, timeout=30.0)
+    if convert_from != convert_to:
+        builder = builder.convert(convert_from, convert_to)
+    return builder.normalize().dispatch_action(target_action).build()
+
+
+def _polling_sync(
+    source_action: str,
+    target_action: str,
+    interval_seconds: float = 300.0,
+    route_id: str = "sync.polling",
+    sort_field: str | None = None,
+) -> Pipeline:
+    """Polling sync: timer → poll → sort → sync с circuit breaker."""
+    builder = (
+        RouteBuilder.from_(route_id, source=f"timer:{interval_seconds}s",
+                           description=f"Polling sync: {source_action}")
+        .timer(interval_seconds=interval_seconds)
+        .poll(source_action)
+    )
+    if sort_field:
+        builder = builder.sort(key_field=sort_field)
+    return (
+        builder
+        .circuit_breaker(
+            processors=[DispatchActionProcessor(action=target_action)],
+            failure_threshold=3,
+        )
+        .on_completion(
+            processors=[LogProcessor(level="info")],
+        )
+        .build()
+    )
+
+
+def _data_quality_pipeline(
+    source_action: str,
+    dq_rules: list | None = None,
+    on_violation_action: str = "notify.send",
+    route_id: str = "dq.check",
+) -> Pipeline:
+    """Data Quality pipeline: poll → DQ check → report/alert."""
+    return (
+        RouteBuilder.from_(route_id, source="internal:dq",
+                           description="Data Quality pipeline")
+        .poll(source_action)
+        .dq_check(rules=dq_rules, fail_on_violation=False)
+        .on_completion(
+            processors=[
+                DispatchActionProcessor(action=on_violation_action),
+            ],
+            on_failure_only=True,
+        )
+        .build()
+    )
 
 
 def list_templates() -> list[dict[str, Any]]:

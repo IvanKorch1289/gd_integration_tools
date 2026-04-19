@@ -30,6 +30,10 @@ __all__ = (
     "NormalizerProcessor",
     "ResequencerProcessor",
     "MulticastProcessor",
+    "LoopProcessor",
+    "OnCompletionProcessor",
+    "SortProcessor",
+    "TimeoutProcessor",
 )
 
 
@@ -1081,3 +1085,218 @@ class MulticastProcessor(BaseProcessor):
         exchange.set_property("multicast_results", results)
         if errors:
             exchange.set_property("multicast_errors", errors)
+
+
+# ---------------------------------------------------------------------------
+#  Apache Camel EIP v3 — Loop, OnCompletion, Sort, Timeout
+# ---------------------------------------------------------------------------
+
+
+class LoopProcessor(BaseProcessor):
+    """Camel Loop EIP — execute sub-processors N times or until condition.
+
+    Supports fixed count, do-while (condition checked after each iteration),
+    and while (condition checked before). Each iteration receives the previous
+    result as input body.
+
+    Usage::
+
+        .loop(processors=[...], count=5)
+        .loop(processors=[...], until=lambda ex: ex.in_message.body.get("done"))
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        count: int | None = None,
+        until: Callable[[Exchange[Any]], bool] | None = None,
+        max_iterations: int = 1000,
+        copy_exchange: bool = False,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"loop({count or 'until'})")
+        self._processors = processors
+        self._count = count
+        self._until = until
+        self._max_iterations = max_iterations
+        self._copy = copy_exchange
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.dsl.engine.processors.base import run_sub_processors
+
+        iteration = 0
+        results: list[Any] = []
+
+        while iteration < self._max_iterations:
+            if self._count is not None and iteration >= self._count:
+                break
+
+            if self._until is not None and iteration > 0:
+                try:
+                    if self._until(exchange):
+                        break
+                except Exception:
+                    break
+
+            exchange.set_property("loop_index", iteration)
+            exchange.set_property("loop_size", self._count or -1)
+
+            if exchange.status == ExchangeStatus.failed or exchange.stopped:
+                break
+
+            await run_sub_processors(self._processors, exchange, context)
+
+            result = (
+                exchange.out_message.body
+                if exchange.out_message
+                else exchange.in_message.body
+            )
+            results.append(result)
+
+            if exchange.out_message:
+                exchange.in_message = Message(
+                    body=exchange.out_message.body,
+                    headers=dict(exchange.out_message.headers),
+                )
+                exchange.out_message = None
+
+            iteration += 1
+
+        exchange.set_property("loop_count", iteration)
+        exchange.set_property("loop_results", results)
+
+
+class OnCompletionProcessor(BaseProcessor):
+    """Camel OnCompletion EIP — execute callback processors after pipeline completes.
+
+    Runs regardless of success or failure (like finally).
+    Can be filtered to run only on success or only on failure.
+
+    Usage::
+
+        .on_completion(
+            processors=[LogProcessor(), NotifyProcessor(...)],
+            on_failure_only=True,
+        )
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        on_success_only: bool = False,
+        on_failure_only: bool = False,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "on_completion")
+        self._processors = processors
+        self._on_success = on_success_only
+        self._on_failure = on_failure_only
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        is_failed = exchange.status == ExchangeStatus.failed
+
+        if self._on_success and is_failed:
+            return
+        if self._on_failure and not is_failed:
+            return
+
+        saved_status = exchange.status
+        saved_error = exchange.error
+
+        for proc in self._processors:
+            try:
+                await proc.process(exchange, context)
+            except Exception as exc:
+                _camel_logger.warning("OnCompletion processor error: %s", exc)
+
+        exchange.status = saved_status
+        exchange.error = saved_error
+
+
+class SortProcessor(BaseProcessor):
+    """Camel Sort EIP — sort list body by key function.
+
+    Sorts the exchange body (must be a list) by the given key
+    expression. Supports ascending and descending order.
+
+    Usage::
+
+        .sort(key_fn=lambda item: item["created_at"], reverse=True)
+        .sort(key_field="price")
+    """
+
+    def __init__(
+        self,
+        *,
+        key_fn: Callable[[Any], Any] | None = None,
+        key_field: str | None = None,
+        reverse: bool = False,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"sort({'desc' if reverse else 'asc'})")
+        self._key_fn = key_fn
+        self._key_field = key_field
+        self._reverse = reverse
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        body = exchange.in_message.body
+        if not isinstance(body, list):
+            return
+
+        if self._key_fn is not None:
+            sorted_body = sorted(body, key=self._key_fn, reverse=self._reverse)
+        elif self._key_field is not None:
+            sorted_body = sorted(
+                body,
+                key=lambda item: item.get(self._key_field, 0) if isinstance(item, dict) else 0,
+                reverse=self._reverse,
+            )
+        else:
+            sorted_body = sorted(body, reverse=self._reverse)
+
+        exchange.set_out(body=sorted_body, headers=dict(exchange.in_message.headers))
+
+
+class TimeoutProcessor(BaseProcessor):
+    """Camel Timeout EIP — wrap sub-processors with a time limit.
+
+    If processing exceeds the timeout, the exchange is failed
+    and an optional fallback is executed.
+
+    Usage::
+
+        .timeout(processors=[HttpCallProcessor(...)], seconds=10,
+                 fallback=[LogProcessor()])
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        seconds: float = 30.0,
+        fallback_processors: list[BaseProcessor] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"timeout({seconds}s)")
+        self._processors = processors
+        self._seconds = seconds
+        self._fallback = fallback_processors or []
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.dsl.engine.processors.base import run_sub_processors
+
+        try:
+            await asyncio.wait_for(
+                run_sub_processors(self._processors, exchange, context),
+                timeout=self._seconds,
+            )
+        except asyncio.TimeoutError:
+            exchange.set_property("timeout_exceeded", True)
+            exchange.set_property("timeout_limit_seconds", self._seconds)
+
+            if self._fallback:
+                await run_sub_processors(self._fallback, exchange, context)
+            else:
+                exchange.fail(f"Timeout after {self._seconds}s")
