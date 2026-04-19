@@ -880,10 +880,95 @@ class RouteBuilder:
             .batch_by_field(correlation_field, batch_size=batch_size)
         )
 
+    # ── DSL v3: .require_* helpers ────────────────────────
+
+    def require_header(self, name: str) -> "RouteBuilder":
+        """DX-2: валидирует присутствие header. Fail route если отсутствует.
+
+        Usage::
+            .require_header("Authorization")
+        """
+        async def _check(exchange: Exchange[Any], context: Any) -> None:
+            if not exchange.in_message.headers.get(name):
+                exchange.fail(f"Missing required header: {name}")
+        return self._add(CallableProcessor(_check, name=f"require_header:{name}"))
+
+    def require_bearer(self) -> "RouteBuilder":
+        """DX-2: валидирует Bearer token в Authorization header."""
+        async def _check(exchange: Exchange[Any], context: Any) -> None:
+            auth = exchange.in_message.headers.get("Authorization", "")
+            if not auth.startswith("Bearer "):
+                exchange.fail("Missing or invalid Bearer token")
+                return
+            token = auth[7:].strip()
+            if not token:
+                exchange.fail("Empty Bearer token")
+                return
+            exchange.set_property("auth_token", token)
+        return self._add(CallableProcessor(_check, name="require_bearer"))
+
+    def require_auth(self) -> "RouteBuilder":
+        """DX-2: валидирует API key или Bearer token."""
+        async def _check(exchange: Exchange[Any], context: Any) -> None:
+            auth = exchange.in_message.headers.get("Authorization", "")
+            api_key = exchange.in_message.headers.get("X-API-Key", "")
+            if not auth and not api_key:
+                exchange.fail("Authentication required (Authorization or X-API-Key header)")
+                return
+            exchange.set_property("authenticated", True)
+        return self._add(CallableProcessor(_check, name="require_auth"))
+
+    def require_fields(self, *names: str) -> "RouteBuilder":
+        """DX-2: валидирует что в body есть указанные поля.
+
+        Usage::
+            .require_fields("order_id", "customer_email")
+        """
+        required = tuple(names)
+
+        async def _check(exchange: Exchange[Any], context: Any) -> None:
+            body = exchange.in_message.body
+            if not isinstance(body, dict):
+                exchange.fail(f"Body must be dict to check fields: {list(required)}")
+                return
+            missing = [f for f in required if f not in body]
+            if missing:
+                exchange.fail(f"Missing required fields: {missing}")
+        return self._add(CallableProcessor(_check, name=f"require_fields:{','.join(required)}"))
+
+    def cache_response(self, *, ttl: int = 300, key_field: str = "") -> "RouteBuilder":
+        """DX-2: кеширует результат pipeline в Redis по hash(body).
+
+        Args:
+            ttl: Время жизни кеша в секундах.
+            key_field: Опционально поле из body для вычисления ключа
+                (иначе hash всего body).
+        """
+        def _key_fn(ex: Exchange[Any]) -> str:
+            body = ex.in_message.body
+            if key_field and isinstance(body, dict):
+                val = body.get(key_field, "")
+                return f"{ex.meta.route_id}:{val}"
+            import hashlib
+            import orjson
+            data = orjson.dumps(body, default=str) if body is not None else b""
+            return f"{ex.meta.route_id}:{hashlib.sha256(data).hexdigest()[:16]}"
+
+        self.cache(_key_fn, ttl=ttl)
+        return self.cache_write(_key_fn, ttl=ttl)
+
     # ── Build ──
 
-    def build(self) -> Pipeline:
-        """Собирает Pipeline из накопленных процессоров. Финальный вызов в fluent-chain."""
+    def build(self, *, validate_actions: bool = True) -> Pipeline:
+        """Собирает Pipeline из накопленных процессоров. Финальный вызов в fluent-chain.
+
+        Args:
+            validate_actions: Если True (default), проверяет что все dispatch_action
+                имена зарегистрированы в ActionHandlerRegistry. Raises ValueError
+                с подсказкой схожих имён при опечатке.
+        """
+        if validate_actions:
+            self._validate_action_names()
         return Pipeline(
             route_id=self.route_id,
             source=self.source,
@@ -893,3 +978,45 @@ class RouteBuilder:
             transport_config=self._transport_config,
             feature_flag=self._feature_flag,
         )
+
+    def _validate_action_names(self) -> None:
+        """DX-1: проверяет что все dispatch_action имена зарегистрированы.
+
+        Raises ValueError с подсказкой schozih имён при опечатке.
+        Вызывается в .build() (можно отключить validate_actions=False).
+        """
+        try:
+            from app.dsl.commands.registry import action_handler_registry
+            available = set(action_handler_registry.list_actions())
+        except (ImportError, AttributeError):
+            return
+
+        if not available:
+            return
+
+        action_names: list[str] = []
+        for proc in self._processors:
+            if type(proc).__name__ == "DispatchActionProcessor":
+                action = getattr(proc, "action", None)
+                if action and isinstance(action, str):
+                    action_names.append(action)
+
+        unknown = [name for name in action_names if name not in available]
+        if not unknown:
+            return
+
+        import difflib
+        suggestions: dict[str, list[str]] = {}
+        for name in unknown:
+            close = difflib.get_close_matches(name, available, n=3, cutoff=0.6)
+            if close:
+                suggestions[name] = close
+
+        msg_parts = [f"Unknown action(s) in pipeline '{self.route_id}':"]
+        for name in unknown:
+            suggestion = suggestions.get(name)
+            if suggestion:
+                msg_parts.append(f"  - '{name}' — did you mean: {', '.join(suggestion)}?")
+            else:
+                msg_parts.append(f"  - '{name}'")
+        raise ValueError("\n".join(msg_parts))
