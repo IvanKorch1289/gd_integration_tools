@@ -185,8 +185,24 @@ class RouteBuilder:
     def agent_graph(self, graph_name: str, tools: list[str]) -> "RouteBuilder":
         return self._add(AgentGraphProcessor(graph_name=graph_name, tools=tools))
 
-    def cdc(self, profile: str, tables: list[str], target_action: str) -> "RouteBuilder":
-        return self._add(CDCProcessor(profile=profile, tables=tables, target_action=target_action))
+    def cdc(
+        self, profile: str, tables: list[str], target_action: str, *,
+        strategy: str = "polling",
+        interval: float = 5.0,
+        timestamp_column: str = "updated_at",
+        batch_size: int = 100,
+        channel: str | None = None,
+    ) -> "RouteBuilder":
+        """Change Data Capture — подписка на изменения в БД.
+
+        strategy: polling (любая БД), listen_notify (PostgreSQL), logminer (Oracle).
+        """
+        return self._add(CDCProcessor(
+            profile=profile, tables=tables, target_action=target_action,
+            strategy=strategy, interval=interval,
+            timestamp_column=timestamp_column, batch_size=batch_size,
+            channel=channel,
+        ))
 
     # ── Control flow ──
 
@@ -627,6 +643,47 @@ class RouteBuilder:
         """Compose + send email через SMTP."""
         return self._add_lazy("app.dsl.engine.processors.rpa", "EmailComposeProcessor",
                               to=to, subject=subject, body_template=body_template)
+
+    # ── Framework Patterns (n8n, Benthos, Zapier) ──
+
+    def switch(
+        self, field: str, cases: dict[str, list[BaseProcessor]], *,
+        default: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        """n8n Switch — case/match роутинг по значению поля."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "SwitchProcessor",
+                              field=field, cases=cases, default=default)
+
+    def merge(self, properties: list[str], *, mode: str = "append") -> "RouteBuilder":
+        """n8n Merge — объединение properties в body. mode: append/merge/zip."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "MergeProcessor",
+                              properties=properties, mode=mode)
+
+    def batch_window(self, *, window_seconds: float = 60.0, max_size: int = 100) -> "RouteBuilder":
+        """Benthos — time-window batching."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "BatchWindowProcessor",
+                              window_seconds=window_seconds, max_size=max_size)
+
+    def deduplicate(
+        self, key_fn: Callable[[Exchange[Any]], str], *,
+        window_seconds: float = 60.0,
+    ) -> "RouteBuilder":
+        """Benthos — дедупликация в скользящем окне."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "DeduplicateProcessor",
+                              key_fn=key_fn, window_seconds=window_seconds)
+
+    def format_text(self, template: str, *, output_property: str | None = None) -> "RouteBuilder":
+        """Zapier Formatter — строковое форматирование из properties."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "FormatterProcessor",
+                              template=template, output_property=output_property)
+
+    def debounce(
+        self, key_fn: Callable[[Exchange[Any]], str], *,
+        delay_seconds: float = 5.0,
+    ) -> "RouteBuilder":
+        """Zapier Debounce — пропускает повторы, только последнее событие."""
+        return self._add_lazy("app.dsl.engine.processors.patterns", "DebounceProcessor",
+                              key_fn=key_fn, delay_seconds=delay_seconds)
 
     # ── Build ──
 

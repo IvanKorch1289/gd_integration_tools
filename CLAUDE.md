@@ -20,14 +20,19 @@ src/
 │   │   └── processors/    # All processor implementations
 │   │       ├── core.py        # SetHeader, Transform, Filter, Enrich, Validate, Log
 │   │       ├── control_flow.py # Choice, Retry, TryCatch, Parallel, Saga, PipelineRef
-│   │       ├── eip.py         # Camel EIP: DeadLetter, Idempotent, Splitter, Aggregator,
+│   │       ├── eip.py         # Camel EIP (22): DeadLetter, Idempotent, Splitter, Aggregator,
 │   │       │                  # Throttler, Delay, WireTap, DynamicRouter, ScatterGather,
 │   │       │                  # RecipientList, Fallback, MessageTranslator,
 │   │       │                  # LoadBalancer, CircuitBreaker, ClaimCheck, Normalizer,
-│   │       │                  # Resequencer, Multicast
+│   │       │                  # Resequencer, Multicast, Loop, OnCompletion, Sort, Timeout
 │   │       ├── components.py  # Source/Sink: HttpCall, DatabaseQuery, FileRead/Write,
 │   │       │                  # S3Read/Write, Timer, PollingConsumer
 │   │       ├── converters.py  # TypeConverter: JSON↔YAML/MsgPack/XML/CSV/Parquet/BSON, HTML→JSON
+│   │       ├── patterns.py    # n8n/Benthos/Zapier: Switch, Merge, BatchWindow,
+│   │       │                  # Deduplicate, Formatter, Debounce
+│   │       ├── rpa.py         # UiPath-style (16): Pdf/Word/Excel read/write, OCR,
+│   │       │                  # image resize, regex, Jinja2, hash, encrypt/decrypt,
+│   │       │                  # archive, shell exec, email compose
 │   │       ├── scraping.py    # Scrape, Paginate, ApiProxy
 │   │       ├── ai.py          # LLMCall, PromptComposer, VectorSearch, PII, TokenBudget
 │   │       ├── web.py         # Navigate, Click, FillForm, Extract, Screenshot
@@ -37,7 +42,8 @@ src/
 │   │       └── dq_check.py    # Data Quality checks
 │   ├── adapters/       # Protocol adapters (REST, SOAP, gRPC, GraphQL, Kafka, etc.)
 │   ├── commands/       # Action registry + setup.py (action handler registration)
-│   └── importers/      # OpenAPI importer
+│   ├── importers/      # OpenAPI importer
+│   └── yaml_loader.py  # Declarative YAML → Pipeline loader
 ├── infrastructure/     # Clients (HTTP, Redis, S3, SMTP, FTP, ES, MongoDB, ClickHouse)
 ├── services/           # Business services (orders, users, files, AI, export, etc.)
 ├── entrypoints/        # FastAPI routes, WebSocket, Streamlit UI, webhooks, MQTT, email
@@ -66,6 +72,27 @@ Option B (manual): Add `ActionHandlerSpec` in `setup.py`
 ### New Protocol Adapter
 1. Add enum value to `ProtocolType` in `adapters/types.py`
 2. Create adapter in `adapters/`
+
+### New Pipeline via YAML
+```yaml
+route_id: my.pipeline
+source: timer:60s
+processors:
+  - timer: {interval_seconds: 60}
+  - http_call: {url: "https://api.example.com", method: GET}
+  - dispatch_action: {action: analytics.save}
+```
+Load via `from app.dsl.yaml_loader import load_pipeline_from_file`.
+
+## Documentation
+- `docs/PROCESSORS.md` — каталог всех ~85 процессоров
+- `docs/RPA_GUIDE.md` — работа с PDF/Word/Excel/OCR/encryption
+- `docs/AI_INTEGRATION.md` — LLM/RAG/PII/guardrails/caching
+- `docs/CDC_GUIDE.md` — Change Data Capture (PG/Oracle/polling)
+- `docs/DSL_COOKBOOK.md` — рецепты типовых pipelines
+- `docs/ARCHITECTURE.md` — архитектура системы
+- `docs/DEVELOPER_GUIDE.md` — гайд для разработчиков
+- `docs/DEPLOYMENT.md` — docker + k8s deployment
 
 ## Commands
 

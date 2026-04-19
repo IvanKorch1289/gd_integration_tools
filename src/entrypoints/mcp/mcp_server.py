@@ -46,6 +46,7 @@ def create_mcp_server() -> Any:
     _register_template_tools(mcp)
     _register_convert_tools(mcp)
     _register_system_tools(mcp)
+    _register_yaml_tools(mcp)
     return mcp
 
 
@@ -387,3 +388,75 @@ def _register_system_tools(mcp: Any) -> None:
         return orjson.dumps({
             "disabled_flags": list(disabled_feature_flags),
         }).decode()
+
+
+# ── YAML Pipeline Tools ──
+
+
+def _register_yaml_tools(mcp: Any) -> None:
+    """Tools для работы с YAML-определениями pipelines."""
+
+    @mcp.tool(
+        name="pipeline_export",
+        description="Экспортирует DSL-маршрут в YAML формат. "
+        "Полезно для backup, версионирования, передачи конфигураций.",
+    )
+    async def pipeline_export(route_id: str) -> str:
+        from app.dsl.registry import route_registry
+        try:
+            import yaml
+        except ImportError:
+            return orjson.dumps({"error": "PyYAML not installed"}).decode()
+
+        pipeline = route_registry.get_optional(route_id)
+        if not pipeline:
+            return orjson.dumps({"error": f"Route '{route_id}' not found"}).decode()
+
+        spec = {
+            "route_id": pipeline.route_id,
+            "source": pipeline.source,
+            "description": pipeline.description,
+            "processors": [
+                {type(p).__name__: {"name": p.name}} for p in pipeline.processors
+            ],
+        }
+        return yaml.dump(spec, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    @mcp.tool(
+        name="pipeline_from_yaml",
+        description="Создаёт DSL-маршрут из YAML и регистрирует в route_registry. "
+        "YAML должен содержать: route_id, source, processors (list).",
+    )
+    async def pipeline_from_yaml(yaml_str: str) -> str:
+        from app.dsl.registry import route_registry
+        try:
+            from app.dsl.yaml_loader import load_pipeline_from_yaml
+        except ImportError:
+            return orjson.dumps({"error": "yaml_loader not available"}).decode()
+
+        try:
+            pipeline = load_pipeline_from_yaml(yaml_str)
+            route_registry.register(pipeline)
+            return orjson.dumps({
+                "status": "registered",
+                "route_id": pipeline.route_id,
+                "processors": len(pipeline.processors),
+            }).decode()
+        except Exception as exc:
+            return orjson.dumps({"error": str(exc)}).decode()
+
+    @mcp.tool(
+        name="route_metrics",
+        description="Возвращает SLO-метрики выполнения DSL-маршрутов: "
+        "количество вызовов, ошибки, latency P50/P95/P99.",
+    )
+    async def route_metrics(route_id: str | None = None) -> str:
+        try:
+            from app.infrastructure.application.slo_tracker import get_slo_tracker
+            tracker = get_slo_tracker()
+            report = tracker.get_report()
+            if route_id:
+                return orjson.dumps({route_id: report.get(route_id, {})}).decode()
+            return orjson.dumps(report).decode()
+        except Exception as exc:
+            return orjson.dumps({"error": str(exc)}).decode()

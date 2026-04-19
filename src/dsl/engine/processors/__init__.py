@@ -90,6 +90,14 @@ from app.dsl.engine.processors.scraping import (
     PaginateProcessor,
     ApiProxyProcessor,
 )
+from app.dsl.engine.processors.patterns import (
+    SwitchProcessor,
+    MergeProcessor,
+    BatchWindowProcessor,
+    DeduplicateProcessor,
+    FormatterProcessor,
+    DebounceProcessor,
+)
 from app.dsl.engine.processors.rpa import (
     PdfReadProcessor,
     PdfMergeProcessor,
@@ -212,4 +220,10 @@ __all__ = (
     "DecryptProcessor",
     "ShellExecProcessor",
     "EmailComposeProcessor",
+    "SwitchProcessor",
+    "MergeProcessor",
+    "BatchWindowProcessor",
+    "DeduplicateProcessor",
+    "FormatterProcessor",
+    "DebounceProcessor",
 )

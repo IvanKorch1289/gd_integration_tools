@@ -2,7 +2,7 @@
 
 ## Overview
 
-GD Integration Tools — enterprise integration bus для автоматизации бизнес-процессов. 9 архитектурных слоёв, 15+ протоколов, 40+ DSL-процессоров.
+GD Integration Tools — enterprise integration bus для автоматизации бизнес-процессов. 9 архитектурных слоёв, 15+ протоколов, 85+ DSL-процессоров (Apache Camel EIP + RPA UiPath-style + AI/ML + n8n/Benthos/Zapier patterns).
 
 ## Layers
 
