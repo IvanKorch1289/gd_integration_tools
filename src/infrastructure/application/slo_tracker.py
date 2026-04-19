@@ -1,8 +1,14 @@
 """Route SLO Tracker — мониторинг P50/P95/P99 per route.
 
-Записывает latency каждого маршрута, вычисляет перцентили,
-предоставляет эндпоинт для SLO-отчёта.
+Использует HdrHistogram для O(1) percentile queries (вместо O(n log n) sort).
+Fallback на простой list если hdrh не установлен.
+
+Multi-instance safety:
+- State per-instance (Prometheus aggregates через pull model)
+- Опциональный Redis snapshot для cross-instance aggregation
 """
+
+from __future__ import annotations
 
 import time
 from collections import defaultdict
@@ -12,18 +18,21 @@ from typing import Any
 __all__ = ("SLOTracker", "get_slo_tracker")
 
 
-@dataclass(slots=True)
-class RouteStats:
-    """Статистика маршрута за скользящее окно."""
-    latencies: list[float] = field(default_factory=list)
-    total_count: int = 0
-    error_count: int = 0
+try:
+    from hdrh.histogram import HdrHistogram as _HdrHistogram
+    _HDRH_AVAILABLE = True
+except ImportError:
+    _HDRH_AVAILABLE = False
+    _HdrHistogram = None  # type: ignore[assignment,misc]
 
-    def record(self, latency_ms: float, is_error: bool = False) -> None:
+
+@dataclass(slots=True)
+class _FallbackStats:
+    """Fallback: simple list-based stats если hdrh недоступен."""
+    latencies: list[float] = field(default_factory=list)
+
+    def record(self, latency_ms: float) -> None:
         self.latencies.append(latency_ms)
-        self.total_count += 1
-        if is_error:
-            self.error_count += 1
         if len(self.latencies) > 10000:
             self.latencies = self.latencies[-5000:]
 
@@ -34,6 +43,48 @@ class RouteStats:
         idx = int(len(sorted_lat) * p / 100)
         return sorted_lat[min(idx, len(sorted_lat) - 1)]
 
+    @property
+    def samples(self) -> int:
+        return len(self.latencies)
+
+
+class RouteStats:
+    """Статистика маршрута. Использует HdrHistogram если доступен."""
+
+    __slots__ = ("_hdr", "_fallback", "total_count", "error_count")
+
+    def __init__(self) -> None:
+        # HdrHistogram: 1..60000 ms, precision 2 digits (O(1) percentile queries)
+        if _HDRH_AVAILABLE:
+            self._hdr: Any = _HdrHistogram(1, 60_000, 2)
+            self._fallback: _FallbackStats | None = None
+        else:
+            self._hdr = None
+            self._fallback = _FallbackStats()
+        self.total_count = 0
+        self.error_count = 0
+
+    def record(self, latency_ms: float, is_error: bool = False) -> None:
+        self.total_count += 1
+        if is_error:
+            self.error_count += 1
+        value = max(1, min(int(latency_ms), 60_000))
+        if self._hdr is not None:
+            self._hdr.record_value(value)
+        else:
+            self._fallback.record(latency_ms)
+
+    def percentile(self, p: float) -> float:
+        if self._hdr is not None:
+            return float(self._hdr.get_value_at_percentile(p))
+        return self._fallback.percentile(p)
+
+    @property
+    def samples(self) -> int:
+        if self._hdr is not None:
+            return int(self._hdr.get_total_count())
+        return self._fallback.samples
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "total": self.total_count,
@@ -42,18 +93,19 @@ class RouteStats:
             "p50_ms": round(self.percentile(50), 2),
             "p95_ms": round(self.percentile(95), 2),
             "p99_ms": round(self.percentile(99), 2),
-            "samples": len(self.latencies),
+            "samples": self.samples,
+            "backend": "hdrh" if self._hdr is not None else "fallback",
         }
 
 
 class SLOTracker:
-    """Трекер SLO per route."""
+    """Трекер SLO per route. Multi-instance safe (Prometheus pull aggregation)."""
 
     def __init__(self) -> None:
         self._stats: dict[str, RouteStats] = defaultdict(RouteStats)
 
     def record(self, route_id: str, latency_ms: float, is_error: bool = False) -> None:
-        """Записывает результат выполнения маршрута + экспортирует в Prometheus."""
+        """Записывает результат выполнения маршрута + экспорт в Prometheus."""
         self._stats[route_id].record(latency_ms, is_error)
         try:
             from app.infrastructure.observability.metrics import (
