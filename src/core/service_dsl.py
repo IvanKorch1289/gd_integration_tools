@@ -5,18 +5,28 @@
 - Queue consumers (RabbitMQ/Kafka)
 - Prefect tasks (через task_factory)
 - DSL routes
+
+@register_action — метод-декоратор для точечной регистрации без правки setup.py.
 """
 
 from __future__ import annotations
 
+import importlib
 import inspect
 import logging
+import pkgutil
 from dataclasses import dataclass, field
 from typing import Any, Callable, Sequence
 
 from pydantic import BaseModel
 
-__all__ = ("service_dsl", "ServiceDSLRegistry", "ServiceMeta")
+__all__ = (
+    "service_dsl",
+    "register_action",
+    "scan_and_register_actions",
+    "ServiceDSLRegistry",
+    "ServiceMeta",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -154,3 +164,102 @@ def service_dsl(
         return cls
 
     return decorator
+
+
+# ─────────── Method-level @register_action ───────────
+
+_ACTION_ATTR = "_action_meta"
+
+_pending_actions: list[dict[str, Any]] = []
+
+
+def register_action(
+    action: str,
+    *,
+    payload_model: type[BaseModel] | None = None,
+    service_getter: Callable[[], Any] | None = None,
+):
+    """Method-level decorator: marks a service method as an action handler.
+
+    Usage::
+
+        class OrderService(BaseService):
+            @register_action("orders.create_skb_order", payload_model=OrderIdQuerySchema)
+            async def create_skb_order(self, data): ...
+
+    The getter is auto-detected from the module's ``get_<service>`` function,
+    or can be provided explicitly.
+    """
+    def decorator(fn: Callable) -> Callable:
+        meta = {
+            "action": action,
+            "method_name": fn.__name__,
+            "payload_model": payload_model,
+            "service_getter": service_getter,
+            "fn": fn,
+        }
+        setattr(fn, _ACTION_ATTR, meta)
+        _pending_actions.append(meta)
+        return fn
+    return decorator
+
+
+def _find_getter_in_module(module: Any, method_owner_cls: type | None) -> Callable | None:
+    """Auto-detect ``get_<name>_service`` or ``get_<name>`` factory in the module."""
+    for name in dir(module):
+        obj = getattr(module, name, None)
+        if callable(obj) and name.startswith("get_") and not isinstance(obj, type):
+            return obj
+    return None
+
+
+def scan_and_register_actions(package_paths: Sequence[str] | None = None) -> int:
+    """Import all modules in given packages and register @register_action-decorated methods.
+
+    Returns the number of actions registered.
+    """
+    from app.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
+
+    if package_paths:
+        for pkg_path in package_paths:
+            try:
+                pkg = importlib.import_module(pkg_path)
+                if hasattr(pkg, "__path__"):
+                    for importer, modname, ispkg in pkgutil.walk_packages(
+                        pkg.__path__, prefix=pkg.__name__ + "."
+                    ):
+                        try:
+                            importlib.import_module(modname)
+                        except ImportError:
+                            pass
+            except ImportError:
+                logger.warning("Cannot import package %s for action scan", pkg_path)
+
+    count = 0
+    for meta in _pending_actions:
+        if action_handler_registry.is_registered(meta["action"]):
+            continue
+
+        getter = meta["service_getter"]
+        if getter is None:
+            fn = meta["fn"]
+            module = inspect.getmodule(fn)
+            if module is not None:
+                getter = _find_getter_in_module(module, None)
+
+        if getter is None:
+            logger.warning(
+                "No service_getter found for action '%s', skipping", meta["action"]
+            )
+            continue
+
+        action_handler_registry.register(
+            action=meta["action"],
+            service_getter=getter,
+            service_method=meta["method_name"],
+            payload_model=meta["payload_model"],
+        )
+        count += 1
+
+    logger.info("Auto-registered %d actions from @register_action decorators", count)
+    return count

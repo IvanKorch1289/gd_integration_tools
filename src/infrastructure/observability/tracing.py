@@ -56,7 +56,7 @@ class TracingMiddleware(ProcessorMiddleware):
             )
             key = f"{id(exchange)}:{processor_name}"
             self._spans[key] = span
-        except Exception:
+        except (AttributeError, TypeError):
             pass
 
     async def after(
@@ -81,5 +81,5 @@ class TracingMiddleware(ProcessorMiddleware):
                     str(error)[:200],
                 )
             span.end()
-        except Exception:
+        except (AttributeError, TypeError):
             pass

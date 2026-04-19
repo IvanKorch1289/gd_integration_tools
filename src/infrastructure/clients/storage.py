@@ -212,7 +212,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except Exception:
+        except (BotoClientError, OSError, TimeoutError):
             return False
 
     async def check_bucket_exists(self) -> bool:

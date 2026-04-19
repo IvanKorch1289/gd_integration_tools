@@ -63,7 +63,7 @@ class SLOTracker:
                 route_id=route_id,
                 status="error" if is_error else "success",
             )
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
     def get_report(self) -> dict[str, Any]:

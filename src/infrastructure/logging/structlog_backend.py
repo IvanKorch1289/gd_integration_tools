@@ -161,7 +161,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                     event_dict.setdefault("request_id", rid)
                 if tid := get_tenant_id():
                     event_dict.setdefault("tenant_id", tid)
-            except Exception:
+            except (ImportError, AttributeError):
                 pass
             return event_dict
 

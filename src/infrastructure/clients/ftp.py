@@ -68,7 +68,7 @@ class FTPClient:
         if self._client:
             try:
                 await self._client.quit()
-            except Exception:
+            except OSError:
                 pass
             self._client = None
             logger.info("FTP disconnected")
@@ -168,7 +168,7 @@ class FTPClient:
         try:
             async with await self._get_client():
                 return True
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 

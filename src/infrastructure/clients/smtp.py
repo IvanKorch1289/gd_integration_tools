@@ -217,7 +217,7 @@ class SmtpClient(BaseSmtpClient):
                 if self._connection_pool:
                     return self._connection_pool.get_nowait()
                 return await self._create_connection()
-            except Exception:
+            except (SMTPException, TimeoutError, ConnectionError, OSError):
                 if attempt == 2:
                     self.logger.error("Попытки соединения исчерпаны")
                     raise
@@ -239,12 +239,12 @@ class SmtpClient(BaseSmtpClient):
                 if not temporary and self._connection_pool.qsize() < self._pool_size:
                     self._connection_pool.put_nowait(connection)
                     return
-        except Exception:
+        except (SMTPException, OSError):
             self.logger.warning("Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True)
 
         try:
             await connection.quit()
-        except Exception:
+        except (SMTPException, OSError):
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:

@@ -35,13 +35,19 @@ from app.dsl.engine.processors.control_flow import (
 )
 from app.dsl.engine.processors.eip import (
     AggregatorProcessor,
+    CircuitBreakerProcessor,
+    ClaimCheckProcessor,
     DeadLetterProcessor,
     DelayProcessor,
     DynamicRouterProcessor,
     FallbackChainProcessor,
     IdempotentConsumerProcessor,
+    LoadBalancerProcessor,
     MessageTranslatorProcessor,
+    MulticastProcessor,
+    NormalizerProcessor,
     RecipientListProcessor,
+    ResequencerProcessor,
     ScatterGatherProcessor,
     SplitterProcessor,
     ThrottlerProcessor,
@@ -70,6 +76,22 @@ from app.dsl.engine.processors.web import (
     ScreenshotProcessor,
 )
 from app.dsl.engine.processors.export import ExportProcessor
+from app.dsl.engine.processors.converters import ConvertProcessor
+from app.dsl.engine.processors.scraping import (
+    ScrapeProcessor,
+    PaginateProcessor,
+    ApiProxyProcessor,
+)
+from app.dsl.engine.processors.components import (
+    HttpCallProcessor,
+    DatabaseQueryProcessor,
+    FileReadProcessor,
+    FileWriteProcessor,
+    S3ReadProcessor,
+    S3WriteProcessor,
+    TimerProcessor,
+    PollingConsumerProcessor,
+)
 
 __all__ = (
     "ProcessorCallable",
@@ -105,6 +127,12 @@ __all__ = (
     "SplitterProcessor",
     "AggregatorProcessor",
     "RecipientListProcessor",
+    "LoadBalancerProcessor",
+    "CircuitBreakerProcessor",
+    "ClaimCheckProcessor",
+    "NormalizerProcessor",
+    "ResequencerProcessor",
+    "MulticastProcessor",
     "PromptComposerProcessor",
     "LLMCallProcessor",
     "LLMParserProcessor",
@@ -122,4 +150,16 @@ __all__ = (
     "ScreenshotProcessor",
     "RunScenarioProcessor",
     "ExportProcessor",
+    "HttpCallProcessor",
+    "DatabaseQueryProcessor",
+    "FileReadProcessor",
+    "FileWriteProcessor",
+    "S3ReadProcessor",
+    "S3WriteProcessor",
+    "TimerProcessor",
+    "PollingConsumerProcessor",
+    "ConvertProcessor",
+    "ScrapeProcessor",
+    "PaginateProcessor",
+    "ApiProxyProcessor",
 )

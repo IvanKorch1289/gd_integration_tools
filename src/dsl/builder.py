@@ -10,17 +10,24 @@ from app.dsl.engine.processors import (
     CallableProcessor,
     CDCProcessor,
     ChoiceProcessor,
+    CircuitBreakerProcessor,
+    ClaimCheckProcessor,
     DeadLetterProcessor,
     DispatchActionProcessor,
     EnrichProcessor,
     FallbackChainProcessor,
     FilterProcessor,
     IdempotentConsumerProcessor,
+    LoadBalancerProcessor,
     LogProcessor,
     MCPToolProcessor,
+    MulticastProcessor,
+    NormalizerProcessor,
     ParallelProcessor,
     PipelineRefProcessor,
     ProcessorCallable,
+    RecipientListProcessor,
+    ResequencerProcessor,
     RetryProcessor,
     SagaProcessor,
     SagaStep,
@@ -37,7 +44,6 @@ from app.dsl.engine.processors import (
     DelayProcessor,
     SplitterProcessor,
     AggregatorProcessor,
-    RecipientListProcessor,
 )
 
 __all__ = ("RouteBuilder",)
@@ -243,6 +249,59 @@ class RouteBuilder:
     ) -> "RouteBuilder":
         return self._add(RecipientListProcessor(recipients_expression=recipients_expression, parallel=parallel))
 
+    # ── Camel EIP v2 ──
+
+    def load_balance(
+        self, targets: list[str], *,
+        strategy: str = "round_robin",
+        weights: list[float] | None = None,
+        sticky_header: str | None = None,
+    ) -> "RouteBuilder":
+        return self._add(LoadBalancerProcessor(
+            targets=targets, strategy=strategy, weights=weights, sticky_header=sticky_header,
+        ))
+
+    def circuit_breaker(
+        self, processors: list[BaseProcessor], *,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 30.0,
+        fallback_processors: list[BaseProcessor] | None = None,
+    ) -> "RouteBuilder":
+        return self._add(CircuitBreakerProcessor(
+            processors=processors, failure_threshold=failure_threshold,
+            recovery_timeout=recovery_timeout, fallback_processors=fallback_processors,
+        ))
+
+    def claim_check_in(self, *, store: str = "redis", ttl_seconds: int = 3600) -> "RouteBuilder":
+        return self._add(ClaimCheckProcessor(mode="store", store=store, ttl_seconds=ttl_seconds))
+
+    def claim_check_out(self) -> "RouteBuilder":
+        return self._add(ClaimCheckProcessor(mode="retrieve"))
+
+    def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
+        return self._add(NormalizerProcessor(target_schema=target_schema))
+
+    def resequence(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str], *,
+        sequence_field: str = "seq",
+        batch_size: int = 10,
+        timeout_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        return self._add(ResequencerProcessor(
+            correlation_key=correlation_key, sequence_field=sequence_field,
+            batch_size=batch_size, timeout_seconds=timeout_seconds,
+        ))
+
+    def multicast(
+        self, branches: list[list[BaseProcessor]], *,
+        strategy: str = "all",
+        stop_on_error: bool = False,
+    ) -> "RouteBuilder":
+        return self._add(MulticastProcessor(
+            branches=branches, strategy=strategy, stop_on_error=stop_on_error,
+        ))
+
     # ── Config ──
 
     def protocol(self, proto: ProtocolType) -> "RouteBuilder":
@@ -256,6 +315,68 @@ class RouteBuilder:
     def feature_flag(self, name: str) -> "RouteBuilder":
         self._feature_flag = name
         return self
+
+    # ── Camel Components (source/sink) ──
+
+    def http_call(
+        self, url: str, *,
+        method: str = "GET",
+        headers: dict[str, str] | None = None,
+        auth_token: str | None = None,
+        timeout: float = 30.0,
+        result_property: str | None = None,
+    ) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "HttpCallProcessor",
+                              url=url, method=method, headers=headers, auth_token=auth_token,
+                              timeout=timeout, result_property=result_property)
+
+    def db_query(self, sql: str, *, result_property: str = "db_result") -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "DatabaseQueryProcessor",
+                              sql=sql, result_property=result_property)
+
+    def read_file(self, path: str | None = None, *, binary: bool = False) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "FileReadProcessor",
+                              path=path, binary=binary)
+
+    def write_file(self, path: str | None = None, *, format: str = "auto") -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "FileWriteProcessor",
+                              path=path, format=format)
+
+    def read_s3(self, bucket: str | None = None, key: str | None = None) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "S3ReadProcessor",
+                              bucket=bucket, key=key)
+
+    def write_s3(self, bucket: str | None = None, key: str | None = None, *, content_type: str = "application/octet-stream") -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "S3WriteProcessor",
+                              bucket=bucket, key=key, content_type=content_type)
+
+    def timer(self, *, interval_seconds: float | None = None, cron: str | None = None, max_fires: int | None = None) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "TimerProcessor",
+                              interval_seconds=interval_seconds, cron=cron, max_fires=max_fires)
+
+    def poll(self, source_action: str, *, payload: dict[str, Any] | None = None, result_property: str = "polled_data") -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.components", "PollingConsumerProcessor",
+                              source_action=source_action, payload=payload, result_property=result_property)
+
+    # ── Type Converters ──
+
+    def convert(self, from_format: str, to_format: str) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.converters", "ConvertProcessor",
+                              from_format=from_format, to_format=to_format)
+
+    # ── Scraping Pipeline ──
+
+    def scrape(self, url: str | None = None, *, selectors: dict[str, str] | None = None, output_property: str = "scraped") -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.scraping", "ScrapeProcessor",
+                              url=url, selectors=selectors, output_property=output_property)
+
+    def paginate(self, *, next_selector: str = "a.next", item_selector: str | None = None, max_pages: int = 10, start_url: str | None = None) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.scraping", "PaginateProcessor",
+                              next_selector=next_selector, item_selector=item_selector, max_pages=max_pages, start_url=start_url)
+
+    def api_proxy(self, base_url: str, *, method: str = "GET", path: str = "", timeout: float = 30.0) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.scraping", "ApiProxyProcessor",
+                              base_url=base_url, method=method, path=path, timeout=timeout)
 
     # ── AI Pipeline ──
 

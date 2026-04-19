@@ -678,5 +678,10 @@ def register_action_handlers() -> None:
     ])
 
     # ── ServiceDSL auto-register ──
-    from app.core.service_dsl import service_dsl_registry
+    from app.core.service_dsl import service_dsl_registry, scan_and_register_actions
     service_dsl_registry.register_all_actions()
+    scan_and_register_actions([
+        "app.services",
+        "app.entrypoints.webhook",
+        "app.dsl.importers",
+    ])

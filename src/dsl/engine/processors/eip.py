@@ -24,6 +24,12 @@ __all__ = (
     "SplitterProcessor",
     "AggregatorProcessor",
     "RecipientListProcessor",
+    "LoadBalancerProcessor",
+    "CircuitBreakerProcessor",
+    "ClaimCheckProcessor",
+    "NormalizerProcessor",
+    "ResequencerProcessor",
+    "MulticastProcessor",
 )
 
 
@@ -647,3 +653,431 @@ class RecipientListProcessor(BaseProcessor):
         exchange.set_property("recipient_results", results)
         if errors:
             exchange.set_property("recipient_errors", errors)
+
+
+# ---------------------------------------------------------------------------
+#  Apache Camel EIP v2 — LoadBalancer, CircuitBreaker, ClaimCheck,
+#  Normalizer, Resequencer, Multicast
+# ---------------------------------------------------------------------------
+
+
+class LoadBalancerProcessor(BaseProcessor):
+    """Camel Load Balancer EIP — distributes exchanges across multiple routes.
+
+    Strategies: round_robin, random, weighted, sticky (header-based).
+    """
+
+    def __init__(
+        self,
+        targets: list[str],
+        *,
+        strategy: str = "round_robin",
+        weights: list[float] | None = None,
+        sticky_header: str | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"load_balancer({strategy})")
+        self._targets = targets
+        self._strategy = strategy
+        self._weights = weights
+        self._sticky_header = sticky_header
+        self._rr_index = 0
+
+    def _select_target(self, exchange: Exchange[Any]) -> str:
+        if self._strategy == "round_robin":
+            target = self._targets[self._rr_index % len(self._targets)]
+            self._rr_index += 1
+            return target
+
+        if self._strategy == "random":
+            import random as _random
+            return _random.choice(self._targets)
+
+        if self._strategy == "weighted" and self._weights:
+            import random as _random
+            return _random.choices(self._targets, weights=self._weights, k=1)[0]
+
+        if self._strategy == "sticky" and self._sticky_header:
+            key = exchange.in_message.headers.get(self._sticky_header, "")
+            idx = hash(key) % len(self._targets)
+            return self._targets[idx]
+
+        return self._targets[0]
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.dsl.engine.processors.base import SubPipelineExecutor
+
+        target = self._select_target(exchange)
+        exchange.set_property("lb_target", target)
+
+        result, error = await SubPipelineExecutor.execute_route(
+            target, exchange.in_message.body,
+            dict(exchange.in_message.headers), context,
+        )
+        if error:
+            exchange.fail(f"Load balancer target '{target}' failed: {error}")
+            return
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+
+
+class CircuitBreakerProcessor(BaseProcessor):
+    """Camel Circuit Breaker EIP — fail-fast pattern inside DSL pipeline.
+
+    Wraps sub-processors with CLOSED → OPEN → HALF_OPEN state machine.
+    When open, immediately routes to fallback or fails.
+    """
+
+    def __init__(
+        self,
+        processors: list[BaseProcessor],
+        *,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 30.0,
+        half_open_max: int = 1,
+        fallback_processors: list[BaseProcessor] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"circuit_breaker(threshold={failure_threshold})")
+        self._processors = processors
+        self._fallback = fallback_processors or []
+        self._threshold = failure_threshold
+        self._recovery_timeout = recovery_timeout
+        self._half_open_max = half_open_max
+        self._failure_count = 0
+        self._state = "closed"
+        self._last_failure_time = 0.0
+        self._half_open_calls = 0
+
+    def _check_state(self) -> str:
+        import time
+        if self._state == "open":
+            if time.monotonic() - self._last_failure_time >= self._recovery_timeout:
+                self._state = "half_open"
+                self._half_open_calls = 0
+        return self._state
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import time
+        from app.dsl.engine.processors.base import run_sub_processors
+
+        state = self._check_state()
+
+        if state == "open":
+            if self._fallback:
+                exchange.set_property("cb_state", "open_fallback")
+                await run_sub_processors(self._fallback, exchange, context)
+                return
+            exchange.fail("Circuit breaker is OPEN")
+            return
+
+        if state == "half_open":
+            self._half_open_calls += 1
+            if self._half_open_calls > self._half_open_max:
+                exchange.fail("Circuit breaker HALF_OPEN: max calls exceeded")
+                return
+
+        saved_status = exchange.status
+        await run_sub_processors(self._processors, exchange, context)
+
+        if exchange.status == ExchangeStatus.failed:
+            self._failure_count += 1
+            self._last_failure_time = time.monotonic()
+            if self._failure_count >= self._threshold:
+                self._state = "open"
+            exchange.set_property("cb_state", self._state)
+        else:
+            if self._state == "half_open":
+                self._state = "closed"
+            self._failure_count = 0
+            exchange.set_property("cb_state", self._state)
+
+
+class ClaimCheckProcessor(BaseProcessor):
+    """Camel Claim Check EIP — store payload, pass token through pipeline.
+
+    mode="store": saves body to Redis, replaces with claim token.
+    mode="retrieve": loads body from Redis using the token.
+    """
+
+    def __init__(
+        self,
+        *,
+        mode: str = "store",
+        store: str = "redis",
+        ttl_seconds: int = 3600,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"claim_check:{mode}")
+        self._mode = mode
+        self._store = store
+        self._ttl = ttl_seconds
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import uuid
+
+        if self._mode == "store":
+            token = f"claim:{uuid.uuid4()}"
+            body_bytes = orjson.dumps(exchange.in_message.body, default=str)
+            try:
+                from app.infrastructure.clients.redis import redis_client
+                await redis_client.set_if_not_exists(
+                    key=token, value=body_bytes.decode(), ttl=self._ttl,
+                )
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                _camel_logger.warning("Claim check store failed: %s", exc)
+                return
+
+            exchange.set_property("_claim_token", token)
+            exchange.set_out(
+                body={"_claim_token": token},
+                headers=dict(exchange.in_message.headers),
+            )
+
+        elif self._mode == "retrieve":
+            token = exchange.properties.get("_claim_token")
+            if not token:
+                body = exchange.in_message.body
+                if isinstance(body, dict):
+                    token = body.get("_claim_token")
+
+            if not token:
+                exchange.fail("No claim token found")
+                return
+
+            try:
+                from app.infrastructure.clients.redis import redis_client
+                raw = await redis_client.get(token)
+                if raw is None:
+                    exchange.fail(f"Claim token expired or not found: {token}")
+                    return
+                restored = orjson.loads(raw)
+                exchange.set_out(
+                    body=restored,
+                    headers=dict(exchange.in_message.headers),
+                )
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                exchange.fail(f"Claim check retrieve failed: {exc}")
+
+
+class NormalizerProcessor(BaseProcessor):
+    """Camel Normalizer EIP — auto-detect input format and normalize to canonical dict.
+
+    Detects XML, CSV, YAML, JSON string and converts to dict,
+    then optionally validates against a Pydantic schema.
+    """
+
+    def __init__(
+        self,
+        target_schema: type | None = None,
+        *,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "normalizer")
+        self._schema = target_schema
+
+    @staticmethod
+    def _detect_and_parse(body: Any) -> Any:
+        if isinstance(body, dict):
+            return body
+        if isinstance(body, list):
+            return body
+        if not isinstance(body, str):
+            return body
+
+        text = body.strip()
+
+        if text.startswith("<"):
+            try:
+                import xmltodict
+                parsed = xmltodict.parse(text)
+                if len(parsed) == 1:
+                    return dict(next(iter(parsed.values())))
+                return dict(parsed)
+            except Exception:
+                pass
+
+        if text.startswith("{") or text.startswith("["):
+            try:
+                return orjson.loads(text)
+            except Exception:
+                pass
+
+        try:
+            import yaml
+            result = yaml.safe_load(text)
+            if isinstance(result, (dict, list)):
+                return result
+        except Exception:
+            pass
+
+        lines = text.split("\n")
+        if len(lines) >= 2 and "," in lines[0]:
+            headers = [h.strip() for h in lines[0].split(",")]
+            return [
+                dict(zip(headers, [v.strip() for v in line.split(",")]))
+                for line in lines[1:] if line.strip()
+            ]
+
+        return body
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        body = exchange.in_message.body
+        normalized = self._detect_and_parse(body)
+
+        if self._schema is not None:
+            try:
+                validated = self._schema.model_validate(normalized)
+                exchange.set_property("normalized_model", validated)
+                normalized = validated.model_dump()
+            except Exception as exc:
+                exchange.fail(f"Normalization validation failed: {exc}")
+                return
+
+        exchange.set_out(body=normalized, headers=dict(exchange.in_message.headers))
+
+
+class ResequencerProcessor(BaseProcessor):
+    """Camel Resequencer EIP — reorder messages by sequence field.
+
+    Buffers messages by correlation key, emits them in sequence order
+    when batch is complete or timeout expires.
+    """
+
+    _MAX_KEYS = 10000
+
+    def __init__(
+        self,
+        correlation_key: Callable[[Exchange[Any]], str],
+        *,
+        sequence_field: str = "seq",
+        batch_size: int = 10,
+        timeout_seconds: float = 30.0,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"resequencer(batch={batch_size})")
+        self._corr_key = correlation_key
+        self._seq_field = sequence_field
+        self._batch_size = batch_size
+        self._timeout = timeout_seconds
+        self._buffers: dict[str, list[tuple[int, Any]]] = {}
+        self._lock = asyncio.Lock()
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        key = self._corr_key(exchange)
+        body = exchange.in_message.body
+
+        seq = 0
+        if isinstance(body, dict):
+            seq = body.get(self._seq_field, 0)
+        elif hasattr(body, self._seq_field):
+            seq = getattr(body, self._seq_field, 0)
+
+        async with self._lock:
+            if len(self._buffers) >= self._MAX_KEYS:
+                oldest = next(iter(self._buffers))
+                del self._buffers[oldest]
+
+            buf = self._buffers.setdefault(key, [])
+            buf.append((seq, body))
+
+            if len(buf) >= self._batch_size:
+                buf.sort(key=lambda x: x[0])
+                ordered = [item for _, item in buf]
+                buf.clear()
+                exchange.set_property("resequenced", True)
+                exchange.set_out(body=ordered, headers=dict(exchange.in_message.headers))
+            else:
+                exchange.set_property("resequenced", False)
+                exchange.set_property("resequence_buffer_size", len(buf))
+                exchange.stop()
+
+
+class MulticastProcessor(BaseProcessor):
+    """Camel Multicast EIP — send one message to N processor lists in parallel.
+
+    Unlike ParallelProcessor (named branches), Multicast works with
+    a flat list of processor groups and aggregates results.
+    """
+
+    def __init__(
+        self,
+        branches: list[list[BaseProcessor]],
+        *,
+        strategy: str = "all",
+        stop_on_error: bool = False,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"multicast({len(branches)})")
+        self._branches = branches
+        self._strategy = strategy
+        self._stop_on_error = stop_on_error
+
+    async def _run_branch(
+        self,
+        index: int,
+        processors: list[BaseProcessor],
+        body: Any,
+        headers: dict[str, Any],
+        context: ExecutionContext,
+    ) -> tuple[int, Any, str | None]:
+        branch_exchange = Exchange(
+            in_message=Message(body=body, headers=dict(headers))
+        )
+        branch_exchange.status = ExchangeStatus.processing
+
+        for proc in processors:
+            if branch_exchange.status == ExchangeStatus.failed or branch_exchange.stopped:
+                break
+            try:
+                await proc.process(branch_exchange, context)
+            except Exception as exc:
+                branch_exchange.fail(str(exc))
+                break
+
+        result = (
+            branch_exchange.out_message.body
+            if branch_exchange.out_message
+            else branch_exchange.in_message.body
+        )
+        return index, result, branch_exchange.error
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        body = exchange.in_message.body
+        headers = exchange.in_message.headers
+
+        tasks = [
+            self._run_branch(i, procs, body, headers, context)
+            for i, procs in enumerate(self._branches)
+        ]
+
+        results: list[Any] = [None] * len(self._branches)
+        errors: dict[int, str] = {}
+
+        if self._strategy == "first":
+            done, pending = await asyncio.wait(
+                [asyncio.create_task(t) for t in tasks],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in pending:
+                task.cancel()
+            for task in done:
+                idx, result, error = task.result()
+                if error:
+                    errors[idx] = error
+                else:
+                    results[idx] = result
+        else:
+            for coro_result in await asyncio.gather(*tasks, return_exceptions=True):
+                if isinstance(coro_result, Exception):
+                    errors[-1] = str(coro_result)
+                else:
+                    idx, result, error = coro_result
+                    results[idx] = result
+                    if error:
+                        errors[idx] = error
+                        if self._stop_on_error:
+                            break
+
+        exchange.set_property("multicast_results", results)
+        if errors:
+            exchange.set_property("multicast_errors", errors)

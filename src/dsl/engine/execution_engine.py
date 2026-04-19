@@ -83,6 +83,7 @@ class ExecutionEngine:
 
     @staticmethod
     def _finalize(exchange: Exchange[Any], pipeline: Pipeline, total_ms: float) -> None:
+        """Set final exchange status and record SLO metrics."""
         if exchange.status != ExchangeStatus.failed:
             if exchange.out_message is None:
                 exchange.complete(
@@ -99,7 +100,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
     async def execute(

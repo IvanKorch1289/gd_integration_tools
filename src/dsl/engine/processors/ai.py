@@ -58,10 +58,15 @@ class LLMCallProcessor(BaseProcessor):
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             prompt = exchange.in_message.body if isinstance(exchange.in_message.body, str) else str(exchange.in_message.body)
-        from app.services.ai_agent import get_ai_agent_service
-        agent = get_ai_agent_service()
-        result = await agent.chat(message=prompt, provider=self._provider, model=self._model)
-        exchange.in_message.set_body(result)
+        try:
+            from app.services.ai_agent import get_ai_agent_service
+            agent = get_ai_agent_service()
+            result = await agent.chat(message=prompt, provider=self._provider, model=self._model)
+            exchange.in_message.set_body(result)
+        except ImportError as exc:
+            exchange.fail(f"AI agent service unavailable: {exc}")
+        except (ConnectionError, TimeoutError, RuntimeError) as exc:
+            exchange.fail(f"LLM call failed: {exc}")
 
 
 class LLMParserProcessor(BaseProcessor):
@@ -84,8 +89,8 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except Exception:
-                exchange.set_property("_parse_error", f"Invalid JSON: {text[:100]}")
+            except (orjson.JSONDecodeError, ValueError):
+                exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:
             parsed = text
@@ -94,8 +99,8 @@ class LLMParserProcessor(BaseProcessor):
                 from pydantic import BaseModel
                 if issubclass(self._schema, BaseModel):
                     parsed = self._schema.model_validate(parsed)
-            except Exception as exc:
-                exchange.set_property("_parse_error", str(exc))
+            except (ValueError, TypeError) as exc:
+                exchange.fail(f"LLM output schema validation failed: {exc}")
                 return
         exchange.in_message.set_body(parsed)
 
