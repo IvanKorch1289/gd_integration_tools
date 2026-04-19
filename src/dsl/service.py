@@ -38,11 +38,46 @@ class DslService:
 
         Returns:
             Exchange[Any]: Итоговый Exchange.
+
+        Raises:
+            RouteDisabledError: Маршрут заблокирован feature-флагом.
+            KeyError: Маршрут не зарегистрирован.
         """
         pipeline = route_registry.get(route_id)
         return await self._engine.execute(
             pipeline, body=body, headers=headers, context=context
         )
+
+    @staticmethod
+    def list_routes() -> tuple[str, ...]:
+        """Список всех зарегистрированных маршрутов."""
+        return route_registry.list_routes()
+
+    @staticmethod
+    def list_enabled_routes() -> tuple[str, ...]:
+        """Список маршрутов, доступных для выполнения."""
+        return route_registry.list_enabled_routes()
+
+    @staticmethod
+    def list_disabled_routes() -> tuple[str, ...]:
+        """Список маршрутов, заблокированных feature-флагом."""
+        return route_registry.list_disabled_routes()
+
+    @staticmethod
+    def get_feature_flags() -> dict[str, str]:
+        """Маппинг route_id → feature_flag."""
+        return route_registry.get_route_feature_flags()
+
+    @staticmethod
+    def toggle_feature_flag(flag_name: str, *, enable: bool) -> None:
+        """Включает/отключает feature-флаг.
+
+        Args:
+            flag_name: Имя feature-флага.
+            enable: ``True`` — маршруты доступны,
+                ``False`` — заблокированы.
+        """
+        route_registry.toggle_feature_flag(flag_name, enable=enable)
 
 
 def get_dsl_service() -> DslService:

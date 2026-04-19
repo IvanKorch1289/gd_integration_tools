@@ -9,7 +9,7 @@ from logging import (
 )
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from socket import gethostname
-from typing import List
+from __future__ import annotations
 
 from app.core.config.settings import LogStorageSettings, settings
 from app.infrastructure.clients.logger import GraylogHandler, graylog_handler
@@ -57,13 +57,13 @@ class LoggerManager:
     class SafeFormatter(Formatter):
         """Гарантирует наличие обязательных полей в записях логов."""
 
-        def __init__(self, fmt: str, required_fields: List[str]):
+        def __init__(self, fmt: str, required_fields: list[str]):
             """
             Инициализирует форматтер с обязательными полями.
 
             Аргументы:
                 fmt (str): Строка формата лога
-                required_fields (List[str]): Обязательные поля для каждой записи
+                required_fields (list[str]): Обязательные поля для каждой записи
             """
             super().__init__(fmt)
             self.required_fields = required_fields
@@ -109,7 +109,7 @@ class LoggerManager:
 
         self.log_queue = Queue()
         self.queue_listener: QueueListener | None = None
-        self.handlers: List[Handler] = []
+        self.handlers: list[Handler] = []
         self.graylog: GraylogHandler = handler
 
         self._setup_components()

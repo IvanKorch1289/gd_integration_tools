@@ -14,20 +14,17 @@ from app.core.config.database import (
     db_connection_settings,
     mongo_connection_settings,
 )
-from app.core.config.external_database import (
+from app.core.config.external_databases import (
     ExternalDatabasesSettings,
     external_databases_settings,
 )
-from app.core.config.outer_api import (
-    AntivirusAPISettings,
-    DadataAPISettings,
-    HttpBaseSettings,
-    SKBAPISettings,
-    antivirus_api_settings,
-    dadata_api_settings,
-    http_base_settings,
-    skb_api_settings,
-)
+from app.core.config.antivirus_api import AntivirusAPISettings, antivirus_api_settings
+from app.core.config.dadata_api import DadataAPISettings, dadata_api_settings
+from app.core.config.http_base import HttpBaseSettings, http_base_settings
+from app.core.config.skb_api import SKBAPISettings, skb_api_settings
+from app.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from app.core.config.express_settings import ExpressSettings, express_settings
+from app.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from app.core.config.security import SecureSettings, secure_settings
 from app.core.config.services import (
     CelerySettings,
@@ -78,6 +75,11 @@ class Settings(BaseSettings):
     celery: CelerySettings = celery_settings
     tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
+
+    # Аналитика / поиск
+    clickhouse: ClickHouseSettings = clickhouse_settings
+    express: ExpressSettings = express_settings
+    elasticsearch: ElasticsearchSettings = elasticsearch_settings
 
     # Хранилища
     storage: FileStorageSettings = fs_settings

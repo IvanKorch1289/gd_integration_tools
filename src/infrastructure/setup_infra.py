@@ -15,8 +15,70 @@ from app.infrastructure.scheduler.scheduler_manager import scheduler_manager
 __all__ = ("starting", "ending")
 
 
+def _get_watcher_manager():
+    """Ленивый импорт WatcherManager для избежания циклических зависимостей."""
+    from app.entrypoints.filewatcher.watcher_manager import watcher_manager
+
+    return watcher_manager
+
+
 OperationCallable = Callable[[], Any | Awaitable[Any]]
 OperationItem = tuple[str, OperationCallable]
+
+
+async def _register_health_checks() -> None:
+    """ARCH-3: Wire HealthAggregator to infrastructure components.
+
+    Regisers ping-based health checks for Redis, DB, S3, SMTP.
+    Aggregator exposes unified /health endpoint for K8s probes.
+    """
+    try:
+        from app.infrastructure.application.health_aggregator import get_health_aggregator
+    except ImportError:
+        return
+
+    aggregator = get_health_aggregator()
+
+    # Redis
+    async def _redis_health() -> dict[str, Any]:
+        import time
+        start = time.monotonic()
+        try:
+            raw = getattr(redis_client, "_raw_client", None) or redis_client
+            await raw.ping()
+            return {"status": "ok", "latency_ms": round((time.monotonic() - start) * 1000, 2)}
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)[:200]}
+
+    # DB main
+    async def _db_health() -> dict[str, Any]:
+        import time
+        from sqlalchemy import text
+        start = time.monotonic()
+        try:
+            async with db_initializer.get_async_engine().connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            return {"status": "ok", "latency_ms": round((time.monotonic() - start) * 1000, 2)}
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)[:200]}
+
+    # S3
+    async def _s3_health() -> dict[str, Any]:
+        import time
+        start = time.monotonic()
+        try:
+            is_ok = await s3_client.check_bucket_exists()
+            return {
+                "status": "ok" if is_ok else "degraded",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+            }
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)[:200]}
+
+    aggregator.register("redis", _redis_health)
+    aggregator.register("database", _db_health)
+    aggregator.register("s3", _s3_health)
+    app_logger.info("Health checks registered: redis, database, s3")
 
 
 starting_operations: list[OperationItem] = [
@@ -29,9 +91,11 @@ starting_operations: list[OperationItem] = [
     ("rate_limiter", init_limiter),
     ("redis_streams", redis_client.create_initial_streams),
     ("scheduler", scheduler_manager.start),
+    ("health_aggregator", _register_health_checks),  # ARCH-3
 ]
 
 ending_operations: list[OperationItem] = [
+    ("file_watchers", lambda: _get_watcher_manager().stop_all()),
     ("scheduler", scheduler_manager.stop),
     ("smtp_pool", smtp_client.close_pool),
     ("s3_client", s3_client.close),

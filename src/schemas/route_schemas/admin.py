@@ -4,6 +4,7 @@ from app.schemas.base import BaseSchema
 
 __all__ = (
     "AdminToggleRouteQuerySchema",
+    "AdminToggleFeatureFlagQuerySchema",
     "AdminCacheKeysQuerySchema",
     "AdminCacheValuePathSchema",
 )
@@ -23,6 +24,15 @@ class AdminToggleRouteQuerySchema(BaseSchema):
     )
     enable: bool = Field(
         description="Флаг состояния маршрута: true - включить, false - выключить."
+    )
+
+
+class AdminToggleFeatureFlagQuerySchema(BaseSchema):
+    """Query-схема для включения/отключения feature-флага."""
+
+    flag_name: str = Field(description="Имя feature-флага.")
+    enable: bool = Field(
+        description="true — включить (маршруты доступны), false — отключить."
     )
 
 

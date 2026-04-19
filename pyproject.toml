@@ -62,6 +62,19 @@ oracledb = "^3.4.2"
 orjson = "^3.11.8"
 diskcache = "^5.6.3"
 watchdog = "^6.0.0"
+strawberry-graphql = {extras = ["fastapi"], version = ">=0.262.0"}
+jmespath = "^1.0.1"
+beautifulsoup4 = "^4.12.3"
+lxml = "^5.3.0"
+langchain-core = {version = ">=0.3.0", optional = true}
+langchain-community = {version = ">=0.3.0", optional = true}
+langgraph = {version = ">=0.3.0", optional = true}
+langfuse = {version = ">=2.0.0", optional = true}
+fastmcp = {version = ">=2.0.0", optional = true}
+
+[tool.poetry.extras]
+ai = ["langchain-core", "langchain-community", "langgraph", "langfuse"]
+mcp = ["fastmcp"]
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.20.1"

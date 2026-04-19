@@ -30,27 +30,41 @@ def setup_middlewares(app: FastAPI) -> None:
     from starlette_exporter import PrometheusMiddleware
 
     from app.core.config.settings import settings
-    from app.entrypoints.api.middlewares.admin_ip import IPRestrictionMiddleware
-    from app.entrypoints.api.middlewares.api_key import APIKeyMiddleware
-    from app.entrypoints.api.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from app.entrypoints.api.middlewares.circuit_breaker import CircuitBreakerMiddleware
-    from app.entrypoints.api.middlewares.exception_handler import (
+    from app.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
+    from app.entrypoints.middlewares.api_key import APIKeyMiddleware
+    from app.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
+    from app.entrypoints.middlewares.circuit_breaker import CircuitBreakerMiddleware
+    from app.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
-    from app.entrypoints.api.middlewares.request_id import RequestIDMiddleware
-    from app.entrypoints.api.middlewares.request_log import (
+    from app.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from app.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
+    from app.entrypoints.middlewares.data_masking import DataMaskingMiddleware
+    from app.entrypoints.middlewares.request_id import RequestIDMiddleware
+    from app.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
     )
-    from app.entrypoints.api.middlewares.timeout import TimeoutMiddleware
+    from app.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
+    from app.entrypoints.middlewares.timeout import TimeoutMiddleware
 
-    # Порядок middleware соответствует последовательности обработки запроса
+    # Порядок оптимизирован для high-load:
+    # 1. Дешёвые проверки + early exit (отсекаем до обработки)
+    # 2. Управление запросом (ID, timeout)
+    # 3. Бизнес-middleware (кэш, маскировка)
+    # 4. Метрики (измеряют реальную работу, а не overhead)
     middleware_chain = [
-        # Системные middleware (безопасность и метрики)
-        (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
+        # Слой 1: Early exit — отклоняем невалидные запросы мгновенно
+        (ExceptionHandlerMiddleware, {}),
         (TrustedHostMiddleware, {"allowed_hosts": settings.secure.allowed_hosts}),
+        (BlockedRoutesMiddleware, {}),
         (IPRestrictionMiddleware, {}),
         (APIKeyMiddleware, {}),
-        (BlockedRoutesMiddleware, {}),
+        # Слой 2: Управление запросом
+        (RequestIDMiddleware, {}),
+        (TimeoutMiddleware, {}),
+        (CircuitBreakerMiddleware, {}),
+        # Слой 3: Обработка тела (только для прошедших аутентификацию)
+        (ResponseCacheMiddleware, {"max_age": 60}),
         (
             GZipMiddleware,
             {
@@ -58,14 +72,12 @@ def setup_middlewares(app: FastAPI) -> None:
                 "compresslevel": settings.app.gzip_compresslevel,
             },
         ),
-        # Middleware управления запросами
-        (RequestIDMiddleware, {}),
-        (TimeoutMiddleware, {}),
-        # Middleware логирования
+        (DataMaskingMiddleware, {}),
+        # Слой 4: Логирование и метрики (последними — измеряют всё)
+        (AuditLogMiddleware, {}),
+        (AuditReplayMiddleware, {"sample_rate": 1.0}),  # ARCH-4: wire audit_replay
         (InnerRequestLoggingMiddleware, {}),
-        # Middleware обработки ошибок
-        (CircuitBreakerMiddleware, {}),
-        (ExceptionHandlerMiddleware, {}),
+        (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
     ]
 
     try:

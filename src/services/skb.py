@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urljoin
 from uuid import UUID
 
@@ -29,7 +29,7 @@ class APISKBService:
         endpoint = self.endpoints.get(endpoint_key, "")
         return urljoin(self.base_url, endpoint)
 
-    async def get_request_kinds(self) -> Dict[str, Any]:
+    async def get_request_kinds(self) -> dict[str, Any]:
         """Получить справочник видов запросов из СКБ-Техно."""
         try:
             url = None
@@ -57,7 +57,7 @@ class APISKBService:
         except Exception as exc:
             raise ServiceError from exc
 
-    async def add_request(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def add_request(self, data: dict[str, Any]) -> dict[str, Any]:
         """Создать запрос на получение данных по залогу в СКБ-Техно."""
         try:
             url = self._get_url("CREATE_REQUEST")
@@ -77,7 +77,7 @@ class APISKBService:
 
     async def get_response_by_order(
         self, order_uuid: UUID, response_type_str: str | None = None
-    ) -> Any | Dict[str, Any]:
+    ) -> Any | dict[str, Any]:
         """Получить результат по залогу из СКБ-Техно."""
         try:
             params = {**self.params, "Type": response_type_str}
@@ -103,7 +103,7 @@ class APISKBService:
 
     async def get_orders_list(
         self, take: int | None = None, skip: int | None = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Получить список заказов документов по залогу из СКБ-Техно."""
         try:
             params = {**self.params}
@@ -129,7 +129,7 @@ class APISKBService:
 
     async def get_objects_by_address(
         self, query: str, comment: str | None = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Проверка-поиск объектов недвижимости по адресу."""
         try:
             params: dict[str, Any] = {**self.params, "query": query}

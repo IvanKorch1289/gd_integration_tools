@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Sequence, Type
+from typing import Any, Sequence, Type
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Params
@@ -49,13 +49,13 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def add(self, session: AsyncSession, data: Dict[str, Any]) -> ConcreteTable:
+    async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
         """Добавить новый объект в таблицу."""
         raise NotImplementedError
 
     @abstractmethod
     async def update(
-        self, session: AsyncSession, key: str, value: Any, data: Dict[str, Any]
+        self, session: AsyncSession, key: str, value: Any, data: dict[str, Any]
     ) -> ConcreteTable:
         """Обновить объект в таблице."""
         raise NotImplementedError
@@ -68,7 +68,7 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
     @abstractmethod
     async def get_all_versions(
         self, session: AsyncSession, object_id: int
-    ) -> List[ConcreteTable]:
+    ) -> list[ConcreteTable]:
         """Получить все версии объекта по его id."""
         raise NotImplementedError
 
@@ -111,7 +111,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         async def _prepare_and_save_object(
             self,
             session: AsyncSession,
-            data: List[Dict[str, Any]],
+            data: list[dict[str, Any]],
             existing_object: ConcreteTable | None = None,  # type: ignore
             ignore_none: bool = True,
             load_into_memory: bool = True,
@@ -142,7 +142,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             session: AsyncSession,
             query_or_object: Select | ConcreteTable,  # type: ignore
             is_return_list: bool = False,
-        ) -> ConcreteTable | None | List[ConcreteTable]:  # type: ignore
+        ) -> ConcreteTable | None | list[ConcreteTable]:  # type: ignore
             """
             Выполняет запрос или подгружает связи для объекта.
 
@@ -157,7 +157,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
                 if is_return_list:
                     # Возвращаем список объектов
-                    objects: List[ConcreteTable] = (  # type: ignore
+                    objects: list[ConcreteTable] = (  # type: ignore
                         result.scalars().unique().all()
                     )
                     return objects if objects else []
@@ -257,7 +257,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         pagination: Params | None = None,
         by: str | None = "id",
         order: str = "asc",
-    ) -> ConcreteTable | List[ConcreteTable] | None:
+    ) -> ConcreteTable | list[ConcreteTable] | None:
         """
         Получить объект по ключу и значению или по фильтру.
 
@@ -347,7 +347,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         )
 
     @main_session_manager.connection()
-    async def add(self, session: AsyncSession, data: Dict[str, Any]) -> ConcreteTable:
+    async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
         """
         Добавить новый объект в таблицу.
 
@@ -363,7 +363,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         session: AsyncSession,
         key: str,
         value: Any,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         ignore_none: bool = True,  # По умолчанию игнорируем пустые значения
         load_into_memory: bool = False,  # По умолчанию объект загружается в память. False - если не требуется выводить измененные данные
     ) -> ConcreteTable:
@@ -421,7 +421,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     @main_session_manager.connection(commit=False)
     async def get_latest_version(
         self, session: AsyncSession, object_id: int
-    ) -> Dict[str, Any] | None:
+    ) -> dict[str, Any] | None:
         """
         Получить последнюю версию объекта.
         """
@@ -433,7 +433,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     @main_session_manager.connection()
     async def restore_to_version(
         self, session: AsyncSession, object_id: int, transaction_id: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Восстановить объект до указанной версии и вернуть информацию о транзакции.
 

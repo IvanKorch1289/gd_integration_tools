@@ -32,10 +32,9 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry install --only main --no-root --no-ansi && \
     poetry cache clear pypi --all
 
-COPY app ./app
+COPY src ./app
 COPY alembic.ini ./
 COPY config.yml ./
-COPY .env ./
 COPY scripts/manage.sh ./scripts/manage.sh
 
 RUN chmod +x ./scripts/manage.sh
@@ -66,7 +65,6 @@ COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
 COPY --from=builder --chown=appuser:appuser /app/app ./app
 COPY --from=builder --chown=appuser:appuser /app/alembic.ini ./alembic.ini
 COPY --from=builder --chown=appuser:appuser /app/config.yml ./config.yml
-COPY --from=builder --chown=appuser:appuser /app/.env ./.env
 COPY --from=builder --chown=appuser:appuser /app/scripts/manage.sh ./scripts/manage.sh
 
 RUN chmod 755 ./scripts/manage.sh && \

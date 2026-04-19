@@ -58,7 +58,7 @@ class Utilities:
                     return decoded_bytes.decode("utf-8")
                 except UnicodeDecodeError:
                     return decoded_bytes
-            except BinasciiError, ValueError:
+            except (BinasciiError, ValueError):
                 return data
 
         if isinstance(data, dict):

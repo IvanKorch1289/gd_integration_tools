@@ -1,6 +1,18 @@
+from app.core.config.runtime_state import disabled_feature_flags
+from app.dsl.commands.action_registry import (
+    ActionHandlerRegistry,
+    ActionHandlerSpec,
+    action_handler_registry,
+)
 from app.dsl.engine.pipeline import Pipeline
 
-__all__ = ("RouteRegistry", "route_registry")
+__all__ = (
+    "RouteRegistry",
+    "route_registry",
+    "ActionHandlerRegistry",
+    "ActionHandlerSpec",
+    "action_handler_registry",
+)
 
 
 class RouteRegistry:
@@ -77,6 +89,70 @@ class RouteRegistry:
             tuple[str, ...]: Отсортированный список route_id.
         """
         return tuple(sorted(self._routes.keys()))
+
+    def list_enabled_routes(self) -> tuple[str, ...]:
+        """
+        Возвращает маршруты, доступные для выполнения.
+
+        Исключает маршруты, чей feature_flag находится
+        в ``disabled_feature_flags``.
+
+        Returns:
+            tuple[str, ...]: Отсортированный список route_id.
+        """
+        return tuple(
+            sorted(
+                rid
+                for rid, pipeline in self._routes.items()
+                if pipeline.feature_flag is None
+                or pipeline.feature_flag not in disabled_feature_flags
+            )
+        )
+
+    def list_disabled_routes(self) -> tuple[str, ...]:
+        """
+        Возвращает маршруты, заблокированные feature-флагом.
+
+        Returns:
+            tuple[str, ...]: Отсортированный список route_id.
+        """
+        return tuple(
+            sorted(
+                rid
+                for rid, pipeline in self._routes.items()
+                if pipeline.feature_flag is not None
+                and pipeline.feature_flag in disabled_feature_flags
+            )
+        )
+
+    def get_route_feature_flags(self) -> dict[str, str]:
+        """
+        Возвращает маппинг route_id → feature_flag для всех
+        маршрутов, защищённых флагами.
+
+        Returns:
+            dict[str, str]: {route_id: feature_flag_name}.
+        """
+        return {
+            rid: pipeline.feature_flag
+            for rid, pipeline in sorted(self._routes.items())
+            if pipeline.feature_flag is not None
+        }
+
+    @staticmethod
+    def toggle_feature_flag(flag_name: str, *, enable: bool) -> None:
+        """
+        Включает или отключает feature-флаг.
+
+        Args:
+            flag_name: Имя feature-флага.
+            enable: ``True`` — маршруты с этим флагом доступны;
+                ``False`` — заблокированы.
+        """
+        if enable:
+            disabled_feature_flags.discard(flag_name)
+        else:
+            disabled_feature_flags.add(flag_name)
 
     def clear(self) -> None:
         """

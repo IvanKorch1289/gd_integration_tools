@@ -1,85 +1,153 @@
+"""gRPC-сервер с универсальным dispatch через ActionHandlerRegistry.
+
+Все servicer-классы делегируют вызовы через единый _dispatch,
+обеспечивая консистентность с другими протоколами.
+"""
+
+import orjson
+from typing import Any
+
 from app.core.config.settings import settings
-from app.entrypoints.grpc.protobuf.orders_pb2 import OrderResponse  # type: ignore
+from app.dsl.commands.registry import action_handler_registry
+from app.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
+    DeleteResponse as OrderDeleteResponse,
+    OrderDetailResponse,
+    OrderResponse,
+)
 from app.entrypoints.grpc.protobuf.orders_pb2_grpc import (
     OrderServiceServicer,
     add_OrderServiceServicer_to_server,
 )
 from app.infrastructure.external_apis.logging_service import grpc_logger
-from app.services.orders import get_order_service
+from app.schemas.invocation import ActionCommandSchema
 
 
-class OrderGRPCServicer(OrderServiceServicer):
-    """gRPC servicer handling order operations"""
+class BaseGRPCServicer:
+    """Базовый класс для gRPC servicer с dispatch через ActionHandlerRegistry."""
 
-    def __init__(self):
-        self.order_service = get_order_service()
+    def __init__(self) -> None:
         self.logger = grpc_logger
 
-        self.logger.info("Order service initialized")
+    async def _dispatch(self, action: str, payload: dict[str, Any] | None = None) -> Any:
+        """Диспетчеризует action через ActionHandlerRegistry."""
+        command = ActionCommandSchema(
+            action=action,
+            payload=payload or {},
+            meta={"source": "grpc"},
+        )
+        return await action_handler_registry.dispatch(command)
+
+    def _serialize(self, result: Any) -> str:
+        """Сериализует результат в JSON-строку."""
+        if result is None:
+            return "{}"
+        if hasattr(result, "model_dump"):
+            return orjson.dumps(result.model_dump(mode="json")).decode()
+        if isinstance(result, (dict, list)):
+            return orjson.dumps(result).decode()
+        return str(result)
+
+
+class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
+    """gRPC servicer для Orders."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.logger.info("OrderGRPCServicer инициализирован")
 
     async def CreateOrder(self, request, context):
-        """Create order implementation for gRPC endpoint"""
         try:
-            self.logger.info(f"Creating order for ID: {request.order_id}")
-
-            result = await self.order_service.create_skb_order(
-                order_id=request.order_id
+            result = await self._dispatch(
+                "orders.create_skb_order",
+                {"order_id": request.order_id},
             )
-
-            # Добавлена проверка на None
             if not result:
-                self.logger.warning(
-                    f"Order creation returned empty result for ID: {request.order_id}"
-                )
-                return OrderResponse(error="Failed to create order: empty result")
+                return OrderResponse(error="Не удалось создать заказ")
 
             return OrderResponse(
                 order_id=result["instance"]["id"],
                 skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
-                error=(
-                    ""
-                    if result["response"]["status_code"] == 200
-                    else str(result["response"]["status_code"])
-                ),
+                error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
             )
         except Exception as exc:
-            self.logger.error(f"Order creation failed: {str(exc)}", exc_info=True)
+            self.logger.error("CreateOrder ошибка: %s", exc, exc_info=True)
             return OrderResponse(error=str(exc))
 
     async def GetOrderResult(self, request, context):
-        """Get order result implementation for gRPC endpoint"""
         try:
-            self.logger.info(f"Fetching result for order: {request.order_id}")
-
-            result = await self.order_service.get_order_file_and_json_from_skb(
-                order_id=request.order_id
+            result = await self._dispatch(
+                "orders.get_file_and_json",
+                {"order_id": request.order_id},
             )
-
-            # Добавлена проверка на None
             if not result:
-                self.logger.warning(
-                    f"Order result not found for ID: {request.order_id}"
-                )
-                return OrderResponse(error="Order result not found")
+                return OrderResponse(error="Результат не найден")
 
             return OrderResponse(
                 order_id=result["instance"]["id"],
                 skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
-                error=(
-                    ""
-                    if result["response"]["status_code"] == 200
-                    else str(result["response"]["status_code"])
-                ),
+                error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
             )
         except Exception as exc:
-            self.logger.error(f"Result fetch failed: {str(exc)}", exc_info=True)
+            self.logger.error("GetOrderResult ошибка: %s", exc, exc_info=True)
+            return OrderResponse(error=str(exc))
+
+    async def GetOrder(self, request, context):
+        try:
+            result = await self._dispatch(
+                "orders.get",
+                {"key": "id", "value": request.order_id},
+            )
+            if not result:
+                return OrderDetailResponse(error="Заказ не найден")
+
+            return OrderDetailResponse(
+                id=result.id if hasattr(result, "id") else 0,
+                object_uuid=str(getattr(result, "object_uuid", "")),
+                order_kind_id=getattr(result, "order_kind_id", 0) or 0,
+                is_active=getattr(result, "is_active", True),
+                is_send_to_gd=getattr(result, "is_send_to_gd", False),
+                json_data=self._serialize(result),
+            )
+        except Exception as exc:
+            self.logger.error("GetOrder ошибка: %s", exc, exc_info=True)
+            return OrderDetailResponse(error=str(exc))
+
+    async def DeleteOrder(self, request, context):
+        try:
+            await self._dispatch("orders.delete", {"key": "id", "value": request.order_id})
+            return OrderDeleteResponse(success=True)
+        except Exception as exc:
+            self.logger.error("DeleteOrder ошибка: %s", exc, exc_info=True)
+            return OrderDeleteResponse(success=False, error=str(exc))
+
+    async def CreateSKBOrder(self, request, context):
+        return await self.CreateOrder(request, context)
+
+    async def GetFileAndJson(self, request, context):
+        return await self.GetOrderResult(request, context)
+
+    async def SendOrderData(self, request, context):
+        try:
+            result = await self._dispatch(
+                "orders.send_order_data",
+                {"order_id": request.order_id},
+            )
+            if not result:
+                return OrderResponse(error="Не удалось отправить данные")
+            return OrderResponse(
+                order_id=request.order_id,
+                status="sent",
+                json_data=self._serialize(result),
+            )
+        except Exception as exc:
+            self.logger.error("SendOrderData ошибка: %s", exc, exc_info=True)
             return OrderResponse(error=str(exc))
 
 
 async def serve():
-    """Start gRPC server with Unix domain socket"""
+    """Запуск gRPC-сервера с регистрацией всех servicer."""
     from concurrent import futures
     from pathlib import Path
 
@@ -87,7 +155,7 @@ async def serve():
 
     Path(settings.grpc.socket_path).unlink(missing_ok=True)
 
-    server = server(
+    grpc_server = server(
         futures.ThreadPoolExecutor(max_workers=settings.grpc.max_workers),
         options=[
             ("grpc.so_reuseport", 1),
@@ -96,19 +164,20 @@ async def serve():
         ],
     )
 
-    add_OrderServiceServicer_to_server(OrderGRPCServicer(), server)
-    server.add_insecure_port(settings.grpc.socket_uri)
+    add_OrderServiceServicer_to_server(OrderGRPCServicer(), grpc_server)
+    grpc_server.add_insecure_port(settings.grpc.socket_uri)
 
-    await server.start()
-    grpc_logger.info(f"Server started on {settings.grpc.socket_uri}")
+    await grpc_server.start()
+    grpc_logger.info("gRPC-сервер запущен на %s", settings.grpc.socket_uri)
 
     try:
-        await server.wait_for_termination()
+        await grpc_server.wait_for_termination()
     except KeyboardInterrupt:
-        await server.stop(5)
+        grpc_logger.info("Остановка gRPC-сервера...")
+        await grpc_server.stop(5)
 
 
 if __name__ == "__main__":
-    import asyncio
+    from asyncio import run
 
-    asyncio.run(serve())
+    run(serve())

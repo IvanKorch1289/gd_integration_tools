@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -18,10 +19,12 @@ class ExecutionContext:
         action_registry: Реестр action-команд.
         logger: Опциональный logger для трассировки выполнения.
         state: Общий изменяемый словарь для обмена данными между процессорами.
+        route_id: Идентификатор текущего маршрута (для логирования).
     """
 
     action_registry: ActionHandlerRegistry = action_handler_registry
-    logger: Any | None = None
+    logger: logging.Logger | None = None
+    route_id: str = ""
     state: dict[str, Any] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:

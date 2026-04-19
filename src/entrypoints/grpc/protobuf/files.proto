@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package files;
+
+service FileService {
+  rpc GetFile(GetFileRequest) returns (FileResponse) {}
+  rpc DeleteFile(GetFileRequest) returns (DeleteResponse) {}
+}
+
+message GetFileRequest {
+  int32 file_id = 1;
+}
+
+message FileResponse {
+  int32 id = 1;
+  string name = 2;
+  string object_uuid = 3;
+  string error = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string error = 2;
+}

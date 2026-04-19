@@ -1,0 +1,87 @@
+groups:
+  - name: gd_integration_slo
+    interval: 30s
+    rules:
+      # SLO: pipeline error rate < 5%
+      - alert: HighPipelineErrorRate
+        expr: |
+          100 * sum(rate(dsl_pipeline_execution_total{status="error"}[5m]))
+          / sum(rate(dsl_pipeline_execution_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+        annotations:
+          summary: "DSL pipeline error rate >5% for 5 minutes"
+          description: "Current error rate: {{ $value | humanizePercentage }}. Check route_id labels."
+
+      # SLO: P95 latency < 2000ms
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(dsl_processor_duration_seconds_bucket[5m])) by (le, route_id)
+          ) > 2.0
+        for: 10m
+        labels:
+          severity: warning
+          team: integration
+        annotations:
+          summary: "Route {{ $labels.route_id }} P95 latency >2s"
+          description: "Current P95: {{ $value }}s"
+
+      # Circuit breaker has been open too long
+      - alert: CircuitBreakerOpenTooLong
+        expr: dsl_circuit_breaker_state{state="open"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          team: integration
+        annotations:
+          summary: "Circuit breaker {{ $labels.breaker_name }} OPEN for >5m"
+          description: "Downstream service may be down. Investigate."
+
+      # DB pool saturation
+      - alert: DatabasePoolSaturation
+        expr: db_pool_utilization_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+        annotations:
+          summary: "DB pool {{ $labels.db_name }} >80% utilization"
+          description: "Consider increasing pool_size or investigating slow queries."
+
+      # LLM hallucination detection
+      - alert: HighLLMHallucinationScore
+        expr: avg_over_time(llm_judge_hallucination[15m]) > 0.4
+        for: 15m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "LLM hallucination score >0.4 for model {{ $labels.model }}"
+          description: "Avg hallucination: {{ $value }}. Review prompts/model version."
+
+      # CDC lag (polling strategy)
+      - alert: CDCPollingLag
+        expr: time() - cdc_last_check_timestamp > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+        annotations:
+          summary: "CDC polling lagging >5 minutes for {{ $labels.profile }}/{{ $labels.table }}"
+          description: "Check CDC health, DB connectivity, or increase polling interval."
+
+      # Webhook delivery failures
+      - alert: WebhookDeliveryFailures
+        expr: |
+          100 * sum(rate(webhook_delivery_total{status="failed"}[5m]))
+          / sum(rate(webhook_delivery_total[5m])) > 10
+        for: 10m
+        labels:
+          severity: warning
+          team: integration
+        annotations:
+          summary: ">10% webhook delivery failures"
+          description: "Check target endpoints health and network."

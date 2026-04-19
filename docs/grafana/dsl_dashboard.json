@@ -1,0 +1,135 @@
+{
+  "title": "GD Integration Tools — DSL & Infrastructure",
+  "tags": ["gd-integration", "dsl", "slo"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 30,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pipeline Execution Rate (req/s)",
+      "type": "graph",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(dsl_pipeline_execution_total[1m])) by (status)",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Route Latency P50/P95/P99 (ms)",
+      "type": "graph",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(dsl_processor_duration_seconds_bucket[5m])) by (le, route_id))",
+          "legendFormat": "P50 {{route_id}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(dsl_processor_duration_seconds_bucket[5m])) by (le, route_id))",
+          "legendFormat": "P95 {{route_id}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(dsl_processor_duration_seconds_bucket[5m])) by (le, route_id))",
+          "legendFormat": "P99 {{route_id}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Error Rate %",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "100 * sum(rate(dsl_pipeline_execution_total{status=\"error\"}[5m])) / sum(rate(dsl_pipeline_execution_total[5m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "yellow"},
+              {"value": 5, "color": "red"}
+            ]
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Circuit Breakers State",
+      "type": "table",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 6},
+      "targets": [
+        {
+          "expr": "dsl_circuit_breaker_state",
+          "legendFormat": "{{breaker_name}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "DB Pool Utilization",
+      "type": "graph",
+      "gridPos": {"h": 4, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "db_pool_utilization_percent",
+          "legendFormat": "{{db_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent"}
+      }
+    },
+    {
+      "id": 6,
+      "title": "HTTP Client Latency (external calls)",
+      "type": "graph",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 10},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_client_request_duration_seconds_bucket[5m])) by (le, target))",
+          "legendFormat": "P95 {{target}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Active Pipelines by Route",
+      "type": "graph",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 10},
+      "targets": [
+        {
+          "expr": "sum(dsl_pipeline_active) by (route_id)",
+          "legendFormat": "{{route_id}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "LLM Judge Verdicts (hallucination/relevance/toxicity)",
+      "type": "graph",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "avg(llm_judge_hallucination) by (model)",
+          "legendFormat": "hallucination {{model}}"
+        },
+        {
+          "expr": "avg(llm_judge_relevance) by (model)",
+          "legendFormat": "relevance {{model}}"
+        },
+        {
+          "expr": "avg(llm_judge_toxicity) by (model)",
+          "legendFormat": "toxicity {{model}}"
+        }
+      ]
+    }
+  ]
+}

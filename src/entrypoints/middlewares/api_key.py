@@ -1,4 +1,4 @@
-from typing import List, Pattern
+import re
 
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -31,7 +31,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек
-        self.compiled_patterns: List[Pattern] = [
+        self.compiled_patterns: list[re.Pattern] = [
             compile(utilities.convert_pattern(pattern))
             for pattern in settings.secure.routes_without_api_key
         ]
@@ -60,7 +60,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             raise HTTPException(status_code=401, detail="Требуется API-ключ")
 
         # Валидируем API-ключ
-        if api_key != settings.secure.api_key:
+        import secrets as _secrets
+
+        if not _secrets.compare_digest(api_key, settings.secure.api_key):
             raise HTTPException(status_code=401, detail="Неверный API-ключ")
 
         # Передаем запрос дальше по цепочке middleware

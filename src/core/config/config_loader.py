@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Tuple, Type
+from typing import Any, ClassVar
 
 from dotenv import load_dotenv
 from pydantic.fields import FieldInfo
@@ -21,17 +21,17 @@ load_dotenv(consts.ROOT_DIR / ".env")
 class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
     """Abstract base class for filtered settings sources."""
 
-    def __init__(self, settings_cls: Type[BaseSettings]):
+    def __init__(self, settings_cls: type[BaseSettings]):
         super().__init__(settings_cls)
         self.yaml_group = settings_cls.yaml_group  # type: ignore
         self.model_fields = settings_cls.model_fields.keys()
 
     def get_field_value(
         self, field: FieldInfo, field_name: str
-    ) -> Tuple[Any, str, bool]:
+    ) -> tuple[Any, str, bool]:
         return (None, field_name, False)
 
-    def __call__(self) -> Dict[str, Any]:
+    def __call__(self) -> dict[str, Any]:
         try:
             raw_data = self._load_data()
 
@@ -40,7 +40,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
             self._handle_error(exc)
             return {}
 
-    def _filter_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _filter_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """Filter data using model fields."""
         if self.yaml_group:
             group_data = raw_data.get(self.yaml_group, {})
@@ -50,13 +50,17 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         return {k: v for k, v in group_data.items() if k in self.model_fields}
 
     @abstractmethod
-    def _load_data(self) -> Dict[str, Any]:
+    def _load_data(self) -> dict[str, Any]:
         """Load raw data from source."""
         pass
 
     def _handle_error(self, error: Exception):
         """Handle errors during data loading."""
-        print(f"Error in {self.__class__.__name__}: {error}")
+        import logging
+
+        logging.getLogger(__name__).error(
+            "Ошибка в %s: %s", self.__class__.__name__, error
+        )
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
@@ -64,13 +68,13 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
 
     def __init__(
         self,
-        settings_cls: Type[BaseSettings],
+        settings_cls: type[BaseSettings],
         yaml_path: Path = consts.ROOT_DIR / "config.yml",
     ):
         super().__init__(settings_cls)
         self.yaml_path = yaml_path
 
-    def _load_data(self) -> Dict[str, Any]:
+    def _load_data(self) -> dict[str, Any]:
         """Load and parse YAML configuration file."""
         from yaml import safe_load
 
@@ -86,7 +90,7 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
 class VaultConfigSettingsSource(FilteredSettingsSource):
     """Vault config loader with filtering."""
 
-    def _load_data(self) -> Dict[str, Any]:
+    def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
         from os import getenv
 
@@ -132,12 +136,12 @@ class BaseSettingsWithLoader(BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
-        settings_cls: Type[BaseSettings],
+        settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Customize configuration sources and their priority order.
 
         Priority order (highest first):

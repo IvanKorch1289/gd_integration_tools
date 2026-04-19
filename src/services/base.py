@@ -1,14 +1,18 @@
-from typing import Any, Dict, List, Type, cast
+import logging
+from contextlib import asynccontextmanager
+from typing import Any, cast
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
 from app.core.decorators.caching import response_cache
-from app.core.errors import ServiceError
+from app.core.errors import NotFoundError, ServiceError
 from app.infrastructure.db.models.base import BaseModel
 from app.infrastructure.repositories.base import SQLAlchemyRepository
 from app.schemas.base import BaseSchema, PaginatedResult
 from app.utilities.utils import utilities
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("create_service_class", "BaseService", "get_service_for_model")
 
@@ -19,39 +23,57 @@ class BaseService[
     ConcreteRequestSchema: BaseSchema,
     ConcreteVersionSchema: BaseSchema,
 ]:
-    """
-    Базовый сервис для работы с репозиториями и преобразования данных в схемы.
+    """Базовый сервис для работы с репозиториями.
 
-    Атрибуты:
-        repo (Type[ConcreteRepo]): Репозиторий, связанный с сервисом.
-        response_schema (Type[ConcreteResponseSchema]): Схема для преобразования данных.
-        request_schema (Type[ConcreteRequestSchema]): Схема для валидации входных данных.
-        response_schema (Type[ConcreteVersionSchema]): Схема для преобразования данных версий.
+    Предоставляет CRUD-операции, кэширование, версионирование
+    и преобразование моделей в Pydantic-схемы.
+
+    Attrs:
+        repo: Репозиторий, связанный с сервисом.
+        response_schema: Схема для преобразования данных ответа.
+        request_schema: Схема для валидации входных данных.
+        version_schema: Схема для преобразования версий.
     """
+
+    @staticmethod
+    @asynccontextmanager
+    async def _service_error_boundary():
+        """Контекстный менеджер для единообразной обработки ошибок.
+
+        Пробрасывает ``NotFoundError`` без изменений,
+        остальные исключения оборачивает в ``ServiceError``.
+        """
+        try:
+            yield
+        except NotFoundError:
+            raise
+        except ServiceError:
+            raise
+        except Exception as exc:
+            raise ServiceError from exc
 
     class HelperMethods:
-        """
-        Вспомогательные методы для работы.
-        """
+        """Вспомогательные методы для преобразования моделей в схемы."""
 
-        def __init__(self, repo):
+        def __init__(self, repo: Any) -> None:
             self.repo = repo
 
         async def _transfer(
             self,
             instance: Any,
-            response_schema: Type[BaseSchema],
+            response_schema: type[BaseSchema],
             from_attributes: bool = True,
         ) -> BaseSchema | None:
-            """
-            Преобразует объект модели в схему ответа.
+            """Преобразует объект модели в схему ответа.
 
-            :param instance: Объект модели.
-            :param response_schema: Схема ответа, в которую нужно преобразовать объект.
-            :param from_attributes: Флаг для указания преобразования связанных моделей.
-            :return: Схема ответа или None, если объект не передан.
-            """
+            Args:
+                instance: Объект модели.
+                response_schema: Целевая схема ответа.
+                from_attributes: Преобразование связанных моделей.
 
+            Returns:
+                Схема ответа или ``None``.
+            """
             if isinstance(instance, BaseModel) or hasattr(
                 instance.__class__, "version_parent"
             ):
@@ -63,36 +85,46 @@ class BaseService[
             return cast(BaseSchema | None, instance)
 
         async def _transfer_paginated(
-            self, items: List[Any], response_schema: Type[BaseSchema]
-        ) -> List[BaseSchema | None]:
+            self, items: list[Any], response_schema: type[BaseSchema]
+        ) -> list[BaseSchema | None]:
+            """Преобразует список моделей в список схем."""
             return [await self._transfer(item, response_schema) for item in items]
 
         async def _process_and_transfer(
-            self, repo_method: str, response_schema: Type[BaseSchema], *args, **kwargs
+            self, repo_method: str, response_schema: type[BaseSchema], *args: Any, **kwargs: Any
         ) -> Any:
+            """Вызывает метод репозитория и преобразует результат.
+
+            Args:
+                repo_method: Имя метода репозитория.
+                response_schema: Целевая схема ответа.
+                *args: Позиционные аргументы для метода.
+                **kwargs: Именованные аргументы для метода.
+
+            Returns:
+                Результат в виде схемы, списка схем или
+                ``PaginatedResult``.
+
+            Raises:
+                ServiceError: При ошибке репозитория.
+            """
             try:
-                # Получаем результат из репозитория
                 instance = await getattr(self.repo, repo_method)(*args, **kwargs)
 
-                # Обработка пагинированного ответа
                 if isinstance(instance, dict) and "items" in instance:
                     items = await self._transfer_paginated(
                         instance["items"], response_schema
                     )
                     return PaginatedResult(items=items, total=instance["total"])
 
-                # Оригинальная логика
                 if not instance:
                     return []
-                elif isinstance(instance, list):
-                    return (
-                        [
-                            await self._transfer(item, response_schema)
-                            for item in instance
-                        ]
-                        if instance
-                        else []
-                    )
+
+                if isinstance(instance, list):
+                    return [
+                        await self._transfer(item, response_schema)
+                        for item in instance
+                    ]
 
                 return await self._transfer(instance, response_schema)
 
@@ -101,17 +133,18 @@ class BaseService[
 
     def __init__(
         self,
-        repo: Type[ConcreteRepo] = None,
-        response_schema: Type[ConcreteResponseSchema] = None,
-        request_schema: Type[ConcreteRequestSchema] = None,
-        version_schema: Type[ConcreteVersionSchema] = None,
-    ):
-        """
-        Инициализация сервиса.
+        repo: type[ConcreteRepo] | None = None,
+        response_schema: type[ConcreteResponseSchema] | None = None,
+        request_schema: type[ConcreteRequestSchema] | None = None,
+        version_schema: type[ConcreteVersionSchema] | None = None,
+    ) -> None:
+        """Инициализация сервиса.
 
-        :param repo: Репозиторий, связанный с сервисом.
-        :param response_schema: Схема для преобразования данных.
-        :param request_schema: Схема для валидации входных данных.
+        Args:
+            repo: Репозиторий, связанный с сервисом.
+            response_schema: Схема для преобразования данных.
+            request_schema: Схема для валидации входных данных.
+            version_schema: Схема для версий объекта.
         """
         self.repo = repo
         self.response_schema = response_schema
@@ -119,62 +152,91 @@ class BaseService[
         self.version_schema = version_schema
         self.helper = self.HelperMethods(repo)
 
-    async def add(self, data: Dict[str, Any]) -> ConcreteResponseSchema | None:
-        """
-        Добавляет новый объект в репозиторий и возвращает его в виде схемы.
+    async def add(self, data: dict[str, Any]) -> ConcreteResponseSchema | None:
+        """Добавляет объект и инвалидирует кэш.
 
-        :param data: Данные для создания объекта.
-        :return: Схема ответа или None, если произошла ошибка.
+        Args:
+            data: Данные для создания объекта.
+
+        Returns:
+            Схема ответа или ``None``.
         """
-        try:
-            result: (
-                ConcreteResponseSchema | None
-            ) = await self.helper._process_and_transfer(
-                "add", self.response_schema, data=data
+        async with self._service_error_boundary():
+            result: ConcreteResponseSchema | None = (
+                await self.helper._process_and_transfer(
+                    "add", self.response_schema, data=data
+                )
             )
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
             return result
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def add_many(
-        self, data_list: List[Dict[str, Any]]
-    ) -> List[ConcreteResponseSchema | None]:
-        """
-        Добавляет несколько объектов в репозиторий и возвращает их в виде списка схем.
+        self, data_list: list[dict[str, Any]]
+    ) -> list[ConcreteResponseSchema | None]:
+        """Добавляет несколько объектов.
 
-        :param data_list: Список данных для создания объектов.
-        :return: Список схем ответа или None, если произошла ошибка.
-        """
-        result: List[ConcreteResponseSchema | None] = []
+        При ошибке элемент записывается как ``None``, ошибка
+        логируется и сохраняется. После обработки всех элементов,
+        если были ошибки, поднимается ``ServiceError`` с деталями.
 
-        for data in data_list:
+        Args:
+            data_list: Список данных для создания.
+
+        Returns:
+            Список схем ответа (``None`` для ошибочных элементов).
+
+        Raises:
+            ServiceError: Если хотя бы один элемент не был создан.
+        """
+        result: list[ConcreteResponseSchema | None] = []
+        errors: list[dict[str, Any]] = []
+
+        for idx, data in enumerate(data_list):
             try:
-                response: ConcreteResponseSchema | None = await self.add(data=data)
+                response: ConcreteResponseSchema | None = await self.add(
+                    data=data
+                )
                 result.append(response)
-            except Exception:  # noqa: S110
-                pass
+            except Exception as exc:
+                logger.exception(
+                    "Ошибка при добавлении объекта #%d в add_many: %s",
+                    idx,
+                    data,
+                )
+                result.append(None)
+                errors.append({"index": idx, "data": data, "error": str(exc)})
+
+        if errors:
+            from app.core.errors import ServiceError
+
+            raise ServiceError(
+                detail=(
+                    f"add_many: {len(errors)}/{len(data_list)} элементов не создано. "
+                    f"Ошибки: {errors}"
+                )
+            )
 
         return result
 
     async def update(
-        self, key: str, value: int, data: Dict[str, Any]
+        self, key: str, value: int, data: dict[str, Any]
     ) -> ConcreteResponseSchema | None:
-        """
-        Обновляет объект в репозитории и возвращает его в виде схемы.
+        """Обновляет объект в репозитории.
 
-        :param key: Название поля.
-        :param value: Значение поля.
-        :param data: Данные для обновления объекта.
-        :return: Схема ответа или None, если произошла ошибка.
+        Args:
+            key: Название поля.
+            value: Значение поля.
+            data: Данные для обновления.
+
+        Returns:
+            Обновлённая схема ответа или ``None``.
         """
-        try:
-            result = await self.helper._process_and_transfer(
+        async with self._service_error_boundary():
+            return await self.helper._process_and_transfer(
                 "update", self.response_schema, key=key, value=value, data=data
             )
-            return result
-        except Exception as exc:
-            raise ServiceError from exc
 
     @response_cache
     async def get(
@@ -187,19 +249,24 @@ class BaseService[
         order: str = "asc",
     ) -> (
         ConcreteResponseSchema
-        | List[ConcreteResponseSchema]
+        | list[ConcreteResponseSchema]
         | Page[ConcreteResponseSchema]
         | None
     ):
-        """
-        Получает объект по ключу и значению, фильтру или все объекты, если ничего не передано.
+        """Получает объекты по ключу, фильтру или все.
 
-        :param key: Название поля (опционально).
-        :param value: Значение поля (опционально).
-        :param filter: Фильтр для запроса (опционально).
-        :return: Схема ответа, список схем или None, если произошла ошибка.
+        Args:
+            key: Название поля (опционально).
+            value: Значение поля (опционально).
+            filter: Фильтр для запроса (опционально).
+            pagination: Параметры пагинации.
+            by: Поле сортировки.
+            order: Направление сортировки.
+
+        Returns:
+            Схема, список схем, ``Page`` или ``None``.
         """
-        try:
+        async with self._service_error_boundary():
             result = await self.helper._process_and_transfer(
                 "get",
                 self.response_schema,
@@ -216,21 +283,24 @@ class BaseService[
                     items=result.items, total=result.total, params=pagination
                 )
             return result
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def get_or_add(
-        self, key: str = None, value: int = None, data: Dict[str, Any] = None
+        self,
+        key: str | None = None,
+        value: int | None = None,
+        data: dict[str, Any] | None = None,
     ) -> ConcreteResponseSchema | None:
-        """
-        Получает объект по ключу и значению. Если объект не найден, добавляет его.
+        """Получает объект или создаёт, если не найден.
 
-        :param key: Название поля.
-        :param value: Значение поля.
-        :param data: Данные для создания объекта, если он не найден.
-        :return: Схема ответа или None, если произошла ошибка.
+        Args:
+            key: Название поля.
+            value: Значение поля.
+            data: Данные для создания.
+
+        Returns:
+            Схема ответа или ``None``.
         """
-        try:
+        async with self._service_error_boundary():
             instance = None
             if key and value:
                 instance = await self.helper._process_and_transfer(
@@ -242,122 +312,135 @@ class BaseService[
                 )
             return instance
 
-        except Exception as exc:
-            raise ServiceError from exc
-
     @response_cache
     async def get_first_or_last_with_limit(
         self, limit: int = 1, by: str = "id", order: str = "asc"
-    ) -> ConcreteResponseSchema | List[ConcreteResponseSchema] | None:
-        try:
+    ) -> ConcreteResponseSchema | list[ConcreteResponseSchema] | None:
+        """Возвращает первые/последние записи с лимитом."""
+        async with self._service_error_boundary():
             return await self.helper._process_and_transfer(
-                "first_or_last", self.response_schema, limit=limit, by=by, order=order
+                "first_or_last", self.response_schema,
+                limit=limit, by=by, order=order,
             )
-        except Exception as exc:
-            raise ServiceError from exc
 
-    async def delete(self, key: str, value: int) -> str:  # type: ignore
-        """
-        Удаляет объект по ключу и значению.
+    async def delete(self, key: str, value: int) -> None:
+        """Удаляет объект и инвалидирует кэш.
 
-        :param key: Название поля.
-        :param value: Значение поля.
-        :return: Сообщение об успешном удалении или информация об ошибке.
+        Args:
+            key: Название поля.
+            value: Значение поля.
         """
-        try:
+        async with self._service_error_boundary():
             await self.repo.delete(key=key, value=value)  # type: ignore
-            await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
-        except Exception as exc:
-            raise ServiceError from exc
+            await response_cache.invalidate_pattern(
+                pattern=self.__class__.__name__
+            )
 
     @response_cache
     async def get_all_object_versions(
-        self, object_id: int, order: str
-    ) -> List[BaseSchema | None]:
-        """
-        Получает все версии объекта по его id.
+        self, object_id: int, order: str = "asc"
+    ) -> list[BaseSchema | None]:
+        """Получает все версии объекта.
 
-        :param object_id: ID объекта.
-        :return: Список всех версий объекта в виде схем.
+        Args:
+            object_id: ID объекта.
+            order: Направление сортировки.
+
+        Returns:
+            Список версий в виде схем.
         """
-        try:
+        async with self._service_error_boundary():
             versions = await self.repo.get_all_versions(  # type: ignore[attr-defined]
                 object_id=object_id, order=order
             )
 
-            result: List[BaseSchema | None] = []
-
+            result: list[BaseSchema | None] = []
             for version in versions:
                 try:
-                    response: BaseSchema | None = await self.helper._transfer(
+                    response = await self.helper._transfer(
                         version, self.version_schema
                     )
                     result.append(response)
-                except Exception:  # noqa: S110
-                    pass
+                except Exception:
+                    logger.exception(
+                        "Ошибка преобразования версии object_id=%s",
+                        object_id,
+                    )
 
             return result
-        except Exception as exc:
-            raise ServiceError from exc
 
     @response_cache
-    async def get_latest_object_version(self, object_id: int) -> BaseSchema | None:
-        """
-        Получает последнюю версию объекта.
+    async def get_latest_object_version(
+        self, object_id: int
+    ) -> BaseSchema | None:
+        """Получает последнюю версию объекта.
 
-        :param object_id: ID объекта.
-        :return: Последняя версия объекта в виде схемы или None, если объект не найден.
+        Args:
+            object_id: ID объекта.
+
+        Returns:
+            Последняя версия или ``None``.
         """
-        try:
-            version = await self.repo.get_latest_version(object_id=object_id)  # type: ignore
+        async with self._service_error_boundary():
+            version = await self.repo.get_latest_version(  # type: ignore
+                object_id=object_id
+            )
             return await self.helper._transfer(version, self.version_schema)
-        except Exception as exc:
-            raise ServiceError from exc
 
     async def restore_object_to_version(
         self, object_id: int, transaction_id: int
     ) -> BaseSchema | None:
-        """
-        Восстанавливает объект до указанной версии.
+        """Восстанавливает объект до указанной версии.
 
-        :param object_id: ID объекта.
-        :param transaction_id: ID транзакции, до которой нужно восстановить объект.
-        :return: Восстановленный объект в виде схемы или None, если произошла ошибка.
+        Args:
+            object_id: ID объекта.
+            transaction_id: ID транзакции для восстановления.
+
+        Returns:
+            Восстановленный объект или ``None``.
         """
-        try:
+        async with self._service_error_boundary():
             restored_object = await self.repo.restore_to_version(  # type: ignore
                 object_id=object_id, transaction_id=transaction_id
             )
+            return await self.helper._transfer(
+                restored_object, self.response_schema
+            )
 
-            return await self.helper._transfer(restored_object, self.response_schema)
-        except Exception as exc:
-            raise ServiceError from exc
+    async def get_object_changes(
+        self, object_id: int
+    ) -> list[dict[str, Any]]:
+        """Получает список изменений атрибутов объекта.
 
-    async def get_object_changes(self, object_id: int) -> List[Dict[str, Any]]:
+        Args:
+            object_id: ID объекта.
+
+        Returns:
+            Список изменений между версиями.
         """
-        Получает список изменений атрибутов объекта.
-
-        :param object_id: ID объекта.
-        :return: Список изменений атрибутов объекта.
-        """
-        try:
-            versions = await self.get_all_object_versions(object_id=object_id)
+        async with self._service_error_boundary():
+            versions = await self.get_all_object_versions(
+                object_id=object_id
+            )
             if not versions:
                 return []
 
             versions_dict = [
-                (version.model_dump() if isinstance(version, BaseSchema) else version)
+                (
+                    version.model_dump()
+                    if isinstance(version, BaseSchema)
+                    else version
+                )
                 for version in versions
             ]
 
-            changes = []
+            changes: list[dict[str, Any]] = []
+            excluded_fields = {"transaction_id", "operation_type"}
+
             for i in range(1, len(versions_dict)):
                 prev_version = versions_dict[i - 1]
                 current_version = versions_dict[i]
-                transaction_id = current_version.get("transaction_id")
-                operation_type = current_version.get("operation_type")
 
-                excluded_fields = {"transaction_id", "operation_type"}
                 diff = {
                     attr: {
                         "old": prev_version.get(attr),
@@ -371,40 +454,51 @@ class BaseService[
                 if diff:
                     changes.append(
                         {
-                            "transaction_id": transaction_id,
-                            "operation_type": operation_type,
+                            "transaction_id": current_version.get(
+                                "transaction_id"
+                            ),
+                            "operation_type": current_version.get(
+                                "operation_type"
+                            ),
                             "changes": diff,
                         }
                     )
 
             return changes
-        except Exception as exc:
-            raise ServiceError from exc
 
 
-async def get_service_for_model(model: Type[BaseModel]):
-    """
-    Возвращает сервис для указанной модели.
+async def get_service_for_model(model: type[BaseModel]) -> Any:
+    """Возвращает сервис для указанной модели.
 
-    :param model: Класс модели.
-    :return: Класс сервиса, связанного с моделью.
-    :raises ValueError: Если сервис для модели не найден.
+    Args:
+        model: Класс модели.
+
+    Returns:
+        Класс сервиса.
+
+    Raises:
+        ValueError: Если сервис для модели не найден.
     """
     from importlib import import_module
 
     service_name = f"{model.__name__}Service"
 
     try:
-        service_module = import_module(f"app.services.{model.__tablename__}")
+        service_module = import_module(
+            f"app.services.{model.__tablename__}"
+        )
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
-        raise ValueError(f"Сервис для модели {model.__name__} не найден: {str(exc)}")
+        raise ValueError(
+            f"Сервис для модели {model.__name__} не найден: {exc}"
+        ) from exc
 
 
 def create_service_class(
-    request_schema: BaseSchema,
-    response_schema: BaseSchema,
-    version_schema: BaseSchema,
-    repo: SQLAlchemyRepository,
-) -> BaseService:
+    request_schema: type[BaseSchema],
+    response_schema: type[BaseSchema],
+    version_schema: type[BaseSchema],
+    repo: type[SQLAlchemyRepository],
+) -> BaseService:  # type: ignore[type-arg]
+    """Фабрика для создания экземпляра BaseService."""
     return BaseService(repo, response_schema, request_schema, version_schema)

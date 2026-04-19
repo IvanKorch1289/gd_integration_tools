@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -80,6 +80,20 @@ class AppBaseSettings(BaseSettingsWithLoader):
         le=65535,
         description="Порт для интеграции с Prefect Server",
         examples=[4200],
+    )
+
+    langfuse_url: str = Field(
+        default="",
+        title="URL LangFuse",
+        description="URL LangFuse Dashboard для мониторинга LLM-вызовов",
+        examples=["http://localhost:3000"],
+    )
+
+    langgraph_url: str = Field(
+        default="",
+        title="URL LangGraph Studio",
+        description="URL LangGraph Studio для управления AI-агентами",
+        examples=["http://localhost:8123"],
     )
 
     use_ssl: bool = Field(
@@ -248,7 +262,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     # Параметры выполнения
-    executors: Dict[str, Dict[str, Any]] = Field(
+    executors: dict[str, dict[str, Any]] = Field(
         ...,
         title="Исполнители задач",
         description="Конфигурация исполнителей для разных типов задач",

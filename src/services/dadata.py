@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urljoin
 
 from app.core.config.settings import DadataAPISettings, settings
@@ -30,9 +30,9 @@ class APIDADATAService:
         lon: float,
         count_results: int | None = None,
         radius_metres: int | None = None,
-    ) -> Dict[str, Any] | None:
+    ) -> dict[str, Any] | None:
         """Получает адрес по координатам через API Dadata."""
-        payload: Dict[str, Any] = {"lat": lat, "lon": lon}
+        payload: dict[str, Any] = {"lat": lat, "lon": lon}
 
         if radius_metres is not None:
             payload["radius_meters"] = radius_metres

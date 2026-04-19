@@ -5,6 +5,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from app.dsl.adapters.types import ProtocolType
+
 __all__ = ("ExchangeStatus", "Message", "ExchangeMeta", "Exchange")
 
 T = TypeVar("T")
@@ -74,6 +76,8 @@ class ExchangeMeta(BaseModel):
     correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source: str | None = None
+    protocol: ProtocolType | None = None
+    protocol_attrs: dict[str, Any] = Field(default_factory=dict)
 
 
 class Exchange(BaseModel, Generic[T]):
@@ -149,3 +153,35 @@ class Exchange(BaseModel, Generic[T]):
         """
         self.status = ExchangeStatus.failed
         self.error = reason
+
+    def stop(self) -> None:
+        """Прерывает дальнейшую обработку маршрута."""
+        self.set_property("_stopped", True)
+
+    @property
+    def stopped(self) -> bool:
+        """Проверяет, была ли остановлена обработка."""
+        return self.properties.get("_stopped", False)
+
+    def set_error(self, reason: str) -> None:
+        """Устанавливает ошибку без изменения статуса."""
+        self.error = reason
+
+    def clone(self, *, body: Any = None) -> "Exchange[Any]":
+        """Создаёт копию Exchange для параллельной обработки.
+
+        Копирует in_message (с опциональной заменой body),
+        headers, properties и metadata. Новый exchange начинает
+        со статуса processing.
+        """
+        cloned = Exchange(
+            in_message=Message(
+                body=body if body is not None else self.in_message.body,
+                headers=dict(self.in_message.headers),
+            )
+        )
+        cloned.meta.route_id = self.meta.route_id
+        cloned.meta.correlation_id = self.meta.correlation_id
+        cloned.properties = dict(self.properties)
+        cloned.status = ExchangeStatus.processing
+        return cloned

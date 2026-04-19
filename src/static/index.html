@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GD Integration Tools</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>GD Integration Tools</h1>
+            <p class="subtitle">
+                Интеграционная шина для управления данными.
+                Сквозная интеграция всех компонентов инфраструктуры.
+            </p>
+            <span class="version" id="app-version">v0.1.0</span>
+        </header>
+
+        <section class="card-group">
+            <h2>Основные интерфейсы</h2>
+            <div class="cards" id="service-links">
+                <a class="card" href="#" id="link-logs" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">Мониторинг логов</div>
+                    <div class="card-desc">Graylog / Loki</div>
+                </a>
+                <a class="card" href="#" id="link-storage" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">Файловое хранилище</div>
+                    <div class="card-desc">S3 / MinIO</div>
+                </a>
+                <a class="card" href="#" id="link-queue" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">Управление очередями</div>
+                    <div class="card-desc">RabbitMQ Management</div>
+                </a>
+                <a class="card" href="#" id="link-prefect" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">Оркестрация</div>
+                    <div class="card-desc">Prefect UI</div>
+                </a>
+                <a class="card" href="#" id="link-langfuse" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">LLM Observability</div>
+                    <div class="card-desc">LangFuse Dashboard</div>
+                </a>
+                <a class="card" href="#" id="link-langgraph" target="_blank" rel="noopener noreferrer">
+                    <div class="card-title">AI Agents</div>
+                    <div class="card-desc">LangGraph Studio</div>
+                </a>
+            </div>
+        </section>
+
+        <section class="card-group">
+            <h2>Документация API</h2>
+            <div class="cards">
+                <a class="card" href="/docs">
+                    <div class="card-title">REST API</div>
+                    <div class="card-desc">OpenAPI / Swagger UI</div>
+                </a>
+                <a class="card" href="/redoc">
+                    <div class="card-title">ReDoc</div>
+                    <div class="card-desc">Альтернативная документация</div>
+                </a>
+                <a class="card" href="/graphql">
+                    <div class="card-title">GraphQL</div>
+                    <div class="card-desc">GraphiQL Playground</div>
+                </a>
+                <a class="card" href="/asyncapi">
+                    <div class="card-title">AsyncAPI</div>
+                    <div class="card-desc">Streams & Queues</div>
+                </a>
+            </div>
+        </section>
+
+        <section class="card-group">
+            <h2>Протоколы</h2>
+            <div class="cards">
+                <a class="card" href="/grpc/schema">
+                    <div class="card-title">gRPC</div>
+                    <div class="card-desc">Proto Schema</div>
+                </a>
+                <a class="card" href="/docs#/SOAP">
+                    <div class="card-title">SOAP</div>
+                    <div class="card-desc">POST /soap/</div>
+                </a>
+                <a class="card" href="/docs#/WebSocket">
+                    <div class="card-title">WebSocket</div>
+                    <div class="card-desc">ws:// /ws</div>
+                </a>
+                <a class="card" href="/docs#/SSE">
+                    <div class="card-title">SSE</div>
+                    <div class="card-desc">GET /events/stream</div>
+                </a>
+                <a class="card" href="/docs#/Webhooks">
+                    <div class="card-title">Webhooks</div>
+                    <div class="card-desc">Inbound + Outbound</div>
+                </a>
+            </div>
+        </section>
+
+        <div style="display:flex;gap:0.75rem;justify-content:center;margin:1rem 0;">
+            <a href="/static/dashboard/index.html" class="admin-btn">
+                Live Dashboard
+            </a>
+            <a href="/admin" class="admin-btn" target="_blank">
+                Административный портал
+            </a>
+        </div>
+
+        <div class="health-bar">
+            <span class="health-dot" id="health-dot"></span>
+            <span id="health-text">Проверка...</span>
+            <span style="margin-left: auto; font-size: 0.8rem;" id="current-time"></span>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

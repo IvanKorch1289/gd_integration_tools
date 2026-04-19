@@ -78,18 +78,41 @@ async def run_async_migrations() -> None:
     """In this scenario we need to create an Engine
     and associate a connection with the context.
 
+    Multi-instance safety: uses Redis distributed lock to ensure
+    only ONE instance runs migrations at a time. Other instances
+    wait (up to 5 min) for the lock and skip migration if already applied.
     """
+    # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
+    try:
+        from app.core.utils.redis_lock import distributed_lock
+        lock_ctx = distributed_lock(
+            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0,
+        )
+    except ImportError:
+        import contextlib
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+        @contextlib.asynccontextmanager
+        async def lock_ctx():  # type: ignore[no-redef]
+            yield True
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+    async with lock_ctx as acquired:
+        if not acquired:
+            import logging
+            logging.getLogger("alembic").warning(
+                "Could not acquire migration lock — another instance is running migrations"
+            )
+            return
 
-    await connectable.dispose()
+        connectable = async_engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+
+        await connectable.dispose()
 
 
 def run_migrations_online() -> None:

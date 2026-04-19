@@ -1,79 +1,104 @@
-from datetime import datetime, timedelta
-from typing import Type
+"""Circuit Breaker — единый адаптер поверх core.interfaces.CircuitBreaker.
+
+Предоставляет совместимый API для http.py и smtp.py
+(async check_state + record_failure/success), делегируя
+state machine в interfaces.CircuitBreaker.
+
+Использование::
+
+    cb = get_circuit_breaker(reset_timeout=30)
+    await cb.check_state(max_failures=5, exception_class=ConnectionError)
+    cb.record_success()
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from app.core.interfaces import (
+    CircuitBreaker as _CircuitBreakerImpl,
+    CircuitBreakerConfig,
+)
 
 __all__ = ("CircuitBreaker", "get_circuit_breaker")
 
 
 class CircuitBreaker:
-    """Универсальная реализация Circuit Breaker с поддержкой разных типов ошибок."""
+    """Adapter: async check_state API поверх interfaces.CircuitBreaker.
 
-    def __init__(self):
-        self.state: str = "CLOSED"
-        self.failure_count: int = 0
-        self.last_failure_time: datetime | None = None
+    http.py и smtp.py вызывают:
+      - await cb.check_state(max_failures=..., exception_class=...)
+      - cb.record_failure()
+      - cb.record_success()
 
-    def _is_timeout_expired(self, reset_timeout: int) -> bool:
-        """Проверяет, истекло ли время таймаута для сброса состояния.
+    Внутри делегирует в interfaces.CircuitBreaker с полной
+    state machine (CLOSED → OPEN → HALF_OPEN → CLOSED).
+    """
 
-        Args:
-            reset_timeout: Время в секундах до сброса состояния.
-
-        Returns:
-            bool: True, если таймаут истек, иначе False.
-        """
-        if self.last_failure_time is None:
-            return False
-        return datetime.now() > self.last_failure_time + timedelta(
-            seconds=reset_timeout
+    def __init__(self, *, reset_timeout: int = 30, name: str = "default") -> None:
+        self._impl = _CircuitBreakerImpl(
+            name,
+            CircuitBreakerConfig(recovery_timeout=float(reset_timeout)),
         )
+        self._name = name
 
     async def check_state(
         self,
         max_failures: int,
-        reset_timeout: int,
-        exception_class: Type[Exception] = Exception,
+        reset_timeout: int | None = None,
+        exception_class: type[Exception] = Exception,
         error_message: str = "Circuit Breaker triggered",
     ) -> None:
-        """Проверяет и обновляет состояние Circuit Breaker.
+        """Проверяет состояние и бросает исключение если CB открыт.
 
         Args:
-            max_failures: Максимальное количество ошибок до срабатывания.
-            reset_timeout: Время в секундах до сброса состояния.
-            exception_class: Класс исключения для вызова.
-            error_message: Сообщение об ошибке.
-        """
-        if self.state == "OPEN" and self._is_timeout_expired(reset_timeout):
-            self.state = "HALF-OPEN"
-            self.failure_count = 0
+            max_failures: Порог ошибок для срабатывания.
+            reset_timeout: Таймаут до перехода OPEN → HALF_OPEN.
+            exception_class: Класс исключения при срабатывании.
+            error_message: Сообщение ошибки.
 
-        if self.failure_count >= max_failures:
-            self.state = "OPEN"
-            self.last_failure_time = datetime.now()
+        Raises:
+            exception_class: Если CB открыт и таймаут не истёк.
+        """
+        if reset_timeout is not None:
+            self._impl._config.recovery_timeout = float(reset_timeout)
+        self._impl._config.failure_threshold = max_failures
+
+        if not self._impl.allow_request():
             raise exception_class(error_message)
 
     def record_failure(self) -> None:
         """Фиксирует неудачный запрос."""
-        self.failure_count += 1
+        self._impl.record_failure()
 
     def record_success(self) -> None:
-        """Сбрасывает Circuit Breaker при успешном запросе."""
-        if self.state == "HALF-OPEN":
-            self.state = "CLOSED"
-        self.failure_count = 0
+        """Сбрасывает breaker при успешном запросе."""
+        self._impl.record_success()
 
     async def is_blocked(self) -> bool:
-        """Проверяет состояние без вызова исключения.
+        """Проверяет блокировку без исключения."""
+        return self._impl.state.value == "open"
 
-        Returns:
-            bool: True, если Circuit Breaker в состоянии OPEN и таймаут не истек.
-        """
-        return self.state == "OPEN" and not self._is_timeout_expired(reset_timeout=30)
+    @property
+    def state(self) -> str:
+        """Текущее состояние: CLOSED / OPEN / HALF_OPEN."""
+        return self._impl.state.value.upper()
+
+    @property
+    def failure_count(self) -> int:
+        return self._impl._failure_count
 
 
-def get_circuit_breaker() -> CircuitBreaker:
-    """Создает и возвращает экземпляр Circuit Breaker.
+def get_circuit_breaker(
+    *, reset_timeout: int = 30, name: str = "default",
+) -> CircuitBreaker:
+    """Создаёт экземпляр Circuit Breaker (adapter).
+
+    Args:
+        reset_timeout: Таймаут сброса в секундах.
+        name: Имя breaker для логирования.
 
     Returns:
-        CircuitBreaker: Экземпляр Circuit Breaker.
+        CircuitBreaker adapter.
     """
-    return CircuitBreaker()
+    return CircuitBreaker(reset_timeout=reset_timeout, name=name)

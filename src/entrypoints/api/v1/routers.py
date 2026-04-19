@@ -6,8 +6,10 @@ __all__ = ("get_v1_routers",)
 def get_v1_routers() -> APIRouter:
     from app.entrypoints.api.v1.endpoints.admin import router as admin_router
     from app.entrypoints.api.v1.endpoints.dadata import router as dadata_router
+    from app.entrypoints.api.v1.endpoints.dsl_console import router as dsl_console_router
     from app.entrypoints.api.v1.endpoints.files import router as files_router
     from app.entrypoints.api.v1.endpoints.files import storage_router
+    from app.entrypoints.api.v1.endpoints.health import router as health_router
     from app.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
     from app.entrypoints.api.v1.endpoints.orders import router as orders_router
     from app.entrypoints.api.v1.endpoints.skb import router as skb_router
@@ -15,6 +17,8 @@ def get_v1_routers() -> APIRouter:
     from app.entrypoints.api.v1.endpoints.users import router as users_router
 
     api_router_v1 = APIRouter()
+
+    api_router_v1.include_router(health_router, prefix="/health", tags=["Health"])
 
     api_router_v1.include_router(
         orderkinds_router,
@@ -42,6 +46,9 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(tech_router, prefix="/tech", tags=["Техническое"])
     api_router_v1.include_router(
         admin_router, prefix="/admin", tags=["Администрирование"]
+    )
+    api_router_v1.include_router(
+        dsl_console_router, tags=["DSL Console"]
     )
 
     return api_router_v1

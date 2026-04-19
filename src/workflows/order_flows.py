@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from prefect import flow
 
@@ -28,7 +28,7 @@ async def _send_status_notification(
     order_id: str,
     action: str,
     cad_num: str,
-    result: Dict[str, Any],
+    result: dict[str, Any],
     default_message: str,
     data_path: str,
 ) -> None:
@@ -65,7 +65,7 @@ async def _handle_order_error(
     name="send-notification-workflow",
     description="Отправляет письмо клиенту по указанному адресу электронной почты",
 )
-async def send_notification_workflow(body: Dict[str, Any]) -> None:
+async def send_notification_workflow(body: dict[str, Any]) -> None:
     try:
         await send_notification_task(body)
         print(f"body: {body}")
@@ -77,7 +77,7 @@ async def send_notification_workflow(body: Dict[str, Any]) -> None:
     name="create-skb-order-workflow",
     description="Создает новый заказ в системе SKB для клиента с указанным номером заказа",
 )
-async def create_skb_order_workflow(order_data: Dict[str, Any]) -> Dict[str, Any]:
+async def create_skb_order_workflow(order_data: dict[str, Any]) -> dict[str, Any]:
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
     cad_num = order_data.get("pledge_cadastral_number")
@@ -115,7 +115,7 @@ async def create_skb_order_workflow(order_data: Dict[str, Any]) -> Dict[str, Any
     retry_delay_seconds=settings.tasks.flow_seconds_delay,
     log_prints=True,
 )
-async def get_skb_order_result_workflow(order_data: Dict[str, Any]) -> Dict[str, Any]:
+async def get_skb_order_result_workflow(order_data: dict[str, Any]) -> dict[str, Any]:
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
     cad_num = order_data.get("pledge_cadastral_number")
@@ -144,7 +144,7 @@ async def get_skb_order_result_workflow(order_data: Dict[str, Any]) -> Dict[str,
     description="Отправляет результат обработки заказа в системе SKB",
     log_prints=True,
 )
-async def send_skb_order_result_workflow(order_data: Dict[str, Any]) -> Dict[str, Any]:
+async def send_skb_order_result_workflow(order_data: dict[str, Any]) -> dict[str, Any]:
     order_id = order_data.get("id", "UNKNOWN")
     email = order_data.get("email_for_answer")
     cad_num = order_data.get("pledge_cadastral_number")
@@ -171,7 +171,7 @@ async def send_skb_order_result_workflow(order_data: Dict[str, Any]) -> Dict[str
     description="Оптимизированный процесс обработки заказов с улучшенной обработкой ошибок",
     log_prints=True,
 )
-async def order_processing_workflow(order_data: Dict[str, Any]) -> Dict[str, Any]:
+async def order_processing_workflow(order_data: dict[str, Any]) -> dict[str, Any]:
     try:
         creating_result = await create_skb_order_workflow(order_data)
         print(f"creating_result: {creating_result}")
@@ -179,8 +179,8 @@ async def order_processing_workflow(order_data: Dict[str, Any]) -> Dict[str, Any
         await managed_pause(delay_seconds=consts.INITIAL_DELAY)
         print(f"unpaused by: {consts.INITIAL_DELAY} seconds")
 
-        gettting_result = await get_skb_order_result_workflow(order_data)
-        print(f"gettting_result: {gettting_result}")
+        getting_result = await get_skb_order_result_workflow(order_data)
+        print(f"getting_result: {getting_result}")
 
         sending_result = await send_skb_order_result_workflow(order_data)
         print(f"sending_result: {sending_result}")

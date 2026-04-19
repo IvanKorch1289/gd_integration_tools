@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config.database import DatabaseConnectionSettings
-from app.core.config.external_database import ExternalDatabaseConnectionSettings
+from app.core.config.external_databases import ExternalDatabaseConnectionSettings
 from app.core.config.settings import settings
 from app.core.enums.database import DatabaseTypeChoices
 from app.core.errors import DatabaseError
@@ -169,7 +169,7 @@ class DatabaseInitializer:
                 "Асинхронный пул соединений инициализирован",
                 extra={"db_name": self.name},
             )
-        except Exception:
+        except (OSError, TimeoutError) as exc:
             self.logger.error(
                 "Ошибка инициализации асинхронного пула соединений",
                 extra={"db_name": self.name},
@@ -200,7 +200,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Синхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except Exception:
+        except (RuntimeError, OSError) as exc:
             self.logger.error(
                 "Ошибка закрытия синхронных соединений",
                 extra={"db_name": self.name},
@@ -216,7 +216,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Асинхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except Exception:
+        except (RuntimeError, OSError) as exc:
             self.logger.error(
                 "Ошибка закрытия асинхронных соединений",
                 extra={"db_name": self.name},

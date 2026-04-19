@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any, AsyncGenerator
 
 from fastapi.responses import StreamingResponse
 
@@ -31,9 +31,9 @@ class S3Service:
         content: bytes,
         original_filename: str,
         content_type: str | None = None,
-        extra_metadata: Dict[str, str] | None = None,
-    ) -> Dict[str, Any]:
-        metadata: Dict[str, str] = {"original-filename": original_filename}
+        extra_metadata: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        metadata: dict[str, str] = {"original-filename": original_filename}
 
         if content_type:
             metadata["content-type"] = content_type
@@ -83,7 +83,7 @@ class S3Service:
             raise FileNotFoundError(f"Файл {key} не найден")
         return content
 
-    async def multi_upload(self, files: Dict[str, bytes]) -> Dict[str, Any]:
+    async def multi_upload(self, files: dict[str, bytes]) -> dict[str, Any]:
         results = {}
         for key, content in files.items():
             try:
@@ -94,12 +94,12 @@ class S3Service:
                 results[key] = str(exc)
         return results
 
-    async def delete_file_object(self, key: str) -> Dict[str, Any]:
+    async def delete_file_object(self, key: str) -> dict[str, Any]:
         result = await self.client.delete_object(key)
         await self._invalidate_key_cache(key)
         return result
 
-    async def create_zip_archive(self, keys: List[str]) -> StreamingResponse:
+    async def create_zip_archive(self, keys: list[str]) -> StreamingResponse:
         from io import BytesIO
         from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -129,11 +129,11 @@ class S3Service:
             raise FileNotFoundError(f"Файл {key} не найден")
         return await utilities.encode_base64(content)
 
-    async def list_files(self, prefix: str = None) -> List[str]:
+    async def list_files(self, prefix: str = None) -> list[str]:
         return await self.client.list_objects(prefix)
 
     @metadata_cache
-    async def get_file_metadata(self, key: str) -> Dict[str, Any]:
+    async def get_file_metadata(self, key: str) -> dict[str, Any]:
         metadata = await self.client.head_object(key)
         if metadata is None:
             raise FileNotFoundError(f"Файл {key} не найден")
