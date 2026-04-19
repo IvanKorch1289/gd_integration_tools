@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
 from typing import Any
+
+import orjson
 
 from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.redis import redis_client
@@ -51,7 +52,7 @@ class WebhookScheduler:
         key = f"{_PREFIX}:{schedule_id}"
         await redis_client.client.set(
             key,
-            json.dumps(task, default=str),
+            orjson.dumps(task, default=str),
             ex=86400 * 7,
         )
 
@@ -76,14 +77,14 @@ class WebhookScheduler:
         for key in keys:
             raw = await redis_client.client.get(key)
             if raw:
-                tasks.append(json.loads(raw))
+                tasks.append(orjson.loads(raw))
         return tasks
 
     async def get(self, schedule_id: str) -> dict[str, Any] | None:
         """Получает информацию о задаче."""
         key = f"{_PREFIX}:{schedule_id}"
         raw = await redis_client.client.get(key)
-        return json.loads(raw) if raw else None
+        return orjson.loads(raw) if raw else None
 
     async def execute_webhook(self, schedule_id: str) -> dict[str, Any]:
         """Выполняет webhook немедленно.

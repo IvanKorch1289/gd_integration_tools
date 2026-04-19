@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import time  # PERF-5: top-level import (hot path — CircuitBreaker state checks)
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -144,8 +145,6 @@ class CircuitBreaker:
     """Lightweight circuit breaker для защиты от каскадных сбоев."""
 
     def __init__(self, name: str, config: CircuitBreakerConfig | None = None) -> None:
-        import time
-
         self.name = name
         self._config = config or CircuitBreakerConfig()
         self._state = CircuitState.CLOSED
@@ -157,7 +156,6 @@ class CircuitBreaker:
     @property
     def state(self) -> CircuitState:
         if self._state == CircuitState.OPEN:
-            import time
             elapsed = time.monotonic() - self._last_failure_time
             if elapsed >= self._config.recovery_timeout:
                 self._state = CircuitState.HALF_OPEN
@@ -175,7 +173,6 @@ class CircuitBreaker:
             self._failure_count = 0
 
     def record_failure(self) -> None:
-        import time
         self._failure_count += 1
         self._last_failure_time = time.monotonic()
         if self._failure_count >= self._config.failure_threshold:
