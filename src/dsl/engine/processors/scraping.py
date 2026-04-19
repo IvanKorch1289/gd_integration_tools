@@ -19,6 +19,34 @@ __all__ = ("ScrapeProcessor", "PaginateProcessor", "ApiProxyProcessor")
 
 _scrape_logger = logging.getLogger("dsl.scraping")
 
+_BLOCKED_IP_PREFIXES = (
+    "127.", "10.", "0.", "192.168.", "169.254.", "::1", "fc00:", "fe80:",
+)
+_BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "metadata.aws"}
+
+
+def _validate_url(url: str) -> None:
+    """Block requests to private networks, localhost, and cloud metadata endpoints."""
+    from urllib.parse import urlparse
+    import ipaddress
+
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+
+    if host in _BLOCKED_HOSTS:
+        raise ValueError(f"Blocked host: {host}")
+
+    for prefix in _BLOCKED_IP_PREFIXES:
+        if host.startswith(prefix):
+            raise ValueError(f"Blocked private IP: {host}")
+
+    try:
+        addr = ipaddress.ip_address(host)
+        if addr.is_private or addr.is_loopback or addr.is_link_local:
+            raise ValueError(f"Blocked private/loopback IP: {host}")
+    except ValueError:
+        pass
+
 
 class ScrapeProcessor(BaseProcessor):
     """Extract structured data from HTML using CSS selectors.
@@ -53,6 +81,12 @@ class ScrapeProcessor(BaseProcessor):
 
         if not url:
             exchange.fail("No URL provided for scraping")
+            return
+
+        try:
+            _validate_url(url)
+        except ValueError as exc:
+            exchange.fail(f"SSRF blocked: {exc}")
             return
 
         try:
@@ -131,6 +165,12 @@ class PaginateProcessor(BaseProcessor):
 
         if not url:
             exchange.fail("No start URL for pagination")
+            return
+
+        try:
+            _validate_url(url)
+        except ValueError as exc:
+            exchange.fail(f"SSRF blocked: {exc}")
             return
 
         try:
@@ -225,6 +265,12 @@ class ApiProxyProcessor(BaseProcessor):
                 pass
 
         url = f"{self._base_url}{path}"
+
+        try:
+            _validate_url(url)
+        except ValueError as exc:
+            exchange.fail(f"SSRF blocked: {exc}")
+            return
 
         proxy_headers: dict[str, str] = {}
         for target_header, source_header in self._headers_mapping.items():

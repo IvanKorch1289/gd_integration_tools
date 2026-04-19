@@ -110,10 +110,28 @@ class DatabaseQueryProcessor(BaseProcessor):
         self._params_from_body = params_from_body
         self._result_property = result_property
 
+    _FORBIDDEN_SQL = {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"}
+
+    @staticmethod
+    def _validate_sql(sql: str) -> None:
+        """Block dangerous SQL: multi-statement, DDL, privilege commands."""
+        stripped = sql.strip().rstrip(";")
+        if ";" in stripped:
+            raise ValueError("Multi-statement SQL is not allowed")
+        first_word = stripped.split()[0].upper() if stripped else ""
+        if first_word in DatabaseQueryProcessor._FORBIDDEN_SQL:
+            raise ValueError(f"SQL command '{first_word}' is not allowed")
+
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from sqlalchemy import text
 
         from app.infrastructure.database.database import get_db_manager
+
+        try:
+            self._validate_sql(self._sql)
+        except ValueError as exc:
+            exchange.fail(f"SQL validation failed: {exc}")
+            return
 
         params = {}
         if self._params_from_body:

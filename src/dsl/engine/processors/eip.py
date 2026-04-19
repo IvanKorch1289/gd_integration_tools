@@ -573,17 +573,24 @@ class AggregatorProcessor(BaseProcessor):
         self._timeout = timeout_seconds
         self._max_buffer = max_buffer_size
         self._buffers: dict[str, list[Any]] = {}
+        self._timestamps: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import time
         key = self._corr_key(exchange)
+        now = time.monotonic()
 
         async with self._lock:
+            self._flush_expired(now)
+
             if len(self._buffers) >= self._MAX_CORRELATION_KEYS:
                 oldest = next(iter(self._buffers))
                 del self._buffers[oldest]
+                self._timestamps.pop(oldest, None)
 
             buf = self._buffers.setdefault(key, [])
+            self._timestamps.setdefault(key, now)
             if len(buf) >= self._max_buffer:
                 buf.pop(0)
             buf.append(exchange.in_message.body)
@@ -591,12 +598,20 @@ class AggregatorProcessor(BaseProcessor):
             if len(buf) >= self._batch_size:
                 aggregated = list(buf)
                 buf.clear()
+                self._timestamps.pop(key, None)
                 exchange.set_property("aggregated", True)
                 exchange.set_out(body=aggregated, headers=dict(exchange.in_message.headers))
             else:
                 exchange.set_property("aggregated", False)
                 exchange.set_property("buffer_size", len(buf))
                 exchange.stop()
+
+    def _flush_expired(self, now: float) -> None:
+        """Remove buffers that exceeded timeout to prevent memory leaks."""
+        expired = [k for k, ts in self._timestamps.items() if now - ts > self._timeout]
+        for k in expired:
+            self._buffers.pop(k, None)
+            self._timestamps.pop(k, None)
 
 
 class RecipientListProcessor(BaseProcessor):
@@ -686,11 +701,13 @@ class LoadBalancerProcessor(BaseProcessor):
         self._weights = weights
         self._sticky_header = sticky_header
         self._rr_index = 0
+        self._lock = asyncio.Lock()
 
-    def _select_target(self, exchange: Exchange[Any]) -> str:
+    async def _select_target(self, exchange: Exchange[Any]) -> str:
         if self._strategy == "round_robin":
-            target = self._targets[self._rr_index % len(self._targets)]
-            self._rr_index += 1
+            async with self._lock:
+                target = self._targets[self._rr_index % len(self._targets)]
+                self._rr_index += 1
             return target
 
         if self._strategy == "random":
@@ -711,7 +728,7 @@ class LoadBalancerProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from app.dsl.engine.processors.base import SubPipelineExecutor
 
-        target = self._select_target(exchange)
+        target = await self._select_target(exchange)
         exchange.set_property("lb_target", target)
 
         result, error = await SubPipelineExecutor.execute_route(
@@ -751,6 +768,7 @@ class CircuitBreakerProcessor(BaseProcessor):
         self._state = "closed"
         self._last_failure_time = 0.0
         self._half_open_calls = 0
+        self._lock = asyncio.Lock()
 
     def _check_state(self) -> str:
         import time
@@ -764,36 +782,37 @@ class CircuitBreakerProcessor(BaseProcessor):
         import time
         from app.dsl.engine.processors.base import run_sub_processors
 
-        state = self._check_state()
+        async with self._lock:
+            state = self._check_state()
 
-        if state == "open":
-            if self._fallback:
-                exchange.set_property("cb_state", "open_fallback")
-                await run_sub_processors(self._fallback, exchange, context)
-                return
-            exchange.fail("Circuit breaker is OPEN")
-            return
-
-        if state == "half_open":
-            self._half_open_calls += 1
-            if self._half_open_calls > self._half_open_max:
-                exchange.fail("Circuit breaker HALF_OPEN: max calls exceeded")
+            if state == "open":
+                if self._fallback:
+                    exchange.set_property("cb_state", "open_fallback")
+                    await run_sub_processors(self._fallback, exchange, context)
+                    return
+                exchange.fail("Circuit breaker is OPEN")
                 return
 
-        saved_status = exchange.status
+            if state == "half_open":
+                self._half_open_calls += 1
+                if self._half_open_calls > self._half_open_max:
+                    exchange.fail("Circuit breaker HALF_OPEN: max calls exceeded")
+                    return
+
         await run_sub_processors(self._processors, exchange, context)
 
-        if exchange.status == ExchangeStatus.failed:
-            self._failure_count += 1
-            self._last_failure_time = time.monotonic()
-            if self._failure_count >= self._threshold:
-                self._state = "open"
-            exchange.set_property("cb_state", self._state)
-        else:
-            if self._state == "half_open":
-                self._state = "closed"
-            self._failure_count = 0
-            exchange.set_property("cb_state", self._state)
+        async with self._lock:
+            if exchange.status == ExchangeStatus.failed:
+                self._failure_count += 1
+                self._last_failure_time = time.monotonic()
+                if self._failure_count >= self._threshold:
+                    self._state = "open"
+                exchange.set_property("cb_state", self._state)
+            else:
+                if self._state == "half_open":
+                    self._state = "closed"
+                self._failure_count = 0
+                exchange.set_property("cb_state", self._state)
 
 
 class ClaimCheckProcessor(BaseProcessor):

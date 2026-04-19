@@ -12,6 +12,8 @@ __all__ = (
     "PromptComposerProcessor", "LLMCallProcessor", "LLMParserProcessor",
     "TokenBudgetProcessor", "VectorSearchProcessor",
     "SanitizePIIProcessor", "RestorePIIProcessor",
+    "LLMFallbackProcessor", "CacheProcessor", "CacheWriteProcessor",
+    "GuardrailsProcessor",
 )
 
 
@@ -61,7 +63,11 @@ class LLMCallProcessor(BaseProcessor):
         try:
             from app.services.ai_agent import get_ai_agent_service
             agent = get_ai_agent_service()
-            result = await agent.chat(message=prompt, provider=self._provider, model=self._model)
+            result = await agent.chat(
+                messages=[{"role": "user", "content": prompt}],
+                provider=self._provider,
+                model=self._model or "default",
+            )
             exchange.in_message.set_body(result)
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
@@ -206,3 +212,170 @@ class RestorePIIProcessor(BaseProcessor):
         for placeholder, original in mapping.items():
             body = body.replace(placeholder, original)
         exchange.in_message.set_body(body)
+        exchange.properties.pop("_pii_mapping", None)
+        exchange.properties.pop("_pii_original", None)
+
+
+class LLMFallbackProcessor(BaseProcessor):
+    """Пробует несколько LLM-провайдеров по цепочке.
+
+    При недоступности primary провайдера автоматически
+    переключается на следующий. Полезно для production-надёжности.
+
+    Usage::
+
+        .call_llm_with_fallback(providers=["perplexity", "huggingface", "open_webui"])
+    """
+
+    def __init__(
+        self, providers: list[str], *,
+        model: str = "default",
+        prompt_property: str = "_composed_prompt",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"llm_fallback({len(providers)})")
+        self._providers = providers
+        self._model = model
+        self._prompt_property = prompt_property
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        prompt = exchange.properties.get(self._prompt_property)
+        if prompt is None:
+            prompt = exchange.in_message.body if isinstance(exchange.in_message.body, str) else str(exchange.in_message.body)
+
+        from app.services.ai_agent import get_ai_agent_service
+        agent = get_ai_agent_service()
+
+        last_error: str | None = None
+        for provider in self._providers:
+            try:
+                result = await agent.chat(
+                    messages=[{"role": "user", "content": prompt}],
+                    provider=provider,
+                    model=self._model,
+                )
+                exchange.in_message.set_body(result)
+                exchange.set_property("llm_provider_used", provider)
+                return
+            except Exception as exc:
+                last_error = f"{provider}: {exc}"
+
+        exchange.fail(f"All LLM providers failed. Last error: {last_error}")
+
+
+class CacheProcessor(BaseProcessor):
+    """Redis-кеш для результатов обработки.
+
+    Проверяет кеш по ключу. При попадании — возвращает из кеша.
+    При промахе — ставит property cached=False для downstream.
+
+    Usage::
+
+        .cache(key_fn=lambda ex: str(ex.in_message.body)[:100], ttl=3600)
+    """
+
+    def __init__(
+        self, key_fn: Callable[[Exchange[Any]], str], *,
+        ttl_seconds: int = 3600,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "cache_read")
+        self._key_fn = key_fn
+        self._ttl = ttl_seconds
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        key = f"dsl:cache:{self._key_fn(exchange)}"
+        exchange.set_property("_cache_key", key)
+        exchange.set_property("_cache_ttl", self._ttl)
+
+        try:
+            from app.infrastructure.clients.redis import redis_client
+            cached = await redis_client.get(key)
+            if cached is not None:
+                exchange.set_out(body=orjson.loads(cached), headers=dict(exchange.in_message.headers))
+                exchange.set_property("cached", True)
+                return
+        except (ConnectionError, TimeoutError, OSError):
+            pass
+
+        exchange.set_property("cached", False)
+
+
+class CacheWriteProcessor(BaseProcessor):
+    """Записывает результат в Redis-кеш после обработки.
+
+    Записывает только если property cached=False (промах).
+    Ставится после вычислительных процессоров.
+
+    Usage::
+
+        .cache_write(key_fn=lambda ex: str(ex.in_message.body)[:100], ttl=3600)
+    """
+
+    def __init__(
+        self, key_fn: Callable[[Exchange[Any]], str], *,
+        ttl_seconds: int = 3600,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "cache_write")
+        self._key_fn = key_fn
+        self._ttl = ttl_seconds
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        if exchange.properties.get("cached", True):
+            return
+
+        key = exchange.properties.get("_cache_key", f"dsl:cache:{self._key_fn(exchange)}")
+        body = exchange.out_message.body if exchange.out_message else exchange.in_message.body
+
+        try:
+            from app.infrastructure.clients.redis import redis_client
+            data = orjson.dumps(body, default=str).decode()
+            await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
+        except (ConnectionError, TimeoutError, OSError):
+            pass
+
+
+class GuardrailsProcessor(BaseProcessor):
+    """Проверяет LLM output на безопасность и соответствие ожиданиям.
+
+    Валидации: max_length, blocklist regex, required dict keys.
+    При нарушении — exchange.fail() с деталями.
+
+    Usage::
+
+        .guardrails(max_length=5000, blocked_patterns=[r"password", r"\\bsecret\\b"])
+    """
+
+    def __init__(
+        self, *,
+        max_length: int = 10000,
+        blocked_patterns: list[str] | None = None,
+        required_fields: list[str] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or "guardrails")
+        self._max_length = max_length
+        self._blocked = blocked_patterns or []
+        self._required = required_fields or []
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        import re
+
+        body = exchange.in_message.body
+        text = body if isinstance(body, str) else str(body)
+
+        if len(text) > self._max_length:
+            exchange.fail(f"Guardrail: output too long ({len(text)} > {self._max_length})")
+            return
+
+        for pattern in self._blocked:
+            if re.search(pattern, text, re.IGNORECASE):
+                exchange.fail(f"Guardrail: blocked pattern detected: {pattern}")
+                return
+
+        if self._required and isinstance(body, dict):
+            missing = [f for f in self._required if f not in body]
+            if missing:
+                exchange.fail(f"Guardrail: missing required fields: {missing}")
+                return

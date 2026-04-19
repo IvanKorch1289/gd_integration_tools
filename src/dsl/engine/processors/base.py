@@ -92,6 +92,28 @@ async def run_sub_processors(
         await proc.process(exchange, context)
 
 
+def collect_route_results(
+    raw_results: list[Any],
+) -> tuple[dict[str, Any], dict[str, str]]:
+    """Collect results from parallel route executions into results/errors dicts.
+
+    Used by ScatterGather, RecipientList, Multicast to avoid code duplication.
+    Each item in raw_results is either an Exception or (route_id, result, error_or_None).
+    """
+    results: dict[str, Any] = {}
+    errors: dict[str, str] = {}
+    for item in raw_results:
+        if isinstance(item, Exception):
+            errors["_exception"] = str(item)
+        else:
+            rid, result, error = item
+            if error:
+                errors[rid] = error
+            else:
+                results[rid] = result
+    return results, errors
+
+
 def handle_processor_error(process_method):
     """Декоратор для process() — ловит ImportError + Exception, записывает в exchange."""
     import functools

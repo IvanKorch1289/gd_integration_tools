@@ -166,3 +166,22 @@ class Exchange(BaseModel, Generic[T]):
     def set_error(self, reason: str) -> None:
         """Устанавливает ошибку без изменения статуса."""
         self.error = reason
+
+    def clone(self, *, body: Any = None) -> "Exchange[Any]":
+        """Создаёт копию Exchange для параллельной обработки.
+
+        Копирует in_message (с опциональной заменой body),
+        headers, properties и metadata. Новый exchange начинает
+        со статуса processing.
+        """
+        cloned = Exchange(
+            in_message=Message(
+                body=body if body is not None else self.in_message.body,
+                headers=dict(self.in_message.headers),
+            )
+        )
+        cloned.meta.route_id = self.meta.route_id
+        cloned.meta.correlation_id = self.meta.correlation_id
+        cloned.properties = dict(self.properties)
+        cloned.status = ExchangeStatus.processing
+        return cloned

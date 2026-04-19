@@ -536,6 +536,98 @@ class RouteBuilder:
 
         return self._add(CallableProcessor(_search, name=f"web_search:{query_field}"))
 
+    # ── AI Extended ──
+
+    def call_llm_with_fallback(self, providers: list[str], *, model: str = "default") -> "RouteBuilder":
+        """LLM с fallback-цепочкой провайдеров."""
+        return self._add_lazy("app.dsl.engine.processors.ai", "LLMFallbackProcessor",
+                              providers=providers, model=model)
+
+    def cache(self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600) -> "RouteBuilder":
+        """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
+        return self._add_lazy("app.dsl.engine.processors.ai", "CacheProcessor",
+                              key_fn=key_fn, ttl_seconds=ttl)
+
+    def cache_write(self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600) -> "RouteBuilder":
+        """Redis-кеш: записывает результат после обработки."""
+        return self._add_lazy("app.dsl.engine.processors.ai", "CacheWriteProcessor",
+                              key_fn=key_fn, ttl_seconds=ttl)
+
+    def guardrails(self, *, max_length: int = 10000, blocked_patterns: list[str] | None = None, required_fields: list[str] | None = None) -> "RouteBuilder":
+        """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
+        return self._add_lazy("app.dsl.engine.processors.ai", "GuardrailsProcessor",
+                              max_length=max_length, blocked_patterns=blocked_patterns, required_fields=required_fields)
+
+    # ── RPA (UiPath-style) ──
+
+    def pdf_read(self, *, extract_tables: bool = False) -> "RouteBuilder":
+        """Извлечь текст и таблицы из PDF."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "PdfReadProcessor", extract_tables=extract_tables)
+
+    def pdf_merge(self) -> "RouteBuilder":
+        """Объединить несколько PDF (body = list[bytes])."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "PdfMergeProcessor")
+
+    def word_read(self) -> "RouteBuilder":
+        """Извлечь текст из .docx."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "WordReadProcessor")
+
+    def word_write(self) -> "RouteBuilder":
+        """Сгенерировать .docx из body."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "WordWriteProcessor")
+
+    def excel_read(self, *, sheet_name: str | None = None) -> "RouteBuilder":
+        """Прочитать Excel → list[dict]."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "ExcelReadProcessor", sheet_name=sheet_name)
+
+    def file_move(self, src: str | None = None, dst: str | None = None, *, mode: str = "copy") -> "RouteBuilder":
+        """Copy/move/rename файлов."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "FileMoveProcessor", src=src, dst=dst, mode=mode)
+
+    def archive(self, *, mode: str = "extract", format: str = "zip") -> "RouteBuilder":
+        """ZIP/TAR архивация/распаковка."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "ArchiveProcessor", mode=mode, format=format)
+
+    def ocr(self, *, lang: str = "eng+rus") -> "RouteBuilder":
+        """OCR — текст с изображений (pytesseract)."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang)
+
+    def image_resize(self, *, width: int | None = None, height: int | None = None, output_format: str = "PNG") -> "RouteBuilder":
+        """Ресайз/конвертация изображений."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "ImageResizeProcessor",
+                              width=width, height=height, output_format=output_format)
+
+    def regex(self, pattern: str, *, action: str = "extract", replacement: str = "") -> "RouteBuilder":
+        """Regex extract/replace/match."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "RegexProcessor",
+                              pattern=pattern, action=action, replacement=replacement)
+
+    def render_template(self, template: str) -> "RouteBuilder":
+        """Jinja2 рендеринг шаблона."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "TemplateRenderProcessor", template=template)
+
+    def hash(self, *, algorithm: str = "sha256") -> "RouteBuilder":
+        """Hash данных (sha256/md5/sha512)."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "HashProcessor", algorithm=algorithm)
+
+    def encrypt(self, key: str) -> "RouteBuilder":
+        """AES шифрование (Fernet)."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "EncryptProcessor", key=key)
+
+    def decrypt(self, key: str) -> "RouteBuilder":
+        """AES расшифровка (Fernet)."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "DecryptProcessor", key=key)
+
+    def shell(self, command: str, *, args: list[str] | None = None, allowed_commands: list[str] | None = None) -> "RouteBuilder":
+        """Shell-команда с whitelist и timeout."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "ShellExecProcessor",
+                              command=command, args=args, allowed_commands=allowed_commands)
+
+    def email(self, to: str, subject: str, body_template: str) -> "RouteBuilder":
+        """Compose + send email через SMTP."""
+        return self._add_lazy("app.dsl.engine.processors.rpa", "EmailComposeProcessor",
+                              to=to, subject=subject, body_template=body_template)
+
     # ── Build ──
 
     def build(self) -> Pipeline:
