@@ -75,20 +75,34 @@ class APIKeyManager:
                 description="Global API key",
             )
 
-        # 2. Проверка per-client ключей в Redis
+        # 2. Проверка per-client ключей в Redis (SCAN + MGET pipeline)
         try:
             from app.infrastructure.clients.redis import redis_client
+            import orjson
 
-            all_clients = await redis_client.list_cache_keys(f"{_KEY_PREFIX}*")
-            keys_list = all_clients.get("keys", [])
+            async def _mget_keys(conn: Any) -> list[dict[str, Any]]:
+                keys: list[str] = []
+                async for k in conn.scan_iter(match=f"{_KEY_PREFIX}*", count=500):
+                    keys.append(k if isinstance(k, str) else k.decode())
+                if not keys:
+                    return []
+                values = await conn.mget(keys)
+                result = []
+                for v in values:
+                    if v is None:
+                        continue
+                    try:
+                        parsed = orjson.loads(v) if isinstance(v, (bytes, str)) else v
+                        if isinstance(parsed, dict):
+                            result.append(parsed)
+                    except Exception:
+                        continue
+                return result
 
+            all_data = await redis_client.execute("cache", _mget_keys)
             now = time.time()
-            for redis_key in keys_list:
-                data = await redis_client.get_cache_value(redis_key)
-                if not data or not isinstance(data.get("value"), dict):
-                    continue
 
-                info = data["value"]
+            for info in all_data:
                 stored_hash = info.get("key_hash", "")
                 prev_hash = info.get("prev_key_hash", "")
 
@@ -101,7 +115,6 @@ class APIKeyManager:
                         is_active=True,
                     )
 
-                # Grace period: старый ключ ещё валиден
                 if (
                     prev_hash == key_hash
                     and info.get("rotated_at", 0) + self._grace_period > now
@@ -254,17 +267,9 @@ class APIKeyManager:
             return []
 
 
-_manager: APIKeyManager | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("api_key_manager", APIKeyManager)
 def get_api_key_manager() -> APIKeyManager:
-    """Возвращает APIKeyManager из app.state (если доступен) или lazy-init fallback."""
-    global _manager
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("api_key_manager")
-    if instance is not None:
-        return instance
-    if _manager is None:
-        _manager = APIKeyManager()
-    return _manager
+    """Возвращает APIKeyManager из app.state или lazy-init fallback."""

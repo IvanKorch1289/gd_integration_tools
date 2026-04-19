@@ -113,17 +113,9 @@ class VaultSecretRefresher:
                 logger.error("Vault refresh callback error: %s", exc)
 
 
-_refresher: VaultSecretRefresher | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("vault_refresher", VaultSecretRefresher)
 def get_vault_refresher() -> VaultSecretRefresher:
     """Возвращает VaultSecretRefresher из app.state или lazy-init fallback."""
-    global _refresher
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("vault_refresher")
-    if instance is not None:
-        return instance
-    if _refresher is None:
-        _refresher = VaultSecretRefresher()
-    return _refresher

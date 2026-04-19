@@ -251,25 +251,20 @@ class ExpressClient:
             return {"status": "error", "message": str(exc)}
 
 
-_express_client: ExpressClient | None = None
+def _create_express_client() -> ExpressClient:
+    from app.core.config.express_settings import express_settings
+
+    return ExpressClient(
+        bot_id=express_settings.bot_id,
+        secret_key=express_settings.secret_key,
+        botx_url=express_settings.botx_url,
+        enabled=express_settings.enabled,
+    )
 
 
+from app.core.di import app_state_singleton
+
+
+@app_state_singleton("express_client", _create_express_client)
 def get_express_client() -> ExpressClient:
     """Возвращает ExpressClient из app.state или lazy-init fallback."""
-    global _express_client
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("express_client")
-    if instance is not None:
-        return instance
-
-    if _express_client is None:
-        from app.core.config.express_settings import express_settings
-
-        _express_client = ExpressClient(
-            bot_id=express_settings.bot_id,
-            secret_key=express_settings.secret_key,
-            botx_url=express_settings.botx_url,
-            enabled=express_settings.enabled,
-        )
-    return _express_client

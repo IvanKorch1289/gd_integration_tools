@@ -12,6 +12,7 @@ from app.dsl.engine.middleware import (
     TimeoutMiddleware,
 )
 from app.dsl.engine.pipeline import Pipeline
+from app.dsl.engine.processors.base import BaseProcessor
 from app.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)
@@ -24,14 +25,7 @@ _default_middleware = MiddlewareChain([
 
 
 class ExecutionEngine:
-    """Исполнитель DSL-маршрутов с MiddlewareChain.
-
-    Middleware обеспечивает:
-    - Per-processor timeout enforcement
-    - Error normalization (единый формат ошибок)
-    - Metrics collection (latency, success/error per processor)
-    - Pipeline validation перед выполнением
-    """
+    """Исполнитель DSL-маршрутов с MiddlewareChain."""
 
     def __init__(
         self,
@@ -40,6 +34,13 @@ class ExecutionEngine:
     ) -> None:
         self._middleware = middleware or _default_middleware
         self._validate = validate_before_execute
+        self._timeout_mw = self._find_timeout_middleware()
+
+    def _find_timeout_middleware(self) -> TimeoutMiddleware | None:
+        for mw in self._middleware._middlewares:
+            if isinstance(mw, TimeoutMiddleware):
+                return mw
+        return None
 
     @staticmethod
     def _check_feature_flag(pipeline: Pipeline) -> None:
@@ -51,6 +52,55 @@ class ExecutionEngine:
                 route_id=pipeline.route_id,
                 feature_flag=pipeline.feature_flag,
             )
+
+    async def _execute_processor(
+        self,
+        processor: BaseProcessor,
+        exchange: Exchange[Any],
+        context: ExecutionContext,
+        route_id: str,
+        tracer: Any,
+    ) -> dict[str, Any]:
+        """Выполняет один процессор, возвращает trace entry."""
+        proc_start = time.monotonic()
+
+        if context.logger is not None:
+            context.logger.debug("Executing '%s' for route '%s'", processor.name, route_id)
+
+        timeout = self._timeout_mw.get_timeout(processor.name) if self._timeout_mw else None
+
+        async with tracer.trace(route_id, processor.name, type(processor).__name__):
+            await self._middleware.execute(
+                processor, exchange, context, timeout=timeout,
+            )
+
+        return {
+            "processor": processor.name,
+            "type": type(processor).__name__,
+            "duration_ms": (time.monotonic() - proc_start) * 1000,
+            "status": "ok",
+        }
+
+    @staticmethod
+    def _finalize(exchange: Exchange[Any], pipeline: Pipeline, total_ms: float) -> None:
+        if exchange.status != ExchangeStatus.failed:
+            if exchange.out_message is None:
+                exchange.complete(
+                    body=exchange.in_message.body,
+                    headers=dict(exchange.in_message.headers),
+                )
+            else:
+                exchange.status = ExchangeStatus.completed
+
+        try:
+            from app.infrastructure.application.slo_tracker import get_slo_tracker
+            get_slo_tracker().record(
+                route_id=pipeline.route_id,
+                latency_ms=total_ms,
+                is_error=exchange.status == ExchangeStatus.failed,
+            )
+        except Exception:
+            pass
 
     async def execute(
         self,
@@ -80,57 +130,25 @@ class ExecutionEngine:
         current_exchange.status = ExchangeStatus.processing
 
         from app.dsl.engine.tracer import get_tracer
-
         tracer = get_tracer()
         trace_log: list[dict[str, Any]] = []
         pipeline_start = time.monotonic()
 
         for processor in pipeline.processors:
-            if current_exchange.status == ExchangeStatus.failed:
+            if current_exchange.status == ExchangeStatus.failed or current_exchange.stopped:
                 break
-            if current_exchange.stopped:
-                break
-
-            proc_start = time.monotonic()
 
             try:
-                if runtime_context.logger is not None:
-                    runtime_context.logger.debug(
-                        "Executing '%s' for route '%s'",
-                        processor.name, pipeline.route_id,
-                    )
-
-                timeout = None
-                for mw in self._middleware._middlewares:
-                    if isinstance(mw, TimeoutMiddleware):
-                        timeout = mw.get_timeout(processor.name)
-                        break
-
-                async with tracer.trace(
-                    pipeline.route_id, processor.name, type(processor).__name__
-                ) as trace_data:
-                    await self._middleware.execute(
-                        processor, current_exchange, runtime_context,
-                        timeout=timeout,
-                    )
-
-                duration_ms = (time.monotonic() - proc_start) * 1000
-                trace_log.append({
-                    "processor": processor.name,
-                    "type": type(processor).__name__,
-                    "duration_ms": duration_ms,
-                    "status": "ok",
-                })
-
+                entry = await self._execute_processor(
+                    processor, current_exchange, runtime_context, pipeline.route_id, tracer,
+                )
+                trace_log.append(entry)
             except Exception as exc:
-                duration_ms = (time.monotonic() - proc_start) * 1000
-
+                duration_ms = (time.monotonic() - pipeline_start) * 1000
                 if runtime_context.logger is not None:
                     runtime_context.logger.exception(
-                        "Processor '%s' failed in route '%s'",
-                        processor.name, pipeline.route_id,
+                        "Processor '%s' failed in route '%s'", processor.name, pipeline.route_id,
                     )
-
                 trace_log.append({
                     "processor": processor.name,
                     "type": type(processor).__name__,
@@ -142,25 +160,5 @@ class ExecutionEngine:
                 break
 
         current_exchange.set_property("_trace", trace_log)
-
-        if current_exchange.status != ExchangeStatus.failed:
-            if current_exchange.out_message is None:
-                current_exchange.complete(
-                    body=current_exchange.in_message.body,
-                    headers=dict(current_exchange.in_message.headers),
-                )
-            else:
-                current_exchange.status = ExchangeStatus.completed
-
-        total_ms = (time.monotonic() - pipeline_start) * 1000
-        try:
-            from app.infrastructure.application.slo_tracker import get_slo_tracker
-            get_slo_tracker().record(
-                route_id=pipeline.route_id,
-                latency_ms=total_ms,
-                is_error=current_exchange.status == ExchangeStatus.failed,
-            )
-        except Exception:
-            pass
-
+        self._finalize(current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000)
         return current_exchange

@@ -108,21 +108,17 @@ class MongoDBClient:
             return False
 
 
-_mongo_client: MongoDBClient | None = None
+def _create_mongo_client() -> MongoDBClient:
+    from app.core.config.settings import settings
+    return MongoDBClient(
+        connection_url=settings.mongo.connection_url,
+        database=settings.mongo.database,
+    )
 
 
+from app.core.di import app_state_singleton
+
+
+@app_state_singleton("mongo_client", _create_mongo_client)
 def get_mongo_client() -> MongoDBClient:
-    global _mongo_client
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("mongo_client")
-    if instance is not None:
-        return instance
-
-    if _mongo_client is None:
-        from app.core.config.settings import settings
-        _mongo_client = MongoDBClient(
-            connection_url=settings.mongo.connection_url,
-            database=settings.mongo.database,
-        )
-    return _mongo_client
+    """Возвращает MongoDBClient из app.state или lazy-init fallback."""

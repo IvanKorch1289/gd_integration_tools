@@ -104,17 +104,9 @@ class PoolMonitor:
         return self._stats_history[-limit:]
 
 
-_monitor: PoolMonitor | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("pool_monitor", PoolMonitor)
 def get_pool_monitor() -> PoolMonitor:
     """Возвращает PoolMonitor из app.state или lazy-init fallback."""
-    global _monitor
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("pool_monitor")
-    if instance is not None:
-        return instance
-    if _monitor is None:
-        _monitor = PoolMonitor()
-    return _monitor

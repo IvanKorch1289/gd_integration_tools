@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 from app.dsl.engine.context import ExecutionContext
 from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from app.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 _cf_logger = logging.getLogger("dsl.control_flow")
 
@@ -52,16 +52,10 @@ class ChoiceProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         for predicate, branch_processors in self._when:
             if predicate(exchange):
-                for proc in branch_processors:
-                    if exchange.status == ExchangeStatus.failed or exchange.stopped:
-                        break
-                    await proc.process(exchange, context)
+                await run_sub_processors(branch_processors, exchange, context)
                 return
 
-        for proc in self._otherwise:
-            if exchange.status == ExchangeStatus.failed or exchange.stopped:
-                break
-            await proc.process(exchange, context)
+        await run_sub_processors(self._otherwise, exchange, context)
 
 
 class TryCatchProcessor(BaseProcessor):
@@ -89,30 +83,20 @@ class TryCatchProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         caught = False
         try:
-            for proc in self._try:
-                if exchange.status == ExchangeStatus.failed or exchange.stopped:
-                    break
-                await proc.process(exchange, context)
+            await run_sub_processors(self._try, exchange, context)
         except Exception as exc:
             caught = True
             exchange.set_property("caught_error", str(exc))
-            # Сброс статуса failed для catch-обработки
             if exchange.status == ExchangeStatus.failed:
                 exchange.status = ExchangeStatus.processing
                 exchange.error = None
-            for proc in self._catch:
-                if exchange.stopped:
-                    break
-                await proc.process(exchange, context)
+            await run_sub_processors(self._catch, exchange, context)
 
         if not caught and exchange.status == ExchangeStatus.failed:
             exchange.set_property("caught_error", exchange.error or "unknown")
             exchange.status = ExchangeStatus.processing
             exchange.error = None
-            for proc in self._catch:
-                if exchange.stopped:
-                    break
-                await proc.process(exchange, context)
+            await run_sub_processors(self._catch, exchange, context)
 
         for proc in self._finally:
             if exchange.stopped:
@@ -215,27 +199,16 @@ class PipelineRefProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.dsl.commands.registry import route_registry
-        from app.dsl.engine.execution_engine import ExecutionEngine
+        from app.dsl.engine.processors.base import SubPipelineExecutor
 
-        sub_pipeline = route_registry.get(self._route_id)
-        engine = ExecutionEngine()
-        sub_exchange = await engine.execute(
-            sub_pipeline,
-            body=exchange.in_message.body,
-            headers=dict(exchange.in_message.headers),
-            context=context,
+        result, error = await SubPipelineExecutor.execute_route(
+            self._route_id, exchange.in_message.body,
+            dict(exchange.in_message.headers), context,
         )
-
-        if sub_exchange.status == ExchangeStatus.failed:
-            exchange.fail(f"Sub-pipeline '{self._route_id}' failed: {sub_exchange.error}")
+        if error:
+            exchange.fail(f"Sub-pipeline '{self._route_id}' failed: {error}")
             return
 
-        result = (
-            sub_exchange.out_message.body
-            if sub_exchange.out_message
-            else sub_exchange.in_message.body
-        )
         exchange.set_property(self._result_property, result)
 
 

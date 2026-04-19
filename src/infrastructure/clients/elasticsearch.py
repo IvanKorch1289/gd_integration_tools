@@ -198,27 +198,25 @@ class ElasticSearchClient:
 _es_client: ElasticSearchClient | None = None
 
 
+def _create_elasticsearch_client() -> ElasticSearchClient:
+    from app.core.config.elasticsearch import elasticsearch_settings
+
+    return ElasticSearchClient(
+        hosts=elasticsearch_settings.hosts,
+        api_key=elasticsearch_settings.api_key,
+        username=elasticsearch_settings.username,
+        password=elasticsearch_settings.password,
+        verify_certs=elasticsearch_settings.verify_certs,
+        ca_certs=elasticsearch_settings.ca_certs,
+        request_timeout=elasticsearch_settings.request_timeout,
+        max_retries=elasticsearch_settings.max_retries,
+        index_prefix=elasticsearch_settings.index_prefix,
+    )
+
+
+from app.core.di import app_state_singleton
+
+
+@app_state_singleton("elasticsearch_client", _create_elasticsearch_client)
 def get_elasticsearch_client() -> ElasticSearchClient:
     """Возвращает ElasticSearchClient из app.state или lazy-init fallback."""
-    global _es_client
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("elasticsearch_client")
-    if instance is not None:
-        return instance
-
-    if _es_client is None:
-        from app.core.config.elasticsearch import elasticsearch_settings
-
-        _es_client = ElasticSearchClient(
-            hosts=elasticsearch_settings.hosts,
-            api_key=elasticsearch_settings.api_key,
-            username=elasticsearch_settings.username,
-            password=elasticsearch_settings.password,
-            verify_certs=elasticsearch_settings.verify_certs,
-            ca_certs=elasticsearch_settings.ca_certs,
-            request_timeout=elasticsearch_settings.request_timeout,
-            max_retries=elasticsearch_settings.max_retries,
-            index_prefix=elasticsearch_settings.index_prefix,
-        )
-    return _es_client

@@ -82,17 +82,9 @@ class ProcessorPluginRegistry:
         return name in self._plugins
 
 
-_registry: ProcessorPluginRegistry | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("plugin_registry", ProcessorPluginRegistry)
 def get_processor_plugin_registry() -> ProcessorPluginRegistry:
     """Возвращает ProcessorPluginRegistry из app.state или lazy-init fallback."""
-    global _registry
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("plugin_registry")
-    if instance is not None:
-        return instance
-    if _registry is None:
-        _registry = ProcessorPluginRegistry()
-    return _registry

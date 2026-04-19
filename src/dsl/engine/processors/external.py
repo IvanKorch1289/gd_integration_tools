@@ -1,8 +1,8 @@
 from typing import Any
 
 from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus
-from app.dsl.engine.processors.base import BaseProcessor
+from app.dsl.engine.exchange import Exchange
+from app.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("MCPToolProcessor", "AgentGraphProcessor", "CDCProcessor")
 
@@ -16,21 +16,13 @@ class MCPToolProcessor(BaseProcessor):
         self.tool_name = tool_name
         self.result_property = result_property
 
+    @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        body = exchange.in_message.body
-        payload = body if isinstance(body, dict) else {}
-        try:
-            from fastmcp import Client
-            async with Client(self.tool_uri) as client:
-                result = await client.call_tool(self.tool_name, arguments=payload)
-                exchange.set_property(self.result_property, result)
-                exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-        except ImportError:
-            exchange.set_error("fastmcp не установлен")
-            exchange.stop()
-        except Exception as exc:
-            exchange.set_error(f"MCP tool error: {exc}")
-            exchange.stop()
+        from fastmcp import Client
+        async with Client(self.tool_uri) as client:
+            result = await client.call_tool(self.tool_name, arguments=exchange.in_message.body if isinstance(exchange.in_message.body, dict) else {})
+            exchange.set_property(self.result_property, result)
+            exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
 
 class AgentGraphProcessor(BaseProcessor):
@@ -41,19 +33,13 @@ class AgentGraphProcessor(BaseProcessor):
         self.graph_name = graph_name
         self.tools = tools
 
+    @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from app.services.ai_graph import build_and_run_agent
         body = exchange.in_message.body
         prompt = body if isinstance(body, str) else str(body)
-        try:
-            from app.services.ai_graph import build_and_run_agent
-            result = await build_and_run_agent(prompt=prompt, tool_actions=self.tools)
-            exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-        except ImportError:
-            exchange.set_error("langgraph не установлен")
-            exchange.stop()
-        except Exception as exc:
-            exchange.set_error(f"Agent graph error: {exc}")
-            exchange.stop()
+        result = await build_and_run_agent(prompt=prompt, tool_actions=self.tools)
+        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
 
 class CDCProcessor(BaseProcessor):
@@ -66,6 +52,7 @@ class CDCProcessor(BaseProcessor):
         self.target_action = target_action
         self._subscribed = False
 
+    @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if not self._subscribed:
             from app.infrastructure.clients.cdc import get_cdc_client

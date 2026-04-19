@@ -244,56 +244,76 @@ class MessageTranslatorProcessor(BaseProcessor):
     def _convert(self, body: Any) -> Any:
         key = f"{self._from}→{self._to}"
 
-        if key == "json→xml" or key == "dict→xml":
+        if key in ("json→xml", "dict→xml"):
             return self._dict_to_xml(body if isinstance(body, dict) else {})
 
-        if key == "xml→json" or key == "xml→dict":
+        if key in ("xml→json", "xml→dict"):
             return self._xml_to_dict(body if isinstance(body, str) else str(body))
 
-        if key == "dict→csv" or key == "json→csv":
+        if key in ("dict→csv", "json→csv"):
             return self._dict_list_to_csv(body if isinstance(body, list) else [body])
 
-        if key == "csv→dict" or key == "csv→json":
+        if key in ("csv→dict", "csv→json"):
             return self._csv_to_dict_list(body if isinstance(body, str) else str(body))
 
         return body
 
     @staticmethod
     def _dict_to_xml(data: dict, root_tag: str = "root") -> str:
-        parts = [f"<{root_tag}>"]
-        for k, v in data.items():
-            parts.append(f"  <{k}>{v}</{k}>")
-        parts.append(f"</{root_tag}>")
-        return "\n".join(parts)
+        try:
+            import xmltodict
+            return xmltodict.unparse({root_tag: data}, pretty=True)
+        except ImportError:
+            parts = [f"<{root_tag}>"]
+            for k, v in data.items():
+                parts.append(f"  <{k}>{v}</{k}>")
+            parts.append(f"</{root_tag}>")
+            return "\n".join(parts)
 
     @staticmethod
-    def _xml_to_dict(xml_str: str) -> dict[str, str]:
-        import re as _re
-        result: dict[str, str] = {}
-        for match in _re.finditer(r"<(\w+)>([^<]*)</\1>", xml_str):
-            result[match.group(1)] = match.group(2)
-        return result
+    def _xml_to_dict(xml_str: str) -> dict[str, Any]:
+        try:
+            import xmltodict
+            parsed = xmltodict.parse(xml_str)
+            if len(parsed) == 1:
+                return dict(next(iter(parsed.values())))
+            return dict(parsed)
+        except ImportError:
+            import re as _re
+            return {m.group(1): m.group(2) for m in _re.finditer(r"<(\w+)>([^<]*)</\1>", xml_str)}
 
     @staticmethod
     def _dict_list_to_csv(data: list[dict]) -> str:
         if not data:
             return ""
-        headers = list(data[0].keys())
-        lines = [",".join(headers)]
-        for row in data:
-            lines.append(",".join(str(row.get(h, "")) for h in headers))
-        return "\n".join(lines)
+        try:
+            import pandas as pd
+            import io
+            df = pd.DataFrame(data)
+            return df.to_csv(index=False)
+        except ImportError:
+            headers = list(data[0].keys())
+            lines = [",".join(headers)]
+            for row in data:
+                lines.append(",".join(str(row.get(h, "")) for h in headers))
+            return "\n".join(lines)
 
     @staticmethod
     def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
-        lines = csv_str.strip().split("\n")
-        if len(lines) < 2:
-            return []
-        headers = [h.strip() for h in lines[0].split(",")]
-        return [
-            dict(zip(headers, [v.strip() for v in line.split(",")]))
-            for line in lines[1:]
-        ]
+        try:
+            import pandas as pd
+            import io
+            df = pd.read_csv(io.StringIO(csv_str))
+            return df.to_dict(orient="records")
+        except ImportError:
+            lines = csv_str.strip().split("\n")
+            if len(lines) < 2:
+                return []
+            headers = [h.strip() for h in lines[0].split(",")]
+            return [
+                dict(zip(headers, [v.strip() for v in line.split(",")]))
+                for line in lines[1:]
+            ]
 
 
 class DynamicRouterProcessor(BaseProcessor):
@@ -314,27 +334,21 @@ class DynamicRouterProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from app.dsl.commands.registry import route_registry
-        from app.dsl.engine.execution_engine import ExecutionEngine
+        from app.dsl.engine.processors.base import SubPipelineExecutor
 
         target_route_id = self._expr(exchange)
         if not route_registry.is_registered(target_route_id):
             exchange.fail(f"Dynamic route '{target_route_id}' not found")
             return
 
-        pipeline = route_registry.get(target_route_id)
-        engine = ExecutionEngine()
-        sub = await engine.execute(
-            pipeline,
-            body=exchange.in_message.body,
-            headers=dict(exchange.in_message.headers),
-            context=context,
+        result, error = await SubPipelineExecutor.execute_route(
+            target_route_id, exchange.in_message.body,
+            dict(exchange.in_message.headers), context,
         )
-
-        if sub.status == ExchangeStatus.failed:
-            exchange.fail(f"Dynamic route '{target_route_id}' failed: {sub.error}")
+        if error:
+            exchange.fail(f"Dynamic route '{target_route_id}' failed: {error}")
             return
 
-        result = sub.out_message.body if sub.out_message else sub.in_message.body
         exchange.set_property("dynamic_route_used", target_route_id)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
@@ -362,17 +376,11 @@ class ScatterGatherProcessor(BaseProcessor):
     async def _call_route(
         self, route_id: str, body: Any, headers: dict, context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
-        from app.dsl.commands.registry import route_registry
-        from app.dsl.engine.execution_engine import ExecutionEngine
+        from app.dsl.engine.processors.base import SubPipelineExecutor
 
-        try:
-            pipeline = route_registry.get(route_id)
-            engine = ExecutionEngine()
-            sub = await engine.execute(pipeline, body=body, headers=dict(headers), context=context)
-            result = sub.out_message.body if sub.out_message else sub.in_message.body
-            return route_id, result, sub.error
-        except Exception as exc:
-            return route_id, None, str(exc)
+        return await SubPipelineExecutor.execute_route_safe(
+            route_id, body, headers, context,
+        )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         tasks = [
@@ -602,17 +610,11 @@ class RecipientListProcessor(BaseProcessor):
     async def _send_to(
         self, route_id: str, body: Any, headers: dict, context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
-        from app.dsl.commands.registry import route_registry
-        from app.dsl.engine.execution_engine import ExecutionEngine
+        from app.dsl.engine.processors.base import SubPipelineExecutor
 
-        try:
-            pipeline = route_registry.get(route_id)
-            engine = ExecutionEngine()
-            sub = await engine.execute(pipeline, body=body, headers=dict(headers), context=context)
-            result = sub.out_message.body if sub.out_message else sub.in_message.body
-            return route_id, result, sub.error
-        except Exception as exc:
-            return route_id, None, str(exc)
+        return await SubPipelineExecutor.execute_route_safe(
+            route_id, body, headers, context,
+        )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         recipients = self._expr(exchange)

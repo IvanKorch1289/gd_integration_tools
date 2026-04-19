@@ -189,23 +189,9 @@ class KafkaClient(BaseKafkaClient):
         await self.stop_consumer()
 
 
-_kafka_client: KafkaClient | None = None
+from app.core.di import app_state_singleton
 
 
-def get_kafka_client(
-    bootstrap_servers: str = "localhost:9092",
-    group_id: str = "gd-integration-tools",
-) -> KafkaClient:
+@app_state_singleton("kafka_client", KafkaClient)
+def get_kafka_client() -> KafkaClient:
     """Возвращает KafkaClient из app.state или lazy-init fallback."""
-    global _kafka_client
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("kafka_client")
-    if instance is not None:
-        return instance
-    if _kafka_client is None:
-        _kafka_client = KafkaClient(
-            bootstrap_servers=bootstrap_servers,
-            group_id=group_id,
-        )
-    return _kafka_client

@@ -141,17 +141,9 @@ class PipelineVersionManager:
             return {"error": str(exc)}
 
 
-_manager: PipelineVersionManager | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("pipeline_version_manager", PipelineVersionManager)
 def get_pipeline_version_manager() -> PipelineVersionManager:
     """Возвращает PipelineVersionManager из app.state или lazy-init fallback."""
-    global _manager
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("pipeline_version_manager")
-    if instance is not None:
-        return instance
-    if _manager is None:
-        _manager = PipelineVersionManager()
-    return _manager

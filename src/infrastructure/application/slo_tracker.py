@@ -83,17 +83,9 @@ class SLOTracker:
         self._stats.clear()
 
 
-_tracker: SLOTracker | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("slo_tracker", SLOTracker)
 def get_slo_tracker() -> SLOTracker:
     """Возвращает SLOTracker из app.state или lazy-init fallback."""
-    global _tracker
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("slo_tracker")
-    if instance is not None:
-        return instance
-    if _tracker is None:
-        _tracker = SLOTracker()
-    return _tracker

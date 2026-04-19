@@ -4,12 +4,13 @@
 и доступны через ``Depends(get_xxx)`` в FastAPI-эндпоинтах.
 
 Для non-FastAPI контекстов (Prefect, scripts, DSL engine) каждый модуль
-сохраняет fallback lazy-init через свою ``get_xxx()`` функцию.
+использует ``app_state_singleton`` — декоратор, который устраняет дублирование
+15× одинаковых get_xxx() функций.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from fastapi import Request
 
@@ -27,8 +28,12 @@ if TYPE_CHECKING:
     from app.infrastructure.clients.langfuse_client import LangFuseClient
     from app.infrastructure.database.pool_monitor import PoolMonitor
 
+T = TypeVar("T")
+
 __all__ = (
     "register_app_state",
+    "app_state_singleton",
+    "_get_from_app_state",
     "get_api_key_manager",
     "get_tracer",
     "get_plugin_registry",
@@ -82,10 +87,52 @@ def register_app_state(app: FastAPI) -> None:
     app.state.mqtt_handler = MqttHandler(mqtt_settings)
 
 
-def _get_from_app_state(attr: str):
+def _get_from_app_state(attr: str) -> Any:
     if _app_ref is not None:
         return getattr(_app_ref.state, attr, None)
     return None
+
+
+def app_state_singleton(
+    attr: str,
+    factory: Callable[[], T] | None = None,
+) -> Callable[[], T]:
+    """Декоратор-фабрика: убирает 15× дублированный паттерн get_xxx().
+
+    Сначала ищет в app.state, потом lazy-init через factory.
+
+    Usage::
+
+        @app_state_singleton("clickhouse_client", lambda: ClickHouseClient(...))
+        def get_clickhouse_client() -> ClickHouseClient: ...
+
+    Или без factory (для no-arg конструкторов, инициализированных в register_app_state)::
+
+        @app_state_singleton("tracer")
+        def get_tracer() -> ExecutionTracer: ...
+    """
+    _cache: dict[str, Any] = {}
+
+    def decorator(fn: Callable[[], T]) -> Callable[[], T]:
+        def wrapper() -> T:
+            instance = _get_from_app_state(attr)
+            if instance is not None:
+                return instance
+            if attr not in _cache:
+                if factory is not None:
+                    _cache[attr] = factory()
+                else:
+                    raise RuntimeError(
+                        f"{attr} not in app.state and no factory provided. "
+                        "Ensure register_app_state() was called."
+                    )
+            return _cache[attr]
+        wrapper.__name__ = fn.__name__
+        wrapper.__doc__ = fn.__doc__
+        wrapper.__qualname__ = fn.__qualname__
+        return wrapper
+
+    return decorator
 
 
 # --- FastAPI Depends functions (for endpoint injection) ---

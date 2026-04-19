@@ -161,30 +161,25 @@ class ClickHouseClient:
             return False
 
 
-_clickhouse_client: ClickHouseClient | None = None
+def _create_clickhouse_client() -> ClickHouseClient:
+    from app.core.config.clickhouse import clickhouse_settings
+
+    return ClickHouseClient(
+        host=clickhouse_settings.host,
+        http_port=clickhouse_settings.http_port,
+        database=clickhouse_settings.database,
+        user=clickhouse_settings.user,
+        password=clickhouse_settings.password,
+        secure=clickhouse_settings.secure,
+        connect_timeout=clickhouse_settings.connect_timeout,
+        send_receive_timeout=clickhouse_settings.send_receive_timeout,
+        max_batch_size=clickhouse_settings.max_batch_size,
+    )
 
 
+from app.core.di import app_state_singleton
+
+
+@app_state_singleton("clickhouse_client", _create_clickhouse_client)
 def get_clickhouse_client() -> ClickHouseClient:
     """Возвращает ClickHouseClient из app.state или lazy-init fallback."""
-    global _clickhouse_client
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("clickhouse_client")
-    if instance is not None:
-        return instance
-
-    if _clickhouse_client is None:
-        from app.core.config.clickhouse import clickhouse_settings
-
-        _clickhouse_client = ClickHouseClient(
-            host=clickhouse_settings.host,
-            http_port=clickhouse_settings.http_port,
-            database=clickhouse_settings.database,
-            user=clickhouse_settings.user,
-            password=clickhouse_settings.password,
-            secure=clickhouse_settings.secure,
-            connect_timeout=clickhouse_settings.connect_timeout,
-            send_receive_timeout=clickhouse_settings.send_receive_timeout,
-            max_batch_size=clickhouse_settings.max_batch_size,
-        )
-    return _clickhouse_client

@@ -123,18 +123,9 @@ class EventBus:
         )
 
 
-_event_bus: EventBus | None = None
+from app.core.di import app_state_singleton
 
 
+@app_state_singleton("event_bus", EventBus)
 def get_event_bus() -> EventBus:
     """Возвращает singleton EventBus."""
-    global _event_bus
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("event_bus")
-    if instance is not None:
-        return instance
-
-    if _event_bus is None:
-        _event_bus = EventBus()
-    return _event_bus

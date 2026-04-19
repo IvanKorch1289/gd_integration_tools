@@ -204,23 +204,19 @@ class MqttHandler:
             logger.error("MQTT publish error: %s", exc)
 
 
-_mqtt_handler: MqttHandler | None = None
+def _create_mqtt_handler() -> MqttHandler:
+    try:
+        settings = MqttSettings()
+    except Exception:
+        settings = MqttSettings(
+            broker_host="localhost", broker_port=1883, enabled=False
+        )
+    return MqttHandler(settings)
 
 
+from app.core.di import app_state_singleton
+
+
+@app_state_singleton("mqtt_handler", _create_mqtt_handler)
 def get_mqtt_handler() -> MqttHandler:
     """Возвращает MqttHandler из app.state или lazy-init fallback."""
-    global _mqtt_handler
-    from app.core.di import _get_from_app_state
-
-    instance = _get_from_app_state("mqtt_handler")
-    if instance is not None:
-        return instance
-    if _mqtt_handler is None:
-        try:
-            settings = MqttSettings()
-        except Exception:
-            settings = MqttSettings(
-                broker_host="localhost", broker_port=1883, enabled=False
-            )
-        _mqtt_handler = MqttHandler(settings)
-    return _mqtt_handler
