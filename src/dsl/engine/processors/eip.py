@@ -87,14 +87,11 @@ class DeadLetterProcessor(BaseProcessor):
             _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        for proc in self._processors:
-            if exchange.status == ExchangeStatus.failed or exchange.stopped:
-                break
-            try:
-                await proc.process(exchange, context)
-            except Exception as exc:
-                exchange.fail(str(exc))
-                break
+        from app.dsl.engine.processors.base import run_sub_processors
+        try:
+            await run_sub_processors(self._processors, exchange, context)
+        except Exception as exc:
+            exchange.fail(str(exc))
 
         if exchange.status == ExchangeStatus.failed:
             await self._send_to_dlq(exchange)

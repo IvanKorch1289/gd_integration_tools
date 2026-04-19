@@ -55,43 +55,59 @@ class AIAgentService:
     #  Провайдеры
     # ------------------------------------------------------------------
 
+    async def _post_provider(
+        self,
+        *,
+        url: str,
+        headers: dict[str, str],
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Общий POST-вызов с единой политикой таймаутов."""
+        client = self._get_http_client()
+        return await client.make_request(
+            method="POST",
+            url=url,
+            headers=headers,
+            json=payload,
+            connect_timeout=self._ai_cfg.connect_timeout,
+            read_timeout=self._ai_cfg.read_timeout,
+            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
+        )
+
+    def _build_auth_headers(self, api_key: str | None, *, use_waf: bool = False) -> dict[str, str]:
+        """Формирует Content-Type + Authorization (с WAF-перекрытием при необходимости)."""
+        headers: dict[str, str] = {}
+        if use_waf:
+            headers.update(self._waf_headers)
+        headers["Content-Type"] = "application/json"
+        if not use_waf and api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return headers
+
     async def _call_perplexity(
         self, messages: list[dict[str, str]], **kwargs: Any
     ) -> dict[str, Any]:
         """Вызов Perplexity API."""
-        client = self._get_http_client()
         model = kwargs.get("model", self._perplexity.model)
-
         url = self._waf_url if self._perplexity.use_waf else f"{self._perplexity.base_url}/chat/completions"
-        headers = {**(self._waf_headers if self._perplexity.use_waf else {}), "Content-Type": "application/json"}
-        if not self._perplexity.use_waf and self._perplexity.api_key:
-            headers["Authorization"] = f"Bearer {self._perplexity.api_key}"
-
+        headers = self._build_auth_headers(
+            self._perplexity.api_key, use_waf=self._perplexity.use_waf,
+        )
         payload = {
             "model": model,
             "messages": messages,
             "max_tokens": kwargs.get("max_tokens", self._perplexity.max_tokens),
             "temperature": kwargs.get("temperature", self._perplexity.temperature),
         }
-
-        return await client.make_request(
-            method="POST", url=url, headers=headers, json=payload,
-            connect_timeout=self._ai_cfg.connect_timeout,
-            read_timeout=self._ai_cfg.read_timeout,
-            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
-        )
+        return await self._post_provider(url=url, headers=headers, payload=payload)
 
     async def _call_huggingface(
         self, messages: list[dict[str, str]], **kwargs: Any
     ) -> dict[str, Any]:
         """Вызов HuggingFace Inference API."""
-        client = self._get_http_client()
         model = kwargs.get("model", self._huggingface.model)
-
         url = f"{self._huggingface.base_url}/{model}"
-        headers = {"Content-Type": "application/json"}
-        if self._huggingface.api_key:
-            headers["Authorization"] = f"Bearer {self._huggingface.api_key}"
+        headers = self._build_auth_headers(self._huggingface.api_key)
 
         prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
         payload = {
@@ -101,39 +117,22 @@ class AIAgentService:
                 "temperature": kwargs.get("temperature", self._huggingface.temperature),
             },
         }
-
-        return await client.make_request(
-            method="POST", url=url, headers=headers, json=payload,
-            connect_timeout=self._ai_cfg.connect_timeout,
-            read_timeout=self._ai_cfg.read_timeout,
-            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
-        )
+        return await self._post_provider(url=url, headers=headers, payload=payload)
 
     async def _call_open_webui(
         self, messages: list[dict[str, str]], **kwargs: Any
     ) -> dict[str, Any]:
         """Вызов внутреннего OpenWebUI сервера."""
-        client = self._get_http_client()
         model = kwargs.get("model", self._open_webui.model)
-
         url = f"{self._open_webui.base_url}/api/chat/completions"
-        headers = {"Content-Type": "application/json"}
-        if self._open_webui.api_key:
-            headers["Authorization"] = f"Bearer {self._open_webui.api_key}"
-
+        headers = self._build_auth_headers(self._open_webui.api_key)
         payload = {
             "model": model,
             "messages": messages,
             "max_tokens": kwargs.get("max_tokens", self._open_webui.max_tokens),
             "temperature": kwargs.get("temperature", self._open_webui.temperature),
         }
-
-        return await client.make_request(
-            method="POST", url=url, headers=headers, json=payload,
-            connect_timeout=self._ai_cfg.connect_timeout,
-            read_timeout=self._ai_cfg.read_timeout,
-            total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
-        )
+        return await self._post_provider(url=url, headers=headers, payload=payload)
 
     # ------------------------------------------------------------------
     #  Публичные методы

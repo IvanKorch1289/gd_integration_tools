@@ -135,9 +135,11 @@ class RouteBuilder:
     # ── Core processors ──
 
     def set_header(self, key: str, value: Any) -> "RouteBuilder":
+        """Устанавливает заголовок в in_message."""
         return self._add(SetHeaderProcessor(key=key, value=value))
 
     def set_property(self, key: str, value: Any) -> "RouteBuilder":
+        """Устанавливает runtime-свойство Exchange."""
         return self._add(SetPropertyProcessor(key=key, value=value))
 
     def dispatch_action(
@@ -172,17 +174,21 @@ class RouteBuilder:
         ))
 
     def log(self, level: str = "info") -> "RouteBuilder":
+        """Логирование текущего состояния Exchange (для отладки)."""
         return self._add(LogProcessor(level=level))
 
     def validate(self, model: type) -> "RouteBuilder":
+        """Pydantic-валидация body; при ошибке Exchange останавливается."""
         return self._add(ValidateProcessor(model=model))
 
     # ── Integration processors ──
 
     def mcp_tool(self, uri: str, tool: str, *, result_property: str = "mcp_result") -> "RouteBuilder":
+        """Вызов внешнего MCP tool."""
         return self._add(MCPToolProcessor(tool_uri=uri, tool_name=tool, result_property=result_property))
 
     def agent_graph(self, graph_name: str, tools: list[str]) -> "RouteBuilder":
+        """Запуск LangGraph-агента."""
         return self._add(AgentGraphProcessor(graph_name=graph_name, tools=tools))
 
     def cdc(
@@ -211,6 +217,7 @@ class RouteBuilder:
         when: list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
         otherwise: list[BaseProcessor] | None = None,
     ) -> "RouteBuilder":
+        """Camel When/Otherwise: ветвление по предикатам."""
         return self._add(ChoiceProcessor(when=when, otherwise=otherwise))
 
     def do_try(
@@ -219,6 +226,7 @@ class RouteBuilder:
         catch_processors: list[BaseProcessor] | None = None,
         finally_processors: list[BaseProcessor] | None = None,
     ) -> "RouteBuilder":
+        """Camel Try/Catch/Finally: exception handling в pipeline."""
         return self._add(TryCatchProcessor(
             try_processors=try_processors,
             catch_processors=catch_processors,
@@ -229,58 +237,72 @@ class RouteBuilder:
         self, processors: list[BaseProcessor], *,
         max_attempts: int = 3, delay_seconds: float = 1.0, backoff: str = "exponential",
     ) -> "RouteBuilder":
+        """Retry с backoff: повторяет процессоры при ошибке. backoff: fixed|exponential."""
         return self._add(RetryProcessor(
             processors=processors, max_attempts=max_attempts,
             delay_seconds=delay_seconds, backoff=backoff,
         ))
 
     def to_route(self, route_id: str, *, result_property: str = "sub_result") -> "RouteBuilder":
+        """Вызов другого зарегистрированного DSL-маршрута."""
         return self._add(PipelineRefProcessor(route_id=route_id, result_property=result_property))
 
     def parallel(self, branches: dict[str, list[BaseProcessor]], *, strategy: str = "all") -> "RouteBuilder":
+        """Параллельное выполнение именованных веток. strategy: all|first."""
         return self._add(ParallelProcessor(branches=branches, strategy=strategy))
 
     def saga(self, steps: list[SagaStep]) -> "RouteBuilder":
+        """Saga-паттерн: последовательные шаги с компенсацией при ошибке."""
         return self._add(SagaProcessor(steps=steps))
 
     def dead_letter(self, processors: list[BaseProcessor], *, dlq_stream: str = "dsl-dlq") -> "RouteBuilder":
+        """Dead Letter Channel: при ошибке — отправка в Redis stream."""
         return self._add(DeadLetterProcessor(processors=processors, dlq_stream=dlq_stream))
 
     def idempotent(self, key_expression: Callable[[Exchange[Any]], str], *, ttl_seconds: int = 86400) -> "RouteBuilder":
+        """Идемпотентный consumer: дедупликация через Redis SET NX EX."""
         return self._add(IdempotentConsumerProcessor(key_expression=key_expression, ttl_seconds=ttl_seconds))
 
     def fallback(self, processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Fallback-цепочка: последовательно пробует процессоры, останавливается на первом успехе."""
         return self._add(FallbackChainProcessor(processors=processors))
 
     def wire_tap(self, tap_processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Wire Tap: копия Exchange в побочный канал без влияния на основной поток."""
         return self._add(WireTapProcessor(tap_processors=tap_processors))
 
     # ── EIP processors ──
 
     def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
-        return self._add(MessageTranslatorProcessor(from_format=from_format, to_format=to_format))
+        """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
+        return self.convert(from_format=from_format, to_format=to_format)
 
     def dynamic_route(self, route_expression: Callable[[Exchange[Any]], str]) -> "RouteBuilder":
+        """Camel Dynamic Router: runtime-вычисление route_id."""
         return self._add(DynamicRouterProcessor(route_expression=route_expression))
 
     def scatter_gather(
         self, route_ids: list[str], *,
         aggregation: str = "merge", timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
+        """Camel Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
         return self._add(ScatterGatherProcessor(
             route_ids=route_ids, aggregation=aggregation, timeout_seconds=timeout_seconds,
         ))
 
     def throttle(self, rate: float, *, burst: int = 1) -> "RouteBuilder":
+        """Camel Throttler: rate-limit N сообщений/сек (token bucket)."""
         return self._add(ThrottlerProcessor(rate=rate, burst=burst))
 
     def delay(
         self, delay_ms: int | None = None, *,
         scheduled_time_fn: Callable[[Exchange[Any]], float] | None = None,
     ) -> "RouteBuilder":
+        """Camel Delay: задержка на N миллисекунд или до timestamp."""
         return self._add(DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn))
 
     def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Camel Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         return self._add(SplitterProcessor(expression=expression, processors=processors))
 
     def aggregate(
@@ -288,6 +310,7 @@ class RouteBuilder:
         correlation_key: Callable[[Exchange[Any]], str], *,
         batch_size: int = 10, timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
+        """Camel Aggregator: собирает N Exchange по correlation_key в batch."""
         return self._add(AggregatorProcessor(
             correlation_key=correlation_key, batch_size=batch_size, timeout_seconds=timeout_seconds,
         ))
@@ -297,6 +320,7 @@ class RouteBuilder:
         recipients_expression: Callable[[Exchange[Any]], list[str]], *,
         parallel: bool = True,
     ) -> "RouteBuilder":
+        """Camel Recipient List: динамический fan-out на список маршрутов."""
         return self._add(RecipientListProcessor(recipients_expression=recipients_expression, parallel=parallel))
 
     # ── Camel EIP v2 ──
@@ -307,6 +331,7 @@ class RouteBuilder:
         weights: list[float] | None = None,
         sticky_header: str | None = None,
     ) -> "RouteBuilder":
+        """Camel Load Balancer: round_robin/random/weighted/sticky распределение."""
         return self._add(LoadBalancerProcessor(
             targets=targets, strategy=strategy, weights=weights, sticky_header=sticky_header,
         ))
@@ -317,18 +342,22 @@ class RouteBuilder:
         recovery_timeout: float = 30.0,
         fallback_processors: list[BaseProcessor] | None = None,
     ) -> "RouteBuilder":
+        """Camel Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN)."""
         return self._add(CircuitBreakerProcessor(
             processors=processors, failure_threshold=failure_threshold,
             recovery_timeout=recovery_timeout, fallback_processors=fallback_processors,
         ))
 
     def claim_check_in(self, *, store: str = "redis", ttl_seconds: int = 3600) -> "RouteBuilder":
+        """Camel Claim Check (store): сохраняет body в Redis, body → {_claim_token: ...}."""
         return self._add(ClaimCheckProcessor(mode="store", store=store, ttl_seconds=ttl_seconds))
 
     def claim_check_out(self) -> "RouteBuilder":
+        """Camel Claim Check (retrieve): восстанавливает body по _claim_token."""
         return self._add(ClaimCheckProcessor(mode="retrieve"))
 
     def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
+        """Camel Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         return self._add(NormalizerProcessor(target_schema=target_schema))
 
     def resequence(
@@ -338,6 +367,7 @@ class RouteBuilder:
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
     ) -> "RouteBuilder":
+        """Camel Resequencer: восстановление порядка сообщений по sequence_field."""
         return self._add(ResequencerProcessor(
             correlation_key=correlation_key, sequence_field=sequence_field,
             batch_size=batch_size, timeout_seconds=timeout_seconds,
@@ -348,6 +378,7 @@ class RouteBuilder:
         strategy: str = "all",
         stop_on_error: bool = False,
     ) -> "RouteBuilder":
+        """Camel Multicast: fan-out на flat list процессор-групп + aggregation."""
         return self._add(MulticastProcessor(
             branches=branches, strategy=strategy, stop_on_error=stop_on_error,
         ))
@@ -393,14 +424,17 @@ class RouteBuilder:
     # ── Config ──
 
     def protocol(self, proto: ProtocolType) -> "RouteBuilder":
+        """Привязывает маршрут к конкретному протоколу (REST/SOAP/gRPC/...)."""
         self._protocol = proto
         return self
 
     def transport(self, config: TransportConfig) -> "RouteBuilder":
+        """Настройки транспорта (endpoint, timeout, retry_count, options)."""
         self._transport_config = config
         return self
 
     def feature_flag(self, name: str) -> "RouteBuilder":
+        """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
         self._feature_flag = name
         return self
 
@@ -414,134 +448,166 @@ class RouteBuilder:
         timeout: float = 30.0,
         result_property: str | None = None,
     ) -> "RouteBuilder":
+        """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
         return self._add_lazy("app.dsl.engine.processors.components", "HttpCallProcessor",
                               url=url, method=method, headers=headers, auth_token=auth_token,
                               timeout=timeout, result_property=result_property)
 
     def db_query(self, sql: str, *, result_property: str = "db_result") -> "RouteBuilder":
+        """SQL-запрос через SQLAlchemy (с валидацией: DDL/multi-statement запрещены)."""
         return self._add_lazy("app.dsl.engine.processors.components", "DatabaseQueryProcessor",
                               sql=sql, result_property=result_property)
 
     def read_file(self, path: str | None = None, *, binary: bool = False) -> "RouteBuilder":
+        """Чтение локального файла в body (text или bytes)."""
         return self._add_lazy("app.dsl.engine.processors.components", "FileReadProcessor",
                               path=path, binary=binary)
 
     def write_file(self, path: str | None = None, *, format: str = "auto") -> "RouteBuilder":
+        """Запись body в файл. format: auto|json|csv|text."""
         return self._add_lazy("app.dsl.engine.processors.components", "FileWriteProcessor",
                               path=path, format=format)
 
     def read_s3(self, bucket: str | None = None, key: str | None = None) -> "RouteBuilder":
+        """Загрузка объекта из S3."""
         return self._add_lazy("app.dsl.engine.processors.components", "S3ReadProcessor",
                               bucket=bucket, key=key)
 
     def write_s3(self, bucket: str | None = None, key: str | None = None, *, content_type: str = "application/octet-stream") -> "RouteBuilder":
+        """Выгрузка body в S3."""
         return self._add_lazy("app.dsl.engine.processors.components", "S3WriteProcessor",
                               bucket=bucket, key=key, content_type=content_type)
 
     def timer(self, *, interval_seconds: float | None = None, cron: str | None = None, max_fires: int | None = None) -> "RouteBuilder":
+        """Scheduled event source: интервал или cron-выражение."""
         return self._add_lazy("app.dsl.engine.processors.components", "TimerProcessor",
                               interval_seconds=interval_seconds, cron=cron, max_fires=max_fires)
 
     def poll(self, source_action: str, *, payload: dict[str, Any] | None = None, result_property: str = "polled_data") -> "RouteBuilder":
+        """Periodically вызывает action, результат → body."""
         return self._add_lazy("app.dsl.engine.processors.components", "PollingConsumerProcessor",
                               source_action=source_action, payload=payload, result_property=result_property)
 
     # ── Type Converters ──
 
     def convert(self, from_format: str, to_format: str) -> "RouteBuilder":
+        """Универсальный конвертер: json↔yaml/xml/csv/msgpack/parquet/bson, html→json."""
         return self._add_lazy("app.dsl.engine.processors.converters", "ConvertProcessor",
                               from_format=from_format, to_format=to_format)
 
     # ── Scraping Pipeline ──
 
     def scrape(self, url: str | None = None, *, selectors: dict[str, str] | None = None, output_property: str = "scraped") -> "RouteBuilder":
+        """Извлечение данных с URL через CSS-селекторы (с SSRF-защитой)."""
         return self._add_lazy("app.dsl.engine.processors.scraping", "ScrapeProcessor",
                               url=url, selectors=selectors, output_property=output_property)
 
     def paginate(self, *, next_selector: str = "a.next", item_selector: str | None = None, max_pages: int = 10, start_url: str | None = None) -> "RouteBuilder":
+        """Multi-page crawling с защитой от циклов и лимитом страниц."""
         return self._add_lazy("app.dsl.engine.processors.scraping", "PaginateProcessor",
                               next_selector=next_selector, item_selector=item_selector, max_pages=max_pages, start_url=start_url)
 
     def api_proxy(self, base_url: str, *, method: str = "GET", path: str = "", timeout: float = 30.0) -> "RouteBuilder":
+        """Прозрачный API proxy с request/response трансформацией."""
         return self._add_lazy("app.dsl.engine.processors.scraping", "ApiProxyProcessor",
                               base_url=base_url, method=method, path=path, timeout=timeout)
 
     # ── AI Pipeline ──
 
     def rag_search(self, query_field: str = "question", top_k: int = 5, namespace: str | None = None) -> "RouteBuilder":
+        """RAG vector search: top-K ближайших документов по семантике."""
         return self._add_lazy("app.dsl.engine.processors", "VectorSearchProcessor",
                               query_field=query_field, top_k=top_k, namespace=namespace)
 
     def compose_prompt(self, template: str, context_property: str = "vector_results") -> "RouteBuilder":
+        """Построение промпта из шаблона + контекста из properties."""
         return self._add_lazy("app.dsl.engine.processors", "PromptComposerProcessor",
                               template=template, context_property=context_property)
 
     def call_llm(self, provider: str | None = None, model: str | None = None) -> "RouteBuilder":
+        """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
         return self._add_lazy("app.dsl.engine.processors", "LLMCallProcessor",
                               provider=provider, model=model)
 
     def parse_llm_output(self, schema: type | None = None) -> "RouteBuilder":
+        """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         return self._add_lazy("app.dsl.engine.processors", "LLMParserProcessor", schema=schema)
 
     def token_budget(self, max_tokens: int = 4096) -> "RouteBuilder":
+        """Ограничение по токенам (tiktoken) — обрезка текста до лимита."""
         return self._add_lazy("app.dsl.engine.processors", "TokenBudgetProcessor", max_tokens=max_tokens)
 
     def sanitize_pii(self) -> "RouteBuilder":
+        """Маскирование PII (email/phone/СНИЛС/карт) перед LLM."""
         return self._add_lazy("app.dsl.engine.processors", "SanitizePIIProcessor")
 
     def restore_pii(self) -> "RouteBuilder":
+        """Восстановление PII в ответе после LLM."""
         return self._add_lazy("app.dsl.engine.processors", "RestorePIIProcessor")
 
     def publish_event(self, channel: str) -> "RouteBuilder":
+        """Публикация события через EventBus."""
         return self._add_lazy("app.dsl.engine.processors", "EventPublishProcessor", channel=channel)
 
     def load_memory(self, session_id_header: str = "X-Session-Id") -> "RouteBuilder":
+        """Загрузка conversation/facts из AgentMemory (Redis)."""
         return self._add_lazy("app.dsl.engine.processors", "MemoryLoadProcessor",
                               session_id_header=session_id_header)
 
     def save_memory(self) -> "RouteBuilder":
+        """Сохранение результата в AgentMemory."""
         return self._add_lazy("app.dsl.engine.processors", "MemorySaveProcessor")
 
     # ── Web Automation ──
 
     def navigate(self, url: str) -> "RouteBuilder":
+        """Открыть URL в браузере (Playwright)."""
         return self._add_lazy("app.dsl.engine.processors.web", "NavigateProcessor", url=url)
 
     def click(self, url: str, selector: str) -> "RouteBuilder":
+        """Клик по CSS-селектору."""
         return self._add_lazy("app.dsl.engine.processors.web", "ClickProcessor", url=url, selector=selector)
 
     def fill_form(self, url: str, fields: dict | None = None, submit: str | None = None) -> "RouteBuilder":
+        """Заполнение формы по полям + опциональный submit."""
         return self._add_lazy("app.dsl.engine.processors.web", "FillFormProcessor",
                               url=url, fields=fields, submit=submit)
 
     def extract(self, selector: str, url: str | None = None, output_property: str = "extracted") -> "RouteBuilder":
+        """Извлечение текста по CSS-селектору."""
         return self._add_lazy("app.dsl.engine.processors.web", "ExtractProcessor",
                               url=url, selector=selector, output_property=output_property)
 
     def screenshot(self, url: str | None = None) -> "RouteBuilder":
+        """Скриншот страницы как bytes."""
         return self._add_lazy("app.dsl.engine.processors.web", "ScreenshotProcessor", url=url)
 
     def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
+        """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy("app.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps)
 
     # ── Data Quality ──
 
     def dq_check(self, rules: list[Any] | None = None, dataset: str = "default", fail_on_violation: bool = False) -> "RouteBuilder":
+        """Проверка DQ-правил (not_null/range/regex) на body."""
         return self._add_lazy("app.dsl.engine.processors.dq_check", "DQCheckProcessor",
                               rules=rules, dataset=dataset, fail_on_violation=fail_on_violation)
 
     # ── Export & Notify ──
 
     def export(self, format: str = "csv", output_property: str = "export_data", title: str = "Report") -> "RouteBuilder":
+        """Экспорт body (list[dict]) в CSV/Excel/PDF → bytes в property."""
         return self._add_lazy("app.dsl.engine.processors.export", "ExportProcessor",
                               format=format, output_property=output_property, title=title)
 
     def notify(self, channel: str = "email", to: str = "", subject: str = "", message: str = "") -> "RouteBuilder":
+        """Отправка уведомления через notification_hub (email/telegram/webhook/express)."""
         return self.dispatch_action(f"notify.{channel}" if channel != "send" else "notify.send")
 
     # ── Search ──
 
     def web_search(self, query_field: str = "query", provider: str | None = None, output_property: str = "search_results") -> "RouteBuilder":
+        """Web search через Perplexity/Tavily (search_providers)."""
         async def _search(exchange: Exchange[Any], context: Any) -> None:
             from app.infrastructure.clients.search_providers import get_web_search_service
             body = exchange.in_message.body
