@@ -763,6 +763,123 @@ class RouteBuilder:
         return self._add_lazy("app.dsl.engine.processors.patterns", "DebounceProcessor",
                               key_fn=key_fn, delay_seconds=delay_seconds)
 
+    # ── Ergonomics (DSL v2) ──────────────────────────────
+
+    def as_(self, name: str) -> "RouteBuilder":
+        """Называет результат последнего процессора — сохраняет out_message в property.
+
+        Usage::
+
+            .http_call("https://api/x").as_("response")
+            .transform("response.data")
+        """
+        async def _capture(exchange: Exchange[Any], context: Any) -> None:
+            body = (
+                exchange.out_message.body
+                if exchange.out_message
+                else exchange.in_message.body
+            )
+            exchange.set_property(name, body)
+        return self._add(CallableProcessor(_capture, name=f"as_:{name}"))
+
+    def on_error(
+        self, *,
+        action: str | None = None,
+        processors: list[BaseProcessor] | None = None,
+        dlq_stream: str = "dsl-dlq",
+    ) -> "RouteBuilder":
+        """Глобальный error handler для pipeline — оборачивает ВСЕ накопленные процессоры.
+
+        При ошибке делегирует в action или выполняет processors, всё попадает в DLQ.
+
+        Usage::
+
+            RouteBuilder.from_("x", source="...")
+                .http_call(...)
+                .transform(...)
+                .on_error(action="dlq.handle")
+                .build()
+        """
+        handler_procs: list[BaseProcessor] = []
+        if action:
+            handler_procs.append(DispatchActionProcessor(action=action))
+        if processors:
+            handler_procs.extend(processors)
+        if not handler_procs:
+            handler_procs.append(LogProcessor(level="error"))
+
+        current = list(self._processors)
+        self._processors.clear()
+        wrapped = DeadLetterProcessor(
+            processors=current + handler_procs,
+            dlq_stream=dlq_stream,
+        )
+        self._processors.append(wrapped)
+        return self
+
+    def filter_dispatch(
+        self,
+        predicate: Callable[[Exchange[Any]], bool],
+        action: str,
+    ) -> "RouteBuilder":
+        """Shorthand: filter + dispatch_action в одном вызове."""
+        return self.filter(predicate).dispatch_action(action)
+
+    def pick(self, *fields: str) -> "RouteBuilder":
+        """JMESPath shorthand: оставляет только указанные поля в body."""
+        if not fields:
+            return self
+        expr = "{" + ",".join(f"{f}: {f}" for f in fields) + "}"
+        return self.transform(expr)
+
+    def drop(self, *fields: str) -> "RouteBuilder":
+        """Убирает указанные поля из body (через process_fn).
+
+        JMESPath не поддерживает exclusion, поэтому используется функция.
+        """
+        drop_set = set(fields)
+
+        async def _drop(exchange: Exchange[Any], context: Any) -> None:
+            body = exchange.in_message.body
+            if isinstance(body, dict):
+                new_body = {k: v for k, v in body.items() if k not in drop_set}
+                exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
+
+        return self._add(CallableProcessor(_drop, name=f"drop:{','.join(fields)}"))
+
+    def batch_by_field(
+        self,
+        field: str, *,
+        batch_size: int = 100,
+        timeout_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        """Composite macro: aggregate по значению поля с окном size+timeout.
+
+        Usage: .batch_by_field("customer_id", batch_size=50)
+        """
+        return self.aggregate(
+            correlation_key=lambda ex: str(
+                ex.in_message.body.get(field) if isinstance(ex.in_message.body, dict) else ex.in_message.body
+            ),
+            batch_size=batch_size,
+            timeout_seconds=timeout_seconds,
+        )
+
+    def poll_and_aggregate(
+        self,
+        source_action: str, *,
+        interval_seconds: float = 60.0,
+        batch_size: int = 100,
+        correlation_field: str = "id",
+    ) -> "RouteBuilder":
+        """Composite macro: timer + poll + aggregate — готовый polling ETL pattern."""
+        return (
+            self
+            .timer(interval_seconds=interval_seconds)
+            .poll(source_action)
+            .batch_by_field(correlation_field, batch_size=batch_size)
+        )
+
     # ── Build ──
 
     def build(self) -> Pipeline:
