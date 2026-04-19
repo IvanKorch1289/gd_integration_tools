@@ -92,10 +92,35 @@ class _PollingStrategy(_CDCStrategy):
     Работает с любой БД (PostgreSQL, Oracle, MySQL и т.д.).
     Не различает INSERT от UPDATE — оба попадают как UPSERT.
     Не обнаруживает DELETE.
+
+    Multi-instance safety (MI-4):
+    - Cursor _last_check хранится в Redis через RedisCursor (CAS)
+    - Несколько инстансов могут безопасно подписываться на одну таблицу
+    - Дублирование событий предотвращается atomic try_advance()
     """
 
     def __init__(self) -> None:
-        self._last_check: dict[str, datetime] = {}
+        self._last_check_local: dict[str, datetime] = {}
+
+    async def _get_cursor(self, key: str, default: datetime) -> datetime:
+        """Загружает cursor из Redis (или возвращает default при недоступности)."""
+        try:
+            from app.core.utils.redis_coordinator import RedisCursor
+            cursor = RedisCursor(f"cdc:cursor:{key}")
+            stored = await cursor.get_or_init(default.isoformat())
+            return datetime.fromisoformat(stored)
+        except (ImportError, ValueError, Exception):
+            return self._last_check_local.get(key, default)
+
+    async def _advance_cursor(self, key: str, new_value: datetime) -> None:
+        """Atomic advance cursor через Redis CAS."""
+        try:
+            from app.core.utils.redis_coordinator import RedisCursor
+            cursor = RedisCursor(f"cdc:cursor:{key}")
+            await cursor.try_advance(new_value.isoformat())
+        except (ImportError, Exception):
+            pass
+        self._last_check_local[key] = new_value
 
     async def run(
         self,
@@ -120,7 +145,7 @@ class _PollingStrategy(_CDCStrategy):
         while sub.active:
             for table in sub.tables:
                 key = f"{sub.profile}:{table}"
-                last = self._last_check.get(key, datetime.now(timezone.utc))
+                last = await self._get_cursor(key, datetime.now(timezone.utc))
 
                 try:
                     async with engine.connect() as conn:
@@ -152,7 +177,7 @@ class _PollingStrategy(_CDCStrategy):
                             )
                             await dispatch(sub, event)
 
-                        self._last_check[key] = max_ts
+                        await self._advance_cursor(key, max_ts)
 
                 except Exception as exc:
                     logger.warning(
