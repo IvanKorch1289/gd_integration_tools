@@ -99,3 +99,25 @@ async def startup_probe(request: Request) -> JSONResponse:
             "actions": len(action_handler_registry.list_actions()),
         }
     )
+
+
+@router.get("/components", summary="Detailed component health (uses HealthAggregator)")
+async def components_health() -> JSONResponse:
+    """ARCH-3: Unified component health через HealthAggregator.
+
+    Возвращает parallel-checked health всех зарегистрированных компонентов:
+    {status: ok|degraded|down, timestamp, components: {name: {...}}}.
+    """
+    try:
+        from app.infrastructure.application.health_aggregator import (
+            get_health_aggregator,
+        )
+        aggregator = get_health_aggregator()
+        report = await aggregator.check_all()
+        status_code = 200 if report.get("status") == "ok" else 503
+        return JSONResponse(status_code=status_code, content=report)
+    except Exception as exc:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "error": str(exc)[:200]},
+        )

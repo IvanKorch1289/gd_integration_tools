@@ -38,6 +38,7 @@ def setup_middlewares(app: FastAPI) -> None:
         ExceptionHandlerMiddleware,
     )
     from app.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from app.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from app.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from app.entrypoints.middlewares.request_id import RequestIDMiddleware
     from app.entrypoints.middlewares.request_log import (
@@ -74,6 +75,7 @@ def setup_middlewares(app: FastAPI) -> None:
         (DataMaskingMiddleware, {}),
         # Слой 4: Логирование и метрики (последними — измеряют всё)
         (AuditLogMiddleware, {}),
+        (AuditReplayMiddleware, {"sample_rate": 1.0}),  # ARCH-4: wire audit_replay
         (InnerRequestLoggingMiddleware, {}),
         (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
     ]
