@@ -557,6 +557,126 @@ def register_action_handlers() -> None:
         ),
     ])
 
+    # ── Message Replay ──
+    from app.services.message_replay import get_replay_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="replay.list",
+            service_getter=get_replay_service,
+            service_method="list_messages",
+        ),
+        ActionHandlerSpec(
+            action="replay.one",
+            service_getter=get_replay_service,
+            service_method="replay_one",
+        ),
+        ActionHandlerSpec(
+            action="replay.bulk",
+            service_getter=get_replay_service,
+            service_method="replay_bulk",
+        ),
+        ActionHandlerSpec(
+            action="replay.stats",
+            service_getter=get_replay_service,
+            service_method="stats",
+        ),
+    ])
+
+    # ── Webhook Relay ──
+    from app.entrypoints.webhook.transformer import get_webhook_relay
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="webhook.relay",
+            service_getter=get_webhook_relay,
+            service_method="relay",
+        ),
+        ActionHandlerSpec(
+            action="webhook.transform",
+            service_getter=get_webhook_relay,
+            service_method="transform",
+        ),
+        ActionHandlerSpec(
+            action="webhook.dlq_list",
+            service_getter=get_webhook_relay,
+            service_method="dlq_list",
+        ),
+        ActionHandlerSpec(
+            action="webhook.dlq_retry",
+            service_getter=get_webhook_relay,
+            service_method="dlq_retry",
+        ),
+    ])
+
+    # ── Data Quality ──
+    from app.services.data_quality import get_dq_monitor
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="dq.check",
+            service_getter=get_dq_monitor,
+            service_method="check",
+        ),
+        ActionHandlerSpec(
+            action="dq.schema_infer",
+            service_getter=get_dq_monitor,
+            service_method="schema_infer",
+        ),
+        ActionHandlerSpec(
+            action="dq.stats",
+            service_getter=get_dq_monitor,
+            service_method="stats",
+        ),
+    ])
+
+    # ── OpenAPI Importer ──
+    from app.dsl.importers.openapi_parser import get_openapi_importer
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="openapi.import",
+            service_getter=get_openapi_importer,
+            service_method="import_spec",
+        ),
+        ActionHandlerSpec(
+            action="openapi.preview",
+            service_getter=get_openapi_importer,
+            service_method="preview",
+        ),
+        ActionHandlerSpec(
+            action="openapi.list_imported",
+            service_getter=get_openapi_importer,
+            service_method="list_imported",
+        ),
+    ])
+
+    # ── Scheduled Reports ──
+    from app.services.scheduled_reports import get_reports_service
+
+    action_handler_registry.register_many([
+        ActionHandlerSpec(
+            action="reports.schedule",
+            service_getter=get_reports_service,
+            service_method="schedule",
+        ),
+        ActionHandlerSpec(
+            action="reports.list",
+            service_getter=get_reports_service,
+            service_method="list_reports",
+        ),
+        ActionHandlerSpec(
+            action="reports.run_now",
+            service_getter=get_reports_service,
+            service_method="run_now",
+        ),
+        ActionHandlerSpec(
+            action="reports.history",
+            service_getter=get_reports_service,
+            service_method="history",
+        ),
+    ])
+
     # ── ServiceDSL auto-register ──
     from app.core.service_dsl import service_dsl_registry
     service_dsl_registry.register_all_actions()

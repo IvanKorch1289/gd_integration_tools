@@ -315,6 +315,12 @@ class RouteBuilder:
     def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
         return self._add_lazy("app.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps)
 
+    # ── Data Quality ──
+
+    def dq_check(self, rules: list[Any] | None = None, dataset: str = "default", fail_on_violation: bool = False) -> "RouteBuilder":
+        return self._add_lazy("app.dsl.engine.processors.dq_check", "DQCheckProcessor",
+                              rules=rules, dataset=dataset, fail_on_violation=fail_on_violation)
+
     # ── Export & Notify ──
 
     def export(self, format: str = "csv", output_property: str = "export_data", title: str = "Report") -> "RouteBuilder":
