@@ -3,7 +3,6 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from app.core.decorators.singleton import singleton
 from app.core.errors import ServiceError
 from app.infrastructure.repositories.orderkinds import (
     OrderKindRepository,
@@ -20,7 +19,6 @@ from app.services.integrations.skb import APISKBService, get_skb_service
 __all__ = ("get_order_kind_service",)
 
 
-@singleton
 class OrderKindService(
     BaseService[
         OrderKindRepository,
@@ -77,14 +75,18 @@ class OrderKindService(
             raise ServiceError from exc
 
 
+_order_kind_service_instance: OrderKindService | None = None
+
+
 def get_order_kind_service() -> OrderKindService:
     """
     Возвращает экземпляр сервиса для работы с видами заказов.
     """
-    return OrderKindService(
-        repo=get_order_kind_repo(),
+    global _order_kind_service_instance
+    if _order_kind_service_instance is None:
+        _order_kind_service_instance = OrderKindService(repo=get_order_kind_repo(),
         schema_in=OrderKindSchemaIn,
         schema_out=OrderKindSchemaOut,
         version_schema=OrderKindVersionSchemaOut,
-        request_service=get_skb_service(),
-    )
+        request_service=get_skb_service(),)
+    return _order_kind_service_instance

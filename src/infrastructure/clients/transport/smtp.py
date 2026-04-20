@@ -7,7 +7,6 @@ from typing import Any, AsyncGenerator
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from app.core.config.settings import MailSettings, settings
-from app.core.decorators.singleton import singleton
 from app.core.utils.circuit_breaker import get_circuit_breaker
 
 __all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient")
@@ -33,7 +32,6 @@ class BaseSmtpClient(ABC):
         """Проверяет работоспособность соединения."""
 
 
-@singleton
 class SmtpClient(BaseSmtpClient):
     """
     Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости.

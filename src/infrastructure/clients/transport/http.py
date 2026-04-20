@@ -28,7 +28,6 @@ from tenacity import (
 
 from app.core.config.constants import consts
 from app.core.config.settings import settings
-from app.core.decorators.singleton import singleton
 from app.core.utils.circuit_breaker import get_circuit_breaker
 
 __all__ = ("BaseHttpClient", "HttpClient", "get_http_client", "get_http_client_dependency")
@@ -67,7 +66,6 @@ class BaseHttpClient(ABC):
         """Закрывает соединения."""
 
 
-@singleton
 class HttpClient(BaseHttpClient):
     """
     HTTP-клиент с поддержкой:
@@ -541,5 +539,8 @@ async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     yield client
 
 
+_http_client_dependency_instance = HttpClient()
+
+
 def get_http_client_dependency() -> HttpClient:
-    return HttpClient()
+    return _http_client_dependency_instance

@@ -39,10 +39,28 @@ class ClaudeProvider:
     Supports: function calling (tools), streaming, multi-modal (images).
     """
 
+    name = "claude"
+
     def __init__(self, *, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022") -> None:
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self.model = model
         self.base_url = "https://api.anthropic.com/v1"
+
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """Извлекает текст из ответа Anthropic (``content[0].text``)."""
+        try:
+            blocks = response.get("content", [])
+            if blocks and isinstance(blocks, list):
+                return blocks[0].get("text", "")
+        except (AttributeError, IndexError, TypeError):
+            pass
+        return ""
+
+    async def embeddings(
+        self, texts: list[str], *, model: str | None = None,
+    ) -> list[list[float]]:
+        """Anthropic не предоставляет embeddings API — используйте Voyage/OpenAI."""
+        raise NotImplementedError("Claude API не поддерживает embeddings")
 
     async def chat(
         self,
@@ -104,10 +122,30 @@ class GeminiProvider:
     Supports: multi-modal (images), function calling.
     """
 
+    name = "gemini"
+
     def __init__(self, *, api_key: str | None = None, model: str = "gemini-1.5-pro") -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model = model
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
+
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """Извлекает текст из Gemini (``candidates[0].content.parts[0].text``)."""
+        try:
+            cands = response.get("candidates", [])
+            if cands:
+                parts = cands[0].get("content", {}).get("parts", [])
+                if parts:
+                    return parts[0].get("text", "")
+        except (AttributeError, IndexError, TypeError):
+            pass
+        return ""
+
+    async def embeddings(
+        self, texts: list[str], *, model: str | None = None,
+    ) -> list[list[float]]:
+        """Gemini embedContent через отдельный endpoint (не реализовано пока)."""
+        raise NotImplementedError("Gemini embeddings требует отдельной реализации")
 
     async def chat(
         self,
@@ -160,9 +198,34 @@ class OllamaProvider:
     Benefits: no API costs, full privacy, offline capable.
     """
 
+    name = "ollama"
+
     def __init__(self, *, base_url: str | None = None, model: str = "llama3.2") -> None:
         self.base_url = base_url or os.environ.get("OLLAMA_URL", "http://localhost:11434")
         self.model = model
+
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """Извлекает текст из Ollama (``message.content``)."""
+        try:
+            return response.get("message", {}).get("content", "") or response.get("response", "")
+        except (AttributeError, TypeError):
+            return ""
+
+    async def embeddings(
+        self, texts: list[str], *, model: str | None = None,
+    ) -> list[list[float]]:
+        """Embeddings через Ollama /api/embeddings (по одному запросу на текст)."""
+        out: list[list[float]] = []
+        async with httpx.AsyncClient(timeout=60) as client:
+            for text in texts:
+                resp = await client.post(
+                    f"{self.base_url}/api/embeddings",
+                    json={"model": model or self.model, "prompt": text},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                out.append(data.get("embedding", []))
+        return out
 
     async def chat(
         self,
@@ -208,6 +271,8 @@ class OpenAIProvider:
     OpenRouter, Ollama openai-endpoint).
     """
 
+    name = "openai"
+
     def __init__(
         self,
         *,
@@ -218,6 +283,33 @@ class OpenAIProvider:
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
         self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """OpenAI-format: ``choices[0].message.content``."""
+        try:
+            choices = response.get("choices", [])
+            if choices:
+                msg = choices[0].get("message", {})
+                return msg.get("content", "") or ""
+        except (AttributeError, IndexError, TypeError):
+            pass
+        return ""
+
+    async def embeddings(
+        self, texts: list[str], *, model: str | None = None,
+    ) -> list[list[float]]:
+        """Embeddings через ``/embeddings`` endpoint (batch-запрос)."""
+        if not self.api_key:
+            raise RuntimeError("OPENAI_API_KEY not set")
+        payload = {"model": model or "text-embedding-3-small", "input": texts}
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"{self.base_url}/embeddings", headers=headers, json=payload,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return [item["embedding"] for item in data.get("data", [])]
 
     async def chat(
         self,

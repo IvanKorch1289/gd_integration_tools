@@ -178,29 +178,40 @@ class OutboxProcessor(BaseProcessor):
 
     Паттерн Transactional Outbox: событие сохраняется в той же транзакции,
     что и бизнес-данные; отдельный worker читает таблицу и публикует в
-    брокер, обеспечивая exactly-once доставку.
+    брокер, обеспечивая at-least-once доставку.
 
     Args:
-        outbox_writer: callable ``async (topic, payload, headers) -> None``.
-        topic: Тема/очередь для публикации.
+        topic: Тема/очередь для публикации. Префикс определяет broker:
+            ``kafka:<topic>``, ``rabbit:<queue>``, ``redis:<stream>``.
+            Без префикса — kafka по умолчанию.
+        outbox_writer: Опциональный callable ``async (topic, payload, headers) -> Any``.
+            По умолчанию используется
+            :func:`app.infrastructure.repositories.outbox.write`, который
+            сохраняет запись в таблицу ``outbox_messages``.
     """
 
     def __init__(
         self,
         *,
-        outbox_writer: Any,
         topic: str,
+        outbox_writer: Any = None,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"outbox:{topic}")
-        self._writer = outbox_writer
         self._topic = topic
+        self._writer = outbox_writer
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         payload = exchange.out_message.body if exchange.out_message else exchange.in_message.body
         headers = dict(exchange.in_message.headers)
+
+        writer = self._writer
+        if writer is None:
+            from app.infrastructure.repositories.outbox import write as default_writer
+            writer = default_writer
+
         try:
-            await self._writer(self._topic, payload, headers)
+            await writer(topic=self._topic, payload=payload, headers=headers)
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"Outbox write failed: {exc}")
 

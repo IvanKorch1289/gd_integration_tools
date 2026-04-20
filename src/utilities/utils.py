@@ -7,14 +7,12 @@ from uuid import UUID
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.external_apis.logging_service import app_logger
 from app.utilities.json_codec import from_jsonable, to_jsonable
 
 __all__ = ("utilities", "AsyncChunkIterator")
 
 
-@singleton
 class Utilities:
     logger = app_logger
 

@@ -65,8 +65,9 @@ def service_template(class_name: str) -> str:
     return dedent(f'''
         """{class_name}Service — бизнес-сервис.
 
-        Сервис следует паттерну singleton (``@singleton``) и доступен из
-        ActionHandlerRegistry после регистрации в ``src/dsl/commands/setup.py``.
+        Инстанс создаётся как module-level object и доступен через
+        ``get_{class_name.lower()}_service()``. Регистрируется как action
+        в ``src/dsl/commands/setup.py``.
         """
 
         from __future__ import annotations
@@ -74,12 +75,9 @@ def service_template(class_name: str) -> str:
         import logging
         from typing import Any
 
-        from app.core.decorators.singleton import singleton
-
         logger = logging.getLogger(__name__)
 
 
-        @singleton
         class {class_name}Service:
             """Опишите ответственность сервиса."""
 
@@ -95,13 +93,15 @@ def service_template(class_name: str) -> str:
                 Returns:
                     Результат в dict-виде.
                 """
-                # TODO: реализуйте бизнес-логику
                 return {{"ok": True}}
 
 
+        _{class_name.lower()}_service_instance = {class_name}Service()
+
+
         def get_{class_name.lower()}_service() -> {class_name}Service:
-            """Accessor для singleton-экземпляра."""
-            return {class_name}Service()
+            """Возвращает module-level инстанс сервиса."""
+            return _{class_name.lower()}_service_instance
     ''').lstrip()
 
 

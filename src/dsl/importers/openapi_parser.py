@@ -12,7 +12,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("OpenAPIImporter", "ImportedRoute", "get_openapi_importer")
 
@@ -32,7 +31,6 @@ class ImportedRoute:
     registered: bool = False
 
 
-@singleton
 class OpenAPIImporter:
     """Импортирует OpenAPI spec и генерирует DSL routes."""
 
@@ -206,5 +204,8 @@ class OpenAPIImporter:
             return response.json()
 
 
+_openapi_importer_instance = OpenAPIImporter()
+
+
 def get_openapi_importer() -> OpenAPIImporter:
-    return OpenAPIImporter()
+    return _openapi_importer_instance

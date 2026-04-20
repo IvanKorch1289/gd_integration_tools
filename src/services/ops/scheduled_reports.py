@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("ScheduledReportsService", "ReportSchedule", "get_reports_service")
 
@@ -47,7 +46,6 @@ class ReportRun:
     duration_ms: float = 0
 
 
-@singleton
 class ScheduledReportsService:
     """Управление запланированными отчётами."""
 
@@ -169,5 +167,8 @@ class ScheduledReportsService:
         }
 
 
+_reports_service_instance = ScheduledReportsService()
+
+
 def get_reports_service() -> ScheduledReportsService:
-    return ScheduledReportsService()
+    return _reports_service_instance

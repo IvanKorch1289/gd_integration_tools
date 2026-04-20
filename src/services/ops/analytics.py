@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.s3_pool.clickhouse import ClickHouseClient, get_clickhouse_client
 
 __all__ = ("AnalyticsService", "get_analytics_service")
 
 
-@singleton
 class AnalyticsService:
     """Сервис аналитики — batch insert, query, aggregations через ClickHouse."""
 
@@ -60,5 +58,11 @@ class AnalyticsService:
         return await self._client.ping()
 
 
+_analytics_service_instance: AnalyticsService | None = None
+
+
 def get_analytics_service() -> AnalyticsService:
-    return AnalyticsService(client=get_clickhouse_client())
+    global _analytics_service_instance
+    if _analytics_service_instance is None:
+        _analytics_service_instance = AnalyticsService(client=get_clickhouse_client())
+    return _analytics_service_instance

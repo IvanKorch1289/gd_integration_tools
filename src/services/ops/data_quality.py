@@ -21,7 +21,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("DataQualityMonitor", "DQRule", "DQCheckResult", "get_dq_monitor")
 
@@ -66,7 +65,6 @@ class DQRule:
     enabled: bool = True
 
 
-@singleton
 class DataQualityMonitor:
     """Монитор качества данных с авто-детектом схемы."""
 
@@ -202,5 +200,8 @@ class DataQualityMonitor:
         return None
 
 
+_dq_monitor_instance = DataQualityMonitor()
+
+
 def get_dq_monitor() -> DataQualityMonitor:
-    return DataQualityMonitor()
+    return _dq_monitor_instance

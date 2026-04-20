@@ -8,7 +8,6 @@
 import logging
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.core.security.ai_sanitizer import AIDataSanitizer, get_ai_sanitizer
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
@@ -16,7 +15,6 @@ __all__ = ("AIAgentService", "get_ai_agent_service")
 logger = logging.getLogger(__name__)
 
 
-@singleton
 class AIAgentService:
     """Сервис для AI-операций с маскировкой PII."""
 
@@ -274,6 +272,9 @@ class AIAgentService:
             return {"success": False, "error": str(exc)}
 
 
+_ai_agent_service_instance = AIAgentService()
+
+
 def get_ai_agent_service() -> AIAgentService:
     """Фабрика AI-сервиса."""
-    return AIAgentService()
+    return _ai_agent_service_instance

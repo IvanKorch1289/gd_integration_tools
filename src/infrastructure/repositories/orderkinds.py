@@ -1,11 +1,9 @@
-from app.core.decorators.singleton import singleton
 from app.infrastructure.db.models.orderkinds import OrderKind
 from app.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("OrderKindRepository", "get_order_kind_repo")
 
 
-@singleton
 class OrderKindRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей видов запросов (OrderKind).
@@ -28,6 +26,9 @@ class OrderKindRepository(SQLAlchemyRepository):
         super().__init__(model=model, load_joined_models=load_joined_models)
 
 
+_order_kind_repo_instance: OrderKindRepository | None = None
+
+
 def get_order_kind_repo() -> OrderKindRepository:
     """
     Возвращает экземпляр репозитория для работы с видами заказов.
@@ -36,4 +37,7 @@ def get_order_kind_repo() -> OrderKindRepository:
 
     :return: Экземпляр OrderKindRepository.
     """
-    return OrderKindRepository(model=OrderKind, load_joined_models=False)
+    global _order_kind_repo_instance
+    if _order_kind_repo_instance is None:
+        _order_kind_repo_instance = OrderKindRepository(model=OrderKind, load_joined_models=False)
+    return _order_kind_repo_instance

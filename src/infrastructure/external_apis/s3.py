@@ -4,14 +4,12 @@ from typing import Any, AsyncGenerator
 from fastapi.responses import StreamingResponse
 
 from app.core.decorators.caching import existence_cache, metadata_cache
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
 from app.utilities.utils import utilities
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
 
-@singleton
 class S3Service:
     """Сервис для работы с объектным хранилищем S3."""
 
@@ -184,5 +182,11 @@ async def get_s3_service() -> AsyncGenerator[S3Service, None]:
         pass
 
 
+_s3_service_dependency_instance: S3Service | None = None
+
+
 def get_s3_service_dependency() -> S3Service:
-    return S3Service(client=s3_client)
+    global _s3_service_dependency_instance
+    if _s3_service_dependency_instance is None:
+        _s3_service_dependency_instance = S3Service(client=s3_client)
+    return _s3_service_dependency_instance

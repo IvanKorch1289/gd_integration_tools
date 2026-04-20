@@ -8,7 +8,6 @@ from typing import Any
 
 import orjson
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("WebhookScheduler", "get_webhook_scheduler")
@@ -18,7 +17,6 @@ logger = logging.getLogger(__name__)
 _PREFIX = "webhook:scheduled"
 
 
-@singleton
 class WebhookScheduler:
     """Планирование исходящих webhooks с cron/delay.
 
@@ -125,5 +123,8 @@ class WebhookScheduler:
             return result
 
 
+_webhook_scheduler_instance = WebhookScheduler()
+
+
 def get_webhook_scheduler() -> WebhookScheduler:
-    return WebhookScheduler()
+    return _webhook_scheduler_instance

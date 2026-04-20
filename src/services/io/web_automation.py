@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.transport.browser import BrowserClient, get_browser_client
 
 __all__ = ("WebAutomationService", "get_web_automation_service")
@@ -16,7 +15,6 @@ __all__ = ("WebAutomationService", "get_web_automation_service")
 logger = logging.getLogger(__name__)
 
 
-@singleton
 class WebAutomationService:
     """Web automation — парсинг, заполнение форм, мониторинг, сценарии."""
 
@@ -75,5 +73,8 @@ class WebAutomationService:
         return changes
 
 
+_web_automation_service_instance = WebAutomationService()
+
+
 def get_web_automation_service() -> WebAutomationService:
-    return WebAutomationService()
+    return _web_automation_service_instance

@@ -7,7 +7,6 @@ import logging
 import time
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("AgentMemoryService", "get_agent_memory_service")
@@ -17,7 +16,6 @@ logger = logging.getLogger(__name__)
 _PREFIX = "agent:memory"
 
 
-@singleton
 class AgentMemoryService:
     """Persistence-слой для agent memory через Redis.
 
@@ -126,5 +124,8 @@ class AgentMemoryService:
         return bool(await redis_client.client.exists(key))
 
 
+_agent_memory_service_instance = AgentMemoryService()
+
+
 def get_agent_memory_service() -> AgentMemoryService:
-    return AgentMemoryService()
+    return _agent_memory_service_instance

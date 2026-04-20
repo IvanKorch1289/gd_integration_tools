@@ -6,7 +6,6 @@ import hashlib
 import logging
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.s3_pool.vector_store import BaseVectorStore, get_vector_store
 
 __all__ = ("RAGService", "get_rag_service")
@@ -14,7 +13,6 @@ __all__ = ("RAGService", "get_rag_service")
 logger = logging.getLogger(__name__)
 
 
-@singleton
 class RAGService:
     """Retrieval-Augmented Generation — загрузка, поиск, обогащение промптов."""
 
@@ -134,5 +132,11 @@ class RAGService:
         return await self._store.count()
 
 
+_rag_service_instance: RAGService | None = None
+
+
 def get_rag_service() -> RAGService:
-    return RAGService(store=get_vector_store())
+    global _rag_service_instance
+    if _rag_service_instance is None:
+        _rag_service_instance = RAGService(store=get_vector_store())
+    return _rag_service_instance

@@ -54,6 +54,11 @@ class LLMProvider(Protocol):
     Обеспечивает горячую замену моделей (Claude, Gemini, Ollama, OpenWebUI,
     HuggingFace) без изменения бизнес-кода.
 
+    Метод :meth:`chat` возвращает raw dict-ответ провайдера (у каждого
+    вендора своя структура — tool_calls, usage, finish_reason). Для получения
+    чистого текста используйте :meth:`extract_text`. Такое разделение
+    позволяет оставить единый Protocol без потери вендор-специфичных метаданных.
+
     Attributes:
         name: Человекочитаемое имя провайдера (для логов и метрик).
     """
@@ -62,35 +67,27 @@ class LLMProvider(Protocol):
 
     async def chat(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int | None = None,
+        max_tokens: int = 4096,
         **kwargs: Any,
-    ) -> str:
-        """Отправляет чат-запрос и возвращает текст ответа.
+    ) -> dict[str, Any]:
+        """Отправляет чат-запрос и возвращает raw dict-ответ провайдера."""
+        ...
 
-        Args:
-            messages: История сообщений в формате ``[{"role": "user", "content": "..."}]``.
-            model: Опциональный override модели провайдера.
-            temperature: Температура сэмплинга (0.0–1.0).
-            max_tokens: Максимум токенов в ответе.
-            **kwargs: Провайдер-специфичные параметры.
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """Извлекает текстовое содержимое ответа из raw dict.
 
-        Returns:
-            Текстовый ответ модели.
+        У каждого вендора своя структура (OpenAI ``choices[0].message.content``,
+        Anthropic ``content[0].text``, Gemini ``candidates[0].content.parts[0].text``).
+        Метод инкапсулирует эту специфику.
         """
         ...
 
     async def embeddings(self, texts: list[str], *, model: str | None = None) -> list[list[float]]:
         """Получает векторные представления для списка текстов."""
-        ...
-
-    def stream(
-        self, messages: list[dict[str, str]], *, model: str | None = None, **kwargs: Any,
-    ) -> AsyncIterator[str]:
-        """Стриминг ответа по токенам/чанкам."""
         ...
 
 

@@ -35,10 +35,22 @@ def _register_protocol_providers() -> None:
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("LLM providers registration skipped: %s", exc)
 
-    # Export форматы — по одному инстансу сервиса на все форматы.
+    # Exporters — каждый формат как отдельный Protocol-instance в категории.
+    # Позволяет бизнес-коду делать get_provider("exporter", "csv") и
+    # подменять реализации (csv-по-другому, xlsx-через polars и т.п.).
     try:
-        from app.services.io.export_service import get_export_service
-        register_provider("exporter", "default", get_export_service())
+        from app.services.io.export_service import (
+            CsvExporter,
+            ExcelExporter,
+            JsonExporter,
+            ParquetExporter,
+            PdfExporter,
+        )
+        register_provider("exporter", "csv", CsvExporter())
+        register_provider("exporter", "xlsx", ExcelExporter())
+        register_provider("exporter", "pdf", PdfExporter())
+        register_provider("exporter", "json", JsonExporter())
+        register_provider("exporter", "parquet", ParquetExporter())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Exporter registration skipped: %s", exc)
 
@@ -49,9 +61,20 @@ def _register_protocol_providers() -> None:
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Memory backend registration skipped: %s", exc)
 
-    # Notification hub — единый канал-диспетчер.
+    # Notification channels — каждый канал отдельно через адаптер.
     try:
+        from app.services.ops.notification_adapters import (
+            EmailNotificationAdapter,
+            ExpressNotificationAdapter,
+            TelegramNotificationAdapter,
+            WebhookNotificationAdapter,
+        )
         from app.services.ops.notification_hub import get_notification_hub
+        register_provider("notifier", "email", EmailNotificationAdapter())
+        register_provider("notifier", "express", ExpressNotificationAdapter())
+        register_provider("notifier", "telegram", TelegramNotificationAdapter())
+        register_provider("notifier", "webhook", WebhookNotificationAdapter())
+        # hub — мультиплексор, полезно иметь как отдельную реализацию.
         register_provider("notifier", "hub", get_notification_hub())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Notifier registration skipped: %s", exc)
@@ -91,6 +114,9 @@ async def lifespan(app: FastAPI):
         _register_protocol_providers()
         await starting()
 
+        from app.workflows.outbox_worker import start_outbox_worker
+        start_outbox_worker(interval_seconds=5, batch_size=100)
+
         startup_completed = True
         app.state.infrastructure_ready = True
 
@@ -121,6 +147,12 @@ async def lifespan(app: FastAPI):
     finally:
         app_logger.info("Завершение работы приложения...")
         app.state.infrastructure_ready = False
+
+        try:
+            from app.workflows.outbox_worker import stop_outbox_worker
+            await stop_outbox_worker()
+        except Exception as worker_exc:  # noqa: BLE001
+            app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
 
         try:
             await ending()

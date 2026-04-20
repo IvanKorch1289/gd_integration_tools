@@ -3,14 +3,12 @@ from urllib.parse import urljoin
 
 from app.core.config.settings import DadataAPISettings, settings
 from app.core.decorators.caching import response_cache
-from app.core.decorators.singleton import singleton
 from app.core.errors import ServiceError
 from app.infrastructure.clients.transport.http import get_http_client_dependency
 
 __all__ = ("APIDADATAService", "get_dadata_service")
 
 
-@singleton
 class APIDADATAService:
     """Сервис для работы с API Dadata."""
 
@@ -67,5 +65,11 @@ class APIDADATAService:
             raise ServiceError from exc
 
 
+_dadata_service_instance: APIDADATAService | None = None
+
+
 def get_dadata_service() -> APIDADATAService:
-    return APIDADATAService(dadata_settings=settings.dadata_api)
+    global _dadata_service_instance
+    if _dadata_service_instance is None:
+        _dadata_service_instance = APIDADATAService(dadata_settings=settings.dadata_api)
+    return _dadata_service_instance

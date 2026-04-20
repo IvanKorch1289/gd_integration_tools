@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
 
@@ -43,7 +42,6 @@ class NotificationRequest:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
-@singleton
 class NotificationHub:
     """Single point для отправки уведомлений в любой канал."""
 
@@ -258,5 +256,8 @@ class NotificationHub:
         }
 
 
+_notification_hub_instance = NotificationHub()
+
+
 def get_notification_hub() -> NotificationHub:
-    return NotificationHub()
+    return _notification_hub_instance

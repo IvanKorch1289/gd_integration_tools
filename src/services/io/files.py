@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.repositories.files import FileRepository, get_file_repo
 from app.schemas.route_schemas.files import (
     FileSchemaIn,
@@ -12,7 +11,6 @@ from app.services.core.base import BaseService
 __all__ = ("get_file_service",)
 
 
-@singleton
 class FileService(
     BaseService[FileRepository, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut]
 ):
@@ -35,13 +33,17 @@ class FileService(
         )
 
 
+_file_service_instance: FileService | None = None
+
+
 def get_file_service() -> FileService:
     """
     Возвращает экземпляр сервиса для работы с файлами.
     """
-    return FileService(
-        repo=get_file_repo(),
+    global _file_service_instance
+    if _file_service_instance is None:
+        _file_service_instance = FileService(repo=get_file_repo(),
         schema_in=FileSchemaIn,
         schema_out=FileSchemaOut,
-        version_schema=FileVersionSchemaOut,
-    )
+        version_schema=FileVersionSchemaOut,)
+    return _file_service_instance

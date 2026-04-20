@@ -16,7 +16,6 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("AnomalyDetector", "Anomaly", "get_anomaly_detector")
 
@@ -34,7 +33,6 @@ class Anomaly:
     context: dict[str, Any] = field(default_factory=dict)
 
 
-@singleton
 class AnomalyDetector:
     """Детектор аномалий по rolling window."""
 
@@ -143,5 +141,8 @@ class AnomalyDetector:
         return list(self._series.keys())
 
 
+_anomaly_detector_instance = AnomalyDetector()
+
+
 def get_anomaly_detector() -> AnomalyDetector:
-    return AnomalyDetector()
+    return _anomaly_detector_instance

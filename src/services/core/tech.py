@@ -6,7 +6,6 @@ import pandas as pd
 from fastapi.responses import HTMLResponse
 
 from app.core.config.settings import settings
-from app.core.decorators.singleton import singleton
 from app.core.utils.health_check import get_healthcheck_service
 from app.services.core.base import BaseService, get_service_for_model
 from app.utilities.utils import utilities
@@ -14,7 +13,6 @@ from app.utilities.utils import utilities
 __all__ = ("TechService", "get_tech_service")
 
 
-@singleton
 class TechService:
     """
     Сервис для технических и служебных операций (Healthcheck, ссылки, отправка писем, массовая загрузка).
@@ -118,5 +116,8 @@ class TechService:
         return results
 
 
+_tech_service_instance = TechService()
+
+
 def get_tech_service() -> TechService:
-    return TechService()
+    return _tech_service_instance

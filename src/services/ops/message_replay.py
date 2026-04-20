@@ -15,7 +15,6 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from app.core.decorators.singleton import singleton
 
 __all__ = ("MessageReplayService", "ReplayMessage", "ReplayStatus", "get_replay_service")
 
@@ -42,7 +41,6 @@ class ReplayMessage:
     replay_count: int = 0
 
 
-@singleton
 class MessageReplayService:
     """Записывает все inbound сообщения и позволяет replay."""
 
@@ -159,5 +157,8 @@ class MessageReplayService:
         }
 
 
+_replay_service_instance = MessageReplayService()
+
+
 def get_replay_service() -> MessageReplayService:
-    return MessageReplayService()
+    return _replay_service_instance

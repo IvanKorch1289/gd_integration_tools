@@ -3,14 +3,12 @@ from urllib.parse import urljoin
 from uuid import UUID
 
 from app.core.config.settings import SKBAPISettings, settings
-from app.core.decorators.singleton import singleton
 from app.core.errors import ServiceError
 from app.infrastructure.clients.transport.http import get_http_client_dependency
 
 __all__ = ("APISKBService", "get_skb_service")
 
 
-@singleton
 class APISKBService:
     """Сервис для взаимодействия с API СКБ-Техно."""
 
@@ -152,5 +150,11 @@ class APISKBService:
             raise ServiceError from exc
 
 
+_skb_service_instance: APISKBService | None = None
+
+
 def get_skb_service() -> APISKBService:
-    return APISKBService(skb_settings=settings.skb_api)
+    global _skb_service_instance
+    if _skb_service_instance is None:
+        _skb_service_instance = APISKBService(skb_settings=settings.skb_api)
+    return _skb_service_instance

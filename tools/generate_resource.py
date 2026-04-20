@@ -68,13 +68,11 @@ def render_repository(resource: str, class_name: str) -> str:
         f"""
         from app.infrastructure.repositories.base import BaseRepository
         from app.models.{resource} import {class_name}
-        from app.core.decorators.singleton import singleton
 
 
         __all__ = ("get_{resource}_repo",)
 
 
-        @singleton
         class {class_name}Repository(BaseRepository[{class_name}]):
             \"\"\"
             Репозиторий ресурса {resource}.
@@ -82,8 +80,14 @@ def render_repository(resource: str, class_name: str) -> str:
             pass
 
 
+        _{resource}_repo_instance: {class_name}Repository | None = None
+
+
         def get_{resource}_repo() -> {class_name}Repository:
-            return {class_name}Repository(model={class_name})
+            global _{resource}_repo_instance
+            if _{resource}_repo_instance is None:
+                _{resource}_repo_instance = {class_name}Repository(model={class_name})
+            return _{resource}_repo_instance
         """
     )
 
@@ -100,13 +104,11 @@ def render_service(resource: str, class_name: str) -> str:
             {class_name}VersionSchemaOut,
         )
         from app.services.core.base import BaseService
-        from app.core.decorators.singleton import singleton
 
 
         __all__ = ("get_{resource}_service",)
 
 
-        @singleton
         class {class_name}Service(
             BaseService[
                 {class_name}Repository,
@@ -134,13 +136,19 @@ def render_service(resource: str, class_name: str) -> str:
                 )
 
 
+        _{resource}_service_instance: {class_name}Service | None = None
+
+
         def get_{resource}_service() -> {class_name}Service:
-            return {class_name}Service(
-                repo=get_{resource}_repo(),
-                schema_in={class_name}SchemaIn,
-                schema_out={class_name}SchemaOut,
-                version_schema={class_name}VersionSchemaOut,
-            )
+            global _{resource}_service_instance
+            if _{resource}_service_instance is None:
+                _{resource}_service_instance = {class_name}Service(
+                    repo=get_{resource}_repo(),
+                    schema_in={class_name}SchemaIn,
+                    schema_out={class_name}SchemaOut,
+                    version_schema={class_name}VersionSchemaOut,
+                )
+            return _{resource}_service_instance
         """
     )
 

@@ -1,6 +1,5 @@
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.core.errors import ServiceError
 from app.infrastructure.repositories.users import UserRepository, get_user_repo
 from app.schemas.route_schemas.users import (
@@ -13,7 +12,6 @@ from app.services.core.base import BaseService
 __all__ = ("get_user_service",)
 
 
-@singleton
 class UserService(
     BaseService[UserRepository, UserSchemaOut, UserSchemaIn, UserVersionSchemaOut]
 ):
@@ -79,13 +77,17 @@ class UserService(
             raise ServiceError from exc
 
 
+_user_service_instance: UserService | None = None
+
+
 def get_user_service() -> UserService:
     """
     Возвращает экземпляр сервиса для работы с пользователями.
     """
-    return UserService(
-        repo=get_user_repo(),
+    global _user_service_instance
+    if _user_service_instance is None:
+        _user_service_instance = UserService(repo=get_user_repo(),
         request_schema=UserSchemaIn,
         response_schema=UserSchemaOut,
-        version_schema=UserVersionSchemaOut,
-    )
+        version_schema=UserVersionSchemaOut,)
+    return _user_service_instance

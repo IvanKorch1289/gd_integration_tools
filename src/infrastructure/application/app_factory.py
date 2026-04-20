@@ -73,9 +73,18 @@ def _configure_application_components(app: FastAPI) -> None:
     # Middleware для обработки запросов
     setup_middlewares(app=app)
 
-    # Настройка распределенной трассировки
+    # Настройка распределенной трассировки. OTLP-коллектор может быть
+    # недоступен в dev/ci — ловим исключения чтобы не ломать старт приложения.
     if settings.app.telemetry_enabled:
-        setup_tracing(app=app)
+        try:
+            setup_tracing(app=app)
+        except Exception as exc:  # noqa: BLE001
+            import logging
+
+            logging.getLogger("app_factory").warning(
+                "OpenTelemetry setup failed: %s (приложение продолжит работу без трейсинга)",
+                exc,
+            )
 
     # Подключение административного интерфейса
     if settings.app.admin_enabled:

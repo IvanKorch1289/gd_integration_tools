@@ -542,14 +542,12 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
         from urllib.parse import urljoin
 
         from app.core.config.settings import settings
-        from app.core.decorators.singleton import singleton
         from app.core.errors import ServiceError
         from app.infrastructure.clients.transport.http import get_http_client_dependency
 
         __all__ = ("API{class_prefix}Service", "get_{name}_service")
 
 
-        @singleton
         class API{class_prefix}Service:
             """Сервис интеграции с {name} API."""
 
@@ -566,8 +564,14 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
                 return {{}}
 
     ''') + indent(methods_block, "") + "\n\n\n" + dedent(f'''\
+        _{name}_service_instance: "API{class_prefix}Service | None" = None
+
+
         def get_{name}_service() -> API{class_prefix}Service:
-            return API{class_prefix}Service()
+            global _{name}_service_instance
+            if _{name}_service_instance is None:
+                _{name}_service_instance = API{class_prefix}Service()
+            return _{name}_service_instance
     ''')
 
 

@@ -8,7 +8,6 @@ from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from app.core.config.settings import RedisSettings, settings
-from app.core.decorators.singleton import singleton
 from app.infrastructure.external_apis.logging_service import redis_logger
 
 __all__ = ("redis_client", "RedisClient")
@@ -17,7 +16,6 @@ __all__ = ("redis_client", "RedisClient")
 RedisKind = Literal["cache", "queue", "limits"]
 
 
-@singleton
 class RedisClient:
     """Redis-клиент с раздельными подключениями для cache/queue/limits."""
 

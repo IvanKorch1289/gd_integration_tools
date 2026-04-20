@@ -6,12 +6,10 @@ from typing import Any
 from aio_pika import connect
 
 from app.core.config.settings import settings
-from app.core.decorators.singleton import singleton
 
 __all__ = ("get_healthcheck_service",)
 
 
-@singleton
 class HealthCheck:
     """Сервис для комплексной проверки работоспособности системы.
 

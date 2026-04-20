@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.storage.s3_pool.elasticsearch import (
     ElasticSearchClient,
     get_elasticsearch_client,
@@ -13,7 +12,6 @@ from app.infrastructure.clients.storage.s3_pool.elasticsearch import (
 __all__ = ("SearchService", "get_search_service")
 
 
-@singleton
 class SearchService:
     """Сервис поиска — индексация, полнотекстовый поиск, агрегации."""
 
@@ -75,5 +73,11 @@ class SearchService:
         return await self._client.ping()
 
 
+_search_service_instance: SearchService | None = None
+
+
 def get_search_service() -> SearchService:
-    return SearchService(client=get_elasticsearch_client())
+    global _search_service_instance
+    if _search_service_instance is None:
+        _search_service_instance = SearchService(client=get_elasticsearch_client())
+    return _search_service_instance

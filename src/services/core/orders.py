@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 from app.core.config.settings import settings
 from app.core.decorators.caching import response_cache
-from app.core.decorators.singleton import singleton
 from app.core.enums.skb import ResponseTypeChoices
 from app.core.errors import NotFoundError
 from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
@@ -24,7 +23,6 @@ from app.utilities.utils import utilities
 __all__ = ("OrderService", "get_order_service")
 
 
-@singleton
 class OrderService(
     BaseService[OrderRepository, OrderSchemaOut, OrderSchemaIn, OrderVersionSchemaOut]
 ):
@@ -339,14 +337,24 @@ class OrderService(
             return result
 
 
+_order_service_instance: OrderService | None = None
+
+
 def get_order_service() -> OrderService:
-    """Возвращает экземпляр сервиса для работы с заказами."""
-    return OrderService(
-        repo=get_order_repo(),
-        schema_out=OrderSchemaOut,
-        schema_in=OrderSchemaIn,
-        version_schema=OrderVersionSchemaOut,
-        request_service=get_skb_service(),
-        file_repo=get_file_repo(),
-        s3_service=get_s3_service_dependency(),
-    )
+    """Возвращает lazy-инициализированный экземпляр сервиса работы с заказами.
+
+    Lazy-init нужна т.к. зависимости (репозитории, s3, skb) доступны только
+    после полной инициализации приложения — на top-level импорте их ещё нет.
+    """
+    global _order_service_instance
+    if _order_service_instance is None:
+        _order_service_instance = OrderService(
+            repo=get_order_repo(),
+            schema_out=OrderSchemaOut,
+            schema_in=OrderSchemaIn,
+            version_schema=OrderVersionSchemaOut,
+            request_service=get_skb_service(),
+            file_repo=get_file_repo(),
+            s3_service=get_s3_service_dependency(),
+        )
+    return _order_service_instance

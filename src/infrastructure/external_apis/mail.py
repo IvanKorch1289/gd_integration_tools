@@ -3,13 +3,11 @@ from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTPException
 
-from app.core.decorators.singleton import singleton
 from app.infrastructure.clients.transport.smtp import SmtpClient, smtp_client
 
 __all__ = ("get_mail_service", "MailService")
 
 
-@singleton
 class MailService:
     """Сервис для работы с электронной почтой, поддерживающий использование шаблонов."""
 

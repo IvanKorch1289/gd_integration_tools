@@ -182,6 +182,9 @@ class AdminService:
         return get_slo_tracker().get_report()
 
 
+_admin_service_instance = AdminService()
+
+
 def get_admin_service() -> AdminService:
     """
     Фабрика административного сервиса.
@@ -189,4 +192,4 @@ def get_admin_service() -> AdminService:
     Returns:
         AdminRouteService: Экземпляр сервиса admin-роутов.
     """
-    return AdminService()
+    return _admin_service_instance
