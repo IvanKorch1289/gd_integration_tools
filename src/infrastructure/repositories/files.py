@@ -2,7 +2,6 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.decorators.singleton import singleton
 from app.core.errors import NotFoundError
 from app.infrastructure.db.models.base import BaseModel
 from app.infrastructure.db.models.files import File, OrderFile
@@ -12,7 +11,6 @@ from app.infrastructure.repositories.base import SQLAlchemyRepository
 __all__ = ("FileRepository", "get_file_repo")
 
 
-@singleton
 class FileRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей файлов (File) и связующей таблицей (OrderFile).
@@ -54,8 +52,14 @@ class FileRepository(SQLAlchemyRepository):
         return new_link
 
 
+_file_repo_instance: FileRepository | None = None
+
+
 def get_file_repo() -> FileRepository:
     """
     Возвращает экземпляр репозитория для работы с файлами.
     """
-    return FileRepository(model=File, load_joined_models=False, link_model=OrderFile)
+    global _file_repo_instance
+    if _file_repo_instance is None:
+        _file_repo_instance = FileRepository(model=File, load_joined_models=False, link_model=OrderFile)
+    return _file_repo_instance

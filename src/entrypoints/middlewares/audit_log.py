@@ -88,7 +88,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
 
         # Асинхронная запись в Redis stream (fire-and-forget)
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
 
             await redis_client.add_to_stream(
                 stream_name="audit-log",

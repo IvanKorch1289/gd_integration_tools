@@ -7,6 +7,89 @@ from app.infrastructure.external_apis.logging_service import app_logger
 __all__ = ("lifespan",)
 
 
+def _register_protocol_providers() -> None:
+    """Регистрирует известные реализации Protocol'ов в providers_registry.
+
+    Выполняется один раз при startup'е. Реестр делает реализации доступными
+    для бизнес-кода через ``get_provider(category, name)`` без прямого импорта
+    конкретных классов — что позволяет подменять их в тестах и hot-swap в prod.
+
+    Каждая регистрация обёрнута в ``try/except ImportError`` — если
+    соответствующая опциональная зависимость не установлена (например, нет
+    ollama или langfuse), провайдер просто не регистрируется.
+    """
+    from app.core.providers_registry import register_provider
+
+    # LLM провайдеры (работают если есть env-переменные с ключами).
+    try:
+        from app.services.ai.ai_providers import (
+            ClaudeProvider,
+            GeminiProvider,
+            OllamaProvider,
+            OpenAIProvider,
+        )
+        register_provider("llm", "openai", OpenAIProvider())
+        register_provider("llm", "claude", ClaudeProvider())
+        register_provider("llm", "gemini", GeminiProvider())
+        register_provider("llm", "ollama", OllamaProvider())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("LLM providers registration skipped: %s", exc)
+
+    # Exporters — каждый формат как отдельный Protocol-instance в категории.
+    # Позволяет бизнес-коду делать get_provider("exporter", "csv") и
+    # подменять реализации (csv-по-другому, xlsx-через polars и т.п.).
+    try:
+        from app.services.io.export_service import (
+            CsvExporter,
+            ExcelExporter,
+            JsonExporter,
+            ParquetExporter,
+            PdfExporter,
+        )
+        register_provider("exporter", "csv", CsvExporter())
+        register_provider("exporter", "xlsx", ExcelExporter())
+        register_provider("exporter", "pdf", PdfExporter())
+        register_provider("exporter", "json", JsonExporter())
+        register_provider("exporter", "parquet", ParquetExporter())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("Exporter registration skipped: %s", exc)
+
+    # Agent memory (Redis-backed).
+    try:
+        from app.services.ai.agent_memory import get_agent_memory_service
+        register_provider("memory", "redis", get_agent_memory_service())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("Memory backend registration skipped: %s", exc)
+
+    # Notification channels — каждый канал отдельно через адаптер.
+    try:
+        from app.services.ops.notification_adapters import (
+            EmailNotificationAdapter,
+            ExpressNotificationAdapter,
+            TelegramNotificationAdapter,
+            WebhookNotificationAdapter,
+        )
+        from app.services.ops.notification_hub import get_notification_hub
+        register_provider("notifier", "email", EmailNotificationAdapter())
+        register_provider("notifier", "express", ExpressNotificationAdapter())
+        register_provider("notifier", "telegram", TelegramNotificationAdapter())
+        register_provider("notifier", "webhook", WebhookNotificationAdapter())
+        # hub — мультиплексор, полезно иметь как отдельную реализацию.
+        register_provider("notifier", "hub", get_notification_hub())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("Notifier registration skipped: %s", exc)
+
+    # Prompt store (in-memory fallback, при наличии LangFuse — он приоритетен).
+    try:
+        from app.services.ai.prompt_registry import get_prompt_registry
+        register_provider("prompt_store", "default", get_prompt_registry())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("Prompt store registration skipped: %s", exc)
+
+    from app.core.providers_registry import list_providers
+    app_logger.info("Protocol providers registered: %s", list_providers())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -28,7 +111,11 @@ async def lifespan(app: FastAPI):
         register_all_services()
         register_action_handlers()
         register_dsl_routes()
+        _register_protocol_providers()
         await starting()
+
+        from app.workflows.outbox_worker import start_outbox_worker
+        start_outbox_worker(interval_seconds=5, batch_size=100)
 
         startup_completed = True
         app.state.infrastructure_ready = True
@@ -60,6 +147,12 @@ async def lifespan(app: FastAPI):
     finally:
         app_logger.info("Завершение работы приложения...")
         app.state.infrastructure_ready = False
+
+        try:
+            from app.workflows.outbox_worker import stop_outbox_worker
+            await stop_outbox_worker()
+        except Exception as worker_exc:  # noqa: BLE001
+            app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
 
         try:
             await ending()

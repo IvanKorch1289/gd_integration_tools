@@ -5,8 +5,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from app.core.config.settings import settings
-from app.core.decorators.singleton import singleton
-from app.infrastructure.clients.http import HttpClient, get_http_client_dependency
+from app.infrastructure.clients.transport.http import HttpClient, get_http_client_dependency
 from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
 
 __all__ = (
@@ -26,7 +25,6 @@ class UnknownAntivirusVerdictError(Exception):
     """Не удалось определить вердикт антивируса."""
 
 
-@singleton
 class AntivirusService:
     """
     Сервис антивирусной проверки файлов.
@@ -219,7 +217,14 @@ async def get_antivirus_service() -> AsyncGenerator[AntivirusService, None]:
         pass
 
 
+_antivirus_service_dependency_instance: AntivirusService | None = None
+
+
 def get_antivirus_service_dependency() -> AntivirusService:
-    return AntivirusService(
-        http_client=get_http_client_dependency(), s3_service=get_s3_service_dependency()
-    )
+    global _antivirus_service_dependency_instance
+    if _antivirus_service_dependency_instance is None:
+        _antivirus_service_dependency_instance = AntivirusService(
+            http_client=get_http_client_dependency(),
+            s3_service=get_s3_service_dependency(),
+        )
+    return _antivirus_service_dependency_instance

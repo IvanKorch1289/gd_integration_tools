@@ -3,7 +3,7 @@ from faststream.redis.fastapi import Redis, RedisMessage
 
 from app.core.config.settings import settings
 from app.entrypoints.api.generator.registry import action_handler_registry
-from app.infrastructure.clients.stream import stream_client
+from app.infrastructure.clients.messaging.stream import stream_client
 from app.infrastructure.external_apis.logging_service import stream_logger
 from app.schemas.invocation import ActionCommandSchema
 

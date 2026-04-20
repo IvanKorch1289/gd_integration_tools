@@ -4,7 +4,7 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request, Response, status
 
 from app.core.config.settings import settings
-from app.infrastructure.clients.redis import redis_client
+from app.infrastructure.clients.storage.redis import redis_client
 from app.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("init_limiter", "route_limiting", "RouteLimiter")

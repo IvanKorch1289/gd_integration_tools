@@ -2,7 +2,6 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.decorators.singleton import singleton
 from app.core.errors import NotFoundError
 from app.infrastructure.db.models.orders import Order
 from app.infrastructure.db.session_manager import main_session_manager
@@ -12,7 +11,6 @@ from app.infrastructure.repositories.orderkinds import get_order_kind_repo
 __all__ = ("OrderRepository", "get_order_repo")
 
 
-@singleton
 class OrderRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей заказов (Order).
@@ -116,6 +114,9 @@ class OrderRepository(SQLAlchemyRepository):
         return updated_order
 
 
+_order_repo_instance: OrderRepository | None = None
+
+
 def get_order_repo() -> OrderRepository:
     """
     Возвращает экземпляр репозитория для работы с заказами.
@@ -125,6 +126,11 @@ def get_order_repo() -> OrderRepository:
     :param order_kind_repo: Репозиторий для работы с видами заказов.
     :return: Экземпляр OrderRepository.
     """
-    return OrderRepository(
-        model=Order, load_joined_models=True, order_kind_repo=get_order_kind_repo()
-    )
+    global _order_repo_instance
+    if _order_repo_instance is None:
+        _order_repo_instance = OrderRepository(
+            model=Order,
+            load_joined_models=True,
+            order_kind_repo=get_order_kind_repo(),
+        )
+    return _order_repo_instance

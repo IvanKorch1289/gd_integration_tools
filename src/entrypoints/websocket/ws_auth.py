@@ -78,7 +78,7 @@ class WSAuthenticator:
         if not api_key_hash:
             return set()
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             members = await raw.smembers(f"ws:groups:{api_key_hash}")
             return {m.decode() if isinstance(m, bytes) else str(m) for m in (members or [])}
@@ -94,7 +94,7 @@ class WSAuthenticator:
     async def grant_group(self, api_key_hash: str, group: str) -> None:
         """Выдаёт доступ к группе (admin operation)."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.sadd(f"ws:groups:{api_key_hash}", group)
         except (ImportError, AttributeError, ConnectionError) as exc:
@@ -103,7 +103,7 @@ class WSAuthenticator:
     async def revoke_group(self, api_key_hash: str, group: str) -> None:
         """Отзывает доступ к группе."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.srem(f"ws:groups:{api_key_hash}", group)
         except (ImportError, AttributeError, ConnectionError) as exc:

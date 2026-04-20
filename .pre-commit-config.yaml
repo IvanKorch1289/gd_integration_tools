@@ -1,6 +1,17 @@
+# Pre-commit hooks для gd_integration_tools.
+#
+# Установка: `pip install pre-commit && pre-commit install`.
+# Запуск вручную на всех файлах: `pre-commit run --all-files`.
+#
+# Хуки блокируют коммит при ошибках lint, проблемах форматирования или
+# утечках секретов. Проверки идут только по изменённым файлам — коммиты быстрые.
+
+default_language_version:
+  python: python3.14
+
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.15.10
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -20,6 +31,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: [--baseline, .secrets.baseline]
+        exclude: poetry\.lock
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -27,6 +39,8 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-toml
       - id: check-added-large-files
         args: [--maxkb=500]
       - id: check-merge-conflict
+      - id: debug-statements

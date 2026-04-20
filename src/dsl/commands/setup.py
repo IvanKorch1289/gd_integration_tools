@@ -40,15 +40,15 @@ def register_action_handlers() -> None:
         SKBOrdersListQuerySchema,
         SKBResultQuerySchema,
     )
-    from app.services.admin import get_admin_service
-    from app.services.ai_agent import get_ai_agent_service
-    from app.services.dadata import get_dadata_service
-    from app.services.files import get_file_service
-    from app.services.orderkinds import get_order_kind_service
-    from app.services.orders import get_order_service
-    from app.services.skb import get_skb_service
-    from app.services.tech import get_tech_service
-    from app.services.users import get_user_service
+    from app.services.core.admin import get_admin_service
+    from app.services.ai.ai_agent import get_ai_agent_service
+    from app.services.integrations.dadata import get_dadata_service
+    from app.services.io.files import get_file_service
+    from app.services.core.orderkinds import get_order_kind_service
+    from app.services.core.orders import get_order_service
+    from app.services.integrations.skb import get_skb_service
+    from app.services.core.tech import get_tech_service
+    from app.services.core.users import get_user_service
 
     # ── Orders: CRUD + кастомные методы ──
     _register_crud_actions("orders", get_order_service)
@@ -238,7 +238,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Analytics (ClickHouse) ──
-    from app.services.analytics import get_analytics_service
+    from app.services.ops.analytics import get_analytics_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -269,7 +269,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Search (Elasticsearch) ──
-    from app.services.search import get_search_service
+    from app.services.io.search import get_search_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -300,7 +300,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── RAG (Vector DB + LLM) ──
-    from app.services.rag_service import get_rag_service
+    from app.services.ai.rag_service import get_rag_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -331,7 +331,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Agent Memory ──
-    from app.services.agent_memory import get_agent_memory_service
+    from app.services.ai.agent_memory import get_agent_memory_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -372,7 +372,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Webhook Scheduler ──
-    from app.services.webhook_scheduler import get_webhook_scheduler
+    from app.services.ops.webhook_scheduler import get_webhook_scheduler
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -398,7 +398,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Web Automation (multi-protocol: API, queue, Prefect, gRPC, MCP) ──
-    from app.services.web_automation import get_web_automation_service
+    from app.services.io.web_automation import get_web_automation_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -449,7 +449,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Web Search (Perplexity + Tavily) ──
-    from app.infrastructure.clients.search_providers import get_web_search_service
+    from app.infrastructure.clients.external.search_providers import get_web_search_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -465,7 +465,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Data Export (Excel/CSV/PDF) ──
-    from app.services.export_service import get_export_service
+    from app.services.io.export_service import get_export_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -486,7 +486,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Notifications (email/express/webhook/telegram) ──
-    from app.services.notification_hub import get_notification_hub
+    from app.services.ops.notification_hub import get_notification_hub
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -537,7 +537,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Anomaly Detection ──
-    from app.services.anomaly_detector import get_anomaly_detector
+    from app.services.ops.anomaly_detector import get_anomaly_detector
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -558,7 +558,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Message Replay ──
-    from app.services.message_replay import get_replay_service
+    from app.services.ops.message_replay import get_replay_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -610,7 +610,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Data Quality ──
-    from app.services.data_quality import get_dq_monitor
+    from app.services.ops.data_quality import get_dq_monitor
 
     action_handler_registry.register_many([
         ActionHandlerSpec(
@@ -652,7 +652,7 @@ def register_action_handlers() -> None:
     ])
 
     # ── Scheduled Reports ──
-    from app.services.scheduled_reports import get_reports_service
+    from app.services.ops.scheduled_reports import get_reports_service
 
     action_handler_registry.register_many([
         ActionHandlerSpec(

@@ -192,7 +192,7 @@ class ClaimCheckProcessor(BaseProcessor):
             token = f"claim:{uuid.uuid4()}"
             body_bytes = orjson.dumps(exchange.in_message.body, default=str)
             try:
-                from app.infrastructure.clients.redis import redis_client
+                from app.infrastructure.clients.storage.redis import redis_client
                 await redis_client.set_if_not_exists(
                     key=token, value=body_bytes.decode(), ttl=self._ttl,
                 )
@@ -218,7 +218,7 @@ class ClaimCheckProcessor(BaseProcessor):
                 return
 
             try:
-                from app.infrastructure.clients.redis import redis_client
+                from app.infrastructure.clients.storage.redis import redis_client
                 raw = await redis_client.get(token)
                 if raw is None:
                     exchange.fail(f"Claim token expired or not found: {token}")

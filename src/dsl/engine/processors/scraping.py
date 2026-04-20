@@ -134,7 +134,7 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from app.infrastructure.clients.http import HttpClient
+            from app.infrastructure.clients.transport.http import HttpClient
             client = HttpClient()
             response = await client.make_request(
                 method="GET", url=url, response_type="text",
@@ -196,7 +196,7 @@ class PaginateProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.http import HttpClient
+        from app.infrastructure.clients.transport.http import HttpClient
 
         url = self._start_url
         if not url:
@@ -310,7 +310,7 @@ class ApiProxyProcessor(BaseProcessor):
         self._timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.http import HttpClient
+        from app.infrastructure.clients.transport.http import HttpClient
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):

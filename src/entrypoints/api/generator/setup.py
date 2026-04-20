@@ -3,8 +3,8 @@ from app.entrypoints.api.generator.registry import (
     action_handler_registry,
 )
 from app.schemas.route_schemas.orders import OrderIdPathSchema
-from app.services.orderkinds import get_order_kind_service
-from app.services.orders import get_order_service
+from app.services.core.orderkinds import get_order_kind_service
+from app.services.core.orders import get_order_service
 from app.workfolws.workflows_service import get_workflows_service
 
 __all__ = ("register_action_handlers",)

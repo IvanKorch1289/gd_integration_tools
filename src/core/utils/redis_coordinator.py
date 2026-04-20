@@ -28,7 +28,7 @@ logger = logging.getLogger("core.redis_coordinator")
 
 def _get_raw_redis() -> Any:
     """Возвращает raw Redis client (обходит обёртки)."""
-    from app.infrastructure.clients.redis import redis_client
+    from app.infrastructure.clients.storage.redis import redis_client
     return getattr(redis_client, "_raw_client", None) or redis_client
 
 

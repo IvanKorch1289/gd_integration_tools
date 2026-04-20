@@ -58,7 +58,7 @@ class AuditEventLog:
 
     async def _flush_to_clickhouse(self, events: list[AuditEvent]) -> None:
         try:
-            from app.infrastructure.clients.clickhouse import get_clickhouse_client
+            from app.infrastructure.clients.storage.s3_pool.clickhouse import get_clickhouse_client
 
             client = get_clickhouse_client()
             rows = []
@@ -89,7 +89,7 @@ class AuditEventLog:
         who: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        from app.infrastructure.clients.clickhouse import get_clickhouse_client
+        from app.infrastructure.clients.storage.s3_pool.clickhouse import get_clickhouse_client
 
         client = get_clickhouse_client()
 

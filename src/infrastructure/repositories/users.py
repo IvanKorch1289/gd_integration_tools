@@ -3,7 +3,6 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.decorators.singleton import singleton
 from app.core.errors import DatabaseError
 from app.infrastructure.db.models.users import User
 from app.infrastructure.db.session_manager import main_session_manager
@@ -12,7 +11,6 @@ from app.infrastructure.repositories.base import SQLAlchemyRepository
 __all__ = ("UserRepository", "get_user_repo")
 
 
-@singleton
 class UserRepository(SQLAlchemyRepository):
     """
     Репозиторий для работы с таблицей пользователей (User).
@@ -62,8 +60,14 @@ class UserRepository(SQLAlchemyRepository):
             raise DatabaseError from exc
 
 
+_user_repo_instance: UserRepository | None = None
+
+
 def get_user_repo() -> UserRepository:
     """
     Возвращает экземпляр репозитория для работы с пользователями.
     """
-    return UserRepository(model=User, load_joined_models=False)
+    global _user_repo_instance
+    if _user_repo_instance is None:
+        _user_repo_instance = UserRepository(model=User, load_joined_models=False)
+    return _user_repo_instance

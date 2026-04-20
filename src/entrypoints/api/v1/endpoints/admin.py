@@ -7,7 +7,7 @@ from app.schemas.route_schemas.admin import (
     AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
-from app.services.admin import get_admin_service
+from app.services.core.admin import get_admin_service
 
 __all__ = ("router",)
 
@@ -135,3 +135,21 @@ ActionRouterBuilder(router).add_actions(
         ),
     ]
 )
+
+
+@router.post(
+    "/config/reload",
+    summary="Горячая перезагрузка конфигурации",
+    description=(
+        "Вручную запускает все зарегистрированные config-reload колбеки "
+        "(без рестарта процесса). Используйте когда FS watcher недоступен."
+    ),
+)
+async def reload_config() -> dict[str, object]:
+    """Эндпоинт ручного триггера hot-reload.
+
+    Возвращает агрегированный отчёт из :class:`ConfigHotReloader`.
+    """
+    from app.core.config.hot_reload import get_hot_reloader
+
+    return await get_hot_reloader().trigger_reload(reason="api-request")

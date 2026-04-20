@@ -154,7 +154,7 @@ POST /api/v1/admin/feature-flags/toggle?flag_name=beta_orders&enable=false
 ```python
 from app.dsl.commands.registry import action_handler_registry
 from app.schemas.base import EmailSchema
-from app.services.tech import get_tech_service
+from app.services.core.tech import get_tech_service
 
 def register_action_handlers() -> None:
     action_handler_registry.register(

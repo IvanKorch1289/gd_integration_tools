@@ -4,10 +4,10 @@ from typing import Any, Awaitable, Callable
 
 from app.core.decorators.caching import close_caches
 from app.core.decorators.limiting import init_limiter
-from app.infrastructure.clients.logger import graylog_handler
-from app.infrastructure.clients.redis import redis_client
-from app.infrastructure.clients.smtp import smtp_client
-from app.infrastructure.clients.storage import s3_client
+from app.infrastructure.clients.external.logger import graylog_handler
+from app.infrastructure.clients.storage.redis import redis_client
+from app.infrastructure.clients.transport.smtp import smtp_client
+from app.infrastructure.clients.storage.s3_pool import s3_client
 from app.infrastructure.db.database import db_initializer, external_db_registry
 from app.infrastructure.external_apis.logging_service import app_logger
 from app.infrastructure.scheduler.scheduler_manager import scheduler_manager

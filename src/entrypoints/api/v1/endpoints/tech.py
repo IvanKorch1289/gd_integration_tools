@@ -13,7 +13,7 @@ from app.entrypoints.api.generator.invocation import (
     default_payload_factory,
 )
 from app.schemas.base import EmailSchema
-from app.services.tech import get_tech_service
+from app.services.core.tech import get_tech_service
 
 __all__ = ("router",)
 

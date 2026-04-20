@@ -666,7 +666,7 @@ class EmailComposeProcessor(BaseProcessor):
             email_body = self._body_template
 
         try:
-            from app.infrastructure.clients.smtp import smtp_client
+            from app.infrastructure.clients.transport.smtp import smtp_client
             await smtp_client.send_email(
                 to=self._to,
                 subject=self._subject,

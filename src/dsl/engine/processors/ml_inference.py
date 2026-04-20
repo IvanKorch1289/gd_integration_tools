@@ -7,6 +7,8 @@ CPU-only inference через ONNX Runtime. Graceful fallback если onnxrunti
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
+from threading import Lock
 from typing import Any
 
 from app.dsl.engine.context import ExecutionContext
@@ -33,7 +35,12 @@ class OnnxInferenceProcessor(BaseProcessor):
                     input_key="features", output_property="predictions")
     """
 
-    _model_cache: dict[str, Any] = {}
+    # LRU-кэш моделей: ограничен размером, чтобы избежать OOM при большом
+    # числе разных моделей. Потокобезопасен через Lock (модели могут загружаться
+    # параллельно из разных pipeline'ов).
+    _MAX_MODELS: int = 8
+    _model_cache: OrderedDict[str, Any] = OrderedDict()
+    _cache_lock: Lock = Lock()
 
     def __init__(
         self,
@@ -49,23 +56,33 @@ class OnnxInferenceProcessor(BaseProcessor):
         self._output = output_property
 
     def _get_session(self) -> Any:
-        if self._path in self._model_cache:
-            return self._model_cache[self._path]
+        """Возвращает ONNX-сессию с LRU-вытеснением старых моделей."""
+        with self._cache_lock:
+            if self._path in self._model_cache:
+                # move-to-end помечает как "недавно использованную"
+                self._model_cache.move_to_end(self._path)
+                return self._model_cache[self._path]
 
         try:
             import onnxruntime as ort
+
             session = ort.InferenceSession(
-                self._path,
-                providers=["CPUExecutionProvider"],
+                self._path, providers=["CPUExecutionProvider"],
             )
-            self._model_cache[self._path] = session
-            return session
         except ImportError:
             logger.warning("onnxruntime not installed, ONNX inference disabled")
             return None
         except Exception as exc:
             logger.error("ONNX model load failed: %s", exc)
             return None
+
+        with self._cache_lock:
+            self._model_cache[self._path] = session
+            # Вытесняем самую старую модель при переполнении кэша
+            while len(self._model_cache) > self._MAX_MODELS:
+                evicted_path, _ = self._model_cache.popitem(last=False)
+                logger.info("ONNX LRU eviction: %s", evicted_path)
+        return session
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         session = self._get_session()
@@ -125,7 +142,7 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from app.services.ai_agent import get_ai_agent_service
+            from app.services.ai.ai_agent import get_ai_agent_service
             agent = get_ai_agent_service()
 
             # Проверяем что у агента есть streaming (иначе fallback в non-streaming)
@@ -160,7 +177,7 @@ class StreamingLLMProcessor(BaseProcessor):
         self, session_id: str, content: Any, *, is_final: bool,
     ) -> None:
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",
                 data={
@@ -216,7 +233,7 @@ class EmbeddingProcessor(BaseProcessor):
             exchange.fail(f"Embedding failed: {exc}")
 
     async def _st_embed(self, text: str) -> list[float]:
-        from app.services.rag_service import get_rag_service
+        from app.services.ai.rag_service import get_rag_service
         rag = get_rag_service()
         if hasattr(rag, "_embed"):
             result = rag._embed(text)

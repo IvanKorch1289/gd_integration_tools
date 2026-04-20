@@ -34,7 +34,7 @@ class DQCheckProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.data_quality import get_dq_monitor
+        from app.services.ops.data_quality import get_dq_monitor
 
         monitor = get_dq_monitor()
         for rule in self._rules:
