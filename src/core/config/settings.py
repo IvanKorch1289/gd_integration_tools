@@ -18,16 +18,20 @@ from app.core.config.external_databases import (
     ExternalDatabasesSettings,
     external_databases_settings,
 )
-from app.core.config.antivirus_api import AntivirusAPISettings, antivirus_api_settings
-from app.core.config.dadata_api import DadataAPISettings, dadata_api_settings
+from app.core.config.external_apis import (
+    AntivirusAPISettings,
+    DadataAPISettings,
+    SKBAPISettings,
+    antivirus_api_settings,
+    dadata_api_settings,
+    skb_api_settings,
+)
 from app.core.config.http_base import HttpBaseSettings, http_base_settings
-from app.core.config.skb_api import SKBAPISettings, skb_api_settings
 from app.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
 from app.core.config.express_settings import ExpressSettings, express_settings
 from app.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from app.core.config.security import SecureSettings, secure_settings
 from app.core.config.services import (
-    CelerySettings,
     FileStorageSettings,
     GRPCSettings,
     LogStorageSettings,
@@ -35,7 +39,6 @@ from app.core.config.services import (
     QueueSettings,
     RedisSettings,
     TasksSettings,
-    celery_settings,
     fs_settings,
     grpc_settings,
     log_settings,
@@ -72,7 +75,6 @@ class Settings(BaseSettings):
     dadata_api: DadataAPISettings = dadata_api_settings
     queue: QueueSettings = queue_settings
     mail: MailSettings = mail_settings
-    celery: CelerySettings = celery_settings
     tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
 

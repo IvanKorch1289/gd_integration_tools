@@ -1,16 +1,11 @@
-"""Fast JSON serialization — msgspec-first для hot paths, orjson fallback.
+"""Fast JSON (msgspec-first, orjson fallback) для primitive payload'ов.
 
-msgspec в 40x быстрее Pydantic на simple types + в 2-3x быстрее orjson
-на некоторых workloads (no dict-to-struct conversion).
+Используй этот модуль когда:
+- Нужна максимальная скорость на простых dict/list/str/int payload'ах
+- НЕ нужно сохранять типы Python (UUID, Decimal, datetime).
 
-ВАЖНО: НЕ заменяет Pydantic для business schemas — Pydantic v2 остаётся
-единственным ORM/validation layer. msgspec используется для:
-- Audit event logs (hot path)
-- Redis payload serialization
-- Internal pipeline messaging
-
-Pydantic-compatible API (encode/decode) для drop-in replacement
-в низкоуровневых utility функциях.
+Если тебе нужно round-trip сохранение типов — используй
+`app.utilities.json_codec` (формат с markers несовместим с этим модулем).
 """
 
 from __future__ import annotations

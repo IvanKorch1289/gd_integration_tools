@@ -17,28 +17,39 @@ src/
 │   │   ├── pipeline.py     # Pipeline (list of processors + metadata)
 │   │   ├── execution_engine.py  # Executes pipeline with middleware chain
 │   │   ├── middleware.py   # Timeout, error normalization, metrics
-│   │   └── processors/    # All processor implementations
+│   │   └── processors/    # All processor implementations (138+)
 │   │       ├── core.py        # SetHeader, Transform, Filter, Enrich, Validate, Log
 │   │       ├── control_flow.py # Choice, Retry, TryCatch, Parallel, Saga, PipelineRef
-│   │       ├── eip.py         # Camel EIP (22): DeadLetter, Idempotent, Splitter, Aggregator,
+│   │       ├── eip/           # Camel EIP: DeadLetter, Idempotent, Splitter, Aggregator,
 │   │       │                  # Throttler, Delay, WireTap, DynamicRouter, ScatterGather,
-│   │       │                  # RecipientList, Fallback, MessageTranslator,
-│   │       │                  # LoadBalancer, CircuitBreaker, ClaimCheck, Normalizer,
-│   │       │                  # Resequencer, Multicast, Loop, OnCompletion, Sort, Timeout
+│   │       │                  # RecipientList, Fallback, MessageTranslator, LoadBalancer,
+│   │       │                  # CircuitBreaker, ClaimCheck, Normalizer, Resequencer,
+│   │       │                  # Multicast, Loop, OnCompletion, Sort, Timeout
 │   │       ├── components.py  # Source/Sink: HttpCall, DatabaseQuery, FileRead/Write,
 │   │       │                  # S3Read/Write, Timer, PollingConsumer
 │   │       ├── converters.py  # TypeConverter: JSON↔YAML/MsgPack/XML/CSV/Parquet/BSON, HTML→JSON
 │   │       ├── patterns.py    # n8n/Benthos/Zapier: Switch, Merge, BatchWindow,
 │   │       │                  # Deduplicate, Formatter, Debounce
-│   │       ├── rpa.py         # UiPath-style (16): Pdf/Word/Excel read/write, OCR,
+│   │       ├── rpa.py         # UiPath-style: Pdf/Word/Excel read/write, OCR,
 │   │       │                  # image resize, regex, Jinja2, hash, encrypt/decrypt,
 │   │       │                  # archive, shell exec, email compose
+│   │       ├── rpa_banking.py # Банковский RPA: Citrix, SAP GUI, 3270, Appium,
+│   │       │                  # email-driven, keystroke replay, bank PDF parser
+│   │       ├── banking.py     # Банковские протоколы: SWIFT MT/MX, ISO 20022, FIX,
+│   │       │                  # EDIFACT, 1C
+│   │       ├── ai_banking.py  # AI-пайплайны: KYC/AML, антифрод, кредитный скоринг,
+│   │       │                  # чат-бот, обработка обращений, tx-категоризация, fin-OCR
+│   │       ├── generic.py     # Универсальные: shadow mode, bulkhead, lineage,
+│   │       │                  # SSE source, JSON Schema validate, A/B router, feature flags
 │   │       ├── scraping.py    # Scrape, Paginate, ApiProxy
 │   │       ├── ai.py          # LLMCall, PromptComposer, VectorSearch, PII, TokenBudget
 │   │       ├── web.py         # Navigate, Click, FillForm, Extract, Screenshot
 │   │       ├── external.py    # MCPTool, AgentGraph, CDC
 │   │       ├── integration.py # EventPublish, MemoryLoad/Save
 │   │       ├── export.py      # Export CSV/Excel/PDF
+│   │       ├── enrichment.py  # Контент-обогащение
+│   │       ├── ml_inference.py # ML-инференс в пайплайне
+│   │       ├── storage_ext.py # Расширенные storage-процессоры
 │   │       └── dq_check.py    # Data Quality checks
 │   ├── adapters/       # Protocol adapters (REST, SOAP, gRPC, GraphQL, Kafka, etc.)
 │   ├── commands/       # Action registry + setup.py (action handler registration)
@@ -85,7 +96,7 @@ processors:
 Load via `from app.dsl.yaml_loader import load_pipeline_from_file`.
 
 ## Documentation
-- `docs/PROCESSORS.md` — каталог всех ~85 процессоров
+- `docs/PROCESSORS.md` — каталог всех 138 процессоров (автоген из docstrings)
 - `docs/RPA_GUIDE.md` — работа с PDF/Word/Excel/OCR/encryption
 - `docs/AI_INTEGRATION.md` — LLM/RAG/PII/guardrails/caching
 - `docs/CDC_GUIDE.md` — Change Data Capture (PG/Oracle/polling)
@@ -93,6 +104,11 @@ Load via `from app.dsl.yaml_loader import load_pipeline_from_file`.
 - `docs/ARCHITECTURE.md` — архитектура системы
 - `docs/DEVELOPER_GUIDE.md` — гайд для разработчиков
 - `docs/DEPLOYMENT.md` — docker + k8s deployment
+
+**Регенерация docs/PROCESSORS.md:**
+```bash
+python tools/generate_processors_doc.py > docs/PROCESSORS.md
+```
 
 ## Commands
 

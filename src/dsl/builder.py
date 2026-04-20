@@ -957,6 +957,190 @@ class RouteBuilder:
         self.cache(_key_fn, ttl=ttl)
         return self.cache_write(_key_fn, ttl=ttl)
 
+    # ── Banking protocols ──
+
+    def swift_mt_parse(self, message_type: str = "auto") -> "RouteBuilder":
+        """Парсит SWIFT MT-сообщение (MT103/MT202/MT940) в dict."""
+        from app.dsl.engine.processors.banking import SwiftMTParserProcessor
+        return self._add(SwiftMTParserProcessor(message_type=message_type))
+
+    def swift_mx_build(self, schema: str, action: str = "banking.swift_mx.build") -> "RouteBuilder":
+        """Формирует SWIFT MX (ISO 20022 XML)."""
+        from app.dsl.engine.processors.banking import SwiftMXBuilderProcessor
+        return self._add(SwiftMXBuilderProcessor(schema=schema, action=action))
+
+    def iso20022_parse(self, namespace: str | None = None) -> "RouteBuilder":
+        """Парсит ISO 20022 XML (pain.001, camt.053, pacs.008)."""
+        from app.dsl.engine.processors.banking import Iso20022ParserProcessor
+        return self._add(Iso20022ParserProcessor(namespace=namespace))
+
+    def fix_message(self, mode: str = "parse") -> "RouteBuilder":
+        """Парсер/билдер FIX-сообщений."""
+        from app.dsl.engine.processors.banking import FixMessageProcessor
+        return self._add(FixMessageProcessor(mode=mode))
+
+    def edifact_parse(self) -> "RouteBuilder":
+        """Парсит UN/EDIFACT сегменты (FINPAY, PAYMUL)."""
+        from app.dsl.engine.processors.banking import EdifactParserProcessor
+        return self._add(EdifactParserProcessor())
+
+    def onec_exchange(
+        self, operation: str, entity: str, action: str = "onec.invoke",
+    ) -> "RouteBuilder":
+        """Интеграция с 1С:Предприятие через OData/HTTP-сервисы."""
+        from app.dsl.engine.processors.banking import OneCExchangeProcessor
+        return self._add(OneCExchangeProcessor(operation=operation, entity=entity, action=action))
+
+    # ── RPA для банковских приложений ──
+
+    def citrix(self, operation: str, session_id: str) -> "RouteBuilder":
+        """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
+        from app.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
+        return self._add(CitrixSessionProcessor(operation=operation, session_id=session_id))
+
+    def sap_gui(self, operation: str, transaction: str | None = None) -> "RouteBuilder":
+        """SAP GUI Scripting (Windows-only)."""
+        from app.dsl.engine.processors.rpa_banking import SapGuiProcessor
+        return self._add(SapGuiProcessor(operation=operation, transaction=transaction))
+
+    def terminal_3270(self, host: str, port: int = 23, action: str = "query") -> "RouteBuilder":
+        """IBM 3270 терминал-эмулятор (мейнфрейм)."""
+        from app.dsl.engine.processors.rpa_banking import TerminalEmulator3270Processor
+        return self._add(TerminalEmulator3270Processor(host=host, port=port, action=action))
+
+    def appium_mobile(
+        self, platform: str, app_package: str, operation: str,
+    ) -> "RouteBuilder":
+        """Appium автоматизация мобильных приложений (android/ios)."""
+        from app.dsl.engine.processors.rpa_banking import AppiumMobileProcessor
+        return self._add(AppiumMobileProcessor(
+            platform=platform, app_package=app_package, operation=operation,
+        ))
+
+    def email_driven(
+        self,
+        mailbox: str = "INBOX",
+        subject_filter: str | None = None,
+        extract: str = "body_table",
+    ) -> "RouteBuilder":
+        """IMAP → structured data pipeline."""
+        from app.dsl.engine.processors.rpa_banking import EmailDrivenProcessor
+        return self._add(EmailDrivenProcessor(
+            mailbox=mailbox, subject_filter=subject_filter, extract=extract,
+        ))
+
+    def keystroke_replay(self, script_name: str) -> "RouteBuilder":
+        """Воспроизведение записанного сценария клавиатуры/мыши."""
+        from app.dsl.engine.processors.rpa_banking import KeystrokeReplayProcessor
+        return self._add(KeystrokeReplayProcessor(script_name=script_name))
+
+    def bank_statement_pdf(self, bank_format: str = "generic") -> "RouteBuilder":
+        """Парсер PDF-выписок по счёту."""
+        from app.dsl.engine.processors.rpa_banking import BankStatementPdfParserProcessor
+        return self._add(BankStatementPdfParserProcessor(bank_format=bank_format))
+
+    # ── AI-пайплайны для банка ──
+
+    def kyc_aml_verify(self, jurisdiction: str = "ru") -> "RouteBuilder":
+        """KYC/AML верификация клиента."""
+        from app.dsl.engine.processors.ai_banking import KycAmlVerifyProcessor
+        return self._add(KycAmlVerifyProcessor(jurisdiction=jurisdiction))
+
+    def antifraud_score(self, model: str = "default") -> "RouteBuilder":
+        """LLM-скоринг антифрода (поверх детерминистических правил)."""
+        from app.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
+        return self._add(AntiFraudScoreProcessor(model=model))
+
+    def credit_scoring_rag(self, product: str = "retail") -> "RouteBuilder":
+        """Кредитный скоринг через RAG."""
+        from app.dsl.engine.processors.ai_banking import CreditScoringRagProcessor
+        return self._add(CreditScoringRagProcessor(product=product))
+
+    def customer_chatbot(self, channel: str = "web") -> "RouteBuilder":
+        """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
+        from app.dsl.engine.processors.ai_banking import CustomerChatbotProcessor
+        return self._add(CustomerChatbotProcessor(channel=channel))
+
+    def appeal_ai(self) -> "RouteBuilder":
+        """Автоматическая обработка клиентских обращений."""
+        from app.dsl.engine.processors.ai_banking import AppealProcessorAI
+        return self._add(AppealProcessorAI())
+
+    def tx_categorize(self, taxonomy: str = "mcc") -> "RouteBuilder":
+        """Категоризация транзакций (MCC + merchant normalization)."""
+        from app.dsl.engine.processors.ai_banking import TransactionCategorizerProcessor
+        return self._add(TransactionCategorizerProcessor(taxonomy=taxonomy))
+
+    def findoc_ocr_llm(self, doc_type: str = "invoice") -> "RouteBuilder":
+        """OCR + LLM для финансовых документов."""
+        from app.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
+        return self._add(FinDocOcrLlmProcessor(doc_type=doc_type))
+
+    # ── Generic (универсальные) ──
+
+    def shadow_mode(self, processors: list[BaseProcessor]) -> "RouteBuilder":
+        """Исполняет вложенную ветку в shadow-режиме (без side effects)."""
+        from app.dsl.engine.processors.generic import ShadowModeProcessor
+        return self._add(ShadowModeProcessor(processors=processors))
+
+    def bulkhead(
+        self,
+        name: str,
+        limit: int,
+        processors: list[BaseProcessor],
+        *,
+        wait: bool = True,
+        timeout: float | None = None,
+    ) -> "RouteBuilder":
+        """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
+        from app.dsl.engine.processors.generic import BulkheadProcessor
+        return self._add(BulkheadProcessor(
+            name=name, limit=limit, processors=processors, wait=wait, timeout=timeout,
+        ))
+
+    def lineage(self, tag: str = "step") -> "RouteBuilder":
+        """Записывает шаг в `_lineage` property (data governance)."""
+        from app.dsl.engine.processors.generic import LineageTrackerProcessor
+        return self._add(LineageTrackerProcessor(tag=tag))
+
+    def sse_source(self, url: str, event_types: list[str] | None = None) -> "RouteBuilder":
+        """Source-процессор для Server-Sent Events."""
+        from app.dsl.engine.processors.generic import SseSourceProcessor
+        return self._add(SseSourceProcessor(url=url, event_types=event_types))
+
+    def schema_validate(self, schema: dict[str, Any]) -> "RouteBuilder":
+        """Валидация body по JSON Schema (Draft 2020-12)."""
+        from app.dsl.engine.processors.generic import SchemaValidateProcessor
+        return self._add(SchemaValidateProcessor(schema=schema))
+
+    def ab_test(
+        self,
+        variant_a: list[BaseProcessor],
+        variant_b: list[BaseProcessor],
+        *,
+        split_percent: int = 50,
+        key_fn: Callable[[Exchange[Any]], str] | None = None,
+    ) -> "RouteBuilder":
+        """Стабильная маршрутизация X% трафика на вариант B."""
+        from app.dsl.engine.processors.generic import AbTestRouterProcessor
+        return self._add(AbTestRouterProcessor(
+            variant_a=variant_a, variant_b=variant_b,
+            split_percent=split_percent, key_fn=key_fn,
+        ))
+
+    def feature_flag(
+        self,
+        flag: str,
+        processors: list[BaseProcessor],
+        *,
+        resolver: Callable[[str], bool] | None = None,
+    ) -> "RouteBuilder":
+        """Выполняет ветку только при включённом feature flag."""
+        from app.dsl.engine.processors.generic import FeatureFlagGuardProcessor
+        return self._add(FeatureFlagGuardProcessor(
+            flag=flag, processors=processors, resolver=resolver,
+        ))
+
     # ── Build ──
 
     def build(self, *, validate_actions: bool = True) -> Pipeline:

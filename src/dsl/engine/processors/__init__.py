@@ -127,6 +127,41 @@ from app.dsl.engine.processors.components import (
     TimerProcessor,
     PollingConsumerProcessor,
 )
+from app.dsl.engine.processors.banking import (
+    SwiftMTParserProcessor,
+    SwiftMXBuilderProcessor,
+    Iso20022ParserProcessor,
+    FixMessageProcessor,
+    EdifactParserProcessor,
+    OneCExchangeProcessor,
+)
+from app.dsl.engine.processors.rpa_banking import (
+    CitrixSessionProcessor,
+    SapGuiProcessor,
+    TerminalEmulator3270Processor,
+    AppiumMobileProcessor,
+    EmailDrivenProcessor,
+    KeystrokeReplayProcessor,
+    BankStatementPdfParserProcessor,
+)
+from app.dsl.engine.processors.ai_banking import (
+    KycAmlVerifyProcessor,
+    AntiFraudScoreProcessor,
+    CreditScoringRagProcessor,
+    CustomerChatbotProcessor,
+    AppealProcessorAI,
+    TransactionCategorizerProcessor,
+    FinDocOcrLlmProcessor,
+)
+from app.dsl.engine.processors.generic import (
+    ShadowModeProcessor,
+    BulkheadProcessor,
+    LineageTrackerProcessor,
+    SseSourceProcessor,
+    SchemaValidateProcessor,
+    AbTestRouterProcessor,
+    FeatureFlagGuardProcessor,
+)
 
 __all__ = (
     "ProcessorCallable",
@@ -228,4 +263,31 @@ __all__ = (
     "DeduplicateProcessor",
     "FormatterProcessor",
     "DebounceProcessor",
+    "SwiftMTParserProcessor",
+    "SwiftMXBuilderProcessor",
+    "Iso20022ParserProcessor",
+    "FixMessageProcessor",
+    "EdifactParserProcessor",
+    "OneCExchangeProcessor",
+    "CitrixSessionProcessor",
+    "SapGuiProcessor",
+    "TerminalEmulator3270Processor",
+    "AppiumMobileProcessor",
+    "EmailDrivenProcessor",
+    "KeystrokeReplayProcessor",
+    "BankStatementPdfParserProcessor",
+    "KycAmlVerifyProcessor",
+    "AntiFraudScoreProcessor",
+    "CreditScoringRagProcessor",
+    "CustomerChatbotProcessor",
+    "AppealProcessorAI",
+    "TransactionCategorizerProcessor",
+    "FinDocOcrLlmProcessor",
+    "ShadowModeProcessor",
+    "BulkheadProcessor",
+    "LineageTrackerProcessor",
+    "SseSourceProcessor",
+    "SchemaValidateProcessor",
+    "AbTestRouterProcessor",
+    "FeatureFlagGuardProcessor",
 )

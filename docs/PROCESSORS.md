@@ -1,179 +1,279 @@
-# Каталог DSL-процессоров
+# Каталог процессоров DSL
 
-Полный список процессоров с категориями, builder-методами и примерами.
+> Автогенерируется `tools/generate_processors_doc.py` из docstrings.
 
-## Core Processors (app/dsl/engine/processors/core.py)
+Всего процессоров: **138**
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `SetHeaderProcessor` | `.set_header(k, v)` | Устанавливает заголовок |
-| `SetPropertyProcessor` | `.set_property(k, v)` | Устанавливает runtime-свойство |
-| `DispatchActionProcessor` | `.dispatch_action(action)` | **Camel Service Activator** — вызов action из registry |
-| `TransformProcessor` | `.transform(expr)` | JMESPath преобразование body |
-| `FilterProcessor` | `.filter(pred)` | **Camel Message Filter** — стоп если predicate=False |
-| `EnrichProcessor` | `.enrich(action)` | **Camel Content Enricher** — обогащение из action |
-| `LogProcessor` | `.log(level)` | Логирование состояния exchange |
-| `ValidateProcessor` | `.validate(model)` | Pydantic-валидация body |
+## ai
 
-## Control Flow (control_flow.py)
+| Класс | Назначение |
+|-------|------------|
+| `CacheProcessor` | Redis-кеш для результатов обработки. |
+| `CacheWriteProcessor` | Записывает результат в Redis-кеш после обработки. |
+| `GuardrailsProcessor` | Проверяет LLM output на безопасность и соответствие ожиданиям. |
+| `LLMCallProcessor` | Вызывает LLM с retry, rate-limit detection и cost tracking. |
+| `LLMFallbackProcessor` | Пробует несколько LLM-провайдеров по цепочке. |
+| `LLMParserProcessor` | Парсит ответ LLM в структурированный формат. |
+| `PromptComposerProcessor` | Строит промпт из шаблона + контекст из exchange properties. |
+| `RestorePIIProcessor` | Восстанавливает замаскированные PII из exchange properties. |
+| `SanitizePIIProcessor` | Маскирует PII в body перед передачей дальше. |
+| `SemanticRouterProcessor` | Маршрутизация по семантическому сходству — RAG-based intent routing. |
+| `TokenBudgetProcessor` | Обрезает текст по token budget (tiktoken для точного подсчёта). |
+| `VectorSearchProcessor` | Ищет в RAG vector store, результаты в exchange properties. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `ChoiceProcessor` | `.choice(when, otherwise)` | When/Otherwise ветвление |
-| `TryCatchProcessor` | `.do_try(try, catch, finally)` | Try/catch/finally |
-| `RetryProcessor` | `.retry(procs, max_attempts)` | Retry с exponential backoff |
-| `PipelineRefProcessor` | `.to_route(route_id)` | Вызов другого маршрута |
-| `ParallelProcessor` | `.parallel(branches)` | Параллельное выполнение веток |
-| `SagaProcessor` | `.saga(steps)` | Saga с компенсацией |
+## ai_banking
 
-## Camel EIP (eip.py)
+| Класс | Назначение |
+|-------|------------|
+| `AntiFraudScoreProcessor` | LLM-скоринг антифрода поверх детерминистических правил. |
+| `AppealProcessorAI` | Автоматическая обработка клиентских обращений. |
+| `CreditScoringRagProcessor` | Кредитный скоринг через RAG: клиент + история + policy-документы. |
+| `CustomerChatbotProcessor` | Клиентский чат-бот (tool-use: balance, statement, faq, escalate). |
+| `FinDocOcrLlmProcessor` | OCR + LLM для финансовых документов (счета, договоры, выписки). |
+| `KycAmlVerifyProcessor` | KYC/AML верификация клиента. |
+| `TransactionCategorizerProcessor` | Категоризация транзакций (MCC + subcategory + merchant normalization). |
 
-### Routing
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `DynamicRouterProcessor` | `.dynamic_route(expr)` | Runtime-выбор маршрута |
-| `LoadBalancerProcessor` | `.load_balance(targets, strategy)` | round_robin/random/weighted/sticky |
-| `RecipientListProcessor` | `.recipient_list(expr)` | Динамический fan-out |
-| `ScatterGatherProcessor` | `.scatter_gather(routes)` | Fan-out + aggregation |
-| `MulticastProcessor` | `.multicast(branches)` | Параллельная отправка на N веток |
+## banking
 
-### Transformation
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `MessageTranslatorProcessor` | `.translate(from, to)` | (DEPRECATED — use `.convert()`) |
-| `NormalizerProcessor` | `.normalize(schema)` | Авто-нормализация XML/CSV/YAML/JSON → dict |
-| `ClaimCheckProcessor` | `.claim_check_in/out()` | Хранение payload в Redis, передача токена |
-| `ResequencerProcessor` | `.resequence(key, seq_field)` | Восстановление порядка сообщений |
-| `SortProcessor` | `.sort(key_field, reverse)` | Сортировка list body |
+| Класс | Назначение |
+|-------|------------|
+| `EdifactParserProcessor` | Парсер UN/EDIFACT сегментов (FINPAY, PAYMUL). |
+| `FixMessageProcessor` | Парсер/билдер FIX-сообщений для торговых систем (биржа, брокер). |
+| `Iso20022ParserProcessor` | Парсит ISO 20022 XML (pain.001, camt.053, pacs.008) в структурированный dict. |
+| `OneCExchangeProcessor` | Интеграция с 1С:Предприятие через OData или HTTP-сервисы. |
+| `SwiftMTParserProcessor` | Парсит SWIFT MT-сообщение (MT103, MT202, MT940) в dict-структуру. |
+| `SwiftMXBuilderProcessor` | Строит SWIFT MX (ISO 20022 XML) из словаря. Делегирует в сервис через action. |
 
-### Resilience
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `DeadLetterProcessor` | `.dead_letter(procs)` | DLQ для упавших Exchange |
-| `IdempotentConsumerProcessor` | `.idempotent(key)` | Дедупликация через Redis (постоянная) |
-| `FallbackChainProcessor` | `.fallback(procs)` | Последовательный fallback |
-| `CircuitBreakerProcessor` | `.circuit_breaker(procs)` | CLOSED→OPEN→HALF_OPEN |
-| `TimeoutProcessor` | `.timeout(procs, seconds)` | Обёртка с таймаутом |
-| `LoopProcessor` | `.loop(procs, count/until)` | Цикл N раз или до условия |
-| `OnCompletionProcessor` | `.on_completion(procs)` | Callback после pipeline (как finally) |
+## base
 
-### Flow
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `ThrottlerProcessor` | `.throttle(rate)` | Rate limiting (token bucket) |
-| `DelayProcessor` | `.delay(ms)` | Задержка |
-| `SplitterProcessor` | `.split(expr, procs)` | Разбиение массива на отдельные Exchange |
-| `AggregatorProcessor` | `.aggregate(key, batch_size)` | Агрегация по correlation_id |
-| `WireTapProcessor` | `.wire_tap(procs)` | Копия Exchange в отдельный канал |
+| Класс | Назначение |
+|-------|------------|
+| `CallableProcessor` | Адаптер, превращающий обычную функцию или coroutine в процессор. |
 
-## Components (components.py) — Sources/Sinks
+## components
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `HttpCallProcessor` | `.http_call(url, method)` | HTTP client (GET/POST/PUT/DELETE) |
-| `DatabaseQueryProcessor` | `.db_query(sql)` | SQL через SQLAlchemy |
-| `FileReadProcessor` | `.read_file(path)` | Чтение локального файла |
-| `FileWriteProcessor` | `.write_file(path, format)` | Запись в файл |
-| `S3ReadProcessor` | `.read_s3(bucket, key)` | Загрузка из S3 |
-| `S3WriteProcessor` | `.write_s3(bucket, key)` | Выгрузка в S3 |
-| `TimerProcessor` | `.timer(interval)` | Scheduled event source |
-| `PollingConsumerProcessor` | `.poll(action)` | Периодический опрос action |
+| Класс | Назначение |
+|-------|------------|
+| `DatabaseQueryProcessor` | Camel JDBC Component — query/execute SQL from DSL pipeline. |
+| `FileReadProcessor` | Camel File Component (read) — read local file into exchange body. |
+| `FileWriteProcessor` | Camel File Component (write) — write exchange body to local file. |
+| `HttpCallProcessor` | Camel HTTP Component — call external APIs from DSL pipeline. |
+| `PollingConsumerProcessor` | Camel Polling Consumer — periodically calls an action and feeds results into pipeline. |
+| `S3ReadProcessor` | Camel S3 Component (read) — download object from S3. |
+| `S3WriteProcessor` | Camel S3 Component (write) — upload exchange body to S3. |
+| `TimerProcessor` | Camel Timer Component — generates exchange events on interval or cron. |
 
-## Converters (converters.py)
+## control_flow
 
-| Builder | Назначение |
-|---|---|
-| `.convert(from, to)` | Универсальный конвертер форматов |
+| Класс | Назначение |
+|-------|------------|
+| `ChoiceProcessor` | Условное ветвление When/Otherwise. |
+| `ParallelProcessor` | Выполняет несколько веток параллельно. |
+| `PipelineRefProcessor` | Вызывает другой зарегистрированный DSL-маршрут. |
+| `RetryProcessor` | Повторяет sub-pipeline с настраиваемым backoff. |
+| `SagaProcessor` | Saga-паттерн: выполняет шаги последовательно с откатом. |
+| `TryCatchProcessor` | Try/Catch/Finally внутри DSL pipeline. |
 
-Поддерживаемые форматы: `json`, `yaml`, `xml`, `csv`, `msgpack`, `parquet`, `bson`, `html→json`.
+## converters
 
-## Scraping (scraping.py)
+| Класс | Назначение |
+|-------|------------|
+| `ConvertProcessor` | Universal format converter — Camel TypeConverter pattern. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `ScrapeProcessor` | `.scrape(url, selectors)` | CSS-selector extraction (с SSRF-защитой) |
-| `PaginateProcessor` | `.paginate(next_selector)` | Multi-page crawling |
-| `ApiProxyProcessor` | `.api_proxy(base_url)` | Прозрачный API proxy |
+## core
 
-## AI/ML (ai.py)
+| Класс | Назначение |
+|-------|------------|
+| `DispatchActionProcessor` | Camel Service Activator — вызывает зарегистрированный action. |
+| `EnrichProcessor` | Camel Content Enricher — обогащает Exchange данными из внешнего action. |
+| `FilterProcessor` | Camel Message Filter — пропускает Exchange только если predicate=True. |
+| `LogProcessor` | Логирует текущее состояние Exchange (тип body, список properties). |
+| `SetHeaderProcessor` | Устанавливает заголовок в in_message Exchange. |
+| `SetPropertyProcessor` | Устанавливает runtime-свойство Exchange. |
+| `TransformProcessor` | Трансформирует body через JMESPath-выражение. |
+| `ValidateProcessor` | Валидирует body через Pydantic-модель. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `PromptComposerProcessor` | `.compose_prompt(tpl)` | Построение промпта из шаблона |
-| `LLMCallProcessor` | `.call_llm()` | Вызов LLM с PII-маскировкой |
-| `LLMFallbackProcessor` | `.call_llm_with_fallback()` | LLM с fallback-цепочкой провайдеров |
-| `LLMParserProcessor` | `.parse_llm_output(schema)` | Парсинг LLM в Pydantic |
-| `TokenBudgetProcessor` | `.token_budget(n)` | Ограничение по токенам (tiktoken) |
-| `VectorSearchProcessor` | `.rag_search(query)` | RAG поиск |
-| `SanitizePIIProcessor` | `.sanitize_pii()` | PII маскирование перед LLM |
-| `RestorePIIProcessor` | `.restore_pii()` | Восстановление PII после LLM |
-| `CacheProcessor` | `.cache(key_fn)` | Redis-кеш чтение |
-| `CacheWriteProcessor` | `.cache_write(key_fn)` | Redis-кеш запись |
-| `GuardrailsProcessor` | `.guardrails()` | Проверка LLM output (length, blocklist) |
+## dq_check
 
-## RPA (UiPath-style) (rpa.py)
+| Класс | Назначение |
+|-------|------------|
+| `DQCheckProcessor` | Проверяет данные по правилам Data Quality. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `PdfReadProcessor` | `.pdf_read()` | Извлечение текста и таблиц из PDF |
-| `PdfMergeProcessor` | `.pdf_merge()` | Объединение PDF |
-| `WordReadProcessor` | `.word_read()` | Чтение .docx |
-| `WordWriteProcessor` | `.word_write()` | Генерация .docx |
-| `ExcelReadProcessor` | `.excel_read(sheet)` | Чтение Excel → list[dict] |
-| `FileMoveProcessor` | `.file_move(src, dst, mode)` | Copy/move/rename |
-| `ArchiveProcessor` | `.archive(mode, format)` | ZIP/TAR |
-| `ImageOcrProcessor` | `.ocr(lang)` | OCR (pytesseract) |
-| `ImageResizeProcessor` | `.image_resize(w, h)` | Ресайз (Pillow) |
-| `RegexProcessor` | `.regex(pattern, action)` | Regex extract/replace/match |
-| `TemplateRenderProcessor` | `.render_template(tpl)` | Jinja2 |
-| `HashProcessor` | `.hash(algorithm)` | sha256/md5/sha512 |
-| `EncryptProcessor` | `.encrypt(key)` | AES Fernet |
-| `DecryptProcessor` | `.decrypt(key)` | AES Fernet |
-| `ShellExecProcessor` | `.shell(cmd, allowed)` | Shell с whitelist |
-| `EmailComposeProcessor` | `.email(to, subj, tpl)` | SMTP email с шаблоном |
+## enrichment
 
-## Framework Patterns (patterns.py)
+| Класс | Назначение |
+|-------|------------|
+| `CompressProcessor` | Compress body через gzip/brotli/zstd. |
+| `DeadlineProcessor` | Устанавливает дedline для pipeline — проверяется последующими процессорами. |
+| `DecompressProcessor` | Decompress body (auto-detect или указанный algorithm). |
+| `GeoIpProcessor` | GeoIP enrichment via MaxMind GeoLite2. |
+| `JwtSignProcessor` | Sign payload as JWT with secret + algorithm. |
+| `JwtVerifyProcessor` | Verify JWT from header. Stores claims в property или fail. |
+| `WebhookSignProcessor` | Sign outgoing webhook body with HMAC-SHA256. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `SwitchProcessor` | `.switch(field, cases)` | n8n — case/match роутинг |
-| `MergeProcessor` | `.merge(props, mode)` | n8n — объединение properties в body |
-| `BatchWindowProcessor` | `.batch_window(window)` | Benthos — time-window batching |
-| `DeduplicateProcessor` | `.deduplicate(key_fn)` | Benthos — дедупликация в окне |
-| `FormatterProcessor` | `.format_text(template)` | Zapier — строковое форматирование |
-| `DebounceProcessor` | `.debounce(key_fn, delay)` | Zapier — debounce повторов |
+## export
 
-## Web Automation (web.py)
+| Класс | Назначение |
+|-------|------------|
+| `ExportProcessor` | Экспортирует body (list[dict]) в файл указанного формата. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `NavigateProcessor` | `.navigate(url)` | Открыть URL в браузере |
-| `ClickProcessor` | `.click(sel)` | Клик по CSS-selector |
-| `FillFormProcessor` | `.fill_form(url, fields)` | Заполнение формы |
-| `ExtractProcessor` | `.extract(sel)` | Извлечение по CSS |
-| `ScreenshotProcessor` | `.screenshot(url)` | Скриншот страницы |
-| `RunScenarioProcessor` | `.run_scenario(steps)` | Multi-step сценарий |
+## external
 
-## External (external.py)
+| Класс | Назначение |
+|-------|------------|
+| `AgentGraphProcessor` | Запускает LangGraph-агента внутри DSL pipeline. |
+| `CDCProcessor` | Реагирует на CDC-события и маршрутизирует через DSL. |
+| `MCPToolProcessor` | Вызывает внешний MCP tool из DSL pipeline. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `MCPToolProcessor` | `.mcp_tool(uri, tool)` | Вызов внешнего MCP tool |
-| `AgentGraphProcessor` | `.agent_graph(name, tools)` | LangGraph agent |
-| `CDCProcessor` | `.cdc(profile, tables, strategy)` | Change Data Capture (polling/PG/Oracle) |
+## flow_control
 
-## Integration/Export/DQ
+| Класс | Назначение |
+|-------|------------|
+| `AggregatorProcessor` | Собирает N Exchange по correlation_id. |
+| `DelayProcessor` | Задержка обработки на N миллисекунд или до timestamp. |
+| `LoopProcessor` | Camel Loop EIP — execute sub-processors N times or until condition. |
+| `OnCompletionProcessor` | Camel OnCompletion EIP — execute callback processors after pipeline completes. |
+| `ThrottlerProcessor` | Rate-limit per route: N сообщений в секунду. |
+| `WireTapProcessor` | Wire Tap — копирует Exchange в отдельный канал. |
 
-| Процессор | Builder | Назначение |
-|---|---|---|
-| `EventPublishProcessor` | `.publish_event(channel)` | EventBus publish |
-| `MemoryLoadProcessor` | `.load_memory()` | Agent memory (Redis) |
-| `MemorySaveProcessor` | `.save_memory()` | Agent memory save |
-| `ExportProcessor` | `.export(format)` | CSV/Excel/PDF export |
-| `DQCheckProcessor` | `.dq_check(rules)` | Data Quality validation |
+## generic
 
-## Статистика
+| Класс | Назначение |
+|-------|------------|
+| `AbTestRouterProcessor` | Стабильная маршрутизация X% трафика на вариант B. |
+| `BulkheadProcessor` | Ограничивает одновременное выполнение вложенной ветки на уровне всего процесса. |
+| `FeatureFlagGuardProcessor` | Пропускает вложенную ветку только если feature-flag включен. |
+| `LineageTrackerProcessor` | Фиксирует происхождение данных: какой pipeline и processor положил значение. |
+| `SchemaValidateProcessor` | Валидация body по JSON Schema (Draft 2020-12). |
+| `ShadowModeProcessor` | Исполняет вложенные процессоры в «теневом режиме» — без side effects. |
+| `SseSourceProcessor` | Source-процессор для Server-Sent Events. |
 
-- **Всего процессоров: 85+**
-- **Docstrings coverage**: ~95%
-- **Camel EIP coverage**: ~85%
+## idempotency
+
+| Класс | Назначение |
+|-------|------------|
+| `IdempotentConsumerProcessor` | Idempotent Consumer — предотвращает повторную обработку. |
+
+## integration
+
+| Класс | Назначение |
+|-------|------------|
+| `EventPublishProcessor` | Публикует событие из pipeline через EventBus. |
+| `MemoryLoadProcessor` | Загружает conversation + facts из AgentMemoryService. |
+| `MemorySaveProcessor` | Сохраняет результат в AgentMemoryService. |
+
+## ml_inference
+
+| Класс | Назначение |
+|-------|------------|
+| `EmbeddingProcessor` | Унифицированный embedding generation — OpenAI/SentenceTransformers/Ollama. |
+| `OnnxInferenceProcessor` | ONNX model inference (CPU-only). |
+| `OutboxProcessor` | Transactional Outbox pattern — guaranteed delivery. |
+| `StreamingLLMProcessor` | Streaming LLM response — чанки отправляются через Redis stream. |
+
+## patterns
+
+| Класс | Назначение |
+|-------|------------|
+| `BatchWindowProcessor` | Benthos-style time-window batching. |
+| `DebounceProcessor` | Zapier Debounce — группирует повторы, пропускает только последний. |
+| `DeduplicateProcessor` | Benthos-style dedup в скользящем окне. |
+| `FormatterProcessor` | Zapier Formatter — форматирует строку из body и properties. |
+| `MergeProcessor` | n8n Merge node — объединяет несколько properties в body. |
+| `SwitchProcessor` | n8n Switch node — маршрутизация по значению поля. |
+
+## resilience
+
+| Класс | Назначение |
+|-------|------------|
+| `CircuitBreakerProcessor` | Camel Circuit Breaker EIP — fail-fast pattern inside DSL pipeline. |
+| `DeadLetterProcessor` | Dead Letter Channel — направляет упавшие Exchange в DLQ. |
+| `FallbackChainProcessor` | Fallback Chain — последовательно пробует процессоры. |
+| `TimeoutProcessor` | Camel Timeout EIP — wrap sub-processors with a time limit. |
+
+## routing
+
+| Класс | Назначение |
+|-------|------------|
+| `DynamicRouterProcessor` | Маршрутизация на основе runtime-выражения. |
+| `LoadBalancerProcessor` | Camel Load Balancer EIP — distributes exchanges across multiple routes. |
+| `MulticastProcessor` | Camel Multicast EIP — send one message to N processor lists in parallel. |
+| `RecipientListProcessor` | Отправляет сообщение на динамический список маршрутов. |
+| `ScatterGatherProcessor` | Fan-out на N маршрутов → сборка результатов. |
+
+## rpa
+
+| Класс | Назначение |
+|-------|------------|
+| `ArchiveProcessor` | ZIP/TAR архивация и распаковка. |
+| `DecryptProcessor` | AES расшифровка body через Fernet. |
+| `EmailComposeProcessor` | Compose и отправка email через SMTP. |
+| `EncryptProcessor` | AES шифрование body через Fernet (symmetric). |
+| `ExcelReadProcessor` | Читает Excel файл в list[dict]. |
+| `FileMoveProcessor` | Copy, move, or rename файлов. |
+| `HashProcessor` | Вычисляет hash от body. |
+| `ImageOcrProcessor` | OCR — извлечение текста с изображений через Tesseract. |
+| `ImageResizeProcessor` | Ресайз и конвертация изображений через Pillow. |
+| `PdfMergeProcessor` | Объединяет несколько PDF в один. |
+| `PdfReadProcessor` | Извлекает текст и таблицы из PDF файла. |
+| `RegexProcessor` | Regex операции: extract, replace, match. |
+| `ShellExecProcessor` | Выполнение shell-команд с whitelist и sandbox. |
+| `TemplateRenderProcessor` | Рендеринг Jinja2 шаблонов. |
+| `WordReadProcessor` | Извлекает текст из .docx файла. |
+| `WordWriteProcessor` | Генерирует .docx документ из текста. |
+
+## rpa_banking
+
+| Класс | Назначение |
+|-------|------------|
+| `AppiumMobileProcessor` | Appium для автоматизации мобильных банковских приложений. |
+| `BankStatementPdfParserProcessor` | Парсер PDF-выписок по счёту (Сбер, ВТБ, Альфа и т.д.). |
+| `CitrixSessionProcessor` | Управление Citrix/RDP-сессией. Реальный вызов — через action. |
+| `EmailDrivenProcessor` | Email → structured data pipeline. |
+| `KeystrokeReplayProcessor` | Воспроизведение записанного сценария клавиатуры/мыши (pyautogui). |
+| `SapGuiProcessor` | SAP GUI Scripting (через pywin32). Windows-only. |
+| `TerminalEmulator3270Processor` | IBM 3270 терминальный эмулятор. Нужен x3270/py3270. |
+
+## scraping
+
+| Класс | Назначение |
+|-------|------------|
+| `ApiProxyProcessor` | Transparent API proxy with request/response transformation. |
+| `PaginateProcessor` | Multi-page crawling with automatic next-page detection. |
+| `ScrapeProcessor` | Extract structured data from HTML using CSS selectors. |
+
+## sequencing
+
+| Класс | Назначение |
+|-------|------------|
+| `ResequencerProcessor` | Camel Resequencer EIP — reorder messages by sequence field. |
+
+## storage_ext
+
+| Класс | Назначение |
+|-------|------------|
+| `Neo4jQueryProcessor` | Neo4j Cypher query processor. |
+| `PriorityEnqueueProcessor` | Enqueue сообщение в priority queue (Redis sorted set). |
+| `TimeSeriesWriteProcessor` | Write to TimescaleDB или InfluxDB (auto-detect по ENV). |
+
+## transformation
+
+| Класс | Назначение |
+|-------|------------|
+| `ClaimCheckProcessor` | Camel Claim Check EIP — store payload, pass token through pipeline. |
+| `MessageTranslatorProcessor` | Конвертация форматов: JSON↔XML, JSON↔CSV. |
+| `NormalizerProcessor` | Camel Normalizer EIP — auto-detect input format and normalize to canonical dict. |
+| `SortProcessor` | Camel Sort EIP — sort list body by key function. |
+| `SplitterProcessor` | Разбивает массив из body на отдельные Exchange. |
+
+## web
+
+| Класс | Назначение |
+|-------|------------|
+| `ClickProcessor` | Кликает по CSS-селектору на текущей странице. |
+| `ExtractProcessor` | Извлекает текст по CSS-селектору. |
+| `FillFormProcessor` | Заполняет форму на странице. |
+| `NavigateProcessor` | Открывает URL в браузере, результат в properties. |
+| `RunScenarioProcessor` | Выполняет multi-step сценарий из body или параметра. |
+| `ScreenshotProcessor` | Делает скриншот страницы. |
+
