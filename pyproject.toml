@@ -66,6 +66,7 @@ tavily-python = {version = ">=0.5.0", optional = true}
 presidio-analyzer = {version = ">=2.2.0", optional = true}
 presidio-anonymizer = {version = ">=2.2.0", optional = true}
 watchfiles = "^1.0.0"
+structlog = "^24.4.0"
 playwright = {version = ">=1.48.0", optional = true}
 
 [tool.poetry.extras]

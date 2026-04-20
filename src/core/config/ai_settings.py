@@ -85,6 +85,11 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
         description="Базовый URL Inference API",
     )
 
+    use_waf: bool = Field(
+        default=True,
+        description="Проксировать запросы через корпоративный WAF (внешний сервис)",
+    )
+
     max_tokens: int = Field(
         default=2048,
         ge=1,
@@ -120,6 +125,14 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     base_url: str = Field(
         default="http://localhost:3000",
         description="URL внутреннего OpenWebUI сервера",
+    )
+
+    use_waf: bool = Field(
+        default=False,
+        description=(
+            "Проксировать через WAF (false по-умолчанию: OpenWebUI во "
+            "внутреннем контуре, WAF не требуется)."
+        ),
     )
 
     max_tokens: int = Field(

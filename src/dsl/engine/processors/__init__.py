@@ -176,6 +176,14 @@ from app.dsl.engine.processors.streaming import (
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
+from app.dsl.engine.processors.business import (
+    ComplianceLabelProcessor,
+    CostTrackerProcessor,
+    DataMaskingProcessor,
+    HumanApprovalProcessor,
+    OutboxProcessor,
+    TenantScopeProcessor,
+)
 
 __all__ = (
     "ProcessorCallable",
@@ -316,4 +324,10 @@ __all__ = (
     "DurableSubscriberProcessor",
     "ChannelPurgerProcessor",
     "SamplingProcessor",
+    "TenantScopeProcessor",
+    "CostTrackerProcessor",
+    "HumanApprovalProcessor",
+    "OutboxProcessor",
+    "DataMaskingProcessor",
+    "ComplianceLabelProcessor",
 )

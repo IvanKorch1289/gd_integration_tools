@@ -24,6 +24,7 @@ __all__ = (
     "ClaudeProvider",
     "GeminiProvider",
     "OllamaProvider",
+    "OpenAIProvider",
 )
 
 logger = logging.getLogger("services.ai_providers")
@@ -195,13 +196,84 @@ class OllamaProvider:
             return resp.json()
 
 
-def register_extended_providers(agent: Any) -> int:
-    """Регистрирует Claude/Gemini/Ollama в ai_agent._providers.
+class OpenAIProvider:
+    """OpenAI GPT-провайдер.
 
-    Вызвать при startup после get_ai_agent_service().
-    Возвращает количество успешно зарегистрированных провайдеров.
+    Requires: OPENAI_API_KEY env (+ опционально OPENAI_BASE_URL для azure/
+    openai-compatible прокси вроде LiteLLM / vLLM).
+    Models: gpt-4o / gpt-4o-mini / gpt-4-turbo.
+
+    Поддержка tool-calling и streaming идентична OpenAI-API, так что провайдер
+    работает с любым openai-compatible backend'ом (LocalAI, vLLM, LiteLLM,
+    OpenRouter, Ollama openai-endpoint).
+    """
+
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        model: str = "gpt-4o-mini",
+        base_url: str | None = None,
+    ) -> None:
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        self.model = model
+        self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+
+    async def chat(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        model: str | None = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        tools: list[dict] | None = None,
+        stream: bool = False,
+    ) -> dict[str, Any]:
+        """Chat completion через OpenAI / openai-compatible API."""
+        if not self.api_key:
+            raise RuntimeError("OPENAI_API_KEY not set")
+
+        payload: dict[str, Any] = {
+            "model": model or self.model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": stream,
+        }
+        if tools:
+            payload["tools"] = tools
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+
+def register_extended_providers(agent: Any) -> int:
+    """Регистрирует OpenAI/Claude/Gemini/Ollama в ``agent._providers``.
+
+    Вызвать при startup после ``get_ai_agent_service()``. Каждый провайдер
+    активируется только при наличии соответствующих env-переменных — никаких
+    хардкод-умолчаний, никаких исключений при отсутствии ключей.
+
+    Returns:
+        Количество успешно зарегистрированных провайдеров.
     """
     registered = 0
+
+    if os.environ.get("OPENAI_API_KEY"):
+        openai_p = OpenAIProvider()
+        agent._providers["openai"] = openai_p.chat
+        agent._providers["gpt"] = openai_p.chat
+        registered += 1
 
     if os.environ.get("ANTHROPIC_API_KEY"):
         claude = ClaudeProvider()
@@ -222,4 +294,5 @@ def register_extended_providers(agent: Any) -> int:
         registered += 1
 
     logger.info("Registered %d extended AI providers", registered)
+    return registered
     return registered

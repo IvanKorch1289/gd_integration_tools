@@ -121,17 +121,25 @@ degradation_manager = DegradationManager()
 
 
 class RetryBudget:
-    """Глобальный лимит retry — защита от retry storm.
+    """Глобальный бюджет ретраев — защита от retry storm.
 
-    Идея: не более 20% запросов могут быть retries.
-    Если превышаем — cut-off и быстрые fail.
+    Идея: не более ``max_ratio`` (по умолчанию 20%) запросов в окне могут
+    быть retries. При превышении — быстрые fail.
+
+    Реализация использует :mod:`collections.deque` с фиксированной ёмкостью
+    для эффективного скользящего окна (O(1) добавление, без list-comprehension
+    на каждом вызове). Для настоящих ретраев вокруг HTTP-клиента рекомендуется
+    использовать ``tenacity.AsyncRetrying`` поверх этого бюджета.
     """
 
     def __init__(self, window_seconds: int = 60, max_ratio: float = 0.2) -> None:
+        from collections import deque
+
         self._window = window_seconds
         self._max_ratio = max_ratio
-        self._total: list[float] = []
-        self._retries: list[float] = []
+        # maxlen не подходит — окно по времени, а не по числу событий.
+        self._total: deque[float] = deque()
+        self._retries: deque[float] = deque()
         self._lock = asyncio.Lock()
 
     async def record_request(self) -> None:
@@ -154,9 +162,12 @@ class RetryBudget:
             return True
 
     def _trim(self) -> None:
+        """Удаляет события вне окна из deque (O(1) на элемент c левого края)."""
         cutoff = time.monotonic() - self._window
-        self._total = [t for t in self._total if t > cutoff]
-        self._retries = [t for t in self._retries if t > cutoff]
+        while self._total and self._total[0] < cutoff:
+            self._total.popleft()
+        while self._retries and self._retries[0] < cutoff:
+            self._retries.popleft()
 
     def stats(self) -> dict[str, Any]:
         return {
@@ -212,15 +223,21 @@ class Bulkhead:
 
 
 class SelfHealer:
-    """Автоматическое восстановление после ошибок.
+    """Автоматическое восстановление после ошибок через APScheduler.
 
-    Периодически проверяет health компонентов, и при восстановлении —
-    переводит из degraded в normal mode.
+    Периодически вызывает health-checks компонентов, и при восстановлении —
+    переводит :class:`DegradationManager` из degraded в normal mode.
+
+    Использует ``AsyncIOScheduler`` из APScheduler (уже присутствует в deps),
+    что даёт persistence задач, надёжный shutdown и совместимость с
+    corutine-функциями из коробки. Fallback на простой ``asyncio.sleep``-loop
+    сохранён для минимального окружения без APScheduler.
     """
 
     def __init__(self, check_interval: int = 30) -> None:
         self._interval = check_interval
         self._task: asyncio.Task | None = None
+        self._scheduler: Any = None
         self._running = False
         self._healers: dict[str, Callable[[], Any]] = {}
 
@@ -229,29 +246,51 @@ class SelfHealer:
 
     async def start(self) -> None:
         self._running = True
+        # Попытка через APScheduler (основной путь).
+        try:
+            from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+            self._scheduler = AsyncIOScheduler()
+            self._scheduler.add_job(
+                self._run_healers, "interval", seconds=self._interval, id="self_healer",
+            )
+            self._scheduler.start()
+            logger.info("SelfHealer started via APScheduler (interval=%ds)", self._interval)
+            return
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("APScheduler недоступен, fallback на asyncio: %s", exc)
+
         self._task = asyncio.create_task(self._heal_loop())
-        logger.info("SelfHealer started (interval=%ds)", self._interval)
+        logger.info("SelfHealer started via asyncio loop (interval=%ds)", self._interval)
 
     async def stop(self) -> None:
         self._running = False
+        if self._scheduler is not None:
+            self._scheduler.shutdown(wait=False)
+            self._scheduler = None
         if self._task:
             self._task.cancel()
 
+    async def _run_healers(self) -> None:
+        """Один раунд проверок — используется APScheduler'ом."""
+        for name, check in self._healers.items():
+            if degradation_manager.is_available(name):
+                continue
+            try:
+                result = check()
+                if hasattr(result, "__await__"):
+                    result = await result
+                if result:
+                    degradation_manager.report_success(name)
+                    logger.info("SelfHealer: %s восстановлен", name)
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("SelfHealer: %s ещё down: %s", name, exc)
+
     async def _heal_loop(self) -> None:
+        """Fallback-цикл без APScheduler."""
         while self._running:
             await asyncio.sleep(self._interval)
-            for name, check in self._healers.items():
-                if degradation_manager.is_available(name):
-                    continue
-                try:
-                    result = check()
-                    if hasattr(result, "__await__"):
-                        result = await result
-                    if result:
-                        degradation_manager.report_success(name)
-                        logger.info("SelfHealer: %s восстановлен", name)
-                except Exception as exc:
-                    logger.debug("SelfHealer: %s ещё down: %s", name, exc)
+            await self._run_healers()
 
 
 _retry_budget: RetryBudget | None = None

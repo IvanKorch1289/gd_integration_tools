@@ -1,0 +1,43 @@
+{
+  "name": "gd_integration_tools",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers-contrib/features/poetry:2": {}
+  },
+  "postCreateCommand": "poetry install --with dev --extras 'ai security mcp rpa' && poetry run pre-commit install",
+  "forwardPorts": [8000, 8501, 5432, 6379, 9200, 27017],
+  "portsAttributes": {
+    "8000": { "label": "FastAPI" },
+    "8501": { "label": "Streamlit" },
+    "5432": { "label": "PostgreSQL" },
+    "6379": { "label": "Redis" },
+    "9200": { "label": "Elasticsearch" },
+    "27017": { "label": "MongoDB" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": { "source.fixAll.ruff": "explicit" }
+        }
+      }
+    }
+  },
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/src",
+    "POETRY_VIRTUALENVS_IN_PROJECT": "true"
+  }
+}
