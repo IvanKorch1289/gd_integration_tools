@@ -116,7 +116,11 @@ def _configure_business_routers(app: FastAPI) -> None:
 
 
 def _configure_root_endpoint(app: FastAPI) -> None:
-    """Конфигурация корневого эндпоинта"""
+    """Конфигурация корневого эндпоинта и health/ready-проб для Kubernetes.
+
+    Эндпоинты ``/health`` (liveness) и ``/ready`` (readiness) вынесены на
+    корневой уровень, чтобы k8s-пробы не зависели от роутинга ``/api/v1``.
+    """
 
     @app.get("/", response_class=HTMLResponse, name="Корневой эндпоинт")
     async def root_endpoint():
@@ -131,3 +135,25 @@ def _configure_root_endpoint(app: FastAPI) -> None:
             - Административными интерфейсами
         """
         return await root_page()
+
+    @app.get("/health", name="Liveness probe", tags=["Health"])
+    async def liveness():
+        """Liveness probe: приложение работает, event loop отвечает."""
+        return {"status": "alive", "version": settings.app.version}
+
+    @app.get("/ready", name="Readiness probe", tags=["Health"])
+    async def readiness():
+        """Readiness probe: агрегированная проверка критичных компонентов.
+
+        Возвращает 200 если все зарегистрированные компоненты healthy, 503 иначе.
+        Использует :class:`HealthAggregator` с параллельным опросом и таймаутом.
+        """
+        from fastapi.responses import JSONResponse
+
+        from app.infrastructure.application.health_aggregator import (
+            get_health_aggregator,
+        )
+
+        report = await get_health_aggregator().check_all()
+        ok = report.get("status") == "ok"
+        return JSONResponse(status_code=200 if ok else 503, content=report)

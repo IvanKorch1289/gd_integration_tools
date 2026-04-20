@@ -162,6 +162,20 @@ from app.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     FeatureFlagGuardProcessor,
 )
+from app.dsl.engine.processors.streaming import (
+    ChannelPurgerProcessor,
+    CorrelationIdProcessor,
+    DurableSubscriberProcessor,
+    ExactlyOnceProcessor,
+    GroupByKeyProcessor,
+    MessageExpirationProcessor,
+    ReplyToProcessor,
+    SamplingProcessor,
+    SchemaRegistryValidator,
+    SessionWindowProcessor,
+    SlidingWindowProcessor,
+    TumblingWindowProcessor,
+)
 
 __all__ = (
     "ProcessorCallable",
@@ -290,4 +304,16 @@ __all__ = (
     "SchemaValidateProcessor",
     "AbTestRouterProcessor",
     "FeatureFlagGuardProcessor",
+    "MessageExpirationProcessor",
+    "CorrelationIdProcessor",
+    "TumblingWindowProcessor",
+    "SlidingWindowProcessor",
+    "SessionWindowProcessor",
+    "GroupByKeyProcessor",
+    "SchemaRegistryValidator",
+    "ReplyToProcessor",
+    "ExactlyOnceProcessor",
+    "DurableSubscriberProcessor",
+    "ChannelPurgerProcessor",
+    "SamplingProcessor",
 )

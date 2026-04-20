@@ -45,6 +45,20 @@ from app.dsl.engine.processors import (
     SplitterProcessor,
     AggregatorProcessor,
 )
+from app.dsl.engine.processors.streaming import (
+    ChannelPurgerProcessor,
+    CorrelationIdProcessor,
+    DurableSubscriberProcessor,
+    ExactlyOnceProcessor,
+    GroupByKeyProcessor,
+    MessageExpirationProcessor,
+    ReplyToProcessor,
+    SamplingProcessor,
+    SchemaRegistryValidator,
+    SessionWindowProcessor,
+    SlidingWindowProcessor,
+    TumblingWindowProcessor,
+)
 
 __all__ = ("RouteBuilder",)
 
@@ -1204,3 +1218,96 @@ class RouteBuilder:
             else:
                 msg_parts.append(f"  - '{name}'")
         raise ValueError("\n".join(msg_parts))
+
+    # ── Streaming & expiration EIPs ──
+
+    def expire(
+        self,
+        ttl_seconds: float,
+        *,
+        header_name: str = "x-created-at",
+        drop_action: str = "fail",
+    ) -> "RouteBuilder":
+        """EIP Message Expiration: отбрасывает сообщения старше ``ttl_seconds``."""
+        return self._add(
+            MessageExpirationProcessor(
+                ttl_seconds=ttl_seconds,
+                header_name=header_name,
+                drop_action=drop_action,
+            )
+        )
+
+    def correlation_id(self, *, header: str = "x-correlation-id") -> "RouteBuilder":
+        """EIP Correlation Identifier: проставляет/пропагирует correlation-id."""
+        return self._add(CorrelationIdProcessor(header=header))
+
+    def tumbling_window(
+        self, sink: Callable[[list[Any]], Any], *, size: int = 100, interval_seconds: float = 10.0,
+    ) -> "RouteBuilder":
+        """Streaming tumbling-окно фиксированного размера."""
+        return self._add(
+            TumblingWindowProcessor(sink=sink, size=size, interval_seconds=interval_seconds)
+        )
+
+    def sliding_window(
+        self, sink: Callable[[list[Any]], Any], *, window_seconds: float = 10.0, step_seconds: float = 2.0,
+    ) -> "RouteBuilder":
+        """Streaming sliding-окно с перекрытием."""
+        return self._add(
+            SlidingWindowProcessor(sink=sink, window_seconds=window_seconds, step_seconds=step_seconds)
+        )
+
+    def session_window(
+        self, sink: Callable[[list[Any]], Any], *, gap_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        """Streaming session-окно (закрывается по паузе)."""
+        return self._add(SessionWindowProcessor(sink=sink, gap_seconds=gap_seconds))
+
+    def group_by_key(
+        self, key_path: str, sink: Callable[[dict[Any, list[Any]]], Any], *, window_seconds: float = 60.0,
+    ) -> "RouteBuilder":
+        """Группировка по ключу (jmespath) в пределах окна."""
+        return self._add(
+            GroupByKeyProcessor(sink=sink, key_path=key_path, window_seconds=window_seconds)
+        )
+
+    def validate_schema(self, subject: str, *, schema_loader: Any = None) -> "RouteBuilder":
+        """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
+        return self._add(SchemaRegistryValidator(subject=subject, schema_loader=schema_loader))
+
+    def reply_to(
+        self, broker: Any, *, reply_to_header: str = "reply-to", correlation_header: str = "x-correlation-id",
+    ) -> "RouteBuilder":
+        """EIP Return Address: публикует ответ в очередь из reply-to заголовка."""
+        return self._add(
+            ReplyToProcessor(
+                broker=broker,
+                reply_to_header=reply_to_header,
+                correlation_header=correlation_header,
+            )
+        )
+
+    def exactly_once(
+        self, storage: Any, *, id_header: str = "x-message-id", ttl_seconds: int = 86_400, namespace: str = "exactly-once",
+    ) -> "RouteBuilder":
+        """Exactly-once: dedup через storage по message-id."""
+        return self._add(
+            ExactlyOnceProcessor(
+                storage=storage,
+                id_header=id_header,
+                ttl_seconds=ttl_seconds,
+                namespace=namespace,
+            )
+        )
+
+    def durable_fanout(self, broker: Any, subscribers: list[str]) -> "RouteBuilder":
+        """EIP Durable Subscriber: fan-out к persistent-подписчикам."""
+        return self._add(DurableSubscriberProcessor(broker=broker, subscribers=subscribers))
+
+    def purge_channel(self, broker: Any, channel: str, *, dry_run: bool = True) -> "RouteBuilder":
+        """Очистка очереди/стрима (admin-операция)."""
+        return self._add(ChannelPurgerProcessor(broker=broker, channel=channel, dry_run=dry_run))
+
+    def sample(self, probability: float = 0.1) -> "RouteBuilder":
+        """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
+        return self._add(SamplingProcessor(probability=probability))

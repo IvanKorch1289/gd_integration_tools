@@ -8,6 +8,7 @@ def get_v1_routers() -> APIRouter:
     from app.entrypoints.api.v1.endpoints.dadata import router as dadata_router
     from app.entrypoints.api.v1.endpoints.dsl_console import router as dsl_console_router
     from app.entrypoints.api.v1.endpoints.files import router as files_router
+    from app.entrypoints.api.v1.endpoints.imports import router as imports_router
     from app.entrypoints.api.v1.endpoints.files import storage_router
     from app.entrypoints.api.v1.endpoints.health import router as health_router
     from app.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
@@ -49,6 +50,9 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         dsl_console_router, tags=["DSL Console"]
+    )
+    api_router_v1.include_router(
+        imports_router, prefix="/import", tags=["Импорт схем и объектов"]
     )
 
     return api_router_v1
