@@ -11,7 +11,7 @@ from app.schemas.route_schemas.skb import (
     SKBOrdersListQuerySchema,
     SKBResultQuerySchema,
 )
-from app.services.skb import get_skb_service
+from app.services.integrations.skb import get_skb_service
 
 __all__ = ("router",)
 

@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from app.dsl.engine.versioning import PipelineVersionManager
     from app.entrypoints.mqtt.mqtt_handler import MqttHandler
     from app.infrastructure.application.slo_tracker import SLOTracker
-    from app.infrastructure.clients.kafka import KafkaClient
-    from app.infrastructure.clients.langfuse_client import LangFuseClient
+    from app.infrastructure.clients.messaging.kafka import KafkaClient
+    from app.infrastructure.clients.external.langfuse_client import LangFuseClient
     from app.infrastructure.database.pool_monitor import PoolMonitor
 
 T = TypeVar("T")
@@ -59,8 +59,8 @@ def register_app_state(app: FastAPI) -> None:
     from app.dsl.engine.tracer import ExecutionTracer
     from app.dsl.engine.versioning import PipelineVersionManager
     from app.infrastructure.application.slo_tracker import SLOTracker
-    from app.infrastructure.clients.kafka import KafkaClient
-    from app.infrastructure.clients.langfuse_client import LangFuseClient
+    from app.infrastructure.clients.messaging.kafka import KafkaClient
+    from app.infrastructure.clients.external.langfuse_client import LangFuseClient
     from app.infrastructure.database.pool_monitor import PoolMonitor
 
     app.state.api_key_manager = APIKeyManager()

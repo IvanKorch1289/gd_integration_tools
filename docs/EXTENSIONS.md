@@ -82,7 +82,7 @@ await process_order.kiq(order_id=123)
 
 ### Semantic Cache
 ```python
-from app.services.semantic_cache import get_semantic_cache
+from app.services.ai.semantic_cache import get_semantic_cache
 
 cache = get_semantic_cache()
 hit = await cache.lookup(query)
@@ -98,7 +98,7 @@ await cache.store(query, response)
 
 ### Content Moderation
 ```python
-from app.services.ai_moderation import get_moderation
+from app.services.ai.ai_moderation import get_moderation
 
 result = await get_moderation().check(user_input)
 if result.flagged:
@@ -107,7 +107,7 @@ if result.flagged:
 
 ### RAGAS Evaluation
 ```python
-from app.services.ai_moderation import get_ragas
+from app.services.ai.ai_moderation import get_ragas
 
 scores = await get_ragas().evaluate(
     question="...", answer="...", contexts=[...],

@@ -88,7 +88,7 @@ class LLMCallProcessor(BaseProcessor):
         logger = logging.getLogger("dsl.ai")
 
         try:
-            from app.services.ai_agent import get_ai_agent_service
+            from app.services.ai.ai_agent import get_ai_agent_service
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
             return
@@ -245,7 +245,7 @@ class VectorSearchProcessor(BaseProcessor):
         if not query:
             exchange.set_property(self._output_property, [])
             return
-        from app.services.rag_service import get_rag_service
+        from app.services.ai.rag_service import get_rag_service
         rag = get_rag_service()
         results = await rag.search(query=query, top_k=self._top_k, namespace=self._namespace)
         exchange.set_property(self._output_property, results)
@@ -316,7 +316,7 @@ class LLMFallbackProcessor(BaseProcessor):
         if prompt is None:
             prompt = exchange.in_message.body if isinstance(exchange.in_message.body, str) else str(exchange.in_message.body)
 
-        from app.services.ai_agent import get_ai_agent_service
+        from app.services.ai.ai_agent import get_ai_agent_service
         agent = get_ai_agent_service()
 
         last_error: str | None = None
@@ -362,7 +362,7 @@ class CacheProcessor(BaseProcessor):
         exchange.set_property("_cache_ttl", self._ttl)
 
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             cached = await redis_client.get(key)
             if cached is not None:
                 exchange.set_out(body=orjson.loads(cached), headers=dict(exchange.in_message.headers))
@@ -402,7 +402,7 @@ class CacheWriteProcessor(BaseProcessor):
         body = exchange.out_message.body if exchange.out_message else exchange.in_message.body
 
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
         except (ConnectionError, TimeoutError, OSError):
@@ -501,7 +501,7 @@ class SemanticRouterProcessor(BaseProcessor):
             return
 
         try:
-            from app.services.rag_service import get_rag_service
+            from app.services.ai.rag_service import get_rag_service
             rag = get_rag_service()
             results = await rag.search(query=query, top_k=1, namespace=self._namespace)
         except (ImportError, ConnectionError, TimeoutError, RuntimeError) as exc:

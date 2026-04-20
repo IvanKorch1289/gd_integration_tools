@@ -609,7 +609,7 @@ class RouteBuilder:
     def web_search(self, query_field: str = "query", provider: str | None = None, output_property: str = "search_results") -> "RouteBuilder":
         """Web search через Perplexity/Tavily (search_providers)."""
         async def _search(exchange: Exchange[Any], context: Any) -> None:
-            from app.infrastructure.clients.search_providers import get_web_search_service
+            from app.infrastructure.clients.external.search_providers import get_web_search_service
             body = exchange.in_message.body
             query = body.get(query_field) if isinstance(body, dict) else str(body)
             svc = get_web_search_service()

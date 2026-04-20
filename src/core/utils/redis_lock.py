@@ -72,7 +72,7 @@ class RedisLock:
                 None (default) = non-blocking.
         """
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             logger.warning("Redis unavailable, lock not enforced: %s", self._key)
             return True
@@ -109,7 +109,7 @@ class RedisLock:
         if self._token is None:
             return False
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             result = await raw.eval(_RELEASE_SCRIPT, 1, self._key, self._token)
             self._token = None
@@ -131,7 +131,7 @@ class RedisLock:
         end
         """
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             result = await raw.eval(script, 1, self._key, self._token, ttl)
             return bool(result)

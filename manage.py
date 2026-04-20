@@ -167,7 +167,7 @@ def health():
     async def _check():
         checks = {}
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
@@ -189,7 +189,7 @@ def health():
 @app.command()
 def breakers():
     """Состояние circuit breakers."""
-    from app.infrastructure.clients.circuit_breakers import breaker_registry
+    from app.infrastructure.clients.external.circuit_breakers import breaker_registry
 
     for info in breaker_registry.get_all_status():
         state = info["state"]

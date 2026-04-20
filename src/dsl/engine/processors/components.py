@@ -56,7 +56,7 @@ class HttpCallProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.http import HttpClient
+        from app.infrastructure.clients.transport.http import HttpClient
 
         client = HttpClient()
 
@@ -311,7 +311,7 @@ class S3ReadProcessor(BaseProcessor):
         self._key_property = key_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.storage import storage_client
+        from app.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:
@@ -351,7 +351,7 @@ class S3WriteProcessor(BaseProcessor):
         self._content_type = content_type
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.storage import storage_client
+        from app.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:

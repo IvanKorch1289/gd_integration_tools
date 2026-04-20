@@ -12,7 +12,7 @@ from socket import gethostname
 from __future__ import annotations
 
 from app.core.config.settings import LogStorageSettings, settings
-from app.infrastructure.clients.logger import GraylogHandler, graylog_handler
+from app.infrastructure.clients.external.logger import GraylogHandler, graylog_handler
 
 __all__ = (
     "app_logger",

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from app.entrypoints.api.dependencies.auth import require_api_key
 from app.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from app.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
-from app.services.dadata import get_dadata_service
+from app.services.integrations.dadata import get_dadata_service
 
 __all__ = ("router",)
 

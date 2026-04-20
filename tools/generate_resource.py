@@ -99,7 +99,7 @@ def render_service(resource: str, class_name: str) -> str:
             {class_name}SchemaOut,
             {class_name}VersionSchemaOut,
         )
-        from app.services.base import BaseService
+        from app.services.core.base import BaseService
         from app.core.decorators.singleton import singleton
 
 

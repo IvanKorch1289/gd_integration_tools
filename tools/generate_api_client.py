@@ -544,7 +544,7 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
         from app.core.config.settings import settings
         from app.core.decorators.singleton import singleton
         from app.core.errors import ServiceError
-        from app.infrastructure.clients.http import get_http_client_dependency
+        from app.infrastructure.clients.transport.http import get_http_client_dependency
 
         __all__ = ("API{class_prefix}Service", "get_{name}_service")
 

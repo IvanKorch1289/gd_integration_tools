@@ -222,7 +222,7 @@ class PriorityEnqueueProcessor(BaseProcessor):
         }, default=str).decode()
 
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             raw = getattr(redis_client, "_raw_client", None) or redis_client
 
             # Lower score = higher priority (ZADD).

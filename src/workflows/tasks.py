@@ -4,7 +4,7 @@ from prefect import task
 
 from app.core.config.settings import settings
 from app.infrastructure.external_apis.logging_service import tasks_logger
-from app.services.orders import get_order_service
+from app.services.core.orders import get_order_service
 from app.utilities.utils import utilities
 from app.workflows.dicts import ProcessingResult
 from app.workflows.utils import validate_order_id

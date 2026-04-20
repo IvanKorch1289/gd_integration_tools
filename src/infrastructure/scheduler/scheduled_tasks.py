@@ -19,7 +19,7 @@ async def check_all_services():
             result = await health_check.check_all_services()
 
         if not result.get("is_all_services_active"):
-            from app.infrastructure.clients.stream import stream_client
+            from app.infrastructure.clients.messaging.stream import stream_client
 
             data = {
                 "to_emails": ["cards25@rt.bak"],

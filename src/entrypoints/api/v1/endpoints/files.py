@@ -20,7 +20,7 @@ from app.schemas.route_schemas.files import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.files import get_file_service
+from app.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")
 

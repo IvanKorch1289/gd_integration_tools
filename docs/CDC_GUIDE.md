@@ -170,7 +170,7 @@ etl_route = (
 ## Управление подписками
 
 ```python
-from app.infrastructure.clients.cdc import get_cdc_client
+from app.infrastructure.clients.external.cdc import get_cdc_client
 
 client = get_cdc_client()
 

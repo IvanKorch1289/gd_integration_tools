@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.infrastructure.clients.cdc import get_cdc_client
+from app.infrastructure.clients.external.cdc import get_cdc_client
 
 __all__ = ("cdc_router",)
 

@@ -5,7 +5,7 @@ from fastapi.responses import StreamingResponse
 
 from app.core.decorators.caching import existence_cache, metadata_cache
 from app.core.decorators.singleton import singleton
-from app.infrastructure.clients.storage import BaseS3Client, s3_client
+from app.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
 from app.utilities.utils import utilities
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")

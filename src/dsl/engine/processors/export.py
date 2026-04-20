@@ -28,7 +28,7 @@ class ExportProcessor(BaseProcessor):
         self._title = title
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.export_service import get_export_service
+        from app.services.io.export_service import get_export_service
 
         body = exchange.in_message.body
         rows = body if isinstance(body, list) else [body] if isinstance(body, dict) else []

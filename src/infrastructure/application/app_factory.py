@@ -14,7 +14,7 @@ from app.infrastructure.application.index import root_page
 from app.infrastructure.application.lifecycle import lifespan
 from app.infrastructure.application.monitoring import setup_monitoring
 from app.infrastructure.application.telemetry import setup_tracing
-from app.infrastructure.clients.stream import stream_client
+from app.infrastructure.clients.messaging.stream import stream_client
 from app.utilities.admins.setup_admin import setup_admin
 
 __all__ = ("create_app",)

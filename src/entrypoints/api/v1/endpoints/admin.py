@@ -7,7 +7,7 @@ from app.schemas.route_schemas.admin import (
     AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
-from app.services.admin import get_admin_service
+from app.services.core.admin import get_admin_service
 
 __all__ = ("router",)
 

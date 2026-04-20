@@ -35,7 +35,7 @@ class AgentGraphProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.ai_graph import build_and_run_agent
+        from app.services.ai.ai_graph import build_and_run_agent
         body = exchange.in_message.body
         prompt = body if isinstance(body, str) else str(body)
         result = await build_and_run_agent(prompt=prompt, tool_actions=self.tools)
@@ -84,7 +84,7 @@ class CDCProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if not self._subscribed:
-            from app.infrastructure.clients.cdc import get_cdc_client
+            from app.infrastructure.clients.external.cdc import get_cdc_client
             client = get_cdc_client()
             sub_id = await client.subscribe(
                 profile=self.profile,

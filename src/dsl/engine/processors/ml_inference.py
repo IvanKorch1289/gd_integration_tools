@@ -125,7 +125,7 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from app.services.ai_agent import get_ai_agent_service
+            from app.services.ai.ai_agent import get_ai_agent_service
             agent = get_ai_agent_service()
 
             # Проверяем что у агента есть streaming (иначе fallback в non-streaming)
@@ -160,7 +160,7 @@ class StreamingLLMProcessor(BaseProcessor):
         self, session_id: str, content: Any, *, is_final: bool,
     ) -> None:
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",
                 data={
@@ -216,7 +216,7 @@ class EmbeddingProcessor(BaseProcessor):
             exchange.fail(f"Embedding failed: {exc}")
 
     async def _st_embed(self, text: str) -> list[float]:
-        from app.services.rag_service import get_rag_service
+        from app.services.ai.rag_service import get_rag_service
         rag = get_rag_service()
         if hasattr(rag, "_embed"):
             result = rag._embed(text)

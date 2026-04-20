@@ -22,7 +22,7 @@ from app.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.orders import get_order_service
+from app.services.core.orders import get_order_service
 
 __all__ = ("router",)
 

@@ -84,7 +84,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Отправляет запись в Redis stream."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return
 
@@ -111,7 +111,7 @@ async def list_audit_records(
 ) -> list[dict[str, Any]]:
     """Читает последние записи из audit stream для Replay UI."""
     try:
-        from app.infrastructure.clients.redis import redis_client
+        from app.infrastructure.clients.storage.redis import redis_client
         records = await redis_client.read_stream(
             stream_name=_STREAM_NAME, count=count, start_id=start_id,
         )
@@ -127,7 +127,7 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
     Возвращает {"status": "replayed", "record_id": ..., "new_response": {...}}.
     """
     try:
-        from app.infrastructure.clients.redis import redis_client
+        from app.infrastructure.clients.storage.redis import redis_client
         records = await redis_client.read_stream(
             stream_name=_STREAM_NAME, count=1, start_id=record_id,
         )

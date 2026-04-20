@@ -77,7 +77,7 @@ class APIKeyManager:
 
         # 2. Проверка per-client ключей в Redis (SCAN + MGET pipeline)
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             async def _mget_keys(conn: Any) -> list[dict[str, Any]]:
@@ -156,7 +156,7 @@ class APIKeyManager:
         }
 
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             await redis_client.add_to_stream(
@@ -182,7 +182,7 @@ class APIKeyManager:
             Новый raw API-ключ или None если клиент не найден.
         """
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             raw = await redis_client._redis.get(f"{_KEY_PREFIX}{client_id}")
@@ -229,7 +229,7 @@ class APIKeyManager:
     async def revoke_client_key(self, client_id: str) -> bool:
         """Отзывает ключ клиента (немедленно, без grace period)."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
 
             await redis_client._redis.delete(f"{_KEY_PREFIX}{client_id}")
             await redis_client.add_to_stream(
@@ -245,7 +245,7 @@ class APIKeyManager:
     async def list_clients(self) -> list[dict[str, Any]]:
         """Список всех зарегистрированных клиентов."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             result: list[dict[str, Any]] = []

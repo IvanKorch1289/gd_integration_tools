@@ -65,7 +65,7 @@ class RedisRateLimiter:
             {"remaining": int, "reset_at": int, "limit": int}
         """
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return {"remaining": policy.limit, "reset_at": 0, "limit": policy.limit}
 

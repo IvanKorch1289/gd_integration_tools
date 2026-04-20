@@ -74,7 +74,7 @@ class PipelineVersionManager:
         )
 
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             key = f"{_SNAPSHOT_PREFIX}{route_id}:v{version}"
@@ -92,7 +92,7 @@ class PipelineVersionManager:
     async def get_history(self, route_id: str) -> list[dict[str, Any]]:
         """Возвращает историю версий маршрута."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             result = []
@@ -109,7 +109,7 @@ class PipelineVersionManager:
     async def compare(self, route_id: str, v1: int, v2: int) -> dict[str, Any]:
         """Сравнивает две версии маршрута."""
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
 
             raw1 = await redis_client._redis.get(f"{_SNAPSHOT_PREFIX}{route_id}:v{v1}")

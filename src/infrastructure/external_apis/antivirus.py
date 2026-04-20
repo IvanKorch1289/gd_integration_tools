@@ -6,7 +6,7 @@ from typing import Any
 
 from app.core.config.settings import settings
 from app.core.decorators.singleton import singleton
-from app.infrastructure.clients.http import HttpClient, get_http_client_dependency
+from app.infrastructure.clients.transport.http import HttpClient, get_http_client_dependency
 from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
 
 __all__ = (

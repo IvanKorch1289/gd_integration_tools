@@ -84,7 +84,7 @@ class HealthCheck:
         Возвращает:
             bool: Статус доступности Redis
         """
-        from app.infrastructure.clients.redis import redis_client
+        from app.infrastructure.clients.storage.redis import redis_client
 
         return await redis_client.check_connection()
 
@@ -94,7 +94,7 @@ class HealthCheck:
         Возвращает:
             bool: Результат проверки соединения с объектным хранилищем
         """
-        from app.infrastructure.clients.storage import s3_client
+        from app.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_connection()
 
@@ -104,7 +104,7 @@ class HealthCheck:
         Возвращает:
             bool: True если бакет существует, False в случае ошибки
         """
-        from app.infrastructure.clients.storage import s3_client
+        from app.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_bucket_exists()
 
@@ -114,7 +114,7 @@ class HealthCheck:
         Возвращает:
             bool: Статус подключения к Graylog
         """
-        from app.infrastructure.clients.logger import graylog_handler
+        from app.infrastructure.clients.external.logger import graylog_handler
 
         return await graylog_handler.check_connection()
 
@@ -124,7 +124,7 @@ class HealthCheck:
         Возвращает:
             bool: Результат проверки почтового сервера
         """
-        from app.infrastructure.clients.smtp import smtp_client
+        from app.infrastructure.clients.transport.smtp import smtp_client
 
         return await smtp_client.test_connection()
 

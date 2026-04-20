@@ -181,7 +181,7 @@ class AIDataSanitizer:
 
         if result.audit_events:
             try:
-                from app.infrastructure.clients.redis import redis_client
+                from app.infrastructure.clients.storage.redis import redis_client
 
                 import json
 

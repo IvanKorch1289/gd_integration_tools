@@ -13,7 +13,7 @@ from app.core.config.settings import settings
 from app.core.decorators.caching.stampede import KeyLockManager
 from app.core.decorators.caching.storage.disk import DiskTTLCache
 from app.core.decorators.caching.storage.memory import InMemoryTTLCache
-from app.infrastructure.clients.redis import redis_client
+from app.infrastructure.clients.storage.redis import redis_client
 from app.infrastructure.external_apis.logging_service import redis_logger
 from app.utilities.json_codec import json_dumps, json_loads
 

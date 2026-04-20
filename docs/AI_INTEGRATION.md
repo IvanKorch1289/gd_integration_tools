@@ -191,7 +191,7 @@ route = (
 
 ## Провайдеры
 
-Текущие (`app.services.ai_agent`):
+Текущие (`app.services.ai.ai_agent`):
 - **Perplexity** (web-grounded search)
 - **HuggingFace** (OSS модели)
 - **Open WebUI** (локальные модели)

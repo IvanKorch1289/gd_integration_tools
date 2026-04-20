@@ -21,7 +21,7 @@ from app.schemas.route_schemas.orderkinds import (
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from app.services.orderkinds import get_order_kind_service
+from app.services.core.orderkinds import get_order_kind_service
 
 __all__ = ("router",)
 

@@ -35,7 +35,7 @@ class IdempotentConsumerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            from app.infrastructure.clients.redis import redis_client
+            from app.infrastructure.clients.storage.redis import redis_client
 
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
             is_new = await redis_client.set_if_not_exists(

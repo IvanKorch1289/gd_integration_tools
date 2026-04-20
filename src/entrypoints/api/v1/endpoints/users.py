@@ -9,7 +9,7 @@ from app.schemas.route_schemas.users import (
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from app.services.users import get_user_service
+from app.services.core.users import get_user_service
 
 __all__ = ("router",)
 

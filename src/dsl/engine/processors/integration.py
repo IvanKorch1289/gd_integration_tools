@@ -19,7 +19,7 @@ class EventPublishProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from pydantic import BaseModel
-        from app.infrastructure.clients.event_bus import get_event_bus
+        from app.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         if self._event_factory:
@@ -45,7 +45,7 @@ class MemoryLoadProcessor(BaseProcessor):
         session_id = exchange.in_message.headers.get(self._session_header)
         if not session_id:
             session_id = exchange.correlation_id
-        from app.services.agent_memory import get_agent_memory_service
+        from app.services.ai.agent_memory import get_agent_memory_service
         memory_svc = get_agent_memory_service()
         memory = await memory_svc.load_memory(session_id)
         exchange.set_property("_agent_memory", memory)
@@ -62,7 +62,7 @@ class MemorySaveProcessor(BaseProcessor):
         session_id = exchange.properties.get("_session_id")
         if not session_id:
             return
-        from app.services.agent_memory import get_agent_memory_service
+        from app.services.ai.agent_memory import get_agent_memory_service
         memory_svc = get_agent_memory_service()
         body = exchange.in_message.body
         content = body if isinstance(body, str) else str(body)
