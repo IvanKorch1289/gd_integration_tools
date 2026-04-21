@@ -4,6 +4,7 @@
     {
         "status": "ok" | "degraded" | "down",
         "timestamp": "...",
+        "mode": "fast" | "deep",
         "components": {
             "redis": {"status": "ok", "latency_ms": 2.3, "error": null},
             "database": {"status": "ok", "latency_ms": 5.1, "error": null},
@@ -11,21 +12,46 @@
         }
     }
 
-Используется для Kubernetes liveness/readiness probes.
+Используется для Kubernetes liveness (fast) и readiness (deep) probes.
+
+IL1.6 (ADR-022): добавлен ``mode: "fast" | "deep"``.
+* ``fast`` — быстрый PING (SLA < 100ms), для K8s liveness.
+* ``deep`` — smoke-operation (SLA < 2s), для readiness и on-demand dashboard.
+Каждая зарегистрированная check-функция может поддерживать kwarg ``mode`` —
+aggregator пробросит его через inspect. Клиенты ABC (``InfrastructureClient``)
+из ``ConnectorRegistry`` интегрируются автоматически через
+``include_registry()``.
 """
 
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 from datetime import UTC, datetime
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal
+
+if TYPE_CHECKING:
+    from app.infrastructure.clients.base_connector import HealthMode
 
 __all__ = ("HealthAggregator", "get_health_aggregator")
 
 logger = logging.getLogger("infra.health")
 
-HealthCheckFn = Callable[[], Awaitable[dict[str, Any]]]
+HealthMode = Literal["fast", "deep"]  # noqa: F811  (re-export для удобства)
+
+#: Legacy-сигнатура (backward-compat): функция без аргументов, возвращает dict.
+#: Новая сигнатура может принимать kwarg ``mode`` — aggregator прокинет его
+#: автоматически через inspect.
+HealthCheckFn = Callable[..., Awaitable[dict[str, Any]]]
+
+
+#: SLA-timeout per-check в зависимости от режима (seconds). Конкретная
+#: реализация client.health(mode) должна укладываться в эти бюджеты.
+_TIMEOUT_BY_MODE: dict[HealthMode, float] = {
+    "fast": 1.0,
+    "deep": 2.5,
+}
 
 
 class HealthAggregator:
@@ -43,7 +69,9 @@ class HealthAggregator:
 
     def __init__(self, *, timeout_seconds: float = 5.0) -> None:
         self._checks: dict[str, HealthCheckFn] = {}
+        #: Legacy-timeout. Для режимных probes используется `_TIMEOUT_BY_MODE`.
         self._timeout = timeout_seconds
+        self._include_registry: bool = False
 
     def register(self, name: str, health_fn: HealthCheckFn) -> None:
         """Регистрирует health-check функцию. Должна возвращать dict со status."""
@@ -54,75 +82,175 @@ class HealthAggregator:
         """Удаляет health-check."""
         self._checks.pop(name, None)
 
+    def include_registry(self, enabled: bool = True) -> None:
+        """Автоматически включать ``ConnectorRegistry.health_all()`` в отчёт.
+
+        Предпочтительный путь для новых infrastructure-клиентов (ABC
+        ``InfrastructureClient``). Legacy-check-функции, зарегистрированные
+        через ``register()``, продолжают работать рядом.
+        """
+        self._include_registry = enabled
+
     def list_components(self) -> list[str]:
         return sorted(self._checks.keys())
 
-    async def _safe_check(self, name: str, fn: HealthCheckFn) -> dict[str, Any]:
-        """Выполняет один health-check с timeout."""
+    @staticmethod
+    def _supports_mode_kwarg(fn: HealthCheckFn) -> bool:
+        """Определить, принимает ли callable kwarg ``mode``."""
         try:
-            result = await asyncio.wait_for(fn(), timeout=self._timeout)
+            sig = inspect.signature(fn)
+        except (TypeError, ValueError):
+            return False
+        return "mode" in sig.parameters
+
+    async def _safe_check(
+        self,
+        name: str,
+        fn: HealthCheckFn,
+        *,
+        mode: HealthMode = "fast",
+    ) -> dict[str, Any]:
+        """Выполняет один health-check с timeout."""
+        timeout = _TIMEOUT_BY_MODE.get(mode, self._timeout)
+        try:
+            coro = fn(mode=mode) if self._supports_mode_kwarg(fn) else fn()
+            result = await asyncio.wait_for(coro, timeout=timeout)
             if not isinstance(result, dict):
                 return {
                     "name": name,
                     "status": "error",
                     "error": f"Invalid result type: {type(result).__name__}",
+                    "mode": mode,
                 }
             result.setdefault("name", name)
             result.setdefault("status", "unknown")
+            result.setdefault("mode", mode)
             return result
         except asyncio.TimeoutError:
             return {
                 "name": name,
                 "status": "error",
-                "error": f"Timeout after {self._timeout}s",
-                "latency_ms": self._timeout * 1000,
+                "error": f"Timeout after {timeout}s ({mode})",
+                "latency_ms": timeout * 1000,
+                "mode": mode,
             }
         except Exception as exc:
             return {
                 "name": name,
                 "status": "error",
                 "error": str(exc)[:200],
+                "mode": mode,
             }
 
-    async def check_all(self) -> dict[str, Any]:
+    async def _collect_registry_components(
+        self, mode: HealthMode
+    ) -> dict[str, dict[str, Any]]:
+        """Собрать health-отчёты из ConnectorRegistry (если включено).
+
+        Преобразует HealthResult → dict с полями совместимыми с legacy
+        check-функциями.
+        """
+        if not self._include_registry:
+            return {}
+        try:
+            from app.infrastructure.registry import ConnectorRegistry
+        except ImportError:
+            return {}
+        registry = ConnectorRegistry.instance()
+        names = registry.names()
+        if not names:
+            return {}
+        try:
+            results = await registry.health_all(mode=mode)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ConnectorRegistry.health_all failed: %s", exc)
+            return {}
+        out: dict[str, dict[str, Any]] = {}
+        for name, r in results.items():
+            out[name] = {
+                "name": name,
+                "status": "ok" if r.status == "ok" else ("degraded" if r.status == "degraded" else "error"),
+                "latency_ms": r.latency_ms,
+                "mode": r.mode,
+                "details": r.details,
+                "error": r.error,
+            }
+        return out
+
+    async def check_all(self, *, mode: HealthMode = "fast") -> dict[str, Any]:
         """Параллельный опрос всех зарегистрированных компонентов."""
-        if not self._checks:
+        legacy_tasks = [
+            self._safe_check(name, fn, mode=mode) for name, fn in self._checks.items()
+        ]
+        legacy_results_coro = (
+            asyncio.gather(*legacy_tasks) if legacy_tasks else asyncio.sleep(0, result=[])
+        )
+        registry_coro = self._collect_registry_components(mode)
+        legacy_results, registry_results = await asyncio.gather(
+            legacy_results_coro, registry_coro
+        )
+
+        components: dict[str, dict[str, Any]] = {}
+        # Сначала registry-компоненты, потом legacy (legacy может override
+        # registry-имени — полезно, если кастомный check подменяет дефолт).
+        for name, comp in registry_results.items():
+            components[name] = comp
+        for comp in legacy_results or []:
+            name = comp.get("name", "unknown")
+            components[name] = comp
+
+        if not components:
             return {
                 "status": "ok",
                 "timestamp": datetime.now(UTC).isoformat(),
+                "mode": mode,
                 "components": {},
                 "message": "No health checks registered",
             }
 
-        tasks = [
-            self._safe_check(name, fn)
-            for name, fn in self._checks.items()
-        ]
-        results = await asyncio.gather(*tasks)
-
-        components: dict[str, dict[str, Any]] = {}
         overall = "ok"
-        for comp in results:
-            name = comp.get("name", "unknown")
-            components[name] = comp
+        for comp in components.values():
             status = comp.get("status", "unknown")
             if status == "error":
-                overall = "down" if overall != "down" else overall
+                overall = "down"
             elif status in ("degraded", "unknown") and overall == "ok":
                 overall = "degraded"
 
         return {
             "status": overall,
             "timestamp": datetime.now(UTC).isoformat(),
+            "mode": mode,
             "components": components,
         }
 
-    async def check_single(self, name: str) -> dict[str, Any]:
+    async def check_single(
+        self, name: str, *, mode: HealthMode = "fast"
+    ) -> dict[str, Any]:
         """Проверка одного компонента по имени."""
         fn = self._checks.get(name)
-        if fn is None:
-            return {"name": name, "status": "error", "error": "Component not registered"}
-        return await self._safe_check(name, fn)
+        if fn is not None:
+            return await self._safe_check(name, fn, mode=mode)
+        # Попробовать через ConnectorRegistry.
+        if self._include_registry:
+            try:
+                from app.infrastructure.registry import ConnectorRegistry
+
+                client = ConnectorRegistry.instance().get(name)
+            except Exception:  # noqa: BLE001
+                return {"name": name, "status": "error", "error": "Component not registered"}
+            try:
+                r = await client.health(mode=mode)
+                return {
+                    "name": name,
+                    "status": "ok" if r.status == "ok" else "error",
+                    "latency_ms": r.latency_ms,
+                    "mode": r.mode,
+                    "details": r.details,
+                    "error": r.error,
+                }
+            except Exception as exc:  # noqa: BLE001
+                return {"name": name, "status": "error", "error": str(exc)[:200]}
+        return {"name": name, "status": "error", "error": "Component not registered"}
 
 
 _aggregator: HealthAggregator | None = None

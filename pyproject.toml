@@ -38,6 +38,13 @@ opentelemetry-api = "^1.30.0"
 opentelemetry-sdk = "^1.30.0"
 opentelemetry-instrumentation-fastapi = "^0.51b0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
+# IL1.3 (ADR-022): расширение OTEL-инструментации на Kafka/RabbitMQ/MongoDB/gRPC-client.
+# Безопасны при отсутствии соответствующих драйверов — инструментатор no-op'ит
+# (см. _instrument_* в src/infrastructure/observability/otel_auto.py).
+opentelemetry-instrumentation-aiokafka = "^0.51b0"
+opentelemetry-instrumentation-aio-pika = "^0.51b0"
+opentelemetry-instrumentation-pymongo = "^0.51b0"
+opentelemetry-instrumentation-grpc = "^0.51b0"
 aiocircuitbreaker = "^2.0.0"
 apscheduler = "^3.11.0"
 faststream = "^0.5.34"

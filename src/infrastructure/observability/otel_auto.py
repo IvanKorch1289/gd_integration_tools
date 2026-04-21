@@ -1,13 +1,16 @@
 """OpenTelemetry auto-instrumentation.
 
-Автоматически инструментирует FastAPI / HTTPX / SQLAlchemy / Redis / Logging
-без ручных spans в коде.
+Автоматически инструментирует FastAPI / HTTPX / SQLAlchemy / Redis / Logging /
+aiokafka / aio-pika / PyMongo (Motor) / gRPC client без ручных spans в коде.
 
 Активируется в main.py::
     from app.infrastructure.observability.otel_auto import init_otel
     init_otel(app=fastapi_app)
 
 Требует env OTEL_EXPORTER_OTLP_ENDPOINT (иначе skip).
+
+IL1.3 (ADR-022): добавлены Kafka / RabbitMQ / MongoDB / gRPC-client
+instrumentations — закрывает observability-gap в infra-слое.
 """
 
 from __future__ import annotations
@@ -30,6 +33,13 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     - SQLAlchemy (DB query spans)
     - Redis (command spans)
     - Logging (trace_id/span_id в log records)
+    - aiokafka (Kafka produce/consume spans) — IL1.3
+    - aio-pika (RabbitMQ publish/consume spans) — IL1.3
+    - PyMongo через Motor (MongoDB ops spans) — IL1.3
+    - gRPC client (unary/stream spans) — IL1.3
+
+    Новые instrumentations fail gracefully при отсутствующем пакете —
+    logger.debug с причиной, без исключений.
 
     Returns True если инициализировано.
     """
@@ -64,6 +74,11 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     _instrument_sqlalchemy()
     _instrument_redis()
     _instrument_logging()
+    # IL1.3: расширение coverage до messaging / mongo / grpc-client.
+    _instrument_aiokafka()
+    _instrument_aiopika()
+    _instrument_pymongo()
+    _instrument_grpc_client()
 
     logger.info("OpenTelemetry initialized: service=%s, env=%s", service_name, environment)
     return True
@@ -114,3 +129,56 @@ def _instrument_logging() -> None:
         logger.debug("OTel Logging instrumented")
     except ImportError:
         pass
+
+
+def _instrument_aiokafka() -> None:
+    """Kafka producer/consumer spans. Требует
+    opentelemetry-instrumentation-aiokafka.
+    """
+    try:
+        from opentelemetry.instrumentation.aiokafka import AIOKafkaInstrumentor
+        AIOKafkaInstrumentor().instrument()
+        logger.debug("OTel aiokafka instrumented")
+    except ImportError as exc:
+        logger.debug("OTel aiokafka instrumentor skipped: %s", exc)
+
+
+def _instrument_aiopika() -> None:
+    """RabbitMQ publish/consume spans. Требует
+    opentelemetry-instrumentation-aio-pika.
+    """
+    try:
+        from opentelemetry.instrumentation.aio_pika import AioPikaInstrumentor
+        AioPikaInstrumentor().instrument()
+        logger.debug("OTel aio-pika instrumented")
+    except ImportError as exc:
+        logger.debug("OTel aio-pika instrumentor skipped: %s", exc)
+
+
+def _instrument_pymongo() -> None:
+    """PyMongo / Motor spans.
+
+    Motor использует PyMongo под капотом, поэтому PyMongoInstrumentor
+    охватывает и async operations. Требует
+    opentelemetry-instrumentation-pymongo.
+    """
+    try:
+        from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
+        PymongoInstrumentor().instrument()
+        logger.debug("OTel pymongo instrumented")
+    except ImportError as exc:
+        logger.debug("OTel pymongo instrumentor skipped: %s", exc)
+
+
+def _instrument_grpc_client() -> None:
+    """gRPC client-side spans (unary + streaming).
+
+    Server-side уже инструментируется отдельно при старте gRPC server-а.
+    Требует opentelemetry-instrumentation-grpc.
+    """
+    try:
+        from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient
+        GrpcAioInstrumentorClient().instrument()
+        logger.debug("OTel gRPC async client instrumented")
+    except ImportError as exc:
+        logger.debug("OTel gRPC client instrumentor skipped: %s", exc)
