@@ -24,7 +24,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 ## Phase C — Framework Ports (P1)
 
 - [x] C1 Camel EIP (полный набор) — статус: done — commit: HEAD — ADR: —
-- [ ] C2 Spring Integration (Gateway+Interceptors+Versioning) — статус: planned — commit: — — ADR: —
+- [x] C2 Spring Integration (Gateway+Interceptors+Versioning) — статус: done — commit: HEAD — ADR: —
 - [ ] C3 Orchestration (Sensor+Backfill+DryRun+HITL) — статус: planned — commit: — — ADR: —
 - [ ] C4 CloudEvents + Schema Registry + AsyncAPI — статус: planned — commit: — — ADR: ADR-010
 - [ ] C5 Outbox+Inbox + FastStream унификация — статус: planned — commit: — — ADR: ADR-011,ADR-013
