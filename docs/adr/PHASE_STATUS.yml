@@ -309,9 +309,15 @@ phases:
   D3:
     title: "RAG stack upgrade"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-014]
     depends_on: [D2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/ai/vector_store.py
+      - docs/adr/ADR-014-qdrant-fastembed-rag-stack.md
+      - docs/phases/PHASE_D3.md
 
   E1:
     title: "DSL utils max"

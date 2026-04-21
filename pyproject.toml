@@ -84,6 +84,10 @@ httpx = {extras = ["http2"], version = "^0.28.0"}
 msgpack = "^1.1.0"
 cbor2 = "^5.6.0"
 xmltodict = "^0.14.0"
+# D3: RAG stack upgrade (ADR-014). qdrant + fastembed заменяют chromadb +
+# sentence-transformers (ONNX-quantized, ~10x быстрее, ×10 меньше в образе).
+qdrant-client = "^1.12.0"
+fastembed = "^0.4.0"
 
 [tool.poetry.extras]
 ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama", "tavily-python"]
