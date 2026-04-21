@@ -74,6 +74,8 @@ aiomqtt = "^2.0.0"
 aioimaplib = "^1.0.0"
 pyyaml = "^6.0.2"
 grpc-interceptor = "^0.15.4"
+# A3: svcs — единый DI-контейнер (ADR-002). service_registry удалён.
+svcs = "^25.1.0"
 
 [tool.poetry.extras]
 ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama", "tavily-python"]

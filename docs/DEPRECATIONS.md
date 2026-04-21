@@ -9,7 +9,11 @@
 
 ## Активные shim
 
-_Пусто — будут добавлены по мере введения в фазах A3/A4/D3/F1/F2/H1._
+| Путь/Имя | Заменён на | Введён (фаза/дата) | Плановое удаление | Тип |
+|---|---|---|---|---|
+| `app.core.service_registry` (module) | `app.core.svcs_registry` | A3 / 2026-04-21 | 2026-07-01 (H3 Cleanup) | module |
+| `app.core.service_registry.ServiceRegistry` | `app.core.svcs_registry.register_factory/get_service/list_services` | A3 / 2026-04-21 | 2026-07-01 | class |
+| `app.core.service_registry.service_registry` (singleton) | `app.core.svcs_registry.register_factory/get_service` | A3 / 2026-04-21 | 2026-07-01 | singleton |
 
 ## Удалённые (для истории)
 

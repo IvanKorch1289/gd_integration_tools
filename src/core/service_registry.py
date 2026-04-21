@@ -1,69 +1,63 @@
-"""Централизованный реестр сервисов.
+"""DEPRECATION SHIM — ``service_registry`` заменён на ``svcs_registry``.
 
-Предоставляет единую точку доступа ко всем бизнес-сервисам
-приложения. Сервисы регистрируются с lazy-фабрикой и
-создаются при первом обращении.
+Этот модуль оставлен на один релиз (удаление запланировано на 2026-07-01,
+см. ``docs/DEPRECATIONS.md``). Все обращения к ``service_registry`` и
+``ServiceRegistry`` проксируются в ``app.core.svcs_registry``.
+
+Импорты выдают ``DeprecationWarning``; после 2026-07-01 модуль будет
+удалён безусловно — рекомендуется обновить импорты сейчас.
 """
 
-import threading
+from __future__ import annotations
+
+import warnings
 from typing import Any, Callable
+
+from app.core.svcs_registry import (
+    clear_registry as _clear,
+    get_service,
+    has_service,
+    list_services as _list_services,
+    register_factory,
+)
 
 __all__ = ("ServiceRegistry", "service_registry")
 
+warnings.warn(
+    "`app.core.service_registry` deprecated (ADR-002). "
+    "Используйте `app.core.svcs_registry.{register_factory,get_service}`. "
+    "Модуль будет удалён 2026-07-01.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 class ServiceRegistry:
-    """Реестр сервисов с lazy-инициализацией и потокобезопасностью."""
+    """Shim над svcs_registry для старого name-based API.
 
-    def __init__(self) -> None:
-        self._factories: dict[str, Callable[[], Any]] = {}
-        self._lock = threading.Lock()
+    Новый код должен использовать ``from app.core.svcs_registry import
+    register_factory, get_service`` напрямую.
+    """
 
-    def register(self, name: str, factory: Callable[[], Any]) -> None:
-        """Регистрирует фабрику сервиса.
+    @staticmethod
+    def register(name: str, factory: Callable[[], Any]) -> None:
+        register_factory(name, factory)
 
-        Args:
-            name: Уникальное имя сервиса (например, ``orders``).
-            factory: Callable, возвращающий экземпляр сервиса.
-        """
-        with self._lock:
-            self._factories[name] = factory
+    @staticmethod
+    def get(name: str) -> Any:
+        return get_service(name)
 
-    def get(self, name: str) -> Any:
-        """Возвращает экземпляр сервиса по имени.
+    @staticmethod
+    def list_services() -> list[str]:
+        return _list_services()
 
-        Вызывает фабрику при каждом обращении — сами фабрики обычно
-        возвращают module-level инстанс, поэтому дублирования нет.
+    @staticmethod
+    def is_registered(name: str) -> bool:
+        return has_service(name)
 
-        Args:
-            name: Имя зарегистрированного сервиса.
-
-        Returns:
-            Экземпляр сервиса.
-
-        Raises:
-            KeyError: Если сервис не зарегистрирован.
-        """
-        try:
-            factory = self._factories[name]
-        except KeyError:
-            raise KeyError(
-                f"Сервис '{name}' не зарегистрирован. "
-                f"Доступные: {', '.join(self.list_services())}"
-            ) from None
-
-        return factory()
-
-    def list_services(self) -> list[str]:
-        """Возвращает список зарегистрированных имён сервисов."""
-        return sorted(self._factories.keys())
-
-    def is_registered(self, name: str) -> bool:
-        """Проверяет, зарегистрирован ли сервис."""
-        return name in self._factories
-
-    def clear(self) -> None:
-        """Очищает реестр."""
-        self._factories.clear()
+    @staticmethod
+    def clear() -> None:
+        _clear()
 
 
 service_registry = ServiceRegistry()

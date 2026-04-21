@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 2
+  closed: 3
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -66,14 +66,20 @@ phases:
   A3:
     title: "DI consolidation (svcs only)"
     priority: P0
-    status: planned
+    status: done
     adr: [ADR-002]
     depends_on: [A1, A2]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
     artifacts:
       - src/core/service_registry.py
       - src/core/svcs_registry.py
       - src/core/providers_registry.py
+      - src/core/service_setup.py
       - docs/DEPRECATIONS.md
+      - docs/adr/ADR-002-svcs-di-container.md
+      - docs/phases/PHASE_A3.md
 
   A4:
     title: "Resilience consolidation + aiohttp→httpx"
