@@ -9,6 +9,10 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from app.core.config.settings import RedisSettings, settings
 from app.infrastructure.external_apis.logging_service import redis_logger
+from app.infrastructure.resilience.client_breaker import (
+    CircuitOpen,
+    ClientCircuitBreaker,
+)
 
 __all__ = ("redis_client", "RedisClient")
 
@@ -32,6 +36,20 @@ class RedisClient:
             "cache": asyncio.Lock(),
             "queue": asyncio.Lock(),
             "limits": asyncio.Lock(),
+        }
+        # IL1.4: per-kind CircuitBreaker. При падении Redis (N подряд failures)
+        # пул переходит в OPEN — execute() делает fast-fail без лишних
+        # reconnect-попыток, пока не пройдёт recovery_timeout. Thresholds —
+        # из PoolingProfile defaults (5/30s); в IL2 можно прокинуть из
+        # RedisSettings.pooling.
+        self._breakers: dict[RedisKind, ClientCircuitBreaker] = {
+            kind: ClientCircuitBreaker(
+                name=f"redis.{kind}",
+                host=f"{settings.host}:{settings.port}",
+                failure_threshold=5,
+                recovery_timeout=30.0,
+            )
+            for kind in ("cache", "queue", "limits")
         }
 
     def _base_url(self) -> str:
@@ -129,16 +147,32 @@ class RedisClient:
     async def execute(
         self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]]
     ) -> Any:
-        client = await self.get_client(kind)
+        """Выполнить Redis-операцию с retry и CB (IL1.4).
+
+        Поведение:
+          * CircuitOpen → проброс немедленно (fast-fail).
+          * RedisError → один reconnect-retry (как раньше); при повторном
+            падении breaker поглощает failure и переводит себя в OPEN через
+            `failure_threshold` подряд failures.
+        """
+        breaker = self._breakers[kind]
         try:
-            return await operation(client)
-        except (RedisConnectionError, RedisTimeoutError, RedisError) as exc:
-            self.logger.warning(
-                "Redis kind=%s недоступен, reconnect: %s", kind, str(exc)
-            )
-            await self.reset_client(kind)
-            client = await self.get_client(kind, force_reconnect=True)
-            return await operation(client)
+            async with breaker.guard():
+                client = await self.get_client(kind)
+                try:
+                    return await operation(client)
+                except (RedisConnectionError, RedisTimeoutError, RedisError) as exc:
+                    self.logger.warning(
+                        "Redis kind=%s недоступен, reconnect: %s", kind, str(exc)
+                    )
+                    await self.reset_client(kind)
+                    client = await self.get_client(kind, force_reconnect=True)
+                    return await operation(client)
+        except CircuitOpen as exc:
+            # CB не считает это «нашей» ошибкой; пробрасываем с понятным
+            # сообщением для upstream-логики (retry budget / fallback).
+            self.logger.warning("Redis kind=%s CircuitOpen: %s", kind, str(exc))
+            raise
 
     async def check_connection(self, kind: RedisKind) -> bool:
         try:
