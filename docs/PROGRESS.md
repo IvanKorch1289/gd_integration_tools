@@ -28,7 +28,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] C3 Orchestration (Sensor+Backfill+DryRun+HITL) — статус: done — commit: HEAD — ADR: —
 - [x] C4 CloudEvents + Schema Registry + AsyncAPI — статус: done — commit: HEAD — ADR: ADR-010
 - [x] C5 Outbox+Inbox + FastStream унификация — статус: done — commit: HEAD — ADR: ADR-011,ADR-013
-- [ ] C6 OPA + Casbin (двухуровневая авторизация) — статус: planned — commit: — — ADR: ADR-012
+- [x] C6 OPA + Casbin (двухуровневая авторизация) — статус: done — commit: HEAD — ADR: ADR-012
 - [ ] C7 Data contracts / expectations — статус: planned — commit: — — ADR: —
 - [ ] C8 Transformations max (фасад 7 engines) — статус: planned — commit: — — ADR: —
 - [ ] C9 Codecs max (все форматы + банковские) — статус: planned — commit: — — ADR: —

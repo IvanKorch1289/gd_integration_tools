@@ -212,9 +212,17 @@ phases:
   C6:
     title: "OPA + Casbin"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-012]
     depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/policy/__init__.py
+      - src/infrastructure/policy/opa.py
+      - src/infrastructure/policy/casbin_adapter.py
+      - docs/adr/ADR-012-opa-casbin-authorization.md
+      - docs/phases/PHASE_C6.md
 
   C7:
     title: "Data contracts / expectations"
