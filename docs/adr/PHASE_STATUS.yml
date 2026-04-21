@@ -182,9 +182,17 @@ phases:
   C4:
     title: "CloudEvents + Schema Registry + AsyncAPI"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-010]
     depends_on: [C3]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/eventing/__init__.py
+      - src/infrastructure/eventing/cloudevents.py
+      - src/infrastructure/eventing/schema_registry.py
+      - docs/adr/ADR-010-cloudevents-schema-registry.md
+      - docs/phases/PHASE_C4.md
 
   C5:
     title: "Outbox+Inbox + FastStream унификация"

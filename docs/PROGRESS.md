@@ -26,7 +26,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] C1 Camel EIP (полный набор) — статус: done — commit: HEAD — ADR: —
 - [x] C2 Spring Integration (Gateway+Interceptors+Versioning) — статус: done — commit: HEAD — ADR: —
 - [x] C3 Orchestration (Sensor+Backfill+DryRun+HITL) — статус: done — commit: HEAD — ADR: —
-- [ ] C4 CloudEvents + Schema Registry + AsyncAPI — статус: planned — commit: — — ADR: ADR-010
+- [x] C4 CloudEvents + Schema Registry + AsyncAPI — статус: done — commit: HEAD — ADR: ADR-010
 - [ ] C5 Outbox+Inbox + FastStream унификация — статус: planned — commit: — — ADR: ADR-011,ADR-013
 - [ ] C6 OPA + Casbin (двухуровневая авторизация) — статус: planned — commit: — — ADR: ADR-012
 - [ ] C7 Data contracts / expectations — статус: planned — commit: — — ADR: —
