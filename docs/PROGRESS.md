@@ -75,7 +75,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase K — Extended DSL (P2)
 
-- [ ] K1 DSL+ max (Tooling + Authoring + Interop) — статус: planned — commit: — — ADR: ADR-020,ADR-021
+- [x] K1 DSL+ max (Tooling + Authoring + Interop) — статус: done — commit: HEAD — ADR: ADR-020,ADR-021
 
 ## Phase L — Onboarding Portal (P2)
 

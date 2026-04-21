@@ -508,9 +508,15 @@ phases:
   K1:
     title: "DSL+ max"
     priority: P2
-    status: planned
+    status: done
     adr: [ADR-020, ADR-021]
     depends_on: [E2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-020-dsl-plus-tooling.md
+      - docs/adr/ADR-021-dsl-interop.md
+      - docs/phases/PHASE_K1.md
 
   L1:
     title: "Onboarding portal max"
