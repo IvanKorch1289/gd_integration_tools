@@ -62,7 +62,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] H1 Документация (RU) + 15 ADR — статус: done — commit: HEAD — ADR: —
 - [x] H2 Scaffolding + DSL visualization — статус: done — commit: HEAD — ADR: —
 - [x] H3 Cleanup (deprecated deps + dead code) — статус: done — commit: HEAD — ADR: —
-- [ ] H4 Final verification + release — статус: planned — commit: — — ADR: —
+- [x] H4 Final verification + release — статус: done — commit: HEAD — ADR: —
 
 ## Phase I — Extended Integrations (P2)
 
