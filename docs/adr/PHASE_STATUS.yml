@@ -415,8 +415,27 @@ phases:
   H1:
     title: "Документация (RU) + 15 ADR"
     priority: P2
-    status: planned
+    status: done
     depends_on: [G3]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-001-dsl-central-abstraction.md
+      - docs/adr/ADR-002-svcs-di-container.md
+      - docs/adr/ADR-003-cors-policy.md
+      - docs/adr/ADR-004-grpc-tls-auth.md
+      - docs/adr/ADR-005-tenacity-only-retry.md
+      - docs/adr/ADR-006-granian-prod-asgi.md
+      - docs/adr/ADR-007-python-3.14-ft-readiness.md
+      - docs/adr/ADR-008-pandas-to-polars.md
+      - docs/adr/ADR-009-httpx-replaces-aiohttp.md
+      - docs/adr/ADR-010-cloudevents-schema-registry.md
+      - docs/adr/ADR-011-outbox-inbox.md
+      - docs/adr/ADR-012-opa-casbin-authorization.md
+      - docs/adr/ADR-013-faststream-unification.md
+      - docs/adr/ADR-014-qdrant-fastembed-rag-stack.md
+      - docs/adr/ADR-015-api-management-stack.md
+      - docs/phases/PHASE_H1.md
 
   H2:
     title: "Scaffolding + DSL visualization"
