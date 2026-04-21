@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROGRESS = ROOT / "docs" / "PROGRESS.md"
 STATUS = ROOT / "docs" / "adr" / "PHASE_STATUS.yml"
 
-PHASE_RE = re.compile(r"^\[phase:([A-Z]\d+[a-z]?)\]")
+PHASE_RE = re.compile(r"^\[phase:([A-Z]+\d+[a-z]?)\]")
 
 
 def read_commit_msg(path: Path) -> str:

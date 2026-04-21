@@ -93,11 +93,25 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 - [x] O1 External env max (Vault Transit/DB + K8s + S3/Email/SMS/Push/Payments + Observability SaaS) — статус: done — commit: HEAD — ADR: —
 
+## Phase IL — Infrastructure Layer production-доводка (follow-up, P0/P1/P2)
+
+Фазы добавлены после initial 40/40 closure как production-доводка по слоям
+(первый слой — инфраструктурный: подключения к внешним сервисам). План:
+`/root/.claude/plans/tidy-jingling-map.md`. ADR: ADR-022..ADR-024.
+
+- [ ] IL1 Infrastructure Layer P0 — ConnectorRegistry + Metrics + OTEL full + CB + Kafka idempotent + deep health + admin API + PoolingProfile — статус: planned — commit: — — ADR: ADR-022
+- [ ] IL2 Infrastructure Layer P1 — Kafka FastStream + NotificationGateway (Jinja2+DLQ+Priority) + Reconnection + Vault hot-reload + IMAP pool + HTTP upstream + Streamlit dashboard — статус: planned — commit: — — ADR: ADR-023
+- [ ] IL3 Infrastructure Layer P2 — Outbox notify + gRPC interceptors + Hedging + Deadline + Load shedding + Grafana + Exemplars + Alert rules + S3 multipart + tenant pools — статус: planned — commit: — — ADR: ADR-024
+
 ---
 
-**Всего фаз:** 40. **Закрыто:** 40. **В работе:** 0.
+**Всего фаз:** 43. **Закрыто:** 40. **В работе:** 0. **Запланировано:** 3.
 
-(Примечание: в тексте плана фигурировало "38", реальная декомпозиция дала 40 —
-отличие учтено в `docs/adr/PHASE_STATUS.yml::meta`.)
+Initial closure (40/40) зафиксирована 2026-04-21; дальнейшая production-доводка
+добавляется как новые IL-фазы по мере выполнения. Каждая IL-фаза — самостоятельный
+коммит с префиксом `[phase:IL<N>]` и ADR-ссылкой.
+
+(Примечание: в тексте initial плана фигурировало "38", реальная декомпозиция
+дала 40 — отличие учтено в `docs/adr/PHASE_STATUS.yml::meta`.)
 
 MR в `master` не будет пропущен, пока счётчик «закрыто» не равен total.
