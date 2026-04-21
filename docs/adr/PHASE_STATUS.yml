@@ -197,9 +197,17 @@ phases:
   C5:
     title: "Outbox+Inbox + FastStream унификация"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-011, ADR-013]
     depends_on: [C4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/eventing/outbox.py
+      - src/infrastructure/eventing/inbox.py
+      - docs/adr/ADR-011-outbox-inbox.md
+      - docs/adr/ADR-013-faststream-unification.md
+      - docs/phases/PHASE_C5.md
 
   C6:
     title: "OPA + Casbin"
