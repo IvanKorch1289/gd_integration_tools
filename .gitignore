@@ -64,3 +64,8 @@ build/
 .cache/
 # docs/ — отслеживаются явно; artifacts собираются в docs/_build/
 docs/_build/
+
+# Claude Code — локальные настройки (settings.json — общий, коммитится)
+.claude/settings.local.json
+.claude/sessions/
+.claude/cache/
