@@ -337,8 +337,14 @@ phases:
   E2:
     title: "Dev tools"
     priority: P1
-    status: planned
+    status: done
     depends_on: [E1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/tools/dsl_cli/__init__.py
+      - src/tools/dsl_cli/lint.py
+      - docs/phases/PHASE_E2.md
 
   F1:
     title: "Performance stack max"
