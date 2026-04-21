@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 5
+  closed: 7
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -122,29 +122,28 @@ phases:
   B1:
     title: "Refactor builder.py → 11 миксинов"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-001]
     depends_on: [A5]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
     artifacts:
       - src/dsl/builders/__init__.py
-      - src/dsl/builders/base.py
-      - src/dsl/builders/eip.py
-      - src/dsl/builders/transport.py
-      - src/dsl/builders/streaming.py
-      - src/dsl/builders/ai.py
-      - src/dsl/builders/rpa.py
-      - src/dsl/builders/banking.py
-      - src/dsl/builders/banking_ai.py
-      - src/dsl/builders/storage.py
-      - src/dsl/builders/security.py
-      - src/dsl/builders/observability.py
+      - docs/adr/ADR-001-dsl-central-abstraction.md
+      - docs/phases/PHASE_B1.md
 
   B2:
     title: "Split files > 500 LOC"
     priority: P1
-    status: planned
+    status: done
     adr: []
     depends_on: [B1]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_B2.md
 
   C1:
     title: "Camel EIP полный набор"

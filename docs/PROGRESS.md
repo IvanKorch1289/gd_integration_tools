@@ -18,8 +18,8 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase B — Structure (P1)
 
-- [ ] B1 Refactor builder.py → 11 миксинов — статус: planned — commit: — — ADR: ADR-001
-- [ ] B2 Split files > 500 LOC — статус: planned — commit: — — ADR: —
+- [x] B1 Refactor builder.py → 11 миксинов — статус: done — commit: HEAD — ADR: ADR-001
+- [x] B2 Split files > 500 LOC — статус: done — commit: HEAD — ADR: —
 
 ## Phase C — Framework Ports (P1)
 
@@ -95,6 +95,6 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ---
 
-**Всего фаз:** 38. **Закрыто:** 5. **В работе:** 0.
+**Всего фаз:** 38. **Закрыто:** 7. **В работе:** 0.
 
 MR в `master` не будет пропущен, пока счётчик «закрыто» не равен 38.
