@@ -83,7 +83,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase M — Extended Resilience (P2)
 
-- [ ] M1 Resilience+ max (Chaos + LS + Hedging + ES/CQRS + Backup) — статус: planned — commit: — — ADR: —
+- [x] M1 Resilience+ max (Chaos + LS + Hedging + ES/CQRS + Backup) — статус: done — commit: HEAD — ADR: —
 
 ## Phase N — Business Logic Core (P2)
 

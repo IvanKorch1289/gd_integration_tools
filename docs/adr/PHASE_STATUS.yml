@@ -531,8 +531,12 @@ phases:
   M1:
     title: "Resilience+ max"
     priority: P2
-    status: planned
+    status: done
     depends_on: [A4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_M1.md
 
   N1:
     title: "Business Logic max"
