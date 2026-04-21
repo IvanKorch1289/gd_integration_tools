@@ -11,7 +11,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 ## Phase A — Foundation (P0)
 
 - [x] A1 Baseline inventory + pre-commit + guardrails — статус: done — commit: HEAD — ADR: —
-- [ ] A2 Security hardening — статус: planned — commit: — — ADR: ADR-003,ADR-004
+- [x] A2 Security hardening — статус: done — commit: HEAD — ADR: ADR-003,ADR-004
 - [ ] A3 DI consolidation (svcs only) — статус: planned — commit: — — ADR: ADR-002
 - [ ] A4 Resilience consolidation + aiohttp→httpx — статус: planned — commit: — — ADR: ADR-005,ADR-009
 - [ ] A5 GitLab CI (merge-gates без test-stage) — статус: planned — commit: — — ADR: —
@@ -95,6 +95,6 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ---
 
-**Всего фаз:** 38. **Закрыто:** 1. **В работе:** 0.
+**Всего фаз:** 38. **Закрыто:** 2. **В работе:** 0.
 
 MR в `master` не будет пропущен, пока счётчик «закрыто» не равен 38.

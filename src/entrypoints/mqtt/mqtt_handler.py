@@ -64,6 +64,24 @@ class MqttSettings(BaseSettingsWithLoader):
         description="Включить MQTT-подписку",
     )
 
+    # TLS / mTLS (A2 / ADR-004). Для prod/внешних брокеров TLS обязателен.
+    tls_enabled: bool = Field(
+        default=False,
+        description="Включить TLS для MQTT (обязательно для публичных брокеров)",
+    )
+    ca_cert_path: str = Field(
+        default="",
+        description="Путь к CA-сертификату брокера (PEM)",
+    )
+    client_cert_path: str = Field(
+        default="",
+        description="Путь к клиентскому сертификату (для mTLS)",
+    )
+    client_key_path: str = Field(
+        default="",
+        description="Путь к клиентскому ключу (для mTLS)",
+    )
+
 
 class MqttHandler:
     """Обработчик MQTT-сообщений.
@@ -103,6 +121,28 @@ class MqttHandler:
                 pass
         logger.info("MQTT handler stopped")
 
+    def _build_tls_context(self):
+        """Собирает ssl.SSLContext для aiomqtt из TLS-настроек.
+
+        Возвращает None, если TLS отключён.
+        """
+        if not self._settings.tls_enabled:
+            return None
+
+        import ssl
+
+        ca_path = self._settings.ca_cert_path or None
+        ctx = ssl.create_default_context(cafile=ca_path)
+        ctx.check_hostname = True
+        ctx.verify_mode = ssl.CERT_REQUIRED
+
+        if self._settings.client_cert_path and self._settings.client_key_path:
+            ctx.load_cert_chain(
+                certfile=self._settings.client_cert_path,
+                keyfile=self._settings.client_key_path,
+            )
+        return ctx
+
     async def _listen(self) -> None:
         """Основной цикл подписки."""
         try:
@@ -110,6 +150,8 @@ class MqttHandler:
         except ImportError:
             logger.warning("aiomqtt не установлен — MQTT отключён")
             return
+
+        tls_context = self._build_tls_context()
 
         while self._running:
             try:
@@ -119,6 +161,7 @@ class MqttHandler:
                     username=self._settings.username or None,
                     password=self._settings.password or None,
                     identifier=self._settings.client_id,
+                    tls_context=tls_context,
                 ) as client:
                     for topic in self._settings.topics:
                         await client.subscribe(topic, qos=self._settings.qos)
@@ -192,6 +235,7 @@ class MqttHandler:
                 port=self._settings.broker_port,
                 username=self._settings.username or None,
                 password=self._settings.password or None,
+                tls_context=self._build_tls_context(),
             ) as client:
                 await client.publish(
                     topic,

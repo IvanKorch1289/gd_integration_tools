@@ -25,6 +25,7 @@ def setup_middlewares(app: FastAPI) -> None:
         app = FastAPI()
         setup_middlewares(app)
     """
+    from fastapi.middleware.cors import CORSMiddleware
     from fastapi.middleware.gzip import GZipMiddleware
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
@@ -33,7 +34,6 @@ def setup_middlewares(app: FastAPI) -> None:
     from app.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from app.entrypoints.middlewares.api_key import APIKeyMiddleware
     from app.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from app.entrypoints.middlewares.circuit_breaker import CircuitBreakerMiddleware
     from app.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
@@ -55,14 +55,26 @@ def setup_middlewares(app: FastAPI) -> None:
     middleware_chain = [
         # Слой 1: Early exit — отклоняем невалидные запросы мгновенно
         (ExceptionHandlerMiddleware, {}),
+        (
+            CORSMiddleware,
+            {
+                "allow_origins": settings.secure.cors_origins,
+                "allow_credentials": settings.secure.cors_allow_credentials,
+                "allow_methods": settings.secure.cors_allow_methods,
+                "allow_headers": settings.secure.cors_allow_headers,
+                "expose_headers": ["X-Request-ID"],
+                "max_age": 600,
+            },
+        ),
         (TrustedHostMiddleware, {"allowed_hosts": settings.secure.allowed_hosts}),
         (BlockedRoutesMiddleware, {}),
         (IPRestrictionMiddleware, {}),
         (APIKeyMiddleware, {}),
         # Слой 2: Управление запросом
+        # NOTE: CircuitBreakerMiddleware удалён в A2 (ADR-005) — global-state баг.
+        # Circuit breaker применяется per-route на уровне HTTP-клиентов.
         (RequestIDMiddleware, {}),
         (TimeoutMiddleware, {}),
-        (CircuitBreakerMiddleware, {}),
         # Слой 3: Обработка тела (только для прошедших аутентификацию)
         (ResponseCacheMiddleware, {"max_age": 60}),
         (

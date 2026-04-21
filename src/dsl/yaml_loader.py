@@ -106,6 +106,36 @@ def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
     return builder.build()
 
 
+def _is_allowed_processor(builder: RouteBuilder, name: str) -> bool:
+    """Whitelist-проверка имени процессора (A2 / ADR-003).
+
+    Разрешены:
+    - публичные атрибуты (не начинаются с '_'),
+    - объявленные в ``RouteBuilder`` или его миксинах,
+    - атрибуты, явно помеченные как ``__dsl_processor__ = True`` (опционально).
+
+    Запрещены:
+    - dunder (``__...__``) — защита от ``__class__``, ``__globals__`` и т.п.,
+    - приватные (``_foo``),
+    - атрибуты из стандартных Python/типов.
+    """
+    if not isinstance(name, str) or not name.isidentifier():
+        return False
+    if name.startswith("_"):
+        return False
+    # Класс builder-а (и его mixin-ы) должны явно содержать метод в public API.
+    for cls in type(builder).mro():
+        if cls in (object, type):
+            continue
+        attr = cls.__dict__.get(name)
+        if attr is None:
+            continue
+        # Разрешаем только callable методы/property — не data-атрибуты.
+        if callable(attr) or isinstance(attr, (property, classmethod, staticmethod)):
+            return True
+    return False
+
+
 def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
     """Применяет один процессор к builder.
 
@@ -125,11 +155,16 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
     else:
         raise ValueError(f"Invalid processor spec: {spec}")
 
-    method = getattr(builder, proc_name, None)
-    if method is None or not callable(method):
+    if not _is_allowed_processor(builder, proc_name):
         raise ValueError(
-            f"Unknown processor '{proc_name}'. "
-            f"Check RouteBuilder methods."
+            f"Unknown or forbidden processor '{proc_name}'. "
+            "YAML DSL принимает только публичные методы RouteBuilder (A2 whitelist)."
+        )
+
+    method = getattr(builder, proc_name)
+    if not callable(method):
+        raise ValueError(
+            f"Processor '{proc_name}' не является вызываемым методом."
         )
 
     try:

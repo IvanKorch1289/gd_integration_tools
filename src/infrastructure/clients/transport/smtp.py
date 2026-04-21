@@ -123,10 +123,10 @@ class SmtpClient(BaseSmtpClient):
             ConnectionError: Если соединение не удалось после нескольких попыток.
             TimeoutError: Если превышено время ожидания соединения.
         """
-        from async_timeout import timeout
-
+        # A2: async-timeout deprecated; используем нативный asyncio.timeout()
+        # доступный с Python 3.11+ (проект требует 3.14).
         try:
-            async with timeout(self.settings.connect_timeout):
+            async with asyncio.timeout(self.settings.connect_timeout):
                 smtp = SMTP(
                     hostname=self.settings.host,  # self.settings.smtp_url,
                     port=self.settings.port,

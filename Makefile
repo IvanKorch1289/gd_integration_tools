@@ -364,9 +364,15 @@ pre-commit: check-env ## Install and run pre-commit hooks
 	$(POETRY_RUN) pre-commit run --all-files
 	@$(SUCCESS) "Pre-commit configured!"
 
-commit: ensure-branch ## Commit changes to Git
-	@$(INFO) "Committing changes..."
-	git add -A
+commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
+	@$(INFO) "Committing changes (explicit paths, no -A)..."
+	@# A2 security: запрещаем git add -A, чтобы исключить добавление
+	@# случайных файлов (.env, artifacts, IDE-cruft, секреты).
+	git add src/ docs/ scripts/ tools/ pyproject.toml poetry.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	@# Опциональные корневые файлы — добавляются, только если существуют.
+	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
+	@[ -f Dockerfile ] && git add Dockerfile || true
+	@[ -f docker-compose.yml ] && git add docker-compose.yml || true
 	@if git diff --cached --quiet; then \
 		$(WARN) "Nothing to commit"; \
 	else \

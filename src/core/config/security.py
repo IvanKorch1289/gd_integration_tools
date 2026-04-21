@@ -1,6 +1,7 @@
+import os
 from typing import ClassVar, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from app.core.config.config_loader import BaseSettingsWithLoader
@@ -67,6 +68,37 @@ class SecureSettings(BaseSettingsWithLoader):
         description="Разрешенные хосты для входящих запросов",
         examples=["example.com", "api.example.com"],
     )
+    cors_origins: list[str] = Field(
+        default_factory=list,
+        description=(
+            "CORS allow-origins whitelist. В prod-окружении запрещён '*' — "
+            "список должен быть явным."
+        ),
+        examples=[["https://app.example.com", "https://admin.example.com"]],
+    )
+    cors_allow_credentials: bool = Field(
+        default=True,
+        description="Разрешить отправку cookies/auth headers в cross-origin запросах",
+    )
+    cors_allow_methods: list[str] = Field(
+        default_factory=lambda: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        description="Разрешённые HTTP-методы для cross-origin",
+    )
+    cors_allow_headers: list[str] = Field(
+        default_factory=lambda: ["Authorization", "Content-Type", "X-Request-ID", "X-API-Key"],
+        description="Разрешённые заголовки для cross-origin",
+    )
+
+    @field_validator("cors_origins")
+    @classmethod
+    def _forbid_wildcard_in_prod(cls, value: list[str]) -> list[str]:
+        """В prod-окружении запрещён '*' — требуется явный whitelist."""
+        env = os.getenv("APP_ENV") or os.getenv("ENVIRONMENT") or "dev"
+        if env.lower() in {"prod", "production"} and "*" in value:
+            raise ValueError(
+                "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
+            )
+        return value
     routes_without_api_key: list[str] = Field(
         ...,
         description="Эндпоинты, доступные без API-ключа",

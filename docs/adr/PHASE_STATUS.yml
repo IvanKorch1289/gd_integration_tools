@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 1
+  closed: 2
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -42,9 +42,12 @@ phases:
   A2:
     title: "Security hardening"
     priority: P0
-    status: planned
+    status: done
     adr: [ADR-003, ADR-004]
     depends_on: [A1]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
     artifacts:
       - src/entrypoints/middlewares/setup_middlewares.py
       - src/core/config/security.py
@@ -56,6 +59,9 @@ phases:
       - src/infrastructure/database/models/users.py
       - src/infrastructure/clients/transport/smtp.py
       - Makefile
+      - docs/adr/ADR-003-cors-policy.md
+      - docs/adr/ADR-004-grpc-tls-auth.md
+      - docs/phases/PHASE_A2.md
 
   A3:
     title: "DI consolidation (svcs only)"

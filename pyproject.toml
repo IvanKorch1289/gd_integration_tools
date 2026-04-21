@@ -17,10 +17,10 @@ alembic = "^1.13.3"
 greenlet = "^3.1.1"
 python-dotenv = "^1.0.1"
 fastapi-filter = "^2.0.0"
-aioboto3 = "^13.2.0"
 python-multipart = ">=0.0.18"
 sqladmin = "^0.20.1"
-passlib = "^1.7.4"
+# A2: passlib/pbkdf2 заменён на argon2-cffi (OWASP recommendation, ADR-003).
+argon2-cffi = "^23.1.0"
 aiohttp = ">=3.12.14"
 aiosmtplib = "^3.0.2"
 sqlalchemy-utils = "^0.41.2"
@@ -30,9 +30,9 @@ fastapi-limiter = "^0.1.6"
 pandas = "^2.2.3"
 openpyxl = "^3.1.5"
 sqlalchemy-continuum = "^1.4.2"
-psycopg2 = "^2.9.10"
+# A2: psycopg2 (sync, 0 импортов), async-timeout (deprecated, asyncio.timeout),
+# aioboto3 (не используется) удалены.
 zeep = "^4.3.1"
-async-timeout = "^5.0.1"
 hvac = "^2.3.0"
 opentelemetry-api = "^1.30.0"
 opentelemetry-sdk = "^1.30.0"
@@ -68,6 +68,12 @@ presidio-anonymizer = {version = ">=2.2.0", optional = true}
 watchfiles = "^1.0.0"
 structlog = "^24.4.0"
 playwright = {version = ">=1.48.0", optional = true}
+# A2: критичные missing deps — импортируются в runtime, но не были объявлены.
+redis = "^5.0.0"
+aiomqtt = "^2.0.0"
+aioimaplib = "^1.0.0"
+pyyaml = "^6.0.2"
+grpc-interceptor = "^0.15.4"
 
 [tool.poetry.extras]
 ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama", "tavily-python"]
@@ -90,7 +96,6 @@ creosote = "^5.2.0"
 vulture = "^2.14"
 pydeps = "^3.0.1"
 bandit = {extras = ["toml"], version = "^1.7.10"}
-pyyaml = "^6.0.2"
 
 [[tool.poetry.source]]
 name = "nexus"
