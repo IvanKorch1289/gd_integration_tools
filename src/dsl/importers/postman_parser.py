@@ -204,12 +204,13 @@ class PostmanImporter:
         if isinstance(spec, dict):
             return spec
         try:
-            import aiohttp
+            # A4 (ADR-009): aiohttp → httpx.
+            import httpx
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(spec, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-                    resp.raise_for_status()
-                    return await resp.json()
+            async with httpx.AsyncClient(http2=True, timeout=15.0) as session:
+                resp = await session.get(spec)
+                resp.raise_for_status()
+                return resp.json()
         except Exception as exc:
             raise ValueError(f"Не удалось загрузить Postman-коллекцию {spec}: {exc}") from exc
 

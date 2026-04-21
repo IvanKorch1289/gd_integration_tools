@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 3
+  closed: 4
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -84,13 +84,27 @@ phases:
   A4:
     title: "Resilience consolidation + aiohttp→httpx"
     priority: P0
-    status: planned
+    status: done
     adr: [ADR-005, ADR-009]
     depends_on: [A3]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
     artifacts:
       - src/dsl/engine/processors/control_flow.py
       - src/infrastructure/clients/transport/http.py
-      - src/infrastructure/resilience/
+      - src/infrastructure/clients/transport/http_httpx.py
+      - src/infrastructure/resilience/__init__.py
+      - src/infrastructure/resilience/bulkhead.py
+      - src/infrastructure/resilience/time_limiter.py
+      - src/infrastructure/resilience/retry_budget.py
+      - src/infrastructure/resilience/rate_limiter.py
+      - src/entrypoints/webhook/handler.py
+      - src/dsl/importers/postman_parser.py
+      - src/core/config/constants.py
+      - docs/adr/ADR-005-tenacity-only-retry.md
+      - docs/adr/ADR-009-httpx-replaces-aiohttp.md
+      - docs/phases/PHASE_A4.md
 
   A5:
     title: "GitLab CI (merge-gates без test-stage)"

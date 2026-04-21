@@ -107,14 +107,28 @@ class TryCatchProcessor(BaseProcessor):
                 _cf_logger.error("Finally processor error: %s", exc)
 
 
+class _RetryAbort(Exception):
+    """Внутренний маркер для tenacity — извлекаем error из Exchange."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
 class RetryProcessor(BaseProcessor):
-    """Повторяет sub-pipeline с настраиваемым backoff.
+    """Повторяет sub-pipeline с backoff через ``tenacity`` (ADR-005).
+
+    Раньше здесь был собственный цикл retry — параллельная логика
+    с уже установленной ``tenacity``. В A4 реализация переписана как
+    тонкая обёртка: tenacity отвечает за стратегии wait/stop/jitter,
+    мы — только за правильный сброс состояния ``Exchange`` между
+    попытками.
 
     Args:
         processors: Процессоры для повторного выполнения.
         max_attempts: Максимальное число попыток.
-        delay_seconds: Базовая задержка.
+        delay_seconds: Базовая задержка (для exponential — множитель).
         backoff: ``"fixed"`` или ``"exponential"``.
+        jitter_seconds: Максимум случайного сдвига (anti-thundering herd).
     """
 
     def __init__(
@@ -124,6 +138,7 @@ class RetryProcessor(BaseProcessor):
         max_attempts: int = 3,
         delay_seconds: float = 1.0,
         backoff: str = "exponential",
+        jitter_seconds: float = 0.0,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"retry({max_attempts})")
@@ -131,53 +146,61 @@ class RetryProcessor(BaseProcessor):
         self._max_attempts = max_attempts
         self._delay = delay_seconds
         self._backoff = backoff
+        self._jitter = jitter_seconds
 
-    def _get_delay(self, attempt: int) -> float:
+    def _build_wait(self):
+        from tenacity import wait_exponential, wait_fixed, wait_random
+
         if self._backoff == "exponential":
-            return self._delay * (2 ** attempt)
-        return self._delay
+            base = wait_exponential(multiplier=self._delay, min=self._delay, max=60.0)
+        else:
+            base = wait_fixed(self._delay)
+        if self._jitter > 0:
+            return base + wait_random(0, self._jitter)
+        return base
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from tenacity import AsyncRetrying, RetryError, stop_after_attempt
+
         last_error: str | None = None
+        retrying = AsyncRetrying(
+            stop=stop_after_attempt(self._max_attempts),
+            wait=self._build_wait(),
+            reraise=True,
+        )
 
-        for attempt in range(self._max_attempts):
-            # Сброс состояния для повторной попытки
-            if attempt > 0:
-                exchange.status = ExchangeStatus.processing
-                exchange.error = None
-                exchange.properties.pop("_stopped", None)
+        try:
+            async for attempt in retrying:
+                with attempt:
+                    # Сброс состояния для повторной попытки
+                    if attempt.retry_state.attempt_number > 1:
+                        exchange.status = ExchangeStatus.processing
+                        exchange.error = None
+                        exchange.properties.pop("_stopped", None)
 
-            failed = False
-            for proc in self._processors:
-                if exchange.status == ExchangeStatus.failed or exchange.stopped:
-                    failed = True
-                    break
-                try:
-                    await proc.process(exchange, context)
-                except Exception as exc:
-                    exchange.fail(str(exc))
-                    failed = True
-                    break
+                    for proc in self._processors:
+                        if exchange.status == ExchangeStatus.failed or exchange.stopped:
+                            break
+                        try:
+                            await proc.process(exchange, context)
+                        except Exception as exc:
+                            exchange.fail(str(exc))
+                            break
 
-            if exchange.status == ExchangeStatus.failed:
-                failed = True
-
-            if not failed:
-                return
-
-            last_error = exchange.error
-            _cf_logger.warning(
-                "Retry attempt %d/%d for '%s' failed: %s",
-                attempt + 1,
-                self._max_attempts,
-                self.name,
-                last_error,
+                    if exchange.status == ExchangeStatus.failed:
+                        last_error = exchange.error
+                        _cf_logger.warning(
+                            "Retry %d/%d for '%s' failed: %s",
+                            attempt.retry_state.attempt_number,
+                            self._max_attempts,
+                            self.name,
+                            last_error,
+                        )
+                        raise _RetryAbort(last_error or "failed")
+        except (RetryError, _RetryAbort):
+            exchange.fail(
+                f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
-
-            if attempt < self._max_attempts - 1:
-                await asyncio.sleep(self._get_delay(attempt))
-
-        exchange.fail(f"All {self._max_attempts} attempts failed. Last: {last_error}")
 
 
 class PipelineRefProcessor(BaseProcessor):

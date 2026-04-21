@@ -225,7 +225,8 @@ async def send_webhook_event(
     Returns:
         Список результатов отправки.
     """
-    import aiohttp
+    # A4 (ADR-009): aiohttp → httpx.
+    import httpx
 
     subscriptions = webhook_registry.get_by_event(event_type)
     results: list[dict[str, Any]] = []
@@ -248,20 +249,19 @@ async def send_webhook_event(
             headers["X-Webhook-Signature"] = sig
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with httpx.AsyncClient(http2=True, timeout=10.0) as session:
+                resp = await session.post(
                     sub.target_url,
                     json=payload,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as resp:
-                    results.append(
-                        {
-                            "subscription_id": sub.id,
-                            "status": resp.status,
-                            "success": 200 <= resp.status < 300,
-                        }
-                    )
+                )
+                results.append(
+                    {
+                        "subscription_id": sub.id,
+                        "status": resp.status_code,
+                        "success": 200 <= resp.status_code < 300,
+                    }
+                )
         except Exception as exc:
             logger.exception(
                 "Webhook outbound failed: sub=%s, url=%s",

@@ -1,4 +1,13 @@
+"""DEPRECATED — legacy aiohttp-based HTTP-клиент.
+
+Новый код должен использовать
+``app.infrastructure.clients.transport.http_httpx.HttpxClient``
+(ADR-009, фаза A4). Полное удаление запланировано в H3.
+См. ``docs/DEPRECATIONS.md``.
+"""
+
 import asyncio
+import warnings
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from logging import DEBUG
@@ -15,6 +24,14 @@ from aiohttp import (
     ClientTimeout,
     FormData,
     TCPConnector,
+)
+
+warnings.warn(
+    "`app.infrastructure.clients.transport.http.HttpClient` deprecated (ADR-009). "
+    "Используйте `app.infrastructure.clients.transport.http_httpx.HttpxClient`. "
+    "Будет удалён в H3 Cleanup (2026-07-01).",
+    DeprecationWarning,
+    stacklevel=2,
 )
 from app.utilities.json_codec import json_dumps
 from tenacity import (

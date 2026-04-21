@@ -76,6 +76,10 @@ pyyaml = "^6.0.2"
 grpc-interceptor = "^0.15.4"
 # A3: svcs — единый DI-контейнер (ADR-002). service_registry удалён.
 svcs = "^25.1.0"
+# A4: httpx с HTTP/2 — новый дефолт для исходящих HTTP (ADR-009).
+# aiohttp остаётся до H3 для legacy http.py (миграция коннекторов
+# orders/skb/dadata в follow-up); webhook и postman уже на httpx.
+httpx = {extras = ["http2"], version = "^0.28.0"}
 
 [tool.poetry.extras]
 ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama", "tavily-python"]

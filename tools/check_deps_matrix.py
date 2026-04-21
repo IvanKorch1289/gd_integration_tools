@@ -27,12 +27,14 @@ PYPROJECT = ROOT / "pyproject.toml"
 # REMOVE-ограничения этой фазы вступают в силу.
 PHASE_REMOVE = {
     "A2": ["psycopg2", "async-timeout", "aioboto3", "passlib"],
-    "A4": ["aiohttp"],
+    # A4 вводит httpx и переводит публичные коннекторы (webhook, postman,
+    # constants). Финальное удаление aiohttp из pyproject — в H3 (все legacy
+    # call-site-ы мигрированы). См. docs/DEPRECATIONS.md.
     "C11": ["zeep"],
     "D3": ["chromadb", "sentence-transformers"],
     "F2": ["pandas"],
     "H1": ["alabaster"],
-    "H3": ["sqlalchemy-utils", "starlette-exporter"],
+    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp"],
 }
 
 PHASE_MUST_EXIST = {
