@@ -16,7 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 STATUS = ROOT / "docs" / "adr" / "PHASE_STATUS.yml"
 
-PHASE_RE = re.compile(r"^\[phase:([A-Z]+\d+[a-z]?)\]")
+PHASE_RE = re.compile(r"^\[phase:([A-Z]+(?:-[A-Z]+)?\d+[a-z]?)\]")
 ADR_RE = re.compile(r"\bADR-(\d{3})\b")
 
 

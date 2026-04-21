@@ -3,10 +3,13 @@
 # После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
 
 meta:
-  total_phases: 43
+  total_phases: 44
   closed: 41
   in_progress: 0
-  planned: 2
+  planned: 3
+  # IL2 переходит в in-progress автоматически при первом коммите с `[phase:IL2]`
+  # (hook tools/update_progress.py). IL-DB1 добавлен 2026-04-21 по результатам
+  # AskUserQuestion — включает все 4 performance-фикса + полный DB DSL.
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
   completion_date: "2026-04-21"
@@ -621,6 +624,31 @@ phases:
       - src/entrypoints/middlewares/load_shedding.py
       - deploy/grafana/dashboards/infrastructure_health.json
       - deploy/prometheus/alerts/infrastructure.yml
+
+  # === DB Layer доводка — репозитории + модели + DB DSL ===
+  # Согласовано с пользователем 2026-04-21:
+  #   * Performance: FK indexes + selectinload + JSON→JSONB + убрать .unique().
+  #   * DSL for DB: полный Query + Bulk + Transaction DSL.
+  # План: /root/.claude/plans/tidy-jingling-map.md (IL-DB1 секция).
+
+  IL-DB1:
+    title: "DB Layer доводка — FK indexes + JSONB + selectinload N+1 fix + Query/Bulk/Transaction DB DSL"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-025]
+    depends_on: [IL2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-DB1.md
+      - docs/adr/ADR-025-db-dsl.md
+      - src/infrastructure/dsl/query_builder.py
+      - src/infrastructure/dsl/bulk_operations.py
+      - src/infrastructure/dsl/transaction.py
+      - src/infrastructure/database/migrations/versions/add_fk_indexes.py
+      - src/infrastructure/database/migrations/versions/json_to_jsonb.py
 
   O1:
     title: "External env max"

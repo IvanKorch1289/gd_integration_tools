@@ -102,10 +102,11 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] IL1 Infrastructure Layer P0 — ConnectorRegistry + Metrics + OTEL full + CB + Kafka idempotent + deep health + admin API + PoolingProfile — статус: done — commit: HEAD — ADR: ADR-022
 - [ ] IL2 Infrastructure Layer P1 — Kafka FastStream + NotificationGateway (Jinja2+DLQ+Priority) + Reconnection + Vault hot-reload + IMAP pool + HTTP upstream + Streamlit dashboard — статус: planned — commit: — — ADR: ADR-023
 - [ ] IL3 Infrastructure Layer P2 — Outbox notify + gRPC interceptors + Hedging + Deadline + Load shedding + Grafana + Exemplars + Alert rules + S3 multipart + tenant pools — статус: planned — commit: — — ADR: ADR-024
+- [ ] IL-DB1 DB Layer доводка — FK indexes + JSONB + selectinload N+1 fix + Query/Bulk/Transaction DB DSL — статус: planned — commit: — — ADR: ADR-025
 
 ---
 
-**Всего фаз:** 43. **Закрыто:** 41. **В работе:** 0. **Запланировано:** 2.
+**Всего фаз:** 44. **Закрыто:** 41. **В работе:** 0. **Запланировано:** 3 (IL2, IL3, IL-DB1).
 
 Initial closure (40/40) зафиксирована 2026-04-21; дальнейшая production-доводка
 добавляется как новые IL-фазы по мере выполнения. Каждая IL-фаза — самостоятельный
