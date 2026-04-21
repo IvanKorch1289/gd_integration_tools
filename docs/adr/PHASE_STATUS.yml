@@ -440,20 +440,36 @@ phases:
   H2:
     title: "Scaffolding + DSL visualization"
     priority: P2
-    status: planned
+    status: done
     depends_on: [H1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - tools/scaffold.py
+      - tools/generate_resource.py
+      - tools/dsl_diff.py
+      - docs/phases/PHASE_H2.md
 
   H3:
     title: "Cleanup"
     priority: P2
-    status: planned
+    status: done
     depends_on: [H2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/DEPRECATIONS.md
+      - docs/phases/PHASE_H3.md
 
   H4:
     title: "Final verification + release"
     priority: P2
-    status: planned
+    status: done
     depends_on: [H3, I2, J1, K1, L1, M1, N1, O1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_H4.md
 
   I1:
     title: "Enterprise коннекторы"
