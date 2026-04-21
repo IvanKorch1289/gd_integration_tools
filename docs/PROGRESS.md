@@ -79,7 +79,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase L — Onboarding Portal (P2)
 
-- [ ] L1 Onboarding portal max (Sandbox + AI-ассистент + Learning) — статус: planned — commit: — — ADR: —
+- [x] L1 Onboarding portal max (Sandbox + AI-ассистент + Learning) — статус: done — commit: HEAD — ADR: —
 
 ## Phase M — Extended Resilience (P2)
 

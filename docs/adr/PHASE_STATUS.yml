@@ -521,8 +521,12 @@ phases:
   L1:
     title: "Onboarding portal max"
     priority: P2
-    status: planned
+    status: done
     depends_on: [G2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_L1.md
 
   M1:
     title: "Resilience+ max"
