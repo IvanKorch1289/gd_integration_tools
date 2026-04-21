@@ -3,13 +3,18 @@
 # После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
 
 meta:
-  total_phases: 44
+  total_phases: 46
   closed: 41
-  in_progress: 0
-  planned: 3
-  # IL2 переходит в in-progress автоматически при первом коммите с `[phase:IL2]`
-  # (hook tools/update_progress.py). IL-DB1 добавлен 2026-04-21 по результатам
-  # AskUserQuestion — включает все 4 performance-фикса + полный DB DSL.
+  in_progress: 1
+  planned: 5
+  # IL2 — в работе (1 chunk закоммичен 880818e).
+  # IL3 + IL-DB1 + IL-BIZ1 + IL-AI1 — planned (все согласованы через AskUserQuestion
+  # 2026-04-21). Каждая открывает самостоятельный domain layer:
+  #   IL2   — инфра-клиенты (transport/messaging/storage).
+  #   IL3   — advanced resilience + observability artifacts.
+  #   IL-DB1 — DB layer (FK/JSONB/N+1 + Query/Bulk/Transaction DSL).
+  #   IL-BIZ1 — business logic (multi-tenant cache + saga + async export + PII).
+  #   IL-AI1 — AI (cost metrics + streaming LLM + cost budget DSL).
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
   completion_date: "2026-04-21"
@@ -624,6 +629,54 @@ phases:
       - src/entrypoints/middlewares/load_shedding.py
       - deploy/grafana/dashboards/infrastructure_health.json
       - deploy/prometheus/alerts/infrastructure.yml
+
+  # === Business Logic Layer — consistency + scalability + compliance ===
+  # Согласовано 2026-04-21 (P0+P1 из анализа):
+  #   * Multi-tenant cache key (security fix).
+  #   * Saga для OrderService.create_skb_order (consistency).
+  #   * Async streaming в ExportService (scalability).
+  #   * PII Vault + audit log (GDPR compliance).
+
+  IL-BIZ1:
+    title: "Business Logic Layer — multi-tenant cache + Saga + async streaming export + PII audit"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-026]
+    depends_on: [IL-DB1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-BIZ1.md
+      - docs/adr/ADR-026-business-logic-doводка.md
+      - src/services/core/cache_decorator.py
+      - src/services/core/saga_orders.py
+      - src/services/io/export_stream.py
+      - src/services/security/pii_vault.py
+
+  # === AI Layer — observability + streaming + cost control ===
+  # Согласовано 2026-04-21:
+  #   * AI cost Prometheus metrics (tokens/cost/cache-hit per provider).
+  #   * Streaming LLM процессор (SSE).
+  #   * Cost Budget DSL (defence против runaway LLM).
+
+  IL-AI1:
+    title: "AI Layer — cost observability + streaming LLM (SSE) + Cost Budget DSL"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-027]
+    depends_on: [IL-BIZ1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-AI1.md
+      - docs/adr/ADR-027-ai-observability.md
+      - src/infrastructure/observability/ai_metrics.py
+      - src/dsl/engine/processors/ai_streaming.py
+      - src/dsl/engine/processors/ai_cost_budget.py
 
   # === DB Layer доводка — репозитории + модели + DB DSL ===
   # Согласовано с пользователем 2026-04-21:
