@@ -349,9 +349,16 @@ phases:
   F1:
     title: "Performance stack max"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-006, ADR-007]
     depends_on: [A4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - pyproject.toml
+      - docs/adr/ADR-006-granian-prod-asgi.md
+      - docs/adr/ADR-007-python-3.14-ft-readiness.md
+      - docs/phases/PHASE_F1.md
 
   F2:
     title: "pandas → polars"

@@ -88,6 +88,10 @@ xmltodict = "^0.14.0"
 # sentence-transformers (ONNX-quantized, ~10x быстрее, ×10 меньше в образе).
 qdrant-client = "^1.12.0"
 fastembed = "^0.4.0"
+# F1 (ADR-006, ADR-007): prod performance stack.
+granian = "^1.6.0"
+msgspec = "^0.18.0"
+uvloop = "^0.21.0"
 
 [tool.poetry.extras]
 ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama", "tavily-python"]

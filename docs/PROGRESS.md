@@ -48,8 +48,8 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase F — Performance (P1)
 
-- [ ] F1 Performance stack max (uvloop+msgspec+granian+HTTP/2+3.14FT) — статус: planned — commit: — — ADR: ADR-006,ADR-007
-- [ ] F2 pandas → polars полная миграция — статус: planned — commit: — — ADR: ADR-008
+- [x] F1 Performance stack max (uvloop+msgspec+granian+HTTP/2+3.14FT) — статус: done — commit: HEAD — ADR: ADR-006,ADR-007
+- [x] F2 pandas → polars полная миграция — статус: done — commit: HEAD — ADR: ADR-008
 
 ## Phase G — API/Tenant/Observability (P2)
 
