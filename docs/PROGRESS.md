@@ -87,7 +87,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase N — Business Logic Core (P2)
 
-- [ ] N1 Business Logic max (BPMN + Rules + Forms + ЭЦП + KYC + Temporal tables) — статус: planned — commit: — — ADR: —
+- [x] N1 Business Logic max (BPMN + Rules + Forms + ЭЦП + KYC + Temporal tables) — статус: done — commit: HEAD — ADR: —
 
 ## Phase O — External Env Max (P2)
 

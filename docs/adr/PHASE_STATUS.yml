@@ -541,8 +541,12 @@ phases:
   N1:
     title: "Business Logic max"
     priority: P2
-    status: planned
+    status: done
     depends_on: [C5, C6, C7]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_N1.md
 
   O1:
     title: "External env max"
