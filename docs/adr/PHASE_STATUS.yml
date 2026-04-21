@@ -464,18 +464,19 @@ phases:
   H4:
     title: "Final verification + release"
     priority: P2
-    status: done
+    status: planned
     depends_on: [H3, I2, J1, K1, L1, M1, N1, O1]
-    finished_at: "2026-04-21T00:00:00+00:00"
-    commit: HEAD
-    artifacts:
-      - docs/phases/PHASE_H4.md
 
   I1:
     title: "Enterprise коннекторы"
     priority: P2
-    status: planned
+    status: done
     depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/entrypoints/enterprise/__init__.py
+      - docs/phases/PHASE_I1.md
 
   I2:
     title: "Data lake + CDC max"
