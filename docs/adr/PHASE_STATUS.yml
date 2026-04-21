@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 4
+  closed: 5
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -109,9 +109,12 @@ phases:
   A5:
     title: "GitLab CI (merge-gates без test-stage)"
     priority: P0
-    status: planned
+    status: done
     adr: []
     depends_on: [A4]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
     artifacts:
       - .gitlab-ci.yml
       - docs/phases/PHASE_A5.md
