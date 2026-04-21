@@ -16,6 +16,7 @@
 | `app.core.service_registry.service_registry` (singleton) | `app.core.svcs_registry.register_factory/get_service` | A3 / 2026-04-21 | 2026-07-01 | singleton |
 | `app.infrastructure.clients.transport.http.HttpClient` (aiohttp) | `app.infrastructure.clients.transport.http_httpx.HttpxClient` | A4 / 2026-04-21 | 2026-07-01 (H3) | class/module |
 | `app.dsl.engine.processors.control_flow.RetryProcessor` (custom loop) | wraps `tenacity.AsyncRetrying` | A4 / 2026-04-21 | поведение совместимо — удаление не планируется | class |
+| `app.infrastructure.clients.transport.soap` (zeep) | `soap_async.AsyncSoapClient` | C11 / 2026-04-21 | 2026-07-01 (H3) | module |
 
 ## Удалённые (для истории)
 

@@ -33,7 +33,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] C8 Transformations max (фасад 7 engines) — статус: done — commit: HEAD — ADR: —
 - [x] C9 Codecs max (все форматы + банковские) — статус: done — commit: HEAD — ADR: —
 - [x] C10 Connectors max (IoT+Web3+Legacy) — статус: done — commit: HEAD — ADR: —
-- [ ] C11 SOAP + IMAP async-миграция — статус: planned — commit: — — ADR: —
+- [x] C11 SOAP + IMAP async-миграция — статус: done — commit: HEAD — ADR: —
 
 ## Phase D — AI / ML / RPA (P1)
 
@@ -95,6 +95,6 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ---
 
-**Всего фаз:** 38. **Закрыто:** 7. **В работе:** 0.
+**Всего фаз:** 38. **Закрыто:** 18. **В работе:** 0.
 
 MR в `master` не будет пропущен, пока счётчик «закрыто» не равен 38.

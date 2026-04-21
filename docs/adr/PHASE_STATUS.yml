@@ -4,7 +4,7 @@
 
 meta:
   total_phases: 38
-  closed: 7
+  closed: 18
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
@@ -273,8 +273,15 @@ phases:
   C11:
     title: "SOAP + IMAP async-миграция"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C10]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/clients/transport/soap.py
+      - src/infrastructure/clients/transport/soap_async.py
+      - src/entrypoints/email/imap_monitor.py
+      - docs/phases/PHASE_C11.md
 
   D1:
     title: "AI agents DSL max"

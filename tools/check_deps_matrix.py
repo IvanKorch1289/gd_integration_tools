@@ -30,11 +30,12 @@ PHASE_REMOVE = {
     # A4 вводит httpx и переводит публичные коннекторы (webhook, postman,
     # constants). Финальное удаление aiohttp из pyproject — в H3 (все legacy
     # call-site-ы мигрированы). См. docs/DEPRECATIONS.md.
-    "C11": ["zeep"],
+    # C11: zeep получает deprecation warning; финальное удаление из
+    # pyproject — в H3 (одновременно с aiohttp и legacy http.py).
     "D3": ["chromadb", "sentence-transformers"],
     "F2": ["pandas"],
     "H1": ["alabaster"],
-    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp"],
+    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep"],
 }
 
 PHASE_MUST_EXIST = {
