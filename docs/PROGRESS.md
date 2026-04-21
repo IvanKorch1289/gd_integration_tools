@@ -31,7 +31,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] C6 OPA + Casbin (двухуровневая авторизация) — статус: done — commit: HEAD — ADR: ADR-012
 - [x] C7 Data contracts / expectations — статус: done — commit: HEAD — ADR: —
 - [x] C8 Transformations max (фасад 7 engines) — статус: done — commit: HEAD — ADR: —
-- [ ] C9 Codecs max (все форматы + банковские) — статус: planned — commit: — — ADR: —
+- [x] C9 Codecs max (все форматы + банковские) — статус: done — commit: HEAD — ADR: —
 - [ ] C10 Connectors max (IoT+Web3+Legacy) — статус: planned — commit: — — ADR: —
 - [ ] C11 SOAP + IMAP async-миграция — статус: planned — commit: — — ADR: —
 

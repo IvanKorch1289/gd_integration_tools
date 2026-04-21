@@ -249,8 +249,13 @@ phases:
   C9:
     title: "Codecs max"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C8]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/codec/__init__.py
+      - docs/phases/PHASE_C9.md
 
   C10:
     title: "Connectors max (IoT+Web3+Legacy)"
