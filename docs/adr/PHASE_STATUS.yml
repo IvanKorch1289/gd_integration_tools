@@ -171,8 +171,13 @@ phases:
   C3:
     title: "Orchestration (Sensor+Backfill+DryRun+HITL)"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/orchestration/__init__.py
+      - docs/phases/PHASE_C3.md
 
   C4:
     title: "CloudEvents + Schema Registry + AsyncAPI"
