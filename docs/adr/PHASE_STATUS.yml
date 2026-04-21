@@ -3,12 +3,16 @@
 # После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
 
 meta:
-  total_phases: 38
-  closed: 38
+  total_phases: 40
+  closed: 40
   in_progress: 0
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
   completion_date: "2026-04-21"
+  # Примечание: исходный план упоминал "38 phases", фактически после уточнения
+  # структуры получилось 40 (A×5, B×2, C×11, D×3, E×2, F×2, G×3, H×4, I×2,
+  # J×1, K×1, L×1, M×1, N×1, O×1 = 40). Различие учтено, разниц по содержимому
+  # нет.
 
 phases:
 

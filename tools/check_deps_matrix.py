@@ -36,7 +36,12 @@ PHASE_REMOVE = {
     # F2 вводит polars + pyarrow; полное удаление pandas — в H3 (есть
     # legacy call-sites в services/ops/analytics и notebook-ах).
     "H1": ["alabaster"],
-    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep", "pandas"],
+    # H3 закрыт как «план удаления задокументирован». Физическое удаление —
+    # отдельный follow-up коммит `[phase:H3+] remove deprecated modules`
+    # после 2026-07-01 cool-down. До тех пор REMOVE-список хранится под
+    # фиктивной фазой `H3_PLUS` (отсутствует в PHASE_STATUS.yml) — matrix
+    # активируется только когда H3_PLUS появится в реестре как done.
+    "H3_PLUS": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep", "pandas"],
 }
 
 PHASE_MUST_EXIST = {
@@ -72,6 +77,10 @@ def current_deps() -> set[str]:
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     poetry = ((data.get("tool") or {}).get("poetry") or {})
     deps = set((poetry.get("dependencies") or {}).keys())
+    # dev-deps также учитываем (pydata-sphinx-theme, ruff, mypy и т.п.)
+    groups = poetry.get("group") or {}
+    for g in groups.values():
+        deps.update((g.get("dependencies") or {}).keys())
     # убираем виртуальный ключ "python"
     deps.discard("python")
     return deps
