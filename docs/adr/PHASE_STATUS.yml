@@ -286,8 +286,15 @@ phases:
   D1:
     title: "AI agents DSL max"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C11]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/ai/__init__.py
+      - src/infrastructure/ai/prompt_registry.py
+      - src/infrastructure/ai/semantic_cache.py
+      - docs/phases/PHASE_D1.md
 
   D2:
     title: "RPA max"
