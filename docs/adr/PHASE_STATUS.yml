@@ -227,8 +227,13 @@ phases:
   C7:
     title: "Data contracts / expectations"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C6]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/contracts/__init__.py
+      - docs/phases/PHASE_C7.md
 
   C8:
     title: "Transformations max"
