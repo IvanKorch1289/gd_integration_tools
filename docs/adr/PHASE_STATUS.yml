@@ -387,9 +387,18 @@ phases:
   G2:
     title: "API Management + Developer Portal max"
     priority: P2
-    status: planned
+    status: done
     adr: [ADR-015]
     depends_on: [G1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/api_management/__init__.py
+      - src/infrastructure/api_management/api_key_auth.py
+      - src/infrastructure/api_management/quotas.py
+      - src/infrastructure/api_management/versioning.py
+      - docs/adr/ADR-015-api-management-stack.md
+      - docs/phases/PHASE_G2.md
 
   G3:
     title: "Hardening + observability final"
