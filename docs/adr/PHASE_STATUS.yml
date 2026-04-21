@@ -238,8 +238,13 @@ phases:
   C8:
     title: "Transformations max"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C7]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/transform/__init__.py
+      - docs/phases/PHASE_C8.md
 
   C9:
     title: "Codecs max"
