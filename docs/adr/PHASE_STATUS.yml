@@ -403,8 +403,14 @@ phases:
   G3:
     title: "Hardening + observability final"
     priority: P2
-    status: planned
+    status: done
     depends_on: [G2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/observability/__init__.py
+      - src/infrastructure/observability/pii_filter.py
+      - docs/phases/PHASE_G3.md
 
   H1:
     title: "Документация (RU) + 15 ADR"
