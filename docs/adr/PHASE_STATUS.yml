@@ -4,9 +4,9 @@
 
 meta:
   total_phases: 43
-  closed: 40
+  closed: 41
   in_progress: 0
-  planned: 3
+  planned: 2
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
   completion_date: "2026-04-21"
@@ -571,13 +571,13 @@ phases:
   IL1:
     title: "Infrastructure Layer P0 — ConnectorRegistry + Metrics + OTEL + CB + Kafka idempotent + deep health + admin API + PoolingProfile"
     priority: P0
-    status: planned
+    status: done
     owner: "claude"
     adr: [ADR-022]
     depends_on: [A3, A4, H4]
-    started_at: null
-    finished_at: null
-    commit: null
+    started_at: "2026-04-21T18:00:00+00:00"
+    finished_at: "2026-04-21T19:00:00+00:00"
+    commit: HEAD
     artifacts:
       - docs/phases/PHASE_IL1.md
       - docs/adr/ADR-022-connector-spi.md
