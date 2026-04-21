@@ -481,9 +481,15 @@ phases:
   I2:
     title: "Data lake + CDC max"
     priority: P2
-    status: planned
+    status: done
     adr: [ADR-016]
     depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/datalake/__init__.py
+      - docs/adr/ADR-016-data-lake-stack.md
+      - docs/phases/PHASE_I2.md
 
   J1:
     title: "Performance+ max (Rust/Cython + HTTP/3 + NUMA)"

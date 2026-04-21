@@ -112,6 +112,10 @@ legacy = []
 banking = []
 # I1: enterprise connectors (AS2/EDI X12/SAP/IBM MQ/JMS/NATS/SFTP).
 enterprise = []
+# I2: data lake (Iceberg/Delta), Temporal workflows, Apache Beam.
+datalake = []
+temporal = []
+beam = []
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.20.1"
