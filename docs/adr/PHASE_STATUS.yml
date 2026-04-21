@@ -376,8 +376,13 @@ phases:
   G1:
     title: "Multi-tenancy max"
     priority: P2
-    status: planned
+    status: done
     depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/core/tenancy/__init__.py
+      - docs/phases/PHASE_G1.md
 
   G2:
     title: "API Management + Developer Portal max"

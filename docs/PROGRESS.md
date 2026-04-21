@@ -53,7 +53,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase G — API/Tenant/Observability (P2)
 
-- [ ] G1 Multi-tenancy max (RLS+RedisPrefix+RL+Quotas+Billing) — статус: planned — commit: — — ADR: —
+- [x] G1 Multi-tenancy max (RLS+RedisPrefix+RL+Quotas+Billing) — статус: done — commit: HEAD — ADR: —
 - [ ] G2 API Management + Developer Portal max — статус: planned — commit: — — ADR: ADR-015
 - [ ] G3 Hardening + observability final — статус: planned — commit: — — ADR: —
 
