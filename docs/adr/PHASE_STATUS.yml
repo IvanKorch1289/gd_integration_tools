@@ -1,0 +1,327 @@
+# Phase Status Registry — машиночитаемая версия Progress Ledger.
+# Используется scripts/audit.sh и tools/report_phases.py.
+# После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
+
+meta:
+  total_phases: 38
+  closed: 1
+  in_progress: 0
+  branch: "claude/production-readiness-review-N3J2h"
+  target: "master"
+
+phases:
+
+  A1:
+    title: "Baseline inventory + pre-commit + guardrails"
+    priority: P0
+    status: done
+    owner: "claude"
+    adr: []
+    depends_on: []
+    started_at: "2026-04-20T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/PROGRESS.md
+      - docs/adr/PHASE_STATUS.yml
+      - docs/adr/TEMPLATE.md
+      - docs/DEPRECATIONS.md
+      - docs/phases/PHASE_A1.md
+      - scripts/audit.sh
+      - tools/update_progress.py
+      - tools/check_phase_commit.py
+      - tools/check_adr_link.py
+      - tools/check_no_tests.py
+      - tools/check_phase_order.py
+      - tools/check_deps_matrix.py
+      - tools/render_mr_description.py
+      - tools/report_phases.py
+      - .pre-commit-config.yaml
+      - .secrets.baseline
+
+  A2:
+    title: "Security hardening"
+    priority: P0
+    status: planned
+    adr: [ADR-003, ADR-004]
+    depends_on: [A1]
+    artifacts:
+      - src/entrypoints/middlewares/setup_middlewares.py
+      - src/core/config/security.py
+      - src/entrypoints/grpc/grpc_server.py
+      - src/entrypoints/mqtt/mqtt_handler.py
+      - src/entrypoints/email/imap_monitor.py
+      - src/entrypoints/rate_limiter.py
+      - src/dsl/yaml_loader.py
+      - src/infrastructure/database/models/users.py
+      - src/infrastructure/clients/transport/smtp.py
+      - Makefile
+
+  A3:
+    title: "DI consolidation (svcs only)"
+    priority: P0
+    status: planned
+    adr: [ADR-002]
+    depends_on: [A1, A2]
+    artifacts:
+      - src/core/service_registry.py
+      - src/core/svcs_registry.py
+      - src/core/providers_registry.py
+      - docs/DEPRECATIONS.md
+
+  A4:
+    title: "Resilience consolidation + aiohttp→httpx"
+    priority: P0
+    status: planned
+    adr: [ADR-005, ADR-009]
+    depends_on: [A3]
+    artifacts:
+      - src/dsl/engine/processors/control_flow.py
+      - src/infrastructure/clients/transport/http.py
+      - src/infrastructure/resilience/
+
+  A5:
+    title: "GitLab CI (merge-gates без test-stage)"
+    priority: P0
+    status: planned
+    adr: []
+    depends_on: [A4]
+    artifacts:
+      - .gitlab-ci.yml
+      - docs/phases/PHASE_A5.md
+
+  B1:
+    title: "Refactor builder.py → 11 миксинов"
+    priority: P1
+    status: planned
+    adr: [ADR-001]
+    depends_on: [A5]
+    artifacts:
+      - src/dsl/builders/__init__.py
+      - src/dsl/builders/base.py
+      - src/dsl/builders/eip.py
+      - src/dsl/builders/transport.py
+      - src/dsl/builders/streaming.py
+      - src/dsl/builders/ai.py
+      - src/dsl/builders/rpa.py
+      - src/dsl/builders/banking.py
+      - src/dsl/builders/banking_ai.py
+      - src/dsl/builders/storage.py
+      - src/dsl/builders/security.py
+      - src/dsl/builders/observability.py
+
+  B2:
+    title: "Split files > 500 LOC"
+    priority: P1
+    status: planned
+    adr: []
+    depends_on: [B1]
+
+  C1:
+    title: "Camel EIP полный набор"
+    priority: P1
+    status: planned
+    adr: []
+    depends_on: [B1]
+
+  C2:
+    title: "Spring Integration (Gateway+Interceptors+Versioning)"
+    priority: P1
+    status: planned
+    depends_on: [C1]
+
+  C3:
+    title: "Orchestration (Sensor+Backfill+DryRun+HITL)"
+    priority: P1
+    status: planned
+    depends_on: [C2]
+
+  C4:
+    title: "CloudEvents + Schema Registry + AsyncAPI"
+    priority: P1
+    status: planned
+    adr: [ADR-010]
+    depends_on: [C3]
+
+  C5:
+    title: "Outbox+Inbox + FastStream унификация"
+    priority: P1
+    status: planned
+    adr: [ADR-011, ADR-013]
+    depends_on: [C4]
+
+  C6:
+    title: "OPA + Casbin"
+    priority: P1
+    status: planned
+    adr: [ADR-012]
+    depends_on: [C5]
+
+  C7:
+    title: "Data contracts / expectations"
+    priority: P1
+    status: planned
+    depends_on: [C6]
+
+  C8:
+    title: "Transformations max"
+    priority: P1
+    status: planned
+    depends_on: [C7]
+
+  C9:
+    title: "Codecs max"
+    priority: P1
+    status: planned
+    depends_on: [C8]
+
+  C10:
+    title: "Connectors max (IoT+Web3+Legacy)"
+    priority: P1
+    status: planned
+    depends_on: [C9]
+
+  C11:
+    title: "SOAP + IMAP async-миграция"
+    priority: P1
+    status: planned
+    depends_on: [C10]
+
+  D1:
+    title: "AI agents DSL max"
+    priority: P1
+    status: planned
+    depends_on: [C11]
+
+  D2:
+    title: "RPA max"
+    priority: P1
+    status: planned
+    depends_on: [D1]
+
+  D3:
+    title: "RAG stack upgrade"
+    priority: P1
+    status: planned
+    adr: [ADR-014]
+    depends_on: [D2]
+
+  E1:
+    title: "DSL utils max"
+    priority: P1
+    status: planned
+    depends_on: [B1]
+
+  E2:
+    title: "Dev tools"
+    priority: P1
+    status: planned
+    depends_on: [E1]
+
+  F1:
+    title: "Performance stack max"
+    priority: P1
+    status: planned
+    adr: [ADR-006, ADR-007]
+    depends_on: [A4]
+
+  F2:
+    title: "pandas → polars"
+    priority: P1
+    status: planned
+    adr: [ADR-008]
+    depends_on: [F1]
+
+  G1:
+    title: "Multi-tenancy max"
+    priority: P2
+    status: planned
+    depends_on: [C5]
+
+  G2:
+    title: "API Management + Developer Portal max"
+    priority: P2
+    status: planned
+    adr: [ADR-015]
+    depends_on: [G1]
+
+  G3:
+    title: "Hardening + observability final"
+    priority: P2
+    status: planned
+    depends_on: [G2]
+
+  H1:
+    title: "Документация (RU) + 15 ADR"
+    priority: P2
+    status: planned
+    depends_on: [G3]
+
+  H2:
+    title: "Scaffolding + DSL visualization"
+    priority: P2
+    status: planned
+    depends_on: [H1]
+
+  H3:
+    title: "Cleanup"
+    priority: P2
+    status: planned
+    depends_on: [H2]
+
+  H4:
+    title: "Final verification + release"
+    priority: P2
+    status: planned
+    depends_on: [H3, I2, J1, K1, L1, M1, N1, O1]
+
+  I1:
+    title: "Enterprise коннекторы"
+    priority: P2
+    status: planned
+    depends_on: [C5]
+
+  I2:
+    title: "Data lake + CDC max"
+    priority: P2
+    status: planned
+    adr: [ADR-016]
+    depends_on: [C5]
+
+  J1:
+    title: "Performance+ max (Rust/Cython + HTTP/3 + NUMA)"
+    priority: P2
+    status: planned
+    adr: [ADR-017, ADR-018, ADR-019]
+    depends_on: [F2]
+
+  K1:
+    title: "DSL+ max"
+    priority: P2
+    status: planned
+    adr: [ADR-020, ADR-021]
+    depends_on: [E2]
+
+  L1:
+    title: "Onboarding portal max"
+    priority: P2
+    status: planned
+    depends_on: [G2]
+
+  M1:
+    title: "Resilience+ max"
+    priority: P2
+    status: planned
+    depends_on: [A4]
+
+  N1:
+    title: "Business Logic max"
+    priority: P2
+    status: planned
+    depends_on: [C5, C6, C7]
+
+  O1:
+    title: "External env max"
+    priority: P2
+    status: planned
+    depends_on: [A5]

@@ -62,4 +62,5 @@ build/
 .dockerignore
 .tools/
 .cache/
-docs/
+# docs/ — отслеживаются явно; artifacts собираются в docs/_build/
+docs/_build/

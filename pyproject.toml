@@ -87,6 +87,10 @@ schemathesis = "^4.15.2"
 python-semantic-release = "^10.5.3"
 detect-secrets = "^1.5.0"
 creosote = "^5.2.0"
+vulture = "^2.14"
+pydeps = "^3.0.1"
+bandit = {extras = ["toml"], version = "^1.7.10"}
+pyyaml = "^6.0.2"
 
 [[tool.poetry.source]]
 name = "nexus"
