@@ -38,7 +38,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 ## Phase D — AI / ML / RPA (P1)
 
 - [x] D1 AI agents DSL max (ReAct+PlanExec+LangGraph+eval) — статус: done — commit: HEAD — ADR: —
-- [ ] D2 RPA max (self-healing+visual+activities+ComputerUse) — статус: planned — commit: — — ADR: —
+- [x] D2 RPA max (self-healing+visual+activities+ComputerUse) — статус: done — commit: HEAD — ADR: —
 - [ ] D3 RAG stack upgrade (qdrant+fastembed) — статус: planned — commit: — — ADR: ADR-014
 
 ## Phase E — DevEx (P1)

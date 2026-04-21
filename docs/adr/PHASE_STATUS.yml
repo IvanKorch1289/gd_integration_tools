@@ -299,8 +299,12 @@ phases:
   D2:
     title: "RPA max"
     priority: P1
-    status: planned
+    status: done
     depends_on: [D1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_D2.md
 
   D3:
     title: "RAG stack upgrade"
