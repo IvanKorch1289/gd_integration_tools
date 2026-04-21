@@ -363,9 +363,15 @@ phases:
   F2:
     title: "pandas → polars"
     priority: P1
-    status: planned
+    status: done
     adr: [ADR-008]
     depends_on: [F1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/utilities/dataframes.py
+      - docs/adr/ADR-008-pandas-to-polars.md
+      - docs/phases/PHASE_F2.md
 
   G1:
     title: "Multi-tenancy max"

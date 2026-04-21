@@ -33,9 +33,10 @@ PHASE_REMOVE = {
     # C11: zeep получает deprecation warning; финальное удаление из
     # pyproject — в H3 (одновременно с aiohttp и legacy http.py).
     "D3": ["chromadb", "sentence-transformers"],
-    "F2": ["pandas"],
+    # F2 вводит polars + pyarrow; полное удаление pandas — в H3 (есть
+    # legacy call-sites в services/ops/analytics и notebook-ах).
     "H1": ["alabaster"],
-    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep"],
+    "H3": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep", "pandas"],
 }
 
 PHASE_MUST_EXIST = {
