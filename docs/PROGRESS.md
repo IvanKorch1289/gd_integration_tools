@@ -71,7 +71,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase J — Extended Performance (P2)
 
-- [ ] J1 Performance+ max (Rust/Cython + HTTP/3 + shared-mem + NUMA + jemalloc) — статус: planned — commit: — — ADR: ADR-017,ADR-018,ADR-019
+- [x] J1 Performance+ max (Rust/Cython + HTTP/3 + shared-mem + NUMA + jemalloc) — статус: done — commit: HEAD — ADR: ADR-017,ADR-018,ADR-019
 
 ## Phase K — Extended DSL (P2)
 

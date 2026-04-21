@@ -494,9 +494,16 @@ phases:
   J1:
     title: "Performance+ max (Rust/Cython + HTTP/3 + NUMA)"
     priority: P2
-    status: planned
+    status: done
     adr: [ADR-017, ADR-018, ADR-019]
     depends_on: [F2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-017-rust-pyo3-hotpath.md
+      - docs/adr/ADR-018-http3-quic.md
+      - docs/adr/ADR-019-numa-jemalloc.md
+      - docs/phases/PHASE_J1.md
 
   K1:
     title: "DSL+ max"
