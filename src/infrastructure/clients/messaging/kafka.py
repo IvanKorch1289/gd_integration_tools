@@ -3,6 +3,12 @@
 Предоставляет async API для публикации и потребления
 сообщений из Apache Kafka с DSL-интеграцией.
 
+IL2.1 (ADR-013): **DEPRECATED** — новый путь через FastStream KafkaRouter в
+`src/infrastructure/clients/messaging/stream.py::StreamClient.publish_to_kafka`.
+Этот прямой aiokafka-клиент остаётся shim-ом на один релиз, удаление в H3_PLUS.
+Legacy call-sites, которые не переведены на FastStream — прокидывают
+DeprecationWarning при импорте.
+
 IL1.4 + IL1.5 (ADR-022):
   * Producer по умолчанию идёт с `enable_idempotence=True`, `acks="all"`,
     `max_in_flight_requests_per_connection=5` — гарантия at-least-once с
@@ -16,6 +22,7 @@ IL1.4 + IL1.5 (ADR-022):
 
 import logging
 import os
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -25,9 +32,19 @@ from app.infrastructure.resilience.client_breaker import (
     ClientCircuitBreaker,
 )
 
-__all__ = ("BaseKafkaClient", "KafkaClient", "get_kafka_client")
+__all__ = ("BaseKafkaClient", "KafkaClient", "get_kafka_client", "get_outbox_producer")
 
 logger = logging.getLogger(__name__)
+
+# IL2.1: DeprecationWarning на import.
+warnings.warn(
+    "`app.infrastructure.clients.messaging.kafka.KafkaClient` deprecated. "
+    "Use FastStream KafkaRouter через "
+    "`app.infrastructure.clients.messaging.stream.StreamClient.publish_to_kafka` "
+    "(ADR-013). Этот модуль будет удалён в H3_PLUS (2026-07-01+).",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class BaseKafkaClient(ABC):

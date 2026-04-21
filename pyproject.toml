@@ -47,7 +47,7 @@ opentelemetry-instrumentation-pymongo = "^0.51b0"
 opentelemetry-instrumentation-grpc = "^0.51b0"
 aiocircuitbreaker = "^2.0.0"
 apscheduler = "^3.11.0"
-faststream = "^0.5.34"
+faststream = {extras = ["kafka"], version = "^0.5.34"}  # IL2.1: unified Kafka через FastStream (ADR-013).
 aiokafka = "^0.12.0"
 grpcio = "^1.70.0"
 protobuf = "^5.29.3"
