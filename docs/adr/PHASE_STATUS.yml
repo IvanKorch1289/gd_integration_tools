@@ -322,8 +322,17 @@ phases:
   E1:
     title: "DSL utils max"
     priority: P1
-    status: planned
+    status: done
     depends_on: [B1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/helpers/__init__.py
+      - src/dsl/helpers/banking.py
+      - src/dsl/helpers/datetime_utils.py
+      - src/dsl/helpers/strings.py
+      - src/dsl/helpers/regex_presets.py
+      - docs/phases/PHASE_E1.md
 
   E2:
     title: "Dev tools"

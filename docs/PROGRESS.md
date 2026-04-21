@@ -43,7 +43,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase E — DevEx (P1)
 
-- [ ] E1 DSL utils max (banking+fluent+shortcuts+macros) — статус: planned — commit: — — ADR: —
+- [x] E1 DSL utils max (banking+fluent+shortcuts+macros) — статус: done — commit: HEAD — ADR: —
 - [ ] E2 Dev tools (hot-reload+dev-panel+linter+REPL+diff) — статус: planned — commit: — — ADR: —
 
 ## Phase F — Performance (P1)
