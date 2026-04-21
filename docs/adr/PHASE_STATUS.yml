@@ -260,8 +260,15 @@ phases:
   C10:
     title: "Connectors max (IoT+Web3+Legacy)"
     priority: P1
-    status: planned
+    status: done
     depends_on: [C9]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/entrypoints/iot/__init__.py
+      - src/entrypoints/web3/__init__.py
+      - src/entrypoints/legacy/__init__.py
+      - docs/phases/PHASE_C10.md
 
   C11:
     title: "SOAP + IMAP async-миграция"

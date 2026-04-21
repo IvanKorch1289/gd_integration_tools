@@ -32,7 +32,7 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] C7 Data contracts / expectations — статус: done — commit: HEAD — ADR: —
 - [x] C8 Transformations max (фасад 7 engines) — статус: done — commit: HEAD — ADR: —
 - [x] C9 Codecs max (все форматы + банковские) — статус: done — commit: HEAD — ADR: —
-- [ ] C10 Connectors max (IoT+Web3+Legacy) — статус: planned — commit: — — ADR: —
+- [x] C10 Connectors max (IoT+Web3+Legacy) — статус: done — commit: HEAD — ADR: —
 - [ ] C11 SOAP + IMAP async-миграция — статус: planned — commit: — — ADR: —
 
 ## Phase D — AI / ML / RPA (P1)

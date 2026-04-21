@@ -90,6 +90,14 @@ ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama"
 security = ["presidio-analyzer", "presidio-anonymizer"]
 mcp = ["fastmcp"]
 rpa = ["playwright"]
+# C10 opt-in: IoT (OPC-UA/Modbus/CoAP), Web3 (EVM), Legacy (TN3270/5250),
+# Banking (SWIFT MT, HL7, ISO8583) — объявлены как extras без транзитив-
+# деталей; пользователь сам доинсталирует соответствующие пакеты в своей
+# среде (имена зафиксированы в docs/connectors/).
+iot = []
+web3 = []
+legacy = []
+banking = []
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.20.1"
