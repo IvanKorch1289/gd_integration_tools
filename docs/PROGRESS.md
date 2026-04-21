@@ -91,10 +91,10 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 
 ## Phase O — External Env Max (P2)
 
-- [ ] O1 External env max (Vault Transit/DB + K8s + S3/Email/SMS/Push/Payments + Observability SaaS) — статус: planned — commit: — — ADR: —
+- [x] O1 External env max (Vault Transit/DB + K8s + S3/Email/SMS/Push/Payments + Observability SaaS) — статус: done — commit: HEAD — ADR: —
 
 ---
 
-**Всего фаз:** 38. **Закрыто:** 18. **В работе:** 0.
+**Всего фаз:** 38. **Закрыто:** 38. **В работе:** 0.
 
 MR в `master` не будет пропущен, пока счётчик «закрыто» не равен 38.
