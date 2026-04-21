@@ -148,9 +148,14 @@ phases:
   C1:
     title: "Camel EIP полный набор"
     priority: P1
-    status: planned
+    status: done
     adr: []
     depends_on: [B1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/eip/__init__.py
+      - docs/phases/PHASE_C1.md
 
   C2:
     title: "Spring Integration (Gateway+Interceptors+Versioning)"
