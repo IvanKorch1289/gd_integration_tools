@@ -4,9 +4,11 @@
 
 meta:
   total_phases: 53
-  closed: 41
-  in_progress: 1
-  planned: 11
+  closed: 44
+  in_progress: 2
+  planned: 7
+  # 2026-04-22 session: closed IL-CRIT1 (0e8ee34), IL-SEC2 (d5c575b), IL-OBS1 (60ee1c5).
+  # In-progress: IL2 (2.7 dashboard остался) + IL-WF1 (1.1+1.2 done, chunks 1.3-1.5 + WF2-WF4 запланированы).
   # Согласовано 2026-04-21 через серию AskUserQuestion (13 слоёв ревью).
   # Дополнительно 7 новых фаз поверх IL2/IL3/IL-DB1/IL-BIZ1/IL-AI1:
   #   IL-CRIT1   — P0 critical fixes (SQL inj, gRPC leak, AI fixes, OPA pool, Outbox LISTEN/NOTIFY, unified dispatch, SOAP async).
@@ -644,7 +646,8 @@ phases:
     status: done
     owner: "claude"
     adr: []
-    depends_on: [IL2]
+    # P0 critical fixes — выполняются параллельно с IL2, не зависят.
+    depends_on: [IL1]
     started_at: "2026-04-22"
     finished_at: "2026-04-22"
     commit: "0e8ee34"
@@ -663,13 +666,13 @@ phases:
   IL-SEC2:
     title: "Security hardening — envelope encryption Vault Transit + immutable HMAC audit + tenant-scoped Casbin"
     priority: P1
-    status: planned
+    status: done
     owner: "claude"
     adr: [ADR-028]
     depends_on: [IL-CRIT1]
-    started_at: null
-    finished_at: null
-    commit: null
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "d5c575b"
     artifacts:
       - docs/phases/PHASE_IL-SEC2.md
       - docs/adr/ADR-028-security-hardening.md
@@ -735,13 +738,13 @@ phases:
   IL-OBS1:
     title: "Observability automation — OTEL middleware + body cache + exception consolidation + Grafana + Alert rules"
     priority: P1
-    status: planned
+    status: done
     owner: "claude"
     adr: [ADR-032]
     depends_on: [IL-CRIT1]
-    started_at: null
-    finished_at: null
-    commit: null
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "60ee1c5"
     artifacts:
       - docs/phases/PHASE_IL-OBS1.md
       - docs/adr/ADR-032-observability-automation.md

@@ -2,7 +2,7 @@
 """immutable audit log — HMAC-chain append-only (IL-SEC2)
 
 Revision ID: d4e5f6a7b8c9
-Revises: b2c3d4e5f6a7
+Revises: c3d4e5f6a7b8
 Create Date: 2026-04-22 12:00:00.000000
 
 IL-SEC2. Создаёт таблицу ``audit_log_immutable`` — append-only audit log с
@@ -49,7 +49,14 @@ from sqlalchemy.dialects import postgresql
 
 
 revision: str = "d4e5f6a7b8c9"
-down_revision: Union[str, None] = "b2c3d4e5f6a7"
+# IL-SEC2: в этом worktree-snapshot-е миграция b2c3d4e5f6a7 (outbox NOTIFY
+# IL-SEC2 миграция идёт после workflow_tables (IL-WF1.1 — c3d4e5f6a7b8),
+# которая в свою очередь идёт после outbox NOTIFY trigger (IL-CRIT1.4c —
+# b2c3d4e5f6a7) и базовой outbox_messages (a1b2c3d4e5f6). Корректная
+# верхушка цепочки — c3d4e5f6a7b8.
+# на её предка a1b2c3d4e5f6. При merge в main достаточно перепривязать на
+# "b2c3d4e5f6a7" (или на любую последнюю head revision).
+down_revision: Union[str, None] = "c3d4e5f6a7b8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
