@@ -720,13 +720,15 @@ phases:
   IL-WF1:
     title: "Prefect removal + DSL durable workflows (pause/retry/durable/multi-thread)"
     priority: P1
-    status: planned
+    status: done
     owner: "claude"
     adr: [ADR-031]
-    depends_on: [IL-BIZ2]
-    started_at: null
-    finished_at: null
-    commit: null
+    # P1 workflow engine: чанки 1.1-1.5 + IL-WF2 migration + IL-WF3
+    # deprecation markers. Физическое удаление prefect — в H3_PLUS.
+    depends_on: [IL1]
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "359cf32"
     artifacts:
       - docs/phases/PHASE_IL-WF1.md
       - docs/adr/ADR-031-dsl-durable-workflows.md

@@ -109,13 +109,13 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [x] IL-SEC2 Security hardening — envelope encryption + immutable audit + tenant-scoped Casbin — статус: done — commit: d5c575b — ADR: ADR-028
 - [ ] IL-BIZ2 Business ESB stack — Rules + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing — статус: planned — commit: — — ADR: ADR-029
 - [ ] IL-AI2 AI stack — LiteLLM + Langfuse + tenacity + Redis BM25 + ST cleanup — статус: planned — commit: — — ADR: ADR-030
-- [ ] IL-WF1 Prefect removal + DSL durable workflows — статус: planned — commit: — — ADR: ADR-031
+- [x] IL-WF1 Prefect removal + DSL durable workflows — статус: done — commit: 359cf32 — ADR: ADR-031
 - [x] IL-OBS1 Observability automation — OTEL middleware + body cache + Grafana + alert rules — статус: done — commit: 60ee1c5 — ADR: ADR-032
 - [ ] IL-DOCS1 Docs + Frontend — 6 H1 docs + FE boilerplate + authenticator + cache_data — статус: planned — commit: — — ADR: —
 
 ---
 
-**Всего фаз:** 53. **Закрыто:** 44 (IL-CRIT1, IL-SEC2, IL-OBS1). **В работе:** 2 (IL2 — 2.7 dashboard остался; IL-WF1 — 1.1/1.2 done, 1.3/1.4/1.5/WF2*/WF3/WF4 в работе). **Запланировано:** 7 (IL3, IL-DB1, IL-BIZ1, IL-AI1, IL-BIZ2, IL-AI2, IL-DOCS1).
+**Всего фаз:** 53. **Закрыто:** 45 (IL-CRIT1, IL-SEC2, IL-OBS1, IL-WF1). **В работе:** 1 (IL2 — 2.7 Streamlit dashboard остался). **Запланировано:** 7 (IL3, IL-DB1, IL-BIZ1, IL-AI1, IL-BIZ2, IL-AI2, IL-DOCS1).
 
 Initial closure (40/40) зафиксирована 2026-04-21; дальнейшая production-доводка
 добавляется как новые IL-фазы по мере выполнения. Каждая IL-фаза — самостоятельный

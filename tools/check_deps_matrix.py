@@ -41,7 +41,16 @@ PHASE_REMOVE = {
     # после 2026-07-01 cool-down. До тех пор REMOVE-список хранится под
     # фиктивной фазой `H3_PLUS` (отсутствует в PHASE_STATUS.yml) — matrix
     # активируется только когда H3_PLUS появится в реестре как done.
-    "H3_PLUS": ["sqlalchemy-utils", "starlette-exporter", "aiohttp", "zeep", "pandas"],
+    "H3_PLUS": [
+        "sqlalchemy-utils",
+        "starlette-exporter",
+        "aiohttp",
+        "zeep",
+        "pandas",
+        # IL-WF3: prefect заменён на DSL durable workflows (orders_dsl.py +
+        # WorkflowBuilder). Удаление — одновременно с остальными legacy.
+        "prefect",
+    ],
 }
 
 PHASE_MUST_EXIST = {

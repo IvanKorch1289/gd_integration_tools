@@ -1,3 +1,11 @@
+"""Prefect-tasks для order processing.
+
+IL-WF3: модуль помечен DEPRECATED. Эквивалентные DSL processors —
+``src/workflows/orders_dsl.py::_call_*`` + WorkflowBuilder spec'ы.
+Cooldown удаления — H3_PLUS (2026-07-01+).
+"""
+
+import warnings
 from typing import Any
 
 from prefect import task
@@ -14,6 +22,14 @@ __all__ = (
     "create_skb_order_task",
     "get_skb_order_result_task",
     "send_order_result_task",
+)
+
+warnings.warn(
+    "`app.workflows.tasks` (Prefect @task) deprecated in IL-WF3. "
+    "DSL durable processors: `app.workflows.orders_dsl._call_*`. "
+    "Removal: H3_PLUS cooldown (2026-07-01+).",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 
