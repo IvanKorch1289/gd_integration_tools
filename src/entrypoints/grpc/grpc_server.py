@@ -11,7 +11,7 @@ import orjson
 
 from app.core.config.settings import settings
 from app.core.errors import BaseError
-from app.dsl.commands.registry import action_handler_registry
+from app.entrypoints.base import dispatch_action
 from app.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
     OrderDetailResponse,
@@ -22,7 +22,6 @@ from app.entrypoints.grpc.protobuf.orders_pb2_grpc import (
     add_OrderServiceServicer_to_server,
 )
 from app.infrastructure.external_apis.logging_service import grpc_logger
-from app.schemas.invocation import ActionCommandSchema
 
 
 def _safe_error(exc: Exception, correlation_id: str) -> str:
@@ -49,14 +48,23 @@ class BaseGRPCServicer:
     def __init__(self) -> None:
         self.logger = grpc_logger
 
-    async def _dispatch(self, action: str, payload: dict[str, Any] | None = None) -> Any:
-        """Диспетчеризует action через ActionHandlerRegistry."""
-        command = ActionCommandSchema(
+    async def _dispatch(
+        self,
+        action: str,
+        payload: dict[str, Any] | None = None,
+        correlation_id: str | None = None,
+    ) -> Any:
+        """Диспетчеризует action через общий `dispatch_action()`.
+
+        IL-CRIT1.5: был дубликат ActionCommandSchema-сборки, теперь — через
+        unified `app.entrypoints.base.dispatch_action` с `source="grpc"`.
+        """
+        return await dispatch_action(
             action=action,
-            payload=payload or {},
-            meta={"source": "grpc"},
+            payload=payload,
+            source="grpc",
+            correlation_id=correlation_id,
         )
-        return await action_handler_registry.dispatch(command)
 
     def _serialize(self, result: Any) -> str:
         """Сериализует результат в JSON-строку."""
