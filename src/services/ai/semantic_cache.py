@@ -182,16 +182,21 @@ class SemanticCache:
         except ImportError:
             return
 
+        # IL-CRIT1.3: `RAGService.ingest()` ожидает `content: str` +
+        # `metadata: dict` + `namespace: str` (не `documents: list` +
+        # `metadata: list`). Ранее параметры были переданы неверно —
+        # ингест молча падал в `except Exception`, semantic-lookup не
+        # наполнялся.
         try:
             if hasattr(rag, "ingest"):
                 await rag.ingest(
-                    documents=[query],
-                    metadata=[{
+                    content=query,
+                    metadata={
                         "response": response,
                         "provider": provider,
                         "model": model,
                         "cached_at": time.time(),
-                    }],
+                    },
                     namespace=self._namespace,
                 )
         except Exception as exc:

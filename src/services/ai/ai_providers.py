@@ -387,4 +387,3 @@ def register_extended_providers(agent: Any) -> int:
 
     logger.info("Registered %d extended AI providers", registered)
     return registered
-    return registered
