@@ -69,3 +69,4 @@ docs/_build/
 .claude/settings.local.json
 .claude/sessions/
 .claude/cache/
+.claude/worktrees/
