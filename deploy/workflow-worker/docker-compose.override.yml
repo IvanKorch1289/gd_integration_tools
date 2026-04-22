@@ -1,0 +1,50 @@
+# docker-compose override, подмешивающий standalone workflow worker (IL-WF1.4).
+#
+# Использование::
+#
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f deploy/workflow-worker/docker-compose.override.yml \
+#     up -d
+#
+# Файл не трогает основной ``docker-compose.yml``, чтобы не конфликтовать с
+# прочими follow-up правками. 2 реплики по умолчанию для HA.
+
+services:
+  workflow-worker:
+    build:
+      context: ../..
+      dockerfile: deploy/workflow-worker/Dockerfile
+    env_file:
+      - ../../.env
+    environment:
+      # Уникальный per-replica id берётся из hostname (docker compose выдаёт
+      # ``<project>-workflow-worker-<N>``); runner сам сгенерирует worker-id
+      # из ``WORKFLOW_WORKER_ID`` env var (см. RunnerConfig).
+      WORKFLOW_WORKER_ID: "${HOSTNAME:-worker}"
+      SHUTDOWN_GRACE_SECONDS: "30"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # HA — по умолчанию 2 реплики, адвизари-локи гарантируют at-most-once
+    # picking per instance.
+    deploy:
+      replicas: 2
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >
+          import urllib.request, sys;
+          r = urllib.request.urlopen('http://127.0.0.1:9100/healthz', timeout=3);
+          sys.exit(0 if r.status == 200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    ports:
+      # Экспонируем probes только на loopback — метрики собираются Prometheus
+      # через service discovery, а не через host ports.
+      - "127.0.0.1::9100"

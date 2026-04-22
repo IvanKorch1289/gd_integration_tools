@@ -364,9 +364,15 @@ pre-commit: check-env ## Install and run pre-commit hooks
 	$(POETRY_RUN) pre-commit run --all-files
 	@$(SUCCESS) "Pre-commit configured!"
 
-commit: ensure-branch ## Commit changes to Git
-	@$(INFO) "Committing changes..."
-	git add -A
+commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
+	@$(INFO) "Committing changes (explicit paths, no -A)..."
+	@# A2 security: запрещаем git add -A, чтобы исключить добавление
+	@# случайных файлов (.env, artifacts, IDE-cruft, секреты).
+	git add src/ docs/ scripts/ tools/ pyproject.toml poetry.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	@# Опциональные корневые файлы — добавляются, только если существуют.
+	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
+	@[ -f Dockerfile ] && git add Dockerfile || true
+	@[ -f docker-compose.yml ] && git add docker-compose.yml || true
 	@if git diff --cached --quiet; then \
 		$(WARN) "Nothing to commit"; \
 	else \
@@ -509,3 +515,27 @@ tag: ## Create and push version tag (legacy)
 	git tag $(TAG)
 	git push origin $(TAG)
 	@$(SUCCESS) "Tag $(TAG) pushed!"
+
+##@ Production Readiness
+
+phase-audit: ## Audit phase readiness. Usage: make phase-audit PHASE=A1
+	@if [ -z "$(PHASE)" ]; then \
+		$(ERROR) "PHASE is required. Example: make phase-audit PHASE=A1"; \
+		exit 1; \
+	fi
+	@bash scripts/audit.sh $(PHASE)
+
+progress: ## Show phase progress summary
+	@$(POETRY_RUN) python3 tools/report_phases.py
+
+phases: ## Show only in-progress phases
+	@$(POETRY_RUN) python3 tools/report_phases.py --only in-progress
+
+mr-description: ## Render MR description from PROGRESS + STATUS
+	@$(POETRY_RUN) python3 tools/render_mr_description.py
+
+readiness-check: ## Run all anti-forget guards locally
+	@$(INFO) "Running anti-forget guards..."
+	$(POETRY_RUN) python3 tools/check_phase_order.py
+	$(POETRY_RUN) python3 tools/check_deps_matrix.py
+	@$(SUCCESS) "All guards passed!"

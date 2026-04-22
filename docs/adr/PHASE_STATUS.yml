@@ -1,0 +1,860 @@
+# Phase Status Registry — машиночитаемая версия Progress Ledger.
+# Используется scripts/audit.sh и tools/report_phases.py.
+# После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
+
+meta:
+  total_phases: 53
+  closed: 44
+  in_progress: 2
+  planned: 7
+  # 2026-04-22 session: closed IL-CRIT1 (0e8ee34), IL-SEC2 (d5c575b), IL-OBS1 (60ee1c5).
+  # In-progress: IL2 (2.7 dashboard остался) + IL-WF1 (1.1+1.2 done, chunks 1.3-1.5 + WF2-WF4 запланированы).
+  # Согласовано 2026-04-21 через серию AskUserQuestion (13 слоёв ревью).
+  # Дополнительно 7 новых фаз поверх IL2/IL3/IL-DB1/IL-BIZ1/IL-AI1:
+  #   IL-CRIT1   — P0 critical fixes (SQL inj, gRPC leak, AI fixes, OPA pool, Outbox LISTEN/NOTIFY, unified dispatch, SOAP async).
+  #   IL-SEC2    — envelope encryption + immutable audit + tenant-scoped Casbin (ADR-028).
+  #   IL-BIZ2    — Rules Engine + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing (ADR-029).
+  #   IL-AI2     — LiteLLM + Langfuse + tenacity + Redis BM25 + ST cleanup (ADR-030).
+  #   IL-WF1     — Prefect removal + DSL durable workflows (ADR-031).
+  #   IL-OBS1    — OTEL middleware + body cache + Grafana + Alert rules (ADR-032).
+  #   IL-DOCS1   — H1 6 missing docs + FE + ADR cross-links.
+  branch: "claude/production-readiness-review-N3J2h"
+  target: "master"
+  completion_date: "2026-04-21"
+  # 40/40 initial closure сохраняется. Три новые фазы IL1/IL2/IL3 — это
+  # production-доводка по слоям (infrastructure-слой), начата после initial
+  # closure. План: /root/.claude/plans/tidy-jingling-map.md.
+  # Примечание: исходный план упоминал "38 phases", фактически после уточнения
+  # структуры получилось 40 (A×5, B×2, C×11, D×3, E×2, F×2, G×3, H×4, I×2,
+  # J×1, K×1, L×1, M×1, N×1, O×1 = 40). Различие учтено, разниц по содержимому
+  # нет.
+
+phases:
+
+  A1:
+    title: "Baseline inventory + pre-commit + guardrails"
+    priority: P0
+    status: done
+    owner: "claude"
+    adr: []
+    depends_on: []
+    started_at: "2026-04-20T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/PROGRESS.md
+      - docs/adr/PHASE_STATUS.yml
+      - docs/adr/TEMPLATE.md
+      - docs/DEPRECATIONS.md
+      - docs/phases/PHASE_A1.md
+      - scripts/audit.sh
+      - tools/update_progress.py
+      - tools/check_phase_commit.py
+      - tools/check_adr_link.py
+      - tools/check_no_tests.py
+      - tools/check_phase_order.py
+      - tools/check_deps_matrix.py
+      - tools/render_mr_description.py
+      - tools/report_phases.py
+      - .pre-commit-config.yaml
+      - .secrets.baseline
+
+  A2:
+    title: "Security hardening"
+    priority: P0
+    status: done
+    adr: [ADR-003, ADR-004]
+    depends_on: [A1]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/entrypoints/middlewares/setup_middlewares.py
+      - src/core/config/security.py
+      - src/entrypoints/grpc/grpc_server.py
+      - src/entrypoints/mqtt/mqtt_handler.py
+      - src/entrypoints/email/imap_monitor.py
+      - src/entrypoints/rate_limiter.py
+      - src/dsl/yaml_loader.py
+      - src/infrastructure/database/models/users.py
+      - src/infrastructure/clients/transport/smtp.py
+      - Makefile
+      - docs/adr/ADR-003-cors-policy.md
+      - docs/adr/ADR-004-grpc-tls-auth.md
+      - docs/phases/PHASE_A2.md
+
+  A3:
+    title: "DI consolidation (svcs only)"
+    priority: P0
+    status: done
+    adr: [ADR-002]
+    depends_on: [A1, A2]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/core/service_registry.py
+      - src/core/svcs_registry.py
+      - src/core/providers_registry.py
+      - src/core/service_setup.py
+      - docs/DEPRECATIONS.md
+      - docs/adr/ADR-002-svcs-di-container.md
+      - docs/phases/PHASE_A3.md
+
+  A4:
+    title: "Resilience consolidation + aiohttp→httpx"
+    priority: P0
+    status: done
+    adr: [ADR-005, ADR-009]
+    depends_on: [A3]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/engine/processors/control_flow.py
+      - src/infrastructure/clients/transport/http.py
+      - src/infrastructure/clients/transport/http_httpx.py
+      - src/infrastructure/resilience/__init__.py
+      - src/infrastructure/resilience/bulkhead.py
+      - src/infrastructure/resilience/time_limiter.py
+      - src/infrastructure/resilience/retry_budget.py
+      - src/infrastructure/resilience/rate_limiter.py
+      - src/entrypoints/webhook/handler.py
+      - src/dsl/importers/postman_parser.py
+      - src/core/config/constants.py
+      - docs/adr/ADR-005-tenacity-only-retry.md
+      - docs/adr/ADR-009-httpx-replaces-aiohttp.md
+      - docs/phases/PHASE_A4.md
+
+  A5:
+    title: "GitLab CI (merge-gates без test-stage)"
+    priority: P0
+    status: done
+    adr: []
+    depends_on: [A4]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - .gitlab-ci.yml
+      - docs/phases/PHASE_A5.md
+
+  B1:
+    title: "Refactor builder.py → 11 миксинов"
+    priority: P1
+    status: done
+    adr: [ADR-001]
+    depends_on: [A5]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/builders/__init__.py
+      - docs/adr/ADR-001-dsl-central-abstraction.md
+      - docs/phases/PHASE_B1.md
+
+  B2:
+    title: "Split files > 500 LOC"
+    priority: P1
+    status: done
+    adr: []
+    depends_on: [B1]
+    started_at: "2026-04-21T00:00:00+00:00"
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_B2.md
+
+  C1:
+    title: "Camel EIP полный набор"
+    priority: P1
+    status: done
+    adr: []
+    depends_on: [B1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/eip/__init__.py
+      - docs/phases/PHASE_C1.md
+
+  C2:
+    title: "Spring Integration (Gateway+Interceptors+Versioning)"
+    priority: P1
+    status: done
+    depends_on: [C1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/integration_gateway/__init__.py
+      - docs/phases/PHASE_C2.md
+
+  C3:
+    title: "Orchestration (Sensor+Backfill+DryRun+HITL)"
+    priority: P1
+    status: done
+    depends_on: [C2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/orchestration/__init__.py
+      - docs/phases/PHASE_C3.md
+
+  C4:
+    title: "CloudEvents + Schema Registry + AsyncAPI"
+    priority: P1
+    status: done
+    adr: [ADR-010]
+    depends_on: [C3]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/eventing/__init__.py
+      - src/infrastructure/eventing/cloudevents.py
+      - src/infrastructure/eventing/schema_registry.py
+      - docs/adr/ADR-010-cloudevents-schema-registry.md
+      - docs/phases/PHASE_C4.md
+
+  C5:
+    title: "Outbox+Inbox + FastStream унификация"
+    priority: P1
+    status: done
+    adr: [ADR-011, ADR-013]
+    depends_on: [C4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/eventing/outbox.py
+      - src/infrastructure/eventing/inbox.py
+      - docs/adr/ADR-011-outbox-inbox.md
+      - docs/adr/ADR-013-faststream-unification.md
+      - docs/phases/PHASE_C5.md
+
+  C6:
+    title: "OPA + Casbin"
+    priority: P1
+    status: done
+    adr: [ADR-012]
+    depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/policy/__init__.py
+      - src/infrastructure/policy/opa.py
+      - src/infrastructure/policy/casbin_adapter.py
+      - docs/adr/ADR-012-opa-casbin-authorization.md
+      - docs/phases/PHASE_C6.md
+
+  C7:
+    title: "Data contracts / expectations"
+    priority: P1
+    status: done
+    depends_on: [C6]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/contracts/__init__.py
+      - docs/phases/PHASE_C7.md
+
+  C8:
+    title: "Transformations max"
+    priority: P1
+    status: done
+    depends_on: [C7]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/transform/__init__.py
+      - docs/phases/PHASE_C8.md
+
+  C9:
+    title: "Codecs max"
+    priority: P1
+    status: done
+    depends_on: [C8]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/codec/__init__.py
+      - docs/phases/PHASE_C9.md
+
+  C10:
+    title: "Connectors max (IoT+Web3+Legacy)"
+    priority: P1
+    status: done
+    depends_on: [C9]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/entrypoints/iot/__init__.py
+      - src/entrypoints/web3/__init__.py
+      - src/entrypoints/legacy/__init__.py
+      - docs/phases/PHASE_C10.md
+
+  C11:
+    title: "SOAP + IMAP async-миграция"
+    priority: P1
+    status: done
+    depends_on: [C10]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/clients/transport/soap.py
+      - src/infrastructure/clients/transport/soap_async.py
+      - src/entrypoints/email/imap_monitor.py
+      - docs/phases/PHASE_C11.md
+
+  D1:
+    title: "AI agents DSL max"
+    priority: P1
+    status: done
+    depends_on: [C11]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/ai/__init__.py
+      - src/infrastructure/ai/prompt_registry.py
+      - src/infrastructure/ai/semantic_cache.py
+      - docs/phases/PHASE_D1.md
+
+  D2:
+    title: "RPA max"
+    priority: P1
+    status: done
+    depends_on: [D1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_D2.md
+
+  D3:
+    title: "RAG stack upgrade"
+    priority: P1
+    status: done
+    adr: [ADR-014]
+    depends_on: [D2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/ai/vector_store.py
+      - docs/adr/ADR-014-qdrant-fastembed-rag-stack.md
+      - docs/phases/PHASE_D3.md
+
+  E1:
+    title: "DSL utils max"
+    priority: P1
+    status: done
+    depends_on: [B1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/dsl/helpers/__init__.py
+      - src/dsl/helpers/banking.py
+      - src/dsl/helpers/datetime_utils.py
+      - src/dsl/helpers/strings.py
+      - src/dsl/helpers/regex_presets.py
+      - docs/phases/PHASE_E1.md
+
+  E2:
+    title: "Dev tools"
+    priority: P1
+    status: done
+    depends_on: [E1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/tools/dsl_cli/__init__.py
+      - src/tools/dsl_cli/lint.py
+      - docs/phases/PHASE_E2.md
+
+  F1:
+    title: "Performance stack max"
+    priority: P1
+    status: done
+    adr: [ADR-006, ADR-007]
+    depends_on: [A4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - pyproject.toml
+      - docs/adr/ADR-006-granian-prod-asgi.md
+      - docs/adr/ADR-007-python-3.14-ft-readiness.md
+      - docs/phases/PHASE_F1.md
+
+  F2:
+    title: "pandas → polars"
+    priority: P1
+    status: done
+    adr: [ADR-008]
+    depends_on: [F1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/utilities/dataframes.py
+      - docs/adr/ADR-008-pandas-to-polars.md
+      - docs/phases/PHASE_F2.md
+
+  G1:
+    title: "Multi-tenancy max"
+    priority: P2
+    status: done
+    depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/core/tenancy/__init__.py
+      - docs/phases/PHASE_G1.md
+
+  G2:
+    title: "API Management + Developer Portal max"
+    priority: P2
+    status: done
+    adr: [ADR-015]
+    depends_on: [G1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/api_management/__init__.py
+      - src/infrastructure/api_management/api_key_auth.py
+      - src/infrastructure/api_management/quotas.py
+      - src/infrastructure/api_management/versioning.py
+      - docs/adr/ADR-015-api-management-stack.md
+      - docs/phases/PHASE_G2.md
+
+  G3:
+    title: "Hardening + observability final"
+    priority: P2
+    status: done
+    depends_on: [G2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/observability/__init__.py
+      - src/infrastructure/observability/pii_filter.py
+      - docs/phases/PHASE_G3.md
+
+  H1:
+    title: "Документация (RU) + 15 ADR"
+    priority: P2
+    status: done
+    depends_on: [G3]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-001-dsl-central-abstraction.md
+      - docs/adr/ADR-002-svcs-di-container.md
+      - docs/adr/ADR-003-cors-policy.md
+      - docs/adr/ADR-004-grpc-tls-auth.md
+      - docs/adr/ADR-005-tenacity-only-retry.md
+      - docs/adr/ADR-006-granian-prod-asgi.md
+      - docs/adr/ADR-007-python-3.14-ft-readiness.md
+      - docs/adr/ADR-008-pandas-to-polars.md
+      - docs/adr/ADR-009-httpx-replaces-aiohttp.md
+      - docs/adr/ADR-010-cloudevents-schema-registry.md
+      - docs/adr/ADR-011-outbox-inbox.md
+      - docs/adr/ADR-012-opa-casbin-authorization.md
+      - docs/adr/ADR-013-faststream-unification.md
+      - docs/adr/ADR-014-qdrant-fastembed-rag-stack.md
+      - docs/adr/ADR-015-api-management-stack.md
+      - docs/phases/PHASE_H1.md
+
+  H2:
+    title: "Scaffolding + DSL visualization"
+    priority: P2
+    status: done
+    depends_on: [H1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - tools/scaffold.py
+      - tools/generate_resource.py
+      - tools/dsl_diff.py
+      - docs/phases/PHASE_H2.md
+
+  H3:
+    title: "Cleanup"
+    priority: P2
+    status: done
+    depends_on: [H2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/DEPRECATIONS.md
+      - docs/phases/PHASE_H3.md
+
+  H4:
+    title: "Final verification + release"
+    priority: P2
+    status: done
+    depends_on: [H3, I2, J1, K1, L1, M1, N1, O1]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - .gitlab-ci.yml
+      - tools/render_mr_description.py
+      - docs/phases/PHASE_H4.md
+
+  I1:
+    title: "Enterprise коннекторы"
+    priority: P2
+    status: done
+    depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/entrypoints/enterprise/__init__.py
+      - docs/phases/PHASE_I1.md
+
+  I2:
+    title: "Data lake + CDC max"
+    priority: P2
+    status: done
+    adr: [ADR-016]
+    depends_on: [C5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - src/infrastructure/datalake/__init__.py
+      - docs/adr/ADR-016-data-lake-stack.md
+      - docs/phases/PHASE_I2.md
+
+  J1:
+    title: "Performance+ max (Rust/Cython + HTTP/3 + NUMA)"
+    priority: P2
+    status: done
+    adr: [ADR-017, ADR-018, ADR-019]
+    depends_on: [F2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-017-rust-pyo3-hotpath.md
+      - docs/adr/ADR-018-http3-quic.md
+      - docs/adr/ADR-019-numa-jemalloc.md
+      - docs/phases/PHASE_J1.md
+
+  K1:
+    title: "DSL+ max"
+    priority: P2
+    status: done
+    adr: [ADR-020, ADR-021]
+    depends_on: [E2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/adr/ADR-020-dsl-plus-tooling.md
+      - docs/adr/ADR-021-dsl-interop.md
+      - docs/phases/PHASE_K1.md
+
+  L1:
+    title: "Onboarding portal max"
+    priority: P2
+    status: done
+    depends_on: [G2]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_L1.md
+
+  M1:
+    title: "Resilience+ max"
+    priority: P2
+    status: done
+    depends_on: [A4]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_M1.md
+
+  N1:
+    title: "Business Logic max"
+    priority: P2
+    status: done
+    depends_on: [C5, C6, C7]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_N1.md
+
+  # === Production-доводка по слоям (follow-up после 40/40) ===
+  # Слой 1 — Infrastructure layer (подключения к внешним сервисам).
+  # План зафиксирован в /root/.claude/plans/tidy-jingling-map.md.
+  # Эти фазы добавлены после initial closure, meta.total_phases обновлён.
+
+  IL1:
+    title: "Infrastructure Layer P0 — ConnectorRegistry + Metrics + OTEL + CB + Kafka idempotent + deep health + admin API + PoolingProfile"
+    priority: P0
+    status: done
+    owner: "claude"
+    adr: [ADR-022]
+    depends_on: [A3, A4, H4]
+    started_at: "2026-04-21T18:00:00+00:00"
+    finished_at: "2026-04-21T19:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_IL1.md
+      - docs/adr/ADR-022-connector-spi.md
+      - src/core/config/pooling.py
+      - src/infrastructure/clients/base_connector.py
+      - src/infrastructure/registry.py
+      - src/infrastructure/observability/client_metrics.py
+
+  IL2:
+    title: "Infrastructure Layer P1 — Kafka FastStream + NotificationGateway + Reconnection + Vault hot-reload + IMAP pool + HTTP upstream + Streamlit dashboard"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-023]
+    depends_on: [IL1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL2.md
+      - docs/adr/ADR-023-notification-gateway.md
+      - src/infrastructure/notifications/gateway.py
+      - src/infrastructure/resilience/reconnection.py
+      - src/entrypoints/streamlit_app/pages/26_Infrastructure_Health.py
+
+  IL3:
+    title: "Infrastructure Layer P2 — Outbox notify + gRPC interceptors + Hedging + Deadline budgeting + Load shedding + Grafana + Exemplars + Alert rules + S3 multipart + tenant pools"
+    priority: P2
+    status: planned
+    owner: "claude"
+    adr: [ADR-024]
+    depends_on: [IL2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL3.md
+      - docs/adr/ADR-024-resilience-plus.md
+      - src/infrastructure/resilience/hedging.py
+      - src/infrastructure/resilience/deadline.py
+      - src/entrypoints/middlewares/load_shedding.py
+      - deploy/grafana/dashboards/infrastructure_health.json
+      - deploy/prometheus/alerts/infrastructure.yml
+
+  # === IL-CRIT1 P0 Critical fixes (production blockers) ===
+  # Согласовано 2026-04-21 (AskUserQuestion P0):
+  #   * SQL Injection fix в external_database.py (L264,273,292-307) + gRPC leak fix.
+  #   * AI: duplicate return + sentence-transformers drop + rag.ingest() params.
+  #   * Middleware self.logger bug + OPA singleton + Outbox LISTEN/NOTIFY (pg_notify).
+  #   * BaseEntrypoint.dispatch() unified + zeep → aiohttp-soap.
+
+  IL-CRIT1:
+    title: "P0 Critical fixes — SQL inj / gRPC leak / AI cleanup / OPA pool / Outbox listen / unified dispatch / SOAP async"
+    priority: P0
+    status: done
+    owner: "claude"
+    adr: []
+    # P0 critical fixes — выполняются параллельно с IL2, не зависят.
+    depends_on: [IL1]
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "0e8ee34"
+    artifacts:
+      - docs/phases/PHASE_IL-CRIT1.md
+      - src/services/io/external_database.py
+      - src/services/ai/ai_providers.py
+      - src/services/ai/rag_service.py
+      - src/infrastructure/ai/semantic_cache.py
+      - src/entrypoints/middlewares/exception_handler.py
+      - src/infrastructure/policy/opa.py
+      - src/infrastructure/eventing/outbox_listener.py
+      - src/entrypoints/base.py
+      - src/entrypoints/soap/soap_handler.py
+
+  IL-SEC2:
+    title: "Security hardening — envelope encryption Vault Transit + immutable HMAC audit + tenant-scoped Casbin"
+    priority: P1
+    status: done
+    owner: "claude"
+    adr: [ADR-028]
+    depends_on: [IL-CRIT1]
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "d5c575b"
+    artifacts:
+      - docs/phases/PHASE_IL-SEC2.md
+      - docs/adr/ADR-028-security-hardening.md
+      - src/core/security/vault_cipher.py
+      - src/infrastructure/observability/immutable_audit.py
+      - src/infrastructure/policy/casbin_tenant_scoped.py
+
+  IL-BIZ2:
+    title: "Business ESB stack — Rules Engine + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-029]
+    depends_on: [IL-SEC2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-BIZ2.md
+      - docs/adr/ADR-029-esb-business-stack.md
+      - src/services/rules/engine.py
+      - src/infrastructure/command_bus/__init__.py
+      - src/infrastructure/command_bus/event_bus.py
+      - src/services/features/store.py
+      - src/services/integrations/base_external.py
+      - src/core/errors.py
+
+  IL-AI2:
+    title: "AI stack — LiteLLM unified + Langfuse traces + tenacity retry + Redis BM25 + sentence-transformers cleanup"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-030]
+    depends_on: [IL-AI1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-AI2.md
+      - docs/adr/ADR-030-ai-unified.md
+      - src/services/ai/litellm_provider.py
+      - src/infrastructure/ai/langfuse_observer.py
+      - src/infrastructure/ai/redis_bm25.py
+
+  IL-WF1:
+    title: "Prefect removal + DSL durable workflows (pause/retry/durable/multi-thread)"
+    priority: P1
+    status: done
+    owner: "claude"
+    adr: [ADR-031]
+    # P1 workflow engine: чанки 1.1-1.5 + IL-WF2 migration + IL-WF3
+    # deprecation markers. Физическое удаление prefect — в H3_PLUS.
+    depends_on: [IL1]
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "359cf32"
+    artifacts:
+      - docs/phases/PHASE_IL-WF1.md
+      - docs/adr/ADR-031-dsl-durable-workflows.md
+      - src/infrastructure/workflow/durable_runner.py
+      - src/infrastructure/workflow/state_store.py
+      - src/dsl/engine/processors/durable_workflow.py
+      - src/infrastructure/database/models/workflow_instance.py
+
+  IL-OBS1:
+    title: "Observability automation — OTEL middleware + body cache + exception consolidation + Grafana + Alert rules"
+    priority: P1
+    status: done
+    owner: "claude"
+    adr: [ADR-032]
+    depends_on: [IL-CRIT1]
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "60ee1c5"
+    artifacts:
+      - docs/phases/PHASE_IL-OBS1.md
+      - docs/adr/ADR-032-observability-automation.md
+      - src/entrypoints/middlewares/otel_middleware.py
+      - src/entrypoints/middlewares/request_body_cache.py
+      - deploy/grafana/dashboards/infrastructure_health.json
+      - deploy/prometheus/alerts/infrastructure.yml
+
+  IL-DOCS1:
+    title: "Docs + Frontend — 6 missing H1 docs + FE boilerplate + authenticator + cache_data + ADR cross-links"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: []
+    depends_on: [IL-OBS1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-DOCS1.md
+      - docs/RUNBOOK.md
+      - docs/SECURITY.md
+      - docs/SCALING.md
+      - docs/ROLLOUT.md
+      - docs/TROUBLESHOOTING.md
+      - docs/CONTRIBUTING.md
+      - src/entrypoints/streamlit_app/lib/ui_helpers.py
+      - src/entrypoints/streamlit_app/lib/auth.py
+
+  # === Business Logic Layer — consistency + scalability + compliance ===
+  # Согласовано 2026-04-21 (P0+P1 из анализа):
+  #   * Multi-tenant cache key (security fix).
+  #   * Saga для OrderService.create_skb_order (consistency).
+  #   * Async streaming в ExportService (scalability).
+  #   * PII Vault + audit log (GDPR compliance).
+
+  IL-BIZ1:
+    title: "Business Logic Layer — multi-tenant cache + Saga + async streaming export + PII audit"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-026]
+    depends_on: [IL-DB1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-BIZ1.md
+      - docs/adr/ADR-026-business-logic-doводка.md
+      - src/services/core/cache_decorator.py
+      - src/services/core/saga_orders.py
+      - src/services/io/export_stream.py
+      - src/services/security/pii_vault.py
+
+  # === AI Layer — observability + streaming + cost control ===
+  # Согласовано 2026-04-21:
+  #   * AI cost Prometheus metrics (tokens/cost/cache-hit per provider).
+  #   * Streaming LLM процессор (SSE).
+  #   * Cost Budget DSL (defence против runaway LLM).
+
+  IL-AI1:
+    title: "AI Layer — cost observability + streaming LLM (SSE) + Cost Budget DSL"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-027]
+    depends_on: [IL-BIZ1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-AI1.md
+      - docs/adr/ADR-027-ai-observability.md
+      - src/infrastructure/observability/ai_metrics.py
+      - src/dsl/engine/processors/ai_streaming.py
+      - src/dsl/engine/processors/ai_cost_budget.py
+
+  # === DB Layer доводка — репозитории + модели + DB DSL ===
+  # Согласовано с пользователем 2026-04-21:
+  #   * Performance: FK indexes + selectinload + JSON→JSONB + убрать .unique().
+  #   * DSL for DB: полный Query + Bulk + Transaction DSL.
+  # План: /root/.claude/plans/tidy-jingling-map.md (IL-DB1 секция).
+
+  IL-DB1:
+    title: "DB Layer доводка — FK indexes + JSONB + selectinload N+1 fix + Query/Bulk/Transaction DB DSL"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-025]
+    depends_on: [IL2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-DB1.md
+      - docs/adr/ADR-025-db-dsl.md
+      - src/infrastructure/dsl/query_builder.py
+      - src/infrastructure/dsl/bulk_operations.py
+      - src/infrastructure/dsl/transaction.py
+      - src/infrastructure/database/migrations/versions/add_fk_indexes.py
+      - src/infrastructure/database/migrations/versions/json_to_jsonb.py
+
+  O1:
+    title: "External env max"
+    priority: P2
+    status: done
+    depends_on: [A5]
+    finished_at: "2026-04-21T00:00:00+00:00"
+    commit: HEAD
+    artifacts:
+      - docs/phases/PHASE_O1.md

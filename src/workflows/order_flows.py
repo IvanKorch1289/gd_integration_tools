@@ -1,3 +1,15 @@
+"""Prefect flows для order processing.
+
+IL-WF3: модуль помечен DEPRECATED. Эквивалентные DSL durable workflows —
+``src/workflows/orders_dsl.py`` (5 спеков). Для production использовать
+DSL-версии через ``workflow_registry.register(...)`` в startup.
+
+Переключение контролируется feature-flag
+``settings.tasks.use_dsl_workflows``; default False до validation
+stage-окружением. Cooldown удаления Prefect — H3_PLUS (2026-07-01+).
+"""
+
+import warnings
 from typing import Any
 
 from prefect import flow
@@ -20,6 +32,16 @@ __all__ = (
     "send_notification_workflow",
     "create_skb_order_workflow",
     "order_processing_workflow",
+)
+
+warnings.warn(
+    "`app.workflows.order_flows` (Prefect @flow) deprecated in IL-WF3. "
+    "DSL durable workflow specs: `app.workflows.orders_dsl."
+    "build_all_order_workflows()`. Migrations в production — через "
+    "feature-flag `settings.tasks.use_dsl_workflows`. "
+    "Removal: H3_PLUS cooldown (2026-07-01+).",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 

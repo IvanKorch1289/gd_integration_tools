@@ -47,6 +47,17 @@ def create_mcp_server() -> Any:
     _register_convert_tools(mcp)
     _register_system_tools(mcp)
     _register_yaml_tools(mcp)
+
+    # IL-WF1.5: auto-export durable workflows как MCP tools
+    # (CrewAI / LangChain / LangGraph получают каждый workflow
+    # отдельным tool'ом с валидацией payload через input_schema).
+    try:
+        from app.entrypoints.mcp.workflow_tools import register_workflow_tools
+
+        register_workflow_tools(mcp)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("workflow MCP tools registration skipped: %s", exc)
+
     return mcp
 
 

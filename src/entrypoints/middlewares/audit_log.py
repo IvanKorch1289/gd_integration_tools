@@ -37,10 +37,16 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         start = _time.monotonic()
         body_bytes: bytes = b""
 
-        try:
-            body_bytes = await request.body()
-        except Exception:
-            pass
+        # IL-OBS1: сначала пробуем cached body из RequestBodyCacheMiddleware,
+        # затем graceful fallback на чтение потока.
+        cached = getattr(request.state, "body", None)
+        if isinstance(cached, (bytes, bytearray)):
+            body_bytes = bytes(cached)
+        else:
+            try:
+                body_bytes = await request.body()
+            except Exception:
+                pass
 
         response = await call_next(request)
         duration_ms = (_time.monotonic() - start) * 1000

@@ -45,7 +45,13 @@ class MessageLoggingMiddleware(BaseMiddleware):
 
 
 class StreamClient:
-    """Управление Redis/Rabbit брокерами и отложенной публикацией."""
+    """Управление Redis/Rabbit/Kafka брокерами и отложенной публикацией.
+
+    IL2.1 (ADR-013): Kafka теперь унифицирован через FastStream KafkaRouter
+    (ранее — прямой aiokafka в `messaging/kafka.py`). Прямой aiokafka клиент
+    остаётся как shim до H3_PLUS с DeprecationWarning — см. соответствующий
+    модуль.
+    """
 
     def __init__(self) -> None:
         from app.infrastructure.scheduler.scheduler_manager import scheduler_manager
@@ -53,16 +59,21 @@ class StreamClient:
         self.stream_app = FastStream(logger=stream_logger)
         self.redis_settings = settings.redis
         self.rabbit_settings = settings.queue
+        # Kafka-настройки: используем те же bootstrap_servers / group_id, что
+        # и legacy aiokafka-клиент — для плавной миграции.
+        self.kafka_settings = getattr(settings, "kafka", None)
         self.scheduler = scheduler_manager.scheduler
 
         self.redis_router = None
         self.rabbit_router = None
+        self.kafka_router = None
 
         self._initialize_routers()
 
     def _initialize_routers(self) -> None:
         self._setup_redis_router()
         self._setup_rabbit_router()
+        self._setup_kafka_router()
 
     def _common_middlewares(self) -> list[Any]:
         return [
@@ -107,6 +118,44 @@ class StreamClient:
             asyncapi_tags=[{"name": "rabbitmq"}],
             include_in_schema=True,
             middlewares=self._common_middlewares(),
+        )
+
+    def _setup_kafka_router(self) -> None:
+        """IL2.1: унификация Kafka через FastStream (ADR-013).
+
+        Идёт параллельно с legacy прямым aiokafka клиентом
+        (`messaging/kafka.py`). Миграция существующих call-site-ов —
+        следующий шаг (migration-guide в ADR-013).
+
+        Если `settings.kafka` не определён — роутер не инициализируется
+        (kafka-функционал опционален в текущих stage-окружениях).
+        """
+        if self.kafka_settings is None:
+            stream_logger.debug(
+                "kafka settings not found — Kafka router skipped "
+                "(IL2.1 miграция не ломает стенды без Kafka)"
+            )
+            return
+        try:
+            from faststream.kafka.fastapi import KafkaRouter
+        except ImportError as exc:
+            stream_logger.warning(
+                "faststream[kafka] not installed — Kafka router skipped: %s", exc
+            )
+            return
+
+        bootstrap = getattr(self.kafka_settings, "bootstrap_servers", "localhost:9092")
+        self.kafka_router = KafkaRouter(
+            bootstrap_servers=bootstrap,
+            logger=stream_logger,
+            schema_url="/asyncapi",
+            asyncapi_tags=[{"name": "kafka"}],
+            include_in_schema=True,
+            middlewares=self._common_middlewares(),
+            # IL1.5: idempotent producer унаследован — FastStream сам
+            # конфигурирует aiokafka с enable_idempotence=True + acks="all",
+            # если в producer-config задан transactional_id или при явном
+            # указании `publisher(..., idempotent=True)`.
         )
 
     @staticmethod
@@ -222,6 +271,65 @@ class StreamClient:
         self, queue: str, message: dict[str, Any]
     ) -> None:
         await self._publish_rabbit_immediately(queue, message)
+
+    # -- Kafka API (IL2.1) ---------------------------------------------
+
+    async def publish_to_kafka(
+        self,
+        topic: str,
+        message: dict[str, Any],
+        key: str | None = None,
+        headers: dict[str, Any] | None = None,
+        delay: timedelta | None = None,
+        cron: str | None = None,
+    ) -> str | None:
+        """Публикация через FastStream KafkaRouter (унифицированный API).
+
+        Поддерживает immediate + delayed (APScheduler) + cron-scheduled
+        publishing — симметрично с Rabbit/Redis.
+        """
+        if self.kafka_router is None:
+            raise RuntimeError(
+                "Kafka router не инициализирован (settings.kafka отсутствует или "
+                "faststream[kafka] не установлен)"
+            )
+        self._validate_schedule_args(delay, cron)
+        if not delay and not cron:
+            await self._publish_kafka_immediately(
+                topic=topic, message=message, key=key, headers=headers or {}
+            )
+            return None
+        return self._schedule_publish(
+            delay=delay,
+            cron=cron,
+            publish_func=self._execute_kafka_publish,
+            func_kwargs={
+                "topic": topic,
+                "message": message,
+                "key": key,
+                "headers": headers or {},
+            },
+        )
+
+    async def _publish_kafka_immediately(
+        self,
+        topic: str,
+        message: dict[str, Any],
+        key: str | None,
+        headers: dict[str, Any],
+    ) -> None:
+        await self.kafka_router.broker.publish(  # type: ignore[union-attr]
+            message=message, topic=topic, key=key, headers=headers
+        )
+
+    async def _execute_kafka_publish(
+        self,
+        topic: str,
+        message: dict[str, Any],
+        key: str | None,
+        headers: dict[str, Any],
+    ) -> None:
+        await self._publish_kafka_immediately(topic, message, key, headers)
 
 
 _stream_client: StreamClient | None = None

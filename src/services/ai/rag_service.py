@@ -21,14 +21,20 @@ class RAGService:
         self._embedder: Any = None
 
     def _get_embedder(self) -> Any:
+        """Lazy-инициализация embedder-а.
+
+        IL-CRIT1.3 (ADR-014): переход с `sentence-transformers` (1.2GB, sync
+        под `asyncio.to_thread`) на `fastembed` (ONNX quantized, в ~10× легче).
+        `fastembed.TextEmbedding` работает через batch API.
+        """
         if self._embedder is not None:
             return self._embedder
 
-        from sentence_transformers import SentenceTransformer
+        from fastembed import TextEmbedding
 
         from app.core.config.rag_settings import rag_settings
 
-        self._embedder = SentenceTransformer(rag_settings.embedding_model)
+        self._embedder = TextEmbedding(model_name=rag_settings.embedding_model)
         return self._embedder
 
     def _chunk_text(self, text: str) -> list[str]:
@@ -46,13 +52,20 @@ class RAGService:
         return chunks
 
     async def _embed(self, texts: list[str]) -> list[list[float]]:
+        """Построить embeddings для списка текстов.
+
+        `fastembed.TextEmbedding.embed()` возвращает generator of numpy
+        arrays. Выполняем в `asyncio.to_thread`, чтобы не блокировать
+        event loop (ONNX-inference не является async-native).
+        """
         import asyncio
 
         model = self._get_embedder()
-        embeddings = await asyncio.to_thread(
-            model.encode, texts, convert_to_numpy=True
+        # Материализуем generator в список np.ndarray внутри потока.
+        arrays = await asyncio.to_thread(
+            lambda: [vec for vec in model.embed(texts)]
         )
-        return embeddings.tolist()
+        return [arr.tolist() for arr in arrays]
 
     async def ingest(
         self,

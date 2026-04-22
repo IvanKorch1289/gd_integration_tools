@@ -2,8 +2,14 @@
 
 Позволяет автоматически генерировать Prefect-таски для любого
 action из ActionHandlerRegistry без ручного написания обёрток.
+
+IL-WF3: модуль помечен DEPRECATED. DSL аналог — workflows напрямую
+вызывают ``dispatch_action()`` через processors в WorkflowBuilder;
+auto-factory не требуется. MCP auto-export (IL-WF1.5) обеспечивает
+доступность workflows как AI-агент tools. Cooldown — H3_PLUS.
 """
 
+import warnings
 from typing import Any, Callable
 
 from prefect import task
@@ -12,6 +18,15 @@ from app.dsl.commands.registry import action_handler_registry
 from app.schemas.invocation import ActionCommandSchema
 
 __all__ = ("create_service_task", "generate_all_tasks")
+
+warnings.warn(
+    "`app.workflows.task_factory` (Prefect auto-factory) deprecated "
+    "in IL-WF3. DSL workflows использует dispatch_action() напрямую + "
+    "MCP auto-export (app.entrypoints.mcp.workflow_tools). "
+    "Removal: H3_PLUS cooldown (2026-07-01+).",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def create_service_task(

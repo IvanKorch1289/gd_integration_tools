@@ -1,6 +1,29 @@
 """Notification Hub — единый интерфейс отправки уведомлений.
 
-Поддерживает каналы:
+IL2.2 (ADR-023): **DEPRECATED** — новый путь через
+``src/infrastructure/notifications/gateway.py::NotificationGateway``. Этот
+модуль остаётся как shim на один релиз; удаление в H3_PLUS (2026-07-01+).
+
+Новый API:
+
+    from app.infrastructure.notifications import get_gateway
+    gateway = get_gateway()
+    await gateway.send_tx(
+        channel="email",
+        template_key="kyc_approved",
+        locale="ru",
+        context={"name": "..."},
+        recipient="user@example.com",
+    )
+
+Новые преимущества gateway:
+  * Jinja2 + i18n (ru/en) шаблонизация.
+  * Priority queues (tx vs marketing) — разные SLA.
+  * DLQ для неуспешных уведомлений + replay.
+  * Централизованные metrics per-channel.
+  * Расширенный набор каналов: + SMS (МТС/МегаФон/SMS.ru), Slack, Teams.
+
+Поддерживаемые каналы (legacy shim):
 - email (SMTP)
 - eXpress (BotX API — корпоративный мессенджер)
 - webhook (HTTP POST с HMAC signature)
@@ -14,6 +37,7 @@ Actions: notify.email, notify.express, notify.webhook, notify.telegram,
 from __future__ import annotations
 
 import logging
+import warnings
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -22,6 +46,15 @@ from typing import Any
 __all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
 
 logger = logging.getLogger(__name__)
+
+# IL2.2: DeprecationWarning на import — напоминает мигрировать на Gateway.
+warnings.warn(
+    "`app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). "
+    "Use `app.infrastructure.notifications.get_gateway()` instead. "
+    "This shim will be removed in H3_PLUS (2026-07-01+).",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class Channel(str, Enum):

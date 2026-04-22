@@ -16,7 +16,6 @@ from fastapi import APIRouter, Request, Response
 from app.core.errors import BaseError
 from app.dsl.commands.registry import action_handler_registry
 from app.dsl.service import get_dsl_service
-from app.schemas.invocation import ActionCommandSchema
 
 __all__ = ("soap_router",)
 
@@ -121,13 +120,18 @@ def _xml_escape(value: Any) -> str:
 
 
 async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
-    """Пытается диспетчеризовать через ActionHandlerRegistry напрямую."""
-    command = ActionCommandSchema(
+    """Пытается диспетчеризовать через общий `dispatch_action()`.
+
+    IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
+    с `source="soap"`. Унифицирует с REST/gRPC/GraphQL.
+    """
+    from app.entrypoints.base import dispatch_action
+
+    return await dispatch_action(
         action=operation,
         payload=payload,
-        meta={"source": "soap"},
+        source="soap",
     )
-    return await action_handler_registry.dispatch(command)
 
 
 @soap_router.post(

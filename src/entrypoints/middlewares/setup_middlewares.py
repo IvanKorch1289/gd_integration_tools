@@ -25,6 +25,7 @@ def setup_middlewares(app: FastAPI) -> None:
         app = FastAPI()
         setup_middlewares(app)
     """
+    from fastapi.middleware.cors import CORSMiddleware
     from fastapi.middleware.gzip import GZipMiddleware
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
@@ -33,13 +34,16 @@ def setup_middlewares(app: FastAPI) -> None:
     from app.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from app.entrypoints.middlewares.api_key import APIKeyMiddleware
     from app.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from app.entrypoints.middlewares.circuit_breaker import CircuitBreakerMiddleware
     from app.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
     )
     from app.entrypoints.middlewares.audit_log import AuditLogMiddleware
     from app.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from app.entrypoints.middlewares.data_masking import DataMaskingMiddleware
+    from app.entrypoints.middlewares.otel_middleware import OtelMiddleware
+    from app.entrypoints.middlewares.request_body_cache import (
+        RequestBodyCacheMiddleware,
+    )
     from app.entrypoints.middlewares.request_id import RequestIDMiddleware
     from app.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
@@ -55,14 +59,30 @@ def setup_middlewares(app: FastAPI) -> None:
     middleware_chain = [
         # Слой 1: Early exit — отклоняем невалидные запросы мгновенно
         (ExceptionHandlerMiddleware, {}),
+        (
+            CORSMiddleware,
+            {
+                "allow_origins": settings.secure.cors_origins,
+                "allow_credentials": settings.secure.cors_allow_credentials,
+                "allow_methods": settings.secure.cors_allow_methods,
+                "allow_headers": settings.secure.cors_allow_headers,
+                "expose_headers": ["X-Request-ID"],
+                "max_age": 600,
+            },
+        ),
         (TrustedHostMiddleware, {"allowed_hosts": settings.secure.allowed_hosts}),
         (BlockedRoutesMiddleware, {}),
         (IPRestrictionMiddleware, {}),
         (APIKeyMiddleware, {}),
         # Слой 2: Управление запросом
+        # NOTE: CircuitBreakerMiddleware удалён в A2 (ADR-005) — global-state баг.
+        # Circuit breaker применяется per-route на уровне HTTP-клиентов.
         (RequestIDMiddleware, {}),
+        # IL-OBS1 (ADR-032): кешируем body один раз, чтобы downstream
+        # middleware (audit_log / audit_replay / request_log) читали
+        # `request.state.body` вместо повторного `await request.body()`.
+        (RequestBodyCacheMiddleware, {}),
         (TimeoutMiddleware, {}),
-        (CircuitBreakerMiddleware, {}),
         # Слой 3: Обработка тела (только для прошедших аутентификацию)
         (ResponseCacheMiddleware, {"max_age": 60}),
         (
@@ -77,6 +97,11 @@ def setup_middlewares(app: FastAPI) -> None:
         (AuditLogMiddleware, {}),
         (AuditReplayMiddleware, {"sample_rate": 1.0}),  # ARCH-4: wire audit_replay
         (InnerRequestLoggingMiddleware, {}),
+        # IL-OBS1 (ADR-032): FastAPI OTEL middleware — создаёт HTTP-span
+        # с correlation/tenant/route_id атрибутами и пропагирует
+        # `traceparent` в response headers. Ставится ПОСЛЕ логов и
+        # ПЕРЕД PrometheusMiddleware, чтобы измерять полный цикл.
+        (OtelMiddleware, {}),
         (PrometheusMiddleware, {"group_paths": True, "app_name": settings.app.title}),
     ]
 

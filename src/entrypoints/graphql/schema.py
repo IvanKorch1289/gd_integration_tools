@@ -19,7 +19,6 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from app.dsl.service import get_dsl_service
-from app.schemas.invocation import ActionCommandSchema
 
 __all__ = ("graphql_router",)
 
@@ -111,16 +110,19 @@ class ActionResult:
 # ────────────────────────────────────────────────────
 
 async def _dispatch_action(action: str, payload: dict[str, Any] | None = None) -> ActionResult:
-    """Диспетчеризует action через ActionHandlerRegistry."""
-    from app.dsl.commands.registry import action_handler_registry
+    """Диспетчеризует action через общий `dispatch_action()`.
+
+    IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
+    с `source="graphql"`. Meta и correlation_id — автоматически.
+    """
+    from app.entrypoints.base import dispatch_action as _unified_dispatch
 
     try:
-        command = ActionCommandSchema(
+        result = await _unified_dispatch(
             action=action,
-            payload=payload or {},
-            meta={"source": "graphql"},
+            payload=payload,
+            source="graphql",
         )
-        result = await action_handler_registry.dispatch(command)
 
         data = result
         if hasattr(result, "model_dump"):

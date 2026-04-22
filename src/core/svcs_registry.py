@@ -1,86 +1,150 @@
-"""svcs — lightweight DI container (дополняет FastAPI app.state pattern).
+"""Единый DI-контейнер приложения на базе ``svcs`` (ADR-002).
 
-svcs vs FastAPI Depends:
-- svcs глобальный registry (не привязан к HTTP request)
-- FastAPI Depends только в HTTP context
-- svcs удобен для background tasks, CLI tools, tests
+Этот модуль — единственный источник правды для регистрации и получения
+сервисов. Старый name-based ``ServiceRegistry`` (``app.core.service_registry``)
+превращён в тонкий deprecation-shim; ``_FallbackRegistry`` (dead code с
+прошлой итерации) удалён.
 
-Usage::
+Возможности:
 
-    from app.core.svcs_registry import services, register_factory
+* type-based lookup — ``get_service(OrderService)`` (svcs convention);
+* name-based lookup — ``get_service("orders")`` (обратная совместимость
+  для DSL-процессоров и admin-роутов);
+* lazy singleton — factory вызывается при первом обращении, результат
+  кешируется; повторные ``get_service`` возвращают тот же объект.
 
-    # At startup:
-    register_factory(RedisClient, lambda: get_redis_client())
-    register_factory(SomeService, SomeService)
+Примеры::
 
-    # In code:
-    from app.core.svcs_registry import get_service
-    redis = get_service(RedisClient)
+    from app.core.svcs_registry import register_factory, get_service
 
-Fallback: если svcs не установлен, используется простой dict registry.
+    register_factory("orders", get_order_service)
+    register_factory(OrderService, get_order_service)
+
+    svc = get_service("orders")        # name-based
+    svc = get_service(OrderService)    # type-based (тот же объект)
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, TypeVar
+import threading
+from typing import Any, Callable, Hashable, TypeVar
 
-__all__ = ("register_factory", "get_service", "services")
+import svcs
+
+__all__ = (
+    "registry",
+    "register_factory",
+    "get_service",
+    "has_service",
+    "list_services",
+    "clear_registry",
+)
 
 logger = logging.getLogger("core.svcs_registry")
 
 T = TypeVar("T")
 
+# Единый глобальный Registry для всего процесса.
+registry: svcs.Registry = svcs.Registry()
 
-try:
-    import svcs
-    SVCS_AVAILABLE = True
-    _registry = svcs.Registry()
-except ImportError:
-    SVCS_AVAILABLE = False
-    svcs = None  # type: ignore[assignment]
+# Сопутствующий кеш синглтонов: svcs отдаёт новый Container на каждую
+# операцию, а у нас подавляющее большинство сервисов — module-level
+# синглтоны. Храним их здесь, чтобы ``get_service`` был реентерабельным
+# без накладных расходов.
+_singletons: dict[Hashable, Any] = {}
+_known_keys: set[Hashable] = set()
+_lock = threading.RLock()
 
 
-class _FallbackRegistry:
-    """Simple dict-based fallback."""
+def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:
+    """Регистрирует фабрику сервиса.
 
-    def __init__(self) -> None:
-        self._factories: dict[type, Callable[[], Any]] = {}
-        self._instances: dict[type, Any] = {}
+    Args:
+        key: строка (имя) или тип.
+        factory: callable без аргументов, возвращающий экземпляр.
+    """
+    with _lock:
+        # svcs требует type в качестве ключа — оборачиваем произвольный
+        # hashable через proxy-класс при необходимости.
+        if isinstance(key, type):
+            registry.register_factory(key, factory)
+        else:
+            # Для строковых/hashable ключей храним у себя; svcs-контейнер
+            # опционально получает их тоже (svcs ≥ 25.1 это допускает).
+            try:
+                registry.register_factory(key, factory)  # type: ignore[arg-type]
+            except Exception:
+                logger.debug("svcs не принял ключ %r — используется внутренний cache.", key)
+        _known_keys.add(key)
+        # Если фабрика уже вызывалась — сбрасываем кеш.
+        _singletons.pop(key, None)
 
-    def register(self, key: type, factory: Callable[[], Any]) -> None:
-        self._factories[key] = factory
 
-    def get(self, key: type) -> Any:
-        if key in self._instances:
-            return self._instances[key]
-        factory = self._factories.get(key)
-        if factory is None:
-            raise KeyError(f"Service not registered: {key.__name__}")
-        instance = factory()
-        self._instances[key] = instance
+def has_service(key: Hashable) -> bool:
+    """Возвращает True, если сервис зарегистрирован."""
+    return key in _known_keys
+
+
+def list_services() -> list[str]:
+    """Возвращает имена зарегистрированных сервисов (для admin-API)."""
+    with _lock:
+        return sorted(str(k) if not isinstance(k, type) else k.__name__ for k in _known_keys)
+
+
+def get_service(key: Hashable | type[T]) -> T | Any:
+    """Получает экземпляр сервиса (singleton).
+
+    Args:
+        key: строка-имя или тип.
+
+    Returns:
+        Инстанс сервиса.
+
+    Raises:
+        KeyError: если ``key`` не зарегистрирован.
+    """
+    with _lock:
+        if key in _singletons:
+            return _singletons[key]
+        if key not in _known_keys:
+            raise KeyError(
+                f"Сервис '{key}' не зарегистрирован. "
+                f"Доступные: {', '.join(list_services())}"
+            )
+        # Пытаемся svcs Container (type-keys); fallback — прямой вызов factory.
+        instance: Any
+        try:
+            container = svcs.Container(registry)
+            instance = container.get(key)  # type: ignore[arg-type]
+        except Exception:
+            factory = _factory_for(key)
+            if factory is None:
+                raise KeyError(f"Factory для '{key}' не найдена") from None
+            instance = factory()
+        _singletons[key] = instance
         return instance
 
 
-_fallback = _FallbackRegistry()
+def clear_registry() -> None:
+    """Очищает registry (для тестов/reload)."""
+    with _lock:
+        _known_keys.clear()
+        _singletons.clear()
+        # svcs Registry не имеет публичного clear — пересоздаём.
+        global registry
+        registry = svcs.Registry()
 
 
-def register_factory(key: type, factory: Callable[[], Any]) -> None:
-    """Register service factory."""
-    if SVCS_AVAILABLE:
-        _registry.register_factory(key, factory)
-    _fallback.register(key, factory)
+def _factory_for(key: Hashable) -> Callable[[], Any] | None:
+    """Достаёт factory для key из svcs Registry.
 
-
-def get_service(key: type[T]) -> T:
-    """Get service instance."""
-    if SVCS_AVAILABLE:
-        try:
-            container = svcs.Container(_registry)
-            return container.get(key)
-        except Exception as exc:
-            logger.debug("svcs container error, falling back: %s", exc)
-    return _fallback.get(key)
-
-
-services = _fallback  # Alias for direct access
+    svcs хранит factories в ``_services`` (dict key->Service). API не
+    публично, но стабильно в рамках svcs 25.x. Fallback — None.
+    """
+    services = getattr(registry, "_services", None)
+    if isinstance(services, dict):
+        svc = services.get(key)
+        if svc is not None:
+            return getattr(svc, "factory", None) or getattr(svc, "_factory", None)
+    return None

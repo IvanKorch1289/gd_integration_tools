@@ -4,7 +4,7 @@ from fastapi import HTTPException, Request
 
 from app.core.config.runtime_state import disabled_feature_flags
 from app.core.config.settings import settings
-from app.core.service_registry import ServiceRegistry
+from app.core.svcs_registry import list_services as _list_services
 from app.dsl.commands.action_registry import action_handler_registry
 from app.dsl.commands.registry import route_registry
 from app.infrastructure.clients.storage.redis import redis_client
@@ -103,7 +103,7 @@ class AdminService:
 
     async def list_services(self) -> dict[str, Any]:
         """Возвращает список зарегистрированных сервисов."""
-        return {"services": ServiceRegistry.list_services()}
+        return {"services": _list_services()}
 
     async def list_actions(self) -> dict[str, Any]:
         """Возвращает список зарегистрированных action-команд."""
@@ -168,7 +168,7 @@ class AdminService:
     async def system_info(self) -> dict[str, Any]:
         """Сводная информация о системе."""
         return {
-            "services": ServiceRegistry.list_services(),
+            "services": _list_services(),
             "actions_count": len(action_handler_registry.list_actions()),
             "routes_total": len(route_registry.list_routes()),
             "routes_enabled": len(route_registry.list_enabled_routes()),

@@ -57,12 +57,16 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                     f" ({exc.__class__.__module__}):"
                     f" {exc}"
                 )
+                # IL-CRIT1.4: fix `self.logger` → `logger` (module-level).
+                # `BaseHTTPMiddleware` не предоставляет `self.logger`, и
+                # попадание в этот branch крашилось вторичным AttributeError,
+                # заслоняя первичное исключение от клиента и логов.
                 traceback_str = "".join(
                     traceback.format_exception(
                         type(exc), exc, exc.__traceback__
                     )
                 )
-                self.logger.error(
+                logger.error(
                     "Unhandled exception: %s\n%s",
                     error_message,
                     traceback_str,

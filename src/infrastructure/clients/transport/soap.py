@@ -1,11 +1,15 @@
-"""SOAP-клиент с поддержкой retry и circuit breaker.
+"""DEPRECATED — SOAP-клиент на ``zeep`` (sync + asyncio.to_thread).
 
-Обёртка над ``zeep`` для вызова внешних WSDL-сервисов.
-Поддерживает async-вызовы через ``asyncio.to_thread``.
+Новый код должен использовать async-реализацию на базе httpx + lxml
+(C11, ADR-009): ручной WSDL-парсер + POST XML envelope. См.
+``soap_async.py`` в этом же пакете для scaffold-уровня.
+
+Полное удаление ``zeep`` — в H3.
 """
 
 import asyncio
 import logging
+import warnings
 from typing import Any
 
 from zeep import Client, Settings
@@ -15,6 +19,13 @@ from zeep.exceptions import Fault as ZeepFault
 from app.core.errors import ServiceError
 
 __all__ = ("SoapClient", "get_soap_client")
+
+warnings.warn(
+    "`app.infrastructure.clients.transport.soap` (zeep) deprecated. "
+    "Используйте `soap_async.AsyncSoapClient`. Удаление — H3 Cleanup.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 logger = logging.getLogger(__name__)
 

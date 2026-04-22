@@ -45,12 +45,25 @@ class HybridRAGSearch:
         except ImportError:
             logger.debug("rank_bm25 not installed, hybrid falls to vector-only")
 
+        # IL-CRIT1.3 / ADR-014: sentence-transformers помечен deprecated.
+        # `fastembed` не поставляет CrossEncoder как drop-in замену, поэтому
+        # reranking отключён по умолчанию. Если заказчику нужен rerank —
+        # установить opt-in: `pip install gd_integration_tools[rag-rerank]`
+        # (extra добавляет `sentence-transformers`), либо дождаться IL-AI2
+        # где будет использован BGE reranker через fastembed.
         try:
-            from sentence_transformers import CrossEncoder
+            from sentence_transformers import CrossEncoder  # noqa: PLC0415
+
             self._reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-            logger.info("Cross-encoder reranker loaded")
-        except (ImportError, Exception) as exc:
-            logger.debug("Cross-encoder not available: %s", exc)
+            logger.info("Cross-encoder reranker loaded (opt-in, deprecated path)")
+        except ImportError:
+            logger.debug(
+                "sentence-transformers not installed — reranking disabled. "
+                "Install gd_integration_tools[rag-rerank] for rerank support."
+            )
+            self._reranker = None
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Cross-encoder model load failed: %s", exc)
             self._reranker = None
 
     def _get_rag(self) -> Any:

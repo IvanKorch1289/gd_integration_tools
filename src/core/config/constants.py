@@ -4,7 +4,15 @@ from datetime import timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from aiohttp import ClientError
+# A4 (ADR-009): aiohttp → httpx. В legacy http.py ещё используется
+# aiohttp.ClientError; для совместимости создаём union с httpx-ошибками,
+# чтобы RETRY_EXCEPTIONS обрабатывал оба источника одинаково.
+try:
+    from aiohttp import ClientError as _AioClientError  # type: ignore
+except ImportError:  # aiohttp удалён — используем httpx-only
+    _AioClientError = Exception  # type: ignore
+
+import httpx
 
 __all__ = ("consts", "Constants")
 
@@ -29,7 +37,11 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: tuple[Any] = (ClientError, TimeoutError)
+    RETRY_EXCEPTIONS: tuple[Any, ...] = (
+        _AioClientError,
+        httpx.HTTPError,
+        TimeoutError,
+    )
     CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )
