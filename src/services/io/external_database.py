@@ -1,5 +1,6 @@
+import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Final
 
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -19,6 +20,25 @@ from app.infrastructure.db.session_manager import get_external_session_manager
 from app.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("external_db_service", "ExternalDatabaseService")
+
+
+# IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
+#
+# Даже при том, что `meta.qualified_name` / `param.db_name` / `param.bind_name`
+# приходят из whitelist-enum `ExternalDBObjectChoices`, никогда не следует
+# полагаться на один уровень защиты. Добавлен regex-guard для всех identifier-ов,
+# которые попадают в динамический SQL. Если кто-то случайно / вредительски
+# запишет в meta строку с пробелом / кавычкой / точкой с запятой — `DatabaseError`
+# с понятным сообщением вместо выполнения неожиданного SQL.
+#
+# Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
+# каждый сегмент — обычный SQL identifier без кавычек.
+_IDENT_RE: Final = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+)
+
+# Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
+_BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 @dataclass(slots=True)
@@ -247,6 +267,41 @@ class ExternalDatabaseService:
             message=f"Неподдерживаемый тип внешнего объекта: {meta.object_type}"
         )
 
+    # -- IL-CRIT1.1: identifier validation (defence-in-depth) ---------
+
+    @staticmethod
+    def _validate_identifier(value: str, *, context: str) -> str:
+        """Проверить, что identifier безопасен для интерполяции в SQL.
+
+        Разрешены только обычные SQL identifiers: `name`, `schema.name`,
+        `db.schema.name`. Кавычки, пробелы, спецсимволы — запрещены.
+
+        Используется как defence-in-depth поверх whitelist-enum. Даже если
+        в `ExternalDBObjectChoices` случайно попадёт строка со спецсимволом —
+        код упадёт с понятной ошибкой, а не выполнит неожиданный SQL.
+        """
+        if not isinstance(value, str) or not _IDENT_RE.match(value):
+            raise DatabaseError(
+                message=(
+                    f"Недопустимый SQL identifier в контексте '{context}': "
+                    f"{value!r}. Ожидается name / schema.name / db.schema.name "
+                    "без кавычек и спецсимволов."
+                )
+            )
+        return value
+
+    @staticmethod
+    def _validate_bind_name(value: str, *, context: str) -> str:
+        """Bind-параметр (после ':') — простой identifier без точек."""
+        if not isinstance(value, str) or not _BIND_NAME_RE.match(value):
+            raise DatabaseError(
+                message=(
+                    f"Недопустимый bind-параметр в '{context}': {value!r}. "
+                    "Ожидается [A-Za-z_][A-Za-z0-9_]*."
+                )
+            )
+        return value
+
     async def _execute_query(
         self,
         session: AsyncSession,
@@ -270,7 +325,8 @@ class ExternalDatabaseService:
         """
         Выполняет SELECT * FROM разрешённого view.
         """
-        sql = f"SELECT * FROM {meta.qualified_name}"  # noqa: S608
+        safe_name = self._validate_identifier(meta.qualified_name, context="view")
+        sql = f"SELECT * FROM {safe_name}"  # identifier провалидирован regex-ом
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
 
@@ -285,25 +341,26 @@ class ExternalDatabaseService:
         """
         Выполняет разрешённую функцию.
         """
+        safe_name = self._validate_identifier(meta.qualified_name, context="function")
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 
         if db_type == DatabaseTypeChoices.postgresql:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {meta.qualified_name}({arguments_sql})"  # noqa: S608
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {meta.qualified_name}({arguments_sql}) AS result"
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result"
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
         if db_type == DatabaseTypeChoices.oracle:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {meta.qualified_name}({arguments_sql})"  # noqa: S608
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {meta.qualified_name}({arguments_sql}) AS result FROM dual"  # noqa: S608
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
@@ -326,12 +383,15 @@ class ExternalDatabaseService:
         - преобразован в параметры БД;
         - безопасно передан через bind-параметры.
         """
+        safe_name = self._validate_identifier(
+            meta.qualified_name, context="procedure"
+        )
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 
         if db_type == DatabaseTypeChoices.postgresql:
-            sql = f"CALL {meta.qualified_name}({arguments_sql})"
+            sql = f"CALL {safe_name}({arguments_sql})"
         elif db_type == DatabaseTypeChoices.oracle:
-            sql = f"BEGIN {meta.qualified_name}({arguments_sql}); END;"
+            sql = f"BEGIN {safe_name}({arguments_sql}); END;"
         else:
             raise DatabaseError(
                 message=f"Неподдерживаемый тип БД для procedure: {db_type}"
@@ -354,6 +414,16 @@ class ExternalDatabaseService:
         """
         if not prepared_params:
             return ""
+
+        # IL-CRIT1.1: валидируем идентификаторы, которые попадают в SQL.
+        # `db_name` и `bind_name` берутся из whitelist-enum, но применяем
+        # defence-in-depth regex-проверку.
+        for p in prepared_params:
+            self._validate_bind_name(p.bind_name, context=f"bind_name:{p.db_name}")
+            if meta.parameter_mode == ExternalDBParameterModeChoices.named:
+                # db_name (имя аргумента функции) — тоже identifier.
+                # Используем тот же bind-regex (имя без точек).
+                self._validate_bind_name(p.db_name, context="db_name")
 
         if meta.parameter_mode == ExternalDBParameterModeChoices.named:
             return ", ".join(
