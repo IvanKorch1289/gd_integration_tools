@@ -4,10 +4,13 @@
 обеспечивая консистентность с другими протоколами.
 """
 
-import orjson
+import uuid
 from typing import Any
 
+import orjson
+
 from app.core.config.settings import settings
+from app.core.errors import BaseError
 from app.dsl.commands.registry import action_handler_registry
 from app.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
@@ -20,6 +23,24 @@ from app.entrypoints.grpc.protobuf.orders_pb2_grpc import (
 )
 from app.infrastructure.external_apis.logging_service import grpc_logger
 from app.schemas.invocation import ActionCommandSchema
+
+
+def _safe_error(exc: Exception, correlation_id: str) -> str:
+    """Формирует безопасное сообщение об ошибке для gRPC client (IL-CRIT1.2).
+
+    Политика:
+      * ``BaseError`` (наши domain errors) — выдаём ``exc.message`` как есть:
+        это типизированные, контролируемые сообщения без sensitive data.
+      * Любые другие Exception — generic "Internal server error" +
+        correlation_id для корреляции с server-side logs.
+
+    Никогда не отправляем клиенту ``str(exc)`` / traceback / module-path —
+    это leak информации о внутренней реализации (кроме контролируемых
+    BaseError сообщений).
+    """
+    if isinstance(exc, BaseError):
+        return exc.message
+    return f"Internal server error; ref={correlation_id}"
 
 
 class BaseGRPCServicer:
@@ -71,8 +92,11 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
             )
         except Exception as exc:
-            self.logger.error("CreateOrder ошибка: %s", exc, exc_info=True)
-            return OrderResponse(error=str(exc))
+            cid = uuid.uuid4().hex[:12]
+            self.logger.error(
+                "CreateOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
+            )
+            return OrderResponse(error=_safe_error(exc, cid))
 
     async def GetOrderResult(self, request, context):
         try:
@@ -90,8 +114,11 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
             )
         except Exception as exc:
-            self.logger.error("GetOrderResult ошибка: %s", exc, exc_info=True)
-            return OrderResponse(error=str(exc))
+            cid = uuid.uuid4().hex[:12]
+            self.logger.error(
+                "GetOrderResult ошибка [ref=%s]: %s", cid, exc, exc_info=True
+            )
+            return OrderResponse(error=_safe_error(exc, cid))
 
     async def GetOrder(self, request, context):
         try:
@@ -111,16 +138,22 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 json_data=self._serialize(result),
             )
         except Exception as exc:
-            self.logger.error("GetOrder ошибка: %s", exc, exc_info=True)
-            return OrderDetailResponse(error=str(exc))
+            cid = uuid.uuid4().hex[:12]
+            self.logger.error(
+                "GetOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
+            )
+            return OrderDetailResponse(error=_safe_error(exc, cid))
 
     async def DeleteOrder(self, request, context):
         try:
             await self._dispatch("orders.delete", {"key": "id", "value": request.order_id})
             return OrderDeleteResponse(success=True)
         except Exception as exc:
-            self.logger.error("DeleteOrder ошибка: %s", exc, exc_info=True)
-            return OrderDeleteResponse(success=False, error=str(exc))
+            cid = uuid.uuid4().hex[:12]
+            self.logger.error(
+                "DeleteOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
+            )
+            return OrderDeleteResponse(success=False, error=_safe_error(exc, cid))
 
     async def CreateSKBOrder(self, request, context):
         return await self.CreateOrder(request, context)
@@ -142,8 +175,11 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 json_data=self._serialize(result),
             )
         except Exception as exc:
-            self.logger.error("SendOrderData ошибка: %s", exc, exc_info=True)
-            return OrderResponse(error=str(exc))
+            cid = uuid.uuid4().hex[:12]
+            self.logger.error(
+                "SendOrderData ошибка [ref=%s]: %s", cid, exc, exc_info=True
+            )
+            return OrderResponse(error=_safe_error(exc, cid))
 
 
 def _load_tls_credentials() -> "grpc.ServerCredentials | None":
