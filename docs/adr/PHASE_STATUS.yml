@@ -641,13 +641,13 @@ phases:
   IL-CRIT1:
     title: "P0 Critical fixes — SQL inj / gRPC leak / AI cleanup / OPA pool / Outbox listen / unified dispatch / SOAP async"
     priority: P0
-    status: planned
+    status: done
     owner: "claude"
     adr: []
     depends_on: [IL2]
-    started_at: null
-    finished_at: null
-    commit: null
+    started_at: "2026-04-22"
+    finished_at: "2026-04-22"
+    commit: "0e8ee34"
     artifacts:
       - docs/phases/PHASE_IL-CRIT1.md
       - src/services/io/external_database.py
