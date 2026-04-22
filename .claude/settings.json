@@ -1,13 +1,103 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "language": "russian",
+  "showClearContextOnPlanAccept": true,
+  "disableSkillShellExecution": false,
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(graphify:*)",
+      "Bash(poetry run ruff:*)",
+      "Bash(poetry run mypy:*)",
+      "Bash(poetry run vulture:*)",
+      "Bash(poetry run sphinx-build:*)",
+      "Bash(poetry run sphinx-apidoc:*)",
+      "Bash(poetry run detect-secrets:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(make help)",
+      "Bash(make format)",
+      "Bash(make format-check)",
+      "Bash(make lint)",
+      "Bash(make lint-strict)",
+      "Bash(make type-check)",
+      "Bash(make type-check-strict)",
+      "Bash(make vulture-check)",
+      "Bash(make refurb-check)",
+      "Bash(make deps-check)",
+      "Bash(make deps-check-strict)",
+      "Bash(make secrets-check)",
+      "Bash(make audit)",
+      "Bash(make routes)",
+      "Bash(make actions)",
+      "Bash(make docs)",
+      "Bash(make docs-rebuild)",
+      "Bash(make status)",
+      "Bash(make readiness-check)",
+      "Bash(make progress)",
+      "Bash(make phases)",
+      "Bash(make current-version)",
+      "Bash(make next-version)",
+      "Bash(make profile-memray-stats)",
+      "Bash(make mr-description)",
+      "Skill(plan-execute *)",
+      "Skill(verify-change *)",
+      "Skill(compact-session *)"
+    ],
+    "ask": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(make commit:*)",
+      "Bash(make bump:*)",
+      "Bash(git tag:*)",
+      "Skill(commit-work *)",
+      "Agent(*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*secret*)",
+      "Read(**/*token*)",
+      "Bash(git push:*)",
+      "Bash(make push:*)",
+      "Bash(make git-sync:*)",
+      "Bash(make ship:*)",
+      "Bash(make ship-release:*)",
+      "Bash(make clean-all:*)",
+      "Bash(rm -rf:*)",
+      "Bash(pip install:*)",
+      "Bash(poetry add:*)",
+      "Bash(poetry remove:*)",
+      "Skill(deploy *)",
+      "Skill(release *)"
+    ]
+  },
   "hooks": {
-    "SessionStart": [
+    "PostToolUse": [
       {
-        "matcher": "startup|resume|clear",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/claude_session_start.sh"
+            "command": "./.claude/scripts/post-bash-graphify.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf 'ℹ️ Если завершена крупная задача по плану — выполни /compact\\n'"
           }
         ]
       }

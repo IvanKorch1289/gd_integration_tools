@@ -112,7 +112,7 @@ ruff = "^0.15.10"
 sphinx = "^9.1.0"
 sphinx-autoapi = "^3.3.2"
 pydata-sphinx-theme = "^0.16.0"
-myst-parser = "^4.0.0"
+myst-parser = "^5.0.0"
 schemathesis = "^4.15.2"
 python-semantic-release = "^10.5.3"
 detect-secrets = "^1.5.0"
@@ -121,10 +121,10 @@ vulture = "^2.14"
 pydeps = "^3.0.1"
 bandit = {extras = ["toml"], version = "^1.7.10"}
 
-[[tool.poetry.source]]
-name = "nexus"
-url = "https://nexus.bank.srv/repository/pypi/simple"
-priority = "primary"
+# [[tool.poetry.source]]
+# name = "nexus"
+# url = "https://nexus.bank.srv/repository/pypi/simple"
+# priority = "primary"
 
 [build-system]
 requires = ["poetry-core"]

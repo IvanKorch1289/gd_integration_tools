@@ -62,6 +62,7 @@ build/
 .dockerignore
 .tools/
 .cache/
+
 # docs/ — отслеживаются явно; artifacts собираются в docs/_build/
 docs/_build/
 
@@ -70,3 +71,6 @@ docs/_build/
 .claude/sessions/
 .claude/cache/
 .claude/worktrees/
+
+# Graphify
+graphify-out
