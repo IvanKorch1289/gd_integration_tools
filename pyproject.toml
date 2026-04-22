@@ -19,7 +19,6 @@ python-dotenv = "^1.0.1"
 fastapi-filter = "^2.0.0"
 python-multipart = ">=0.0.18"
 sqladmin = "^0.20.1"
-# A2: passlib/pbkdf2 заменён на argon2-cffi (OWASP recommendation, ADR-003).
 argon2-cffi = "^23.1.0"
 aiohttp = ">=3.12.14"
 aiosmtplib = "^3.0.2"
@@ -30,17 +29,12 @@ fastapi-limiter = "^0.1.6"
 pandas = "^2.2.3"
 openpyxl = "^3.1.5"
 sqlalchemy-continuum = "^1.4.2"
-# A2: psycopg2 (sync, 0 импортов), async-timeout (deprecated, asyncio.timeout),
-# aioboto3 (не используется) удалены.
 zeep = "^4.3.1"
 hvac = "^2.3.0"
 opentelemetry-api = "^1.30.0"
 opentelemetry-sdk = "^1.30.0"
 opentelemetry-instrumentation-fastapi = "^0.51b0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.30.0"
-# IL1.3 (ADR-022): расширение OTEL-инструментации на Kafka/RabbitMQ/MongoDB/gRPC-client.
-# Безопасны при отсутствии соответствующих драйверов — инструментатор no-op'ит
-# (см. _instrument_* в src/infrastructure/observability/otel_auto.py).
 opentelemetry-instrumentation-aiokafka = "^0.51b0"
 opentelemetry-instrumentation-aio-pika = "^0.51b0"
 opentelemetry-instrumentation-pymongo = "^0.51b0"
@@ -75,39 +69,24 @@ presidio-anonymizer = {version = ">=2.2.0", optional = true}
 watchfiles = "^1.0.0"
 structlog = "^24.4.0"
 playwright = {version = ">=1.48.0", optional = true}
-# A2: критичные missing deps — импортируются в runtime, но не были объявлены.
 redis = "^5.0.0"
 aiomqtt = "^2.0.0"
 aioimaplib = "^1.0.0"
 pyyaml = "^6.0.2"
 grpc-interceptor = "^0.15.4"
-# A3: svcs — единый DI-контейнер (ADR-002). service_registry удалён.
 svcs = "^25.1.0"
-# A4: httpx с HTTP/2 — новый дефолт для исходящих HTTP (ADR-009).
-# aiohttp остаётся до H3 для legacy http.py (миграция коннекторов
-# orders/skb/dadata в follow-up); webhook и postman уже на httpx.
 httpx = {extras = ["http2"], version = "^0.28.0"}
-# C9: codec facade — msgpack/cbor/xmltodict.
 msgpack = "^1.1.0"
 cbor2 = "^5.6.0"
 xmltodict = "^0.14.0"
-# D3: RAG stack upgrade (ADR-014). qdrant + fastembed заменяют chromadb +
-# sentence-transformers (ONNX-quantized, ~10x быстрее, ×10 меньше в образе).
 qdrant-client = "^1.12.0"
 fastembed = "^0.4.0"
-# F1 (ADR-006, ADR-007): prod performance stack.
 granian = "^1.6.0"
 msgspec = "^0.18.0"
 uvloop = "^0.21.0"
-# C4 (ADR-010): CloudEvents 1.0 + Schema Registry (JSON + Avro).
 cloudevents = "^1.10.0"
 fastavro = "^1.9.0"
-# C6 (ADR-012): Casbin RBAC/ABAC.
 casbin = "^1.36.0"
-# C11: async SOAP support (legacy zeep помечен deprecated).
-aiohttp-soap = "^0.1.3"
-# F2 (ADR-008): pandas → polars миграция. pandas пока остаётся для
-# legacy call-sites; удаление — в H3 Cleanup.
 polars = "^1.20.0"
 pyarrow = "^17.0.0"
 
@@ -116,17 +95,11 @@ ai = ["langchain-core", "langchain-community", "langgraph", "langfuse", "ollama"
 security = ["presidio-analyzer", "presidio-anonymizer"]
 mcp = ["fastmcp"]
 rpa = ["playwright"]
-# C10 opt-in: IoT (OPC-UA/Modbus/CoAP), Web3 (EVM), Legacy (TN3270/5250),
-# Banking (SWIFT MT, HL7, ISO8583) — объявлены как extras без транзитив-
-# деталей; пользователь сам доинсталирует соответствующие пакеты в своей
-# среде (имена зафиксированы в docs/connectors/).
 iot = []
 web3 = []
 legacy = []
 banking = []
-# I1: enterprise connectors (AS2/EDI X12/SAP/IBM MQ/JMS/NATS/SFTP).
 enterprise = []
-# I2: data lake (Iceberg/Delta), Temporal workflows, Apache Beam.
 datalake = []
 temporal = []
 beam = []
@@ -138,7 +111,6 @@ grpcio-tools = "^1.70.0"
 ruff = "^0.15.10"
 sphinx = "^9.1.0"
 sphinx-autoapi = "^3.3.2"
-# H1: pydata-sphinx-theme заменяет alabaster — современный tech-look.
 pydata-sphinx-theme = "^0.16.0"
 myst-parser = "^4.0.0"
 schemathesis = "^4.15.2"
@@ -192,11 +164,10 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Добавлен префикс "S" для активации проверок безопасности (аналог Bandit)
 select = ["E", "F", "W", "I", "S"]
 ignore = [
     "E501", 
-    "S104"  # Игнорируем S104 (Possible binding to all interfaces), так как uvicorn на 0.0.0.0 — это норма для Docker
+    "S104"
 ]
 
 [tool.ruff.lint.isort]
