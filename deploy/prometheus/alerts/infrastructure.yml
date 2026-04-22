@@ -1,0 +1,147 @@
+# Prometheus alert rules — Infrastructure Health (фаза IL-OBS1, ADR-032).
+#
+# Метрики `infra_client_*` добавляются фазой IL1.2; если Prometheus ещё
+# не собирает их — эти rules не сработают (тишина, а не ложные alert-ы).
+# Rules, ссылающиеся на существующие dsl_* / connection_pool_utilization
+# метрики, активны сразу.
+#
+# Файл предназначен для автоматической загрузки Prometheus через
+# `rule_files:` секцию или через ConfigMap в Kubernetes.
+
+groups:
+  - name: infrastructure
+    interval: 30s
+    rules:
+      # ----------------------------------------------------------------
+      # 1. Circuit breaker OPEN — downstream клиент полностью отключён.
+      # ----------------------------------------------------------------
+      - alert: ClientCircuitOpen
+        expr: infra_client_circuit_state == 2
+        for: 1m
+        labels:
+          severity: critical
+          team: integration
+          component: resilience
+        annotations:
+          summary: "Circuit breaker OPEN: {{ $labels.client }}"
+          description: >-
+            Client {{ $labels.client }} circuit has been OPEN for >1 minute.
+            Downstream service likely degraded. Check error rate, latency,
+            and upstream health before manual reset.
+          runbook_url: "https://runbooks.example.com/infra/circuit-open"
+
+      # ----------------------------------------------------------------
+      # 2. Pool saturation — >85% active / max.
+      # ----------------------------------------------------------------
+      - alert: ClientPoolSaturated
+        expr: |
+          sum by (client) (infra_client_pool_size{state="active"})
+          /
+          clamp_min(sum by (client) (infra_client_pool_size{state="max"}), 1)
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+          component: resilience
+        annotations:
+          summary: "Client pool saturated: {{ $labels.client }} >85%"
+          description: >-
+            {{ $labels.client }} connection pool at {{ $value | humanizePercentage }}
+            for >5 minutes. Consider increasing pool size or investigating
+            slow downstream.
+
+      # ----------------------------------------------------------------
+      # 3. Client error rate > 1%.
+      # ----------------------------------------------------------------
+      - alert: HighClientErrorRate
+        expr: |
+          sum by (client) (rate(infra_client_requests_total{outcome="error"}[5m]))
+          /
+          clamp_min(sum by (client) (rate(infra_client_requests_total[5m])), 0.001)
+          > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+          component: resilience
+        annotations:
+          summary: "High error rate for client {{ $labels.client }}"
+          description: >-
+            {{ $labels.client }} error ratio {{ $value | humanizePercentage }}
+            за последние 5 минут (threshold 1%). Проверить логи клиента
+            и статус downstream endpoint-а.
+
+      # ----------------------------------------------------------------
+      # 4. P99 latency > 2s.
+      # ----------------------------------------------------------------
+      - alert: ClientLatencyP99High
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le, client) (rate(infra_client_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: integration
+          component: latency
+        annotations:
+          summary: "Client {{ $labels.client }} P99 latency >2s"
+          description: >-
+            P99 latency = {{ $value }}s for {{ $labels.client }} за 10 минут.
+            Проверить downstream health, network, queue backlog.
+
+      # ----------------------------------------------------------------
+      # 5. Reconnect storm — частые переподключения.
+      # ----------------------------------------------------------------
+      - alert: ClientReconnectStorm
+        expr: |
+          sum by (client) (rate(infra_client_reconnect_attempts_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: integration
+          component: resilience
+        annotations:
+          summary: "Reconnect storm: {{ $labels.client }}"
+          description: >-
+            Client {{ $labels.client }} reconnect rate {{ $value }} / sec
+            за 5 минут. Нестабильное соединение с downstream.
+
+      # ----------------------------------------------------------------
+      # 6. DSL pipeline error budget burn — 2x burn rate > 10%.
+      # ----------------------------------------------------------------
+      - alert: DslPipelineErrorBudgetBurn
+        expr: |
+          100 * sum(rate(dsl_pipeline_execution_total{status="error"}[15m]))
+          /
+          clamp_min(sum(rate(dsl_pipeline_execution_total[15m])), 0.001)
+          > 10
+        for: 15m
+        labels:
+          severity: critical
+          team: integration
+          component: dsl
+        annotations:
+          summary: "DSL pipeline error rate >10% — error budget burning"
+          description: >-
+            Error rate {{ $value | humanizePercentage }} за 15 минут.
+            Fast burn of monthly error budget. Проверить проблемные route_id
+            и логи DSL engine.
+
+      # ----------------------------------------------------------------
+      # 7. Connection pool exhausted (legacy db_pool / connection_pool_utilization).
+      # ----------------------------------------------------------------
+      - alert: ConnectionPoolExhausted
+        expr: connection_pool_utilization >= 95
+        for: 2m
+        labels:
+          severity: critical
+          team: integration
+          component: database
+        annotations:
+          summary: "Connection pool {{ $labels.pool_name }} exhausted"
+          description: >-
+            Pool utilization {{ $value }}% for {{ $labels.pool_name }}/{{ $labels.metric }}.
+            Requests queuing or being rejected. Increase pool_size or investigate
+            long-running queries.

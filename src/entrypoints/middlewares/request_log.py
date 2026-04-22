@@ -79,12 +79,20 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         """
         Получение и логирование тела запроса с ограничением по размеру.
 
+        Сначала пытается взять cached body из ``request.state.body`` (выставлен
+        ``RequestBodyCacheMiddleware`` — см. ADR-032 / IL-OBS1). Если кеша
+        нет — graceful fallback на ``await request.body()``.
+
         :param request: Входящий HTTP-запрос.
         :return: Тело запроса в виде байтов.
         :raises UnicodeDecodeError: Если тело запроса содержит бинарные данные и не может быть декодировано.
         """
         try:
-            body = await request.body()
+            cached = getattr(request.state, "body", None)
+            if isinstance(cached, (bytes, bytearray)):
+                body = bytes(cached)
+            else:
+                body = await request.body()
             if len(body) > self.max_body_size:
                 return "<тело запроса слишком велико для логирования>".encode("utf-8")
 
