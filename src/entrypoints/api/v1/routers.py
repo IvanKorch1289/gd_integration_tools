@@ -8,6 +8,9 @@ def get_v1_routers() -> APIRouter:
     from app.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
+    from app.entrypoints.api.v1.endpoints.admin_workflows import (
+        router as admin_workflows_router,
+    )
     from app.entrypoints.api.v1.endpoints.dadata import router as dadata_router
     from app.entrypoints.api.v1.endpoints.dsl_console import router as dsl_console_router
     from app.entrypoints.api.v1.endpoints.files import router as files_router
@@ -56,6 +59,12 @@ def get_v1_routers() -> APIRouter:
         admin_connectors_router,
         prefix="/admin",
         tags=["Admin · Infrastructure"],
+    )
+    # IL-WF1.5: Admin-endpoints для durable workflow instances.
+    api_router_v1.include_router(
+        admin_workflows_router,
+        prefix="/admin",
+        tags=["Admin · Workflows"],
     )
     api_router_v1.include_router(
         dsl_console_router, tags=["DSL Console"]
