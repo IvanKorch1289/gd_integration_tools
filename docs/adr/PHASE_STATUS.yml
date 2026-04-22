@@ -3,18 +3,19 @@
 # После каждого коммита hook tools/update_progress.py синхронизирует с docs/PROGRESS.md.
 
 meta:
-  total_phases: 46
+  total_phases: 53
   closed: 41
   in_progress: 1
-  planned: 5
-  # IL2 — в работе (1 chunk закоммичен 880818e).
-  # IL3 + IL-DB1 + IL-BIZ1 + IL-AI1 — planned (все согласованы через AskUserQuestion
-  # 2026-04-21). Каждая открывает самостоятельный domain layer:
-  #   IL2   — инфра-клиенты (transport/messaging/storage).
-  #   IL3   — advanced resilience + observability artifacts.
-  #   IL-DB1 — DB layer (FK/JSONB/N+1 + Query/Bulk/Transaction DSL).
-  #   IL-BIZ1 — business logic (multi-tenant cache + saga + async export + PII).
-  #   IL-AI1 — AI (cost metrics + streaming LLM + cost budget DSL).
+  planned: 11
+  # Согласовано 2026-04-21 через серию AskUserQuestion (13 слоёв ревью).
+  # Дополнительно 7 новых фаз поверх IL2/IL3/IL-DB1/IL-BIZ1/IL-AI1:
+  #   IL-CRIT1   — P0 critical fixes (SQL inj, gRPC leak, AI fixes, OPA pool, Outbox LISTEN/NOTIFY, unified dispatch, SOAP async).
+  #   IL-SEC2    — envelope encryption + immutable audit + tenant-scoped Casbin (ADR-028).
+  #   IL-BIZ2    — Rules Engine + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing (ADR-029).
+  #   IL-AI2     — LiteLLM + Langfuse + tenacity + Redis BM25 + ST cleanup (ADR-030).
+  #   IL-WF1     — Prefect removal + DSL durable workflows (ADR-031).
+  #   IL-OBS1    — OTEL middleware + body cache + Grafana + Alert rules (ADR-032).
+  #   IL-DOCS1   — H1 6 missing docs + FE + ADR cross-links.
   branch: "claude/production-readiness-review-N3J2h"
   target: "master"
   completion_date: "2026-04-21"
@@ -629,6 +630,146 @@ phases:
       - src/entrypoints/middlewares/load_shedding.py
       - deploy/grafana/dashboards/infrastructure_health.json
       - deploy/prometheus/alerts/infrastructure.yml
+
+  # === IL-CRIT1 P0 Critical fixes (production blockers) ===
+  # Согласовано 2026-04-21 (AskUserQuestion P0):
+  #   * SQL Injection fix в external_database.py (L264,273,292-307) + gRPC leak fix.
+  #   * AI: duplicate return + sentence-transformers drop + rag.ingest() params.
+  #   * Middleware self.logger bug + OPA singleton + Outbox LISTEN/NOTIFY (pg_notify).
+  #   * BaseEntrypoint.dispatch() unified + zeep → aiohttp-soap.
+
+  IL-CRIT1:
+    title: "P0 Critical fixes — SQL inj / gRPC leak / AI cleanup / OPA pool / Outbox listen / unified dispatch / SOAP async"
+    priority: P0
+    status: planned
+    owner: "claude"
+    adr: []
+    depends_on: [IL2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-CRIT1.md
+      - src/services/io/external_database.py
+      - src/services/ai/ai_providers.py
+      - src/services/ai/rag_service.py
+      - src/infrastructure/ai/semantic_cache.py
+      - src/entrypoints/middlewares/exception_handler.py
+      - src/infrastructure/policy/opa.py
+      - src/infrastructure/eventing/outbox_listener.py
+      - src/entrypoints/base.py
+      - src/entrypoints/soap/soap_handler.py
+
+  IL-SEC2:
+    title: "Security hardening — envelope encryption Vault Transit + immutable HMAC audit + tenant-scoped Casbin"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-028]
+    depends_on: [IL-CRIT1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-SEC2.md
+      - docs/adr/ADR-028-security-hardening.md
+      - src/core/security/vault_cipher.py
+      - src/infrastructure/observability/immutable_audit.py
+      - src/infrastructure/policy/casbin_tenant_scoped.py
+
+  IL-BIZ2:
+    title: "Business ESB stack — Rules Engine + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-029]
+    depends_on: [IL-SEC2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-BIZ2.md
+      - docs/adr/ADR-029-esb-business-stack.md
+      - src/services/rules/engine.py
+      - src/infrastructure/command_bus/__init__.py
+      - src/infrastructure/command_bus/event_bus.py
+      - src/services/features/store.py
+      - src/services/integrations/base_external.py
+      - src/core/errors.py
+
+  IL-AI2:
+    title: "AI stack — LiteLLM unified + Langfuse traces + tenacity retry + Redis BM25 + sentence-transformers cleanup"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-030]
+    depends_on: [IL-AI1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-AI2.md
+      - docs/adr/ADR-030-ai-unified.md
+      - src/services/ai/litellm_provider.py
+      - src/infrastructure/ai/langfuse_observer.py
+      - src/infrastructure/ai/redis_bm25.py
+
+  IL-WF1:
+    title: "Prefect removal + DSL durable workflows (pause/retry/durable/multi-thread)"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-031]
+    depends_on: [IL-BIZ2]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-WF1.md
+      - docs/adr/ADR-031-dsl-durable-workflows.md
+      - src/infrastructure/workflow/durable_runner.py
+      - src/infrastructure/workflow/state_store.py
+      - src/dsl/engine/processors/durable_workflow.py
+      - src/infrastructure/database/models/workflow_instance.py
+
+  IL-OBS1:
+    title: "Observability automation — OTEL middleware + body cache + exception consolidation + Grafana + Alert rules"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: [ADR-032]
+    depends_on: [IL-CRIT1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-OBS1.md
+      - docs/adr/ADR-032-observability-automation.md
+      - src/entrypoints/middlewares/otel_middleware.py
+      - src/entrypoints/middlewares/request_body_cache.py
+      - deploy/grafana/dashboards/infrastructure_health.json
+      - deploy/prometheus/alerts/infrastructure.yml
+
+  IL-DOCS1:
+    title: "Docs + Frontend — 6 missing H1 docs + FE boilerplate + authenticator + cache_data + ADR cross-links"
+    priority: P1
+    status: planned
+    owner: "claude"
+    adr: []
+    depends_on: [IL-OBS1]
+    started_at: null
+    finished_at: null
+    commit: null
+    artifacts:
+      - docs/phases/PHASE_IL-DOCS1.md
+      - docs/RUNBOOK.md
+      - docs/SECURITY.md
+      - docs/SCALING.md
+      - docs/ROLLOUT.md
+      - docs/TROUBLESHOOTING.md
+      - docs/CONTRIBUTING.md
+      - src/entrypoints/streamlit_app/lib/ui_helpers.py
+      - src/entrypoints/streamlit_app/lib/auth.py
 
   # === Business Logic Layer — consistency + scalability + compliance ===
   # Согласовано 2026-04-21 (P0+P1 из анализа):

@@ -105,10 +105,17 @@ pre-commit hook `tools/update_progress.py` на основании commit-messag
 - [ ] IL-DB1 DB Layer доводка — FK indexes + JSONB + selectinload N+1 fix + Query/Bulk/Transaction DB DSL — статус: planned — commit: — — ADR: ADR-025
 - [ ] IL-BIZ1 Business Logic Layer — multi-tenant cache + Saga + async streaming export + PII audit — статус: planned — commit: — — ADR: ADR-026
 - [ ] IL-AI1 AI Layer — cost observability + streaming LLM (SSE) + Cost Budget DSL — статус: planned — commit: — — ADR: ADR-027
+- [ ] IL-CRIT1 P0 Critical fixes — SQL injection / gRPC leak / AI cleanup / OPA pool / Outbox listen / unified dispatch / SOAP async — статус: planned — commit: — — ADR: —
+- [ ] IL-SEC2 Security hardening — envelope encryption + immutable audit + tenant-scoped Casbin — статус: planned — commit: — — ADR: ADR-028
+- [ ] IL-BIZ2 Business ESB stack — Rules + CommandBus + Feature Store + BaseExternalAPI + ServiceError typing — статус: planned — commit: — — ADR: ADR-029
+- [ ] IL-AI2 AI stack — LiteLLM + Langfuse + tenacity + Redis BM25 + ST cleanup — статус: planned — commit: — — ADR: ADR-030
+- [ ] IL-WF1 Prefect removal + DSL durable workflows — статус: planned — commit: — — ADR: ADR-031
+- [ ] IL-OBS1 Observability automation — OTEL middleware + body cache + Grafana + alert rules — статус: planned — commit: — — ADR: ADR-032
+- [ ] IL-DOCS1 Docs + Frontend — 6 H1 docs + FE boilerplate + authenticator + cache_data — статус: planned — commit: — — ADR: —
 
 ---
 
-**Всего фаз:** 46. **Закрыто:** 41. **В работе:** 1 (IL2). **Запланировано:** 4 (IL3, IL-DB1, IL-BIZ1, IL-AI1).
+**Всего фаз:** 53. **Закрыто:** 41. **В работе:** 1 (IL2). **Запланировано:** 11 (IL3, IL-DB1, IL-BIZ1, IL-AI1, IL-CRIT1, IL-SEC2, IL-BIZ2, IL-AI2, IL-WF1, IL-OBS1, IL-DOCS1).
 
 Initial closure (40/40) зафиксирована 2026-04-21; дальнейшая production-доводка
 добавляется как новые IL-фазы по мере выполнения. Каждая IL-фаза — самостоятельный
