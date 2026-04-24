@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from app.infrastructure.workflow.executor import WorkflowSpec
     from pydantic import BaseModel
 
 __all__ = (
@@ -81,9 +82,17 @@ class WorkflowRegistry:
     def __init__(self) -> None:
         self._descriptors: dict[str, WorkflowDescriptor] = {}
         self._route_ids: dict[str, str] = {}
+        # IL-WF1.3 (Wave 3.2): route_id → WorkflowSpec для DSLStepExecutor.
+        # Позволяет runner'у hot-reload spec без перезапуска worker-а.
+        self._specs: dict[str, "WorkflowSpec"] = {}
         self._lock = threading.Lock()
 
-    def register(self, descriptor: WorkflowDescriptor, route_id: str) -> None:
+    def register(
+        self,
+        descriptor: WorkflowDescriptor,
+        route_id: str,
+        spec: "WorkflowSpec | None" = None,
+    ) -> None:
         """Регистрирует workflow в реестре.
 
         Args:
@@ -91,6 +100,9 @@ class WorkflowRegistry:
             route_id: DSL ``route_id`` — идентификатор pipeline-spec'а
                 в :class:`RouteRegistry`, под которым выполняется
                 workflow (в IL-WF1.3 это будет ``f"workflow:{name}"``).
+            spec: Опциональный :class:`WorkflowSpec` для
+                :class:`DSLStepExecutor`. Эквивалент ручного вызова
+                :meth:`register_spec` сразу после ``register``.
 
         Raises:
             ValueError: Если workflow с таким именем уже зарегистрирован.
@@ -108,12 +120,32 @@ class WorkflowRegistry:
                 )
             self._descriptors[descriptor.name] = descriptor
             self._route_ids[descriptor.name] = route_id
+            if spec is not None:
+                self._specs[route_id] = spec
 
     def unregister(self, name: str) -> None:
         """Удаляет workflow из реестра (используется в hot-reload)."""
         with self._lock:
+            route_id = self._route_ids.pop(name, None)
             self._descriptors.pop(name, None)
-            self._route_ids.pop(name, None)
+            if route_id is not None:
+                self._specs.pop(route_id, None)
+
+    def register_spec(self, route_id: str, spec: "WorkflowSpec") -> None:
+        """Кладёт актуальный :class:`WorkflowSpec` под ``route_id``.
+
+        Вызывается из ``WorkflowBuilder`` в пайплайне регистрации роутов
+        либо из кода, который собирает spec декларативно. Replace-semantics:
+        повторная регистрация перезаписывает spec (это и есть hot-reload).
+        """
+        if not route_id:
+            raise ValueError("route_id не может быть пустым")
+        with self._lock:
+            self._specs[route_id] = spec
+
+    def get_spec(self, route_id: str) -> "WorkflowSpec | None":
+        """Возвращает :class:`WorkflowSpec` по ``route_id`` или ``None``."""
+        return self._specs.get(route_id)
 
     def get(self, name: str) -> WorkflowDescriptor | None:
         """Возвращает descriptor по имени или ``None``."""
@@ -137,6 +169,7 @@ class WorkflowRegistry:
         with self._lock:
             self._descriptors.clear()
             self._route_ids.clear()
+            self._specs.clear()
 
     def __contains__(self, name: str) -> bool:
         return name in self._descriptors

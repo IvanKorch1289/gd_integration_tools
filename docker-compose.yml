@@ -12,6 +12,23 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  workflow-worker:
+    build: .
+    command: ["python", "-m", "app.workflows.worker", "run"]
+    env_file:
+      - .env
+    environment:
+      WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
+      SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-30}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${WORKER_COUNT:-4}
+
   postgres:
     image: postgres:16-alpine
     environment:

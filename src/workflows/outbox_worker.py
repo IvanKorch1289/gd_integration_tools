@@ -41,17 +41,20 @@ async def _publish(topic: str, payload: dict[str, Any], headers: dict[str, Any])
 
     match protocol:
         case "kafka":
-            from app.infrastructure.clients.messaging.kafka import kafka_client
-            await kafka_client.publish(dest, payload, headers=headers)
+            from app.infrastructure.clients.messaging.stream import get_stream_client
+            await get_stream_client().publish_to_kafka(
+                topic=dest, message=payload, headers=headers,
+            )
         case "rabbit":
-            # aio-pika выносим в отдельный клиент по мере надобности.
-            from app.infrastructure.clients.messaging.event_bus import event_bus
-            await event_bus.publish(dest, payload, headers=headers)
+            from app.infrastructure.clients.messaging.stream import get_stream_client
+            await get_stream_client().publish_to_rabbit(
+                queue=dest, message=payload,
+            )
         case "redis":
-            from app.infrastructure.clients.storage.redis import redis_client
-            import orjson
-            raw = getattr(redis_client, "_raw_client", None) or redis_client
-            await raw.xadd(dest, {"payload": orjson.dumps(payload).decode()})
+            from app.infrastructure.clients.messaging.stream import get_stream_client
+            await get_stream_client().publish_to_redis(
+                stream=dest, message=payload, headers=headers,
+            )
         case _:
             raise ValueError(f"Неизвестный protocol '{protocol}' в topic '{topic}'")
 

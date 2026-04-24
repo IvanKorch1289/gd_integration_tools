@@ -25,11 +25,14 @@ CLI (Typer), стиль совпадает с ``manage.py``::
   реализации печатает hint как drain-ить работающий pod через K8s (SIGTERM
   handler включает drain автоматически).
 
-NB: step executor, который runner вызывает для выполнения одного шага,
-реализуется в IL-WF1.3 (``DurableWorkflowProcessor`` + DSL-based runner). Пока
-его нет — подключаем :class:`NoOpStepExecutor`, который просто логирует и
-возвращает ``DONE``. Это позволяет проверить lifecycle worker-а end-to-end
-(lock → read events → execute → append events → unlock), не дожидаясь WF1.3.
+Wave 3.2 / IL-WF1.3: runner выполняет шаги через :class:`DSLStepExecutor`,
+который загружает :class:`WorkflowSpec` из :data:`workflow_registry` по
+``instance.route_id``. Hot-reload spec работает «из коробки» —
+``spec_loader`` пересматривает реестр на каждом шаге.
+
+Legacy :class:`NoOpStepExecutor` оставлен как dev-only fallback и
+активируется переменной ``WORKFLOW_WORKER_EXECUTOR=noop`` (для smoke-проверок
+lifecycle без реальных spec'ов).
 """
 
 from __future__ import annotations
@@ -42,11 +45,11 @@ import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 import typer
 
-__all__ = ("app", "NoOpStepExecutor", "main")
+__all__ = ("app", "NoOpStepExecutor", "main", "build_spec_loader")
 
 _logger = logging.getLogger("workflow.worker")
 
@@ -57,22 +60,52 @@ app = typer.Typer(
 )
 
 
-# ── Временный stub-executor (будет заменён в IL-WF1.3) ────────────────
+# ── Executors: prod (DSL) + dev-only (NoOp) ──────────────────────────
 
 
-# TODO(IL-WF1.3): заменить NoOpStepExecutor на DSL-based executor
-# (``DurableWorkflowProcessor`` + ``RouteRegistry`` lookup). После закрытия
-# IL-WF1.3 следующий чанк (IL-WF1.5) прокинет реальный executor в worker.
+def build_spec_loader() -> Callable[[str], Any]:
+    """Фабрика ``SpecLoader`` для :class:`DSLStepExecutor`.
+
+    Spec ищется в :data:`workflow_registry`. ``KeyError`` (unknown route_id)
+    конвертируется executor'ом в ``StepOutcome.FAILED`` — runner увидит
+    событие ``step_failed`` с причиной ``spec_not_found``.
+    """
+    from app.workflows.registry import workflow_registry
+
+    def _loader(route_id: str) -> Any:
+        spec = workflow_registry.get_spec(route_id)
+        if spec is None:
+            raise KeyError(route_id)
+        return spec
+
+    return _loader
+
+
+def _resolve_executor() -> Any:
+    """Выбирает step-executor по переменной ``WORKFLOW_WORKER_EXECUTOR``.
+
+    По умолчанию — DSL executor (prod path). Значение ``noop`` — fallback
+    для smoke-lifecycle-проверок без spec'ов.
+    """
+    mode = os.environ.get("WORKFLOW_WORKER_EXECUTOR", "dsl").lower()
+    if mode == "noop":
+        _logger.warning(
+            "WORKFLOW_WORKER_EXECUTOR=noop — NoOpStepExecutor active (dev/smoke)"
+        )
+        return NoOpStepExecutor()
+    from app.infrastructure.workflow.executor import DSLStepExecutor
+
+    return DSLStepExecutor(spec_loader=build_spec_loader())
+
+
 class NoOpStepExecutor:
-    """**TEMPORARY** step executor — заглушка до завершения IL-WF1.3.
+    """Dev-only step executor (smoke-lifecycle без spec'ов).
 
     Логирует факт вызова и возвращает ``StepResult(outcome=DONE, events=[])``.
-    Это переводит инстанс в ``succeeded`` и даёт worker-у пройти полный
-    lifecycle (lock → replay → execute → record → unlock), чтобы можно было
-    проверить все механизмы IL-WF1.2 в реальном окружении.
-
-    **Не предназначен для production** — в prod IL-WF1.5 будет подключён
-    ``DslStepExecutor``.
+    Нужен только чтобы проверить lifecycle worker-а (lock → replay →
+    execute → record → unlock) в окружениях без регистрированных workflow
+    spec-ов. В prod-пути замещён :class:`DSLStepExecutor` — активация
+    через ``WORKFLOW_WORKER_EXECUTOR=noop``.
     """
 
     async def execute_next(
@@ -86,7 +119,7 @@ class NoOpStepExecutor:
 
         _logger.warning(
             "NoOpStepExecutor.execute_next called for workflow %s — "
-            "returning DONE (TEMPORARY behaviour, replaced in IL-WF1.3)",
+            "returning DONE (dev-only fallback)",
             getattr(instance, "id", "<unknown>"),
         )
         return StepResult(outcome=StepOutcome.DONE, events=[], output_state=None)
@@ -110,9 +143,10 @@ async def _bootstrap() -> None:
     Аналогично ``manage.py._bootstrap``, но дополнительно стартует
     ``ConnectorRegistry`` — worker-у нужны живые БД-подключения.
     """
-    from app.core.service_setup import register_all_services
     from app.dsl.commands.setup import register_action_handlers
     from app.dsl.routes import register_dsl_routes
+
+    from src.infrastructure.application.service_setup import register_all_services
 
     register_all_services()
     register_action_handlers()
@@ -195,7 +229,7 @@ async def _run_worker(
 
     runner = DurableWorkflowRunner(
         config=config,
-        executor=NoOpStepExecutor(),  # TODO(IL-WF1.3): заменить реальным DSL-executor
+        executor=_resolve_executor(),
         listener_dsn=listener_dsn,
     )
 
