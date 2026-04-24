@@ -108,12 +108,67 @@ def run_all(
 
 
 @app.command()
-def migrate(message: str = typer.Option("", help="Migration message")):
-    """Применить миграции (alembic upgrade head)."""
-    if message:
-        subprocess.run([sys.executable, "-m", "alembic", "revision", "--autogenerate", "-m", message], check=True)
-    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
+def migrate():
+    """Применить все накопившиеся миграции (alembic upgrade head)."""
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"], check=True
+    )
     typer.echo("Migrations applied.")
+
+
+@app.command("makemigration")
+def make_migration(
+    message: str = typer.Argument(..., help="Описание миграции (станет частью имени файла)"),
+    autogenerate: bool = typer.Option(
+        True,
+        "--autogenerate/--empty",
+        help="Авто-детект изменений моделей (по умолчанию) или создать пустую миграцию",
+    ),
+):
+    """Создать новую alembic-миграцию.
+
+    Примеры::
+
+        uv run python manage.py makemigration "add orders table"
+        uv run python manage.py makemigration "manual data backfill" --empty
+    """
+    cmd = [sys.executable, "-m", "alembic", "revision"]
+    if autogenerate:
+        cmd.append("--autogenerate")
+    cmd.extend(["-m", message])
+    subprocess.run(cmd, check=True)
+    typer.echo(
+        "Migration created. Проверь сгенерированный файл в "
+        "src/infrastructure/database/migrations/versions/ перед `migrate`."
+    )
+
+
+@app.command("downgrade")
+def downgrade(
+    target: str = typer.Argument("-1", help="Revision id или шаг (-1, -2, base)"),
+):
+    """Откатить миграцию к указанной ревизии (по умолчанию на одну назад)."""
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", target], check=True
+    )
+    typer.echo(f"Downgraded to {target}.")
+
+
+@app.command("migration-history")
+def migration_history(
+    verbose: bool = typer.Option(False, "-v", help="Развёрнутая история"),
+):
+    """Показать историю миграций (alembic history)."""
+    cmd = [sys.executable, "-m", "alembic", "history"]
+    if verbose:
+        cmd.append("-v")
+    subprocess.run(cmd, check=True)
+
+
+@app.command("migration-current")
+def migration_current():
+    """Показать текущую ревизию БД (alembic current)."""
+    subprocess.run([sys.executable, "-m", "alembic", "current"], check=True)
 
 
 # ────────────── Introspection ──────────────
@@ -150,12 +205,13 @@ def actions():
 def services():
     """Список зарегистрированных сервисов."""
     _bootstrap()
-    from app.core.service_registry import service_registry
+    from src.core.svcs_registry import list_services
 
-    for name in sorted(service_registry.list_services()):
+    names = sorted(list_services())
+    for name in names:
         typer.echo(f"  {name}")
 
-    typer.echo(f"\nTotal: {len(service_registry.list_services())} services")
+    typer.echo(f"\nTotal: {len(names)} services")
 
 
 @app.command()
@@ -173,7 +229,7 @@ def health():
             checks["redis"] = False
 
         try:
-            from app.infrastructure.db.database import db_initializer
+            from app.infrastructure.database.database import db_initializer
             checks["database"] = await db_initializer.check_connection()
         except Exception:
             checks["database"] = False
@@ -216,7 +272,7 @@ def scaffold_service(name: str):
     class_name = name.capitalize() + "Service"
     content = f'''"""Сервис {name} — автогенерация через manage.py scaffold."""
 
-from app.core.decorators.singleton import singleton
+from src.infrastructure.decorators.singleton import singleton
 
 __all__ = ("{class_name}", "get_{name}_service")
 
@@ -244,7 +300,7 @@ def get_{name}_service() -> {class_name}:
 '''
     service_file.write_text(content)
     typer.echo(f"Created: {service_file}")
-    typer.echo(f"Next: register in src/core/service_setup.py and src/dsl/commands/setup.py")
+    typer.echo("Next: register in src/core/service_setup.py and src/dsl/commands/setup.py")
 
 
 @scaffold_app.command("processor")
@@ -278,7 +334,7 @@ class {class_name}(BaseProcessor):
 '''
     file_path.write_text(content)
     typer.echo(f"Created: {file_path}")
-    typer.echo(f"Next: add to processors/__init__.py and builder.py")
+    typer.echo("Next: add to processors/__init__.py and builder.py")
 
 
 @scaffold_app.command("route")
@@ -298,6 +354,47 @@ processors:
 """
     file_path.write_text(content)
     typer.echo(f"Created: {file_path}")
+
+
+# ────────────── Schema Import ──────────────
+
+
+import_schema_app = typer.Typer(help="Импорт OpenAPI/Postman → Pydantic + DSL-routes")
+app.add_typer(import_schema_app, name="import-schema")
+
+
+@import_schema_app.command("openapi")
+def import_schema_openapi(
+    source: str = typer.Argument(..., help="Путь к OpenAPI 3.x YAML/JSON"),
+    models_out: str = typer.Option(None, "--models-out", help="Путь для Pydantic-моделей"),
+    routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
+):
+    """Генерация Pydantic + DSL-routes из OpenAPI-спеки."""
+    from app.tools.schema_importer import SchemaImporter
+
+    importer = SchemaImporter()
+    models_path, routes_path = importer.from_openapi(
+        source, models_out=models_out, routes_out=routes_out
+    )
+    typer.echo(f"Models: {models_path}")
+    typer.echo(f"Routes: {routes_path}")
+
+
+@import_schema_app.command("postman")
+def import_schema_postman(
+    source: str = typer.Argument(..., help="Путь к Postman Collection v2.1 JSON"),
+    models_out: str = typer.Option(None, "--models-out", help="Путь для Pydantic-моделей"),
+    routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
+):
+    """Генерация Pydantic + DSL-routes из Postman-коллекции."""
+    from app.tools.schema_importer import SchemaImporter
+
+    importer = SchemaImporter()
+    models_path, routes_path = importer.from_postman(
+        source, models_out=models_out, routes_out=routes_out
+    )
+    typer.echo(f"Models: {models_path}")
+    typer.echo(f"Routes: {routes_path}")
 
 
 # ────────────── Validation ──────────────
@@ -329,9 +426,10 @@ def validate(route_id: str):
 
 def _bootstrap():
     """Минимальная инициализация для introspection команд."""
-    from app.core.service_setup import register_all_services
     from app.dsl.commands.setup import register_action_handlers
     from app.dsl.routes import register_dsl_routes
+
+    from src.infrastructure.application.service_setup import register_all_services
 
     register_all_services()
     register_action_handlers()
