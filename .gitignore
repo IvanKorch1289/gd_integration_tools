@@ -71,6 +71,66 @@ docs/_build/
 .claude/sessions/
 .claude/cache/
 .claude/worktrees/
+.claude/projects/
+.claude/memory/
+vault/
 
 # Graphify
 graphify-out
+
+# Editor swap / backup
+*.swp
+*.swo
+*.bak
+*.orig
+*~
+.#*
+\#*\#
+
+# Profiling artifacts (make profile-memray / mprof / pyspy)
+*.prof
+*.memray
+*.mprof
+*.pstats
+prof/
+perf.data*
+speedscope-*.json
+
+# Секреты и приватные ключи
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+!*.pub.pem
+!*.pub.key
+
+# Локальные дампы / бэкапы БД
+*.dump
+*.sql.gz
+*.sqlitedb
+
+# Jupyter / notebooks
+.ipynb_checkpoints/
+.jupyter/
+
+# Локальные tool-каталоги
+.ropeproject/
+.fleet/
+.zed/
+.nvimlog
+.null-ls_*
+
+# Node / frontend билды (если появятся)
+node_modules/
+.next/
+.parcel-cache/
+
+# Streamlit runtime
+.streamlit/secrets.toml
+.streamlit/credentials.toml
+
+# Coverage artifacts
+coverage.xml
+*.cover
