@@ -9,7 +9,11 @@ Dual-write problem: commit to DB + publish to broker не атомарны. Пр
 периодически (или через LISTEN/NOTIFY) читает необработанные события,
 публикует в broker и помечает как published.
 
-Alembic-миграция таблицы ``outbox_events`` — в follow-up.
+Wave 3.1 / IL2.1: публикация перенесена на
+:class:`StreamClient.publish_to_kafka` — единый FastStream-producer поверх
+KafkaRouter. Прежний прямой ``aiokafka`` через ``get_kafka_producer``
+признан deprecated и удалён из горячего пути; EOS-транзакционный адаптер
+остаётся узким shim-ом до H3_PLUS (см. ADR-013).
 """
 
 from __future__ import annotations
@@ -45,14 +49,22 @@ class OutboxEvent:
 
 class OutboxPublisher:
     """Background-publisher: читает unpublished events и публикует
-    в FastStream broker (Kafka/Rabbit — C5 унификация).
+    в FastStream broker через :class:`StreamClient.publish_to_kafka`.
 
-    Полная реализация требует:
-    - Alembic миграция таблицы outbox_events.
-    - LISTEN/NOTIFY Postgres (для low-latency) либо periodic polling.
-    - Backoff + max_attempts + DLQ.
+    Высокоуровневый pipeline:
 
-    Здесь — scaffold с минимальным интерфейсом (publish + mark_published).
+    * ``publish_batch`` — вход для listener/debounce-пути
+      (``outbox_listener.drain_handler``): получает уже загруженные
+      :class:`OutboxEvent`-ы, прогоняет каждый через CE-envelope и
+      делегирует в ``StreamClient``.
+    * ``drain_pending`` — совместимость с ``OutboxListener``. Тонкая
+      обёртка, которая читает pending-записи из репозитория
+      (по id либо all) и вызывает ``publish_batch``.
+
+    Идемпотентность: дубли возможны в ошибочных сценариях, поэтому
+    consumer-сторона должна оставаться идемпотентной (dedupe по ``id``
+    CE-envelope). EOS (`transactional_id`) сейчас не используется —
+    см. ADR-013 про стратегию до H3_PLUS.
     """
 
     def __init__(self, *, batch_size: int = 100, poll_interval: float = 1.0) -> None:
@@ -60,14 +72,15 @@ class OutboxPublisher:
         self.poll_interval = poll_interval
 
     async def publish_batch(self, events: list[OutboxEvent]) -> list[UUID]:
-        """Публикует batch в broker, возвращает published IDs.
+        """Публикует batch CE-envelope-ов в Kafka через ``StreamClient``.
 
-        В scaffold-реализации ставит stub: публикация делегируется
-        FastStream-producer-у через ``app.infrastructure.clients.messaging.kafka``
-        (миграция на FastStream — C5 follow-up).
+        Returns:
+            Список id успешно опубликованных событий.
         """
+        from app.infrastructure.clients.messaging.stream import get_stream_client
         from app.infrastructure.eventing.cloudevents import envelope
 
+        client = get_stream_client()
         published: list[UUID] = []
         for event in events:
             ce = envelope(
@@ -77,16 +90,15 @@ class OutboxPublisher:
                 data=event.payload,
             )
             try:
-                # TODO(C5-follow-up): перенести на FastStream producer
-                from app.infrastructure.clients.messaging.kafka import (  # type: ignore[import-not-found]
-                    get_kafka_producer,
+                await client.publish_to_kafka(
+                    topic=event.event_type,
+                    message=ce,
+                    key=event.aggregate_id or None,
+                    headers=dict(event.headers),
                 )
-
-                producer = get_kafka_producer()
-                await producer.send(event.event_type, value=ce, headers=event.headers)
                 published.append(event.id)
                 event.published_at = datetime.now(timezone.utc)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 event.attempts += 1
                 logger.warning(
                     "Outbox publish failed [attempts=%d]: %s %s",
@@ -95,3 +107,47 @@ class OutboxPublisher:
                     exc,
                 )
         return published
+
+    async def drain_pending(
+        self, *, event_ids: list[str] | None = None
+    ) -> list[UUID]:
+        """Drain-handler для :class:`OutboxListener`.
+
+        Args:
+            event_ids: Если передан — drain только указанных записей
+                (push-путь из NOTIFY). ``None`` — drain всех pending-ов
+                (safety-net polling).
+
+        Returns:
+            Список успешно опубликованных ``OutboxEvent.id``.
+        """
+        from app.infrastructure.repositories import outbox as outbox_repo
+
+        pending = await outbox_repo.fetch_pending(limit=self.batch_size)
+        if event_ids is not None:
+            wanted = {str(eid) for eid in event_ids}
+            pending = [m for m in pending if str(m.id) in wanted]
+        if not pending:
+            return []
+
+        events = [
+            OutboxEvent(
+                aggregate_type=(m.headers or {}).get("aggregate_type", ""),
+                aggregate_id=(m.headers or {}).get("aggregate_id", "") or str(m.id),
+                event_type=m.topic,
+                payload=dict(m.payload or {}),
+                headers={k: str(v) for k, v in (m.headers or {}).items()},
+            )
+            for m in pending
+        ]
+        published = await self.publish_batch(events)
+
+        published_set = {e.id for e in events if e.id in set(published)}
+        for msg, ev in zip(pending, events):
+            if ev.id in published_set:
+                await outbox_repo.mark_sent(msg.id)
+            else:
+                await outbox_repo.mark_failed(
+                    msg.id, error="publish failed (see logs)"
+                )
+        return list(published_set)
