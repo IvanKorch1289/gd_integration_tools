@@ -76,6 +76,22 @@ docs/_build/
 .claude/CONTEXT.md
 vault/
 
+# Мастер-план рефакторинга и ADR-ы плана — локальные артефакты,
+# не часть долгоживущей документации репозитория.
+PLAN.md
+docs/adr/ADR-001-layered-architecture.md
+docs/adr/ADR-002-single-di-svcs.md
+docs/adr/ADR-003-repository-pattern.md
+docs/adr/ADR-004-cache-single-layer.md
+docs/adr/ADR-005-dsl-engine.md
+docs/adr/ADR-006-event-bus-faststream.md
+docs/adr/ADR-007-audit-clickhouse.md
+docs/adr/ADR-008-notification-gateway.md
+docs/adr/ADR-009-self-healing.md
+docs/adr/ADR-010-service-boundary.md
+docs/adr/ADR-011-open-closed-plugins.md
+docs/adr/ADR-014-proxy-pass-through.md
+
 # Graphify
 graphify-out
 
