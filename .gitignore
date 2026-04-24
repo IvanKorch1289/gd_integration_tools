@@ -73,6 +73,7 @@ docs/_build/
 .claude/worktrees/
 .claude/projects/
 .claude/memory/
+.claude/CONTEXT.md
 vault/
 
 # Graphify
