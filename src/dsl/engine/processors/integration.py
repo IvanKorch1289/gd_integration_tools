@@ -1,4 +1,4 @@
-"""Integration processors — EventBus, Agent Memory."""
+"""Integration processors — EventBus, Agent Memory, Reply-channel."""
 
 from typing import Any, Callable
 
@@ -6,7 +6,12 @@ from app.dsl.engine.context import ExecutionContext
 from app.dsl.engine.exchange import Exchange
 from app.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("EventPublishProcessor", "MemoryLoadProcessor", "MemorySaveProcessor")
+__all__ = (
+    "EventPublishProcessor",
+    "MemoryLoadProcessor",
+    "MemorySaveProcessor",
+    "AwaitReplyProcessor",
+)
 
 
 class EventPublishProcessor(BaseProcessor):
@@ -18,8 +23,8 @@ class EventPublishProcessor(BaseProcessor):
         self._event_factory = event_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from pydantic import BaseModel
         from app.infrastructure.clients.messaging.event_bus import get_event_bus
+        from pydantic import BaseModel
 
         bus = get_event_bus()
         if self._event_factory:
@@ -67,3 +72,49 @@ class MemorySaveProcessor(BaseProcessor):
         body = exchange.in_message.body
         content = body if isinstance(body, str) else str(body)
         await memory_svc.add_message(session_id, "assistant", content)
+
+
+class AwaitReplyProcessor(BaseProcessor):
+    """Публикует запрос через EventBus и дожидается reply (Wave 3.3).
+
+    Пример использования в Route:
+
+        .await_reply(channel="events.ai.queries", timeout=30.0)
+
+    Семантика: заменяет ``exchange.in_message.body`` на reply-payload.
+    Correlation_id берётся из ``exchange.correlation_id``, так что
+    кросс-сервисное трасирование сохраняется.
+    """
+
+    def __init__(
+        self,
+        channel: str,
+        *,
+        timeout: float = 30.0,
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name)
+        self._channel = channel
+        self._timeout = timeout
+        self._payload_factory = payload_factory
+
+    async def process(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
+        from app.infrastructure.clients.messaging.event_bus import get_event_bus
+
+        bus = get_event_bus()
+        if self._payload_factory is not None:
+            payload = self._payload_factory(exchange)
+        else:
+            body = exchange.in_message.body
+            payload = body if isinstance(body, dict) else {"body": body}
+
+        reply = await bus.request(
+            self._channel,
+            payload,
+            timeout=self._timeout,
+            correlation_id=exchange.correlation_id,
+        )
+        exchange.in_message.body = reply

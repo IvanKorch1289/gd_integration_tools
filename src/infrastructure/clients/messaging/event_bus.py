@@ -122,8 +122,34 @@ class EventBus:
             "events.routes", RouteEvent(route_id=route_id, action=action)
         )
 
+    async def request(
+        self,
+        channel: str,
+        payload: dict[str, Any],
+        *,
+        timeout: float = 30.0,
+        correlation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Request-Reply поверх EventBus (Wave 3.3).
 
-from app.core.di import app_state_singleton
+        Публикует ``payload`` в ``channel`` и ждёт ответа
+        в ``events.replies.<correlation_id>`` не дольше ``timeout``
+        секунд. Возвращает payload ответа.
+
+        Делегирует в :class:`ReplyChannel` — вся логика future-ов
+        и subscription-ов живёт там.
+        """
+        from app.infrastructure.clients.messaging.reply_channel import ReplyChannel
+
+        return await ReplyChannel.instance(self).request(
+            target_channel=channel,
+            payload=payload,
+            timeout=timeout,
+            correlation_id=correlation_id,
+        )
+
+
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("event_bus", EventBus)
