@@ -452,6 +452,84 @@ class RouteBuilder:
         self._feature_flag = name
         return self
 
+    # ── Proxy pass-through (Wave 3.5 / ADR-014) ──
+
+    def expose_proxy(
+        self,
+        src: str,
+        *,
+        methods: list[str] | None = None,
+        header_map: dict[str, Any] | None = None,
+    ) -> "RouteBuilder":
+        """Объявить роут как прокси-вход.
+
+        Args:
+            src: ``<protocol>:<address>`` (``http:/api/payments``,
+                ``kafka:orders.in`` и т.п.).
+            methods: HTTP-методы (для ``http``). ``None`` = все.
+            header_map: Опциональный словарь ``{add|drop|override}`` для
+                политики inbound-headers.
+        """
+        from app.dsl.engine.processors.proxy import (
+            ExposeProxyProcessor,
+            HeaderMapPolicy,
+        )
+
+        return self._add(
+            ExposeProxyProcessor(
+                src=src,
+                methods=methods,
+                header_policy=HeaderMapPolicy.from_dict(header_map),
+            )
+        )
+
+    def forward_to(
+        self,
+        dst: str,
+        *,
+        pass_headers: bool = True,
+        header_map: dict[str, Any] | None = None,
+        rewrite_path: str | None = None,
+        timeout: float = 30.0,
+    ) -> "RouteBuilder":
+        """Переслать текущее сообщение в backend без трансформаций."""
+        from app.dsl.engine.processors.proxy import (
+            ForwardToProcessor,
+            HeaderMapPolicy,
+        )
+
+        return self._add(
+            ForwardToProcessor(
+                dst=dst,
+                pass_headers=pass_headers,
+                header_policy=HeaderMapPolicy.from_dict(header_map),
+                rewrite_path=rewrite_path,
+                timeout=timeout,
+            )
+        )
+
+    def proxy(
+        self,
+        src: str,
+        dst: str,
+        *,
+        methods: list[str] | None = None,
+        pass_headers: bool = True,
+        header_map: dict[str, Any] | None = None,
+        rewrite_path: str | None = None,
+        timeout: float = 30.0,
+    ) -> "RouteBuilder":
+        """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
+        return self.expose_proxy(
+            src=src, methods=methods, header_map=header_map
+        ).forward_to(
+            dst=dst,
+            pass_headers=pass_headers,
+            header_map=header_map,
+            rewrite_path=rewrite_path,
+            timeout=timeout,
+        )
+
     # ── Camel Components (source/sink) ──
 
     def http_call(
