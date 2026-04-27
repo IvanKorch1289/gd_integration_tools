@@ -4,14 +4,9 @@ from datetime import timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-# A4 (ADR-009): aiohttp → httpx. В legacy http.py ещё используется
-# aiohttp.ClientError; для совместимости создаём union с httpx-ошибками,
-# чтобы RETRY_EXCEPTIONS обрабатывал оба источника одинаково.
-try:
-    from aiohttp import ClientError as _AioClientError
-except ImportError:  # aiohttp удалён — используем httpx-only
-    _AioClientError = Exception  # type: ignore
-
+# Wave 0.4.6: aiohttp → httpx. Legacy http.py может ещё импортировать
+# aiohttp до полного удаления в H3. RETRY_EXCEPTIONS использует только
+# httpx, что покрывает все non-deprecated клиенты проекта.
 import httpx
 
 __all__ = ("consts", "Constants")
@@ -37,7 +32,7 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: tuple[Any, ...] = (_AioClientError, httpx.HTTPError, TimeoutError)
+    RETRY_EXCEPTIONS: tuple[Any, ...] = (httpx.HTTPError, TimeoutError)
     CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )
