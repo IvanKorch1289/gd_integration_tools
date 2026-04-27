@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.config.runtime_state import disabled_feature_flags
+from src.core.state.runtime import disabled_feature_flags
 from src.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     ActionHandlerSpec,

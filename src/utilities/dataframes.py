@@ -6,7 +6,6 @@
 Для табличных операций приложения смотри ``src.services.io.dataframe``.
 """
 
-from __future__ import annotations
 
 from typing import Any
 

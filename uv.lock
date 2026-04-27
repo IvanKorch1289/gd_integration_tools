@@ -28,15 +28,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aiocircuitbreaker"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/23/c00a37ef498c90b7849172cf7a37e04c789a4d57794a3afa782b3eeaacf8/aiocircuitbreaker-2.0.0.tar.gz", hash = "sha256:21cc3ed3a4c40b8004239fedb2630dbecb8d30dab020d201721c9f745bc8f04f", size = 5742, upload-time = "2022-01-07T18:25:04.824Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/53/4810e1fb92469025358022948508c65597f59e355faef6a1d1960473fcce/aiocircuitbreaker-2.0.0-py3-none-any.whl", hash = "sha256:82cb3dae72eac2d8476c93ebd8d2d46fcc69c280aaf14076df27632535d91d9d", size = 5694, upload-time = "2022-01-07T18:25:03.193Z" },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1208,7 +1199,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aio-pika" },
-    { name = "aiocircuitbreaker" },
     { name = "aiofiles" },
     { name = "aioimaplib" },
     { name = "aiokafka" },
@@ -1254,6 +1244,7 @@ dependencies = [
     { name = "polars" },
     { name = "prometheus-fastapi-instrumentator" },
     { name = "protobuf" },
+    { name = "purgatory" },
     { name = "pyarrow" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -1323,7 +1314,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.5,<10.0.0" },
-    { name = "aiocircuitbreaker", specifier = ">=2.0.0,<3.0.0" },
     { name = "aiofiles", specifier = ">=24.1.0,<25.0.0" },
     { name = "aioimaplib", specifier = ">=1.0.0,<2.0.0" },
     { name = "aiokafka", specifier = ">=0.12.0,<1.0.0" },
@@ -1378,6 +1368,8 @@ requires-dist = [
     { name = "presidio-anonymizer", marker = "extra == 'security'", specifier = ">=2.2.0" },
     { name = "prometheus-fastapi-instrumentator", specifier = ">=7.0.0,<8.0.0" },
     { name = "protobuf", specifier = ">=5.29.3,<6.0.0" },
+    { name = "purgatory", specifier = ">=3.0.0,<4.0.0" },
+    { name = "purgatory", specifier = ">=3.0.1" },
     { name = "pyarrow", specifier = ">=20.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.10.3,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.6.0,<3.0.0" },
@@ -3371,6 +3363,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/d7/48cbf6b0c3c39761e47a99cb483405f0fde2be22cf00d71ef316ce52b458/protobuf-5.29.6-cp38-abi3-manylinux2014_aarch64.whl", hash = "sha256:a8866b2cff111f0f863c1b3b9e7572dc7eaea23a7fae27f6fc613304046483e6", size = 320284, upload-time = "2026-02-04T22:54:31.782Z" },
     { url = "https://files.pythonhosted.org/packages/e3/dd/cadd6ec43069247d91f6345fa7a0d2858bef6af366dbd7ba8f05d2c77d3b/protobuf-5.29.6-cp38-abi3-manylinux2014_x86_64.whl", hash = "sha256:e3387f44798ac1106af0233c04fb8abf543772ff241169946f698b3a9a3d3ab9", size = 320478, upload-time = "2026-02-04T22:54:32.909Z" },
     { url = "https://files.pythonhosted.org/packages/5a/cb/e3065b447186cb70aa65acc70c86baf482d82bf75625bf5a2c4f6919c6a3/protobuf-5.29.6-py3-none-any.whl", hash = "sha256:6b9edb641441b2da9fa8f428760fc136a49cf97a52076010cf22a2ff73438a86", size = 173126, upload-time = "2026-02-04T22:54:39.462Z" },
+]
+
+[[package]]
+name = "purgatory"
+version = "3.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/e4/9d33c714ea9161448ce8b05d66fe139fb20d55df4c1a3855c1901bc012ac/purgatory-3.0.1.tar.gz", hash = "sha256:c4ce9b93f7a54244bea6aa281af36767ff91bbd9665591cb46fb9cf89bf18d47", size = 13256, upload-time = "2024-11-02T17:21:23.549Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/67/45778e3bf3af6a401ec94a19efe649a81fe451cd0964dfa8d8d89233f9fa/purgatory-3.0.1-py3-none-any.whl", hash = "sha256:1ee8ac2d949b09ebacc8a58b947115d49518593492cad84c14f0feedd1b22a21", size = 21485, upload-time = "2024-11-02T17:21:22.099Z" },
 ]
 
 [[package]]

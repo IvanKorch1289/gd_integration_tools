@@ -1,9 +1,7 @@
-from src.core.config.external_databases.connection_settings import (
+from src.core.config.external_databases.connection import (
     ExternalDatabaseConnectionSettings,
 )
-from src.core.config.external_databases.item_settings import (
-    ExternalDatabaseItemSettings,
-)
+from src.core.config.external_databases.item import ExternalDatabaseItemSettings
 from src.core.config.external_databases.registry import (
     ExternalDatabasesSettings,
     external_databases_settings,

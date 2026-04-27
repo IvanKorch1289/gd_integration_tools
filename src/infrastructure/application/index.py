@@ -9,7 +9,7 @@ from pathlib import Path
 from starlette.responses import HTMLResponse
 
 from src.core.config.settings import settings
-from src.utilities.utils import utilities
+from src.utilities.web import ensure_url_protocol
 
 __all__ = ("root_page",)
 
@@ -35,7 +35,7 @@ async def root_page() -> HTMLResponse:
     def _safe_url(url: str | None) -> str:
         if not url:
             return "#"
-        return utilities.ensure_url_protocol(url)
+        return ensure_url_protocol(url)
 
     urls_script = f"""
     <script>

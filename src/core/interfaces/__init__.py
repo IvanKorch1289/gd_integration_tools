@@ -146,12 +146,12 @@ class CircuitBreakerConfig:
 
 
 class CircuitBreaker:
-    """Lightweight circuit breaker — обёртка над :mod:`aiocircuitbreaker`.
+    """Lightweight circuit breaker — самодостаточная state-machine.
 
     Сохраняет публичный API (``state``, ``record_success``, ``record_failure``,
     ``allow_request``, ``__aenter__/__aexit__``) для обратной совместимости
-    с 11+ callsite'ами. Внутри использует батл-тестед реализацию из
-    ``aiocircuitbreaker`` (если установлена); иначе — минимальный fallback.
+    с 11+ callsite'ами. Для нового кода предпочитать
+    ``infrastructure.resilience.breaker.BreakerRegistry`` (purgatory backend).
     """
 
     def __init__(self, name: str, config: CircuitBreakerConfig | None = None) -> None:
@@ -162,17 +162,6 @@ class CircuitBreaker:
         self._last_failure_time = 0.0
         self._half_open_calls = 0
         self._state = CircuitState.CLOSED
-
-        try:
-            from aiocircuitbreaker import CircuitBreaker as _AioCB
-
-            self._aio = _AioCB(
-                failure_threshold=self._config.failure_threshold,
-                recovery_timeout=self._config.recovery_timeout,
-                name=name,
-            )
-        except ImportError:
-            self._aio = None
 
     @property
     def state(self) -> CircuitState:

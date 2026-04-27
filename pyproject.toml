@@ -37,7 +37,7 @@ dependencies = [
     "opentelemetry-instrumentation-aio-pika>=0.51b0",
     "opentelemetry-instrumentation-pymongo>=0.51b0",
     "opentelemetry-instrumentation-grpc>=0.51b0",
-    "aiocircuitbreaker>=2.0.0,<3.0.0",
+    "purgatory>=3.0.0,<4.0.0",
     "apscheduler>=3.11.0,<4.0.0",
     "faststream[kafka]>=0.5.34,<1.0.0",
     "aiokafka>=0.12.0,<1.0.0",
@@ -76,7 +76,8 @@ dependencies = [
     "casbin>=1.36.0,<2.0.0",
     "polars>=1.20.0,<2.0.0",
     "pyarrow>=20.0.0",
-    "cachetools>=5.3.0,<8.0.0"
+    "cachetools>=5.3.0,<8.0.0",
+    "purgatory>=3.0.1",
 ]
 
 [project.optional-dependencies]

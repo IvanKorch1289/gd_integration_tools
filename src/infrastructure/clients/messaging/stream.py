@@ -11,6 +11,7 @@ from faststream.security import BaseSecurity
 from src.core.config.constants import consts
 from src.core.config.settings import settings
 from src.infrastructure.external_apis.logging_service import stream_logger
+from src.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
 
 __all__ = ("stream_client", "StreamClient", "get_stream_client")
 
@@ -251,9 +252,15 @@ class StreamClient:
     async def _publish_rabbit_immediately(
         self, queue: str, message: dict[str, Any]
     ) -> None:
-        await self.rabbit_router.broker.publish(  # type: ignore
-            message=message, queue=queue, mandatory=True
+        # Wave 6.2: rabbit publish защищён CB через единый фасад.
+        # Дефолты из BreakerSpec (consts.DEFAULT_CB_*).
+        breaker = breaker_registry.get_or_create(
+            "rabbit:publish", BreakerSpec()
         )
+        async with breaker.guard():
+            await self.rabbit_router.broker.publish(  # type: ignore
+                message=message, queue=queue, mandatory=True
+            )
 
     async def _publish_redis_immediately(
         self, stream: str, message: dict[str, Any], headers: dict[str, Any]

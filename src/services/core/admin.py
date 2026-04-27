@@ -2,8 +2,8 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
-from src.core.config.runtime_state import disabled_feature_flags
 from src.core.config.settings import settings
+from src.core.state.runtime import disabled_feature_flags
 from src.core.svcs_registry import list_services as _list_services
 from src.dsl.commands.action_registry import action_handler_registry
 from src.dsl.commands.registry import route_registry
@@ -51,7 +51,7 @@ class AdminService:
         Raises:
             HTTPException: Если маршрут с указанным путём не найден.
         """
-        from src.core.config.runtime_state import blocked_routes
+        from src.core.state.runtime import blocked_routes
 
         route_exists = any(route.path == route_path for route in request.app.routes)
         if not route_exists:

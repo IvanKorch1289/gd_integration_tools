@@ -1,30 +1,19 @@
-"""Единый per-client Circuit Breaker для infrastructure-клиентов.
+"""Per-client circuit breaker для infrastructure-клиентов.
 
-IL1.4 (ADR-022): до этой фазы CB был только на HTTP + SMTP. Теперь доступен
-единый helper поверх ``aiocircuitbreaker``, который применяется также для
-Redis / MongoDB / Kafka — с thresholds из `PoolingProfile`.
+Wave 6.1: backend переведён с ``aiocircuitbreaker`` на ``purgatory`` через
+единый фасад ``infrastructure.resilience.breaker.BreakerRegistry``.
 
-Использование:
-
-    class RedisConnector(ClientMetricsMixin, InfrastructureClient):
-        def __init__(self, settings):
-            super().__init__(name="redis", pooling=settings.pooling)
-            self._breaker = ClientCircuitBreaker.from_profile(
-                name=self.name, profile=self.pooling,
-            )
-
-        async def get(self, key):
-            async with self._breaker.guard():
-                async with self.track("GET"):
-                    return await self._redis.get(key)
+Класс ``ClientCircuitBreaker`` сохраняет публичный API (``guard()``,
+``is_open()``, ``from_profile()``) — ``RedisClient``, ``KafkaClient``,
+``HttpUpstream`` и т. п. callsite-ы продолжают работать без изменений.
 
 State machine:
   ``closed`` → при failure_threshold подряд failures → ``open``.
   ``open`` → через ``recovery_timeout`` секунд → ``half_open``.
-  ``half_open`` → первый успех возвращает в ``closed``; failure — снова ``open``.
+  ``half_open`` → первый успех закрывает; failure возвращает в ``open``.
 
-Метрики: обновляется gauge `infra_client_circuit_state{client,host}` через
-`client_metrics.record_circuit_state()` на каждом переходе.
+Метрики: gauge ``infra_client_circuit_state{client,host}`` обновляется
+автоматически через event-listener purgatory factory.
 """
 
 from __future__ import annotations
@@ -33,6 +22,9 @@ import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncIterator, Final
 
+from src.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
+from src.infrastructure.resilience.breaker import CircuitOpen as CircuitOpen
+
 if TYPE_CHECKING:
     from src.core.config.pooling import PoolingProfile
 
@@ -40,77 +32,11 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-class CircuitOpen(Exception):
-    """Бросается клиентом, когда breaker в состоянии OPEN."""
-
-
-class _FallbackBreaker:
-    """Внутренний fallback на случай, если aiocircuitbreaker не установлен.
-
-    Реализует минимально достаточный API state-machine через ручной счётчик
-    последовательных failures. Используется только как dev-safety-net;
-    в production aiocircuitbreaker должен быть установлен.
-    """
-
-    def __init__(self, *, failure_threshold: int, recovery_timeout: float) -> None:
-        import time
-
-        self._threshold = failure_threshold
-        self._recovery = recovery_timeout
-        self._failures = 0
-        self._state = "closed"
-        self._open_until = 0.0
-        self._now = time.monotonic
-
-    @property
-    def state(self) -> str:
-        if self._state == "open" and self._now() >= self._open_until:
-            self._state = "half_open"
-        return self._state
-
-    def record_success(self) -> None:
-        self._failures = 0
-        self._state = "closed"
-
-    def record_failure(self) -> None:
-        self._failures += 1
-        if self._failures >= self._threshold:
-            self._state = "open"
-            self._open_until = self._now() + self._recovery
-
-    def is_open(self) -> bool:
-        return self.state == "open"
-
-
-def _build_backend(failure_threshold: int, recovery_timeout: float) -> object:
-    """Создать экземпляр aiocircuitbreaker.CircuitBreaker или fallback."""
-    try:
-        from aiocircuitbreaker import CircuitBreaker  # type: ignore[import-untyped]
-
-        return CircuitBreaker(
-            failure_threshold=failure_threshold,
-            recovery_timeout=recovery_timeout,
-            expected_exception=Exception,
-        )
-    except ImportError:
-        _logger.warning(
-            "aiocircuitbreaker not installed, using fallback _FallbackBreaker"
-        )
-        return _FallbackBreaker(
-            failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
-        )
-
-
 class ClientCircuitBreaker:
-    """Обёртка над backend CB + client_metrics reporting.
+    """Адаптер фасадного ``Breaker`` для infrastructure-клиентов.
 
-    В отличие от прямого использования `aiocircuitbreaker.CircuitBreaker`,
-    этот класс:
-
-    1. Знает имя клиента (для Prometheus labels).
-    2. Автоматически обновляет gauge `infra_client_circuit_state`.
-    3. Поддерживает fallback при отсутствии `aiocircuitbreaker`.
-    4. Предоставляет удобный `async with .guard():` API.
+    Главное отличие от прямого использования фасада — ``host``-label для
+    Prometheus-метрик и factory из ``PoolingProfile``.
     """
 
     def __init__(
@@ -123,18 +49,20 @@ class ClientCircuitBreaker:
     ) -> None:
         self.name = name
         self.host = host
-        self._failure_threshold = failure_threshold
-        self._recovery_timeout = recovery_timeout
-        self._backend = _build_backend(failure_threshold, recovery_timeout)
-        # Публикуем initial state.
-        self._last_state: str | None = None
-        self._publish_state("closed")
+        self._breaker = breaker_registry.get_or_create(
+            f"{name}@{host}",
+            BreakerSpec(
+                failure_threshold=failure_threshold,
+                recovery_timeout=recovery_timeout,
+            ),
+            host=host,
+        )
 
     @classmethod
     def from_profile(
         cls, *, name: str, profile: "PoolingProfile", host: str = "default"
     ) -> "ClientCircuitBreaker":
-        """Создать CB из `PoolingProfile` (circuit_threshold + circuit_recovery_s)."""
+        """Создать CB из ``PoolingProfile`` (circuit_threshold + circuit_recovery_s)."""
         return cls(
             name=name,
             host=host,
@@ -142,76 +70,18 @@ class ClientCircuitBreaker:
             recovery_timeout=profile.circuit_recovery_s,
         )
 
-    # -- State -------------------------------------------------------
-
-    def _current_state(self) -> str:
-        state = getattr(self._backend, "state", None) or getattr(
-            self._backend, "current_state", None
-        )
-        if state is None:
-            # aiocircuitbreaker exposes as attribute or property; normalize.
-            state = "closed"
-        # Нормализация имён: некоторые версии используют `open`/`closed`/`half_open`.
-        return str(state)
-
-    def _publish_state(self, state: str) -> None:
-        if state == self._last_state:
-            return
-        self._last_state = state
-        try:
-            from src.infrastructure.observability.client_metrics import (
-                record_circuit_state,
-            )
-
-            # Привести к Literal[closed, open, half_open].
-            normalized = state if state in ("closed", "open", "half_open") else "closed"
-            record_circuit_state(
-                client=self.name,
-                host=self.host,
-                state=normalized,  # type: ignore[arg-type]
-            )
-        except ImportError:
-            pass
-
     def is_open(self) -> bool:
-        state = self._current_state()
-        return state == "open"
-
-    # -- Guard API ---------------------------------------------------
+        return self._breaker.is_open
 
     @asynccontextmanager
     async def guard(self) -> AsyncIterator[None]:
         """Оборачивает operation в CB state-machine.
 
         При ``open`` бросает ``CircuitOpen`` без запроса к upstream.
-        При exception во время operation — помечает failure + публикует новый
-        state.
+        При exception — purgatory сам инкрементит failure_count.
         """
-        if self.is_open():
-            self._publish_state("open")
-            raise CircuitOpen(
-                f"Circuit breaker '{self.name}' is OPEN (host={self.host})"
-            )
-        try:
+        async with self._breaker.guard():
             yield
-        except Exception:
-            # Backend запомнит failure — вызвать его, если есть публичный метод.
-            self._record_failure()
-            self._publish_state(self._current_state())
-            raise
-        else:
-            self._record_success()
-            self._publish_state(self._current_state())
-
-    def _record_success(self) -> None:
-        method = getattr(self._backend, "record_success", None)
-        if callable(method):
-            method()
-
-    def _record_failure(self) -> None:
-        method = getattr(self._backend, "record_failure", None)
-        if callable(method):
-            method()
 
 
 _PUBLIC: Final = ("ClientCircuitBreaker", "CircuitOpen")

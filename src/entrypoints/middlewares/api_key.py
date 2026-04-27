@@ -27,12 +27,12 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """
         from re import compile
 
-        from src.utilities.utils import utilities
+        from src.utilities.converters import convert_pattern
 
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек
         self.compiled_patterns: list[re.Pattern] = [
-            compile(utilities.convert_pattern(pattern))
+            compile(convert_pattern(pattern))
             for pattern in settings.secure.routes_without_api_key
         ]
 

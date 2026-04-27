@@ -192,7 +192,7 @@ async def track_operation(
         raise exc
 
 
-# Поздняя резолюция типов исключений: aiocircuitbreaker, asyncio.TimeoutError.
+# Поздняя резолюция типов исключений: purgatory.OpenedState, asyncio.TimeoutError.
 def _resolve_exception_types() -> tuple[
     tuple[type[BaseException], ...], tuple[type[BaseException], ...]
 ]:
@@ -201,11 +201,9 @@ def _resolve_exception_types() -> tuple[
     timeout_types: list[type[BaseException]] = [asyncio.TimeoutError, TimeoutError]
     circuit_types: list[type[BaseException]] = []
     try:
-        from aiocircuitbreaker import (
-            CircuitBreakerError,  # type: ignore[import-untyped]
-        )
+        from purgatory.domain.model import OpenedState
 
-        circuit_types.append(CircuitBreakerError)
+        circuit_types.append(OpenedState)
     except ImportError:
         pass
     return tuple(timeout_types), tuple(circuit_types)

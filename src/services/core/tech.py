@@ -8,7 +8,8 @@ from fastapi.responses import HTMLResponse
 from src.core.config.settings import settings
 from src.infrastructure.monitoring.health_check import get_healthcheck_service
 from src.services.core.base import BaseService, get_service_for_model
-from src.utilities.utils import utilities
+from src.utilities.converters import convert_numpy_types
+from src.utilities.web import generate_link_page
 
 __all__ = ("TechService", "get_tech_service")
 
@@ -19,32 +20,32 @@ class TechService:
     """
 
     async def get_log_storage_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             f"{settings.logging.host}:{settings.logging.port}", "Хранилище логов"
         )
 
     async def get_file_storage_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             f"{settings.storage.interface_endpoint}", "Файловое хранилище"
         )
 
     async def get_task_monitor_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             settings.app.prefect_url, "Мониторинг задач"
         )
 
     async def get_queue_monitor_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             settings.queue.queue_ui_url, "Мониторинг очередей"
         )
 
     async def get_langfuse_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             settings.app.langfuse_url, "LangFuse — LLM Observability"
         )
 
     async def get_langgraph_link(self) -> HTMLResponse:
-        return utilities.generate_link_page(
+        return generate_link_page(
             settings.app.langgraph_url, "LangGraph Studio — AI Agents"
         )
 
@@ -101,7 +102,7 @@ class TechService:
 
         for row in df.iter_rows(named=True):
             row_data = {
-                col: utilities.convert_numpy_types(value) for col, value in row.items()
+                col: convert_numpy_types(value) for col, value in row.items()
             }
 
             validated_data = service.request_schema.model_validate(row_data)

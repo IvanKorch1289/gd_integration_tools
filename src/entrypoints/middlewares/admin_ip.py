@@ -15,13 +15,13 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
         from re import compile
 
-        from src.utilities.utils import utilities
+        from src.utilities.converters import convert_pattern
 
         super().__init__(app)
         self.allowed_ips: set[str] = settings.secure.admin_ips
         self.admin_routes: set[str] = settings.secure.admin_routes
         self.compiled_patterns: list[re.Pattern] = [
-            compile(utilities.convert_pattern(pattern)) for pattern in self.admin_routes
+            compile(convert_pattern(pattern)) for pattern in self.admin_routes
         ]
 
     async def dispatch(self, request: Request, call_next):

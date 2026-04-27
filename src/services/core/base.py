@@ -10,7 +10,7 @@ from src.infrastructure.database.models.base import BaseModel
 from src.infrastructure.decorators.caching import response_cache
 from src.infrastructure.repositories.base import SQLAlchemyRepository
 from src.schemas.base import BaseSchema, PaginatedResult
-from src.utilities.utils import utilities
+from src.utilities.converters import transfer_model_to_schema
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class BaseService[
             if isinstance(instance, BaseModel) or hasattr(
                 instance.__class__, "version_parent"
             ):
-                return utilities.transfer_model_to_schema(  # type: ignore[return-value]
+                return transfer_model_to_schema(  # type: ignore[return-value]
                     instance=instance,
                     schema=response_schema,
                     from_attributes=from_attributes,

@@ -1,11 +1,12 @@
-"""Circuit Breaker Registry — именованные breakers для всех I/O клиентов."""
+"""Pre-registered breakers для всех внешних I/O клиентов (поверх фасада)."""
 
-from __future__ import annotations
 
 import logging
 from typing import Any
 
-from src.core.interfaces import CircuitBreaker, CircuitBreakerConfig
+from src.core.config.constants import consts
+from src.infrastructure.resilience.breaker import Breaker, BreakerSpec
+from src.infrastructure.resilience.breaker import breaker_registry as _facade_registry
 
 __all__ = ("CircuitBreakerRegistry", "breaker_registry")
 
@@ -13,49 +14,40 @@ logger = logging.getLogger(__name__)
 
 
 class CircuitBreakerRegistry:
-    """Реестр именованных circuit breakers."""
+    """Тонкий адаптер над единым ``BreakerRegistry`` (Wave 6.1).
 
-    def __init__(self) -> None:
-        self._breakers: dict[str, CircuitBreaker] = {}
+    Сохраняет API ``get_or_create / get / list_states / get_all_status``
+    для совместимости со старыми callsite-ами; внутри делегирует в фасад.
+    """
 
     def get_or_create(
-        self, name: str, config: CircuitBreakerConfig | None = None
-    ) -> CircuitBreaker:
-        if name not in self._breakers:
-            self._breakers[name] = CircuitBreaker(name, config)
-            logger.info("Circuit breaker created: %s", name)
-        return self._breakers[name]
+        self, name: str, spec: BreakerSpec | None = None
+    ) -> Breaker:
+        return _facade_registry.get_or_create(name, spec)
 
-    def get(self, name: str) -> CircuitBreaker | None:
-        return self._breakers.get(name)
+    def get(self, name: str) -> Breaker | None:
+        return _facade_registry.get(name)
 
     def list_states(self) -> dict[str, str]:
-        return {name: cb.state.value for name, cb in self._breakers.items()}
+        return _facade_registry.list_states()
 
     def get_all_status(self) -> list[dict[str, Any]]:
-        result = []
-        for name, cb in self._breakers.items():
-            result.append(
-                {
-                    "name": name,
-                    "state": cb.state.value,
-                    "failure_count": cb._failure_count,
-                }
-            )
-        return result
+        return [
+            {"name": name, "state": state}
+            for name, state in _facade_registry.list_states().items()
+        ]
 
 
 breaker_registry = CircuitBreakerRegistry()
 
+# Pre-registered breakers для канонических зависимостей.
 breaker_registry.get_or_create("redis")
 breaker_registry.get_or_create("db_main")
 breaker_registry.get_or_create("s3")
-breaker_registry.get_or_create(
-    "clickhouse", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
+_FAST = BreakerSpec(
+    failure_threshold=consts.DEFAULT_CB_FAST_FAILURE_THRESHOLD,
+    recovery_timeout=consts.DEFAULT_CB_FAST_RECOVERY_SECONDS,
 )
-breaker_registry.get_or_create(
-    "elasticsearch", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
-)
-breaker_registry.get_or_create(
-    "mongodb", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
-)
+breaker_registry.get_or_create("clickhouse", _FAST)
+breaker_registry.get_or_create("elasticsearch", _FAST)
+breaker_registry.get_or_create("mongodb", _FAST)

@@ -4,9 +4,11 @@ from typing import AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from src.core.config.settings import settings
 from src.core.errors import DatabaseError, NotFoundError
 from src.infrastructure.database.database import db_initializer, external_db_registry
 from src.infrastructure.external_apis.logging_service import db_logger
+from src.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
 
 __all__ = (
     "DatabaseSessionManager",
@@ -35,25 +37,32 @@ class DatabaseSessionManager:
         self.session_maker = session_maker
         self.db_name = db_name
         self.logger = db_logger
+        # Wave 6.2: per-DB circuit breaker. Параметры из settings.database.*.
+        self._breaker = breaker_registry.get_or_create(
+            f"db:{db_name}",
+            BreakerSpec(
+                failure_threshold=settings.database.circuit_breaker_max_failures,
+                recovery_timeout=float(settings.database.circuit_breaker_reset_timeout),
+            ),
+        )
 
     @asynccontextmanager
     async def create_session(self) -> AsyncGenerator[AsyncSession, None]:
-        """
-        Создаёт и возвращает асинхронную сессию.
-        """
-        async with self.session_maker() as session:
-            try:
-                yield session
-            except Exception as exc:
-                self.logger.error(
-                    "Ошибка при работе с сессией БД '%s': %s",
-                    self.db_name,
-                    str(exc),
-                    exc_info=True,
-                )
-                raise DatabaseError(
-                    message=f"Failed to create database session for '{self.db_name}'"
-                ) from exc
+        """Создаёт и возвращает асинхронную сессию (под защитой circuit breaker)."""
+        async with self._breaker.guard():
+            async with self.session_maker() as session:
+                try:
+                    yield session
+                except Exception as exc:
+                    self.logger.error(
+                        "Ошибка при работе с сессией БД '%s': %s",
+                        self.db_name,
+                        str(exc),
+                        exc_info=True,
+                    )
+                    raise DatabaseError(
+                        message=f"Failed to create database session for '{self.db_name}'"
+                    ) from exc
 
     @asynccontextmanager
     async def transaction(self, session: AsyncSession) -> AsyncGenerator[None, None]:

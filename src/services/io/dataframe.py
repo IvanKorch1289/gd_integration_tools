@@ -13,7 +13,6 @@ Usage::
     write_excel(rows, output_path)
 """
 
-from __future__ import annotations
 
 import io
 import logging

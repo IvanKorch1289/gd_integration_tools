@@ -18,7 +18,7 @@ from src.schemas.route_schemas.orders import (
 )
 from src.services.core.base import BaseService
 from src.services.integrations.skb import APISKBService, get_skb_service
-from src.utilities.utils import utilities
+from src.utilities.async_helpers import safe_get
 
 __all__ = ("OrderService", "get_order_service")
 
@@ -180,7 +180,7 @@ class OrderService(
                 order_id=order_id, response_type=ResponseTypeChoices.json
             )
 
-            has_pdf_result = await utilities.safe_get(
+            has_pdf_result = await safe_get(
                 json_result, "response.data.Result", False
             )
 
@@ -193,7 +193,7 @@ class OrderService(
                 "response_data": json_result.get("response", {}).get("data", {})
             }
 
-            message = await utilities.safe_get(
+            message = await safe_get(
                 json_result, "response.data.Message", "Не готов"
             )
 

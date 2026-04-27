@@ -5,7 +5,7 @@ from fastapi.responses import StreamingResponse
 
 from src.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
 from src.infrastructure.decorators.caching import existence_cache, metadata_cache
-from src.utilities.utils import utilities
+from src.utilities.codecs.base64 import decode_base64, encode_base64
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
@@ -45,7 +45,7 @@ class S3Service:
                 }
             )
 
-        encoded_metadata = await utilities.encode_base64(metadata)
+        encoded_metadata = encode_base64(metadata)
 
         result = await self.client.put_object(
             key=key, body=content, metadata=encoded_metadata
@@ -59,7 +59,7 @@ class S3Service:
             raise FileNotFoundError(f"Файл {key} не найден")
 
         body, metadata = result
-        decoded_metadata = await utilities.decode_base64(metadata)
+        decoded_metadata = decode_base64(metadata)
 
         filename = decoded_metadata.get("original-filename", key)
         content_type = decoded_metadata.get("content-type", "application/octet-stream")
@@ -125,7 +125,7 @@ class S3Service:
         content = await self.client.get_object_bytes(key)
         if content is None:
             raise FileNotFoundError(f"Файл {key} не найден")
-        return await utilities.encode_base64(content)
+        return encode_base64(content)
 
     async def list_files(self, prefix: str = None) -> list[str]:
         return await self.client.list_objects(prefix)
@@ -147,7 +147,7 @@ class S3Service:
         if not metadata:
             return None
 
-        decoded_metadata = await utilities.decode_base64(metadata)
+        decoded_metadata = decode_base64(metadata)
         return decoded_metadata.get("original-filename")
 
     @metadata_cache
@@ -156,7 +156,7 @@ class S3Service:
         if not metadata:
             return None
 
-        decoded_metadata = await utilities.decode_base64(metadata)
+        decoded_metadata = decode_base64(metadata)
         return decoded_metadata.get("content-type")
 
     async def _invalidate_key_cache(self, key: str):

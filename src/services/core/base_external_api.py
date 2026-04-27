@@ -16,7 +16,6 @@ Usage::
             return await self._request("GET", self._url("list_items"))
 """
 
-from __future__ import annotations
 
 import logging
 from typing import Any
@@ -34,7 +33,7 @@ class BaseExternalAPIClient:
     - `self.client` — HttpClient singleton
     - `self.settings` — API settings
     - `self._url(endpoint_key)` — URL resolver из settings.endpoints
-    - `self._headers()` — готовые headers (WAF/API-key/Bearer)
+    - `self._headers()` — готовые headers (WAF / API-key / Authorization)
     - `self._request(method, url, **kwargs)` — обёртка с headers + timeout
 
     Settings могут содержать:
@@ -43,7 +42,12 @@ class BaseExternalAPIClient:
         endpoints: dict[str, str]
         use_waf: bool (optional)
         connect_timeout, read_timeout: float (optional)
+
+    Подклассы могут переопределить ``_auth_scheme`` (`"Bearer"` по умолчанию)
+    для сервисов, использующих другие схемы (`"Token"`, и т. п.).
     """
+
+    _auth_scheme: str = "Bearer"
 
     def __init__(self, *, settings: Any, name: str | None = None) -> None:
         from src.infrastructure.clients.transport.http import get_http_client_dependency
@@ -97,7 +101,7 @@ class BaseExternalAPIClient:
             if api_key:
                 if hasattr(api_key, "get_secret_value"):
                     api_key = api_key.get_secret_value()
-                headers["Authorization"] = f"Bearer {api_key}"
+                headers["Authorization"] = f"{self._auth_scheme} {api_key}"
 
         if extra:
             headers.update(extra)
@@ -122,10 +126,22 @@ class BaseExternalAPIClient:
         json: Any = None,
         headers: dict[str, str] | None = None,
         use_waf: bool | None = None,
-    ) -> dict[str, Any]:
-        """Единый request wrapper с unified headers + timeout + logging."""
+        response_type: str | None = None,
+        raise_for_status: bool | None = None,
+        **extra_kwargs: Any,
+    ) -> Any:
+        """Единый request wrapper с unified headers + timeout + logging.
+
+        ``response_type`` / ``raise_for_status`` пробрасываются в
+        ``HttpClient.make_request`` только если заданы — иначе используются
+        дефолты HttpClient. Доп. kwargs прозрачно передаются дальше.
+        """
         full_headers = self._headers(extra=headers, use_waf=use_waf)
-        timeouts = self._timeouts()
+        kwargs: dict[str, Any] = {**self._timeouts(), **extra_kwargs}
+        if response_type is not None:
+            kwargs["response_type"] = response_type
+        if raise_for_status is not None:
+            kwargs["raise_for_status"] = raise_for_status
 
         try:
             return await self.client.make_request(
@@ -134,7 +150,7 @@ class BaseExternalAPIClient:
                 params=params,
                 json=json,
                 headers=full_headers,
-                **timeouts,
+                **kwargs,
             )
         except Exception as exc:
             self._logger.error(

@@ -2,9 +2,7 @@ from urllib.parse import quote_plus
 
 from pydantic import Field, SecretStr, computed_field
 
-from src.core.config.external_databases.item_settings import (
-    ExternalDatabaseItemSettings,
-)
+from src.core.config.external_databases.item import ExternalDatabaseItemSettings
 from src.core.enums.database import DatabaseTypeChoices
 
 __all__ = ("ExternalDatabaseConnectionSettings",)

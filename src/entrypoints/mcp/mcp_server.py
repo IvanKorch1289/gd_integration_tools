@@ -425,7 +425,7 @@ def _register_system_tools(mcp: Any) -> None:
         "Feature flags позволяют включать/отключать маршруты без рестарта.",
     )
     async def system_feature_flags() -> str:
-        from src.core.config.runtime_state import disabled_feature_flags
+        from src.core.state.runtime import disabled_feature_flags
 
         return orjson.dumps({"disabled_flags": list(disabled_feature_flags)}).decode()
 

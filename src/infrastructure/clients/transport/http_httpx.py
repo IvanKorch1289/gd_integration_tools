@@ -7,9 +7,9 @@
 * HTTP/2 включён по умолчанию (``http2=True``). Auto-fallback на HTTP/1.1.
 * Bulkhead + adaptive TimeLimiter из ``infrastructure.resilience``.
 * Per-resource RateLimiter (Redis token-bucket).
-* Retry — ``tenacity`` (A4); единый источник правды.
-* Per-route circuit breaker (``aiocircuitbreaker``) — один инстанс CB на
-  ``(host, route)``; глобальный middleware удалён в A2.
+* Retry — ``tenacity``; единый источник правды.
+* Per-host circuit breaker — единый фасад
+  ``infrastructure.resilience.breaker.BreakerRegistry`` (purgatory backend, Wave 6.1).
 * orjson — дефолтный JSON-сериализатор.
 """
 
@@ -20,7 +20,6 @@ import logging
 from typing import Any, Mapping
 
 import httpx
-from aiocircuitbreaker import CircuitBreaker, CircuitBreakerError
 from tenacity import (
     RetryError,
     before_sleep_log,
@@ -32,6 +31,12 @@ from tenacity import (
 )
 
 from src.core.config.settings import settings
+from src.infrastructure.resilience.breaker import (
+    Breaker,
+    BreakerSpec,
+    CircuitOpen,
+    breaker_registry,
+)
 from src.infrastructure.resilience.bulkhead import registry as bulkhead_registry
 from src.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,
@@ -51,8 +56,6 @@ class HttpxClient:
     def __init__(self) -> None:
         self._client: httpx.AsyncClient | None = None
         self._lock = asyncio.Lock()
-        # По одному CB на host — чтобы сбой одного даунстрима не валил других.
-        self._breakers: dict[str, CircuitBreaker] = {}
         self._time_limiter = TimeLimiter(name="httpx-global")
         self._rate_limiter = ResourceRateLimiter()
         self._http_settings = settings.http_base_settings
@@ -82,17 +85,15 @@ class HttpxClient:
                 )
             return self._client
 
-    def _breaker_for(self, host: str) -> CircuitBreaker:
-        breaker = self._breakers.get(host)
-        if breaker is None:
-            breaker = CircuitBreaker(
+    def _breaker_for(self, host: str) -> Breaker:
+        return breaker_registry.get_or_create(
+            f"httpx:{host}",
+            BreakerSpec(
                 failure_threshold=self._http_settings.circuit_breaker_max_failures,
                 recovery_timeout=self._http_settings.circuit_breaker_reset_timeout,
-                expected_exception=httpx.HTTPError,
-                name=f"httpx:{host}",
-            )
-            self._breakers[host] = breaker
-        return breaker
+            ),
+            host=host,
+        )
 
     async def close(self) -> None:
         async with self._lock:
@@ -164,10 +165,14 @@ class HttpxClient:
             reraise=True,
         )
 
+        async def _do_with_cb() -> httpx.Response:
+            async with breaker.guard():
+                return await retry_policy(_do)()
+
         try:
             async with bulkhead.guard():
-                return await self._time_limiter.run(breaker(retry_policy(_do))())
-        except RetryError, CircuitBreakerError, httpx.HTTPError:
+                return await self._time_limiter.run(_do_with_cb())
+        except (RetryError, CircuitOpen, httpx.HTTPError):
             raise
 
 

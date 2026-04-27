@@ -69,6 +69,8 @@ class HealthAggregator:
         #: Legacy-timeout. Для режимных probes используется `_TIMEOUT_BY_MODE`.
         self._timeout = timeout_seconds
         self._include_registry: bool = False
+        #: Wave 6.4: предыдущий overall-статус для детекции переходов.
+        self._last_overall: str | None = None
 
     def register(self, name: str, health_fn: HealthCheckFn) -> None:
         """Регистрирует health-check функцию. Должна возвращать dict со status."""
@@ -213,12 +215,37 @@ class HealthAggregator:
             elif status in ("degraded", "unknown") and overall == "ok":
                 overall = "degraded"
 
+        # Wave 6.4: публикация перехода overall-статуса в EventBus.
+        await self._maybe_publish_transition(overall, components)
+
         return {
             "status": overall,
             "timestamp": datetime.now(UTC).isoformat(),
             "mode": mode,
             "components": components,
         }
+
+    async def _maybe_publish_transition(
+        self, current: str, components: dict[str, dict[str, Any]]
+    ) -> None:
+        """Публикует событие при смене overall-статуса (ok ↔ degraded ↔ down)."""
+        previous = self._last_overall
+        self._last_overall = current
+        if previous is None or previous == current:
+            return
+        try:
+            from src.infrastructure.clients.messaging.event_bus import get_event_bus
+            from src.schemas.health_events import HealthTransitionEvent
+
+            bus = get_event_bus()
+            event = HealthTransitionEvent(
+                previous_status=previous,
+                current_status=current,
+                components=components,
+            )
+            await bus.publish("events.health", event)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Health transition publish skipped: %s", exc)
 
     async def check_single(
         self, name: str, *, mode: HealthMode = "fast"

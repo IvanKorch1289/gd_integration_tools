@@ -1,7 +1,7 @@
 import time
 from typing import Any
 
-from src.core.config.runtime_state import disabled_feature_flags
+from src.core.state.runtime import disabled_feature_flags
 from src.core.errors import RouteDisabledError
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
