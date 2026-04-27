@@ -105,9 +105,25 @@ class ExpressSendProcessor(BaseProcessor):
                 sync_id = await client.send_message(msg, sync=self._sync)
             exchange.set_property(self._result_property, sync_id)
             _logger.debug("ExpressSend: chat_id=%s sync_id=%s", chat_id, sync_id)
+            try:
+                from src.infrastructure.observability.metrics import (
+                    record_express_message_sent,
+                )
+
+                record_express_message_sent(self._bot, status="ok")
+            except Exception:  # noqa: BLE001, S110
+                pass
         except Exception as exc:
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
+            try:
+                from src.infrastructure.observability.metrics import (
+                    record_express_message_sent,
+                )
+
+                record_express_message_sent(self._bot, status="error")
+            except Exception:  # noqa: BLE001, S110
+                pass
 
     @staticmethod
     def _normalize_btn(raw: dict[str, Any]) -> dict[str, Any]:

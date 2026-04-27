@@ -7,18 +7,24 @@
 - WHEN: timestamp, duration
 - CORRELATION: request_id, correlation_id
 
-Аудит-события сохраняются в Redis stream для поиска
-и в Graylog для долговременного хранения.
+Хранилища:
+- Redis stream ``audit-log`` — для real-time поиска (TTL ограничен).
+- ClickHouse ``audit_log`` — для долгосрочной аналитики и compliance.
+- Graylog — для централизованного логирования.
 """
 
 import hashlib
+import logging
 import time as _time
+from datetime import UTC, datetime
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
 __all__ = ("AuditLogMiddleware",)
+
+_clickhouse_logger = logging.getLogger("audit_log.clickhouse")
 
 
 class AuditLogMiddleware(BaseHTTPMiddleware):
@@ -44,7 +50,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         else:
             try:
                 body_bytes = await request.body()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
         response = await call_next(request)
@@ -99,7 +105,34 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
                 stream_name="audit-log",
                 data={k: str(v) for k, v in audit_event.items()},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
+
+        # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget)
+        try:
+            from src.infrastructure.clients.storage.clickhouse import (
+                get_clickhouse_client,
+            )
+
+            ch_row = {
+                "ts": datetime.fromtimestamp(
+                    audit_event["timestamp"], tz=UTC
+                ).isoformat(),
+                "method": audit_event["method"],
+                "path": audit_event["path"],
+                "query": audit_event["query"],
+                "status": int(audit_event["status"]),
+                "duration_ms": float(audit_event["duration_ms"]),
+                "client_id": audit_event["client_id"],
+                "client_ip": audit_event["client_ip"],
+                "user_agent": audit_event["user_agent"],
+                "payload_hash": audit_event["payload_hash"],
+                "request_id": audit_event["request_id"],
+                "correlation_id": audit_event["correlation_id"],
+            }
+            ch = get_clickhouse_client()
+            await ch.insert("audit_log", [ch_row])
+        except Exception as exc:  # noqa: BLE001
+            _clickhouse_logger.debug("ClickHouse audit insert failed: %s", exc)
 
         return response

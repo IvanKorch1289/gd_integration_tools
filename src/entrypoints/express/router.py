@@ -78,6 +78,16 @@ async def receive_command(request: Request) -> JSONResponse:
         chat.get("group_chat_id"),
     )
 
+    try:
+        from src.infrastructure.observability.metrics import (
+            record_express_command_received,
+        )
+
+        bot_name = str(payload.get("bot_id", "main_bot"))
+        record_express_command_received(bot_name, command_name)
+    except Exception:  # noqa: BLE001, S110
+        pass
+
     route_id = f"express.command.{command_name}"
     fallback_id = "express.command.default"
     response = await _dispatch_to_route(route_id, fallback_id, payload, sync_id)
