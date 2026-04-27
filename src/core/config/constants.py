@@ -22,8 +22,6 @@ class Constants:
         MOSCOW_TZ (timezone): Временная зона для Москвы (UTC+3).
         RETRY_EXCEPTIONS (Tuple): Исключения, при которых следует повторять запросы.
         CHECK_SERVICES_JOB (Dict[str, Any]): Настройки задачи проверки сервисов.
-        PREFECT_SERVER_COMMAND (str): Команда для запуска сервера Prefect.
-        PREFECT_WORKER_COMMAND (str): Команда для запуска воркера Prefect.
         INITIAL_DELAY (int): Начальная задержка перед повторной попыткой (в секундах).
         RETRY_DELAY (int): Задержка между повторными попытками (в секундах).
         MAX_RESULT_ATTEMPTS (int): Максимальное количество попыток получения результата.
@@ -36,8 +34,6 @@ class Constants:
     CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )
-    PREFECT_SERVER_COMMAND: str = "prefect server start"
-    PREFECT_WORKER_COMMAND: str = "prefect agent start -q 'default'"
     INITIAL_DELAY: int = 3600  # 60 минут
     RETRY_DELAY: int = 1800  # 30 минут
     MAX_RESULT_ATTEMPTS: int = 4

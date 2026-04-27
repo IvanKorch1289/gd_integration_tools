@@ -86,26 +86,6 @@ class ServiceDSLRegistry:
                         service_method=method_name,
                     )
 
-    def generate_prefect_tasks(self) -> dict[str, Any]:
-        """Генерирует Prefect tasks для всех зарегистрированных actions."""
-        try:
-            from src.workflows.task_factory import create_service_task
-        except ImportError:
-            return {}
-
-        tasks: dict[str, Any] = {}
-        from src.dsl.commands.registry import action_handler_registry
-
-        for meta in self._services.values():
-            if "prefect" not in meta.protocols and "all" not in meta.protocols:
-                continue
-            prefix = f"{meta.name}."
-            for action in action_handler_registry.list_actions():
-                if action.startswith(prefix):
-                    tasks[action] = create_service_task(action)
-        return tasks
-
-
 service_dsl_registry = ServiceDSLRegistry()
 
 
