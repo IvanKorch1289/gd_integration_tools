@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field
@@ -13,8 +14,21 @@ class FileStorageSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="FS_", extra="forbid")
 
     # Основные параметры подключения
-    provider: Literal["minio", "aws", "other"] = Field(
-        ..., description="Тип провайдера хранилища", example="minio"
+    provider: Literal["minio", "aws", "other", "local"] = Field(
+        ...,
+        description=(
+            "Тип провайдера хранилища. ``local`` — LocalFS бэкенд для dev-стенда "
+            "(не использовать в production)."
+        ),
+        example="minio",
+    )
+    local_storage_path: Path = Field(
+        default=Path("./dev_storage"),
+        description=(
+            "Путь к директории, используемой LocalFS-бэкендом, когда "
+            "``provider=local``. Игнорируется при S3-совместимых провайдерах."
+        ),
+        example="./dev_storage",
     )
     bucket: str = Field(
         default="my-bucket",
