@@ -19,6 +19,7 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.dsl_console import (
         router as dsl_console_router,
     )
+    from src.entrypoints.api.v1.endpoints.dsl_routes import router as dsl_routes_router
     from src.entrypoints.api.v1.endpoints.files import router as files_router
     from src.entrypoints.api.v1.endpoints.files import storage_router
     from src.entrypoints.api.v1.endpoints.health import router as health_router
@@ -67,6 +68,10 @@ def get_v1_routers() -> APIRouter:
     # IL-WF1.5: Admin-endpoints для durable workflow instances.
     api_router_v1.include_router(
         admin_workflows_router, prefix="/admin", tags=["Admin · Workflows"]
+    )
+    # Wave 3.8: CRUD над YAML-маршрутами через YAMLStore.
+    api_router_v1.include_router(
+        dsl_routes_router, prefix="/admin", tags=["DSL · Routes Store"]
     )
     api_router_v1.include_router(dsl_console_router, tags=["DSL Console"])
     api_router_v1.include_router(
