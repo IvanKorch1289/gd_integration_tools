@@ -222,10 +222,10 @@ async def import_bulk_objects(
         if filename.endswith((".xlsx", ".xls")):
             import io
 
-            import pandas as pd
+            import polars as pl
 
-            df = pd.read_excel(io.BytesIO(content))
-            rows = df.to_dict(orient="records")
+            df = pl.read_excel(io.BytesIO(content))
+            rows = df.to_dicts()
         else:
             import csv
             import io

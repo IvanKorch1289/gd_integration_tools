@@ -114,14 +114,20 @@ class Utilities:
         )
 
     def convert_numpy_types(self, value: Any) -> Any:
-        import pandas as pd
-
-        if pd.api.types.is_integer(value):
-            return int(value)
-        if pd.api.types.is_float(value):
-            return float(value)
-        if pd.api.types.is_bool(value):
+        # Конвертирует numpy/native типы в стандартные Python без зависимости от pandas.
+        if isinstance(value, bool):
             return bool(value)
+        if isinstance(value, int):
+            return int(value)
+        if isinstance(value, float):
+            return float(value)
+        # numpy скаляры имеют атрибут .item() для конверсии в native Python тип.
+        item = getattr(value, "item", None)
+        if callable(item):
+            try:
+                return item()
+            except Exception:  # noqa: BLE001
+                return value
         return value
 
     def convert_data(self, obj: Any) -> Any:

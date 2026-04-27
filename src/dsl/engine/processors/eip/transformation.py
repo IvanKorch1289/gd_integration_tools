@@ -90,12 +90,10 @@ class MessageTranslatorProcessor(BaseProcessor):
         if not data:
             return ""
         try:
-            import io
+            import polars as pl
 
-            import pandas as pd
-
-            df = pd.DataFrame(data)
-            return df.to_csv(index=False)
+            df = pl.DataFrame(data)
+            return df.write_csv()
         except ImportError:
             headers = list(data[0].keys())
             lines = [",".join(headers)]
@@ -108,10 +106,10 @@ class MessageTranslatorProcessor(BaseProcessor):
         try:
             import io
 
-            import pandas as pd
+            import polars as pl
 
-            df = pd.read_csv(io.StringIO(csv_str))
-            return df.to_dict(orient="records")
+            df = pl.read_csv(io.StringIO(csv_str))
+            return df.to_dicts()
         except ImportError:
             lines = csv_str.strip().split("\n")
             if len(lines) < 2:

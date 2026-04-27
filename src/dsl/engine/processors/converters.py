@@ -94,16 +94,16 @@ class CsvToParquet(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import io
 
-        import pandas as pd
+        import polars as pl
 
         if isinstance(data, str):
-            df = pd.read_csv(io.StringIO(data))
+            df = pl.read_csv(io.StringIO(data))
         elif isinstance(data, list) and data and isinstance(data[0], dict):
-            df = pd.DataFrame(data)
+            df = pl.DataFrame(data)
         else:
             return data
         buf = io.BytesIO()
-        df.to_parquet(buf, index=False)
+        df.write_parquet(buf)
         return buf.getvalue()
 
 
@@ -111,11 +111,11 @@ class ParquetToCsv(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import io
 
-        import pandas as pd
+        import polars as pl
 
         if isinstance(data, bytes):
-            df = pd.read_parquet(io.BytesIO(data))
-            return df.to_csv(index=False)
+            df = pl.read_parquet(io.BytesIO(data))
+            return df.write_csv()
         return data
 
 
@@ -182,10 +182,10 @@ class DictToCsv(ConversionStrategy):
         if not isinstance(data, list) or not data:
             return data
         try:
-            import pandas as pd
+            import polars as pl
 
-            df = pd.DataFrame(data)
-            return df.to_csv(index=False)
+            df = pl.DataFrame(data)
+            return df.write_csv()
         except ImportError:
             headers = list(data[0].keys())
             lines = [",".join(headers)]
@@ -201,10 +201,10 @@ class CsvToDict(ConversionStrategy):
         try:
             import io
 
-            import pandas as pd
+            import polars as pl
 
-            df = pd.read_csv(io.StringIO(data))
-            return df.to_dict(orient="records")
+            df = pl.read_csv(io.StringIO(data))
+            return df.to_dicts()
         except ImportError:
             lines = data.strip().split("\n")
             if len(lines) < 2:
