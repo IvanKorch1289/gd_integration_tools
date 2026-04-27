@@ -1,8 +1,18 @@
+"""In-memory TTL-кэш на ``cachetools.TTLCache`` с поддержкой stale-семантики.
+
+Тонкая обёртка над ``cachetools.TTLCache``: библиотека берёт на себя
+TTL-учёт и LRU-эвикцию, обёртка добавляет async-API, fnmatch-инвалидацию
+по паттерну и envelope (CacheEnvelope) с stale-семантикой, ожидаемый
+вышестоящим ``CachingDecorator``.
+"""
+
+from __future__ import annotations
+
 import asyncio
 import fnmatch
-import time
-from collections import OrderedDict
 from typing import Any
+
+from cachetools import TTLCache
 
 from src.infrastructure.decorators.caching.envelope import (
     CacheEnvelope,
@@ -13,59 +23,29 @@ __all__ = ("InMemoryTTLCache",)
 
 
 class InMemoryTTLCache:
-    """In-memory LRU-кэш с поддержкой TTL и stale-семантики."""
-
-    _PURGE_INTERVAL: float = 60.0
+    """Async-обёртка над ``cachetools.TTLCache`` с envelope/stale-семантикой."""
 
     def __init__(self, max_size: int = 1024) -> None:
-        self._data: OrderedDict[str, MemoryCacheEntry] = OrderedDict()
+        # ttl=максимально возможное; реальное TTL хранится в envelope.
+        # cachetools нужен только как LRU-контейнер; срок жизни валидируется
+        # через CacheEnvelope.is_alive().
+        self._data: TTLCache[str, MemoryCacheEntry] = TTLCache(
+            maxsize=max_size, ttl=10**9
+        )
         self._lock = asyncio.Lock()
-        self._max_size = max_size
-        self._last_purge_time: float = 0.0
-
-    @staticmethod
-    def _now() -> float:
-        return time.monotonic()
-
-    def _purge_dead(self) -> None:
-        current = self._now()
-        over_capacity = len(self._data) > int(self._max_size * 1.1)
-
-        if not over_capacity and current - self._last_purge_time < self._PURGE_INTERVAL:
-            return
-
-        dead_keys = [
-            key
-            for key, entry in self._data.items()
-            if not entry.envelope.is_alive(current)
-        ]
-        for key in dead_keys:
-            self._data.pop(key, None)
-
-        self._last_purge_time = current
-
-    def _evict_if_needed(self) -> None:
-        while len(self._data) > self._max_size:
-            self._data.popitem(last=False)
 
     async def get(self, key: str, renew_ttl: bool = False) -> CacheEnvelope | None:
         async with self._lock:
-            self._purge_dead()
-
             entry = self._data.get(key)
             if entry is None:
                 return None
-
             envelope = entry.envelope
             if not envelope.is_alive():
                 self._data.pop(key, None)
                 return None
-
             if renew_ttl and envelope.is_fresh() and envelope.ttl_seconds:
                 envelope = envelope.renew()
                 entry.envelope = envelope
-
-            self._data.move_to_end(key)
             return envelope
 
     async def set(
@@ -76,8 +56,6 @@ class InMemoryTTLCache:
         stale_if_error_seconds: int = 0,
     ) -> None:
         async with self._lock:
-            self._purge_dead()
-
             self._data[key] = MemoryCacheEntry(
                 envelope=CacheEnvelope.create(
                     value=value,
@@ -85,8 +63,6 @@ class InMemoryTTLCache:
                     stale_if_error_seconds=stale_if_error_seconds,
                 )
             )
-            self._data.move_to_end(key)
-            self._evict_if_needed()
 
     async def delete(self, *keys: str) -> None:
         async with self._lock:
@@ -95,8 +71,5 @@ class InMemoryTTLCache:
 
     async def delete_pattern(self, pattern: str) -> None:
         async with self._lock:
-            keys_to_delete = [
-                key for key in self._data if fnmatch.fnmatch(key, pattern)
-            ]
-            for key in keys_to_delete:
+            for key in [k for k in self._data if fnmatch.fnmatch(k, pattern)]:
                 self._data.pop(key, None)
