@@ -1,7 +1,18 @@
-"""Core interfaces — ABCs for infrastructure abstractions.
+"""Core interfaces — ABC-контракты для инфраструктурных абстракций.
 
-Позволяют подменять реализации (Redis→Memcached, S3→Azure, Kafka→NATS)
-без изменения бизнес-логики.
+Wave 1.1: монолитный ``core/interfaces.py`` разбит на тематические модули:
+
+* :mod:`core.interfaces.cache` — :class:`CacheBackend` (Redis / KeyDB / Memcached / Memory).
+* :mod:`core.interfaces.storage` — :class:`ObjectStorage` (S3 / Azure / GCS / LocalFS).
+* :mod:`core.interfaces.antivirus` — :class:`AntivirusBackend` (ClamAV / HTTP).
+* :mod:`core.interfaces.notification` — :class:`NotificationAdapter` (Email / Express / ...).
+
+Прочие ABC (Healthcheck, MessageBroker, AsyncLifecycle, CircuitBreaker,
+PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле — они
+плотно связаны и переезд в отдельные модули не уменьшает зацепления.
+
+Публичный API сохранён: ``from src.core.interfaces import X`` продолжает
+работать для всех ранее экспортируемых имён.
 """
 
 from __future__ import annotations
@@ -11,6 +22,44 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+
+from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.core.interfaces.cache import CacheBackend
+from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
+from src.core.interfaces.storage import ObjectStorage
+
+__all__ = (
+    # Health
+    "HealthStatus",
+    "HealthReport",
+    "Healthcheck",
+    # Cache / Storage / Antivirus / Notification (через подмодули)
+    "CacheBackend",
+    "ObjectStorage",
+    "AntivirusBackend",
+    "AntivirusScanResult",
+    "NotificationAdapter",
+    "NotificationMessage",
+    # Messaging
+    "MessageBroker",
+    # Lifecycle
+    "AsyncLifecycle",
+    "ManagedResource",
+    # Circuit breaker
+    "CircuitState",
+    "CircuitBreakerConfig",
+    "CircuitBreaker",
+    "CircuitBreakerOpenError",
+    # Pool
+    "PoolMetrics",
+    "PoolMetricsCollector",
+    "pool_metrics",
+    # Auth
+    "AuthProvider",
+    # Batching
+    "AsyncBatcher",
+)
+
 
 # ────────────────── Health Check ──────────────────
 
@@ -36,28 +85,6 @@ class Healthcheck(ABC):
     async def check_health(self) -> HealthReport: ...
 
 
-# ────────────────── Cache Backend ──────────────────
-
-
-class CacheBackend(ABC):
-    """Абстракция кэш-бэкенда (Redis, Memcached, in-memory)."""
-
-    @abstractmethod
-    async def get(self, key: str) -> bytes | None: ...
-
-    @abstractmethod
-    async def set(self, key: str, value: bytes, ttl: int | None = None) -> None: ...
-
-    @abstractmethod
-    async def delete(self, *keys: str) -> None: ...
-
-    @abstractmethod
-    async def delete_pattern(self, pattern: str) -> None: ...
-
-    @abstractmethod
-    async def exists(self, key: str) -> bool: ...
-
-
 # ────────────────── Message Broker ──────────────────
 
 
@@ -80,33 +107,6 @@ class MessageBroker(ABC):
 
     @abstractmethod
     async def disconnect(self) -> None: ...
-
-
-# ────────────────── Object Storage ──────────────────
-
-
-class ObjectStorage(ABC):
-    """Абстракция объектного хранилища (S3, Azure Blob, GCS, MinIO)."""
-
-    @abstractmethod
-    async def upload(
-        self, key: str, data: bytes, content_type: str | None = None
-    ) -> str: ...
-
-    @abstractmethod
-    async def download(self, key: str) -> bytes: ...
-
-    @abstractmethod
-    async def delete(self, key: str) -> None: ...
-
-    @abstractmethod
-    async def exists(self, key: str) -> bool: ...
-
-    @abstractmethod
-    async def list_keys(self, prefix: str = "") -> list[str]: ...
-
-    @abstractmethod
-    async def presigned_url(self, key: str, expires_in: int = 3600) -> str: ...
 
 
 # ────────────────── Lifecycle ──────────────────
@@ -150,11 +150,8 @@ class CircuitBreaker:
 
     Сохраняет публичный API (``state``, ``record_success``, ``record_failure``,
     ``allow_request``, ``__aenter__/__aexit__``) для обратной совместимости
-    с 11+ callsite'ами в проекте. Внутри использует батл-тестед реализацию
-    из ``aiocircuitbreaker`` (если установлена); иначе — минимальный fallback.
-
-    Такой подход снижает ~60 строк ручной логики до тонкой адаптерной обёртки,
-    не трогая ни одного callsite (zero-risk migration).
+    с 11+ callsite'ами. Внутри использует батл-тестед реализацию из
+    ``aiocircuitbreaker`` (если установлена); иначе — минимальный fallback.
     """
 
     def __init__(self, name: str, config: CircuitBreakerConfig | None = None) -> None:
@@ -166,7 +163,6 @@ class CircuitBreaker:
         self._half_open_calls = 0
         self._state = CircuitState.CLOSED
 
-        # Попытка использовать aiocircuitbreaker как primary-реализацию.
         try:
             from aiocircuitbreaker import CircuitBreaker as _AioCB
 
@@ -180,7 +176,6 @@ class CircuitBreaker:
 
     @property
     def state(self) -> CircuitState:
-        """Текущее состояние CB — пересчитывается при каждом обращении."""
         if self._state == CircuitState.OPEN:
             elapsed = time.monotonic() - self._last_failure_time
             if elapsed >= self._config.recovery_timeout:
@@ -288,7 +283,9 @@ class AuthProvider(ABC):
         ...
 
     @abstractmethod
-    async def authorize(self, user: dict[str, Any], resource: str, action: str) -> bool:
+    async def authorize(
+        self, user: dict[str, Any], resource: str, action: str
+    ) -> bool:
         """Авторизация: может ли user выполнить action на resource."""
         ...
 
@@ -300,7 +297,10 @@ class AsyncBatcher:
     """Generic async batcher — накапливает items, flush по batch_size или interval."""
 
     def __init__(
-        self, flush_fn: Any, batch_size: int = 100, flush_interval_seconds: float = 5.0
+        self,
+        flush_fn: Any,
+        batch_size: int = 100,
+        flush_interval_seconds: float = 5.0,
     ) -> None:
         import asyncio
 
