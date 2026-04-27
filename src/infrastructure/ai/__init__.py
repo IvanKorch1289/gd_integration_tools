@@ -1,11 +1,10 @@
-"""AI/ML infrastructure (D1..D3): semantic_cache, prompt_registry, eval.
+"""AI/ML infrastructure: semantic_cache, vector_store.
 
-Scaffolding для AI agents DSL. Конкретные паттерны (ReAct, Plan-and-
-Execute, LangGraph state machine) живут в
-`dsl.engine.processors.ai_*`; здесь — инфраструктурная обвязка.
+Wave 0.11: ``PromptRegistry`` живёт в ``src.services.ai.prompt_registry``
+(Langfuse-backed). In-memory stub из infrastructure удалён — больше нет
+дублирования.
 """
 
-from src.infrastructure.ai.prompt_registry import PromptRegistry, PromptVersion
 from src.infrastructure.ai.semantic_cache import SemanticCache
 
-__all__ = ("PromptRegistry", "PromptVersion", "SemanticCache")
+__all__ = ("SemanticCache",)
