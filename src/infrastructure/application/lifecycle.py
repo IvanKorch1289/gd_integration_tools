@@ -56,11 +56,13 @@ def _register_protocol_providers() -> None:
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Exporter registration skipped: %s", exc)
 
-    # Agent memory (Redis-backed).
+    # Agent memory (MongoDB-backed, Wave 0.10).
     try:
         from src.services.ai.agent_memory import get_agent_memory_service
 
-        register_provider("memory", "redis", get_agent_memory_service())
+        memory_service = get_agent_memory_service()
+        await memory_service.ensure_indexes()
+        register_provider("memory", "mongo", memory_service)
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Memory backend registration skipped: %s", exc)
 
