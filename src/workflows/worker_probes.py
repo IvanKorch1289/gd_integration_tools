@@ -2,43 +2,30 @@
 
 Экспортирует три endpoint-а на отдельном порту (по умолчанию 9100):
 
-* ``GET /healthz`` — **liveness**. 200 пока процесс работает; 503 в
-  период graceful-shutdown (после того как worker перешёл в состояние
-  ``draining``).
-* ``GET /readyz`` — **readiness**. 200 только если:
+* ``GET /healthz`` — **liveness**. 200 пока процесс работает; в drain-режиме
+  отдаёт ``{"status": "draining"}`` (всё ещё 200).
+* ``GET /readyz`` — **readiness**. 200 только если ``DurableWorkflowRunner``
+  стартовал и (опционально) ``readiness_check()`` вернул True. Иначе 503.
+* ``GET /metrics`` — Prometheus text format. Worker-specific gauge'и
+  (``workflow_worker_*``) + дефолтный ``REGISTRY``.
 
-    - ``DurableWorkflowRunner`` стартовал (``_running == True``),
-    - БД-подключение проверено (можно выполнить ``SELECT 1``),
-    - LISTEN-подписка установлена (или LISTEN-режим выключен в конфиге).
-
-  Иначе 503 — K8s не направляет трафик в pod.
-* ``GET /metrics`` — Prometheus text format. Выдаёт как worker-specific
-  метрики (``workflow_worker_*``), так и уже существующие метрики из
-  :mod:`app.infrastructure.observability.client_metrics` (``infra_client_*``)
-  и прочие, зарегистрированные в дефолтном ``REGISTRY`` prometheus-client.
-
-Реализация — aiohttp (легковесный, не требует FastAPI dependency stack и
-не тянет uvicorn). Один server в том же event-loop что и runner.
-
-Интерфейс:
-
-    probes = WorkerProbesServer(
-        runner=runner,
-        port=9100,
-        readiness_check=readiness_fn,
-    )
-    await probes.start()
-    ...
-    await probes.stop()
+Реализация — embedded ``uvicorn`` + ``Starlette`` (роутинг). FastAPI не
+нужен (нет валидации/схемы), Starlette уже тянется как зависимость FastAPI.
+Один HTTP-сервер в том же event-loop, что и runner.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Awaitable, Callable
 
-from aiohttp import web
+import uvicorn
 from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, Gauge, generate_latest
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.routing import Route
 
 __all__ = (
     "WorkerProbesServer",
@@ -49,7 +36,6 @@ __all__ = (
 
 _logger = logging.getLogger("workflow.worker.probes")
 
-# ── Worker-specific Prometheus метрики ────────────────────────────────
 
 WORKER_ACTIVE_EXECUTIONS = Gauge(
     "workflow_worker_active_executions",
@@ -70,18 +56,11 @@ WORKER_UP = Gauge(
 )
 
 
-# ── HTTP-сервер ───────────────────────────────────────────────────────
-
 ReadinessFn = Callable[[], Awaitable[bool]]
 
 
 class WorkerProbesServer:
-    """aiohttp-based HTTP server для K8s liveness/readiness + /metrics.
-
-    Запускается в одном event-loop c ``DurableWorkflowRunner``, не требует
-    дополнительного thread/process. Graceful shutdown — через
-    :meth:`stop`.
-    """
+    """ASGI-сервер K8s probes на uvicorn + Starlette в общем event-loop."""
 
     def __init__(
         self,
@@ -98,23 +77,30 @@ class WorkerProbesServer:
         self._host = host
         self._readiness_check = readiness_check
         self._draining = False
-        self._runner_app: web.Application | None = None
-        self._runner_obj: web.AppRunner | None = None
-        self._site: web.TCPSite | None = None
-
-    # -- Lifecycle ------------------------------------------------------
+        self._server: uvicorn.Server | None = None
+        self._serve_task: asyncio.Task | None = None
 
     async def start(self) -> None:
-        """Запускает HTTP-сервер на настроенном порту."""
-        app = web.Application()
-        app.router.add_get("/healthz", self._handle_healthz)
-        app.router.add_get("/readyz", self._handle_readyz)
-        app.router.add_get("/metrics", self._handle_metrics)
-        self._runner_app = app
-        self._runner_obj = web.AppRunner(app, access_log=None)
-        await self._runner_obj.setup()
-        self._site = web.TCPSite(self._runner_obj, host=self._host, port=self._port)
-        await self._site.start()
+        """Запускает ASGI-сервер на настроенном порту."""
+        app = Starlette(
+            routes=[
+                Route("/healthz", self._handle_healthz),
+                Route("/readyz", self._handle_readyz),
+                Route("/metrics", self._handle_metrics),
+            ]
+        )
+        config = uvicorn.Config(
+            app=app,
+            host=self._host,
+            port=self._port,
+            log_level="warning",
+            access_log=False,
+            lifespan="off",
+        )
+        self._server = uvicorn.Server(config)
+        self._serve_task = asyncio.create_task(
+            self._server.serve(), name="worker-probes-uvicorn"
+        )
         WORKER_UP.labels(worker_id=self._worker_id).set(1)
         _logger.info(
             "probes server started on %s:%s (worker_id=%s)",
@@ -127,65 +113,53 @@ class WorkerProbesServer:
         """Останавливает сервер. Метит ``workflow_worker_up = 0``."""
         self._draining = True
         WORKER_UP.labels(worker_id=self._worker_id).set(0)
-        if self._site is not None:
+        if self._server is not None:
+            self._server.should_exit = True
+        if self._serve_task is not None:
             try:
-                await self._site.stop()
+                await asyncio.wait_for(self._serve_task, timeout=5)
+            except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
+                _logger.warning("probes server stop timeout/cancel: %s", exc)
             except Exception as exc:  # noqa: BLE001
-                _logger.warning("failed to stop probes TCPSite: %s", exc)
-        if self._runner_obj is not None:
-            try:
-                await self._runner_obj.cleanup()
-            except Exception as exc:  # noqa: BLE001
-                _logger.warning("failed to cleanup probes AppRunner: %s", exc)
+                _logger.warning("probes server stop error: %s", exc)
         _logger.info("probes server stopped")
 
     def mark_draining(self) -> None:
-        """Явно перевести probes в drain-режим (readyz начнёт отдавать 503).
-
-        Liveness продолжает отдавать 200, пока ``stop()`` не вызван.
-        """
+        """Явно перевести probes в drain-режим (readyz начнёт отдавать 503)."""
         self._draining = True
 
-    # -- Handlers -------------------------------------------------------
-
-    async def _handle_healthz(self, _req: web.Request) -> web.Response:
-        """Liveness — 200 пока процесс жив (до физической остановки)."""
+    async def _handle_healthz(self, _req: Request) -> Response:
         if self._draining:
-            # В режиме drain liveness остаётся 200 — иначе K8s убьёт pod
-            # до того как активные executions успеют завершиться. Readiness
-            # же уже 503 — новый трафик не поступает.
-            return web.json_response({"status": "draining"}, status=200)
-        return web.json_response({"status": "ok"}, status=200)
+            return JSONResponse({"status": "draining"}, status_code=200)
+        return JSONResponse({"status": "ok"}, status_code=200)
 
-    async def _handle_readyz(self, _req: web.Request) -> web.Response:
-        """Readiness — 200 только если runner запущен и БД/LISTEN здоровы."""
+    async def _handle_readyz(self, _req: Request) -> Response:
         if self._draining:
-            return web.json_response(
-                {"status": "not_ready", "reason": "draining"}, status=503
+            return JSONResponse(
+                {"status": "not_ready", "reason": "draining"}, status_code=503
             )
-        running = bool(getattr(self._runner, "_running", False))
-        if not running:
-            return web.json_response(
-                {"status": "not_ready", "reason": "runner_not_started"}, status=503
+        if not bool(getattr(self._runner, "_running", False)):
+            return JSONResponse(
+                {"status": "not_ready", "reason": "runner_not_started"},
+                status_code=503,
             )
         if self._readiness_check is not None:
             try:
                 ok = await self._readiness_check()
             except Exception as exc:  # noqa: BLE001
                 _logger.warning("readiness check error: %s", exc)
-                return web.json_response(
-                    {"status": "not_ready", "reason": f"check_error: {exc}"}, status=503
+                return JSONResponse(
+                    {"status": "not_ready", "reason": f"check_error: {exc}"},
+                    status_code=503,
                 )
             if not ok:
-                return web.json_response(
+                return JSONResponse(
                     {"status": "not_ready", "reason": "dependency_unhealthy"},
-                    status=503,
+                    status_code=503,
                 )
-        return web.json_response({"status": "ready"}, status=200)
+        return JSONResponse({"status": "ready"}, status_code=200)
 
-    async def _handle_metrics(self, _req: web.Request) -> web.Response:
-        """Prometheus text export (дефолтный REGISTRY)."""
-        # Подтягиваем актуальные значения worker-specific gauge'ей.
+    async def _handle_metrics(self, _req: Request) -> Response:
         try:
             active = len(getattr(self._runner, "_active_executions", ()) or ())
             queue = getattr(self._runner, "_pending_instance_ids", None)
@@ -194,6 +168,5 @@ class WorkerProbesServer:
             WORKER_QUEUE_DEPTH.labels(worker_id=self._worker_id).set(qsize)
         except Exception as exc:  # noqa: BLE001
             _logger.debug("failed to refresh worker gauges: %s", exc)
-
         data = generate_latest(REGISTRY)
-        return web.Response(body=data, content_type=CONTENT_TYPE_LATEST)
+        return Response(content=data, media_type=CONTENT_TYPE_LATEST)
