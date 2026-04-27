@@ -22,5 +22,6 @@ Scaffolding-адаптеры — placeholder'ы с правильным инте
 """
 
 from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.infrastructure.notifications.adapters.express import ExpressAdapter
 
-__all__ = ("NotificationChannel",)
+__all__ = ("ExpressAdapter", "NotificationChannel")

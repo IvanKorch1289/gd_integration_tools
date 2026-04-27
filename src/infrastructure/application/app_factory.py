@@ -124,6 +124,11 @@ def _configure_business_routers(app: FastAPI) -> None:
 
     app.include_router(cdc_router)
 
+    # Express BotX (Wave 4.2)
+    from src.entrypoints.express import router as express_router
+
+    app.include_router(express_router)
+
 
 def _configure_root_endpoint(app: FastAPI) -> None:
     """Конфигурация корневого эндпоинта и health/ready-проб для Kubernetes.
