@@ -239,6 +239,12 @@ api-fuzz: check-env ## Run property-based testing against live FastAPI
 
 ##@ Runtime
 
+layers: ## Проверка архитектурных слоёв (ADR-001)
+	@uv run python tools/check_layers.py
+
+layers-update: ## Обновить allowlist архитектурных нарушений (после сокращения legacy)
+	@uv run python tools/check_layers.py --update-allowlist
+
 run: check-env ## Start backend in foreground (использует APP_SERVER из env)
 	@$(MANAGE_SCRIPT) run
 
