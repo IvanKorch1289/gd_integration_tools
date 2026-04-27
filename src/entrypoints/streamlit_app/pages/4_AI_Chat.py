@@ -23,6 +23,7 @@ if "messages" not in st.session_state:
 
 if "session_id" not in st.session_state:
     import uuid
+
     st.session_state.session_id = str(uuid.uuid4())[:8]
 
 # ──────────── Chat history ────────────
@@ -55,6 +56,7 @@ with col1:
     if st.button("Очистить"):
         st.session_state.messages = []
         import uuid
+
         st.session_state.session_id = str(uuid.uuid4())[:8]
         st.rerun()
 with col2:

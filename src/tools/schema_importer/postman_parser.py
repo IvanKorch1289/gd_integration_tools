@@ -88,7 +88,7 @@ def _walk_items(
                     response_model = f"{name}Response"
                     schemas[response_model] = schema
                     break
-            except (json.JSONDecodeError, TypeError):
+            except json.JSONDecodeError, TypeError:
                 continue
 
         routes.append(
@@ -136,11 +136,7 @@ def _infer_schema(value: Any) -> dict[str, Any]:
     """Эвристика: JSON-значение → approximate JSON Schema dict."""
     if isinstance(value, dict):
         props = {k: _infer_schema(v) for k, v in value.items()}
-        return {
-            "type": "object",
-            "properties": props,
-            "required": list(props.keys()),
-        }
+        return {"type": "object", "properties": props, "required": list(props.keys())}
     if isinstance(value, list):
         if not value:
             return {"type": "array", "items": {"type": "string"}}

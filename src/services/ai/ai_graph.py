@@ -18,14 +18,12 @@ def _make_action_tool(action_name: str) -> Any:
 
     from langchain_core.tools import StructuredTool
 
-    from app.dsl.commands.registry import action_handler_registry
-    from app.schemas.invocation import ActionCommandSchema
+    from src.dsl.commands.registry import action_handler_registry
+    from src.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:
         command = ActionCommandSchema(
-            action=action_name,
-            payload=kwargs,
-            meta={"source": "ai_agent"},
+            action=action_name, payload=kwargs, meta={"source": "ai_agent"}
         )
         result = await action_handler_registry.dispatch(command)
         if hasattr(result, "model_dump"):
@@ -36,6 +34,7 @@ def _make_action_tool(action_name: str) -> Any:
         loop = asyncio.get_event_loop()
         if loop.is_running():
             import concurrent.futures
+
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 return pool.submit(asyncio.run, _run_action(**kwargs)).result()
         return asyncio.run(_run_action(**kwargs))
@@ -48,10 +47,7 @@ def _make_action_tool(action_name: str) -> Any:
     )
 
 
-async def build_and_run_agent(
-    prompt: str,
-    tool_actions: list[str],
-) -> dict[str, Any]:
+async def build_and_run_agent(prompt: str, tool_actions: list[str]) -> dict[str, Any]:
     """Строит и запускает LangGraph-агента.
 
     Args:
@@ -62,15 +58,17 @@ async def build_and_run_agent(
         Результат работы агента.
     """
     try:
-        from langgraph.prebuilt import create_react_agent
         from langchain_community.chat_models import ChatOpenAI
+        from langgraph.prebuilt import create_react_agent
 
         tools = [_make_action_tool(action) for action in tool_actions]
 
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         agent = create_react_agent(llm, tools)
 
-        result = await agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
+        result = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": prompt}]}
+        )
 
         messages = result.get("messages", [])
         final_content = messages[-1].content if messages else ""

@@ -51,10 +51,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from app.core.tenancy import current_tenant
+from src.core.tenancy import current_tenant
 
 if TYPE_CHECKING:
-    from app.infrastructure.policy.casbin_adapter import CasbinAdapter
+    from src.infrastructure.policy.casbin_adapter import CasbinAdapter
 
 
 __all__ = ("TenantScopedCasbin",)
@@ -79,10 +79,7 @@ class TenantScopedCasbin:
     """
 
     def __init__(
-        self,
-        base_adapter: "CasbinAdapter",
-        *,
-        default_tenant_id: str | None = None,
+        self, base_adapter: "CasbinAdapter", *, default_tenant_id: str | None = None
     ) -> None:
         self._base = base_adapter
         self._default_tenant_id = default_tenant_id
@@ -101,11 +98,7 @@ class TenantScopedCasbin:
     # ---------------------------------------------------------------- enforce
 
     def enforce(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        tenant_id: str | None = None,
+        self, user_id: str, resource: str, action: str, tenant_id: str | None = None
     ) -> bool:
         """Разрешён ли ``user_id`` выполнить ``action`` на ``resource`` в ``tenant``.
 
@@ -146,11 +139,7 @@ class TenantScopedCasbin:
     # ----------------------------------------------------------- admin: policy
 
     def add_policy(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        tenant_id: str,
+        self, user_id: str, resource: str, action: str, tenant_id: str
     ) -> bool:
         """Добавить 4-арг policy ``(user, resource, action, tenant)``."""
         enforcer = self._base._ensure_enforcer()  # noqa: SLF001
@@ -163,20 +152,14 @@ class TenantScopedCasbin:
             return False
 
     def remove_policy(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        tenant_id: str,
+        self, user_id: str, resource: str, action: str, tenant_id: str
     ) -> bool:
         """Удалить ранее добавленную 4-арг policy."""
         enforcer = self._base._ensure_enforcer()  # noqa: SLF001
         if enforcer is None:
             return False
         try:
-            return bool(
-                enforcer.remove_policy(user_id, resource, action, tenant_id)
-            )
+            return bool(enforcer.remove_policy(user_id, resource, action, tenant_id))
         except Exception as exc:  # noqa: BLE001
             logger.error("TenantScopedCasbin remove_policy fail: %s", exc)
             return False

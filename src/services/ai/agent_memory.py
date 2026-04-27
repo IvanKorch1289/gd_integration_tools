@@ -7,7 +7,7 @@ import logging
 import time
 from typing import Any
 
-from app.infrastructure.clients.storage.redis import redis_client
+from src.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("AgentMemoryService", "get_agent_memory_service")
 
@@ -104,11 +104,7 @@ class AgentMemoryService:
         scratchpad = await self.get_scratchpad(session_id)
         facts = await self.get_facts(session_id)
 
-        return {
-            "conversation": conversation,
-            "scratchpad": scratchpad,
-            "facts": facts,
-        }
+        return {"conversation": conversation, "scratchpad": scratchpad, "facts": facts}
 
     async def save_memory(self, session_id: str, memory: dict[str, Any]) -> None:
         """Сохраняет полный контекст памяти."""

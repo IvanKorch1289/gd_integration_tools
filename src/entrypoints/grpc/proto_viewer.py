@@ -24,15 +24,12 @@ def _parse_proto(content: str) -> dict[str, Any]:
     messages: list[dict[str, Any]] = []
 
     # Парсинг сервисов и RPC-методов
-    for svc_match in re.finditer(
-        r"service\s+(\w+)\s*\{([^}]+)\}", content, re.DOTALL
-    ):
+    for svc_match in re.finditer(r"service\s+(\w+)\s*\{([^}]+)\}", content, re.DOTALL):
         svc_name = svc_match.group(1)
         svc_body = svc_match.group(2)
         methods = []
         for rpc_match in re.finditer(
-            r"rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)",
-            svc_body,
+            r"rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)", svc_body
         ):
             methods.append(
                 {
@@ -44,15 +41,11 @@ def _parse_proto(content: str) -> dict[str, Any]:
         services.append({"name": svc_name, "methods": methods})
 
     # Парсинг сообщений
-    for msg_match in re.finditer(
-        r"message\s+(\w+)\s*\{([^}]+)\}", content, re.DOTALL
-    ):
+    for msg_match in re.finditer(r"message\s+(\w+)\s*\{([^}]+)\}", content, re.DOTALL):
         msg_name = msg_match.group(1)
         msg_body = msg_match.group(2)
         fields = []
-        for field_match in re.finditer(
-            r"(\w+)\s+(\w+)\s*=\s*(\d+)", msg_body
-        ):
+        for field_match in re.finditer(r"(\w+)\s+(\w+)\s*=\s*(\d+)", msg_body):
             fields.append(
                 {
                     "type": field_match.group(1),
@@ -66,9 +59,7 @@ def _parse_proto(content: str) -> dict[str, Any]:
 
 
 @proto_viewer_router.get(
-    "/schema",
-    response_class=PlainTextResponse,
-    summary="Содержимое .proto файлов",
+    "/schema", response_class=PlainTextResponse, summary="Содержимое .proto файлов"
 )
 async def get_proto_schema() -> PlainTextResponse:
     """Возвращает объединённое содержимое всех .proto файлов."""
@@ -81,8 +72,7 @@ async def get_proto_schema() -> PlainTextResponse:
 
 
 @proto_viewer_router.get(
-    "/schema/json",
-    summary="Структурированное описание gRPC-сервисов",
+    "/schema/json", summary="Структурированное описание gRPC-сервисов"
 )
 async def get_proto_schema_json() -> dict[str, Any]:
     """Возвращает JSON-описание всех сервисов, методов и сообщений."""

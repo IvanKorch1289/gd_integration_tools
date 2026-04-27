@@ -26,12 +26,12 @@ from uuid import UUID
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database.models.workflow_event import (
+from src.infrastructure.database.models.workflow_event import (
     WorkflowEvent,
     WorkflowEventType,
 )
-from app.infrastructure.database.models.workflow_instance import WorkflowInstance
-from app.infrastructure.database.session_manager import main_session_manager
+from src.infrastructure.database.models.workflow_instance import WorkflowInstance
+from src.infrastructure.database.session_manager import main_session_manager
 
 __all__ = ("WorkflowEventRow", "WorkflowEventStore")
 
@@ -158,10 +158,7 @@ class WorkflowEventStore:
         return seq
 
     async def read_events(
-        self,
-        workflow_id: UUID,
-        after_seq: int = 0,
-        limit: int = 1000,
+        self, workflow_id: UUID, after_seq: int = 0, limit: int = 1000
     ) -> list[WorkflowEventRow]:
         """Читает события ``seq > after_seq`` в порядке возрастания ``seq``.
 
@@ -193,17 +190,14 @@ class WorkflowEventStore:
         """Возвращает ``max(seq)`` для workflow. ``0`` если событий нет."""
         async with self._sm.create_session() as session:
             stmt = select(func.max(WorkflowEvent.id)).where(
-                WorkflowEvent.workflow_id == workflow_id,
+                WorkflowEvent.workflow_id == workflow_id
             )
             result = await session.execute(stmt)
             value = result.scalar_one_or_none()
             return int(value) if value is not None else 0
 
     async def snapshot(
-        self,
-        workflow_id: UUID,
-        state: dict[str, Any],
-        at_seq: int,
+        self, workflow_id: UUID, state: dict[str, Any], at_seq: int
     ) -> None:
         """Фиксирует snapshot state + event ``snapshotted``.
 

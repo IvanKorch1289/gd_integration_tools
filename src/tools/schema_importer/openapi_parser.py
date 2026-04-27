@@ -37,7 +37,9 @@ def _load_raw(path: str | Path) -> dict[str, Any]:
     else:
         data = json.loads(text)
     if not isinstance(data, dict):
-        raise ValueError(f"OpenAPI spec должен быть object-ом, не {type(data).__name__}")
+        raise ValueError(
+            f"OpenAPI spec должен быть object-ом, не {type(data).__name__}"
+        )
     return data
 
 

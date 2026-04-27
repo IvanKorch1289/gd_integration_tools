@@ -29,9 +29,9 @@ import uuid
 from collections import defaultdict, deque
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "MessageExpirationProcessor",
@@ -90,7 +90,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = time.time() - float(created_at)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
 
         if age <= self._ttl:
@@ -119,7 +119,9 @@ class CorrelationIdProcessor(BaseProcessor):
     Полезно для трейсинга цепочки вызовов между сервисами и очередями.
     """
 
-    def __init__(self, *, header: str = "x-correlation-id", name: str | None = None) -> None:
+    def __init__(
+        self, *, header: str = "x-correlation-id", name: str | None = None
+    ) -> None:
         super().__init__(name=name or "correlation-id")
         self._header = header
 
@@ -242,11 +244,7 @@ class SessionWindowProcessor(_BaseWindow):
     """
 
     def __init__(
-        self,
-        *,
-        sink: Any,
-        gap_seconds: float = 30.0,
-        name: str | None = None,
+        self, *, sink: Any, gap_seconds: float = 30.0, name: str | None = None
     ) -> None:
         super().__init__(sink=sink, name=name or "session-window")
         self._gap = gap_seconds
@@ -302,6 +300,7 @@ class GroupByKeyProcessor(_BaseWindow):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             import jmespath
+
             key = jmespath.search(self._key_path, exchange.in_message.body)
         except Exception:
             key = None
@@ -338,11 +337,7 @@ class SchemaRegistryValidator(BaseProcessor):
     _cache: dict[str, Any] = {}
 
     def __init__(
-        self,
-        *,
-        subject: str,
-        schema_loader: Any = None,
-        name: str | None = None,
+        self, *, subject: str, schema_loader: Any = None, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"schema:{subject}")
         self._subject = subject
@@ -363,6 +358,7 @@ class SchemaRegistryValidator(BaseProcessor):
 
         try:
             import jsonschema
+
             jsonschema.validate(instance=exchange.in_message.body, schema=schema)
         except ImportError:
             logger.warning("jsonschema не установлен, валидация пропущена")
@@ -400,7 +396,11 @@ class ReplyToProcessor(BaseProcessor):
 
         correlation = exchange.in_message.headers.get(self._correlation_header)
         headers = {self._correlation_header: correlation} if correlation else {}
-        body = exchange.out_message.body if exchange.out_message else exchange.in_message.body
+        body = (
+            exchange.out_message.body
+            if exchange.out_message
+            else exchange.in_message.body
+        )
 
         try:
             await self._broker.publish(reply_to, body, headers=headers)
@@ -459,11 +459,7 @@ class DurableSubscriberProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        *,
-        broker: Any,
-        subscribers: list[str],
-        name: str | None = None,
+        self, *, broker: Any, subscribers: list[str], name: str | None = None
     ) -> None:
         super().__init__(name=name or f"durable-fanout:{len(subscribers)}")
         self._broker = broker
@@ -473,10 +469,17 @@ class DurableSubscriberProcessor(BaseProcessor):
         body = exchange.in_message.body
         headers = dict(exchange.in_message.headers)
         results = await asyncio.gather(
-            *(self._broker.publish(sub, body, headers=headers) for sub in self._subscribers),
+            *(
+                self._broker.publish(sub, body, headers=headers)
+                for sub in self._subscribers
+            ),
             return_exceptions=True,
         )
-        failed = [sub for sub, res in zip(self._subscribers, results, strict=True) if isinstance(res, Exception)]
+        failed = [
+            sub
+            for sub, res in zip(self._subscribers, results, strict=True)
+            if isinstance(res, Exception)
+        ]
         if failed:
             exchange.fail(f"Durable publish failed for: {failed}")
 
@@ -506,11 +509,21 @@ class ChannelPurgerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if self._dry_run:
-            logger.warning("ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel)
-            exchange.out_message.body = {"purged": False, "dry_run": True, "channel": self._channel}
+            logger.warning(
+                "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel
+            )
+            exchange.out_message.body = {
+                "purged": False,
+                "dry_run": True,
+                "channel": self._channel,
+            }
             return
         deleted = await self._broker.purge(self._channel)
-        exchange.out_message.body = {"purged": True, "deleted": deleted, "channel": self._channel}
+        exchange.out_message.body = {
+            "purged": True,
+            "deleted": deleted,
+            "channel": self._channel,
+        }
 
 
 # ──────────────────── Sampling ────────────────────

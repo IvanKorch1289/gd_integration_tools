@@ -11,13 +11,9 @@ from typing import Any, Callable
 
 from pydantic import BaseModel
 
-from app.schemas.invocation import ActionCommandSchema
+from src.schemas.invocation import ActionCommandSchema
 
-__all__ = (
-    "ActionHandlerSpec",
-    "ActionHandlerRegistry",
-    "action_handler_registry",
-)
+__all__ = ("ActionHandlerSpec", "ActionHandlerRegistry", "action_handler_registry")
 
 
 @dataclass(slots=True)

@@ -1,27 +1,27 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.config.settings import settings
-from app.core.decorators.limiting import route_limiting
-from app.core.enums.invocation import BrokerKind
-from app.entrypoints.api.dependencies.auth import require_api_key
-from app.entrypoints.api.generator.actions import (
+from src.core.config.settings import settings
+from src.core.enums.invocation import BrokerKind
+from src.entrypoints.api.dependencies.auth import require_api_key
+from src.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
     CrudSpec,
 )
-from app.entrypoints.api.generator.invocation import (
+from src.entrypoints.api.generator.invocation import (
     EventPublishSpec,
     InvocationSpec,
     build_http_command_meta,
     default_payload_factory,
 )
-from app.schemas.filter_schemas.orderkinds import OrderKindFilter
-from app.schemas.route_schemas.orderkinds import (
+from src.infrastructure.decorators.limiting import route_limiting
+from src.schemas.filter_schemas.orderkinds import OrderKindFilter
+from src.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from app.services.core.orderkinds import get_order_kind_service
+from src.services.core.orderkinds import get_order_kind_service
 
 __all__ = ("router",)
 

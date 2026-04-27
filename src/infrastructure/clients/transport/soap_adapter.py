@@ -40,9 +40,7 @@ class ZeepSoapAdapter:
 
         import httpx
 
-        session = httpx.AsyncClient(
-            auth=self._auth if self._auth else None, timeout=30,
-        )
+        session = httpx.AsyncClient(auth=self._auth if self._auth else None, timeout=30)
         transport = AsyncTransport(client=session)
         self._client = AsyncClient(wsdl=self._wsdl_url, transport=transport)
         return self._client

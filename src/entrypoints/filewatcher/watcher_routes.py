@@ -9,40 +9,26 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.entrypoints.filewatcher.watcher_manager import (
-    WatcherSpec,
-    watcher_manager,
-)
+from src.entrypoints.filewatcher.watcher_manager import WatcherSpec, watcher_manager
 
 __all__ = ("watcher_router",)
 
-watcher_router = APIRouter(
-    prefix="/watchers",
-    tags=["File Watchers"],
-)
+watcher_router = APIRouter(prefix="/watchers", tags=["File Watchers"])
 
 
 class CreateWatcherRequest(BaseModel):
     """Запрос на создание наблюдателя."""
 
     directory: str = Field(description="Путь к директории.")
-    pattern: str = Field(
-        default="*", description="Glob-паттерн файлов."
-    )
-    route_id: str = Field(
-        description="DSL-маршрут для обработки."
-    )
+    pattern: str = Field(default="*", description="Glob-паттерн файлов.")
+    route_id: str = Field(description="DSL-маршрут для обработки.")
     poll_interval: float = Field(
-        default=5.0,
-        ge=1.0,
-        description="Интервал опроса (сек).",
+        default=5.0, ge=1.0, description="Интервал опроса (сек)."
     )
 
 
 @watcher_router.post("/", summary="Создать наблюдатель")
-async def create_watcher(
-    body: CreateWatcherRequest,
-) -> dict[str, Any]:
+async def create_watcher(body: CreateWatcherRequest) -> dict[str, Any]:
     """Создаёт и запускает файловый наблюдатель."""
     spec = WatcherSpec(
         directory=body.directory,
@@ -65,9 +51,7 @@ async def create_watcher(
     }
 
 
-@watcher_router.delete(
-    "/{watcher_id}", summary="Удалить наблюдатель"
-)
+@watcher_router.delete("/{watcher_id}", summary="Удалить наблюдатель")
 async def delete_watcher(watcher_id: str) -> dict[str, str]:
     """Удаляет файловый наблюдатель."""
     try:

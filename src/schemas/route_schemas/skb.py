@@ -2,8 +2,8 @@ from uuid import UUID, uuid4
 
 from pydantic import Field
 
-from app.core.enums.skb import ResponseTypeChoices
-from app.schemas.base import BaseSchema
+from src.core.enums.skb import ResponseTypeChoices
+from src.schemas.base import BaseSchema
 
 __all__ = (
     "APISKBOrderSchemaIn",

@@ -101,7 +101,7 @@ async def shutdown():
 2. В IL2 мигрируются Kafka / RabbitMQ / IMAP / HTTP (вместе с профилями upstream).
 3. В IL3 добавляется tenant-aware per-tenant sub-registry.
 
-До полной миграции существующие `from app.infrastructure.clients.* import X`
+До полной миграции существующие `from src.infrastructure.clients.* import X`
 продолжают работать через re-export shim (`DeprecationWarning` — plan deletion
 в H3_PLUS).
 

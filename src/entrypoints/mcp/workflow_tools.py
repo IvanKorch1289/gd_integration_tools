@@ -33,7 +33,7 @@ from uuid import UUID
 
 import orjson
 
-from app.workflows.registry import WorkflowDescriptor, workflow_registry
+from src.workflows.registry import WorkflowDescriptor, workflow_registry
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -54,16 +54,14 @@ def register_workflow_tools(mcp: Any) -> None:
         route_id = workflow_registry.get_route_id(descriptor.name)
         if route_id is None:  # defensive
             _logger.warning(
-                "skipping workflow %s: no route_id binding", descriptor.name,
+                "skipping workflow %s: no route_id binding", descriptor.name
             )
             continue
         _build_workflow_tool(mcp, descriptor, route_id)
 
     _register_catalog_tools(mcp)
 
-    _logger.info(
-        "Зарегистрировано %d workflow MCP tools", len(descriptors),
-    )
+    _logger.info("Зарегистрировано %d workflow MCP tools", len(descriptors))
 
 
 def _sanitize_tool_name(name: str) -> str:
@@ -93,9 +91,7 @@ def _tool_description(descriptor: WorkflowDescriptor) -> str:
 
 
 def _build_workflow_tool(
-    mcp: Any,
-    descriptor: WorkflowDescriptor,
-    route_id: str,
+    mcp: Any, descriptor: WorkflowDescriptor, route_id: str
 ) -> None:
     """Регистрирует один workflow как отдельный MCP tool.
 
@@ -129,9 +125,9 @@ def _build_workflow_tool(
         """
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             return orjson.dumps(
-                {"error": "invalid JSON payload", "raw": payload},
+                {"error": "invalid JSON payload", "raw": payload}
             ).decode()
 
         if _input_schema is not None:
@@ -140,7 +136,7 @@ def _build_workflow_tool(
                 parsed_payload = validated.model_dump(mode="json")
             except Exception as exc:  # noqa: BLE001
                 return orjson.dumps(
-                    {"error": f"payload validation failed: {exc}"},
+                    {"error": f"payload validation failed: {exc}"}
                 ).decode()
 
         try:
@@ -153,9 +149,7 @@ def _build_workflow_tool(
             )
             return orjson.dumps(result, default=str).decode()
         except Exception as exc:  # noqa: BLE001
-            _logger.exception(
-                "workflow tool %s failed: %s", tool_name, exc,
-            )
+            _logger.exception("workflow tool %s failed: %s", tool_name, exc)
             return orjson.dumps({"error": str(exc)}).decode()
 
 
@@ -176,10 +170,10 @@ async def _trigger_and_maybe_wait(
     import asyncio
     from datetime import datetime, timezone
 
-    from app.dsl.commands.registry import action_handler_registry
-    from app.entrypoints.base import dispatch_action
-    from app.infrastructure.database.models.workflow_instance import WorkflowStatus
-    from app.infrastructure.workflow.state_store import WorkflowInstanceStore
+    from src.dsl.commands.registry import action_handler_registry
+    from src.entrypoints.base import dispatch_action
+    from src.infrastructure.database.models.workflow_instance import WorkflowStatus
+    from src.infrastructure.workflow.state_store import WorkflowInstanceStore
 
     store = WorkflowInstanceStore()
 
@@ -202,18 +196,14 @@ async def _trigger_and_maybe_wait(
             instance_id = UUID(str(dispatched))
     else:
         instance_id = await store.create(
-            workflow_name=workflow_name,
-            route_id=route_id,
-            input_payload=payload,
+            workflow_name=workflow_name, route_id=route_id, input_payload=payload
         )
 
     if not wait:
         return {
             "workflow_id": str(instance_id),
             "status": WorkflowStatus.pending.value,
-            "message": (
-                "Workflow queued. Use workflow_status tool to check progress."
-            ),
+            "message": ("Workflow queued. Use workflow_status tool to check progress."),
         }
 
     # Polling до terminal или timeout'а.
@@ -228,10 +218,7 @@ async def _trigger_and_maybe_wait(
     while True:
         row = await store.get(instance_id)
         if row is None:
-            return {
-                "workflow_id": str(instance_id),
-                "error": "instance disappeared",
-            }
+            return {"workflow_id": str(instance_id), "error": "instance disappeared"}
         if row.status in terminal:
             last_error: str | None = None
             result_payload: Any = None
@@ -279,9 +266,7 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_list() -> str:
-        from app.entrypoints.api.v1.endpoints.admin_workflows import (
-            input_schema_json,
-        )
+        from src.entrypoints.api.v1.endpoints.admin_workflows import input_schema_json
 
         items: list[dict[str, Any]] = []
         for descriptor in workflow_registry.list_all():
@@ -307,20 +292,18 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_status(instance_id: str) -> str:
-        from app.infrastructure.workflow.state_store import WorkflowInstanceStore
+        from src.infrastructure.workflow.state_store import WorkflowInstanceStore
 
         try:
             uid = UUID(instance_id)
-        except (ValueError, TypeError):
-            return orjson.dumps(
-                {"error": f"invalid UUID: {instance_id!r}"},
-            ).decode()
+        except ValueError, TypeError:
+            return orjson.dumps({"error": f"invalid UUID: {instance_id!r}"}).decode()
 
         store = WorkflowInstanceStore()
         row = await store.get(uid)
         if row is None:
             return orjson.dumps(
-                {"error": f"instance '{instance_id}' not found"},
+                {"error": f"instance '{instance_id}' not found"}
             ).decode()
 
         last_error: str | None = None
@@ -336,9 +319,7 @@ def _register_catalog_tools(mcp: Any) -> None:
                 "status": row.status.value,
                 "last_event_seq": row.last_event_seq,
                 "next_attempt_at": (
-                    row.next_attempt_at.isoformat()
-                    if row.next_attempt_at
-                    else None
+                    row.next_attempt_at.isoformat() if row.next_attempt_at else None
                 ),
                 "created_at": row.created_at.isoformat(),
                 "finished_at": (

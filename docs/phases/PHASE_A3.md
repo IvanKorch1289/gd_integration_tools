@@ -53,7 +53,7 @@ DI-контейнер.
 ```bash
 # Deprecation warning виден:
 python -W error::DeprecationWarning -c "
-from app.core.service_registry import service_registry
+from src.core.service_registry import service_registry
 "
 # → DeprecationWarning (exit 1 с -W error)
 
@@ -62,7 +62,7 @@ grep -r '_FallbackRegistry' src/ && echo FOUND || echo CLEAN
 
 # svcs_registry принимает и name, и type:
 python -c "
-from app.core.svcs_registry import register_factory, get_service
+from src.core.svcs_registry import register_factory, get_service
 class Foo: pass
 register_factory('foo', lambda: Foo())
 register_factory(Foo, lambda: Foo())

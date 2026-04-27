@@ -69,7 +69,7 @@ class PoolMonitor:
     async def collect_stats(self) -> dict[str, Any] | None:
         """Собирает текущую статистику пула."""
         try:
-            from app.infrastructure.database.database import db_initializer
+            from src.infrastructure.database.database import db_initializer
 
             pool = db_initializer._async_engine.pool  # type: ignore[union-attr]
 
@@ -90,7 +90,7 @@ class PoolMonitor:
                 "total_connections": total,
                 "utilization_pct": round(utilization, 1),
             }
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return None
 
     def get_current_stats(self) -> dict[str, Any]:
@@ -104,7 +104,7 @@ class PoolMonitor:
         return self._stats_history[-limit:]
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("pool_monitor", PoolMonitor)

@@ -15,8 +15,12 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-
-__all__ = ("MessageReplayService", "ReplayMessage", "ReplayStatus", "get_replay_service")
+__all__ = (
+    "MessageReplayService",
+    "ReplayMessage",
+    "ReplayStatus",
+    "get_replay_service",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +61,7 @@ class MessageReplayService:
     ) -> str:
         """Записывает inbound сообщение. Возвращает message_id."""
         msg = ReplayMessage(
-            source=source, action=action,
-            payload=payload, headers=headers or {},
+            source=source, action=action, payload=payload, headers=headers or {}
         )
         self._messages[msg.id] = msg
         self._trim()
@@ -79,7 +82,7 @@ class MessageReplayService:
             msgs = [m for m in msgs if m.source == source]
         msgs.sort(key=lambda m: m.timestamp, reverse=True)
         total = len(msgs)
-        page = msgs[offset:offset + limit]
+        page = msgs[offset : offset + limit]
         return {
             "total": total,
             "offset": offset,
@@ -87,18 +90,25 @@ class MessageReplayService:
             "messages": [self._to_dict(m) for m in page],
         }
 
-    async def replay_one(self, message_id: str, dry_run: bool = False) -> dict[str, Any]:
+    async def replay_one(
+        self, message_id: str, dry_run: bool = False
+    ) -> dict[str, Any]:
         """Воспроизводит одно сообщение."""
         msg = self._messages.get(message_id)
         if msg is None:
             return {"status": "not_found", "id": message_id}
 
         if dry_run:
-            return {"status": "dry_run", "id": message_id, "action": msg.action, "payload": msg.payload}
+            return {
+                "status": "dry_run",
+                "id": message_id,
+                "action": msg.action,
+                "payload": msg.payload,
+            }
 
         try:
-            from app.dsl.commands.registry import action_handler_registry
-            from app.schemas.invocation import ActionCommandSchema
+            from src.dsl.commands.registry import action_handler_registry
+            from src.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=msg.action,
@@ -116,13 +126,17 @@ class MessageReplayService:
             return {"status": "error", "id": msg.id, "message": str(exc)}
 
     async def replay_bulk(
-        self, message_ids: list[str] | None = None, status_filter: str = "stored",
+        self, message_ids: list[str] | None = None, status_filter: str = "stored"
     ) -> dict[str, Any]:
         """Массовый replay сообщений."""
         if message_ids:
-            targets = [self._messages[mid] for mid in message_ids if mid in self._messages]
+            targets = [
+                self._messages[mid] for mid in message_ids if mid in self._messages
+            ]
         else:
-            targets = [m for m in self._messages.values() if m.status.value == status_filter]
+            targets = [
+                m for m in self._messages.values() if m.status.value == status_filter
+            ]
 
         results = []
         for msg in targets:
@@ -150,9 +164,13 @@ class MessageReplayService:
     @staticmethod
     def _to_dict(msg: ReplayMessage) -> dict[str, Any]:
         return {
-            "id": msg.id, "source": msg.source, "action": msg.action,
-            "status": msg.status.value, "error": msg.error,
-            "timestamp": msg.timestamp, "replay_count": msg.replay_count,
+            "id": msg.id,
+            "source": msg.source,
+            "action": msg.action,
+            "status": msg.status.value,
+            "error": msg.error,
+            "timestamp": msg.timestamp,
+            "replay_count": msg.replay_count,
             "payload_preview": str(msg.payload)[:200],
         }
 

@@ -4,7 +4,7 @@ from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from app.core.config.settings import settings
+from src.core.config.settings import settings
 
 __all__ = ("APIKeyMiddleware",)
 
@@ -27,7 +27,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """
         from re import compile
 
-        from app.utilities.utils import utilities
+        from src.utilities.utils import utilities
 
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек

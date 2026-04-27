@@ -2,9 +2,9 @@
 
 from typing import Any, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "EventPublishProcessor",
@@ -17,14 +17,20 @@ __all__ = (
 class EventPublishProcessor(BaseProcessor):
     """Публикует событие из pipeline через EventBus."""
 
-    def __init__(self, channel: str, event_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        channel: str,
+        event_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._channel = channel
         self._event_factory = event_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.messaging.event_bus import get_event_bus
         from pydantic import BaseModel
+
+        from src.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         if self._event_factory:
@@ -42,7 +48,9 @@ class EventPublishProcessor(BaseProcessor):
 class MemoryLoadProcessor(BaseProcessor):
     """Загружает conversation + facts из AgentMemoryService."""
 
-    def __init__(self, session_id_header: str = "X-Session-Id", name: str | None = None) -> None:
+    def __init__(
+        self, session_id_header: str = "X-Session-Id", name: str | None = None
+    ) -> None:
         super().__init__(name)
         self._session_header = session_id_header
 
@@ -50,7 +58,8 @@ class MemoryLoadProcessor(BaseProcessor):
         session_id = exchange.in_message.headers.get(self._session_header)
         if not session_id:
             session_id = exchange.correlation_id
-        from app.services.ai.agent_memory import get_agent_memory_service
+        from src.services.ai.agent_memory import get_agent_memory_service
+
         memory_svc = get_agent_memory_service()
         memory = await memory_svc.load_memory(session_id)
         exchange.set_property("_agent_memory", memory)
@@ -67,7 +76,8 @@ class MemorySaveProcessor(BaseProcessor):
         session_id = exchange.properties.get("_session_id")
         if not session_id:
             return
-        from app.services.ai.agent_memory import get_agent_memory_service
+        from src.services.ai.agent_memory import get_agent_memory_service
+
         memory_svc = get_agent_memory_service()
         body = exchange.in_message.body
         content = body if isinstance(body, str) else str(body)
@@ -99,10 +109,8 @@ class AwaitReplyProcessor(BaseProcessor):
         self._timeout = timeout
         self._payload_factory = payload_factory
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
-        from app.infrastructure.clients.messaging.event_bus import get_event_bus
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        from src.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         if self._payload_factory is not None:

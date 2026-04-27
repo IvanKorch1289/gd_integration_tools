@@ -9,9 +9,9 @@ import logging
 import time
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "GeoIpProcessor",
@@ -56,8 +56,10 @@ class GeoIpProcessor(BaseProcessor):
     def _get_reader(self) -> Any:
         if self._reader is None:
             import os
+
             try:
                 import geoip2.database
+
                 path = os.environ.get("GEOIP_DB_PATH", "/data/geoip/GeoLite2-City.mmdb")
                 self._reader = geoip2.database.Reader(path)
             except (ImportError, FileNotFoundError, OSError) as exc:
@@ -80,20 +82,29 @@ class GeoIpProcessor(BaseProcessor):
 
         reader = self._get_reader()
         if not reader:
-            exchange.set_property(self._output, {"ip": ip, "error": "geoip_unavailable"})
+            exchange.set_property(
+                self._output, {"ip": ip, "error": "geoip_unavailable"}
+            )
             return
 
         try:
             record = reader.city(ip)
-            exchange.set_property(self._output, {
-                "ip": ip,
-                "country": record.country.iso_code,
-                "country_name": record.country.name,
-                "city": record.city.name,
-                "latitude": float(record.location.latitude) if record.location.latitude else None,
-                "longitude": float(record.location.longitude) if record.location.longitude else None,
-                "timezone": record.location.time_zone,
-            })
+            exchange.set_property(
+                self._output,
+                {
+                    "ip": ip,
+                    "country": record.country.iso_code,
+                    "country_name": record.country.name,
+                    "city": record.city.name,
+                    "latitude": float(record.location.latitude)
+                    if record.location.latitude
+                    else None,
+                    "longitude": float(record.location.longitude)
+                    if record.location.longitude
+                    else None,
+                    "timezone": record.location.time_zone,
+                },
+            )
         except Exception as exc:
             exchange.set_property(self._output, {"ip": ip, "error": str(exc)})
 
@@ -196,11 +207,7 @@ class CompressProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        *,
-        algorithm: str = "gzip",
-        level: int = 6,
-        name: str | None = None,
+        self, *, algorithm: str = "gzip", level: int = 6, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"compress:{algorithm}")
         self._algo = algorithm
@@ -220,12 +227,15 @@ class CompressProcessor(BaseProcessor):
         try:
             if self._algo == "gzip":
                 import gzip
+
                 compressed = gzip.compress(data, compresslevel=self._level)
             elif self._algo == "brotli":
                 import brotli
+
                 compressed = brotli.compress(data, quality=self._level)
             elif self._algo == "zstd":
                 import zstandard
+
                 cctx = zstandard.ZstdCompressor(level=self._level)
                 compressed = cctx.compress(data)
             else:
@@ -233,7 +243,9 @@ class CompressProcessor(BaseProcessor):
                 return
 
             exchange.set_property("compress_original_size", len(data))
-            exchange.set_property("compress_ratio", round(len(compressed) / max(len(data), 1), 3))
+            exchange.set_property(
+                "compress_ratio", round(len(compressed) / max(len(data), 1), 3)
+            )
             exchange.set_out(body=compressed, headers=dict(exchange.in_message.headers))
         except ImportError as exc:
             exchange.fail(f"Compression library missing: {exc}")
@@ -242,12 +254,7 @@ class CompressProcessor(BaseProcessor):
 class DecompressProcessor(BaseProcessor):
     """Decompress body (auto-detect или указанный algorithm)."""
 
-    def __init__(
-        self,
-        *,
-        algorithm: str = "auto",
-        name: str | None = None,
-    ) -> None:
+    def __init__(self, *, algorithm: str = "auto", name: str | None = None) -> None:
         super().__init__(name=name or f"decompress:{algorithm}")
         self._algo = algorithm
 
@@ -269,12 +276,15 @@ class DecompressProcessor(BaseProcessor):
         try:
             if algo == "gzip":
                 import gzip
+
                 data = gzip.decompress(body)
             elif algo == "brotli":
                 import brotli
+
                 data = brotli.decompress(body)
             elif algo == "zstd":
                 import zstandard
+
                 dctx = zstandard.ZstdDecompressor()
                 data = dctx.decompress(body)
             else:
@@ -310,6 +320,7 @@ class WebhookSignProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import hashlib
         import hmac
+
         import orjson
 
         body = exchange.in_message.body

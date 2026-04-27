@@ -27,7 +27,7 @@ route = (
 Полный цикл с векторным поиском, PII маскированием и парсингом:
 
 ```python
-from app.dsl.macros import ai_qa_pipeline
+from src.dsl.macros import ai_qa_pipeline
 
 route = ai_qa_pipeline(
     route_id="ai.support_qa",

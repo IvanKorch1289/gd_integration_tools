@@ -16,7 +16,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 [ -n "$ROOT" ] || exit 0
 
 case "$CMD" in
-  git\ commit*|make\ commit*|make\ bump*|poetry\ run\ semantic-release\ version*)
+  git\ commit*|make\ commit*|make\ bump*|uv\ run\ semantic-release\ version*)
     cd "$ROOT"
     graphify update . >/dev/null 2>&1 || true
     printf '✅ graphify updated after commit/release\n'

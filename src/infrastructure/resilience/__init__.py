@@ -4,7 +4,7 @@
 
 Публичный API::
 
-    from app.infrastructure.resilience import (
+    from src.infrastructure.resilience import (
         Bulkhead,
         TimeLimiter,
         RetryBudget,
@@ -14,13 +14,13 @@
 См. отдельные модули для деталей.
 """
 
-from app.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
-from app.infrastructure.resilience.rate_limiter import (
+from src.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
+from src.infrastructure.resilience.rate_limiter import (
     RateLimiterPolicy,
     ResourceRateLimiter,
 )
-from app.infrastructure.resilience.retry_budget import RetryBudget
-from app.infrastructure.resilience.time_limiter import TimeLimiter
+from src.infrastructure.resilience.retry_budget import RetryBudget
+from src.infrastructure.resilience.time_limiter import TimeLimiter
 
 __all__ = (
     "Bulkhead",

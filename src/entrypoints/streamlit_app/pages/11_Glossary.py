@@ -101,8 +101,13 @@ with tab_glossary:
     search = st.text_input("Поиск", placeholder="Начните вводить термин...")
 
     filtered = (
-        {k: v for k, v in TERMS.items() if search.lower() in k.lower() or search.lower() in v["description"].lower()}
-        if search else TERMS
+        {
+            k: v
+            for k, v in TERMS.items()
+            if search.lower() in k.lower() or search.lower() in v["description"].lower()
+        }
+        if search
+        else TERMS
     )
 
     for term, info in sorted(filtered.items()):
@@ -117,26 +122,46 @@ with tab_glossary:
 
 with tab_faq:
     FAQ = [
-        ("Как добавить новый маршрут?",
-         "Используй RouteBuilder или YAML hot-reload. Файл `*.dsl.yaml` в `config/dsl/` автоматически загружается."),
-        ("Как вызвать маршрут через REST?",
-         "Маршрут автоматически доступен по `/api/v1/{action_prefix}/{method}`. Проверь `actions` в manage.py."),
-        ("Где искать логи?",
-         "3 варианта: (1) stdout в debug mode, (2) Graylog в production, (3) `/api/v1/admin/traces` для DSL trace."),
-        ("Что делать если сервис недоступен?",
-         "Circuit breaker автоматически откроется. Жди recovery_timeout (30s). Смотри /metrics для состояния."),
-        ("Как посмотреть все actions?",
-         "`make actions` или Streamlit: Routes → Actions."),
-        ("Как протестировать pipeline без side-effects?",
-         "DSL Playground → включи 'Dry-run'. Или `manage.py validate <route_id>`."),
-        ("Как отключить маршрут без деплоя?",
-         "Feature flag: в routes/ файле добавь `feature_flag: my_flag`. Toggle через админку."),
-        ("Почему мой маршрут не работает через GraphQL?",
-         "Убедись что action зарегистрирован в ActionHandlerRegistry. GraphQL генерируется автоматически из реестра."),
-        ("Как добавить свой процессор?",
-         "1. Отнаследуй BaseProcessor. 2. Зарегистрируй в plugin_registry или entry_points. 3. Используй через `.process(MyProcessor())`."),
-        ("Где хранятся секреты?",
-         "Vault (production) или .env (dev). Никогда не коммить секреты в код!"),
+        (
+            "Как добавить новый маршрут?",
+            "Используй RouteBuilder или YAML hot-reload. Файл `*.dsl.yaml` в `config/dsl/` автоматически загружается.",
+        ),
+        (
+            "Как вызвать маршрут через REST?",
+            "Маршрут автоматически доступен по `/api/v1/{action_prefix}/{method}`. Проверь `actions` в manage.py.",
+        ),
+        (
+            "Где искать логи?",
+            "3 варианта: (1) stdout в debug mode, (2) Graylog в production, (3) `/api/v1/admin/traces` для DSL trace.",
+        ),
+        (
+            "Что делать если сервис недоступен?",
+            "Circuit breaker автоматически откроется. Жди recovery_timeout (30s). Смотри /metrics для состояния.",
+        ),
+        (
+            "Как посмотреть все actions?",
+            "`make actions` или Streamlit: Routes → Actions.",
+        ),
+        (
+            "Как протестировать pipeline без side-effects?",
+            "DSL Playground → включи 'Dry-run'. Или `manage.py validate <route_id>`.",
+        ),
+        (
+            "Как отключить маршрут без деплоя?",
+            "Feature flag: в routes/ файле добавь `feature_flag: my_flag`. Toggle через админку.",
+        ),
+        (
+            "Почему мой маршрут не работает через GraphQL?",
+            "Убедись что action зарегистрирован в ActionHandlerRegistry. GraphQL генерируется автоматически из реестра.",
+        ),
+        (
+            "Как добавить свой процессор?",
+            "1. Отнаследуй BaseProcessor. 2. Зарегистрируй в plugin_registry или entry_points. 3. Используй через `.process(MyProcessor())`.",
+        ),
+        (
+            "Где хранятся секреты?",
+            "Vault (production) или .env (dev). Никогда не коммить секреты в код!",
+        ),
     ]
 
     for q, a in FAQ:

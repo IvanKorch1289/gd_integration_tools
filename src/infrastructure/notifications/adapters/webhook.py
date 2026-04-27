@@ -23,8 +23,7 @@ import logging
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -46,12 +45,7 @@ class WebhookAdapter:
         self._signature_header = signature_header
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить POST на `recipient` (URL).
 
@@ -73,14 +67,12 @@ class WebhookAdapter:
             secret = self._secret_provider()
             body_bytes = _json_encode(payload)
             signature = hmac.new(
-                secret.encode("utf-8"),
-                body_bytes,
-                hashlib.sha256,
+                secret.encode("utf-8"), body_bytes, hashlib.sha256
             ).hexdigest()
             headers[self._signature_header] = f"sha256={signature}"
 
         # Используем per-upstream httpx-клиент (IL2.6).
-        from app.infrastructure.clients.transport.http_upstream import upstream
+        from src.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         response = await client.request(
@@ -94,7 +86,7 @@ class WebhookAdapter:
     async def health(self) -> bool:
         """Проверить, что upstream зарегистрирован."""
         try:
-            from app.infrastructure.clients.transport.http_upstream import (
+            from src.infrastructure.clients.transport.http_upstream import (
                 upstream_registry,
             )
 

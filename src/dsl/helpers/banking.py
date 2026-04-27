@@ -68,7 +68,10 @@ def validate_iban(iban: str) -> bool:
 
 
 def business_day(
-    current: date, *, holidays: Iterable[date] = (), weekend_days: tuple[int, ...] = (5, 6)
+    current: date,
+    *,
+    holidays: Iterable[date] = (),
+    weekend_days: tuple[int, ...] = (5, 6),
 ) -> date:
     """Следующий business day (пропускает weekend и holidays)."""
     d = current + timedelta(days=1)

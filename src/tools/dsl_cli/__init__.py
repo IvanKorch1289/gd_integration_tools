@@ -11,6 +11,6 @@ Commands:
 наличии entry-point в pyproject, как ``gdi dsl <command>``.
 """
 
-from app.tools.dsl_cli.lint import lint_file
+from src.tools.dsl_cli.lint import lint_file
 
 __all__ = ("lint_file",)

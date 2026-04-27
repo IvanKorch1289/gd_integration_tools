@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from logging import (
     Filter,
     Formatter,
@@ -9,10 +11,9 @@ from logging import (
 )
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from socket import gethostname
-from __future__ import annotations
 
-from app.core.config.settings import LogStorageSettings, settings
-from app.infrastructure.clients.external.logger import GraylogHandler, graylog_handler
+from src.core.config.settings import LogStorageSettings, settings
+from src.infrastructure.clients.external.logger import GraylogHandler, graylog_handler
 
 __all__ = (
     "app_logger",

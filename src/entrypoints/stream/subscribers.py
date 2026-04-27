@@ -1,11 +1,11 @@
 from faststream.rabbit.fastapi import RabbitMessage
 from faststream.redis.fastapi import Redis, RedisMessage
 
-from app.core.config.settings import settings
-from app.entrypoints.api.generator.registry import action_handler_registry
-from app.infrastructure.clients.messaging.stream import stream_client
-from app.infrastructure.external_apis.logging_service import stream_logger
-from app.schemas.invocation import ActionCommandSchema
+from src.core.config.settings import settings
+from src.entrypoints.api.generator.registry import action_handler_registry
+from src.infrastructure.clients.messaging.stream import stream_client
+from src.infrastructure.external_apis.logging_service import stream_logger
+from src.schemas.invocation import ActionCommandSchema
 
 __all__ = ("handle_universal_redis_action", "handle_universal_rabbit_action")
 

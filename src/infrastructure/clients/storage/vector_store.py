@@ -6,7 +6,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-__all__ = ("BaseVectorStore", "ChromaVectorStore", "FAISSVectorStore", "get_vector_store")
+__all__ = (
+    "BaseVectorStore",
+    "ChromaVectorStore",
+    "FAISSVectorStore",
+    "get_vector_store",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +47,7 @@ class ChromaVectorStore(BaseVectorStore):
     """Vector store через Chroma DB."""
 
     def __init__(
-        self,
-        host: str = "localhost",
-        port: int = 8000,
-        collection_name: str = "gd_rag",
+        self, host: str = "localhost", port: int = 8000, collection_name: str = "gd_rag"
     ) -> None:
         self._host = host
         self._port = port
@@ -109,12 +111,20 @@ class ChromaVectorStore(BaseVectorStore):
 
         items = []
         for i, doc_id in enumerate(results["ids"][0]):
-            items.append({
-                "id": doc_id,
-                "document": results["documents"][0][i] if results["documents"] else "",
-                "metadata": results["metadatas"][0][i] if results["metadatas"] else {},
-                "distance": results["distances"][0][i] if results["distances"] else 0.0,
-            })
+            items.append(
+                {
+                    "id": doc_id,
+                    "document": results["documents"][0][i]
+                    if results["documents"]
+                    else "",
+                    "metadata": results["metadatas"][0][i]
+                    if results["metadatas"]
+                    else {},
+                    "distance": results["distances"][0][i]
+                    if results["distances"]
+                    else 0.0,
+                }
+            )
         return items
 
     async def delete(self, ids: list[str]) -> None:
@@ -190,12 +200,14 @@ class FAISSVectorStore(BaseVectorStore):
             if idx < 0:
                 continue
             doc_id = idx_to_id.get(int(idx), "")
-            results.append({
-                "id": doc_id,
-                "document": self._docs.get(doc_id, ""),
-                "metadata": self._metas.get(doc_id, {}),
-                "distance": float(distances[0][i]),
-            })
+            results.append(
+                {
+                    "id": doc_id,
+                    "document": self._docs.get(doc_id, ""),
+                    "metadata": self._metas.get(doc_id, {}),
+                    "distance": float(distances[0][i]),
+                }
+            )
         return results
 
     async def delete(self, ids: list[str]) -> None:
@@ -212,7 +224,7 @@ def get_vector_store(backend: str = "chroma", **kwargs: Any) -> BaseVectorStore:
     """Фабрика для vector store."""
     if backend == "faiss":
         return FAISSVectorStore(**kwargs)
-    from app.core.config.rag_settings import rag_settings
+    from src.core.config.rag_settings import rag_settings
 
     return ChromaVectorStore(
         host=kwargs.get("host", rag_settings.chroma_host),

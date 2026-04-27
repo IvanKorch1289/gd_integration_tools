@@ -1,5 +1,5 @@
-from app.dsl.commands.setup import register_action_handlers
-from app.dsl.routes import register_dsl_routes
+from src.dsl.commands.setup import register_action_handlers
+from src.dsl.routes import register_dsl_routes
 
 __all__ = ("bootstrap_dsl",)
 

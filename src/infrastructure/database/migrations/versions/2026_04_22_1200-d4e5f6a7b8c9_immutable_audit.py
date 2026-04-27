@@ -65,11 +65,7 @@ def upgrade() -> None:
     op.create_table(
         "audit_log_immutable",
         sa.Column(
-            "seq",
-            sa.BigInteger(),
-            primary_key=True,
-            autoincrement=True,
-            nullable=False,
+            "seq", sa.BigInteger(), primary_key=True, autoincrement=True, nullable=False
         ),
         sa.Column("actor", sa.String(length=255), nullable=False),
         sa.Column("action", sa.String(length=255), nullable=False),
@@ -100,20 +96,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("event_hash", name="uq_audit_log_immutable_event_hash"),
     )
 
+    op.create_index("ix_audit_log_immutable_actor", "audit_log_immutable", ["actor"])
+    op.create_index("ix_audit_log_immutable_action", "audit_log_immutable", ["action"])
     op.create_index(
-        "ix_audit_log_immutable_actor",
-        "audit_log_immutable",
-        ["actor"],
-    )
-    op.create_index(
-        "ix_audit_log_immutable_action",
-        "audit_log_immutable",
-        ["action"],
-    )
-    op.create_index(
-        "ix_audit_log_immutable_tenant_id",
-        "audit_log_immutable",
-        ["tenant_id"],
+        "ix_audit_log_immutable_tenant_id", "audit_log_immutable", ["tenant_id"]
     )
     op.create_index(
         "ix_audit_log_immutable_correlation_id",
@@ -121,9 +107,7 @@ def upgrade() -> None:
         ["correlation_id"],
     )
     op.create_index(
-        "ix_audit_log_immutable_occurred_at",
-        "audit_log_immutable",
-        ["occurred_at"],
+        "ix_audit_log_immutable_occurred_at", "audit_log_immutable", ["occurred_at"]
     )
 
     # Дополнительный REVOKE UPDATE/DELETE на уровне БД-ролей рекомендуется
@@ -133,23 +117,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index(
-        "ix_audit_log_immutable_occurred_at",
-        table_name="audit_log_immutable",
+        "ix_audit_log_immutable_occurred_at", table_name="audit_log_immutable"
     )
     op.drop_index(
-        "ix_audit_log_immutable_correlation_id",
-        table_name="audit_log_immutable",
+        "ix_audit_log_immutable_correlation_id", table_name="audit_log_immutable"
     )
-    op.drop_index(
-        "ix_audit_log_immutable_tenant_id",
-        table_name="audit_log_immutable",
-    )
-    op.drop_index(
-        "ix_audit_log_immutable_action",
-        table_name="audit_log_immutable",
-    )
-    op.drop_index(
-        "ix_audit_log_immutable_actor",
-        table_name="audit_log_immutable",
-    )
+    op.drop_index("ix_audit_log_immutable_tenant_id", table_name="audit_log_immutable")
+    op.drop_index("ix_audit_log_immutable_action", table_name="audit_log_immutable")
+    op.drop_index("ix_audit_log_immutable_actor", table_name="audit_log_immutable")
     op.drop_table("audit_log_immutable")

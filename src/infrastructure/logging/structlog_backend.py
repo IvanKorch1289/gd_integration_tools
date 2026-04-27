@@ -5,7 +5,7 @@
 контекста, обогащение метаданными.
 
 Переключение на этот бэкенд:
-    from app.infrastructure.logging.structlog_backend import StructlogGraylogBackend
+    from src.infrastructure.logging.structlog_backend import StructlogGraylogBackend
     backend = StructlogGraylogBackend()
     backend.configure(host="graylog.example.com", port=12201, ...)
     logger = backend.get_logger("application")
@@ -17,7 +17,7 @@ import logging.handlers
 import sys
 from typing import Any
 
-from app.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
+from src.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
 
 __all__ = ("StructlogGraylogBackend",)
 
@@ -96,7 +96,9 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             try:
                 import graypy
 
-                handler_cls = graypy.GELFTLSHandler if use_tls else graypy.GELFUDPHandler
+                handler_cls = (
+                    graypy.GELFTLSHandler if use_tls else graypy.GELFUDPHandler
+                )
                 gelf_kwargs: dict[str, Any] = {}
                 if use_tls and ca_bundle:
                     gelf_kwargs["ca_certs"] = ca_bundle
@@ -129,10 +131,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Configure stdlib root logger
         log_level = getattr(logging, level.upper(), logging.INFO)
         logging.basicConfig(
-            format="%(message)s",
-            level=log_level,
-            handlers=handlers,
-            force=True,
+            format="%(message)s", level=log_level, handlers=handlers, force=True
         )
 
         # Configure per-name loggers
@@ -147,21 +146,24 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                 stdlib_logger.addHandler(h)
 
         # Correlation context injector
-        def _inject_correlation(logger: Any, method_name: str, event_dict: dict) -> dict:
+        def _inject_correlation(
+            logger: Any, method_name: str, event_dict: dict
+        ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
-                from app.infrastructure.observability.correlation import (
+                from src.infrastructure.observability.correlation import (
                     get_correlation_id,
                     get_request_id,
                     get_tenant_id,
                 )
+
                 if cid := get_correlation_id():
                     event_dict.setdefault("correlation_id", cid)
                 if rid := get_request_id():
                     event_dict.setdefault("request_id", rid)
                 if tid := get_tenant_id():
                     event_dict.setdefault("tenant_id", tid)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 pass
             return event_dict
 
@@ -196,8 +198,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Bind default context
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
-            environment=environment,
-            hostname=hostname,
+            environment=environment, hostname=hostname
         )
 
         # Formatter for stdlib handlers
@@ -205,7 +206,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             processors=[
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 renderer,
-            ],
+            ]
         )
         for h in handlers:
             h.setFormatter(formatter)
@@ -219,9 +220,11 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
         try:
             import structlog
+
             inner = structlog.get_logger(name)
         except ImportError:
             import logging as _logging
+
             inner = _logging.getLogger(name)
 
         logger = StructlogLogger(inner)

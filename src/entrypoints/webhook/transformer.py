@@ -70,7 +70,8 @@ class DLQEntry:
 async def _redis_raw() -> Any:
     """Возвращает raw redis-клиент (или ``None`` если Redis недоступен)."""
     try:
-        from app.infrastructure.clients.storage.redis import redis_client
+        from src.infrastructure.clients.storage.redis import redis_client
+
         return getattr(redis_client, "_raw_client", None) or redis_client
     except Exception as exc:  # noqa: BLE001
         logger.debug("Redis недоступен для DLQ: %s", exc)
@@ -116,7 +117,8 @@ class WebhookRelay:
     async def relay(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Рассылает payload по matching rules с трансформацией."""
         matching = [
-            r for r in self._rules.values()
+            r
+            for r in self._rules.values()
             if r.enabled and (r.event_type == "*" or r.event_type == event_type)
         ]
         if not matching:
@@ -131,22 +133,31 @@ class WebhookRelay:
             results.append(await self._send_with_retry(rule, transformed))
 
         sent = sum(1 for r in results if r.get("status") == "sent")
-        return {"status": "relayed", "sent": sent, "total": len(matching), "results": results}
+        return {
+            "status": "relayed",
+            "sent": sent,
+            "total": len(matching),
+            "results": results,
+        }
 
     async def transform(self, payload: dict[str, Any], expression: str) -> Any:
         """Применяет JMESPath к payload (для диагностики)."""
         try:
             import jmespath
+
             return jmespath.search(expression, payload)
         except ImportError:
             return payload
         except Exception as exc:  # noqa: BLE001
             return {"error": str(exc)}
 
-    def _transform(self, payload: dict[str, Any], rule: RelayRule) -> dict[str, Any] | None:
+    def _transform(
+        self, payload: dict[str, Any], rule: RelayRule
+    ) -> dict[str, Any] | None:
         if rule.condition:
             try:
                 import jmespath
+
                 if not jmespath.search(rule.condition, payload):
                     return None
             except Exception:  # noqa: BLE001
@@ -155,29 +166,34 @@ class WebhookRelay:
         if rule.jmespath_expression:
             try:
                 import jmespath
+
                 return jmespath.search(rule.jmespath_expression, payload) or payload
             except ImportError:
                 return payload
         return payload
 
     async def _send_with_retry(
-        self, rule: RelayRule, payload: dict[str, Any],
+        self, rule: RelayRule, payload: dict[str, Any]
     ) -> dict[str, Any]:
         import httpx
 
         headers = {"Content-Type": "application/json"}
         if rule.secret:
-            from app.entrypoints.webhook.signatures import build_signature_headers
+            from src.infrastructure.security.signatures import build_signature_headers
+
             headers.update(build_signature_headers(payload, rule.secret))
 
         last_error = ""
         for attempt in range(rule.max_retries):
             try:
                 async with httpx.AsyncClient(timeout=15) as client:
-                    resp = await client.post(rule.target_url, json=payload, headers=headers)
+                    resp = await client.post(
+                        rule.target_url, json=payload, headers=headers
+                    )
                     if resp.is_success:
                         return {
-                            "rule_id": rule.id, "status": "sent",
+                            "rule_id": rule.id,
+                            "status": "sent",
                             "status_code": resp.status_code,
                         }
                     last_error = f"HTTP {resp.status_code}"
@@ -185,10 +201,13 @@ class WebhookRelay:
                 last_error = str(exc)
 
             if attempt < rule.max_retries - 1:
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
 
         entry = DLQEntry(
-            rule_id=rule.id, payload=payload, error=last_error, attempts=rule.max_retries,
+            rule_id=rule.id,
+            payload=payload,
+            error=last_error,
+            attempts=rule.max_retries,
         )
         await self._dlq_push(entry)
         return {"rule_id": rule.id, "status": "dlq", "error": last_error}
@@ -228,7 +247,9 @@ class WebhookRelay:
                 continue
         return entries
 
-    async def _dlq_remove(self, entry_id: str, entry_raw: bytes | str | None = None) -> None:
+    async def _dlq_remove(
+        self, entry_id: str, entry_raw: bytes | str | None = None
+    ) -> None:
         """Удаляет одну запись DLQ по id (находит raw через полный обход)."""
         raw = await _redis_raw()
         if raw is None:
@@ -254,8 +275,13 @@ class WebhookRelay:
         return {
             "total": len(all_entries),
             "entries": [
-                {"id": e.id, "rule_id": e.rule_id, "error": e.error,
-                 "attempts": e.attempts, "timestamp": e.timestamp}
+                {
+                    "id": e.id,
+                    "rule_id": e.rule_id,
+                    "error": e.error,
+                    "attempts": e.attempts,
+                    "timestamp": e.timestamp,
+                }
                 for e in entries
             ],
         }

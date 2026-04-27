@@ -8,9 +8,9 @@ from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
 from faststream.broker.message import StreamMessage
 from faststream.security import BaseSecurity
 
-from app.core.config.constants import consts
-from app.core.config.settings import settings
-from app.infrastructure.external_apis.logging_service import stream_logger
+from src.core.config.constants import consts
+from src.core.config.settings import settings
+from src.infrastructure.external_apis.logging_service import stream_logger
 
 __all__ = ("stream_client", "StreamClient", "get_stream_client")
 
@@ -54,7 +54,7 @@ class StreamClient:
     """
 
     def __init__(self) -> None:
-        from app.infrastructure.scheduler.scheduler_manager import scheduler_manager
+        from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
 
         self.stream_app = FastStream(logger=stream_logger)
         self.redis_settings = settings.redis

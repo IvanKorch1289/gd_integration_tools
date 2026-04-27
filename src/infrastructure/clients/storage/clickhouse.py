@@ -82,9 +82,7 @@ class ClickHouseClient:
         return response.text
 
     async def query(
-        self,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """SELECT запрос, возвращает список словарей."""
         import json
@@ -95,11 +93,7 @@ class ClickHouseClient:
             return []
         return [json.loads(line) for line in raw.strip().split("\n") if line.strip()]
 
-    async def insert(
-        self,
-        table: str,
-        rows: list[dict[str, Any]],
-    ) -> int:
+    async def insert(self, table: str, rows: list[dict[str, Any]]) -> int:
         """Batch INSERT — разбивает на chunk-и по max_batch_size."""
         import json
 
@@ -157,12 +151,12 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 
 def _create_clickhouse_client() -> ClickHouseClient:
-    from app.core.config.clickhouse import clickhouse_settings
+    from src.core.config.clickhouse import clickhouse_settings
 
     return ClickHouseClient(
         host=clickhouse_settings.host,
@@ -177,7 +171,7 @@ def _create_clickhouse_client() -> ClickHouseClient:
     )
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("clickhouse_client", _create_clickhouse_client)

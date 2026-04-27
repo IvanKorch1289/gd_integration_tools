@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends
 
-from app.core.decorators.limiting import route_limiting
-from app.entrypoints.api.dependencies.auth import require_api_key
-from app.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
-from app.schemas.filter_schemas.users import UserFilter
-from app.schemas.route_schemas.users import (
+from src.entrypoints.api.dependencies.auth import require_api_key
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
+from src.infrastructure.decorators.limiting import route_limiting
+from src.schemas.filter_schemas.users import UserFilter
+from src.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from app.services.core.users import get_user_service
+from src.services.core.users import get_user_service
 
 __all__ = ("router",)
 

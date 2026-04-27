@@ -1,18 +1,23 @@
 import asyncio
 import logging
 import time
-from typing import Any, Callable
+from typing import Any
 
 import orjson
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange, ExchangeStatus
+from src.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
-__all__ = ('DeadLetterProcessor', 'FallbackChainProcessor', 'CircuitBreakerProcessor', 'TimeoutProcessor')
+__all__ = (
+    "DeadLetterProcessor",
+    "FallbackChainProcessor",
+    "CircuitBreakerProcessor",
+    "TimeoutProcessor",
+)
 
 
 class DeadLetterProcessor(BaseProcessor):
@@ -37,24 +42,25 @@ class DeadLetterProcessor(BaseProcessor):
 
     async def _send_to_dlq(self, exchange: Exchange[Any]) -> None:
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
 
             dlq_entry = {
                 "exchange_id": exchange.meta.exchange_id,
                 "route_id": exchange.meta.route_id or "",
                 "correlation_id": exchange.meta.correlation_id,
                 "error": exchange.error or "unknown",
-                "body": orjson.dumps(
-                    exchange.in_message.body, default=str
-                ).decode()[:8192] if exchange.in_message.body else "",
-                "properties": orjson.dumps(
-                    exchange.properties, default=str
-                ).decode()[:4096],
+                "body": orjson.dumps(exchange.in_message.body, default=str).decode()[
+                    :8192
+                ]
+                if exchange.in_message.body
+                else "",
+                "properties": orjson.dumps(exchange.properties, default=str).decode()[
+                    :4096
+                ],
                 "timestamp": exchange.meta.created_at.isoformat(),
             }
             await redis_client.add_to_stream(
-                stream_name=self._dlq_stream,
-                data=dlq_entry,
+                stream_name=self._dlq_stream, data=dlq_entry
             )
             _eip_logger.info(
                 "Exchange %s sent to DLQ stream '%s'",
@@ -65,7 +71,8 @@ class DeadLetterProcessor(BaseProcessor):
             _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.dsl.engine.processors.base import run_sub_processors
+        from src.dsl.engine.processors.base import run_sub_processors
+
         try:
             await run_sub_processors(self._processors, exchange, context)
         except Exception as exc:
@@ -73,7 +80,6 @@ class DeadLetterProcessor(BaseProcessor):
 
         if exchange.status == ExchangeStatus.failed:
             await self._send_to_dlq(exchange)
-
 
 
 class FallbackChainProcessor(BaseProcessor):
@@ -85,10 +91,7 @@ class FallbackChainProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        processors: list[BaseProcessor],
-        *,
-        name: str | None = None,
+        self, processors: list[BaseProcessor], *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"fallback_chain({len(processors)})")
         self._processors = processors
@@ -109,12 +112,9 @@ class FallbackChainProcessor(BaseProcessor):
                 last_error = exchange.error
             except Exception as exc:
                 last_error = str(exc)
-                _eip_logger.debug(
-                    "Fallback %d (%s) failed: %s", i, proc.name, exc
-                )
+                _eip_logger.debug("Fallback %d (%s) failed: %s", i, proc.name, exc)
 
         exchange.fail(f"All fallbacks exhausted. Last error: {last_error}")
-
 
 
 class CircuitBreakerProcessor(BaseProcessor):
@@ -147,7 +147,6 @@ class CircuitBreakerProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     def _check_state(self) -> str:
-        import time
         if self._state == "open":
             if time.monotonic() - self._last_failure_time >= self._recovery_timeout:
                 self._state = "half_open"
@@ -155,8 +154,7 @@ class CircuitBreakerProcessor(BaseProcessor):
         return self._state
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import time
-        from app.dsl.engine.processors.base import run_sub_processors
+        from src.dsl.engine.processors.base import run_sub_processors
 
         async with self._lock:
             state = self._check_state()
@@ -191,7 +189,6 @@ class CircuitBreakerProcessor(BaseProcessor):
                 exchange.set_property("cb_state", self._state)
 
 
-
 class TimeoutProcessor(BaseProcessor):
     """Camel Timeout EIP — wrap sub-processors with a time limit.
 
@@ -218,7 +215,7 @@ class TimeoutProcessor(BaseProcessor):
         self._fallback = fallback_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.dsl.engine.processors.base import run_sub_processors
+        from src.dsl.engine.processors.base import run_sub_processors
 
         try:
             await asyncio.wait_for(
@@ -233,5 +230,3 @@ class TimeoutProcessor(BaseProcessor):
                 await run_sub_processors(self._fallback, exchange, context)
             else:
                 exchange.fail(f"Timeout after {self._seconds}s")
-
-

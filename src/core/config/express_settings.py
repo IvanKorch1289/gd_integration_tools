@@ -5,7 +5,7 @@ from typing import ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("ExpressSettings", "express_settings")
 
@@ -23,8 +23,7 @@ class ExpressSettings(BaseSettingsWithLoader):
         description="URL BotX microservice (внутренний контур).",
     )
     default_chat_id: str = Field(
-        "",
-        description="Чат по умолчанию для broadcast notifications.",
+        "", description="Чат по умолчанию для broadcast notifications."
     )
     enabled: bool = Field(False, description="Включить eXpress интеграцию.")
 

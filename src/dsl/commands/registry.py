@@ -1,10 +1,16 @@
-from app.core.config.runtime_state import disabled_feature_flags
-from app.dsl.commands.action_registry import (
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from src.core.config.runtime_state import disabled_feature_flags
+from src.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     ActionHandlerSpec,
     action_handler_registry,
 )
-from app.dsl.engine.pipeline import Pipeline
+
+if TYPE_CHECKING:
+    from src.dsl.engine.pipeline import Pipeline
 
 __all__ = (
     "RouteRegistry",

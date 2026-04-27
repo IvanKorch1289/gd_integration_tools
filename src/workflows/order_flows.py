@@ -14,18 +14,18 @@ from typing import Any
 
 from prefect import flow
 
-from app.core.config.constants import consts
-from app.core.config.settings import settings
-from app.core.errors import ServiceError
-from app.infrastructure.external_apis.logging_service import tasks_logger
-from app.utilities.utils import utilities
-from app.workflows.tasks import (
+from src.core.config.constants import consts
+from src.core.config.settings import settings
+from src.core.errors import ServiceError
+from src.infrastructure.external_apis.logging_service import tasks_logger
+from src.utilities.utils import utilities
+from src.workflows.tasks import (
     create_skb_order_task,
     get_skb_order_result_task,
     send_notification_task,
     send_order_result_task,
 )
-from app.workflows.utils import handle_error, managed_pause
+from src.workflows.utils import handle_error, managed_pause
 
 __all__ = (
     "get_skb_order_result_workflow",

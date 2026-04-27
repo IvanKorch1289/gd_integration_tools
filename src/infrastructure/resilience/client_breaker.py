@@ -34,7 +34,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncIterator, Final
 
 if TYPE_CHECKING:
-    from app.core.config.pooling import PoolingProfile
+    from src.core.config.pooling import PoolingProfile
 
 
 _logger = logging.getLogger(__name__)
@@ -97,8 +97,7 @@ def _build_backend(failure_threshold: int, recovery_timeout: float) -> object:
             "aiocircuitbreaker not installed, using fallback _FallbackBreaker"
         )
         return _FallbackBreaker(
-            failure_threshold=failure_threshold,
-            recovery_timeout=recovery_timeout,
+            failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
         )
 
 
@@ -160,14 +159,16 @@ class ClientCircuitBreaker:
             return
         self._last_state = state
         try:
-            from app.infrastructure.observability.client_metrics import (
+            from src.infrastructure.observability.client_metrics import (
                 record_circuit_state,
             )
 
             # Привести к Literal[closed, open, half_open].
             normalized = state if state in ("closed", "open", "half_open") else "closed"
             record_circuit_state(
-                client=self.name, host=self.host, state=normalized  # type: ignore[arg-type]
+                client=self.name,
+                host=self.host,
+                state=normalized,  # type: ignore[arg-type]
             )
         except ImportError:
             pass
@@ -213,8 +214,5 @@ class ClientCircuitBreaker:
             method()
 
 
-_PUBLIC: Final = (
-    "ClientCircuitBreaker",
-    "CircuitOpen",
-)
+_PUBLIC: Final = ("ClientCircuitBreaker", "CircuitOpen")
 __all__ = _PUBLIC

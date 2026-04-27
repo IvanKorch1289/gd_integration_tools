@@ -32,6 +32,7 @@ logger = logging.getLogger("services.prompts")
 @dataclass(slots=True)
 class PromptVersion:
     """Скомпилированный промпт с метаданными версии."""
+
     name: str
     version: int | str
     template: str
@@ -61,6 +62,7 @@ class PromptRegistry:
     def _try_init_langfuse(self) -> None:
         try:
             from langfuse import Langfuse
+
             self._langfuse = Langfuse()
             logger.info("Langfuse prompt registry initialized")
         except ImportError:
@@ -104,8 +106,14 @@ class PromptRegistry:
 
         if self._langfuse is not None:
             try:
-                lf_prompt = self._langfuse.get_prompt(name, label=label, version=version)
-                compiled = lf_prompt.compile(**variables) if hasattr(lf_prompt, "compile") else str(lf_prompt)
+                lf_prompt = self._langfuse.get_prompt(
+                    name, label=label, version=version
+                )
+                compiled = (
+                    lf_prompt.compile(**variables)
+                    if hasattr(lf_prompt, "compile")
+                    else str(lf_prompt)
+                )
                 return PromptVersion(
                     name=name,
                     version=getattr(lf_prompt, "version", "langfuse"),
@@ -134,7 +142,9 @@ class PromptRegistry:
             version=resolved_version,
             template=template,
             compiled=compiled,
-            labels=self._labels.get(f"{name}:{resolved_version}", {"source": "fallback"}),
+            labels=self._labels.get(
+                f"{name}:{resolved_version}", {"source": "fallback"}
+            ),
         )
 
 

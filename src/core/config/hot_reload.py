@@ -72,7 +72,9 @@ class ConfigHotReloader:
                     await result
                 ok += 1
             except Exception as exc:  # noqa: BLE001
-                failed.append({"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)})
+                failed.append(
+                    {"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)}
+                )
                 logger.error("Hot-reload callback failed: %s", exc)
         logger.info("Config reloaded (%s): %d OK, %d failed", reason, ok, len(failed))
         return {"reason": reason, "succeeded": ok, "failed": failed}
@@ -111,7 +113,9 @@ class ConfigHotReloader:
         # step=debounce_ms собирает пакет изменений за интервал — избегает
         # множественных срабатываний при сохранении редактором (который
         # обычно создаёт tmp-файл и затем переименовывает).
-        async for _changes in awatch(*paths, step=self._debounce_ms, stop_event=self._stop_event):
+        async for _changes in awatch(
+            *paths, step=self._debounce_ms, stop_event=self._stop_event
+        ):
             await self.trigger_reload(reason="file-change")
 
 

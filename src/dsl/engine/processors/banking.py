@@ -14,9 +14,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "SwiftMTParserProcessor",
@@ -44,8 +44,13 @@ class SwiftMTParserProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
-        text = body.decode("utf-8") if isinstance(body, (bytes, bytearray)) else str(body)
-        fields = {m.group("tag"): m.group("value").strip() for m in _MT_FIELD_RE.finditer(text)}
+        text = (
+            body.decode("utf-8") if isinstance(body, (bytes, bytearray)) else str(body)
+        )
+        fields = {
+            m.group("tag"): m.group("value").strip()
+            for m in _MT_FIELD_RE.finditer(text)
+        }
         exchange.out_message.body = {
             "message_type": self.message_type,
             "fields": fields,
@@ -81,6 +86,7 @@ class Iso20022ParserProcessor(BaseProcessor):
         self.namespace = namespace
         try:
             from lxml import etree  # noqa: F401
+
             self._available = True
         except ImportError:
             self._available = False
@@ -145,7 +151,9 @@ class EdifactParserProcessor(BaseProcessor):
         body = exchange.in_message.body
         text = body.decode() if isinstance(body, (bytes, bytearray)) else str(body)
         segments = [s.strip() for s in text.split("'") if s.strip()]
-        parsed = [{"tag": s.split("+", 1)[0], "elements": s.split("+")[1:]} for s in segments]
+        parsed = [
+            {"tag": s.split("+", 1)[0], "elements": s.split("+")[1:]} for s in segments
+        ]
         exchange.out_message.body = parsed
 
 
@@ -157,10 +165,7 @@ class OneCExchangeProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        operation: str,
-        entity: str,
-        action: str = "onec.invoke",
+        self, operation: str, entity: str, action: str = "onec.invoke"
     ) -> None:
         super().__init__(name=f"1c:{operation}:{entity}")
         self.operation = operation

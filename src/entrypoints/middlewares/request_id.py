@@ -13,10 +13,7 @@
 from uuid import uuid4
 
 from fastapi import Request, Response
-from starlette.middleware.base import (
-    BaseHTTPMiddleware,
-    RequestResponseEndpoint,
-)
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 __all__ = ("RequestIDMiddleware",)
 
@@ -32,9 +29,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Обрабатывает запрос, добавляя Request ID и Correlation ID.
 
@@ -45,14 +40,8 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         Returns:
             HTTP-ответ с добавленными идентификаторами.
         """
-        request_id = (
-            request.headers.get("X-Request-ID")
-            or self._generate_id()
-        )
-        correlation_id = (
-            request.headers.get("X-Correlation-ID")
-            or self._generate_id()
-        )
+        request_id = request.headers.get("X-Request-ID") or self._generate_id()
+        correlation_id = request.headers.get("X-Correlation-ID") or self._generate_id()
 
         request.state.request_id = request_id
         request.state.correlation_id = correlation_id

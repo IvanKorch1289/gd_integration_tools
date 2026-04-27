@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from prefect import suspend_flow_run
 
-from app.infrastructure.external_apis.logging_service import tasks_logger
+from src.infrastructure.external_apis.logging_service import tasks_logger
 
 __all__ = ("managed_pause", "validate_order_id", "handle_error")
 
@@ -72,7 +72,7 @@ async def handle_error(
     """
     Централизованная обработка ошибок.
     """
-    from app.workflows.order_tasks import send_notification_task
+    from src.workflows.order_tasks import send_notification_task
 
     await send_notification_task(
         {"to_emails": email, "subject": subject, "message": f"{ident_data}: {error}"}

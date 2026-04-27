@@ -15,10 +15,16 @@ def slugify(value: str) -> str:
     return re.sub(r"[-\s]+", "-", value)
 
 
-def mask(value: str, *, keep_first: int = 2, keep_last: int = 2, char: str = "*") -> str:
+def mask(
+    value: str, *, keep_first: int = 2, keep_last: int = 2, char: str = "*"
+) -> str:
     if len(value) <= keep_first + keep_last:
         return char * len(value)
-    return value[:keep_first] + char * (len(value) - keep_first - keep_last) + value[-keep_last:]
+    return (
+        value[:keep_first]
+        + char * (len(value) - keep_first - keep_last)
+        + value[-keep_last:]
+    )
 
 
 def redact_pii(text: str) -> str:

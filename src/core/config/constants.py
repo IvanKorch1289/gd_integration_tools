@@ -8,7 +8,7 @@ from typing import Any
 # aiohttp.ClientError; для совместимости создаём union с httpx-ошибками,
 # чтобы RETRY_EXCEPTIONS обрабатывал оба источника одинаково.
 try:
-    from aiohttp import ClientError as _AioClientError  # type: ignore
+    from aiohttp import ClientError as _AioClientError
 except ImportError:  # aiohttp удалён — используем httpx-only
     _AioClientError = Exception  # type: ignore
 
@@ -37,11 +37,7 @@ class Constants:
 
     ROOT_DIR: Path = Path(__file__).parent.parent.parent
     MOSCOW_TZ: timezone = timezone(timedelta(hours=3))
-    RETRY_EXCEPTIONS: tuple[Any, ...] = (
-        _AioClientError,
-        httpx.HTTPError,
-        TimeoutError,
-    )
+    RETRY_EXCEPTIONS: tuple[Any, ...] = (_AioClientError, httpx.HTTPError, TimeoutError)
     CHECK_SERVICES_JOB: dict[str, Any] = field(
         default_factory=lambda: {"name": "check_all_services_job", "minutes": 60}
     )

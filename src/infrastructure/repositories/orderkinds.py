@@ -1,5 +1,5 @@
-from app.infrastructure.db.models.orderkinds import OrderKind
-from app.infrastructure.repositories.base import SQLAlchemyRepository
+from src.infrastructure.database.models.orderkinds import OrderKind
+from src.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("OrderKindRepository", "get_order_kind_repo")
 
@@ -39,5 +39,7 @@ def get_order_kind_repo() -> OrderKindRepository:
     """
     global _order_kind_repo_instance
     if _order_kind_repo_instance is None:
-        _order_kind_repo_instance = OrderKindRepository(model=OrderKind, load_joined_models=False)
+        _order_kind_repo_instance = OrderKindRepository(
+            model=OrderKind, load_joined_models=False
+        )
     return _order_kind_repo_instance

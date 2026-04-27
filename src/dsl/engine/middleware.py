@@ -15,8 +15,8 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
 
 __all__ = (
     "ProcessorMiddleware",
@@ -96,12 +96,15 @@ class ErrorNormalizerMiddleware(ProcessorMiddleware):
         duration_ms: float,
     ) -> None:
         if error is not None:
-            exchange.set_property("_last_error", {
-                "processor": processor_name,
-                "type": type(error).__name__,
-                "message": str(error),
-                "duration_ms": duration_ms,
-            })
+            exchange.set_property(
+                "_last_error",
+                {
+                    "processor": processor_name,
+                    "type": type(error).__name__,
+                    "message": str(error),
+                    "duration_ms": duration_ms,
+                },
+            )
 
 
 class MetricsMiddleware(ProcessorMiddleware):

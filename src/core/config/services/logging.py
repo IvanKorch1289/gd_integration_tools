@@ -3,7 +3,7 @@ from typing import ClassVar, Literal
 from pydantic import Field, computed_field
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 
 class LogStorageSettings(BaseSettingsWithLoader):

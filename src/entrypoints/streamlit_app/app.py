@@ -3,7 +3,6 @@
 Главная страница: KPI метрики + Component Health.
 """
 
-import os
 import sys
 from pathlib import Path
 

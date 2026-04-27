@@ -12,7 +12,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.errors import BaseError
+from src.core.errors import BaseError
 
 __all__ = ("ExceptionHandlerMiddleware",)
 
@@ -42,60 +42,39 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as exc:
-            correlation_id = getattr(
-                request.state, "correlation_id", None
-            )
-            request_id = getattr(
-                request.state, "request_id", None
-            )
+            correlation_id = getattr(request.state, "correlation_id", None)
+            request_id = getattr(request.state, "request_id", None)
 
             if isinstance(exc, BaseError):
                 error_data = exc.to_dict()
             else:
                 error_message = (
-                    f"{type(exc).__name__}"
-                    f" ({exc.__class__.__module__}):"
-                    f" {exc}"
+                    f"{type(exc).__name__} ({exc.__class__.__module__}): {exc}"
                 )
                 # IL-CRIT1.4: fix `self.logger` → `logger` (module-level).
                 # `BaseHTTPMiddleware` не предоставляет `self.logger`, и
                 # попадание в этот branch крашилось вторичным AttributeError,
                 # заслоняя первичное исключение от клиента и логов.
                 traceback_str = "".join(
-                    traceback.format_exception(
-                        type(exc), exc, exc.__traceback__
-                    )
+                    traceback.format_exception(type(exc), exc, exc.__traceback__)
                 )
                 logger.error(
-                    "Unhandled exception: %s\n%s",
-                    error_message,
-                    traceback_str,
+                    "Unhandled exception: %s\n%s", error_message, traceback_str
                 )
-                error_data = {
-                    "message": "Internal server error",
-                    "hasErrors": True,
-                }
+                error_data = {"message": "Internal server error", "hasErrors": True}
 
             if correlation_id:
                 error_data["correlation_id"] = correlation_id
             if request_id:
                 error_data["request_id"] = request_id
 
-            status_code = (
-                exc.status_code
-                if isinstance(exc, BaseError)
-                else 500
-            )
+            status_code = exc.status_code if isinstance(exc, BaseError) else 500
 
             logger.exception(
-                "Необработанное исключение [correlation_id=%s,"
-                " path=%s]: %s",
+                "Необработанное исключение [correlation_id=%s, path=%s]: %s",
                 correlation_id,
                 request.url.path,
                 exc,
             )
 
-            return JSONResponse(
-                status_code=status_code,
-                content=error_data,
-            )
+            return JSONResponse(status_code=status_code, content=error_data)

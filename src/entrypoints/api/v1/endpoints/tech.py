@@ -3,17 +3,17 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
 from fastapi.responses import HTMLResponse
 
-from app.core.config.settings import settings
-from app.core.enums.base import get_model_enum
-from app.core.enums.invocation import BrokerKind
-from app.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from app.entrypoints.api.generator.invocation import (
+from src.core.config.settings import settings
+from src.core.enums.invocation import BrokerKind
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.entrypoints.api.generator.invocation import (
     EventPublishSpec,
     InvocationSpec,
     default_payload_factory,
 )
-from app.schemas.base import EmailSchema
-from app.services.core.tech import get_tech_service
+from src.infrastructure.database.model_registry import get_model_enum
+from src.schemas.base import EmailSchema
+from src.services.core.tech import get_tech_service
 
 __all__ = ("router",)
 
@@ -55,18 +55,14 @@ async def redirect_to_queue_monitor():
 
 
 @router.get(
-    "/langfuse",
-    response_class=HTMLResponse,
-    summary="Ссылка на LangFuse Dashboard",
+    "/langfuse", response_class=HTMLResponse, summary="Ссылка на LangFuse Dashboard"
 )
 async def redirect_to_langfuse():
     return await get_tech_service().get_langfuse_link()
 
 
 @router.get(
-    "/langgraph",
-    response_class=HTMLResponse,
-    summary="Ссылка на LangGraph Studio",
+    "/langgraph", response_class=HTMLResponse, summary="Ссылка на LangGraph Studio"
 )
 async def redirect_to_langgraph():
     return await get_tech_service().get_langgraph_link()

@@ -24,13 +24,24 @@ def upgrade() -> None:
     op.create_table(
         "outbox_messages",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         sa.Column("topic", sa.String(length=256), nullable=False),
         sa.Column("payload", sa.JSON(), nullable=False),
         sa.Column("headers", sa.JSON(), nullable=False, server_default=sa.text("'{}'")),
-        sa.Column("status", sa.String(length=16), nullable=False, server_default=sa.text("'pending'")),
-        sa.Column("retry_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "status",
+            sa.String(length=16),
+            nullable=False,
+            server_default=sa.text("'pending'"),
+        ),
+        sa.Column(
+            "retry_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("last_error", sa.String(length=1024), nullable=True),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
@@ -42,10 +53,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_outbox_messages")),
     )
     op.create_index(
-        op.f("ix_outbox_messages_topic"), "outbox_messages", ["topic"], unique=False,
+        op.f("ix_outbox_messages_topic"), "outbox_messages", ["topic"], unique=False
     )
     op.create_index(
-        op.f("ix_outbox_messages_status"), "outbox_messages", ["status"], unique=False,
+        op.f("ix_outbox_messages_status"), "outbox_messages", ["status"], unique=False
     )
     op.create_index(
         op.f("ix_outbox_messages_next_attempt_at"),
@@ -56,7 +67,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_outbox_messages_next_attempt_at"), table_name="outbox_messages")
+    op.drop_index(
+        op.f("ix_outbox_messages_next_attempt_at"), table_name="outbox_messages"
+    )
     op.drop_index(op.f("ix_outbox_messages_status"), table_name="outbox_messages")
     op.drop_index(op.f("ix_outbox_messages_topic"), table_name="outbox_messages")
     op.drop_table("outbox_messages")

@@ -35,8 +35,7 @@ limit = st.number_input("LIMIT", min_value=1, max_value=10_000, value=1000, step
 if st.button("Выполнить", type="primary"):
     try:
         result = client._request(  # type: ignore[attr-defined]
-            "POST", "/api/v1/admin/sql/query",
-            json={"query": sql, "limit": int(limit)},
+            "POST", "/api/v1/admin/sql/query", json={"query": sql, "limit": int(limit)}
         )
         if isinstance(result, dict):
             rows = result.get("rows") or []

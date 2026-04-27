@@ -1,13 +1,13 @@
+import asyncio
 from abc import ABC, abstractmethod
 from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
-import asyncio
 from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
-from app.core.config.settings import MailSettings, settings
-from app.core.utils.circuit_breaker import get_circuit_breaker
+from src.core.config.settings import MailSettings, settings
+from src.core.utils.circuit_breaker import get_circuit_breaker
 
 __all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient")
 
@@ -47,7 +47,7 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
-        from app.infrastructure.external_apis.logging_service import smtp_logger
+        from src.infrastructure.external_apis.logging_service import smtp_logger
 
         if not all([settings.host, settings.port]):
             raise ValueError("Неверная конфигурация SMTP")
@@ -55,7 +55,9 @@ class SmtpClient(BaseSmtpClient):
         self.settings = settings
         self.logger = smtp_logger
         self._pool_size = self.settings.connection_pool_size
-        self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(maxsize=self._pool_size)
+        self._connection_pool: asyncio.Queue[SMTP] = asyncio.Queue(
+            maxsize=self._pool_size
+        )
         self._circuit_breaker = get_circuit_breaker()  # Инициализация CircuitBreaker
 
     async def __aenter__(self):
@@ -215,7 +217,7 @@ class SmtpClient(BaseSmtpClient):
                 if self._connection_pool:
                     return self._connection_pool.get_nowait()
                 return await self._create_connection()
-            except (SMTPException, TimeoutError, ConnectionError, OSError):
+            except SMTPException, TimeoutError, ConnectionError, OSError:
                 if attempt == 2:
                     self.logger.error("Попытки соединения исчерпаны")
                     raise
@@ -237,12 +239,14 @@ class SmtpClient(BaseSmtpClient):
                 if not temporary and self._connection_pool.qsize() < self._pool_size:
                     self._connection_pool.put_nowait(connection)
                     return
-        except (SMTPException, OSError):
-            self.logger.warning("Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True)
+        except SMTPException, OSError:
+            self.logger.warning(
+                "Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True
+            )
 
         try:
             await connection.quit()
-        except (SMTPException, OSError):
+        except SMTPException, OSError:
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:

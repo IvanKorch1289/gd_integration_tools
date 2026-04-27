@@ -6,7 +6,7 @@ IL2.2 (ADR-023): **DEPRECATED** — новый путь через
 
 Новый API:
 
-    from app.infrastructure.notifications import get_gateway
+    from src.infrastructure.notifications import get_gateway
     gateway = get_gateway()
     await gateway.send_tx(
         channel="email",
@@ -42,7 +42,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-
 __all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
 
 logger = logging.getLogger(__name__)
@@ -67,6 +66,7 @@ class Channel(str, Enum):
 @dataclass(slots=True)
 class NotificationRequest:
     """Унифицированная структура уведомления."""
+
     subject: str
     message: str
     recipients: list[str] = field(default_factory=list)
@@ -104,11 +104,10 @@ class NotificationHub:
     ) -> dict[str, Any]:
         """Отправка email через SMTP."""
         try:
-            from app.infrastructure.clients.transport.smtp import smtp_client
+            from src.infrastructure.clients.transport.smtp import smtp_client
+
             await smtp_client.send_email(
-                to=[to] if isinstance(to, str) else to,
-                subject=subject,
-                body=message,
+                to=[to] if isinstance(to, str) else to, subject=subject, body=message
             )
             return {"status": "sent", "channel": "email", "to": to}
         except Exception as exc:
@@ -131,7 +130,7 @@ class NotificationHub:
             message: Тело сообщения.
             is_direct: True → отправить личное сообщение по HUID.
         """
-        from app.infrastructure.clients.external.express import get_express_client
+        from src.infrastructure.clients.external.express import get_express_client
 
         client = get_express_client()
         text = f"**{subject}**\n\n{message}" if subject else message
@@ -144,7 +143,7 @@ class NotificationHub:
         self, chat_ids: list[str], subject: str, message: str
     ) -> dict[str, Any]:
         """Broadcast в несколько eXpress чатов."""
-        from app.infrastructure.clients.external.express import get_express_client
+        from src.infrastructure.clients.external.express import get_express_client
 
         client = get_express_client()
         text = f"**{subject}**\n\n{message}" if subject else message
@@ -158,7 +157,7 @@ class NotificationHub:
         chat_type: str = "group_chat",
     ) -> dict[str, Any]:
         """Создаёт групповой чат в eXpress."""
-        from app.infrastructure.clients.external.express import get_express_client
+        from src.infrastructure.clients.external.express import get_express_client
 
         client = get_express_client()
         return await client.create_chat(
@@ -166,10 +165,7 @@ class NotificationHub:
         )
 
     async def express_event(
-        self,
-        event_type: str,
-        chat_id: str,
-        payload: dict[str, Any],
+        self, event_type: str, chat_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         """Отправка события в eXpress (оформляется как структурированное сообщение).
 
@@ -205,7 +201,8 @@ class NotificationHub:
         headers = {"Content-Type": "application/json"}
 
         if secret:
-            from app.entrypoints.webhook.signatures import build_signature_headers
+            from src.infrastructure.security.signatures import build_signature_headers
+
             headers.update(build_signature_headers(payload, secret))
 
         try:
@@ -221,34 +218,33 @@ class NotificationHub:
             return {"status": "error", "channel": "webhook", "message": str(exc)}
 
     async def telegram(
-        self,
-        to: str,
-        subject: str = "",
-        message: str = "",
-        **extras: Any,
+        self, to: str, subject: str = "", message: str = "", **extras: Any
     ) -> dict[str, Any]:
         """Отправка в Telegram через Bot API."""
         import httpx
 
         try:
-            from app.core.config.settings import settings
+            from src.core.config.settings import settings
+
             bot_token = getattr(settings, "telegram_bot_token", "")
         except Exception:
             bot_token = ""
 
         if not bot_token:
-            return {"status": "error", "channel": "telegram", "message": "bot_token не задан"}
+            return {
+                "status": "error",
+                "channel": "telegram",
+                "message": "bot_token не задан",
+            }
 
         text = f"*{subject}*\n\n{message}" if subject else message
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
-                response = await client.post(url, json={
-                    "chat_id": to,
-                    "text": text,
-                    "parse_mode": "Markdown",
-                })
+                response = await client.post(
+                    url, json={"chat_id": to, "text": text, "parse_mode": "Markdown"}
+                )
                 return {
                     "status": "sent" if response.is_success else "failed",
                     "channel": "telegram",
@@ -258,10 +254,7 @@ class NotificationHub:
             return {"status": "error", "channel": "telegram", "message": str(exc)}
 
     async def broadcast(
-        self,
-        channels: list[str | dict[str, Any]],
-        subject: str,
-        message: str,
+        self, channels: list[str | dict[str, Any]], subject: str, message: str
     ) -> dict[str, Any]:
         """Multi-channel broadcast.
 

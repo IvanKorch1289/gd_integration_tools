@@ -1,10 +1,10 @@
 from typing import Any
 from urllib.parse import urljoin
 
-from app.core.config.settings import DadataAPISettings, settings
-from app.core.decorators.caching import response_cache
-from app.core.errors import ServiceError
-from app.infrastructure.clients.transport.http import get_http_client_dependency
+from src.core.config.settings import DadataAPISettings, settings
+from src.core.errors import ServiceError
+from src.infrastructure.clients.transport.http import get_http_client_dependency
+from src.infrastructure.decorators.caching import response_cache
 
 __all__ = ("APIDADATAService", "get_dadata_service")
 

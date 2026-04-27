@@ -23,9 +23,7 @@ st.caption(
 )
 
 source_kind = st.radio(
-    "Формат источника",
-    ["OpenAPI 3.x", "Postman Collection v2.1"],
-    horizontal=True,
+    "Формат источника", ["OpenAPI 3.x", "Postman Collection v2.1"], horizontal=True
 )
 
 uploaded = st.file_uploader(
@@ -35,7 +33,7 @@ uploaded = st.file_uploader(
 )
 
 if uploaded and st.button("Сгенерировать"):
-    from app.tools.schema_importer import SchemaImporter
+    from src.tools.schema_importer import SchemaImporter
 
     importer = SchemaImporter()
     with tempfile.NamedTemporaryFile(

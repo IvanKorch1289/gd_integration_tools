@@ -29,11 +29,7 @@ services = {
     "RabbitMQ": config.get("queue_ui_url"),
 }
 
-doc_services = {
-    "Swagger UI": "/docs",
-    "ReDoc": "/redoc",
-    "AsyncAPI": "/asyncapi",
-}
+doc_services = {"Swagger UI": "/docs", "ReDoc": "/redoc", "AsyncAPI": "/asyncapi"}
 
 st.subheader("Infrastructure")
 for name, url in services.items():

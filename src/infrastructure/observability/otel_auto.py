@@ -4,7 +4,7 @@
 aiokafka / aio-pika / PyMongo (Motor) / gRPC client без ручных spans в коде.
 
 Активируется в main.py::
-    from app.infrastructure.observability.otel_auto import init_otel
+    from src.infrastructure.observability.otel_auto import init_otel
     init_otel(app=fastapi_app)
 
 Требует env OTEL_EXPORTER_OTLP_ENDPOINT (иначе skip).
@@ -53,7 +53,9 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
 
     try:
         from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -61,10 +63,9 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
         logger.warning("OpenTelemetry SDK not installed: %s", exc)
         return False
 
-    resource = Resource.create({
-        "service.name": service_name,
-        "deployment.environment": environment,
-    })
+    resource = Resource.create(
+        {"service.name": service_name, "deployment.environment": environment}
+    )
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
     trace.set_tracer_provider(provider)
@@ -80,7 +81,9 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     _instrument_pymongo()
     _instrument_grpc_client()
 
-    logger.info("OpenTelemetry initialized: service=%s, env=%s", service_name, environment)
+    logger.info(
+        "OpenTelemetry initialized: service=%s, env=%s", service_name, environment
+    )
     return True
 
 
@@ -89,6 +92,7 @@ def _instrument_fastapi(app: Any) -> None:
         return
     try:
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
         FastAPIInstrumentor.instrument_app(app)
         logger.debug("OTel FastAPI instrumented")
     except ImportError:
@@ -98,6 +102,7 @@ def _instrument_fastapi(app: Any) -> None:
 def _instrument_httpx() -> None:
     try:
         from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
         HTTPXClientInstrumentor().instrument()
         logger.debug("OTel httpx instrumented")
     except ImportError:
@@ -107,6 +112,7 @@ def _instrument_httpx() -> None:
 def _instrument_sqlalchemy() -> None:
     try:
         from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
         SQLAlchemyInstrumentor().instrument()
         logger.debug("OTel SQLAlchemy instrumented")
     except ImportError:
@@ -116,6 +122,7 @@ def _instrument_sqlalchemy() -> None:
 def _instrument_redis() -> None:
     try:
         from opentelemetry.instrumentation.redis import RedisInstrumentor
+
         RedisInstrumentor().instrument()
         logger.debug("OTel Redis instrumented")
     except ImportError:
@@ -125,6 +132,7 @@ def _instrument_redis() -> None:
 def _instrument_logging() -> None:
     try:
         from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
         LoggingInstrumentor().instrument(set_logging_format=True)
         logger.debug("OTel Logging instrumented")
     except ImportError:
@@ -137,6 +145,7 @@ def _instrument_aiokafka() -> None:
     """
     try:
         from opentelemetry.instrumentation.aiokafka import AIOKafkaInstrumentor
+
         AIOKafkaInstrumentor().instrument()
         logger.debug("OTel aiokafka instrumented")
     except ImportError as exc:
@@ -149,6 +158,7 @@ def _instrument_aiopika() -> None:
     """
     try:
         from opentelemetry.instrumentation.aio_pika import AioPikaInstrumentor
+
         AioPikaInstrumentor().instrument()
         logger.debug("OTel aio-pika instrumented")
     except ImportError as exc:
@@ -164,6 +174,7 @@ def _instrument_pymongo() -> None:
     """
     try:
         from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
+
         PymongoInstrumentor().instrument()
         logger.debug("OTel pymongo instrumented")
     except ImportError as exc:
@@ -178,6 +189,7 @@ def _instrument_grpc_client() -> None:
     """
     try:
         from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient
+
         GrpcAioInstrumentorClient().instrument()
         logger.debug("OTel gRPC async client instrumented")
     except ImportError as exc:

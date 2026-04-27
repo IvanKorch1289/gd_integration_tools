@@ -17,10 +17,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
-from app.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.processors.proxy.headers import HeaderMapPolicy
 
 __all__ = ("ExposeProxyProcessor", "ProxyInboundSpec")
 
@@ -77,7 +77,9 @@ class ExposeProxyProcessor(BaseProcessor):
         return self._spec
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext  # noqa: ARG002
+        self,
+        exchange: Exchange[Any],
+        context: ExecutionContext,  # noqa: ARG002
     ) -> None:
         # Нормализуем headers согласно политике — последующий forward_to
         # получает уже очищенный набор.

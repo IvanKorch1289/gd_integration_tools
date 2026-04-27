@@ -77,16 +77,14 @@ class BulkheadRegistry:
         self._lock = asyncio.Lock()
 
     async def get_or_create(
-        self,
-        name: str,
-        *,
-        max_concurrent: int = 32,
-        wait_timeout: float = 5.0,
+        self, name: str, *, max_concurrent: int = 32, wait_timeout: float = 5.0
     ) -> Bulkhead:
         async with self._lock:
             bh = self._items.get(name)
             if bh is None:
-                bh = Bulkhead(name=name, max_concurrent=max_concurrent, wait_timeout=wait_timeout)
+                bh = Bulkhead(
+                    name=name, max_concurrent=max_concurrent, wait_timeout=wait_timeout
+                )
                 self._items[name] = bh
             return bh
 

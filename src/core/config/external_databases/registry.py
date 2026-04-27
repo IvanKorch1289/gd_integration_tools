@@ -5,11 +5,13 @@ from typing import ClassVar
 from pydantic import Field, SecretStr, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
-from app.core.config.external_databases.connection_settings import (
+from src.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.external_databases.connection_settings import (
     ExternalDatabaseConnectionSettings,
 )
-from app.core.config.external_databases.item_settings import ExternalDatabaseItemSettings
+from src.core.config.external_databases.item_settings import (
+    ExternalDatabaseItemSettings,
+)
 
 __all__ = ("ExternalDatabasesSettings", "external_databases_settings")
 

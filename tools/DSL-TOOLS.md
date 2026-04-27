@@ -36,8 +36,8 @@ register_dsl_routes()        # src/dsl/routes.py
 Декларативное описание маршрутов в стиле Apache Camel:
 
 ```python
-from app.dsl.builder import RouteBuilder
-from app.dsl.adapters.types import ProtocolType
+from src.dsl.builder import RouteBuilder
+from src.dsl.adapters.types import ProtocolType
 
 route = (
     RouteBuilder.from_(
@@ -125,7 +125,7 @@ route = (
 )
 
 # Управление флагами (в runtime)
-from app.dsl.commands.registry import route_registry
+from src.dsl.commands.registry import route_registry
 
 route_registry.toggle_feature_flag("beta_orders", enable=False)  # отключить
 route_registry.toggle_feature_flag("beta_orders", enable=True)   # включить
@@ -152,9 +152,9 @@ POST /api/v1/admin/feature-flags/toggle?flag_name=beta_orders&enable=false
 Регистрация action-обработчиков в `src/dsl/commands/setup.py`:
 
 ```python
-from app.dsl.commands.registry import action_handler_registry
-from app.schemas.base import EmailSchema
-from app.services.core.tech import get_tech_service
+from src.dsl.commands.registry import action_handler_registry
+from src.schemas.base import EmailSchema
+from src.services.core.tech import get_tech_service
 
 def register_action_handlers() -> None:
     action_handler_registry.register(
@@ -188,8 +188,8 @@ action_handler_registry.register(
 Регистрация DSL-маршрутов в `src/dsl/routes.py`:
 
 ```python
-from app.dsl.builder import RouteBuilder
-from app.dsl.registry import route_registry
+from src.dsl.builder import RouteBuilder
+from src.dsl.registry import route_registry
 
 def register_dsl_routes() -> None:
     route = (

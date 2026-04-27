@@ -185,12 +185,7 @@ def _render_model(name: str, schema: dict[str, Any]) -> tuple[str, set[str]]:
     return "\n".join(lines) + "\n", imports
 
 
-def render_models(
-    *,
-    models: dict[str, dict[str, Any]],
-    source: str,
-    kind: str,
-) -> str:
+def render_models(*, models: dict[str, dict[str, Any]], source: str, kind: str) -> str:
     """Собирает итоговый текст ``.py`` со всеми моделями.
 
     Args:
@@ -213,6 +208,5 @@ def render_models(
     imports_block = "\n".join(sorted(all_imports))
     return (
         f"{header}\nfrom __future__ import annotations\n\n"
-        f"{imports_block}\n\n\n"
-        + "\n\n".join(bodies)
+        f"{imports_block}\n\n\n" + "\n\n".join(bodies)
     )

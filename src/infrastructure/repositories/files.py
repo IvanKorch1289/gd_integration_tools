@@ -2,11 +2,11 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import NotFoundError
-from app.infrastructure.db.models.base import BaseModel
-from app.infrastructure.db.models.files import File, OrderFile
-from app.infrastructure.db.session_manager import main_session_manager
-from app.infrastructure.repositories.base import SQLAlchemyRepository
+from src.core.errors import NotFoundError
+from src.infrastructure.database.models.base import BaseModel
+from src.infrastructure.database.models.files import File, OrderFile
+from src.infrastructure.database.session_manager import main_session_manager
+from src.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("FileRepository", "get_file_repo")
 
@@ -61,5 +61,7 @@ def get_file_repo() -> FileRepository:
     """
     global _file_repo_instance
     if _file_repo_instance is None:
-        _file_repo_instance = FileRepository(model=File, load_joined_models=False, link_model=OrderFile)
+        _file_repo_instance = FileRepository(
+            model=File, load_joined_models=False, link_model=OrderFile
+        )
     return _file_repo_instance

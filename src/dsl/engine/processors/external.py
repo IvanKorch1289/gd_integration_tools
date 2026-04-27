@@ -1,8 +1,8 @@
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("MCPToolProcessor", "AgentGraphProcessor", "CDCProcessor")
 
@@ -10,7 +10,14 @@ __all__ = ("MCPToolProcessor", "AgentGraphProcessor", "CDCProcessor")
 class MCPToolProcessor(BaseProcessor):
     """Вызывает внешний MCP tool из DSL pipeline."""
 
-    def __init__(self, tool_uri: str, tool_name: str, *, result_property: str = "mcp_result", name: str | None = None) -> None:
+    def __init__(
+        self,
+        tool_uri: str,
+        tool_name: str,
+        *,
+        result_property: str = "mcp_result",
+        name: str | None = None,
+    ) -> None:
         super().__init__(name=name or f"mcp_tool:{tool_name}")
         self.tool_uri = tool_uri
         self.tool_name = tool_name
@@ -19,8 +26,14 @@ class MCPToolProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from fastmcp import Client
+
         async with Client(self.tool_uri) as client:
-            result = await client.call_tool(self.tool_name, arguments=exchange.in_message.body if isinstance(exchange.in_message.body, dict) else {})
+            result = await client.call_tool(
+                self.tool_name,
+                arguments=exchange.in_message.body
+                if isinstance(exchange.in_message.body, dict)
+                else {},
+            )
             exchange.set_property(self.result_property, result)
             exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
@@ -28,14 +41,17 @@ class MCPToolProcessor(BaseProcessor):
 class AgentGraphProcessor(BaseProcessor):
     """Запускает LangGraph-агента внутри DSL pipeline."""
 
-    def __init__(self, graph_name: str, tools: list[str], *, name: str | None = None) -> None:
+    def __init__(
+        self, graph_name: str, tools: list[str], *, name: str | None = None
+    ) -> None:
         super().__init__(name=name or f"agent_graph:{graph_name}")
         self.graph_name = graph_name
         self.tools = tools
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.ai.ai_graph import build_and_run_agent
+        from src.services.ai.ai_graph import build_and_run_agent
+
         body = exchange.in_message.body
         prompt = body if isinstance(body, str) else str(body)
         result = await build_and_run_agent(prompt=prompt, tool_actions=self.tools)
@@ -84,7 +100,8 @@ class CDCProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if not self._subscribed:
-            from app.infrastructure.clients.external.cdc import get_cdc_client
+            from src.infrastructure.clients.external.cdc import get_cdc_client
+
             client = get_cdc_client()
             sub_id = await client.subscribe(
                 profile=self.profile,

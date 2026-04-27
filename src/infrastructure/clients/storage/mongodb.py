@@ -34,9 +34,7 @@ class MongoDBClient:
         from motor.motor_asyncio import AsyncIOMotorClient
 
         self._client = AsyncIOMotorClient(
-            self._url,
-            maxPoolSize=self._max_pool,
-            minPoolSize=self._min_pool,
+            self._url, maxPoolSize=self._max_pool, minPoolSize=self._min_pool
         )
         self._db = self._client[self._database_name]
         await self._client.admin.command("ping")
@@ -59,9 +57,12 @@ class MongoDBClient:
         return self.db[name]
 
     async def find(
-        self, collection: str, query: dict[str, Any] | None = None,
+        self,
+        collection: str,
+        query: dict[str, Any] | None = None,
         projection: dict[str, Any] | None = None,
-        limit: int = 100, skip: int = 0,
+        limit: int = 100,
+        skip: int = 0,
         sort: list[tuple[str, int]] | None = None,
     ) -> list[dict[str, Any]]:
         cursor = self.db[collection].find(query or {}, projection)
@@ -70,28 +71,40 @@ class MongoDBClient:
         cursor = cursor.skip(skip).limit(limit)
         return [doc async for doc in cursor]
 
-    async def find_one(self, collection: str, query: dict[str, Any]) -> dict[str, Any] | None:
+    async def find_one(
+        self, collection: str, query: dict[str, Any]
+    ) -> dict[str, Any] | None:
         return await self.db[collection].find_one(query)
 
     async def insert_one(self, collection: str, document: dict[str, Any]) -> str:
         result = await self.db[collection].insert_one(document)
         return str(result.inserted_id)
 
-    async def insert_many(self, collection: str, documents: list[dict[str, Any]]) -> list[str]:
+    async def insert_many(
+        self, collection: str, documents: list[dict[str, Any]]
+    ) -> list[str]:
         result = await self.db[collection].insert_many(documents)
         return [str(id_) for id_ in result.inserted_ids]
 
     async def update_one(
-        self, collection: str, query: dict[str, Any], update: dict[str, Any], upsert: bool = False,
+        self,
+        collection: str,
+        query: dict[str, Any],
+        update: dict[str, Any],
+        upsert: bool = False,
     ) -> int:
-        result = await self.db[collection].update_one(query, {"$set": update}, upsert=upsert)
+        result = await self.db[collection].update_one(
+            query, {"$set": update}, upsert=upsert
+        )
         return result.modified_count
 
     async def delete_one(self, collection: str, query: dict[str, Any]) -> int:
         result = await self.db[collection].delete_one(query)
         return result.deleted_count
 
-    async def aggregate(self, collection: str, pipeline: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def aggregate(
+        self, collection: str, pipeline: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         cursor = self.db[collection].aggregate(pipeline)
         return [doc async for doc in cursor]
 
@@ -104,19 +117,19 @@ class MongoDBClient:
                 return False
             await self._client.admin.command("ping")
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 
 def _create_mongo_client() -> MongoDBClient:
-    from app.core.config.settings import settings
+    from src.core.config.settings import settings
+
     return MongoDBClient(
-        connection_url=settings.mongo.connection_url,
-        database=settings.mongo.database,
+        connection_url=settings.mongo.connection_url, database=settings.mongo.database
     )
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("mongo_client", _create_mongo_client)

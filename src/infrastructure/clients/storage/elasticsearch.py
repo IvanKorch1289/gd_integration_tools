@@ -83,25 +83,17 @@ class ElasticSearchClient:
         return self._client
 
     async def index_document(
-        self,
-        index: str,
-        document: dict[str, Any],
-        doc_id: str | None = None,
+        self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
         """Индексирует один документ."""
         client = await self._ensure_client()
         result = await client.index(
-            index=self._prefixed(index),
-            document=document,
-            id=doc_id,
+            index=self._prefixed(index), document=document, id=doc_id
         )
         return dict(result)
 
     async def bulk_index(
-        self,
-        index: str,
-        documents: list[dict[str, Any]],
-        id_field: str | None = None,
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
         """Bulk-индексация документов."""
         from elasticsearch.helpers import async_bulk
@@ -111,10 +103,7 @@ class ElasticSearchClient:
 
         actions = []
         for doc in documents:
-            action: dict[str, Any] = {
-                "_index": prefixed,
-                "_source": doc,
-            }
+            action: dict[str, Any] = {"_index": prefixed, "_source": doc}
             if id_field and id_field in doc:
                 action["_id"] = doc[id_field]
             actions.append(action)
@@ -152,10 +141,7 @@ class ElasticSearchClient:
         ]
 
     async def aggregate(
-        self,
-        index: str,
-        aggs: dict[str, Any],
-        query: dict[str, Any] | None = None,
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Запрос агрегации."""
         client = await self._ensure_client()
@@ -172,7 +158,7 @@ class ElasticSearchClient:
         try:
             await client.delete(index=self._prefixed(index), id=doc_id)
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
     async def create_index(
@@ -191,7 +177,7 @@ class ElasticSearchClient:
         try:
             client = await self._ensure_client()
             return await client.ping()
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 
@@ -199,7 +185,7 @@ _es_client: ElasticSearchClient | None = None
 
 
 def _create_elasticsearch_client() -> ElasticSearchClient:
-    from app.core.config.elasticsearch import elasticsearch_settings
+    from src.core.config.elasticsearch import elasticsearch_settings
 
     return ElasticSearchClient(
         hosts=elasticsearch_settings.hosts,
@@ -214,7 +200,7 @@ def _create_elasticsearch_client() -> ElasticSearchClient:
     )
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("elasticsearch_client", _create_elasticsearch_client)

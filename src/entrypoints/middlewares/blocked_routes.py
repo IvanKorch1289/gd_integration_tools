@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.config.runtime_state import blocked_routes
+from src.core.config.runtime_state import blocked_routes
 
 __all__ = ("BlockedRoutesMiddleware", "blocked_routes")
 

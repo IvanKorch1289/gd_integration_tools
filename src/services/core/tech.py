@@ -5,10 +5,10 @@ from typing import Any
 import pandas as pd
 from fastapi.responses import HTMLResponse
 
-from app.core.config.settings import settings
-from app.core.utils.health_check import get_healthcheck_service
-from app.services.core.base import BaseService, get_service_for_model
-from app.utilities.utils import utilities
+from src.core.config.settings import settings
+from src.infrastructure.monitoring.health_check import get_healthcheck_service
+from src.services.core.base import BaseService, get_service_for_model
+from src.utilities.utils import utilities
 
 __all__ = ("TechService", "get_tech_service")
 

@@ -29,7 +29,9 @@ class QdrantVectorStore:
 
     def _client(self):
         try:
-            from qdrant_client import AsyncQdrantClient  # type: ignore[import-not-found]
+            from qdrant_client import (
+                AsyncQdrantClient,  # type: ignore[import-not-found]
+            )
 
             return AsyncQdrantClient(url=self.url, api_key=self.api_key)
         except ImportError:
@@ -41,10 +43,19 @@ class QdrantVectorStore:
         client = self._client()
         await client.upsert(
             collection_name=self.collection,
-            points=[PointStruct(id=p["id"], vector=p["vector"], payload=p.get("payload", {})) for p in points],
+            points=[
+                PointStruct(
+                    id=p["id"], vector=p["vector"], payload=p.get("payload", {})
+                )
+                for p in points
+            ],
         )
 
-    async def search(self, vector: list[float], *, limit: int = 10) -> list[dict[str, Any]]:
+    async def search(
+        self, vector: list[float], *, limit: int = 10
+    ) -> list[dict[str, Any]]:
         client = self._client()
-        result = await client.search(collection_name=self.collection, query_vector=vector, limit=limit)
+        result = await client.search(
+            collection_name=self.collection, query_vector=vector, limit=limit
+        )
         return [{"id": r.id, "score": r.score, "payload": r.payload} for r in result]

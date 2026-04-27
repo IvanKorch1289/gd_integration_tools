@@ -7,9 +7,9 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from app.core.config.settings import RedisSettings, settings
-from app.infrastructure.external_apis.logging_service import redis_logger
-from app.infrastructure.resilience.client_breaker import (
+from src.core.config.settings import RedisSettings, settings
+from src.infrastructure.external_apis.logging_service import redis_logger
+from src.infrastructure.resilience.client_breaker import (
     CircuitOpen,
     ClientCircuitBreaker,
 )
@@ -87,7 +87,9 @@ class RedisClient:
             return value.decode()
         if isinstance(value, dict):
             return {
-                (k.decode() if isinstance(k, bytes) else k): RedisClient.decode(v, _depth + 1)
+                (k.decode() if isinstance(k, bytes) else k): RedisClient.decode(
+                    v, _depth + 1
+                )
                 for k, v in value.items()
             }
         if isinstance(value, (list, tuple)):

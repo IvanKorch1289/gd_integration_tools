@@ -38,7 +38,6 @@ from typing import Any, Awaitable, Callable, Final, TypeVar
 
 from prometheus_client import Counter
 
-
 _logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
@@ -95,7 +94,9 @@ class ReconnectForever(ReconnectionStrategy):
             attempt += 1
             try:
                 result = await dial()
-                reconnect_attempts_total.labels(client=client_name, outcome="success").inc()
+                reconnect_attempts_total.labels(
+                    client=client_name, outcome="success"
+                ).inc()
                 if attempt > 1:
                     _logger.info(
                         "reconnect succeeded",
@@ -103,7 +104,9 @@ class ReconnectForever(ReconnectionStrategy):
                     )
                 return result
             except Exception as exc:  # noqa: BLE001
-                reconnect_attempts_total.labels(client=client_name, outcome="failure").inc()
+                reconnect_attempts_total.labels(
+                    client=client_name, outcome="failure"
+                ).inc()
                 _logger.warning(
                     "reconnect failed; retrying",
                     extra={
@@ -135,13 +138,19 @@ class ReconnectN(ReconnectionStrategy):
         for i in range(1, self.attempts + 1):
             try:
                 result = await dial()
-                reconnect_attempts_total.labels(client=client_name, outcome="success").inc()
+                reconnect_attempts_total.labels(
+                    client=client_name, outcome="success"
+                ).inc()
                 return result
             except Exception as exc:  # noqa: BLE001
                 last_exc = exc
-                reconnect_attempts_total.labels(client=client_name, outcome="failure").inc()
+                reconnect_attempts_total.labels(
+                    client=client_name, outcome="failure"
+                ).inc()
                 if i == self.attempts:
-                    reconnect_attempts_total.labels(client=client_name, outcome="giveup").inc()
+                    reconnect_attempts_total.labels(
+                        client=client_name, outcome="giveup"
+                    ).inc()
                     _logger.error(
                         "reconnect giving up",
                         extra={
@@ -182,7 +191,11 @@ class NoReconnect(ReconnectionStrategy):
 
 
 def build(
-    policy: str, *, initial_delay: float = 1.0, max_delay: float = 60.0, attempts: int = 3
+    policy: str,
+    *,
+    initial_delay: float = 1.0,
+    max_delay: float = 60.0,
+    attempts: int = 3,
 ) -> ReconnectionStrategy:
     """Factory по имени из Settings: ``forever | n_attempts | none``.
 

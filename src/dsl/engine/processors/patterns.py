@@ -16,9 +16,9 @@ import logging
 import time
 from typing import Any, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 __all__ = (
     "SwitchProcessor",
@@ -67,7 +67,9 @@ class SwitchProcessor(BaseProcessor):
 
         key = str(value) if value is not None else ""
         branch = self._cases.get(key, self._default)
-        exchange.set_property("switch_matched", key if key in self._cases else "default")
+        exchange.set_property(
+            "switch_matched", key if key in self._cases else "default"
+        )
         await run_sub_processors(branch, exchange, context)
 
 
@@ -85,11 +87,7 @@ class MergeProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        properties: list[str],
-        *,
-        mode: str = "append",
-        name: str | None = None,
+        self, properties: list[str], *, mode: str = "append", name: str | None = None
     ) -> None:
         super().__init__(name=name or f"merge({mode})")
         self._properties = properties
@@ -106,7 +104,9 @@ class MergeProcessor(BaseProcessor):
             exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
         elif self._mode == "zip":
             lists = [v if isinstance(v, list) else [v] for v in values]
-            exchange.set_out(body=list(zip(*lists)), headers=dict(exchange.in_message.headers))
+            exchange.set_out(
+                body=list(zip(*lists)), headers=dict(exchange.in_message.headers)
+            )
         else:
             exchange.set_out(body=values, headers=dict(exchange.in_message.headers))
 
@@ -220,7 +220,13 @@ class FormatterProcessor(BaseProcessor):
         .format_text("Order {order_id} from {_user_email}")
     """
 
-    def __init__(self, template: str, *, output_property: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        template: str,
+        *,
+        output_property: str | None = None,
+        name: str | None = None,
+    ) -> None:
         super().__init__(name=name or f"format_text:{template[:30]}")
         self._template = template
         self._output_property = output_property
@@ -286,7 +292,9 @@ class DebounceProcessor(BaseProcessor):
         now = time.monotonic()
 
         async with self._lock:
-            expired = [k for k, ts in self._last_seen.items() if now - ts > self._delay * 10]
+            expired = [
+                k for k, ts in self._last_seen.items() if now - ts > self._delay * 10
+            ]
             for k in expired:
                 del self._last_seen[k]
 

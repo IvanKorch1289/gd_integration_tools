@@ -21,6 +21,7 @@ _SNAPSHOT_PREFIX = "dsl_snapshot:"
 @dataclass(slots=True)
 class PipelineSnapshot:
     """Снэпшот маршрута."""
+
     route_id: str
     version: int
     processors: list[dict[str, Any]]
@@ -51,10 +52,7 @@ class PipelineVersionManager:
         """Сериализует processor chain в JSON-совместимый формат."""
         result = []
         for proc in pipeline.processors:
-            result.append({
-                "type": type(proc).__name__,
-                "name": proc.name,
-            })
+            result.append({"type": type(proc).__name__, "name": proc.name})
         return result
 
     async def snapshot(self, pipeline: Any) -> PipelineSnapshot:
@@ -74,8 +72,9 @@ class PipelineVersionManager:
         )
 
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
+
+            from src.infrastructure.clients.storage.redis import redis_client
 
             key = f"{_SNAPSHOT_PREFIX}{route_id}:v{version}"
             await redis_client._redis.set(key, orjson.dumps(snap.to_dict()))
@@ -83,7 +82,12 @@ class PipelineVersionManager:
             latest_key = f"{_SNAPSHOT_PREFIX}{route_id}:latest"
             await redis_client._redis.set(latest_key, orjson.dumps(snap.to_dict()))
 
-            logger.info("Pipeline snapshot: %s v%d (%d processors)", route_id, version, len(snap.processors))
+            logger.info(
+                "Pipeline snapshot: %s v%d (%d processors)",
+                route_id,
+                version,
+                len(snap.processors),
+            )
         except Exception as exc:
             logger.warning("Snapshot save failed: %s", exc)
 
@@ -92,8 +96,9 @@ class PipelineVersionManager:
     async def get_history(self, route_id: str) -> list[dict[str, Any]]:
         """Возвращает историю версий маршрута."""
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
+
+            from src.infrastructure.clients.storage.redis import redis_client
 
             result = []
             for v in range(1, self._versions.get(route_id, 0) + 1):
@@ -109,8 +114,9 @@ class PipelineVersionManager:
     async def compare(self, route_id: str, v1: int, v2: int) -> dict[str, Any]:
         """Сравнивает две версии маршрута."""
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
             import orjson
+
+            from src.infrastructure.clients.storage.redis import redis_client
 
             raw1 = await redis_client._redis.get(f"{_SNAPSHOT_PREFIX}{route_id}:v{v1}")
             raw2 = await redis_client._redis.get(f"{_SNAPSHOT_PREFIX}{route_id}:v{v2}")
@@ -135,13 +141,14 @@ class PipelineVersionManager:
                 "added_processors": added,
                 "removed_processors": removed,
                 "changed_processors": changed,
-                "feature_flag_changed": snap1.get("feature_flag") != snap2.get("feature_flag"),
+                "feature_flag_changed": snap1.get("feature_flag")
+                != snap2.get("feature_flag"),
             }
         except Exception as exc:
             return {"error": str(exc)}
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("pipeline_version_manager", PipelineVersionManager)

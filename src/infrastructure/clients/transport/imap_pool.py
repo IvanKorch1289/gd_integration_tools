@@ -26,13 +26,9 @@ from typing import TYPE_CHECKING, Any, AsyncIterator
 if TYPE_CHECKING:
     from aioimaplib import IMAP4_SSL
 
-from app.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from app.infrastructure.clients.base_connector import (
-    HealthResult,
-    InfrastructureClient,
-)
-from app.infrastructure.observability.client_metrics import ClientMetricsMixin
-
+from src.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
+from src.infrastructure.clients.base_connector import HealthResult, InfrastructureClient
+from src.infrastructure.observability.client_metrics import ClientMetricsMixin
 
 _logger = logging.getLogger(__name__)
 
@@ -73,7 +69,9 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         self._password_provider = password_provider
         self._use_ssl = use_ssl
         self._timeout_s = timeout_s
-        self._pool: asyncio.Queue["IMAP4_SSL"] = asyncio.Queue(maxsize=self.pooling.max_size)
+        self._pool: asyncio.Queue["IMAP4_SSL"] = asyncio.Queue(
+            maxsize=self.pooling.max_size
+        )
         self._created: int = 0  # сколько соединений фактически открыто
         self._lock = asyncio.Lock()  # guard _created в multi-acquire
 
@@ -170,8 +168,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
                     else:
                         # Дожидаемся freed connection.
                         conn = await asyncio.wait_for(
-                            self._pool.get(),
-                            timeout=self.pooling.acquire_timeout_s,
+                            self._pool.get(), timeout=self.pooling.acquire_timeout_s
                         )
             # Verify livenessо: если connection упал — replace.
             if not await self._is_alive(conn):
@@ -202,9 +199,13 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         import aioimaplib
 
         if self._use_ssl:
-            conn = aioimaplib.IMAP4_SSL(host=self._host, port=self._port, timeout=self._timeout_s)
+            conn = aioimaplib.IMAP4_SSL(
+                host=self._host, port=self._port, timeout=self._timeout_s
+            )
         else:
-            conn = aioimaplib.IMAP4(host=self._host, port=self._port, timeout=self._timeout_s)  # type: ignore[assignment]
+            conn = aioimaplib.IMAP4(
+                host=self._host, port=self._port, timeout=self._timeout_s
+            )  # type: ignore[assignment]
         await conn.wait_hello_from_server()
         password = await _maybe_async(self._password_provider)
         await conn.login(self._username, password)

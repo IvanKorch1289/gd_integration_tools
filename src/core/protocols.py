@@ -86,7 +86,9 @@ class LLMProvider(Protocol):
         """
         ...
 
-    async def embeddings(self, texts: list[str], *, model: str | None = None) -> list[list[float]]:
+    async def embeddings(
+        self, texts: list[str], *, model: str | None = None
+    ) -> list[list[float]]:
         """Получает векторные представления для списка текстов."""
         ...
 
@@ -191,7 +193,9 @@ class Exporter[T](Protocol):
 class MemoryBackend(Protocol):
     """Хранилище состояния AI-агента (Redis / Memcached / Postgres / in-memory)."""
 
-    async def get_conversation(self, session_id: str, *, limit: int = 50) -> list[dict[str, Any]]:
+    async def get_conversation(
+        self, session_id: str, *, limit: int = 50
+    ) -> list[dict[str, Any]]:
         """Возвращает последние N сообщений диалога."""
         ...
 
@@ -289,7 +293,9 @@ class PromptStore(Protocol):
         """Возвращает текст промпта. При ``version=None`` — последнюю версию."""
         ...
 
-    async def register(self, name: str, content: str, *, metadata: dict[str, Any] | None = None) -> int:
+    async def register(
+        self, name: str, content: str, *, metadata: dict[str, Any] | None = None
+    ) -> int:
         """Регистрирует новую версию промпта, возвращает её номер."""
         ...
 

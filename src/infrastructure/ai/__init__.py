@@ -5,7 +5,7 @@ Execute, LangGraph state machine) живут в
 `dsl.engine.processors.ai_*`; здесь — инфраструктурная обвязка.
 """
 
-from app.infrastructure.ai.prompt_registry import PromptRegistry, PromptVersion
-from app.infrastructure.ai.semantic_cache import SemanticCache
+from src.infrastructure.ai.prompt_registry import PromptRegistry, PromptVersion
+from src.infrastructure.ai.semantic_cache import SemanticCache
 
 __all__ = ("PromptRegistry", "PromptVersion", "SemanticCache")

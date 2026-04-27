@@ -85,10 +85,10 @@ FOR EACH ROW EXECUTE FUNCTION fn_workflow_notify();
 def upgrade() -> None:
     # --- ENUM types -------------------------------------------------------
     workflow_status = postgresql.ENUM(
-        *WORKFLOW_STATUS_VALUES, name="workflow_status", create_type=False,
+        *WORKFLOW_STATUS_VALUES, name="workflow_status", create_type=False
     )
     workflow_event_type = postgresql.ENUM(
-        *WORKFLOW_EVENT_TYPE_VALUES, name="workflow_event_type", create_type=False,
+        *WORKFLOW_EVENT_TYPE_VALUES, name="workflow_event_type", create_type=False
     )
 
     # idempotent create (DROP IF EXISTS на downgrade + CREATE IF NOT EXISTS тут)
@@ -185,12 +185,8 @@ def upgrade() -> None:
     # --- workflow_events --------------------------------------------------
     op.create_table(
         "workflow_events",
-        sa.Column(
-            "id", sa.BigInteger(), autoincrement=True, nullable=False,
-        ),
-        sa.Column(
-            "workflow_id", postgresql.UUID(as_uuid=True), nullable=False,
-        ),
+        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
+        sa.Column("workflow_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("event_type", workflow_event_type, nullable=False),
         sa.Column(
             "payload",
@@ -247,30 +243,22 @@ def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS trg_workflow_notify ON workflow_events;")
     op.execute("DROP FUNCTION IF EXISTS fn_workflow_notify();")
 
-    op.drop_index(
-        "ix_workflow_events_workflow_id_seq", table_name="workflow_events",
-    )
-    op.drop_index(
-        op.f("ix_workflow_events_workflow_id"), table_name="workflow_events",
-    )
+    op.drop_index("ix_workflow_events_workflow_id_seq", table_name="workflow_events")
+    op.drop_index(op.f("ix_workflow_events_workflow_id"), table_name="workflow_events")
     op.drop_table("workflow_events")
 
     op.drop_index(
-        op.f("ix_workflow_instances_tenant_id"), table_name="workflow_instances",
+        op.f("ix_workflow_instances_tenant_id"), table_name="workflow_instances"
     )
     op.drop_index(
-        op.f("ix_workflow_instances_next_attempt_at"),
-        table_name="workflow_instances",
+        op.f("ix_workflow_instances_next_attempt_at"), table_name="workflow_instances"
+    )
+    op.drop_index(op.f("ix_workflow_instances_status"), table_name="workflow_instances")
+    op.drop_index(
+        op.f("ix_workflow_instances_route_id"), table_name="workflow_instances"
     )
     op.drop_index(
-        op.f("ix_workflow_instances_status"), table_name="workflow_instances",
-    )
-    op.drop_index(
-        op.f("ix_workflow_instances_route_id"), table_name="workflow_instances",
-    )
-    op.drop_index(
-        op.f("ix_workflow_instances_workflow_name"),
-        table_name="workflow_instances",
+        op.f("ix_workflow_instances_workflow_name"), table_name="workflow_instances"
     )
     op.drop_table("workflow_instances")
 

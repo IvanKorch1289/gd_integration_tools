@@ -55,7 +55,7 @@
 
 - Публичный API регистрации сервисов сужается до одного импорта
   (`app.core.svcs_registry`).
-- Старые импорты `from app.core.service_registry import ...` продолжают
+- Старые импорты `from src.core.service_registry import ...` продолжают
   работать один релиз, но выдают `DeprecationWarning`.
 - В H3 (Cleanup) shim удаляется, запись в `DEPRECATIONS.md` переезжает в
   «Удалённые».

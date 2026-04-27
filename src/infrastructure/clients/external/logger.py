@@ -1,6 +1,6 @@
 from logging import Handler
 
-from app.core.config.settings import LogStorageSettings, settings
+from src.core.config.settings import LogStorageSettings, settings
 
 __all__ = ("graylog_handler",)
 

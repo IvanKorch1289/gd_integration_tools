@@ -17,7 +17,7 @@ from typing import Any
 from sqlalchemy import JSON, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.database.models.base import BaseModel
+from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("OutboxMessage",)
 
@@ -46,8 +46,8 @@ class OutboxMessage(BaseModel):
     last_error: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
     published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True,
+        DateTime(timezone=True), nullable=True
     )
     next_attempt_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=func.now(), index=True,
+        DateTime(timezone=True), default=func.now(), index=True
     )

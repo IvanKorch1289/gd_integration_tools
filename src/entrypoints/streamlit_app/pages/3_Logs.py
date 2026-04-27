@@ -33,7 +33,9 @@ except Exception:
     logs = []
 
 if route_filter:
-    logs = [l for l in logs if route_filter.lower() in str(l.get("route_id", "")).lower()]
+    logs = [
+        l for l in logs if route_filter.lower() in str(l.get("route_id", "")).lower()
+    ]
 
 if corr_filter:
     logs = [l for l in logs if corr_filter in str(l.get("correlation_id", ""))]

@@ -14,7 +14,7 @@ services:
 
   workflow-worker:
     build: .
-    command: ["python", "-m", "app.workflows.worker", "run"]
+    command: ["python", "-m", "src.workflows.worker", "run"]
     env_file:
       - .env
     environment:

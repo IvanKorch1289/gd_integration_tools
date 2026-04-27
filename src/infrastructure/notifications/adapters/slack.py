@@ -17,8 +17,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -38,12 +37,7 @@ class SlackAdapter:
         self._upstream_name = upstream_name
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить message в Slack.
 
@@ -74,7 +68,7 @@ class SlackAdapter:
             },
         }
 
-        from app.infrastructure.clients.transport.http_upstream import upstream
+        from src.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         response = await client.request("POST", url, json=payload)
@@ -90,9 +84,7 @@ class SlackAdapter:
             return False
 
 
-assert isinstance(
-    SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel
-)
+assert isinstance(SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel)
 
 
 __all__ = ("SlackAdapter",)

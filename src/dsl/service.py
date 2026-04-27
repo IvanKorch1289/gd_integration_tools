@@ -1,9 +1,9 @@
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.execution_engine import ExecutionEngine
-from app.dsl.registry import route_registry
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.execution_engine import ExecutionEngine
+from src.dsl.registry import route_registry
 
 __all__ = ("DslService", "get_dsl_service")
 

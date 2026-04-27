@@ -8,17 +8,16 @@ DSL-dispatch как fallback для произвольных actions.
 """
 
 import logging
-from datetime import datetime
 from collections.abc import AsyncGenerator
+from datetime import datetime
 from typing import Any
-from uuid import UUID
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from app.dsl.service import get_dsl_service
+from src.dsl.service import get_dsl_service
 
 __all__ = ("graphql_router",)
 
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 # ────────────────────────────────────────────────────
 # Доменные типы
 # ────────────────────────────────────────────────────
+
 
 @strawberry.type
 class OrderKindType:
@@ -109,19 +109,20 @@ class ActionResult:
 # Вспомогательные функции
 # ────────────────────────────────────────────────────
 
-async def _dispatch_action(action: str, payload: dict[str, Any] | None = None) -> ActionResult:
+
+async def _dispatch_action(
+    action: str, payload: dict[str, Any] | None = None
+) -> ActionResult:
     """Диспетчеризует action через общий `dispatch_action()`.
 
     IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
     с `source="graphql"`. Meta и correlation_id — автоматически.
     """
-    from app.entrypoints.base import dispatch_action as _unified_dispatch
+    from src.entrypoints.base import dispatch_action as _unified_dispatch
 
     try:
         result = await _unified_dispatch(
-            action=action,
-            payload=payload,
-            source="graphql",
+            action=action, payload=payload, source="graphql"
         )
 
         data = result
@@ -133,8 +134,7 @@ async def _dispatch_action(action: str, payload: dict[str, Any] | None = None) -
         return ActionResult(action=action, success=True, data=data)
     except KeyError:
         return ActionResult(
-            action=action, success=False,
-            error=f"Action '{action}' не зарегистрирован",
+            action=action, success=False, error=f"Action '{action}' не зарегистрирован"
         )
     except Exception as exc:
         logger.exception("GraphQL action error: %s", exc)
@@ -151,7 +151,9 @@ def _schema_to_order(data: Any) -> OrderType:
         d = {"id": 0}
 
     order_kind_data = d.get("order_kind")
-    order_kind = OrderKindType(**order_kind_data) if isinstance(order_kind_data, dict) else None
+    order_kind = (
+        OrderKindType(**order_kind_data) if isinstance(order_kind_data, dict) else None
+    )
 
     files_data = d.get("files", [])
     files = [FileType(**f) for f in files_data] if files_data else []
@@ -218,9 +220,7 @@ async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
     try:
         dsl = get_dsl_service()
         exchange = await dsl.dispatch(
-            route_id=route_id,
-            body=payload,
-            headers={"x-source": "graphql"},
+            route_id=route_id, body=payload, headers={"x-source": "graphql"}
         )
 
         result_body = exchange.out_message.body if exchange.out_message else None
@@ -233,7 +233,8 @@ async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
         )
     except KeyError:
         return DslResult(
-            route_id=route_id, status="failed",
+            route_id=route_id,
+            status="failed",
             error=f"Маршрут '{route_id}' не зарегистрирован",
         )
     except Exception as exc:
@@ -244,6 +245,7 @@ async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
 # ────────────────────────────────────────────────────
 # Query
 # ────────────────────────────────────────────────────
+
 
 @strawberry.type
 class Query:
@@ -285,7 +287,9 @@ class Query:
 
     @strawberry.field(description="Получить вид запроса по ID.")
     async def order_kind(self, order_kind_id: int) -> OrderKindType | None:
-        result = await _dispatch_action("orderkinds.get", {"key": "id", "value": order_kind_id})
+        result = await _dispatch_action(
+            "orderkinds.get", {"key": "id", "value": order_kind_id}
+        )
         if result.success and result.data:
             return _schema_to_order_kind(result.data)
         return None
@@ -303,11 +307,13 @@ class Query:
     async def file(self, file_id: int) -> FileType | None:
         result = await _dispatch_action("files.get", {"key": "id", "value": file_id})
         if result.success and result.data and isinstance(result.data, dict):
-            return FileType(**{
-                k: result.data.get(k)
-                for k in ("id", "name", "object_uuid", "created_at", "updated_at")
-                if k in result.data
-            })
+            return FileType(
+                **{
+                    k: result.data.get(k)
+                    for k in ("id", "name", "object_uuid", "created_at", "updated_at")
+                    if k in result.data
+                }
+            )
         return None
 
     # ── Tech ──
@@ -319,27 +325,26 @@ class Query:
     # ── DSL fallback ──
 
     @strawberry.field(description="Выполнить произвольный DSL-маршрут (read-only).")
-    async def dsl_query(
-        self,
-        route_id: str,
-        payload: JSON | None = None,
-    ) -> DslResult:
+    async def dsl_query(self, route_id: str, payload: JSON | None = None) -> DslResult:
         return await _dispatch_dsl(route_id, payload or {})
 
     @strawberry.field(description="Список зарегистрированных DSL-маршрутов.")
     async def dsl_routes(self) -> list[str]:
-        from app.dsl.registry import route_registry
+        from src.dsl.registry import route_registry
+
         return list(route_registry.list_routes())
 
     @strawberry.field(description="Список зарегистрированных actions.")
     async def actions(self) -> list[str]:
-        from app.dsl.commands.registry import action_handler_registry
+        from src.dsl.commands.registry import action_handler_registry
+
         return list(action_handler_registry.list_actions())
 
 
 # ────────────────────────────────────────────────────
 # Mutation
 # ────────────────────────────────────────────────────
+
 
 @strawberry.type
 class Mutation:
@@ -353,7 +358,9 @@ class Mutation:
 
     @strawberry.mutation(description="Обновить заказ.")
     async def update_order(self, order_id: int, input: JSON) -> ActionResult:
-        return await _dispatch_action("orders.update", {"key": "id", "value": order_id, "data": input})
+        return await _dispatch_action(
+            "orders.update", {"key": "id", "value": order_id, "data": input}
+        )
 
     @strawberry.mutation(description="Удалить заказ.")
     async def delete_order(self, order_id: int) -> ActionResult:
@@ -375,7 +382,9 @@ class Mutation:
 
     @strawberry.mutation(description="Авторизация пользователя.")
     async def login(self, username: str, password: str) -> ActionResult:
-        return await _dispatch_action("users.login", {"username": username, "password": password})
+        return await _dispatch_action(
+            "users.login", {"username": username, "password": password}
+        )
 
     # ── OrderKinds ──
 
@@ -387,13 +396,12 @@ class Mutation:
 
     @strawberry.mutation(description="Отправить email.")
     async def send_email(
-        self, to_emails: list[str], subject: str, message: str,
+        self, to_emails: list[str], subject: str, message: str
     ) -> ActionResult:
-        return await _dispatch_action("tech.send_email", {
-            "to_emails": to_emails,
-            "subject": subject,
-            "message": message,
-        })
+        return await _dispatch_action(
+            "tech.send_email",
+            {"to_emails": to_emails, "subject": subject, "message": message},
+        )
 
     # ── Admin ──
 
@@ -404,16 +412,16 @@ class Mutation:
     # ── Universal action dispatch ──
 
     @strawberry.mutation(description="Выполнить произвольный action.")
-    async def execute_action(self, action: str, payload: JSON | None = None) -> ActionResult:
+    async def execute_action(
+        self, action: str, payload: JSON | None = None
+    ) -> ActionResult:
         return await _dispatch_action(action, payload)
 
     # ── DSL fallback ──
 
     @strawberry.mutation(description="Выполнить DSL-маршрут (write).")
     async def dsl_execute(
-        self,
-        route_id: str,
-        payload: JSON | None = None,
+        self, route_id: str, payload: JSON | None = None
     ) -> DslResult:
         return await _dispatch_dsl(route_id, payload or {})
 
@@ -421,6 +429,7 @@ class Mutation:
 # ────────────────────────────────────────────────────
 # Subscription
 # ────────────────────────────────────────────────────
+
 
 @strawberry.type
 class TraceEventType:
@@ -448,11 +457,13 @@ class SystemEventType:
 class Subscription:
     """GraphQL Subscriptions — real-time события."""
 
-    @strawberry.subscription(description="Трассировка выполнения маршрута в реальном времени.")
+    @strawberry.subscription(
+        description="Трассировка выполнения маршрута в реальном времени."
+    )
     async def route_trace(
         self, route_id: str, info: Info
     ) -> AsyncGenerator[TraceEventType, None]:
-        from app.dsl.engine.tracer import get_tracer
+        from src.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         async for event in tracer.subscribe(route_id):
@@ -468,7 +479,7 @@ class Subscription:
 
     @strawberry.subscription(description="Все trace-события (для dashboard).")
     async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType, None]:
-        from app.dsl.engine.tracer import get_tracer
+        from src.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         async for event in tracer.subscribe_all():
@@ -482,14 +493,18 @@ class Subscription:
                 error=event.error,
             )
 
-    @strawberry.subscription(description="Системные события (health check каждые 30 сек).")
+    @strawberry.subscription(
+        description="Системные события (health check каждые 30 сек)."
+    )
     async def system_health(self, info: Info) -> AsyncGenerator[SystemEventType, None]:
         import asyncio
         from datetime import UTC, datetime
 
         while True:
             try:
-                from app.core.utils.health_check import get_healthcheck_service
+                from src.infrastructure.monitoring.health_check import (
+                    get_healthcheck_service,
+                )
 
                 async with get_healthcheck_service() as hc:
                     result = await hc.check_all_services()

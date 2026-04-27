@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from app.dsl.service import get_dsl_service
+from src.dsl.service import get_dsl_service
 
 __all__ = ("WatcherManager", "WatcherSpec", "watcher_manager")
 
@@ -69,15 +69,11 @@ class WatcherManager:
         """
         path = Path(spec.directory)
         if not path.is_dir():
-            raise ValueError(
-                f"Директория не найдена: {spec.directory}"
-            )
+            raise ValueError(f"Директория не найдена: {spec.directory}")
 
         self._watchers[spec.id] = spec
         self._seen_files[spec.id] = self._scan_existing(spec)
-        self._tasks[spec.id] = asyncio.create_task(
-            self._poll_loop(spec.id)
-        )
+        self._tasks[spec.id] = asyncio.create_task(self._poll_loop(spec.id))
 
         logger.info(
             "Watcher %s запущен: dir=%s, pattern=%s, route=%s",
@@ -134,8 +130,7 @@ class WatcherManager:
             return {
                 entry.name
                 for entry in os.scandir(spec.directory)
-                if entry.is_file()
-                and fnmatch.fnmatch(entry.name, spec.pattern)
+                if entry.is_file() and fnmatch.fnmatch(entry.name, spec.pattern)
             }
         except OSError:
             return set()
@@ -158,11 +153,7 @@ class WatcherManager:
 
                 for filename in sorted(new_files):
                     filepath = str(Path(spec.directory) / filename)
-                    logger.info(
-                        "Watcher %s: новый файл %s",
-                        watcher_id,
-                        filepath,
-                    )
+                    logger.info("Watcher %s: новый файл %s", watcher_id, filepath)
 
                     try:
                         dsl = get_dsl_service()
@@ -180,17 +171,13 @@ class WatcherManager:
                         )
                     except Exception:
                         logger.exception(
-                            "Watcher %s: ошибка обработки %s",
-                            watcher_id,
-                            filepath,
+                            "Watcher %s: ошибка обработки %s", watcher_id, filepath
                         )
 
                 self._seen_files[watcher_id] = current_files
 
             except Exception:
-                logger.exception(
-                    "Watcher %s: ошибка опроса", watcher_id
-                )
+                logger.exception("Watcher %s: ошибка опроса", watcher_id)
 
             await asyncio.sleep(spec.poll_interval)
 

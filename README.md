@@ -148,7 +148,7 @@ curl http://localhost:8000/api/v1/admin/feature-flags
 
 **Программное управление:**
 ```python
-from app.dsl.commands.registry import route_registry
+from src.dsl.commands.registry import route_registry
 
 route_registry.toggle_feature_flag("new_skb_algorithm", enable=False)
 disabled = route_registry.list_disabled_routes()
@@ -157,8 +157,8 @@ disabled = route_registry.list_disabled_routes()
 ### Пример сложного pipeline (control-flow)
 
 ```python
-from app.dsl.builder import RouteBuilder
-from app.dsl.engine.processors import (
+from src.dsl.builder import RouteBuilder
+from src.dsl.engine.processors import (
     DispatchActionProcessor, LogProcessor, SagaStep,
 )
 
@@ -415,8 +415,8 @@ src/
 ## Как создать DSL-маршрут с feature flag
 
 ```python
-from app.dsl.builder import RouteBuilder
-from app.dsl.engine.processors import DispatchActionProcessor, SagaStep
+from src.dsl.builder import RouteBuilder
+from src.dsl.engine.processors import DispatchActionProcessor, SagaStep
 
 # Простой маршрут
 route = (

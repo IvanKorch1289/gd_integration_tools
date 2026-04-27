@@ -15,7 +15,7 @@ import asyncio
 import logging
 from typing import Any
 
-from app.core.utils.redis_coordinator import RedisPubSub, RedisSet
+from src.infrastructure.clients.storage.redis_coordinator import RedisPubSub, RedisSet
 
 __all__ = ("WSBroadcast", "ws_broadcast")
 

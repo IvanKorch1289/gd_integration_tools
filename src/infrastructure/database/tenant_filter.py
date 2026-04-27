@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import String, event
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from app.infrastructure.observability.correlation import get_tenant_id
+from src.infrastructure.observability.correlation import get_tenant_id
 
 __all__ = ("TenantMixin", "apply_tenant_filter")
 
@@ -58,7 +58,9 @@ def apply_tenant_filter(session_factory: Any) -> None:
                 break
 
     @event.listens_for(session_factory, "before_flush")
-    def _set_tenant_on_new(session: Session, flush_context: Any, instances: Any) -> None:
+    def _set_tenant_on_new(
+        session: Session, flush_context: Any, instances: Any
+    ) -> None:
         tenant_id = get_tenant_id()
         if not tenant_id:
             return

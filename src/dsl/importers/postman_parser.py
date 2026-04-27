@@ -10,7 +10,7 @@
 * методы GET/POST/PUT/PATCH/DELETE;
 * URL-параметры, query-params, headers, body (raw/json).
 
-Actions (регистрируются в :mod:`app.dsl.commands.setup`):
+Actions (регистрируются в :mod:`src.dsl.commands.setup`):
 
 * ``postman.import`` — импорт коллекции из dict или URL.
 * ``postman.list_imported`` — список ранее импортированных коллекций.
@@ -64,7 +64,7 @@ class PostmanImporter:
         self._collections: dict[str, list[ImportedPostmanRequest]] = {}
 
     async def import_collection(
-        self, collection: dict[str, Any] | str, *, prefix: str = "postman",
+        self, collection: dict[str, Any] | str, *, prefix: str = "postman"
     ) -> dict[str, Any]:
         """Импортирует Postman-коллекцию.
 
@@ -101,7 +101,9 @@ class PostmanImporter:
         for item in items:
             if "item" in item:  # folder
                 folder_name = _sanitize_id(item.get("name", ""))
-                new_prefix = f"{path_prefix}.{folder_name}" if path_prefix else folder_name
+                new_prefix = (
+                    f"{path_prefix}.{folder_name}" if path_prefix else folder_name
+                )
                 self._walk_items(item["item"], prefix, out, new_prefix)
                 continue
             req = self._parse_request(item, prefix, path_prefix)
@@ -109,7 +111,7 @@ class PostmanImporter:
                 out.append(req)
 
     def _parse_request(
-        self, item: dict[str, Any], prefix: str, folder_path: str,
+        self, item: dict[str, Any], prefix: str, folder_path: str
     ) -> ImportedPostmanRequest | None:
         """Разбирает один request из Postman collection."""
         request = item.get("request")
@@ -129,7 +131,9 @@ class PostmanImporter:
         if isinstance(url_obj, dict):
             url = url_obj.get("raw", "")
             query_list = url_obj.get("query", []) or []
-            query_params = {q["key"]: q.get("value", "") for q in query_list if q.get("key")}
+            query_params = {
+                q["key"]: q.get("value", "") for q in query_list if q.get("key")
+            }
         else:
             url = str(url_obj)
             query_params = {}
@@ -164,7 +168,9 @@ class PostmanImporter:
         if mode == "raw":
             return body_obj.get("raw")
         if mode == "urlencoded":
-            return {p["key"]: p.get("value", "") for p in body_obj.get("urlencoded", [])}
+            return {
+                p["key"]: p.get("value", "") for p in body_obj.get("urlencoded", [])
+            }
         if mode == "formdata":
             return {p["key"]: p.get("value", "") for p in body_obj.get("formdata", [])}
         return None
@@ -181,7 +187,7 @@ class PostmanImporter:
         """Возвращает Python-сниппет для создания DSL-роута."""
         lines = [
             f'# Auto-generated from Postman для "{route_id}"',
-            "from app.dsl.builder import RouteBuilder",
+            "from src.dsl.builder import RouteBuilder",
             "",
             "route = (",
             f'    RouteBuilder.from_("{route_id}", source="postman_import")',
@@ -212,11 +218,16 @@ class PostmanImporter:
                 resp.raise_for_status()
                 return resp.json()
         except Exception as exc:
-            raise ValueError(f"Не удалось загрузить Postman-коллекцию {spec}: {exc}") from exc
+            raise ValueError(
+                f"Не удалось загрузить Postman-коллекцию {spec}: {exc}"
+            ) from exc
 
     def list_imported(self) -> dict[str, list[str]]:
         """Возвращает карту ``prefix → [route_id, ...]``."""
-        return {prefix: [r.route_id for r in reqs] for prefix, reqs in self._collections.items()}
+        return {
+            prefix: [r.route_id for r in reqs]
+            for prefix, reqs in self._collections.items()
+        }
 
 
 _importer: PostmanImporter | None = None

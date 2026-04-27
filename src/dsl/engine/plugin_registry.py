@@ -18,7 +18,7 @@ import importlib
 import logging
 from typing import Any
 
-from app.dsl.engine.processors import BaseProcessor
+from src.dsl.engine.processors import BaseProcessor
 
 __all__ = ("ProcessorPluginRegistry", "get_processor_plugin_registry")
 
@@ -73,16 +73,13 @@ class ProcessorPluginRegistry:
 
     def list_plugins(self) -> dict[str, str]:
         """Возвращает {name: class_name}."""
-        return {
-            name: cls.__name__
-            for name, cls in sorted(self._plugins.items())
-        }
+        return {name: cls.__name__ for name, cls in sorted(self._plugins.items())}
 
     def is_registered(self, name: str) -> bool:
         return name in self._plugins
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("plugin_registry", ProcessorPluginRegistry)

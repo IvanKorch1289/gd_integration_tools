@@ -1,7 +1,7 @@
 from sqladmin import ModelView
 
-from app.infrastructure.db.models.users import User
-from app.utilities.admins.base import BaseAdmin
+from src.infrastructure.database.models.users import User
+from src.utilities.admins.base import BaseAdmin
 
 __all__ = ("UserAdmin",)
 

@@ -30,26 +30,22 @@ def setup_middlewares(app: FastAPI) -> None:
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
 
-    from app.core.config.settings import settings
-    from app.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
-    from app.entrypoints.middlewares.api_key import APIKeyMiddleware
-    from app.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from app.entrypoints.middlewares.exception_handler import (
-        ExceptionHandlerMiddleware,
-    )
-    from app.entrypoints.middlewares.audit_log import AuditLogMiddleware
-    from app.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
-    from app.entrypoints.middlewares.data_masking import DataMaskingMiddleware
-    from app.entrypoints.middlewares.otel_middleware import OtelMiddleware
-    from app.entrypoints.middlewares.request_body_cache import (
+    from src.core.config.settings import settings
+    from src.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
+    from src.entrypoints.middlewares.api_key import APIKeyMiddleware
+    from src.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from src.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
+    from src.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
+    from src.entrypoints.middlewares.data_masking import DataMaskingMiddleware
+    from src.entrypoints.middlewares.exception_handler import ExceptionHandlerMiddleware
+    from src.entrypoints.middlewares.otel_middleware import OtelMiddleware
+    from src.entrypoints.middlewares.request_body_cache import (
         RequestBodyCacheMiddleware,
     )
-    from app.entrypoints.middlewares.request_id import RequestIDMiddleware
-    from app.entrypoints.middlewares.request_log import (
-        InnerRequestLoggingMiddleware,
-    )
-    from app.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
-    from app.entrypoints.middlewares.timeout import TimeoutMiddleware
+    from src.entrypoints.middlewares.request_id import RequestIDMiddleware
+    from src.entrypoints.middlewares.request_log import InnerRequestLoggingMiddleware
+    from src.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
+    from src.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     # Порядок оптимизирован для high-load:
     # 1. Дешёвые проверки + early exit (отсекаем до обработки)

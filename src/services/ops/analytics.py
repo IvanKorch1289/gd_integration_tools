@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.infrastructure.clients.storage.s3_pool.clickhouse import ClickHouseClient, get_clickhouse_client
+from src.infrastructure.clients.storage.s3_pool.clickhouse import (
+    ClickHouseClient,
+    get_clickhouse_client,
+)
 
 __all__ = ("AnalyticsService", "get_analytics_service")
 
@@ -24,16 +27,12 @@ class AnalyticsService:
         return await self._client.insert(table, events)
 
     async def query(
-        self,
-        sql: str,
-        params: dict[str, Any] | None = None,
+        self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Произвольный SELECT-запрос."""
         return await self._client.query(sql, params)
 
-    async def count(
-        self, table: str, where: str | None = None
-    ) -> int:
+    async def count(self, table: str, where: str | None = None) -> int:
         """COUNT(*) с опциональным WHERE."""
         result = await self._client.aggregate(table, "count", "*", where=where)
         if result:

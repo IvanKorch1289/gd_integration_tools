@@ -27,7 +27,9 @@ logger = logging.getLogger("workflows.outbox")
 _scheduler: Any = None
 
 
-async def _publish(topic: str, payload: dict[str, Any], headers: dict[str, Any]) -> None:
+async def _publish(
+    topic: str, payload: dict[str, Any], headers: dict[str, Any]
+) -> None:
     """Публикует payload в брокер по префиксу topic.
 
     Raises:
@@ -41,19 +43,20 @@ async def _publish(topic: str, payload: dict[str, Any], headers: dict[str, Any])
 
     match protocol:
         case "kafka":
-            from app.infrastructure.clients.messaging.stream import get_stream_client
+            from src.infrastructure.clients.messaging.stream import get_stream_client
+
             await get_stream_client().publish_to_kafka(
-                topic=dest, message=payload, headers=headers,
+                topic=dest, message=payload, headers=headers
             )
         case "rabbit":
-            from app.infrastructure.clients.messaging.stream import get_stream_client
-            await get_stream_client().publish_to_rabbit(
-                queue=dest, message=payload,
-            )
+            from src.infrastructure.clients.messaging.stream import get_stream_client
+
+            await get_stream_client().publish_to_rabbit(queue=dest, message=payload)
         case "redis":
-            from app.infrastructure.clients.messaging.stream import get_stream_client
+            from src.infrastructure.clients.messaging.stream import get_stream_client
+
             await get_stream_client().publish_to_redis(
-                stream=dest, message=payload, headers=headers,
+                stream=dest, message=payload, headers=headers
             )
         case _:
             raise ValueError(f"Неизвестный protocol '{protocol}' в topic '{topic}'")
@@ -65,7 +68,7 @@ async def run_once(*, batch_size: int = 100) -> dict[str, int]:
     Вынесена в отдельную функцию для удобства юнит-тестов и ручного запуска
     через admin-эндпоинт.
     """
-    from app.infrastructure.repositories import outbox as outbox_repo
+    from src.infrastructure.repositories import outbox as outbox_repo
 
     pending = await outbox_repo.fetch_pending(limit=batch_size)
     stats = {"fetched": len(pending), "sent": 0, "failed": 0}
@@ -108,7 +111,7 @@ def start_outbox_worker(*, interval_seconds: int = 5, batch_size: int = 100) -> 
     )
     _scheduler.start()
     logger.info(
-        "Outbox worker started (interval=%ds, batch=%d)", interval_seconds, batch_size,
+        "Outbox worker started (interval=%ds, batch=%d)", interval_seconds, batch_size
     )
 
 

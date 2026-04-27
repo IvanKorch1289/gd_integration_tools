@@ -28,8 +28,8 @@ from sqlalchemy import BigInteger, DateTime, Enum, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.database.models.base import BaseModel
-from app.infrastructure.database.tenant_filter import TenantMixin
+from src.infrastructure.database.models.base import BaseModel
+from src.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("WorkflowInstance", "WorkflowStatus")
 
@@ -90,9 +90,7 @@ class WorkflowInstance(BaseModel, TenantMixin):
     # Переопределяем id — BaseModel использует int, для workflow нужен UUID
     # (stable cross-service identifier, безопасно раздавать наружу).
     id: Mapped[uuid.UUID] = mapped_column(  # type: ignore[assignment]
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
 
     workflow_name: Mapped[str] = mapped_column(String(256), index=True)
@@ -113,40 +111,36 @@ class WorkflowInstance(BaseModel, TenantMixin):
     )
 
     current_version: Mapped[int] = mapped_column(
-        BigInteger, default=1, server_default="1", nullable=False,
+        BigInteger, default=1, server_default="1", nullable=False
     )
 
-    last_event_seq: Mapped[int | None] = mapped_column(
-        BigInteger, nullable=True,
-    )
+    last_event_seq: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
-    snapshot_state: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB, nullable=True,
-    )
+    snapshot_state: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     next_attempt_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True,
+        DateTime(timezone=True), nullable=True, index=True
     )
 
-    locked_by: Mapped[str | None] = mapped_column(
-        String(128), nullable=True,
-    )
+    locked_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     locked_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True,
+        DateTime(timezone=True), nullable=True
     )
 
     input_payload: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict, server_default="{}",
+        JSONB, nullable=False, default=dict, server_default="{}"
     )
 
     finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True,
+        DateTime(timezone=True), nullable=True
     )
 
     # Переопределяем created_at/updated_at из BaseModel на timezone-aware,
     # чтобы в event log и в header была единая timezone семантика.
     created_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
-        DateTime(timezone=True), default=func.now(), server_default=func.now(),
+        DateTime(timezone=True),
+        default=func.now(),
+        server_default=func.now(),
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]

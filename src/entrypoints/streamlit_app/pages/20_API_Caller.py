@@ -13,19 +13,21 @@ import time
 import httpx
 import streamlit as st
 
-st.set_page_config(page_title="API Caller", page_icon=":satellite_antenna:", layout="wide")
+st.set_page_config(
+    page_title="API Caller", page_icon=":satellite_antenna:", layout="wide"
+)
 st.header(":satellite_antenna: REST API Caller")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 col1, col2 = st.columns([1, 3])
 method = col1.selectbox("Метод", ["GET", "POST", "PUT", "PATCH", "DELETE"])
-path = col2.text_input("Путь", value="/api/v1/health/components", help="Относительный путь от BASE_URL")
+path = col2.text_input(
+    "Путь", value="/api/v1/health/components", help="Относительный путь от BASE_URL"
+)
 
 headers_raw = st.text_area(
-    "Headers (JSON)",
-    value='{\n  "Content-Type": "application/json"\n}',
-    height=100,
+    "Headers (JSON)", value='{\n  "Content-Type": "application/json"\n}', height=100
 )
 body_raw = st.text_area("Body (JSON)", value="", height=150) if method != "GET" else ""
 
@@ -64,7 +66,13 @@ if st.button("Отправить", type="primary"):
                 st.code(resp.text[:10_000])
 
             st.session_state["api_history"].insert(
-                0, {"method": method, "path": path, "status": resp.status_code, "ms": round(elapsed_ms)},
+                0,
+                {
+                    "method": method,
+                    "path": path,
+                    "status": resp.status_code,
+                    "ms": round(elapsed_ms),
+                },
             )
             st.session_state["api_history"] = st.session_state["api_history"][:20]
         except Exception as exc:  # noqa: BLE001
@@ -73,4 +81,6 @@ if st.button("Отправить", type="primary"):
 st.divider()
 st.subheader("История")
 for item in st.session_state.get("api_history", []):
-    st.write(f"{item['method']} `{item['path']}` — **{item['status']}** ({item['ms']} ms)")
+    st.write(
+        f"{item['method']} `{item['path']}` — **{item['status']}** ({item['ms']} ms)"
+    )

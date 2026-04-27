@@ -37,13 +37,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.core.config.constants import consts
-from app.core.config.settings import settings
-from app.infrastructure.workflow.builder import WorkflowBuilder
-from app.infrastructure.workflow.executor import (
-    DurableWorkflowProcessor,
-    WorkflowStep,
-)
+from src.core.config.constants import consts
+from src.core.config.settings import settings
+from src.infrastructure.workflow.builder import WorkflowBuilder
+from src.infrastructure.workflow.executor import DurableWorkflowProcessor, WorkflowStep
 
 __all__ = (
     "send_notification_workflow_spec",
@@ -66,7 +63,7 @@ async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
     Использует новый gateway из src/infrastructure/notifications/; старый
     notification_hub — deprecated (DeprecationWarning шлёт при import).
     """
-    from app.infrastructure.notifications import get_gateway
+    from src.infrastructure.notifications import get_gateway
 
     gw = get_gateway()
     payload = body.get("payload") or body
@@ -90,7 +87,7 @@ async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
 
 async def _call_create_skb_order(body: dict[str, Any]) -> dict[str, Any]:
     """Processor: создать заказ в SKB через OrderService."""
-    from app.entrypoints.base import dispatch_action
+    from src.entrypoints.base import dispatch_action
 
     order_id = body.get("order_id") or body.get("id")
     if order_id is None:
@@ -108,7 +105,7 @@ async def _call_create_skb_order(body: dict[str, Any]) -> dict[str, Any]:
 
 async def _call_get_skb_result(body: dict[str, Any]) -> dict[str, Any]:
     """Processor: запрос результата заказа из SKB (polling step)."""
-    from app.entrypoints.base import dispatch_action
+    from src.entrypoints.base import dispatch_action
 
     order_id = body.get("order_id") or body.get("id")
     result = await dispatch_action(
@@ -124,7 +121,7 @@ async def _call_get_skb_result(body: dict[str, Any]) -> dict[str, Any]:
 
 async def _call_send_skb_result(body: dict[str, Any]) -> dict[str, Any]:
     """Processor: отправить финальный результат заказа."""
-    from app.entrypoints.base import dispatch_action
+    from src.entrypoints.base import dispatch_action
 
     order_id = body.get("order_id") or body.get("id")
     result = await dispatch_action(
@@ -266,10 +263,7 @@ def order_processing_workflow_spec() -> DurableWorkflowProcessor:
         )
         .max_attempts(1)  # Каждый sub-flow имеет собственный retry budget.
         .sub_workflow("orders.create_skb", wait=True, name="step_create")
-        .wait(
-            name="initial_delay",
-            duration_s=float(consts.INITIAL_DELAY),
-        )
+        .wait(name="initial_delay", duration_s=float(consts.INITIAL_DELAY))
         .sub_workflow("orders.poll_skb_result", wait=True, name="step_poll")
         .sub_workflow("orders.send_skb_result", wait=True, name="step_send")
         .compensate_with(
@@ -295,8 +289,8 @@ def build_all_order_workflows() -> dict[str, DurableWorkflowProcessor]:
     в ``WorkflowRegistry`` + автоматического MCP export (IL-WF1.5).
 
     Usage:
-        from app.workflows.orders_dsl import build_all_order_workflows
-        from app.workflows.registry import workflow_registry
+        from src.workflows.orders_dsl import build_all_order_workflows
+        from src.workflows.registry import workflow_registry
 
         for name, processor in build_all_order_workflows().items():
             workflow_registry.register(processor, route_id=name)

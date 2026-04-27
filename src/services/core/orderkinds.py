@@ -3,18 +3,18 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from app.core.errors import ServiceError
-from app.infrastructure.repositories.orderkinds import (
+from src.core.errors import ServiceError
+from src.infrastructure.repositories.orderkinds import (
     OrderKindRepository,
     get_order_kind_repo,
 )
-from app.schemas.route_schemas.orderkinds import (
+from src.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from app.services.core.base import BaseService
-from app.services.integrations.skb import APISKBService, get_skb_service
+from src.services.core.base import BaseService
+from src.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("get_order_kind_service",)
 
@@ -84,9 +84,11 @@ def get_order_kind_service() -> OrderKindService:
     """
     global _order_kind_service_instance
     if _order_kind_service_instance is None:
-        _order_kind_service_instance = OrderKindService(repo=get_order_kind_repo(),
-        schema_in=OrderKindSchemaIn,
-        schema_out=OrderKindSchemaOut,
-        version_schema=OrderKindVersionSchemaOut,
-        request_service=get_skb_service(),)
+        _order_kind_service_instance = OrderKindService(
+            repo=get_order_kind_repo(),
+            schema_in=OrderKindSchemaIn,
+            schema_out=OrderKindSchemaOut,
+            version_schema=OrderKindVersionSchemaOut,
+            request_service=get_skb_service(),
+        )
     return _order_kind_service_instance

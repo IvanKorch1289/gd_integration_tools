@@ -3,16 +3,21 @@ import logging
 import time
 from typing import Any, Callable
 
-import orjson
-
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
-__all__ = ('WireTapProcessor', 'ThrottlerProcessor', 'DelayProcessor', 'AggregatorProcessor', 'LoopProcessor', 'OnCompletionProcessor')
+__all__ = (
+    "WireTapProcessor",
+    "ThrottlerProcessor",
+    "DelayProcessor",
+    "AggregatorProcessor",
+    "LoopProcessor",
+    "OnCompletionProcessor",
+)
 
 
 class WireTapProcessor(BaseProcessor):
@@ -26,10 +31,7 @@ class WireTapProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        tap_processors: list[BaseProcessor],
-        *,
-        name: str | None = None,
+        self, tap_processors: list[BaseProcessor], *, name: str | None = None
     ) -> None:
         super().__init__(name=name or "wire_tap")
         self._tap_processors = tap_processors
@@ -37,8 +39,7 @@ class WireTapProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         tap_exchange = Exchange(
             in_message=Message(
-                body=exchange.in_message.body,
-                headers=dict(exchange.in_message.headers),
+                body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
             )
         )
         tap_exchange.meta.route_id = exchange.meta.route_id
@@ -64,7 +65,6 @@ class WireTapProcessor(BaseProcessor):
 # ---------------------------------------------------------------------------
 
 
-
 class ThrottlerProcessor(BaseProcessor):
     """Rate-limit per route: N сообщений в секунду.
 
@@ -72,13 +72,7 @@ class ThrottlerProcessor(BaseProcessor):
     способности. При превышении — задержка.
     """
 
-    def __init__(
-        self,
-        rate: float,
-        *,
-        burst: int = 1,
-        name: str | None = None,
-    ) -> None:
+    def __init__(self, rate: float, *, burst: int = 1, name: str | None = None) -> None:
         super().__init__(name=name or f"throttle({rate}/s)")
         self._rate = rate
         self._burst = burst
@@ -87,7 +81,6 @@ class ThrottlerProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import time
 
         async with self._lock:
             now = time.monotonic()
@@ -106,7 +99,6 @@ class ThrottlerProcessor(BaseProcessor):
                 self._tokens -= 1.0
 
 
-
 class DelayProcessor(BaseProcessor):
     """Задержка обработки на N миллисекунд или до timestamp."""
 
@@ -122,7 +114,6 @@ class DelayProcessor(BaseProcessor):
         self._scheduled_fn = scheduled_time_fn
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import time
 
         if self._scheduled_fn is not None:
             target = self._scheduled_fn(exchange)
@@ -131,7 +122,6 @@ class DelayProcessor(BaseProcessor):
                 await asyncio.sleep(target - now)
         elif self._delay_ms is not None and self._delay_ms > 0:
             await asyncio.sleep(self._delay_ms / 1000.0)
-
 
 
 class AggregatorProcessor(BaseProcessor):
@@ -163,7 +153,6 @@ class AggregatorProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import time
         key = self._corr_key(exchange)
         now = time.monotonic()
 
@@ -186,7 +175,9 @@ class AggregatorProcessor(BaseProcessor):
                 buf.clear()
                 self._timestamps.pop(key, None)
                 exchange.set_property("aggregated", True)
-                exchange.set_out(body=aggregated, headers=dict(exchange.in_message.headers))
+                exchange.set_out(
+                    body=aggregated, headers=dict(exchange.in_message.headers)
+                )
             else:
                 exchange.set_property("aggregated", False)
                 exchange.set_property("buffer_size", len(buf))
@@ -198,7 +189,6 @@ class AggregatorProcessor(BaseProcessor):
         for k in expired:
             self._buffers.pop(k, None)
             self._timestamps.pop(k, None)
-
 
 
 class LoopProcessor(BaseProcessor):
@@ -232,7 +222,7 @@ class LoopProcessor(BaseProcessor):
         self._copy = copy_exchange
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.dsl.engine.processors.base import run_sub_processors
+        from src.dsl.engine.processors.base import run_sub_processors
 
         iteration = 0
         results: list[Any] = []
@@ -274,7 +264,6 @@ class LoopProcessor(BaseProcessor):
 
         exchange.set_property("loop_count", iteration)
         exchange.set_property("loop_results", results)
-
 
 
 class OnCompletionProcessor(BaseProcessor):
@@ -323,5 +312,3 @@ class OnCompletionProcessor(BaseProcessor):
 
         exchange.status = saved_status
         exchange.error = saved_error
-
-

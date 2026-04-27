@@ -30,14 +30,14 @@ class MessagingGateway:
 
     route_id: str
 
-    async def invoke(self, payload: dict[str, Any], headers: dict[str, str] | None = None) -> Any:
-        from app.dsl.service import get_dsl_service
+    async def invoke(
+        self, payload: dict[str, Any], headers: dict[str, str] | None = None
+    ) -> Any:
+        from src.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
         return await dsl.dispatch(
-            route_id=self.route_id,
-            body=payload,
-            headers=headers or {},
+            route_id=self.route_id, body=payload, headers=headers or {}
         )
 
 

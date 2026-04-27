@@ -29,6 +29,7 @@ logger = logging.getLogger("services.llm_judge")
 @dataclass(slots=True)
 class JudgeVerdict:
     """Результат оценки одного LLM output."""
+
     timestamp: str
     model: str
     hallucination_score: float  # 0.0 (no) — 1.0 (high)
@@ -63,26 +64,21 @@ class LLMJudge:
         self._model = model
 
     async def evaluate(
-        self,
-        *,
-        query: str,
-        response: str,
-        metadata: dict[str, Any] | None = None,
+        self, *, query: str, response: str, metadata: dict[str, Any] | None = None
     ) -> JudgeVerdict:
         """Оценивает один (query, response) pair."""
         try:
             import orjson
-            from app.services.ai.ai_agent import get_ai_agent_service
+
+            from src.services.ai.ai_agent import get_ai_agent_service
 
             agent = get_ai_agent_service()
             judge_prompt = _JUDGE_PROMPT.format(
-                query=query[:500],
-                response=response[:2000],
+                query=query[:500], response=response[:2000]
             )
 
             result = await agent.chat(
-                messages=[{"role": "user", "content": judge_prompt}],
-                model=self._model,
+                messages=[{"role": "user", "content": judge_prompt}], model=self._model
             )
 
             content = ""
@@ -127,19 +123,22 @@ class LLMJudge:
     async def _publish_metrics(self, verdict: JudgeVerdict) -> None:
         """Публикует scores в Prometheus + Redis для dashboard."""
         try:
-            from app.infrastructure.observability.metrics import record_llm_judge
+            from src.infrastructure.observability.metrics import record_llm_judge
+
             record_llm_judge(
                 model=verdict.model,
                 hallucination=verdict.hallucination_score,
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
             import orjson as _orjson
+
+            from src.infrastructure.clients.storage.redis import redis_client
+
             await redis_client.add_to_stream(
                 stream_name="llm_judge:verdicts",
                 data={
@@ -153,7 +152,7 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except (ImportError, AttributeError, ConnectionError):
+        except ImportError, AttributeError, ConnectionError:
             pass
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
@@ -163,11 +162,12 @@ class LLMJudge:
         """
         verdicts: list[JudgeVerdict] = []
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
+
             records = await redis_client.read_stream(
-                stream_name="llm_calls", count=limit,
+                stream_name="llm_calls", count=limit
             )
-        except (ImportError, AttributeError, ConnectionError):
+        except ImportError, AttributeError, ConnectionError:
             return verdicts
 
         for record in records or []:

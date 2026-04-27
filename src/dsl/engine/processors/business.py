@@ -25,9 +25,9 @@ import time
 import uuid
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "TenantScopeProcessor",
@@ -69,6 +69,7 @@ class TenantScopeProcessor(BaseProcessor):
         if tenant_id is None and self._body_path:
             try:
                 import jmespath
+
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
             except Exception:  # noqa: BLE001
                 tenant_id = None
@@ -191,23 +192,24 @@ class OutboxProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        *,
-        topic: str,
-        outbox_writer: Any = None,
-        name: str | None = None,
+        self, *, topic: str, outbox_writer: Any = None, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"outbox:{topic}")
         self._topic = topic
         self._writer = outbox_writer
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        payload = exchange.out_message.body if exchange.out_message else exchange.in_message.body
+        payload = (
+            exchange.out_message.body
+            if exchange.out_message
+            else exchange.in_message.body
+        )
         headers = dict(exchange.in_message.headers)
 
         writer = self._writer
         if writer is None:
-            from app.infrastructure.repositories.outbox import write as default_writer
+            from src.infrastructure.repositories.outbox import write as default_writer
+
             writer = default_writer
 
         try:
@@ -224,7 +226,9 @@ _DEFAULT_PATTERNS = {
     "card": re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"),
     "passport_ru": re.compile(r"\b\d{4} \d{6}\b"),
     "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
-    "phone": re.compile(r"\b(?:\+?7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b"),
+    "phone": re.compile(
+        r"\b(?:\+?7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}\b"
+    ),
 }
 
 
@@ -244,7 +248,9 @@ class DataMaskingProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=name or "mask")
         chosen = patterns or list(_DEFAULT_PATTERNS.keys())
-        self._patterns = [_DEFAULT_PATTERNS[p] for p in chosen if p in _DEFAULT_PATTERNS]
+        self._patterns = [
+            _DEFAULT_PATTERNS[p] for p in chosen if p in _DEFAULT_PATTERNS
+        ]
         self._replacement = replacement
 
     def _mask_str(self, text: str) -> str:

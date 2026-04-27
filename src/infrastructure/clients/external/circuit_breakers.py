@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.core.interfaces import CircuitBreaker, CircuitBreakerConfig, CircuitState
+from src.core.interfaces import CircuitBreaker, CircuitBreakerConfig
 
 __all__ = ("CircuitBreakerRegistry", "breaker_registry")
 
@@ -35,11 +35,13 @@ class CircuitBreakerRegistry:
     def get_all_status(self) -> list[dict[str, Any]]:
         result = []
         for name, cb in self._breakers.items():
-            result.append({
-                "name": name,
-                "state": cb.state.value,
-                "failure_count": cb._failure_count,
-            })
+            result.append(
+                {
+                    "name": name,
+                    "state": cb.state.value,
+                    "failure_count": cb._failure_count,
+                }
+            )
         return result
 
 
@@ -48,6 +50,12 @@ breaker_registry = CircuitBreakerRegistry()
 breaker_registry.get_or_create("redis")
 breaker_registry.get_or_create("db_main")
 breaker_registry.get_or_create("s3")
-breaker_registry.get_or_create("clickhouse", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0))
-breaker_registry.get_or_create("elasticsearch", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0))
-breaker_registry.get_or_create("mongodb", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0))
+breaker_registry.get_or_create(
+    "clickhouse", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
+)
+breaker_registry.get_or_create(
+    "elasticsearch", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
+)
+breaker_registry.get_or_create(
+    "mongodb", CircuitBreakerConfig(failure_threshold=3, recovery_timeout=15.0)
+)

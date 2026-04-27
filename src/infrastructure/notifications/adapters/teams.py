@@ -19,8 +19,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -42,12 +41,7 @@ class TeamsAdapter:
         self._theme_color = theme_color
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         url = self._webhook_url_provider()
         if not url:
@@ -62,7 +56,7 @@ class TeamsAdapter:
             "text": body,
         }
 
-        from app.infrastructure.clients.transport.http_upstream import upstream
+        from src.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         response = await client.request("POST", url, json=card)
@@ -78,9 +72,7 @@ class TeamsAdapter:
             return False
 
 
-assert isinstance(
-    TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel
-)
+assert isinstance(TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel)
 
 
 __all__ = ("TeamsAdapter",)

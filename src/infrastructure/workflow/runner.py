@@ -41,24 +41,19 @@ import random
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
-from app.infrastructure.database.models.workflow_event import WorkflowEventType
-from app.infrastructure.database.models.workflow_instance import WorkflowStatus
-from app.infrastructure.workflow.event_store import WorkflowEventStore
-from app.infrastructure.workflow.state import WorkflowState
-from app.infrastructure.workflow.state_store import (
+from src.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.infrastructure.workflow.event_store import WorkflowEventStore
+from src.infrastructure.workflow.state import WorkflowState
+from src.infrastructure.workflow.state_store import (
     WorkflowInstanceRow,
     WorkflowInstanceStore,
 )
 
-__all__ = (
-    "DurableWorkflowRunner",
-    "StepExecutor",
-    "StepResult",
-    "RunnerConfig",
-)
+__all__ = ("DurableWorkflowRunner", "StepExecutor", "StepResult", "RunnerConfig")
 
 
 _logger = logging.getLogger("workflow.runner")
@@ -111,10 +106,7 @@ class StepExecutor(Protocol):
     """
 
     async def execute_next(
-        self,
-        *,
-        instance: WorkflowInstanceRow,
-        state: WorkflowState,
+        self, *, instance: WorkflowInstanceRow, state: WorkflowState
     ) -> StepResult: ...
 
 
@@ -125,9 +117,11 @@ class StepExecutor(Protocol):
 class RunnerConfig:
     """Параметры, управляющие жизненным циклом runner-а."""
 
-    worker_id: str = field(default_factory=lambda: os.environ.get(
-        "WORKFLOW_WORKER_ID", f"worker-{uuid.uuid4().hex[:8]}"
-    ))
+    worker_id: str = field(
+        default_factory=lambda: os.environ.get(
+            "WORKFLOW_WORKER_ID", f"worker-{uuid.uuid4().hex[:8]}"
+        )
+    )
     #: Размер concurrent execution (семантика "up to N parallel instances").
     max_concurrent: int = 8
     #: Лимит для list_pending за один poll.
@@ -217,7 +211,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                except asyncio.CancelledError, Exception:  # noqa: BLE001
                     pass
         # Ждём завершения активных executions (до lock_ttl_s — иначе drop).
         deadline = asyncio.get_event_loop().time() + self._config.lock_ttl_s
@@ -255,9 +249,7 @@ class DurableWorkflowRunner:
                 finally:
                     await conn.close()
 
-    def _on_notify(
-        self, connection: Any, pid: int, channel: str, payload: str
-    ) -> None:
+    def _on_notify(self, connection: Any, pid: int, channel: str, payload: str) -> None:
         """asyncpg callback (sync) — только enqueue."""
         if not payload:
             return
@@ -316,9 +308,7 @@ class DurableWorkflowRunner:
                 await self._run_step(workflow_id)
             except Exception as exc:  # noqa: BLE001
                 _logger.exception(
-                    "unexpected error executing workflow %s: %s",
-                    workflow_id,
-                    exc,
+                    "unexpected error executing workflow %s: %s", workflow_id, exc
                 )
             finally:
                 async with self._active_lock:
@@ -351,9 +341,7 @@ class DurableWorkflowRunner:
             }:
                 return
 
-            events = await self._event_store.read_events(
-                workflow_id=workflow_id
-            )
+            events = await self._event_store.read_events(workflow_id=workflow_id)
             state = WorkflowState.replay(events)
 
             # 3) Transition to 'running' if needed.
@@ -393,9 +381,7 @@ class DurableWorkflowRunner:
     ) -> None:
         """Transition status + schedule next attempt per outcome."""
         if result.outcome == StepOutcome.DONE:
-            await self._state_store.update_status(
-                workflow_id, WorkflowStatus.succeeded
-            )
+            await self._state_store.update_status(workflow_id, WorkflowStatus.succeeded)
             return
 
         if result.outcome == StepOutcome.FAILED:
@@ -412,9 +398,8 @@ class DurableWorkflowRunner:
 
         if result.outcome == StepOutcome.PAUSE:
             next_at = result.next_attempt_at or (
-                datetime.now(timezone.utc) + timedelta(
-                    seconds=self._compute_backoff(state.attempts)
-                )
+                datetime.now(timezone.utc)
+                + timedelta(seconds=self._compute_backoff(state.attempts))
             )
             await self._state_store.update_status(
                 workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
@@ -430,9 +415,7 @@ class DurableWorkflowRunner:
             return
 
         _logger.warning(
-            "unknown outcome %r for %s; treating as pause",
-            result.outcome,
-            workflow_id,
+            "unknown outcome %r for %s; treating as pause", result.outcome, workflow_id
         )
         next_at = datetime.now(timezone.utc) + timedelta(
             seconds=self._compute_backoff(state.attempts)

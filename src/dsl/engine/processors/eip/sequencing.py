@@ -1,18 +1,15 @@
 import asyncio
 import logging
-import time
 from typing import Any, Callable
 
-import orjson
-
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
-__all__ = ('ResequencerProcessor',)
+__all__ = ("ResequencerProcessor",)
 
 
 class ResequencerProcessor(BaseProcessor):
@@ -64,10 +61,10 @@ class ResequencerProcessor(BaseProcessor):
                 ordered = [item for _, item in buf]
                 buf.clear()
                 exchange.set_property("resequenced", True)
-                exchange.set_out(body=ordered, headers=dict(exchange.in_message.headers))
+                exchange.set_out(
+                    body=ordered, headers=dict(exchange.in_message.headers)
+                )
             else:
                 exchange.set_property("resequenced", False)
                 exchange.set_property("resequence_buffer_size", len(buf))
                 exchange.stop()
-
-

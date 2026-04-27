@@ -17,7 +17,6 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Any
 
 import httpx
 
@@ -89,10 +88,7 @@ class ContentModeration:
             reason = ", ".join(reasons) if reasons else "unspecified"
 
         return ModerationResult(
-            flagged=flagged,
-            categories=categories,
-            scores=scores,
-            reason=reason,
+            flagged=flagged, categories=categories, scores=scores, reason=reason
         )
 
     def _check_local(self, text: str) -> ModerationResult:
@@ -137,26 +133,19 @@ class RagasEvaluator:
         Returns dict с метриками 0-1.
         """
         try:
-            from ragas import evaluate
-            from ragas.metrics import (
-                answer_relevancy,
-                context_precision,
-                faithfulness,
-            )
             from datasets import Dataset
+            from ragas import evaluate
+            from ragas.metrics import answer_relevancy, context_precision, faithfulness
         except ImportError:
             logger.debug("ragas not installed, skipping evaluation")
             return {"ragas_available": 0.0}
 
-        row = {
-            "question": [question],
-            "answer": [answer],
-            "contexts": [contexts],
-        }
+        row = {"question": [question], "answer": [answer], "contexts": [contexts]}
         metrics = [faithfulness, answer_relevancy, context_precision]
 
         if ground_truth:
             from ragas.metrics import context_recall
+
             row["ground_truth"] = [ground_truth]
             metrics.append(context_recall)
 

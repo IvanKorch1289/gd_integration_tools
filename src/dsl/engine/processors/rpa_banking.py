@@ -18,9 +18,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "CitrixSessionProcessor",
@@ -43,7 +43,14 @@ class CitrixSessionProcessor(BaseProcessor):
 
     def __init__(self, operation: str, session_id: str) -> None:
         super().__init__(name=f"citrix:{operation}")
-        if operation not in {"launch", "connect", "click", "type", "screenshot", "close"}:
+        if operation not in {
+            "launch",
+            "connect",
+            "click",
+            "type",
+            "screenshot",
+            "close",
+        }:
             raise ValueError(f"Unknown citrix operation: {operation}")
         self.operation = operation
         self.session_id = session_id
@@ -162,7 +169,7 @@ class KeystrokeReplayProcessor(BaseProcessor):
 _BANK_LINE_RE = re.compile(
     r"(?P<date>\d{2}\.\d{2}\.\d{4})\s+"
     r"(?P<desc>.+?)\s+"
-    r"(?P<amount>-?[\d\s,]+\.\d{2})",
+    r"(?P<amount>-?[\d\s,]+\.\d{2})"
 )
 
 

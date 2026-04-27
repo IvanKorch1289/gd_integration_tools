@@ -37,7 +37,7 @@ class tenant_scope:
 
     def __init__(self, ctx: TenantContext) -> None:
         self._ctx = ctx
-        self._token = None  # type: ignore[assignment]
+        self._token = None
 
     def __enter__(self) -> TenantContext:
         self._token = _current.set(self._ctx)

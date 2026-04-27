@@ -1,15 +1,75 @@
 """DSL Processors — re-export для обратной совместимости.
 
 Все процессоры доступны через:
-    from app.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
+    from src.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
 """
 
-from app.dsl.engine.processors.base import (
+from src.dsl.engine.processors.ai import (
+    CacheProcessor,
+    CacheWriteProcessor,
+    GetFeedbackExamplesProcessor,
+    GuardrailsProcessor,
+    LLMCallProcessor,
+    LLMFallbackProcessor,
+    LLMParserProcessor,
+    PromptComposerProcessor,
+    RestorePIIProcessor,
+    SanitizePIIProcessor,
+    SemanticRouterProcessor,
+    TokenBudgetProcessor,
+    VectorSearchProcessor,
+)
+from src.dsl.engine.processors.ai_banking import (
+    AntiFraudScoreProcessor,
+    AppealProcessorAI,
+    CreditScoringRagProcessor,
+    CustomerChatbotProcessor,
+    FinDocOcrLlmProcessor,
+    KycAmlVerifyProcessor,
+    TransactionCategorizerProcessor,
+)
+from src.dsl.engine.processors.banking import (
+    EdifactParserProcessor,
+    FixMessageProcessor,
+    Iso20022ParserProcessor,
+    OneCExchangeProcessor,
+    SwiftMTParserProcessor,
+    SwiftMXBuilderProcessor,
+)
+from src.dsl.engine.processors.base import (
     BaseProcessor,
     CallableProcessor,
     ProcessorCallable,
 )
-from app.dsl.engine.processors.core import (
+from src.dsl.engine.processors.business import (
+    ComplianceLabelProcessor,
+    CostTrackerProcessor,
+    DataMaskingProcessor,
+    HumanApprovalProcessor,
+    OutboxProcessor,
+    TenantScopeProcessor,
+)
+from src.dsl.engine.processors.components import (
+    DatabaseQueryProcessor,
+    FileReadProcessor,
+    FileWriteProcessor,
+    HttpCallProcessor,
+    PollingConsumerProcessor,
+    S3ReadProcessor,
+    S3WriteProcessor,
+    TimerProcessor,
+)
+from src.dsl.engine.processors.control_flow import (
+    ChoiceProcessor,
+    ParallelProcessor,
+    PipelineRefProcessor,
+    RetryProcessor,
+    SagaProcessor,
+    SagaStep,
+    TryCatchProcessor,
+)
+from src.dsl.engine.processors.converters import ConvertProcessor
+from src.dsl.engine.processors.core import (
     DispatchActionProcessor,
     EnrichProcessor,
     FilterProcessor,
@@ -19,21 +79,7 @@ from app.dsl.engine.processors.core import (
     TransformProcessor,
     ValidateProcessor,
 )
-from app.dsl.engine.processors.external import (
-    AgentGraphProcessor,
-    CDCProcessor,
-    MCPToolProcessor,
-)
-from app.dsl.engine.processors.control_flow import (
-    ChoiceProcessor,
-    ParallelProcessor,
-    PipelineRefProcessor,
-    RetryProcessor,
-    SagaProcessor,
-    SagaStep,
-    TryCatchProcessor,
-)
-from app.dsl.engine.processors.eip import (
+from src.dsl.engine.processors.eip import (
     AggregatorProcessor,
     CircuitBreakerProcessor,
     ClaimCheckProcessor,
@@ -57,112 +103,67 @@ from app.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
-from app.dsl.engine.processors.ai import (
-    CacheProcessor,
-    CacheWriteProcessor,
-    GuardrailsProcessor,
-    SemanticRouterProcessor,
-    LLMCallProcessor,
-    LLMFallbackProcessor,
-    LLMParserProcessor,
-    PromptComposerProcessor,
-    RestorePIIProcessor,
-    SanitizePIIProcessor,
-    TokenBudgetProcessor,
-    VectorSearchProcessor,
+from src.dsl.engine.processors.export import ExportProcessor
+from src.dsl.engine.processors.external import (
+    AgentGraphProcessor,
+    CDCProcessor,
+    MCPToolProcessor,
 )
-from app.dsl.engine.processors.integration import (
+from src.dsl.engine.processors.generic import (
+    AbTestRouterProcessor,
+    BulkheadProcessor,
+    FeatureFlagGuardProcessor,
+    LineageTrackerProcessor,
+    SchemaValidateProcessor,
+    ShadowModeProcessor,
+    SseSourceProcessor,
+)
+from src.dsl.engine.processors.integration import (
     EventPublishProcessor,
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
-from app.dsl.engine.processors.web import (
-    ClickProcessor,
-    ExtractProcessor,
-    FillFormProcessor,
-    NavigateProcessor,
-    RunScenarioProcessor,
-    ScreenshotProcessor,
-)
-from app.dsl.engine.processors.export import ExportProcessor
-from app.dsl.engine.processors.converters import ConvertProcessor
-from app.dsl.engine.processors.scraping import (
-    ScrapeProcessor,
-    PaginateProcessor,
-    ApiProxyProcessor,
-)
-from app.dsl.engine.processors.patterns import (
-    SwitchProcessor,
-    MergeProcessor,
+from src.dsl.engine.processors.patterns import (
     BatchWindowProcessor,
+    DebounceProcessor,
     DeduplicateProcessor,
     FormatterProcessor,
-    DebounceProcessor,
+    MergeProcessor,
+    SwitchProcessor,
 )
-from app.dsl.engine.processors.rpa import (
-    PdfReadProcessor,
-    PdfMergeProcessor,
-    WordReadProcessor,
-    WordWriteProcessor,
+from src.dsl.engine.processors.rpa import (
+    ArchiveProcessor,
+    DecryptProcessor,
+    EmailComposeProcessor,
+    EncryptProcessor,
     ExcelReadProcessor,
     FileMoveProcessor,
-    ArchiveProcessor,
+    HashProcessor,
     ImageOcrProcessor,
     ImageResizeProcessor,
+    PdfMergeProcessor,
+    PdfReadProcessor,
     RegexProcessor,
-    TemplateRenderProcessor,
-    HashProcessor,
-    EncryptProcessor,
-    DecryptProcessor,
     ShellExecProcessor,
-    EmailComposeProcessor,
+    TemplateRenderProcessor,
+    WordReadProcessor,
+    WordWriteProcessor,
 )
-from app.dsl.engine.processors.components import (
-    HttpCallProcessor,
-    DatabaseQueryProcessor,
-    FileReadProcessor,
-    FileWriteProcessor,
-    S3ReadProcessor,
-    S3WriteProcessor,
-    TimerProcessor,
-    PollingConsumerProcessor,
-)
-from app.dsl.engine.processors.banking import (
-    SwiftMTParserProcessor,
-    SwiftMXBuilderProcessor,
-    Iso20022ParserProcessor,
-    FixMessageProcessor,
-    EdifactParserProcessor,
-    OneCExchangeProcessor,
-)
-from app.dsl.engine.processors.rpa_banking import (
-    CitrixSessionProcessor,
-    SapGuiProcessor,
-    TerminalEmulator3270Processor,
+from src.dsl.engine.processors.rpa_banking import (
     AppiumMobileProcessor,
+    BankStatementPdfParserProcessor,
+    CitrixSessionProcessor,
     EmailDrivenProcessor,
     KeystrokeReplayProcessor,
-    BankStatementPdfParserProcessor,
+    SapGuiProcessor,
+    TerminalEmulator3270Processor,
 )
-from app.dsl.engine.processors.ai_banking import (
-    KycAmlVerifyProcessor,
-    AntiFraudScoreProcessor,
-    CreditScoringRagProcessor,
-    CustomerChatbotProcessor,
-    AppealProcessorAI,
-    TransactionCategorizerProcessor,
-    FinDocOcrLlmProcessor,
+from src.dsl.engine.processors.scraping import (
+    ApiProxyProcessor,
+    PaginateProcessor,
+    ScrapeProcessor,
 )
-from app.dsl.engine.processors.generic import (
-    ShadowModeProcessor,
-    BulkheadProcessor,
-    LineageTrackerProcessor,
-    SseSourceProcessor,
-    SchemaValidateProcessor,
-    AbTestRouterProcessor,
-    FeatureFlagGuardProcessor,
-)
-from app.dsl.engine.processors.streaming import (
+from src.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     CorrelationIdProcessor,
     DurableSubscriberProcessor,
@@ -176,13 +177,13 @@ from app.dsl.engine.processors.streaming import (
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
-from app.dsl.engine.processors.business import (
-    ComplianceLabelProcessor,
-    CostTrackerProcessor,
-    DataMaskingProcessor,
-    HumanApprovalProcessor,
-    OutboxProcessor,
-    TenantScopeProcessor,
+from src.dsl.engine.processors.web import (
+    ClickProcessor,
+    ExtractProcessor,
+    FillFormProcessor,
+    NavigateProcessor,
+    RunScenarioProcessor,
+    ScreenshotProcessor,
 )
 
 __all__ = (
@@ -241,6 +242,7 @@ __all__ = (
     "CacheWriteProcessor",
     "GuardrailsProcessor",
     "SemanticRouterProcessor",
+    "GetFeedbackExamplesProcessor",
     "EventPublishProcessor",
     "MemoryLoadProcessor",
     "MemorySaveProcessor",

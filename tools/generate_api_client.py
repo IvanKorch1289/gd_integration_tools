@@ -392,7 +392,7 @@ def render_schemas(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
         "",
         "from pydantic import Field",
         "",
-        "from app.schemas.base import BaseSchema",
+        "from src.schemas.base import BaseSchema",
         "",
         "",
         f"class {class_prefix}BaseResponse(BaseSchema):",
@@ -541,9 +541,9 @@ def render_service(name: str, class_prefix: str, endpoints: list[EndpointSpec]) 
         from typing import Any
         from urllib.parse import urljoin
 
-        from app.core.config.settings import settings
-        from app.core.errors import ServiceError
-        from app.infrastructure.clients.transport.http import get_http_client_dependency
+        from src.core.config.settings import settings
+        from src.core.errors import ServiceError
+        from src.infrastructure.clients.transport.http import get_http_client_dependency
 
         __all__ = ("API{class_prefix}Service", "get_{name}_service")
 
@@ -606,7 +606,7 @@ def render_actions_fragment(name: str, class_prefix: str, endpoints: list[Endpoi
     """Генерирует фрагмент для setup.py."""
     lines = [
         f"# --- {name} API actions ---",
-        f"from app.services.{name} import get_{name}_service",
+        f"from src.services.{name} import get_{name}_service",
         "",
     ]
 

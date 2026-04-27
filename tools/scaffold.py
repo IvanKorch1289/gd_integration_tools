@@ -37,9 +37,9 @@ def processor_template(class_name: str) -> str:
 
         from typing import Any
 
-        from app.dsl.engine.context import ExecutionContext
-        from app.dsl.engine.exchange import Exchange
-        from app.dsl.engine.processors.base import BaseProcessor
+        from src.dsl.engine.context import ExecutionContext
+        from src.dsl.engine.exchange import Exchange
+        from src.dsl.engine.processors.base import BaseProcessor
 
 
         class {class_name}Processor(BaseProcessor):
@@ -115,7 +115,7 @@ def route_template(route_id: str, source: str) -> str:
 
         from __future__ import annotations
 
-        from app.dsl.builder import RouteBuilder
+        from src.dsl.builder import RouteBuilder
 
 
         route = (

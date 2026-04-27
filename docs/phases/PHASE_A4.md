@@ -84,14 +84,14 @@ grep -n 'AsyncRetrying' src/dsl/engine/processors/control_flow.py
 
 # Resilience package importable:
 python -c "
-from app.infrastructure.resilience import Bulkhead, TimeLimiter, RetryBudget, ResourceRateLimiter
+from src.infrastructure.resilience import Bulkhead, TimeLimiter, RetryBudget, ResourceRateLimiter
 print(Bulkhead(name='test', max_concurrent=4).max_concurrent)
 "
 
 # HttpxClient работает:
 python -c "
 import asyncio
-from app.infrastructure.clients.transport.http_httpx import get_httpx_client
+from src.infrastructure.clients.transport.http_httpx import get_httpx_client
 async def m():
     c = get_httpx_client()
     r = await c.request('GET', 'https://httpbin.org/get')

@@ -28,14 +28,11 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.infrastructure.workflow.executor import WorkflowSpec
     from pydantic import BaseModel
 
-__all__ = (
-    "WorkflowDescriptor",
-    "WorkflowRegistry",
-    "workflow_registry",
-)
+    from src.infrastructure.workflow.executor import WorkflowSpec
+
+__all__ = ("WorkflowDescriptor", "WorkflowRegistry", "workflow_registry")
 
 
 @dataclass(slots=True)
@@ -116,7 +113,7 @@ class WorkflowRegistry:
             if descriptor.name in self._descriptors:
                 raise ValueError(
                     f"Workflow '{descriptor.name}' уже зарегистрирован "
-                    "(route_id=%s)" % self._route_ids.get(descriptor.name, "?"),
+                    "(route_id=%s)" % self._route_ids.get(descriptor.name, "?")
                 )
             self._descriptors[descriptor.name] = descriptor
             self._route_ids[descriptor.name] = route_id

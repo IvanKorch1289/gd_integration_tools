@@ -23,7 +23,7 @@ def setup_tracing(app: FastAPI):
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-    from app.core.config.settings import settings
+    from src.core.config.settings import settings
 
     resource = Resource.create(
         {

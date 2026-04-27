@@ -29,21 +29,21 @@ from uuid import UUID
 from fastapi import APIRouter, Body, HTTPException, Query, status
 from pydantic import TypeAdapter
 
-from app.entrypoints.base import dispatch_action
-from app.infrastructure.database.models.workflow_instance import WorkflowStatus
-from app.infrastructure.workflow.event_store import WorkflowEventStore
-from app.infrastructure.workflow.state_store import (
+from src.entrypoints.base import dispatch_action
+from src.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.infrastructure.workflow.event_store import WorkflowEventStore
+from src.infrastructure.workflow.state_store import (
     WorkflowInstanceRow,
     WorkflowInstanceStore,
 )
-from app.schemas.workflow import (
+from src.schemas.workflow import (
     WorkflowCancelRequest,
     WorkflowEventSchemaOut,
     WorkflowInstanceDetailSchemaOut,
     WorkflowInstanceRef,
     WorkflowInstanceSchemaOut,
 )
-from app.workflows.registry import workflow_registry
+from src.workflows.registry import workflow_registry
 
 __all__ = ("router",)
 
@@ -116,8 +116,8 @@ async def _list_instances_filtered(
     """
     from sqlalchemy import select
 
-    from app.infrastructure.database.models.workflow_instance import WorkflowInstance
-    from app.infrastructure.database.session_manager import main_session_manager
+    from src.infrastructure.database.models.workflow_instance import WorkflowInstance
+    from src.infrastructure.database.session_manager import main_session_manager
 
     async with main_session_manager.create_session() as session:
         stmt = select(WorkflowInstance)
@@ -149,19 +149,13 @@ async def _list_instances_filtered(
 )
 async def list_workflows(
     status_filter: WorkflowStatus | None = Query(
-        None,
-        alias="status",
-        description="Фильтр по статусу инстанса.",
+        None, alias="status", description="Фильтр по статусу инстанса."
     ),
     workflow_name: str | None = Query(
         None, description="Фильтр по логическому имени workflow."
     ),
-    tenant_id: str | None = Query(
-        None, description="Фильтр по tenant scope."
-    ),
-    limit: int = Query(
-        50, ge=1, le=500, description="Максимум записей в ответе."
-    ),
+    tenant_id: str | None = Query(None, description="Фильтр по tenant scope."),
+    limit: int = Query(50, ge=1, le=500, description="Максимум записей в ответе."),
 ) -> list[WorkflowInstanceSchemaOut]:
     """Получить список workflow-инстансов."""
     rows = await _list_instances_filtered(
@@ -188,13 +182,12 @@ async def get_workflow(instance_id: UUID) -> WorkflowInstanceDetailSchemaOut:
     row = await _instance_store().get(instance_id)
     if row is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow instance '{instance_id}' not found",
+            status_code=404, detail=f"Workflow instance '{instance_id}' not found"
         )
 
     base = _row_to_schema(row)
     events_rows = await _event_store().read_events(
-        workflow_id=instance_id, after_seq=0, limit=1000,
+        workflow_id=instance_id, after_seq=0, limit=1000
     )
     events = [
         WorkflowEventSchemaOut(
@@ -209,9 +202,7 @@ async def get_workflow(instance_id: UUID) -> WorkflowInstanceDetailSchemaOut:
     ]
 
     return WorkflowInstanceDetailSchemaOut(
-        **base.model_dump(),
-        snapshot_state=row.snapshot_state,
-        events=events,
+        **base.model_dump(), snapshot_state=row.snapshot_state, events=events
     )
 
 
@@ -228,21 +219,18 @@ async def get_workflow(instance_id: UUID) -> WorkflowInstanceDetailSchemaOut:
 async def get_workflow_events(
     instance_id: UUID,
     after_seq: int = Query(0, ge=0, description="Cursor — нижняя граница seq."),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Максимум событий в batch'е."
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Максимум событий в batch'е."),
 ) -> list[WorkflowEventSchemaOut]:
     """Читать события workflow'а с курсором."""
     # Проверка существования (даём 404 вместо пустого списка для UX).
     row = await _instance_store().get(instance_id)
     if row is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow instance '{instance_id}' not found",
+            status_code=404, detail=f"Workflow instance '{instance_id}' not found"
         )
 
     events_rows = await _event_store().read_events(
-        workflow_id=instance_id, after_seq=after_seq, limit=limit,
+        workflow_id=instance_id, after_seq=after_seq, limit=limit
     )
     return [
         WorkflowEventSchemaOut(
@@ -274,25 +262,19 @@ async def retry_workflow(instance_id: UUID) -> dict[str, Any]:
     row = await store.get(instance_id)
     if row is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow instance '{instance_id}' not found",
+            status_code=404, detail=f"Workflow instance '{instance_id}' not found"
         )
 
     terminal = {WorkflowStatus.succeeded, WorkflowStatus.cancelled}
     if row.status in terminal:
         raise HTTPException(
             status_code=409,
-            detail=(
-                f"Cannot retry workflow in terminal status "
-                f"'{row.status.value}'"
-            ),
+            detail=(f"Cannot retry workflow in terminal status '{row.status.value}'"),
         )
 
     # Для failed — возвращаем в pending, чтобы worker его поднял.
     new_status = (
-        WorkflowStatus.pending
-        if row.status == WorkflowStatus.failed
-        else row.status
+        WorkflowStatus.pending if row.status == WorkflowStatus.failed else row.status
     )
     await store.update_status(
         workflow_id=instance_id,
@@ -300,8 +282,7 @@ async def retry_workflow(instance_id: UUID) -> dict[str, Any]:
         next_attempt_at=datetime.now(timezone.utc),
     )
     _logger.info(
-        "retry triggered: workflow_id=%s prev_status=%s",
-        instance_id, row.status.value,
+        "retry triggered: workflow_id=%s prev_status=%s", instance_id, row.status.value
     )
     return {
         "status": "accepted",
@@ -330,8 +311,7 @@ async def cancel_workflow(
     row = await store.get(instance_id)
     if row is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow instance '{instance_id}' not found",
+            status_code=404, detail=f"Workflow instance '{instance_id}' not found"
         )
 
     terminal = {
@@ -342,10 +322,7 @@ async def cancel_workflow(
     if row.status in terminal:
         raise HTTPException(
             status_code=409,
-            detail=(
-                f"Cannot cancel workflow in terminal status "
-                f"'{row.status.value}'"
-            ),
+            detail=(f"Cannot cancel workflow in terminal status '{row.status.value}'"),
         )
 
     await store.update_status(
@@ -354,10 +331,7 @@ async def cancel_workflow(
         next_attempt_at=datetime.now(timezone.utc),
         error=(f"cancelled: {body.reason}" if body.reason else None),
     )
-    _logger.info(
-        "cancel requested: workflow_id=%s reason=%s",
-        instance_id, body.reason,
-    )
+    _logger.info("cancel requested: workflow_id=%s reason=%s", instance_id, body.reason)
     return {
         "status": "accepted",
         "instance_id": str(instance_id),
@@ -381,8 +355,7 @@ async def resume_workflow(instance_id: UUID) -> dict[str, Any]:
     row = await store.get(instance_id)
     if row is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow instance '{instance_id}' not found",
+            status_code=404, detail=f"Workflow instance '{instance_id}' not found"
         )
     if row.status != WorkflowStatus.paused:
         raise HTTPException(
@@ -422,11 +395,12 @@ async def trigger_workflow(
     workflow_name: str,
     payload: dict[str, Any] = Body(default_factory=dict),
     wait: bool = Query(
-        False,
-        description="Ждать завершения (polling до terminal или timeout).",
+        False, description="Ждать завершения (polling до terminal или timeout)."
     ),
     timeout_s: int = Query(
-        30, ge=1, le=600,
+        30,
+        ge=1,
+        le=600,
         description="Timeout ожидания (действует только при wait=True).",
     ),
 ) -> WorkflowInstanceRef:
@@ -434,8 +408,7 @@ async def trigger_workflow(
     descriptor = workflow_registry.get(workflow_name)
     if descriptor is None:
         raise HTTPException(
-            status_code=404,
-            detail=f"Workflow '{workflow_name}' not registered",
+            status_code=404, detail=f"Workflow '{workflow_name}' not registered"
         )
 
     route_id = workflow_registry.get_route_id(workflow_name)
@@ -454,8 +427,7 @@ async def trigger_workflow(
             payload = validated.model_dump(mode="json")
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(
-                status_code=422,
-                detail=f"Payload validation failed: {exc}",
+                status_code=422, detail=f"Payload validation failed: {exc}"
             ) from exc
 
     # Unified dispatch — пока делегируем в store напрямую; в IL-WF1.3
@@ -465,29 +437,25 @@ async def trigger_workflow(
     # при trigger'е до wiring'а action-handler'а.
     store = _instance_store()
     instance_id = await _trigger_via_action_or_store(
-        store=store,
-        workflow_name=workflow_name,
-        route_id=route_id,
-        payload=payload,
+        store=store, workflow_name=workflow_name, route_id=route_id, payload=payload
     )
     _logger.info(
         "workflow triggered: name=%s instance_id=%s wait=%s",
-        workflow_name, instance_id, wait,
+        workflow_name,
+        instance_id,
+        wait,
     )
 
     row = await store.get(instance_id)
     if row is None:
         # Race невозможен в том же соединении — defensive fallback.
         raise HTTPException(
-            status_code=500,
-            detail="Created instance disappeared (race condition)",
+            status_code=500, detail="Created instance disappeared (race condition)"
         )
 
     if wait:
         row = await _wait_for_terminal(
-            store=store,
-            instance_id=instance_id,
-            timeout_s=timeout_s,
+            store=store, instance_id=instance_id, timeout_s=timeout_s
         )
 
     last_error: str | None = None
@@ -533,7 +501,7 @@ async def _trigger_via_action_or_store(
         2. Fallback — прямой вызов ``store.create()`` (нужен до
            wiring'а action-handler'а в IL-WF1.3).
     """
-    from app.dsl.commands.registry import action_handler_registry
+    from src.dsl.commands.registry import action_handler_registry
 
     if action_handler_registry.is_registered("workflows.trigger"):
         result = await dispatch_action(
@@ -553,9 +521,7 @@ async def _trigger_via_action_or_store(
         return UUID(str(result))
 
     return await store.create(
-        workflow_name=workflow_name,
-        route_id=route_id,
-        input_payload=payload,
+        workflow_name=workflow_name, route_id=route_id, input_payload=payload
     )
 
 
@@ -585,8 +551,7 @@ async def _wait_for_terminal(
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=410,
-                detail=f"Workflow instance '{instance_id}' disappeared",
+                status_code=410, detail=f"Workflow instance '{instance_id}' disappeared"
             )
         if row.status in terminal:
             return row

@@ -8,7 +8,7 @@
 import logging
 from typing import Any
 
-from app.core.security.ai_sanitizer import AIDataSanitizer, get_ai_sanitizer
+from src.infrastructure.security.ai_sanitizer import AIDataSanitizer, get_ai_sanitizer
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 
@@ -19,13 +19,13 @@ class AIAgentService:
     """Сервис для AI-операций с маскировкой PII."""
 
     def __init__(self) -> None:
-        from app.core.config.ai_settings import (
+        from src.core.config.ai_settings import (
             AIProvidersSettings,
             HuggingFaceSettings,
             OpenWebUISettings,
             PerplexitySettings,
         )
-        from app.core.config.settings import settings
+        from src.core.config.settings import settings
 
         self._waf_url = settings.http_base_settings.waf_url
         self._waf_headers = dict(settings.http_base_settings.waf_route_header)
@@ -44,9 +44,10 @@ class AIAgentService:
         }
 
     def _get_http_client(self):
-        from app.infrastructure.external_apis.http_client import (
+        from src.infrastructure.external_apis.http_client import (
             get_http_client_dependency,
         )
+
         return get_http_client_dependency()
 
     # ------------------------------------------------------------------
@@ -54,11 +55,7 @@ class AIAgentService:
     # ------------------------------------------------------------------
 
     async def _post_provider(
-        self,
-        *,
-        url: str,
-        headers: dict[str, str],
-        payload: dict[str, Any],
+        self, *, url: str, headers: dict[str, str], payload: dict[str, Any]
     ) -> dict[str, Any]:
         """Общий POST-вызов с единой политикой таймаутов."""
         client = self._get_http_client()
@@ -72,7 +69,9 @@ class AIAgentService:
             total_timeout=self._ai_cfg.connect_timeout + self._ai_cfg.read_timeout,
         )
 
-    def _build_auth_headers(self, api_key: str | None, *, use_waf: bool = False) -> dict[str, str]:
+    def _build_auth_headers(
+        self, api_key: str | None, *, use_waf: bool = False
+    ) -> dict[str, str]:
         """Формирует Content-Type + Authorization (с WAF-перекрытием при необходимости)."""
         headers: dict[str, str] = {}
         if use_waf:
@@ -87,9 +86,13 @@ class AIAgentService:
     ) -> dict[str, Any]:
         """Вызов Perplexity API."""
         model = kwargs.get("model", self._perplexity.model)
-        url = self._waf_url if self._perplexity.use_waf else f"{self._perplexity.base_url}/chat/completions"
+        url = (
+            self._waf_url
+            if self._perplexity.use_waf
+            else f"{self._perplexity.base_url}/chat/completions"
+        )
         headers = self._build_auth_headers(
-            self._perplexity.api_key, use_waf=self._perplexity.use_waf,
+            self._perplexity.api_key, use_waf=self._perplexity.use_waf
         )
         payload = {
             "model": model,
@@ -111,7 +114,9 @@ class AIAgentService:
         payload = {
             "inputs": prompt,
             "parameters": {
-                "max_new_tokens": kwargs.get("max_tokens", self._huggingface.max_tokens),
+                "max_new_tokens": kwargs.get(
+                    "max_tokens", self._huggingface.max_tokens
+                ),
                 "temperature": kwargs.get("temperature", self._huggingface.temperature),
             },
         }
@@ -162,15 +167,20 @@ class AIAgentService:
         headers = {**self._waf_headers, "X-Target-URL": url}
 
         try:
-            result = await client.make_request(method="GET", url=self._waf_url, headers=headers)
+            result = await client.make_request(
+                method="GET", url=self._waf_url, headers=headers
+            )
             html_content = result if isinstance(result, str) else str(result)
 
             from bs4 import BeautifulSoup
+
             soup = BeautifulSoup(html_content, "html.parser")
 
             links = []
             for a_tag in soup.find_all("a", href=True)[:50]:
-                links.append({"text": a_tag.get_text(strip=True), "href": a_tag["href"]})
+                links.append(
+                    {"text": a_tag.get_text(strip=True), "href": a_tag["href"]}
+                )
 
             return {
                 "success": True,
@@ -187,34 +197,48 @@ class AIAgentService:
         messages: list[dict[str, str]],
         model: str = "default",
         provider: str | None = None,
+        *,
+        session_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Чат с LLM через мульти-провайдерную архитектуру.
 
         Данные маскируются перед отправкой, восстанавливаются после.
         При недоступности провайдера — fallback на следующий.
+        Каждый успешный ответ автоматически сохраняется в
+        ``AIFeedbackService`` для последующей разметки оператором.
 
         Args:
             messages: [{role, content}].
             model: Идентификатор модели.
             provider: Конкретный провайдер (или fallback-chain).
+            session_id: Идентификатор сессии (для feedback).
+            metadata: Дополнительные поля в feedback (tenant_id и т.д.).
 
         Returns:
-            Ответ LLM с восстановленными PII.
+            Ответ LLM с восстановленными PII. Дополнительно в ответ
+            добавляется ``feedback_id`` — идентификатор записи
+            в ``AIFeedbackService`` (для кнопок ✅/❌ на стороне UI).
         """
         sanitized_msgs, mapping = self._sanitizer.sanitize_messages(messages)
 
         chain = [provider] if provider else self._ai_cfg.fallback_chain
         last_error: str | None = None
+        metrics = self._get_metrics_service()
 
         for prov_name in chain:
             call_fn = self._providers.get(prov_name)
             if call_fn is None:
                 continue
 
+            import time as _time
+
+            started = _time.perf_counter()
             try:
                 result = await call_fn(sanitized_msgs, model=model)
 
                 content = ""
+                usage: dict[str, Any] = {}
                 if isinstance(result, dict):
                     choices = result.get("choices", [])
                     if choices:
@@ -223,39 +247,107 @@ class AIAgentService:
                         content = result["generated_text"]
                     elif isinstance(result.get("data"), str):
                         content = result["data"]
+                    usage = result.get("usage") or {}
 
                 restored = self._sanitizer.restore_text(content, mapping)
+
+                if metrics is not None:
+                    metrics.record_execution(
+                        agent_id="chat",
+                        provider=prov_name,
+                        duration_seconds=_time.perf_counter() - started,
+                        status="success",
+                    )
+                    metrics.record_tokens(
+                        provider=prov_name,
+                        model=model,
+                        input_tokens=int(usage.get("prompt_tokens", 0) or 0),
+                        output_tokens=int(usage.get("completion_tokens", 0) or 0),
+                    )
+                    cost = float(usage.get("cost_usd", 0.0) or 0.0)
+                    if cost:
+                        metrics.record_cost(
+                            provider=prov_name, model=model, cost_usd=cost
+                        )
+
+                feedback_id = await self._record_feedback(
+                    messages=messages,
+                    response=restored,
+                    agent_id=f"chat:{prov_name}",
+                    session_id=session_id,
+                    metadata={
+                        **(metadata or {}),
+                        "model": model,
+                        "provider": prov_name,
+                    },
+                )
 
                 return {
                     "success": True,
                     "content": restored,
                     "provider": prov_name,
                     "model": model,
+                    "feedback_id": feedback_id,
                 }
             except Exception as exc:
                 last_error = f"{prov_name}: {exc}"
                 logger.warning("AI provider '%s' failed: %s", prov_name, exc)
+                if metrics is not None:
+                    metrics.record_execution(
+                        agent_id="chat",
+                        provider=prov_name,
+                        duration_seconds=_time.perf_counter() - started,
+                        status="error",
+                    )
 
         return {"success": False, "error": f"All providers failed. Last: {last_error}"}
+
+    @staticmethod
+    def _get_metrics_service() -> Any:
+        """Возвращает ``AgentMetricsService`` или ``None`` при сбое.
+
+        Отделено в отдельный метод, чтобы тесты без FastAPI
+        и ``prometheus_client`` не падали при импорте сервиса.
+
+        Returns:
+            ``AgentMetricsService`` либо ``None``.
+        """
+        try:
+            from src.services.ai.metrics import get_agent_metrics_service
+
+            return get_agent_metrics_service()
+        except Exception:
+            return None
 
     async def run_agent(
         self,
         prompt: str,
         tools: list[str] | None = None,
+        *,
+        agent_id: str = "default",
+        session_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Запуск AI-агента с маскировкой PII.
+
+        После успешного ответа автоматически сохраняет результат
+        в ``AIFeedbackService`` для последующей разметки оператором.
 
         Args:
             prompt: Текст задачи.
             tools: Список actions, доступных агенту.
+            agent_id: Логический идентификатор агента (для feedback).
+            session_id: Идентификатор сессии (для feedback).
+            metadata: Дополнительные поля в feedback.
 
         Returns:
-            Результат работы агента.
+            Результат работы агента. В поле ``feedback_id`` —
+            идентификатор записи feedback для кнопок оценки в UI.
         """
         sanitized = self._sanitizer.sanitize_text(prompt)
 
         try:
-            from app.services.ai.ai_graph import build_and_run_agent
+            from src.services.ai.ai_graph import build_and_run_agent
 
             result = await build_and_run_agent(
                 prompt=sanitized.sanitized, tool_actions=tools or []
@@ -264,12 +356,84 @@ class AIAgentService:
             if isinstance(result, str):
                 result = sanitized.restore(result)
 
-            return {"success": True, "data": result}
+            feedback_id = await self._record_feedback(
+                messages=[{"role": "user", "content": prompt}],
+                response=self._extract_agent_response(result),
+                agent_id=agent_id,
+                session_id=session_id,
+                metadata={**(metadata or {}), "tools": tools or []},
+            )
+            return {"success": True, "data": result, "feedback_id": feedback_id}
         except ImportError:
             return {"success": False, "error": "langgraph не установлен."}
         except Exception as exc:
             logger.error("Agent run error: %s", exc)
             return {"success": False, "error": str(exc)}
+
+    async def _record_feedback(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        response: str,
+        agent_id: str,
+        session_id: str | None,
+        metadata: dict[str, Any] | None,
+    ) -> str | None:
+        """Сохраняет ответ агента в ``AIFeedbackService``.
+
+        Ошибки записи не распространяются наверх: сбой feedback
+        не должен ломать основной AI-поток. При отсутствии сервиса
+        (старт без ``app.state``) возвращает ``None``.
+
+        Args:
+            messages: История сообщений (извлекается последний user).
+            response: Восстановленный текст ответа LLM/агента.
+            agent_id: Идентификатор агента.
+            session_id: Идентификатор сессии.
+            metadata: Поля метаданных (провайдер, модель и т.д.).
+
+        Returns:
+            ``feedback_id`` записи либо ``None`` при ошибке.
+        """
+        try:
+            from src.services.ai.feedback import get_ai_feedback_service
+
+            service = get_ai_feedback_service()
+            query = next(
+                (
+                    m.get("content", "")
+                    for m in reversed(messages)
+                    if m.get("role") == "user"
+                ),
+                "",
+            )
+            return await service.save_response(
+                query=query or "",
+                response=response or "",
+                agent_id=agent_id,
+                session_id=session_id,
+                metadata=metadata or {},
+            )
+        except Exception as exc:
+            logger.warning("ai_feedback_save_failed: %s", exc)
+            return None
+
+    @staticmethod
+    def _extract_agent_response(result: Any) -> str:
+        """Извлекает текст ответа из результата ``build_and_run_agent``.
+
+        Результат может быть dict (с ключом ``response``), строкой
+        или произвольной структурой — приводим к строковому представлению.
+
+        Args:
+            result: Значение, возвращённое из ``ai_graph``.
+
+        Returns:
+            Текст ответа для сохранения в feedback.
+        """
+        if isinstance(result, dict):
+            return str(result.get("response") or result.get("data") or result)
+        return str(result)
 
 
 _ai_agent_service_instance = AIAgentService()

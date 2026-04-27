@@ -1,0 +1,28 @@
+# Pre-commit конфигурация: автоматические проверки при git commit.
+# Устанавливается командой `make pre-commit` или `uv run pre-commit install`.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: local
+    hooks:
+      - id: check-layers
+        name: "Архитектурный линтер слоёв (ADR-001)"
+        entry: uv run python scripts/check_layers.py
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: check-compat
+        name: "Совместимость с Python 3.12+"
+        entry: uv run python scripts/check_compat.py
+        language: system
+        types: [python]
+        pass_filenames: false

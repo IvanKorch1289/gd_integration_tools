@@ -17,17 +17,14 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from app.dsl.builder import RouteBuilder
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.pipeline import Pipeline
-from app.dsl.engine.processors import (
-    BaseProcessor,
+from src.dsl.builder import RouteBuilder
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.pipeline import Pipeline
+from src.dsl.engine.processors import (
     DeadLetterProcessor,
     DispatchActionProcessor,
     LogProcessor,
     RetryProcessor,
-    TryCatchProcessor,
-    ValidateProcessor,
 )
 
 __all__ = (
@@ -85,38 +82,30 @@ def etl_pipeline(
         )
     """
     builder = RouteBuilder.from_(
-        route_id, source=source,
-        description=description or f"ETL: {route_id}",
+        route_id, source=source, description=description or f"ETL: {route_id}"
     )
 
     extract_proc = DispatchActionProcessor(action=extract_action)
 
     if use_circuit_breaker:
         builder = builder.circuit_breaker(
-            processors=[RetryProcessor(
-                processors=[extract_proc],
-                max_attempts=retry_attempts,
-            )],
+            processors=[
+                RetryProcessor(processors=[extract_proc], max_attempts=retry_attempts)
+            ],
             failure_threshold=5,
             recovery_timeout=60.0,
             fallback_processors=[LogProcessor(level="error")],
         )
     else:
-        builder = builder.retry(
-            processors=[extract_proc],
-            max_attempts=retry_attempts,
-        )
+        builder = builder.retry(processors=[extract_proc], max_attempts=retry_attempts)
 
     if normalize_schema:
         builder = builder.normalize(target_schema=normalize_schema)
 
     builder = (
-        builder
-        .process_fn(transform_fn)
+        builder.process_fn(transform_fn)
         .dispatch_action(load_action)
-        .on_completion(
-            processors=[LogProcessor(level="info")],
-        )
+        .on_completion(processors=[LogProcessor(level="info")])
     )
     return builder.build()
 
@@ -147,20 +136,16 @@ def webhook_relay(
         Pipeline: Готовый relay pipeline.
     """
     builder = RouteBuilder.from_(
-        route_id, source=source,
-        description=description or f"Relay: {route_id}",
+        route_id, source=source, description=description or f"Relay: {route_id}"
     )
 
     if with_dead_letter:
         builder = builder.dead_letter(
-            processors=[
-                DispatchActionProcessor(action="notify.send"),
-            ],
+            processors=[DispatchActionProcessor(action="notify.send")]
         )
 
     builder = (
-        builder
-        .idempotent(lambda ex: ex.meta.correlation_id, ttl_seconds=3600)
+        builder.idempotent(lambda ex: ex.meta.correlation_id, ttl_seconds=3600)
         .recipient_list(lambda ex: targets, parallel=parallel)
         .log(f"Relayed to {len(targets)} targets")
     )
@@ -209,12 +194,11 @@ def ai_qa_pipeline(
         )
     """
     builder = (
-        RouteBuilder.from_(route_id, source=source, description=description or f"AI Q&A: {route_id}")
+        RouteBuilder.from_(
+            route_id, source=source, description=description or f"AI Q&A: {route_id}"
+        )
         .timeout(
-            processors=[
-                DispatchActionProcessor(action="rag.search"),
-            ],
-            seconds=15.0,
+            processors=[DispatchActionProcessor(action="rag.search")], seconds=15.0
         )
         .rag_search(query_field=query_field, top_k=top_k)
         .compose_prompt(
@@ -260,7 +244,8 @@ def safe_action(
         Pipeline: Готовый pipeline с resilience-паттернами.
     """
     builder = RouteBuilder.from_(
-        route_id, source=source or f"internal:{route_id}",
+        route_id,
+        source=source or f"internal:{route_id}",
         description=description or f"Safe action: {action}",
     )
 
@@ -269,23 +254,17 @@ def safe_action(
     if dlq_action:
         builder = builder.do_try(
             try_processors=[
-                RetryProcessor(
-                    processors=[action_processor],
-                    max_attempts=max_retries,
-                ),
+                RetryProcessor(processors=[action_processor], max_attempts=max_retries)
             ],
             catch_processors=[
                 LogProcessor(level="error"),
                 DeadLetterProcessor(
-                    processors=[DispatchActionProcessor(action=dlq_action)],
+                    processors=[DispatchActionProcessor(action=dlq_action)]
                 ),
             ],
         )
     else:
-        builder = builder.retry(
-            processors=[action_processor],
-            max_attempts=max_retries,
-        )
+        builder = builder.retry(processors=[action_processor], max_attempts=max_retries)
 
     return builder.build()
 
@@ -322,20 +301,20 @@ def crud_with_audit(
     """
     pipelines = []
 
-    for op, action in [("create", create_action), ("update", update_action), ("delete", delete_action)]:
+    for op, action in [
+        ("create", create_action),
+        ("update", update_action),
+        ("delete", delete_action),
+    ]:
         builder = RouteBuilder.from_(
-            f"{route_id_prefix}.{op}",
-            source=f"{source_prefix}:{route_id_prefix}.{op}",
+            f"{route_id_prefix}.{op}", source=f"{source_prefix}:{route_id_prefix}.{op}"
         )
         if validate_model and op in ("create", "update"):
             builder = builder.validate(validate_model)
         builder = (
-            builder
-            .dispatch_action(action)
+            builder.dispatch_action(action)
             .publish_event(event_channel)
-            .on_completion(
-                processors=[LogProcessor(level="info")],
-            )
+            .on_completion(processors=[LogProcessor(level="info")])
         )
         pipelines.append(builder.build())
 
@@ -377,16 +356,13 @@ def scrape_and_store(
         Pipeline: Готовый scraping pipeline.
     """
     builder = RouteBuilder.from_(
-        route_id, source=f"scrape:{url}",
-        description=description or f"Scrape: {url}",
+        route_id, source=f"scrape:{url}", description=description or f"Scrape: {url}"
     )
     builder = builder.scrape(url, selectors=selectors)
 
     if paginate:
         builder = builder.paginate(
-            next_selector=next_selector,
-            max_pages=max_pages,
-            start_url=url,
+            next_selector=next_selector, max_pages=max_pages, start_url=url
         )
 
     if sort_field:
@@ -423,7 +399,8 @@ def format_bridge(
     """
     return (
         RouteBuilder.from_(
-            route_id, source=source,
+            route_id,
+            source=source,
             description=description or f"Bridge: {from_format}→{to_format}",
         )
         .normalize()
@@ -462,7 +439,8 @@ def polling_etl(
     """
     builder = (
         RouteBuilder.from_(
-            route_id, source=f"timer:{interval_seconds}s",
+            route_id,
+            source=f"timer:{interval_seconds}s",
             description=description or f"Polling ETL: {source_action}",
         )
         .timer(interval_seconds=interval_seconds)

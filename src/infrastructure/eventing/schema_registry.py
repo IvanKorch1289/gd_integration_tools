@@ -57,7 +57,9 @@ class SchemaRegistry:
 
             validate(instance=payload, schema=schema)
         except ImportError:
-            logger.warning("jsonschema не установлен — validation skipped для %s", subject)
+            logger.warning(
+                "jsonschema не установлен — validation skipped для %s", subject
+            )
         except Exception as exc:
             raise SchemaRegistryError(f"{subject}: {exc}") from exc
 
@@ -74,7 +76,9 @@ class SchemaRegistry:
             bio = io.BytesIO(payload)
             return fastavro.schemaless_reader(bio, schema)  # type: ignore[return-value]
         except ImportError:
-            raise SchemaRegistryError("fastavro не установлен — Avro validation недоступна")
+            raise SchemaRegistryError(
+                "fastavro не установлен — Avro validation недоступна"
+            )
 
 
 # Module-level singleton (опционально; обычно резолвится через svcs).

@@ -8,8 +8,8 @@ from pathlib import Path
 
 from starlette.responses import HTMLResponse
 
-from app.core.config.settings import settings
-from app.utilities.utils import utilities
+from src.core.config.settings import settings
+from src.utilities.utils import utilities
 
 __all__ = ("root_page",)
 

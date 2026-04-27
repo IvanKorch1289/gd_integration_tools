@@ -28,7 +28,12 @@ except Exception as exc:  # noqa: BLE001
     st.error(f"Не удалось получить /ready: {exc}")
 
 overall = data.get("status", "unknown")
-colors = {"ok": ":green_circle:", "degraded": ":large_orange_circle:", "down": ":red_circle:", "error": ":red_circle:"}
+colors = {
+    "ok": ":green_circle:",
+    "degraded": ":large_orange_circle:",
+    "down": ":red_circle:",
+    "error": ":red_circle:",
+}
 
 st.subheader(f"{colors.get(overall, ':grey_question:')} Overall: **{overall.upper()}**")
 st.caption(f"Timestamp: {data.get('timestamp', '—')}")

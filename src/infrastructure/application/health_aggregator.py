@@ -32,7 +32,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal
 
 if TYPE_CHECKING:
-    from app.infrastructure.clients.base_connector import HealthMode
+    from src.infrastructure.clients.base_connector import HealthMode
 
 __all__ = ("HealthAggregator", "get_health_aggregator")
 
@@ -48,10 +48,7 @@ HealthCheckFn = Callable[..., Awaitable[dict[str, Any]]]
 
 #: SLA-timeout per-check в зависимости от режима (seconds). Конкретная
 #: реализация client.health(mode) должна укладываться в эти бюджеты.
-_TIMEOUT_BY_MODE: dict[HealthMode, float] = {
-    "fast": 1.0,
-    "deep": 2.5,
-}
+_TIMEOUT_BY_MODE: dict[HealthMode, float] = {"fast": 1.0, "deep": 2.5}
 
 
 class HealthAggregator:
@@ -99,16 +96,12 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return "mode" in sig.parameters
 
     async def _safe_check(
-        self,
-        name: str,
-        fn: HealthCheckFn,
-        *,
-        mode: HealthMode = "fast",
+        self, name: str, fn: HealthCheckFn, *, mode: HealthMode = "fast"
     ) -> dict[str, Any]:
         """Выполняет один health-check с timeout."""
         timeout = _TIMEOUT_BY_MODE.get(mode, self._timeout)
@@ -153,7 +146,7 @@ class HealthAggregator:
         if not self._include_registry:
             return {}
         try:
-            from app.infrastructure.registry import ConnectorRegistry
+            from src.infrastructure.registry import ConnectorRegistry
         except ImportError:
             return {}
         registry = ConnectorRegistry.instance()
@@ -169,7 +162,9 @@ class HealthAggregator:
         for name, r in results.items():
             out[name] = {
                 "name": name,
-                "status": "ok" if r.status == "ok" else ("degraded" if r.status == "degraded" else "error"),
+                "status": "ok"
+                if r.status == "ok"
+                else ("degraded" if r.status == "degraded" else "error"),
                 "latency_ms": r.latency_ms,
                 "mode": r.mode,
                 "details": r.details,
@@ -183,7 +178,9 @@ class HealthAggregator:
             self._safe_check(name, fn, mode=mode) for name, fn in self._checks.items()
         ]
         legacy_results_coro = (
-            asyncio.gather(*legacy_tasks) if legacy_tasks else asyncio.sleep(0, result=[])
+            asyncio.gather(*legacy_tasks)
+            if legacy_tasks
+            else asyncio.sleep(0, result=[])
         )
         registry_coro = self._collect_registry_components(mode)
         legacy_results, registry_results = await asyncio.gather(
@@ -233,11 +230,15 @@ class HealthAggregator:
         # Попробовать через ConnectorRegistry.
         if self._include_registry:
             try:
-                from app.infrastructure.registry import ConnectorRegistry
+                from src.infrastructure.registry import ConnectorRegistry
 
                 client = ConnectorRegistry.instance().get(name)
             except Exception:  # noqa: BLE001
-                return {"name": name, "status": "error", "error": "Component not registered"}
+                return {
+                    "name": name,
+                    "status": "error",
+                    "error": "Component not registered",
+                }
             try:
                 r = await client.health(mode=mode)
                 return {

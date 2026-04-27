@@ -1,7 +1,7 @@
-from app.core.config.constants import consts
-from app.core.config.settings import settings
-from app.infrastructure.external_apis.logging_service import scheduler_logger
-from app.infrastructure.scheduler.scheduled_tasks import check_all_services
+from src.core.config.constants import consts
+from src.core.config.settings import settings
+from src.infrastructure.external_apis.logging_service import scheduler_logger
+from src.infrastructure.scheduler.scheduled_tasks import check_all_services
 
 __all__ = ("scheduler_manager", "SchedulerManager")
 
@@ -24,7 +24,7 @@ class SchedulerManager:
         from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-        from app.infrastructure.db.database import db_initializer
+        from src.infrastructure.database.database import db_initializer
 
         self.logger = scheduler_logger
         self.scheduler = AsyncIOScheduler(

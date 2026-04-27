@@ -3,8 +3,8 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
-from app.core.enums.invocation import InvokeMode
-from app.schemas.base import BaseSchema
+from src.core.enums.invocation import InvokeMode
+from src.schemas.base import BaseSchema
 
 __all__ = (
     "InvocationOptionsSchema",

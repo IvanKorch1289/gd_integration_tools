@@ -22,7 +22,9 @@ BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 # ── Фильтры
 col_a, col_b, col_c = st.columns([2, 2, 1])
-level = col_a.selectbox("Минимальный уровень", ["DEBUG", "INFO", "WARNING", "ERROR"], index=1)
+level = col_a.selectbox(
+    "Минимальный уровень", ["DEBUG", "INFO", "WARNING", "ERROR"], index=1
+)
 module = col_b.text_input("Фильтр по модулю (substring)")
 pause = col_c.toggle("Пауза")
 
@@ -67,6 +69,7 @@ batch: list[dict[str, Any]] = []
 while not q.empty() and len(batch) < 100:
     try:
         import orjson
+
         batch.append(orjson.loads(q.get_nowait()))
     except Exception:  # noqa: BLE001
         continue
@@ -87,17 +90,26 @@ filtered = [
 ]
 
 # ── Отображение
-st.caption(f"Записей в буфере: {len(st.session_state['log_history'])}, после фильтра: {len(filtered)}")
+st.caption(
+    f"Записей в буфере: {len(st.session_state['log_history'])}, после фильтра: {len(filtered)}"
+)
 for item in reversed(filtered[-200:]):
     ts = item.get("timestamp", "")
     lvl = item.get("level", "INFO")
     msg = item.get("event") or item.get("message", "")
     logger_name = item.get("logger", "—")
-    icon = ":red_circle:" if lvl == "ERROR" else ":large_orange_circle:" if lvl == "WARNING" else ":large_blue_circle:"
+    icon = (
+        ":red_circle:"
+        if lvl == "ERROR"
+        else ":large_orange_circle:"
+        if lvl == "WARNING"
+        else ":large_blue_circle:"
+    )
     st.markdown(f"{icon} `{ts}` **{logger_name}** — {msg}")
 
 # Авто-рефреш каждые 2с
 if not pause:
     import time
+
     time.sleep(2)
     st.rerun()

@@ -2,7 +2,7 @@
 
 Публичный фасад:
 
-    from app.tools.schema_importer import SchemaImporter
+    from src.tools.schema_importer import SchemaImporter
 
     importer = SchemaImporter()
     importer.from_openapi("petstore.yaml", out_dir="src/schemas/auto")
@@ -17,6 +17,6 @@
 
 from __future__ import annotations
 
-from app.tools.schema_importer.importer import SchemaImporter
+from src.tools.schema_importer.importer import SchemaImporter
 
 __all__ = ("SchemaImporter",)

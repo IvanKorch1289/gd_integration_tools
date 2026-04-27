@@ -1,13 +1,13 @@
 from typing import Any
 
-from app.core.errors import ServiceError
-from app.infrastructure.repositories.users import UserRepository, get_user_repo
-from app.schemas.route_schemas.users import (
+from src.core.errors import ServiceError
+from src.infrastructure.repositories.users import UserRepository, get_user_repo
+from src.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from app.services.core.base import BaseService
+from src.services.core.base import BaseService
 
 __all__ = ("get_user_service",)
 
@@ -86,8 +86,10 @@ def get_user_service() -> UserService:
     """
     global _user_service_instance
     if _user_service_instance is None:
-        _user_service_instance = UserService(repo=get_user_repo(),
-        request_schema=UserSchemaIn,
-        response_schema=UserSchemaOut,
-        version_schema=UserVersionSchemaOut,)
+        _user_service_instance = UserService(
+            repo=get_user_repo(),
+            request_schema=UserSchemaIn,
+            response_schema=UserSchemaOut,
+            version_schema=UserVersionSchemaOut,
+        )
     return _user_service_instance

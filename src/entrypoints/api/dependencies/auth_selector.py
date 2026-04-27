@@ -10,7 +10,7 @@
 - ANY — любая из настроенных прошла = OK
 
 Usage:
-    from app.entrypoints.api.dependencies.auth_selector import require_auth, AuthMethod
+    from src.entrypoints.api.dependencies.auth_selector import require_auth, AuthMethod
 
     @router.get("/protected", dependencies=[Depends(require_auth(AuthMethod.API_KEY))])
     async def protected(): ...
@@ -51,10 +51,7 @@ class AuthContext:
     __slots__ = ("method", "principal", "metadata")
 
     def __init__(
-        self,
-        method: AuthMethod,
-        principal: str,
-        metadata: dict[str, Any] | None = None,
+        self, method: AuthMethod, principal: str, metadata: dict[str, Any] | None = None
     ) -> None:
         self.method = method
         self.principal = principal
@@ -75,7 +72,8 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
     if not key:
         return None
     try:
-        from app.core.security.api_key_manager import get_api_key_manager
+        from src.infrastructure.security.api_key_manager import get_api_key_manager
+
         manager = get_api_key_manager()
         info = await manager.validate_key(key)
         if info is None:
@@ -93,10 +91,14 @@ async def _verify_jwt(request: Request) -> AuthContext | None:
     token = auth[7:]
     try:
         from jose import jwt
-        from app.core.config.settings import settings
-        secret = settings.secure.secret_key.get_secret_value() if hasattr(
-            settings.secure.secret_key, "get_secret_value"
-        ) else str(settings.secure.secret_key)
+
+        from src.core.config.settings import settings
+
+        secret = (
+            settings.secure.secret_key.get_secret_value()
+            if hasattr(settings.secure.secret_key, "get_secret_value")
+            else str(settings.secure.secret_key)
+        )
         payload = jwt.decode(token, secret, algorithms=[settings.secure.algorithm])
         principal = payload.get("sub", "")
         return AuthContext(AuthMethod.JWT, principal, payload)

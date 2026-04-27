@@ -35,29 +35,19 @@ class EventBus:
         Returns:
             Очередь, в которую будут приходить события.
         """
-        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
-            maxsize=100
-        )
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=100)
         self._subscribers.append(queue)
         return queue
 
-    def unsubscribe(
-        self, queue: asyncio.Queue[dict[str, Any]]
-    ) -> None:
+    def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
         """Отменяет подписку.
 
         Args:
             queue: Очередь подписки.
         """
-        self._subscribers = [
-            q for q in self._subscribers if q is not queue
-        ]
+        self._subscribers = [q for q in self._subscribers if q is not queue]
 
-    async def publish(
-        self,
-        event_type: str,
-        data: Any,
-    ) -> None:
+    async def publish(self, event_type: str, data: Any) -> None:
         """Публикует событие всем подписчикам.
 
         Args:
@@ -70,9 +60,7 @@ class EventBus:
             try:
                 queue.put_nowait(event)
             except asyncio.QueueFull:
-                logger.warning(
-                    "SSE очередь переполнена, событие пропущено"
-                )
+                logger.warning("SSE очередь переполнена, событие пропущено")
 
 
 event_bus = EventBus()
@@ -99,16 +87,11 @@ async def sse_stream(request: Request) -> StreamingResponse:
                     break
 
                 try:
-                    event = await asyncio.wait_for(
-                        queue.get(), timeout=30.0
-                    )
+                    event = await asyncio.wait_for(queue.get(), timeout=30.0)
                     import json
 
                     event_type = event.get("event", "message")
-                    data = json.dumps(
-                        event.get("data"),
-                        ensure_ascii=False,
-                    )
+                    data = json.dumps(event.get("data"), ensure_ascii=False)
                     yield f"event: {event_type}\ndata: {data}\n\n"
                 except asyncio.TimeoutError:
                     # Heartbeat для поддержания соединения

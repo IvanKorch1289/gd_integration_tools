@@ -1,15 +1,20 @@
 import logging
 from typing import Any, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
-from app.schemas.invocation import ActionCommandSchema
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
+from src.schemas.invocation import ActionCommandSchema
 
 __all__ = (
-    "SetHeaderProcessor", "SetPropertyProcessor", "DispatchActionProcessor",
-    "TransformProcessor", "FilterProcessor", "EnrichProcessor",
-    "LogProcessor", "ValidateProcessor",
+    "SetHeaderProcessor",
+    "SetPropertyProcessor",
+    "DispatchActionProcessor",
+    "TransformProcessor",
+    "FilterProcessor",
+    "EnrichProcessor",
+    "LogProcessor",
+    "ValidateProcessor",
 )
 
 
@@ -56,7 +61,9 @@ class DispatchActionProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, action: str, *,
+        self,
+        action: str,
+        *,
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
         result_property: str = "action_result",
     ) -> None:
@@ -92,6 +99,7 @@ class TransformProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import jmespath
+
         body = exchange.in_message.body
         result = jmespath.search(self.expression, body)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
@@ -104,7 +112,9 @@ class FilterProcessor(BaseProcessor):
     (property "filtered"=True). Последующие процессоры не выполняются.
     """
 
-    def __init__(self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None) -> None:
+    def __init__(
+        self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None
+    ) -> None:
         super().__init__(name=name or "filter")
         self._predicate = predicate
 
@@ -122,9 +132,12 @@ class EnrichProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, action: str, *,
+        self,
+        action: str,
+        *,
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
-        result_property: str = "enrichment", name: str | None = None,
+        result_property: str = "enrichment",
+        name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"enrich:{action}")
         self.action = action
@@ -153,7 +166,8 @@ class LogProcessor(BaseProcessor):
         log_fn = getattr(logger, self._level, logger.info)
         log_fn(
             "Exchange[route=%s]: body=%s, properties=%s",
-            context.route_id, type(exchange.in_message.body).__name__,
+            context.route_id,
+            type(exchange.in_message.body).__name__,
             list(exchange.properties.keys()),
         )
 
@@ -172,6 +186,7 @@ class ValidateProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from pydantic import ValidationError
+
         body = exchange.in_message.body
         if not isinstance(body, dict):
             exchange.set_error(f"Ожидался dict, получен {type(body).__name__}")

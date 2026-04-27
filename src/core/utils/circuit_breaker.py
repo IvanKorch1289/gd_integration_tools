@@ -13,12 +13,8 @@ state machine в interfaces.CircuitBreaker.
 
 from __future__ import annotations
 
-from typing import Any
-
-from app.core.interfaces import (
-    CircuitBreaker as _CircuitBreakerImpl,
-    CircuitBreakerConfig,
-)
+from src.core.interfaces import CircuitBreaker as _CircuitBreakerImpl
+from src.core.interfaces import CircuitBreakerConfig
 
 __all__ = ("CircuitBreaker", "get_circuit_breaker")
 
@@ -37,8 +33,7 @@ class CircuitBreaker:
 
     def __init__(self, *, reset_timeout: int = 30, name: str = "default") -> None:
         self._impl = _CircuitBreakerImpl(
-            name,
-            CircuitBreakerConfig(recovery_timeout=float(reset_timeout)),
+            name, CircuitBreakerConfig(recovery_timeout=float(reset_timeout))
         )
         self._name = name
 
@@ -90,7 +85,7 @@ class CircuitBreaker:
 
 
 def get_circuit_breaker(
-    *, reset_timeout: int = 30, name: str = "default",
+    *, reset_timeout: int = 30, name: str = "default"
 ) -> CircuitBreaker:
     """Создаёт экземпляр Circuit Breaker (adapter).
 

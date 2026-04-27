@@ -29,8 +29,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.dsl.commands.registry import action_handler_registry
-from app.schemas.invocation import ActionCommandSchema
+from src.dsl.commands.registry import action_handler_registry
+from src.schemas.invocation import ActionCommandSchema
 
 __all__ = ("BaseEntrypoint", "dispatch_action")
 
@@ -66,23 +66,13 @@ async def dispatch_action(
     if extra_meta:
         meta.update(extra_meta)
 
-    command = ActionCommandSchema(
-        action=action,
-        payload=payload or {},
-        meta=meta,
-    )
+    command = ActionCommandSchema(action=action, payload=payload or {}, meta=meta)
 
     start = time.monotonic()
     try:
         result = await action_handler_registry.dispatch(command)
         elapsed_ms = (time.monotonic() - start) * 1000
-        logger.debug(
-            "%s dispatch %s [ref=%s]: %.1fms",
-            source,
-            action,
-            cid,
-            elapsed_ms,
-        )
+        logger.debug("%s dispatch %s [ref=%s]: %.1fms", source, action, cid, elapsed_ms)
         return result
     except Exception as exc:
         elapsed_ms = (time.monotonic() - start) * 1000

@@ -31,7 +31,9 @@ class AsyncSoapClient:
     soap_action: str = ""
     timeout: float = 30.0
 
-    async def call(self, envelope_xml: str, headers: dict[str, str] | None = None) -> str:
+    async def call(
+        self, envelope_xml: str, headers: dict[str, str] | None = None
+    ) -> str:
         """Отправляет SOAP-envelope, возвращает raw XML-ответ."""
         import httpx
 
@@ -42,7 +44,9 @@ class AsyncSoapClient:
         if headers:
             hdr.update(headers)
         async with httpx.AsyncClient(http2=True, timeout=self.timeout) as client:
-            resp = await client.post(self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr)
+            resp = await client.post(
+                self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr
+            )
             resp.raise_for_status()
             return resp.text
 

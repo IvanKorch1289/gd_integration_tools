@@ -7,16 +7,18 @@
 
 try:
     import xxhash
+
     _USE_XXHASH = True
 except ImportError:
     import hashlib
+
     _USE_XXHASH = False
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from app.utilities.utils import AsyncChunkIterator
+from src.utilities.utils import AsyncChunkIterator
 
 __all__ = ("ResponseCacheMiddleware",)
 

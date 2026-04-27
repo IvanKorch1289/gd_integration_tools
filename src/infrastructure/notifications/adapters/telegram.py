@@ -23,8 +23,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -46,12 +45,7 @@ class TelegramAdapter:
         self._parse_mode = parse_mode  # "HTML" | "MarkdownV2" | None
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить сообщение в Telegram.
 
@@ -66,7 +60,7 @@ class TelegramAdapter:
         else:
             text = f"{subject}\n\n{body}"
 
-        from app.infrastructure.clients.transport.http_upstream import upstream
+        from src.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         url = f"/bot{token}/sendMessage"
@@ -97,9 +91,7 @@ def _html_escape(text: str) -> str:
     )
 
 
-assert isinstance(
-    TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel
-)
+assert isinstance(TelegramAdapter(bot_token_provider=lambda: ""), NotificationChannel)
 
 
 __all__ = ("TelegramAdapter",)

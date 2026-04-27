@@ -53,8 +53,8 @@ class OutboxListener:
 
     Usage:
 
-        from app.infrastructure.eventing.outbox_listener import OutboxListener
-        from app.infrastructure.eventing.outbox import OutboxPublisher
+        from src.infrastructure.eventing.outbox_listener import OutboxListener
+        from src.infrastructure.eventing.outbox import OutboxPublisher
 
         publisher = OutboxPublisher()
         listener = OutboxListener(
@@ -122,14 +122,14 @@ class OutboxListener:
             self._backup_task.cancel()
             try:
                 await self._backup_task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._backup_task = None
         if self._debounce_task is not None:
             self._debounce_task.cancel()
             try:
                 await self._debounce_task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._debounce_task = None
         if self._conn is not None:
@@ -143,11 +143,7 @@ class OutboxListener:
     # -- Private handlers ----------------------------------------------
 
     def _on_notify(
-        self,
-        connection: "asyncpg.Connection",
-        pid: int,
-        channel: str,
-        payload: str,
+        self, connection: "asyncpg.Connection", pid: int, channel: str, payload: str
     ) -> None:
         """asyncpg-callback. Вызывается sync, поэтому только enqueue."""
         if payload:

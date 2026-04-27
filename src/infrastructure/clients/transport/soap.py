@@ -16,7 +16,7 @@ from zeep import Client, Settings
 from zeep.exceptions import Error as ZeepError
 from zeep.exceptions import Fault as ZeepFault
 
-from app.core.errors import ServiceError
+from src.core.errors import ServiceError
 
 __all__ = ("SoapClient", "get_soap_client")
 
@@ -43,37 +43,21 @@ class SoapClient:
     """
 
     def __init__(
-        self,
-        wsdl_url: str,
-        *,
-        timeout: int = 30,
-        strict: bool = False,
+        self, wsdl_url: str, *, timeout: int = 30, strict: bool = False
     ) -> None:
         self.wsdl_url = wsdl_url
         self.timeout = timeout
-        self._settings = Settings(
-            strict=strict,
-            xml_huge_tree=True,
-        )
+        self._settings = Settings(strict=strict, xml_huge_tree=True)
         self._client: Client | None = None
 
     def _ensure_client(self) -> Client:
         """Ленивая инициализация zeep-клиента."""
         if self._client is None:
-            self._client = Client(
-                wsdl=self.wsdl_url,
-                settings=self._settings,
-            )
-            logger.info(
-                "SOAP-клиент инициализирован: %s", self.wsdl_url
-            )
+            self._client = Client(wsdl=self.wsdl_url, settings=self._settings)
+            logger.info("SOAP-клиент инициализирован: %s", self.wsdl_url)
         return self._client
 
-    def _call_sync(
-        self,
-        operation: str,
-        **kwargs: Any,
-    ) -> Any:
+    def _call_sync(self, operation: str, **kwargs: Any) -> Any:
         """Синхронный вызов SOAP-операции.
 
         Args:
@@ -88,11 +72,7 @@ class SoapClient:
         method = getattr(service, operation)
         return method(**kwargs)
 
-    async def call(
-        self,
-        operation: str,
-        **kwargs: Any,
-    ) -> Any:
+    async def call(self, operation: str, **kwargs: Any) -> Any:
         """Асинхронный вызов SOAP-операции.
 
         Args:
@@ -106,33 +86,15 @@ class SoapClient:
             ServiceError: При ошибке SOAP-вызова.
         """
         try:
-            result = await asyncio.to_thread(
-                self._call_sync, operation, **kwargs
-            )
-            logger.debug(
-                "SOAP вызов %s.%s выполнен",
-                self.wsdl_url,
-                operation,
-            )
+            result = await asyncio.to_thread(self._call_sync, operation, **kwargs)
+            logger.debug("SOAP вызов %s.%s выполнен", self.wsdl_url, operation)
             return result
         except ZeepFault as exc:
-            logger.error(
-                "SOAP Fault при вызове %s: %s",
-                operation,
-                exc.message,
-            )
-            raise ServiceError(
-                detail=f"SOAP Fault: {exc.message}"
-            ) from exc
+            logger.error("SOAP Fault при вызове %s: %s", operation, exc.message)
+            raise ServiceError(detail=f"SOAP Fault: {exc.message}") from exc
         except ZeepError as exc:
-            logger.error(
-                "SOAP ошибка при вызове %s: %s",
-                operation,
-                exc,
-            )
-            raise ServiceError(
-                detail=f"SOAP Error: {exc}"
-            ) from exc
+            logger.error("SOAP ошибка при вызове %s: %s", operation, exc)
+            raise ServiceError(detail=f"SOAP Error: {exc}") from exc
 
     def list_operations(self) -> list[str]:
         """Возвращает список доступных SOAP-операций.
@@ -144,9 +106,7 @@ class SoapClient:
         operations: list[str] = []
         for service in client.wsdl.services.values():
             for port in service.ports.values():
-                operations.extend(
-                    op.name for op in port.binding._operations.values()
-                )
+                operations.extend(op.name for op in port.binding._operations.values())
         return sorted(set(operations))
 
     async def close(self) -> None:
@@ -156,11 +116,7 @@ class SoapClient:
             self._client = None
 
 
-def get_soap_client(
-    wsdl_url: str,
-    *,
-    timeout: int = 30,
-) -> SoapClient:
+def get_soap_client(wsdl_url: str, *, timeout: int = 30) -> SoapClient:
     """Фабрика для создания SOAP-клиента.
 
     Args:

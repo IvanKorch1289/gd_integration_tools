@@ -4,15 +4,14 @@ These processors provide direct I/O capabilities within DSL pipelines,
 equivalent to Apache Camel's Component model.
 """
 
-import asyncio
 import logging
 from typing import Any, Callable
 
 import orjson
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "HttpCallProcessor",
@@ -56,7 +55,7 @@ class HttpCallProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.transport.http import HttpClient
+        from src.infrastructure.clients.transport.http import HttpClient
 
         client = HttpClient()
 
@@ -70,7 +69,7 @@ class HttpCallProcessor(BaseProcessor):
         if "{" in url and isinstance(exchange.in_message.body, dict):
             try:
                 url = url.format(**exchange.in_message.body)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 pass
 
         try:
@@ -125,7 +124,7 @@ class DatabaseQueryProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from sqlalchemy import text
 
-        from app.infrastructure.database.database import get_db_manager
+        from src.infrastructure.database.database import get_db_manager
 
         try:
             self._validate_sql(self._sql)
@@ -148,10 +147,14 @@ class DatabaseQueryProcessor(BaseProcessor):
                 if self._sql.strip().upper().startswith("SELECT"):
                     rows = [dict(row._mapping) for row in result.fetchall()]
                     exchange.set_property(self._result_property, rows)
-                    exchange.set_out(body=rows, headers=dict(exchange.in_message.headers))
+                    exchange.set_out(
+                        body=rows, headers=dict(exchange.in_message.headers)
+                    )
                 else:
                     await conn.commit()
-                    exchange.set_property(self._result_property, {"rowcount": result.rowcount})
+                    exchange.set_property(
+                        self._result_property, {"rowcount": result.rowcount}
+                    )
 
         except Exception as exc:
             exchange.fail(f"Database query failed: {exc}")
@@ -178,7 +181,7 @@ class FileReadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
-        from app.dsl.engine.processors._path_safety import (
+        from src.dsl.engine.processors._path_safety import (
             PathTraversalError,
             validate_path,
         )
@@ -236,7 +239,7 @@ class FileWriteProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
-        from app.dsl.engine.processors._path_safety import (
+        from src.dsl.engine.processors._path_safety import (
             PathTraversalError,
             validate_path,
         )
@@ -271,9 +274,15 @@ class FileWriteProcessor(BaseProcessor):
                 content = orjson.dumps(body, default=str, option=orjson.OPT_INDENT_2)
                 async with aiofiles.open(path, "wb") as f:
                     await f.write(content)
-            elif fmt == "csv" and isinstance(body, list) and body and isinstance(body[0], dict):
+            elif (
+                fmt == "csv"
+                and isinstance(body, list)
+                and body
+                and isinstance(body[0], dict)
+            ):
                 import csv
                 import io
+
                 buf = io.StringIO()
                 writer = csv.DictWriter(buf, fieldnames=body[0].keys())
                 writer.writeheader()
@@ -311,7 +320,7 @@ class S3ReadProcessor(BaseProcessor):
         self._key_property = key_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.storage.s3_pool import storage_client
+        from src.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:
@@ -351,7 +360,7 @@ class S3WriteProcessor(BaseProcessor):
         self._content_type = content_type
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.storage.s3_pool import storage_client
+        from src.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:
@@ -434,7 +443,7 @@ class PollingConsumerProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.schemas.invocation import ActionCommandSchema
+        from src.schemas.invocation import ActionCommandSchema
 
         command = ActionCommandSchema(action=self._action, payload=self._payload)
         try:

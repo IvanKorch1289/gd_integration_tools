@@ -51,7 +51,9 @@ class BrowserClient:
         if self._proxy:
             launch_kwargs["proxy"] = {"server": self._proxy}
         self._browser = await self._playwright.chromium.launch(**launch_kwargs)
-        logger.info("Browser started (headless=%s, stealth=%s)", self._headless, self._stealth)
+        logger.info(
+            "Browser started (headless=%s, stealth=%s)", self._headless, self._stealth
+        )
 
     async def stop(self) -> None:
         if self._browser:
@@ -64,7 +66,10 @@ class BrowserClient:
 
     async def _new_context(self) -> Any:
         ctx_kwargs: dict[str, Any] = {
-            "viewport": {"width": random.randint(1280, 1920), "height": random.randint(720, 1080)},
+            "viewport": {
+                "width": random.randint(1280, 1920),
+                "height": random.randint(720, 1080),
+            },
             "user_agent": random.choice(_USER_AGENTS),
         }
         if self._stealth:
@@ -77,11 +82,15 @@ class BrowserClient:
         if self._human_delays:
             await asyncio.sleep(random.randint(min_ms, max_ms) / 1000)
 
-    async def navigate(self, url: str, wait_until: str = "domcontentloaded") -> dict[str, Any]:
+    async def navigate(
+        self, url: str, wait_until: str = "domcontentloaded"
+    ) -> dict[str, Any]:
         ctx = await self._new_context()
         page = await ctx.new_page()
         try:
-            response = await page.goto(url, wait_until=wait_until, timeout=self._timeout)
+            response = await page.goto(
+                url, wait_until=wait_until, timeout=self._timeout
+            )
             await self._human_delay()
             return {
                 "url": page.url,
@@ -123,7 +132,9 @@ class BrowserClient:
         finally:
             await ctx.close()
 
-    async def fill_form(self, url: str, fields: dict[str, str], submit_selector: str | None = None) -> dict[str, Any]:
+    async def fill_form(
+        self, url: str, fields: dict[str, str], submit_selector: str | None = None
+    ) -> dict[str, Any]:
         ctx = await self._new_context()
         page = await ctx.new_page()
         try:
@@ -173,8 +184,18 @@ class BrowserClient:
                 await self._human_delay()
 
                 if action == "navigate":
-                    resp = await page.goto(step["url"], wait_until="domcontentloaded", timeout=self._timeout)
-                    results.append({"action": "navigate", "url": page.url, "status": resp.status if resp else 0})
+                    resp = await page.goto(
+                        step["url"],
+                        wait_until="domcontentloaded",
+                        timeout=self._timeout,
+                    )
+                    results.append(
+                        {
+                            "action": "navigate",
+                            "url": page.url,
+                            "status": resp.status if resp else 0,
+                        }
+                    )
 
                 elif action == "click":
                     await page.click(step["selector"])
@@ -185,7 +206,9 @@ class BrowserClient:
                     results.append({"action": "fill", "selector": step["selector"]})
 
                 elif action == "wait":
-                    await page.wait_for_selector(step["selector"], timeout=step.get("timeout", self._timeout))
+                    await page.wait_for_selector(
+                        step["selector"], timeout=step.get("timeout", self._timeout)
+                    )
                     results.append({"action": "wait", "selector": step["selector"]})
 
                 elif action == "extract":

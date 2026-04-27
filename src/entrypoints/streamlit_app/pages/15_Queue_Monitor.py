@@ -49,5 +49,6 @@ else:
 
 if auto_refresh:
     import time
+
     time.sleep(10)
     st.rerun()

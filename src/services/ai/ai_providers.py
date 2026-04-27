@@ -20,12 +20,7 @@ from typing import Any
 
 import httpx
 
-__all__ = (
-    "ClaudeProvider",
-    "GeminiProvider",
-    "OllamaProvider",
-    "OpenAIProvider",
-)
+__all__ = ("ClaudeProvider", "GeminiProvider", "OllamaProvider", "OpenAIProvider")
 
 logger = logging.getLogger("services.ai_providers")
 
@@ -41,7 +36,9 @@ class ClaudeProvider:
 
     name = "claude"
 
-    def __init__(self, *, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022") -> None:
+    def __init__(
+        self, *, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022"
+    ) -> None:
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self.model = model
         self.base_url = "https://api.anthropic.com/v1"
@@ -52,12 +49,12 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Anthropic не предоставляет embeddings API — используйте Voyage/OpenAI."""
         raise NotImplementedError("Claude API не поддерживает embeddings")
@@ -106,9 +103,7 @@ class ClaudeProvider:
 
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{self.base_url}/messages",
-                headers=headers,
-                json=payload,
+                f"{self.base_url}/messages", headers=headers, json=payload
             )
             resp.raise_for_status()
             return resp.json()
@@ -124,7 +119,9 @@ class GeminiProvider:
 
     name = "gemini"
 
-    def __init__(self, *, api_key: str | None = None, model: str = "gemini-1.5-pro") -> None:
+    def __init__(
+        self, *, api_key: str | None = None, model: str = "gemini-1.5-pro"
+    ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model = model
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
@@ -137,15 +134,62 @@ class GeminiProvider:
                 parts = cands[0].get("content", {}).get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
-        """Gemini embedContent через отдельный endpoint (не реализовано пока)."""
-        raise NotImplementedError("Gemini embeddings требует отдельной реализации")
+        """Возвращает embeddings батча текстов через Gemini embedContent.
+
+        Использует endpoint ``/v1beta/models/{model}:embedContent``
+        с ``taskType=RETRIEVAL_DOCUMENT``. Для каждого текста выполняется
+        отдельный HTTP-запрос (Gemini не поддерживает batch-вход
+        в embedContent). Requires ``GEMINI_API_KEY``.
+
+        Args:
+            texts: Список входных текстов.
+            model: Имя embedding-модели (например ``text-embedding-004``).
+                По умолчанию ``text-embedding-004``.
+
+        Returns:
+            Список векторов (каждый — ``list[float]``) в порядке входа.
+
+        Raises:
+            RuntimeError: Если ``GEMINI_API_KEY`` не задан или
+                ответ Gemini не содержит поле ``embedding.values``.
+        """
+        if not self.api_key:
+            raise RuntimeError("GEMINI_API_KEY not set")
+
+        embed_model = model or "text-embedding-004"
+        url = f"{self.base_url}/models/{embed_model}:embedContent"
+        headers = {"Content-Type": "application/json"}
+        params = {"key": self.api_key}
+
+        vectors: list[list[float]] = []
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            for text in texts:
+                payload = {
+                    "model": f"models/{embed_model}",
+                    "content": {"parts": [{"text": text}]},
+                    "taskType": "RETRIEVAL_DOCUMENT",
+                }
+                response = await client.post(
+                    url, headers=headers, params=params, json=payload
+                )
+                response.raise_for_status()
+                data = response.json()
+                values = data.get("embedding", {}).get("values") or data.get(
+                    "embeddings", [{}]
+                )[0].get("values")
+                if not values:
+                    raise RuntimeError(
+                        f"Gemini embeddings: empty response for model={embed_model}"
+                    )
+                vectors.append([float(v) for v in values])
+        return vectors
 
     async def chat(
         self,
@@ -165,10 +209,7 @@ class GeminiProvider:
         contents = []
         for msg in messages:
             role = "user" if msg.get("role") == "user" else "model"
-            contents.append({
-                "role": role,
-                "parts": [{"text": msg.get("content", "")}],
-            })
+            contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
 
         payload = {
             "contents": contents,
@@ -201,18 +242,22 @@ class OllamaProvider:
     name = "ollama"
 
     def __init__(self, *, base_url: str | None = None, model: str = "llama3.2") -> None:
-        self.base_url = base_url or os.environ.get("OLLAMA_URL", "http://localhost:11434")
+        self.base_url = base_url or os.environ.get(
+            "OLLAMA_URL", "http://localhost:11434"
+        )
         self.model = model
 
     def extract_text(self, response: dict[str, Any]) -> str:
         """Извлекает текст из Ollama (``message.content``)."""
         try:
-            return response.get("message", {}).get("content", "") or response.get("response", "")
-        except (AttributeError, TypeError):
+            return response.get("message", {}).get("content", "") or response.get(
+                "response", ""
+            )
+        except AttributeError, TypeError:
             return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Embeddings через Ollama /api/embeddings (по одному запросу на текст)."""
         out: list[list[float]] = []
@@ -241,20 +286,14 @@ class OllamaProvider:
         payload: dict[str, Any] = {
             "model": model or self.model,
             "messages": messages,
-            "options": {
-                "num_predict": max_tokens,
-                "temperature": temperature,
-            },
+            "options": {"num_predict": max_tokens, "temperature": temperature},
             "stream": stream,
         }
         if tools:
             payload["tools"] = tools
 
         async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(
-                f"{self.base_url}/api/chat",
-                json=payload,
-            )
+            resp = await client.post(f"{self.base_url}/api/chat", json=payload)
             resp.raise_for_status()
             return resp.json()
 
@@ -282,7 +321,9 @@ class OpenAIProvider:
     ) -> None:
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
-        self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+        self.base_url = (
+            base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+        ).rstrip("/")
 
     def extract_text(self, response: dict[str, Any]) -> str:
         """OpenAI-format: ``choices[0].message.content``."""
@@ -291,21 +332,24 @@ class OpenAIProvider:
             if choices:
                 msg = choices[0].get("message", {})
                 return msg.get("content", "") or ""
-        except (AttributeError, IndexError, TypeError):
+        except AttributeError, IndexError, TypeError:
             pass
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None,
+        self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
         """Embeddings через ``/embeddings`` endpoint (batch-запрос)."""
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
         payload = {"model": model or "text-embedding-3-small", "input": texts}
-        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{self.base_url}/embeddings", headers=headers, json=payload,
+                f"{self.base_url}/embeddings", headers=headers, json=payload
             )
             resp.raise_for_status()
             data = resp.json()
@@ -341,9 +385,7 @@ class OpenAIProvider:
         }
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
+                f"{self.base_url}/chat/completions", headers=headers, json=payload
             )
             resp.raise_for_status()
             return resp.json()
@@ -379,7 +421,10 @@ def register_extended_providers(agent: Any) -> int:
         agent._providers["google"] = gemini.chat
         registered += 1
 
-    if os.environ.get("OLLAMA_URL") or os.environ.get("OLLAMA_ENABLED", "").lower() == "true":
+    if (
+        os.environ.get("OLLAMA_URL")
+        or os.environ.get("OLLAMA_ENABLED", "").lower() == "true"
+    ):
         ollama = OllamaProvider()
         agent._providers["ollama"] = ollama.chat
         agent._providers["local"] = ollama.chat

@@ -6,7 +6,10 @@ import hashlib
 import logging
 from typing import Any
 
-from app.infrastructure.clients.storage.s3_pool.vector_store import BaseVectorStore, get_vector_store
+from src.infrastructure.clients.storage.s3_pool.vector_store import (
+    BaseVectorStore,
+    get_vector_store,
+)
 
 __all__ = ("RAGService", "get_rag_service")
 
@@ -32,13 +35,13 @@ class RAGService:
 
         from fastembed import TextEmbedding
 
-        from app.core.config.rag_settings import rag_settings
+        from src.core.config.rag_settings import rag_settings
 
         self._embedder = TextEmbedding(model_name=rag_settings.embedding_model)
         return self._embedder
 
     def _chunk_text(self, text: str) -> list[str]:
-        from app.core.config.rag_settings import rag_settings
+        from src.core.config.rag_settings import rag_settings
 
         size = rag_settings.chunk_size
         overlap = rag_settings.chunk_overlap
@@ -62,9 +65,7 @@ class RAGService:
 
         model = self._get_embedder()
         # Материализуем generator в список np.ndarray внутри потока.
-        arrays = await asyncio.to_thread(
-            lambda: [vec for vec in model.embed(texts)]
-        )
+        arrays = await asyncio.to_thread(lambda: [vec for vec in model.embed(texts)])
         return [arr.tolist() for arr in arrays]
 
     async def ingest(
@@ -80,25 +81,24 @@ class RAGService:
 
         ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
         metadatas = [
-            {**(metadata or {}), "namespace": namespace, "doc_id": doc_id, "chunk_idx": i}
+            {
+                **(metadata or {}),
+                "namespace": namespace,
+                "doc_id": doc_id,
+                "chunk_idx": i,
+            }
             for i in range(len(chunks))
         ]
 
         await self._store.upsert(
-            embeddings=embeddings,
-            documents=chunks,
-            ids=ids,
-            metadatas=metadatas,
+            embeddings=embeddings, documents=chunks, ids=ids, metadatas=metadatas
         )
 
         logger.info("Ingested document %s: %d chunks", doc_id, len(chunks))
         return doc_id
 
     async def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        namespace: str | None = None,
+        self, query: str, top_k: int = 5, namespace: str | None = None
     ) -> list[dict[str, Any]]:
         """Семантический поиск."""
         embedding = (await self._embed([query]))[0]
@@ -107,9 +107,7 @@ class RAGService:
         if namespace:
             where = {"namespace": namespace}
 
-        return await self._store.query(
-            embedding=embedding, top_k=top_k, where=where
-        )
+        return await self._store.query(embedding=embedding, top_k=top_k, where=where)
 
     async def augment_prompt(
         self,
@@ -128,8 +126,7 @@ class RAGService:
         context = "\n---\n".join(context_parts)
 
         return (
-            f"{system_prompt}\n\nКонтекст из базы знаний:\n{context}"
-            f"\n\nВопрос: {query}"
+            f"{system_prompt}\n\nКонтекст из базы знаний:\n{context}\n\nВопрос: {query}"
         )
 
     async def delete(self, document_id: str) -> bool:

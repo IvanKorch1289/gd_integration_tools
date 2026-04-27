@@ -10,8 +10,8 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.dsl.service import get_dsl_service
-from app.entrypoints.websocket.ws_manager import ws_manager
+from src.dsl.service import get_dsl_service
+from src.entrypoints.websocket.ws_manager import ws_manager
 
 __all__ = ("ws_router",)
 
@@ -42,9 +42,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             if action == "subscribe":
                 groups = data.get("groups", [])
                 for group in groups:
-                    ws_manager._groups.setdefault(
-                        group, set()
-                    ).add(client_id)
+                    ws_manager._groups.setdefault(group, set()).add(client_id)
                 await ws_manager.send_json(
                     client_id,
                     {
@@ -61,26 +59,14 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 exchange = await dsl.dispatch(
                     route_id=action,
                     body=data.get("payload", {}),
-                    headers={
-                        "ws-client-id": client_id,
-                        "ws-action": action,
-                    },
+                    headers={"ws-client-id": client_id, "ws-action": action},
                 )
 
-                result = (
-                    exchange.out_message.body
-                    if exchange.out_message
-                    else None
-                )
+                result = exchange.out_message.body if exchange.out_message else None
                 error = exchange.error
 
                 await ws_manager.send_json(
-                    client_id,
-                    {
-                        "action": action,
-                        "result": result,
-                        "error": error,
-                    },
+                    client_id, {"action": action, "result": result, "error": error}
                 )
 
             except KeyError:
@@ -93,18 +79,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     },
                 )
             except Exception as exc:
-                logger.exception(
-                    "WS ошибка обработки action=%s: %s",
-                    action,
-                    exc,
-                )
+                logger.exception("WS ошибка обработки action=%s: %s", action, exc)
                 await ws_manager.send_json(
-                    client_id,
-                    {
-                        "action": action,
-                        "result": None,
-                        "error": str(exc),
-                    },
+                    client_id, {"action": action, "result": None, "error": str(exc)}
                 )
 
     except WebSocketDisconnect:

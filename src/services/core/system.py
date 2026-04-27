@@ -41,14 +41,16 @@ class SystemService:
     @property
     def tech(self) -> Any:
         if self._tech is None:
-            from app.services.core.tech import get_tech_service
+            from src.services.core.tech import get_tech_service
+
             self._tech = get_tech_service()
         return self._tech
 
     @property
     def admin(self) -> Any:
         if self._admin is None:
-            from app.services.core.admin import get_admin_service
+            from src.services.core.admin import get_admin_service
+
             self._admin = get_admin_service()
         return self._admin
 
@@ -57,14 +59,20 @@ class SystemService:
     async def health(self) -> dict[str, Any]:
         """Unified health check через HealthAggregator."""
         try:
-            from app.infrastructure.application.health_aggregator import get_health_aggregator
+            from src.infrastructure.application.health_aggregator import (
+                get_health_aggregator,
+            )
+
             return await get_health_aggregator().check_all()
         except ImportError:
             return await self.tech.check_all_services()
 
     async def component_health(self, name: str) -> dict[str, Any]:
         """Health одного компонента."""
-        from app.infrastructure.application.health_aggregator import get_health_aggregator
+        from src.infrastructure.application.health_aggregator import (
+            get_health_aggregator,
+        )
+
         return await get_health_aggregator().check_single(name)
 
     # ── Configuration ───────────────────────────────────────
@@ -109,7 +117,8 @@ class SystemService:
     async def slo_report(self) -> dict[str, Any]:
         """P50/P95/P99 по всем DSL маршрутам."""
         try:
-            from app.infrastructure.application.slo_tracker import get_slo_tracker
+            from src.infrastructure.application.slo_tracker import get_slo_tracker
+
             return get_slo_tracker().get_report()
         except ImportError:
             return {}

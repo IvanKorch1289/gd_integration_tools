@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.infrastructure.external_apis.logging_service import app_logger
+from src.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("lifespan",)
 
@@ -18,16 +18,17 @@ def _register_protocol_providers() -> None:
     соответствующая опциональная зависимость не установлена (например, нет
     ollama или langfuse), провайдер просто не регистрируется.
     """
-    from app.core.providers_registry import register_provider
+    from src.core.providers_registry import register_provider
 
     # LLM провайдеры (работают если есть env-переменные с ключами).
     try:
-        from app.services.ai.ai_providers import (
+        from src.services.ai.ai_providers import (
             ClaudeProvider,
             GeminiProvider,
             OllamaProvider,
             OpenAIProvider,
         )
+
         register_provider("llm", "openai", OpenAIProvider())
         register_provider("llm", "claude", ClaudeProvider())
         register_provider("llm", "gemini", GeminiProvider())
@@ -39,13 +40,14 @@ def _register_protocol_providers() -> None:
     # Позволяет бизнес-коду делать get_provider("exporter", "csv") и
     # подменять реализации (csv-по-другому, xlsx-через polars и т.п.).
     try:
-        from app.services.io.export_service import (
+        from src.services.io.export_service import (
             CsvExporter,
             ExcelExporter,
             JsonExporter,
             ParquetExporter,
             PdfExporter,
         )
+
         register_provider("exporter", "csv", CsvExporter())
         register_provider("exporter", "xlsx", ExcelExporter())
         register_provider("exporter", "pdf", PdfExporter())
@@ -56,20 +58,22 @@ def _register_protocol_providers() -> None:
 
     # Agent memory (Redis-backed).
     try:
-        from app.services.ai.agent_memory import get_agent_memory_service
+        from src.services.ai.agent_memory import get_agent_memory_service
+
         register_provider("memory", "redis", get_agent_memory_service())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Memory backend registration skipped: %s", exc)
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
-        from app.services.ops.notification_adapters import (
+        from src.services.ops.notification_adapters import (
             EmailNotificationAdapter,
             ExpressNotificationAdapter,
             TelegramNotificationAdapter,
             WebhookNotificationAdapter,
         )
-        from app.services.ops.notification_hub import get_notification_hub
+        from src.services.ops.notification_hub import get_notification_hub
+
         register_provider("notifier", "email", EmailNotificationAdapter())
         register_provider("notifier", "express", ExpressNotificationAdapter())
         register_provider("notifier", "telegram", TelegramNotificationAdapter())
@@ -81,13 +85,37 @@ def _register_protocol_providers() -> None:
 
     # Prompt store (in-memory fallback, при наличии LangFuse — он приоритетен).
     try:
-        from app.services.ai.prompt_registry import get_prompt_registry
+        from src.services.ai.prompt_registry import get_prompt_registry
+
         register_provider("prompt_store", "default", get_prompt_registry())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Prompt store registration skipped: %s", exc)
 
-    from app.core.providers_registry import list_providers
+    from src.core.providers_registry import list_providers
+
     app_logger.info("Protocol providers registered: %s", list_providers())
+
+
+def _validate_cache_layers() -> None:
+    """Проверяет отсутствие двойного кэширования (ADR-004) на старте.
+
+    Использует глобальный ``cache_config_registry`` из
+    ``src.infrastructure.cache``. Каждый сервис/репозиторий, включающий
+    кэш, обязан зарегистрироваться в этом реестре через
+    ``cache_config_registry.register(entity=..., layer=..., enabled=True)``.
+
+    При обнаружении конфликта падаем fail-fast с ``CacheDuplicationError``
+    — лучше не запустить приложение, чем работать с неконсистентной
+    инвалидацией кэша.
+    """
+    from src.infrastructure.cache import cache_config_registry
+    from src.infrastructure.cache.validator import CacheLayerValidator
+
+    CacheLayerValidator().validate(cache_config_registry)
+    app_logger.info(
+        "Cache layer validation passed (ADR-004). Entries: %d",
+        len(cache_config_registry.entries),
+    )
 
 
 @asynccontextmanager
@@ -95,16 +123,16 @@ async def lifespan(app: FastAPI):
     """
     Управляет жизненным циклом приложения FastAPI.
     """
-    from app.core.service_setup import register_all_services
-    from app.dsl.commands.setup import register_action_handlers
-    from app.dsl.routes import register_dsl_routes
-    from app.infrastructure.setup_infra import ending, starting
+    from src.dsl.commands.setup import register_action_handlers
+    from src.dsl.routes import register_dsl_routes
+    from src.infrastructure.application.service_setup import register_all_services
+    from src.infrastructure.setup_infra import ending, starting
 
     app_logger.info("Запуск приложения...")
     startup_completed = False
 
     try:
-        from app.core.di import register_app_state
+        from src.infrastructure.application.di import register_app_state
 
         register_app_state(app)
 
@@ -112,16 +140,18 @@ async def lifespan(app: FastAPI):
         register_action_handlers()
         register_dsl_routes()
         _register_protocol_providers()
+        _validate_cache_layers()
         await starting()
 
-        from app.workflows.outbox_worker import start_outbox_worker
+        from src.workflows.outbox_worker import start_outbox_worker
+
         start_outbox_worker(interval_seconds=5, batch_size=100)
 
         startup_completed = True
         app.state.infrastructure_ready = True
 
-        from app.dsl.commands.registry import action_handler_registry
-        from app.dsl.registry import route_registry
+        from src.dsl.commands.registry import action_handler_registry
+        from src.dsl.registry import route_registry
 
         app_logger.info(
             "Приложение успешно запущено: %d actions, %d DSL-маршрутов",
@@ -149,7 +179,8 @@ async def lifespan(app: FastAPI):
         app.state.infrastructure_ready = False
 
         try:
-            from app.workflows.outbox_worker import stop_outbox_worker
+            from src.workflows.outbox_worker import stop_outbox_worker
+
             await stop_outbox_worker()
         except Exception as worker_exc:  # noqa: BLE001
             app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)

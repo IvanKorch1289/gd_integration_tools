@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-
 # ────────────────── Health Check ──────────────────
 
 
@@ -66,7 +65,9 @@ class MessageBroker(ABC):
     """Абстракция message broker (Kafka, RabbitMQ, Redis Streams, NATS)."""
 
     @abstractmethod
-    async def publish(self, topic: str, message: bytes, headers: dict[str, str] | None = None) -> None: ...
+    async def publish(
+        self, topic: str, message: bytes, headers: dict[str, str] | None = None
+    ) -> None: ...
 
     @abstractmethod
     async def subscribe(self, topic: str, group: str | None = None) -> Any: ...
@@ -88,7 +89,9 @@ class ObjectStorage(ABC):
     """Абстракция объектного хранилища (S3, Azure Blob, GCS, MinIO)."""
 
     @abstractmethod
-    async def upload(self, key: str, data: bytes, content_type: str | None = None) -> str: ...
+    async def upload(
+        self, key: str, data: bytes, content_type: str | None = None
+    ) -> str: ...
 
     @abstractmethod
     async def download(self, key: str) -> bytes: ...
@@ -121,6 +124,7 @@ class AsyncLifecycle(ABC):
 
 class ManagedResource(AsyncLifecycle, Healthcheck):
     """Компонент с lifecycle + health check."""
+
     pass
 
 
@@ -164,7 +168,7 @@ class CircuitBreaker:
 
         # Попытка использовать aiocircuitbreaker как primary-реализацию.
         try:
-            from aiocircuitbreaker import CircuitBreaker as _AioCB  # type: ignore[import-untyped]
+            from aiocircuitbreaker import CircuitBreaker as _AioCB
 
             self._aio = _AioCB(
                 failure_threshold=self._config.failure_threshold,
@@ -214,7 +218,9 @@ class CircuitBreaker:
             raise CircuitBreakerOpenError(self.name)
         return self
 
-    async def __aexit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> None:
+    async def __aexit__(
+        self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any
+    ) -> None:
         if exc_val is None:
             self.record_success()
         else:
@@ -294,12 +300,10 @@ class AsyncBatcher:
     """Generic async batcher — накапливает items, flush по batch_size или interval."""
 
     def __init__(
-        self,
-        flush_fn: Any,
-        batch_size: int = 100,
-        flush_interval_seconds: float = 5.0,
+        self, flush_fn: Any, batch_size: int = 100, flush_interval_seconds: float = 5.0
     ) -> None:
         import asyncio
+
         self._flush_fn = flush_fn
         self._batch_size = batch_size
         self._interval = flush_interval_seconds
@@ -309,7 +313,6 @@ class AsyncBatcher:
         self._running = False
 
     async def add(self, item: Any) -> None:
-        import asyncio
         async with self._lock:
             self._buffer.append(item)
             if len(self._buffer) >= self._batch_size:
@@ -329,6 +332,7 @@ class AsyncBatcher:
 
     async def start(self) -> None:
         import asyncio
+
         self._running = True
         self._task = asyncio.create_task(self._periodic_flush())
 
@@ -341,6 +345,7 @@ class AsyncBatcher:
 
     async def _periodic_flush(self) -> None:
         import asyncio
+
         while self._running:
             await asyncio.sleep(self._interval)
             async with self._lock:

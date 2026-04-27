@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 
 class QueueSettings(BaseSettingsWithLoader):
@@ -185,20 +185,16 @@ class GRPCSettings(BaseSettingsWithLoader):
         description="Включить TLS для gRPC (обязательно в prod для TCP-портов)",
     )
     server_cert_path: str = Field(
-        default="",
-        description="Путь к серверному сертификату (PEM)",
+        default="", description="Путь к серверному сертификату (PEM)"
     )
     server_key_path: str = Field(
-        default="",
-        description="Путь к приватному ключу сервера (PEM)",
+        default="", description="Путь к приватному ключу сервера (PEM)"
     )
     ca_cert_path: str = Field(
-        default="",
-        description="Путь к CA-сертификату для mTLS (опционально)",
+        default="", description="Путь к CA-сертификату для mTLS (опционально)"
     )
     require_client_auth: bool = Field(
-        default=False,
-        description="Требовать клиентский сертификат (mTLS)",
+        default=False, description="Требовать клиентский сертификат (mTLS)"
     )
 
     @computed_field(description="Сформировать URI для подключения к сокету")

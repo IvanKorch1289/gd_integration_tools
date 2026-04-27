@@ -1,6 +1,5 @@
 """Orders — CRUD заказов."""
 
-import json
 import sys
 from pathlib import Path
 
@@ -45,10 +44,12 @@ with st.expander("Создать заказ"):
 
         if st.form_submit_button("Создать"):
             try:
-                result = client.create_order({
-                    "pledge_gd_id": int(pledge_gd_id),
-                    "order_kind_id": int(order_kind_id),
-                })
+                result = client.create_order(
+                    {
+                        "pledge_gd_id": int(pledge_gd_id),
+                        "order_kind_id": int(order_kind_id),
+                    }
+                )
                 st.success(f"Заказ создан: {result}")
                 st.rerun()
             except Exception as exc:
@@ -57,7 +58,9 @@ with st.expander("Создать заказ"):
 # ──────────── Удаление заказа ────────────
 
 with st.expander("Удалить заказ"):
-    order_id = st.number_input("ID заказа для удаления", min_value=1, step=1, key="delete_id")
+    order_id = st.number_input(
+        "ID заказа для удаления", min_value=1, step=1, key="delete_id"
+    )
     if st.button("Удалить"):
         try:
             client.delete_order(int(order_id))

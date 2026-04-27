@@ -12,7 +12,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-
 __all__ = ("OpenAPIImporter", "ImportedRoute", "get_openapi_importer")
 
 logger = logging.getLogger(__name__)
@@ -86,7 +85,9 @@ class OpenAPIImporter:
             "routes": [self._route_summary(r) for r in routes],
         }
 
-    async def preview(self, spec: dict[str, Any] | str, prefix: str = "ext") -> dict[str, Any]:
+    async def preview(
+        self, spec: dict[str, Any] | str, prefix: str = "ext"
+    ) -> dict[str, Any]:
         """Превью без регистрации — показывает что будет сгенерировано."""
         result = await self.import_spec(spec, prefix)
         if result.get("status") == "imported":
@@ -113,8 +114,8 @@ class OpenAPIImporter:
             return {"status": "not_found", "title": title}
 
         registered = 0
-        from app.dsl.builder import RouteBuilder
-        from app.dsl.commands.registry import route_registry
+        from src.dsl.builder import RouteBuilder
+        from src.dsl.commands.registry import route_registry
 
         for route in routes:
             if route.registered:
@@ -124,8 +125,7 @@ class OpenAPIImporter:
                 action_name = route.route_id
                 pipeline = (
                     RouteBuilder.from_(
-                        route.route_id,
-                        source=f"http:{route.method}:{route.path}",
+                        route.route_id, source=f"http:{route.method}:{route.path}"
                     )
                     .dispatch_action(action_name)
                     .log()
@@ -173,16 +173,18 @@ class OpenAPIImporter:
         )
 
     @staticmethod
-    def _generate_code(route_id: str, method: str, path: str, summary: str, action: str) -> str:
+    def _generate_code(
+        route_id: str, method: str, path: str, summary: str, action: str
+    ) -> str:
         return (
-            f'def build_route():\n'
-            f'    from app.dsl.builder import RouteBuilder\n'
-            f'    return (\n'
+            f"def build_route():\n"
+            f"    from src.dsl.builder import RouteBuilder\n"
+            f"    return (\n"
             f'        RouteBuilder.from_("{route_id}", source="http:{method.upper()}:{path}")\n'
             f'        .dispatch_action("{action}")\n'
-            f'        .log()\n'
-            f'        .build()\n'
-            f'    )\n'
+            f"        .log()\n"
+            f"        .build()\n"
+            f"    )\n"
         )
 
     @staticmethod
@@ -198,6 +200,7 @@ class OpenAPIImporter:
     @staticmethod
     async def _fetch_spec(url: str) -> dict[str, Any]:
         import httpx
+
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.get(url)
             response.raise_for_status()

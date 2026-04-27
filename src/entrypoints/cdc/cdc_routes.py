@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.infrastructure.clients.external.cdc import get_cdc_client
+from src.infrastructure.clients.external.cdc import get_cdc_client
 
 __all__ = ("cdc_router",)
 
@@ -22,8 +22,7 @@ class CDCSubscribeRequest(BaseModel):
     profile: str = Field(description="Имя профиля внешней БД.")
     tables: list[str] = Field(description="Список таблиц для отслеживания.")
     target_action: str | None = Field(
-        default=None,
-        description="Action для вызова при обнаружении изменений.",
+        default=None, description="Action для вызова при обнаружении изменений."
     )
 
 
@@ -57,10 +56,7 @@ async def create_subscription(request: CDCSubscribeRequest) -> CDCSubscribeRespo
     )
 
 
-@cdc_router.delete(
-    "/subscriptions/{subscription_id}",
-    summary="Удалить CDC-подписку",
-)
+@cdc_router.delete("/subscriptions/{subscription_id}", summary="Удалить CDC-подписку")
 async def delete_subscription(subscription_id: str) -> dict[str, Any]:
     """Удаляет CDC-подписку."""
     client = get_cdc_client()
@@ -68,10 +64,7 @@ async def delete_subscription(subscription_id: str) -> dict[str, Any]:
     return {"deleted": deleted, "subscription_id": subscription_id}
 
 
-@cdc_router.get(
-    "/subscriptions",
-    summary="Список CDC-подписок",
-)
+@cdc_router.get("/subscriptions", summary="Список CDC-подписок")
 async def list_subscriptions() -> list[dict[str, Any]]:
     """Возвращает список активных CDC-подписок."""
     client = get_cdc_client()

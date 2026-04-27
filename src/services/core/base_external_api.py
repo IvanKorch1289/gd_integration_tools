@@ -46,7 +46,7 @@ class BaseExternalAPIClient:
     """
 
     def __init__(self, *, settings: Any, name: str | None = None) -> None:
-        from app.infrastructure.clients.transport.http import get_http_client_dependency
+        from src.infrastructure.clients.transport.http import get_http_client_dependency
 
         self.settings = settings
         self._name = name or self.__class__.__name__
@@ -67,17 +67,14 @@ class BaseExternalAPIClient:
         return urljoin(self.base_url, endpoint)
 
     def _headers(
-        self,
-        *,
-        extra: dict[str, str] | None = None,
-        use_waf: bool | None = None,
+        self, *, extra: dict[str, str] | None = None, use_waf: bool | None = None
     ) -> dict[str, str]:
         """Формирует headers с учётом WAF routing и auth.
 
         WAF режим (production): заменяет Authorization/endpoint на WAF-прокси.
         Dev режим: прямая передача API key.
         """
-        from app.core.config.settings import settings as app_settings
+        from src.core.config.settings import settings as app_settings
 
         headers: dict[str, str] = {"Content-Type": "application/json"}
 
@@ -90,7 +87,9 @@ class BaseExternalAPIClient:
             )
 
         if waf_active:
-            waf_headers = getattr(app_settings.http_base_settings, "waf_route_header", {})
+            waf_headers = getattr(
+                app_settings.http_base_settings, "waf_route_header", {}
+            )
             if isinstance(waf_headers, dict):
                 headers.update(waf_headers)
         else:
@@ -139,7 +138,6 @@ class BaseExternalAPIClient:
             )
         except Exception as exc:
             self._logger.error(
-                "%s request failed: %s %s — %s",
-                self._name, method, url, exc,
+                "%s request failed: %s %s — %s", self._name, method, url, exc
             )
             raise

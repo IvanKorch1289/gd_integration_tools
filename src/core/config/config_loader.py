@@ -10,7 +10,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from app.core.config.constants import consts
+from src.core.config.constants import consts
 
 __all__ = ("BaseSettingsWithLoader",)
 

@@ -21,8 +21,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Final, Literal
 
-from app.core.config.pooling import PoolingProfile
-
+from src.core.config.pooling import PoolingProfile
 
 _logger = logging.getLogger(__name__)
 
@@ -73,8 +72,12 @@ class PriorityRouter:
     )
 
     #: Приватные поля — заполняются в `start()`.
-    _tx_queue: asyncio.Queue[_QueueItem] = field(init=False, default_factory=asyncio.Queue)
-    _marketing_queue: asyncio.Queue[_QueueItem] = field(init=False, default_factory=asyncio.Queue)
+    _tx_queue: asyncio.Queue[_QueueItem] = field(
+        init=False, default_factory=asyncio.Queue
+    )
+    _marketing_queue: asyncio.Queue[_QueueItem] = field(
+        init=False, default_factory=asyncio.Queue
+    )
     _workers: list[asyncio.Task[None]] = field(init=False, default_factory=list)
     _started: bool = field(init=False, default=False)
 
@@ -149,7 +152,9 @@ class PriorityRouter:
                     f"backlog at qsize={queue.qsize()}"
                 ) from exc
 
-    async def _worker_loop(self, priority: Priority, queue: asyncio.Queue[_QueueItem]) -> None:
+    async def _worker_loop(
+        self, priority: Priority, queue: asyncio.Queue[_QueueItem]
+    ) -> None:
         while True:
             item = await queue.get()
             if item is _SENTINEL:

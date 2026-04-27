@@ -23,7 +23,7 @@ from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, String, fu
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.database.models.base import BaseModel
+from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("WorkflowEvent", "WorkflowEventType")
 
@@ -92,7 +92,7 @@ class WorkflowEvent(BaseModel):
     # используется BIGSERIAL seq как PK; created_at/updated_at бессмысленны
     # (события immutable, есть occurred_at).
     id: Mapped[int] = mapped_column(  # type: ignore[assignment]
-        BigInteger, primary_key=True, autoincrement=True,
+        BigInteger, primary_key=True, autoincrement=True
     )
 
     @property
@@ -119,12 +119,10 @@ class WorkflowEvent(BaseModel):
     )
 
     payload: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict, server_default="{}",
+        JSONB, nullable=False, default=dict, server_default="{}"
     )
 
-    step_name: Mapped[str | None] = mapped_column(
-        String(256), nullable=True,
-    )
+    step_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
 
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -136,7 +134,9 @@ class WorkflowEvent(BaseModel):
     # BaseModel требует created_at/updated_at — для append-only они совпадают
     # с occurred_at. Переопределяем, чтобы были timezone-aware.
     created_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
-        DateTime(timezone=True), default=func.now(), server_default=func.now(),
+        DateTime(timezone=True),
+        default=func.now(),
+        server_default=func.now(),
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]

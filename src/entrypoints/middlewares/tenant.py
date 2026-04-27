@@ -6,7 +6,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from app.infrastructure.observability.correlation import set_correlation_context
+from src.infrastructure.observability.correlation import set_correlation_context
 
 __all__ = ("TenantMiddleware",)
 

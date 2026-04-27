@@ -1,27 +1,29 @@
 import time
 from typing import Any
 
-from app.core.config.runtime_state import disabled_feature_flags
-from app.core.errors import RouteDisabledError
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.middleware import (
+from src.core.config.runtime_state import disabled_feature_flags
+from src.core.errors import RouteDisabledError
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
     MiddlewareChain,
     TimeoutMiddleware,
 )
-from app.dsl.engine.pipeline import Pipeline
-from app.dsl.engine.processors.base import BaseProcessor
-from app.dsl.engine.validation import pipeline_validator
+from src.dsl.engine.pipeline import Pipeline
+from src.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)
 
-_default_middleware = MiddlewareChain([
-    TimeoutMiddleware(default_timeout=30.0),
-    ErrorNormalizerMiddleware(),
-    MetricsMiddleware(),
-])
+_default_middleware = MiddlewareChain(
+    [
+        TimeoutMiddleware(default_timeout=30.0),
+        ErrorNormalizerMiddleware(),
+        MetricsMiddleware(),
+    ]
+)
 
 
 class ExecutionEngine:
@@ -49,8 +51,7 @@ class ExecutionEngine:
             and pipeline.feature_flag in disabled_feature_flags
         ):
             raise RouteDisabledError(
-                route_id=pipeline.route_id,
-                feature_flag=pipeline.feature_flag,
+                route_id=pipeline.route_id, feature_flag=pipeline.feature_flag
             )
 
     async def _execute_processor(
@@ -65,13 +66,17 @@ class ExecutionEngine:
         proc_start = time.monotonic()
 
         if context.logger is not None:
-            context.logger.debug("Executing '%s' for route '%s'", processor.name, route_id)
+            context.logger.debug(
+                "Executing '%s' for route '%s'", processor.name, route_id
+            )
 
-        timeout = self._timeout_mw.get_timeout(processor.name) if self._timeout_mw else None
+        timeout = (
+            self._timeout_mw.get_timeout(processor.name) if self._timeout_mw else None
+        )
 
         async with tracer.trace(route_id, processor.name, type(processor).__name__):
             await self._middleware.execute(
-                processor, exchange, context, timeout=timeout,
+                processor, exchange, context, timeout=timeout
             )
 
         return {
@@ -94,13 +99,14 @@ class ExecutionEngine:
                 exchange.status = ExchangeStatus.completed
 
         try:
-            from app.infrastructure.application.slo_tracker import get_slo_tracker
+            from src.infrastructure.application.slo_tracker import get_slo_tracker
+
             get_slo_tracker().record(
                 route_id=pipeline.route_id,
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(
@@ -118,7 +124,9 @@ class ExecutionEngine:
             result = pipeline_validator.validate(pipeline)
             if not result.valid:
                 errors = "; ".join(i.message for i in result.errors)
-                raise ValueError(f"Pipeline '{pipeline.route_id}' validation failed: {errors}")
+                raise ValueError(
+                    f"Pipeline '{pipeline.route_id}' validation failed: {errors}"
+                )
 
         runtime_context = context or ExecutionContext()
         runtime_context.route_id = pipeline.route_id
@@ -130,36 +138,50 @@ class ExecutionEngine:
         current_exchange.meta.source = pipeline.source
         current_exchange.status = ExchangeStatus.processing
 
-        from app.dsl.engine.tracer import get_tracer
+        from src.dsl.engine.tracer import get_tracer
+
         tracer = get_tracer()
         trace_log: list[dict[str, Any]] = []
         pipeline_start = time.monotonic()
 
         for processor in pipeline.processors:
-            if current_exchange.status == ExchangeStatus.failed or current_exchange.stopped:
+            if (
+                current_exchange.status == ExchangeStatus.failed
+                or current_exchange.stopped
+            ):
                 break
 
             try:
                 entry = await self._execute_processor(
-                    processor, current_exchange, runtime_context, pipeline.route_id, tracer,
+                    processor,
+                    current_exchange,
+                    runtime_context,
+                    pipeline.route_id,
+                    tracer,
                 )
                 trace_log.append(entry)
             except Exception as exc:
                 duration_ms = (time.monotonic() - pipeline_start) * 1000
                 if runtime_context.logger is not None:
                     runtime_context.logger.exception(
-                        "Processor '%s' failed in route '%s'", processor.name, pipeline.route_id,
+                        "Processor '%s' failed in route '%s'",
+                        processor.name,
+                        pipeline.route_id,
                     )
-                trace_log.append({
-                    "processor": processor.name,
-                    "type": type(processor).__name__,
-                    "duration_ms": duration_ms,
-                    "status": "error",
-                    "error": str(exc),
-                })
+                trace_log.append(
+                    {
+                        "processor": processor.name,
+                        "type": type(processor).__name__,
+                        "duration_ms": duration_ms,
+                        "status": "error",
+                        "error": str(exc),
+                    }
+                )
                 current_exchange.fail(str(exc))
                 break
 
         current_exchange.set_property("_trace", trace_log)
-        self._finalize(current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000)
+        self._finalize(
+            current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000
+        )
         return current_exchange

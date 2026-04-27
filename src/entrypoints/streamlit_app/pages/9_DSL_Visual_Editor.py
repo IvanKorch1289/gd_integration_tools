@@ -39,7 +39,9 @@ with col1:
         params[p] = st.text_input(p, key=f"p_{proc_type}_{p}")
 
     if st.button("+ Добавить", use_container_width=True):
-        st.session_state.steps.append({"type": proc_type, "params": {k: v for k, v in params.items() if v}})
+        st.session_state.steps.append(
+            {"type": proc_type, "params": {k: v for k, v in params.items() if v}}
+        )
 
     if st.button("Очистить", use_container_width=True):
         st.session_state.steps = []
@@ -48,7 +50,10 @@ with col2:
     st.subheader("Pipeline")
     for i, s in enumerate(st.session_state.steps):
         c1, c2 = st.columns([5, 1])
-        c1.write(f"{i+1}. **{s['type']}** " + ", ".join(f"{k}={v}" for k, v in s["params"].items()))
+        c1.write(
+            f"{i + 1}. **{s['type']}** "
+            + ", ".join(f"{k}={v}" for k, v in s["params"].items())
+        )
         if c2.button("✕", key=f"d_{i}"):
             st.session_state.steps.pop(i)
             st.rerun()

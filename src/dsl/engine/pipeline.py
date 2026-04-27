@@ -1,7 +1,10 @@
-from dataclasses import dataclass, field
+from __future__ import annotations
 
-from app.dsl.adapters.types import ProtocolType, TransportConfig
-from app.dsl.engine.processors import BaseProcessor
+from dataclasses import dataclass, field
+from typing import Any
+
+from src.dsl.adapters.types import ProtocolType, TransportConfig
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("Pipeline",)
 
@@ -59,3 +62,73 @@ class Pipeline:
         """
         self.processors.extend(processors)
         return self
+
+    def to_dict(self) -> dict[str, Any]:
+        """Сериализует Pipeline в словарь совместимый с YAML-лоадером.
+
+        Процессоры без реализации ``to_spec()`` пропускаются.
+
+        Returns:
+            Словарь с ключами route_id, source, description, processors.
+        """
+        result: dict[str, Any] = {"route_id": self.route_id}
+        if self.source:
+            result["source"] = self.source
+        if self.description:
+            result["description"] = self.description
+        if self.feature_flag:
+            result["feature_flag"] = self.feature_flag
+
+        specs = []
+        for proc in self.processors:
+            spec = proc.to_spec()
+            if spec is not None:
+                specs.append(spec)
+        if specs:
+            result["processors"] = specs
+
+        return result
+
+    def to_yaml(self) -> str:
+        """Сериализует Pipeline в YAML-строку.
+
+        Returns:
+            YAML-строка пригодная для передачи в ``load_pipeline_from_yaml()``.
+
+        Raises:
+            ImportError: Если PyYAML не установлен.
+        """
+        try:
+            import yaml
+        except ImportError as exc:
+            raise ImportError("PyYAML required: pip install pyyaml") from exc
+        return yaml.dump(self.to_dict(), allow_unicode=True, sort_keys=False)
+
+    def to_python(self) -> str:
+        """Генерирует Python-код для воссоздания Pipeline через RouteBuilder.
+
+        Returns:
+            Строка Python-кода.
+        """
+        lines = [
+            "from src.dsl.builder import RouteBuilder",
+            "",
+            "pipeline = (",
+            f"    RouteBuilder.from_({self.route_id!r}, source={self.source!r}",
+        ]
+        if self.description:
+            lines[-1] += f", description={self.description!r}"
+        lines[-1] += ")"
+
+        for proc in self.processors:
+            spec = proc.to_spec()
+            if spec is not None:
+                method, kwargs = next(iter(spec.items()))
+                args_str = ", ".join(f"{k}={v!r}" for k, v in kwargs.items())
+                lines.append(f"    .{method}({args_str})")
+            else:
+                lines.append(f"    # {proc.name} (сериализация недоступна)")
+
+        lines.append("    .build()")
+        lines.append(")")
+        return "\n".join(lines)

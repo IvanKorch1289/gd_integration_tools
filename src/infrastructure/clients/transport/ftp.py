@@ -61,7 +61,9 @@ class FTPClient:
             ssl=ssl_context,
             encoding=self._encoding,
         )
-        logger.info("FTP connected to %s:%d (TLS=%s)", self._host, self._port, self._use_tls)
+        logger.info(
+            "FTP connected to %s:%d (TLS=%s)", self._host, self._port, self._use_tls
+        )
 
     async def close(self) -> None:
         """Закрывает FTP-соединение."""
@@ -103,7 +105,6 @@ class FTPClient:
 
     async def upload_bytes(self, data: bytes, remote_path: str) -> None:
         """Загружает bytes на FTP-сервер."""
-        import io
 
         async with await self._get_client() as client:
             remote = PurePosixPath(remote_path)
@@ -138,12 +139,14 @@ class FTPClient:
         result: list[dict[str, Any]] = []
         async with await self._get_client() as client:
             async for entry_path, info in client.list(path):
-                result.append({
-                    "name": str(entry_path),
-                    "type": info.get("type", "unknown"),
-                    "size": int(info.get("size", 0)),
-                    "modify": info.get("modify"),
-                })
+                result.append(
+                    {
+                        "name": str(entry_path),
+                        "type": info.get("type", "unknown"),
+                        "size": int(info.get("size", 0)),
+                        "modify": info.get("modify"),
+                    }
+                )
         return result
 
     async def delete(self, remote_path: str) -> None:
@@ -168,7 +171,7 @@ class FTPClient:
         try:
             async with await self._get_client():
                 return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 
@@ -181,9 +184,5 @@ def get_ftp_client(
 ) -> FTPClient:
     """Factory для FTP-клиента (stateless, создаёт новый экземпляр)."""
     return FTPClient(
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-        use_tls=use_tls,
+        host=host, port=port, user=user, password=password, use_tls=use_tls
     )

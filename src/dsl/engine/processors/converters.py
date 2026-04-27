@@ -14,9 +14,9 @@ from typing import Any
 
 import orjson
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ConvertProcessor",)
 
@@ -31,6 +31,7 @@ class ConversionStrategy(ABC):
 class JsonToYaml(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import yaml
+
         if isinstance(data, str):
             data = orjson.loads(data)
         return yaml.dump(data, default_flow_style=False, allow_unicode=True)
@@ -39,6 +40,7 @@ class JsonToYaml(ConversionStrategy):
 class YamlToJson(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import yaml
+
         if isinstance(data, str):
             data = yaml.safe_load(data)
         return data
@@ -47,6 +49,7 @@ class YamlToJson(ConversionStrategy):
 class JsonToMsgpack(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import msgpack
+
         if isinstance(data, str):
             data = orjson.loads(data)
         return msgpack.packb(data, use_bin_type=True)
@@ -55,6 +58,7 @@ class JsonToMsgpack(ConversionStrategy):
 class MsgpackToJson(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import msgpack
+
         if isinstance(data, bytes):
             return msgpack.unpackb(data, raw=False)
         return data
@@ -63,16 +67,21 @@ class MsgpackToJson(ConversionStrategy):
 class JsonToXml(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import xmltodict
+
         if isinstance(data, str):
             data = orjson.loads(data)
         if not isinstance(data, dict):
             data = {"root": data}
-        return xmltodict.unparse(data if any(isinstance(v, dict) for v in data.values()) else {"root": data}, pretty=True)
+        return xmltodict.unparse(
+            data if any(isinstance(v, dict) for v in data.values()) else {"root": data},
+            pretty=True,
+        )
 
 
 class XmlToJson(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import xmltodict
+
         if isinstance(data, str):
             parsed = xmltodict.parse(data)
             if len(parsed) == 1:
@@ -84,7 +93,9 @@ class XmlToJson(ConversionStrategy):
 class CsvToParquet(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import io
+
         import pandas as pd
+
         if isinstance(data, str):
             df = pd.read_csv(io.StringIO(data))
         elif isinstance(data, list) and data and isinstance(data[0], dict):
@@ -99,7 +110,9 @@ class CsvToParquet(ConversionStrategy):
 class ParquetToCsv(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         import io
+
         import pandas as pd
+
         if isinstance(data, bytes):
             df = pd.read_parquet(io.BytesIO(data))
             return df.to_csv(index=False)
@@ -112,9 +125,12 @@ class HtmlToJson(ConversionStrategy):
             return data
         try:
             from selectolax.parser import HTMLParser
+
             tree = HTMLParser(data)
             result = {
-                "title": tree.css_first("title").text() if tree.css_first("title") else "",
+                "title": tree.css_first("title").text()
+                if tree.css_first("title")
+                else "",
                 "headings": [h.text() for h in tree.css("h1, h2, h3")],
                 "paragraphs": [p.text() for p in tree.css("p")],
                 "links": [
@@ -125,7 +141,6 @@ class HtmlToJson(ConversionStrategy):
             }
             return result
         except ImportError:
-            from html.parser import HTMLParser as StdParser
             return {"raw_text": data[:10000]}
 
     @staticmethod
@@ -145,6 +160,7 @@ class HtmlToJson(ConversionStrategy):
 class JsonToBson(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         from bson import BSON
+
         if isinstance(data, str):
             data = orjson.loads(data)
         if isinstance(data, dict):
@@ -155,6 +171,7 @@ class JsonToBson(ConversionStrategy):
 class BsonToJson(ConversionStrategy):
     def convert(self, data: Any) -> Any:
         from bson import BSON
+
         if isinstance(data, bytes):
             return BSON(data).decode()
         return data
@@ -166,6 +183,7 @@ class DictToCsv(ConversionStrategy):
             return data
         try:
             import pandas as pd
+
             df = pd.DataFrame(data)
             return df.to_csv(index=False)
         except ImportError:
@@ -182,7 +200,9 @@ class CsvToDict(ConversionStrategy):
             return data
         try:
             import io
+
             import pandas as pd
+
             df = pd.read_csv(io.StringIO(data))
             return df.to_dict(orient="records")
         except ImportError:
@@ -221,7 +241,9 @@ _STRATEGIES: dict[str, ConversionStrategy] = {
 }
 
 
-def register_conversion(from_fmt: str, to_fmt: str, strategy: ConversionStrategy) -> None:
+def register_conversion(
+    from_fmt: str, to_fmt: str, strategy: ConversionStrategy
+) -> None:
     _STRATEGIES[f"{from_fmt}→{to_fmt}"] = strategy
 
 
@@ -232,11 +254,7 @@ class ConvertProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        from_format: str,
-        to_format: str,
-        *,
-        name: str | None = None,
+        self, from_format: str, to_format: str, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"convert:{from_format}→{to_format}")
         self._key = f"{from_format}→{to_format}"

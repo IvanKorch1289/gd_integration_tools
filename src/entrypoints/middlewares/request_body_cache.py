@@ -26,7 +26,6 @@ Downstream middleware (audit_log, request_log, audit_replay) первым
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -58,18 +57,13 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self,
-        app: ASGIApp,
-        *,
-        max_body_size: int = _DEFAULT_MAX_BODY_SIZE,
+        self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE
     ) -> None:
         super().__init__(app)
         self.max_body_size = max(0, int(max_body_size))
 
     async def dispatch(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Кеширует body (если применимо) и передаёт управление дальше.
 
@@ -125,7 +119,7 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
             return None
         try:
             return int(raw)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
 
     @staticmethod
@@ -141,11 +135,7 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
         async def _replay_receive() -> Message:
             if not delivered["done"]:
                 delivered["done"] = True
-                return {
-                    "type": "http.request",
-                    "body": body,
-                    "more_body": False,
-                }
+                return {"type": "http.request", "body": body, "more_body": False}
             return {"type": "http.disconnect"}
 
         # Starlette Request стор `_receive` как атрибут; переопределяем.
@@ -162,7 +152,7 @@ def cached_body(request: Request) -> bytes | None:
 
     Использование::
 
-        from app.entrypoints.middlewares.request_body_cache import cached_body
+        from src.entrypoints.middlewares.request_body_cache import cached_body
 
         body = cached_body(request)
         if body is None:

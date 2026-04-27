@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.dsl.commands.registry import ActionHandlerRegistry, action_handler_registry
+from src.dsl.commands.registry import ActionHandlerRegistry, action_handler_registry
 
 __all__ = ("ExecutionContext",)
 

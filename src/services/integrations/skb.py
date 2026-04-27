@@ -2,9 +2,9 @@ from typing import Any
 from urllib.parse import urljoin
 from uuid import UUID
 
-from app.core.config.settings import SKBAPISettings, settings
-from app.core.errors import ServiceError
-from app.infrastructure.clients.transport.http import get_http_client_dependency
+from src.core.config.settings import SKBAPISettings, settings
+from src.core.errors import ServiceError
+from src.infrastructure.clients.transport.http import get_http_client_dependency
 
 __all__ = ("APISKBService", "get_skb_service")
 

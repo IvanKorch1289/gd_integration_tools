@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Mapping
+from typing import Any, Mapping
 
 import httpx
 from aiocircuitbreaker import CircuitBreaker, CircuitBreakerError
@@ -32,14 +31,14 @@ from tenacity import (
     wait_random,
 )
 
-from app.core.config.settings import settings
-from app.infrastructure.resilience.bulkhead import registry as bulkhead_registry
-from app.infrastructure.resilience.rate_limiter import (
+from src.core.config.settings import settings
+from src.infrastructure.resilience.bulkhead import registry as bulkhead_registry
+from src.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,
     ResourceRateLimiter,
 )
-from app.infrastructure.resilience.time_limiter import TimeLimiter
-from app.utilities.json_codec import json_dumps
+from src.infrastructure.resilience.time_limiter import TimeLimiter
+from src.utilities.json_codec import json_dumps
 
 __all__ = ("HttpxClient", "get_httpx_client")
 
@@ -156,18 +155,19 @@ class HttpxClient:
 
         retry_policy = retry(
             stop=stop_after_attempt(self._http_settings.max_retries + 1),
-            wait=wait_exponential(multiplier=self._http_settings.retry_backoff_factor) + wait_random(0, 0.5),
-            retry=retry_if_exception_type((httpx.TransportError, httpx.TimeoutException)),
+            wait=wait_exponential(multiplier=self._http_settings.retry_backoff_factor)
+            + wait_random(0, 0.5),
+            retry=retry_if_exception_type(
+                (httpx.TransportError, httpx.TimeoutException)
+            ),
             before_sleep=before_sleep_log(logger, logging.DEBUG),
             reraise=True,
         )
 
         try:
             async with bulkhead.guard():
-                return await self._time_limiter.run(
-                    breaker(retry_policy(_do))()
-                )
-        except (RetryError, CircuitBreakerError, httpx.HTTPError):
+                return await self._time_limiter.run(breaker(retry_policy(_do))())
+        except RetryError, CircuitBreakerError, httpx.HTTPError:
             raise
 
 

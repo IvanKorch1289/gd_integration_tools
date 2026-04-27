@@ -51,8 +51,7 @@ class PipelineValidator:
             return ValidationResult(valid=False, issues=issues)
 
         proc_names = [
-            getattr(p, "name", p.__class__.__name__)
-            for p in pipeline.processors
+            getattr(p, "name", p.__class__.__name__) for p in pipeline.processors
         ]
         proc_types = [p.__class__.__name__ for p in pipeline.processors]
 
@@ -82,26 +81,33 @@ class PipelineValidator:
                 llm_idx = i
 
         if restore_idx is not None and sanitize_idx is None:
-            issues.append(ValidationIssue(
-                "error", "RestorePIIProcessor without preceding SanitizePIIProcessor",
-                processor_index=restore_idx,
-            ))
+            issues.append(
+                ValidationIssue(
+                    "error",
+                    "RestorePIIProcessor without preceding SanitizePIIProcessor",
+                    processor_index=restore_idx,
+                )
+            )
 
         if sanitize_idx is not None and restore_idx is not None:
             if restore_idx < sanitize_idx:
-                issues.append(ValidationIssue(
-                    "error",
-                    "RestorePIIProcessor must come after SanitizePIIProcessor",
-                    processor_index=restore_idx,
-                ))
+                issues.append(
+                    ValidationIssue(
+                        "error",
+                        "RestorePIIProcessor must come after SanitizePIIProcessor",
+                        processor_index=restore_idx,
+                    )
+                )
 
         if llm_idx is not None and sanitize_idx is not None:
             if llm_idx < sanitize_idx:
-                issues.append(ValidationIssue(
-                    "warning",
-                    "LLMCallProcessor before SanitizePIIProcessor — PII may leak to LLM",
-                    processor_index=llm_idx,
-                ))
+                issues.append(
+                    ValidationIssue(
+                        "warning",
+                        "LLMCallProcessor before SanitizePIIProcessor — PII may leak to LLM",
+                        processor_index=llm_idx,
+                    )
+                )
 
         prompt_idx = None
         for i, ptype in enumerate(proc_types):
@@ -110,16 +116,16 @@ class PipelineValidator:
 
         if llm_idx is not None and prompt_idx is not None:
             if llm_idx < prompt_idx:
-                issues.append(ValidationIssue(
-                    "warning",
-                    "LLMCallProcessor before PromptComposerProcessor — prompt may not be composed",
-                    processor_index=llm_idx,
-                ))
+                issues.append(
+                    ValidationIssue(
+                        "warning",
+                        "LLMCallProcessor before PromptComposerProcessor — prompt may not be composed",
+                        processor_index=llm_idx,
+                    )
+                )
 
     def _check_error_handling(
-        self,
-        proc_types: list[str],
-        issues: list[ValidationIssue],
+        self, proc_types: list[str], issues: list[ValidationIssue]
     ) -> None:
         has_try_catch = "TryCatchProcessor" in proc_types
         has_retry = "RetryProcessor" in proc_types
@@ -130,26 +136,30 @@ class PipelineValidator:
             for t in ("DispatchActionProcessor", "LLMCallProcessor", "MCPToolProcessor")
         )
 
-        if has_external and not (has_try_catch or has_retry or has_dead_letter or has_fallback):
-            issues.append(ValidationIssue(
-                "warning",
-                "Pipeline calls external services but has no error handling "
-                "(TryCatch, Retry, DeadLetter, or Fallback)",
-            ))
+        if has_external and not (
+            has_try_catch or has_retry or has_dead_letter or has_fallback
+        ):
+            issues.append(
+                ValidationIssue(
+                    "warning",
+                    "Pipeline calls external services but has no error handling "
+                    "(TryCatch, Retry, DeadLetter, or Fallback)",
+                )
+            )
 
-    def _check_route_refs(
-        self, pipeline: Any, issues: list[ValidationIssue]
-    ) -> None:
+    def _check_route_refs(self, pipeline: Any, issues: list[ValidationIssue]) -> None:
         for i, proc in enumerate(pipeline.processors):
             ptype = proc.__class__.__name__
             if ptype == "PipelineRefProcessor":
                 target = getattr(proc, "_target_route_id", None)
                 if target == pipeline.route_id:
-                    issues.append(ValidationIssue(
-                        "error",
-                        f"Circular reference: route '{pipeline.route_id}' references itself",
-                        processor_index=i,
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            "error",
+                            f"Circular reference: route '{pipeline.route_id}' references itself",
+                            processor_index=i,
+                        )
+                    )
 
 
 pipeline_validator = PipelineValidator()

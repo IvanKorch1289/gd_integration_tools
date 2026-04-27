@@ -1,6 +1,6 @@
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infrastructure.db.models.orderkinds import OrderKind
+from src.infrastructure.database.models.orderkinds import OrderKind
 
 __all__ = ("OrderKindFilter",)
 

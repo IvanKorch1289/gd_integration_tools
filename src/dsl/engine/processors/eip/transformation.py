@@ -1,18 +1,22 @@
-import asyncio
 import logging
-import time
 from typing import Any, Callable
 
 import orjson
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
-__all__ = ('MessageTranslatorProcessor', 'SplitterProcessor', 'ClaimCheckProcessor', 'NormalizerProcessor', 'SortProcessor')
+__all__ = (
+    "MessageTranslatorProcessor",
+    "SplitterProcessor",
+    "ClaimCheckProcessor",
+    "NormalizerProcessor",
+    "SortProcessor",
+)
 
 
 class MessageTranslatorProcessor(BaseProcessor):
@@ -23,11 +27,7 @@ class MessageTranslatorProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        from_format: str,
-        to_format: str,
-        *,
-        name: str | None = None,
+        self, from_format: str, to_format: str, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"translate:{from_format}→{to_format}")
         self._from = from_format
@@ -59,6 +59,7 @@ class MessageTranslatorProcessor(BaseProcessor):
     def _dict_to_xml(data: dict, root_tag: str = "root") -> str:
         try:
             import xmltodict
+
             return xmltodict.unparse({root_tag: data}, pretty=True)
         except ImportError:
             parts = [f"<{root_tag}>"]
@@ -71,21 +72,28 @@ class MessageTranslatorProcessor(BaseProcessor):
     def _xml_to_dict(xml_str: str) -> dict[str, Any]:
         try:
             import xmltodict
+
             parsed = xmltodict.parse(xml_str)
             if len(parsed) == 1:
                 return dict(next(iter(parsed.values())))
             return dict(parsed)
         except ImportError:
             import re as _re
-            return {m.group(1): m.group(2) for m in _re.finditer(r"<(\w+)>([^<]*)</\1>", xml_str)}
+
+            return {
+                m.group(1): m.group(2)
+                for m in _re.finditer(r"<(\w+)>([^<]*)</\1>", xml_str)
+            }
 
     @staticmethod
     def _dict_list_to_csv(data: list[dict]) -> str:
         if not data:
             return ""
         try:
-            import pandas as pd
             import io
+
+            import pandas as pd
+
             df = pd.DataFrame(data)
             return df.to_csv(index=False)
         except ImportError:
@@ -98,8 +106,10 @@ class MessageTranslatorProcessor(BaseProcessor):
     @staticmethod
     def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
         try:
-            import pandas as pd
             import io
+
+            import pandas as pd
+
             df = pd.read_csv(io.StringIO(csv_str))
             return df.to_dict(orient="records")
         except ImportError:
@@ -111,7 +121,6 @@ class MessageTranslatorProcessor(BaseProcessor):
                 dict(zip(headers, [v.strip() for v in line.split(",")]))
                 for line in lines[1:]
             ]
-
 
 
 class SplitterProcessor(BaseProcessor):
@@ -164,7 +173,6 @@ class SplitterProcessor(BaseProcessor):
         exchange.set_out(body=results, headers=dict(exchange.in_message.headers))
 
 
-
 class ClaimCheckProcessor(BaseProcessor):
     """Camel Claim Check EIP — store payload, pass token through pipeline.
 
@@ -192,9 +200,10 @@ class ClaimCheckProcessor(BaseProcessor):
             token = f"claim:{uuid.uuid4()}"
             body_bytes = orjson.dumps(exchange.in_message.body, default=str)
             try:
-                from app.infrastructure.clients.storage.redis import redis_client
+                from src.infrastructure.clients.storage.redis import redis_client
+
                 await redis_client.set_if_not_exists(
-                    key=token, value=body_bytes.decode(), ttl=self._ttl,
+                    key=token, value=body_bytes.decode(), ttl=self._ttl
                 )
             except (ConnectionError, TimeoutError, OSError) as exc:
                 _camel_logger.warning("Claim check store failed: %s", exc)
@@ -202,8 +211,7 @@ class ClaimCheckProcessor(BaseProcessor):
 
             exchange.set_property("_claim_token", token)
             exchange.set_out(
-                body={"_claim_token": token},
-                headers=dict(exchange.in_message.headers),
+                body={"_claim_token": token}, headers=dict(exchange.in_message.headers)
             )
 
         elif self._mode == "retrieve":
@@ -218,19 +226,18 @@ class ClaimCheckProcessor(BaseProcessor):
                 return
 
             try:
-                from app.infrastructure.clients.storage.redis import redis_client
+                from src.infrastructure.clients.storage.redis import redis_client
+
                 raw = await redis_client.get(token)
                 if raw is None:
                     exchange.fail(f"Claim token expired or not found: {token}")
                     return
                 restored = orjson.loads(raw)
                 exchange.set_out(
-                    body=restored,
-                    headers=dict(exchange.in_message.headers),
+                    body=restored, headers=dict(exchange.in_message.headers)
                 )
             except (ConnectionError, TimeoutError, OSError) as exc:
                 exchange.fail(f"Claim check retrieve failed: {exc}")
-
 
 
 class NormalizerProcessor(BaseProcessor):
@@ -241,10 +248,7 @@ class NormalizerProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        target_schema: type | None = None,
-        *,
-        name: str | None = None,
+        self, target_schema: type | None = None, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or "normalizer")
         self._schema = target_schema
@@ -263,6 +267,7 @@ class NormalizerProcessor(BaseProcessor):
         if text.startswith("<"):
             try:
                 import xmltodict
+
                 parsed = xmltodict.parse(text)
                 if len(parsed) == 1:
                     return dict(next(iter(parsed.values())))
@@ -278,6 +283,7 @@ class NormalizerProcessor(BaseProcessor):
 
         try:
             import yaml
+
             result = yaml.safe_load(text)
             if isinstance(result, (dict, list)):
                 return result
@@ -289,7 +295,8 @@ class NormalizerProcessor(BaseProcessor):
             headers = [h.strip() for h in lines[0].split(",")]
             return [
                 dict(zip(headers, [v.strip() for v in line.split(",")]))
-                for line in lines[1:] if line.strip()
+                for line in lines[1:]
+                if line.strip()
             ]
 
         return body
@@ -308,7 +315,6 @@ class NormalizerProcessor(BaseProcessor):
                 return
 
         exchange.set_out(body=normalized, headers=dict(exchange.in_message.headers))
-
 
 
 class SortProcessor(BaseProcessor):
@@ -346,12 +352,12 @@ class SortProcessor(BaseProcessor):
         elif self._key_field is not None:
             sorted_body = sorted(
                 body,
-                key=lambda item: item.get(self._key_field, 0) if isinstance(item, dict) else 0,
+                key=lambda item: (
+                    item.get(self._key_field, 0) if isinstance(item, dict) else 0
+                ),
                 reverse=self._reverse,
             )
         else:
             sorted_body = sorted(body, reverse=self._reverse)
 
         exchange.set_out(body=sorted_body, headers=dict(exchange.in_message.headers))
-
-

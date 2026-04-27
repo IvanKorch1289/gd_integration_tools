@@ -64,10 +64,7 @@ class OPAClient:
                 keepalive_expiry=30.0,
             )
             self._client = httpx.AsyncClient(
-                base_url=self.base_url,
-                http2=True,
-                timeout=self.timeout,
-                limits=limits,
+                base_url=self.base_url, http2=True, timeout=self.timeout, limits=limits
             )
             logger.debug(
                 "OPA client initialized (pool=%d/%d, http2=True)",
@@ -84,9 +81,7 @@ class OPAClient:
             finally:
                 self._client = None
 
-    async def query(
-        self, policy: str, input_doc: dict[str, Any]
-    ) -> PolicyDecision:
+    async def query(self, policy: str, input_doc: dict[str, Any]) -> PolicyDecision:
         """POST /v1/data/<policy> с `input_doc`; возвращает PolicyDecision.
 
         ``policy`` — path вроде ``routes/orders/read`` (точки → слэши).

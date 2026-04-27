@@ -30,16 +30,15 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from app.infrastructure.notifications.priority import (
+from src.infrastructure.notifications.priority import (
+    NotificationBacklogError,
     Priority,
     PriorityRouter,
-    NotificationBacklogError,
 )
-from app.infrastructure.notifications.templates import (
+from src.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,
 )
-
 
 _logger = logging.getLogger(__name__)
 
@@ -179,10 +178,7 @@ class NotificationGateway:
         # 1. Template rendering.
         try:
             rendered = self._templates.render(
-                key=template_key,
-                locale=locale,
-                context=context,
-                channel_kind=channel,
+                key=template_key, locale=locale, context=context, channel_kind=channel
             )
         except Exception as exc:  # noqa: BLE001
             return SendResult(

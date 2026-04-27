@@ -18,7 +18,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.entrypoints.rate_limiter import RateLimit, get_rate_limiter, RateLimitExceeded
+from src.infrastructure.resilience.unified_rate_limiter import (
+    RateLimit,
+    RateLimitExceeded,
+    get_rate_limiter,
+)
 
 __all__ = ("RateLimiterPolicy", "ResourceRateLimiter", "RateLimitExceeded")
 
@@ -47,7 +51,9 @@ class ResourceRateLimiter:
         "grpc": RateLimiterPolicy(resource="grpc", limit=60, window_seconds=60),
         "kafka": RateLimiterPolicy(resource="kafka", limit=500, window_seconds=60),
         "mqtt": RateLimiterPolicy(resource="mqtt", limit=200, window_seconds=60),
-        "websocket": RateLimiterPolicy(resource="websocket", limit=100, window_seconds=60),
+        "websocket": RateLimiterPolicy(
+            resource="websocket", limit=100, window_seconds=60
+        ),
     }
 
     def __init__(self) -> None:
@@ -61,6 +67,5 @@ class ResourceRateLimiter:
         if policy is None:
             raise KeyError(f"Unknown RL resource: {resource}")
         return await get_rate_limiter().check(
-            identifier=identifier,
-            policy=policy.as_rate_limit(identifier),
+            identifier=identifier, policy=policy.as_rate_limit(identifier)
         )

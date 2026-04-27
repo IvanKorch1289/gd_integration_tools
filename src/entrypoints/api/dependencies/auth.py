@@ -7,7 +7,10 @@
 
 from fastapi import Depends, Header, HTTPException
 
-from app.core.security.api_key_manager import APIKeyManager, get_api_key_manager
+from src.infrastructure.security.api_key_manager import (
+    APIKeyManager,
+    get_api_key_manager,
+)
 
 __all__ = ("require_api_key",)
 

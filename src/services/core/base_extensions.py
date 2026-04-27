@@ -109,10 +109,7 @@ async def bulk_upsert(
 
     stmt = pg_insert(model).values(rows)
     update_dict = {col: getattr(stmt.excluded, col) for col in update_columns}
-    stmt = stmt.on_conflict_do_update(
-        index_elements=conflict_columns,
-        set_=update_dict,
-    )
+    stmt = stmt.on_conflict_do_update(index_elements=conflict_columns, set_=update_dict)
 
     session_manager = getattr(repo, "session_manager", None)
     if session_manager is None:

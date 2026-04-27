@@ -3,9 +3,9 @@ from typing import Any, AsyncGenerator
 
 from fastapi.responses import StreamingResponse
 
-from app.core.decorators.caching import existence_cache, metadata_cache
-from app.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
-from app.utilities.utils import utilities
+from src.infrastructure.clients.storage.s3_pool import BaseS3Client, s3_client
+from src.infrastructure.decorators.caching import existence_cache, metadata_cache
+from src.utilities.utils import utilities
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 
@@ -14,7 +14,7 @@ class S3Service:
     """Сервис для работы с объектным хранилищем S3."""
 
     def __init__(self, client: BaseS3Client):
-        from app.infrastructure.external_apis.logging_service import fs_logger
+        from src.infrastructure.external_apis.logging_service import fs_logger
 
         self.client = client
         self.logger = fs_logger

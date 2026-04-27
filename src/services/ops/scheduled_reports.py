@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-
 __all__ = ("ScheduledReportsService", "ReportSchedule", "get_reports_service")
 
 logger = logging.getLogger(__name__)
@@ -23,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class ReportSchedule:
     """Описание запланированного отчёта."""
+
     id: str = field(default_factory=lambda: uuid4().hex[:12])
     name: str = ""
     action: str = ""
@@ -65,7 +65,9 @@ class ScheduledReportsService:
     ) -> dict[str, Any]:
         """Создаёт или обновляет расписание отчёта."""
         report = ReportSchedule(
-            name=name, action=action, cron=cron,
+            name=name,
+            action=action,
+            cron=cron,
             export_format=export_format,
             delivery_channel=delivery_channel,
             delivery_to=delivery_to,
@@ -74,8 +76,11 @@ class ScheduledReportsService:
         self._schedules[report.id] = report
         logger.info("Report scheduled: %s (%s)", name, cron)
         return {
-            "status": "scheduled", "id": report.id, "name": name,
-            "cron": cron, "action": action,
+            "status": "scheduled",
+            "id": report.id,
+            "name": name,
+            "cron": cron,
+            "action": action,
         }
 
     async def list_reports(self) -> dict[str, Any]:
@@ -83,10 +88,15 @@ class ScheduledReportsService:
         return {
             "reports": [
                 {
-                    "id": r.id, "name": r.name, "action": r.action,
-                    "cron": r.cron, "format": r.export_format,
-                    "channel": r.delivery_channel, "to": r.delivery_to,
-                    "enabled": r.enabled, "last_run": r.last_run,
+                    "id": r.id,
+                    "name": r.name,
+                    "action": r.action,
+                    "cron": r.cron,
+                    "format": r.export_format,
+                    "channel": r.delivery_channel,
+                    "to": r.delivery_to,
+                    "enabled": r.enabled,
+                    "last_run": r.last_run,
                     "last_status": r.last_status,
                 }
                 for r in self._schedules.values()
@@ -103,8 +113,8 @@ class ScheduledReportsService:
         start = time.monotonic()
 
         try:
-            from app.dsl.commands.registry import action_handler_registry
-            from app.schemas.invocation import ActionCommandSchema
+            from src.dsl.commands.registry import action_handler_registry
+            from src.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=report.action,
@@ -113,18 +123,28 @@ class ScheduledReportsService:
             )
             result = await action_handler_registry.dispatch(command)
 
-            data = result if isinstance(result, list) else [result] if isinstance(result, dict) else []
+            data = (
+                result
+                if isinstance(result, list)
+                else [result]
+                if isinstance(result, dict)
+                else []
+            )
             run.rows = len(data)
 
             export_result = None
             if data and report.export_format != "none":
-                from app.services.io.export_service import get_export_service
+                from src.services.io.export_service import get_export_service
+
                 export_svc = get_export_service()
-                export_method = getattr(export_svc, f"to_{report.export_format}", export_svc.to_csv)
+                export_method = getattr(
+                    export_svc, f"to_{report.export_format}", export_svc.to_csv
+                )
                 export_result = await export_method(data=data, title=report.name)
 
             if report.delivery_to and export_result:
-                from app.services.ops.notification_hub import get_notification_hub
+                from src.services.ops.notification_hub import get_notification_hub
+
                 hub = get_notification_hub()
                 await hub.send(
                     channel=report.delivery_channel,
@@ -147,11 +167,17 @@ class ScheduledReportsService:
 
         self._history.append(run)
         return {
-            "status": run.status, "id": report_id, "name": report.name,
-            "rows": run.rows, "duration_ms": run.duration_ms, "error": run.error,
+            "status": run.status,
+            "id": report_id,
+            "name": report.name,
+            "rows": run.rows,
+            "duration_ms": run.duration_ms,
+            "error": run.error,
         }
 
-    async def history(self, report_id: str | None = None, limit: int = 50) -> dict[str, Any]:
+    async def history(
+        self, report_id: str | None = None, limit: int = 50
+    ) -> dict[str, Any]:
         """История выполнения отчётов."""
         runs = self._history
         if report_id:
@@ -159,9 +185,14 @@ class ScheduledReportsService:
         runs = runs[-limit:]
         return {
             "runs": [
-                {"report_id": r.report_id, "status": r.status,
-                 "rows": r.rows, "duration_ms": r.duration_ms,
-                 "error": r.error, "timestamp": r.timestamp}
+                {
+                    "report_id": r.report_id,
+                    "status": r.status,
+                    "rows": r.rows,
+                    "duration_ms": r.duration_ms,
+                    "error": r.error,
+                    "timestamp": r.timestamp,
+                }
                 for r in runs
             ]
         }

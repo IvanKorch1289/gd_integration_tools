@@ -51,11 +51,14 @@ class EmailNotificationAdapter:
 
     async def send(self, message: NotificationMessage) -> bool:
         try:
-            from app.infrastructure.clients.transport.smtp import smtp_client
+            from src.infrastructure.clients.transport.smtp import smtp_client
+
             content_type = message.metadata.get("content_type", "text/plain")
             for rcpt in message.recipients:
                 await smtp_client.send_email(
-                    to=rcpt, subject=message.subject, body=message.body,
+                    to=rcpt,
+                    subject=message.subject,
+                    body=message.body,
                     content_type=content_type,
                 )
             return True
@@ -65,7 +68,8 @@ class EmailNotificationAdapter:
 
     async def health(self) -> bool:
         try:
-            from app.infrastructure.clients.transport.smtp import smtp_client
+            from src.infrastructure.clients.transport.smtp import smtp_client
+
             return await smtp_client.test_connection()
         except Exception:  # noqa: BLE001
             return False
@@ -81,7 +85,8 @@ class ExpressNotificationAdapter:
 
     async def send(self, message: NotificationMessage) -> bool:
         try:
-            from app.infrastructure.clients.external.express import get_express_client
+            from src.infrastructure.clients.external.express import get_express_client
+
             client = get_express_client()
             for rcpt in message.recipients:
                 await client.send_message(chat_id=rcpt, text=message.body)
@@ -92,7 +97,8 @@ class ExpressNotificationAdapter:
 
     async def health(self) -> bool:
         try:
-            from app.infrastructure.clients.external.express import get_express_client
+            from src.infrastructure.clients.external.express import get_express_client
+
             client = get_express_client()
             return await client.ping() if hasattr(client, "ping") else True
         except Exception:  # noqa: BLE001
@@ -123,14 +129,14 @@ class TelegramNotificationAdapter:
 
         url = f"https://api.telegram.org/bot{self._token}/sendMessage"
         content_type = message.metadata.get("content_type", "text/plain")
-        parse_mode = {"text/markdown": "Markdown", "text/html": "HTML"}.get(content_type)
+        parse_mode = {"text/markdown": "Markdown", "text/html": "HTML"}.get(
+            content_type
+        )
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 for chat_id in message.recipients:
-                    payload: dict[str, Any] = {
-                        "chat_id": chat_id, "text": message.body,
-                    }
+                    payload: dict[str, Any] = {"chat_id": chat_id, "text": message.body}
                     if parse_mode:
                         payload["parse_mode"] = parse_mode
                     resp = await client.post(url, json=payload)
@@ -147,7 +153,9 @@ class TelegramNotificationAdapter:
 
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                resp = await client.get(f"https://api.telegram.org/bot{self._token}/getMe")
+                resp = await client.get(
+                    f"https://api.telegram.org/bot{self._token}/getMe"
+                )
                 return resp.is_success
         except Exception:  # noqa: BLE001
             return False

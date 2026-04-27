@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from email.message import Message
 from typing import Any
 
-from app.dsl.service import get_dsl_service
+from src.dsl.service import get_dsl_service
 
 __all__ = ("ImapMonitor", "ImapConfig")
 
@@ -70,11 +70,17 @@ class ImapMonitor:
         ref = self.config.password_vault_ref
         if ref:
             try:
-                from app.core.config.vault_refresher import VaultSecretRefresher
+                from src.infrastructure.application.vault_refresher import (
+                    VaultSecretRefresher,
+                )
 
                 return await VaultSecretRefresher.get().resolve(ref)
             except Exception as exc:
-                logger.error("IMAP Vault-resolve fail (%s): %s — fallback to config.password", ref, exc)
+                logger.error(
+                    "IMAP Vault-resolve fail (%s): %s — fallback to config.password",
+                    ref,
+                    exc,
+                )
         return self.config.password
 
     def _ssl_context(self) -> ssl.SSLContext | None:
@@ -98,7 +104,9 @@ class ImapMonitor:
         ssl_ctx = self._ssl_context()
 
         if self.config.use_ssl:
-            client = IMAP4_SSL(host=self.config.host, port=self.config.port, ssl_context=ssl_ctx)
+            client = IMAP4_SSL(
+                host=self.config.host, port=self.config.port, ssl_context=ssl_ctx
+            )
         else:
             client = IMAP4(host=self.config.host, port=self.config.port)
 

@@ -9,7 +9,7 @@ Fallback на стандартную asyncio если asyncer не устано�
 
 Usage::
 
-    from app.core.async_utils import run_sync_in_thread, gather_with_timeout
+    from src.core.async_utils import run_sync_in_thread, gather_with_timeout
 
     # Sync function в async контексте
     result = await run_sync_in_thread(heavy_cpu_task, data)
@@ -33,10 +33,11 @@ T = TypeVar("T")
 
 try:
     import asyncer
+
     ASYNCER_AVAILABLE = True
 except ImportError:
     ASYNCER_AVAILABLE = False
-    asyncer = None  # type: ignore[assignment]
+    asyncer = None
 
 
 async def run_sync_in_thread(fn: Callable[..., T], *args: Any, **kwargs: Any) -> T:
@@ -50,14 +51,12 @@ async def run_sync_in_thread(fn: Callable[..., T], *args: Any, **kwargs: Any) ->
         return await async_fn(*args, **kwargs)
 
     import functools
+
     return await asyncio.to_thread(functools.partial(fn, *args, **kwargs))
 
 
 async def gather_with_timeout(
-    coros: list[Awaitable[T]],
-    *,
-    timeout: float = 30.0,
-    return_exceptions: bool = True,
+    coros: list[Awaitable[T]], *, timeout: float = 30.0, return_exceptions: bool = True
 ) -> list[T | Exception]:
     """Run tasks in parallel with SHARED timeout.
 
@@ -66,8 +65,7 @@ async def gather_with_timeout(
     """
     try:
         results = await asyncio.wait_for(
-            asyncio.gather(*coros, return_exceptions=return_exceptions),
-            timeout=timeout,
+            asyncio.gather(*coros, return_exceptions=return_exceptions), timeout=timeout
         )
         return list(results)
     except asyncio.TimeoutError:
@@ -76,10 +74,7 @@ async def gather_with_timeout(
 
 
 async def async_with_timeout(
-    coro: Awaitable[T],
-    *,
-    timeout: float,
-    default: T | None = None,
+    coro: Awaitable[T], *, timeout: float, default: T | None = None
 ) -> T | None:
     """Выполняет coroutine с timeout. При timeout возвращает default."""
     try:

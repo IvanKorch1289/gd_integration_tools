@@ -11,7 +11,9 @@ if str(_root) not in sys.path:
 
 from src.entrypoints.streamlit_app.api_client import get_api_client
 
-st.set_page_config(page_title="Routes", page_icon=":twisted_rightwards_arrows:", layout="wide")
+st.set_page_config(
+    page_title="Routes", page_icon=":twisted_rightwards_arrows:", layout="wide"
+)
 st.header("DSL Routes")
 
 client = get_api_client()
@@ -43,7 +45,18 @@ if routes:
     import pandas as pd
 
     df = pd.DataFrame(routes)
-    display_cols = [c for c in ["route_id", "source", "enabled", "feature_flag", "protocol", "processors_count"] if c in df.columns]
+    display_cols = [
+        c
+        for c in [
+            "route_id",
+            "source",
+            "enabled",
+            "feature_flag",
+            "protocol",
+            "processors_count",
+        ]
+        if c in df.columns
+    ]
     if display_cols:
         st.dataframe(df[display_cols], use_container_width=True)
     else:

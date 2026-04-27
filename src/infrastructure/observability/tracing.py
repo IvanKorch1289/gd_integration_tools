@@ -8,10 +8,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.middleware import ProcessorMiddleware
-from app.infrastructure.observability.correlation import get_correlation_id
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.middleware import ProcessorMiddleware
+from src.infrastructure.observability.correlation import get_correlation_id
 
 __all__ = ("TracingMiddleware", "get_tracer")
 
@@ -26,6 +26,7 @@ def get_tracer():
         return _tracer
     try:
         from opentelemetry import trace
+
         _tracer = trace.get_tracer("gd.dsl.engine")
     except ImportError:
         _tracer = None
@@ -56,7 +57,7 @@ class TracingMiddleware(ProcessorMiddleware):
             )
             key = f"{id(exchange)}:{processor_name}"
             self._spans[key] = span
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass
 
     async def after(
@@ -77,9 +78,11 @@ class TracingMiddleware(ProcessorMiddleware):
                 span.set_attribute("error", True)
                 span.set_attribute("error.message", str(error)[:500])
                 span.set_status(
-                    __import__("opentelemetry.trace", fromlist=["StatusCode"]).StatusCode.ERROR,
+                    __import__(
+                        "opentelemetry.trace", fromlist=["StatusCode"]
+                    ).StatusCode.ERROR,
                     str(error)[:200],
                 )
             span.end()
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass

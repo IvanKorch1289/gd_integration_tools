@@ -9,10 +9,10 @@
 import asyncio
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from logging import DEBUG
 from time import monotonic
-from collections.abc import AsyncGenerator, Mapping
 from typing import Any, BinaryIO, TypedDict
 
 from aiohttp import (
@@ -33,7 +33,6 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
-from app.utilities.json_codec import json_dumps
 from tenacity import (
     RetryError,
     before_sleep_log,
@@ -43,11 +42,17 @@ from tenacity import (
     wait_exponential,
 )
 
-from app.core.config.constants import consts
-from app.core.config.settings import settings
-from app.core.utils.circuit_breaker import get_circuit_breaker
+from src.core.config.constants import consts
+from src.core.config.settings import settings
+from src.core.utils.circuit_breaker import get_circuit_breaker
+from src.utilities.json_codec import json_dumps
 
-__all__ = ("BaseHttpClient", "HttpClient", "get_http_client", "get_http_client_dependency")
+__all__ = (
+    "BaseHttpClient",
+    "HttpClient",
+    "get_http_client",
+    "get_http_client_dependency",
+)
 
 
 class FilePart(TypedDict, total=False):
@@ -94,7 +99,7 @@ class HttpClient(BaseHttpClient):
     """
 
     def __init__(self):
-        from app.infrastructure.external_apis.logging_service import request_logger
+        from src.infrastructure.external_apis.logging_service import request_logger
 
         self.settings = settings.http_base_settings
         self.logger = request_logger
@@ -345,7 +350,6 @@ class HttpClient(BaseHttpClient):
         json_data: dict[str, Any] | list[Any] | None,
         files: Mapping[str, FilePart] | None,
     ) -> Any:
-        from app.utilities.utils import utilities
 
         if json_data is not None and (data is not None or files is not None):
             raise ValueError("json нельзя передавать вместе с data/files")

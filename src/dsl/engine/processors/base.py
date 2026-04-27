@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import inspect
 from abc import ABC, abstractmethod
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
+from src.dsl.engine.exchange import Exchange
+
+if TYPE_CHECKING:
+    from src.dsl.engine.context import ExecutionContext
 
 __all__ = (
     "ProcessorCallable",
@@ -13,7 +17,7 @@ __all__ = (
     "run_sub_processors",
 )
 
-ProcessorCallable = Callable[[Exchange[Any], ExecutionContext], Any | Awaitable[Any]]
+ProcessorCallable = Callable[[Exchange[Any], "ExecutionContext"], Any | Awaitable[Any]]
 
 
 class BaseProcessor(ABC):
@@ -23,7 +27,18 @@ class BaseProcessor(ABC):
         self.name = name or self.__class__.__name__
 
     @abstractmethod
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None: ...
+    async def process(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None: ...
+
+    def to_spec(self) -> dict[str, Any] | None:
+        """Возвращает YAML-spec процессора для round-trip сериализации.
+
+        Returns:
+            Словарь вида ``{method_name: {kwargs}}`` совместимый с YAML-лоадером,
+            или ``None`` если процессор не поддерживает сериализацию.
+        """
+        return None
 
 
 class CallableProcessor(BaseProcessor):
@@ -44,34 +59,28 @@ class SubPipelineExecutor:
 
     @staticmethod
     async def execute_route(
-        route_id: str,
-        body: Any,
-        headers: dict[str, Any],
-        context: ExecutionContext,
+        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext
     ) -> tuple[Any, str | None]:
         """Выполняет DSL route и возвращает (result_body, error_or_None)."""
-        from app.dsl.commands.registry import route_registry
-        from app.dsl.engine.execution_engine import ExecutionEngine
+        from src.dsl.commands.registry import route_registry
+        from src.dsl.engine.execution_engine import ExecutionEngine
 
         pipeline = route_registry.get(route_id)
         engine = ExecutionEngine()
         sub = await engine.execute(
-            pipeline, body=body, headers=dict(headers), context=context,
+            pipeline, body=body, headers=dict(headers), context=context
         )
         result = sub.out_message.body if sub.out_message else sub.in_message.body
         return result, sub.error
 
     @staticmethod
     async def execute_route_safe(
-        route_id: str,
-        body: Any,
-        headers: dict[str, Any],
-        context: ExecutionContext,
+        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
         """Безопасная версия — не бросает исключений."""
         try:
             result, error = await SubPipelineExecutor.execute_route(
-                route_id, body, headers, context,
+                route_id, body, headers, context
             )
             return route_id, result, error
         except Exception as exc:
@@ -79,12 +88,10 @@ class SubPipelineExecutor:
 
 
 async def run_sub_processors(
-    processors: list[BaseProcessor],
-    exchange: Exchange[Any],
-    context: ExecutionContext,
+    processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
     """Общий цикл выполнения sub-processor list с проверкой failed/stopped."""
-    from app.dsl.engine.exchange import ExchangeStatus
+    from src.dsl.engine.exchange import ExchangeStatus
 
     for proc in processors:
         if exchange.status == ExchangeStatus.failed or exchange.stopped:

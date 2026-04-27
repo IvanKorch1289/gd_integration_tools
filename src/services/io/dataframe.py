@@ -11,7 +11,7 @@ Polars (Rust-backed) в 5-30x быстрее pandas на:
 
 Usage::
 
-    from app.services.io.dataframe import read_csv, write_excel, to_records
+    from src.services.io.dataframe import read_csv, write_excel, to_records
 
     df = read_csv(buffer)  # Polars DataFrame
     rows = to_records(df)  # list[dict] для обратной совместимости
@@ -39,6 +39,7 @@ logger = logging.getLogger("services.dataframe")
 
 try:
     import polars as _pl
+
     POLARS_AVAILABLE = True
     DataFrame = _pl.DataFrame
 except ImportError:
@@ -53,6 +54,7 @@ def from_records(records: Iterable[dict[str, Any]]) -> Any:
         return _pl.DataFrame(records_list) if records_list else _pl.DataFrame()
 
     import pandas as pd
+
     return pd.DataFrame(records_list)
 
 
@@ -74,6 +76,7 @@ def read_csv(source: Any) -> Any:
     """
     if POLARS_AVAILABLE:
         import io
+
         if isinstance(source, str) and not source.startswith(("/", "s3://")):
             return _pl.read_csv(io.StringIO(source))
         if isinstance(source, bytes):
@@ -81,7 +84,9 @@ def read_csv(source: Any) -> Any:
         return _pl.read_csv(source)
 
     import io
+
     import pandas as pd
+
     if isinstance(source, str) and not source.startswith(("/", "s3://")):
         return pd.read_csv(io.StringIO(source))
     if isinstance(source, bytes):
@@ -98,6 +103,7 @@ def read_excel(source: Any, *, sheet_name: str | int = 0) -> Any:
             logger.debug("Polars read_excel failed, falling back to pandas: %s", exc)
 
     import pandas as pd
+
     return pd.read_excel(source, sheet_name=sheet_name)
 
 
@@ -108,6 +114,7 @@ def write_csv(df: Any, path: str | None = None) -> bytes | None:
             df.write_csv(path)
             return None
         import io
+
         buf = io.BytesIO()
         df.write_csv(buf)
         return buf.getvalue()
@@ -119,20 +126,22 @@ def write_csv(df: Any, path: str | None = None) -> bytes | None:
 
 
 def write_excel(
-    data: Any,
-    path: str | None = None,
-    *,
-    sheet_name: str = "Sheet1",
+    data: Any, path: str | None = None, *, sheet_name: str = "Sheet1"
 ) -> bytes | None:
     """DataFrame или list[dict] → Excel bytes (или write в файл).
 
     Polars write_excel использует xlsxwriter (fast).
     """
-    if not isinstance(data, (list, tuple)) and POLARS_AVAILABLE and hasattr(data, "write_excel"):
+    if (
+        not isinstance(data, (list, tuple))
+        and POLARS_AVAILABLE
+        and hasattr(data, "write_excel")
+    ):
         if path:
             data.write_excel(path, worksheet=sheet_name)
             return None
         import io
+
         buf = io.BytesIO()
         data.write_excel(buf, worksheet=sheet_name)
         return buf.getvalue()
@@ -143,6 +152,7 @@ def write_excel(
         df = data
 
     import io
+
     if POLARS_AVAILABLE and hasattr(df, "write_excel"):
         if path:
             df.write_excel(path, worksheet=sheet_name)
@@ -152,6 +162,7 @@ def write_excel(
         return buf.getvalue()
 
     import pandas as pd
+
     if isinstance(df, pd.DataFrame):
         if path:
             df.to_excel(path, sheet_name=sheet_name, index=False)

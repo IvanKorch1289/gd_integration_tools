@@ -17,7 +17,6 @@ import logging
 import time
 from typing import Any
 
-import orjson
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -39,11 +38,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self,
-        app: Any,
-        *,
-        skip_paths: set[str] | None = None,
-        sample_rate: float = 1.0,
+        self, app: Any, *, skip_paths: set[str] | None = None, sample_rate: float = 1.0
     ) -> None:
         super().__init__(app)
         self._skip_paths = skip_paths or {"/health", "/metrics", "/readyz", "/livez"}
@@ -55,6 +50,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
 
         if self._sample_rate < 1.0:
             import random
+
             if random.random() > self._sample_rate:
                 return await call_next(request)
 
@@ -91,7 +87,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Отправляет запись в Redis stream."""
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return
 
@@ -104,7 +100,9 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
             "correlation_id": request.headers.get("x-correlation-id", ""),
             "status_code": response.status_code,
             "duration_ms": duration_ms,
-            "request_body": request_body[:_MAX_BODY_SIZE].decode("utf-8", errors="replace"),
+            "request_body": request_body[:_MAX_BODY_SIZE].decode(
+                "utf-8", errors="replace"
+            ),
         }
 
         try:
@@ -114,13 +112,14 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
 
 
 async def list_audit_records(
-    *, count: int = 100, start_id: str = "-",
+    *, count: int = 100, start_id: str = "-"
 ) -> list[dict[str, Any]]:
     """Читает последние записи из audit stream для Replay UI."""
     try:
-        from app.infrastructure.clients.storage.redis import redis_client
+        from src.infrastructure.clients.storage.redis import redis_client
+
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=count, start_id=start_id,
+            stream_name=_STREAM_NAME, count=count, start_id=start_id
         )
         return records or []
     except Exception as exc:
@@ -134,9 +133,10 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
     Возвращает {"status": "replayed", "record_id": ..., "new_response": {...}}.
     """
     try:
-        from app.infrastructure.clients.storage.redis import redis_client
+        from src.infrastructure.clients.storage.redis import redis_client
+
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=1, start_id=record_id,
+            stream_name=_STREAM_NAME, count=1, start_id=record_id
         )
     except Exception as exc:
         return {"status": "error", "error": str(exc)}

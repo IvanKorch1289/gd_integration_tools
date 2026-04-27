@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable
 
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class DegradationMode(Enum):
-    FULL = "full"          # Всё работает
+    FULL = "full"  # Всё работает
     DEGRADED = "degraded"  # Часть функций отключена
     EMERGENCY = "emergency"  # Только критичные функции
 
@@ -86,17 +86,27 @@ class DegradationManager:
         state.fallback_active = False
 
     def get_fallback(self, name: str) -> Callable[..., Any] | None:
-        return self._fallbacks.get(name) if name in self._components and self._components[name].fallback_active else None
+        return (
+            self._fallbacks.get(name)
+            if name in self._components and self._components[name].fallback_active
+            else None
+        )
 
     def is_available(self, name: str) -> bool:
         return self._components.get(name, ComponentState(name=name)).available
 
     def mode(self) -> DegradationMode:
         critical = ["database", "redis"]
-        critical_down = sum(1 for n in critical if n in self._components and not self._components[n].available)
+        critical_down = sum(
+            1
+            for n in critical
+            if n in self._components and not self._components[n].available
+        )
         if critical_down >= 2:
             return DegradationMode.EMERGENCY
-        if critical_down >= 1 or any(not s.available for s in self._components.values()):
+        if critical_down >= 1 or any(
+            not s.available for s in self._components.values()
+        ):
             return DegradationMode.DEGRADED
         return DegradationMode.FULL
 
@@ -211,10 +221,7 @@ class Bulkhead:
 
     def stats(self) -> dict[str, dict[str, int]]:
         return {
-            name: {
-                "available": sem._value,  # type: ignore[attr-defined]
-                "locked": sem.locked(),
-            }
+            name: {"available": sem._value, "locked": sem.locked()}
             for name, sem in self._semaphores.items()
         }
 
@@ -252,16 +259,20 @@ class SelfHealer:
 
             self._scheduler = AsyncIOScheduler()
             self._scheduler.add_job(
-                self._run_healers, "interval", seconds=self._interval, id="self_healer",
+                self._run_healers, "interval", seconds=self._interval, id="self_healer"
             )
             self._scheduler.start()
-            logger.info("SelfHealer started via APScheduler (interval=%ds)", self._interval)
+            logger.info(
+                "SelfHealer started via APScheduler (interval=%ds)", self._interval
+            )
             return
         except Exception as exc:  # noqa: BLE001
             logger.debug("APScheduler недоступен, fallback на asyncio: %s", exc)
 
         self._task = asyncio.create_task(self._heal_loop())
-        logger.info("SelfHealer started via asyncio loop (interval=%ds)", self._interval)
+        logger.info(
+            "SelfHealer started via asyncio loop (interval=%ds)", self._interval
+        )
 
     async def stop(self) -> None:
         self._running = False

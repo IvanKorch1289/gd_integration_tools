@@ -118,7 +118,7 @@ CORS, gRPC без TLS, MQTT без TLS, IMAP-пароли в конфиге, yam
 ```bash
 # CORS: в prod-env '*' должно падать валидацией
 APP_ENV=prod python -c "
-from app.core.config.security import SecureSettings
+from src.core.config.security import SecureSettings
 import os; os.environ['SEC_CORS_ORIGINS']='[\"*\"]'
 SecureSettings()  # ValidationError
 "

@@ -7,10 +7,10 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 from uuid import uuid4
 
-from app.core.config.settings import settings
+from src.core.config.settings import settings
 
 __all__ = ("JobQueue", "get_job_queue")
 
@@ -34,9 +34,8 @@ class JobQueue:
     def _ensure_scheduler(self) -> Any:
         """Получает scheduler из менеджера."""
         if self._scheduler is None:
-            from app.infrastructure.scheduler.scheduler_manager import (
-                scheduler_manager,
-            )
+            from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+
             self._scheduler = scheduler_manager.scheduler
         return self._scheduler
 
@@ -67,9 +66,7 @@ class JobQueue:
             ValueError: Если указаны оба delay и cron.
         """
         if delay is not None and cron is not None:
-            raise ValueError(
-                "Нельзя указать delay и cron одновременно"
-            )
+            raise ValueError("Нельзя указать delay и cron одновременно")
 
         scheduler = self._ensure_scheduler()
         final_job_id = job_id or uuid4().hex
@@ -88,11 +85,7 @@ class JobQueue:
                 replace_existing=True,
                 jobstore=settings.scheduler.default_jobstore_name,
             )
-            logger.info(
-                "Задача %s поставлена по cron: %s",
-                final_job_id,
-                cron,
-            )
+            logger.info("Задача %s поставлена по cron: %s", final_job_id, cron)
         elif delay is not None:
             run_date = datetime.now() + timedelta(seconds=delay)
             scheduler.add_job(
@@ -105,11 +98,7 @@ class JobQueue:
                 replace_existing=True,
                 jobstore=settings.scheduler.default_jobstore_name,
             )
-            logger.info(
-                "Задача %s отложена на %.1f сек",
-                final_job_id,
-                delay,
-            )
+            logger.info("Задача %s отложена на %.1f сек", final_job_id, delay)
         else:
             # Немедленное выполнение через scheduler
             scheduler.add_job(
@@ -120,10 +109,7 @@ class JobQueue:
                 replace_existing=True,
                 jobstore=settings.scheduler.backup_jobstore_name,
             )
-            logger.info(
-                "Задача %s поставлена на немедленное выполнение",
-                final_job_id,
-            )
+            logger.info("Задача %s поставлена на немедленное выполнение", final_job_id)
 
         return final_job_id
 
@@ -141,7 +127,7 @@ class JobQueue:
             scheduler.remove_job(job_id)
             logger.info("Задача %s отменена", job_id)
             return True
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:
@@ -156,9 +142,7 @@ class JobQueue:
             {
                 "id": job.id,
                 "name": job.name,
-                "next_run_time": str(job.next_run_time)
-                if job.next_run_time
-                else None,
+                "next_run_time": str(job.next_run_time) if job.next_run_time else None,
                 "trigger": str(job.trigger),
             }
             for job in jobs

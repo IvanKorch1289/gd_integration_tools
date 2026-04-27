@@ -11,13 +11,13 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
-from app.core.config.database import DatabaseConnectionSettings
-from app.core.config.external_databases import ExternalDatabaseConnectionSettings
-from app.core.config.settings import settings
-from app.core.enums.database import DatabaseTypeChoices
-from app.core.errors import DatabaseError
-from app.infrastructure.db.listeners import DatabaseListener
-from app.infrastructure.external_apis.logging_service import db_logger
+from src.core.config.database import DatabaseConnectionSettings
+from src.core.config.external_databases import ExternalDatabaseConnectionSettings
+from src.core.config.settings import settings
+from src.core.enums.database import DatabaseTypeChoices
+from src.core.errors import DatabaseError
+from src.infrastructure.database.listeners import DatabaseListener
+from src.infrastructure.external_apis.logging_service import db_logger
 
 __all__ = (
     "DatabaseBundle",
@@ -169,7 +169,7 @@ class DatabaseInitializer:
                 "Асинхронный пул соединений инициализирован",
                 extra={"db_name": self.name},
             )
-        except (OSError, TimeoutError) as exc:
+        except OSError, TimeoutError:
             self.logger.error(
                 "Ошибка инициализации асинхронного пула соединений",
                 extra={"db_name": self.name},
@@ -200,7 +200,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Синхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError) as exc:
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия синхронных соединений",
                 extra={"db_name": self.name},
@@ -216,7 +216,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Асинхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError) as exc:
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия асинхронных соединений",
                 extra={"db_name": self.name},

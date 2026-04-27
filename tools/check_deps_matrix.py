@@ -7,12 +7,16 @@
 
 Семантика:
 
-* REMOVE: указанные пакеты НЕ должны присутствовать в ``[tool.poetry.dependencies]``
-  (в dev-deps допустимо только если явно разрешено).
+* REMOVE: указанные пакеты НЕ должны присутствовать в ``[project.dependencies]``
+  или ``[dependency-groups]`` (в dev-группе допустимо только если явно
+  разрешено).
 * MUST_EXIST: должны присутствовать.
 * Результат: код возврата ≠ 0 при расхождении.
 
 Скрипт не падает, если pyproject отсутствует — только предупреждает.
+
+После миграции с Poetry на uv: читает PEP 621 ``[project]`` секцию
+и ``[dependency-groups]`` вместо исторических ``[tool.poetry.*]``.
 """
 from __future__ import annotations
 
@@ -80,17 +84,41 @@ def load_progress_done() -> set[str]:
     return done
 
 
+def _names_from_pep508(items: list[str]) -> set[str]:
+    """Извлекает имена пакетов из PEP 508 зависимостей."""
+    names: set[str] = set()
+    for raw in items or []:
+        # Берём всё до первого разделителя: пробел, [, <, >, =, ;, ~, !
+        name = raw.strip()
+        for sep in [" ", "[", "<", ">", "=", ";", "~", "!", "("]:
+            idx = name.find(sep)
+            if idx >= 0:
+                name = name[:idx]
+        if name:
+            names.add(name.lower())
+    return names
+
+
 def current_deps() -> set[str]:
     if not PYPROJECT.exists():
         return set()
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    project = data.get("project") or {}
+    deps: set[str] = _names_from_pep508(project.get("dependencies") or [])
+    # optional-dependencies (extras) также учитываем — часть пакетов попадает
+    # только в профилях ai/security/mcp/rpa.
+    for extra_items in (project.get("optional-dependencies") or {}).values():
+        deps.update(_names_from_pep508(extra_items))
+    # dependency-groups (PEP 735) — dev и т.п.
+    for group_items in (data.get("dependency-groups") or {}).values():
+        deps.update(_names_from_pep508(group_items))
+    # Совместимость с историческими pyproject: старый [tool.poetry].
     poetry = ((data.get("tool") or {}).get("poetry") or {})
-    deps = set((poetry.get("dependencies") or {}).keys())
-    # dev-deps также учитываем (pydata-sphinx-theme, ruff, mypy и т.п.)
-    groups = poetry.get("group") or {}
-    for g in groups.values():
-        deps.update((g.get("dependencies") or {}).keys())
-    # убираем виртуальный ключ "python"
+    if poetry:
+        deps.update(k.lower() for k in (poetry.get("dependencies") or {}).keys())
+        for g in (poetry.get("group") or {}).values():
+            deps.update(k.lower() for k in (g.get("dependencies") or {}).keys())
+    # Убираем виртуальный ключ "python".
     deps.discard("python")
     return deps
 

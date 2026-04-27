@@ -2,11 +2,11 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import NotFoundError
-from app.infrastructure.db.models.orders import Order
-from app.infrastructure.db.session_manager import main_session_manager
-from app.infrastructure.repositories.base import SQLAlchemyRepository
-from app.infrastructure.repositories.orderkinds import get_order_kind_repo
+from src.core.errors import NotFoundError
+from src.infrastructure.database.models.orders import Order
+from src.infrastructure.database.session_manager import main_session_manager
+from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.infrastructure.repositories.orderkinds import get_order_kind_repo
 
 __all__ = ("OrderRepository", "get_order_repo")
 
@@ -129,8 +129,6 @@ def get_order_repo() -> OrderRepository:
     global _order_repo_instance
     if _order_repo_instance is None:
         _order_repo_instance = OrderRepository(
-            model=Order,
-            load_joined_models=True,
-            order_kind_repo=get_order_kind_repo(),
+            model=Order, load_joined_models=True, order_kind_repo=get_order_kind_repo()
         )
     return _order_repo_instance

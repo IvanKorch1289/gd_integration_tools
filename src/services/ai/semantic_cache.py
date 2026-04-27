@@ -57,11 +57,7 @@ class SemanticCache:
         self._namespace = namespace
 
     async def lookup(
-        self,
-        query: str,
-        *,
-        provider: str | None = None,
-        model: str | None = None,
+        self, query: str, *, provider: str | None = None, model: str | None = None
     ) -> dict[str, Any] | None:
         """Ищет кешированный response по semantic similarity.
 
@@ -92,13 +88,13 @@ class SemanticCache:
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def _exact_lookup(
-        self, query: str, provider: str | None, model: str | None,
+        self, query: str, provider: str | None, model: str | None
     ) -> dict[str, Any] | None:
         """Redis-backed exact lookup (fast path)."""
         try:
             import orjson
 
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return None
 
@@ -113,23 +109,25 @@ class SemanticCache:
             return None
 
     async def _exact_store(
-        self, query: str, response: Any, provider: str | None, model: str | None,
+        self, query: str, response: Any, provider: str | None, model: str | None
     ) -> None:
         try:
             import orjson
 
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return
 
         key = f"{self._namespace}:exact:{self._hash_key(query, provider, model)}"
-        payload = orjson.dumps({
-            "query": query,
-            "response": response,
-            "provider": provider,
-            "model": model,
-            "cached_at": time.time(),
-        })
+        payload = orjson.dumps(
+            {
+                "query": query,
+                "response": response,
+                "provider": provider,
+                "model": model,
+                "cached_at": time.time(),
+            }
+        )
         try:
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.set(key, payload, ex=self._ttl)
@@ -137,21 +135,18 @@ class SemanticCache:
             logger.debug("Semantic cache exact store failed: %s", exc)
 
     async def _semantic_lookup(
-        self, query: str, provider: str | None, model: str | None,
+        self, query: str, provider: str | None, model: str | None
     ) -> dict[str, Any] | None:
         """Vector similarity поиск через RAG service."""
         try:
-            from app.services.ai.rag_service import get_rag_service
+            from src.services.ai.rag_service import get_rag_service
+
             rag = get_rag_service()
         except ImportError:
             return None
 
         try:
-            results = await rag.search(
-                query=query,
-                top_k=1,
-                namespace=self._namespace,
-            )
+            results = await rag.search(query=query, top_k=1, namespace=self._namespace)
         except Exception as exc:
             logger.debug("Semantic cache search failed: %s", exc)
             return None
@@ -173,11 +168,12 @@ class SemanticCache:
         }
 
     async def _semantic_store(
-        self, query: str, response: Any, provider: str | None, model: str | None,
+        self, query: str, response: Any, provider: str | None, model: str | None
     ) -> None:
         """Сохраняет query + response в vector store для semantic search."""
         try:
-            from app.services.ai.rag_service import get_rag_service
+            from src.services.ai.rag_service import get_rag_service
+
             rag = get_rag_service()
         except ImportError:
             return

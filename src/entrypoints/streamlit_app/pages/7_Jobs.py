@@ -16,7 +16,9 @@ st.header("Background Jobs")
 
 client = get_api_client()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Scheduled", "Queue Depths", "Webhooks", "Prefect Flows"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Scheduled", "Queue Depths", "Webhooks", "Prefect Flows"]
+)
 
 # ─────────── Scheduled Jobs (APScheduler) ───────────
 
@@ -30,6 +32,7 @@ with tab1:
 
     if jobs:
         import pandas as pd
+
         df = pd.DataFrame(jobs)
         st.dataframe(df, use_container_width=True)
         st.caption(f"Всего: {len(jobs)} jobs")
@@ -64,8 +67,13 @@ with tab3:
 
     if hooks:
         import pandas as pd
+
         df = pd.DataFrame(hooks)
-        display_cols = [c for c in ["id", "url", "cron", "delay_seconds", "status"] if c in df.columns]
+        display_cols = [
+            c
+            for c in ["id", "url", "cron", "delay_seconds", "status"]
+            if c in df.columns
+        ]
         st.dataframe(df[display_cols] if display_cols else df, use_container_width=True)
     else:
         st.info("Нет запланированных webhooks")
@@ -79,10 +87,12 @@ with tab3:
             delay = st.number_input("Delay seconds (optional)", min_value=0, value=0)
             if st.form_submit_button("Schedule"):
                 import json
+
                 try:
                     payload_dict = json.loads(payload)
                     result = client._request(
-                        "POST", "/api/v1/webhook/schedule",
+                        "POST",
+                        "/api/v1/webhook/schedule",
                         json={
                             "url": url,
                             "payload": payload_dict,
@@ -106,6 +116,7 @@ with tab4:
 
     if flows:
         import pandas as pd
+
         df = pd.DataFrame(flows)
         st.dataframe(df, use_container_width=True)
 

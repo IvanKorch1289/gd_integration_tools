@@ -21,6 +21,6 @@ Scaffolding-адаптеры — placeholder'ы с правильным инте
 интеграция подключается per-customer в deployment-конфиге.
 """
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("NotificationChannel",)

@@ -26,11 +26,8 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.core.errors import ServiceError
-from app.infrastructure.resilience.client_breaker import (
-    CircuitOpen,
-    ClientCircuitBreaker,
-)
+from src.core.errors import ServiceError
+from src.infrastructure.resilience.client_breaker import ClientCircuitBreaker
 
 __all__ = ("BaseKafkaClient", "KafkaClient", "get_kafka_client", "get_outbox_producer")
 
@@ -180,10 +177,7 @@ class KafkaClient(BaseKafkaClient):
         # IL1.4: guard поверх aiokafka.send_and_wait.
         async with self._breaker.guard():
             await self._producer.send_and_wait(
-                topic,
-                value=value,
-                key=key,
-                headers=headers,
+                topic, value=value, key=key, headers=headers
             )
         logger.debug("Kafka: отправлено в %s", topic)
 
@@ -214,10 +208,7 @@ class KafkaClient(BaseKafkaClient):
         await self._producer.abort_transaction()
 
     async def produce_fire_and_forget(
-        self,
-        topic: str,
-        value: bytes,
-        key: bytes | None = None,
+        self, topic: str, value: bytes, key: bytes | None = None
     ) -> None:
         """Отправляет без ожидания ACK (максимальный throughput)."""
         if self._producer is None:
@@ -225,10 +216,7 @@ class KafkaClient(BaseKafkaClient):
         await self._producer.send(topic, value=value, key=key)
 
     async def produce_json(
-        self,
-        topic: str,
-        data: dict[str, Any],
-        key: str | None = None,
+        self, topic: str, data: dict[str, Any], key: str | None = None
     ) -> None:
         """Отправляет JSON-сообщение в Kafka-топик.
 
@@ -243,9 +231,7 @@ class KafkaClient(BaseKafkaClient):
         key_bytes = key.encode() if key else None
         await self.produce(topic, value=value, key=key_bytes)
 
-    async def start_consumer(
-        self, *topics: str
-    ) -> None:
+    async def start_consumer(self, *topics: str) -> None:
         """Запускает Kafka consumer.
 
         Args:
@@ -262,9 +248,7 @@ class KafkaClient(BaseKafkaClient):
         )
         await self._consumer.start()
         logger.info(
-            "Kafka consumer запущен: topics=%s, group=%s",
-            topics,
-            self.group_id,
+            "Kafka consumer запущен: topics=%s, group=%s", topics, self.group_id
         )
 
     async def stop_consumer(self) -> None:
@@ -285,9 +269,7 @@ class KafkaClient(BaseKafkaClient):
         if self._consumer is None:
             return None
 
-        records = await self._consumer.getmany(
-            timeout_ms=timeout_ms, max_records=1
-        )
+        records = await self._consumer.getmany(timeout_ms=timeout_ms, max_records=1)
         for tp_records in records.values():
             if tp_records:
                 return tp_records[0]
@@ -299,7 +281,7 @@ class KafkaClient(BaseKafkaClient):
         await self.stop_consumer()
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("kafka_client", KafkaClient)
@@ -321,6 +303,5 @@ def get_outbox_producer() -> KafkaClient:
     """
     instance_id = os.environ.get("INSTANCE_ID", "default")
     return KafkaClient(
-        transactional_id=f"outbox-{instance_id}",
-        enable_idempotence=True,
+        transactional_id=f"outbox-{instance_id}", enable_idempotence=True
     )

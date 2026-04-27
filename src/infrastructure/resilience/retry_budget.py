@@ -67,8 +67,7 @@ class RetryBudget:
             attempts = len(self._attempts)
             retries = len(self._retries)
             allowed = max(
-                self.min_retries_per_sec * self.window_seconds,
-                attempts * self.ratio,
+                self.min_retries_per_sec * self.window_seconds, attempts * self.ratio
             )
             if retries >= allowed:
                 logger.warning(

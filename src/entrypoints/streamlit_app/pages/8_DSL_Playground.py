@@ -18,14 +18,14 @@ st.caption("Напиши код → Запусти → Посмотри резу
 # ─────────── Example templates ───────────
 
 EXAMPLES = {
-    "Hello World": '''# Простой маршрут
+    "Hello World": """# Простой маршрут
 route = (
     RouteBuilder.from_("demo.hello", source="internal:demo")
     .set_property("greeting", "Привет, мир!")
     .log()
     .build()
-)''',
-    "ETL pipeline": '''# ETL: получить → преобразовать → сохранить
+)""",
+    "ETL pipeline": """# ETL: получить → преобразовать → сохранить
 route = (
     RouteBuilder.from_("demo.etl", source="cron:0 */2 * * *")
     .dispatch_action("external_db.query")
@@ -33,8 +33,8 @@ route = (
     .dispatch_action("analytics.insert_batch")
     .log("ETL complete")
     .build()
-)''',
-    "AI Q&A": '''# AI Q&A с RAG + PII маскировкой
+)""",
+    "AI Q&A": """# AI Q&A с RAG + PII маскировкой
 route = (
     RouteBuilder.from_("demo.ai_qa", source="internal:ai")
     .rag_search(query_field="question", top_k=5)
@@ -46,8 +46,8 @@ route = (
     .call_llm(provider="perplexity")
     .restore_pii()
     .build()
-)''',
-    "Retry + DLQ": '''# Безопасный вызов с retry и dead-letter queue
+)""",
+    "Retry + DLQ": """# Безопасный вызов с retry и dead-letter queue
 route = (
     RouteBuilder.from_("demo.safe", source="internal:safe")
     .do_try(
@@ -60,7 +60,7 @@ route = (
     )
     .log("Done")
     .build()
-)''',
+)""",
 }
 
 col1, col2 = st.columns([1, 3])
@@ -109,8 +109,7 @@ if run_btn or lint_btn or validate_btn:
         client = get_api_client()
         try:
             result = client._request(
-                "POST", endpoint,
-                json={"code": code, "mode": mode},
+                "POST", endpoint, json={"code": code, "mode": mode}
             )
         except Exception:
             result = {

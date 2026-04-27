@@ -23,13 +23,13 @@ __all__ = (
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.
 _HTTP_TO_GRPC_STATUS: dict[int, int] = {
-    status.HTTP_400_BAD_REQUEST: 3,       # INVALID_ARGUMENT
-    status.HTTP_401_UNAUTHORIZED: 16,     # UNAUTHENTICATED
-    status.HTTP_403_FORBIDDEN: 7,         # PERMISSION_DENIED
-    status.HTTP_404_NOT_FOUND: 5,         # NOT_FOUND
+    status.HTTP_400_BAD_REQUEST: 3,  # INVALID_ARGUMENT
+    status.HTTP_401_UNAUTHORIZED: 16,  # UNAUTHENTICATED
+    status.HTTP_403_FORBIDDEN: 7,  # PERMISSION_DENIED
+    status.HTTP_404_NOT_FOUND: 5,  # NOT_FOUND
     status.HTTP_422_UNPROCESSABLE_ENTITY: 3,  # INVALID_ARGUMENT
     status.HTTP_500_INTERNAL_SERVER_ERROR: 13,  # INTERNAL
-    status.HTTP_503_SERVICE_UNAVAILABLE: 14,    # UNAVAILABLE
+    status.HTTP_503_SERVICE_UNAVAILABLE: 14,  # UNAVAILABLE
 }
 
 
@@ -68,9 +68,7 @@ class BaseError(Exception):
             return "Client"
         return "Server"
 
-    def to_dict(
-        self, *, include_type: bool = False
-    ) -> dict[str, Any]:
+    def to_dict(self, *, include_type: bool = False) -> dict[str, Any]:
         """Сериализует ошибку в словарь.
 
         Args:
@@ -93,73 +91,47 @@ class BaseError(Exception):
 class BadRequestError(BaseError):
     """Некорректный запрос (400 Bad Request)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Bad request"
-    ) -> None:
-        super().__init__(
-            message=message,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
+    def __init__(self, *_: Any, message: str = "Bad request") -> None:
+        super().__init__(message=message, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class UnprocessableError(BaseError):
     """Ошибка валидации данных (422 Unprocessable Entity)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Validation error"
-    ) -> None:
+    def __init__(self, *_: Any, message: str = "Validation error") -> None:
         super().__init__(
-            message=message,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            message=message, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
 
 
 class NotFoundError(BaseError):
     """Ресурс не найден (404 Not Found)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Not found"
-    ) -> None:
-        super().__init__(
-            message=message,
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+    def __init__(self, *_: Any, message: str = "Not found") -> None:
+        super().__init__(message=message, status_code=status.HTTP_404_NOT_FOUND)
 
 
 class DatabaseError(BaseError):
     """Ошибка базы данных (500 Internal Server Error)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Database error"
-    ) -> None:
+    def __init__(self, *_: Any, message: str = "Database error") -> None:
         super().__init__(
-            message=message,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
 class AuthenticationError(BaseError):
     """Ошибка аутентификации (401 Unauthorized)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Authentication error"
-    ) -> None:
-        super().__init__(
-            message=message,
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
+    def __init__(self, *_: Any, message: str = "Authentication error") -> None:
+        super().__init__(message=message, status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 class AuthorizationError(BaseError):
     """Ошибка авторизации (403 Forbidden)."""
 
-    def __init__(
-        self, *_: Any, message: str = "Authorization error"
-    ) -> None:
-        super().__init__(
-            message=message,
-            status_code=status.HTTP_403_FORBIDDEN,
-        )
+    def __init__(self, *_: Any, message: str = "Authorization error") -> None:
+        super().__init__(message=message, status_code=status.HTTP_403_FORBIDDEN)
 
 
 class ServiceError(BaseError):
@@ -169,25 +141,17 @@ class ServiceError(BaseError):
     чтобы поддерживать единую модель сериализации.
     """
 
-    def __init__(
-        self, detail: str = "Ошибка обработки запроса"
-    ) -> None:
+    def __init__(self, detail: str = "Ошибка обработки запроса") -> None:
         self.detail = detail
         super().__init__(
-            message=detail,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
 class RouteDisabledError(BaseError):
     """Маршрут отключён feature-флагом (503 Service Unavailable)."""
 
-    def __init__(
-        self,
-        *_: Any,
-        route_id: str = "",
-        feature_flag: str = "",
-    ) -> None:
+    def __init__(self, *_: Any, route_id: str = "", feature_flag: str = "") -> None:
         self.route_id = route_id
         self.feature_flag = feature_flag
         super().__init__(

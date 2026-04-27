@@ -50,10 +50,7 @@ class WebhookRegistry:
         """
         self._subscriptions[sub.id] = sub
         logger.info(
-            "Webhook подписка %s: event=%s → %s",
-            sub.id,
-            sub.event_type,
-            sub.target_url,
+            "Webhook подписка %s: event=%s → %s", sub.id, sub.event_type, sub.target_url
         )
         return sub
 
@@ -70,9 +67,7 @@ class WebhookRegistry:
             raise KeyError(f"Подписка {sub_id} не найдена")
         self._subscriptions.pop(sub_id)
 
-    def get_by_event(
-        self, event_type: str
-    ) -> list[WebhookSubscription]:
+    def get_by_event(self, event_type: str) -> list[WebhookSubscription]:
         """Возвращает подписки по типу события.
 
         Args:

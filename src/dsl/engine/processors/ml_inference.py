@@ -11,9 +11,9 @@ from collections import OrderedDict
 from threading import Lock
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "OnnxInferenceProcessor",
@@ -67,7 +67,7 @@ class OnnxInferenceProcessor(BaseProcessor):
             import onnxruntime as ort
 
             session = ort.InferenceSession(
-                self._path, providers=["CPUExecutionProvider"],
+                self._path, providers=["CPUExecutionProvider"]
             )
         except ImportError:
             logger.warning("onnxruntime not installed, ONNX inference disabled")
@@ -95,6 +95,7 @@ class OnnxInferenceProcessor(BaseProcessor):
 
         try:
             import numpy as np
+
             arr = np.array(features, dtype=np.float32)
 
             input_name = session.get_inputs()[0].name
@@ -142,7 +143,8 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from app.services.ai.ai_agent import get_ai_agent_service
+            from src.services.ai.ai_agent import get_ai_agent_service
+
             agent = get_ai_agent_service()
 
             # Проверяем что у агента есть streaming (иначе fallback в non-streaming)
@@ -174,10 +176,11 @@ class StreamingLLMProcessor(BaseProcessor):
             exchange.fail(f"Streaming LLM failed: {exc}")
 
     async def _publish_chunk(
-        self, session_id: str, content: Any, *, is_final: bool,
+        self, session_id: str, content: Any, *, is_final: bool
     ) -> None:
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
+
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",
                 data={
@@ -219,7 +222,9 @@ class EmbeddingProcessor(BaseProcessor):
             exchange.set_property(self._output, [])
             return
 
-        provider = self._provider or os.environ.get("EMBEDDING_PROVIDER", "sentence-transformers")
+        provider = self._provider or os.environ.get(
+            "EMBEDDING_PROVIDER", "sentence-transformers"
+        )
 
         try:
             if provider == "openai":
@@ -233,7 +238,8 @@ class EmbeddingProcessor(BaseProcessor):
             exchange.fail(f"Embedding failed: {exc}")
 
     async def _st_embed(self, text: str) -> list[float]:
-        from app.services.ai.rag_service import get_rag_service
+        from src.services.ai.rag_service import get_rag_service
+
         rag = get_rag_service()
         if hasattr(rag, "_embed"):
             result = rag._embed(text)
@@ -242,7 +248,9 @@ class EmbeddingProcessor(BaseProcessor):
 
     async def _openai_embed(self, text: str) -> list[float]:
         import os
+
         import httpx
+
         api_key = os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
@@ -258,7 +266,9 @@ class EmbeddingProcessor(BaseProcessor):
 
     async def _ollama_embed(self, text: str) -> list[float]:
         import os
+
         import httpx
+
         base_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
         async with httpx.AsyncClient(timeout=30) as client:
@@ -312,7 +322,7 @@ class OutboxProcessor(BaseProcessor):
         from sqlalchemy import text
 
         try:
-            from app.infrastructure.database.database import db_initializer
+            from src.infrastructure.database.database import db_initializer
         except ImportError:
             exchange.fail("Database not configured for outbox")
             return

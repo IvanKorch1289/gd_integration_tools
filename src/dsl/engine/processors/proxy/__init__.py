@@ -1,25 +1,27 @@
-"""Proxy pass-through процессоры (Wave 3.5 / ADR-014).
+"""Proxy pass-through и redirect процессоры (Wave 3.5-3.6 / ADR-014).
 
 Публичный re-export:
 
-    from app.dsl.engine.processors.proxy import (
+    from src.dsl.engine.processors.proxy import (
         ExposeProxyProcessor,
         ForwardToProcessor,
         HeaderMapPolicy,
+        RedirectProcessor,
     )
 """
 
 from __future__ import annotations
 
-from app.dsl.engine.processors.proxy.expose import (
+from src.dsl.engine.processors.proxy.expose import (
     ExposeProxyProcessor,
     ProxyInboundSpec,
 )
-from app.dsl.engine.processors.proxy.forward import (
+from src.dsl.engine.processors.proxy.forward import (
     ForwardToProcessor,
     ProxyOutboundSpec,
 )
-from app.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.dsl.engine.processors.proxy.redirect import RedirectProcessor
 
 __all__ = (
     "ExposeProxyProcessor",
@@ -27,4 +29,5 @@ __all__ = (
     "HeaderMapPolicy",
     "ProxyInboundSpec",
     "ProxyOutboundSpec",
+    "RedirectProcessor",
 )

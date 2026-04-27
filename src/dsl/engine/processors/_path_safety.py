@@ -59,7 +59,9 @@ def validate_path(path: str) -> str:
     allowed = _get_allowed_prefixes()
     for prefix in allowed:
         prefix_resolved = str(Path(prefix).resolve())
-        if resolved_str == prefix_resolved or resolved_str.startswith(prefix_resolved + os.sep):
+        if resolved_str == prefix_resolved or resolved_str.startswith(
+            prefix_resolved + os.sep
+        ):
             return resolved_str
 
     raise PathTraversalError(

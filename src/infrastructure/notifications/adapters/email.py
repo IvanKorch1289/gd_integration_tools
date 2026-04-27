@@ -11,9 +11,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
-
 _logger = logging.getLogger(__name__)
 
 
@@ -27,12 +24,7 @@ class EmailAdapter:
         self._html = html
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить email через SMTP-pool.
 
@@ -41,7 +33,7 @@ class EmailAdapter:
         """
         # Поздний импорт — SMTPClient может иметь тяжёлые зависимости.
         try:
-            from app.infrastructure.clients.transport.smtp import get_smtp_client
+            from src.infrastructure.clients.transport.smtp import get_smtp_client
         except ImportError as exc:
             raise RuntimeError(f"SMTP client unavailable: {exc}") from exc
 
@@ -56,7 +48,7 @@ class EmailAdapter:
 
     async def health(self) -> bool:
         try:
-            from app.infrastructure.clients.transport.smtp import get_smtp_client
+            from src.infrastructure.clients.transport.smtp import get_smtp_client
 
             smtp = get_smtp_client()
             # SMTPClient обычно имеет свой check — используем его или просто

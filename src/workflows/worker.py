@@ -70,7 +70,7 @@ def build_spec_loader() -> Callable[[str], Any]:
     конвертируется executor'ом в ``StepOutcome.FAILED`` — runner увидит
     событие ``step_failed`` с причиной ``spec_not_found``.
     """
-    from app.workflows.registry import workflow_registry
+    from src.workflows.registry import workflow_registry
 
     def _loader(route_id: str) -> Any:
         spec = workflow_registry.get_spec(route_id)
@@ -93,7 +93,7 @@ def _resolve_executor() -> Any:
             "WORKFLOW_WORKER_EXECUTOR=noop — NoOpStepExecutor active (dev/smoke)"
         )
         return NoOpStepExecutor()
-    from app.infrastructure.workflow.executor import DSLStepExecutor
+    from src.infrastructure.workflow.executor import DSLStepExecutor
 
     return DSLStepExecutor(spec_loader=build_spec_loader())
 
@@ -115,7 +115,7 @@ class NoOpStepExecutor:
         state: Any,  # noqa: ARG002
     ) -> Any:
         # Импорт отложен чтобы CLI --help не тянул БД/модели.
-        from app.infrastructure.workflow.runner import StepOutcome, StepResult
+        from src.infrastructure.workflow.runner import StepOutcome, StepResult
 
         _logger.warning(
             "NoOpStepExecutor.execute_next called for workflow %s — "
@@ -143,9 +143,8 @@ async def _bootstrap() -> None:
     Аналогично ``manage.py._bootstrap``, но дополнительно стартует
     ``ConnectorRegistry`` — worker-у нужны живые БД-подключения.
     """
-    from app.dsl.commands.setup import register_action_handlers
-    from app.dsl.routes import register_dsl_routes
-
+    from src.dsl.commands.setup import register_action_handlers
+    from src.dsl.routes import register_dsl_routes
     from src.infrastructure.application.service_setup import register_all_services
 
     register_all_services()
@@ -154,7 +153,7 @@ async def _bootstrap() -> None:
 
     # Коннекторы (БД + внешние клиенты) — если registry доступен.
     try:
-        from app.infrastructure.registry import ConnectorRegistry
+        from src.infrastructure.registry import ConnectorRegistry
 
         await ConnectorRegistry.instance().start_all()
     except Exception as exc:  # noqa: BLE001
@@ -164,7 +163,7 @@ async def _bootstrap() -> None:
 async def _shutdown_connectors() -> None:
     """Останавливает коннекторы в обратном порядке. Ошибки не фатальны."""
     try:
-        from app.infrastructure.registry import ConnectorRegistry
+        from src.infrastructure.registry import ConnectorRegistry
 
         await ConnectorRegistry.instance().stop_all()
     except Exception as exc:  # noqa: BLE001
@@ -178,8 +177,9 @@ async def _readiness_check() -> bool:
     убедиться что БД отвечает. Возвращает ``False`` при любой ошибке.
     """
     try:
-        from app.infrastructure.database.session_manager import main_session_manager
         from sqlalchemy import text
+
+        from src.infrastructure.database.session_manager import main_session_manager
 
         async with main_session_manager.create_session() as session:
             await session.execute(text("SELECT 1"))
@@ -197,7 +197,7 @@ def _resolve_listener_dsn() -> str | None:
     нужен чистый ``postgresql://``. Переводим.
     """
     try:
-        from app.core.config.settings import settings
+        from src.core.config.settings import settings
 
         url = str(settings.database.async_connection_url)
         if url.startswith("postgresql+asyncpg://"):
@@ -219,8 +219,8 @@ async def _run_worker(
     и ждёт shutdown event. По shutdown — graceful drain: probes → 503,
     runner.stop() ждёт завершения активных executions, probes.stop().
     """
-    from app.infrastructure.workflow.runner import DurableWorkflowRunner, RunnerConfig
-    from app.workflows.worker_probes import WorkerProbesServer
+    from src.infrastructure.workflow.runner import DurableWorkflowRunner, RunnerConfig
+    from src.workflows.worker_probes import WorkerProbesServer
 
     await _bootstrap()
 
@@ -228,9 +228,7 @@ async def _run_worker(
     listener_dsn = _resolve_listener_dsn() if listen else None
 
     runner = DurableWorkflowRunner(
-        config=config,
-        executor=_resolve_executor(),
-        listener_dsn=listener_dsn,
+        config=config, executor=_resolve_executor(), listener_dsn=listener_dsn
     )
 
     probes = WorkerProbesServer(
@@ -290,12 +288,13 @@ async def _run_worker(
 
 async def _print_status() -> None:
     """Async-helper команды ``status``: печатает счётчики по статусам."""
-    from app.infrastructure.database.models.workflow_instance import (
+    from sqlalchemy import func, select
+
+    from src.infrastructure.database.models.workflow_instance import (
         WorkflowInstance,
         WorkflowStatus,
     )
-    from app.infrastructure.database.session_manager import main_session_manager
-    from sqlalchemy import func, select
+    from src.infrastructure.database.session_manager import main_session_manager
 
     await _bootstrap()
     async with main_session_manager.create_session() as session:

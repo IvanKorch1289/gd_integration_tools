@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.infrastructure.db.models.orders import Order
+from src.infrastructure.database.models.orders import Order
 
 __all__ = ("OrderFilter",)
 

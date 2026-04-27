@@ -2,19 +2,12 @@ from abc import ABC, abstractmethod
 from asyncio import Lock
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
-from typing import (
-    Any,
-    AsyncGenerator,
-    Callable,
-    Coroutine,
-    ParamSpec,
-    TypeVar,
-)
+from typing import Any, AsyncGenerator, Callable, Coroutine, ParamSpec, TypeVar
 
 from botocore.exceptions import ClientError as BotoClientError
 
-from app.core.config.settings import FileStorageSettings, settings
-from app.core.errors import ServiceError
+from src.core.config.settings import FileStorageSettings, settings
+from src.core.errors import ServiceError
 
 __all__ = ("S3Client", "s3_client")
 
@@ -113,7 +106,7 @@ class S3Client(BaseS3Client):
         from aiobotocore.config import AioConfig
         from aiobotocore.session import get_session
 
-        from app.infrastructure.external_apis.logging_service import fs_logger
+        from src.infrastructure.external_apis.logging_service import fs_logger
 
         self._connect_lock = Lock()
         self._settings = settings
@@ -212,7 +205,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:

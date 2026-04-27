@@ -11,8 +11,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.dsl.adapters.types import ProtocolType
-from app.dsl.engine.exchange import Exchange
+from src.dsl.adapters.types import ProtocolType
+from src.dsl.engine.exchange import Exchange
 
 __all__ = ("BaseProtocolAdapter",)
 
@@ -31,9 +31,7 @@ class BaseProtocolAdapter(ABC):
     protocol: ProtocolType
 
     @abstractmethod
-    async def create_exchange(
-        self, raw_input: Any
-    ) -> Exchange[Any]:
+    async def create_exchange(self, raw_input: Any) -> Exchange[Any]:
         """Преобразует входящие данные протокола в Exchange.
 
         Args:
@@ -45,9 +43,7 @@ class BaseProtocolAdapter(ABC):
         """
 
     @abstractmethod
-    async def send_response(
-        self, exchange: Exchange[Any], raw_context: Any
-    ) -> Any:
+    async def send_response(self, exchange: Exchange[Any], raw_context: Any) -> Any:
         """Отправляет результат обработки обратно через протокол.
 
         Args:
@@ -67,9 +63,7 @@ class BaseProtocolAdapter(ABC):
     async def stop(self) -> None:
         """Останавливает адаптер и освобождает ресурсы."""
 
-    def enrich_meta(
-        self, exchange: Exchange[Any], **kwargs: Any
-    ) -> None:
+    def enrich_meta(self, exchange: Exchange[Any], **kwargs: Any) -> None:
         """Обогащает ExchangeMeta протокол-специфичными данными.
 
         Args:

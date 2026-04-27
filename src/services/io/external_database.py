@@ -6,18 +6,18 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config.settings import settings
-from app.core.enums.database import DatabaseTypeChoices
-from app.core.enums.external_db import (
+from src.core.config.settings import settings
+from src.core.enums.database import DatabaseTypeChoices
+from src.core.enums.external_db import (
     ExternalDBObjectChoices,
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
     ExternalDBParameterMeta,
     ExternalDBParameterModeChoices,
 )
-from app.core.errors import DatabaseError
-from app.infrastructure.db.session_manager import get_external_session_manager
-from app.infrastructure.external_apis.logging_service import app_logger
+from src.core.errors import DatabaseError
+from src.infrastructure.database.session_manager import get_external_session_manager
+from src.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("external_db_service", "ExternalDatabaseService")
 
@@ -383,9 +383,7 @@ class ExternalDatabaseService:
         - преобразован в параметры БД;
         - безопасно передан через bind-параметры.
         """
-        safe_name = self._validate_identifier(
-            meta.qualified_name, context="procedure"
-        )
+        safe_name = self._validate_identifier(meta.qualified_name, context="procedure")
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 
         if db_type == DatabaseTypeChoices.postgresql:

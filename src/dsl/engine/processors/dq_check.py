@@ -2,9 +2,9 @@
 
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("DQCheckProcessor",)
 
@@ -34,7 +34,7 @@ class DQCheckProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.ops.data_quality import get_dq_monitor
+        from src.services.ops.data_quality import get_dq_monitor
 
         monitor = get_dq_monitor()
         for rule in self._rules:

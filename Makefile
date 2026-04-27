@@ -21,14 +21,14 @@ TAG ?=
 GIT_NO_VERIFY ?= 1
 
 DOCKER ?= docker
-POETRY_RUN := poetry run
-MANAGE_SCRIPT := $(POETRY_RUN) python manage.py
+UV_RUN := uv run
+MANAGE_SCRIPT := $(UV_RUN) python manage.py
 
 CONFIG_FILE ?= ./config.yml
 RUN_DIR ?= ./.run
 LOG_DIR ?= ./logs
 
-UVICORN_APP ?= app.main:app
+UVICORN_APP ?= src.main:app
 UVICORN_HOST ?= 0.0.0.0
 UVICORN_PORT ?= 8000
 
@@ -73,26 +73,26 @@ help: ##@ Misc Show this help
 
 ##@ Setup
 
-init: ## Initialize project with Poetry
+init: ## Initialize project with uv
 	@$(INFO) "Initializing project..."
-	poetry config virtualenvs.in-project true
-	poetry install --with dev
+	uv sync --all-extras
 	@$(SUCCESS) "Project initialized!"
 
 install: ## Install dependencies
-	poetry install --with dev
+	uv sync --all-extras
 
 update: ## Update dependencies
-	poetry update
+	uv lock --upgrade
+	uv sync --all-extras
 
 lock: ## Refresh lock file
-	poetry lock
+	uv lock
 
-check-env: ## Check Poetry environment
-	@if poetry env info --path >/dev/null 2>&1; then \
-		$(SUCCESS) "Poetry virtual environment detected"; \
+check-env: ## Check uv virtual environment
+	@if [ -d ".venv" ]; then \
+		$(SUCCESS) "uv virtual environment detected"; \
 	else \
-		$(WARN) "No Poetry virtual environment found. Run 'poetry env use 3.14 && poetry install --with dev'"; \
+		$(WARN) "No virtual environment found. Run 'uv sync --all-extras'"; \
 		exit 1; \
 	fi
 
@@ -131,46 +131,46 @@ ensure-branch: ## Ensure target branch exists locally and checkout it
 
 format: check-env ## Format code using Ruff
 	@$(INFO) "Formatting code..."
-	$(POETRY_RUN) ruff check --select I --fix $(SOURCE_DIR)
-	$(POETRY_RUN) ruff format $(SOURCE_DIR)
+	$(UV_RUN) ruff check --select I --fix $(SOURCE_DIR)
+	$(UV_RUN) ruff format $(SOURCE_DIR)
 	@$(SUCCESS) "Formatting complete!"
 
 format-check: check-env ## Check formatting without modifying files
 	@$(INFO) "Checking formatting..."
-	@$(POETRY_RUN) ruff format --check --diff $(SOURCE_DIR) || ($(ERROR) "Ruff formatting failed! Run 'make fix' to auto-format your code."; exit 1)
+	@$(UV_RUN) ruff format --check --diff $(SOURCE_DIR) || ($(ERROR) "Ruff formatting failed! Run 'make fix' to auto-format your code."; exit 1)
 	@$(SUCCESS) "Formatting check passed!"
 
 fix: ## Auto-fix code style
 	@$(MAKE) format
 	@$(INFO) "Fixing lint issues..."
-	$(POETRY_RUN) ruff check --fix $(SOURCE_DIR)
+	$(UV_RUN) ruff check --fix $(SOURCE_DIR)
 	@$(SUCCESS) "Auto-fix complete!"
 
 ##@ Quality
 
 lint: check-env ## Run soft lint; mypy and vulture are non-blocking
 	@$(INFO) "Running soft lint..."
-	@$(POETRY_RUN) ruff check $(SOURCE_DIR) $(RUFF_ARGS) || printf '%s\n' "Ruff found issues"
-	@MYPY_USE_MYPYC=0 $(POETRY_RUN) python -X faulthandler -m mypy \
-		--cache-dir=/dev/null -p app || printf '%s\n' "Mypy found issues or crashed"
-	@$(POETRY_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
+	@$(UV_RUN) ruff check $(SOURCE_DIR) $(RUFF_ARGS) || printf '%s\n' "Ruff found issues"
+	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
+		--cache-dir=/dev/null -p src || printf '%s\n' "Mypy found issues or crashed"
+	@$(UV_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
 	@$(SUCCESS) "Soft lint complete!"
 
 lint-strict: check-env format-check ## Run strict lint without mypy and vulture
 	@$(INFO) "Running strict lint..."
-	$(POETRY_RUN) ruff check $(SOURCE_DIR) $(RUFF_ARGS)
+	$(UV_RUN) ruff check $(SOURCE_DIR) $(RUFF_ARGS)
 	@$(SUCCESS) "Strict lint passed!"
 
 type-check: check-env ## Run non-blocking mypy type check
 	@$(INFO) "Running mypy type check..."
-	@MYPY_USE_MYPYC=0 $(POETRY_RUN) python -X faulthandler -m mypy \
-		--cache-dir=/dev/null -p app || printf '%s\n' "Mypy found issues or crashed"
+	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
+		--cache-dir=/dev/null -p src || printf '%s\n' "Mypy found issues or crashed"
 	@$(SUCCESS) "Type check finished!"
 
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
-	@MYPY_USE_MYPYC=0 $(POETRY_RUN) python -X faulthandler -m mypy \
-		--cache-dir=/dev/null -p app || ( \
+	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
+		--cache-dir=/dev/null -p src || ( \
 		RET=$$?; \
 		if [ $$RET -eq 2 ]; then \
 			$(WARN) "Mypy crashed with INTERNAL ERROR (bug in Mypy v1.20.1). Bypassing..."; \
@@ -182,44 +182,44 @@ type-check-strict: check-env ## Run strict mypy type check (tolerates internal m
 
 vulture-check: check-env ## Run informational dead code scan
 	@$(INFO) "Running vulture dead code scan..."
-	@$(POETRY_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
+	@$(UV_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
 	@$(SUCCESS) "Vulture scan finished!"
 
 refurb-check: check-env ## Check for modern Python idioms
 	@$(INFO) "Running Refurb to modernize code..."
-	@if $(POETRY_RUN) refurb --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) refurb $(SOURCE_DIR); \
+	@if $(UV_RUN) refurb --version >/dev/null 2>&1; then \
+		$(UV_RUN) refurb $(SOURCE_DIR); \
 	else \
-		$(WARN) "Skipping refurb: install it with 'poetry add --group dev refurb'"; \
+		$(WARN) "Skipping refurb: install it with 'uv add --dev refurb'"; \
 	fi
 
 deps-check: check-env ## Check for unused dependencies with Creosote
 	@$(INFO) "Checking dependencies..."
-	@if $(POETRY_RUN) creosote --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) creosote -p $(SOURCE_DIR) || printf '%s\n' "Creosote found unused dependencies"; \
+	@if $(UV_RUN) creosote --version >/dev/null 2>&1; then \
+		$(UV_RUN) creosote -p $(SOURCE_DIR) || printf '%s\n' "Creosote found unused dependencies"; \
 	else \
-		$(WARN) "Skipping creosote: install it with 'poetry add --group dev creosote'"; \
+		$(WARN) "Skipping creosote: install it with 'uv add --dev creosote'"; \
 	fi
 	@$(SUCCESS) "Dependencies check complete!"
 
 deps-check-strict: check-env ## Strict dependency check with Creosote
 	@$(INFO) "Running strict dependency checks..."
-	@if $(POETRY_RUN) creosote --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) creosote -p $(SOURCE_DIR); \
+	@if $(UV_RUN) creosote --version >/dev/null 2>&1; then \
+		$(UV_RUN) creosote -p $(SOURCE_DIR); \
 	else \
-		$(ERROR) "creosote is not installed in Poetry env"; \
-		printf '%s\n' "Run: poetry add --group dev creosote"; \
+		$(ERROR) "creosote is not installed in uv env"; \
+		printf '%s\n' "Run: uv add --dev creosote"; \
 		exit 1; \
 	fi
 	@$(SUCCESS) "Strict dependency checks passed!"
 
 secrets-check: check-env ## Scan source code for secrets using detect-secrets
 	@$(INFO) "Scanning for secrets..."
-	@if $(POETRY_RUN) detect-secrets --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) detect-secrets scan $(SOURCE_DIR) \
+	@if $(UV_RUN) detect-secrets --version >/dev/null 2>&1; then \
+		$(UV_RUN) detect-secrets scan $(SOURCE_DIR) \
 			--exclude-files '.*migrations/versions/.*\.py$$'; \
 	else \
-		$(WARN) "Skipping detect-secrets: install it with 'poetry add --group dev detect-secrets'"; \
+		$(WARN) "Skipping detect-secrets: install it with 'uv add --dev detect-secrets'"; \
 	fi
 	@$(SUCCESS) "Secrets check completed!"
 
@@ -230,11 +230,11 @@ audit: ## Run security and dependency audit
 
 api-fuzz: check-env ## Run property-based testing against live FastAPI
 	@$(INFO) "Running Schemathesis API tests..."
-	@if $(POETRY_RUN) schemathesis --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) schemathesis run http://$(UVICORN_HOST):$(UVICORN_PORT)/openapi.json \
+	@if $(UV_RUN) schemathesis --version >/dev/null 2>&1; then \
+		$(UV_RUN) schemathesis run http://$(UVICORN_HOST):$(UVICORN_PORT)/openapi.json \
 			--checks all; \
 	else \
-		$(WARN) "Skipping schemathesis: install it with 'poetry add --group dev schemathesis'"; \
+		$(WARN) "Skipping schemathesis: install it with 'uv add --dev schemathesis'"; \
 	fi
 
 ##@ Runtime
@@ -276,12 +276,12 @@ actions: check-env ## List registered actions
 
 profile-memray: check-env ## Run FastAPI under Memray
 	@mkdir -p "$(PROFILE_DIR)"
-	@if $(POETRY_RUN) memray --version >/dev/null 2>&1; then \
+	@if $(UV_RUN) memray --version >/dev/null 2>&1; then \
 		$(INFO) "Running Memray profiler..."; \
-		$(POETRY_RUN) memray run -o "$(MEMRAY_OUTPUT)" -m uvicorn "$(UVICORN_APP)" --host "$(UVICORN_HOST)" --port "$(UVICORN_PORT)"; \
+		$(UV_RUN) memray run -o "$(MEMRAY_OUTPUT)" -m uvicorn "$(UVICORN_APP)" --host "$(UVICORN_HOST)" --port "$(UVICORN_PORT)"; \
 	else \
-		$(ERROR) "memray is not installed in Poetry env"; \
-		printf '%s\n' "Run: poetry add --group dev memray"; \
+		$(ERROR) "memray is not installed in uv env"; \
+		printf '%s\n' "Run: uv add --dev memray"; \
 		exit 1; \
 	fi
 
@@ -292,13 +292,13 @@ profile-memray-flamegraph: check-env ## Generate Memray flamegraph HTML
 		printf '%s\n' "Run: make profile-memray"; \
 		exit 1; \
 	fi
-	@if $(POETRY_RUN) memray --version >/dev/null 2>&1; then \
+	@if $(UV_RUN) memray --version >/dev/null 2>&1; then \
 		$(INFO) "Generating Memray flamegraph..."; \
-		$(POETRY_RUN) memray flamegraph -o "$(MEMRAY_FLAMEGRAPH)" "$(MEMRAY_OUTPUT)"; \
+		$(UV_RUN) memray flamegraph -o "$(MEMRAY_FLAMEGRAPH)" "$(MEMRAY_OUTPUT)"; \
 		$(SUCCESS) "Memray flamegraph generated: $(MEMRAY_FLAMEGRAPH)"; \
 	else \
-		$(ERROR) "memray is not installed in Poetry env"; \
-		printf '%s\n' "Run: poetry add --group dev memray"; \
+		$(ERROR) "memray is not installed in uv env"; \
+		printf '%s\n' "Run: uv add --dev memray"; \
 		exit 1; \
 	fi
 
@@ -308,24 +308,24 @@ profile-memray-stats: check-env ## Show Memray stats
 		printf '%s\n' "Run: make profile-memray"; \
 		exit 1; \
 	fi
-	@if $(POETRY_RUN) memray --version >/dev/null 2>&1; then \
+	@if $(UV_RUN) memray --version >/dev/null 2>&1; then \
 		$(INFO) "Showing Memray stats..."; \
-		$(POETRY_RUN) memray stats "$(MEMRAY_OUTPUT)"; \
+		$(UV_RUN) memray stats "$(MEMRAY_OUTPUT)"; \
 	else \
-		$(ERROR) "memray is not installed in Poetry env"; \
-		printf '%s\n' "Run: poetry add --group dev memray"; \
+		$(ERROR) "memray is not installed in uv env"; \
+		printf '%s\n' "Run: uv add --dev memray"; \
 		exit 1; \
 	fi
 
 profile-mprof: check-env ## Run memory profiling with mprof
 	@mkdir -p "$(PROFILE_DIR)"
-	@if $(POETRY_RUN) mprof --help >/dev/null 2>&1; then \
+	@if $(UV_RUN) mprof --help >/dev/null 2>&1; then \
 		$(INFO) "Running mprof..."; \
-		$(POETRY_RUN) mprof run --output "$(MPROF_OUTPUT)" uvicorn "$(UVICORN_APP)" --host "$(UVICORN_HOST)" --port "$(UVICORN_PORT)"; \
+		$(UV_RUN) mprof run --output "$(MPROF_OUTPUT)" uvicorn "$(UVICORN_APP)" --host "$(UVICORN_HOST)" --port "$(UVICORN_PORT)"; \
 		$(SUCCESS) "mprof output saved: $(MPROF_OUTPUT)"; \
 	else \
-		$(ERROR) "mprof is not installed in Poetry env"; \
-		printf '%s\n' "Run: poetry add --group dev memory-profiler"; \
+		$(ERROR) "mprof is not installed in uv env"; \
+		printf '%s\n' "Run: uv add --dev memory-profiler"; \
 		exit 1; \
 	fi
 
@@ -347,10 +347,10 @@ docs-clean:
 	rm -rf $(DOCS_BUILD)/*
 
 docs-apidoc:
-	poetry run sphinx-apidoc -f -o $(DOCS_SOURCE) $(APP_DIR)
+	uv run sphinx-apidoc -f -o $(DOCS_SOURCE) $(APP_DIR)
 
 docs-html:
-	poetry run sphinx-build -b html $(DOCS_SOURCE) $(DOCS_BUILD)/html
+	uv run sphinx-build -b html $(DOCS_SOURCE) $(DOCS_BUILD)/html
 
 docs-rebuild: docs-clean docs-apidoc docs-html
 
@@ -360,15 +360,15 @@ docs: docs-rebuild
 
 pre-commit: check-env ## Install and run pre-commit hooks
 	@$(INFO) "Setting up pre-commit..."
-	$(POETRY_RUN) pre-commit install
-	$(POETRY_RUN) pre-commit run --all-files
+	$(UV_RUN) pre-commit install
+	$(UV_RUN) pre-commit run --all-files
 	@$(SUCCESS) "Pre-commit configured!"
 
 commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
 	@$(INFO) "Committing changes (explicit paths, no -A)..."
 	@# A2 security: запрещаем git add -A, чтобы исключить добавление
 	@# случайных файлов (.env, artifacts, IDE-cruft, секреты).
-	git add src/ docs/ scripts/ tools/ pyproject.toml poetry.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	git add src/ docs/ scripts/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
 	@# Опциональные корневые файлы — добавляются, только если существуют.
 	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
 	@[ -f Dockerfile ] && git add Dockerfile || true
@@ -384,18 +384,18 @@ commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
 	fi
 
 current-version: check-env ## Show current semantic version
-	@$(POETRY_RUN) semantic-release print-version --current
+	@$(UV_RUN) semantic-release print-version --current
 
 next-version: check-env ## Show what the next version will be
-	@$(POETRY_RUN) semantic-release print-version --next
+	@$(UV_RUN) semantic-release print-version --next
 
 bump: check-env ## Bump version, update CHANGELOG and tag via Semantic Release
 	@$(INFO) "Running semantic-release..."
-	@if $(POETRY_RUN) semantic-release --version >/dev/null 2>&1; then \
-		$(POETRY_RUN) semantic-release version; \
+	@if $(UV_RUN) semantic-release --version >/dev/null 2>&1; then \
+		$(UV_RUN) semantic-release version; \
 	else \
 		$(ERROR) "python-semantic-release is not installed"; \
-		printf '%s\n' "Run: poetry add --group dev python-semantic-release"; \
+		printf '%s\n' "Run: uv add --dev python-semantic-release"; \
 		exit 1; \
 	fi
 
@@ -526,16 +526,16 @@ phase-audit: ## Audit phase readiness. Usage: make phase-audit PHASE=A1
 	@bash scripts/audit.sh $(PHASE)
 
 progress: ## Show phase progress summary
-	@$(POETRY_RUN) python3 tools/report_phases.py
+	@$(UV_RUN) python3 tools/report_phases.py
 
 phases: ## Show only in-progress phases
-	@$(POETRY_RUN) python3 tools/report_phases.py --only in-progress
+	@$(UV_RUN) python3 tools/report_phases.py --only in-progress
 
 mr-description: ## Render MR description from PROGRESS + STATUS
-	@$(POETRY_RUN) python3 tools/render_mr_description.py
+	@$(UV_RUN) python3 tools/render_mr_description.py
 
 readiness-check: ## Run all anti-forget guards locally
 	@$(INFO) "Running anti-forget guards..."
-	$(POETRY_RUN) python3 tools/check_phase_order.py
-	$(POETRY_RUN) python3 tools/check_deps_matrix.py
+	$(UV_RUN) python3 tools/check_phase_order.py
+	$(UV_RUN) python3 tools/check_deps_matrix.py
 	@$(SUCCESS) "All guards passed!"

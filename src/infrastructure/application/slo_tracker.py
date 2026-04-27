@@ -10,7 +10,6 @@ Multi-instance safety:
 
 from __future__ import annotations
 
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
@@ -20,6 +19,7 @@ __all__ = ("SLOTracker", "get_slo_tracker")
 
 try:
     from hdrh.histogram import HdrHistogram as _HdrHistogram
+
     _HDRH_AVAILABLE = True
 except ImportError:
     _HDRH_AVAILABLE = False
@@ -29,6 +29,7 @@ except ImportError:
 @dataclass(slots=True)
 class _FallbackStats:
     """Fallback: simple list-based stats если hdrh недоступен."""
+
     latencies: list[float] = field(default_factory=list)
 
     def record(self, latency_ms: float) -> None:
@@ -108,14 +109,14 @@ class SLOTracker:
         """Записывает результат выполнения маршрута + экспорт в Prometheus."""
         self._stats[route_id].record(latency_ms, is_error)
         try:
-            from app.infrastructure.observability.metrics import (
+            from src.infrastructure.observability.metrics import (
                 record_pipeline_execution,
             )
+
             record_pipeline_execution(
-                route_id=route_id,
-                status="error" if is_error else "success",
+                route_id=route_id, status="error" if is_error else "success"
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     def get_report(self) -> dict[str, Any]:
@@ -135,7 +136,7 @@ class SLOTracker:
         self._stats.clear()
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("slo_tracker", SLOTracker)

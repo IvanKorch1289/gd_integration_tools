@@ -6,16 +6,15 @@
 """
 
 import logging
-
-import orjson
 from typing import Any
 from xml.etree import ElementTree as ET
 
+import orjson
 from fastapi import APIRouter, Request, Response
 
-from app.core.errors import BaseError
-from app.dsl.commands.registry import action_handler_registry
-from app.dsl.service import get_dsl_service
+from src.core.errors import BaseError
+from src.dsl.commands.registry import action_handler_registry
+from src.dsl.service import get_dsl_service
 
 __all__ = ("soap_router",)
 
@@ -38,6 +37,7 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
     """
     try:
         from defusedxml.ElementTree import fromstring as safe_fromstring
+
         root = safe_fromstring(xml_body)
     except ImportError:
         root = ET.fromstring(xml_body)  # noqa: S314
@@ -74,9 +74,7 @@ def _build_soap_response(operation: str, result: Any) -> str:
         result_parts = f"<result>{orjson.dumps(result).decode()}</result>"
     elif hasattr(result, "model_dump"):
         data = result.model_dump(mode="json")
-        result_parts = "".join(
-            f"<{k}>{_xml_escape(v)}</{k}>" for k, v in data.items()
-        )
+        result_parts = "".join(f"<{k}>{_xml_escape(v)}</{k}>" for k, v in data.items())
     else:
         result_parts = f"<result>{_xml_escape(result)}</result>"
 
@@ -125,13 +123,9 @@ async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
     IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
     с `source="soap"`. Унифицирует с REST/gRPC/GraphQL.
     """
-    from app.entrypoints.base import dispatch_action
+    from src.entrypoints.base import dispatch_action
 
-    return await dispatch_action(
-        action=operation,
-        payload=payload,
-        source="soap",
-    )
+    return await dispatch_action(action=operation, payload=payload, source="soap")
 
 
 @soap_router.post(
@@ -190,7 +184,9 @@ async def handle_soap_request(request: Request) -> Response:
         return Response(content=xml, media_type=content_type, status_code=404)
     except BaseError as exc:
         xml = _build_soap_fault(exc.soap_fault_code, exc.message)
-        return Response(content=xml, media_type=content_type, status_code=exc.status_code)
+        return Response(
+            content=xml, media_type=content_type, status_code=exc.status_code
+        )
     except Exception as exc:
         logger.exception("SOAP ошибка: %s", exc)
         xml = _build_soap_fault("Server", str(exc))
@@ -215,28 +211,28 @@ async def get_wsdl() -> Response:
         safe_name = action.replace(".", "_")
         operations_xsd.append(
             f'    <xsd:element name="{safe_name}">'
-            f'      <xsd:complexType><xsd:sequence>'
+            f"      <xsd:complexType><xsd:sequence>"
             f'        <xsd:element name="payload" type="xsd:string" minOccurs="0"/>'
-            f'      </xsd:sequence></xsd:complexType>'
-            f'    </xsd:element>'
+            f"      </xsd:sequence></xsd:complexType>"
+            f"    </xsd:element>"
             f'    <xsd:element name="{safe_name}Response">'
-            f'      <xsd:complexType><xsd:sequence>'
+            f"      <xsd:complexType><xsd:sequence>"
             f'        <xsd:element name="result" type="xsd:string" minOccurs="0"/>'
-            f'      </xsd:sequence></xsd:complexType>'
-            f'    </xsd:element>'
+            f"      </xsd:sequence></xsd:complexType>"
+            f"    </xsd:element>"
         )
         port_operations.append(
             f'    <wsdl:operation name="{safe_name}">'
             f'      <wsdl:input message="tns:{safe_name}Request"/>'
             f'      <wsdl:output message="tns:{safe_name}Response"/>'
-            f'    </wsdl:operation>'
+            f"    </wsdl:operation>"
         )
         binding_operations.append(
             f'    <wsdl:operation name="{safe_name}">'
             f'      <soap:operation soapAction="{action}"/>'
             f'      <wsdl:input><soap:body use="literal"/></wsdl:input>'
             f'      <wsdl:output><soap:body use="literal"/></wsdl:output>'
-            f'    </wsdl:operation>'
+            f"    </wsdl:operation>"
         )
 
     messages = []
@@ -245,10 +241,10 @@ async def get_wsdl() -> Response:
         messages.append(
             f'  <wsdl:message name="{safe_name}Request">'
             f'    <wsdl:part name="parameters" element="tns:{safe_name}"/>'
-            f'  </wsdl:message>'
+            f"  </wsdl:message>"
             f'  <wsdl:message name="{safe_name}Response">'
             f'    <wsdl:part name="parameters" element="tns:{safe_name}Response"/>'
-            f'  </wsdl:message>'
+            f"  </wsdl:message>"
         )
 
     wsdl = (

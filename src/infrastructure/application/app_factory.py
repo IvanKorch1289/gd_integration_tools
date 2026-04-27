@@ -1,21 +1,21 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from app.core.config.settings import settings
-from app.entrypoints.middlewares.setup_middlewares import setup_middlewares
-from app.entrypoints.api.v1.routers import get_v1_routers
-from app.entrypoints.graphql.schema import graphql_router
-from app.entrypoints.grpc.proto_viewer import proto_viewer_router
-from app.entrypoints.soap.soap_handler import soap_router
-from app.entrypoints.sse.handler import sse_router
-from app.entrypoints.webhook.handler import webhook_router
-from app.entrypoints.websocket.ws_handler import ws_router
-from app.infrastructure.application.index import root_page
-from app.infrastructure.application.lifecycle import lifespan
-from app.infrastructure.application.monitoring import setup_monitoring
-from app.infrastructure.application.telemetry import setup_tracing
-from app.infrastructure.clients.messaging.stream import stream_client
-from app.utilities.admins.setup_admin import setup_admin
+from src.core.config.settings import settings
+from src.entrypoints.api.v1.routers import get_v1_routers
+from src.entrypoints.graphql.schema import graphql_router
+from src.entrypoints.grpc.proto_viewer import proto_viewer_router
+from src.entrypoints.middlewares.setup_middlewares import setup_middlewares
+from src.entrypoints.soap.soap_handler import soap_router
+from src.entrypoints.sse.handler import sse_router
+from src.entrypoints.webhook.handler import webhook_router
+from src.entrypoints.websocket.ws_handler import ws_router
+from src.infrastructure.application.index import root_page
+from src.infrastructure.application.lifecycle import lifespan
+from src.infrastructure.application.monitoring import setup_monitoring
+from src.infrastructure.application.telemetry import setup_tracing
+from src.infrastructure.clients.messaging.stream import stream_client
+from src.utilities.admins.setup_admin import setup_admin
 
 __all__ = ("create_app",)
 
@@ -97,7 +97,7 @@ def _configure_application_components(app: FastAPI) -> None:
 
 def _configure_business_routers(app: FastAPI) -> None:
     """Подключение бизнес-маршрутизаторов"""
-    from app.entrypoints.filewatcher.watcher_routes import watcher_router
+    from src.entrypoints.filewatcher.watcher_routes import watcher_router
 
     # Основное API приложения
     app.include_router(get_v1_routers(), prefix="/api/v1")
@@ -120,7 +120,8 @@ def _configure_business_routers(app: FastAPI) -> None:
     app.include_router(webhook_router)
 
     # CDC
-    from app.entrypoints.cdc.cdc_routes import cdc_router
+    from src.entrypoints.cdc.cdc_routes import cdc_router
+
     app.include_router(cdc_router)
 
 
@@ -159,7 +160,7 @@ def _configure_root_endpoint(app: FastAPI) -> None:
         """
         from fastapi.responses import JSONResponse
 
-        from app.infrastructure.application.health_aggregator import (
+        from src.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
 

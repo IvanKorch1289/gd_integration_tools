@@ -2,7 +2,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from app.utilities.utils import AsyncChunkIterator
+from src.utilities.utils import AsyncChunkIterator
 
 __all__ = ("InnerRequestLoggingMiddleware",)
 
@@ -21,8 +21,8 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
 
         :param app: ASGI-приложение, к которому применяется middleware.
         """
-        from app.core.config.settings import settings
-        from app.infrastructure.external_apis.logging_service import app_logger
+        from src.core.config.settings import settings
+        from src.infrastructure.external_apis.logging_service import app_logger
 
         super().__init__(app)
         self.log_body = (

@@ -12,17 +12,25 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from app.utilities.utils import AsyncChunkIterator
+from src.utilities.utils import AsyncChunkIterator
 
 __all__ = ("DataMaskingMiddleware",)
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 _PHONE_RE = re.compile(r"\+?\d[\d\s\-()]{8,}\d")
 
-_SENSITIVE_KEYS = frozenset({
-    "password", "secret", "token", "api_key", "apikey",
-    "access_token", "refresh_token", "authorization",
-})
+_SENSITIVE_KEYS = frozenset(
+    {
+        "password",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "access_token",
+        "refresh_token",
+        "authorization",
+    }
+)
 
 
 class DataMaskingMiddleware(BaseHTTPMiddleware):
@@ -60,7 +68,7 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             data = orjson.loads(text)
             masked = self._mask_value(data)
             return orjson.dumps(masked)
-        except (orjson.JSONDecodeError, UnicodeDecodeError):
+        except orjson.JSONDecodeError, UnicodeDecodeError:
             return raw
 
     def _mask_value(self, obj: Any) -> Any:

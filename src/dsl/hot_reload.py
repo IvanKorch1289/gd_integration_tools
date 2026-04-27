@@ -81,8 +81,8 @@ def _build_processor(spec: dict[str, Any]) -> Any:
     2. Built-in map (_PROCESSOR_MAP)
     3. Прямое имя класса из processors module
     """
-    from app.dsl.engine import processors as proc_mod
-    from app.dsl.engine.plugin_registry import get_processor_plugin_registry
+    from src.dsl.engine import processors as proc_mod
+    from src.dsl.engine.plugin_registry import get_processor_plugin_registry
 
     proc_type = spec.get("type", "")
     kwargs: dict[str, Any] = {k: v for k, v in spec.items() if k != "type"}
@@ -114,7 +114,7 @@ def load_yaml_route(yaml_path: Path) -> Any:
     if not isinstance(data, dict) or "route_id" not in data:
         raise ValueError(f"Invalid DSL YAML: missing 'route_id' in {yaml_path}")
 
-    from app.dsl.engine.pipeline import Pipeline
+    from src.dsl.engine.pipeline import Pipeline
 
     processors = []
     for proc_spec in data.get("processors", []):
@@ -137,7 +137,7 @@ class DSLHotReloader:
 
     def load_all(self) -> int:
         """Загружает все .dsl.yaml из директории при старте."""
-        from app.dsl.commands.registry import route_registry
+        from src.dsl.commands.registry import route_registry
 
         if not self._dir.exists():
             return 0
@@ -147,7 +147,9 @@ class DSLHotReloader:
             try:
                 pipeline = load_yaml_route(yaml_file)
                 route_registry.register(pipeline)
-                logger.info("Loaded YAML route: %s from %s", pipeline.route_id, yaml_file.name)
+                logger.info(
+                    "Loaded YAML route: %s from %s", pipeline.route_id, yaml_file.name
+                )
                 count += 1
             except Exception as exc:
                 logger.error("Failed to load %s: %s", yaml_file, exc)
@@ -162,7 +164,7 @@ class DSLHotReloader:
             logger.warning("watchfiles не установлен — hot reload отключён")
             return
 
-        from app.dsl.commands.registry import route_registry
+        from src.dsl.commands.registry import route_registry
 
         logger.info("DSL Hot Reload watching: %s", self._dir)
 

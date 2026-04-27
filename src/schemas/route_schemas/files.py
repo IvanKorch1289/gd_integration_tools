@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from app.schemas.base import BaseSchema
+from src.schemas.base import BaseSchema
 
 __all__ = ("FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut")
 

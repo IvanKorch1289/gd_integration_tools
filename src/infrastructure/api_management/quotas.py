@@ -19,9 +19,17 @@ class QuotaExceeded(Exception):
 class QuotaTracker:
     prefix: str = "quota:"
 
-    async def consume(self, tenant_id: str, resource: str, units: int = 1, *, limit: int, period_seconds: int) -> dict:
+    async def consume(
+        self,
+        tenant_id: str,
+        resource: str,
+        units: int = 1,
+        *,
+        limit: int,
+        period_seconds: int,
+    ) -> dict:
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 

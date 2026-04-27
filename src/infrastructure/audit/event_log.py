@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from app.core.interfaces import AsyncBatcher
-from app.infrastructure.observability.correlation import get_correlation_id, get_tenant_id
+from src.core.interfaces import AsyncBatcher
+from src.infrastructure.observability.correlation import (
+    get_correlation_id,
+    get_tenant_id,
+)
 
 __all__ = ("AuditEvent", "AuditEventLog", "emit_audit_event", "get_audit_log")
 
@@ -58,25 +61,34 @@ class AuditEventLog:
 
     async def _flush_to_clickhouse(self, events: list[AuditEvent]) -> None:
         try:
-            from app.infrastructure.clients.storage.s3_pool.clickhouse import get_clickhouse_client
+            from src.infrastructure.clients.storage.s3_pool.clickhouse import (
+                get_clickhouse_client,
+            )
 
             client = get_clickhouse_client()
             rows = []
             for e in events:
                 import json
-                rows.append({
-                    "who": e.who,
-                    "what": e.what,
-                    "entity_type": e.entity_type,
-                    "entity_id": e.entity_id,
-                    "action": e.action,
-                    "when": e.when.isoformat(),
-                    "before_data": json.dumps(e.before, default=str) if e.before else "",
-                    "after_data": json.dumps(e.after, default=str) if e.after else "",
-                    "correlation_id": e.correlation_id,
-                    "tenant_id": e.tenant_id,
-                    "metadata": json.dumps(e.metadata, default=str),
-                })
+
+                rows.append(
+                    {
+                        "who": e.who,
+                        "what": e.what,
+                        "entity_type": e.entity_type,
+                        "entity_id": e.entity_id,
+                        "action": e.action,
+                        "when": e.when.isoformat(),
+                        "before_data": json.dumps(e.before, default=str)
+                        if e.before
+                        else "",
+                        "after_data": json.dumps(e.after, default=str)
+                        if e.after
+                        else "",
+                        "correlation_id": e.correlation_id,
+                        "tenant_id": e.tenant_id,
+                        "metadata": json.dumps(e.metadata, default=str),
+                    }
+                )
             await client.insert(self._table, rows)
             logger.debug("Flushed %d audit events to ClickHouse", len(rows))
         except Exception as exc:
@@ -89,7 +101,9 @@ class AuditEventLog:
         who: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        from app.infrastructure.clients.storage.s3_pool.clickhouse import get_clickhouse_client
+        from src.infrastructure.clients.storage.s3_pool.clickhouse import (
+            get_clickhouse_client,
+        )
 
         client = get_clickhouse_client()
 
@@ -110,7 +124,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             safe_limit = 100
 
         conditions = []
@@ -122,7 +136,9 @@ class AuditEventLog:
             conditions.append(f"who = '{_escape(who)}'")
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-        sql = f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"
+        sql = (
+            f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"
+        )
         return await client.query(sql)
 
 
@@ -147,8 +163,13 @@ async def emit_audit_event(
     **metadata: Any,
 ) -> None:
     event = AuditEvent(
-        who=who, what=what, entity_type=entity_type,
-        entity_id=entity_id, action=action,
-        before=before, after=after, metadata=metadata,
+        who=who,
+        what=what,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        action=action,
+        before=before,
+        after=after,
+        metadata=metadata,
     )
     await get_audit_log().emit(event)

@@ -8,9 +8,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "Neo4jQueryProcessor",
@@ -50,8 +50,10 @@ class Neo4jQueryProcessor(BaseProcessor):
         stripped = cypher.strip().upper()
         forbidden = ("DROP ", "DELETE DETACH ", "REMOVE ")
         for kw in forbidden:
-            if kw in stripped and "MATCH" not in stripped[:stripped.find(kw)]:
-                raise ValueError(f"Destructive Cypher without MATCH guard rejected: {kw}")
+            if kw in stripped and "MATCH" not in stripped[: stripped.find(kw)]:
+                raise ValueError(
+                    f"Destructive Cypher without MATCH guard rejected: {kw}"
+                )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
@@ -61,6 +63,7 @@ class Neo4jQueryProcessor(BaseProcessor):
             return
 
         import os
+
         uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
         password = os.environ.get("NEO4J_PASSWORD", "")
@@ -114,12 +117,15 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import os
+
         backend = self._backend
         if backend == "auto":
             backend = "influxdb" if os.environ.get("INFLUXDB_URL") else "timescale"
 
         body = exchange.in_message.body
-        points = body if isinstance(body, list) else [body] if isinstance(body, dict) else []
+        points = (
+            body if isinstance(body, list) else [body] if isinstance(body, dict) else []
+        )
 
         if not points:
             exchange.set_property("ts_written", 0)
@@ -137,7 +143,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
     async def _write_timescale(self, points: list[dict]) -> None:
         from sqlalchemy import text
 
-        from app.infrastructure.database.database import db_initializer
+        from src.infrastructure.database.database import db_initializer
 
         engine = db_initializer.get_async_engine()
         columns = ["timestamp", *self._tags, self._field]
@@ -150,6 +156,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
                 row = {c: point.get(c) for c in columns}
                 if row["timestamp"] is None:
                     from datetime import UTC, datetime
+
                     row["timestamp"] = datetime.now(UTC)
                 await conn.execute(text(sql), row)
             await conn.commit()
@@ -162,6 +169,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
             raise RuntimeError("influxdb-client not installed")
 
         import os
+
         url = os.environ.get("INFLUXDB_URL", "http://localhost:8086")
         token = os.environ.get("INFLUXDB_TOKEN", "")
         org = os.environ.get("INFLUXDB_ORG", "default")
@@ -214,20 +222,25 @@ class PriorityEnqueueProcessor(BaseProcessor):
             priority = int(body.get(self._priority_field, self._default_priority))
 
         msg_id = str(uuid.uuid4())
-        payload = orjson.dumps({
-            "id": msg_id,
-            "body": body,
-            "headers": dict(exchange.in_message.headers),
-            "priority": priority,
-        }, default=str).decode()
+        payload = orjson.dumps(
+            {
+                "id": msg_id,
+                "body": body,
+                "headers": dict(exchange.in_message.headers),
+                "priority": priority,
+            },
+            default=str,
+        ).decode()
 
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
+
             raw = getattr(redis_client, "_raw_client", None) or redis_client
 
             # Lower score = higher priority (ZADD).
             # Add timestamp для FIFO в одинаковом priority.
             import time as _time
+
             score = priority * 10**10 + int(_time.time() * 1000)
 
             key = f"priority_queue:{self._queue}"

@@ -30,10 +30,14 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from app.dsl.builder import RouteBuilder
-from app.dsl.engine.pipeline import Pipeline
+from src.dsl.builder import RouteBuilder
+from src.dsl.engine.pipeline import Pipeline
 
-__all__ = ("load_pipeline_from_yaml", "load_pipeline_from_file", "load_all_from_directory")
+__all__ = (
+    "load_pipeline_from_yaml",
+    "load_pipeline_from_file",
+    "load_all_from_directory",
+)
 
 logger = logging.getLogger("dsl.yaml_loader")
 
@@ -78,7 +82,9 @@ def load_all_from_directory(directory: str | Path) -> list[Pipeline]:
         try:
             pipeline = load_pipeline_from_file(yaml_file)
             pipelines.append(pipeline)
-            logger.info("Loaded pipeline '%s' from %s", pipeline.route_id, yaml_file.name)
+            logger.info(
+                "Loaded pipeline '%s' from %s", pipeline.route_id, yaml_file.name
+            )
         except Exception as exc:
             logger.error("Failed to load %s: %s", yaml_file, exc)
 
@@ -148,7 +154,9 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
         params: dict[str, Any] = {}
     elif isinstance(spec, dict):
         if len(spec) != 1:
-            raise ValueError(f"Processor spec must have one key, got: {list(spec.keys())}")
+            raise ValueError(
+                f"Processor spec must have one key, got: {list(spec.keys())}"
+            )
         proc_name = next(iter(spec))
         raw_params = spec[proc_name]
         params = raw_params if isinstance(raw_params, dict) else {}
@@ -163,9 +171,7 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
 
     method = getattr(builder, proc_name)
     if not callable(method):
-        raise ValueError(
-            f"Processor '{proc_name}' не является вызываемым методом."
-        )
+        raise ValueError(f"Processor '{proc_name}' не является вызываемым методом.")
 
     try:
         method(**params)

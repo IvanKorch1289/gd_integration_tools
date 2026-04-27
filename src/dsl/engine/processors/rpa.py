@@ -14,11 +14,11 @@ Categories:
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "PdfReadProcessor",
@@ -53,12 +53,15 @@ class PdfReadProcessor(BaseProcessor):
         .pdf_read(extract_tables=True)
     """
 
-    def __init__(self, *, extract_tables: bool = False, name: str | None = None) -> None:
+    def __init__(
+        self, *, extract_tables: bool = False, name: str | None = None
+    ) -> None:
         super().__init__(name=name or "pdf_read")
         self._tables = extract_tables
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             from pypdf import PdfReader
         except ImportError:
@@ -75,12 +78,19 @@ class PdfReadProcessor(BaseProcessor):
             return
 
         pages = [page.extract_text() or "" for page in reader.pages]
-        result: dict[str, Any] = {"text": "\n".join(pages), "pages": pages, "page_count": len(pages)}
+        result: dict[str, Any] = {
+            "text": "\n".join(pages),
+            "pages": pages,
+            "page_count": len(pages),
+        }
 
         if self._tables:
             try:
                 import pdfplumber
-                with pdfplumber.open(io.BytesIO(body) if isinstance(body, bytes) else body) as pdf:
+
+                with pdfplumber.open(
+                    io.BytesIO(body) if isinstance(body, bytes) else body
+                ) as pdf:
                     tables = []
                     for page in pdf.pages:
                         for table in page.extract_tables():
@@ -103,8 +113,9 @@ class PdfMergeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
-            from pypdf import PdfWriter, PdfReader
+            from pypdf import PdfReader, PdfWriter
         except ImportError:
             exchange.fail("pypdf not installed: pip install pypdf")
             return
@@ -123,7 +134,9 @@ class PdfMergeProcessor(BaseProcessor):
 
         output = io.BytesIO()
         writer.write(output)
-        exchange.set_out(body=output.getvalue(), headers=dict(exchange.in_message.headers))
+        exchange.set_out(
+            body=output.getvalue(), headers=dict(exchange.in_message.headers)
+        )
 
 
 class WordReadProcessor(BaseProcessor):
@@ -137,6 +150,7 @@ class WordReadProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             from docx import Document
         except ImportError:
@@ -171,6 +185,7 @@ class WordWriteProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             from docx import Document
         except ImportError:
@@ -202,12 +217,15 @@ class ExcelReadProcessor(BaseProcessor):
     Body: bytes или str (путь). Результат: list[dict] (rows).
     """
 
-    def __init__(self, *, sheet_name: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self, *, sheet_name: str | None = None, name: str | None = None
+    ) -> None:
         super().__init__(name=name or "excel_read")
         self._sheet = sheet_name
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             from openpyxl import load_workbook
         except ImportError:
@@ -244,8 +262,12 @@ class FileMoveProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, src: str | None = None, dst: str | None = None, *,
-        mode: str = "copy", name: str | None = None,
+        self,
+        src: str | None = None,
+        dst: str | None = None,
+        *,
+        mode: str = "copy",
+        name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"file_{mode}")
         self._src = src
@@ -268,11 +290,14 @@ class FileMoveProcessor(BaseProcessor):
                 shutil.move(src, dst)
             elif self._mode == "rename":
                 import os
+
                 os.rename(src, dst)
             else:
                 shutil.copy2(src, dst)
 
-            exchange.set_property("file_operation", {"mode": self._mode, "src": src, "dst": dst})
+            exchange.set_property(
+                "file_operation", {"mode": self._mode, "src": src, "dst": dst}
+            )
         except (FileNotFoundError, PermissionError, OSError) as exc:
             exchange.fail(f"File {self._mode} failed: {exc}")
 
@@ -285,15 +310,13 @@ class ArchiveProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, mode: str = "extract", format: str = "zip",
-        name: str | None = None,
+        self, *, mode: str = "extract", format: str = "zip", name: str | None = None
     ) -> None:
         super().__init__(name=name or f"archive:{mode}:{format}")
         self._mode = mode
         self._format = format
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import io
 
         body = exchange.in_message.body
 
@@ -319,36 +342,58 @@ class ArchiveProcessor(BaseProcessor):
 
     def _extract(self, data: bytes) -> list[dict[str, Any]]:
         import io
+
         files = []
         if self._format == "zip":
             import zipfile
+
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
                 for info in zf.infolist():
                     if not info.is_dir():
-                        files.append({"name": info.filename, "data": zf.read(info), "size": info.file_size})
+                        files.append(
+                            {
+                                "name": info.filename,
+                                "data": zf.read(info),
+                                "size": info.file_size,
+                            }
+                        )
         else:
             import tarfile
+
             with tarfile.open(fileobj=io.BytesIO(data)) as tf:
                 for member in tf.getmembers():
                     if member.isfile():
                         f = tf.extractfile(member)
-                        files.append({"name": member.name, "data": f.read() if f else b"", "size": member.size})
+                        files.append(
+                            {
+                                "name": member.name,
+                                "data": f.read() if f else b"",
+                                "size": member.size,
+                            }
+                        )
         return files
 
     def _create(self, items: list[dict[str, Any]]) -> bytes:
         import io
+
         buf = io.BytesIO()
         if self._format == "zip":
             import zipfile
+
             with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
                 for item in items:
                     zf.writestr(item["name"], item["data"])
         else:
             import tarfile
+
             with tarfile.open(fileobj=buf, mode="w:gz") as tf:
                 for item in items:
                     ti = tarfile.TarInfo(name=item["name"])
-                    data = item["data"] if isinstance(item["data"], bytes) else item["data"].encode()
+                    data = (
+                        item["data"]
+                        if isinstance(item["data"], bytes)
+                        else item["data"].encode()
+                    )
                     ti.size = len(data)
                     tf.addfile(ti, io.BytesIO(data))
         return buf.getvalue()
@@ -366,11 +411,14 @@ class ImageOcrProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             import pytesseract
             from PIL import Image
         except ImportError:
-            exchange.fail("pytesseract/Pillow not installed: pip install pytesseract Pillow")
+            exchange.fail(
+                "pytesseract/Pillow not installed: pip install pytesseract Pillow"
+            )
             return
 
         body = exchange.in_message.body
@@ -393,8 +441,12 @@ class ImageResizeProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, width: int | None = None, height: int | None = None,
-        output_format: str = "PNG", name: str | None = None,
+        self,
+        *,
+        width: int | None = None,
+        height: int | None = None,
+        output_format: str = "PNG",
+        name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"image_resize({width}x{height})")
         self._width = width
@@ -403,6 +455,7 @@ class ImageResizeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import io
+
         try:
             from PIL import Image
         except ImportError:
@@ -438,8 +491,12 @@ class RegexProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, pattern: str, *, action: str = "extract",
-        replacement: str = "", name: str | None = None,
+        self,
+        pattern: str,
+        *,
+        action: str = "extract",
+        replacement: str = "",
+        name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"regex:{action}")
         self._pattern = pattern
@@ -514,6 +571,7 @@ class HashProcessor(BaseProcessor):
             data = body
         else:
             import orjson
+
             data = orjson.dumps(body, default=str)
 
         h = hashlib.new(self._algorithm, data)
@@ -546,6 +604,7 @@ class EncryptProcessor(BaseProcessor):
             data = body
         else:
             import orjson
+
             data = orjson.dumps(body, default=str)
 
         try:
@@ -598,7 +657,9 @@ class ShellExecProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, command: str, *,
+        self,
+        command: str,
+        *,
         args: list[str] | None = None,
         allowed_commands: list[str] | None = None,
         timeout_seconds: float = 30.0,
@@ -614,16 +675,21 @@ class ShellExecProcessor(BaseProcessor):
         import asyncio
 
         if self._allowed and self._command not in self._allowed:
-            exchange.fail(f"Command '{self._command}' not in whitelist: {self._allowed}")
+            exchange.fail(
+                f"Command '{self._command}' not in whitelist: {self._allowed}"
+            )
             return
 
         try:
             proc = await asyncio.create_subprocess_exec(
-                self._command, *self._args,
+                self._command,
+                *self._args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=self._timeout
+            )
             exchange.set_out(
                 body={
                     "stdout": stdout.decode("utf-8", errors="replace"),
@@ -648,8 +714,7 @@ class EmailComposeProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, to: str, subject: str, body_template: str, *,
-        name: str | None = None,
+        self, to: str, subject: str, body_template: str, *, name: str | None = None
     ) -> None:
         super().__init__(name=name or f"email:{to[:20]}")
         self._to = to
@@ -662,15 +727,14 @@ class EmailComposeProcessor(BaseProcessor):
 
         try:
             email_body = self._body_template.format(**variables)
-        except (KeyError, IndexError):
+        except KeyError, IndexError:
             email_body = self._body_template
 
         try:
-            from app.infrastructure.clients.transport.smtp import smtp_client
+            from src.infrastructure.clients.transport.smtp import smtp_client
+
             await smtp_client.send_email(
-                to=self._to,
-                subject=self._subject,
-                body=email_body,
+                to=self._to, subject=self._subject, body=email_body
             )
             exchange.set_property("email_sent", True)
             exchange.set_property("email_to", self._to)

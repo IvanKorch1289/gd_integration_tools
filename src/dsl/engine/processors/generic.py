@@ -10,12 +10,11 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-from collections import defaultdict
 from typing import Any, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 __all__ = (
     "ShadowModeProcessor",
@@ -120,10 +119,14 @@ class LineageTrackerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         lineage: list[dict[str, Any]] = exchange.get_property("_lineage", [])
-        lineage.append({
-            "route_id": getattr(context.meta, "route_id", None) if context.meta else None,
-            "tag": self.tag,
-        })
+        lineage.append(
+            {
+                "route_id": getattr(context.meta, "route_id", None)
+                if context.meta
+                else None,
+                "tag": self.tag,
+            }
+        )
         exchange.set_property("_lineage", lineage)
 
 
@@ -158,6 +161,7 @@ class SchemaValidateProcessor(BaseProcessor):
         self.schema = schema
         try:
             import jsonschema  # noqa: F401
+
             self._strict = True
         except ImportError:
             self._strict = False
@@ -166,6 +170,7 @@ class SchemaValidateProcessor(BaseProcessor):
         body = exchange.in_message.body
         if self._strict:
             import jsonschema
+
             jsonschema.validate(instance=body, schema=self.schema)
             return
 

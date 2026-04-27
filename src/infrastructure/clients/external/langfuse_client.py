@@ -26,6 +26,7 @@ class LangFuseClient:
 
         try:
             from langfuse import Langfuse
+
             self._client = Langfuse()
             self._initialized = True
             logger.info("LangFuse клиент инициализирован")
@@ -60,22 +61,14 @@ class LangFuseClient:
 
         try:
             trace = self._client.trace(
-                name=name,
-                input=input_data,
-                output=output_data,
-                metadata=metadata or {},
+                name=name, input=input_data, output=output_data, metadata=metadata or {}
             )
             return trace.id
         except Exception as exc:
             logger.error("LangFuse trace error: %s", exc)
             return None
 
-    async def score(
-        self,
-        trace_id: str,
-        name: str,
-        value: float,
-    ) -> None:
+    async def score(self, trace_id: str, name: str, value: float) -> None:
         """Добавляет оценку к трассировке.
 
         Args:
@@ -88,11 +81,7 @@ class LangFuseClient:
             return
 
         try:
-            self._client.score(
-                trace_id=trace_id,
-                name=name,
-                value=value,
-            )
+            self._client.score(trace_id=trace_id, name=name, value=value)
         except Exception as exc:
             logger.error("LangFuse score error: %s", exc)
 
@@ -104,12 +93,13 @@ class LangFuseClient:
 
         try:
             from langfuse.callback import CallbackHandler
+
             return CallbackHandler()
         except ImportError:
             return None
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("langfuse_client", LangFuseClient)

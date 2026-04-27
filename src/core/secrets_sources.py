@@ -6,7 +6,7 @@
 
 Usage в settings classes::
 
-    from app.core.secrets_sources import VaultSettingsSource
+    from src.core.secrets_sources import VaultSettingsSource
 
     class MySettings(BaseSettings):
         db_password: str
@@ -52,6 +52,7 @@ class VaultSettingsSource:
             return self._data
 
         import os
+
         addr = os.environ.get("VAULT_ADDR")
         token = os.environ.get("VAULT_TOKEN")
         if not (addr and token):
@@ -69,7 +70,11 @@ class VaultSettingsSource:
             client = hvac.Client(url=addr, token=token)
             resp = client.secrets.kv.v2.read_secret_version(path=self._secret_path)
             self._data = resp.get("data", {}).get("data", {}) or {}
-            logger.info("Loaded %d secrets from Vault path %s", len(self._data), self._secret_path)
+            logger.info(
+                "Loaded %d secrets from Vault path %s",
+                len(self._data),
+                self._secret_path,
+            )
         except Exception as exc:
             logger.warning("Vault load failed: %s", exc)
             self._data = {}
@@ -115,7 +120,11 @@ class AwsSecretsManagerSource:
             resp = client.get_secret_value(SecretId=self._secret_name)
             secret_str = resp.get("SecretString", "{}")
             self._data = orjson.loads(secret_str) or {}
-            logger.info("Loaded %d secrets from AWS Secrets Manager %s", len(self._data), self._secret_name)
+            logger.info(
+                "Loaded %d secrets from AWS Secrets Manager %s",
+                len(self._data),
+                self._secret_name,
+            )
         except Exception as exc:
             logger.warning("AWS Secrets Manager load failed: %s", exc)
             self._data = {}

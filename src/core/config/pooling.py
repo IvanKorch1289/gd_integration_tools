@@ -18,7 +18,6 @@ from typing import ClassVar, Final
 
 from pydantic import BaseModel, Field, model_validator
 
-
 # Разумные defaults, применяются если конкретная Settings-секция не указала
 # свой профиль. Подобраны консервативно под средний нагрузочный профиль
 # (не high-load, но и не demo).
@@ -95,8 +94,7 @@ class PoolingProfile(BaseModel):
 
     # Проверять соединение перед выдачей из пула (стоит I/O).
     pre_ping: bool = Field(
-        default=True,
-        description="Выполнять PING/SELECT 1 перед выдачей соединения.",
+        default=True, description="Выполнять PING/SELECT 1 перед выдачей соединения."
     )
 
     # Количество подряд идущих failures для перехода CB в OPEN.
@@ -125,10 +123,7 @@ class PoolingProfile(BaseModel):
             "acquire_timeout_s": 5.0,
             "circuit_threshold": 3,
         },
-        "default": {
-            "min_size": _DEFAULT_MIN_SIZE,
-            "max_size": _DEFAULT_MAX_SIZE,
-        },
+        "default": {"min_size": _DEFAULT_MIN_SIZE, "max_size": _DEFAULT_MAX_SIZE},
         "high_throughput": {
             "min_size": 10,
             "max_size": 100,
@@ -173,7 +168,9 @@ class PoolingProfile(BaseModel):
             )
         return cls.model_validate(preset)
 
-    def merged_with(self, override: "PoolingProfile | dict[str, object]") -> "PoolingProfile":
+    def merged_with(
+        self, override: "PoolingProfile | dict[str, object]"
+    ) -> "PoolingProfile":
         """Создать новый профиль, переопределяя только явно заданные поля."""
         if isinstance(override, PoolingProfile):
             override_dict = override.model_dump(exclude_unset=True)

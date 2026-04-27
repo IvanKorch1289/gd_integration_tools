@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from app.infrastructure.clients.base_connector import (
+    from src.infrastructure.clients.base_connector import (
         HealthMode,
         HealthResult,
         InfrastructureClient,
@@ -95,10 +95,7 @@ class ConnectorRegistry:
     # -- Регистрация ---------------------------------------------------
 
     def register(
-        self,
-        client: "InfrastructureClient",
-        *,
-        vault_path: str | None = None,
+        self, client: "InfrastructureClient", *, vault_path: str | None = None
     ) -> None:
         """Зарегистрировать клиент в Registry.
 
@@ -111,9 +108,7 @@ class ConnectorRegistry:
             )
         self._order_counter += 1
         self._connectors[client.name] = ConnectorSpec(
-            client=client,
-            vault_path=vault_path,
-            register_order=self._order_counter,
+            client=client, vault_path=vault_path, register_order=self._order_counter
         )
 
     def unregister(self, name: str) -> None:
@@ -186,7 +181,8 @@ class ConnectorRegistry:
                 await asyncio.wait_for(client.stop(), timeout=timeout)
             except asyncio.TimeoutError:
                 _logger.warning(
-                    "connector stop timed out", extra={"connector": name, "timeout": timeout}
+                    "connector stop timed out",
+                    extra={"connector": name, "timeout": timeout},
                 )
             except Exception as exc:  # noqa: BLE001
                 _logger.error(
@@ -194,7 +190,9 @@ class ConnectorRegistry:
                     extra={"connector": name, "error": str(exc)},
                 )
 
-    async def health_all(self, mode: "HealthMode" = "fast") -> "dict[str, HealthResult]":
+    async def health_all(
+        self, mode: "HealthMode" = "fast"
+    ) -> "dict[str, HealthResult]":
         """Параллельный health-check всех клиентов.
 
         Используется эндпоинтом `/api/v1/health/components?mode=fast|deep`.
@@ -208,7 +206,9 @@ class ConnectorRegistry:
         for name, result in zip(names, results, strict=True):
             if isinstance(result, Exception):
                 # Импорт-поздний чтобы избежать циклов.
-                from app.infrastructure.clients.base_connector import HealthResult as _HR
+                from src.infrastructure.clients.base_connector import (
+                    HealthResult as _HR,
+                )
 
                 out[name] = _HR.failed(
                     error=f"{type(result).__name__}: {result}", mode=mode

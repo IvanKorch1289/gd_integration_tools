@@ -25,8 +25,7 @@ st.set_page_config(page_title="Config", page_icon=":gear:", layout="wide")
 st.header(":gear: Config Viewer")
 
 SECRET_PATTERNS = re.compile(
-    r"(password|secret|token|api_key|private|auth|client_secret|bearer)",
-    re.IGNORECASE,
+    r"(password|secret|token|api_key|private|auth|client_secret|bearer)", re.IGNORECASE
 )
 
 
@@ -62,10 +61,20 @@ if config:
 
     def _match(d: dict, q: str) -> dict:
         ql = q.lower()
-        return {k: v for k, v in d.items() if ql in k.lower() or (isinstance(v, (str, int, float)) and ql in str(v).lower())}
+        return {
+            k: v
+            for k, v in d.items()
+            if ql in k.lower()
+            or (isinstance(v, (str, int, float)) and ql in str(v).lower())
+        }
 
     if filter_q and isinstance(masked, dict):
-        masked = {k: _match(v, filter_q) if isinstance(v, dict) else v for k, v in masked.items() if filter_q.lower() in k.lower() or (isinstance(v, dict) and _match(v, filter_q))}
+        masked = {
+            k: _match(v, filter_q) if isinstance(v, dict) else v
+            for k, v in masked.items()
+            if filter_q.lower() in k.lower()
+            or (isinstance(v, dict) and _match(v, filter_q))
+        }
 
     st.json(masked)
 else:

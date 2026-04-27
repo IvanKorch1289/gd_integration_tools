@@ -5,7 +5,7 @@
 
 Доступ через реестр::
 
-    from app.core.providers_registry import get_provider
+    from src.core.providers_registry import get_provider
     csv_bytes = get_provider("exporter", "csv").export(rows)
 
 Или через универсальный диспатчер :func:`export`, который выбирает экспортёр
@@ -44,7 +44,7 @@ class CsvExporter:
         return "csv"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
         if not data:
             return b""
@@ -74,7 +74,7 @@ class ExcelExporter:
         return "xlsx"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
         if not data:
             return b""
@@ -101,9 +101,9 @@ class ExcelExporter:
                 len(str(col_name)),
                 max((len(str(row.get(col_name, ""))) for row in data), default=0),
             )
-            ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = (
-                min(max_len + 2, 50)
-            )
+            ws.column_dimensions[
+                ws.cell(row=1, column=col_idx).column_letter
+            ].width = min(max_len + 2, 50)
 
         buffer = io.BytesIO()
         wb.save(buffer)
@@ -122,7 +122,7 @@ class PdfExporter:
         return "pdf"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
         if not data:
             return b""
@@ -155,14 +155,16 @@ class PdfExporter:
 
         table = Table(table_data)
         table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ]
+            )
         )
         elements.append(table)
 
@@ -182,12 +184,14 @@ class JsonExporter:
         return "json"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
         opts = options or {}
         indent = opts.get("indent", 2)
         # json.dumps для читаемости; orjson медленнее с indent у некоторых версий.
-        return json.dumps(data, ensure_ascii=False, indent=indent, default=str).encode("utf-8")
+        return json.dumps(data, ensure_ascii=False, indent=indent, default=str).encode(
+            "utf-8"
+        )
 
 
 class ParquetExporter:
@@ -200,7 +204,7 @@ class ParquetExporter:
         return "parquet"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
     ) -> bytes:
         if not data:
             return b""
@@ -227,7 +231,7 @@ _EXPORTERS: dict[str, Any] = {
 
 
 def export(
-    format: str, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
+    format: str, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
 ) -> bytes:
     """Универсальный диспатчер по имени формата. Бросает ``KeyError`` если неизвестен."""
     exporter = _EXPORTERS.get(format.lower())
@@ -250,16 +254,24 @@ class ExportFacade:
     """
 
     async def to_csv(
-        self, rows: list[dict[str, Any]], *, delimiter: str = ",", encoding: str = "utf-8",
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        delimiter: str = ",",
+        encoding: str = "utf-8",
     ) -> bytes:
-        return _EXPORTERS["csv"].export(rows, options={"delimiter": delimiter, "encoding": encoding})
+        return _EXPORTERS["csv"].export(
+            rows, options={"delimiter": delimiter, "encoding": encoding}
+        )
 
     async def to_excel(
-        self, rows: list[dict[str, Any]], *, sheet_name: str = "Data",
+        self, rows: list[dict[str, Any]], *, sheet_name: str = "Data"
     ) -> bytes:
         return _EXPORTERS["xlsx"].export(rows, options={"sheet_name": sheet_name})
 
-    async def to_pdf(self, rows: list[dict[str, Any]], *, title: str = "Report") -> bytes:
+    async def to_pdf(
+        self, rows: list[dict[str, Any]], *, title: str = "Report"
+    ) -> bytes:
         return _EXPORTERS["pdf"].export(rows, options={"title": title})
 
     async def to_json(self, rows: list[dict[str, Any]], *, indent: int = 2) -> bytes:

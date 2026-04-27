@@ -30,10 +30,7 @@ __all__ = ("router",)
 router = APIRouter(tags=["Admin · Infrastructure"])
 
 
-@router.get(
-    "/connectors",
-    summary="Список зарегистрированных infra-клиентов",
-)
+@router.get("/connectors", summary="Список зарегистрированных infra-клиентов")
 async def list_connectors() -> JSONResponse:
     """Вернуть состояние всех клиентов из ConnectorRegistry.
 
@@ -51,13 +48,12 @@ async def list_connectors() -> JSONResponse:
     используется `/health/components?mode=deep`.
     """
     try:
-        from app.infrastructure.registry import ConnectorRegistry
+        from src.infrastructure.registry import ConnectorRegistry
 
         registry = ConnectorRegistry.instance()
     except ImportError as exc:
         return JSONResponse(
-            status_code=503,
-            content={"error": f"registry unavailable: {exc}"},
+            status_code=503, content={"error": f"registry unavailable: {exc}"}
         )
 
     names = registry.names()
@@ -81,8 +77,7 @@ async def list_connectors() -> JSONResponse:
         )
 
     return JSONResponse(
-        status_code=200,
-        content={"total": len(connectors), "connectors": connectors},
+        status_code=200, content={"total": len(connectors), "connectors": connectors}
     )
 
 
@@ -107,14 +102,13 @@ async def reload_connector(name: str) -> JSONResponse:
     * (IL2) Vault-refresher callback при ротации секретов.
     """
     try:
-        from app.infrastructure.registry import (
+        from src.infrastructure.registry import (
             ConnectorNotRegisteredError,
             ConnectorRegistry,
         )
     except ImportError as exc:
         raise HTTPException(
-            status_code=503,
-            detail=f"Registry unavailable: {exc}",
+            status_code=503, detail=f"Registry unavailable: {exc}"
         ) from exc
 
     registry = ConnectorRegistry.instance()
@@ -124,15 +118,13 @@ async def reload_connector(name: str) -> JSONResponse:
         duration_ms = await registry.reload(name)
     except ConnectorNotRegisteredError:
         raise HTTPException(
-            status_code=404,
-            detail=f"Connector '{name}' not registered",
+            status_code=404, detail=f"Connector '{name}' not registered"
         ) from None
     except Exception as exc:  # noqa: BLE001
         # Reload мог упасть на стадии rebuild → клиент остался stopped.
         # Прокидываем 500 с подробностями; on-call увидит в audit-log.
         raise HTTPException(
-            status_code=500,
-            detail=f"Reload failed: {type(exc).__name__}: {exc}",
+            status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}"
         ) from exc
 
     # Post-reload health — чтобы сразу видеть, взлетел ли клиент.
@@ -152,9 +144,6 @@ async def reload_connector(name: str) -> JSONResponse:
             "name": name,
             "reload_duration_ms": round(duration_ms, 2),
             "total_duration_ms": round(total_ms, 2),
-            "post_reload_health": {
-                "status": post_status,
-                "error": post_error,
-            },
+            "post_reload_health": {"status": post_status, "error": post_error},
         },
     )

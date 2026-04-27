@@ -1,9 +1,7 @@
 """Единый DI-контейнер приложения на базе ``svcs`` (ADR-002).
 
 Этот модуль — единственный источник правды для регистрации и получения
-сервисов. Старый name-based ``ServiceRegistry`` (``app.core.service_registry``)
-превращён в тонкий deprecation-shim; ``_FallbackRegistry`` (dead code с
-прошлой итерации) удалён.
+сервисов. ``_FallbackRegistry`` (dead code с прошлой итерации) удалён.
 
 Возможности:
 
@@ -15,7 +13,7 @@
 
 Примеры::
 
-    from app.core.svcs_registry import register_factory, get_service
+    from src.core.svcs_registry import register_factory, get_service
 
     register_factory("orders", get_order_service)
     register_factory(OrderService, get_order_service)
@@ -73,9 +71,11 @@ def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:
             # Для строковых/hashable ключей храним у себя; svcs-контейнер
             # опционально получает их тоже (svcs ≥ 25.1 это допускает).
             try:
-                registry.register_factory(key, factory)  # type: ignore[arg-type]
+                registry.register_factory(key, factory)
             except Exception:
-                logger.debug("svcs не принял ключ %r — используется внутренний cache.", key)
+                logger.debug(
+                    "svcs не принял ключ %r — используется внутренний cache.", key
+                )
         _known_keys.add(key)
         # Если фабрика уже вызывалась — сбрасываем кеш.
         _singletons.pop(key, None)
@@ -89,7 +89,9 @@ def has_service(key: Hashable) -> bool:
 def list_services() -> list[str]:
     """Возвращает имена зарегистрированных сервисов (для admin-API)."""
     with _lock:
-        return sorted(str(k) if not isinstance(k, type) else k.__name__ for k in _known_keys)
+        return sorted(
+            str(k) if not isinstance(k, type) else k.__name__ for k in _known_keys
+        )
 
 
 def get_service(key: Hashable | type[T]) -> T | Any:
@@ -116,7 +118,7 @@ def get_service(key: Hashable | type[T]) -> T | Any:
         instance: Any
         try:
             container = svcs.Container(registry)
-            instance = container.get(key)  # type: ignore[arg-type]
+            instance = container.get(key)
         except Exception:
             factory = _factory_for(key)
             if factory is None:

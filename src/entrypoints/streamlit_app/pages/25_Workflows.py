@@ -23,11 +23,8 @@ import streamlit as st
 
 from src.entrypoints.streamlit_app.api_client import get_api_client
 
-
 st.set_page_config(
-    page_title="Workflows · gd_integration_tools",
-    page_icon="🔁",
-    layout="wide",
+    page_title="Workflows · gd_integration_tools", page_icon="🔁", layout="wide"
 )
 
 client = get_api_client()
@@ -65,7 +62,9 @@ EVENT_ICONS: dict[str, str] = {
 
 
 @st.cache_data(ttl=5)
-def _cached_list(status: str | None, name: str | None, tenant: str | None, limit: int) -> list[dict[str, Any]]:
+def _cached_list(
+    status: str | None, name: str | None, tenant: str | None, limit: int
+) -> list[dict[str, Any]]:
     return client.list_workflows(
         status=status or None,
         workflow_name=name or None,
@@ -80,7 +79,9 @@ def _cached_instance(instance_id: str) -> dict[str, Any] | None:
 
 
 @st.cache_data(ttl=3)
-def _cached_events(instance_id: str, after_seq: int, limit: int) -> list[dict[str, Any]]:
+def _cached_events(
+    instance_id: str, after_seq: int, limit: int
+) -> list[dict[str, Any]]:
     return client.get_workflow_events(instance_id, after_seq=after_seq, limit=limit)
 
 
@@ -124,16 +125,18 @@ with tab_list:
     cols_filter = st.columns([1, 1, 1, 1, 1])
     with cols_filter[0]:
         flt_status = st.selectbox(
-            "Status",
-            options=[""] + list(STATUS_BADGES.keys()),
-            index=0,
+            "Status", options=[""] + list(STATUS_BADGES.keys()), index=0
         )
     with cols_filter[1]:
-        flt_name = st.text_input("Workflow name", value="", placeholder="orders.skb_flow")
+        flt_name = st.text_input(
+            "Workflow name", value="", placeholder="orders.skb_flow"
+        )
     with cols_filter[2]:
         flt_tenant = st.text_input("Tenant", value="", placeholder="default")
     with cols_filter[3]:
-        flt_limit = st.number_input("Limit", min_value=10, max_value=500, value=100, step=10)
+        flt_limit = st.number_input(
+            "Limit", min_value=10, max_value=500, value=100, step=10
+        )
     with cols_filter[4]:
         st.write("")  # spacer
         if st.button("🔄 Refresh", use_container_width=True):
@@ -156,7 +159,9 @@ with tab_list:
             with st.expander(header, expanded=False):
                 cols = st.columns([2, 2, 1, 1, 1])
                 cols[0].metric("Created", _fmt_timestamp(inst.get("created_at")))
-                cols[1].metric("Next attempt", _fmt_timestamp(inst.get("next_attempt_at")))
+                cols[1].metric(
+                    "Next attempt", _fmt_timestamp(inst.get("next_attempt_at"))
+                )
                 cols[2].metric("Attempts", inst.get("attempts", 0))
                 cols[3].metric("Tenant", inst.get("tenant_id", "default"))
                 cols[4].metric("Version", inst.get("current_version", 0))
@@ -197,7 +202,9 @@ with tab_timeline:
         placeholder="UUID",
     )
     if not focus_id:
-        st.info("Введите instance ID или выберите «View Timeline» из вкладки Instances.")
+        st.info(
+            "Введите instance ID или выберите «View Timeline» из вкладки Instances."
+        )
     else:
         instance = _cached_instance(focus_id)
         events = _cached_events(focus_id, 0, 500)
@@ -246,7 +253,9 @@ with tab_trigger:
         "Запуск нового workflow instance через `POST /api/v1/admin/workflows/trigger/{name}`."
     )
 
-    trg_name = st.text_input("Workflow name", value="", placeholder="orders.full_processing")
+    trg_name = st.text_input(
+        "Workflow name", value="", placeholder="orders.full_processing"
+    )
     payload_str = st.text_area(
         "Input payload (JSON)",
         value="{}",
@@ -255,7 +264,9 @@ with tab_trigger:
     )
     col_opts = st.columns([1, 1, 3])
     wait = col_opts[0].checkbox("Wait (sync)", value=False)
-    timeout_s = col_opts[1].number_input("Timeout (s)", min_value=5, max_value=600, value=30, step=5)
+    timeout_s = col_opts[1].number_input(
+        "Timeout (s)", min_value=5, max_value=600, value=30, step=5
+    )
 
     if st.button("🚀 Trigger", type="primary"):
         if not trg_name:
@@ -278,7 +289,9 @@ with tab_trigger:
                     st.json(result)
                     if result.get("id"):
                         st.session_state["_workflow_focus_id"] = result["id"]
-                        st.caption("➡ Переключитесь на вкладку **Timeline** для просмотра.")
+                        st.caption(
+                            "➡ Переключитесь на вкладку **Timeline** для просмотра."
+                        )
 
     st.markdown("---")
     st.caption(

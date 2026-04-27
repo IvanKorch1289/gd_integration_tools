@@ -7,7 +7,7 @@
 
 Публичный API::
 
-    from app.dsl.codec import decode_as, encode_as
+    from src.dsl.codec import decode_as, encode_as
     data = decode_as('msgpack', raw_bytes)
     payload = encode_as('parquet', dataframe)
 """
@@ -35,7 +35,9 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
     if fmt == "json":
         import orjson
 
-        return orjson.loads(raw if isinstance(raw, (bytes, bytearray)) else raw.encode())
+        return orjson.loads(
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode()
+        )
     if fmt == "yaml":
         import yaml
 
@@ -47,7 +49,9 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
     if fmt == "msgpack":
         import msgpack
 
-        return msgpack.unpackb(raw if isinstance(raw, (bytes, bytearray)) else raw.encode(), raw=False)
+        return msgpack.unpackb(
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode(), raw=False
+        )
     if fmt == "cbor":
         import cbor2
 
@@ -95,11 +99,15 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
             import hl7apy.parser  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError("hl7apy не установлен — установите gdi[banking]")
-        return hl7apy.parser.parse_message(raw if isinstance(raw, str) else raw.decode("utf-8"))
+        return hl7apy.parser.parse_message(
+            raw if isinstance(raw, str) else raw.decode("utf-8")
+        )
     if fmt == "iso8583":
         try:
             import iso8583  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError("iso8583 не установлен — установите gdi[banking]")
-        return iso8583.decode(raw if isinstance(raw, (bytes, bytearray)) else raw.encode())
+        return iso8583.decode(
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode()
+        )
     raise RuntimeError(f"Banking format '{fmt}' decode — реализация в follow-up")

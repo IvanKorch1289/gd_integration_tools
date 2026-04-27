@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.middleware import ProcessorMiddleware
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.middleware import ProcessorMiddleware
 
 __all__ = ("PrometheusMetricsMiddleware", "get_dsl_metrics")
 
@@ -21,7 +21,12 @@ _pool_gauge = None
 
 
 def _ensure_metrics():
-    global _metrics_initialized, _processor_histogram, _pipeline_counter, _breaker_gauge, _pool_gauge
+    global \
+        _metrics_initialized, \
+        _processor_histogram, \
+        _pipeline_counter, \
+        _breaker_gauge, \
+        _pool_gauge
     if _metrics_initialized:
         return
     try:
@@ -80,8 +85,7 @@ class PrometheusMetricsMiddleware(ProcessorMiddleware):
     ) -> None:
         if _processor_histogram is not None:
             _processor_histogram.labels(
-                route_id=context.route_id or "unknown",
-                processor_type=processor_name,
+                route_id=context.route_id or "unknown", processor_type=processor_name
             ).observe(duration_ms / 1000.0)
 
 

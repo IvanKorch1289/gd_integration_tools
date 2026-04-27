@@ -38,12 +38,11 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Literal
-from uuid import UUID
 
-from app.infrastructure.database.models.workflow_event import WorkflowEventType
-from app.infrastructure.workflow.runner import StepExecutor, StepOutcome, StepResult
-from app.infrastructure.workflow.state import WorkflowState
-from app.infrastructure.workflow.state_store import WorkflowInstanceRow
+from src.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.infrastructure.workflow.runner import StepExecutor, StepOutcome, StepResult
+from src.infrastructure.workflow.state import WorkflowState
+from src.infrastructure.workflow.state_store import WorkflowInstanceRow
 
 __all__ = (
     "WorkflowStep",
@@ -198,19 +197,13 @@ class DSLStepExecutor(StepExecutor):
     """
 
     def __init__(
-        self,
-        spec_loader: SpecLoader,
-        *,
-        timeout_per_step_s: float = 300.0,
+        self, spec_loader: SpecLoader, *, timeout_per_step_s: float = 300.0
     ) -> None:
         self._spec_loader = spec_loader
         self._timeout_per_step_s = timeout_per_step_s
 
     async def execute_next(
-        self,
-        *,
-        instance: WorkflowInstanceRow,
-        state: WorkflowState,
+        self, *, instance: WorkflowInstanceRow, state: WorkflowState
     ) -> StepResult:
         # 1) Hot-reload: подгружаем fresh spec.
         try:
@@ -220,11 +213,7 @@ class DSLStepExecutor(StepExecutor):
                 outcome=StepOutcome.FAILED,
                 error_message=f"spec not found: {instance.route_id}",
                 events=[
-                    (
-                        WorkflowEventType.step_failed,
-                        {"reason": "spec_not_found"},
-                        None,
-                    ),
+                    (WorkflowEventType.step_failed, {"reason": "spec_not_found"}, None)
                 ],
             )
 
@@ -270,10 +259,7 @@ class DSLStepExecutor(StepExecutor):
             if step.kind == "compensate":
                 # compensate — специальный kind, не выполняется в normal flow;
                 # runner вызывает compensators отдельным путём при FAILED.
-                return StepResult(
-                    outcome=StepOutcome.CONTINUE,
-                    events=[],
-                )
+                return StepResult(outcome=StepOutcome.CONTINUE, events=[])
             return StepResult(
                 outcome=StepOutcome.FAILED,
                 error_message=f"unknown step kind: {step.kind}",
@@ -302,10 +288,7 @@ class DSLStepExecutor(StepExecutor):
     # -- Handlers per kind ------------------------------------------
 
     async def _exec_sequential(
-        self,
-        step: WorkflowStep,
-        state: WorkflowState,
-        instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult:
         """Запускает processors-chain. Exchange builds внутри.
 
@@ -338,9 +321,7 @@ class DSLStepExecutor(StepExecutor):
             output_state={"exchange_snapshot": body},
         )
 
-    def _exec_branch(
-        self, step: WorkflowStep, state: WorkflowState
-    ) -> StepResult:
+    def _exec_branch(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
         """if/else по predicate → выбираем branch, далее executeть inline."""
         chosen = "then" if self._eval_predicate(step.predicate, state) else "else"
         return StepResult(
@@ -355,9 +336,7 @@ class DSLStepExecutor(StepExecutor):
             output_state={"branch_choice": chosen},
         )
 
-    def _exec_loop(
-        self, step: WorkflowStep, state: WorkflowState
-    ) -> StepResult:
+    def _exec_loop(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
         """while-loop: evaluate predicate → продолжать или выйти.
 
         Каждая итерация — event `loop_iter`. Hard-cap `max_iter` защищает
@@ -404,10 +383,7 @@ class DSLStepExecutor(StepExecutor):
         )
 
     async def _exec_for_each(
-        self,
-        step: WorkflowStep,
-        state: WorkflowState,
-        instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult:
         """Map body_steps over collection.
 
@@ -438,16 +414,13 @@ class DSLStepExecutor(StepExecutor):
                     WorkflowEventType.step_started,
                     {"items": total, "parallel": step.parallel, "for_each": step.name},
                     step.name,
-                ),
+                )
             ],
             output_state={"for_each_count": total},
         )
 
     def _exec_sub_flow(
-        self,
-        step: WorkflowStep,
-        state: WorkflowState,
-        instance: WorkflowInstanceRow,
+        self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult:
         """Spawn child workflow.
 
@@ -478,18 +451,10 @@ class DSLStepExecutor(StepExecutor):
             )
         ]
         if step.wait:
-            return StepResult(
-                outcome=StepOutcome.SUB_SPAWNED,
-                events=events,
-            )
-        return StepResult(
-            outcome=StepOutcome.CONTINUE,
-            events=events,
-        )
+            return StepResult(outcome=StepOutcome.SUB_SPAWNED, events=events)
+        return StepResult(outcome=StepOutcome.CONTINUE, events=events)
 
-    def _exec_wait(
-        self, step: WorkflowStep, state: WorkflowState
-    ) -> StepResult:
+    def _exec_wait(self, step: WorkflowStep, state: WorkflowState) -> StepResult:
         """Durable pause — возвращаем PAUSE с next_attempt_at.
 
         * ``duration_s`` — абсолютное время ожидания.
@@ -528,9 +493,7 @@ class DSLStepExecutor(StepExecutor):
         result = self._eval_expression(predicate, state)
         return bool(result)
 
-    def _eval_expression(
-        self, expr: str | None, state: WorkflowState
-    ) -> Any:
+    def _eval_expression(self, expr: str | None, state: WorkflowState) -> Any:
         if expr is None:
             return None
         try:
@@ -539,7 +502,6 @@ class DSLStepExecutor(StepExecutor):
             return jmespath.search(expr, state.exchange_snapshot)
         except Exception as exc:  # noqa: BLE001
             _logger.warning(
-                "jmespath eval failed",
-                extra={"expr": expr, "error": str(exc)},
+                "jmespath eval failed", extra={"expr": expr, "error": str(exc)}
             )
             return None

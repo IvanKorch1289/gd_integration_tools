@@ -22,7 +22,7 @@
 См. ``docs/DSL_COOKBOOK.md`` раздел «Camel EIP» для YAML-примеров.
 """
 
-from app.dsl.engine.processors import (
+from src.dsl.engine.processors import (
     ClaimCheckProcessor,
     DeadLetterProcessor,
     EnrichProcessor,

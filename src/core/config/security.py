@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("SecureSettings", "secure_settings")
 
@@ -85,7 +85,12 @@ class SecureSettings(BaseSettingsWithLoader):
         description="Разрешённые HTTP-методы для cross-origin",
     )
     cors_allow_headers: list[str] = Field(
-        default_factory=lambda: ["Authorization", "Content-Type", "X-Request-ID", "X-API-Key"],
+        default_factory=lambda: [
+            "Authorization",
+            "Content-Type",
+            "X-Request-ID",
+            "X-API-Key",
+        ],
         description="Разрешённые заголовки для cross-origin",
     )
 
@@ -99,6 +104,7 @@ class SecureSettings(BaseSettingsWithLoader):
                 "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
             )
         return value
+
     routes_without_api_key: list[str] = Field(
         ...,
         description="Эндпоинты, доступные без API-ключа",

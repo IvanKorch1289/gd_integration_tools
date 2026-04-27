@@ -2,18 +2,18 @@ import inspect
 from inspect import Parameter, Signature
 from typing import Any, Awaitable, Callable, Sequence
 
-from fastapi import APIRouter, Body, Request, status
+from fastapi import APIRouter, Request, status
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 from pydantic import BaseModel
 
-from app.core.enums.ordering import OrderingTypeChoices
-from app.entrypoints.api.generator.marshaller import (
+from src.core.enums.ordering import OrderingTypeChoices
+from src.entrypoints.api.generator.marshaller import (
     decorate_endpoint,
     extract_invocation_kwargs,
     prepare_call_kwargs,
 )
-from app.entrypoints.api.generator.reflection import (
+from src.entrypoints.api.generator.reflection import (
     body_parameter,
     build_invocation_parameters,
     build_model_parameters,
@@ -23,14 +23,14 @@ from app.entrypoints.api.generator.reflection import (
     request_parameter,
     required_query_parameter,
 )
-from app.entrypoints.api.generator.specs import (
+from src.entrypoints.api.generator.specs import (
     ActionSpec,
     CrudSpec,
     HttpMethod,
     RouteDecorator,
 )
-from app.infrastructure.external_apis.action_bus import get_action_bus_service
-from app.schemas.invocation import (
+from src.infrastructure.external_apis.action_bus import get_action_bus_service
+from src.schemas.invocation import (
     InvocationOptionsSchema,
     InvocationResultSchema,
     InvokeMode,
@@ -116,9 +116,7 @@ class ActionRouterBuilder:
             service = spec.service_getter()
             service_method = getattr(service, spec.service_method)
 
-            call_kwargs = prepare_call_kwargs(
-                spec=spec, request=request, kwargs=kwargs
-            )
+            call_kwargs = prepare_call_kwargs(spec=spec, request=request, kwargs=kwargs)
             invoke_options, direct_kwargs = extract_invocation_kwargs(
                 spec=spec, call_kwargs=call_kwargs
             )
@@ -266,20 +264,30 @@ class ActionRouterBuilder:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             query_parameter("page", int | None, None, "Номер страницы."),
-            query_parameter("size", int | None, None, "Количество элементов на странице."),
+            query_parameter(
+                "size", int | None, None, "Количество элементов на странице."
+            ),
             query_parameter("by", str, spec.default_order_by, "Поле сортировки."),
             query_parameter(
-                "order", OrderingTypeChoices, OrderingTypeChoices.ascending,
+                "order",
+                OrderingTypeChoices,
+                OrderingTypeChoices.ascending,
                 "Направление сортировки.",
             ),
         )
 
         self._register_route(
-            path=spec.list_path, endpoint=endpoint, method="GET",
-            name=f"{spec.name}_get_all", summary="Получить все объекты",
+            path=spec.list_path,
+            endpoint=endpoint,
+            method="GET",
+            name=f"{spec.name}_get_all",
+            summary="Получить все объекты",
             description=f"Возвращает список объектов ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_get_by_id(self, spec: CrudSpec) -> None:
@@ -293,15 +301,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Возвращает объект ресурса '{spec.name}' по ID."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
         )
 
         self._register_route(
-            path=spec.by_id_path, endpoint=endpoint, method="GET",
-            name=f"{spec.name}_get_by_id", summary="Получить объект по ID",
+            path=spec.by_id_path,
+            endpoint=endpoint,
+            method="GET",
+            name=f"{spec.name}_get_by_id",
+            summary="Получить объект по ID",
             description=f"Возвращает объект ресурса '{spec.name}' по идентификатору.",
-            status_code_=status.HTTP_200_OK, response_model=spec.schema_out,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=spec.schema_out,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_get_first_or_last(self, spec: CrudSpec) -> None:
@@ -317,24 +333,33 @@ class ActionRouterBuilder:
             )
 
         endpoint.__name__ = f"{spec.name}_get_first_or_last"
-        endpoint.__doc__ = f"Возвращает первые или последние объекты ресурса '{spec.name}'."
+        endpoint.__doc__ = (
+            f"Возвращает первые или последние объекты ресурса '{spec.name}'."
+        )
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             query_parameter("limit", int, 1, "Количество возвращаемых объектов."),
             query_parameter("by", str, spec.default_order_by, "Поле сортировки."),
             query_parameter(
-                "order", OrderingTypeChoices, OrderingTypeChoices.ascending,
+                "order",
+                OrderingTypeChoices,
+                OrderingTypeChoices.ascending,
                 "Направление сортировки.",
             ),
         )
 
         self._register_route(
-            path=spec.first_or_last_path, endpoint=endpoint, method="GET",
+            path=spec.first_or_last_path,
+            endpoint=endpoint,
+            method="GET",
             name=f"{spec.name}_get_first_or_last",
             summary="Получить первые или последние объекты",
             description=f"Возвращает первые или последние объекты ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_create(self, spec: CrudSpec) -> None:
@@ -346,15 +371,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Создаёт новый объект ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            body_parameter("payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."),
+            body_parameter(
+                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."
+            ),
         )
 
         self._register_route(
-            path=spec.create_path, endpoint=endpoint, method="POST",
-            name=f"{spec.name}_create", summary="Добавить объект",
+            path=spec.create_path,
+            endpoint=endpoint,
+            method="POST",
+            name=f"{spec.name}_create",
+            summary="Добавить объект",
             description=f"Создаёт новый объект ресурса '{spec.name}'.",
-            status_code_=status.HTTP_201_CREATED, response_model=spec.schema_out,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_201_CREATED,
+            response_model=spec.schema_out,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_create_many(self, spec: CrudSpec) -> None:
@@ -375,11 +408,17 @@ class ActionRouterBuilder:
         )
 
         self._register_route(
-            path=spec.create_many_path, endpoint=endpoint, method="POST",
-            name=f"{spec.name}_create_many", summary="Добавить несколько объектов",
+            path=spec.create_many_path,
+            endpoint=endpoint,
+            method="POST",
+            name=f"{spec.name}_create_many",
+            summary="Добавить несколько объектов",
             description=f"Создаёт несколько объектов ресурса '{spec.name}'.",
-            status_code_=status.HTTP_201_CREATED, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_201_CREATED,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_update(self, spec: CrudSpec) -> None:
@@ -395,16 +434,26 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Обновляет объект ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
-            body_parameter("payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
+            body_parameter(
+                "payload", spec.schema_in, spec.schema_in.__doc__ or "Тело запроса."
+            ),
         )
 
         self._register_route(
-            path=spec.update_path, endpoint=endpoint, method="PUT",
-            name=f"{spec.name}_update", summary="Изменить объект по ID",
+            path=spec.update_path,
+            endpoint=endpoint,
+            method="PUT",
+            name=f"{spec.name}_update",
+            summary="Изменить объект по ID",
             description=f"Обновляет объект ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=spec.schema_out,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=spec.schema_out,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_delete(self, spec: CrudSpec) -> None:
@@ -419,15 +468,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Удаляет объект ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
         )
 
         self._register_route(
-            path=spec.delete_path, endpoint=endpoint, method="DELETE",
-            name=f"{spec.name}_delete", summary="Удалить объект по ID",
+            path=spec.delete_path,
+            endpoint=endpoint,
+            method="DELETE",
+            name=f"{spec.name}_delete",
+            summary="Удалить объект по ID",
             description=f"Удаляет объект ресурса '{spec.name}'.",
-            status_code_=status.HTTP_204_NO_CONTENT, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_204_NO_CONTENT,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_all_versions(self, spec: CrudSpec) -> None:
@@ -442,15 +499,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Возвращает все версии объекта ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
         )
 
         self._register_route(
-            path=spec.all_versions_path, endpoint=endpoint, method="GET",
-            name=f"{spec.name}_all_versions", summary="Получить версии объекта",
+            path=spec.all_versions_path,
+            endpoint=endpoint,
+            method="GET",
+            name=f"{spec.name}_all_versions",
+            summary="Получить версии объекта",
             description=f"Возвращает все версии объекта ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_latest_version(self, spec: CrudSpec) -> None:
@@ -464,16 +529,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Возвращает последнюю версию объекта ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
         )
 
         self._register_route(
-            path=spec.latest_version_path, endpoint=endpoint, method="GET",
+            path=spec.latest_version_path,
+            endpoint=endpoint,
+            method="GET",
             name=f"{spec.name}_latest_version",
             summary="Получить последнюю версию объекта",
             description=f"Возвращает последнюю версию объекта ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=spec.version_schema,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=spec.version_schema,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_restore(self, spec: CrudSpec) -> None:
@@ -488,18 +560,26 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Восстанавливает объект ресурса '{spec.name}' до версии."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
             required_query_parameter(
                 "transaction_id", int, "Идентификатор транзакции версии."
             ),
         )
 
         self._register_route(
-            path=spec.restore_path, endpoint=endpoint, method="POST",
-            name=f"{spec.name}_restore", summary="Восстановить объект до версии",
+            path=spec.restore_path,
+            endpoint=endpoint,
+            method="POST",
+            name=f"{spec.name}_restore",
+            summary="Восстановить объект до версии",
             description=f"Восстанавливает объект ресурса '{spec.name}' до указанной версии.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_changes(self, spec: CrudSpec) -> None:
@@ -513,15 +593,23 @@ class ActionRouterBuilder:
         endpoint.__doc__ = f"Возвращает изменения объекта ресурса '{spec.name}'."
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
-            path_parameter(spec.id_param_name, spec.id_param_type, "Идентификатор объекта."),
+            path_parameter(
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+            ),
         )
 
         self._register_route(
-            path=spec.changes_path, endpoint=endpoint, method="GET",
-            name=f"{spec.name}_changes", summary="Получить изменения объекта",
+            path=spec.changes_path,
+            endpoint=endpoint,
+            method="GET",
+            name=f"{spec.name}_changes",
+            summary="Получить изменения объекта",
             description=f"Возвращает историю изменений объекта ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )
 
     def _register_filter(self, spec: CrudSpec) -> None:
@@ -555,7 +643,9 @@ class ActionRouterBuilder:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             query_parameter("page", int | None, None, "Номер страницы."),
-            query_parameter("size", int | None, None, "Количество элементов на странице."),
+            query_parameter(
+                "size", int | None, None, "Количество элементов на странице."
+            ),
             Parameter(
                 name="filter",
                 kind=Parameter.KEYWORD_ONLY,
@@ -564,15 +654,23 @@ class ActionRouterBuilder:
             ),
             query_parameter("by", str, spec.default_order_by, "Поле сортировки."),
             query_parameter(
-                "order", OrderingTypeChoices, OrderingTypeChoices.ascending,
+                "order",
+                OrderingTypeChoices,
+                OrderingTypeChoices.ascending,
                 "Направление сортировки.",
             ),
         )
 
         self._register_route(
-            path=spec.filter_path, endpoint=endpoint, method="GET",
-            name=f"{spec.name}_filter", summary="Получить объекты по фильтру",
+            path=spec.filter_path,
+            endpoint=endpoint,
+            method="GET",
+            name=f"{spec.name}_filter",
+            summary="Получить объекты по фильтру",
             description=f"Возвращает отфильтрованные объекты ресурса '{spec.name}'.",
-            status_code_=status.HTTP_200_OK, response_model=None,
-            dependencies=spec.dependencies, tags=spec.tags, decorators=spec.decorators,
+            status_code_=status.HTTP_200_OK,
+            response_model=None,
+            dependencies=spec.dependencies,
+            tags=spec.tags,
+            decorators=spec.decorators,
         )

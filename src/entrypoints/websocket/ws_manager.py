@@ -35,10 +35,7 @@ class ConnectionManager:
         return len(self._connections)
 
     async def connect(
-        self,
-        websocket: WebSocket,
-        client_id: str,
-        groups: list[str] | None = None,
+        self, websocket: WebSocket, client_id: str, groups: list[str] | None = None
     ) -> None:
         """Принимает WebSocket-подключение.
 
@@ -53,11 +50,7 @@ class ConnectionManager:
         for group in groups or []:
             self._groups.setdefault(group, set()).add(client_id)
 
-        logger.info(
-            "WS подключён: client_id=%s, groups=%s",
-            client_id,
-            groups,
-        )
+        logger.info("WS подключён: client_id=%s, groups=%s", client_id, groups)
 
     def disconnect(self, client_id: str) -> None:
         """Отключает клиента.
@@ -72,9 +65,7 @@ class ConnectionManager:
 
         logger.info("WS отключён: client_id=%s", client_id)
 
-    async def send_json(
-        self, client_id: str, data: dict[str, Any]
-    ) -> None:
+    async def send_json(self, client_id: str, data: dict[str, Any]) -> None:
         """Отправляет JSON конкретному клиенту.
 
         Args:

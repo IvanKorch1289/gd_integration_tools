@@ -15,8 +15,8 @@ encrypt/decrypt point-ы в коде (код-ревью проще).
 
 Пример использования в сервисе::
 
-    from app.core.security.vault_cipher import VaultTransitCipher
-    from app.core.security.vault_cipher_sqlalchemy import (
+    from src.core.security.vault_cipher import VaultTransitCipher
+    from src.core.security.vault_cipher_sqlalchemy import (
         encrypt_field,
         decrypt_field,
     )
@@ -44,18 +44,13 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
-    from app.core.security.vault_cipher import VaultTransitCipher
+    from src.core.security.vault_cipher import VaultTransitCipher
 
 
-__all__ = (
-    "encrypt_field",
-    "decrypt_field",
-    "encrypt_mapping",
-    "decrypt_mapping",
-)
+__all__ = ("encrypt_field", "decrypt_field", "encrypt_mapping", "decrypt_mapping")
 
 
 logger = logging.getLogger("security.vault_cipher_sa")
@@ -72,7 +67,7 @@ def _default_deserializer(raw: bytes) -> Any:
     text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else raw
     try:
         return json.loads(text)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return text
 
 

@@ -2,26 +2,36 @@
 
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
-    "NavigateProcessor", "ClickProcessor", "FillFormProcessor",
-    "ExtractProcessor", "ScreenshotProcessor", "RunScenarioProcessor",
+    "NavigateProcessor",
+    "ClickProcessor",
+    "FillFormProcessor",
+    "ExtractProcessor",
+    "ScreenshotProcessor",
+    "RunScenarioProcessor",
 )
 
 
 class NavigateProcessor(BaseProcessor):
     """Открывает URL в браузере, результат в properties."""
 
-    def __init__(self, url: str | None = None, url_property: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        url_property: str | None = None,
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._url = url
         self._url_property = url_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         url = self._url
         if self._url_property:
@@ -42,7 +52,8 @@ class ClickProcessor(BaseProcessor):
         self._selector = selector
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         result = await svc.click(self._url, self._selector)
         exchange.set_property("click_result", result)
@@ -51,14 +62,21 @@ class ClickProcessor(BaseProcessor):
 class FillFormProcessor(BaseProcessor):
     """Заполняет форму на странице."""
 
-    def __init__(self, url: str, fields: dict[str, str] | None = None, submit: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        url: str,
+        fields: dict[str, str] | None = None,
+        submit: str | None = None,
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._url = url
         self._fields = fields or {}
         self._submit = submit
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         fields = self._fields
         if not fields:
@@ -71,14 +89,21 @@ class FillFormProcessor(BaseProcessor):
 class ExtractProcessor(BaseProcessor):
     """Извлекает текст по CSS-селектору."""
 
-    def __init__(self, url: str | None = None, selector: str = "body", output_property: str = "extracted", name: str | None = None) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        selector: str = "body",
+        output_property: str = "extracted",
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._url = url
         self._selector = selector
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         url = self._url
         if not url:
@@ -91,13 +116,19 @@ class ExtractProcessor(BaseProcessor):
 class ScreenshotProcessor(BaseProcessor):
     """Делает скриншот страницы."""
 
-    def __init__(self, url: str | None = None, output_property: str = "screenshot", name: str | None = None) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        output_property: str = "screenshot",
+        name: str | None = None,
+    ) -> None:
         super().__init__(name)
         self._url = url
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         url = self._url
         if not url:
@@ -111,12 +142,15 @@ class ScreenshotProcessor(BaseProcessor):
 class RunScenarioProcessor(BaseProcessor):
     """Выполняет multi-step сценарий из body или параметра."""
 
-    def __init__(self, steps: list[dict[str, Any]] | None = None, name: str | None = None) -> None:
+    def __init__(
+        self, steps: list[dict[str, Any]] | None = None, name: str | None = None
+    ) -> None:
         super().__init__(name)
         self._steps = steps
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.services.io.web_automation import get_web_automation_service
+        from src.services.io.web_automation import get_web_automation_service
+
         svc = get_web_automation_service()
         steps = self._steps
         if not steps:

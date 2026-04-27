@@ -25,12 +25,12 @@ from __future__ import annotations
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator, Final, Literal
+from typing import TYPE_CHECKING, AsyncIterator, Final, Literal
 
 from prometheus_client import Counter, Gauge, Histogram
 
 if TYPE_CHECKING:
-    from app.infrastructure.clients.base_connector import InfrastructureClient
+    pass
 
 
 _logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ def _current_tenant() -> str:
     """Получить tenant_id из ContextVar; `_system` если не задан."""
     try:
         # Поздний импорт, чтобы не создавать цикл.
-        from app.core.tenancy import current_tenant  # type: ignore[attr-defined]
+        from src.core.tenancy import current_tenant  # type: ignore[attr-defined]
 
         tenant = current_tenant()
         if tenant is None:
@@ -123,7 +123,9 @@ def record_request(
     request_duration_seconds.labels(**labels).observe(duration_s)
 
 
-def record_pool_state(*, client: str, active: int, idle: int, waiting: int, max_size: int) -> None:
+def record_pool_state(
+    *, client: str, active: int, idle: int, waiting: int, max_size: int
+) -> None:
     """Записать текущее состояние pool-а. Обычно вызывается из validate()."""
     pool_size.labels(client=client, state="active").set(active)
     pool_size.labels(client=client, state="idle").set(idle)
@@ -138,10 +140,7 @@ def record_circuit_state(*, client: str, host: str, state: CircuitState) -> None
 
 @asynccontextmanager
 async def track_operation(
-    *,
-    client: str,
-    operation: str,
-    tenant: str | None = None,
+    *, client: str, operation: str, tenant: str | None = None
 ) -> AsyncIterator[None]:
     """Async context-manager для инструментации одной client-операции.
 
@@ -194,13 +193,17 @@ async def track_operation(
 
 
 # Поздняя резолюция типов исключений: aiocircuitbreaker, asyncio.TimeoutError.
-def _resolve_exception_types() -> tuple[tuple[type[BaseException], ...], tuple[type[BaseException], ...]]:
+def _resolve_exception_types() -> tuple[
+    tuple[type[BaseException], ...], tuple[type[BaseException], ...]
+]:
     import asyncio
 
     timeout_types: list[type[BaseException]] = [asyncio.TimeoutError, TimeoutError]
     circuit_types: list[type[BaseException]] = []
     try:
-        from aiocircuitbreaker import CircuitBreakerError  # type: ignore[import-untyped]
+        from aiocircuitbreaker import (
+            CircuitBreakerError,  # type: ignore[import-untyped]
+        )
 
         circuit_types.append(CircuitBreakerError)
     except ImportError:
@@ -234,14 +237,20 @@ class ClientMetricsMixin:
 
     name: str  # type: ignore[no-untyped-def]  (поставляется ABC)
 
-    def track(self, operation: str, *, tenant: str | None = None) -> "AsyncIterator[None]":
+    def track(
+        self, operation: str, *, tenant: str | None = None
+    ) -> "AsyncIterator[None]":
         """Shortcut для `track_operation(client=self.name, ...)`."""
         return track_operation(client=self.name, operation=operation, tenant=tenant)
 
     def report_pool(self, *, active: int, idle: int, waiting: int) -> None:
         """Обновить gauge-метрики pool-а. Обычно вызывается из validate()."""
         # type: ignore[no-untyped-def]  (self.pooling из ABC)
-        max_size = getattr(self, "pooling", None).max_size if getattr(self, "pooling", None) else 0  # type: ignore[union-attr]
+        max_size = (
+            getattr(self, "pooling", None).max_size
+            if getattr(self, "pooling", None)
+            else 0
+        )  # type: ignore[union-attr]
         record_pool_state(
             client=self.name,
             active=active,

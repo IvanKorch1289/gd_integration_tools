@@ -12,12 +12,13 @@ Argon2id выбран как победитель Password Hashing Competition 2
 
 from __future__ import annotations
 
-from argon2 import PasswordHasher, exceptions as argon2_exceptions
+from argon2 import PasswordHasher
+from argon2 import exceptions as argon2_exceptions
 from pydantic import SecretStr
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.db.models.base import BaseModel
+from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("User",)
 
@@ -25,11 +26,7 @@ __all__ = ("User",)
 # time_cost=3, memory_cost=64 MiB, parallelism=4, hash_len=32.
 # Для более чувствительных кейсов (корпоративный SSO) — tune через settings.
 _password_hasher = PasswordHasher(
-    time_cost=3,
-    memory_cost=64 * 1024,
-    parallelism=4,
-    hash_len=32,
-    salt_len=16,
+    time_cost=3, memory_cost=64 * 1024, parallelism=4, hash_len=32, salt_len=16
 )
 
 
@@ -47,15 +44,22 @@ class User(BaseModel):
 
     def set_password(self, password: str | SecretStr) -> None:
         """Хеширует пароль и сохраняет в поле ``password``."""
-        raw = password.get_secret_value() if isinstance(password, SecretStr) else password
+        raw = (
+            password.get_secret_value() if isinstance(password, SecretStr) else password
+        )
         self.password = _password_hasher.hash(raw)
 
     def verify_password(self, password: SecretStr | str) -> bool:
         """Проверяет пароль; ``True``, если совпадает с хранимым хешем."""
-        raw = password.get_secret_value() if isinstance(password, SecretStr) else password
+        raw = (
+            password.get_secret_value() if isinstance(password, SecretStr) else password
+        )
         try:
             _password_hasher.verify(self.password, raw)
-        except (argon2_exceptions.VerifyMismatchError, argon2_exceptions.InvalidHashError):
+        except (
+            argon2_exceptions.VerifyMismatchError,
+            argon2_exceptions.InvalidHashError,
+        ):
             return False
         # Опционально: если параметры argon2 устарели (политика компании
         # усилена), пере-хешируем и запишем обратно — caller должен закоммитить.

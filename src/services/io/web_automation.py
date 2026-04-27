@@ -8,7 +8,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.infrastructure.clients.transport.browser import BrowserClient, get_browser_client
+from src.infrastructure.clients.transport.browser import (
+    BrowserClient,
+    get_browser_client,
+)
 
 __all__ = ("WebAutomationService", "get_web_automation_service")
 
@@ -27,7 +30,9 @@ class WebAutomationService:
     async def click(self, url: str, selector: str) -> dict[str, Any]:
         return await self._client.click(url, selector)
 
-    async def fill_form(self, url: str, fields: dict[str, str], submit: str | None = None) -> dict[str, Any]:
+    async def fill_form(
+        self, url: str, fields: dict[str, str], submit: str | None = None
+    ) -> dict[str, Any]:
         return await self._client.fill_form(url, fields, submit)
 
     async def extract_text(self, url: str, selector: str) -> list[str]:
@@ -42,7 +47,9 @@ class WebAutomationService:
     async def run_scenario(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return await self._client.run_scenario(steps)
 
-    async def parse_page(self, url: str, selectors: dict[str, str]) -> dict[str, list[str]]:
+    async def parse_page(
+        self, url: str, selectors: dict[str, str]
+    ) -> dict[str, list[str]]:
         """Парсит страницу по набору CSS-селекторов."""
         result: dict[str, list[str]] = {}
         for name, selector in selectors.items():
@@ -61,11 +68,9 @@ class WebAutomationService:
         for i in range(max_checks):
             current = await self._client.extract_text(url, selector)
             if current != prev_content and prev_content:
-                changes.append({
-                    "check": i,
-                    "previous": prev_content,
-                    "current": current,
-                })
+                changes.append(
+                    {"check": i, "previous": prev_content, "current": current}
+                )
             prev_content = current
             if i < max_checks - 1:
                 await asyncio.sleep(interval_seconds)

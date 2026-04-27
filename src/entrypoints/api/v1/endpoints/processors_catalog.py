@@ -24,34 +24,35 @@ router = APIRouter(prefix="/dsl", tags=["DSL Catalog"])
 
 def _collect_processors() -> list[dict[str, Any]]:
     """Scan all DSL processor modules + collect metadata."""
-    from app.dsl.engine.processors import base
+    from src.dsl.engine.processors import base
 
     results: list[dict[str, Any]] = []
     visited: set[str] = set()
 
     module_paths = [
-        "app.dsl.engine.processors.core",
-        "app.dsl.engine.processors.control_flow",
-        "app.dsl.engine.processors.eip.routing",
-        "app.dsl.engine.processors.eip.transformation",
-        "app.dsl.engine.processors.eip.resilience",
-        "app.dsl.engine.processors.eip.flow_control",
-        "app.dsl.engine.processors.eip.idempotency",
-        "app.dsl.engine.processors.eip.sequencing",
-        "app.dsl.engine.processors.components",
-        "app.dsl.engine.processors.converters",
-        "app.dsl.engine.processors.patterns",
-        "app.dsl.engine.processors.scraping",
-        "app.dsl.engine.processors.ai",
-        "app.dsl.engine.processors.rpa",
-        "app.dsl.engine.processors.web",
-        "app.dsl.engine.processors.external",
-        "app.dsl.engine.processors.integration",
-        "app.dsl.engine.processors.export",
-        "app.dsl.engine.processors.dq_check",
+        "src.dsl.engine.processors.core",
+        "src.dsl.engine.processors.control_flow",
+        "src.dsl.engine.processors.eip.routing",
+        "src.dsl.engine.processors.eip.transformation",
+        "src.dsl.engine.processors.eip.resilience",
+        "src.dsl.engine.processors.eip.flow_control",
+        "src.dsl.engine.processors.eip.idempotency",
+        "src.dsl.engine.processors.eip.sequencing",
+        "src.dsl.engine.processors.components",
+        "src.dsl.engine.processors.converters",
+        "src.dsl.engine.processors.patterns",
+        "src.dsl.engine.processors.scraping",
+        "src.dsl.engine.processors.ai",
+        "src.dsl.engine.processors.rpa",
+        "src.dsl.engine.processors.web",
+        "src.dsl.engine.processors.external",
+        "src.dsl.engine.processors.integration",
+        "src.dsl.engine.processors.export",
+        "src.dsl.engine.processors.dq_check",
     ]
 
     import importlib
+
     for path in module_paths:
         try:
             mod = importlib.import_module(path)
@@ -79,38 +80,42 @@ def _collect_processors() -> list[dict[str, Any]]:
                         "name": p.name,
                         "kind": p.kind.name,
                         "default": (
-                            None if p.default is inspect.Parameter.empty
+                            None
+                            if p.default is inspect.Parameter.empty
                             else repr(p.default)
                         ),
                         "annotation": (
-                            None if p.annotation is inspect.Parameter.empty
+                            None
+                            if p.annotation is inspect.Parameter.empty
                             else str(p.annotation)
                         ),
                     }
                     for p in init_sig.parameters.values()
                     if p.name not in ("self", "name")
                 ]
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 params = []
 
             doc = (inspect.getdoc(obj) or "").strip()
             short_doc = doc.split("\n", 1)[0][:200] if doc else ""
 
-            results.append({
-                "name": name,
-                "category": category,
-                "module": path,
-                "description": short_doc,
-                "docstring": doc,
-                "parameters": params,
-            })
+            results.append(
+                {
+                    "name": name,
+                    "category": category,
+                    "module": path,
+                    "description": short_doc,
+                    "docstring": doc,
+                    "parameters": params,
+                }
+            )
 
     return sorted(results, key=lambda x: (x["category"], x["name"]))
 
 
 def _collect_builder_methods() -> list[dict[str, Any]]:
     """Scan RouteBuilder methods + collect signatures."""
-    from app.dsl.builder import RouteBuilder
+    from src.dsl.builder import RouteBuilder
 
     results: list[dict[str, Any]] = []
 
@@ -127,26 +132,30 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
                 {
                     "name": p.name,
                     "default": (
-                        None if p.default is inspect.Parameter.empty
+                        None
+                        if p.default is inspect.Parameter.empty
                         else repr(p.default)
                     ),
                     "annotation": (
-                        None if p.annotation is inspect.Parameter.empty
+                        None
+                        if p.annotation is inspect.Parameter.empty
                         else str(p.annotation)
                     ),
                 }
                 for p in sig.parameters.values()
                 if p.name != "self"
             ]
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             params = []
 
         doc = (inspect.getdoc(method) or "").strip()
-        results.append({
-            "name": name,
-            "description": doc.split("\n", 1)[0][:200] if doc else "",
-            "parameters": params,
-        })
+        results.append(
+            {
+                "name": name,
+                "description": doc.split("\n", 1)[0][:200] if doc else "",
+                "parameters": params,
+            }
+        )
 
     return sorted(results, key=lambda x: x["name"])
 
@@ -184,6 +193,5 @@ async def processor_details(name: str) -> JSONResponse:
         if p["name"] == name:
             return JSONResponse(content=p)
     return JSONResponse(
-        status_code=404,
-        content={"error": f"Processor '{name}' not found"},
+        status_code=404, content={"error": f"Processor '{name}' not found"}
     )

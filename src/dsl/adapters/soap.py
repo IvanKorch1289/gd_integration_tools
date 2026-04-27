@@ -6,9 +6,9 @@
 
 from typing import Any
 
-from app.dsl.adapters.base import BaseProtocolAdapter
-from app.dsl.adapters.types import ProtocolType
-from app.dsl.engine.exchange import Exchange, Message
+from src.dsl.adapters.base import BaseProtocolAdapter
+from src.dsl.adapters.types import ProtocolType
+from src.dsl.engine.exchange import Exchange, Message
 
 __all__ = ("SoapAdapter",)
 
@@ -22,9 +22,7 @@ class SoapAdapter(BaseProtocolAdapter):
 
     protocol = ProtocolType.soap
 
-    async def create_exchange(
-        self, raw_input: Any
-    ) -> Exchange[Any]:
+    async def create_exchange(self, raw_input: Any) -> Exchange[Any]:
         """Создаёт Exchange из SOAP-данных.
 
         Args:
@@ -46,7 +44,7 @@ class SoapAdapter(BaseProtocolAdapter):
                     "soap-operation": operation,
                     **headers,
                 },
-            ),
+            )
         )
 
         self.enrich_meta(
@@ -57,11 +55,7 @@ class SoapAdapter(BaseProtocolAdapter):
 
         return exchange
 
-    async def send_response(
-        self,
-        exchange: Exchange[Any],
-        raw_context: Any,
-    ) -> Any:
+    async def send_response(self, exchange: Exchange[Any], raw_context: Any) -> Any:
         """Возвращает результат обработки.
 
         Args:

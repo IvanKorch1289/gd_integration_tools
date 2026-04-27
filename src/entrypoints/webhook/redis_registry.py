@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from app.core.utils.redis_coordinator import RedisHash, RedisPubSub
+from src.infrastructure.clients.storage.redis_coordinator import RedisHash, RedisPubSub
 
 __all__ = ("WebhookSubscription", "RedisWebhookRegistry", "redis_webhook_registry")
 
@@ -22,6 +22,7 @@ logger = logging.getLogger("entrypoints.webhook.redis_registry")
 @dataclass
 class WebhookSubscription:
     """Webhook subscription (совместимо с in-memory registry)."""
+
     event_type: str
     target_url: str
     secret: str | None = None
@@ -69,8 +70,7 @@ class RedisWebhookRegistry:
         if now - self._cache_updated > self._cache_ttl:
             raw = await self._store.all()
             self._cache = {
-                sub_id: WebhookSubscription(**data)
-                for sub_id, data in raw.items()
+                sub_id: WebhookSubscription(**data) for sub_id, data in raw.items()
             }
             self._cache_updated = now
         return [asdict(sub) for sub in self._cache.values()]

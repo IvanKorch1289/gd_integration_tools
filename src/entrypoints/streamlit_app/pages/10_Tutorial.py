@@ -13,7 +13,7 @@ st.markdown("""
 ### Анатомия маршрута
 
 ```python
-from app.dsl.builder import RouteBuilder
+from src.dsl.builder import RouteBuilder
 
 route = (
     RouteBuilder.from_("orders.create", source="http:POST:/orders")

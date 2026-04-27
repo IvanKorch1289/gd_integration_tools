@@ -17,16 +17,10 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database.models.outbox import OutboxMessage
-from app.infrastructure.database.session_manager import main_session_manager
+from src.infrastructure.database.models.outbox import OutboxMessage
+from src.infrastructure.database.session_manager import main_session_manager
 
-__all__ = (
-    "write",
-    "fetch_pending",
-    "mark_sent",
-    "mark_failed",
-    "write_within_session",
-)
+__all__ = ("write", "fetch_pending", "mark_sent", "mark_failed", "write_within_session")
 
 
 async def write_within_session(
@@ -51,7 +45,7 @@ async def write_within_session(
 
 
 async def write(
-    *, topic: str, payload: dict[str, Any], headers: dict[str, Any] | None = None,
+    *, topic: str, payload: dict[str, Any], headers: dict[str, Any] | None = None
 ) -> int:
     """Автономная запись в outbox (если у вызывающего кода нет своей сессии).
 
@@ -59,7 +53,7 @@ async def write(
     """
     async with main_session_manager.transaction() as session:
         return await write_within_session(
-            session, topic=topic, payload=payload, headers=headers,
+            session, topic=topic, payload=payload, headers=headers
         )
 
 
@@ -95,7 +89,7 @@ async def mark_sent(message_id: int) -> None:
 
 
 async def mark_failed(
-    message_id: int, error: str, *, max_retries: int = 5, backoff_seconds: int = 60,
+    message_id: int, error: str, *, max_retries: int = 5, backoff_seconds: int = 60
 ) -> None:
     """Инкрементирует retry_count, либо переводит в ``failed`` при исчерпании лимита.
 

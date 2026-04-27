@@ -3,7 +3,7 @@
 ## Basic Pipeline
 
 ```python
-from app.dsl.builder import RouteBuilder
+from src.dsl.builder import RouteBuilder
 
 route = (
     RouteBuilder.from_("orders.process", source="http:POST:/orders")

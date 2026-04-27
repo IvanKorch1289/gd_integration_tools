@@ -11,7 +11,7 @@ from typing import ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = (
     "PerplexitySettings",
@@ -28,10 +28,7 @@ class PerplexitySettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "perplexity"
     model_config = SettingsConfigDict(env_prefix="PERPLEXITY_", extra="forbid")
 
-    api_key: str = Field(
-        default="",
-        description="API-ключ Perplexity",
-    )
+    api_key: str = Field(default="", description="API-ключ Perplexity")
 
     model: str = Field(
         default="sonar",
@@ -40,27 +37,17 @@ class PerplexitySettings(BaseSettingsWithLoader):
     )
 
     base_url: str = Field(
-        default="https://api.perplexity.ai",
-        description="Базовый URL API",
+        default="https://api.perplexity.ai", description="Базовый URL API"
     )
 
-    use_waf: bool = Field(
-        default=True,
-        description="Проксировать запросы через WAF",
-    )
+    use_waf: bool = Field(default=True, description="Проксировать запросы через WAF")
 
     max_tokens: int = Field(
-        default=4096,
-        ge=1,
-        le=32768,
-        description="Максимальное число токенов в ответе",
+        default=4096, ge=1, le=32768, description="Максимальное число токенов в ответе"
     )
 
     temperature: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=2.0,
-        description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -70,10 +57,7 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "huggingface"
     model_config = SettingsConfigDict(env_prefix="HUGGINGFACE_", extra="forbid")
 
-    api_key: str = Field(
-        default="",
-        description="HuggingFace API токен",
-    )
+    api_key: str = Field(default="", description="HuggingFace API токен")
 
     model: str = Field(
         default="mistralai/Mixtral-8x7B-Instruct-v0.1",
@@ -91,17 +75,11 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
     )
 
     max_tokens: int = Field(
-        default=2048,
-        ge=1,
-        le=16384,
-        description="Максимальное число токенов",
+        default=2048, ge=1, le=16384, description="Максимальное число токенов"
     )
 
     temperature: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=2.0,
-        description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -111,10 +89,7 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "open_webui"
     model_config = SettingsConfigDict(env_prefix="OPEN_WEBUI_", extra="forbid")
 
-    api_key: str = Field(
-        default="",
-        description="API-ключ OpenWebUI",
-    )
+    api_key: str = Field(default="", description="API-ключ OpenWebUI")
 
     model: str = Field(
         default="llama3",
@@ -123,8 +98,7 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     base_url: str = Field(
-        default="http://localhost:3000",
-        description="URL внутреннего OpenWebUI сервера",
+        default="http://localhost:3000", description="URL внутреннего OpenWebUI сервера"
     )
 
     use_waf: bool = Field(
@@ -136,17 +110,11 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     max_tokens: int = Field(
-        default=4096,
-        ge=1,
-        le=32768,
-        description="Максимальное число токенов",
+        default=4096, ge=1, le=32768, description="Максимальное число токенов"
     )
 
     temperature: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=2.0,
-        description="Температура генерации",
+        default=0.7, ge=0.0, le=2.0, description="Температура генерации"
     )
 
 
@@ -171,8 +139,7 @@ class AIProvidersSettings(BaseSettingsWithLoader):
     )
 
     enable_data_sanitization: bool = Field(
-        default=True,
-        description="Маскировать PII перед отправкой в LLM",
+        default=True, description="Маскировать PII перед отправкой в LLM"
     )
 
     sanitize_emails: bool = Field(default=True)
@@ -184,20 +151,15 @@ class AIProvidersSettings(BaseSettingsWithLoader):
     sanitize_api_keys: bool = Field(default=True)
 
     custom_sensitive_fields: list[str] = Field(
-        default_factory=list,
-        description="Дополнительные поля для маскировки",
+        default_factory=list, description="Дополнительные поля для маскировки"
     )
 
     connect_timeout: float = Field(
-        default=10.0,
-        ge=1.0,
-        description="Таймаут подключения к AI API (сек)",
+        default=10.0, ge=1.0, description="Таймаут подключения к AI API (сек)"
     )
 
     read_timeout: float = Field(
-        default=60.0,
-        ge=1.0,
-        description="Таймаут чтения ответа от AI API (сек)",
+        default=60.0, ge=1.0, description="Таймаут чтения ответа от AI API (сек)"
     )
 
 

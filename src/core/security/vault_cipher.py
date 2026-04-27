@@ -181,8 +181,7 @@ class VaultTransitCipher:
         """
         if not isinstance(ciphertext, str) or not ciphertext.startswith("vault:"):
             raise VaultCipherError(
-                f"invalid ciphertext format (expected 'vault:v<N>:...'): "
-                f"{ciphertext!r}"
+                f"invalid ciphertext format (expected 'vault:v<N>:...'): {ciphertext!r}"
             )
         path = f"/v1/{self.mount_path}/decrypt/{self.key_name}"
         client = self._ensure_client()
@@ -234,8 +233,7 @@ class VaultTransitCipher:
             raise VaultCipherError(f"vault read-key network error: {exc}") from exc
         if meta_resp.status_code != 200:
             raise VaultCipherError(
-                f"vault read-key HTTP {meta_resp.status_code}: "
-                f"{meta_resp.text[:200]}"
+                f"vault read-key HTTP {meta_resp.status_code}: {meta_resp.text[:200]}"
             )
         try:
             latest = int(meta_resp.json()["data"]["latest_version"])
@@ -243,7 +241,5 @@ class VaultTransitCipher:
             raise VaultCipherError(
                 f"vault read-key bad response: {meta_resp.text[:200]}"
             ) from exc
-        logger.info(
-            "Vault Transit key rotated: %s → v%d", self.key_name, latest
-        )
+        logger.info("Vault Transit key rotated: %s → v%d", self.key_name, latest)
         return latest

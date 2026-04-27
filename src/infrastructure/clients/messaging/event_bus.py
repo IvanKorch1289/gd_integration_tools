@@ -113,9 +113,7 @@ class EventBus:
         )
 
     async def publish_flag_event(self, name: str, enabled: bool) -> None:
-        await self.publish(
-            "events.flags", FlagEvent(name=name, enabled=enabled)
-        )
+        await self.publish("events.flags", FlagEvent(name=name, enabled=enabled))
 
     async def publish_route_event(self, route_id: str, action: str) -> None:
         await self.publish(
@@ -139,7 +137,7 @@ class EventBus:
         Делегирует в :class:`ReplyChannel` — вся логика future-ов
         и subscription-ов живёт там.
         """
-        from app.infrastructure.clients.messaging.reply_channel import ReplyChannel
+        from src.infrastructure.clients.messaging.reply_channel import ReplyChannel
 
         return await ReplyChannel.instance(self).request(
             target_channel=channel,

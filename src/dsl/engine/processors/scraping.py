@@ -11,24 +11,31 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ScrapeProcessor", "PaginateProcessor", "ApiProxyProcessor")
 
 _scrape_logger = logging.getLogger("dsl.scraping")
 
 _BLOCKED_IP_PREFIXES = (
-    "127.", "10.", "0.", "192.168.", "169.254.", "::1", "fc00:", "fe80:",
+    "127.",
+    "10.",
+    "0.",
+    "192.168.",
+    "169.254.",
+    "::1",
+    "fc00:",
+    "fe80:",
 )
 _BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "metadata.aws"}
 
 
 def _validate_url(url: str) -> None:
     """Block requests to private networks, localhost, and cloud metadata endpoints."""
-    from urllib.parse import urlparse
     import ipaddress
+    from urllib.parse import urlparse
 
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
@@ -72,6 +79,7 @@ _ACCEPT_LANGUAGES = [
 def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     """Generate randomized browser-like headers for each request."""
     import random
+
     headers = {
         "User-Agent": random.choice(_USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -89,6 +97,7 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     """Random delay between requests to avoid rate-limiting."""
     import asyncio
     import random
+
     await asyncio.sleep(min_s + random.random() * (max_s - min_s))
 
 
@@ -134,23 +143,29 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from app.infrastructure.clients.transport.http import HttpClient
+            from src.infrastructure.clients.transport.http import HttpClient
+
             client = HttpClient()
             response = await client.make_request(
-                method="GET", url=url, response_type="text",
-                headers=_stealth_headers(),
+                method="GET", url=url, response_type="text", headers=_stealth_headers()
             )
-            html = response.get("data", "") if isinstance(response, dict) else str(response)
+            html = (
+                response.get("data", "")
+                if isinstance(response, dict)
+                else str(response)
+            )
         except Exception as exc:
             exchange.fail(f"Scrape fetch failed: {exc}")
             return
 
         try:
             from selectolax.parser import HTMLParser
+
             tree = HTMLParser(html)
         except ImportError:
-            from html.parser import HTMLParser as _FallbackParser
-            exchange.fail("selectolax not installed, scraping requires: pip install selectolax")
+            exchange.fail(
+                "selectolax not installed, scraping requires: pip install selectolax"
+            )
             return
 
         result: dict[str, Any] = {}
@@ -196,7 +211,7 @@ class PaginateProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.transport.http import HttpClient
+        from src.infrastructure.clients.transport.http import HttpClient
 
         url = self._start_url
         if not url:
@@ -242,12 +257,20 @@ class PaginateProcessor(BaseProcessor):
 
             try:
                 response = await client.make_request(
-                    method="GET", url=url, response_type="text",
+                    method="GET",
+                    url=url,
+                    response_type="text",
                     headers=_stealth_headers(referer=prev_url),
                 )
-                html = response.get("data", "") if isinstance(response, dict) else str(response)
+                html = (
+                    response.get("data", "")
+                    if isinstance(response, dict)
+                    else str(response)
+                )
             except Exception as exc:
-                _scrape_logger.warning("Pagination fetch failed on page %d: %s", page_num, exc)
+                _scrape_logger.warning(
+                    "Pagination fetch failed on page %d: %s", page_num, exc
+                )
                 break
 
             prev_url = url
@@ -258,7 +281,9 @@ class PaginateProcessor(BaseProcessor):
                 items = [node.text().strip() for node in tree.css(self._item_selector)]
                 all_items.extend(items)
             else:
-                all_items.append({"page": page_num, "url": url, "html_length": len(html)})
+                all_items.append(
+                    {"page": page_num, "url": url, "html_length": len(html)}
+                )
 
             next_link = tree.css_first(self._next_selector)
             if next_link is None:
@@ -270,6 +295,7 @@ class PaginateProcessor(BaseProcessor):
 
             if href.startswith("/"):
                 from urllib.parse import urljoin
+
                 url = urljoin(url, href)
             elif href.startswith("http"):
                 url = href
@@ -310,13 +336,13 @@ class ApiProxyProcessor(BaseProcessor):
         self._timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.infrastructure.clients.transport.http import HttpClient
+        from src.infrastructure.clients.transport.http import HttpClient
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):
             try:
                 path = path.format(**exchange.in_message.body)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 pass
 
         url = f"{self._base_url}{path}"

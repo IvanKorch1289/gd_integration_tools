@@ -14,8 +14,8 @@ from typing import Any, Callable
 
 from prefect import task
 
-from app.dsl.commands.registry import action_handler_registry
-from app.schemas.invocation import ActionCommandSchema
+from src.dsl.commands.registry import action_handler_registry
+from src.schemas.invocation import ActionCommandSchema
 
 __all__ = ("create_service_task", "generate_all_tasks")
 
@@ -61,9 +61,7 @@ def create_service_task(
     )
     async def service_task(**kwargs: Any) -> Any:
         command = ActionCommandSchema(
-            action=action,
-            payload=kwargs,
-            meta={"source": "prefect"},
+            action=action, payload=kwargs, meta={"source": "prefect"}
         )
         return await action_handler_registry.dispatch(command)
 

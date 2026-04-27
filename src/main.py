@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from app.core.config.settings import settings
-from app.infrastructure.application.app_factory import create_app
+from src.core.config.settings import settings
+from src.infrastructure.application.app_factory import create_app
 
 app: FastAPI = create_app()
 

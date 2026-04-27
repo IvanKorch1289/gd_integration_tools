@@ -51,7 +51,7 @@ else:
             if st.button("Инстанциировать", key=f"inst_{name}"):
                 try:
                     resp = client._request(  # type: ignore[attr-defined]
-                        "POST", f"/api/v1/admin/templates/{name}/instantiate", json={},
+                        "POST", f"/api/v1/admin/templates/{name}/instantiate", json={}
                     )
                     st.success(f"Создан route: {resp}")
                 except Exception as exc:  # noqa: BLE001

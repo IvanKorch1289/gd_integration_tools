@@ -6,8 +6,8 @@ from typing import Any, Literal
 from fastapi import Body, Path, Query
 from pydantic import BaseModel
 
-from app.entrypoints.api.generator.invocation import InvocationSpec
-from app.schemas.invocation import InvokeMode
+from src.entrypoints.api.generator.invocation import InvocationSpec
+from src.schemas.invocation import InvokeMode
 
 __all__ = (
     "build_model_parameters",
@@ -64,8 +64,7 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
                 kind=Parameter.KEYWORD_ONLY,
                 annotation=InvokeMode,
                 default=Query(
-                    InvokeMode.direct,
-                    description="Режим выполнения: direct или event.",
+                    InvokeMode.direct, description="Режим выполнения: direct или event."
                 ),
             )
         )
@@ -125,9 +124,7 @@ def query_parameter(
     )
 
 
-def required_query_parameter(
-    name: str, annotation: Any, description: str
-) -> Parameter:
+def required_query_parameter(name: str, annotation: Any, description: str) -> Parameter:
     return Parameter(
         name=name,
         kind=Parameter.KEYWORD_ONLY,
@@ -146,6 +143,4 @@ def body_parameter(name: str, annotation: Any, description: str) -> Parameter:
 
 
 def make_signature(*parameters: Parameter, return_annotation: Any = Any) -> Signature:
-    return Signature(
-        parameters=list(parameters), return_annotation=return_annotation
-    )
+    return Signature(parameters=list(parameters), return_annotation=return_annotation)

@@ -2,25 +2,25 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
 
-from app.core.decorators.limiting import route_limiting
-from app.entrypoints.api.dependencies.auth import require_api_key
-from app.entrypoints.api.generator.actions import (
+from src.entrypoints.api.dependencies.auth import require_api_key
+from src.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
     CrudSpec,
 )
-from app.infrastructure.external_apis.antivirus import (
+from src.infrastructure.decorators.limiting import route_limiting
+from src.infrastructure.external_apis.antivirus import (
     AntivirusService,
     get_antivirus_service_dependency,
 )
-from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
-from app.schemas.filter_schemas.files import FileFilter
-from app.schemas.route_schemas.files import (
+from src.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
+from src.schemas.filter_schemas.files import FileFilter
+from src.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from app.services.io.files import get_file_service
+from src.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")
 

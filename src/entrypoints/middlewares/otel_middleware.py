@@ -85,9 +85,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
             return None
 
     async def dispatch(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
+        self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Оборачивает обработку запроса в OTEL span.
 
@@ -112,10 +110,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         span_cm = self._tracer.start_as_current_span(
-            span_name,
-            context=ctx,
-            kind=SpanKind.SERVER,
-            attributes=attributes,
+            span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes
         )
 
         try:
@@ -128,10 +123,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
             raise
 
     async def _process(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
-        span: Any,
+        self, request: Request, call_next: RequestResponseEndpoint, span: Any
     ) -> Response:
         """Выполняет call_next, помечая span при ошибке."""
         try:
@@ -144,7 +136,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
                 span.set_attribute("http.status_code", response.status_code)
                 if response.status_code >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response.status_code}"))
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 pass
 
             # Post-response context: route_id/tenant могут быть выставлены
@@ -153,7 +145,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
-                except (AttributeError, TypeError):
+                except AttributeError, TypeError:
                     pass
             return response
 
@@ -189,7 +181,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
         tenant_id = request.headers.get("x-tenant-id", "")
         if not tenant_id:
             try:
-                from app.core.tenancy import current_tenant
+                from src.core.tenancy import current_tenant
 
                 ctx = current_tenant()
                 if ctx is not None:
@@ -226,9 +218,9 @@ class OtelMiddleware(BaseHTTPMiddleware):
         except Exception:  # pragma: no cover
             try:
                 span.set_attribute("error", True)
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 pass
         try:
             span.record_exception(exc)
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             pass

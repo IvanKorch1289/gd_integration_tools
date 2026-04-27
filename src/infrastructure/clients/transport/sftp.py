@@ -4,7 +4,6 @@
 через SFTP (asyncssh) и FTP (aioftp).
 """
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
@@ -41,22 +40,14 @@ class SftpClient(BaseSftpClient):
     """
 
     def __init__(
-        self,
-        host: str,
-        port: int = 22,
-        username: str = "",
-        password: str = "",
+        self, host: str, port: int = 22, username: str = "", password: str = ""
     ) -> None:
         self.host = host
         self.port = port
         self.username = username
         self.password = password
 
-    async def upload(
-        self,
-        local_path: str,
-        remote_path: str,
-    ) -> None:
+    async def upload(self, local_path: str, remote_path: str) -> None:
         """Загружает файл на SFTP-сервер.
 
         Args:
@@ -75,17 +66,10 @@ class SftpClient(BaseSftpClient):
             async with conn.start_sftp_client() as sftp:
                 await sftp.put(local_path, remote_path)
                 logger.info(
-                    "SFTP upload: %s → %s:%s",
-                    local_path,
-                    self.host,
-                    remote_path,
+                    "SFTP upload: %s → %s:%s", local_path, self.host, remote_path
                 )
 
-    async def download(
-        self,
-        remote_path: str,
-        local_path: str,
-    ) -> None:
+    async def download(self, remote_path: str, local_path: str) -> None:
         """Скачивает файл с SFTP-сервера.
 
         Args:
@@ -104,16 +88,10 @@ class SftpClient(BaseSftpClient):
             async with conn.start_sftp_client() as sftp:
                 await sftp.get(remote_path, local_path)
                 logger.info(
-                    "SFTP download: %s:%s → %s",
-                    self.host,
-                    remote_path,
-                    local_path,
+                    "SFTP download: %s:%s → %s", self.host, remote_path, local_path
                 )
 
-    async def list_dir(
-        self,
-        remote_path: str = ".",
-    ) -> list[dict[str, Any]]:
+    async def list_dir(self, remote_path: str = ".") -> list[dict[str, Any]]:
         """Возвращает список файлов в директории.
 
         Args:
@@ -136,9 +114,7 @@ class SftpClient(BaseSftpClient):
                 return [
                     {
                         "filename": entry.filename,
-                        "size": entry.attrs.size
-                        if entry.attrs
-                        else None,
+                        "size": entry.attrs.size if entry.attrs else None,
                         "modified": str(entry.attrs.mtime)
                         if entry.attrs and entry.attrs.mtime
                         else None,
@@ -147,10 +123,7 @@ class SftpClient(BaseSftpClient):
                     if entry.filename not in (".", "..")
                 ]
 
-    async def download_bytes(
-        self,
-        remote_path: str,
-    ) -> bytes:
+    async def download_bytes(self, remote_path: str) -> bytes:
         """Скачивает файл как bytes.
 
         Args:
@@ -174,10 +147,7 @@ class SftpClient(BaseSftpClient):
 
 
 def get_sftp_client(
-    host: str,
-    port: int = 22,
-    username: str = "",
-    password: str = "",
+    host: str, port: int = 22, username: str = "", password: str = ""
 ) -> SftpClient:
     """Создаёт SFTP-клиент.
 
@@ -190,9 +160,4 @@ def get_sftp_client(
     Returns:
         Экземпляр ``SftpClient``.
     """
-    return SftpClient(
-        host=host,
-        port=port,
-        username=username,
-        password=password,
-    )
+    return SftpClient(host=host, port=port, username=username, password=password)

@@ -9,19 +9,18 @@ from typing import Any
 
 import orjson
 
-from app.core.config.settings import settings
-from app.core.errors import BaseError
-from app.entrypoints.base import dispatch_action
-from app.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
+from src.core.config.settings import settings
+from src.core.errors import BaseError
+from src.entrypoints.base import dispatch_action
+from src.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
-    OrderDetailResponse,
-    OrderResponse,
 )
-from app.entrypoints.grpc.protobuf.orders_pb2_grpc import (
+from src.entrypoints.grpc.protobuf.orders_pb2 import OrderDetailResponse, OrderResponse
+from src.entrypoints.grpc.protobuf.orders_pb2_grpc import (
     OrderServiceServicer,
     add_OrderServiceServicer_to_server,
 )
-from app.infrastructure.external_apis.logging_service import grpc_logger
+from src.infrastructure.external_apis.logging_service import grpc_logger
 
 
 def _safe_error(exc: Exception, correlation_id: str) -> str:
@@ -60,10 +59,7 @@ class BaseGRPCServicer:
         unified `app.entrypoints.base.dispatch_action` с `source="grpc"`.
         """
         return await dispatch_action(
-            action=action,
-            payload=payload,
-            source="grpc",
-            correlation_id=correlation_id,
+            action=action, payload=payload, source="grpc", correlation_id=correlation_id
         )
 
     def _serialize(self, result: Any) -> str:
@@ -87,8 +83,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def CreateOrder(self, request, context):
         try:
             result = await self._dispatch(
-                "orders.create_skb_order",
-                {"order_id": request.order_id},
+                "orders.create_skb_order", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Не удалось создать заказ")
@@ -97,7 +92,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 order_id=result["instance"]["id"],
                 skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
-                error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
+                error=""
+                if result["response"]["status_code"] == 200
+                else str(result["response"]["status_code"]),
             )
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
@@ -109,8 +106,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def GetOrderResult(self, request, context):
         try:
             result = await self._dispatch(
-                "orders.get_file_and_json",
-                {"order_id": request.order_id},
+                "orders.get_file_and_json", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Результат не найден")
@@ -119,7 +115,9 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
                 order_id=result["instance"]["id"],
                 skb_id=str(result["instance"]["object_uuid"]),
                 status=str(result["response"]["status_code"]),
-                error="" if result["response"]["status_code"] == 200 else str(result["response"]["status_code"]),
+                error=""
+                if result["response"]["status_code"] == 200
+                else str(result["response"]["status_code"]),
             )
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
@@ -131,8 +129,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def GetOrder(self, request, context):
         try:
             result = await self._dispatch(
-                "orders.get",
-                {"key": "id", "value": request.order_id},
+                "orders.get", {"key": "id", "value": request.order_id}
             )
             if not result:
                 return OrderDetailResponse(error="Заказ не найден")
@@ -147,14 +144,14 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
             )
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
-            self.logger.error(
-                "GetOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True
-            )
+            self.logger.error("GetOrder ошибка [ref=%s]: %s", cid, exc, exc_info=True)
             return OrderDetailResponse(error=_safe_error(exc, cid))
 
     async def DeleteOrder(self, request, context):
         try:
-            await self._dispatch("orders.delete", {"key": "id", "value": request.order_id})
+            await self._dispatch(
+                "orders.delete", {"key": "id", "value": request.order_id}
+            )
             return OrderDeleteResponse(success=True)
         except Exception as exc:
             cid = uuid.uuid4().hex[:12]
@@ -172,8 +169,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def SendOrderData(self, request, context):
         try:
             result = await self._dispatch(
-                "orders.send_order_data",
-                {"order_id": request.order_id},
+                "orders.send_order_data", {"order_id": request.order_id}
             )
             if not result:
                 return OrderResponse(error="Не удалось отправить данные")
@@ -196,8 +192,9 @@ def _load_tls_credentials() -> "grpc.ServerCredentials | None":
     Ожидаемые файлы: server_cert.pem, server_key.pem, optional ca_cert.pem
     (для mTLS с проверкой клиентских сертификатов).
     """
-    import grpc
     from pathlib import Path
+
+    import grpc
 
     tls = getattr(settings.grpc, "tls_enabled", False)
     if not tls:
@@ -239,16 +236,19 @@ class AuthInterceptor:
         from grpc.aio import AbortError
 
         metadata = dict(handler_call_details.invocation_metadata or [])
-        key = metadata.get("x-api-key") or metadata.get("authorization", "").removeprefix("Bearer ")
+        key = metadata.get("x-api-key") or metadata.get(
+            "authorization", ""
+        ).removeprefix("Bearer ")
         if not key or key != self._expected_key:
             grpc_logger.warning(
-                "gRPC unauthenticated request: method=%s",
-                handler_call_details.method,
+                "gRPC unauthenticated request: method=%s", handler_call_details.method
             )
 
             async def _abort(request_or_iterator, context):
                 try:
-                    await context.abort(StatusCode.UNAUTHENTICATED, "invalid or missing API key")
+                    await context.abort(
+                        StatusCode.UNAUTHENTICATED, "invalid or missing API key"
+                    )
                 except AbortError:
                     raise
 
@@ -292,7 +292,10 @@ async def serve():
         )
     else:
         grpc_server.add_secure_port(settings.grpc.socket_uri, credentials)
-        grpc_logger.info("gRPC сервер запущен с TLS (mTLS=%s)", bool(getattr(settings.grpc, "require_client_auth", False)))
+        grpc_logger.info(
+            "gRPC сервер запущен с TLS (mTLS=%s)",
+            bool(getattr(settings.grpc, "require_client_auth", False)),
+        )
 
     await grpc_server.start()
     grpc_logger.info("gRPC-сервер запущен на %s", settings.grpc.socket_uri)

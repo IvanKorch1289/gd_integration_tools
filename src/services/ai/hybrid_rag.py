@@ -41,6 +41,7 @@ class HybridRAGSearch:
     def _try_init(self) -> None:
         try:
             from rank_bm25 import BM25Okapi  # noqa: F401
+
             logger.debug("rank_bm25 available for hybrid search")
         except ImportError:
             logger.debug("rank_bm25 not installed, hybrid falls to vector-only")
@@ -68,7 +69,8 @@ class HybridRAGSearch:
 
     def _get_rag(self) -> Any:
         if self._rag is None:
-            from app.services.ai.rag_service import get_rag_service
+            from src.services.ai.rag_service import get_rag_service
+
             self._rag = get_rag_service()
         return self._rag
 
@@ -90,7 +92,8 @@ class HybridRAGSearch:
 
     async def search(
         self,
-        query: str, *,
+        query: str,
+        *,
         top_k: int = 5,
         namespace: str | None = None,
         alpha: float = 0.5,
@@ -111,7 +114,7 @@ class HybridRAGSearch:
         rag = self._get_rag()
 
         vector_results = await rag.search(
-            query=query, top_k=top_k * 3, namespace=namespace,
+            query=query, top_k=top_k * 3, namespace=namespace
         )
 
         bm25_results: list[dict[str, Any]] = []
@@ -120,10 +123,12 @@ class HybridRAGSearch:
                 tokenized_query = query.lower().split()
                 scores = self._bm25.get_scores(tokenized_query)
                 import numpy as np
-                top_indices = np.argsort(scores)[::-1][:top_k * 3]
+
+                top_indices = np.argsort(scores)[::-1][: top_k * 3]
                 bm25_results = [
                     {**self._bm25_docs[i], "score": float(scores[i]), "source": "bm25"}
-                    for i in top_indices if scores[i] > 0
+                    for i in top_indices
+                    if scores[i] > 0
                 ]
             except Exception as exc:
                 logger.warning("BM25 search failed: %s", exc)
@@ -136,11 +141,7 @@ class HybridRAGSearch:
         return combined[:top_k]
 
     def _combine_scores(
-        self,
-        vector: list[dict[str, Any]],
-        bm25: list[dict[str, Any]],
-        *,
-        alpha: float,
+        self, vector: list[dict[str, Any]], bm25: list[dict[str, Any]], *, alpha: float
     ) -> list[dict[str, Any]]:
         """Merge по document text с weighted scoring."""
         merged: dict[str, dict[str, Any]] = {}
@@ -157,14 +158,11 @@ class HybridRAGSearch:
                 merged[key]["score"] += doc.get("score", 0.0) * (1 - alpha)
                 merged[key]["source"] = "hybrid"
             else:
-                merged[key] = {
-                    **doc,
-                    "score": doc.get("score", 0.0) * (1 - alpha),
-                }
+                merged[key] = {**doc, "score": doc.get("score", 0.0) * (1 - alpha)}
         return sorted(merged.values(), key=lambda x: x.get("score", 0), reverse=True)
 
     def _rerank(
-        self, query: str, candidates: list[dict[str, Any]],
+        self, query: str, candidates: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Cross-encoder rerank (query, doc) pairs."""
         try:
@@ -175,7 +173,9 @@ class HybridRAGSearch:
             scores = self._reranker.predict(pairs)
             for doc, score in zip(candidates, scores):
                 doc["rerank_score"] = float(score)
-            return sorted(candidates, key=lambda x: x.get("rerank_score", 0), reverse=True)
+            return sorted(
+                candidates, key=lambda x: x.get("rerank_score", 0), reverse=True
+            )
         except Exception as exc:
             logger.warning("Rerank failed: %s", exc)
             return candidates

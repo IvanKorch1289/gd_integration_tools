@@ -12,7 +12,7 @@
 import asyncio
 import time
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, AsyncGenerator
 
@@ -22,6 +22,7 @@ __all__ = ("ExecutionTracer", "TraceEvent", "get_tracer")
 @dataclass(slots=True)
 class TraceEvent:
     """Одно событие трассировки."""
+
     route_id: str
     processor_name: str
     processor_type: str
@@ -55,10 +56,7 @@ class ExecutionTracer:
 
     @asynccontextmanager
     async def trace(
-        self,
-        route_id: str,
-        processor_name: str,
-        processor_type: str,
+        self, route_id: str, processor_name: str, processor_type: str
     ) -> AsyncGenerator[dict[str, Any], None]:
         """Context manager: emit start/end events с timing."""
         ts = datetime.now(UTC).isoformat()
@@ -116,7 +114,7 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except (asyncio.QueueEmpty, asyncio.QueueFull):
+                    except asyncio.QueueEmpty, asyncio.QueueFull:
                         pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent, None]:
@@ -150,7 +148,7 @@ class ExecutionTracer:
                 subs.remove(queue)
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("tracer", ExecutionTracer)

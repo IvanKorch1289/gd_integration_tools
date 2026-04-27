@@ -53,17 +53,13 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-__all__ = (
-    "ImmutableAuditStore",
-    "VerifyResult",
-    "AuditIntegrityError",
-)
+__all__ = ("ImmutableAuditStore", "VerifyResult", "AuditIntegrityError")
 
 
 logger = logging.getLogger("observability.immutable_audit")
@@ -121,7 +117,7 @@ class ImmutableAuditStore:
         # Fallback на глобальный secret_key; это не идеально (shared blast
         # radius), но лучше чем hardcoded default.
         try:
-            from app.core.config.settings import settings  # local import
+            from src.core.config.settings import settings  # local import
 
             fallback = getattr(settings.secure, "secret_key", None)
             if fallback:
@@ -130,9 +126,7 @@ class ImmutableAuditStore:
                     "как fallback. Рекомендуется выделить отдельный ключ."
                 )
                 return (
-                    fallback.encode("utf-8")
-                    if isinstance(fallback, str)
-                    else fallback
+                    fallback.encode("utf-8") if isinstance(fallback, str) else fallback
                 )
         except Exception as exc:  # noqa: BLE001 — settings might be unavailable
             logger.error("Не удалось прочитать fallback secret_key: %s", exc)
@@ -216,8 +210,7 @@ class ImmutableAuditStore:
         async with self._session_scope() as session:
             # pg_advisory_xact_lock — отпускается на commit/rollback.
             await session.execute(
-                text("SELECT pg_advisory_xact_lock(:k)"),
-                {"k": _ADVISORY_LOCK_KEY},
+                text("SELECT pg_advisory_xact_lock(:k)"), {"k": _ADVISORY_LOCK_KEY}
             )
             prev_row = (
                 await session.execute(
@@ -261,9 +254,7 @@ class ImmutableAuditStore:
     # ----------------------------------------------------------------- verify
 
     async def verify(
-        self,
-        from_seq: int = 0,
-        to_seq: int | None = None,
+        self, from_seq: int = 0, to_seq: int | None = None
     ) -> VerifyResult:
         """Проверяет HMAC-цепочку от ``from_seq`` до ``to_seq`` (включительно).
 
@@ -281,7 +272,7 @@ class ImmutableAuditStore:
             f"FROM {self._table} "
             f"WHERE seq >= :from_seq "
             + ("AND seq <= :to_seq " if to_seq is not None else "")
-            + f"ORDER BY seq ASC"
+            + "ORDER BY seq ASC"
         )
         params: dict[str, Any] = {"from_seq": from_seq}
         if to_seq is not None:
@@ -305,10 +296,7 @@ class ImmutableAuditStore:
             async with self._session_scope() as session:
                 anchor_row = (
                     await session.execute(
-                        text(
-                            f"SELECT event_hash FROM {self._table} "
-                            f"WHERE seq = :s"
-                        ),
+                        text(f"SELECT event_hash FROM {self._table} WHERE seq = :s"),
                         {"s": int(first[0]) - 1},
                     )
                 ).first()
@@ -358,9 +346,7 @@ class ImmutableAuditStore:
                     else str(occurred_at)
                 ),
             }
-            expected_hash = self._hmac(
-                self._canonical_json(event_dict), prev_hash
-            )
+            expected_hash = self._hmac(self._canonical_json(event_dict), prev_hash)
             if expected_hash != event_hash:
                 return VerifyResult(
                     valid=False,

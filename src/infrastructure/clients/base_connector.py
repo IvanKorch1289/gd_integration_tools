@@ -23,8 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from app.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-
+from src.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
 
 HealthMode = Literal["fast", "deep"]
 HealthStatus = Literal["ok", "degraded", "failed"]
@@ -51,11 +50,15 @@ class HealthResult:
     error: str | None = None
 
     @classmethod
-    def ok(cls, *, latency_ms: float, mode: HealthMode, **details: Any) -> "HealthResult":
+    def ok(
+        cls, *, latency_ms: float, mode: HealthMode, **details: Any
+    ) -> "HealthResult":
         return cls(status="ok", latency_ms=latency_ms, mode=mode, details=dict(details))
 
     @classmethod
-    def failed(cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0) -> "HealthResult":
+    def failed(
+        cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0
+    ) -> "HealthResult":
         return cls(status="failed", latency_ms=latency_ms, mode=mode, error=error)
 
     @classmethod
@@ -163,9 +166,7 @@ class InfrastructureClient(ABC):
         except Exception as exc:  # noqa: BLE001  (хотим поймать всё)
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}",
-                mode=mode,
-                latency_ms=latency_ms,
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
             )
 
 

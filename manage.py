@@ -42,7 +42,7 @@ def run(
 ):
     """Запуск FastAPI backend."""
     cmd = [
-        sys.executable, "-m", "uvicorn", "app.main:app",
+        sys.executable, "-m", "uvicorn", "src.main:app",
         "--host", host, "--port", str(port), "--workers", str(workers),
     ]
     if reload:
@@ -78,7 +78,7 @@ def run_all(
         typer.echo(f"Starting backend on :{backend_port} + frontend on :{frontend_port}...")
 
         backend = subprocess.Popen([
-            sys.executable, "-m", "uvicorn", "app.main:app",
+            sys.executable, "-m", "uvicorn", "src.main:app",
             "--host", "0.0.0.0", "--port", str(backend_port),
         ])
         procs.append(backend)
@@ -178,7 +178,7 @@ def migration_current():
 def routes():
     """Список зарегистрированных DSL routes."""
     _bootstrap()
-    from app.dsl.commands.registry import route_registry
+    from src.dsl.commands.registry import route_registry
 
     for route in route_registry.list_routes():
         flag = f" [FF:{route.feature_flag}]" if route.feature_flag else ""
@@ -192,7 +192,7 @@ def routes():
 def actions():
     """Список зарегистрированных actions."""
     _bootstrap()
-    from app.dsl.commands.registry import action_handler_registry
+    from src.dsl.commands.registry import action_handler_registry
 
     action_list = sorted(action_handler_registry.list_actions())
     for action in action_list:
@@ -223,13 +223,13 @@ def health():
     async def _check():
         checks = {}
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
 
         try:
-            from app.infrastructure.database.database import db_initializer
+            from src.infrastructure.database.database import db_initializer
             checks["database"] = await db_initializer.check_connection()
         except Exception:
             checks["database"] = False
@@ -245,7 +245,7 @@ def health():
 @app.command()
 def breakers():
     """Состояние circuit breakers."""
-    from app.infrastructure.clients.external.circuit_breakers import breaker_registry
+    from src.infrastructure.clients.external.circuit_breakers import breaker_registry
 
     for info in breaker_registry.get_all_status():
         state = info["state"]
@@ -316,9 +316,9 @@ def scaffold_processor(name: str):
 
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("{class_name}",)
 
@@ -370,7 +370,7 @@ def import_schema_openapi(
     routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
 ):
     """Генерация Pydantic + DSL-routes из OpenAPI-спеки."""
-    from app.tools.schema_importer import SchemaImporter
+    from src.tools.schema_importer import SchemaImporter
 
     importer = SchemaImporter()
     models_path, routes_path = importer.from_openapi(
@@ -387,7 +387,7 @@ def import_schema_postman(
     routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
 ):
     """Генерация Pydantic + DSL-routes из Postman-коллекции."""
-    from app.tools.schema_importer import SchemaImporter
+    from src.tools.schema_importer import SchemaImporter
 
     importer = SchemaImporter()
     models_path, routes_path = importer.from_postman(
@@ -397,6 +397,66 @@ def import_schema_postman(
     typer.echo(f"Routes: {routes_path}")
 
 
+# ────────────── AI Tools ──────────────
+
+
+@app.command("list-tools")
+def list_tools() -> None:
+    """Список зарегистрированных AI-инструментов."""
+    _bootstrap()
+    from src.services.ai.tools import get_tool_registry
+
+    registry = get_tool_registry()
+    tools = registry.list()
+    for tool in tools:
+        required = tool.parameters.get("required") or []
+        params = ", ".join(f"{p}" + ("*" if p in required else "") for p in tool.parameters.get("properties", {}))
+        typer.echo(f"  {tool.id:<40} {tool.description[:60]}")
+        if params:
+            typer.echo(f"      args: {params}")
+
+    typer.echo(f"\nTotal: {len(tools)} tools")
+
+
+@app.command("expose-tool")
+def expose_tool(
+    service_class: str = typer.Argument(
+        ..., help="Dotted path класса сервиса (src.services.X.Y:ServiceCls)."
+    ),
+    method: str = typer.Argument(..., help="Имя метода сервиса."),
+) -> None:
+    """Регистрирует метод сервиса как AI-инструмент.
+
+    Пример::
+
+        python manage.py expose-tool src.services.ops.analytics:AnalyticsService summarise
+    """
+    _bootstrap()
+    import importlib
+
+    from src.services.ai.tools import get_tool_registry
+
+    if ":" not in service_class:
+        typer.echo("Формат: <module>:<ClassName>", err=True)
+        raise typer.Exit(1)
+
+    module_path, class_name = service_class.split(":", 1)
+    module = importlib.import_module(module_path)
+    cls = getattr(module, class_name, None)
+    if cls is None:
+        typer.echo(f"Класс {class_name} не найден в {module_path}", err=True)
+        raise typer.Exit(1)
+
+    registry = get_tool_registry()
+    tools = registry.from_service(cls, methods=[method])
+    if not tools:
+        typer.echo(f"Метод {method} не найден в {class_name}", err=True)
+        raise typer.Exit(1)
+
+    for tool in tools:
+        typer.echo(f"Exposed: {tool.id} — {tool.description[:80]}")
+
+
 # ────────────── Validation ──────────────
 
 
@@ -404,8 +464,8 @@ def import_schema_postman(
 def validate(route_id: str):
     """Валидация DSL pipeline."""
     _bootstrap()
-    from app.dsl.commands.registry import route_registry
-    from app.dsl.engine.validation import pipeline_validator
+    from src.dsl.commands.registry import route_registry
+    from src.dsl.engine.validation import pipeline_validator
 
     pipeline = route_registry.get(route_id)
     result = pipeline_validator.validate(pipeline)
@@ -426,8 +486,8 @@ def validate(route_id: str):
 
 def _bootstrap():
     """Минимальная инициализация для introspection команд."""
-    from app.dsl.commands.setup import register_action_handlers
-    from app.dsl.routes import register_dsl_routes
+    from src.dsl.commands.setup import register_action_handlers
+    from src.dsl.routes import register_dsl_routes
 
     from src.infrastructure.application.service_setup import register_all_services
 

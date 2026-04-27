@@ -8,10 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-__all__ = (
-    "ProtocolType",
-    "TransportConfig",
-)
+__all__ = ("ProtocolType", "TransportConfig")
 
 
 class ProtocolType(str, Enum):

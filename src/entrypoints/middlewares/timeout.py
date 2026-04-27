@@ -4,8 +4,8 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from app.core.config.settings import settings
-from app.infrastructure.external_apis.logging_service import app_logger
+from src.core.config.settings import settings
+from src.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("TimeoutMiddleware",)
 

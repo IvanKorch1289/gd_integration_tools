@@ -51,17 +51,19 @@ async def import_openapi(
     Returns:
         Отчёт об импорте со списком ``route_id``.
     """
-    from app.dsl.importers.openapi_parser import get_openapi_importer
+    from src.dsl.importers.openapi_parser import get_openapi_importer
 
     spec: dict[str, Any] | str
     if file is not None:
         content = await file.read()
         try:
             import orjson
+
             spec = orjson.loads(content)
         except Exception:
             try:
                 import yaml
+
                 spec = yaml.safe_load(content)
             except Exception as exc:
                 raise HTTPException(400, f"Не удалось распарсить spec: {exc}") from exc
@@ -97,10 +99,11 @@ async def import_postman(
     Returns:
         Список сгенерированных ``route_id``.
     """
-    from app.dsl.importers.postman_parser import get_postman_importer
+    from src.dsl.importers.postman_parser import get_postman_importer
 
     if file is not None:
         import orjson
+
         content = await file.read()
         try:
             collection = orjson.loads(content)
@@ -141,7 +144,7 @@ async def import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
     Поддерживаемые типы шагов: ``action``, ``log``, ``transform``, ``choice``,
     ``http_call``, ``dispatch_action``. Расширяется в ``_build_step`` ниже.
     """
-    from app.dsl.builder import RouteBuilder
+    from src.dsl.builder import RouteBuilder
 
     try:
         route_id = payload["route_id"]
@@ -179,8 +182,7 @@ def _apply_steps(builder: Any, steps: list[dict[str, Any]]) -> Any:
                 builder = builder.log(step.get("message", ""))
             case "http_call":
                 builder = builder.http_call(
-                    step["url"],
-                    method=step.get("method", "GET"),
+                    step["url"], method=step.get("method", "GET")
                 )
             case "dispatch_action":
                 builder = builder.dispatch_action(step["action"])
@@ -219,12 +221,15 @@ async def import_bulk_objects(
     try:
         if filename.endswith((".xlsx", ".xls")):
             import io
+
             import pandas as pd
+
             df = pd.read_excel(io.BytesIO(content))
             rows = df.to_dict(orient="records")
         else:
             import csv
             import io
+
             text = content.decode("utf-8-sig")
             reader = csv.DictReader(io.StringIO(text))
             rows = list(reader)
@@ -234,8 +239,8 @@ async def import_bulk_objects(
     if dry_run:
         return {"parsed": len(rows), "sample": rows[:3], "dry_run": True}
 
-    from app.dsl.engine.execution_engine import get_execution_engine
-    from app.dsl.engine.pipeline_registry import get_pipeline_registry
+    from src.dsl.engine.execution_engine import get_execution_engine
+    from src.dsl.engine.pipeline_registry import get_pipeline_registry
 
     pipeline = get_pipeline_registry().get(route_id)
     if pipeline is None:

@@ -50,7 +50,7 @@
     )
 
     # Регистрация → workflow доступен через REST/gRPC/SOAP/Rabbit/Kafka/MCP.
-    from app.workflows.registry import workflow_registry
+    from src.workflows.registry import workflow_registry
     workflow_registry.register(spec, route_id="orders.skb_flow")
 
 Паттерн совместим с существующим :class:`RouteBuilder` из ``src/dsl/builder.py``
@@ -68,7 +68,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Awaitable, Callable
 
-from app.infrastructure.workflow.executor import (
+from src.infrastructure.workflow.executor import (
     DurableWorkflowProcessor,
     WorkflowSpec,
     WorkflowStep,
@@ -123,10 +123,7 @@ class WorkflowBuilder:
     # -- Step constructors ------------------------------------------
 
     def step(
-        self,
-        name: str,
-        *,
-        processors: list[Callable[..., Awaitable[Any]]],
+        self, name: str, *, processors: list[Callable[..., Awaitable[Any]]]
     ) -> "WorkflowBuilder":
         """Sequential-шаг: цепочка async-процессоров.
 
@@ -135,11 +132,7 @@ class WorkflowBuilder:
         через runner backoff.
         """
         self._steps.append(
-            WorkflowStep(
-                kind="sequential",
-                name=name,
-                processors=tuple(processors),
-            )
+            WorkflowStep(kind="sequential", name=name, processors=tuple(processors))
         )
         return self
 
@@ -288,18 +281,12 @@ class WorkflowBuilder:
             raise ValueError("Either duration_s OR until_expr required")
         self._steps.append(
             WorkflowStep(
-                kind="wait",
-                name=name,
-                duration_s=duration_s,
-                until_expr=until_expr,
+                kind="wait", name=name, duration_s=duration_s, until_expr=until_expr
             )
         )
         return self
 
-    def compensate_with(
-        self,
-        steps: list[WorkflowStep],
-    ) -> "WorkflowBuilder":
+    def compensate_with(self, steps: list[WorkflowStep]) -> "WorkflowBuilder":
         """Регистрирует compensators — выполняются runner'ом при FAILED.
 
         Compensators выполняются в reverse-order (LIFO) как saga pattern.
@@ -309,11 +296,7 @@ class WorkflowBuilder:
         return self
 
     def human_approval(
-        self,
-        *,
-        name: str,
-        approvers_group: str,
-        timeout_s: float = 3600.0,
+        self, *, name: str, approvers_group: str, timeout_s: float = 3600.0
     ) -> "WorkflowBuilder":
         """HITL (Human In The Loop) approval.
 

@@ -5,7 +5,7 @@ dataweave (lite), jinja2, xpath (lxml), xslt (lxml).
 
 Публичный API::
 
-    from app.dsl.transform import transform
+    from src.dsl.transform import transform
     data = transform("user.name", payload, engine="jmespath")
 """
 
@@ -35,13 +35,17 @@ def transform(expr: str, data: Any, *, engine: str = "jmespath") -> Any:
     if engine == "jinja2":
         from jinja2 import Template
 
-        return Template(expr).render(**(data if isinstance(data, dict) else {"data": data}))
+        return Template(expr).render(
+            **(data if isinstance(data, dict) else {"data": data})
+        )
     if engine in ("xpath", "xslt"):
         from lxml import etree
 
         # Источник data — bytes/str/xml tree
         if isinstance(data, (bytes, bytearray, str)):
-            root = etree.fromstring(data if isinstance(data, (bytes, bytearray)) else data.encode())
+            root = etree.fromstring(
+                data if isinstance(data, (bytes, bytearray)) else data.encode()
+            )
         else:
             root = data
         if engine == "xpath":

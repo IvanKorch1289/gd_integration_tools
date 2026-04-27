@@ -2,7 +2,7 @@
 
 IL2.2 (ADR-023). Публичный API:
 
-    from app.infrastructure.notifications import (
+    from src.infrastructure.notifications import (
         NotificationGateway,
         TemplateRegistry,
         get_gateway,
@@ -18,13 +18,13 @@ IL2.2 (ADR-023). Публичный API:
     )
 """
 
-from app.infrastructure.notifications.gateway import (
+from src.infrastructure.notifications.gateway import (
     NotificationGateway,
     SendResult,
     get_gateway,
 )
-from app.infrastructure.notifications.priority import Priority, PriorityRouter
-from app.infrastructure.notifications.templates import (
+from src.infrastructure.notifications.priority import Priority, PriorityRouter
+from src.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,
 )

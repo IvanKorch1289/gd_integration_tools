@@ -77,8 +77,8 @@ class OutboxPublisher:
         Returns:
             Список id успешно опубликованных событий.
         """
-        from app.infrastructure.clients.messaging.stream import get_stream_client
-        from app.infrastructure.eventing.cloudevents import envelope
+        from src.infrastructure.clients.messaging.stream import get_stream_client
+        from src.infrastructure.eventing.cloudevents import envelope
 
         client = get_stream_client()
         published: list[UUID] = []
@@ -108,9 +108,7 @@ class OutboxPublisher:
                 )
         return published
 
-    async def drain_pending(
-        self, *, event_ids: list[str] | None = None
-    ) -> list[UUID]:
+    async def drain_pending(self, *, event_ids: list[str] | None = None) -> list[UUID]:
         """Drain-handler для :class:`OutboxListener`.
 
         Args:
@@ -121,7 +119,7 @@ class OutboxPublisher:
         Returns:
             Список успешно опубликованных ``OutboxEvent.id``.
         """
-        from app.infrastructure.repositories import outbox as outbox_repo
+        from src.infrastructure.repositories import outbox as outbox_repo
 
         pending = await outbox_repo.fetch_pending(limit=self.batch_size)
         if event_ids is not None:
@@ -147,7 +145,5 @@ class OutboxPublisher:
             if ev.id in published_set:
                 await outbox_repo.mark_sent(msg.id)
             else:
-                await outbox_repo.mark_failed(
-                    msg.id, error="publish failed (see logs)"
-                )
+                await outbox_repo.mark_failed(msg.id, error="publish failed (see logs)")
         return list(published_set)

@@ -30,8 +30,8 @@
 
 - [x] Пакет `app.dsl.builders` создан.
 - [x] 11 mixin-классов объявлены.
-- [x] Публичный API не сломан (`from app.dsl.builder import RouteBuilder`
-      + `from app.dsl.builders import RouteBuilder` — оба работают).
+- [x] Публичный API не сломан (`from src.dsl.builder import RouteBuilder`
+      + `from src.dsl.builders import RouteBuilder` — оба работают).
 - [x] ADR-001 создан.
 - [x] `docs/phases/PHASE_B1.md`.
 - [x] PROGRESS.md / PHASE_STATUS.yml (B1 → done).
@@ -40,8 +40,8 @@
 
 ```bash
 python3 -c "
-from app.dsl.builders import RouteBuilder as RB1
-from app.dsl.builder import RouteBuilder as RB2
+from src.dsl.builders import RouteBuilder as RB1
+from src.dsl.builder import RouteBuilder as RB2
 assert RB1 is RB2 or issubclass(RB1, RB2) or issubclass(RB2, RB1)
 print('OK: API identity preserved')
 "

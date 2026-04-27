@@ -8,7 +8,7 @@
 import logging
 from typing import Any
 
-from app.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
+from src.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
 
 __all__ = ("StdlibLoggingBackend",)
 

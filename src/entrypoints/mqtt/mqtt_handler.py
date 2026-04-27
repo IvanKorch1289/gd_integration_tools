@@ -20,7 +20,7 @@ from typing import Any, ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from app.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("MqttSettings", "MqttHandler", "get_mqtt_handler")
 
@@ -33,36 +33,21 @@ class MqttSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "mqtt"
     model_config = SettingsConfigDict(env_prefix="MQTT_", extra="forbid")
 
-    broker_host: str = Field(
-        default="localhost",
-        description="Хост MQTT-брокера",
-    )
+    broker_host: str = Field(default="localhost", description="Хост MQTT-брокера")
     broker_port: int = Field(
-        default=1883,
-        ge=1,
-        le=65535,
-        description="Порт MQTT-брокера",
+        default=1883, ge=1, le=65535, description="Порт MQTT-брокера"
     )
     username: str = Field(default="", description="Имя пользователя")
     password: str = Field(default="", description="Пароль")
     client_id: str = Field(
-        default="gd-integration-tools",
-        description="Client ID для MQTT",
+        default="gd-integration-tools", description="Client ID для MQTT"
     )
     topics: list[str] = Field(
         default_factory=lambda: ["gd/#"],
         description="Топики для подписки (поддерживаются wildcards + и #)",
     )
-    qos: int = Field(
-        default=1,
-        ge=0,
-        le=2,
-        description="Quality of Service (0, 1, 2)",
-    )
-    enabled: bool = Field(
-        default=False,
-        description="Включить MQTT-подписку",
-    )
+    qos: int = Field(default=1, ge=0, le=2, description="Quality of Service (0, 1, 2)")
+    enabled: bool = Field(default=False, description="Включить MQTT-подписку")
 
     # TLS / mTLS (A2 / ADR-004). Для prod/внешних брокеров TLS обязателен.
     tls_enabled: bool = Field(
@@ -70,16 +55,13 @@ class MqttSettings(BaseSettingsWithLoader):
         description="Включить TLS для MQTT (обязательно для публичных брокеров)",
     )
     ca_cert_path: str = Field(
-        default="",
-        description="Путь к CA-сертификату брокера (PEM)",
+        default="", description="Путь к CA-сертификату брокера (PEM)"
     )
     client_cert_path: str = Field(
-        default="",
-        description="Путь к клиентскому сертификату (для mTLS)",
+        default="", description="Путь к клиентскому сертификату (для mTLS)"
     )
     client_key_path: str = Field(
-        default="",
-        description="Путь к клиентскому ключу (для mTLS)",
+        default="", description="Путь к клиентскому ключу (для mTLS)"
     )
 
 
@@ -168,8 +150,7 @@ class MqttHandler:
 
                     async for message in client.messages:
                         await self._handle_message(
-                            topic=str(message.topic),
-                            payload=message.payload,
+                            topic=str(message.topic), payload=message.payload
                         )
 
             except asyncio.CancelledError:
@@ -194,13 +175,11 @@ class MqttHandler:
         logger.debug("MQTT message: topic=%s, action=%s", topic, action)
 
         try:
-            from app.dsl.commands.registry import action_handler_registry
-            from app.schemas.invocation import ActionCommandSchema
+            from src.dsl.commands.registry import action_handler_registry
+            from src.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
-                action=action,
-                payload=data,
-                meta={"source": "mqtt", "topic": topic},
+                action=action, payload=data, meta={"source": "mqtt", "topic": topic}
             )
             await action_handler_registry.dispatch(command)
         except KeyError:
@@ -238,9 +217,7 @@ class MqttHandler:
                 tls_context=self._build_tls_context(),
             ) as client:
                 await client.publish(
-                    topic,
-                    payload=orjson.dumps(data),
-                    qos=self._settings.qos,
+                    topic, payload=orjson.dumps(data), qos=self._settings.qos
                 )
         except ImportError:
             logger.warning("aiomqtt не установлен — публикация невозможна")
@@ -258,7 +235,7 @@ def _create_mqtt_handler() -> MqttHandler:
     return MqttHandler(settings)
 
 
-from app.core.di import app_state_singleton
+from src.infrastructure.application.di import app_state_singleton
 
 
 @app_state_singleton("mqtt_handler", _create_mqtt_handler)

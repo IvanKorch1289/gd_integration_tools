@@ -3,8 +3,8 @@ from typing import Any, Callable
 
 from fastapi import Request
 
-from app.core.enums.invocation import BrokerKind
-from app.schemas.invocation import ActionCommandMetaSchema, InvocationOptionsSchema
+from src.core.enums.invocation import BrokerKind
+from src.schemas.invocation import ActionCommandMetaSchema, InvocationOptionsSchema
 
 __all__ = (
     "PayloadFactory",

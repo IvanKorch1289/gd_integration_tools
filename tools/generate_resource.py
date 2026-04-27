@@ -27,7 +27,7 @@ def render_schema(resource: str, class_name: str) -> str:
         f"""
         from pydantic import ConfigDict, Field
 
-        from app.schemas.base import BaseSchema
+        from src.schemas.base import BaseSchema
 
 
         __all__ = (
@@ -66,8 +66,8 @@ def render_schema(resource: str, class_name: str) -> str:
 def render_repository(resource: str, class_name: str) -> str:
     return dedent(
         f"""
-        from app.infrastructure.repositories.base import BaseRepository
-        from app.models.{resource} import {class_name}
+        from src.infrastructure.repositories.base import BaseRepository
+        from src.infrastructure.database.models.{resource} import {class_name}
 
 
         __all__ = ("get_{resource}_repo",)
@@ -97,13 +97,13 @@ def render_service(resource: str, class_name: str) -> str:
         f"""
         from pydantic import BaseModel
 
-        from app.infrastructure.repositories.{resource} import {class_name}Repository, get_{resource}_repo
-        from app.schemas.route_schemas.{resource} import (
+        from src.infrastructure.repositories.{resource} import {class_name}Repository, get_{resource}_repo
+        from src.schemas.route_schemas.{resource} import (
             {class_name}SchemaIn,
             {class_name}SchemaOut,
             {class_name}VersionSchemaOut,
         )
-        from app.services.core.base import BaseService
+        from src.services.core.base import BaseService
 
 
         __all__ = ("get_{resource}_service",)
@@ -158,15 +158,15 @@ def render_router(resource: str, class_name: str) -> str:
         f"""
         from fastapi import APIRouter, Depends, status
 
-        from app.entrypoints.api.dependencies.auth import require_api_key
-        from app.entrypoints.api.dsl.actions import ActionRouterBuilder, CrudSpec
-        from app.schemas.route_schemas.{resource} import (
+        from src.entrypoints.api.dependencies.auth import require_api_key
+        from src.entrypoints.api.dsl.actions import ActionRouterBuilder, CrudSpec
+        from src.schemas.route_schemas.{resource} import (
             {class_name}SchemaIn,
             {class_name}SchemaOut,
             {class_name}VersionSchemaOut,
         )
-        from app.services.{resource} import get_{resource}_service
-        from app.core.decorators.limiting import route_limiting
+        from src.services.{resource} import get_{resource}_service
+        from src.infrastructure.decorators.limiting import route_limiting
 
 
         __all__ = ("router",)
@@ -197,7 +197,7 @@ def render_model(resource: str, class_name: str) -> str:
         from sqlalchemy import String
         from sqlalchemy.orm import Mapped, mapped_column
 
-        from app.models.base import Base
+        from src.infrastructure.database.models.base import Base
 
 
         __all__ = ("{class_name}",)

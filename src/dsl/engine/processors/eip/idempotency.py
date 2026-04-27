@@ -1,18 +1,14 @@
-import asyncio
 import logging
-import time
 from typing import Any, Callable
 
-import orjson
-
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
 
-__all__ = ('IdempotentConsumerProcessor',)
+__all__ = ("IdempotentConsumerProcessor",)
 
 
 class IdempotentConsumerProcessor(BaseProcessor):
@@ -35,22 +31,16 @@ class IdempotentConsumerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
 
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
             is_new = await redis_client.set_if_not_exists(
                 key=dedup_key, value="1", ttl=self._ttl
             )
             if not is_new:
-                _eip_logger.debug(
-                    "Duplicate message filtered: key=%s", dedup_key
-                )
+                _eip_logger.debug("Duplicate message filtered: key=%s", dedup_key)
                 exchange.set_property("idempotent_duplicate", True)
                 exchange.stop()
                 return
         except Exception as exc:
-            _eip_logger.warning(
-                "Idempotent check failed (proceeding): %s", exc
-            )
-
-
+            _eip_logger.warning("Idempotent check failed (proceeding): %s", exc)

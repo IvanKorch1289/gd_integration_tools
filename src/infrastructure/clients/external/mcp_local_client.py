@@ -66,7 +66,9 @@ class LocalMCPClient:
             for tool in result.tools
         ]
 
-    async def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> Any:
+    async def call_tool(
+        self, name: str, arguments: dict[str, Any] | None = None
+    ) -> Any:
         """Вызывает tool на MCP-сервере."""
         if not self._session:
             raise RuntimeError("MCP client not connected")

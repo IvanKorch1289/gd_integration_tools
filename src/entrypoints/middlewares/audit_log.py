@@ -14,7 +14,6 @@
 import hashlib
 import time as _time
 
-import orjson
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
@@ -26,7 +25,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
     """Расширенный аудит-лог HTTP-запросов."""
 
     def __init__(self, app: ASGIApp) -> None:
-        from app.infrastructure.external_apis.logging_service import app_logger
+        from src.infrastructure.external_apis.logging_service import app_logger
 
         super().__init__(app)
         self.logger = app_logger
@@ -94,7 +93,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
 
         # Асинхронная запись в Redis stream (fire-and-forget)
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
 
             await redis_client.add_to_stream(
                 stream_name="audit-log",

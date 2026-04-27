@@ -3,9 +3,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from app.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 _cf_logger = logging.getLogger("dsl.control_flow")
 
@@ -197,7 +197,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except (RetryError, _RetryAbort):
+        except RetryError, _RetryAbort:
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
@@ -222,11 +222,13 @@ class PipelineRefProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from app.dsl.engine.processors.base import SubPipelineExecutor
+        from src.dsl.engine.processors.base import SubPipelineExecutor
 
         result, error = await SubPipelineExecutor.execute_route(
-            self._route_id, exchange.in_message.body,
-            dict(exchange.in_message.headers), context,
+            self._route_id,
+            exchange.in_message.body,
+            dict(exchange.in_message.headers),
+            context,
         )
         if error:
             exchange.fail(f"Sub-pipeline '{self._route_id}' failed: {error}")
@@ -265,13 +267,14 @@ class ParallelProcessor(BaseProcessor):
         headers: dict[str, Any],
         context: ExecutionContext,
     ) -> tuple[str, Any, str | None]:
-        branch_exchange = Exchange(
-            in_message=Message(body=body, headers=dict(headers))
-        )
+        branch_exchange = Exchange(in_message=Message(body=body, headers=dict(headers)))
         branch_exchange.status = ExchangeStatus.processing
 
         for proc in processors:
-            if branch_exchange.status == ExchangeStatus.failed or branch_exchange.stopped:
+            if (
+                branch_exchange.status == ExchangeStatus.failed
+                or branch_exchange.stopped
+            ):
                 break
             try:
                 await proc.process(branch_exchange, context)
@@ -330,6 +333,7 @@ class ParallelProcessor(BaseProcessor):
 @dataclass
 class SagaStep:
     """Шаг саги: forward-действие + компенсация при откате."""
+
     forward: BaseProcessor
     compensate: BaseProcessor | None = None
 
@@ -341,12 +345,7 @@ class SagaProcessor(BaseProcessor):
     ``N-1, N-2, ..., 0`` в обратном порядке.
     """
 
-    def __init__(
-        self,
-        steps: list[SagaStep],
-        *,
-        name: str | None = None,
-    ) -> None:
+    def __init__(self, steps: list[SagaStep], *, name: str | None = None) -> None:
         super().__init__(name=name or f"saga({len(steps)} steps)")
         self._steps = steps
 
@@ -373,9 +372,7 @@ class SagaProcessor(BaseProcessor):
                             exchange.error = None
                             await comp_step.compensate.process(exchange, context)
                         except Exception as comp_exc:
-                            _cf_logger.error(
-                                "Saga compensation failed: %s", comp_exc
-                            )
+                            _cf_logger.error("Saga compensation failed: %s", comp_exc)
 
                 exchange.fail(f"Saga failed at step {i}: {exc}")
                 return

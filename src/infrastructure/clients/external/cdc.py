@@ -26,12 +26,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 from uuid import uuid4
 
-__all__ = (
-    "CDCClient",
-    "CDCSubscription",
-    "CDCEvent",
-    "get_cdc_client",
-)
+__all__ = ("CDCClient", "CDCSubscription", "CDCEvent", "get_cdc_client")
 
 logger = logging.getLogger(__name__)
 
@@ -105,20 +100,22 @@ class _PollingStrategy(_CDCStrategy):
     async def _get_cursor(self, key: str, default: datetime) -> datetime:
         """Загружает cursor из Redis (или возвращает default при недоступности)."""
         try:
-            from app.core.utils.redis_coordinator import RedisCursor
+            from src.infrastructure.clients.storage.redis_coordinator import RedisCursor
+
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except (ImportError, ValueError, Exception):
+        except ImportError, ValueError, Exception:
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
         """Atomic advance cursor через Redis CAS."""
         try:
-            from app.core.utils.redis_coordinator import RedisCursor
+            from src.infrastructure.clients.storage.redis_coordinator import RedisCursor
+
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except (ImportError, Exception):
+        except ImportError, Exception:
             pass
         self._last_check_local[key] = new_value
 
@@ -129,7 +126,8 @@ class _PollingStrategy(_CDCStrategy):
     ) -> None:
         try:
             from sqlalchemy import text
-            from app.infrastructure.database.database import get_external_db_manager
+
+            from src.infrastructure.database.database import get_external_db_manager
         except ImportError:
             logger.error("CDC polling: SQLAlchemy or external DB manager unavailable")
             return
@@ -170,8 +168,11 @@ class _PollingStrategy(_CDCStrategy):
                             event = CDCEvent(
                                 operation="UPSERT",
                                 table=table,
-                                timestamp=(ts_val.isoformat() if isinstance(ts_val, datetime)
-                                           else datetime.now(timezone.utc).isoformat()),
+                                timestamp=(
+                                    ts_val.isoformat()
+                                    if isinstance(ts_val, datetime)
+                                    else datetime.now(timezone.utc).isoformat()
+                                ),
                                 profile=sub.profile,
                                 new=row,
                             )
@@ -181,7 +182,7 @@ class _PollingStrategy(_CDCStrategy):
 
                 except Exception as exc:
                     logger.warning(
-                        "CDC polling error [%s/%s]: %s", sub.profile, table, exc,
+                        "CDC polling error [%s/%s]: %s", sub.profile, table, exc
                     )
 
             await asyncio.sleep(sub.interval)
@@ -212,7 +213,10 @@ class _ListenNotifyStrategy(_CDCStrategy):
         try:
             import asyncpg
             import orjson
-            from app.core.config.external_databases.registry import external_databases_settings
+
+            from src.core.config.external_databases.registry import (
+                external_databases_settings,
+            )
         except ImportError:
             logger.error("CDC listen/notify: asyncpg not installed")
             return
@@ -260,14 +264,17 @@ class _ListenNotifyStrategy(_CDCStrategy):
                     event = CDCEvent(
                         operation=str(data.get("operation", "UNKNOWN")).upper(),
                         table=str(data.get("table", "")),
-                        timestamp=data.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+                        timestamp=data.get("timestamp")
+                        or datetime.now(timezone.utc).isoformat(),
                         profile=sub.profile,
                         new=data.get("new"),
                         old=data.get("old"),
                     )
                     await dispatch(sub, event)
                 except (orjson.JSONDecodeError, ValueError, TypeError) as exc:
-                    logger.warning("CDC notify parse error: %s | payload=%s", exc, payload[:200])
+                    logger.warning(
+                        "CDC notify parse error: %s | payload=%s", exc, payload[:200]
+                    )
         finally:
             try:
                 await conn.remove_listener(channel, _notify_handler)
@@ -293,7 +300,8 @@ class _LogMinerStrategy(_CDCStrategy):
     ) -> None:
         try:
             from sqlalchemy import text
-            from app.infrastructure.database.database import get_external_db_manager
+
+            from src.infrastructure.database.database import get_external_db_manager
         except ImportError:
             logger.error("CDC LogMiner: SQLAlchemy unavailable")
             return
@@ -336,8 +344,11 @@ class _LogMinerStrategy(_CDCStrategy):
                     event = CDCEvent(
                         operation=operation,
                         table=table_name,
-                        timestamp=(ts.isoformat() if isinstance(ts, datetime)
-                                   else datetime.now(timezone.utc).isoformat()),
+                        timestamp=(
+                            ts.isoformat()
+                            if isinstance(ts, datetime)
+                            else datetime.now(timezone.utc).isoformat()
+                        ),
                         profile=sub.profile,
                         new={"_sql_redo": sql_redo, "_scn": scn},
                     )
@@ -419,14 +430,16 @@ class CDCClient:
 
         strategy_impl = self._STRATEGIES[strategy]()
         task = asyncio.create_task(
-            self._run_strategy(strategy_impl, sub),
-            name=f"cdc-{sub.id}",
+            self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}"
         )
         self._tasks[sub.id] = task
 
         logger.info(
             "CDC подписка создана: id=%s profile=%s tables=%s strategy=%s",
-            sub.id, profile, tables, strategy,
+            sub.id,
+            profile,
+            tables,
+            strategy,
         )
         return sub.id
 
@@ -451,7 +464,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
         logger.info("CDC подписка удалена: %s", subscription_id)
@@ -471,9 +484,7 @@ class CDCClient:
             for sub in self._subscriptions.values()
         ]
 
-    async def _dispatch_change(
-        self, sub: CDCSubscription, event: CDCEvent,
-    ) -> None:
+    async def _dispatch_change(self, sub: CDCSubscription, event: CDCEvent) -> None:
         """Обрабатывает обнаруженное изменение."""
         event_dict = event.to_dict()
 
@@ -484,8 +495,8 @@ class CDCClient:
                 logger.error("CDC callback error [%s]: %s", sub.id, exc)
 
         if sub.target_action:
-            from app.dsl.commands.registry import action_handler_registry
-            from app.schemas.invocation import ActionCommandSchema
+            from src.dsl.commands.registry import action_handler_registry
+            from src.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=sub.target_action,
@@ -496,8 +507,7 @@ class CDCClient:
                 await action_handler_registry.dispatch(command)
             except Exception as exc:
                 logger.error(
-                    "CDC dispatch error [%s -> %s]: %s",
-                    sub.id, sub.target_action, exc,
+                    "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc
                 )
 
     async def shutdown(self) -> None:

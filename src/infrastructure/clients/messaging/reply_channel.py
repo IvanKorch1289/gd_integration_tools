@@ -27,7 +27,7 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from app.infrastructure.clients.messaging.event_bus import EventBus
+    from src.infrastructure.clients.messaging.event_bus import EventBus
 
 __all__ = ("ReplyChannel", "ReplyTimeoutError", "DEFAULT_REPLY_TIMEOUT_S")
 
@@ -78,7 +78,7 @@ class ReplyChannel:
         """Возвращает singleton. На первый вызов обязателен ``event_bus``."""
         if cls._instance is None:
             if event_bus is None:
-                from app.infrastructure.clients.messaging.event_bus import get_event_bus
+                from src.infrastructure.clients.messaging.event_bus import get_event_bus
 
                 event_bus = get_event_bus()
             cls._instance = cls(event_bus)
@@ -115,17 +115,11 @@ class ReplyChannel:
         fut: asyncio.Future[dict[str, Any]] = loop.create_future()
         async with self._lock:
             if cid in self._pending:
-                raise ValueError(
-                    f"correlation_id {cid!r} уже имеет pending-request"
-                )
+                raise ValueError(f"correlation_id {cid!r} уже имеет pending-request")
             self._pending[cid] = fut
             await self._ensure_subscribed()
 
-        request = {
-            "correlation_id": cid,
-            "reply_to": reply_channel,
-            "payload": payload,
-        }
+        request = {"correlation_id": cid, "reply_to": reply_channel, "payload": payload}
         try:
             await self._bus_publish_raw(target_channel, request)
             return await asyncio.wait_for(fut, timeout=timeout)
@@ -177,17 +171,14 @@ class ReplyChannel:
             )
             self._subscribed = True
 
-    async def _bus_publish_raw(
-        self, channel: str, message: dict[str, Any]
-    ) -> None:
+    async def _bus_publish_raw(self, channel: str, message: dict[str, Any]) -> None:
         """Публикация dict-а в канал в обход EventBus.publish (который
         требует pydantic BaseModel). Для request/reply у нас сырые dict-ы.
         """
         broker = getattr(self._bus, "_broker", None)
         if broker is None:
             logger.warning(
-                "EventBus broker is None — публикация пропущена (channel=%s)",
-                channel,
+                "EventBus broker is None — публикация пропущена (channel=%s)", channel
             )
             return
         await broker.publish(message, channel=channel)

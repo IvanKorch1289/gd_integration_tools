@@ -21,38 +21,25 @@ async def readiness_probe(request: Request) -> JSONResponse:
     Redis подключён, хотя бы один брокер доступен.
     """
     if not getattr(request.app.state, "infrastructure_ready", False):
-        return JSONResponse(
-            status_code=503,
-            content={"status": "initializing"},
-        )
+        return JSONResponse(status_code=503, content={"status": "initializing"})
 
-    from app.core.utils.health_check import get_healthcheck_service
+    from src.infrastructure.monitoring.health_check import get_healthcheck_service
 
     try:
         async with get_healthcheck_service() as hc:
             db_ok = await hc.check_database()
             redis_ok = await hc.check_redis()
     except Exception:
-        return JSONResponse(
-            status_code=503,
-            content={"status": "health_check_failed"},
-        )
+        return JSONResponse(status_code=503, content={"status": "health_check_failed"})
 
     if not (db_ok and redis_ok):
         return JSONResponse(
             status_code=503,
-            content={
-                "status": "degraded",
-                "database": db_ok,
-                "redis": redis_ok,
-            },
+            content={"status": "degraded", "database": db_ok, "redis": redis_ok},
         )
 
     return JSONResponse(
-        content={
-            "status": "ready",
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
+        content={"status": "ready", "timestamp": datetime.now(UTC).isoformat()}
     )
 
 
@@ -62,7 +49,7 @@ async def liveness_probe() -> JSONResponse:
 
     K8s перезапустит контейнер при 3+ неудачных проверках.
     """
-    from app.infrastructure.database.database import db_initializer
+    from src.infrastructure.database.database import db_initializer
 
     try:
         alive = await db_initializer.check_connection()
@@ -71,10 +58,7 @@ async def liveness_probe() -> JSONResponse:
     except Exception:
         pass
 
-    return JSONResponse(
-        status_code=503,
-        content={"status": "unhealthy"},
-    )
+    return JSONResponse(status_code=503, content={"status": "unhealthy"})
 
 
 @router.get("/startup", summary="Kubernetes startup probe")
@@ -85,12 +69,9 @@ async def startup_probe(request: Request) -> JSONResponse:
     рестарт контейнера во время инициализации.
     """
     if not getattr(request.app.state, "infrastructure_ready", False):
-        return JSONResponse(
-            status_code=503,
-            content={"status": "starting"},
-        )
+        return JSONResponse(status_code=503, content={"status": "starting"})
 
-    from app.dsl.commands.registry import action_handler_registry, route_registry
+    from src.dsl.commands.registry import action_handler_registry, route_registry
 
     return JSONResponse(
         content={
@@ -124,18 +105,21 @@ async def components_health(mode: str = "fast") -> JSONResponse:
     if mode not in ("fast", "deep"):
         return JSONResponse(
             status_code=400,
-            content={"status": "error", "error": f"invalid mode: {mode!r} (use fast|deep)"},
+            content={
+                "status": "error",
+                "error": f"invalid mode: {mode!r} (use fast|deep)",
+            },
         )
     try:
-        from app.infrastructure.application.health_aggregator import (
+        from src.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
+
         aggregator = get_health_aggregator()
         report = await aggregator.check_all(mode=mode)  # type: ignore[arg-type]
         status_code = 200 if report.get("status") == "ok" else 503
         return JSONResponse(status_code=status_code, content=report)
     except Exception as exc:
         return JSONResponse(
-            status_code=503,
-            content={"status": "error", "error": str(exc)[:200]},
+            status_code=503, content={"status": "error", "error": str(exc)[:200]}
         )

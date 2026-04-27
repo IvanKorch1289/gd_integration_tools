@@ -29,13 +29,13 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database.models.workflow_event import WorkflowEventType
-from app.infrastructure.database.models.workflow_instance import (
+from src.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.infrastructure.database.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )
-from app.infrastructure.database.session_manager import main_session_manager
-from app.infrastructure.workflow.event_store import WorkflowEventStore
+from src.infrastructure.database.session_manager import main_session_manager
+from src.infrastructure.workflow.event_store import WorkflowEventStore
 
 __all__ = ("WorkflowInstanceRow", "WorkflowInstanceStore")
 
@@ -70,13 +70,9 @@ class WorkflowInstanceRow:
             status=obj.status,
             current_version=int(obj.current_version),
             last_event_seq=(
-                int(obj.last_event_seq)
-                if obj.last_event_seq is not None
-                else None
+                int(obj.last_event_seq) if obj.last_event_seq is not None else None
             ),
-            snapshot_state=(
-                dict(obj.snapshot_state) if obj.snapshot_state else None
-            ),
+            snapshot_state=(dict(obj.snapshot_state) if obj.snapshot_state else None),
             next_attempt_at=obj.next_attempt_at,
             locked_by=obj.locked_by,
             locked_until=obj.locked_until,
@@ -103,9 +99,7 @@ class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 
     def __init__(
-        self,
-        session_manager: Any = None,
-        event_store: WorkflowEventStore | None = None,
+        self, session_manager: Any = None, event_store: WorkflowEventStore | None = None
     ) -> None:
         self._sm = session_manager or main_session_manager
         self._events = event_store or WorkflowEventStore(session_manager=self._sm)
@@ -167,17 +161,13 @@ class WorkflowInstanceStore:
     async def get(self, workflow_id: UUID) -> WorkflowInstanceRow | None:
         """Возвращает header-запись инстанса или ``None`` если не найдено."""
         async with self._sm.create_session() as session:
-            stmt = select(WorkflowInstance).where(
-                WorkflowInstance.id == workflow_id,
-            )
+            stmt = select(WorkflowInstance).where(WorkflowInstance.id == workflow_id)
             result = await session.execute(stmt)
             obj = result.scalar_one_or_none()
             return WorkflowInstanceRow.from_orm(obj) if obj is not None else None
 
     async def list_pending(
-        self,
-        limit: int = 100,
-        tenant_id: str | None = None,
+        self, limit: int = 100, tenant_id: str | None = None
     ) -> list[WorkflowInstanceRow]:
         """Инстансы, готовые к обработке worker'ом.
 
@@ -223,9 +213,7 @@ class WorkflowInstanceStore:
             rows = result.scalars().all()
             return [WorkflowInstanceRow.from_orm(r) for r in rows]
 
-    async def try_lock(
-        self, workflow_id: UUID, worker_id: str, ttl_s: int,
-    ) -> bool:
+    async def try_lock(self, workflow_id: UUID, worker_id: str, ttl_s: int) -> bool:
         """Кооперативная блокировка инстанса за worker'ом.
 
         Двухуровневая схема:
@@ -254,8 +242,7 @@ class WorkflowInstanceStore:
                 # level; после commit lock снимается — безопасность
                 # обеспечивается полем locked_until.
                 lock_result = await session.execute(
-                    text("SELECT pg_try_advisory_xact_lock(:k)"),
-                    {"k": lock_key},
+                    text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
                 )
                 acquired = bool(lock_result.scalar())
                 if not acquired:
@@ -267,8 +254,7 @@ class WorkflowInstanceStore:
                     .where(
                         or_(
                             WorkflowInstance.locked_until.is_(None),
-                            WorkflowInstance.locked_until
-                            < datetime.now(timezone.utc),
+                            WorkflowInstance.locked_until < datetime.now(timezone.utc),
                         )
                     )
                     .values(locked_by=worker_id, locked_until=locked_until)
@@ -334,7 +320,7 @@ class WorkflowInstanceStore:
             async with self._sm.transaction(session):
                 if error is not None:
                     await self._merge_error_into_snapshot(
-                        session, workflow_id=workflow_id, error=error,
+                        session, workflow_id=workflow_id, error=error
                     )
                 await session.execute(
                     update(WorkflowInstance)
@@ -343,16 +329,12 @@ class WorkflowInstanceStore:
                 )
 
     async def _merge_error_into_snapshot(
-        self,
-        session: AsyncSession,
-        *,
-        workflow_id: UUID,
-        error: str,
+        self, session: AsyncSession, *, workflow_id: UUID, error: str
     ) -> None:
         """Подмешивает ``last_error`` в ``snapshot_state`` без
         перезаписи прочих полей."""
         stmt = select(WorkflowInstance.snapshot_state).where(
-            WorkflowInstance.id == workflow_id,
+            WorkflowInstance.id == workflow_id
         )
         result = await session.execute(stmt)
         current = result.scalar_one_or_none()

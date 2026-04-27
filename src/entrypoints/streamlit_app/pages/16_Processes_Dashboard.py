@@ -17,7 +17,9 @@ if str(_root) not in sys.path:
 
 from src.entrypoints.streamlit_app.api_client import get_api_client
 
-st.set_page_config(page_title="Processes", page_icon=":arrows_clockwise:", layout="wide")
+st.set_page_config(
+    page_title="Processes", page_icon=":arrows_clockwise:", layout="wide"
+)
 st.header(":arrows_clockwise: Выполняющиеся процессы")
 
 client = get_api_client()

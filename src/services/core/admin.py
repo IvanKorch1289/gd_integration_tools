@@ -2,12 +2,12 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
-from app.core.config.runtime_state import disabled_feature_flags
-from app.core.config.settings import settings
-from app.core.svcs_registry import list_services as _list_services
-from app.dsl.commands.action_registry import action_handler_registry
-from app.dsl.commands.registry import route_registry
-from app.infrastructure.clients.storage.redis import redis_client
+from src.core.config.runtime_state import disabled_feature_flags
+from src.core.config.settings import settings
+from src.core.svcs_registry import list_services as _list_services
+from src.dsl.commands.action_registry import action_handler_registry
+from src.dsl.commands.registry import route_registry
+from src.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("AdminService", "get_admin_service")
 
@@ -51,7 +51,7 @@ class AdminService:
         Raises:
             HTTPException: Если маршрут с указанным путём не найден.
         """
-        from app.core.config.runtime_state import blocked_routes
+        from src.core.config.runtime_state import blocked_routes
 
         route_exists = any(route.path == route_path for route in request.app.routes)
         if not route_exists:
@@ -117,11 +117,7 @@ class AdminService:
         return {
             "total": len(all_routes),
             "routes": [
-                {
-                    "route_id": r,
-                    "enabled": r in enabled,
-                    "feature_flag": flags.get(r),
-                }
+                {"route_id": r, "enabled": r in enabled, "feature_flag": flags.get(r)}
                 for r in all_routes
             ],
         }
@@ -138,12 +134,10 @@ class AdminService:
                     "routes": [r for r, fl in flags.items() if fl == f],
                 }
                 for f in unique_flags
-            ],
+            ]
         }
 
-    async def toggle_feature_flag(
-        self, flag_name: str, enable: bool
-    ) -> dict[str, Any]:
+    async def toggle_feature_flag(self, flag_name: str, enable: bool) -> dict[str, Any]:
         """Включает/отключает feature-флаг.
 
         Args:
@@ -159,11 +153,7 @@ class AdminService:
             for r, fl in route_registry.get_route_feature_flags().items()
             if fl == flag_name
         ]
-        return {
-            "flag": flag_name,
-            "enabled": enable,
-            "affected_routes": affected,
-        }
+        return {"flag": flag_name, "enabled": enable, "affected_routes": affected}
 
     async def system_info(self) -> dict[str, Any]:
         """Сводная информация о системе."""
@@ -178,7 +168,8 @@ class AdminService:
 
     async def slo_report(self) -> dict[str, Any]:
         """SLO-отчёт: P50/P95/P99 per route."""
-        from app.infrastructure.application.slo_tracker import get_slo_tracker
+        from src.infrastructure.application.slo_tracker import get_slo_tracker
+
         return get_slo_tracker().get_report()
 
 

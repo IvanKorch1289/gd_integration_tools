@@ -2,23 +2,22 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
-from app.core.config.base import (
+from src.core.config.base import (
     AppBaseSettings,
     SchedulerSettings,
     app_base_settings,
     scheduler_settings,
 )
-from app.core.config.database import (
+from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from src.core.config.database import (
     DatabaseConnectionSettings,
     MongoConnectionSettings,
     db_connection_settings,
     mongo_connection_settings,
 )
-from app.core.config.external_databases import (
-    ExternalDatabasesSettings,
-    external_databases_settings,
-)
-from app.core.config.external_apis import (
+from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
+from src.core.config.express_settings import ExpressSettings, express_settings
+from src.core.config.external_apis import (
     AntivirusAPISettings,
     DadataAPISettings,
     SKBAPISettings,
@@ -26,12 +25,13 @@ from app.core.config.external_apis import (
     dadata_api_settings,
     skb_api_settings,
 )
-from app.core.config.http_base import HttpBaseSettings, http_base_settings
-from app.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
-from app.core.config.express_settings import ExpressSettings, express_settings
-from app.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
-from app.core.config.security import SecureSettings, secure_settings
-from app.core.config.services import (
+from src.core.config.external_databases import (
+    ExternalDatabasesSettings,
+    external_databases_settings,
+)
+from src.core.config.http_base import HttpBaseSettings, http_base_settings
+from src.core.config.security import SecureSettings, secure_settings
+from src.core.config.services import (
     FileStorageSettings,
     GRPCSettings,
     LogStorageSettings,

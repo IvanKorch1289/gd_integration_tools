@@ -7,8 +7,11 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 __all__ = (
-    "BaseSearchProvider", "PerplexityProvider", "TavilyProvider",
-    "WebSearchService", "get_web_search_service",
+    "BaseSearchProvider",
+    "PerplexityProvider",
+    "TavilyProvider",
+    "WebSearchService",
+    "get_web_search_service",
 )
 
 logger = logging.getLogger(__name__)
@@ -20,7 +23,9 @@ class BaseSearchProvider(ABC):
     name: str = "base"
 
     @abstractmethod
-    async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]: ...
+    async def search(
+        self, query: str, max_results: int = 5
+    ) -> list[dict[str, Any]]: ...
 
     @abstractmethod
     async def deep_research(self, query: str) -> dict[str, Any]: ...
@@ -120,7 +125,9 @@ class WebSearchService:
     def add_provider(self, provider: BaseSearchProvider) -> None:
         self._providers.append(provider)
 
-    async def query(self, query: str, max_results: int = 5, provider: str | None = None) -> list[dict[str, Any]]:
+    async def query(
+        self, query: str, max_results: int = 5, provider: str | None = None
+    ) -> list[dict[str, Any]]:
         """Поиск через указанный провайдер или fallback chain."""
         if provider:
             for p in self._providers:
@@ -140,7 +147,9 @@ class WebSearchService:
             raise last_error
         return []
 
-    async def deep_research(self, query: str, provider: str | None = None) -> dict[str, Any]:
+    async def deep_research(
+        self, query: str, provider: str | None = None
+    ) -> dict[str, Any]:
         if provider:
             for p in self._providers:
                 if p.name == provider:
@@ -166,7 +175,8 @@ def get_web_search_service() -> WebSearchService:
     _web_search = WebSearchService()
 
     try:
-        from app.core.config.settings import settings
+        from src.core.config.settings import settings
+
         perplexity_key = getattr(settings, "perplexity_api_key", None) or ""
         tavily_key = getattr(settings, "tavily_api_key", None) or ""
 
@@ -174,7 +184,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         pass
 
     return _web_search

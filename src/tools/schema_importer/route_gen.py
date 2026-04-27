@@ -37,9 +37,9 @@ def render_routes_yaml(*, parsed: dict[str, Any]) -> str:
         if summary:
             lines.append(f'    summary: "{summary}"')
         if req_model:
-            lines.append(f'    request_schema: "app.schemas.auto.{req_model}"')
+            lines.append(f'    request_schema: "src.schemas.auto.{req_model}"')
         if resp_model:
-            lines.append(f'    response_schema: "app.schemas.auto.{resp_model}"')
+            lines.append(f'    response_schema: "src.schemas.auto.{resp_model}"')
         lines.append("    steps: []   # ← дополните процессорами или подключите proxy")
     return "\n".join(lines) + "\n"
 
@@ -57,5 +57,11 @@ def _route_id(route: dict[str, Any]) -> str:
     if op:
         return op
     method = route.get("method", "GET").lower()
-    path = route.get("path", "/").strip("/").replace("/", "_").replace("{", "").replace("}", "")
+    path = (
+        route.get("path", "/")
+        .strip("/")
+        .replace("/", "_")
+        .replace("{", "")
+        .replace("}", "")
+    )
     return f"{method}_{path}" or method

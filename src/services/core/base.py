@@ -5,12 +5,12 @@ from typing import Any, cast
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
-from app.core.decorators.caching import response_cache
-from app.core.errors import NotFoundError, ServiceError
-from app.infrastructure.db.models.base import BaseModel
-from app.infrastructure.repositories.base import SQLAlchemyRepository
-from app.schemas.base import BaseSchema, PaginatedResult
-from app.utilities.utils import utilities
+from src.core.errors import NotFoundError, ServiceError
+from src.infrastructure.database.models.base import BaseModel
+from src.infrastructure.decorators.caching import response_cache
+from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.schemas.base import BaseSchema, PaginatedResult
+from src.utilities.utils import utilities
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,11 @@ class BaseService[
             return [await self._transfer(item, response_schema) for item in items]
 
         async def _process_and_transfer(
-            self, repo_method: str, response_schema: type[BaseSchema], *args: Any, **kwargs: Any
+            self,
+            repo_method: str,
+            response_schema: type[BaseSchema],
+            *args: Any,
+            **kwargs: Any,
         ) -> Any:
             """Вызывает метод репозитория и преобразует результат.
 
@@ -122,8 +126,7 @@ class BaseService[
 
                 if isinstance(instance, list):
                     return [
-                        await self._transfer(item, response_schema)
-                        for item in instance
+                        await self._transfer(item, response_schema) for item in instance
                     ]
 
                 return await self._transfer(instance, response_schema)
@@ -152,6 +155,32 @@ class BaseService[
         self.version_schema = version_schema
         self.helper = self.HelperMethods(repo)
 
+    def _entity_tag(self) -> str:
+        """Возвращает tag-префикс для инвалидации кэша текущего сервиса.
+
+        По умолчанию использует имя класса. Переопределите в наследниках,
+        если хотите более короткий/осмысленный идентификатор сущности.
+        """
+        return f"entity:{self.__class__.__name__}"
+
+    async def _invalidate_entity_cache(self, *, entity_id: Any = None) -> None:
+        """Инвалидирует кэш сущности после write-операции.
+
+        Вызывает ``response_cache.invalidate_pattern`` (legacy) и
+        ``CacheInvalidator.invalidate(tag, tag:id)`` — оба механизма
+        работают параллельно (tag-based не мешает pattern-based).
+
+        Args:
+            entity_id: Идентификатор конкретной записи (опционально).
+        """
+        await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
+        from src.infrastructure.cache import get_cache_invalidator
+
+        tags = [self._entity_tag()]
+        if entity_id is not None:
+            tags.append(f"{self._entity_tag()}:{entity_id}")
+        await get_cache_invalidator().invalidate(*tags)
+
     async def add(self, data: dict[str, Any]) -> ConcreteResponseSchema | None:
         """Добавляет объект и инвалидирует кэш.
 
@@ -162,14 +191,13 @@ class BaseService[
             Схема ответа или ``None``.
         """
         async with self._service_error_boundary():
-            result: ConcreteResponseSchema | None = (
-                await self.helper._process_and_transfer(
-                    "add", self.response_schema, data=data
-                )
+            result: (
+                ConcreteResponseSchema | None
+            ) = await self.helper._process_and_transfer(
+                "add", self.response_schema, data=data
             )
-            await response_cache.invalidate_pattern(
-                pattern=self.__class__.__name__
-            )
+            entity_id = getattr(result, "id", None)
+            await self._invalidate_entity_cache(entity_id=entity_id)
             return result
 
     async def add_many(
@@ -195,21 +223,17 @@ class BaseService[
 
         for idx, data in enumerate(data_list):
             try:
-                response: ConcreteResponseSchema | None = await self.add(
-                    data=data
-                )
+                response: ConcreteResponseSchema | None = await self.add(data=data)
                 result.append(response)
             except Exception as exc:
                 logger.exception(
-                    "Ошибка при добавлении объекта #%d в add_many: %s",
-                    idx,
-                    data,
+                    "Ошибка при добавлении объекта #%d в add_many: %s", idx, data
                 )
                 result.append(None)
                 errors.append({"index": idx, "data": data, "error": str(exc)})
 
         if errors:
-            from app.core.errors import ServiceError
+            from src.core.errors import ServiceError
 
             raise ServiceError(
                 detail=(
@@ -234,9 +258,11 @@ class BaseService[
             Обновлённая схема ответа или ``None``.
         """
         async with self._service_error_boundary():
-            return await self.helper._process_and_transfer(
+            result = await self.helper._process_and_transfer(
                 "update", self.response_schema, key=key, value=value, data=data
             )
+            await self._invalidate_entity_cache(entity_id=value)
+            return result
 
     @response_cache
     async def get(
@@ -319,8 +345,7 @@ class BaseService[
         """Возвращает первые/последние записи с лимитом."""
         async with self._service_error_boundary():
             return await self.helper._process_and_transfer(
-                "first_or_last", self.response_schema,
-                limit=limit, by=by, order=order,
+                "first_or_last", self.response_schema, limit=limit, by=by, order=order
             )
 
     async def delete(self, key: str, value: int) -> None:
@@ -332,9 +357,7 @@ class BaseService[
         """
         async with self._service_error_boundary():
             await self.repo.delete(key=key, value=value)  # type: ignore
-            await response_cache.invalidate_pattern(
-                pattern=self.__class__.__name__
-            )
+            await self._invalidate_entity_cache(entity_id=value)
 
     @response_cache
     async def get_all_object_versions(
@@ -357,22 +380,17 @@ class BaseService[
             result: list[BaseSchema | None] = []
             for version in versions:
                 try:
-                    response = await self.helper._transfer(
-                        version, self.version_schema
-                    )
+                    response = await self.helper._transfer(version, self.version_schema)
                     result.append(response)
                 except Exception:
                     logger.exception(
-                        "Ошибка преобразования версии object_id=%s",
-                        object_id,
+                        "Ошибка преобразования версии object_id=%s", object_id
                     )
 
             return result
 
     @response_cache
-    async def get_latest_object_version(
-        self, object_id: int
-    ) -> BaseSchema | None:
+    async def get_latest_object_version(self, object_id: int) -> BaseSchema | None:
         """Получает последнюю версию объекта.
 
         Args:
@@ -403,13 +421,9 @@ class BaseService[
             restored_object = await self.repo.restore_to_version(  # type: ignore
                 object_id=object_id, transaction_id=transaction_id
             )
-            return await self.helper._transfer(
-                restored_object, self.response_schema
-            )
+            return await self.helper._transfer(restored_object, self.response_schema)
 
-    async def get_object_changes(
-        self, object_id: int
-    ) -> list[dict[str, Any]]:
+    async def get_object_changes(self, object_id: int) -> list[dict[str, Any]]:
         """Получает список изменений атрибутов объекта.
 
         Args:
@@ -419,18 +433,12 @@ class BaseService[
             Список изменений между версиями.
         """
         async with self._service_error_boundary():
-            versions = await self.get_all_object_versions(
-                object_id=object_id
-            )
+            versions = await self.get_all_object_versions(object_id=object_id)
             if not versions:
                 return []
 
             versions_dict = [
-                (
-                    version.model_dump()
-                    if isinstance(version, BaseSchema)
-                    else version
-                )
+                (version.model_dump() if isinstance(version, BaseSchema) else version)
                 for version in versions
             ]
 
@@ -454,12 +462,8 @@ class BaseService[
                 if diff:
                     changes.append(
                         {
-                            "transaction_id": current_version.get(
-                                "transaction_id"
-                            ),
-                            "operation_type": current_version.get(
-                                "operation_type"
-                            ),
+                            "transaction_id": current_version.get("transaction_id"),
+                            "operation_type": current_version.get("operation_type"),
                             "changes": diff,
                         }
                     )
@@ -484,9 +488,7 @@ async def get_service_for_model(model: type[BaseModel]) -> Any:
     service_name = f"{model.__name__}Service"
 
     try:
-        service_module = import_module(
-            f"app.services.{model.__tablename__}"
-        )
+        service_module = import_module(f"src.services.{model.__tablename__}")
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
         raise ValueError(

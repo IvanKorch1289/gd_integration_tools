@@ -29,9 +29,7 @@ prefix = st.text_input("Префикс ключа", value="")
 
 try:
     files = client._request(  # type: ignore[attr-defined]
-        "GET",
-        "/api/v1/storage/list",
-        params={"prefix": prefix, "limit": 200},
+        "GET", "/api/v1/storage/list", params={"prefix": prefix, "limit": 200}
     )
     if not isinstance(files, list):
         files = []
@@ -53,7 +51,13 @@ else:
         cols[2].write(modified)
         if cols[3].button("Preview", key=f"prev_{key}"):
             try:
-                content = client._request("GET", f"/api/v1/storage/get", params={"key": key})  # type: ignore[attr-defined]
-                st.code(content[:10_000] if isinstance(content, str) else str(content)[:10_000])
+                content = client._request(
+                    "GET", "/api/v1/storage/get", params={"key": key}
+                )  # type: ignore[attr-defined]
+                st.code(
+                    content[:10_000]
+                    if isinstance(content, str)
+                    else str(content)[:10_000]
+                )
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Ошибка preview: {exc}")

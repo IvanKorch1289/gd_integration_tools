@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.infrastructure.clients.storage.s3_pool.elasticsearch import (
+from src.infrastructure.clients.storage.s3_pool.elasticsearch import (
     ElasticSearchClient,
     get_elasticsearch_client,
 )
@@ -19,19 +19,13 @@ class SearchService:
         self._client = client
 
     async def index_document(
-        self,
-        index: str,
-        document: dict[str, Any],
-        doc_id: str | None = None,
+        self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
         """Индексирует один документ."""
         return await self._client.index_document(index, document, doc_id)
 
     async def bulk_index(
-        self,
-        index: str,
-        documents: list[dict[str, Any]],
-        id_field: str | None = None,
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
         """Массовая индексация документов."""
         return await self._client.bulk_index(index, documents, id_field)
@@ -50,10 +44,7 @@ class SearchService:
         )
 
     async def aggregate(
-        self,
-        index: str,
-        aggs: dict[str, Any],
-        query: dict[str, Any] | None = None,
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Запрос агрегации."""
         return await self._client.aggregate(index, aggs, query)

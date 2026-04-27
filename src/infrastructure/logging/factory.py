@@ -5,13 +5,13 @@
 - stdlib logging (fallback) — текущая реализация через LoggerManager
 
 Использование:
-    from app.infrastructure.logging.factory import get_logger
+    from src.infrastructure.logging.factory import get_logger
 
     logger = get_logger("application")
     logger.info("Order created", order_id=123, user_id="abc")
 
 Переключение бэкенда:
-    from app.infrastructure.logging.factory import configure_logging
+    from src.infrastructure.logging.factory import configure_logging
 
     # structlog → Graylog
     configure_logging(backend="structlog")
@@ -22,7 +22,7 @@
 
 from typing import Any
 
-from app.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
+from src.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
 
 __all__ = ("get_logger", "configure_logging", "shutdown_logging")
 
@@ -32,21 +32,20 @@ _backend: BaseLoggerBackend | None = None
 def _create_backend(name: str) -> BaseLoggerBackend:
     if name == "structlog":
         try:
-            from app.infrastructure.logging.structlog_backend import (
+            from src.infrastructure.logging.structlog_backend import (
                 StructlogGraylogBackend,
             )
+
             return StructlogGraylogBackend()
         except ImportError:
             pass
 
-    from app.infrastructure.logging.stdlib_backend import StdlibLoggingBackend
+    from src.infrastructure.logging.stdlib_backend import StdlibLoggingBackend
+
     return StdlibLoggingBackend()
 
 
-def configure_logging(
-    backend: str = "auto",
-    **settings: Any,
-) -> BaseLoggerBackend:
+def configure_logging(backend: str = "auto", **settings: Any) -> BaseLoggerBackend:
     """Настраивает систему логирования.
 
     Args:
@@ -65,6 +64,7 @@ def configure_logging(
     if backend == "auto":
         try:
             import structlog  # noqa: F401
+
             backend = "structlog"
         except ImportError:
             backend = "stdlib"

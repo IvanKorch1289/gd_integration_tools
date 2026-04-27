@@ -179,9 +179,9 @@ key = Fernet.generate_key().decode()
 ## Комплексный пример: обработка входящих документов
 
 ```python
-from app.dsl.builder import RouteBuilder
-from app.dsl.engine.processors import ValidateProcessor
-from app.schemas.documents import DocumentSchema
+from src.dsl.builder import RouteBuilder
+from src.dsl.engine.processors import ValidateProcessor
+from src.schemas.documents import DocumentSchema
 
 route = (
     RouteBuilder.from_("documents.process_incoming", source="email_imap:inbox")

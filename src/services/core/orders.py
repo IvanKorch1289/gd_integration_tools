@@ -3,22 +3,22 @@ from typing import Any
 from fastapi import status
 from pydantic import BaseModel
 
-from app.core.config.settings import settings
-from app.core.decorators.caching import response_cache
-from app.core.enums.skb import ResponseTypeChoices
-from app.core.errors import NotFoundError
-from app.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
-from app.infrastructure.repositories.files import FileRepository, get_file_repo
-from app.infrastructure.repositories.orders import OrderRepository, get_order_repo
-from app.schemas.base import BaseSchema
-from app.schemas.route_schemas.orders import (
+from src.core.config.settings import settings
+from src.core.enums.skb import ResponseTypeChoices
+from src.core.errors import NotFoundError
+from src.infrastructure.decorators.caching import response_cache
+from src.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
+from src.infrastructure.repositories.files import FileRepository, get_file_repo
+from src.infrastructure.repositories.orders import OrderRepository, get_order_repo
+from src.schemas.base import BaseSchema
+from src.schemas.route_schemas.orders import (
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from app.services.core.base import BaseService
-from app.services.integrations.skb import APISKBService, get_skb_service
-from app.utilities.utils import utilities
+from src.services.core.base import BaseService
+from src.services.integrations.skb import APISKBService, get_skb_service
+from src.utilities.utils import utilities
 
 __all__ = ("OrderService", "get_order_service")
 
@@ -72,9 +72,7 @@ class OrderService(
 
     async def _invalidate_cache(self) -> None:
         """Инвалидирует кэш по имени сервиса."""
-        await response_cache.invalidate_pattern(
-            pattern=self.__class__.__name__
-        )
+        await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
 
     async def create_skb_order(self, order_id: int) -> dict[str, Any]:
         """Создаёт запрос в СКБ-Техно по существующему заказу."""

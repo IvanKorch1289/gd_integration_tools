@@ -2,7 +2,7 @@ from re import sub
 
 from pydantic import BaseModel, Field, SecretStr, computed_field, model_validator
 
-from app.core.enums.database import DatabaseTypeChoices
+from src.core.enums.database import DatabaseTypeChoices
 
 __all__ = ("ExternalDatabaseItemSettings",)
 

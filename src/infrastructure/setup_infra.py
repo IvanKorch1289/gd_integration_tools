@@ -2,22 +2,22 @@ from asyncio import to_thread
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable
 
-from app.core.decorators.caching import close_caches
-from app.core.decorators.limiting import init_limiter
-from app.infrastructure.clients.external.logger import graylog_handler
-from app.infrastructure.clients.storage.redis import redis_client
-from app.infrastructure.clients.transport.smtp import smtp_client
-from app.infrastructure.clients.storage.s3_pool import s3_client
-from app.infrastructure.db.database import db_initializer, external_db_registry
-from app.infrastructure.external_apis.logging_service import app_logger
-from app.infrastructure.scheduler.scheduler_manager import scheduler_manager
+from src.infrastructure.clients.external.logger import graylog_handler
+from src.infrastructure.clients.storage.redis import redis_client
+from src.infrastructure.clients.storage.s3_pool import s3_client
+from src.infrastructure.clients.transport.smtp import smtp_client
+from src.infrastructure.database.database import db_initializer, external_db_registry
+from src.infrastructure.decorators.caching import close_caches
+from src.infrastructure.decorators.limiting import init_limiter
+from src.infrastructure.external_apis.logging_service import app_logger
+from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
 
 __all__ = ("starting", "ending")
 
 
 def _get_watcher_manager():
     """Ленивый импорт WatcherManager для избежания циклических зависимостей."""
-    from app.entrypoints.filewatcher.watcher_manager import watcher_manager
+    from src.entrypoints.filewatcher.watcher_manager import watcher_manager
 
     return watcher_manager
 
@@ -33,7 +33,9 @@ async def _register_health_checks() -> None:
     Aggregator exposes unified /health endpoint for K8s probes.
     """
     try:
-        from app.infrastructure.application.health_aggregator import get_health_aggregator
+        from src.infrastructure.application.health_aggregator import (
+            get_health_aggregator,
+        )
     except ImportError:
         return
 
@@ -42,29 +44,39 @@ async def _register_health_checks() -> None:
     # Redis
     async def _redis_health() -> dict[str, Any]:
         import time
+
         start = time.monotonic()
         try:
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.ping()
-            return {"status": "ok", "latency_ms": round((time.monotonic() - start) * 1000, 2)}
+            return {
+                "status": "ok",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+            }
         except Exception as exc:
             return {"status": "error", "error": str(exc)[:200]}
 
     # DB main
     async def _db_health() -> dict[str, Any]:
         import time
+
         from sqlalchemy import text
+
         start = time.monotonic()
         try:
             async with db_initializer.get_async_engine().connect() as conn:
                 await conn.execute(text("SELECT 1"))
-            return {"status": "ok", "latency_ms": round((time.monotonic() - start) * 1000, 2)}
+            return {
+                "status": "ok",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+            }
         except Exception as exc:
             return {"status": "error", "error": str(exc)[:200]}
 
     # S3
     async def _s3_health() -> dict[str, Any]:
         import time
+
         start = time.monotonic()
         try:
             is_ok = await s3_client.check_bucket_exists()

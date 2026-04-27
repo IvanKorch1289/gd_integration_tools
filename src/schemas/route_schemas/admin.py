@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from app.schemas.base import BaseSchema
+from src.schemas.base import BaseSchema
 
 __all__ = (
     "AdminToggleRouteQuerySchema",

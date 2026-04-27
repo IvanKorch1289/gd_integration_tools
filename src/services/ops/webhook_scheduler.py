@@ -8,7 +8,7 @@ from typing import Any
 
 import orjson
 
-from app.infrastructure.clients.storage.redis import redis_client
+from src.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("WebhookScheduler", "get_webhook_scheduler")
 
@@ -49,9 +49,7 @@ class WebhookScheduler:
 
         key = f"{_PREFIX}:{schedule_id}"
         await redis_client.client.set(
-            key,
-            orjson.dumps(task, default=str),
-            ex=86400 * 7,
+            key, orjson.dumps(task, default=str), ex=86400 * 7
         )
 
         logger.info("Webhook scheduled: %s -> %s", schedule_id, url)
@@ -95,7 +93,8 @@ class WebhookScheduler:
             return {"error": "not_found"}
 
         # SSRF protection — reuse validator from scraping processors
-        from app.dsl.engine.processors.scraping import _validate_url
+        from src.dsl.engine.processors.scraping import _validate_url
+
         try:
             _validate_url(task["url"])
         except ValueError as exc:
@@ -110,9 +109,7 @@ class WebhookScheduler:
 
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(
-                task["url"],
-                json=task["payload"],
-                headers=task.get("headers", {}),
+                task["url"], json=task["payload"], headers=task.get("headers", {})
             )
             result = {
                 "schedule_id": schedule_id,

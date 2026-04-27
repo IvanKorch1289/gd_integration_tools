@@ -7,8 +7,8 @@ from uuid import UUID
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.infrastructure.external_apis.logging_service import app_logger
-from app.utilities.json_codec import from_jsonable, to_jsonable
+from src.infrastructure.external_apis.logging_service import app_logger
+from src.utilities.json_codec import from_jsonable, to_jsonable
 
 __all__ = ("utilities", "AsyncChunkIterator")
 
@@ -56,7 +56,7 @@ class Utilities:
                     return decoded_bytes.decode("utf-8")
                 except UnicodeDecodeError:
                     return decoded_bytes
-            except (BinasciiError, ValueError):
+            except BinasciiError, ValueError:
                 return data
 
         if isinstance(data, dict):

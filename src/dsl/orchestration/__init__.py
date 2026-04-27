@@ -37,16 +37,21 @@ class Sensor:
     _task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
-        from app.dsl.service import get_dsl_service
+        from src.dsl.service import get_dsl_service
 
         async def _loop() -> None:
             while True:
                 try:
                     if await self.predicate():
-                        await get_dsl_service().dispatch(route_id=self.route_id, body={}, headers={})
+                        await get_dsl_service().dispatch(
+                            route_id=self.route_id, body={}, headers={}
+                        )
                 except Exception:
                     import logging
-                    logging.getLogger("dsl.sensor").exception("Sensor '%s' failed", self.name)
+
+                    logging.getLogger("dsl.sensor").exception(
+                        "Sensor '%s' failed", self.name
+                    )
                 await asyncio.sleep(self.interval_seconds)
 
         self._task = asyncio.create_task(_loop(), name=f"sensor:{self.name}")
@@ -67,7 +72,7 @@ class Backfill:
     step_days: int = 1
 
     async def run(self, payload_for_day: Callable[[date], dict[str, Any]]) -> list[Any]:
-        from app.dsl.service import get_dsl_service
+        from src.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
         results: list[Any] = []
@@ -75,7 +80,9 @@ class Backfill:
         while current <= self.end_date:
             payload = payload_for_day(current)
             results.append(
-                await dsl.dispatch(route_id=self.route_id, body=payload, headers={"x-backfill": "1"})
+                await dsl.dispatch(
+                    route_id=self.route_id, body=payload, headers={"x-backfill": "1"}
+                )
             )
             current = current.fromordinal(current.toordinal() + self.step_days)
         return results
@@ -89,12 +96,10 @@ class DryRun:
     route_id: str
 
     async def run(self, payload: dict[str, Any]) -> Any:
-        from app.dsl.service import get_dsl_service
+        from src.dsl.service import get_dsl_service
 
         return await get_dsl_service().dispatch(
-            route_id=self.route_id,
-            body=payload,
-            headers={"x-dry-run": "1"},
+            route_id=self.route_id, body=payload, headers={"x-dry-run": "1"}
         )
 
 

@@ -5,7 +5,7 @@
 - /api/v2/... — текущая стабильная
 
 Usage:
-    from app.entrypoints.api.versioning import VersionedRouter, APIVersion
+    from src.entrypoints.api.versioning import VersionedRouter, APIVersion
 
     router_v1 = VersionedRouter(version="v1", deprecated=True, sunset_date="2026-01-01")
     router_v2 = VersionedRouter(version="v2")
@@ -20,16 +20,13 @@ from fastapi import APIRouter, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-__all__ = (
-    "APIVersion",
-    "VersionedRouter",
-    "DeprecationMiddleware",
-)
+__all__ = ("APIVersion", "VersionedRouter", "DeprecationMiddleware")
 
 
 @dataclass(slots=True)
 class APIVersion:
     """Метаданные версии API."""
+
     version: str
     deprecated: bool = False
     sunset_date: str | None = None  # ISO date: "2026-01-01"
@@ -71,9 +68,7 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self,
-        app: ASGIApp,
-        versions: dict[str, APIVersion] | None = None,
+        self, app: ASGIApp, versions: dict[str, APIVersion] | None = None
     ) -> None:
         super().__init__(app)
         self._versions = versions or {}

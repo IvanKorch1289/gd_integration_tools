@@ -4,9 +4,9 @@ from typing import AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.errors import DatabaseError, NotFoundError
-from app.infrastructure.db.database import db_initializer, external_db_registry
-from app.infrastructure.external_apis.logging_service import db_logger
+from src.core.errors import DatabaseError, NotFoundError
+from src.infrastructure.database.database import db_initializer, external_db_registry
+from src.infrastructure.external_apis.logging_service import db_logger
 
 __all__ = (
     "DatabaseSessionManager",

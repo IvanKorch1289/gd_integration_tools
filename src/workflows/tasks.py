@@ -10,12 +10,12 @@ from typing import Any
 
 from prefect import task
 
-from app.core.config.settings import settings
-from app.infrastructure.external_apis.logging_service import tasks_logger
-from app.services.core.orders import get_order_service
-from app.utilities.utils import utilities
-from app.workflows.dicts import ProcessingResult
-from app.workflows.utils import validate_order_id
+from src.core.config.settings import settings
+from src.infrastructure.external_apis.logging_service import tasks_logger
+from src.services.core.orders import get_order_service
+from src.utilities.utils import utilities
+from src.workflows.dicts import ProcessingResult
+from src.workflows.utils import validate_order_id
 
 __all__ = (
     "send_notification_task",
@@ -58,7 +58,7 @@ async def send_notification_task(body: dict[str, Any]) -> dict[str, Any]:
     Raises:
         Exception: В случае ошибки при отправке письма.
     """
-    from app.infrastructure.external_apis.mail import get_mail_service
+    from src.infrastructure.external_apis.mail import get_mail_service
 
     async with get_mail_service() as mail_service:
         return await mail_service.send_email(

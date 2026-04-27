@@ -97,7 +97,9 @@ class TxSigner:
     который затем передаётся в audit log и в outbox-таблицу для отправки.
     """
 
-    def __init__(self, crypto: CryptoProvider, algorithm: str = "GOST-R-34.10-2012") -> None:
+    def __init__(
+        self, crypto: CryptoProvider, algorithm: str = "GOST-R-34.10-2012"
+    ) -> None:
         self._crypto = crypto
         self._algorithm = algorithm
 

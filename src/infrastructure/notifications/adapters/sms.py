@@ -26,8 +26,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Final, Literal
 
-from app.infrastructure.notifications.adapters.base import NotificationChannel
-
+from src.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -65,12 +64,7 @@ class SMSAdapter:
         self._sender_id = sender_id
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
         """Отправить SMS.
 
@@ -83,7 +77,7 @@ class SMSAdapter:
         if not creds:
             raise RuntimeError(f"SMS credentials missing for provider={self._provider}")
 
-        from app.infrastructure.clients.transport.http_upstream import upstream
+        from src.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
 
@@ -111,15 +105,10 @@ class SMSAdapter:
         if self._provider == "mts":
             headers = {"Authorization": f"Bearer {creds}"}
             payload = {
-                "messages": [
-                    {"to": recipient, "from": self._sender_id, "text": body}
-                ]
+                "messages": [{"to": recipient, "from": self._sender_id, "text": body}]
             }
             response = await client.request(
-                "POST",
-                PROVIDER_ENDPOINTS["mts"],
-                json=payload,
-                headers=headers,
+                "POST", PROVIDER_ENDPOINTS["mts"], json=payload, headers=headers
             )
             if response.status_code >= 400:
                 raise RuntimeError(f"MTS send failed: {response.status_code}")
@@ -128,12 +117,13 @@ class SMSAdapter:
         # TODO: подтвердить endpoint и формат МегаФон.
         if self._provider == "megafon":
             headers = {"Authorization": creds}
-            payload = {"destination": recipient, "sender": self._sender_id, "text": body}
+            payload = {
+                "destination": recipient,
+                "sender": self._sender_id,
+                "text": body,
+            }
             response = await client.request(
-                "POST",
-                PROVIDER_ENDPOINTS["megafon"],
-                json=payload,
-                headers=headers,
+                "POST", PROVIDER_ENDPOINTS["megafon"], json=payload, headers=headers
             )
             if response.status_code >= 400:
                 raise RuntimeError(f"MegaFon send failed: {response.status_code}")
@@ -149,9 +139,7 @@ class SMSAdapter:
             return False
 
 
-assert isinstance(
-    SMSAdapter(credentials_provider=lambda: ""), NotificationChannel
-)
+assert isinstance(SMSAdapter(credentials_provider=lambda: ""), NotificationChannel)
 
 
 __all__ = ("SMSAdapter", "SMSProvider")

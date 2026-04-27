@@ -16,7 +16,6 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-
 __all__ = ("AnomalyDetector", "Anomaly", "get_anomaly_detector")
 
 logger = logging.getLogger(__name__)
@@ -91,7 +90,10 @@ class AnomalyDetector:
             await self._notify(anomaly)
             logger.warning(
                 "Anomaly detected: %s value=%.2f (z=%.2f, severity=%s)",
-                metric, value, z_score, severity,
+                metric,
+                value,
+                z_score,
+                severity,
             )
             return anomaly
 
@@ -103,7 +105,7 @@ class AnomalyDetector:
             return
 
         try:
-            from app.services.ops.notification_hub import get_notification_hub
+            from src.services.ops.notification_hub import get_notification_hub
 
             hub = get_notification_hub()
             subject = f"[{anomaly.severity.upper()}] Anomaly: {anomaly.metric}"
@@ -115,9 +117,7 @@ class AnomalyDetector:
                 f"Stddev: {anomaly.stddev:.2f}"
             )
             await hub.broadcast(
-                channels=self._notification_channels,
-                subject=subject,
-                message=message,
+                channels=self._notification_channels, subject=subject, message=message
             )
         except Exception as exc:
             logger.error("Anomaly notification failed: %s", exc)

@@ -17,14 +17,16 @@ logger = logging.getLogger("eventing.inbox")
 class Inbox:
     """Redis-based dedup для CloudEvents id."""
 
-    def __init__(self, *, ttl_seconds: int = 7 * 24 * 3600, prefix: str = "inbox:") -> None:
+    def __init__(
+        self, *, ttl_seconds: int = 7 * 24 * 3600, prefix: str = "inbox:"
+    ) -> None:
         self.ttl_seconds = ttl_seconds
         self.prefix = prefix
 
     async def seen_or_mark(self, event_id: str) -> bool:
         """True, если событие уже было обработано (дубликат)."""
         try:
-            from app.infrastructure.clients.storage.redis import redis_client
+            from src.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             logger.debug("Redis недоступен — inbox dedup отключён")
             return False

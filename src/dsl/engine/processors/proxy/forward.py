@@ -15,10 +15,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.dsl.engine.context import ExecutionContext
-from app.dsl.engine.exchange import Exchange
-from app.dsl.engine.processors.base import BaseProcessor
-from app.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.dsl.engine.context import ExecutionContext
+from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.processors.base import BaseProcessor
+from src.dsl.engine.processors.proxy.headers import HeaderMapPolicy
 
 __all__ = ("ForwardToProcessor", "ProxyOutboundSpec")
 
@@ -83,9 +83,7 @@ class ForwardToProcessor(BaseProcessor):
     def spec(self) -> ProxyOutboundSpec:
         return self._spec
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         headers = (
             self._spec.header_policy.apply(exchange.in_message.headers or {})
@@ -128,19 +126,13 @@ class ForwardToProcessor(BaseProcessor):
         exchange.in_message.body = resp.content
         exchange.in_message.headers = dict(resp.headers)
 
-    def _rewrite(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> str:
+    def _rewrite(self, exchange: Exchange[Any], context: ExecutionContext) -> str:
         base = f"{self._spec.protocol}://{self._spec.target}"
         if not self._spec.rewrite_path:
             return base
         mapping = {
-            "request.path": str(
-                exchange.in_message.headers.get("X-Proxy-Path", "")
-            ),
-            "request.query": str(
-                exchange.in_message.headers.get("X-Proxy-Query", "")
-            ),
+            "request.path": str(exchange.in_message.headers.get("X-Proxy-Path", "")),
+            "request.query": str(exchange.in_message.headers.get("X-Proxy-Query", "")),
             "route_id": context.route_id or "",
         }
         rewritten = self._spec.rewrite_path
@@ -160,7 +152,9 @@ class ForwardToProcessor(BaseProcessor):
         async with httpx.AsyncClient(timeout=self._spec.timeout_s) as client:
             resp = await client.post(
                 url,
-                content=body if isinstance(body, (bytes, bytearray, str)) else str(body),
+                content=body
+                if isinstance(body, (bytes, bytearray, str))
+                else str(body),
                 headers=headers,
             )
         exchange.in_message.body = resp.content
@@ -206,7 +200,7 @@ class ForwardToProcessor(BaseProcessor):
         headers: dict[str, str],
         exchange: Exchange[Any],  # noqa: ARG002
     ) -> None:
-        from app.infrastructure.clients.messaging.stream import get_stream_client
+        from src.infrastructure.clients.messaging.stream import get_stream_client
 
         client = get_stream_client()
         payload = body if isinstance(body, dict) else {"body": body}

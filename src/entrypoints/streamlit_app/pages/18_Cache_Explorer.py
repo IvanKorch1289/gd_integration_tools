@@ -25,11 +25,13 @@ st.header(":package: Cache Explorer")
 
 client = get_api_client()
 
-pattern = st.text_input("Pattern поиска ключей", value="*", help="Glob-паттерн Redis (напр., `user:*`)")
+pattern = st.text_input(
+    "Pattern поиска ключей", value="*", help="Glob-паттерн Redis (напр., `user:*`)"
+)
 
 try:
     keys = client._request(  # type: ignore[attr-defined]
-        "GET", "/api/v1/admin/cache/keys", params={"pattern": pattern, "limit": 200},
+        "GET", "/api/v1/admin/cache/keys", params={"pattern": pattern, "limit": 200}
     )
     if not isinstance(keys, list):
         keys = []
@@ -59,7 +61,9 @@ invalidate_pattern = st.text_input("Pattern для инвалидации", valu
 if st.button("Invalidate") and invalidate_pattern:
     try:
         resp = client._request(  # type: ignore[attr-defined]
-            "POST", "/api/v1/admin/cache/invalidate", params={"pattern": invalidate_pattern},
+            "POST",
+            "/api/v1/admin/cache/invalidate",
+            params={"pattern": invalidate_pattern},
         )
         st.success(f"Удалено: {resp}")
     except Exception as exc:  # noqa: BLE001
