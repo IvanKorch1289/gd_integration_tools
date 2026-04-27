@@ -792,6 +792,104 @@ class RouteBuilder:
             )
         )
 
+    # ── Express BotX (Wave 4.2) ──
+
+    def express_send(
+        self,
+        body: str | None = None,
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.group_chat_id",
+        body_from: str | None = None,
+        bubble: list[list[dict[str, Any]]] | None = None,
+        keyboard: list[list[dict[str, Any]]] | None = None,
+        status: str = "ok",
+        silent_response: bool = False,
+        sync: bool = False,
+        result_property: str = "express_sync_id",
+    ) -> "RouteBuilder":
+        """Отправить сообщение в Express чат через BotX API."""
+        from src.dsl.engine.processors.express import ExpressSendProcessor
+
+        return self._add(
+            ExpressSendProcessor(
+                bot=bot,
+                chat_id_from=chat_id_from,
+                body=body,
+                body_from=body_from,
+                bubble=bubble,
+                keyboard=keyboard,
+                status=status,
+                silent_response=silent_response,
+                sync=sync,
+                result_property=result_property,
+            )
+        )
+
+    def express_reply(
+        self,
+        body_from: str | None = None,
+        *,
+        bot: str = "main_bot",
+        source_sync_id_from: str = "header.X-Express-Sync-Id",
+        chat_id_from: str = "body.group_chat_id",
+        body: str | None = None,
+        result_property: str = "express_reply_sync_id",
+    ) -> "RouteBuilder":
+        """Ответить на исходное сообщение Express (reply-thread)."""
+        from src.dsl.engine.processors.express import ExpressReplyProcessor
+
+        return self._add(
+            ExpressReplyProcessor(
+                bot=bot,
+                source_sync_id_from=source_sync_id_from,
+                chat_id_from=chat_id_from,
+                body=body,
+                body_from=body_from,
+                result_property=result_property,
+            )
+        )
+
+    def express_edit(
+        self,
+        sync_id_from: str = "properties.express_sync_id",
+        *,
+        bot: str = "main_bot",
+        body: str | None = None,
+        body_from: str | None = None,
+        bubble: list[list[dict[str, Any]]] | None = None,
+        keyboard: list[list[dict[str, Any]]] | None = None,
+        status: str | None = None,
+    ) -> "RouteBuilder":
+        """Редактировать ранее отправленное Express сообщение."""
+        from src.dsl.engine.processors.express import ExpressEditProcessor
+
+        return self._add(
+            ExpressEditProcessor(
+                bot=bot,
+                sync_id_from=sync_id_from,
+                body=body,
+                body_from=body_from,
+                bubble=bubble,
+                keyboard=keyboard,
+                status=status,
+            )
+        )
+
+    def express_typing(
+        self,
+        action: str = "start",
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.group_chat_id",
+    ) -> "RouteBuilder":
+        """Отправить/остановить индикатор набора в Express чате."""
+        from src.dsl.engine.processors.express import ExpressTypingProcessor
+
+        return self._add(
+            ExpressTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
+        )
+
     # ── Camel Components (source/sink) ──
 
     def http_call(
