@@ -195,7 +195,7 @@ class JsonExporter:
 
 
 class ParquetExporter:
-    """Apache Parquet через pandas + pyarrow."""
+    """Apache Parquet через polars (pyarrow backend)."""
 
     format_name = "parquet"
     mime_type = "application/octet-stream"
@@ -208,14 +208,11 @@ class ParquetExporter:
     ) -> bytes:
         if not data:
             return b""
-        try:
-            import pandas as pd
-        except ImportError as exc:
-            raise RuntimeError("pandas не установлен") from exc
+        import polars as pl
 
-        df = pd.DataFrame(data)
+        df = pl.DataFrame(data)
         buffer = io.BytesIO()
-        df.to_parquet(buffer, engine="pyarrow", index=False)
+        df.write_parquet(buffer)
         return buffer.getvalue()
 
 

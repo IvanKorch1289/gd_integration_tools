@@ -42,9 +42,9 @@ elif status_filter == "Disabled":
     routes = [r for r in routes if not r.get("enabled", True)]
 
 if routes:
-    import pandas as pd
+    import polars as pl
 
-    df = pd.DataFrame(routes)
+    df = pl.DataFrame(routes)
     display_cols = [
         c
         for c in [
@@ -58,7 +58,7 @@ if routes:
         if c in df.columns
     ]
     if display_cols:
-        st.dataframe(df[display_cols], use_container_width=True)
+        st.dataframe(df.select(display_cols), use_container_width=True)
     else:
         st.dataframe(df, use_container_width=True)
     st.caption(f"Всего: {len(routes)} маршрутов")

@@ -31,9 +31,9 @@ with tab1:
         jobs = []
 
     if jobs:
-        import pandas as pd
+        import polars as pl
 
-        df = pd.DataFrame(jobs)
+        df = pl.DataFrame(jobs)
         st.dataframe(df, use_container_width=True)
         st.caption(f"Всего: {len(jobs)} jobs")
     else:
@@ -66,15 +66,17 @@ with tab3:
         hooks = []
 
     if hooks:
-        import pandas as pd
+        import polars as pl
 
-        df = pd.DataFrame(hooks)
+        df = pl.DataFrame(hooks)
         display_cols = [
             c
             for c in ["id", "url", "cron", "delay_seconds", "status"]
             if c in df.columns
         ]
-        st.dataframe(df[display_cols] if display_cols else df, use_container_width=True)
+        st.dataframe(
+            df.select(display_cols) if display_cols else df, use_container_width=True
+        )
     else:
         st.info("Нет запланированных webhooks")
 
@@ -115,9 +117,9 @@ with tab4:
         flows = []
 
     if flows:
-        import pandas as pd
+        import polars as pl
 
-        df = pd.DataFrame(flows)
+        df = pl.DataFrame(flows)
         st.dataframe(df, use_container_width=True)
 
 if st.button("Обновить"):

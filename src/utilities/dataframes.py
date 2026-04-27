@@ -1,49 +1,27 @@
-"""Dataframe utilities — adapter между polars и pandas (F2, ADR-008).
+"""Тонкие polars-обёртки для чтения/записи табличных данных.
 
-Новый код использует polars.DataFrame. Для интеграции с legacy
-библиотеками и аналитическими notebook-ами — два тонких конвертера.
+В проекте используется только polars (pandas удалён). Этот модуль —
+исторический shortcut для CSV/Excel/Parquet I/O без бизнес-логики.
+
+Для табличных операций приложения смотри ``src.services.io.dataframe``.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-__all__ = ("to_polars", "to_pandas", "read_csv", "read_excel", "write_parquet")
+import polars as pl
+
+__all__ = ("read_csv", "read_excel", "write_parquet")
 
 
-def to_polars(df: Any) -> Any:
-    """Конвертирует pandas.DataFrame → polars.DataFrame (no-op если уже polars)."""
-    import polars as pl
-
-    if isinstance(df, pl.DataFrame):
-        return df
-    return pl.from_pandas(df)
-
-
-def to_pandas(df: Any) -> Any:
-    """Конвертирует polars.DataFrame → pandas.DataFrame."""
-    import polars as pl
-
-    if not isinstance(df, pl.DataFrame):
-        return df
-    return df.to_pandas()
-
-
-def read_csv(path: str, **kwargs: Any) -> Any:
-    import polars as pl
-
+def read_csv(path: str, **kwargs: Any) -> pl.DataFrame:
     return pl.read_csv(path, **kwargs)
 
 
-def read_excel(path: str, **kwargs: Any) -> Any:
-    import polars as pl
-
+def read_excel(path: str, **kwargs: Any) -> pl.DataFrame:
     return pl.read_excel(path, **kwargs)
 
 
-def write_parquet(df: Any, path: str, **kwargs: Any) -> None:
-    import polars as pl
-
-    if not isinstance(df, pl.DataFrame):
-        df = pl.from_pandas(df)
+def write_parquet(df: pl.DataFrame, path: str, **kwargs: Any) -> None:
     df.write_parquet(path, **kwargs)

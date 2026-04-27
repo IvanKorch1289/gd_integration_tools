@@ -2,7 +2,7 @@ from enum import Enum
 from io import BytesIO
 from typing import Any
 
-import pandas as pd
+import polars as pl
 from fastapi.responses import HTMLResponse
 
 from src.core.config.settings import settings
@@ -97,12 +97,11 @@ class TechService:
         )
 
         results: list = []
-        df = pd.read_excel(BytesIO(file_bytes))
+        df = pl.read_excel(BytesIO(file_bytes))
 
-        for _, row in df.iterrows():
+        for row in df.iter_rows(named=True):
             row_data = {
-                col: utilities.convert_numpy_types(value)
-                for col, value in row.to_dict().items()
+                col: utilities.convert_numpy_types(value) for col, value in row.items()
             }
 
             validated_data = service.request_schema.model_validate(row_data)
