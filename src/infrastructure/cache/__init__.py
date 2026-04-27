@@ -6,6 +6,8 @@
 отсутствия двойного кэширования (ADR-004) на старте.
 """
 
+from src.infrastructure.cache.backends import KeyDBBackend, MemoryBackend, RedisBackend
+from src.infrastructure.cache.factory import create_cache_backend
 from src.infrastructure.cache.invalidator import (
     CacheBackendProtocol,
     CacheInvalidator,
@@ -29,6 +31,10 @@ __all__ = (
     "CacheInvalidator",
     "CacheLayerValidator",
     "InMemoryCacheBackend",
+    "MemoryBackend",
+    "RedisBackend",
+    "KeyDBBackend",
+    "create_cache_backend",
     "get_cache_invalidator",
     "set_cache_invalidator",
 )

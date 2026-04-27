@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -142,4 +142,46 @@ class RedisSettings(BaseSettingsWithLoader):
 
 
 redis_settings = RedisSettings()
+
+
+class CacheSettings(BaseSettingsWithLoader):
+    """Настройки бэкенда кэширования (Wave 2.2).
+
+    KeyDB — drop-in замена Redis (тот же RESP-протокол, многопоточная
+    реализация). Переключение между backend'ами без изменения кода:
+    ``CACHE_BACKEND=keydb``.
+
+    Поля backend / l1_* / max_connections имеют дефолты; YAML-группа
+    ``cache`` опциональна.
+    """
+
+    yaml_group: ClassVar[str] = "cache"
+    model_config = SettingsConfigDict(env_prefix="CACHE_", extra="forbid")
+
+    backend: Literal["redis", "keydb", "memcached", "memory"] = Field(
+        default="redis",
+        description="Бэкенд кэша. KeyDB — drop-in замена Redis.",
+        examples=["redis", "keydb", "memory"],
+    )
+    l1_enabled: bool = Field(
+        default=True,
+        description="Использовать ли in-process L1-кэш поверх удалённого backend'а.",
+    )
+    l1_maxsize: int = Field(
+        default=1000,
+        ge=1,
+        le=100_000,
+        description="Размер L1 cachetools.TTLCache по умолчанию.",
+    )
+    keydb_active_replica: bool = Field(
+        default=False,
+        description=(
+            "Включить multi-master режим KeyDB (active-active). "
+            "Требует соответствующего deployment."
+        ),
+    )
+
+
+cache_settings = CacheSettings()
+"""Глобальный экземпляр настроек cache backend factory."""
 """Глобальные настройки Redis"""
