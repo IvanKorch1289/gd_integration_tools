@@ -35,6 +35,9 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.entrypoints.middlewares.api_key import APIKeyMiddleware
     from src.entrypoints.middlewares.audit_log import AuditLogMiddleware
     from src.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
+    from src.entrypoints.middlewares.auth_method_header import (
+        AuthMethodHeaderMiddleware,
+    )
     from src.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
     from src.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from src.entrypoints.middlewares.exception_handler import ExceptionHandlerMiddleware
@@ -89,6 +92,8 @@ def setup_middlewares(app: FastAPI) -> None:
             },
         ),
         (DataMaskingMiddleware, {}),
+        # Wave 8.1: маркер успешной аутентификации в response.
+        (AuthMethodHeaderMiddleware, {}),
         # Слой 4: Логирование и метрики (последними — измеряют всё)
         (AuditLogMiddleware, {}),
         (AuditReplayMiddleware, {"sample_rate": 1.0}),  # ARCH-4: wire audit_replay

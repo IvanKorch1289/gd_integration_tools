@@ -19,7 +19,7 @@ class AIAgentService:
     """Сервис для AI-операций с маскировкой PII."""
 
     def __init__(self) -> None:
-        from src.core.config.ai_settings import (
+        from src.core.config.ai import (
             AIProvidersSettings,
             HuggingFaceSettings,
             OpenWebUISettings,

@@ -229,7 +229,7 @@ class ExpressClient:
 
 
 def _create_express_client() -> ExpressClient:
-    from src.core.config.express_settings import express_settings
+    from src.core.config.express import express_settings
 
     return ExpressClient(
         bot_id=express_settings.bot_id,

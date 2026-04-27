@@ -61,7 +61,7 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
     Raises:
         RuntimeError: Если бот не найден или Express отключён.
     """
-    from src.core.config.express_settings import express_settings
+    from src.core.config.express import express_settings
     from src.infrastructure.clients.external.express_bot import (
         BotConfig,
         ExpressBotClient,

@@ -86,8 +86,7 @@ class LocalFSStorage(ObjectStorage):
         return await aiofiles.os.path.exists(str(path))
 
     async def list_keys(self, prefix: str = "") -> list[str]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._list_sync, prefix)
+        return await asyncio.to_thread(self._list_sync, prefix)
 
     def _list_sync(self, prefix: str) -> list[str]:
         root = self._safe_path(prefix) if prefix else self._base

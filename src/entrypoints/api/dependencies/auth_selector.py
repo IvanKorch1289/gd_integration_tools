@@ -26,36 +26,15 @@ from __future__ import annotations
 
 import base64
 import logging
-from enum import Enum
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request
 
+from src.core.auth import AuthContext, AuthMethod
+
 __all__ = ("AuthMethod", "AuthContext", "require_auth", "set_default_auth")
 
 logger = logging.getLogger(__name__)
-
-
-class AuthMethod(str, Enum):
-    NONE = "none"
-    API_KEY = "api_key"
-    JWT = "jwt"
-    BASIC = "basic"
-    MTLS = "mtls"
-    EXPRESS = "express"
-
-
-class AuthContext:
-    """Контекст авторизованного запроса."""
-
-    __slots__ = ("method", "principal", "metadata")
-
-    def __init__(
-        self, method: AuthMethod, principal: str, metadata: dict[str, Any] | None = None
-    ) -> None:
-        self.method = method
-        self.principal = principal
-        self.metadata = metadata or {}
 
 
 _default_auth: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY
@@ -145,12 +124,48 @@ async def _verify_express(request: Request) -> AuthContext | None:
     return AuthContext(AuthMethod.EXPRESS, huid, {"huid": huid})
 
 
+async def _verify_express_jwt(request: Request) -> AuthContext | None:
+    """Верификация JWT, выписанного eXpress BotX.
+
+    Проверяет ``Authorization: Bearer <jwt>``, где токен подписан
+    ``settings.express.secret_key``. Issuer — ``bot_id``,
+    audience — ``botx_host``.
+    """
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:]
+    try:
+        from jose import jwt
+
+        from src.core.config.auth import build_auth_config
+
+        cfg = build_auth_config().express_jwt
+        if not cfg.enabled or not cfg.secret_key:
+            return None
+        options = {"verify_aud": bool(cfg.botx_host)}
+        payload = jwt.decode(
+            token,
+            cfg.secret_key,
+            algorithms=["HS256"],
+            audience=cfg.botx_host or None,
+            issuer=cfg.bot_id or None,
+            options=options,
+        )
+        principal = payload.get("sub") or payload.get("huid") or cfg.bot_id
+        return AuthContext(AuthMethod.EXPRESS_JWT, str(principal), payload)
+    except Exception as exc:
+        logger.warning("Express JWT verify failed: %s", exc)
+        return None
+
+
 _VERIFIERS: dict[AuthMethod, Callable[..., Any]] = {
     AuthMethod.API_KEY: _verify_api_key,
     AuthMethod.JWT: _verify_jwt,
     AuthMethod.BASIC: _verify_basic,
     AuthMethod.MTLS: _verify_mtls,
     AuthMethod.EXPRESS: _verify_express,
+    AuthMethod.EXPRESS_JWT: _verify_express_jwt,
 }
 
 

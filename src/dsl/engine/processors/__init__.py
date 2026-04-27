@@ -123,6 +123,7 @@ from src.dsl.engine.processors.integration import (
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
+from src.dsl.engine.processors.notify import NotifyProcessor
 from src.dsl.engine.processors.patterns import (
     BatchWindowProcessor,
     DebounceProcessor,
@@ -163,6 +164,7 @@ from src.dsl.engine.processors.scraping import (
     PaginateProcessor,
     ScrapeProcessor,
 )
+from src.dsl.engine.processors.security import AuthValidateProcessor
 from src.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     CorrelationIdProcessor,
@@ -332,4 +334,6 @@ __all__ = (
     "OutboxProcessor",
     "DataMaskingProcessor",
     "ComplianceLabelProcessor",
+    "AuthValidateProcessor",
+    "NotifyProcessor",
 )

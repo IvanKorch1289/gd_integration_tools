@@ -211,6 +211,31 @@ class RouteBuilder:
         """Pydantic-валидация body; при ошибке Exchange останавливается."""
         return self._add(ValidateProcessor(model=model))
 
+    def auth(
+        self,
+        methods: list[str] | str = "api_key",
+        *,
+        result_property: str = "auth",
+        required: bool = True,
+    ) -> "RouteBuilder":
+        """Проверяет авторизацию запроса (Wave 8.1).
+
+        Args:
+            methods: Один или список разрешённых AuthMethod
+                (``api_key`` / ``jwt`` / ``express_jwt`` / ``mtls`` / ``basic``).
+            result_property: Имя property для AuthContext.
+            required: Если True — при провале маршрут останавливается.
+        """
+        from src.dsl.engine.processors.security import AuthValidateProcessor
+
+        return self._add(
+            AuthValidateProcessor(
+                methods=methods,
+                result_property=result_property,
+                required=required,
+            )
+        )
+
     # ── Integration processors ──
 
     def mcp_tool(
@@ -1263,11 +1288,44 @@ class RouteBuilder:
         )
 
     def notify(
-        self, channel: str = "email", to: str = "", subject: str = "", message: str = ""
+        self,
+        channel: str = "email",
+        *,
+        template_key: str = "default",
+        recipient: str | None = None,
+        priority: str = "tx",
+        locale: str = "ru",
+        context_property: str | None = None,
+        result_property: str = "notify_result",
     ) -> "RouteBuilder":
-        """Отправка уведомления через notification_hub (email/telegram/webhook/express)."""
-        return self.dispatch_action(
-            f"notify.{channel}" if channel != "send" else "notify.send"
+        """Отправка уведомления через NotificationGateway (Wave 8.3).
+
+        В отличие от старого sugar (dispatch_action), теперь это полноценный
+        DSL-процессор: ``NotifyProcessor`` обращается к gateway напрямую,
+        пишет ``SendResult`` в property и поддерживает round-trip через
+        ``to_spec()``.
+
+        Args:
+            channel: ``email|sms|slack|teams|telegram|webhook|express``.
+            template_key: Имя шаблона в TemplateRegistry.
+            recipient: Получатель. Если None — берётся из ``body['recipient']``.
+            priority: ``tx`` или ``marketing``.
+            locale: Локаль шаблона.
+            context_property: Имя property с контекстом для рендера.
+            result_property: Имя property для ``SendResult``.
+        """
+        from src.dsl.engine.processors.notify import NotifyProcessor
+
+        return self._add(
+            NotifyProcessor(
+                channel=channel,
+                template_key=template_key,
+                recipient=recipient,
+                priority=priority,
+                locale=locale,
+                context_property=context_property,
+                result_property=result_property,
+            )
         )
 
     # ── Search ──

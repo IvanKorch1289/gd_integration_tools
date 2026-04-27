@@ -88,7 +88,7 @@ class ExpressAdapter:
     async def health(self) -> bool:
         """Проверка доступности Express интеграции."""
         try:
-            from src.core.config.express_settings import express_settings
+            from src.core.config.express import express_settings
 
             return bool(express_settings.enabled and express_settings.bot_id)
         except Exception:  # noqa: BLE001

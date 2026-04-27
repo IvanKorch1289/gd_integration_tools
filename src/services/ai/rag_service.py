@@ -35,13 +35,13 @@ class RAGService:
 
         from fastembed import TextEmbedding
 
-        from src.core.config.rag_settings import rag_settings
+        from src.core.config.rag import rag_settings
 
         self._embedder = TextEmbedding(model_name=rag_settings.embedding_model)
         return self._embedder
 
     def _chunk_text(self, text: str) -> list[str]:
-        from src.core.config.rag_settings import rag_settings
+        from src.core.config.rag import rag_settings
 
         size = rag_settings.chunk_size
         overlap = rag_settings.chunk_overlap

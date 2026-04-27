@@ -224,7 +224,7 @@ def get_vector_store(backend: str = "chroma", **kwargs: Any) -> BaseVectorStore:
     """Фабрика для vector store."""
     if backend == "faiss":
         return FAISSVectorStore(**kwargs)
-    from src.core.config.rag_settings import rag_settings
+    from src.core.config.rag import rag_settings
 
     return ChromaVectorStore(
         host=kwargs.get("host", rag_settings.chroma_host),

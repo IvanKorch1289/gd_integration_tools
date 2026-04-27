@@ -9,14 +9,9 @@ from src.core.config.base import (
     scheduler_settings,
 )
 from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
-from src.core.config.database import (
-    DatabaseConnectionSettings,
-    MongoConnectionSettings,
-    db_connection_settings,
-    mongo_connection_settings,
-)
+from src.core.config.database import DatabaseConnectionSettings, db_connection_settings
 from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
-from src.core.config.express_settings import ExpressSettings, express_settings
+from src.core.config.express import ExpressSettings, express_settings
 from src.core.config.external_apis import (
     AntivirusAPISettings,
     DadataAPISettings,
@@ -30,8 +25,10 @@ from src.core.config.external_databases import (
     external_databases_settings,
 )
 from src.core.config.http_base import HttpBaseSettings, http_base_settings
+from src.core.config.mongo import MongoConnectionSettings, mongo_connection_settings
 from src.core.config.security import SecureSettings, secure_settings
 from src.core.config.services import (
+    CacheSettings,
     FileStorageSettings,
     GRPCSettings,
     LogStorageSettings,
@@ -39,6 +36,7 @@ from src.core.config.services import (
     QueueSettings,
     RedisSettings,
     TasksSettings,
+    cache_settings,
     fs_settings,
     grpc_settings,
     log_settings,
@@ -88,6 +86,7 @@ class Settings(BaseSettings):
     logging: LogStorageSettings = log_settings
     redis: RedisSettings = redis_settings
     mongo: MongoConnectionSettings = mongo_connection_settings
+    cache: CacheSettings = cache_settings
 
 
 @lru_cache()

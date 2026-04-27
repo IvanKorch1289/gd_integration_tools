@@ -278,7 +278,7 @@ class AIDataSanitizer:
 
 def get_ai_sanitizer() -> AIDataSanitizer:
     """Фабрика AIDataSanitizer с настройками из конфига."""
-    from src.core.config.ai_settings import ai_providers_settings as cfg
+    from src.core.config.ai import ai_providers_settings as cfg
 
     return AIDataSanitizer(
         mask_emails=cfg.sanitize_emails,
