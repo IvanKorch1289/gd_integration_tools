@@ -239,8 +239,14 @@ api-fuzz: check-env ## Run property-based testing against live FastAPI
 
 ##@ Runtime
 
-run: check-env ## Start backend in foreground
+run: check-env ## Start backend in foreground (использует APP_SERVER из env)
 	@$(MANAGE_SCRIPT) run
+
+dev: check-env ## Start backend (uvicorn, dev режим)
+	@APP_SERVER=uvicorn $(MANAGE_SCRIPT) run
+
+prod: check-env ## Start backend (granian, production)
+	@APP_SERVER=granian $(MANAGE_SCRIPT) run
 
 run-all: check-env ## Start backend + frontend
 	@$(MANAGE_SCRIPT) run-all

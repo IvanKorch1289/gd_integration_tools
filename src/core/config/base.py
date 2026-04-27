@@ -73,6 +73,29 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[8000, 8080],
     )
 
+    # Параметры ASGI-сервера
+    server: Literal["uvicorn", "granian"] = Field(
+        default="uvicorn",
+        title="ASGI-сервер",
+        description=(
+            "Выбор ASGI-сервера для запуска приложения:\n"
+            " - uvicorn: предпочтительно для локальной разработки (поддерживает --reload)\n"
+            " - granian: предпочтительно для production (Rust-реализация, быстрее)"
+        ),
+        examples=["uvicorn", "granian"],
+    )
+
+    workers: int = Field(
+        default=1,
+        title="Количество воркеров ASGI-сервера",
+        ge=1,
+        le=64,
+        description=(
+            "Число воркер-процессов ASGI-сервера. В development режиме всегда 1."
+        ),
+        examples=[1, 4, 8],
+    )
+
     prefect_port: int = Field(
         ...,
         title="Порт Prefect",

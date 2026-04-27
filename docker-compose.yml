@@ -5,6 +5,9 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      APP_SERVER: ${APP_SERVER:-granian}
+      APP_WORKERS: ${APP_WORKERS:-4}
     depends_on:
       postgres:
         condition: service_healthy

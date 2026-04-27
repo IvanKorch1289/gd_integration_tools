@@ -35,19 +35,31 @@ app = typer.Typer(
 
 @app.command()
 def run(
-    host: str = typer.Option("0.0.0.0", help="Bind host"),
-    port: int = typer.Option(8000, help="Bind port"),
-    workers: int = typer.Option(1, help="Uvicorn workers"),
-    reload: bool = typer.Option(False, help="Auto-reload on changes"),
+    host: str | None = typer.Option(None, help="Bind host (override APP_HOST)"),
+    port: int | None = typer.Option(None, help="Bind port (override APP_PORT)"),
+    workers: int | None = typer.Option(None, help="Worker count (override APP_WORKERS)"),
+    server: str | None = typer.Option(
+        None, help="ASGI server: uvicorn | granian (override APP_SERVER)"
+    ),
 ):
-    """Запуск FastAPI backend."""
-    cmd = [
-        sys.executable, "-m", "uvicorn", "src.main:app",
-        "--host", host, "--port", str(port), "--workers", str(workers),
-    ]
-    if reload:
-        cmd.append("--reload")
-    typer.echo(f"Starting backend on {host}:{port}...")
+    """Запуск FastAPI backend через выбранный ASGI-сервер.
+
+    Делегирует выбор бэкенда (uvicorn/granian) в ``src.main:run`` —
+    управляется ``settings.app.server`` (env ``APP_SERVER``).
+    """
+    if host is not None:
+        os.environ["APP_HOST"] = host
+    if port is not None:
+        os.environ["APP_PORT"] = str(port)
+    if workers is not None:
+        os.environ["APP_WORKERS"] = str(workers)
+    if server is not None:
+        os.environ["APP_SERVER"] = server
+
+    cmd = [sys.executable, "-m", "src.main"]
+    typer.echo(
+        f"Starting backend (server={os.environ.get('APP_SERVER', 'uvicorn')})..."
+    )
     os.execvp(cmd[0], cmd)
 
 
