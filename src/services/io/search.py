@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.infrastructure.clients.storage.s3_pool.elasticsearch import (
+from src.infrastructure.clients.storage.elasticsearch import (
     ElasticSearchClient,
     get_elasticsearch_client,
 )

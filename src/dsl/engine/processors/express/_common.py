@@ -13,7 +13,48 @@ if TYPE_CHECKING:
     from src.dsl.engine.exchange import Exchange
     from src.infrastructure.clients.external.express_bot import ExpressBotClient
 
-__all__ = ("resolve_value", "get_express_client")
+__all__ = ("resolve_value", "get_express_client", "log_outgoing_message")
+
+
+async def log_outgoing_message(
+    *,
+    session_id: str,
+    body: str,
+    bot_id: str | None = None,
+    group_chat_id: str | None = None,
+    sync_id: str | None = None,
+    bubble: dict[str, Any] | None = None,
+    keyboard: dict[str, Any] | None = None,
+) -> None:
+    """Дописывает исходящее сообщение бота в ``ExpressDialogStore`` (best-effort).
+
+    Wave 9.2.4: Mongo-сбой не должен ломать отправку — все ошибки гасятся.
+    Входящие сообщения логируются callback-приёмником (Wave 4.2 — TODO).
+    """
+    if not session_id:
+        return
+    try:
+        from src.services.integrations.express.dialog_store import (
+            ExpressDialogStore,
+        )
+        from src.infrastructure.repositories.express_dialogs_mongo import (
+            get_express_dialog_store,
+        )
+
+        store: ExpressDialogStore = get_express_dialog_store()
+        await store.append_message(
+            session_id=session_id,
+            role="bot",
+            body=body,
+            bot_id=bot_id,
+            group_chat_id=group_chat_id,
+            sync_id=sync_id,
+            bubble=bubble,
+            keyboard=keyboard,
+        )
+    except Exception:  # noqa: BLE001
+        # Best-effort логирование; ошибки Mongo не критичны.
+        return
 
 
 def _walk_path(node: Any, parts: list[str]) -> Any:

@@ -8,7 +8,11 @@ from typing import Any
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
 from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import get_express_client, resolve_value
+from src.dsl.engine.processors.express._common import (
+    get_express_client,
+    log_outgoing_message,
+    resolve_value,
+)
 
 __all__ = ("ExpressSendProcessor",)
 
@@ -105,6 +109,13 @@ class ExpressSendProcessor(BaseProcessor):
                 sync_id = await client.send_message(msg, sync=self._sync)
             exchange.set_property(self._result_property, sync_id)
             _logger.debug("ExpressSend: chat_id=%s sync_id=%s", chat_id, sync_id)
+            await log_outgoing_message(
+                session_id=str(sync_id) if sync_id else str(chat_id),
+                body=str(text),
+                bot_id=self._bot,
+                group_chat_id=str(chat_id),
+                sync_id=str(sync_id) if sync_id else None,
+            )
             try:
                 from src.infrastructure.observability.metrics import (
                     record_express_message_sent,

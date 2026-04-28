@@ -94,6 +94,14 @@ class AuditEventLog:
         except Exception as exc:
             logger.error("Audit flush to ClickHouse failed: %s", exc)
 
+        # Wave 9.3.1: secondary indexing в Elasticsearch (best-effort).
+        try:
+            from src.services.io.indexers.log_indexer import get_log_indexer
+
+            await get_log_indexer().index_batch(events)
+        except Exception as es_exc:  # noqa: BLE001
+            logger.warning("LogIndexer.index_batch failed: %s", es_exc)
+
     async def query(
         self,
         entity_type: str | None = None,
@@ -101,7 +109,7 @@ class AuditEventLog:
         who: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        from src.infrastructure.clients.storage.s3_pool.clickhouse import (
+        from src.infrastructure.clients.storage.clickhouse import (
             get_clickhouse_client,
         )
 
@@ -124,7 +132,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             safe_limit = 100
 
         conditions = []

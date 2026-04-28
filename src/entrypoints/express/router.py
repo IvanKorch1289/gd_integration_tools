@@ -36,6 +36,46 @@ _logger = logging.getLogger("entrypoints.express")
 router = APIRouter(prefix="/express", tags=["express"])
 
 
+async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
+    """Wave 9.2.4: запись входящего сообщения в ExpressDialogStore + ping сессии.
+
+    Best-effort — Mongo-сбой не должен срывать обработку команды.
+    """
+    try:
+        from src.infrastructure.repositories.express_dialogs_mongo import (
+            get_express_dialog_store,
+        )
+        from src.infrastructure.repositories.express_sessions_mongo import (
+            get_express_session_store,
+        )
+
+        chat = payload.get("chat") or {}
+        sender = payload.get("from") or {}
+        bot_id = str(payload.get("bot_id", "")) or None
+        group_chat_id = chat.get("group_chat_id") or ""
+        user_huid = sender.get("user_huid")
+        body = ""
+        command = payload.get("command") or {}
+        if isinstance(command, dict):
+            body = str(command.get("body", "") or "")
+
+        session_id = sync_id or group_chat_id or "unknown"
+
+        await get_express_dialog_store().append_message(
+            session_id=session_id,
+            role="user",
+            body=body,
+            bot_id=bot_id,
+            group_chat_id=group_chat_id or None,
+            user_huid=user_huid,
+            sync_id=sync_id or None,
+        )
+        if session_id and session_id != "unknown":
+            await get_express_session_store().ping(session_id)
+    except Exception as exc:  # noqa: BLE001
+        _logger.debug("Express incoming log skipped: %s", exc)
+
+
 @router.get("/health", summary="Express bot healthcheck")
 async def health() -> dict[str, str]:
     """Healthcheck endpoint (BotX проверяет доступность бота).
@@ -88,6 +128,9 @@ async def receive_command(request: Request) -> JSONResponse:
     except Exception:  # noqa: BLE001, S110
         pass
 
+    # Wave 9.2.4: лог входящего сообщения в ExpressDialogStore.
+    await _log_incoming(payload, sync_id=sync_id)
+
     route_id = f"express.command.{command_name}"
     fallback_id = "express.command.default"
     response = await _dispatch_to_route(route_id, fallback_id, payload, sync_id)
@@ -111,6 +154,17 @@ async def receive_callback(request: Request) -> JSONResponse:
 
     sync_id = payload.get("sync_id", "")
     _logger.info("Express callback: sync_id=%s", sync_id)
+
+    # Wave 9.2.4: ping сессии при получении callback'а.
+    if sync_id:
+        try:
+            from src.infrastructure.repositories.express_sessions_mongo import (
+                get_express_session_store,
+            )
+
+            await get_express_session_store().ping(sync_id)
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug("Express callback session ping skipped: %s", exc)
 
     response = await _dispatch_to_route("express.callback", None, payload, sync_id)
     return JSONResponse(response)

@@ -24,8 +24,10 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.files import storage_router
     from src.entrypoints.api.v1.endpoints.health import router as health_router
     from src.entrypoints.api.v1.endpoints.imports import router as imports_router
+    from src.entrypoints.api.v1.endpoints.notebooks import router as notebooks_router
     from src.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
     from src.entrypoints.api.v1.endpoints.orders import router as orders_router
+    from src.entrypoints.api.v1.endpoints.search import router as search_router
     from src.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.entrypoints.api.v1.endpoints.tech import router as tech_router
     from src.entrypoints.api.v1.endpoints.users import router as users_router
@@ -81,5 +83,11 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         ai_feedback_router, prefix="/ai/feedback", tags=["AI · Feedback"]
     )
+    # Wave 9.1: Notebooks — версионируемые заметки.
+    api_router_v1.include_router(
+        notebooks_router, prefix="/notebooks", tags=["Notebooks"]
+    )
+    # Wave 9.3: единый поисковый API поверх Elasticsearch.
+    api_router_v1.include_router(search_router, prefix="/search", tags=["Search"])
 
     return api_router_v1

@@ -156,6 +156,8 @@ class WorkflowInstanceStore:
                     step_name=None,
                 )
 
+        # Wave 9.2.2: проекция в Mongo для observability.
+        await self._project_to_mongo(instance_id)
         return instance_id
 
     async def get(self, workflow_id: UUID) -> WorkflowInstanceRow | None:
@@ -327,6 +329,36 @@ class WorkflowInstanceStore:
                     .where(WorkflowInstance.id == workflow_id)
                     .values(**values)
                 )
+
+        # Wave 9.2.2: fire-and-forget Mongo-проекция (UI/observability).
+        await self._project_to_mongo(workflow_id)
+
+    async def _project_to_mongo(self, workflow_id: UUID) -> None:
+        """Отправляет актуальное состояние в Mongo (fire-and-forget)."""
+        try:
+            from src.infrastructure.workflow.state_projector import (
+                get_workflow_state_projector,
+            )
+
+            row = await self.get(workflow_id)
+            if row is None:
+                return
+            await get_workflow_state_projector().sync_fire_and_forget(
+                workflow_id=row.id,
+                snapshot_state=row.snapshot_state,
+                status=row.status.value,
+                route_id=row.route_id,
+                tenant_id=row.tenant_id,
+                workflow_name=row.workflow_name,
+                updated_at=row.updated_at,
+                finished_at=row.finished_at,
+            )
+        except Exception as exc:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "WorkflowStateProjector hook failed: %s", exc
+            )
 
     async def _merge_error_into_snapshot(
         self, session: AsyncSession, *, workflow_id: UUID, error: str

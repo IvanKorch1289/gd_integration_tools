@@ -74,6 +74,49 @@ class OrderService(
         """Инвалидирует кэш по имени сервиса."""
         await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
 
+    def _index_order_async(self, instance: Any) -> None:
+        """Wave 9.3.2: fire-and-forget индексация заказа в Elasticsearch.
+
+        ES-сбой не должен ломать commit заказа — все ошибки гасятся
+        в ``OrderIndexer.index_one``.
+        """
+        if instance is None:
+            return
+        try:
+            from src.services.io.indexers import get_order_indexer
+
+            get_order_indexer().index_one_fire_and_forget(instance)
+        except Exception:  # noqa: BLE001
+            return
+
+    def _delete_order_index_async(self, value: int) -> None:
+        """Wave 9.3.2: удаление документа из ES (fire-and-forget)."""
+        try:
+            import asyncio
+
+            from src.services.io.indexers import get_order_indexer
+
+            asyncio.create_task(get_order_indexer().delete_one(value))
+        except Exception:  # noqa: BLE001
+            return
+
+    async def add(self, data: dict[str, Any]) -> Any:
+        """Добавляет заказ + триггерит индексацию в ES (Wave 9.3.2)."""
+        result = await super().add(data=data)
+        self._index_order_async(result)
+        return result
+
+    async def update(self, key: str, value: int, data: dict[str, Any]) -> Any:
+        """Обновляет заказ + триггерит индексацию в ES (Wave 9.3.2)."""
+        result = await super().update(key=key, value=value, data=data)
+        self._index_order_async(result)
+        return result
+
+    async def delete(self, key: str, value: int) -> None:
+        """Удаляет заказ + удаляет документ из ES (Wave 9.3.2)."""
+        await super().delete(key=key, value=value)
+        self._delete_order_index_async(value)
+
     async def create_skb_order(self, order_id: int) -> dict[str, Any]:
         """Создаёт запрос в СКБ-Техно по существующему заказу."""
         async with self._service_error_boundary():
@@ -180,9 +223,7 @@ class OrderService(
                 order_id=order_id, response_type=ResponseTypeChoices.json
             )
 
-            has_pdf_result = await safe_get(
-                json_result, "response.data.Result", False
-            )
+            has_pdf_result = await safe_get(json_result, "response.data.Result", False)
 
             if has_pdf_result:
                 await self.get_order_result(
@@ -193,9 +234,7 @@ class OrderService(
                 "response_data": json_result.get("response", {}).get("data", {})
             }
 
-            message = await safe_get(
-                json_result, "response.data.Message", "Не готов"
-            )
+            message = await safe_get(json_result, "response.data.Message", "Не готов")
 
             if not message:
                 update_data["is_active"] = False

@@ -7,7 +7,7 @@ from src.infrastructure.external_apis.logging_service import app_logger
 __all__ = ("lifespan",)
 
 
-def _register_protocol_providers() -> None:
+async def _register_protocol_providers() -> None:
     """Регистрирует известные реализации Protocol'ов в providers_registry.
 
     Выполняется один раз при startup'е. Реестр делает реализации доступными
@@ -65,6 +65,64 @@ def _register_protocol_providers() -> None:
         register_provider("memory", "mongo", memory_service)
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Memory backend registration skipped: %s", exc)
+
+    # Wave 9: ensure_indexes для остальных Mongo-коллекций.
+    try:
+        from src.services.notebooks import get_notebook_service
+
+        await get_notebook_service().ensure_indexes()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("Notebooks ensure_indexes skipped: %s", exc)
+
+    try:
+        from src.services.ai.feedback.repository import get_feedback_repository
+
+        repo = get_feedback_repository()
+        ensure = getattr(repo, "ensure_indexes", None)
+        if ensure is not None:
+            await ensure()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("ai_feedback ensure_indexes skipped: %s", exc)
+
+    try:
+        from src.infrastructure.workflow.state_projector import (
+            get_workflow_state_projector,
+        )
+
+        await get_workflow_state_projector().ensure_indexes()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("workflow_state ensure_indexes skipped: %s", exc)
+
+    try:
+        from src.infrastructure.repositories.connector_configs_mongo import (
+            get_connector_config_store,
+        )
+
+        await get_connector_config_store().ensure_indexes()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("connector_configs ensure_indexes skipped: %s", exc)
+
+    try:
+        from src.infrastructure.repositories.express_dialogs_mongo import (
+            get_express_dialog_store,
+        )
+        from src.infrastructure.repositories.express_sessions_mongo import (
+            get_express_session_store,
+        )
+
+        await get_express_dialog_store().ensure_indexes()
+        await get_express_session_store().ensure_indexes()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("express stores ensure_indexes skipped: %s", exc)
+
+    # Wave 9.3: индексы Elasticsearch для logs/orders.
+    try:
+        from src.services.io.indexers import get_log_indexer, get_order_indexer
+
+        await get_log_indexer().ensure_index()
+        await get_order_indexer().ensure_index()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("ES indexers ensure_index skipped: %s", exc)
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
@@ -141,9 +199,9 @@ async def lifespan(app: FastAPI):
         register_all_services()
         register_action_handlers()
         register_dsl_routes()
-        _register_protocol_providers()
-        _validate_cache_layers()
         await starting()
+        await _register_protocol_providers()
+        _validate_cache_layers()
 
         from src.workflows.outbox_worker import start_outbox_worker
 

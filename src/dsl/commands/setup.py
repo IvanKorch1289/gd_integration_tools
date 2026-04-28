@@ -308,6 +308,44 @@ def register_action_handlers() -> None:
         ]
     )
 
+    # ── Notebooks (Wave 9.1) ──
+    from src.services.notebooks import get_notebook_service
+
+    action_handler_registry.register_many(
+        [
+            ActionHandlerSpec(
+                action="notebooks.create",
+                service_getter=get_notebook_service,
+                service_method="create",
+            ),
+            ActionHandlerSpec(
+                action="notebooks.get",
+                service_getter=get_notebook_service,
+                service_method="get",
+            ),
+            ActionHandlerSpec(
+                action="notebooks.update_content",
+                service_getter=get_notebook_service,
+                service_method="update_content",
+            ),
+            ActionHandlerSpec(
+                action="notebooks.restore_version",
+                service_getter=get_notebook_service,
+                service_method="restore_version",
+            ),
+            ActionHandlerSpec(
+                action="notebooks.list",
+                service_getter=get_notebook_service,
+                service_method="list_all",
+            ),
+            ActionHandlerSpec(
+                action="notebooks.delete",
+                service_getter=get_notebook_service,
+                service_method="delete",
+            ),
+        ]
+    )
+
     # ── RAG (Vector DB + LLM) ──
     from src.services.ai.rag_service import get_rag_service
 

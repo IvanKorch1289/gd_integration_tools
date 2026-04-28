@@ -8,7 +8,11 @@ from typing import Any
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
 from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import get_express_client, resolve_value
+from src.dsl.engine.processors.express._common import (
+    get_express_client,
+    log_outgoing_message,
+    resolve_value,
+)
 
 __all__ = ("ExpressReplyProcessor",)
 
@@ -73,6 +77,13 @@ class ExpressReplyProcessor(BaseProcessor):
                 sync_id = await client.reply(str(source_sync_id), msg)
             exchange.set_property(self._result_property, sync_id)
             _logger.debug("ExpressReply: source=%s reply=%s", source_sync_id, sync_id)
+            await log_outgoing_message(
+                session_id=str(source_sync_id),
+                body=str(text),
+                bot_id=self._bot,
+                group_chat_id=str(chat_id),
+                sync_id=str(sync_id) if sync_id else None,
+            )
         except Exception as exc:
             _logger.warning("ExpressReply: ошибка: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))

@@ -22,8 +22,9 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 __all__ = ("router",)
 
@@ -147,3 +148,115 @@ async def reload_connector(name: str) -> JSONResponse:
             "post_reload_health": {"status": post_status, "error": post_error},
         },
     )
+
+
+# ── Wave 9.2.3: ConnectorConfigStore CRUD ──
+
+
+class ConnectorConfigPayload(BaseModel):
+    """Тело запроса PUT ``/connectors/{name}/config``."""
+
+    config: dict[str, Any] = Field(default_factory=dict)
+    enabled: bool = True
+    user: str | None = None
+
+
+@router.get(
+    "/connectors/{name}/config",
+    summary="Получить хранимый конфиг коннектора (Wave 9.2.3)",
+)
+async def get_connector_config(name: str) -> JSONResponse:
+    """Читает запись из ``connector_configs`` (MongoDB) или возвращает 404."""
+    try:
+        from src.infrastructure.repositories.connector_configs_mongo import (
+            get_connector_config_store,
+        )
+
+        store = get_connector_config_store()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"
+        ) from exc
+
+    entry = await store.get(name)
+    if entry is None:
+        raise HTTPException(status_code=404, detail=f"No config for {name!r}")
+    return JSONResponse(status_code=200, content=entry.model_dump(mode="json"))
+
+
+@router.put(
+    "/connectors/{name}/config",
+    summary="Сохранить конфиг коннектора (upsert) + reload (Wave 9.2.3)",
+)
+async def put_connector_config(
+    name: str, payload: ConnectorConfigPayload = Body(...)
+) -> JSONResponse:
+    """Upsert конфига и попытка hot-reload коннектора.
+
+    Reload — best-effort: если ``ConnectorRegistry`` недоступен или
+    коннектор не зарегистрирован, конфиг всё равно сохраняется.
+    """
+    try:
+        from src.infrastructure.repositories.connector_configs_mongo import (
+            get_connector_config_store,
+        )
+
+        store = get_connector_config_store()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"
+        ) from exc
+
+    entry = await store.save(
+        name,
+        payload.config,
+        enabled=payload.enabled,
+        user=payload.user,
+    )
+
+    reload_status: dict[str, Any] = {"attempted": False}
+    try:
+        from src.infrastructure.registry import (
+            ConnectorNotRegisteredError,
+            ConnectorRegistry,
+        )
+
+        registry = ConnectorRegistry.instance()
+        reload_status["attempted"] = True
+        try:
+            duration_ms = await registry.reload(name)
+            reload_status["duration_ms"] = round(duration_ms, 2)
+            reload_status["status"] = "ok"
+        except ConnectorNotRegisteredError:
+            reload_status["status"] = "not_registered"
+        except Exception as reload_exc:  # noqa: BLE001
+            reload_status["status"] = "failed"
+            reload_status["error"] = str(reload_exc)[:200]
+    except ImportError:
+        reload_status["status"] = "registry_unavailable"
+
+    return JSONResponse(
+        status_code=200,
+        content={"saved": entry.model_dump(mode="json"), "reload": reload_status},
+    )
+
+
+@router.delete(
+    "/connectors/{name}/config",
+    summary="Удалить хранимый конфиг коннектора (Wave 9.2.3)",
+)
+async def delete_connector_config(name: str) -> JSONResponse:
+    """Удаляет запись из ``connector_configs``."""
+    try:
+        from src.infrastructure.repositories.connector_configs_mongo import (
+            get_connector_config_store,
+        )
+
+        store = get_connector_config_store()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"
+        ) from exc
+
+    deleted = await store.delete(name)
+    return JSONResponse(status_code=200, content={"deleted": deleted})

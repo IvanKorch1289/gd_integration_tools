@@ -239,11 +239,31 @@ class InMemoryFeedbackRepository:
                     result["indexed"] += 1
         return result
 
+    async def ensure_indexes(self) -> None:
+        """In-memory не требует индексов; метод нужен для совместимости с Mongo."""
+        return None
 
-@app_state_singleton("ai_feedback_repository", factory=InMemoryFeedbackRepository)
+
+def _default_repository_factory() -> FeedbackRepository:
+    """Mongo-репозиторий с fallback на in-memory.
+
+    Wave 9.2: drop-in замена ``InMemoryFeedbackRepository``. Если Mongo-
+    инфраструктура недоступна — fallback на in-memory сохраняется.
+    """
+    try:
+        from src.infrastructure.repositories.ai_feedback_mongo import (
+            MongoFeedbackRepository,
+        )
+
+        return MongoFeedbackRepository()
+    except Exception:  # noqa: BLE001
+        return InMemoryFeedbackRepository()
+
+
+@app_state_singleton("ai_feedback_repository", factory=_default_repository_factory)
 def get_feedback_repository() -> FeedbackRepository:
     """Возвращает singleton ``FeedbackRepository``.
 
-    По умолчанию — ``InMemoryFeedbackRepository``. В Wave 9 фабрика
-    в ``register_app_state()`` подменит его на MongoDB-реализацию.
+    По умолчанию — ``MongoFeedbackRepository`` (Wave 9.2);
+    fallback — ``InMemoryFeedbackRepository``.
     """
