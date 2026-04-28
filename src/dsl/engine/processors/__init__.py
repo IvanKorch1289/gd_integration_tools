@@ -28,6 +28,7 @@ from src.dsl.engine.processors.ai_banking import (
     KycAmlVerifyProcessor,
     TransactionCategorizerProcessor,
 )
+from src.dsl.engine.processors.audit import AuditProcessor
 from src.dsl.engine.processors.banking import (
     EdifactParserProcessor,
     FixMessageProcessor,
@@ -103,6 +104,13 @@ from src.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
+from src.dsl.engine.processors.entity import (
+    EntityCreateProcessor,
+    EntityDeleteProcessor,
+    EntityGetProcessor,
+    EntityListProcessor,
+    EntityUpdateProcessor,
+)
 from src.dsl.engine.processors.export import ExportProcessor
 from src.dsl.engine.processors.external import (
     AgentGraphProcessor,
@@ -159,6 +167,7 @@ from src.dsl.engine.processors.rpa_banking import (
     SapGuiProcessor,
     TerminalEmulator3270Processor,
 )
+from src.dsl.engine.processors.scan_file import ScanFileProcessor
 from src.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
     PaginateProcessor,
@@ -336,4 +345,11 @@ __all__ = (
     "ComplianceLabelProcessor",
     "AuthValidateProcessor",
     "NotifyProcessor",
+    "AuditProcessor",
+    "EntityCreateProcessor",
+    "EntityDeleteProcessor",
+    "EntityGetProcessor",
+    "EntityListProcessor",
+    "EntityUpdateProcessor",
+    "ScanFileProcessor",
 )

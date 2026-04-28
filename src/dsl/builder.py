@@ -915,6 +915,230 @@ class RouteBuilder:
             ExpressTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
         )
 
+    def express_send_file(
+        self,
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.group_chat_id",
+        s3_key_from: str | None = None,
+        file_data_property: str | None = None,
+        file_name: str | None = None,
+        file_name_from: str | None = None,
+        body: str | None = None,
+        body_from: str | None = None,
+        result_property: str = "express_file_sync_id",
+    ) -> "RouteBuilder":
+        """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
+        from src.dsl.engine.processors.express import ExpressSendFileProcessor
+
+        return self._add(
+            ExpressSendFileProcessor(
+                bot=bot,
+                chat_id_from=chat_id_from,
+                s3_key_from=s3_key_from,
+                file_data_property=file_data_property,
+                file_name=file_name,
+                file_name_from=file_name_from,
+                body=body,
+                body_from=body_from,
+                result_property=result_property,
+            )
+        )
+
+    def express_mention(
+        self,
+        *,
+        mention_type: str = "user",
+        target_from: str | None = None,
+        mention_id: str | None = None,
+        name_from: str | None = None,
+        property_name: str = "express_mentions",
+    ) -> "RouteBuilder":
+        """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
+        from src.dsl.engine.processors.express import ExpressMentionProcessor
+
+        return self._add(
+            ExpressMentionProcessor(
+                mention_type=mention_type,
+                target_from=target_from,
+                mention_id=mention_id,
+                name_from=name_from,
+                property_name=property_name,
+            )
+        )
+
+    def express_status(
+        self,
+        *,
+        bot: str = "main_bot",
+        sync_id_from: str = "properties.express_sync_id",
+        result_property: str = "express_event_status",
+    ) -> "RouteBuilder":
+        """Запросить статус доставки сообщения по sync_id."""
+        from src.dsl.engine.processors.express import ExpressStatusProcessor
+
+        return self._add(
+            ExpressStatusProcessor(
+                bot=bot,
+                sync_id_from=sync_id_from,
+                result_property=result_property,
+            )
+        )
+
+    # ── Entity CRUD (Wave 11) ──
+
+    def entity_create(
+        self,
+        *,
+        entity: str,
+        payload_from: str = "body",
+        result_property: str = "action_result",
+    ) -> "RouteBuilder":
+        """Создать сущность через action ``<entity>.create``."""
+        from src.dsl.engine.processors.entity import EntityCreateProcessor
+
+        return self._add(
+            EntityCreateProcessor(
+                entity=entity,
+                payload_from=payload_from,
+                result_property=result_property,
+            )
+        )
+
+    def entity_get(
+        self,
+        *,
+        entity: str,
+        id_from: str = "body.id",
+        result_property: str = "action_result",
+    ) -> "RouteBuilder":
+        """Прочитать сущность через action ``<entity>.get``."""
+        from src.dsl.engine.processors.entity import EntityGetProcessor
+
+        return self._add(
+            EntityGetProcessor(
+                entity=entity, id_from=id_from, result_property=result_property
+            )
+        )
+
+    def entity_update(
+        self,
+        *,
+        entity: str,
+        id_from: str = "body.id",
+        payload_from: str = "body",
+        result_property: str = "action_result",
+    ) -> "RouteBuilder":
+        """Обновить сущность через action ``<entity>.update``."""
+        from src.dsl.engine.processors.entity import EntityUpdateProcessor
+
+        return self._add(
+            EntityUpdateProcessor(
+                entity=entity,
+                id_from=id_from,
+                payload_from=payload_from,
+                result_property=result_property,
+            )
+        )
+
+    def entity_delete(
+        self,
+        *,
+        entity: str,
+        id_from: str = "body.id",
+        result_property: str = "action_result",
+    ) -> "RouteBuilder":
+        """Удалить сущность через action ``<entity>.delete``."""
+        from src.dsl.engine.processors.entity import EntityDeleteProcessor
+
+        return self._add(
+            EntityDeleteProcessor(
+                entity=entity, id_from=id_from, result_property=result_property
+            )
+        )
+
+    def entity_list(
+        self,
+        *,
+        entity: str,
+        filters_from: str | None = "body.filters",
+        page: int | None = None,
+        size: int | None = None,
+        page_from: str | None = None,
+        size_from: str | None = None,
+        result_property: str = "action_result",
+    ) -> "RouteBuilder":
+        """Получить страницу сущностей через action ``<entity>.list``."""
+        from src.dsl.engine.processors.entity import EntityListProcessor
+
+        return self._add(
+            EntityListProcessor(
+                entity=entity,
+                filters_from=filters_from,
+                page=page,
+                size=size,
+                page_from=page_from,
+                size_from=size_from,
+                result_property=result_property,
+            )
+        )
+
+    # ── Audit + AV (Wave 11) ──
+
+    def audit(
+        self,
+        *,
+        action: str | None = None,
+        action_from: str | None = None,
+        actor: str = "system",
+        actor_from: str | None = None,
+        resource_from: str | None = None,
+        outcome: str = "success",
+        outcome_from: str | None = None,
+        metadata_from: str | None = None,
+        tenant_id_from: str | None = None,
+        correlation_id_from: str | None = None,
+        result_property: str = "audit_event_hash",
+    ) -> "RouteBuilder":
+        """Записать событие в immutable audit log (Wave 5.1)."""
+        from src.dsl.engine.processors.audit import AuditProcessor
+
+        return self._add(
+            AuditProcessor(
+                action=action,
+                action_from=action_from,
+                actor=actor,
+                actor_from=actor_from,
+                resource_from=resource_from,
+                outcome=outcome,
+                outcome_from=outcome_from,
+                metadata_from=metadata_from,
+                tenant_id_from=tenant_id_from,
+                correlation_id_from=correlation_id_from,
+                result_property=result_property,
+            )
+        )
+
+    def scan_file(
+        self,
+        *,
+        s3_key_from: str | None = None,
+        data_property: str | None = None,
+        on_threat: str = "fail",
+        result_property: str = "antivirus_scan_result",
+    ) -> "RouteBuilder":
+        """Сканировать файл AV-бэкендом (Wave 2.4)."""
+        from src.dsl.engine.processors.scan_file import ScanFileProcessor
+
+        return self._add(
+            ScanFileProcessor(
+                s3_key_from=s3_key_from,
+                data_property=data_property,
+                on_threat=on_threat,
+                result_property=result_property,
+            )
+        )
+
     # ── Camel Components (source/sink) ──
 
     def http_call(
@@ -2062,14 +2286,18 @@ class RouteBuilder:
             )
         )
 
-    def feature_flag(
+    def feature_flag_branch(
         self,
         flag: str,
         processors: list[BaseProcessor],
         *,
         resolver: Callable[[str], bool] | None = None,
     ) -> "RouteBuilder":
-        """Выполняет ветку только при включённом feature flag."""
+        """Выполняет ветку процессоров только при включённом feature flag.
+
+        Не путать с ``feature_flag(name)`` (метаданная маршрута, отключает
+        маршрут целиком). Здесь — DSL-step внутри pipeline.
+        """
         from src.dsl.engine.processors.generic import FeatureFlagGuardProcessor
 
         return self._add(
