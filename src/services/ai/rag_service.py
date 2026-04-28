@@ -6,9 +6,13 @@ import hashlib
 import logging
 from typing import Any
 
-from src.infrastructure.clients.storage.s3_pool.vector_store import (
+from src.infrastructure.clients.storage.vector_store import (
     BaseVectorStore,
     get_vector_store,
+)
+from src.services.ai.embedding_providers import (
+    EmbeddingProvider,
+    get_embedding_provider,
 )
 
 __all__ = ("RAGService", "get_rag_service")
@@ -17,28 +21,17 @@ logger = logging.getLogger(__name__)
 
 
 class RAGService:
-    """Retrieval-Augmented Generation — загрузка, поиск, обогащение промптов."""
+    """Retrieval-Augmented Generation — загрузка, поиск, обогащение промптов.
 
-    def __init__(self, store: BaseVectorStore) -> None:
+    Embedding-провайдер и vector store инжектятся через DI; оба компонента
+    выбираются по ``rag_settings`` (vector_backend, embedding_provider).
+    """
+
+    def __init__(
+        self, store: BaseVectorStore, embedder: EmbeddingProvider | None = None
+    ) -> None:
         self._store = store
-        self._embedder: Any = None
-
-    def _get_embedder(self) -> Any:
-        """Lazy-инициализация embedder-а.
-
-        IL-CRIT1.3 (ADR-014): переход с `sentence-transformers` (1.2GB, sync
-        под `asyncio.to_thread`) на `fastembed` (ONNX quantized, в ~10× легче).
-        `fastembed.TextEmbedding` работает через batch API.
-        """
-        if self._embedder is not None:
-            return self._embedder
-
-        from fastembed import TextEmbedding
-
-        from src.core.config.rag import rag_settings
-
-        self._embedder = TextEmbedding(model_name=rag_settings.embedding_model)
-        return self._embedder
+        self._embedder = embedder or get_embedding_provider()
 
     def _chunk_text(self, text: str) -> list[str]:
         from src.core.config.rag import rag_settings
@@ -55,18 +48,7 @@ class RAGService:
         return chunks
 
     async def _embed(self, texts: list[str]) -> list[list[float]]:
-        """Построить embeddings для списка текстов.
-
-        `fastembed.TextEmbedding.embed()` возвращает generator of numpy
-        arrays. Выполняем в `asyncio.to_thread`, чтобы не блокировать
-        event loop (ONNX-inference не является async-native).
-        """
-        import asyncio
-
-        model = self._get_embedder()
-        # Материализуем generator в список np.ndarray внутри потока.
-        arrays = await asyncio.to_thread(lambda: [vec for vec in model.embed(texts)])
-        return [arr.tolist() for arr in arrays]
+        return await self._embedder.embed(texts)
 
     async def ingest(
         self,
@@ -130,7 +112,7 @@ class RAGService:
         )
 
     async def delete(self, document_id: str) -> bool:
-        """Удаляет документ из индекса."""
+        """Удаляет документ из индекса (по chunk-id'ам или doc_id)."""
         try:
             await self._store.delete([document_id])
             return True

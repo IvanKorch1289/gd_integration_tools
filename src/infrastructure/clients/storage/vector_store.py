@@ -1,4 +1,4 @@
-"""Vector store abstraction — Chroma, FAISS backends."""
+"""Vector store abstraction — Qdrant, Chroma, FAISS backends."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ __all__ = (
     "BaseVectorStore",
     "ChromaVectorStore",
     "FAISSVectorStore",
+    "QdrantVectorStore",
     "get_vector_store",
 )
 
@@ -41,6 +42,128 @@ class BaseVectorStore(ABC):
 
     @abstractmethod
     async def count(self) -> int: ...
+
+
+class QdrantVectorStore(BaseVectorStore):
+    """Vector store через Qdrant (default backend)."""
+
+    def __init__(
+        self,
+        url: str = "http://localhost:6333",
+        collection_name: str = "gd_rag",
+        api_key: str | None = None,
+        vector_size: int = 384,
+    ) -> None:
+        self._url = url
+        self._collection_name = collection_name
+        self._api_key = api_key
+        self._vector_size = vector_size
+        self._client: Any = None
+        self._collection_ready = False
+
+    async def _client_instance(self) -> Any:
+        if self._client is not None:
+            return self._client
+        try:
+            from qdrant_client import AsyncQdrantClient
+        except ImportError as exc:
+            raise RuntimeError(
+                "qdrant-client не установлен — добавьте в зависимости проекта"
+            ) from exc
+        self._client = AsyncQdrantClient(url=self._url, api_key=self._api_key)
+        return self._client
+
+    async def _ensure_collection(self) -> Any:
+        client = await self._client_instance()
+        if self._collection_ready:
+            return client
+        from qdrant_client.http.exceptions import UnexpectedResponse
+        from qdrant_client.models import Distance, VectorParams
+
+        try:
+            await client.get_collection(self._collection_name)
+        except (UnexpectedResponse, ValueError):
+            await client.create_collection(
+                collection_name=self._collection_name,
+                vectors_config=VectorParams(
+                    size=self._vector_size, distance=Distance.COSINE
+                ),
+            )
+            logger.info("Qdrant collection '%s' created", self._collection_name)
+        self._collection_ready = True
+        return client
+
+    async def upsert(
+        self,
+        embeddings: list[list[float]],
+        documents: list[str],
+        ids: list[str],
+        metadatas: list[dict[str, Any]] | None = None,
+    ) -> None:
+        from qdrant_client.models import PointStruct
+
+        client = await self._ensure_collection()
+        points = [
+            PointStruct(
+                id=ids[i],
+                vector=embeddings[i],
+                payload={
+                    "document": documents[i],
+                    **(metadatas[i] if metadatas and i < len(metadatas) else {}),
+                },
+            )
+            for i in range(len(ids))
+        ]
+        await client.upsert(collection_name=self._collection_name, points=points)
+
+    async def query(
+        self,
+        embedding: list[float],
+        top_k: int = 5,
+        where: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+        client = await self._ensure_collection()
+        query_filter: Filter | None = None
+        if where:
+            query_filter = Filter(
+                must=[
+                    FieldCondition(key=key, match=MatchValue(value=value))
+                    for key, value in where.items()
+                ]
+            )
+        results = await client.search(
+            collection_name=self._collection_name,
+            query_vector=embedding,
+            limit=top_k,
+            query_filter=query_filter,
+        )
+        return [
+            {
+                "id": str(r.id),
+                "document": (r.payload or {}).get("document", ""),
+                "metadata": {
+                    k: v for k, v in (r.payload or {}).items() if k != "document"
+                },
+                "distance": 1.0 - r.score,
+            }
+            for r in results
+        ]
+
+    async def delete(self, ids: list[str]) -> None:
+        from qdrant_client.models import PointIdsList
+
+        client = await self._ensure_collection()
+        await client.delete(
+            collection_name=self._collection_name,
+            points_selector=PointIdsList(points=list(ids)),
+        )
+
+    async def count(self) -> int:
+        client = await self._ensure_collection()
+        result = await client.count(collection_name=self._collection_name, exact=True)
+        return int(result.count)
 
 
 class ChromaVectorStore(BaseVectorStore):
@@ -220,14 +343,36 @@ class FAISSVectorStore(BaseVectorStore):
         return len(self._docs)
 
 
-def get_vector_store(backend: str = "chroma", **kwargs: Any) -> BaseVectorStore:
-    """Фабрика для vector store."""
-    if backend == "faiss":
-        return FAISSVectorStore(**kwargs)
+def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorStore:
+    """Фабрика vector store. Если ``backend`` не указан — берёт значение
+    из ``rag_settings.vector_backend`` (default ``qdrant``).
+    """
     from src.core.config.rag import rag_settings
 
-    return ChromaVectorStore(
-        host=kwargs.get("host", rag_settings.chroma_host),
-        port=kwargs.get("port", rag_settings.chroma_port),
-        collection_name=kwargs.get("collection_name", rag_settings.chroma_collection),
-    )
+    backend_name = (backend or rag_settings.vector_backend).lower()
+
+    match backend_name:
+        case "qdrant":
+            return QdrantVectorStore(
+                url=kwargs.get("url", rag_settings.qdrant_url),
+                collection_name=kwargs.get(
+                    "collection_name", rag_settings.qdrant_collection
+                ),
+                api_key=kwargs.get("api_key", rag_settings.qdrant_api_key),
+                vector_size=kwargs.get("vector_size", 384),
+            )
+        case "chroma":
+            return ChromaVectorStore(
+                host=kwargs.get("host", rag_settings.chroma_host),
+                port=kwargs.get("port", rag_settings.chroma_port),
+                collection_name=kwargs.get(
+                    "collection_name", rag_settings.chroma_collection
+                ),
+            )
+        case "faiss":
+            return FAISSVectorStore(dimension=kwargs.get("dimension", 384))
+        case _:
+            raise ValueError(
+                f"Неизвестный vector_backend: {backend_name!r}. "
+                "Поддерживается: qdrant, chroma, faiss."
+            )

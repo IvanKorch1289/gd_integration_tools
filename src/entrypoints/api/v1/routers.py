@@ -27,6 +27,7 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.notebooks import router as notebooks_router
     from src.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
     from src.entrypoints.api.v1.endpoints.orders import router as orders_router
+    from src.entrypoints.api.v1.endpoints.rag import router as rag_router
     from src.entrypoints.api.v1.endpoints.search import router as search_router
     from src.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.entrypoints.api.v1.endpoints.tech import router as tech_router
@@ -89,5 +90,7 @@ def get_v1_routers() -> APIRouter:
     )
     # Wave 9.3: единый поисковый API поверх Elasticsearch.
     api_router_v1.include_router(search_router, prefix="/search", tags=["Search"])
+    # Wave 12: Retrieval-Augmented Generation.
+    api_router_v1.include_router(rag_router, prefix="/rag", tags=["RAG"])
 
     return api_router_v1

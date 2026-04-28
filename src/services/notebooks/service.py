@@ -52,6 +52,7 @@ class NotebookService:
             )
             notebook.latest_version = 1
         await self._repo.create(notebook)
+        _trigger_rag_index(notebook)
         return notebook
 
     async def get(self, notebook_id: str) -> Notebook | None:
@@ -74,7 +75,10 @@ class NotebookService:
     async def update_content(
         self, *, notebook_id: str, content: str, user: str, summary: str | None = None
     ) -> Notebook | None:
-        return await self._repo.append_version(notebook_id, content, user, summary)
+        notebook = await self._repo.append_version(notebook_id, content, user, summary)
+        if notebook is not None:
+            _trigger_rag_index(notebook)
+        return notebook
 
     async def restore_version(
         self, *, notebook_id: str, version: int, user: str
@@ -94,7 +98,32 @@ class NotebookService:
         )
 
     async def delete(self, notebook_id: str) -> bool:
-        return await self._repo.soft_delete(notebook_id)
+        deleted = await self._repo.soft_delete(notebook_id)
+        if deleted:
+            _trigger_rag_delete(notebook_id)
+        return deleted
+
+
+def _trigger_rag_index(notebook: Notebook) -> None:
+    """Best-effort fire-and-forget индексация в RAG. Тихо игнорирует ошибки."""
+    try:
+        from src.services.notebooks.indexer import get_notebook_indexer
+
+        get_notebook_indexer().index_one_fire_and_forget(notebook)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("RAG-индексация notebook'а не запущена: %s", exc)
+
+
+def _trigger_rag_delete(notebook_id: str) -> None:
+    """Best-effort fire-and-forget удаление из RAG."""
+    try:
+        import asyncio
+
+        from src.services.notebooks.indexer import get_notebook_indexer
+
+        asyncio.create_task(get_notebook_indexer().delete_one(notebook_id))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("RAG-удаление notebook'а %s не запущено: %s", notebook_id, exc)
 
 
 def _default_repository_factory() -> NotebookRepository:
