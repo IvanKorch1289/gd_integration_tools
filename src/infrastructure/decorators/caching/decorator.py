@@ -215,7 +215,7 @@ class CachingDecorator:
         try:
             await redis_client.cache_set(key, json_dumps(value), self.expire)
             self._mark_redis_success()
-        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
+        except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
             self._mark_redis_failure()
         except Exception as exc:
             redis_client.logger.warning(

@@ -114,7 +114,7 @@ class ExecutionTracer:
                     try:
                         q.get_nowait()
                         q.put_nowait(event)
-                    except asyncio.QueueEmpty, asyncio.QueueFull:
+                    except (asyncio.QueueEmpty, asyncio.QueueFull):
                         pass
 
     async def subscribe(self, route_id: str) -> AsyncGenerator[TraceEvent, None]:

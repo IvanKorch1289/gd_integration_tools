@@ -88,7 +88,7 @@ def _walk_items(
                     response_model = f"{name}Response"
                     schemas[response_model] = schema
                     break
-            except json.JSONDecodeError, TypeError:
+            except (json.JSONDecodeError, TypeError):
                 continue
 
         routes.append(

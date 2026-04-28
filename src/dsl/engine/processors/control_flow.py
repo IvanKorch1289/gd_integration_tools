@@ -197,7 +197,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except RetryError, _RetryAbort:
+        except (RetryError, _RetryAbort):
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
