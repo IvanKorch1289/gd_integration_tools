@@ -230,9 +230,7 @@ class RouteBuilder:
 
         return self._add(
             AuthValidateProcessor(
-                methods=methods,
-                result_property=result_property,
-                required=required,
+                methods=methods, result_property=result_property, required=required
             )
         )
 
@@ -979,10 +977,174 @@ class RouteBuilder:
 
         return self._add(
             ExpressStatusProcessor(
+                bot=bot, sync_id_from=sync_id_from, result_property=result_property
+            )
+        )
+
+    # ── Telegram Bot API (W15.3) ──
+
+    def telegram_send(
+        self,
+        body: str | None = None,
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.chat_id",
+        body_from: str | None = None,
+        parse_mode: str = "HTML",
+        inline_keyboard: list[list[dict[str, Any]]] | None = None,
+        reply_keyboard: list[list[str]] | None = None,
+        disable_notification: bool = False,
+        disable_web_page_preview: bool = False,
+        result_property: str = "telegram_message_id",
+    ) -> "RouteBuilder":
+        """Отправить сообщение в Telegram чат через Bot API."""
+        from src.dsl.engine.processors.telegram import TelegramSendProcessor
+
+        return self._add(
+            TelegramSendProcessor(
                 bot=bot,
-                sync_id_from=sync_id_from,
+                chat_id_from=chat_id_from,
+                body=body,
+                body_from=body_from,
+                parse_mode=parse_mode,
+                inline_keyboard=inline_keyboard,
+                reply_keyboard=reply_keyboard,
+                disable_notification=disable_notification,
+                disable_web_page_preview=disable_web_page_preview,
                 result_property=result_property,
             )
+        )
+
+    def telegram_reply(
+        self,
+        body_from: str | None = None,
+        *,
+        bot: str = "main_bot",
+        source_message_id_from: str = "body.message.message_id",
+        chat_id_from: str = "body.chat_id",
+        body: str | None = None,
+        parse_mode: str = "HTML",
+        result_property: str = "telegram_reply_message_id",
+    ) -> "RouteBuilder":
+        """Ответить на сообщение Telegram (reply_to_message_id)."""
+        from src.dsl.engine.processors.telegram import TelegramReplyProcessor
+
+        return self._add(
+            TelegramReplyProcessor(
+                bot=bot,
+                source_message_id_from=source_message_id_from,
+                chat_id_from=chat_id_from,
+                body=body,
+                body_from=body_from,
+                parse_mode=parse_mode,
+                result_property=result_property,
+            )
+        )
+
+    def telegram_edit(
+        self,
+        message_id_from: str = "properties.telegram_message_id",
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.chat_id",
+        body: str | None = None,
+        body_from: str | None = None,
+        parse_mode: str = "HTML",
+        inline_keyboard: list[list[dict[str, Any]]] | None = None,
+    ) -> "RouteBuilder":
+        """Редактировать ранее отправленное Telegram-сообщение."""
+        from src.dsl.engine.processors.telegram import TelegramEditProcessor
+
+        return self._add(
+            TelegramEditProcessor(
+                bot=bot,
+                chat_id_from=chat_id_from,
+                message_id_from=message_id_from,
+                body=body,
+                body_from=body_from,
+                parse_mode=parse_mode,
+                inline_keyboard=inline_keyboard,
+            )
+        )
+
+    def telegram_typing(
+        self,
+        action: str = "typing",
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.chat_id",
+    ) -> "RouteBuilder":
+        """Отправить chat-action (typing / upload_photo / …) в Telegram."""
+        from src.dsl.engine.processors.telegram import TelegramTypingProcessor
+
+        return self._add(
+            TelegramTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
+        )
+
+    def telegram_send_file(
+        self,
+        *,
+        bot: str = "main_bot",
+        chat_id_from: str = "body.chat_id",
+        s3_key_from: str | None = None,
+        file_data_property: str | None = None,
+        file_name: str | None = None,
+        file_name_from: str | None = None,
+        body: str | None = None,
+        body_from: str | None = None,
+        parse_mode: str = "HTML",
+        disable_notification: bool = False,
+        result_property: str = "telegram_file_message_id",
+    ) -> "RouteBuilder":
+        """Отправить файл (документ) в Telegram чат."""
+        from src.dsl.engine.processors.telegram import TelegramSendFileProcessor
+
+        return self._add(
+            TelegramSendFileProcessor(
+                bot=bot,
+                chat_id_from=chat_id_from,
+                s3_key_from=s3_key_from,
+                file_data_property=file_data_property,
+                file_name=file_name,
+                file_name_from=file_name_from,
+                body=body,
+                body_from=body_from,
+                parse_mode=parse_mode,
+                disable_notification=disable_notification,
+                result_property=result_property,
+            )
+        )
+
+    def telegram_mention(
+        self,
+        *,
+        user_id_from: str,
+        display_name_from: str | None = None,
+        parse_mode: str = "MarkdownV2",
+        property_name: str = "telegram_mention",
+        append: bool = False,
+    ) -> "RouteBuilder":
+        """Создать фрагмент-упоминание пользователя для вставки в текст."""
+        from src.dsl.engine.processors.telegram import TelegramMentionProcessor
+
+        return self._add(
+            TelegramMentionProcessor(
+                user_id_from=user_id_from,
+                display_name_from=display_name_from,
+                parse_mode=parse_mode,
+                property_name=property_name,
+                append=append,
+            )
+        )
+
+    def telegram_status(
+        self, *, bot: str = "main_bot", result_property: str = "telegram_bot_profile"
+    ) -> "RouteBuilder":
+        """Запросить профиль бота (getMe) — health-check Telegram."""
+        from src.dsl.engine.processors.telegram import TelegramStatusProcessor
+
+        return self._add(
+            TelegramStatusProcessor(bot=bot, result_property=result_property)
         )
 
     # ── Entity CRUD (Wave 11) ──
@@ -2338,7 +2500,7 @@ class RouteBuilder:
             from src.dsl.commands.registry import action_handler_registry
 
             available = set(action_handler_registry.list_actions())
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return
 
         if not available:

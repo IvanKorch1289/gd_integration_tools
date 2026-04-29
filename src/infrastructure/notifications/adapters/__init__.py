@@ -23,5 +23,6 @@ Scaffolding-адаптеры — placeholder'ы с правильным инте
 
 from src.infrastructure.notifications.adapters.base import NotificationChannel
 from src.infrastructure.notifications.adapters.express import ExpressAdapter
+from src.infrastructure.notifications.adapters.telegram import TelegramAdapter
 
-__all__ = ("ExpressAdapter", "NotificationChannel")
+__all__ = ("ExpressAdapter", "NotificationChannel", "TelegramAdapter")

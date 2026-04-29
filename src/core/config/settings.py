@@ -45,6 +45,7 @@ from src.core.config.services import (
     redis_settings,
     tasks_settings,
 )
+from src.core.config.telegram import TelegramBotSettings, telegram_bot_settings
 
 __all__ = ("Settings", "settings")
 
@@ -79,6 +80,7 @@ class Settings(BaseSettings):
     # Аналитика / поиск
     clickhouse: ClickHouseSettings = clickhouse_settings
     express: ExpressSettings = express_settings
+    telegram: TelegramBotSettings = telegram_bot_settings
     elasticsearch: ElasticsearchSettings = elasticsearch_settings
 
     # Хранилища

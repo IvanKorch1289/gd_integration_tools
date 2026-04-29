@@ -5,23 +5,25 @@ from typing import ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
+from src.core.config.integration_base import BaseBotChannelSettings
 
 __all__ = ("ExpressSettings", "express_settings")
 
 
-class ExpressSettings(BaseSettingsWithLoader):
+class ExpressSettings(BaseBotChannelSettings):
     """eXpress messenger BotX API настройки.
 
-    Поддерживает single-bot конфигурацию (через env-переменные) и
-    мультибот через YAML-конфиг (``extra_bots``: list[dict]).
+    Наследует от ``BaseBotChannelSettings`` (W15.2): общие поля канала
+    (``enabled``, ``bot_id``, ``secret_key``, ``callback_url``,
+    таймауты, retry) приходят из иерархии. Express-specific остаются
+    здесь: ``botx_url`` (URL BotX), ``botx_host`` (aud в JWT),
+    ``default_chat_id``, ``extra_bots`` для multi-bot конфигурации
+    через YAML.
     """
 
     yaml_group: ClassVar[str] = "express"
     model_config = SettingsConfigDict(env_prefix="EXPRESS_", extra="forbid")
 
-    bot_id: str = Field("", description="UUID бота из eXpress админки.")
-    secret_key: str = Field("", description="Секретный ключ бота.")
     botx_url: str = Field(
         "https://botx.corp.example.ru",
         description="URL BotX microservice (внутренний контур).",
@@ -31,10 +33,6 @@ class ExpressSettings(BaseSettingsWithLoader):
     )
     default_chat_id: str = Field(
         "", description="Чат по умолчанию для broadcast notifications."
-    )
-    enabled: bool = Field(False, description="Включить eXpress интеграцию.")
-    callback_url: str = Field(
-        "", description="URL нашего сервиса для приёма callback от BotX."
     )
     extra_bots: list[dict] = Field(
         default_factory=list,
