@@ -79,19 +79,31 @@ class HealthCheck:
     async def check_redis(self) -> bool:
         """Тестирует соединение с Redis-сервером.
 
+        На dev_light (``settings.redis.enabled=False``) возвращает ``True``
+        — Redis заменён in-memory backend, ping недоступен по контракту.
+
         Возвращает:
             bool: Статус доступности Redis
         """
+        if not getattr(settings.redis, "enabled", True):
+            return True
         from src.infrastructure.clients.storage.redis import redis_client
 
-        return await redis_client.check_connection()
+        return await redis_client.check_connection("cache")
 
     async def check_s3(self) -> bool:
         """Проверяет доступность S3-хранилища.
 
+        На dev_light (``settings.storage.enabled=False`` или
+        ``provider=local``) возвращает ``True`` — S3 заменён LocalFS.
+
         Возвращает:
             bool: Результат проверки соединения с объектным хранилищем
         """
+        if not getattr(settings.storage, "enabled", True):
+            return True
+        if getattr(settings.storage, "provider", "minio") == "local":
+            return True
         from src.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_connection()
@@ -99,9 +111,17 @@ class HealthCheck:
     async def check_s3_bucket(self) -> bool:
         """Проверяет существование требуемого S3-бакета.
 
+        На dev_light (``settings.storage.enabled=False`` или
+        ``provider=local``) возвращает ``True`` — bucket-проверка не
+        применима к LocalFS.
+
         Возвращает:
             bool: True если бакет существует, False в случае ошибки
         """
+        if not getattr(settings.storage, "enabled", True):
+            return True
+        if getattr(settings.storage, "provider", "minio") == "local":
+            return True
         from src.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_bucket_exists()
@@ -129,6 +149,9 @@ class HealthCheck:
     async def check_rabbitmq(self) -> bool:
         """Проверяет доступность брокера сообщений RabbitMQ.
 
+        На dev_light (``settings.queue.enabled=False``) возвращает
+        ``True`` — RabbitMQ заменён in-process очередью.
+
         Возвращает:
             bool: Статус подключения к RabbitMQ
 
@@ -136,6 +159,8 @@ class HealthCheck:
             - Установку тестового соединения
             - Корректное закрытие подключения
         """
+        if not getattr(settings.queue, "enabled", True):
+            return True
         try:
             connection = await connect(settings.queue.queue_url)
             await connection.close()
