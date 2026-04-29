@@ -24,8 +24,12 @@ from enum import Enum
 from typing import Any
 
 from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.core.interfaces.audit import AuditBackend, AuditRecord
 from src.core.interfaces.cache import CacheBackend
+from src.core.interfaces.doc_store import DocStoreBackend
+from src.core.interfaces.metrics import MetricsBackend
 from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
+from src.core.interfaces.secrets import SecretsBackend
 from src.core.interfaces.storage import ObjectStorage
 
 __all__ = (
@@ -40,6 +44,12 @@ __all__ = (
     "AntivirusScanResult",
     "NotificationAdapter",
     "NotificationMessage",
+    # Wave 21.3c fallback contracts
+    "AuditBackend",
+    "AuditRecord",
+    "DocStoreBackend",
+    "SecretsBackend",
+    "MetricsBackend",
     # Messaging
     "MessageBroker",
     # Lifecycle
