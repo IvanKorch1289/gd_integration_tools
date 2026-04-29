@@ -116,6 +116,50 @@ def _s3_enabled() -> bool:
     return bool(getattr(fs, "enabled", True)) and fs.provider != "local"
 
 
+def _taskiq_enabled() -> bool:
+    """Возвращает ``True``, если TaskIQ broker должен стартовать.
+
+    Управляется env-переменной ``TASKIQ_ENABLED`` (default ``true``).
+    Полезно отключить для unit-тестов / dev_light без TaskIQ.
+    """
+    import os
+
+    return os.getenv("TASKIQ_ENABLED", "true").lower() in ("1", "true", "yes")
+
+
+async def _taskiq_startup() -> None:
+    """Стартует TaskIQ broker.
+
+    * ``InMemoryBroker`` — исполняет задачи inline в этом процессе
+      (worker не нужен).
+    * ``ListQueueBroker(Redis)`` — kiq() пушит в Redis; для исполнения
+      нужен **отдельный процесс** worker'а:
+      ``taskiq worker src.infrastructure.execution.taskiq_broker:broker``
+      (см. ``docs/runbooks/taskiq-worker.md``).
+
+    Также гарантирует регистрацию task ``invoker.run`` (декоратор
+    срабатывает при первом ``get_invocation_task()``).
+    """
+    from src.infrastructure.execution.taskiq_broker import (
+        get_broker,
+        get_invocation_task,
+    )
+
+    broker = get_broker()
+    await broker.startup()
+    # Зарегистрировать taskiq-task до того, как kicker / worker
+    # обратится к ней по имени ``invoker.run``.
+    get_invocation_task()
+
+
+async def _taskiq_shutdown() -> None:
+    """Останавливает TaskIQ broker."""
+    from src.infrastructure.execution.taskiq_broker import get_broker
+
+    broker = get_broker()
+    await broker.shutdown()
+
+
 starting_operations: list[OperationItem] = [
     ("graylog_client", lambda: to_thread(graylog_handler.connect), None),
     ("redis", redis_client.ensure_connected, _redis_enabled),
@@ -126,12 +170,14 @@ starting_operations: list[OperationItem] = [
     ("rate_limiter", init_limiter, _redis_enabled),
     ("redis_streams", redis_client.create_initial_streams, _redis_enabled),
     ("scheduler", scheduler_manager.start, None),
+    ("taskiq_broker", _taskiq_startup, _taskiq_enabled),
     ("health_aggregator", _register_health_checks, None),  # ARCH-3
 ]
 
 ending_operations: list[OperationItem] = [
     ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
     ("scheduler", scheduler_manager.stop, None),
+    ("taskiq_broker", _taskiq_shutdown, _taskiq_enabled),
     ("smtp_pool", smtp_client.close_pool, None),
     ("s3_client", s3_client.close, _s3_enabled),
     ("db_async_pool_external", external_db_registry.close_all, None),

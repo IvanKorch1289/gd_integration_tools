@@ -106,6 +106,15 @@ def _configure_business_routers(app: FastAPI) -> None:
     # Интеграция с системами потоковой обработки. На dev_light профиле
     # ``redis.enabled=false`` / ``queue.enabled=false`` делают
     # соответствующий FastStream router None — пропускаем.
+    # Явные импорты subscriber-модулей: декораторы ``@router.subscriber(...)``
+    # регистрируются при импорте, поэтому их нужно подгрузить ДО
+    # ``app.include_router(redis_router/rabbit_router)``.
+    if stream_client.redis_router is not None or stream_client.rabbit_router is not None:
+        from src.entrypoints.stream import (  # noqa: F401
+            invoker_subscribers,
+            subscribers,
+        )
+
     if stream_client.redis_router is not None:
         app.include_router(
             stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"]

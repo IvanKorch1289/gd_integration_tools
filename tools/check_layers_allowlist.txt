@@ -135,3 +135,4 @@ src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.ext
 src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
 src/services/execution/invoker.py	services	src.infrastructure.execution.taskiq_broker
 src/services/execution/invoker.py	services	src.infrastructure.scheduler.scheduler_manager
+src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.stream

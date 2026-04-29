@@ -18,7 +18,6 @@ from src.core.interfaces.invocation_reply import ReplyChannelKind
 from src.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
-    InvocationResponse,
     InvocationStatus,
 )
 from src.infrastructure.messaging.invocation_replies import (
@@ -237,24 +236,220 @@ class TestInvokerStreaming:
         assert ws.sent[0]["error"] == "stream-fail"
 
 
-class TestInvokerStubModes:
-    @pytest.mark.parametrize(
-        "mode", [InvocationMode.ASYNC_QUEUE, InvocationMode.DEFERRED]
-    )
-    async def test_unimplemented_modes_return_error(
-        self, mode: InvocationMode
-    ) -> None:
+class TestInvokerDeferred:
+    """W22 этап B: DEFERRED через APScheduler DateTrigger."""
+
+    async def test_no_run_at_returns_error(self) -> None:
+        """Без metadata.run_at и delay_seconds — ERROR с понятной диагностикой."""
         dispatcher = _make_dispatcher()
         invoker = Invoker(dispatcher=dispatcher)
 
         response = await invoker.invoke(
-            InvocationRequest(action="x.y", mode=mode)
+            InvocationRequest(action="x.y", mode=InvocationMode.DEFERRED)
         )
 
         assert response.status is InvocationStatus.ERROR
         assert response.error is not None
-        assert "not yet implemented" in response.error
+        assert "run_at" in response.error
         dispatcher.dispatch.assert_not_awaited()
+
+    async def test_invalid_iso_run_at_returns_error(self) -> None:
+        dispatcher = _make_dispatcher()
+        invoker = Invoker(dispatcher=dispatcher)
+
+        response = await invoker.invoke(
+            InvocationRequest(
+                action="x.y",
+                mode=InvocationMode.DEFERRED,
+                metadata={"run_at": "not-a-date"},
+            )
+        )
+
+        assert response.status is InvocationStatus.ERROR
+
+    @staticmethod
+    def _patch_scheduler(
+        monkeypatch: pytest.MonkeyPatch, stub_manager: Any
+    ) -> None:
+        """Подменяет ``scheduler_manager``-модуль в ``sys.modules``.
+
+        Это нужно, потому что :meth:`Invoker._invoke_deferred` делает
+        импорт внутри функции — обычный ``monkeypatch.setattr`` на
+        реальный модуль попытается импортировать его (и упадёт без
+        ``psycopg2`` в dev_light). Stub в ``sys.modules`` перехватывает
+        импорт до запуска реального.
+        """
+        import sys
+        import types
+
+        module_name = "src.infrastructure.scheduler.scheduler_manager"
+        stub_module = types.ModuleType(module_name)
+        stub_module.scheduler_manager = stub_manager  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, module_name, stub_module)
+
+    async def test_delay_seconds_registers_job(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """С metadata.delay_seconds регистрирует job через scheduler.add_job."""
+        from src.services.execution import invoker as invoker_module
+
+        captured: dict[str, Any] = {}
+
+        class _StubScheduler:
+            def add_job(self, fn: Any, **kwargs: Any) -> None:
+                captured["fn"] = fn
+                captured["kwargs"] = kwargs
+
+        class _StubManager:
+            scheduler = _StubScheduler()
+
+        self._patch_scheduler(monkeypatch, _StubManager())
+
+        dispatcher = _make_dispatcher()
+        invoker = Invoker(dispatcher=dispatcher)
+        response = await invoker.invoke(
+            InvocationRequest(
+                action="reports.daily",
+                mode=InvocationMode.DEFERRED,
+                metadata={
+                    "delay_seconds": 60,
+                    "deferred_durable": False,  # backup jobstore для тестов
+                },
+            )
+        )
+
+        assert response.status is InvocationStatus.ACCEPTED
+        assert response.mode is InvocationMode.DEFERRED
+        assert "scheduled_at" in response.metadata
+        assert response.metadata["scheduler_job_id"].startswith(
+            "deferred_invocation_"
+        )
+        assert response.metadata["deferred_durable"] is False
+
+        kw = captured["kwargs"]
+        assert kw["jobstore"] == "backup"
+        assert kw["executor"] == "async"
+        # Job-функция picklable (module-level coroutine).
+        assert captured["fn"] is invoker_module._run_deferred_job
+
+    async def test_durable_uses_default_jobstore(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """По умолчанию (deferred_durable=True) job идёт в SQLAlchemy jobstore."""
+        captured: dict[str, Any] = {}
+
+        class _StubScheduler:
+            def add_job(self, fn: Any, **kwargs: Any) -> None:
+                captured["jobstore"] = kwargs["jobstore"]
+
+        class _StubManager:
+            scheduler = _StubScheduler()
+
+        self._patch_scheduler(monkeypatch, _StubManager())
+
+        dispatcher = _make_dispatcher()
+        invoker = Invoker(dispatcher=dispatcher)
+        response = await invoker.invoke(
+            InvocationRequest(
+                action="reports.daily",
+                mode=InvocationMode.DEFERRED,
+                metadata={"delay_seconds": 1},
+            )
+        )
+
+        assert response.status is InvocationStatus.ACCEPTED
+        assert captured["jobstore"] == "default"
+        assert response.metadata["deferred_durable"] is True
+
+    async def test_durable_fallback_on_picklability_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Если SQLAlchemy jobstore отказался — fallback на backup с warning."""
+        attempts: list[str] = []
+
+        class _StubScheduler:
+            def add_job(self, fn: Any, **kwargs: Any) -> None:
+                attempts.append(kwargs["jobstore"])
+                if kwargs["jobstore"] == "default":
+                    raise RuntimeError("not picklable")
+
+        class _StubManager:
+            scheduler = _StubScheduler()
+
+        self._patch_scheduler(monkeypatch, _StubManager())
+
+        dispatcher = _make_dispatcher()
+        invoker = Invoker(dispatcher=dispatcher)
+        response = await invoker.invoke(
+            InvocationRequest(
+                action="reports.daily",
+                mode=InvocationMode.DEFERRED,
+                metadata={"delay_seconds": 1},
+            )
+        )
+
+        assert response.status is InvocationStatus.ACCEPTED
+        assert attempts == ["default", "backup"]
+        assert response.metadata["deferred_durable"] is False
+
+
+class TestInvokerAsyncQueue:
+    """W22 этап B: ASYNC_QUEUE через TaskIQ kicker (InMemoryBroker)."""
+
+    async def test_async_queue_kiq_returns_accepted(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """kiq() в InMemoryBroker → ACCEPTED + invocation_id."""
+        # Сбрасываем module-state, чтобы получить свежий broker.
+        import src.infrastructure.execution.taskiq_broker as broker_module
+
+        monkeypatch.setattr(broker_module, "_broker", None)
+        monkeypatch.setattr(broker_module, "_invocation_task", None)
+        monkeypatch.setenv("TASKIQ_BACKEND", "memory")
+
+        broker = broker_module.get_broker()
+        await broker.startup()
+        try:
+            dispatcher = _make_dispatcher()
+            invoker = Invoker(dispatcher=dispatcher)
+            response = await invoker.invoke(
+                InvocationRequest(
+                    action="x.y",
+                    payload={"k": "v"},
+                    mode=InvocationMode.ASYNC_QUEUE,
+                )
+            )
+
+            assert response.status is InvocationStatus.ACCEPTED
+            assert response.mode is InvocationMode.ASYNC_QUEUE
+            assert response.invocation_id
+        finally:
+            await broker.shutdown()
+            monkeypatch.setattr(broker_module, "_broker", None)
+            monkeypatch.setattr(broker_module, "_invocation_task", None)
+
+    async def test_async_queue_taskiq_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Если import taskiq_broker падает — Invoker возвращает ERROR."""
+        # Patches sys.modules чтобы symуляcируe ImportError.
+        import sys
+
+        monkeypatch.setitem(
+            sys.modules,
+            "src.infrastructure.execution.taskiq_broker",
+            None,  # type: ignore[arg-type]
+        )
+
+        dispatcher = _make_dispatcher()
+        invoker = Invoker(dispatcher=dispatcher)
+        response = await invoker.invoke(
+            InvocationRequest(action="x.y", mode=InvocationMode.ASYNC_QUEUE)
+        )
+
+        assert response.status is InvocationStatus.ERROR
+        assert response.error is not None
+        assert "TaskIQ unavailable" in response.error
 
 
 class TestInvokerReplyChannelLookup:
