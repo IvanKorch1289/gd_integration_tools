@@ -27,6 +27,9 @@ fs:
 redis:
   enabled: false
 
+queue:
+  enabled: false
+
 mongo:
   enabled: false
 

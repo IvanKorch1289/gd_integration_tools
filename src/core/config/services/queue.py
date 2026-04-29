@@ -18,6 +18,15 @@ class QueueSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "queue"
     model_config = SettingsConfigDict(env_prefix="QUEUE_", extra="forbid")
 
+    enabled: bool = Field(
+        default=True,
+        description=(
+            "Включает интеграцию с брокером сообщений. На dev_light "
+            "профиле может быть ``False`` — в этом случае FastStream "
+            "router не создаётся и подписки на очереди пропускаются."
+        ),
+    )
+
     # Блок настроек типа и подключения к брокеру
     type: Literal["kafka", "rabbitmq"] = Field(
         ..., description="Тип брокера сообщений", example="kafka"

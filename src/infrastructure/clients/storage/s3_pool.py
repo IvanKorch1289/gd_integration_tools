@@ -4,7 +4,25 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
 from typing import Any, AsyncGenerator, Callable, Coroutine, ParamSpec, TypeVar
 
-from botocore.exceptions import ClientError as BotoClientError
+try:
+    from botocore.exceptions import (
+        ClientError as BotoClientError,  # type: ignore[import-not-found]
+    )
+except ImportError:  # botocore — опциональная зависимость dev_light
+    class BotoClientError(Exception):  # type: ignore[no-redef]
+        """Stub для случая, когда botocore не установлен (dev_light без S3).
+
+        Принимает произвольные kwargs (``error_response``,
+        ``operation_name``) как и реальный ``botocore.exceptions.ClientError``,
+        чтобы код, генерирующий исключение в кодпуте без botocore, не падал
+        с ``TypeError: takes no keyword arguments``.
+        """
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            super().__init__(*args)
+            self.response = kwargs.get("error_response", {"Error": {"Code": ""}})
+            self.operation_name = kwargs.get("operation_name", "")
+
 
 from src.core.config.settings import FileStorageSettings, settings
 from src.core.errors import ServiceError
@@ -103,17 +121,29 @@ class S3Client(BaseS3Client):
     """Реализация клиента S3 с расширенными функциями."""
 
     def __init__(self, settings: FileStorageSettings):
-        from aiobotocore.config import AioConfig
-        from aiobotocore.session import get_session
-
         from src.infrastructure.external_apis.logging_service import fs_logger
 
         self._connect_lock = Lock()
         self._settings = settings
-        self._session = get_session()
         self._client = None
         self._exit_stack: AsyncExitStack | None = None
         self.logger = fs_logger
+        self._session: Any = None
+        self._config: Any = None
+
+        # На dev_light с провайдером ``local`` или ``enabled=false``
+        # aiobotocore не нужен — пропускаем тяжёлый импорт. Реальные
+        # вызовы S3 защищены через _s3_enabled() guard в setup_infra.py.
+        if (
+            not getattr(settings, "enabled", True)
+            or getattr(settings, "provider", "minio") == "local"
+        ):
+            return
+
+        from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
+        from aiobotocore.session import get_session  # type: ignore[import-not-found]
+
+        self._session = get_session()
         self._config = AioConfig(
             connect_timeout=settings.timeout,
             read_timeout=settings.read_timeout,

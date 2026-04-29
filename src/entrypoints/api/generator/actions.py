@@ -29,7 +29,6 @@ from src.entrypoints.api.generator.specs import (
     HttpMethod,
     RouteDecorator,
 )
-from src.infrastructure.external_apis.action_bus import get_action_bus_service
 from src.schemas.invocation import (
     InvocationOptionsSchema,
     InvocationResultSchema,
@@ -37,6 +36,18 @@ from src.schemas.invocation import (
 )
 
 __all__ = ("ActionSpec", "CrudSpec", "ActionRouterBuilder")
+
+
+def _resolve_action_bus_service():
+    """Ленивый импорт action-bus сервиса.
+
+    Модуль ``src.infrastructure.external_apis.action_bus`` может
+    отсутствовать в усечённой dev_light-сборке; импорт переехал в
+    function-scope, чтобы не блокировать загрузку app_factory.
+    """
+    from src.infrastructure.external_apis.action_bus import get_action_bus_service
+
+    return get_action_bus_service()
 
 
 class ActionRouterBuilder:
@@ -154,7 +165,7 @@ class ActionRouterBuilder:
                     )
 
                 if spec.invocation.event is not None and (wants_event or is_scheduled):
-                    bus_result = await get_action_bus_service().invoke(
+                    bus_result = await _resolve_action_bus_service().invoke(
                         request=request,
                         invoke=invoke_options or InvocationOptionsSchema(),
                         publish_spec=spec.invocation.event,

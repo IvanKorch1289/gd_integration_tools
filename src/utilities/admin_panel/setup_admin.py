@@ -2,10 +2,10 @@ from fastapi import FastAPI
 from sqladmin import Admin
 
 from src.infrastructure.database.database import db_initializer
-from src.utilities.admins.files import FileAdmin, OrderFileAdmin
-from src.utilities.admins.orderkinds import OrderKindAdmin
-from src.utilities.admins.orders import OrderAdmin
-from src.utilities.admins.users import UserAdmin
+from src.utilities.admin_panel.files import FileAdmin, OrderFileAdmin
+from src.utilities.admin_panel.orderkinds import OrderKindAdmin
+from src.utilities.admin_panel.orders import OrderAdmin
+from src.utilities.admin_panel.users import UserAdmin
 
 __all__ = ("setup_admin",)
 

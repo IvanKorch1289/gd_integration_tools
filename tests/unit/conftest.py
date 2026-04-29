@@ -3,10 +3,10 @@
 Решает pre-existing блокеры тестовой инфраструктуры, которые иначе пришлось
 бы дублировать в каждом подкаталоге:
 
-1. ``BaseSettingsWithLoader`` ищет ``config.yml`` через ``consts.ROOT_DIR``,
-   а по умолчанию ``ROOT_DIR`` указывает на ``src/``. Подменяем на ближайший
-   каталог-предок с ``config.yml`` (worktree-safe). Также подгружаем ``.env``
-   оттуда, если он есть.
+1. ``BaseSettingsWithLoader`` ищет ``config_profiles/`` через
+   ``consts.ROOT_DIR``, а по умолчанию ``ROOT_DIR`` указывает на ``src/``.
+   Подменяем на ближайший каталог-предок с ``pyproject.toml``
+   (worktree-safe). Также подгружаем ``.env`` оттуда, если он есть.
 2. ``LoggerManager`` (singleton при импорте ``logging_service``) пытается
    подключиться к Graylog. Через env ``LOG_HOST=""`` отключаем graylog
    handler — :meth:`GraylogHandler.enabled` возвращает False.
@@ -30,10 +30,15 @@ from src.core.config.constants import consts
 
 
 def _find_repo_root_with_config() -> Path | None:
-    """Найти ближайший каталог-предок, содержащий ``config.yml``."""
+    """Найти ближайший каталог-предок, содержащий ``pyproject.toml``.
+
+    Anchor — ``pyproject.toml``: единственный файл, гарантированно
+    лежащий в корне репозитория. Каталог ``config_profiles/`` рядом с
+    ним содержит загружаемые YAML-настройки.
+    """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "config.yml").exists():
+        if (parent / "pyproject.toml").is_file():
             return parent
     return None
 

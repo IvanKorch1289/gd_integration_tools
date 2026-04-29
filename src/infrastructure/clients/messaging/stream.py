@@ -87,6 +87,12 @@ class StreamClient:
         stream_logger.error("Ошибка брокера: %s", str(exc), exc_info=True)
 
     def _setup_redis_router(self) -> None:
+        if not getattr(self.redis_settings, "enabled", True):
+            stream_logger.info(
+                "redis disabled — Redis FastStream router skipped"
+            )
+            return
+
         from faststream.redis.fastapi import RedisRouter
 
         redis_url = f"{self.redis_settings.redis_url}/{self.redis_settings.db_queue}"
@@ -100,12 +106,18 @@ class StreamClient:
             logger=stream_logger,
             db=self.redis_settings.db_queue,
             schema_url="/asyncapi",
-            asyncapi_tags=[{"name": "redis"}],
+            specification_tags=[{"name": "redis"}],
             include_in_schema=True,
             middlewares=self._common_middlewares(),
         )
 
     def _setup_rabbit_router(self) -> None:
+        if not getattr(self.rabbit_settings, "enabled", True):
+            stream_logger.info(
+                "queue disabled — RabbitMQ FastStream router skipped"
+            )
+            return
+
         from faststream.rabbit.fastapi import RabbitRouter
 
         self.rabbit_router = RabbitRouter(
@@ -116,7 +128,7 @@ class StreamClient:
             max_consumers=self.rabbit_settings.max_consumers,
             graceful_timeout=self.rabbit_settings.graceful_timeout,
             schema_url="/asyncapi",
-            asyncapi_tags=[{"name": "rabbitmq"}],
+            specification_tags=[{"name": "rabbitmq"}],
             include_in_schema=True,
             middlewares=self._common_middlewares(),
         )
@@ -150,7 +162,7 @@ class StreamClient:
             bootstrap_servers=bootstrap,
             logger=stream_logger,
             schema_url="/asyncapi",
-            asyncapi_tags=[{"name": "kafka"}],
+            specification_tags=[{"name": "kafka"}],
             include_in_schema=True,
             middlewares=self._common_middlewares(),
             # IL1.5: idempotent producer унаследован — FastStream сам
@@ -325,7 +337,9 @@ class StreamClient:
         key: str | None,
         headers: dict[str, Any],
     ) -> None:
-        await self.kafka_router.broker.publish(  # type: ignore[union-attr]
+        if self.kafka_router is None:
+            raise RuntimeError("Kafka router не инициализирован")
+        await self.kafka_router.broker.publish(
             message=message, topic=topic, key=key, headers=headers
         )
 

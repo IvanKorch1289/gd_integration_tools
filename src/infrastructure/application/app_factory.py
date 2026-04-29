@@ -15,7 +15,7 @@ from src.infrastructure.application.lifecycle import lifespan
 from src.infrastructure.application.monitoring import setup_monitoring
 from src.infrastructure.application.telemetry import setup_tracing
 from src.infrastructure.clients.messaging.stream import stream_client
-from src.utilities.admins.setup_admin import setup_admin
+from src.utilities.admin_panel.setup_admin import setup_admin
 
 __all__ = ("create_app",)
 
@@ -102,13 +102,17 @@ def _configure_business_routers(app: FastAPI) -> None:
     # Основное API приложения
     app.include_router(get_v1_routers(), prefix="/api/v1")
 
-    # Интеграция с системами потоковой обработки
-    app.include_router(
-        stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"]
-    )
-    app.include_router(
-        stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"]
-    )
+    # Интеграция с системами потоковой обработки. На dev_light профиле
+    # ``redis.enabled=false`` / ``queue.enabled=false`` делают
+    # соответствующий FastStream router None — пропускаем.
+    if stream_client.redis_router is not None:
+        app.include_router(
+            stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"]
+        )
+    if stream_client.rabbit_router is not None:
+        app.include_router(
+            stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"]
+        )
 
     # Протокольные entrypoints
     app.include_router(proto_viewer_router)

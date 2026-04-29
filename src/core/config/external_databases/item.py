@@ -12,7 +12,7 @@ class ExternalDatabaseItemSettings(BaseModel):
     Настройки одного внешнего подключения.
 
     Используется как элемент списка `connections` внутри группы
-    `external_databases` в config.yml.
+    `external_databases` в активном профиле (`config_profiles/<APP_PROFILE>.yml`).
     """
 
     name: str = Field(

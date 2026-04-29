@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.infrastructure.clients.storage.s3_pool.clickhouse import (
+from src.infrastructure.clients.storage.clickhouse import (
     ClickHouseClient,
     get_clickhouse_client,
 )

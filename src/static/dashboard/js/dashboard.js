@@ -162,7 +162,7 @@
             } else if (iframe) {
                 iframe.parentElement.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:center;height:50vh;color:var(--text-dim);">
-                        URL not configured. Set in config.yml or environment variables.
+                        URL not configured. Set in config_profiles/&lt;APP_PROFILE&gt;.yml or environment variables.
                     </div>`;
             }
         } catch { /* config unavailable */ }

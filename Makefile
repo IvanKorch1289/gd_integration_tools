@@ -24,7 +24,7 @@ DOCKER ?= docker
 UV_RUN := uv run
 MANAGE_SCRIPT := $(UV_RUN) python manage.py
 
-CONFIG_FILE ?= ./config.yml
+CONFIG_FILE ?= ./config_profiles/dev.yml
 RUN_DIR ?= ./.run
 LOG_DIR ?= ./logs
 

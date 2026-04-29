@@ -8,7 +8,7 @@
     Почему: Сервис недоступен (не запущен / неверный адрес / заблокирован файрволом).
     Как исправить:
     1. Проверьте запущен ли сервис: systemctl status postgres
-    2. Проверьте адрес в config.yml (database.host)
+    2. Проверьте адрес в config_profiles/<APP_PROFILE>.yml (database.host)
     3. Проверьте доступность порта: telnet <host> 5432
 """
 
@@ -36,7 +36,7 @@ _ERROR_PATTERNS: dict[str, ExplainedError] = {
         why="Сервис не запущен, неверный адрес/порт, или заблокирован файрволом",
         how_to_fix=[
             "Проверьте запущен ли сервис",
-            "Проверьте host/port в config.yml",
+            "Проверьте host/port в config_profiles/<APP_PROFILE>.yml",
             "Проверьте доступность сети: telnet <host> <port>",
         ],
         docs_url="docs/TROUBLESHOOTING.md#connection-refused",

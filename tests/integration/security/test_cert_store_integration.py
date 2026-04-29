@@ -10,7 +10,7 @@
 * Hot-cache + ``subscribe_updates`` уведомления.
 
 Импорт ``cert_store`` отложенный — глобальные ``app_base_settings`` тянут
-``config.yml``, который при сборке тестов может быть недоступен.
+``config_profiles/dev.yml``, который при сборке тестов может быть недоступен.
 """
 
 # ruff: noqa: S101  # assert — стандартная идиома pytest

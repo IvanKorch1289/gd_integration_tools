@@ -16,13 +16,16 @@ from src.core.config.profile import get_active_profile
 __all__ = ("BaseSettingsWithLoader",)
 
 
+_DEFAULT_PROFILE_NAME = "dev"
+
+
 def _resolve_repo_root() -> Path:
     """Возвращает корень репозитория (директория с ``pyproject.toml``).
 
     ``consts.ROOT_DIR`` исторически указывает на ``src/`` — для конфигов
-    нужен родитель (где лежит ``config.yml`` и ``config_profiles/``).
-    Поиск идёт вверх от текущего файла; при провале возвращается
-    родитель ``ROOT_DIR`` как лучший доступный fallback.
+    нужен родитель (где лежит ``config_profiles/``). Поиск идёт вверх от
+    текущего файла; при провале возвращается родитель ``ROOT_DIR`` как
+    лучший доступный fallback.
     """
     current = Path(__file__).resolve()
     for parent in (current, *current.parents):
@@ -95,25 +98,32 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
-    """YAML config loader with profile overlay support.
+    """YAML config loader: грузит конфигурацию из ``config_profiles/``.
 
-    Загружает базовый ``config.yml`` и накладывает поверх него
-    ``config_profiles/{APP_PROFILE}.yml``. Отсутствие профильного файла
-    не считается ошибкой — поведение совпадает со старым (без overlay).
+    Источник истины — каталог ``config_profiles/``. Базовый набор живёт
+    в ``config_profiles/dev.yml`` (полный набор всех ключей). Профили
+    ``prod``/``staging``/``dev_light`` — overlay поверх dev через
+    deep-merge.
+
+    Логика:
+    - active profile == ``dev`` → только ``dev.yml``;
+    - active profile != ``dev`` → ``dev.yml`` (base) + ``{profile}.yml``
+      (overlay) через :func:`_deep_merge`.
+
+    Отсутствие профильного файла не считается ошибкой (overlay
+    игнорируется); отсутствие base ``dev.yml`` — фатальная ошибка.
     """
 
     def __init__(
         self,
         settings_cls: type[BaseSettings],
-        yaml_path: Path | None = None,
         profiles_dir: Path | None = None,
     ):
         super().__init__(settings_cls)
-        self.yaml_path = yaml_path or _REPO_ROOT / "config.yml"
         self.profiles_dir = profiles_dir or _REPO_ROOT / "config_profiles"
 
     def _load_data(self) -> dict[str, Any]:
-        """Load and parse YAML configuration file with optional profile overlay."""
+        """Загружает базовый профиль и накладывает overlay активного."""
         from yaml import safe_load
 
         def _read(path: Path) -> dict[str, Any]:
@@ -125,21 +135,38 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
             except Exception as exc:
                 raise RuntimeError(f"YAML loading error ({path}): {exc}") from exc
 
-        base = _read(self.yaml_path)
+        base_path = self.profiles_dir / f"{_DEFAULT_PROFILE_NAME}.yml"
+        base = _read(base_path)
         profile = get_active_profile()
+        if profile.value == _DEFAULT_PROFILE_NAME:
+            return base
+
         overlay_path = self.profiles_dir / f"{profile.value}.yml"
         overlay = _read(overlay_path)
         return _deep_merge(base, overlay) if overlay else base
 
 
 class VaultConfigSettingsSource(FilteredSettingsSource):
-    """Vault config loader with filtering."""
+    """Vault config loader with filtering.
+
+    Активируется только если в окружении заданы все три переменных
+    (``VAULT_ADDR``, ``VAULT_TOKEN``, ``VAULT_SECRET_PATH``) и
+    ``VAULT_ENABLED`` не выставлен в ``false``. На профиле
+    ``dev_light`` Vault отключают через ``VAULT_ENABLED=false``,
+    чтобы не получать сетевые ошибки при отсутствии серверa.
+    """
 
     def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
         from os import getenv
 
-        from hvac import Client
+        if getenv("VAULT_ENABLED", "true").strip().lower() in {"0", "false", "no"}:
+            return {}
+
+        # На профиле dev_light Vault недоступен по умолчанию — отключаем
+        # без необходимости явного ``VAULT_ENABLED=false``.
+        if get_active_profile().value == "dev_light":
+            return {}
 
         vault_addr = getenv("VAULT_ADDR")
         vault_token = getenv("VAULT_TOKEN")
@@ -147,6 +174,8 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
 
         if not all([vault_addr, vault_token, vault_secret_path]):
             return {}
+
+        from hvac import Client
 
         try:
             client = Client(url=vault_addr, token=vault_token)
