@@ -261,9 +261,14 @@ async def lifespan(app: FastAPI):
         await _register_protocol_providers()
         _validate_cache_layers()
 
-        from src.workflows.outbox_worker import start_outbox_worker
+        try:
+            from src.workflows.outbox_worker import start_outbox_worker
 
-        start_outbox_worker(interval_seconds=5, batch_size=100)
+            start_outbox_worker(interval_seconds=5, batch_size=100)
+        except Exception as exc:  # noqa: BLE001
+            # Outbox-worker не критичен для базовой работоспособности
+            # (например, dev_light без RabbitMQ) — startup продолжается.
+            app_logger.warning("Outbox worker registration skipped: %s", exc)
 
         startup_completed = True
         app.state.infrastructure_ready = True

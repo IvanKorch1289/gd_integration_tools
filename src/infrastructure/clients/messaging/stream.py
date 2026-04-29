@@ -5,7 +5,7 @@ from uuid import uuid4
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from faststream import BaseMiddleware, ExceptionMiddleware, FastStream
-from faststream.broker.message import StreamMessage
+from faststream.message import StreamMessage
 from faststream.security import BaseSecurity
 
 from src.core.config.constants import consts

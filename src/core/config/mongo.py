@@ -23,6 +23,14 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "mongo"
     model_config = SettingsConfigDict(env_prefix="MONGO_", extra="forbid")
 
+    enabled: bool = Field(
+        default=True,
+        description=(
+            "Включить интеграцию с MongoDB. Для dev_light устанавливается "
+            "``false`` через ``config_profiles/dev_light.yml``."
+        ),
+    )
+
     username: str = Field(
         ...,
         title="Пользователь",

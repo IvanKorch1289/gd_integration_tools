@@ -12,6 +12,15 @@ class RedisSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "redis"
     model_config = SettingsConfigDict(env_prefix="REDIS_", extra="forbid")
 
+    enabled: bool = Field(
+        default=True,
+        description=(
+            "Включить интеграцию с Redis. Для dev_light устанавливается "
+            "``false`` через ``config_profiles/dev_light.yml`` — заменяется "
+            "in-memory backend (cachetools)."
+        ),
+    )
+
     # Основные параметры подключения
     host: str = Field(
         ..., description="Хост или IP-адрес сервера Redis", example="redis.example.com"

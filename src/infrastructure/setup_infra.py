@@ -23,7 +23,9 @@ def _get_watcher_manager():
 
 
 OperationCallable = Callable[[], Any | Awaitable[Any]]
-OperationItem = tuple[str, OperationCallable]
+# Третий элемент — guard, возвращающий ``True`` если операцию нужно
+# выполнять (для dev_light без Redis/S3 — пропускается). ``None`` ≡ всегда.
+OperationItem = tuple[str, OperationCallable, Callable[[], bool] | None]
 
 
 async def _register_health_checks() -> None:
@@ -93,42 +95,74 @@ async def _register_health_checks() -> None:
     app_logger.info("Health checks registered: redis, database, s3")
 
 
+def _redis_enabled() -> bool:
+    """Возвращает ``True``, если интеграция с Redis активна в текущем профиле.
+
+    Используется как guard для startup/shutdown операций — в dev_light
+    профиле ``redis.enabled=False`` и попытка подключения к Redis
+    блокировала бы запуск (``perform_infrastructure_operation``
+    падает на первой ошибке).
+    """
+    from src.core.config.settings import settings
+
+    return bool(getattr(settings.redis, "enabled", True))
+
+
+def _s3_enabled() -> bool:
+    """Возвращает ``True`` для S3-провайдеров (skip для ``local`` и ``enabled=False``)."""
+    from src.core.config.settings import settings
+
+    fs = settings.storage
+    return bool(getattr(fs, "enabled", True)) and fs.provider != "local"
+
+
 starting_operations: list[OperationItem] = [
-    ("graylog_client", lambda: to_thread(graylog_handler.connect)),
-    ("redis", redis_client.ensure_connected),
-    ("db_async_pool_main", db_initializer.initialize_async_pool),
-    ("db_async_pool_external", external_db_registry.initialize_all_pools),
-    ("s3_client", s3_client.connect),
-    ("smtp_pool", smtp_client.initialize_pool),
-    ("rate_limiter", init_limiter),
-    ("redis_streams", redis_client.create_initial_streams),
-    ("scheduler", scheduler_manager.start),
-    ("health_aggregator", _register_health_checks),  # ARCH-3
+    ("graylog_client", lambda: to_thread(graylog_handler.connect), None),
+    ("redis", redis_client.ensure_connected, _redis_enabled),
+    ("db_async_pool_main", db_initializer.initialize_async_pool, None),
+    ("db_async_pool_external", external_db_registry.initialize_all_pools, None),
+    ("s3_client", s3_client.connect, _s3_enabled),
+    ("smtp_pool", smtp_client.initialize_pool, None),
+    ("rate_limiter", init_limiter, _redis_enabled),
+    ("redis_streams", redis_client.create_initial_streams, _redis_enabled),
+    ("scheduler", scheduler_manager.start, None),
+    ("health_aggregator", _register_health_checks, None),  # ARCH-3
 ]
 
 ending_operations: list[OperationItem] = [
-    ("file_watchers", lambda: _get_watcher_manager().stop_all()),
-    ("scheduler", scheduler_manager.stop),
-    ("smtp_pool", smtp_client.close_pool),
-    ("s3_client", s3_client.close),
-    ("db_async_pool_external", external_db_registry.close_all),
-    ("db_async_pool_main", db_initializer.close),
-    ("graylog_client", lambda: to_thread(graylog_handler.close)),
-    ("cache_backends", close_caches),
-    ("redis", redis_client.close),
+    ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
+    ("scheduler", scheduler_manager.stop, None),
+    ("smtp_pool", smtp_client.close_pool, None),
+    ("s3_client", s3_client.close, _s3_enabled),
+    ("db_async_pool_external", external_db_registry.close_all, None),
+    ("db_async_pool_main", db_initializer.close, None),
+    ("graylog_client", lambda: to_thread(graylog_handler.close), None),
+    ("cache_backends", close_caches, None),
+    ("redis", redis_client.close, _redis_enabled),
 ]
 
 
-async def perform_infrastructure_operation(components: list[OperationItem]) -> None:
+async def perform_infrastructure_operation(
+    components: list[OperationItem],
+) -> None:
     """
     Последовательно выполняет startup/shutdown операции инфраструктуры.
 
     Логика:
     - порядок выполнения фиксирован и управляется списком `components`;
+    - каждый элемент содержит опциональный guard ``enabled_check``;
+      если он возвращает ``False``, операция пропускается с info-логом
+      (используется для dev_light, где Redis/S3 отключены);
     - при первой критической ошибке выполнение прерывается;
     - подробности ошибки логируются в app_logger.
     """
-    for name, operation in components:
+    for name, operation, enabled_check in components:
+        if enabled_check is not None and not enabled_check():
+            app_logger.info(
+                "Операция инфраструктуры пропущена (disabled)",
+                extra={"operation": name},
+            )
+            continue
         try:
             result = operation()
 

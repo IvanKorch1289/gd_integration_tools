@@ -13,16 +13,22 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, Index, Integer, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.models.base import BaseModel
+from src.infrastructure.database.models.base import Base
 
 __all__ = ("CertRecord", "CertHistory")
 
 
-class CertRecord(BaseModel):
+# Модели наследуют ``Base`` (а не ``BaseModel``), потому что реальная
+# alembic-миграция PG для ``certs`` не содержит колонок ``id``/``created_at``/
+# ``updated_at`` из ``BaseModel`` и единственный PK = ``service_id``.
+# Дополнительный ``id`` ломал бы create_all() на SQLite (composite PK
+# с autoincrement) и расходился с production-схемой PG.
+
+
+class CertRecord(Base):
     """Текущая версия сертификата для ``service_id``."""
 
     __tablename__ = "certs"
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
     __table_args__ = (Index("idx_certs_expires", "expires_at"),)
 
     service_id: Mapped[str] = mapped_column(Text, primary_key=True)
@@ -38,11 +44,10 @@ class CertRecord(BaseModel):
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
 
-class CertHistory(BaseModel):
+class CertHistory(Base):
     """Лог замен сертификата (append-only)."""
 
     __tablename__ = "cert_history"
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
     __table_args__ = (Index("idx_cert_history_service", "service_id"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)

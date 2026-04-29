@@ -3,8 +3,8 @@
 # Накладывается поверх config.yml после загрузки, замещает только указанные
 # ключи. Активируется переменной APP_PROFILE=dev_light.
 #
-# Цель: SQLite вместо PostgreSQL, LocalFS вместо S3 — без тяжёлой инфраструктуры.
-# Полный fallback (Mongo/Redis/ES → лёгкие аналоги) добавляется в W21.3.
+# Цель: SQLite вместо PostgreSQL, LocalFS вместо S3, in-memory вместо Redis,
+# без Mongo/Elasticsearch/ClickHouse.
 
 database:
   type: sqlite
@@ -17,12 +17,36 @@ database:
   ssl_mode: null
   ca_bundle: null
 
-storage:
+# LocalFS вместо S3: ``provider=local`` пропускает s3_client startup
+# (см. _s3_enabled в setup_infra.py).
+fs:
+  enabled: true
   provider: local
-  base_path: ./.run/storage
+  local_storage_path: ./.run/storage
+
+redis:
+  enabled: false
+
+mongo:
+  enabled: false
 
 elasticsearch:
   enabled: false
 
 clickhouse:
   enabled: false
+
+cache:
+  backend: memory
+  l1_enabled: true
+
+# Отключение Graylog (graypy не входит в [dev-light] extras).
+log:
+  host: ""
+
+# Внешние БД (Oracle/PG из vault) — для dev_light пустой список,
+# чтобы не падать на отсутствующих username/password в Vault.
+external_databases:
+  connections: []
+
+

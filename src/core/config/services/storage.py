@@ -13,6 +13,14 @@ class FileStorageSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "fs"
     model_config = SettingsConfigDict(env_prefix="FS_", extra="forbid")
 
+    enabled: bool = Field(
+        default=True,
+        description=(
+            "Включить S3-совместимый бэкенд при старте. Для dev_light "
+            "достаточно ``provider=local`` (LocalFS), s3-клиент пропускается."
+        ),
+    )
+
     # Основные параметры подключения
     provider: Literal["minio", "aws", "other", "local"] = Field(
         ...,
