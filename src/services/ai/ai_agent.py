@@ -200,6 +200,9 @@ class AIAgentService:
         *,
         session_id: str | None = None,
         metadata: dict[str, Any] | None = None,
+        rag_namespace: str | None = None,
+        rag_top_k: int | None = None,
+        rag_system_prompt: str = "",
     ) -> dict[str, Any]:
         """Чат с LLM через мульти-провайдерную архитектуру.
 
@@ -208,18 +211,35 @@ class AIAgentService:
         Каждый успешный ответ автоматически сохраняется в
         ``AIFeedbackService`` для последующей разметки оператором.
 
+        Если задан ``rag_namespace`` и ``rag_settings.enabled=True``,
+        последний user-message предварительно обогащается контекстом
+        из векторного хранилища через ``RAGService.augment_prompt``.
+        Ошибки RAG не прерывают основной flow (best-effort).
+
         Args:
             messages: [{role, content}].
             model: Идентификатор модели.
             provider: Конкретный провайдер (или fallback-chain).
             session_id: Идентификатор сессии (для feedback).
             metadata: Дополнительные поля в feedback (tenant_id и т.д.).
+            rag_namespace: Namespace в RAG (например, "notebooks").
+                None — обогащение отключено для этого вызова.
+            rag_top_k: Кол-во чанков при retrieval. None — берёт
+                ``rag_settings.top_k``.
+            rag_system_prompt: System-prompt, который дополнит RAG-контекст.
 
         Returns:
             Ответ LLM с восстановленными PII. Дополнительно в ответ
             добавляется ``feedback_id`` — идентификатор записи
             в ``AIFeedbackService`` (для кнопок ✅/❌ на стороне UI).
         """
+        rag_used, messages = await self._maybe_augment_with_rag(
+            messages=messages,
+            namespace=rag_namespace,
+            top_k=rag_top_k,
+            system_prompt=rag_system_prompt,
+        )
+
         sanitized_msgs, mapping = self._sanitizer.sanitize_messages(messages)
 
         chain = [provider] if provider else self._ai_cfg.fallback_chain
@@ -270,25 +290,33 @@ class AIAgentService:
                             provider=prov_name, model=model, cost_usd=cost
                         )
 
+                feedback_meta: dict[str, Any] = {
+                    **(metadata or {}),
+                    "model": model,
+                    "provider": prov_name,
+                }
+                if rag_used:
+                    feedback_meta["rag_used"] = True
+                    feedback_meta["rag_namespace"] = rag_namespace
                 feedback_id = await self._record_feedback(
                     messages=messages,
                     response=restored,
                     agent_id=f"chat:{prov_name}",
                     session_id=session_id,
-                    metadata={
-                        **(metadata or {}),
-                        "model": model,
-                        "provider": prov_name,
-                    },
+                    metadata=feedback_meta,
                 )
 
-                return {
+                response: dict[str, Any] = {
                     "success": True,
                     "content": restored,
                     "provider": prov_name,
                     "model": model,
                     "feedback_id": feedback_id,
                 }
+                if rag_used:
+                    response["rag_used"] = True
+                    response["rag_namespace"] = rag_namespace
+                return response
             except Exception as exc:
                 last_error = f"{prov_name}: {exc}"
                 logger.warning("AI provider '%s' failed: %s", prov_name, exc)
@@ -416,6 +444,95 @@ class AIAgentService:
             )
         except Exception as exc:
             logger.warning("ai_feedback_save_failed: %s", exc)
+            return None
+
+    async def _maybe_augment_with_rag(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        namespace: str | None,
+        top_k: int | None,
+        system_prompt: str,
+    ) -> tuple[bool, list[dict[str, str]]]:
+        """Best-effort обогащение последнего user-сообщения RAG-контекстом.
+
+        Возвращает ``(rag_used, messages)``. Если RAG отключён, namespace
+        пуст или произошла ошибка — возвращает исходный список сообщений
+        без модификации.
+
+        Args:
+            messages: Исходный список сообщений чата.
+            namespace: Namespace в RAG. None — обогащение пропускается.
+            top_k: Кол-во чанков; None — берёт ``rag_settings.top_k``.
+            system_prompt: System-prompt, который RAGService включит
+                в augmented-промпт.
+
+        Returns:
+            (use_flag, messages) — флаг включения RAG и потенциально
+            модифицированный список сообщений.
+        """
+        if not namespace:
+            return False, messages
+
+        try:
+            from src.core.config.rag import rag_settings
+        except Exception as exc:
+            logger.warning("rag_settings недоступны: %s", exc)
+            return False, messages
+
+        if not rag_settings.enabled:
+            return False, messages
+
+        rag = self._resolve_rag_service()
+        if rag is None:
+            return False, messages
+
+        last_user_idx = next(
+            (
+                i
+                for i in range(len(messages) - 1, -1, -1)
+                if messages[i].get("role") == "user"
+            ),
+            -1,
+        )
+        if last_user_idx < 0:
+            return False, messages
+
+        query = messages[last_user_idx].get("content", "")
+        if not query:
+            return False, messages
+
+        try:
+            augmented = await rag.augment_prompt(
+                query=query,
+                system_prompt=system_prompt,
+                top_k=top_k or rag_settings.top_k,
+                namespace=namespace,
+            )
+        except Exception as exc:
+            logger.warning("rag_augment_failed namespace=%s: %s", namespace, exc)
+            return False, messages
+
+        new_messages = list(messages)
+        new_messages[last_user_idx] = {**messages[last_user_idx], "content": augmented}
+        return True, new_messages
+
+    @staticmethod
+    def _resolve_rag_service() -> Any:
+        """Lazy-получение singleton RAGService с защитой от ошибок инициализации.
+
+        Если зависимости RAG недоступны (qdrant, sentence-transformers и т.д.)
+        либо vector store не запущен — возвращает None, не ломая основной flow.
+
+        Returns:
+            ``RAGService`` либо ``None``.
+        """
+        try:
+            from src.services.ai.rag_service import get_rag_service
+
+            return get_rag_service()
+        except Exception as exc:
+            logger.warning("rag_service_resolve_failed: %s", exc)
             return None
 
     @staticmethod
