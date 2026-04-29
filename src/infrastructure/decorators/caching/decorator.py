@@ -10,14 +10,19 @@ from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.core.config.settings import settings
+from src.infrastructure.cache.backends.memory import MemoryBackend
 from src.infrastructure.clients.storage.redis import redis_client
+from src.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.infrastructure.decorators.caching.storage.disk import DiskTTLCache
-from src.infrastructure.decorators.caching.storage.memory import InMemoryTTLCache
 from src.infrastructure.external_apis.logging_service import redis_logger
 from src.utilities.json_codec import json_dumps, json_loads
 
 __all__ = ("CachingDecorator",)
+
+# Practically-infinite TTL для cachetools-таймера: реальный per-key TTL
+# хранится в CacheEnvelope, MemoryBackend используется только как LRU-store.
+_MEMORY_BACKEND_GLOBAL_TTL = 10**9
 
 
 class CachingDecorator:
@@ -54,8 +59,12 @@ class CachingDecorator:
         self.key_builder = key_builder or self._default_key_builder
         self.logger = redis_logger
 
-        self.memory_cache = (
-            InMemoryTTLCache(memory_max_size) if use_memory_fallback else None
+        self.memory_cache: MemoryBackend | None = (
+            MemoryBackend(
+                maxsize=memory_max_size, default_ttl=_MEMORY_BACKEND_GLOBAL_TTL
+            )
+            if use_memory_fallback
+            else None
         )
 
         self.disk_cache = (
@@ -148,6 +157,48 @@ class CachingDecorator:
         if self.disk_cache:
             await self.disk_cache.delete_pattern(match_pattern)
 
+    async def _memory_get_envelope(
+        self, key: str, renew_ttl: bool = False
+    ) -> CacheEnvelope | None:
+        if not self.memory_cache:
+            return None
+        raw = await self.memory_cache.get(key)
+        if raw is None:
+            return None
+        try:
+            envelope = CacheEnvelope.from_payload(json_loads(raw))
+        except Exception:
+            await self.memory_cache.delete(key)
+            return None
+        if not envelope.is_alive():
+            await self.memory_cache.delete(key)
+            return None
+        if renew_ttl and envelope.is_fresh() and envelope.ttl_seconds:
+            envelope = envelope.renew()
+            await self._memory_store_envelope(key, envelope)
+        return envelope
+
+    async def _memory_store_envelope(self, key: str, envelope: CacheEnvelope) -> None:
+        if not self.memory_cache:
+            return
+        await self.memory_cache.set(key, json_dumps(envelope.to_dict()))
+
+    async def _memory_set(
+        self,
+        key: str,
+        value: Any,
+        ttl_seconds: int | None,
+        stale_if_error_seconds: int = 0,
+    ) -> None:
+        if not self.memory_cache:
+            return
+        envelope = CacheEnvelope.create(
+            value=value,
+            ttl_seconds=ttl_seconds,
+            stale_if_error_seconds=stale_if_error_seconds,
+        )
+        await self._memory_store_envelope(key, envelope)
+
     def __call__(
         self, func: Callable[..., Awaitable[Any]]
     ) -> Callable[..., Awaitable[Any]]:
@@ -215,7 +266,7 @@ class CachingDecorator:
         try:
             await redis_client.cache_set(key, json_dumps(value), self.expire)
             self._mark_redis_success()
-        except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
+        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
             self._mark_redis_failure()
         except Exception as exc:
             redis_client.logger.warning(
@@ -234,7 +285,7 @@ class CachingDecorator:
                     self._mark_redis_success()
 
                     if self.memory_cache:
-                        await self.memory_cache.set(
+                        await self._memory_set(
                             key=key,
                             value=value,
                             ttl_seconds=self.expire,
@@ -266,7 +317,9 @@ class CachingDecorator:
 
         # 2. Memory
         if self.memory_cache:
-            memory_entry = await self.memory_cache.get(key, renew_ttl=self.renew_ttl)
+            memory_entry = await self._memory_get_envelope(
+                key, renew_ttl=self.renew_ttl
+            )
             if memory_entry is not None and memory_entry.is_fresh():
                 return memory_entry.value
 
@@ -276,7 +329,7 @@ class CachingDecorator:
                 disk_entry = await self.disk_cache.get(key, renew_ttl=self.renew_ttl)
                 if disk_entry is not None and disk_entry.is_fresh():
                     if self.memory_cache:
-                        await self.memory_cache.set(
+                        await self._memory_set(
                             key=key,
                             value=disk_entry.value,
                             ttl_seconds=disk_entry.ttl_seconds or self.expire,
@@ -293,7 +346,7 @@ class CachingDecorator:
 
     async def _get_stale_value(self, key: str) -> Any | None:
         if self.memory_cache:
-            memory_entry = await self.memory_cache.get(key, renew_ttl=False)
+            memory_entry = await self._memory_get_envelope(key, renew_ttl=False)
             if memory_entry is not None and memory_entry.is_alive():
                 return memory_entry.value
 
@@ -302,7 +355,7 @@ class CachingDecorator:
                 disk_entry = await self.disk_cache.get(key, renew_ttl=False)
                 if disk_entry is not None and disk_entry.is_alive():
                     if self.memory_cache:
-                        await self.memory_cache.set(
+                        await self._memory_set(
                             key=key,
                             value=disk_entry.value,
                             ttl_seconds=disk_entry.ttl_seconds or self.expire,
@@ -321,7 +374,7 @@ class CachingDecorator:
             return
 
         if self.memory_cache:
-            await self.memory_cache.set(
+            await self._memory_set(
                 key=key,
                 value=result,
                 ttl_seconds=self.expire,

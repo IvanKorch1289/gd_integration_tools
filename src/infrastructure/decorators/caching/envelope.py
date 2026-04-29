@@ -2,7 +2,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ("CacheEnvelope", "MemoryCacheEntry")
+__all__ = ("CacheEnvelope",)
 
 
 @dataclass(slots=True)
@@ -106,8 +106,3 @@ class CacheEnvelope:
             fresh_until=None,
             stale_until=None,
         )
-
-
-@dataclass(slots=True)
-class MemoryCacheEntry:
-    envelope: CacheEnvelope
