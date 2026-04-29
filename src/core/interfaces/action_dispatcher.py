@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from src.schemas.invocation import ActionCommandSchema
+from src.core.types.invocation_command import ActionCommandSchema
 
 __all__ = ("ActionDispatcher",)
 

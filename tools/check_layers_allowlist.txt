@@ -25,7 +25,6 @@ src/entrypoints/email/imap_monitor.py	entrypoints	src.infrastructure.application
 src/entrypoints/express/router.py	entrypoints	src.infrastructure.observability.metrics
 src/entrypoints/express/router.py	entrypoints	src.infrastructure.repositories.express_dialogs_mongo
 src/entrypoints/express/router.py	entrypoints	src.infrastructure.repositories.express_sessions_mongo
-src/entrypoints/streamlit_app/pages/30_Express_Bots.py	entrypoints	src.infrastructure.clients.external.express_bot
 src/entrypoints/graphql/schema.py	entrypoints	src.infrastructure.monitoring.health_check
 src/entrypoints/grpc/grpc_server.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/mcp/mcp_server.py	entrypoints	src.infrastructure.application.slo_tracker
@@ -40,6 +39,7 @@ src/entrypoints/middlewares/tenant.py	entrypoints	src.infrastructure.observabili
 src/entrypoints/middlewares/timeout.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
 src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
+src/entrypoints/streamlit_app/pages/30_Express_Bots.py	entrypoints	src.infrastructure.clients.external.express_bot
 src/entrypoints/webhook/handler.py	entrypoints	src.infrastructure.resilience.unified_rate_limiter
 src/entrypoints/webhook/redis_registry.py	entrypoints	src.infrastructure.clients.storage.redis_coordinator
 src/entrypoints/webhook/transformer.py	entrypoints	src.infrastructure.clients.storage.redis
@@ -58,7 +58,9 @@ src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.soa
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.sse.handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.webhook.handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.websocket.ws_handler
+src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.websocket.ws_invocations
 src/infrastructure/application/di.py	infrastructure	src.entrypoints.mqtt.mqtt_handler
+src/infrastructure/application/di.py	infrastructure	src.services.execution.invoker
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.ai.agent_memory
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.ai.ai_providers
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.ai.feedback.repository
@@ -71,7 +73,6 @@ src/infrastructure/application/lifecycle.py	infrastructure	src.services.notebook
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.notebooks.service
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.ops.notification_adapters
 src/infrastructure/application/lifecycle.py	infrastructure	src.services.ops.notification_hub
-src/infrastructure/audit/event_log.py	infrastructure	src.services.io.indexers.log_indexer
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ai.agent_memory
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ai.ai_agent
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ai.rag_service
@@ -86,6 +87,7 @@ src/infrastructure/application/service_setup.py	infrastructure	src.services.io.f
 src/infrastructure/application/service_setup.py	infrastructure	src.services.io.search
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ops.analytics
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ops.webhook_scheduler
+src/infrastructure/audit/event_log.py	infrastructure	src.services.io.indexers.log_indexer
 src/infrastructure/setup_infra.py	infrastructure	src.entrypoints.filewatcher.watcher_manager
 src/schemas/filter_schemas/files.py	schemas	src.infrastructure.database.models.files
 src/schemas/filter_schemas/orderkinds.py	schemas	src.infrastructure.database.models.orderkinds
@@ -120,7 +122,7 @@ src/services/io/external_database.py	services	src.infrastructure.database.sessio
 src/services/io/external_database.py	services	src.infrastructure.external_apis.logging_service
 src/services/io/files.py	services	src.infrastructure.repositories.files
 src/services/io/web_automation.py	services	src.infrastructure.clients.transport.browser
-src/services/ops/analytics.py	services	src.infrastructure.clients.storage.s3_pool.clickhouse
+src/services/ops/analytics.py	services	src.infrastructure.clients.storage.clickhouse
 src/services/ops/notification_adapters.py	services	src.infrastructure.clients.external.express
 src/services/ops/notification_adapters.py	services	src.infrastructure.clients.transport.smtp
 src/services/ops/notification_hub.py	services	src.infrastructure.clients.external.express

@@ -49,14 +49,16 @@ ws_invocations_router = APIRouter(tags=["WebSocket · Invocations"])
 
 @ws_invocations_router.websocket("/ws/invocations")
 async def websocket_invocations(websocket: WebSocket) -> None:
-    """WS-эндпоинт для streaming/async-api вызовов через Invoker."""
-    from src.infrastructure.messaging.invocation_replies import (
-        get_reply_channel_registry,
-    )
-    from src.services.execution.invoker import get_invoker
+    """WS-эндпоинт для streaming/async-api вызовов через Invoker.
 
+    DI: ``ReplyChannelRegistry`` и ``Invoker`` берутся из
+    ``websocket.app.state`` (composition root в
+    :func:`src.infrastructure.application.di.register_app_state`).
+    """
     await websocket.accept()
-    ws_channel = get_reply_channel_registry().get("ws")
+    registry = websocket.app.state.reply_registry
+    invoker = websocket.app.state.invoker
+    ws_channel = registry.get("ws")
     if ws_channel is None:
         await websocket.send_json(
             {"type": "error", "error": "WS reply channel is not configured"}
@@ -67,8 +69,6 @@ async def websocket_invocations(websocket: WebSocket) -> None:
     # Список invocation_id, привязанных к этому соединению — чтобы
     # корректно unregister'нуть всё на disconnect.
     bound: list[str] = []
-
-    invoker = get_invoker()
 
     try:
         while True:
@@ -105,7 +105,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
 
             # Привязываем сокет к invocation_id ДО запуска вызова, иначе
             # ранние chunks от STREAMING-task'а потеряются.
-            await ws_channel.register(invocation_id, websocket)  # type: ignore[attr-defined]
+            await ws_channel.register(invocation_id, websocket)
             bound.append(invocation_id)
 
             await websocket.send_json(
@@ -133,7 +133,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
     finally:
         for invocation_id in bound:
             try:
-                await ws_channel.unregister(invocation_id)  # type: ignore[attr-defined]
+                await ws_channel.unregister(invocation_id)
             except Exception:  # noqa: BLE001
                 logger.debug("unregister failed for %s", invocation_id, exc_info=True)
 

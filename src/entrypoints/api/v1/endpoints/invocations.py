@@ -12,14 +12,21 @@ Streaming через WebSocket — в отдельном эндпоинте ``/w
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Response, status
+from typing import TYPE_CHECKING
 
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+
+from src.core.di.dependencies import get_invoker_dep, get_reply_registry
 from src.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
 )
 from src.schemas.invocation_api import InvocationRequestSchema, InvocationResponseSchema
+
+if TYPE_CHECKING:
+    from src.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
+    from src.core.interfaces.invoker import Invoker
 
 __all__ = ("router",)
 
@@ -34,6 +41,7 @@ router = APIRouter(tags=["Invocations"])
 async def post_invocation(
     request_body: InvocationRequestSchema,
     response: Response,
+    invoker: "Invoker" = Depends(get_invoker_dep),
 ) -> InvocationResponseSchema:
     """Универсальный вход для всех режимов :class:`InvocationMode`.
 
@@ -42,9 +50,6 @@ async def post_invocation(
       результат опрашивается через GET ``/api/v1/invocations/{id}``
       (для ``api`` reply-канала) или приходит push'ом в WS/queue.
     """
-    from src.services.execution.invoker import get_invoker
-
-    invoker = get_invoker()
     invocation = await invoker.invoke(
         InvocationRequest(
             action=request_body.action,
@@ -69,18 +74,17 @@ async def post_invocation(
     response_model=InvocationResponseSchema,
     summary="Получить результат async/streaming-вызова (polling)",
 )
-async def get_invocation(invocation_id: str) -> InvocationResponseSchema:
+async def get_invocation(
+    invocation_id: str,
+    registry: "ReplyChannelRegistryProtocol" = Depends(get_reply_registry),
+) -> InvocationResponseSchema:
     """Polling-результата через ``api`` reply-канал.
 
     Returns:
         404, если результат ещё не опубликован (или TTL истёк) либо
         invocation_id не существовал. Клиент должен ретраить.
     """
-    from src.infrastructure.messaging.invocation_replies import (
-        get_reply_channel_registry,
-    )
-
-    channel = get_reply_channel_registry().get("api")
+    channel = registry.get("api")
     if channel is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

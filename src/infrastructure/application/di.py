@@ -86,6 +86,17 @@ def register_app_state(app: FastAPI) -> None:
     app.state.pool_monitor = PoolMonitor()
     app.state.langfuse_client = LangFuseClient()
 
+    # W22 техдолг: composition root для Invoker + ReplyChannelRegistry.
+    # Concrete реализация регистрируется здесь, чтобы services/execution
+    # и entrypoints зависели только от Protocol через core/di.dependencies.
+    from src.infrastructure.messaging.invocation_replies import (
+        get_reply_channel_registry,
+    )
+    from src.services.execution.invoker import Invoker
+
+    app.state.reply_registry = get_reply_channel_registry()
+    app.state.invoker = Invoker()
+
     from src.infrastructure.application.vault_refresher import VaultSecretRefresher
 
     app.state.vault_refresher = VaultSecretRefresher()

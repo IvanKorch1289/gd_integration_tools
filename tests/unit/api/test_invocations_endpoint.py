@@ -1,8 +1,8 @@
 """Unit-тесты для REST-адаптера ``/api/v1/invocations`` (W22.2).
 
-Не используют TestClient — напрямую вызывают handler-функции с
-patched ``get_invoker`` / ``get_reply_channel_registry``. Это
-достаточно для проверки контракта без поднятия full FastAPI lifespan.
+После рефакторинга на FastAPI Depends (W22 техдолг) тесты вызывают
+handler-функции с явно переданными ``invoker`` / ``registry`` —
+зависимости резолвятся через :mod:`src.core.di.dependencies`.
 """
 
 # ruff: noqa: S101
@@ -29,105 +29,80 @@ from src.infrastructure.messaging.invocation_replies import (
 from src.schemas.invocation_api import InvocationRequestSchema
 
 
-def _patch_get_invoker(
-    monkeypatch: pytest.MonkeyPatch, response: InvocationResponse
-) -> MagicMock:
+def _make_invoker(response: InvocationResponse) -> MagicMock:
+    """Создаёт MagicMock-Invoker с заранее заданным ответом."""
     invoker = MagicMock()
     invoker.invoke = AsyncMock(return_value=response)
-    monkeypatch.setattr(
-        "src.entrypoints.api.v1.endpoints.invocations.get_invoker",
-        lambda: invoker,
-        raising=False,
-    )
-    # get_invoker импортится внутри функции; patch'им src.services...
-    monkeypatch.setattr(
-        "src.services.execution.invoker.get_invoker",
-        lambda: invoker,
-    )
     return invoker
 
 
-def _patch_registry(
-    monkeypatch: pytest.MonkeyPatch, registry: ReplyChannelRegistry
-) -> None:
-    monkeypatch.setattr(
-        "src.infrastructure.messaging.invocation_replies.get_reply_channel_registry",
-        lambda: registry,
-    )
-
-
 class TestPostInvocation:
-    async def test_sync_ok_returns_200(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker_response = InvocationResponse(
-            invocation_id="i-1",
-            status=InvocationStatus.OK,
-            result={"x": 1},
-            mode=InvocationMode.SYNC,
+    async def test_sync_ok_returns_200(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
+                invocation_id="i-1",
+                status=InvocationStatus.OK,
+                result={"x": 1},
+                mode=InvocationMode.SYNC,
+            )
         )
-        _patch_get_invoker(monkeypatch, invoker_response)
 
         response = Response()
         body = InvocationRequestSchema(action="users.list", mode="sync")
-        result = await post_invocation(body, response)
+        result = await post_invocation(body, response, invoker=invoker)
 
         assert result.status == "ok"
         assert result.invocation_id == "i-1"
         assert result.result == {"x": 1}
-        # status_code не выставлен явно → FastAPI отдаст 200
         assert response.status_code is None or response.status_code == 200
 
-    async def test_async_api_returns_202(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker_response = InvocationResponse(
-            invocation_id="i-2",
-            status=InvocationStatus.ACCEPTED,
-            mode=InvocationMode.ASYNC_API,
+    async def test_async_api_returns_202(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
+                invocation_id="i-2",
+                status=InvocationStatus.ACCEPTED,
+                mode=InvocationMode.ASYNC_API,
+            )
         )
-        _patch_get_invoker(monkeypatch, invoker_response)
 
         response = Response()
         body = InvocationRequestSchema(action="x.y", mode="async-api")
-        result = await post_invocation(body, response)
+        result = await post_invocation(body, response, invoker=invoker)
 
         assert result.status == "accepted"
         assert response.status_code == status.HTTP_202_ACCEPTED
 
-    async def test_error_returns_payload_with_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker_response = InvocationResponse(
-            invocation_id="i-3",
-            status=InvocationStatus.ERROR,
-            error="boom",
-            mode=InvocationMode.SYNC,
+    async def test_error_returns_payload_with_error(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
+                invocation_id="i-3",
+                status=InvocationStatus.ERROR,
+                error="boom",
+                mode=InvocationMode.SYNC,
+            )
         )
-        _patch_get_invoker(monkeypatch, invoker_response)
 
         response = Response()
         body = InvocationRequestSchema(action="x.y", mode="sync")
-        result = await post_invocation(body, response)
+        result = await post_invocation(body, response, invoker=invoker)
 
         assert result.status == "error"
         assert result.error == "boom"
 
-    async def test_invokes_with_correct_mode_and_reply_channel(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker_response = InvocationResponse(
-            invocation_id="i-4",
-            status=InvocationStatus.ACCEPTED,
-            mode=InvocationMode.STREAMING,
+    async def test_invokes_with_correct_mode_and_reply_channel(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
+                invocation_id="i-4",
+                status=InvocationStatus.ACCEPTED,
+                mode=InvocationMode.STREAMING,
+            )
         )
-        invoker = _patch_get_invoker(monkeypatch, invoker_response)
 
         response = Response()
         body = InvocationRequestSchema(
             action="x.stream", mode="streaming", reply_channel="ws"
         )
-        await post_invocation(body, response)
+        await post_invocation(body, response, invoker=invoker)
 
         invoker.invoke.assert_awaited_once()
         request = invoker.invoke.call_args[0][0]
@@ -136,9 +111,7 @@ class TestPostInvocation:
 
 
 class TestGetInvocation:
-    async def test_returns_response_when_present(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_returns_response_when_present(self) -> None:
         memory = MemoryReplyChannel()
         await memory.send(
             InvocationResponse(
@@ -150,32 +123,24 @@ class TestGetInvocation:
         )
         registry = ReplyChannelRegistry()
         registry.register(memory)
-        _patch_registry(monkeypatch, registry)
 
-        result = await get_invocation("poll-1")
+        result = await get_invocation("poll-1", registry=registry)
         assert result.status == "ok"
         assert result.result == {"done": True}
 
-    async def test_returns_404_when_missing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_returns_404_when_missing(self) -> None:
         registry = ReplyChannelRegistry()
         registry.register(MemoryReplyChannel())
-        _patch_registry(monkeypatch, registry)
 
         with pytest.raises(HTTPException) as exc:
-            await get_invocation("never-published")
+            await get_invocation("never-published", registry=registry)
         assert exc.value.status_code == status.HTTP_404_NOT_FOUND
 
-    async def test_returns_503_if_api_channel_unavailable(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        # Registry без api-канала.
+    async def test_returns_503_if_api_channel_unavailable(self) -> None:
         registry = ReplyChannelRegistry()
-        _patch_registry(monkeypatch, registry)
 
         with pytest.raises(HTTPException) as exc:
-            await get_invocation("any-id")
+            await get_invocation("any-id", registry=registry)
         assert exc.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
@@ -217,22 +182,21 @@ class TestSchemaValidation:
 class TestPayloadPassthrough:
     """Payload корректно проксируется в Invoker без изменений."""
 
-    async def test_payload_preserved(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker_response = InvocationResponse(
-            invocation_id="i-pl",
-            status=InvocationStatus.OK,
-            result=None,
-            mode=InvocationMode.SYNC,
+    async def test_payload_preserved(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
+                invocation_id="i-pl",
+                status=InvocationStatus.OK,
+                result=None,
+                mode=InvocationMode.SYNC,
+            )
         )
-        invoker = _patch_get_invoker(monkeypatch, invoker_response)
 
         payload: dict[str, Any] = {"deeply": {"nested": [1, 2, {"key": "v"}]}}
         body = InvocationRequestSchema(
             action="deep.test", mode="sync", payload=payload
         )
-        await post_invocation(body, Response())
+        await post_invocation(body, Response(), invoker=invoker)
 
         request = invoker.invoke.call_args[0][0]
         assert request.payload == payload

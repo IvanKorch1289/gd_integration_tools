@@ -1,7 +1,9 @@
 """Unit-тесты WS-адаптера ``/ws/invocations`` (W22.2).
 
-Тестируется напрямую корутина ``websocket_invocations`` с подмешанным
-``FakeWebSocket`` (минимальный stub под Starlette WebSocket-API).
+После рефакторинга на DI (W22 техдолг) handler читает зависимости из
+``websocket.app.state``: :class:`FakeWebSocket` принимает
+``invoker``/``registry`` через конструктор и выставляет их как
+``self.app.state.invoker`` / ``self.app.state.reply_registry``.
 """
 
 # ruff: noqa: S101
@@ -27,14 +29,36 @@ from src.infrastructure.messaging.invocation_replies import (
 )
 
 
+class _FakeAppState:
+    """Stub под ``app.state`` с реквизитами reply_registry/invoker."""
+
+    def __init__(self, *, reply_registry: Any, invoker: Any) -> None:
+        self.reply_registry = reply_registry
+        self.invoker = invoker
+
+
+class _FakeApp:
+    """Stub под ``websocket.app`` — нужен только атрибут ``state``."""
+
+    def __init__(self, *, reply_registry: Any, invoker: Any) -> None:
+        self.state = _FakeAppState(reply_registry=reply_registry, invoker=invoker)
+
+
 class FakeWebSocket:
     """Минимальный stub под Starlette WebSocket для unit-тестов."""
 
-    def __init__(self, incoming: list[Any]) -> None:
+    def __init__(
+        self,
+        incoming: list[Any],
+        *,
+        invoker: Any,
+        registry: ReplyChannelRegistry,
+    ) -> None:
         self._incoming = list(incoming)
         self.sent: list[dict[str, Any]] = []
         self.accepted = False
         self.closed = False
+        self.app = _FakeApp(reply_registry=registry, invoker=invoker)
 
     async def accept(self) -> None:
         self.accepted = True
@@ -54,21 +78,6 @@ class FakeWebSocket:
         self.closed = True
 
 
-def _patch_deps(
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    invoker: Any,
-    registry: ReplyChannelRegistry,
-) -> None:
-    monkeypatch.setattr(
-        "src.services.execution.invoker.get_invoker", lambda: invoker
-    )
-    monkeypatch.setattr(
-        "src.infrastructure.messaging.invocation_replies.get_reply_channel_registry",
-        lambda: registry,
-    )
-
-
 def _registry_with_ws() -> tuple[ReplyChannelRegistry, WsReplyChannel]:
     registry = ReplyChannelRegistry()
     ws_channel = WsReplyChannel()
@@ -76,20 +85,24 @@ def _registry_with_ws() -> tuple[ReplyChannelRegistry, WsReplyChannel]:
     return registry, ws_channel
 
 
+def _make_invoker(
+    response: InvocationResponse | None = None,
+) -> MagicMock:
+    invoker = MagicMock()
+    invoker.invoke = AsyncMock(return_value=response) if response else AsyncMock()
+    return invoker
+
+
 class TestWebsocketInvocations:
-    async def test_accepts_and_acks(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock(
-            return_value=InvocationResponse(
+    async def test_accepts_and_acks(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
                 invocation_id="i-ws-1",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
             )
         )
         registry, _ = _registry_with_ws()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
         ws = FakeWebSocket(
             incoming=[
@@ -100,97 +113,89 @@ class TestWebsocketInvocations:
                     "mode": "streaming",
                     "invocation_id": "i-ws-1",
                 }
-            ]
+            ],
+            invoker=invoker,
+            registry=registry,
         )
         await websocket_invocations(ws)
 
         assert ws.accepted is True
-        # Ack-сообщение про invocation_id, потом disconnect — пушей нет
         assert ws.sent[0] == {"type": "ack", "invocation_id": "i-ws-1"}
 
-    async def test_invocation_id_generated_when_absent(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock(
-            return_value=InvocationResponse(
+    async def test_invocation_id_generated_when_absent(self) -> None:
+        invoker = _make_invoker(
+            InvocationResponse(
                 invocation_id="generated",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
             )
         )
         registry, _ = _registry_with_ws()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
-        ws = FakeWebSocket(incoming=[{"type": "invoke", "action": "x.y"}])
+        ws = FakeWebSocket(
+            incoming=[{"type": "invoke", "action": "x.y"}],
+            invoker=invoker,
+            registry=registry,
+        )
         await websocket_invocations(ws)
 
-        # Ack-сообщение содержит сгенерированный invocation_id
         assert ws.sent[0]["type"] == "ack"
         assert isinstance(ws.sent[0]["invocation_id"], str)
         assert len(ws.sent[0]["invocation_id"]) > 0
 
-    async def test_unknown_type_returns_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock()
+    async def test_unknown_type_returns_error(self) -> None:
+        invoker = _make_invoker()
         registry, _ = _registry_with_ws()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
-        ws = FakeWebSocket(incoming=[{"type": "ping"}])
+        ws = FakeWebSocket(
+            incoming=[{"type": "ping"}], invoker=invoker, registry=registry
+        )
         await websocket_invocations(ws)
 
         assert ws.sent[0]["type"] == "error"
         assert "unknown type" in ws.sent[0]["error"]
         invoker.invoke.assert_not_awaited()
 
-    async def test_invalid_mode_returns_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock()
+    async def test_invalid_mode_returns_error(self) -> None:
+        invoker = _make_invoker()
         registry, _ = _registry_with_ws()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
         ws = FakeWebSocket(
-            incoming=[{"type": "invoke", "action": "x", "mode": "nope"}]
+            incoming=[{"type": "invoke", "action": "x", "mode": "nope"}],
+            invoker=invoker,
+            registry=registry,
         )
         await websocket_invocations(ws)
 
         assert ws.sent[0]["type"] == "error"
         assert "invalid mode" in ws.sent[0]["error"]
 
-    async def test_empty_action_returns_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
+    async def test_empty_action_returns_error(self) -> None:
+        invoker = _make_invoker()
         registry, _ = _registry_with_ws()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
-        ws = FakeWebSocket(incoming=[{"type": "invoke", "action": ""}])
+        ws = FakeWebSocket(
+            incoming=[{"type": "invoke", "action": ""}],
+            invoker=invoker,
+            registry=registry,
+        )
         await websocket_invocations(ws)
 
         assert ws.sent[0]["type"] == "error"
         assert "action" in ws.sent[0]["error"]
 
-    async def test_no_ws_channel_closes_connection(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        invoker = MagicMock()
-        # Регистрируем пустой registry — kind 'ws' отсутствует.
+    async def test_no_ws_channel_closes_connection(self) -> None:
+        invoker = _make_invoker()
+        # Пустой registry — kind 'ws' отсутствует.
         registry = ReplyChannelRegistry()
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
-        ws = FakeWebSocket(incoming=[])
+        ws = FakeWebSocket(incoming=[], invoker=invoker, registry=registry)
         await websocket_invocations(ws)
 
         assert ws.closed is True
         assert any("not configured" in m.get("error", "") for m in ws.sent)
 
-    async def test_handler_registers_ws_in_channel_before_invoke(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_handler_registers_ws_in_channel_before_invoke(self) -> None:
         """Handler регистрирует сокет в :class:`WsReplyChannel` ДО invoke,
         чтобы streaming-task не терял ранние chunks."""
         registry, ws_channel = _registry_with_ws()
@@ -204,46 +209,41 @@ class TestWebsocketInvocations:
 
         ws_channel.register = spy_register  # type: ignore[method-assign]
 
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock(
-            return_value=InvocationResponse(
+        invoker = _make_invoker(
+            InvocationResponse(
                 invocation_id="i-reg",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
             )
         )
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
         ws = FakeWebSocket(
-            incoming=[
-                {"type": "invoke", "action": "x", "invocation_id": "i-reg"}
-            ]
+            incoming=[{"type": "invoke", "action": "x", "invocation_id": "i-reg"}],
+            invoker=invoker,
+            registry=registry,
         )
         await websocket_invocations(ws)
 
-        # register был вызван и инвокер тоже — проверяем порядок
         assert register_calls[0][0] == "i-reg"
         invoker.invoke.assert_awaited_once()
 
-    async def test_disconnect_unregisters_channel(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    async def test_disconnect_unregisters_channel(self) -> None:
         registry, ws_channel = _registry_with_ws()
-        invoker = MagicMock()
-        invoker.invoke = AsyncMock(
-            return_value=InvocationResponse(
+        invoker = _make_invoker(
+            InvocationResponse(
                 invocation_id="i-bye",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
             )
         )
-        _patch_deps(monkeypatch, invoker=invoker, registry=registry)
 
         ws = FakeWebSocket(
             incoming=[
                 {"type": "invoke", "action": "x", "invocation_id": "i-bye"},
                 WebSocketDisconnect(code=1000),
-            ]
+            ],
+            invoker=invoker,
+            registry=registry,
         )
         await websocket_invocations(ws)
 
@@ -260,3 +260,4 @@ class TestWebsocketInvocations:
             )
         )
         assert len(ws.sent) == before
+

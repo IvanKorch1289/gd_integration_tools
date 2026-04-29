@@ -1,93 +1,21 @@
-from datetime import datetime
-from typing import Any, Literal
+"""Переэкспорт invocation-DTO из ``core/types``.
 
-from pydantic import Field, model_validator
+Модели физически живут в :mod:`src.core.types.invocation_command`
+(перемещены для устранения зависимости core → schemas). Этот модуль
+сохранён как точка обратной совместимости для существующих 16+
+импортёров ``from src.schemas.invocation import ActionCommandSchema``.
+"""
 
-from src.core.enums.invocation import InvokeMode
-from src.schemas.base import BaseSchema
-
-__all__ = (
-    "InvocationOptionsSchema",
-    "InvocationResultSchema",
-    "ActionCommandMetaSchema",
-    "ActionCommandSchema",
+from src.core.types.invocation_command import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+    InvocationOptionsSchema,
+    InvocationResultSchema,
 )
 
-
-class InvocationOptionsSchema(BaseSchema):
-    """
-    Унифицированные параметры исполнения action.
-
-    Attributes:
-        mode: Способ выполнения действия.
-        delay_seconds: Отложенный запуск в секундах.
-        cron: Cron-выражение для планирования публикации.
-    """
-
-    mode: InvokeMode = Field(
-        default=InvokeMode.direct, description="Режим выполнения: direct или event."
-    )
-    delay_seconds: int | None = Field(
-        default=None, ge=1, description="Отложенный запуск в секундах."
-    )
-    cron: str | None = Field(
-        default=None, description="Cron-выражение для планирования публикации."
-    )
-
-    @model_validator(mode="after")
-    def validate_schedule(self) -> "InvocationOptionsSchema":
-        """
-        Проверяет корректность параметров расписания.
-        """
-        if self.delay_seconds is not None and self.cron is not None:
-            raise ValueError("Нельзя одновременно использовать delay_seconds и cron")
-        return self
-
-
-class InvocationResultSchema(BaseSchema):
-    """
-    Унифицированный ответ для event/scheduled вызовов.
-    """
-
-    status: Literal["queued", "scheduled", "completed"] = Field(
-        description="Статус обработки запроса."
-    )
-    transport: str = Field(description="Транспорт или шина (direct, redis, rabbit).")
-    job_id: str | None = Field(
-        default=None, description="Идентификатор задачи (если scheduled)."
-    )
-    command: dict[str, Any] | None = Field(
-        default=None, description="Сформированная команда для шины."
-    )
-    result: Any | None = Field(
-        default=None, description="Результат выполнения (если direct)."
-    )
-
-
-class ActionCommandMetaSchema(BaseSchema):
-    """
-    Служебные метаданные команды.
-    """
-
-    source: str = Field(default="http", description="Источник вызова команды.")
-    request_path: str | None = Field(
-        default=None, description="HTTP path, с которого была сформирована команда."
-    )
-    requested_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Время формирования команды."
-    )
-
-
-class ActionCommandSchema(BaseSchema):
-    """
-    Универсальная команда для event bus.
-    """
-
-    action: str = Field(description="Уникальное имя действия.")
-    payload: dict[str, Any] = Field(
-        default_factory=dict, description="Полезная нагрузка команды."
-    )
-    meta: ActionCommandMetaSchema = Field(
-        default_factory=ActionCommandMetaSchema,
-        description="Служебные метаданные команды.",
-    )
+__all__ = (
+    "ActionCommandMetaSchema",
+    "ActionCommandSchema",
+    "InvocationOptionsSchema",
+    "InvocationResultSchema",
+)

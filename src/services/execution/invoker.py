@@ -23,10 +23,13 @@ import asyncio
 import logging
 from typing import Any, AsyncIterator
 
+from src.core.di import app_state_singleton
+from src.core.di.dependencies import get_reply_registry_singleton
 from src.core.interfaces.action_dispatcher import ActionDispatcher
 from src.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
+    ReplyChannelRegistryProtocol,
 )
 from src.core.interfaces.invoker import (
     InvocationMode,
@@ -35,7 +38,7 @@ from src.core.interfaces.invoker import (
     InvocationStatus,
 )
 from src.core.interfaces.invoker import Invoker as InvokerProtocol
-from src.schemas.invocation import ActionCommandSchema
+from src.core.types.invocation_command import ActionCommandSchema
 from src.services.execution.action_dispatcher import get_action_dispatcher
 
 __all__ = ("Invoker", "InvocationMode", "get_invoker")
@@ -50,25 +53,24 @@ class Invoker(InvokerProtocol):
         self,
         dispatcher: ActionDispatcher | None = None,
         *,
-        reply_registry: Any = None,
+        reply_registry: ReplyChannelRegistryProtocol | None = None,
     ) -> None:
         self._dispatcher = dispatcher or get_action_dispatcher()
-        # ReplyChannelRegistry инжектится опционально; lazy-доступ внутри
-        # asynchronous-методов сохраняет совместимость со старыми
-        # вызывающими (которые передавали только dispatcher).
+        # ReplyChannelRegistry инжектится опционально; lazy-резолв
+        # из app.state через core/di сохраняет совместимость с
+        # вызывающими, которые передавали только dispatcher (тесты).
         self._reply_registry_override = reply_registry
         # Активные fire-and-forget tasks хранятся, чтобы их не собрал GC
         # до завершения; auto-cleanup на done.
         self._tasks: set[asyncio.Task[None]] = set()
 
-    def _resolve_reply_registry(self) -> Any:
+    def _resolve_reply_registry(self) -> ReplyChannelRegistryProtocol | None:
         if self._reply_registry_override is not None:
             return self._reply_registry_override
-        from src.infrastructure.messaging.invocation_replies import (
-            get_reply_channel_registry,
-        )
-
-        return get_reply_channel_registry()
+        try:
+            return get_reply_registry_singleton()
+        except RuntimeError:
+            return None
 
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:
         match request.mode:
@@ -169,7 +171,10 @@ class Invoker(InvokerProtocol):
 
     def _resolve_channel(self, name: str) -> InvocationReplyChannel | None:
         """Получает backend по имени (kind) или возвращает None."""
-        return self._resolve_reply_registry().get(name)
+        registry = self._resolve_reply_registry()
+        if registry is None:
+            return None
+        return registry.get(name)
 
     def _track(self, task: asyncio.Task[None]) -> None:
         """Сохраняет ссылку на task до его завершения (защита от GC)."""
@@ -280,12 +285,13 @@ def _is_async_iterator(obj: Any) -> bool:
     )
 
 
-_invoker_singleton: Invoker | None = None
-
-
+@app_state_singleton("invoker", factory=Invoker)
 def get_invoker() -> Invoker:
-    """Singleton-доступ к Invoker'у (для DI и DSL processors)."""
-    global _invoker_singleton
-    if _invoker_singleton is None:
-        _invoker_singleton = Invoker()
-    return _invoker_singleton
+    """Singleton-доступ к Invoker'у (для DI и DSL processors).
+
+    Сначала ищет инстанс в ``app.state.invoker`` (composition root в
+    :func:`src.infrastructure.application.di.register_app_state`);
+    для non-request контекстов lazy-создаёт через factory ``Invoker()``.
+    Тело перезаписывается декоратором; ``raise`` — для mypy.
+    """
+    raise RuntimeError("get_invoker overridden by app_state_singleton")

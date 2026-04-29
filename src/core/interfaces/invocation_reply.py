@@ -27,7 +27,11 @@ from typing import Protocol, runtime_checkable
 
 from src.core.interfaces.invoker import InvocationResponse
 
-__all__ = ("ReplyChannelKind", "InvocationReplyChannel")
+__all__ = (
+    "ReplyChannelKind",
+    "InvocationReplyChannel",
+    "ReplyChannelRegistryProtocol",
+)
 
 
 class ReplyChannelKind(str, Enum):
@@ -69,4 +73,30 @@ class InvocationReplyChannel(Protocol):
         Для push-only каналов (WS/EMAIL/EXPRESS) всегда возвращает
         ``None`` — у них нет сохранённого state.
         """
+        ...
+
+
+@runtime_checkable
+class ReplyChannelRegistryProtocol(Protocol):
+    """Контракт реестра :class:`InvocationReplyChannel` для DI.
+
+    Конкретная реализация живёт в
+    :mod:`src.infrastructure.messaging.invocation_replies.registry`;
+    services/ и entrypoints/ зависят только от этого Protocol через
+    composition root (``app.state.reply_registry`` /
+    :mod:`src.core.di.dependencies`).
+    """
+
+    def register(self, channel: InvocationReplyChannel) -> None:
+        """Регистрирует backend; перезаписывает уже существующий той же kind."""
+        ...
+
+    def get(
+        self, kind: ReplyChannelKind | str
+    ) -> InvocationReplyChannel | None:
+        """Возвращает backend по типу; ``None`` — если не зарегистрирован."""
+        ...
+
+    def kinds(self) -> tuple[ReplyChannelKind, ...]:
+        """Перечисляет зарегистрированные kinds (для introspection)."""
         ...
