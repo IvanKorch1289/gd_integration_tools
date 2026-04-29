@@ -1,4 +1,4 @@
-"""Background Job Dashboard — Prefect flows + APScheduler + queues + webhooks."""
+"""Background Job Dashboard — APScheduler + queues + webhooks."""
 
 import sys
 from pathlib import Path
@@ -16,9 +16,7 @@ st.header("Background Jobs")
 
 client = get_api_client()
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["Scheduled", "Queue Depths", "Webhooks", "Prefect Flows"]
-)
+tab1, tab2, tab3 = st.tabs(["Scheduled", "Queue Depths", "Webhooks"])
 
 # ─────────── Scheduled Jobs (APScheduler) ───────────
 
@@ -105,22 +103,6 @@ with tab3:
                     st.success(f"Запланировано: {result}")
                 except Exception as exc:
                     st.error(f"Ошибка: {exc}")
-
-# ─────────── Prefect Flows ───────────
-
-with tab4:
-    st.subheader("Prefect Flows")
-    try:
-        flows = client._request("GET", "/api/v1/admin/prefect/flows")
-    except Exception as exc:
-        st.info(f"Prefect API недоступен: {exc}")
-        flows = []
-
-    if flows:
-        import polars as pl
-
-        df = pl.DataFrame(flows)
-        st.dataframe(df, use_container_width=True)
 
 if st.button("Обновить"):
     st.rerun()

@@ -64,7 +64,6 @@
                 'link-logs': logging.host ? `${logging.host}:${logging.port}` : '',
                 'link-storage': storage.interface_endpoint || '',
                 'link-queue': queue.queue_ui_url || '',
-                'link-prefect': app.prefect_url || '',
                 'link-langfuse': app.langfuse_url || '',
                 'link-langgraph': app.langgraph_url || '',
             };

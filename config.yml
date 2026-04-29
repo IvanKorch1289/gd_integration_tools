@@ -1,7 +1,6 @@
 app:
   host: "127.0.0.1"
   port: 8000
-  prefect_port: 4200
   use_ssl: False
   environment: "development"
   debug_mode: true

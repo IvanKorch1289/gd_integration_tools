@@ -43,8 +43,7 @@ async def root_page() -> HTMLResponse:
         var links = {{
             'link-logs': '{_safe_url(settings.logging.base_url)}',
             'link-storage': '{_safe_url(settings.storage.interface_endpoint)}',
-            'link-queue': '{_safe_url(settings.queue.queue_ui_url)}',
-            'link-prefect': '{_safe_url(settings.app.prefect_url)}'
+            'link-queue': '{_safe_url(settings.queue.queue_ui_url)}'
         }};
         for (var id in links) {{
             var el = document.getElementById(id);

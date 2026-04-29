@@ -96,15 +96,6 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[1, 4, 8],
     )
 
-    prefect_port: int = Field(
-        ...,
-        title="Порт Prefect",
-        ge=1,
-        le=65535,
-        description="Порт для интеграции с Prefect Server",
-        examples=[4200],
-    )
-
     langfuse_url: str = Field(
         default="",
         title="URL LangFuse",
@@ -228,14 +219,6 @@ class AppBaseSettings(BaseSettingsWithLoader):
     @computed_field(description="Базовый URL приложения")
     def base_url(self) -> str:
         return f"{self.build_base_url}:{self.port}"
-
-    @computed_field(description="URL Prefect сервера")
-    def prefect_url(self) -> str:
-        return f"{self.build_base_url}:{self.prefect_port}"
-
-    @computed_field(description="URL Prefect API документации")
-    def prefect_api_url(self) -> str:
-        return f"{self.prefect_url}/docs"
 
     # Валидация бизнес-правил
     @model_validator(mode="after")

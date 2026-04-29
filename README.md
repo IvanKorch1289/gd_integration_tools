@@ -37,8 +37,9 @@
                         │
 ┌───────────────────────▼─────────────────────────────────────┐
 │                    Инфраструктура                            │
-│  PostgreSQL │ Redis │ S3 │ RabbitMQ │ Kafka │ MongoDB       │
-│  WAF proxy │ LangFuse │ CDC │ Prefect                       │
+│  PostgreSQL │ Redis/KeyDB │ S3/MinIO │ RabbitMQ │ Kafka     │
+│  MongoDB │ Elasticsearch │ ClickHouse │ Qdrant │ LangFuse   │
+│  WAF proxy │ CDC │ DSL durable workflows                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,6 +59,7 @@
 | Redis Streams | `/stream/redis/*` | Pub/Sub через Redis |
 | MCP | FastMCP server | Model Context Protocol для LLM-агентов |
 | CDC | `/api/v1/cdc/*` | Change Data Capture подписки |
+| RAG | `/api/v1/rag/*` | Vector ingest / search / augment (Qdrant) |
 
 ## Бизнес-actions
 
@@ -73,7 +75,8 @@
 | **dadata** | get_geolocate |
 | **tech** | check_all_services, check_database, check_redis, check_s3, send_email |
 | **admin** | get_config, list_cache_keys, get_cache_value, invalidate_cache, list_services, list_actions, list_routes, list_feature_flags, toggle_feature_flag, system_info |
-| **ai** | search_web, parse_webpage, chat, run_agent |
+| **ai** | search_web, parse_webpage, chat (с опц. RAG augmentation), run_agent |
+| **rag** | ingest, search, augment, stats, delete |
 
 ## DSL Engine
 
@@ -233,29 +236,33 @@ route = (
 ## Стек технологий
 
 - **Python 3.14** / FastAPI / SQLAlchemy / Alembic
-- **PostgreSQL** / Redis / MongoDB / S3
-- **RabbitMQ** / Kafka / Redis Streams
+- **PostgreSQL** / Redis (KeyDB совместим) / MongoDB / Elasticsearch /
+  ClickHouse / S3 (MinIO/LocalFS fallback)
+- **Qdrant** + **sentence-transformers** — RAG stack
+- **RabbitMQ** / Kafka / Redis Streams (FastStream-унификация)
 - **gRPC** / GraphQL (Strawberry) / SOAP (Zeep)
-- **Prefect** — workflow orchestration
-- **LangChain** / LangGraph / LangFuse — AI
+- **DSL durable workflows** (заменили Prefect, ADR-031)
+- **LangChain** / LangGraph / LangFuse / LangMem — AI
 - **FastMCP** — Model Context Protocol
-- **Prometheus** / OpenTelemetry — observability
-- **Docker** / Poetry
+- **Prometheus** / OpenTelemetry / Grafana — observability
+- **Granian** (prod ASGI) / **uvicorn** (dev) / **uvloop** / **msgspec**
+- **polars** (заменил pandas, ADR-008) / DuckDB
+- **Docker** / **uv** (пакетный менеджер)
 
 ## Требования
 
 - Python 3.14
-- Poetry
+- [uv](https://github.com/astral-sh/uv) (пакетный менеджер)
 - Docker и Docker Compose (для контейнерного запуска)
 - PostgreSQL, RabbitMQ, Redis и другие зависимости
 
 ## Установка
 
 ```bash
-# Установить Poetry
-curl -sSL https://install.python-poetry.org | python3 -
+# Установить uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Установить зависимости
+# Инициализировать проект (uv sync)
 make init
 
 # Настроить .env
@@ -278,7 +285,8 @@ make run
 | GraphQL | `http://localhost:8000/graphql` |
 | gRPC Schema | `http://localhost:8000/grpc/schema` |
 | SOAP WSDL | `http://localhost:8000/soap/wsdl` |
-| Prefect UI | `http://localhost:4200` |
+| RAG API | `http://localhost:8000/api/v1/rag` |
+| Streamlit | `http://localhost:8501` |
 
 ## Примеры вызовов
 

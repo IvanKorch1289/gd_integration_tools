@@ -22,7 +22,6 @@ except Exception:
     config = {}
 
 services = {
-    "Prefect": config.get("prefect_url"),
     "S3 / MinIO": config.get("storage_interface_endpoint"),
     "Graylog": config.get("graylog_url"),
     "LangFuse": config.get("langfuse_url"),

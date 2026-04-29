@@ -29,15 +29,8 @@ class TechService:
             f"{settings.storage.interface_endpoint}", "Файловое хранилище"
         )
 
-    async def get_task_monitor_link(self) -> HTMLResponse:
-        return generate_link_page(
-            settings.app.prefect_url, "Мониторинг задач"
-        )
-
     async def get_queue_monitor_link(self) -> HTMLResponse:
-        return generate_link_page(
-            settings.queue.queue_ui_url, "Мониторинг очередей"
-        )
+        return generate_link_page(settings.queue.queue_ui_url, "Мониторинг очередей")
 
     async def get_langfuse_link(self) -> HTMLResponse:
         return generate_link_page(
@@ -101,9 +94,7 @@ class TechService:
         df = pl.read_excel(BytesIO(file_bytes))
 
         for row in df.iter_rows(named=True):
-            row_data = {
-                col: convert_numpy_types(value) for col, value in row.items()
-            }
+            row_data = {col: convert_numpy_types(value) for col, value in row.items()}
 
             validated_data = service.request_schema.model_validate(row_data)
 

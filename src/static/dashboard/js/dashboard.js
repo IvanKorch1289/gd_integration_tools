@@ -1,7 +1,7 @@
 /**
  * GD Integration Tools — Live Dashboard.
  *
- * Tabs: Metrics, Routes, Logs, Prefect, S3, Graylog, LangFuse.
+ * Tabs: Metrics, Routes, Logs, S3, Graylog, LangFuse.
  * Metrics + health refresh every 10s.
  * Routes loaded on tab activation.
  * Logs streamed via SSE (trace events).
@@ -24,7 +24,7 @@
             document.getElementById('panel-' + target).classList.add('active');
 
             if (target === 'routes') loadRoutes();
-            if (['prefect', 'storage', 'graylog', 'langfuse'].includes(target)) {
+            if (['storage', 'graylog', 'langfuse'].includes(target)) {
                 lazyLoadIframe(target);
             }
         });
@@ -151,7 +151,6 @@
             const config = await resp.json();
 
             const urls = {
-                prefect: config.app?.prefect_url || '',
                 storage: config.storage?.interface_endpoint || '',
                 graylog: config.logging?.host ? `http://${config.logging.host}:${config.logging.port}` : '',
                 langfuse: config.app?.langfuse_url || '',

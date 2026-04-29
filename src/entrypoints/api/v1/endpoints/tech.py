@@ -39,13 +39,6 @@ async def redirect_to_file_storage():
 
 
 @router.get(
-    "/task-monitor", response_class=HTMLResponse, summary="Ссылка на мониторинг задач"
-)
-async def redirect_to_task_monitor():
-    return await get_tech_service().get_task_monitor_link()
-
-
-@router.get(
     "/queue-monitor",
     response_class=HTMLResponse,
     summary="Ссылка на мониторинг очередей",
