@@ -46,19 +46,35 @@ _registry_singleton: ReplyChannelRegistry | None = None
 def get_reply_channel_registry() -> ReplyChannelRegistry:
     """Singleton :class:`ReplyChannelRegistry` с дефолтными backends.
 
-    Lazy-инициализация: при первом вызове регистрирует ``api`` (memory)
-    и ``ws`` backends. Перерегистрация поверх singleton разрешена через
-    ``register`` — это используется в тестах.
+    Lazy-инициализация: при первом вызове регистрирует все пять backend'ов
+    (``api``, ``ws``, ``email``, ``express``, ``queue``). Push-only каналы
+    (email/express/queue) при отсутствии конфигурации (recipient/topic в
+    ``response.metadata``) корректно пропускают доставку с warning, поэтому
+    их безопасно регистрировать всегда — даже в dev_light без SMTP/MQ.
+    Перерегистрация поверх singleton разрешена через ``register`` — это
+    используется в тестах.
     """
     global _registry_singleton
     if _registry_singleton is None:
+        from src.infrastructure.messaging.invocation_replies.email import (
+            EmailReplyChannel,
+        )
+        from src.infrastructure.messaging.invocation_replies.express import (
+            ExpressReplyChannel,
+        )
         from src.infrastructure.messaging.invocation_replies.memory import (
             MemoryReplyChannel,
+        )
+        from src.infrastructure.messaging.invocation_replies.queue import (
+            QueueReplyChannel,
         )
         from src.infrastructure.messaging.invocation_replies.ws import WsReplyChannel
 
         registry = ReplyChannelRegistry()
         registry.register(MemoryReplyChannel())
         registry.register(WsReplyChannel())
+        registry.register(EmailReplyChannel())
+        registry.register(ExpressReplyChannel())
+        registry.register(QueueReplyChannel())
         _registry_singleton = registry
     return _registry_singleton

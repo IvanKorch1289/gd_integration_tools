@@ -74,13 +74,18 @@ class InvocationRequest:
 
 @dataclass(slots=True)
 class InvocationResponse:
-    """Унифицированный ответ Invoker."""
+    """Унифицированный ответ Invoker.
+
+    ``metadata`` копируется из :class:`InvocationRequest` для push-каналов
+    (Email/Express/Queue), которым нужен routing-target (адрес/chat_id/topic).
+    """
 
     invocation_id: str
     status: InvocationStatus
     result: Any = None
     error: str | None = None
     mode: InvocationMode = InvocationMode.SYNC
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @runtime_checkable

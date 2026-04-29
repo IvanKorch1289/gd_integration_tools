@@ -1,6 +1,6 @@
-"""Реализация Invoker (W22.1 + W22.2/W22.3 расширения).
+"""Реализация Invoker (W22.1 + W22.2/W22.3 + Этап B расширения).
 
-Поддерживает четыре режима из шести:
+Поддерживает шесть режимов:
 
 * :attr:`InvocationMode.SYNC` — блокирующий вызов через ActionDispatcher.
 * :attr:`InvocationMode.ASYNC_API` — fire-and-forget, результат
@@ -11,16 +11,20 @@
 * :attr:`InvocationMode.STREAMING` — action возвращает ``AsyncIterator``;
   каждый yield пушится в :class:`WsReplyChannel` для зарегистрированного
   invocation_id. Завершение stream'а — закрытие WS со стороны клиента.
-
-Режимы :attr:`InvocationMode.ASYNC_QUEUE` (требует TaskIQ) и
-:attr:`InvocationMode.DEFERRED` (требует APScheduler) — пока заглушки
-с ``status=ERROR``; будут реализованы в W22 продолжении.
+* :attr:`InvocationMode.DEFERRED` — однократный отложенный запуск через
+  APScheduler (``request.metadata['run_at']`` ISO-datetime или
+  ``request.metadata['delay_seconds']``). Не durable — после рестарта
+  сервиса задача не восстанавливается (memory jobstore).
+* :attr:`InvocationMode.ASYNC_QUEUE` — публикация в очередь TaskIQ
+  (требует ``taskiq`` опционально установленным). При отсутствии TaskIQ
+  возвращает ``ERROR`` с понятной диагностикой.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import UTC, datetime, timedelta
 from typing import Any, AsyncIterator
 
 from src.core.di import app_state_singleton
@@ -82,16 +86,10 @@ class Invoker(InvokerProtocol):
                 return self._invoke_background(request)
             case InvocationMode.STREAMING:
                 return self._invoke_streaming(request)
-            case InvocationMode.ASYNC_QUEUE | InvocationMode.DEFERRED:
-                return InvocationResponse(
-                    invocation_id=request.invocation_id,
-                    status=InvocationStatus.ERROR,
-                    error=(
-                        f"Mode '{request.mode.value}' is not yet implemented "
-                        "(requires TaskIQ/APScheduler integration)"
-                    ),
-                    mode=request.mode,
-                )
+            case InvocationMode.DEFERRED:
+                return self._invoke_deferred(request)
+            case InvocationMode.ASYNC_QUEUE:
+                return await self._invoke_async_queue(request)
 
     async def _invoke_sync(self, request: InvocationRequest) -> InvocationResponse:
         try:
@@ -102,6 +100,7 @@ class Invoker(InvokerProtocol):
                 status=InvocationStatus.OK,
                 result=result,
                 mode=request.mode,
+                metadata=dict(request.metadata),
             )
         except KeyError as exc:
             return InvocationResponse(
@@ -109,6 +108,7 @@ class Invoker(InvokerProtocol):
                 status=InvocationStatus.ERROR,
                 error=f"Action not registered: {exc}",
                 mode=request.mode,
+                metadata=dict(request.metadata),
             )
         except Exception as exc:
             logger.exception(
@@ -121,6 +121,7 @@ class Invoker(InvokerProtocol):
                 status=InvocationStatus.ERROR,
                 error=str(exc)[:500],
                 mode=request.mode,
+                metadata=dict(request.metadata),
             )
 
     def _invoke_async_api(self, request: InvocationRequest) -> InvocationResponse:
@@ -169,6 +170,128 @@ class Invoker(InvokerProtocol):
             mode=request.mode,
         )
 
+    def _invoke_deferred(self, request: InvocationRequest) -> InvocationResponse:
+        """Планирует однократный запуск через APScheduler.
+
+        Время старта определяется одним из полей ``request.metadata``:
+
+        * ``run_at``: ISO-datetime (UTC, e.g. ``2026-04-30T12:00:00+00:00``);
+        * ``delay_seconds``: число — относительная задержка в секундах.
+
+        Если ни одно не задано — возвращает ``ERROR``. Job сохраняется в
+        memory-jobstore (не durable; после рестарта сервиса теряется).
+        """
+        run_at = self._resolve_deferred_run_at(request)
+        if run_at is None:
+            return InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=(
+                    "DEFERRED требует metadata.run_at (ISO datetime) или "
+                    "metadata.delay_seconds (число)"
+                ),
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+
+        try:
+            from apscheduler.triggers.date import DateTrigger
+
+            from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("DEFERRED: APScheduler недоступен")
+            return InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=f"APScheduler unavailable: {exc}",
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+
+        job_id = f"deferred_invocation_{request.invocation_id}"
+        scheduler_manager.scheduler.add_job(
+            _run_deferred_job,
+            trigger=DateTrigger(run_date=run_at),
+            kwargs={"request": request},
+            id=job_id,
+            replace_existing=False,
+            executor="async",
+            jobstore="backup",
+        )
+        meta = dict(request.metadata)
+        meta["scheduled_at"] = run_at.isoformat()
+        meta["scheduler_job_id"] = job_id
+        return InvocationResponse(
+            invocation_id=request.invocation_id,
+            status=InvocationStatus.ACCEPTED,
+            mode=request.mode,
+            metadata=meta,
+        )
+
+    def _resolve_deferred_run_at(
+        self, request: InvocationRequest
+    ) -> datetime | None:
+        meta = request.metadata or {}
+        run_at_raw = meta.get("run_at")
+        if isinstance(run_at_raw, datetime):
+            return run_at_raw if run_at_raw.tzinfo else run_at_raw.replace(tzinfo=UTC)
+        if isinstance(run_at_raw, str) and run_at_raw:
+            try:
+                parsed = datetime.fromisoformat(run_at_raw)
+            except ValueError:
+                logger.warning("DEFERRED: невалидный run_at=%r", run_at_raw)
+                return None
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+        delay_raw = meta.get("delay_seconds")
+        if isinstance(delay_raw, (int, float)) and delay_raw >= 0:
+            return datetime.now(UTC) + timedelta(seconds=float(delay_raw))
+        return None
+
+    async def _invoke_async_queue(
+        self, request: InvocationRequest
+    ) -> InvocationResponse:
+        """Публикует invocation в очередь TaskIQ.
+
+        Требует опциональную установку ``taskiq``. Брокер берётся через
+        :func:`src.infrastructure.execution.taskiq_broker.get_broker`.
+        Worker подхватывает задачу и сам вызывает Invoker.invoke в режиме
+        SYNC (см. :func:`run_taskiq_invocation`), результат публикуется в
+        указанный ``reply_channel`` (по умолчанию ``api``).
+        """
+        try:
+            from src.infrastructure.execution.taskiq_broker import get_invocation_task
+        except Exception as exc:  # noqa: BLE001
+            return InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=f"TaskIQ unavailable: {exc}",
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+
+        try:
+            task = get_invocation_task()
+            await task.kiq(_serialize_request(request))
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "ASYNC_QUEUE kiq failed (invocation_id=%s)",
+                request.invocation_id,
+            )
+            return InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=f"TaskIQ kiq failed: {exc}",
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+        return InvocationResponse(
+            invocation_id=request.invocation_id,
+            status=InvocationStatus.ACCEPTED,
+            mode=request.mode,
+            metadata=dict(request.metadata),
+        )
+
     def _resolve_channel(self, name: str) -> InvocationReplyChannel | None:
         """Получает backend по имени (kind) или возвращает None."""
         registry = self._resolve_reply_registry()
@@ -195,6 +318,7 @@ class Invoker(InvokerProtocol):
             result=response.result,
             error=response.error,
             mode=request.mode,
+            metadata=dict(request.metadata),
         )
         if channel is None:
             logger.warning(
@@ -225,6 +349,7 @@ class Invoker(InvokerProtocol):
         channel: InvocationReplyChannel,
     ) -> None:
         """Стримит yield'ы action'а в reply-канал по одному InvocationResponse."""
+        meta = dict(request.metadata)
         try:
             command = ActionCommandSchema(action=request.action, payload=request.payload)
             result = await self._dispatcher.dispatch(command)
@@ -235,6 +360,7 @@ class Invoker(InvokerProtocol):
                     status=InvocationStatus.ERROR,
                     error=f"Action not registered: {exc}",
                     mode=request.mode,
+                    metadata=meta,
                 )
             )
             return
@@ -250,6 +376,7 @@ class Invoker(InvokerProtocol):
                     status=InvocationStatus.ERROR,
                     error=str(exc)[:500],
                     mode=request.mode,
+                    metadata=meta,
                 )
             )
             return
@@ -263,6 +390,7 @@ class Invoker(InvokerProtocol):
                     status=InvocationStatus.OK,
                     result=result,
                     mode=request.mode,
+                    metadata=meta,
                 )
             )
             return
@@ -274,6 +402,7 @@ class Invoker(InvokerProtocol):
                     status=InvocationStatus.OK,
                     result=chunk,
                     mode=request.mode,
+                    metadata=meta,
                 )
             )
 
@@ -283,6 +412,90 @@ def _is_async_iterator(obj: Any) -> bool:
     return hasattr(obj, "__aiter__") and isinstance(obj, AsyncIterator) or hasattr(
         obj, "__aiter__"
     )
+
+
+def _serialize_request(request: InvocationRequest) -> dict[str, Any]:
+    """Сериализует :class:`InvocationRequest` в JSON-friendly dict.
+
+    Используется при публикации в TaskIQ; worker восстанавливает
+    request через :func:`_deserialize_request` и вызывает
+    :class:`Invoker` в режиме SYNC.
+    """
+    return {
+        "action": request.action,
+        "payload": dict(request.payload),
+        "mode": request.mode.value,
+        "reply_channel": request.reply_channel,
+        "invocation_id": request.invocation_id,
+        "created_at": request.created_at.isoformat(),
+        "metadata": dict(request.metadata),
+    }
+
+
+def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
+    """Восстанавливает :class:`InvocationRequest` из словаря."""
+    created_at_raw = raw.get("created_at")
+    if isinstance(created_at_raw, str):
+        created_at = datetime.fromisoformat(created_at_raw)
+    else:
+        created_at = datetime.now(UTC)
+    mode_raw = raw.get("mode") or InvocationMode.SYNC.value
+    return InvocationRequest(
+        action=str(raw["action"]),
+        payload=dict(raw.get("payload") or {}),
+        mode=InvocationMode(mode_raw),
+        reply_channel=raw.get("reply_channel"),
+        invocation_id=str(raw.get("invocation_id") or ""),
+        created_at=created_at,
+        metadata=dict(raw.get("metadata") or {}),
+    )
+
+
+async def _run_deferred_job(request: InvocationRequest) -> None:
+    """APScheduler-job: вызывает Invoker SYNC и публикует ответ в reply_channel.
+
+    Запускается планировщиком через :class:`DateTrigger`. Использует тот
+    же мостик, что и ``_invoke_async_api`` — выполняет SYNC и пушит
+    результат в reply-канал, указанный в ``request.reply_channel``
+    (по умолчанию ``api``).
+    """
+    # Создание Invoker через app_state_singleton: если app.state есть —
+    # переиспользует тот же экземпляр; иначе локальный fallback.
+    invoker = get_invoker()
+    sync_request = InvocationRequest(
+        action=request.action,
+        payload=dict(request.payload),
+        mode=InvocationMode.SYNC,
+        reply_channel=request.reply_channel,
+        invocation_id=request.invocation_id,
+        created_at=request.created_at,
+        metadata=dict(request.metadata),
+    )
+    response = await invoker._invoke_sync(sync_request)
+    response = InvocationResponse(
+        invocation_id=response.invocation_id,
+        status=response.status,
+        result=response.result,
+        error=response.error,
+        mode=InvocationMode.DEFERRED,
+        metadata=dict(request.metadata),
+    )
+    channel_kind = request.reply_channel or ReplyChannelKind.API.value
+    channel = invoker._resolve_channel(channel_kind)
+    if channel is None:
+        logger.warning(
+            "DEFERRED: reply_channel=%r не найден (invocation_id=%s)",
+            channel_kind,
+            request.invocation_id,
+        )
+        return
+    try:
+        await channel.send(response)
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "DEFERRED: ReplyChannel.send failed (invocation_id=%s)",
+            request.invocation_id,
+        )
 
 
 @app_state_singleton("invoker", factory=Invoker)

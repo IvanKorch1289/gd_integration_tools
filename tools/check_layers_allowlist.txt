@@ -129,3 +129,9 @@ src/services/ops/notification_hub.py	services	src.infrastructure.clients.externa
 src/services/ops/notification_hub.py	services	src.infrastructure.clients.transport.smtp
 src/services/ops/notification_hub.py	services	src.infrastructure.security.signatures
 src/services/ops/webhook_scheduler.py	services	src.infrastructure.clients.storage.redis
+src/entrypoints/scheduler/invoker_schedule.py	entrypoints	src.infrastructure.scheduler.scheduler_manager
+src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
+src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
+src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
+src/services/execution/invoker.py	services	src.infrastructure.execution.taskiq_broker
+src/services/execution/invoker.py	services	src.infrastructure.scheduler.scheduler_manager

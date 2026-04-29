@@ -3,18 +3,31 @@
 Принимает XML/SOAP envelope через POST, парсит операцию
 и payload, маршрутизирует через DSL или ActionHandlerRegistry,
 формирует SOAP-ответ. Также предоставляет автогенерацию WSDL.
+
+W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точка входа,
+которая транслирует envelope в :class:`InvocationRequest` и передаёт
+его в :class:`Invoker` (тот же Gateway, что и REST/WS адаптеры).
 """
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from xml.etree import ElementTree as ET
 
 import orjson
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 
+from src.core.di.dependencies import get_invoker_dep
 from src.core.errors import BaseError
+from src.core.interfaces.invoker import (
+    InvocationMode,
+    InvocationRequest,
+    InvocationStatus,
+)
 from src.dsl.commands.registry import action_handler_registry
 from src.dsl.service import get_dsl_service
+
+if TYPE_CHECKING:
+    from src.core.interfaces.invoker import Invoker
 
 __all__ = ("soap_router",)
 
@@ -269,3 +282,150 @@ async def get_wsdl() -> Response:
     )
 
     return Response(content=wsdl, media_type="text/xml; charset=utf-8")
+
+
+def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
+    """Парсит SOAP envelope формата ``InvokeRequest`` в :class:`InvocationRequest`.
+
+    Ожидаемая структура (literal-style):
+
+    .. code-block:: xml
+
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <InvokeRequest>
+              <action>orders.get</action>
+              <mode>sync</mode>
+              <reply_channel>api</reply_channel>
+              <payload>{"id": 42}</payload>
+              <metadata>{"email": "user@x"}</metadata>
+            </InvokeRequest>
+          </soap:Body>
+        </soap:Envelope>
+
+    ``payload`` и ``metadata`` принимают JSON-строку (для произвольной
+    вложенности) либо плоские дочерние элементы.
+    """
+    try:
+        from defusedxml.ElementTree import fromstring as safe_fromstring
+
+        root = safe_fromstring(xml_body)
+    except ImportError:
+        root = ET.fromstring(xml_body)  # noqa: S314
+
+    body = root.find(f"{{{_SOAP_NS}}}Body")
+    if body is None:
+        raise ValueError("SOAP Body не найден")
+    request_element = next(iter(body), None)
+    if request_element is None:
+        raise ValueError("SOAP Body пуст")
+
+    fields: dict[str, str] = {}
+    for child in request_element:
+        tag = child.tag.split("}")[1] if "}" in child.tag else child.tag
+        fields[tag] = child.text or ""
+
+    action = fields.get("action") or ""
+    if not action:
+        raise ValueError("InvokeRequest.action обязателен")
+    mode_raw = fields.get("mode") or InvocationMode.SYNC.value
+    try:
+        mode = InvocationMode(mode_raw)
+    except ValueError as exc:
+        raise ValueError(f"Неизвестный mode: {mode_raw!r}") from exc
+
+    reply_channel = fields.get("reply_channel") or None
+
+    payload_raw = fields.get("payload") or ""
+    metadata_raw = fields.get("metadata") or ""
+    return InvocationRequest(
+        action=action,
+        payload=_parse_json_field(payload_raw),
+        mode=mode,
+        reply_channel=reply_channel,
+        metadata=_parse_json_field(metadata_raw),
+    )
+
+
+def _parse_json_field(raw: str) -> dict[str, Any]:
+    """Парсит строковое поле как JSON; пустая строка → пустой dict."""
+    if not raw or not raw.strip():
+        return {}
+    try:
+        decoded = orjson.loads(raw)
+    except orjson.JSONDecodeError as exc:
+        raise ValueError(f"Невалидный JSON в SOAP-поле: {exc}") from exc
+    if not isinstance(decoded, dict):
+        raise ValueError("SOAP-поле должно быть JSON-объектом")
+    return decoded
+
+
+def _build_invoke_response_envelope(
+    invocation_id: str,
+    status_value: str,
+    mode: str,
+    result: Any = None,
+    error: str | None = None,
+) -> str:
+    """Формирует SOAP envelope для :class:`InvocationResponse`."""
+    parts = [
+        f"<invocation_id>{_xml_escape(invocation_id)}</invocation_id>",
+        f"<status>{_xml_escape(status_value)}</status>",
+        f"<mode>{_xml_escape(mode)}</mode>",
+    ]
+    if result is not None:
+        try:
+            result_json = orjson.dumps(result, default=str).decode()
+        except (TypeError, ValueError):
+            result_json = str(result)
+        parts.append(f"<result>{_xml_escape(result_json)}</result>")
+    if error:
+        parts.append(f"<error>{_xml_escape(error)}</error>")
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<soap:Envelope xmlns:soap="{_SOAP_NS}">'
+        "<soap:Body>"
+        "<InvokeResponse>"
+        + "".join(parts)
+        + "</InvokeResponse>"
+        "</soap:Body>"
+        "</soap:Envelope>"
+    )
+
+
+@soap_router.post(
+    "/invoke",
+    response_class=Response,
+    summary="SOAP-адаптер для Invoker (W22 этап B)",
+    description=(
+        "Принимает SOAP envelope <InvokeRequest> и пробрасывает в Invoker. "
+        "Для async-режимов возвращает 202 + invocation_id."
+    ),
+)
+async def soap_invoke(
+    request: Request,
+    invoker: "Invoker" = Depends(get_invoker_dep),
+) -> Response:
+    """Единая SOAP-точка входа для всех :class:`InvocationMode` через Invoker."""
+    content_type = "text/xml; charset=utf-8"
+    try:
+        invocation_request = _parse_invoker_envelope(await request.body())
+    except ValueError as exc:
+        xml = _build_soap_fault("Client", str(exc))
+        return Response(content=xml, media_type=content_type, status_code=400)
+
+    response = await invoker.invoke(invocation_request)
+    status_code = (
+        202 if response.status is InvocationStatus.ACCEPTED
+        else 500 if response.status is InvocationStatus.ERROR
+        else 200
+    )
+    xml = _build_invoke_response_envelope(
+        invocation_id=response.invocation_id,
+        status_value=response.status.value,
+        mode=response.mode.value,
+        result=response.result,
+        error=response.error,
+    )
+    return Response(content=xml, media_type=content_type, status_code=status_code)
