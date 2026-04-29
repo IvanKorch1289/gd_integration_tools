@@ -1,8 +1,116 @@
-# Профиль staging — предпродакшн.
+# ──────────────────────────────────────────────────────────────────────
+# staging.yml — overlay для предпродакшн-окружения.
 #
-# Все секреты и хосты приходят из env / Vault и НЕ должны храниться здесь.
-# Этот overlay — место только для staging-специфичных значений настроек.
+# Все хосты/порты/секреты приходят извне (env / Vault) — здесь только
+# staging-специфичные значения, которые отличаются от base.yml. Файл
+# обязан быть самодостаточным после deep-merge с base.yml.
+# ──────────────────────────────────────────────────────────────────────
 
 app:
-  environment: staging
+  environment: "staging"
   debug_mode: false
+  host: "0.0.0.0"
+  port: 8000
+  use_ssl: true
+  opentelemetry_endpoint: "http://otel-collector:4317"
+  telemetry_enabled: true
+  admin_enabled: true
+  monitoring_enabled: true
+
+
+security:
+  admin_ips: []
+  admin_routes:
+    - "/admin"
+    - "/admin/*"
+    - "/metrics"
+  allowed_hosts:
+    - "*.staging.local"
+
+
+database:
+  type: "postgresql"
+  host: "postgres-staging"
+  port: 5432
+  name: "main_db"
+  ssl_mode: "require"
+  ca_bundle: null
+
+
+external_databases:
+  ssl_mode: "require"
+  ca_bundle: null
+  connections: []
+
+
+redis:
+  enabled: true
+  host: "redis-staging"
+  port: 6379
+  db_cache: 2
+  db_queue: 3
+  db_limits: 4
+  db_tasks: 5
+  use_ssl: true
+  ca_bundle: null
+  socket_keepalive: true
+  main_stream: "events_stream"
+  dlq_stream: "events_dlq"
+
+
+mongo:
+  enabled: true
+  host: "mongo-staging"
+  port: 27017
+  name: "mongo"
+
+
+queue:
+  enabled: true
+  type: "rabbitmq"
+  host: "rabbitmq-staging"
+  port: 5672
+  ui_port: 15672
+  use_ssl: true
+  ca_bundle: null
+
+
+mail:
+  host: "smtp-staging"
+  port: 587
+  sender: "noreply@staging.local"
+  use_tls: true
+  validate_certs: true
+  ca_bundle: null
+  template_folder: null
+
+
+log:
+  host: "graylog-staging"
+  port: 9000
+  use_tls: true
+  ca_bundle: null
+
+
+fs:
+  enabled: true
+  provider: "minio"
+  bucket: "staging-bucket"
+  endpoint: "https://minio-staging:9000"
+  interface_endpoint: "https://minio-staging:9001"
+  use_ssl: true
+  verify: true
+  ca_bundle: null
+
+
+skb:
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
+
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
+
+
+antivirus:
+  base_url: "https://kkdrweb.bank.srv:443"

@@ -1,55 +1,143 @@
-# Профиль dev_light — лёгкий локальный запуск без Docker.
+# ──────────────────────────────────────────────────────────────────────
+# dev_light.yml — лёгкий локальный запуск без Docker.
 #
-# Накладывается поверх config.yml после загрузки, замещает только указанные
-# ключи. Активируется переменной APP_PROFILE=dev_light.
+# Disk-only вариант: всё хранится на локальном диске, никаких внешних
+# сервисов. Использовать, когда docker-compose не запущен.
+#   • database  — SQLite (файл в ./.run/dev.sqlite3)
+#   • fs        — LocalFS (./.run/storage)
+#   • log       — file-only (./.run/logs/dev_light.log; remote graylog off)
+#   • redis/mongo/rabbitmq/elasticsearch/clickhouse — disabled
+#   • cache     — in-memory
+#   • vault     — disabled (см. vault.enabled = false)
 #
-# Цель: SQLite вместо PostgreSQL, LocalFS вместо S3, in-memory вместо Redis,
-# без Mongo/Elasticsearch/ClickHouse.
+# Для полноценного prod-like стенда — dev.yml.
+# Накладывается поверх base.yml через _deep_merge.
+# ──────────────────────────────────────────────────────────────────────
+
+vault:
+  enabled: false
+
+
+app:
+  environment: "development"
+  debug_mode: true
+  host: "127.0.0.1"
+  port: 8000
+  use_ssl: false
+  opentelemetry_endpoint: ""
+  telemetry_enabled: false
+  admin_enabled: true
+  monitoring_enabled: true
+
+
+security:
+  admin_ips:
+    - "127.0.0.1"
+  admin_routes:
+    - "/"
+    - "/admin"
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+
 
 database:
-  type: sqlite
-  path: ./.run/dev.sqlite3
-  host: localhost
+  type: "sqlite"
+  path: "./.run/dev.sqlite3"
+  host: "localhost"
   port: 0
-  name: dev
-  username: ""
-  password: ""
+  name: "dev"
   ssl_mode: null
   ca_bundle: null
 
-# LocalFS вместо S3: ``provider=local`` пропускает s3_client startup
-# (см. _s3_enabled в setup_infra.py).
-fs:
-  enabled: true
-  provider: local
-  local_storage_path: ./.run/storage
 
-redis:
-  enabled: false
-
-queue:
-  enabled: false
-
-mongo:
-  enabled: false
-
-elasticsearch:
-  enabled: false
-
-clickhouse:
-  enabled: false
-
-cache:
-  backend: memory
-  l1_enabled: true
-
-# Отключение Graylog (graypy не входит в [dev-light] extras).
-log:
-  host: ""
-
-# Внешние БД (Oracle/PG из vault) — для dev_light пустой список,
-# чтобы не падать на отсутствующих username/password в Vault.
 external_databases:
   connections: []
 
 
+redis:
+  enabled: false
+  host: "127.0.0.1"
+  port: 6379
+  db_cache: 0
+  db_queue: 1
+  db_limits: 2
+  db_tasks: 3
+  use_ssl: false
+  ca_bundle: null
+  socket_keepalive: false
+  main_stream: null
+  dlq_stream: null
+
+
+mongo:
+  enabled: false
+  host: "127.0.0.1"
+  port: 27017
+  name: "dev"
+
+
+queue:
+  enabled: false
+  type: "rabbitmq"
+  host: "127.0.0.1"
+  port: 5672
+  ui_port: 15672
+  ca_bundle: null
+
+
+mail:
+  host: "localhost"
+  port: 1025
+  sender: "dev_light@local"
+  ca_bundle: null
+  template_folder: null
+
+
+log:
+  # disk-only: пустой host отключает remote-Graylog, всё пишется в файл.
+  host: ""
+  port: 9000
+  use_tls: false
+  ca_bundle: null
+  level: "DEBUG"
+  dir_log_name: "./.run/logs"
+  name_log_file: "dev_light.log"
+
+
+fs:
+  enabled: true
+  provider: "local"
+  local_storage_path: "./.run/storage"
+  bucket: "dev-light"
+  endpoint: "http://127.0.0.1:9090"
+  interface_endpoint: "http://127.0.0.1:9091"
+  use_ssl: false
+  verify: false
+  ca_bundle: null
+
+
+skb:
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
+
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
+
+
+antivirus:
+  base_url: "https://kkdrweb.bank.srv:443"
+
+
+cache:
+  backend: "memory"
+  l1_enabled: true
+
+
+elasticsearch:
+  enabled: false
+
+
+clickhouse:
+  enabled: false

@@ -16,9 +16,6 @@ from src.core.config.profile import get_active_profile
 __all__ = ("BaseSettingsWithLoader",)
 
 
-_DEFAULT_PROFILE_NAME = "dev"
-
-
 def _resolve_repo_root() -> Path:
     """Возвращает корень репозитория (директория с ``pyproject.toml``).
 
@@ -50,6 +47,41 @@ def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]
         else:
             merged[key] = value
     return merged
+
+
+def _read_yaml(path: Path) -> dict[str, Any]:
+    """Безопасное чтение YAML-файла. Отсутствие файла → пустой dict."""
+    from yaml import safe_load
+
+    try:
+        with open(path) as fh:
+            data = safe_load(fh) or {}
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:
+        raise RuntimeError(f"YAML loading error ({path}): {exc}") from exc
+    return data if isinstance(data, dict) else {}
+
+
+def _is_vault_enabled() -> bool:
+    """Решает, активировать ли VaultConfigSettingsSource.
+
+    Приоритет: env-override (``VAULT_ENABLED``) → YAML (``vault.enabled``)
+    → значение по умолчанию ``True``. Helper не инстанциирует
+    ``VaultSettings`` — это вызвало бы рекурсию через
+    ``customise_sources``; YAML читается напрямую.
+    """
+    from os import getenv
+
+    raw = getenv("VAULT_ENABLED")
+    if raw is not None and raw.strip():
+        return raw.strip().lower() not in {"0", "false", "no"}
+    base = _read_yaml(_REPO_ROOT / "config_profiles" / "base.yml")
+    overlay = _read_yaml(
+        _REPO_ROOT / "config_profiles" / f"{get_active_profile().value}.yml"
+    )
+    vault_cfg = _deep_merge(base, overlay).get("vault") or {}
+    return bool(vault_cfg.get("enabled", True))
 
 
 class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
@@ -98,74 +130,62 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
-    """YAML config loader: грузит конфигурацию из ``config_profiles/``.
+    """YAML config loader: ``base.yml`` + overlay активного профиля.
 
-    Источник истины — каталог ``config_profiles/``. Базовый набор живёт
-    в ``config_profiles/dev.yml`` (полный набор всех ключей). Профили
-    ``prod``/``staging``/``dev_light`` — overlay поверх dev через
-    deep-merge.
+    Структура ``config_profiles/``:
+        * ``base.yml`` — общие нечувствительные настройки, не зависящие
+          от окружения (timeouts, retries, pool_size, encoding и т.д.);
+        * ``{profile}.yml`` — env-specific overrides (хосты, порты,
+          enabled-флаги для конкретного окружения).
 
-    Логика:
-    - active profile == ``dev`` → только ``dev.yml``;
-    - active profile != ``dev`` → ``dev.yml`` (base) + ``{profile}.yml``
-      (overlay) через :func:`_deep_merge`.
-
-    Отсутствие профильного файла не считается ошибкой (overlay
-    игнорируется); отсутствие base ``dev.yml`` — фатальная ошибка.
+    Финальная конфигурация = ``_deep_merge(base, profile)``. Оба файла
+    обязательны — отсутствие любого из них приводит к фатальной ошибке.
+    Секреты приходят из env / Vault; в YAML их быть не должно (см.
+    ``tools/config_audit.py`` и ``.env.example``).
     """
 
     def __init__(
-        self,
-        settings_cls: type[BaseSettings],
-        profiles_dir: Path | None = None,
+        self, settings_cls: type[BaseSettings], profiles_dir: Path | None = None
     ):
         super().__init__(settings_cls)
         self.profiles_dir = profiles_dir or _REPO_ROOT / "config_profiles"
 
     def _load_data(self) -> dict[str, Any]:
-        """Загружает базовый профиль и накладывает overlay активного."""
-        from yaml import safe_load
+        """Загружает ``base.yml`` и накладывает overlay активного профиля.
 
-        def _read(path: Path) -> dict[str, Any]:
-            try:
-                with open(path) as f:
-                    return safe_load(f) or {}
-            except FileNotFoundError:
-                return {}
-            except Exception as exc:
-                raise RuntimeError(f"YAML loading error ({path}): {exc}") from exc
-
-        base_path = self.profiles_dir / f"{_DEFAULT_PROFILE_NAME}.yml"
-        base = _read(base_path)
+        Оба файла обязательны (FileNotFound → RuntimeError); ``_read_yaml``
+        здесь оборачивается, чтобы конвертировать отсутствие файла в
+        фатальную ошибку (в loader-контексте отсутствие конфига —
+        нерабочая ситуация, в отличие от ``_is_vault_enabled``, который
+        допускает мягкий fallback).
+        """
+        base_path = self.profiles_dir / "base.yml"
         profile = get_active_profile()
-        if profile.value == _DEFAULT_PROFILE_NAME:
-            return base
-
         overlay_path = self.profiles_dir / f"{profile.value}.yml"
-        overlay = _read(overlay_path)
-        return _deep_merge(base, overlay) if overlay else base
+        for path in (base_path, overlay_path):
+            if not path.is_file():
+                raise RuntimeError(
+                    f"Config not found: {path}. "
+                    "Ожидается base.yml + {profile}.yml в config_profiles/."
+                )
+        return _deep_merge(_read_yaml(base_path), _read_yaml(overlay_path))
 
 
 class VaultConfigSettingsSource(FilteredSettingsSource):
     """Vault config loader with filtering.
 
-    Активируется только если в окружении заданы все три переменных
-    (``VAULT_ADDR``, ``VAULT_TOKEN``, ``VAULT_SECRET_PATH``) и
-    ``VAULT_ENABLED`` не выставлен в ``false``. На профиле
-    ``dev_light`` Vault отключают через ``VAULT_ENABLED=false``,
-    чтобы не получать сетевые ошибки при отсутствии серверa.
+    Активируется только если включён через YAML (``vault.enabled: true``)
+    или env-override (``VAULT_ENABLED``), и в окружении заданы все три
+    переменных ``VAULT_ADDR``/``VAULT_TOKEN``/``VAULT_SECRET_PATH``. На
+    профиле ``dev_light`` поставляется overlay ``vault.enabled: false``,
+    что отключает источник без необходимости трогать env.
     """
 
     def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
         from os import getenv
 
-        if getenv("VAULT_ENABLED", "true").strip().lower() in {"0", "false", "no"}:
-            return {}
-
-        # На профиле dev_light Vault недоступен по умолчанию — отключаем
-        # без необходимости явного ``VAULT_ENABLED=false``.
-        if get_active_profile().value == "dev_light":
+        if not _is_vault_enabled():
             return {}
 
         vault_addr = getenv("VAULT_ADDR")

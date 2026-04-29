@@ -1,9 +1,118 @@
-# Профиль prod — production-окружение.
+# ──────────────────────────────────────────────────────────────────────
+# prod.yml — overlay для production-окружения.
 #
-# Все секреты и хосты приходят из env / Vault и НЕ должны храниться здесь.
-# Этот overlay — место только для prod-специфичных значений настроек.
+# Хосты/порты — placeholder'ы. Все секреты приходят из env / Vault.
+# Файл накладывается поверх base.yml через _deep_merge.
+# ──────────────────────────────────────────────────────────────────────
 
 app:
-  environment: production
+  environment: "production"
   debug_mode: false
-  server: granian
+  server: "granian"
+  host: "0.0.0.0"
+  port: 8000
+  use_ssl: true
+  opentelemetry_endpoint: "http://otel-collector:4317"
+  telemetry_enabled: true
+  admin_enabled: true
+  monitoring_enabled: true
+  enable_swagger: false
+  enable_redoc: false
+
+
+security:
+  admin_ips: []
+  admin_routes:
+    - "/admin"
+    - "/admin/*"
+    - "/metrics"
+  allowed_hosts:
+    - "*.prod.local"
+
+
+database:
+  type: "postgresql"
+  host: "postgres-prod"
+  port: 5432
+  name: "main_db"
+  ssl_mode: "require"
+  ca_bundle: null
+
+
+external_databases:
+  ssl_mode: "require"
+  ca_bundle: null
+  connections: []
+
+
+redis:
+  enabled: true
+  host: "redis-prod"
+  port: 6379
+  db_cache: 2
+  db_queue: 3
+  db_limits: 4
+  db_tasks: 5
+  use_ssl: true
+  ca_bundle: null
+  socket_keepalive: true
+  main_stream: "events_stream"
+  dlq_stream: "events_dlq"
+
+
+mongo:
+  enabled: true
+  host: "mongo-prod"
+  port: 27017
+  name: "mongo"
+
+
+queue:
+  enabled: true
+  type: "rabbitmq"
+  host: "rabbitmq-prod"
+  port: 5672
+  ui_port: 15672
+  use_ssl: true
+  ca_bundle: null
+
+
+mail:
+  host: "smtp-prod"
+  port: 587
+  sender: "noreply@prod.local"
+  use_tls: true
+  validate_certs: true
+  ca_bundle: null
+  template_folder: null
+
+
+log:
+  host: "graylog-prod"
+  port: 9000
+  use_tls: true
+  ca_bundle: null
+
+
+fs:
+  enabled: true
+  provider: "aws"
+  bucket: "prod-bucket"
+  endpoint: "https://s3.prod.local"
+  interface_endpoint: "https://s3-console.prod.local"
+  use_ssl: true
+  verify: true
+  ca_bundle: null
+
+
+skb:
+  prod_url: "https://api.skb-techno.ru/v2/Requests/"
+  test_url: "https://test-api.skb-techno.ru/v2/Requests/"
+
+
+dadata:
+  base_url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/"
+
+
+antivirus:
+  base_url: "https://kkdrweb.bank.srv:443"

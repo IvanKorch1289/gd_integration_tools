@@ -20,11 +20,6 @@ class SecureSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="SEC_", extra="forbid")
 
     # Основные настройки токенов
-    token_name: str = Field(
-        ...,
-        description="Название HTTP-куки/заголовка с токеном",
-        examples=["access_token", "auth_token"],
-    )
     token_lifetime: int = Field(
         ...,
         ge=60,
@@ -47,16 +42,6 @@ class SecureSettings(BaseSettingsWithLoader):
     )
     algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
         ..., description="Алгоритм подписи токенов", examples=["HS256", "RS256"]
-    )
-
-    # Параметры Cookie
-    cookie_secure: bool = Field(
-        ..., description="Передача токена только по HTTPS", examples=[True, False]
-    )
-    cookie_samesite: Literal["lax", "strict", "none"] = Field(
-        ...,
-        description="Политика SameSite для Cookie",
-        examples=["lax", "strict", "none"],
     )
 
     # API-безопасность
@@ -134,16 +119,6 @@ class SecureSettings(BaseSettingsWithLoader):
         ...,
         description="Временное окно для ограничения запросов (секунды)",
         examples=[60, 300],
-    )
-    failure_threshold: int = Field(
-        ...,
-        description="Количество неудачных попыток до блокировки аккаунта",
-        examples=[5, 10],
-    )
-    recovery_timeout: int = Field(
-        ...,
-        description="Время до разблокировки аккаунта после неудачных попыток (секунды)",
-        examples=[600, 3600],
     )
 
 

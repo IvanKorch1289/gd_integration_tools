@@ -303,16 +303,6 @@ class SchedulerSettings(BaseSettingsWithLoader):
         examples=[True],
     )
 
-    # Потоковые интеграции
-    stream_client_event_generated_name: str = Field(
-        ...,
-        title="Имя потока событий",
-        min_length=3,
-        max_length=64,
-        description="Имя Redis Stream для событий планировщика",
-        examples=["job_events"],
-    )
-
     # Временные настройки
     timezone: str = Field(
         ...,

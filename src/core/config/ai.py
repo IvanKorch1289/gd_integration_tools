@@ -1,9 +1,12 @@
-"""Настройки AI-провайдеров: Perplexity, HuggingFace, OpenWebUI.
+"""Настройки AI-провайдеров.
 
-Три уровня AI-провайдеров по приоритету:
-1. Perplexity — основной (поиск + chat через WAF)
-2. HuggingFace — fallback (Inference API)
-3. OpenWebUI — внутренний сервер (полный контроль)
+Стандартный набор провайдеров по приоритету:
+1. Perplexity — поиск + chat через WAF.
+2. HuggingFace — Inference API (fallback).
+3. OpenWebUI — внутренний сервер (полный контроль).
+4. OpenRouter — агрегатор моделей по OpenAI-совместимому API.
+5. Nvidia NIM — OpenAI-совместимые микросервисы NVIDIA (build.nvidia.com).
+6. OpenAI — Assistants API / OpenAI-совместимые прокси (vLLM, LiteLLM, Ollama).
 """
 
 from typing import ClassVar
@@ -17,8 +20,14 @@ __all__ = (
     "PerplexitySettings",
     "HuggingFaceSettings",
     "OpenWebUISettings",
+    "OpenRouterSettings",
+    "NimSettings",
+    "OpenAISettings",
     "AIProvidersSettings",
     "ai_providers_settings",
+    "openrouter_settings",
+    "nim_settings",
+    "openai_settings",
 )
 
 
@@ -118,6 +127,73 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
 
+class OpenRouterSettings(BaseSettingsWithLoader):
+    """OpenRouter — агрегатор LLM-моделей по OpenAI-совместимому API."""
+
+    yaml_group: ClassVar[str] = "openrouter"
+    model_config = SettingsConfigDict(env_prefix="OPENROUTER_", extra="forbid")
+
+    api_key: str = Field(default="", description="API-ключ OpenRouter")
+    model: str = Field(
+        default="openrouter/auto",
+        description="Slug модели (см. https://openrouter.ai/models).",
+    )
+    base_url: str = Field(
+        default="https://openrouter.ai/api/v1",
+        description="Базовый URL OpenAI-совместимого API.",
+    )
+    use_waf: bool = Field(default=True, description="Проксировать через WAF.")
+    max_tokens: int = Field(default=4096, ge=1, le=131072)
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+
+
+class NimSettings(BaseSettingsWithLoader):
+    """Nvidia NIM — OpenAI-совместимые микросервисы NVIDIA."""
+
+    yaml_group: ClassVar[str] = "nim"
+    model_config = SettingsConfigDict(env_prefix="NIM_", extra="forbid")
+
+    api_key: str = Field(default="", description="API-ключ build.nvidia.com")
+    model: str = Field(
+        default="meta/llama-3.1-70b-instruct",
+        description="Слаг модели в каталоге NIM.",
+    )
+    base_url: str = Field(
+        default="https://integrate.api.nvidia.com/v1",
+        description=(
+            "OpenAI-совместимый endpoint. Для self-hosted NIM-инстанса "
+            "переопределить URL в overlay профиля."
+        ),
+    )
+    use_waf: bool = Field(default=True)
+    max_tokens: int = Field(default=4096, ge=1, le=131072)
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+
+
+class OpenAISettings(BaseSettingsWithLoader):
+    """OpenAI / OpenAI-совместимые провайдеры (vLLM, LiteLLM, Ollama)."""
+
+    yaml_group: ClassVar[str] = "openai"
+    model_config = SettingsConfigDict(env_prefix="OPENAI_", extra="forbid")
+
+    api_key: str = Field(default="", description="API-ключ провайдера.")
+    model: str = Field(
+        default="gpt-4o-mini",
+        description="Имя/slug модели у выбранного провайдера.",
+    )
+    base_url: str = Field(
+        default="https://api.openai.com/v1",
+        description=(
+            "Базовый URL OpenAI-совместимого API. Подставьте URL прокси "
+            "(vLLM/LiteLLM/Ollama), чтобы переключить провайдера без "
+            "изменений кода."
+        ),
+    )
+    use_waf: bool = Field(default=False)
+    max_tokens: int = Field(default=4096, ge=1, le=131072)
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+
+
 class AIProvidersSettings(BaseSettingsWithLoader):
     """Агрегированные настройки AI-провайдеров.
 
@@ -130,12 +206,22 @@ class AIProvidersSettings(BaseSettingsWithLoader):
 
     default_provider: str = Field(
         default="perplexity",
-        description="Провайдер по умолчанию (perplexity, huggingface, open_webui)",
+        description=(
+            "Провайдер по умолчанию (perplexity, huggingface, open_webui, "
+            "openrouter, nim, openai)."
+        ),
     )
 
     fallback_chain: list[str] = Field(
-        default=["perplexity", "huggingface", "open_webui"],
-        description="Порядок fallback при недоступности провайдера",
+        default=[
+            "perplexity",
+            "huggingface",
+            "open_webui",
+            "openrouter",
+            "nim",
+            "openai",
+        ],
+        description="Порядок fallback при недоступности провайдера.",
     )
 
     enable_data_sanitization: bool = Field(
@@ -164,3 +250,6 @@ class AIProvidersSettings(BaseSettingsWithLoader):
 
 
 ai_providers_settings = AIProvidersSettings()
+openrouter_settings = OpenRouterSettings()
+nim_settings = NimSettings()
+openai_settings = OpenAISettings()

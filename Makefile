@@ -62,7 +62,8 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	fix-check-push ship ship-release \
 	docker-build docker-run docker-stop \
 	tag all \
-	docs-clean docs-apidoc docs-html docs-rebuild docs
+	docs-clean docs-apidoc docs-html docs-rebuild docs \
+	layers layers-update config-audit
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"
@@ -244,6 +245,9 @@ layers: ## Проверка архитектурных слоёв (ADR-001)
 
 layers-update: ## Обновить allowlist архитектурных нарушений (после сокращения legacy)
 	@uv run python tools/check_layers.py --update-allowlist
+
+config-audit: check-env ## Двусторонний аудит конфигов (orphans + missing secrets)
+	@$(UV_RUN) python tools/config_audit.py
 
 run: check-env ## Start backend in foreground (использует APP_SERVER из env)
 	@$(MANAGE_SCRIPT) run

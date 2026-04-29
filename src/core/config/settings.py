@@ -2,6 +2,16 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
+from src.core.config.ai import (
+    AIProvidersSettings,
+    NimSettings,
+    OpenAISettings,
+    OpenRouterSettings,
+    ai_providers_settings,
+    nim_settings,
+    openai_settings,
+    openrouter_settings,
+)
 from src.core.config.base import (
     AppBaseSettings,
     SchedulerSettings,
@@ -46,6 +56,7 @@ from src.core.config.services import (
     tasks_settings,
 )
 from src.core.config.telegram import TelegramBotSettings, telegram_bot_settings
+from src.core.config.vault import VaultSettings, vault_settings
 
 __all__ = ("Settings", "settings")
 
@@ -65,6 +76,7 @@ class Settings(BaseSettings):
     secure: SecureSettings = secure_settings
     http_base_settings: HttpBaseSettings = http_base_settings
     scheduler: SchedulerSettings = scheduler_settings
+    vault: VaultSettings = vault_settings
 
     # Интеграции
     antivirus: AntivirusAPISettings = antivirus_api_settings
@@ -82,6 +94,12 @@ class Settings(BaseSettings):
     express: ExpressSettings = express_settings
     telegram: TelegramBotSettings = telegram_bot_settings
     elasticsearch: ElasticsearchSettings = elasticsearch_settings
+
+    # AI-провайдеры
+    ai_providers: AIProvidersSettings = ai_providers_settings
+    openrouter: OpenRouterSettings = openrouter_settings
+    nim: NimSettings = nim_settings
+    openai: OpenAISettings = openai_settings
 
     # Хранилища
     storage: FileStorageSettings = fs_settings

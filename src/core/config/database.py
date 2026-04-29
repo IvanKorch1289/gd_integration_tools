@@ -212,6 +212,27 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         return self
 
     @model_validator(mode="after")
+    def validate_oracle_drivers(self) -> "DatabaseConnectionSettings":
+        """Для Oracle драйверы PG-семейства не работают.
+
+        В ``base.yml`` зашиты PG-defaults ``asyncpg``/``psycopg2``. При
+        переключении профиля на Oracle их обязательно переопределить в
+        overlay (``async_driver=oracledb``, ``sync_driver=oracledb``);
+        иначе DSN строится с неверным префиксом и падает в рантайме.
+        """
+        if self.type == DatabaseTypeChoices.oracle:
+            invalid = {"asyncpg", "psycopg2", "psycopg"}
+            if self.async_driver in invalid or self.sync_driver in invalid:
+                raise ValueError(
+                    "Для type=oracle требуются драйверы oracledb-семейства; "
+                    f"получено async_driver={self.async_driver!r}, "
+                    f"sync_driver={self.sync_driver!r}. Переопределите в "
+                    "config_profiles/{profile}.yml::database: "
+                    "async_driver=oracledb, sync_driver=oracledb."
+                )
+        return self
+
+    @model_validator(mode="after")
     def validate_required_fields(self) -> "DatabaseConnectionSettings":
         """Проверяет наличие обязательных полей в зависимости от типа СУБД."""
         if self.type == DatabaseTypeChoices.sqlite:
