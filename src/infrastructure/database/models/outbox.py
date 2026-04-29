@@ -33,9 +33,12 @@ class OutboxMessage(BaseModel):
     """
 
     __tablename__ = "outbox_messages"
-    # Отключаем SQLAlchemy-Continuum versioning для outbox (не нужен
-    # history у служебной таблицы и это даёт лишние записи в *_versions).
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
+    # Отключаем SQLAlchemy-Continuum versioning для outbox: служебная таблица
+    # не нуждается в history. Используется задокументированный ключ
+    # ``versioning: False`` (sqlalchemy-continuum), а не ``exclude: True`` —
+    # последний ожидает iterable колонок и приводит к TypeError в
+    # ``is_excluded_property`` (``key in True``).
+    __versioned__ = {"versioning": False}
 
     topic: Mapped[str] = mapped_column(String(256), index=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)

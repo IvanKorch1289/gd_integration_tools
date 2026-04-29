@@ -24,6 +24,9 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.files import storage_router
     from src.entrypoints.api.v1.endpoints.health import router as health_router
     from src.entrypoints.api.v1.endpoints.imports import router as imports_router
+    from src.entrypoints.api.v1.endpoints.invocations import (
+        router as invocations_router,
+    )
     from src.entrypoints.api.v1.endpoints.notebooks import router as notebooks_router
     from src.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
     from src.entrypoints.api.v1.endpoints.orders import router as orders_router
@@ -92,5 +95,9 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(search_router, prefix="/search", tags=["Search"])
     # Wave 12: Retrieval-Augmented Generation.
     api_router_v1.include_router(rag_router, prefix="/rag", tags=["RAG"])
+    # W22.2: Single Invoker — единый REST-вход для всех режимов.
+    api_router_v1.include_router(
+        invocations_router, prefix="/invocations", tags=["Invocations"]
+    )
 
     return api_router_v1

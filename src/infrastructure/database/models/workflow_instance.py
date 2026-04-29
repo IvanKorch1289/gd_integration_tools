@@ -84,12 +84,12 @@ class WorkflowInstance(BaseModel, TenantMixin):
 
     __tablename__ = "workflow_instances"
     # Служебная таблица — SQLAlchemy-Continuum history не нужен.
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
+    __versioned__ = {"versioning": False}
     __table_args__ = {"comment": "Durable workflow instances"}
 
     # Переопределяем id — BaseModel использует int, для workflow нужен UUID
     # (stable cross-service identifier, безопасно раздавать наружу).
-    id: Mapped[uuid.UUID] = mapped_column(  # type: ignore[assignment]
+    id: Mapped[uuid.UUID] = mapped_column(
         uuid_t(), primary_key=True, default=uuid.uuid4
     )
 
@@ -139,13 +139,13 @@ class WorkflowInstance(BaseModel, TenantMixin):
 
     # Переопределяем created_at/updated_at из BaseModel на timezone-aware,
     # чтобы в event log и в header была единая timezone семантика.
-    created_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
         nullable=False,
     )
-    updated_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),

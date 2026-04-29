@@ -10,6 +10,7 @@ from src.entrypoints.soap.soap_handler import soap_router
 from src.entrypoints.sse.handler import sse_router
 from src.entrypoints.webhook.handler import webhook_router
 from src.entrypoints.websocket.ws_handler import ws_router
+from src.entrypoints.websocket.ws_invocations import ws_invocations_router
 from src.infrastructure.application.index import root_page
 from src.infrastructure.application.lifecycle import lifespan
 from src.infrastructure.application.monitoring import setup_monitoring
@@ -118,6 +119,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     app.include_router(proto_viewer_router)
     app.include_router(graphql_router)
     app.include_router(ws_router)
+    app.include_router(ws_invocations_router)
     app.include_router(watcher_router, prefix="/api/v1")
     app.include_router(soap_router)
     app.include_router(sse_router)

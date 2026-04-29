@@ -1,6 +1,13 @@
 from re import sub
 
-from pydantic import BaseModel, Field, SecretStr, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    computed_field,
+    model_validator,
+)
 
 from src.core.enums.database import DatabaseTypeChoices
 
@@ -14,6 +21,11 @@ class ExternalDatabaseItemSettings(BaseModel):
     Используется как элемент списка `connections` внутри группы
     `external_databases` в активном профиле (`config_profiles/<APP_PROFILE>.yml`).
     """
+
+    # Поле ``schema`` в YAML мапится в ``db_schema``: одноимённое имя
+    # затеняет атрибут ``BaseModel.schema`` (deprecated в Pydantic v2,
+    # удаляется в v3) и вызывает UserWarning при создании класса.
+    model_config = ConfigDict(populate_by_name=True)
 
     name: str = Field(
         ...,
@@ -98,8 +110,9 @@ class ExternalDatabaseItemSettings(BaseModel):
         examples=["psycopg2", "oracledb"],
     )
 
-    schema: str = Field(
+    db_schema: str = Field(
         ...,
+        alias="schema",
         title="Схема",
         min_length=1,
         description="Базовая схема, в которой находятся view/procedure/function",

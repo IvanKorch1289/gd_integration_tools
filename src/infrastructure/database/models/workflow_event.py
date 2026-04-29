@@ -81,7 +81,7 @@ class WorkflowEvent(BaseModel):
 
     __tablename__ = "workflow_events"
     # Append-only таблица — SQLAlchemy-Continuum versioning не нужен.
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
+    __versioned__ = {"versioning": False}
 
     __table_args__ = (
         Index("ix_workflow_events_workflow_id_seq", "workflow_id", "id"),
@@ -91,7 +91,7 @@ class WorkflowEvent(BaseModel):
     # Отключаем унаследованные id/created_at/updated_at — для event log
     # используется BIGSERIAL seq как PK; created_at/updated_at бессмысленны
     # (события immutable, есть occurred_at).
-    id: Mapped[int] = mapped_column(  # type: ignore[assignment]
+    id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=True
     )
 
@@ -133,13 +133,13 @@ class WorkflowEvent(BaseModel):
 
     # BaseModel требует created_at/updated_at — для append-only они совпадают
     # с occurred_at. Переопределяем, чтобы были timezone-aware.
-    created_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
         nullable=False,
     )
-    updated_at: Mapped[datetime] = mapped_column(  # type: ignore[assignment]
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),

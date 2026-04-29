@@ -44,6 +44,7 @@ from src.dsl.engine.processors import (
     ValidateProcessor,
     WireTapProcessor,
 )
+from src.dsl.engine.processors.invoke import InvokeProcessor
 from src.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     CorrelationIdProcessor,
@@ -177,6 +178,34 @@ class RouteBuilder:
                 action=action,
                 payload_factory=payload_factory,
                 result_property=result_property,
+            )
+        )
+
+    def invoke(
+        self,
+        action: str,
+        *,
+        mode: str = "sync",
+        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
+        reply_channel: str | None = None,
+        result_property: str = "invoke_result",
+        invocation_id_property: str = "invocation_id",
+    ) -> "RouteBuilder":
+        """Вызывает action через :class:`Invoker` (W22) с заданным режимом.
+
+        В отличие от :meth:`dispatch_action`, поддерживает шесть режимов
+        (``sync``/``async-api``/``async-queue``/``deferred``/``background``/
+        ``streaming``) и возвращает единый ``invocation_id`` для трассировки
+        и polling-результата через ReplyChannel registry.
+        """
+        return self._add(
+            InvokeProcessor(
+                action=action,
+                mode=mode,
+                payload_factory=payload_factory,
+                reply_channel=reply_channel,
+                result_property=result_property,
+                invocation_id_property=invocation_id_property,
             )
         )
 

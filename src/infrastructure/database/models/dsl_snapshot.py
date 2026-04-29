@@ -31,7 +31,7 @@ class DslSnapshot(BaseModel):
     """Версионированный снэпшот pipeline маршрута."""
 
     __tablename__ = "dsl_snapshots"
-    __versioned__ = {"exclude": True}  # type: ignore[assignment]
+    __versioned__ = {"versioning": False}
     __table_args__ = (
         UniqueConstraint("route_id", "version", name="uq_dsl_snapshots_route_ver"),
         Index("idx_dsl_snapshots_route", "route_id"),

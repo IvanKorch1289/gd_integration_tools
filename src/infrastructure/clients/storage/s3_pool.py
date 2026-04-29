@@ -5,8 +5,8 @@ from functools import wraps
 from typing import Any, AsyncGenerator, Callable, Coroutine, ParamSpec, TypeVar
 
 try:
-    from botocore.exceptions import (
-        ClientError as BotoClientError,  # type: ignore[import-not-found]
+    from botocore.exceptions import (  # type: ignore[import-not-found]
+        ClientError as BotoClientError,
     )
 except ImportError:  # botocore — опциональная зависимость dev_light
     class BotoClientError(Exception):  # type: ignore[no-redef]
@@ -219,7 +219,7 @@ class S3Client(BaseS3Client):
                 await self.connect()
             return await func(self, *args, **kwargs)
 
-        return wrapper  # type: ignore
+        return wrapper
 
     async def check_connection(self) -> bool:
         """Проверяет доступность хранилища.
