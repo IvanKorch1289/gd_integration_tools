@@ -104,7 +104,7 @@ class PoolMonitor:
         return self._stats_history[-limit:]
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("pool_monitor", PoolMonitor)

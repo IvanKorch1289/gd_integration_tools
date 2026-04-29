@@ -23,7 +23,7 @@ import time
 from contextlib import contextmanager
 from typing import Any, Iterator
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 __all__ = ("AgentMetricsService", "get_agent_metrics_service")
 

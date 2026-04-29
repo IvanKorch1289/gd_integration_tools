@@ -44,9 +44,10 @@ class NotifyGatewayActions:
     """
 
     async def _send(self, *, channel: str, **kwargs: Any) -> Any:
-        from src.infrastructure.notifications.gateway import get_gateway
+        from src.core.providers_registry import get_provider
 
-        return await get_gateway().send(channel=channel, **kwargs)
+        gateway = get_provider("notifier", "gateway")
+        return await gateway.send(channel=channel, **kwargs)
 
     async def send(self, *, channel: str = "email", **kwargs: Any) -> Any:
         """Универсальный send — channel передаётся в kwargs."""

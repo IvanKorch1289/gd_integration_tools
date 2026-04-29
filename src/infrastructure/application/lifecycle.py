@@ -126,6 +126,7 @@ async def _register_protocol_providers() -> None:
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
+        from src.infrastructure.notifications.gateway import get_gateway
         from src.services.ops.notification_adapters import (
             EmailNotificationAdapter,
             ExpressNotificationAdapter,
@@ -140,8 +141,19 @@ async def _register_protocol_providers() -> None:
         register_provider("notifier", "webhook", WebhookNotificationAdapter())
         # hub — мультиплексор, полезно иметь как отдельную реализацию.
         register_provider("notifier", "hub", get_notification_hub())
+        # gateway — единый фасад для services/ops/notify_actions и
+        # services/health/alert_subscriber (см. W6.3).
+        register_provider("notifier", "gateway", get_gateway())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Notifier registration skipped: %s", exc)
+
+    # EventBus — для services/health/alert_subscriber и др. подписчиков.
+    try:
+        from src.infrastructure.clients.messaging.event_bus import get_event_bus
+
+        register_provider("event_bus", "default", get_event_bus())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("EventBus registration skipped: %s", exc)
 
     # Prompt store (in-memory fallback, при наличии LangFuse — он приоритетен).
     try:
@@ -154,6 +166,51 @@ async def _register_protocol_providers() -> None:
     from src.core.providers_registry import list_providers
 
     app_logger.info("Protocol providers registered: %s", list_providers())
+
+
+def _register_storage_singletons(app: FastAPI) -> None:
+    """Регистрирует Mongo-реализации репозиториев в ``app.state`` (W6).
+
+    Bootstrap-точка для Mongo-backends: services/ai/feedback/repository.py
+    и services/notebooks/service.py обращаются к ``app.state.*`` через
+    ``app_state_singleton``; конкретный backend ставится здесь.
+    """
+    try:
+        from src.infrastructure.repositories.ai_feedback_mongo import (
+            MongoFeedbackRepository,
+        )
+
+        app.state.ai_feedback_repository = MongoFeedbackRepository()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("MongoFeedbackRepository registration skipped: %s", exc)
+
+    try:
+        from src.infrastructure.repositories.notebooks_mongo import (
+            MongoNotebookRepository,
+        )
+        from src.services.notebooks.service import NotebookService
+
+        app.state.notebook_service = NotebookService(MongoNotebookRepository())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("MongoNotebookRepository registration skipped: %s", exc)
+
+    try:
+        from src.infrastructure.clients.storage.vector_store import get_vector_store
+        from src.services.ai.rag_service import RAGService
+
+        app.state.rag_service = RAGService(store=get_vector_store())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("RAGService registration skipped: %s", exc)
+
+    try:
+        from src.infrastructure.clients.storage.elasticsearch import (
+            get_elasticsearch_client,
+        )
+        from src.services.io.search import SearchService
+
+        app.state.search_service = SearchService(client=get_elasticsearch_client())
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("SearchService registration skipped: %s", exc)
 
 
 def _validate_cache_layers() -> None:
@@ -195,6 +252,7 @@ async def lifespan(app: FastAPI):
         from src.infrastructure.application.di import register_app_state
 
         register_app_state(app)
+        _register_storage_singletons(app)
 
         register_all_services()
         register_action_handlers()

@@ -200,7 +200,7 @@ def _create_elasticsearch_client() -> ElasticSearchClient:
     )
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("elasticsearch_client", _create_elasticsearch_client)

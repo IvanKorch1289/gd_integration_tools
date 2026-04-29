@@ -13,7 +13,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 if TYPE_CHECKING:
     from src.services.ai.rag_service import RAGService

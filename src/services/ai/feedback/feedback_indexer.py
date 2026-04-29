@@ -16,7 +16,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 from src.services.ai.feedback.models import AIFeedbackDoc
 from src.services.ai.feedback.repository import (
     FeedbackRepository,

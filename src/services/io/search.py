@@ -1,13 +1,11 @@
-"""SearchService — полнотекстовый поиск через Elasticsearch."""
+"""SearchService — полнотекстовый поиск через ``SearchClient`` Protocol."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from src.infrastructure.clients.storage.elasticsearch import (
-    ElasticSearchClient,
-    get_elasticsearch_client,
-)
+from src.core.di import app_state_singleton
+from src.core.interfaces.search import SearchClient
 
 __all__ = ("SearchService", "get_search_service")
 
@@ -15,7 +13,7 @@ __all__ = ("SearchService", "get_search_service")
 class SearchService:
     """Сервис поиска — индексация, полнотекстовый поиск, агрегации."""
 
-    def __init__(self, client: ElasticSearchClient) -> None:
+    def __init__(self, client: SearchClient) -> None:
         self._client = client
 
     async def index_document(
@@ -64,11 +62,14 @@ class SearchService:
         return await self._client.ping()
 
 
-_search_service_instance: SearchService | None = None
-
-
+@app_state_singleton("search_service")
 def get_search_service() -> SearchService:
-    global _search_service_instance
-    if _search_service_instance is None:
-        _search_service_instance = SearchService(client=get_elasticsearch_client())
-    return _search_service_instance
+    """Возвращает singleton ``SearchService`` из ``app.state.search_service``.
+
+    Регистрация выполняется в ``infrastructure/application/lifecycle.py``
+    при старте приложения.
+    """
+    raise RuntimeError(
+        "search_service не зарегистрирован — убедитесь, что register_app_state() "
+        "и _register_storage_singletons были вызваны при старте."
+    )

@@ -17,9 +17,12 @@ infrastructure/application/ согласно Clean Architecture — composition 
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING
 
 from fastapi import Request
+
+from src.core.di import app_state_singleton, set_app_ref
+from src.core.di.app_state import _get_from_app_state
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -34,8 +37,6 @@ if TYPE_CHECKING:
     from src.infrastructure.clients.messaging.kafka import KafkaClient
     from src.infrastructure.database.pool_monitor import PoolMonitor
     from src.infrastructure.security.api_key_manager import APIKeyManager
-
-T = TypeVar("T")
 
 __all__ = (
     "register_app_state",
@@ -53,10 +54,6 @@ __all__ = (
     "get_langfuse_client",
 )
 
-# Ссылка на FastAPI-приложение, сохраняется при первой инициализации
-# и используется в non-request контекстах (Prefect workers, CLI).
-_app_ref: FastAPI | None = None
-
 
 def register_app_state(app: FastAPI) -> None:
     """
@@ -69,8 +66,7 @@ def register_app_state(app: FastAPI) -> None:
     Args:
         app: Экземпляр FastAPI для записи singletons в ``app.state``.
     """
-    global _app_ref
-    _app_ref = app
+    set_app_ref(app)
 
     from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
     from src.dsl.engine.tracer import ExecutionTracer
@@ -104,72 +100,6 @@ def register_app_state(app: FastAPI) -> None:
             broker_host="localhost", broker_port=1883, enabled=False
         )
     app.state.mqtt_handler = MqttHandler(mqtt_settings)
-
-
-def _get_from_app_state(attr: str) -> Any:
-    """
-    Возвращает атрибут из ``app.state`` или ``None`` если приложение не создано.
-
-    Args:
-        attr: Имя атрибута в ``app.state``.
-
-    Returns:
-        Значение атрибута либо ``None`` если app ещё не инициализирован
-        или атрибут отсутствует.
-    """
-    if _app_ref is not None:
-        return getattr(_app_ref.state, attr, None)
-    return None
-
-
-def app_state_singleton(
-    attr: str, factory: Callable[[], T] | None = None
-) -> Callable[[Callable[[], T]], Callable[[], T]]:
-    """
-    Декоратор-фабрика singleton-доступа к объектам из ``app.state``.
-
-    Убирает 15× дублированный паттерн ``def get_xxx(): return app.state.xxx``.
-    Сначала ищет объект в ``app.state``, затем lazy-init через factory
-    (для контекстов без FastAPI).
-
-    Args:
-        attr: Имя атрибута в ``app.state``.
-        factory: Опциональная фабрика для lazy-init в non-request контекстах.
-
-    Returns:
-        Декоратор, превращающий функцию-заглушку в accessor singleton'а.
-
-    Пример::
-
-        @app_state_singleton("clickhouse_client", lambda: ClickHouseClient(...))
-        def get_clickhouse_client() -> ClickHouseClient: ...
-
-        @app_state_singleton("tracer")
-        def get_tracer() -> ExecutionTracer: ...
-    """
-    _cache: dict[str, Any] = {}
-
-    def decorator(fn: Callable[[], T]) -> Callable[[], T]:
-        def wrapper() -> T:
-            instance = _get_from_app_state(attr)
-            if instance is not None:
-                return instance
-            if attr not in _cache:
-                if factory is not None:
-                    _cache[attr] = factory()
-                else:
-                    raise RuntimeError(
-                        f"{attr} not in app.state and no factory provided. "
-                        "Ensure register_app_state() was called."
-                    )
-            return _cache[attr]
-
-        wrapper.__name__ = fn.__name__
-        wrapper.__doc__ = fn.__doc__
-        wrapper.__qualname__ = fn.__qualname__
-        return wrapper
-
-    return decorator
 
 
 # --- FastAPI Depends-функции для инъекции singletons в эндпоинты ---

@@ -169,7 +169,7 @@ class PipelineVersionManager:
             return {"error": str(exc)}
 
 
-from src.infrastructure.application.di import app_state_singleton  # noqa: E402
+from src.core.di import app_state_singleton  # noqa: E402
 
 
 @app_state_singleton("pipeline_version_manager", PipelineVersionManager)

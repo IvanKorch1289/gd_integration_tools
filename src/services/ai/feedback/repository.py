@@ -16,7 +16,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Protocol, runtime_checkable
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 from src.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
 
 __all__ = (
@@ -245,25 +245,20 @@ class InMemoryFeedbackRepository:
 
 
 def _default_repository_factory() -> FeedbackRepository:
-    """Mongo-репозиторий с fallback на in-memory.
+    """Fallback-фабрика: in-memory репозиторий.
 
-    Wave 9.2: drop-in замена ``InMemoryFeedbackRepository``. Если Mongo-
-    инфраструктура недоступна — fallback на in-memory сохраняется.
+    Mongo-реализация (``MongoFeedbackRepository``) регистрируется в
+    ``app.state.ai_feedback_repository`` через
+    ``infrastructure/application/lifecycle.py`` (W6). Этот fallback
+    используется только в non-FastAPI контекстах (CLI, scripts, unit-tests).
     """
-    try:
-        from src.infrastructure.repositories.ai_feedback_mongo import (
-            MongoFeedbackRepository,
-        )
-
-        return MongoFeedbackRepository()
-    except Exception:  # noqa: BLE001
-        return InMemoryFeedbackRepository()
+    return InMemoryFeedbackRepository()
 
 
 @app_state_singleton("ai_feedback_repository", factory=_default_repository_factory)
 def get_feedback_repository() -> FeedbackRepository:
     """Возвращает singleton ``FeedbackRepository``.
 
-    По умолчанию — ``MongoFeedbackRepository`` (Wave 9.2);
-    fallback — ``InMemoryFeedbackRepository``.
+    По умолчанию — ``MongoFeedbackRepository`` (Wave 9.2, регистрируется
+    в lifecycle); fallback — ``InMemoryFeedbackRepository``.
     """

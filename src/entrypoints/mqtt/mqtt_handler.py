@@ -235,7 +235,7 @@ def _create_mqtt_handler() -> MqttHandler:
     return MqttHandler(settings)
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("mqtt_handler", _create_mqtt_handler)

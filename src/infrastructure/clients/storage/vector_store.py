@@ -1,10 +1,15 @@
-"""Vector store abstraction — Qdrant, Chroma, FAISS backends."""
+"""Vector store backends — Qdrant, Chroma, FAISS реализации.
+
+ABC ``BaseVectorStore`` вынесен в ``core/interfaces/vector_store.py``
+(Wave 6) — здесь лежат конкретные реализации.
+"""
 
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
 from typing import Any
+
+from src.core.interfaces.vector_store import BaseVectorStore
 
 __all__ = (
     "BaseVectorStore",
@@ -15,33 +20,6 @@ __all__ = (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class BaseVectorStore(ABC):
-    """Абстрактный vector store для RAG."""
-
-    @abstractmethod
-    async def upsert(
-        self,
-        embeddings: list[list[float]],
-        documents: list[str],
-        ids: list[str],
-        metadatas: list[dict[str, Any]] | None = None,
-    ) -> None: ...
-
-    @abstractmethod
-    async def query(
-        self,
-        embedding: list[float],
-        top_k: int = 5,
-        where: dict[str, Any] | None = None,
-    ) -> list[dict[str, Any]]: ...
-
-    @abstractmethod
-    async def delete(self, ids: list[str]) -> None: ...
-
-    @abstractmethod
-    async def count(self) -> int: ...
 
 
 class QdrantVectorStore(BaseVectorStore):

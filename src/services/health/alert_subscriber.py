@@ -30,9 +30,9 @@ class HealthAlertSubscriber:
         if self._started:
             return
         try:
-            from src.infrastructure.clients.messaging.event_bus import get_event_bus
+            from src.core.providers_registry import get_provider
 
-            bus = get_event_bus()
+            bus = get_provider("event_bus", "default")
             broker = getattr(bus, "_broker", None)
             if broker is None:
                 logger.debug("EventBus broker not initialized — subscriber idle")
@@ -51,11 +51,9 @@ class HealthAlertSubscriber:
         if not _is_degradation(previous, current):
             return
         try:
-            from src.infrastructure.notifications.gateway import (
-                get_notification_gateway,
-            )
+            from src.core.providers_registry import get_provider
 
-            gateway = get_notification_gateway()
+            gateway = get_provider("notifier", "gateway")
             await gateway.send(
                 channel="default",
                 template_key=self.TEMPLATE_KEY,

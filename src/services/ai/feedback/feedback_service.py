@@ -17,7 +17,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 from src.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
 from src.services.ai.feedback.repository import (
     FeedbackRepository,

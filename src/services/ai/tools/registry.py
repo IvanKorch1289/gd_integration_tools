@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 __all__ = ("AgentTool", "ToolRegistry", "agent_tool", "get_tool_registry")
 

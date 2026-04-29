@@ -6,29 +6,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field
+from src.core.models.express import ExpressSession
 
 __all__ = ("ExpressSession", "ExpressSessionStore")
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-class ExpressSession(BaseModel):
-    """Документ сессии Express-бота."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    session_id: str
-    bot_id: str
-    context: dict[str, Any] = Field(default_factory=dict)
-    state: str = "active"
-    created_at: datetime = Field(default_factory=_utc_now)
-    last_activity_at: datetime = Field(default_factory=_utc_now)
 
 
 @runtime_checkable

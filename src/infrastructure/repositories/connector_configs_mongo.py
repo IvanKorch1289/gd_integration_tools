@@ -9,9 +9,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
+from src.core.models.connector_configs import ConnectorConfigEntry
 from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
-from src.services.integrations.connector_configs import ConnectorConfigEntry
 
 __all__ = ("MongoConnectorConfigStore", "get_connector_config_store")
 

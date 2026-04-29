@@ -136,7 +136,7 @@ class SLOTracker:
         self._stats.clear()
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("slo_tracker", SLOTracker)

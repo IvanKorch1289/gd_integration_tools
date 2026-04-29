@@ -7,46 +7,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field
+from src.core.models.express import ExpressDialog, ExpressMessage
 
 __all__ = ("ExpressMessage", "ExpressDialog", "ExpressDialogStore")
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-class ExpressMessage(BaseModel):
-    """Одно сообщение в диалоге."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    role: str  # "user" | "bot"
-    body: str
-    sync_id: str | None = None
-    ts: datetime = Field(default_factory=_utc_now)
-    bubble: dict[str, Any] | None = None
-    keyboard: dict[str, Any] | None = None
-
-
-class ExpressDialog(BaseModel):
-    """Документ диалога (один на сессию)."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    session_id: str
-    bot_id: str
-    group_chat_id: str
-    user_huid: str | None = None
-    messages: list[ExpressMessage] = Field(default_factory=list)
-    context: dict[str, Any] = Field(default_factory=dict)
-    state: str = "active"
-    created_at: datetime = Field(default_factory=_utc_now)
-    updated_at: datetime = Field(default_factory=_utc_now)
-    ttl: datetime | None = None
 
 
 @runtime_checkable

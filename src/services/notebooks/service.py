@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 from src.services.notebooks.models import Notebook, NotebookVersion
 from src.services.notebooks.repository import (
     InMemoryNotebookRepository,
@@ -126,23 +126,15 @@ def _trigger_rag_delete(notebook_id: str) -> None:
         logger.warning("RAG-удаление notebook'а %s не запущено: %s", notebook_id, exc)
 
 
-def _default_repository_factory() -> NotebookRepository:
-    """Возвращает MongoNotebookRepository, fallback на InMemory."""
-    try:
-        from src.infrastructure.repositories.notebooks_mongo import (
-            MongoNotebookRepository,
-        )
-
-        return MongoNotebookRepository()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "MongoNotebookRepository недоступен (fallback InMemory): %s", exc
-        )
-        return InMemoryNotebookRepository()
-
-
 def _default_service_factory() -> NotebookService:
-    return NotebookService(_default_repository_factory())
+    """Fallback-фабрика: in-memory репозиторий.
+
+    Mongo-реализация регистрируется в ``app.state.notebook_service``
+    через ``infrastructure/application/lifecycle.py`` при наличии
+    Mongo-инфраструктуры. Этот fallback используется только в
+    non-FastAPI контекстах (CLI, scripts, unit-tests).
+    """
+    return NotebookService(InMemoryNotebookRepository())
 
 
 @app_state_singleton("notebook_service", factory=_default_service_factory)

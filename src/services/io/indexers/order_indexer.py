@@ -11,7 +11,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 if TYPE_CHECKING:
     from src.services.io.search import SearchService

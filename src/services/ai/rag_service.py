@@ -6,10 +6,8 @@ import hashlib
 import logging
 from typing import Any
 
-from src.infrastructure.clients.storage.vector_store import (
-    BaseVectorStore,
-    get_vector_store,
-)
+from src.core.di import app_state_singleton
+from src.core.interfaces.vector_store import BaseVectorStore
 from src.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
@@ -124,11 +122,14 @@ class RAGService:
         return await self._store.count()
 
 
-_rag_service_instance: RAGService | None = None
-
-
+@app_state_singleton("rag_service")
 def get_rag_service() -> RAGService:
-    global _rag_service_instance
-    if _rag_service_instance is None:
-        _rag_service_instance = RAGService(store=get_vector_store())
-    return _rag_service_instance
+    """Возвращает singleton ``RAGService`` из ``app.state.rag_service``.
+
+    Регистрация выполняется в ``infrastructure/application/service_setup.py``
+    при старте приложения; здесь — только accessor.
+    """
+    raise RuntimeError(
+        "rag_service не зарегистрирован — убедитесь, что register_app_state() "
+        "и infrastructure.application.service_setup были вызваны при старте."
+    )

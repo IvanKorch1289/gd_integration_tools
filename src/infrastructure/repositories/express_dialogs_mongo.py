@@ -10,9 +10,9 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
+from src.core.models.express import ExpressDialog, ExpressMessage
 from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
-from src.services.integrations.express.dialog_store import ExpressDialog, ExpressMessage
 
 __all__ = ("MongoExpressDialogStore", "get_express_dialog_store")
 

@@ -239,7 +239,7 @@ def _create_express_client() -> ExpressClient:
     )
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("express_client", _create_express_client)

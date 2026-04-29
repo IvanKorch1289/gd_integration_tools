@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
+from src.core.models.express import ExpressSession
 from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
-from src.services.integrations.express.session_store import ExpressSession
 
 __all__ = ("MongoExpressSessionStore", "get_express_session_store")
 

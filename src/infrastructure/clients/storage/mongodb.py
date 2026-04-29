@@ -129,7 +129,7 @@ def _create_mongo_client() -> MongoDBClient:
     )
 
 
-from src.infrastructure.application.di import app_state_singleton
+from src.core.di import app_state_singleton
 
 
 @app_state_singleton("mongo_client", _create_mongo_client)
