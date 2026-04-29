@@ -11,11 +11,42 @@ from pydantic_settings import (
 )
 
 from src.core.config.constants import consts
+from src.core.config.profile import get_active_profile
 
 __all__ = ("BaseSettingsWithLoader",)
 
 
-load_dotenv(consts.ROOT_DIR / ".env")
+def _resolve_repo_root() -> Path:
+    """Возвращает корень репозитория (директория с ``pyproject.toml``).
+
+    ``consts.ROOT_DIR`` исторически указывает на ``src/`` — для конфигов
+    нужен родитель (где лежит ``config.yml`` и ``config_profiles/``).
+    Поиск идёт вверх от текущего файла; при провале возвращается
+    родитель ``ROOT_DIR`` как лучший доступный fallback.
+    """
+    current = Path(__file__).resolve()
+    for parent in (current, *current.parents):
+        if (parent / "pyproject.toml").is_file():
+            return parent
+    return consts.ROOT_DIR.parent
+
+
+_REPO_ROOT: Path = _resolve_repo_root()
+
+
+load_dotenv(_REPO_ROOT / ".env")
+
+
+def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
+    """Рекурсивно сливает ``overlay`` поверх ``base``, не мутируя исходники."""
+    merged: dict[str, Any] = dict(base)
+    for key, value in overlay.items():
+        existing = merged.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(existing, value)
+        else:
+            merged[key] = value
+    return merged
 
 
 class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
@@ -64,27 +95,41 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
-    """YAML config loader with filtering."""
+    """YAML config loader with profile overlay support.
+
+    Загружает базовый ``config.yml`` и накладывает поверх него
+    ``config_profiles/{APP_PROFILE}.yml``. Отсутствие профильного файла
+    не считается ошибкой — поведение совпадает со старым (без overlay).
+    """
 
     def __init__(
         self,
         settings_cls: type[BaseSettings],
-        yaml_path: Path = consts.ROOT_DIR / "config.yml",
+        yaml_path: Path | None = None,
+        profiles_dir: Path | None = None,
     ):
         super().__init__(settings_cls)
-        self.yaml_path = yaml_path
+        self.yaml_path = yaml_path or _REPO_ROOT / "config.yml"
+        self.profiles_dir = profiles_dir or _REPO_ROOT / "config_profiles"
 
     def _load_data(self) -> dict[str, Any]:
-        """Load and parse YAML configuration file."""
+        """Load and parse YAML configuration file with optional profile overlay."""
         from yaml import safe_load
 
-        try:
-            with open(self.yaml_path) as f:
-                return safe_load(f) or {}
-        except FileNotFoundError:
-            return {}
-        except Exception as exc:
-            raise RuntimeError(f"YAML loading error: {str(exc)}") from exc
+        def _read(path: Path) -> dict[str, Any]:
+            try:
+                with open(path) as f:
+                    return safe_load(f) or {}
+            except FileNotFoundError:
+                return {}
+            except Exception as exc:
+                raise RuntimeError(f"YAML loading error ({path}): {exc}") from exc
+
+        base = _read(self.yaml_path)
+        profile = get_active_profile()
+        overlay_path = self.profiles_dir / f"{profile.value}.yml"
+        overlay = _read(overlay_path)
+        return _deep_merge(base, overlay) if overlay else base
 
 
 class VaultConfigSettingsSource(FilteredSettingsSource):

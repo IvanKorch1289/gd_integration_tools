@@ -251,8 +251,11 @@ run: check-env ## Start backend in foreground (использует APP_SERVER �
 dev: check-env ## Start backend (uvicorn, dev режим)
 	@APP_SERVER=uvicorn $(MANAGE_SCRIPT) run
 
+dev-light: check-env ## Start backend (APP_PROFILE=dev_light, без Docker)
+	@APP_PROFILE=dev_light APP_SERVER=uvicorn $(MANAGE_SCRIPT) run
+
 prod: check-env ## Start backend (granian, production)
-	@APP_SERVER=granian $(MANAGE_SCRIPT) run
+	@APP_PROFILE=prod APP_SERVER=granian $(MANAGE_SCRIPT) run
 
 run-all: check-env ## Start backend + frontend
 	@$(MANAGE_SCRIPT) run-all

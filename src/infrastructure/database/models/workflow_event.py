@@ -20,9 +20,9 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, String, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.infrastructure.database.migrations._compat import json_b, uuid_t
 from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("WorkflowEvent", "WorkflowEventType")
@@ -84,7 +84,7 @@ class WorkflowEvent(BaseModel):
     __versioned__ = {"exclude": True}  # type: ignore[assignment]
 
     __table_args__ = (
-        Index("ix_workflow_events_workflow_id_seq", "workflow_id", "seq"),
+        Index("ix_workflow_events_workflow_id_seq", "workflow_id", "id"),
         {"comment": "Append-only event log для durable workflows"},
     )
 
@@ -101,7 +101,7 @@ class WorkflowEvent(BaseModel):
         return self.id
 
     workflow_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        uuid_t(),
         ForeignKey("workflow_instances.id", ondelete="CASCADE"),
         index=True,
         nullable=False,
@@ -119,7 +119,7 @@ class WorkflowEvent(BaseModel):
     )
 
     payload: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict, server_default="{}"
+        json_b(), nullable=False, default=dict, server_default="{}"
     )
 
     step_name: Mapped[str | None] = mapped_column(String(256), nullable=True)

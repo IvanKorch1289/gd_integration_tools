@@ -19,9 +19,9 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.infrastructure.database.migrations._compat import json_b
 from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("DslSnapshot",)
@@ -40,14 +40,12 @@ class DslSnapshot(BaseModel):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     route_id: Mapped[str] = mapped_column(Text, nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
-    spec: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    spec: Mapped[dict[str, Any]] = mapped_column(json_b(), nullable=False)
 
     feature_flag: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )

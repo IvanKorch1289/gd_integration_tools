@@ -1,0 +1,28 @@
+# Профиль dev_light — лёгкий локальный запуск без Docker.
+#
+# Накладывается поверх config.yml после загрузки, замещает только указанные
+# ключи. Активируется переменной APP_PROFILE=dev_light.
+#
+# Цель: SQLite вместо PostgreSQL, LocalFS вместо S3 — без тяжёлой инфраструктуры.
+# Полный fallback (Mongo/Redis/ES → лёгкие аналоги) добавляется в W21.3.
+
+database:
+  type: sqlite
+  path: ./.run/dev.sqlite3
+  host: localhost
+  port: 0
+  name: dev
+  username: ""
+  password: ""
+  ssl_mode: null
+  ca_bundle: null
+
+storage:
+  provider: local
+  base_path: ./.run/storage
+
+elasticsearch:
+  enabled: false
+
+clickhouse:
+  enabled: false

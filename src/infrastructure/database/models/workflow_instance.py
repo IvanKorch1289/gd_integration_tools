@@ -25,9 +25,9 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, Enum, String, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.infrastructure.database.migrations._compat import json_b, uuid_t
 from src.infrastructure.database.models.base import BaseModel
 from src.infrastructure.database.tenant_filter import TenantMixin
 
@@ -90,7 +90,7 @@ class WorkflowInstance(BaseModel, TenantMixin):
     # Переопределяем id — BaseModel использует int, для workflow нужен UUID
     # (stable cross-service identifier, безопасно раздавать наружу).
     id: Mapped[uuid.UUID] = mapped_column(  # type: ignore[assignment]
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+        uuid_t(), primary_key=True, default=uuid.uuid4
     )
 
     workflow_name: Mapped[str] = mapped_column(String(256), index=True)
@@ -116,7 +116,9 @@ class WorkflowInstance(BaseModel, TenantMixin):
 
     last_event_seq: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
-    snapshot_state: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    snapshot_state: Mapped[dict[str, Any] | None] = mapped_column(
+        json_b(), nullable=True
+    )
 
     next_attempt_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
@@ -128,7 +130,7 @@ class WorkflowInstance(BaseModel, TenantMixin):
     )
 
     input_payload: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict, server_default="{}"
+        json_b(), nullable=False, default=dict, server_default="{}"
     )
 
     finished_at: Mapped[datetime | None] = mapped_column(

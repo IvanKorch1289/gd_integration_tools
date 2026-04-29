@@ -6,10 +6,7 @@ from pydantic_settings import SettingsConfigDict
 from src.core.config.config_loader import BaseSettingsWithLoader
 from src.core.enums.database import DatabaseTypeChoices
 
-__all__ = (
-    "DatabaseConnectionSettings",
-    "db_connection_settings",
-)
+__all__ = ("DatabaseConnectionSettings", "db_connection_settings")
 
 
 class DatabaseConnectionSettings(BaseSettingsWithLoader):
@@ -31,58 +28,69 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     host: str = Field(
-        ...,
+        default="",
         title="Хост",
-        min_length=3,
         max_length=253,
-        description="Сервер базы данных (IP или доменное имя)",
+        description="Сервер базы данных (IP или доменное имя). Игнорируется для sqlite.",
         examples=["db.example.com"],
     )
 
     port: int = Field(
-        ...,
+        default=0,
         title="Порт",
-        gt=0,
+        ge=0,
         lt=65536,
-        description="Порт для подключения к СУБД",
+        description="Порт для подключения к СУБД. Игнорируется для sqlite.",
         examples=[5432],
     )
 
     name: str = Field(
-        ...,
+        default="",
         description="Наименование базы данных или service_name",
         examples=["myapp_prod", "ORCL"],
     )
 
+    path: str | None = Field(
+        default=None,
+        description=(
+            "Путь к файлу SQLite (для type=sqlite). "
+            "Поддерживаются относительные пути и ':memory:'."
+        ),
+        examples=["./.run/dev.sqlite3", ":memory:"],
+    )
+
     async_driver: str = Field(
-        ...,
-        description="Пакет, используемый для асинхронного подключения",
-        examples=["asyncpg", "oracledb_async"],
+        default="asyncpg",
+        description=(
+            "Пакет асинхронного драйвера. Для sqlite по умолчанию используется "
+            "'aiosqlite' (если значение оставлено для PG)."
+        ),
+        examples=["asyncpg", "oracledb_async", "aiosqlite"],
     )
 
     sync_driver: str = Field(
-        ...,
-        description="Пакет, используемый для синхронного подключения",
-        examples=["psycopg2", "oracledb"],
+        default="psycopg2",
+        description=(
+            "Пакет синхронного драйвера. Для sqlite используется встроенный 'pysqlite'."
+        ),
+        examples=["psycopg2", "oracledb", "pysqlite"],
     )
 
     echo: bool = Field(
-        ..., description="Включить логирование SQL-запросов", examples=[False]
+        default=False, description="Включить логирование SQL-запросов", examples=[False]
     )
 
     username: str = Field(
-        ...,
+        default="",
         title="Пользователь",
-        min_length=1,
-        description="Имя пользователя для аутентификации",
+        description="Имя пользователя для аутентификации. Игнорируется для sqlite.",
         examples=["app_user"],
     )
 
     password: str = Field(
-        ...,
+        default="",
         title="Пароль",
-        min_length=1,
-        description="Пароль пользователя базы данных",
+        description="Пароль пользователя базы данных. Игнорируется для sqlite.",
         examples=["Str0ngPa$$w0rd"],
     )
 
@@ -173,7 +181,13 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
 
         Примечание:
             Для Oracle поле `name` трактуется как `service_name`.
+            Для SQLite используется ``path`` (для ``:memory:`` префикс пустой).
         """
+        if self.type == DatabaseTypeChoices.sqlite:
+            driver = "aiosqlite" if is_async else "pysqlite"
+            target = self.path or ":memory:"
+            return f"sqlite+{driver}:///{target}"
+
         driver = self.async_driver if is_async else self.sync_driver
 
         if self.type == DatabaseTypeChoices.postgresql:
@@ -195,6 +209,27 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         """Проверяет корректность SSL-настроек."""
         if self.ssl_mode and self.type != DatabaseTypeChoices.postgresql:
             raise ValueError("SSL доступен только для PostgreSQL")
+        return self
+
+    @model_validator(mode="after")
+    def validate_required_fields(self) -> "DatabaseConnectionSettings":
+        """Проверяет наличие обязательных полей в зависимости от типа СУБД."""
+        if self.type == DatabaseTypeChoices.sqlite:
+            if not self.path:
+                raise ValueError("Для type=sqlite обязательно поле 'path'.")
+            return self
+
+        # postgresql / oracle: требуем сетевые параметры
+        if not self.host or len(self.host) < 3:
+            raise ValueError(
+                f"Для type={self.type.value} требуется host (min 3 символа)."
+            )
+        if self.port <= 0:
+            raise ValueError(f"Для type={self.type.value} требуется валидный port.")
+        if not self.username:
+            raise ValueError(f"Для type={self.type.value} требуется username.")
+        if not self.password:
+            raise ValueError(f"Для type={self.type.value} требуется password.")
         return self
 
 

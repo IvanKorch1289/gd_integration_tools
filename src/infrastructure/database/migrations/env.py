@@ -81,7 +81,25 @@ async def run_async_migrations() -> None:
     Multi-instance safety: uses Redis distributed lock to ensure
     only ONE instance runs migrations at a time. Other instances
     wait (up to 5 min) for the lock and skip migration if already applied.
+
+    Для SQLite (W21.2 dev_light) ветка versions/*.py содержит PG-specific
+    код (pg_notify trigger, gen_random_uuid, '{}'::jsonb) и не запускается.
+    Вместо этого таблицы создаются через ``metadata.create_all`` —
+    подходит для одноразового локального стенда.
     """
+    is_sqlite = settings.database.type.value == "sqlite"
+
+    if is_sqlite:
+        connectable = async_engine_from_config(
+            config.get_section(config.config_ini_section, {}),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+        async with connectable.begin() as connection:
+            await connection.run_sync(target_metadata.create_all)
+        await connectable.dispose()
+        return
+
     # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
     try:
         from src.infrastructure.clients.storage.redis_lock import distributed_lock

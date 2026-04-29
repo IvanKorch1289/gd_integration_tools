@@ -1,0 +1,8 @@
+# Профиль staging — предпродакшн.
+#
+# Все секреты и хосты приходят из env / Vault и НЕ должны храниться здесь.
+# Этот overlay — место только для staging-специфичных значений настроек.
+
+app:
+  environment: staging
+  debug_mode: false

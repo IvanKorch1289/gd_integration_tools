@@ -10,10 +10,12 @@ class DatabaseTypeChoices(str, Enum):
     Значения:
         postgresql (str): PostgreSQL.
         oracle (str): Oracle.
+        sqlite (str): SQLite (профиль dev_light, W21.2).
     """
 
     postgresql = "postgresql"
     oracle = "oracle"
+    sqlite = "sqlite"
 
 
 class IsolationLevelChoices(str, Enum):

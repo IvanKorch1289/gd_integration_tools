@@ -1,0 +1,9 @@
+# Профиль prod — production-окружение.
+#
+# Все секреты и хосты приходят из env / Vault и НЕ должны храниться здесь.
+# Этот overlay — место только для prod-специфичных значений настроек.
+
+app:
+  environment: production
+  debug_mode: false
+  server: granian

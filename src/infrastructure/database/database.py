@@ -99,19 +99,34 @@ class DatabaseInitializer:
             sync_session_maker=self.sync_session_maker,
         )
 
+    def _engine_kwargs(self) -> dict[str, Any]:
+        """Базовые kwargs для create_engine / create_async_engine.
+
+        Для SQLite отключается pool — у него нет параметров pool_size/recycle,
+        и SQLAlchemy ругается на их передачу с дефолтным NullPool.
+        """
+        kwargs: dict[str, Any] = {
+            "echo": self.settings.echo,
+            "connect_args": self._get_connect_args(),
+        }
+        if self.settings.type != DatabaseTypeChoices.sqlite:
+            kwargs.update(
+                {
+                    "pool_size": self.settings.pool_size,
+                    "max_overflow": self.settings.max_overflow,
+                    "pool_recycle": self.settings.pool_recycle,
+                    "pool_timeout": self.settings.pool_timeout,
+                    "pool_pre_ping": True,
+                }
+            )
+        return kwargs
+
     def _create_async_engine(self) -> AsyncEngine:
         """
         Создаёт и настраивает асинхронный engine SQLAlchemy.
         """
         return create_async_engine(
-            url=self.settings.async_connection_url,
-            echo=self.settings.echo,
-            pool_size=self.settings.pool_size,
-            max_overflow=self.settings.max_overflow,
-            pool_recycle=self.settings.pool_recycle,
-            pool_timeout=self.settings.pool_timeout,
-            connect_args=self._get_connect_args(),
-            pool_pre_ping=True,
+            url=self.settings.async_connection_url, **self._engine_kwargs()
         )
 
     def _create_sync_engine(self) -> Engine:
@@ -119,14 +134,7 @@ class DatabaseInitializer:
         Создаёт и настраивает синхронный engine SQLAlchemy.
         """
         return create_engine(
-            url=self.settings.sync_connection_url,
-            echo=self.settings.echo,
-            pool_size=self.settings.pool_size,
-            max_overflow=self.settings.max_overflow,
-            pool_recycle=self.settings.pool_recycle,
-            pool_timeout=self.settings.pool_timeout,
-            connect_args=self._get_connect_args(),
-            pool_pre_ping=True,
+            url=self.settings.sync_connection_url, **self._engine_kwargs()
         )
 
     def _get_connect_args(self) -> dict[str, Any]:
