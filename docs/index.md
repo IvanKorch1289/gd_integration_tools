@@ -11,6 +11,7 @@ MCP и Prefect-тасков без модификаций.
 :maxdepth: 2
 :caption: Руководства
 
+QUICKSTART
 ARCHITECTURE
 DEVELOPER_GUIDE
 DSL_COOKBOOK
