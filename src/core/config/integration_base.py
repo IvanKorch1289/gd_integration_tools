@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -25,7 +25,9 @@ from src.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = (
     "BaseBotChannelSettings",
+    "BaseConnectorSettings",
     "BaseIntegrationSettings",
+    "BaseQueueSettings",
     "BaseWebhookChannelSettings",
 )
 
@@ -180,4 +182,153 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
         title="Base URL",
         description="Базовый URL bot-API мессенджера",
         examples=["https://botx.corp.example.ru", "https://api.telegram.org"],
+    )
+
+
+class BaseConnectorSettings(BaseIntegrationSettings):
+    """Базовый контракт коннектора с пулом и circuit breaker.
+
+    Расширяет ``BaseIntegrationSettings`` параметрами, общими для
+    HTTP/DB/SOAP-коннекторов: размер пула соединений, частота
+    health-check и порог срабатывания circuit breaker (W26).
+
+    Поля:
+        pool_min_size: Минимум соединений в пуле.
+        pool_max_size: Максимум соединений в пуле.
+        pool_acquire_timeout: Время ожидания свободного соединения, сек.
+        circuit_breaker_threshold: Сколько подряд сбоев открывают circuit.
+        circuit_breaker_reset_after: Через сколько секунд переходить в
+            half-open после открытия circuit.
+        health_check_interval: Период периодического health-check, сек.
+            ``None`` отключает health-check loop.
+    """
+
+    pool_min_size: int = Field(
+        default=1,
+        title="Минимум пула",
+        ge=0,
+        le=1024,
+        description="Минимальное число соединений в пуле",
+        examples=[1, 5],
+    )
+    pool_max_size: int = Field(
+        default=10,
+        title="Максимум пула",
+        ge=1,
+        le=4096,
+        description="Максимальное число соединений в пуле",
+        examples=[10, 50],
+    )
+    pool_acquire_timeout: float = Field(
+        default=5.0,
+        title="Таймаут получения соединения",
+        ge=0.1,
+        description="Время ожидания свободного соединения из пула (сек.)",
+        examples=[1.0, 5.0],
+    )
+    circuit_breaker_threshold: int = Field(
+        default=5,
+        title="Порог CB",
+        ge=1,
+        le=1000,
+        description="Сколько подряд ошибок открывают circuit breaker",
+        examples=[5, 10],
+    )
+    circuit_breaker_reset_after: float = Field(
+        default=30.0,
+        title="Reset CB",
+        ge=0.1,
+        description="Через сколько секунд CB пробует half-open",
+        examples=[10.0, 60.0],
+    )
+    health_check_interval: float | None = Field(
+        default=None,
+        title="Health-check период",
+        description=(
+            "Период периодической проверки доступности (сек.). "
+            "``None`` отключает встроенный health-check loop."
+        ),
+        examples=[None, 30.0],
+    )
+
+    @model_validator(mode="after")
+    def _validate_pool(self) -> BaseConnectorSettings:
+        """Гарантирует ``pool_min_size <= pool_max_size``."""
+        if self.pool_min_size > self.pool_max_size:
+            raise ValueError("pool_min_size не может быть больше pool_max_size")
+        return self
+
+
+class BaseQueueSettings(BaseIntegrationSettings):
+    """Базовый контракт MQ-настроек (Kafka/RabbitMQ/NATS/Redis-Streams).
+
+    Расширяет ``BaseIntegrationSettings`` параметрами брокера и
+    группового потребления. Конкретные реализации (например,
+    ``KafkaSourceSettings``, ``RedisStreamsSinkSettings``) задают
+    свой ``yaml_group`` и ``env_prefix``.
+
+    Поля:
+        broker_url: URL брокера (``kafka://...``/``amqp://...``/
+            ``redis://...``/``nats://...``). Конкретный формат
+            выбирает наследник.
+        topic_prefix: Префикс topic/queue/stream-имён для
+            multi-tenant изоляции.
+        consumer_group: Идентификатор consumer group/subscription.
+            Пустая строка означает «без группы» (broadcast).
+        batch_size: Сколько сообщений запрашивать одним fetch'ем.
+        batch_timeout_ms: Сколько миллисекунд копить batch до flush.
+        ack_mode: Стратегия подтверждения: ``auto`` (на стороне
+            брокера), ``manual`` (явный ack после обработки), ``none``
+            (fire-and-forget без гарантий).
+    """
+
+    broker_url: str = Field(
+        default="",
+        title="URL брокера",
+        description="Полный URL брокера (kafka://, amqp://, redis://, nats://)",
+        examples=[
+            "kafka://broker:9092",
+            "amqp://guest:guest@localhost:5672/",
+            "redis://localhost:6379/1",
+        ],
+    )
+    topic_prefix: str = Field(
+        default="",
+        title="Префикс topic",
+        description=(
+            "Префикс для имени topic/queue/stream (multi-tenant "
+            "изоляция). Пустая строка отключает префикс."
+        ),
+        examples=["", "tenant_a_", "gd_"],
+    )
+    consumer_group: str = Field(
+        default="",
+        title="Consumer group",
+        description=(
+            "Идентификатор consumer group / subscription. Пустая "
+            "строка — без группы (broadcast)."
+        ),
+        examples=["", "gd-workers"],
+    )
+    batch_size: int = Field(
+        default=100,
+        title="Размер batch",
+        ge=1,
+        le=10_000,
+        description="Сколько сообщений запрашивать за один fetch",
+        examples=[1, 100, 500],
+    )
+    batch_timeout_ms: int = Field(
+        default=200,
+        title="Тайм-аут batch (мс)",
+        ge=0,
+        le=60_000,
+        description="Сколько мс копить batch до принудительного flush",
+        examples=[100, 200, 1000],
+    )
+    ack_mode: Literal["auto", "manual", "none"] = Field(
+        default="auto",
+        title="Режим подтверждения",
+        description="auto — broker, manual — после обработки, none — без ack",
+        examples=["auto", "manual"],
     )

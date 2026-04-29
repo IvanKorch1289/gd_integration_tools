@@ -63,7 +63,8 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	docker-build docker-run docker-stop \
 	tag all \
 	docs-clean docs-apidoc docs-html docs-rebuild docs \
-	layers layers-update config-audit
+	layers layers-update config-audit \
+	config-new config-apply config-extract
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"
@@ -248,6 +249,17 @@ layers-update: ## Обновить allowlist архитектурных нару
 
 config-audit: check-env ## Двусторонний аудит конфигов (orphans + missing secrets)
 	@$(UV_RUN) python tools/config_audit.py
+
+config-new: check-env ## Интерактивный wizard создания нового Settings-класса
+	@$(UV_RUN) python tools/codegen_settings.py wizard
+
+config-apply: check-env ## Применить config-spec/<NAME>.yml (NAME=<name>)
+	@if [ -z "$(NAME)" ]; then echo "Использование: make config-apply NAME=<name>"; exit 1; fi
+	@$(UV_RUN) python tools/codegen_settings.py apply "config-spec/$(NAME).yml"
+
+config-extract: check-env ## Reverse-codegen: класс → config-spec/<name>.yml (CLS=<Name>Settings)
+	@if [ -z "$(CLS)" ]; then echo "Использование: make config-extract CLS=<Name>Settings"; exit 1; fi
+	@$(UV_RUN) python tools/codegen_settings.py extract --cls "$(CLS)"
 
 run: check-env ## Start backend in foreground (использует APP_SERVER из env)
 	@$(MANAGE_SCRIPT) run
