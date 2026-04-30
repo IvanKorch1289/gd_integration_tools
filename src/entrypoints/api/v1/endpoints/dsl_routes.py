@@ -1,23 +1,21 @@
 """Admin REST API для управления DSL-маршрутами через YAMLStore.
 
-Wave 3.8 (bidirectional YAML ↔ Python): CRUD-операции над файловым
-хранилищем DSL-маршрутов. Работает поверх :class:`YAMLStore`
-(``src/dsl/yaml_store.py``) и round-trip контракта Pipeline.to_yaml()
-↔ load_pipeline_from_yaml().
+W26.5: маршруты регистрируются декларативно — ActionSpec для JSON-
+эндпоинтов и ``router.add_api_route`` для text/plain (Python-код).
 
-Endpoints (под префиксом ``/api/v1/admin/dsl-routes``):
+Endpoints (под ``/api/v1/admin/dsl-routes``):
 
-    * ``GET    /``                     — список route_id.
-    * ``GET    /{route_id}``           — yaml + spec + python для маршрута.
-    * ``GET    /{route_id}/python``    — только Python-код (text/plain).
-    * ``POST   /``                     — создать маршрут (body: yaml).
-    * ``PUT    /{route_id}``           — обновить маршрут (body: yaml).
-    * ``DELETE /{route_id}``           — удалить маршрут.
-    * ``POST   /validate``             — валидация YAML без записи на диск.
-    * ``POST   /{route_id}/diff``      — diff с переданным YAML.
+    * GET    /              — список route_id.
+    * GET    /{route_id}    — yaml + spec + python для маршрута.
+    * GET    /{route_id}/python  — text/plain Python-код.
+    * POST   /              — создать маршрут (body: yaml).
+    * PUT    /{route_id}    — обновить маршрут (body: yaml).
+    * DELETE /{route_id}    — удалить маршрут.
+    * POST   /validate      — валидация YAML без записи на диск.
+    * POST   /{route_id}/diff  — diff с переданным YAML.
 
 Авторизация: эндпоинты монтируются под ``/admin`` — защищены
-глобальным :class:`APIKeyMiddleware` (см. ``api_key.py``).
+глобальным :class:`APIKeyMiddleware`.
 
 Директория хранилища: env ``DSL_YAML_STORE_DIR`` (default
 ``<root_dir>/routes_store``). Создаётся автоматически.
@@ -30,32 +28,25 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import APIRouter, Body, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
 from src.dsl.engine.pipeline import Pipeline
 from src.dsl.yaml_loader import load_pipeline_from_yaml
 from src.dsl.yaml_store import YAMLStore
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 
 __all__ = ("router",)
 
 _logger = logging.getLogger("admin.dsl_routes")
 
-router = APIRouter(tags=["DSL · Routes Store"])
 
-
-# --- DI ----------------------------------------------------------------
+# --- DI --------------------------------------------------------------------
 
 
 @lru_cache(maxsize=1)
 def _yaml_store() -> YAMLStore:
-    """Ленивый singleton :class:`YAMLStore` на директорию из настроек.
-
-    Директория берётся из env ``DSL_YAML_STORE_DIR``. Если переменная
-    не задана — fallback на ``<root_dir>/routes_store`` (root_dir читается
-    лениво из ``app_base_settings`` чтобы не требовать полной конфигурации
-    для импорта модуля). ``YAMLStore`` создаёт директорию автоматически.
-    """
+    """Ленивый singleton :class:`YAMLStore` на директорию из настроек."""
     raw = os.getenv("DSL_YAML_STORE_DIR")
     if raw:
         store_dir = Path(raw)
@@ -66,7 +57,7 @@ def _yaml_store() -> YAMLStore:
     return YAMLStore(store_dir)
 
 
-# --- Pydantic schemas --------------------------------------------------
+# --- Pydantic schemas ------------------------------------------------------
 
 
 class YamlPayload(BaseModel):
@@ -100,7 +91,13 @@ class RouteDiffOut(BaseModel):
     diff: str
 
 
-# --- Helpers -----------------------------------------------------------
+class RouteIdPath(BaseModel):
+    """Path-параметр идентификатора маршрута."""
+
+    route_id: str = Field(..., description="route_id YAML-маршрута.")
+
+
+# --- Helpers ---------------------------------------------------------------
 
 
 def _parse_yaml_or_400(yaml_str: str) -> Pipeline:
@@ -123,54 +120,119 @@ def _to_detail(pipeline: Pipeline) -> RouteDetailOut:
     )
 
 
-# --- Endpoints ---------------------------------------------------------
+# --- Service facade --------------------------------------------------------
 
 
-@router.get(
-    "/dsl-routes",
-    response_model=list[str],
-    summary="Список route_id всех YAML-маршрутов",
-    description="Возвращает отсортированный список route_id, сохранённых в YAMLStore.",
-)
-async def list_dsl_routes() -> list[str]:
-    """Список сохранённых маршрутов."""
-    return _yaml_store().list()
+class _DSLRoutesFacade:
+    """Адаптер над :class:`YAMLStore` для action-маршрутов."""
 
+    async def list_routes(self) -> list[str]:
+        return _yaml_store().list()
 
-@router.get(
-    "/dsl-routes/{route_id}",
-    response_model=RouteDetailOut,
-    summary="Получить YAML + spec + Python маршрута",
-    description=(
-        "Возвращает YAML-исходник, распарсенный JSON spec и сгенерированный "
-        "Python-код для воссоздания Pipeline через RouteBuilder."
-    ),
-)
-async def get_dsl_route(route_id: str) -> RouteDetailOut:
-    """Получить детальную информацию о маршруте."""
-    store = _yaml_store()
-    if not store.exists(route_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Маршрут {route_id!r} не найден",
+    async def get_route(self, *, route_id: str) -> RouteDetailOut:
+        store = _yaml_store()
+        if not store.exists(route_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Маршрут {route_id!r} не найден",
+            )
+        try:
+            pipeline = store.load(route_id)
+        except (FileNotFoundError, ValueError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Ошибка загрузки маршрута: {exc}",
+            ) from exc
+        return _to_detail(pipeline)
+
+    async def create_route(self, *, yaml: str) -> RouteDetailOut:
+        pipeline = _parse_yaml_or_400(yaml)
+        store = _yaml_store()
+        if store.exists(pipeline.route_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Маршрут {pipeline.route_id!r} уже существует. "
+                    "Используйте PUT для обновления."
+                ),
+            )
+        store.save(pipeline)
+        _logger.info("dsl-routes: created %r", pipeline.route_id)
+        return _to_detail(pipeline)
+
+    async def update_route(self, *, route_id: str, yaml: str) -> RouteDetailOut:
+        store = _yaml_store()
+        if not store.exists(route_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Маршрут {route_id!r} не найден",
+            )
+        pipeline = _parse_yaml_or_400(yaml)
+        if pipeline.route_id != route_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"route_id в path ({route_id!r}) не совпадает с route_id в YAML "
+                    f"({pipeline.route_id!r})"
+                ),
+            )
+        store.save(pipeline)
+        _logger.info("dsl-routes: updated %r", route_id)
+        return _to_detail(pipeline)
+
+    async def delete_route(self, *, route_id: str) -> Response:
+        store = _yaml_store()
+        if not store.delete(route_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Маршрут {route_id!r} не найден",
+            )
+        _logger.info("dsl-routes: deleted %r", route_id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    async def validate_route(self, *, yaml: str) -> RouteValidationOut:
+        try:
+            pipeline = load_pipeline_from_yaml(yaml)
+        except (ValueError, ImportError) as exc:
+            return RouteValidationOut(valid=False, error=str(exc))
+        return RouteValidationOut(
+            valid=True,
+            route_id=pipeline.route_id,
+            processors_count=len(pipeline.processors),
         )
-    try:
-        pipeline = store.load(route_id)
-    except (FileNotFoundError, ValueError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка загрузки маршрута: {exc}",
-        ) from exc
-    return _to_detail(pipeline)
+
+    async def diff_route(self, *, route_id: str, yaml: str) -> RouteDiffOut:
+        store = _yaml_store()
+        if not store.exists(route_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Маршрут {route_id!r} не найден",
+            )
+        current = store.load(route_id)
+        proposed = _parse_yaml_or_400(yaml)
+        return RouteDiffOut(route_id=route_id, diff=store.diff(current, proposed))
 
 
-@router.get(
-    "/dsl-routes/{route_id}/python",
-    summary="Получить Python-код маршрута",
-    description="Возвращает Python-код, воссоздающий Pipeline через RouteBuilder.",
-    response_class=Response,
-)
-async def get_dsl_route_python(route_id: str) -> Response:
+_FACADE = _DSLRoutesFacade()
+
+
+def _get_facade() -> _DSLRoutesFacade:
+    return _FACADE
+
+
+# --- Router ----------------------------------------------------------------
+
+
+router = APIRouter(tags=["DSL · Routes Store"])
+builder = ActionRouterBuilder(router)
+
+common_tags = ("DSL · Routes Store",)
+
+
+# Python-код требует response_class=Response с media_type='text/plain' —
+# это не вписывается в ActionSpec-генерацию, поэтому endpoint регистрируется
+# через add_api_route.
+async def _get_route_python(route_id: str) -> Response:
     """Python-код Pipeline в виде text/plain."""
     store = _yaml_store()
     if not store.exists(route_id):
@@ -182,123 +244,120 @@ async def get_dsl_route_python(route_id: str) -> Response:
     return Response(content=pipeline.to_python(), media_type="text/plain")
 
 
-@router.post(
-    "/dsl-routes",
-    response_model=RouteDetailOut,
-    status_code=status.HTTP_201_CREATED,
-    summary="Создать новый YAML-маршрут",
-    description=(
-        "Парсит YAML, валидирует через RouteBuilder и сохраняет в YAMLStore. "
-        "Возвращает 409 если маршрут с таким route_id уже существует."
-    ),
+router.add_api_route(
+    path="/dsl-routes/{route_id}/python",
+    endpoint=_get_route_python,
+    methods=["GET"],
+    summary="Получить Python-код маршрута",
+    description="Возвращает Python-код, воссоздающий Pipeline через RouteBuilder.",
+    response_class=Response,
+    name="get_dsl_route_python",
 )
-async def create_dsl_route(payload: YamlPayload = Body(...)) -> RouteDetailOut:
-    """Создать новый маршрут."""
-    pipeline = _parse_yaml_or_400(payload.yaml)
-    store = _yaml_store()
-    if store.exists(pipeline.route_id):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Маршрут {pipeline.route_id!r} уже существует. Используйте PUT для обновления.",
-        )
-    store.save(pipeline)
-    _logger.info("dsl-routes: created %r", pipeline.route_id)
-    return _to_detail(pipeline)
 
 
-@router.put(
-    "/dsl-routes/{route_id}",
-    response_model=RouteDetailOut,
-    summary="Обновить существующий YAML-маршрут",
-    description=(
-        "Парсит YAML, валидирует и перезаписывает существующий маршрут. "
-        "404 если маршрут не существует. route_id из path должен совпадать "
-        "с route_id из YAML — иначе 400."
-    ),
-)
-async def update_dsl_route(
-    route_id: str, payload: YamlPayload = Body(...)
-) -> RouteDetailOut:
-    """Обновить существующий маршрут."""
-    store = _yaml_store()
-    if not store.exists(route_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Маршрут {route_id!r} не найден",
-        )
-    pipeline = _parse_yaml_or_400(payload.yaml)
-    if pipeline.route_id != route_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"route_id в path ({route_id!r}) не совпадает с route_id в YAML "
-                f"({pipeline.route_id!r})"
+builder.add_actions(
+    [
+        ActionSpec(
+            name="list_dsl_routes",
+            method="GET",
+            path="/dsl-routes",
+            summary="Список route_id всех YAML-маршрутов",
+            description="Возвращает отсортированный список route_id, сохранённых в YAMLStore.",
+            service_getter=_get_facade,
+            service_method="list_routes",
+            response_model=list[str],
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="get_dsl_route",
+            method="GET",
+            path="/dsl-routes/{route_id}",
+            summary="Получить YAML + spec + Python маршрута",
+            description=(
+                "Возвращает YAML-исходник, распарсенный JSON spec и сгенерированный "
+                "Python-код для воссоздания Pipeline через RouteBuilder."
             ),
-        )
-    store.save(pipeline)
-    _logger.info("dsl-routes: updated %r", route_id)
-    return _to_detail(pipeline)
-
-
-@router.delete(
-    "/dsl-routes/{route_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Удалить YAML-маршрут",
-    description="Удаляет файл маршрута. 404 если маршрут не существует.",
+            service_getter=_get_facade,
+            service_method="get_route",
+            path_model=RouteIdPath,
+            response_model=RouteDetailOut,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="create_dsl_route",
+            method="POST",
+            path="/dsl-routes",
+            summary="Создать новый YAML-маршрут",
+            description=(
+                "Парсит YAML, валидирует через RouteBuilder и сохраняет в YAMLStore. "
+                "Возвращает 409 если маршрут с таким route_id уже существует."
+            ),
+            status_code=status.HTTP_201_CREATED,
+            service_getter=_get_facade,
+            service_method="create_route",
+            body_model=YamlPayload,
+            response_model=RouteDetailOut,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="update_dsl_route",
+            method="PUT",
+            path="/dsl-routes/{route_id}",
+            summary="Обновить существующий YAML-маршрут",
+            description=(
+                "Парсит YAML, валидирует и перезаписывает существующий маршрут. "
+                "404 если маршрут не существует. route_id из path должен совпадать "
+                "с route_id из YAML — иначе 400."
+            ),
+            service_getter=_get_facade,
+            service_method="update_route",
+            path_model=RouteIdPath,
+            body_model=YamlPayload,
+            response_model=RouteDetailOut,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="delete_dsl_route",
+            method="DELETE",
+            path="/dsl-routes/{route_id}",
+            summary="Удалить YAML-маршрут",
+            description="Удаляет файл маршрута. 404 если маршрут не существует.",
+            status_code=status.HTTP_204_NO_CONTENT,
+            service_getter=_get_facade,
+            service_method="delete_route",
+            path_model=RouteIdPath,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="validate_dsl_route",
+            method="POST",
+            path="/dsl-routes/validate",
+            summary="Валидация YAML без записи на диск",
+            description=(
+                "Парсит YAML и возвращает статус валидации. Используется UI-редактором "
+                "для подсветки ошибок до сохранения."
+            ),
+            service_getter=_get_facade,
+            service_method="validate_route",
+            body_model=YamlPayload,
+            response_model=RouteValidationOut,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="diff_dsl_route",
+            method="POST",
+            path="/dsl-routes/{route_id}/diff",
+            summary="Diff между сохранённым и предложенным YAML",
+            description=(
+                "Парсит переданный YAML и возвращает unified-diff с текущей версией "
+                "маршрута из YAMLStore. 404 если маршрут не существует."
+            ),
+            service_getter=_get_facade,
+            service_method="diff_route",
+            path_model=RouteIdPath,
+            body_model=YamlPayload,
+            response_model=RouteDiffOut,
+            tags=common_tags,
+        ),
+    ]
 )
-async def delete_dsl_route(route_id: str) -> Response:
-    """Удалить маршрут."""
-    store = _yaml_store()
-    if not store.delete(route_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Маршрут {route_id!r} не найден",
-        )
-    _logger.info("dsl-routes: deleted %r", route_id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post(
-    "/dsl-routes/validate",
-    response_model=RouteValidationOut,
-    summary="Валидация YAML без записи на диск",
-    description=(
-        "Парсит YAML и возвращает статус валидации. Используется UI-редактором "
-        "для подсветки ошибок до сохранения."
-    ),
-)
-async def validate_dsl_route(payload: YamlPayload = Body(...)) -> RouteValidationOut:
-    """Валидация YAML без сохранения."""
-    try:
-        pipeline = load_pipeline_from_yaml(payload.yaml)
-    except (ValueError, ImportError) as exc:
-        return RouteValidationOut(valid=False, error=str(exc))
-    return RouteValidationOut(
-        valid=True,
-        route_id=pipeline.route_id,
-        processors_count=len(pipeline.processors),
-    )
-
-
-@router.post(
-    "/dsl-routes/{route_id}/diff",
-    response_model=RouteDiffOut,
-    summary="Diff между сохранённым и предложенным YAML",
-    description=(
-        "Парсит переданный YAML и возвращает unified-diff с текущей версией "
-        "маршрута из YAMLStore. 404 если маршрут не существует."
-    ),
-)
-async def diff_dsl_route(
-    route_id: str, payload: YamlPayload = Body(...)
-) -> RouteDiffOut:
-    """Diff между сохранённым YAML и переданным."""
-    store = _yaml_store()
-    if not store.exists(route_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Маршрут {route_id!r} не найден",
-        )
-    current = store.load(route_id)
-    proposed = _parse_yaml_or_400(payload.yaml)
-    return RouteDiffOut(route_id=route_id, diff=store.diff(current, proposed))
