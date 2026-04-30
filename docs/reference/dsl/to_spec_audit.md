@@ -1,14 +1,14 @@
-# DSL Processors — `to_spec()` audit (W25.2 baseline)
+# DSL Processors — `to_spec()` audit (W26.1 update)
 
-Снимок покрытия после W25.2. Цель — сделать round-trip
-``RouteBuilder → YAML → RouteBuilder`` возможным для всё большего
-числа процессоров.
+Снимок покрытия после W26.1 (sub-processor framework). Цель —
+сделать round-trip ``RouteBuilder → YAML → RouteBuilder`` возможным
+для всё большего числа процессоров.
 
 | Категория | Покрытие |
 |---|---|
 | Всего процессоров | **186** |
-| C `to_spec()` | **36** |
-| Без `to_spec()` | **150** |
+| C `to_spec()` | **41** |
+| Без `to_spec()` | **145** |
 
 `to_spec()` возвращает ``dict | None`` по контракту:
 - ключ внешнего dict'а = имя метода RouteBuilder;
@@ -78,12 +78,12 @@
 - [   ] (8 классов — детали см. через скрипт audit)
 
 ### control_flow.py
-- [   ] ChoiceProcessor (sub-processors)
-- [   ] ParallelProcessor (sub-processors)
+- [✓] ChoiceProcessor (W26.1; JMESPath-форма; legacy callable predicate → None)
+- [✓] ParallelProcessor (W26.1)
 - [   ] PipelineRefProcessor
-- [   ] RetryProcessor (sub-processors)
-- [   ] SagaProcessor (sub-processors)
-- [   ] TryCatchProcessor (sub-processors)
+- [✓] RetryProcessor (W26.1)
+- [✓] SagaProcessor (W26.1)
+- [✓] TryCatchProcessor (W26.1)
 
 ### converters.py
 - [   ] (несколько классов конверсий)

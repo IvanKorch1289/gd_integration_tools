@@ -92,9 +92,50 @@ Redirect и пр.
    не сериализуется — model нужно резолвить через registry. Будет в
    следующих волнах через ``schema: OrderSchemaIn`` (символьный ref).
 
-3. **Sub-processors** (Choice / Retry / Saga / Splitter / Aggregator /
-   Loop / OnCompletion / Parallel): требуется рекурсивная to_spec на
-   children. Запланировано как long-tail вне W25.2.
+3. **Sub-processors**: реализованы в W26.1 для пяти control-flow
+   процессоров — Retry / TryCatch / Parallel / Saga / Choice. Choice
+   поддерживает только JMESPath-форму (``expr``); legacy callable
+   predicate возвращает ``None`` и пропускается при write-back.
+   Splitter / Aggregator / Loop / OnCompletion остаются open и
+   запланированы в более поздних волнах.
+
+   Пример nested-YAML для control-flow:
+
+   ```yaml
+   processors:
+     - retry:
+         max_attempts: 3
+         delay_seconds: 1.0
+         backoff: exponential
+         processors:
+           - log: {level: info}
+           - dispatch_action: {action: orders.create}
+     - do_try:
+         try_processors:
+           - transform: {expression: body}
+         catch_processors:
+           - log: {level: error}
+         finally_processors:
+           - set_header: {key: x-finalized, value: "1"}
+     - parallel:
+         strategy: all
+         branches:
+           left:
+             - log: {level: info}
+           right:
+             - dispatch_action: {action: notify.user}
+     - saga:
+         steps:
+           - forward: {dispatch_action: {action: orders.reserve}}
+             compensate: {dispatch_action: {action: orders.cancel}}
+     - choice:
+         when:
+           - expr: "status == 'ok'"
+             processors:
+               - dispatch_action: {action: orders.complete}
+         otherwise:
+           - log: {level: warning}
+   ```
 
 4. **Write-back только в development**: env-guard в
    ``DSLBuilderService.is_write_enabled``. Production использует

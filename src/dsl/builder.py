@@ -12,6 +12,7 @@ from src.dsl.engine.processors import (
     BaseProcessor,
     CallableProcessor,
     CDCProcessor,
+    ChoiceBranch,
     ChoiceProcessor,
     CircuitBreakerProcessor,
     ClaimCheckProcessor,
@@ -349,10 +350,16 @@ class RouteBuilder:
 
     def choice(
         self,
-        when: list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
+        when: list[ChoiceBranch]
+        | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
         otherwise: list[BaseProcessor] | None = None,
     ) -> "RouteBuilder":
-        """Camel When/Otherwise: ветвление по предикатам."""
+        """Camel When/Otherwise: ветвление по JMESPath-веткам или предикатам.
+
+        Принимает либо новый формат — список :class:`ChoiceBranch` с
+        ``expr=<jmespath>`` (поддерживает write-back YAML), либо legacy —
+        список ``(predicate, processors)`` с Python-callable (без write-back).
+        """
         return self._add(ChoiceProcessor(when=when, otherwise=otherwise))
 
     def do_try(

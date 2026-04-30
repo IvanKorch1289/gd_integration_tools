@@ -10,6 +10,7 @@ from src.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 _cf_logger = logging.getLogger("dsl.control_flow")
 
 __all__ = (
+    "ChoiceBranch",
     "ChoiceProcessor",
     "TryCatchProcessor",
     "RetryProcessor",
@@ -20,19 +21,96 @@ __all__ = (
 )
 
 
+def _serialize_sub(procs: list[BaseProcessor]) -> list[dict[str, Any]] | None:
+    """Сериализует список sub-processors через ``to_spec``.
+
+    Если хотя бы один child возвращает ``None`` (например, callable
+    payload_factory), весь sub-pipeline считается несериализуемым —
+    возвращаем ``None``, чтобы родительский ``to_spec`` тоже отдал ``None``.
+
+    Args:
+        procs: Дочерние процессоры sub-pipeline.
+
+    Returns:
+        Список dict-spec'ов либо ``None``.
+    """
+    out: list[dict[str, Any]] = []
+    for p in procs:
+        spec = p.to_spec()
+        if spec is None:
+            return None
+        out.append(spec)
+    return out
+
+
+@dataclass
+class ChoiceBranch:
+    """Одна ветка ``ChoiceProcessor`` с предикатом или JMESPath-выражением.
+
+    Атрибуты:
+        processors: Sub-pipeline ветки (выполняется при истинном условии).
+        predicate: Legacy-форма — Python-callable над ``Exchange``.
+            Не сериализуется в YAML; используется для in-process тестов.
+        expr: JMESPath-выражение поверх ``ex.in_message.body``.
+            Сериализуется в YAML и поддерживает write-back round-trip.
+
+    Должна быть указана **ровно одна** из ``predicate``/``expr``.
+    """
+
+    processors: list[BaseProcessor]
+    predicate: Callable[[Exchange[Any]], bool] | None = None
+    expr: str | None = None
+
+    def __post_init__(self) -> None:
+        if (self.predicate is None) == (self.expr is None):
+            raise ValueError(
+                "ChoiceBranch требует ровно одно из 'predicate' / 'expr'"
+            )
+
+    def matches(self, exchange: Exchange[Any]) -> bool:
+        """Проверяет условие ветки против текущего ``Exchange``."""
+        if self.predicate is not None:
+            return bool(self.predicate(exchange))
+        import jmespath
+
+        return bool(jmespath.search(self.expr, exchange.in_message.body))
+
+
+def _normalize_choice_branches(
+    when: list[ChoiceBranch]
+    | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
+) -> list[ChoiceBranch]:
+    """Приводит legacy-формат веток к списку :class:`ChoiceBranch`."""
+    branches: list[ChoiceBranch] = []
+    for item in when:
+        if isinstance(item, ChoiceBranch):
+            branches.append(item)
+        elif isinstance(item, tuple) and len(item) == 2:
+            predicate, processors = item
+            branches.append(
+                ChoiceBranch(processors=list(processors), predicate=predicate)
+            )
+        else:
+            raise ValueError(f"Invalid choice-branch spec: {item!r}")
+    return branches
+
+
 class ChoiceProcessor(BaseProcessor):
     """Условное ветвление When/Otherwise.
 
-    Проверяет предикаты по порядку. Выполняет процессоры
-    первой подходящей ветки. Если ни одна не подошла —
-    выполняет ``otherwise``.
+    Поддерживает две формы веток:
+    1. :class:`ChoiceBranch` с ``expr`` (JMESPath) — сериализуется в YAML.
+    2. Legacy-tuple ``(predicate, processors)`` — для in-process Python-кода;
+       такие ветки не сериализуются и приводят ``to_spec`` к ``None``.
 
-    Пример::
+    Пример (новая форма)::
 
         ChoiceProcessor(
             when=[
-                (lambda ex: ex.in_message.body.get("status") == "ok",
-                 [DispatchActionProcessor("orders.update")]),
+                ChoiceBranch(
+                    expr="status == 'ok'",
+                    processors=[DispatchActionProcessor("orders.update")],
+                ),
             ],
             otherwise=[LogProcessor(level="warning")],
         )
@@ -40,22 +118,46 @@ class ChoiceProcessor(BaseProcessor):
 
     def __init__(
         self,
-        when: list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
+        when: list[ChoiceBranch]
+        | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
         otherwise: list[BaseProcessor] | None = None,
         *,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or "choice")
-        self._when = when
+        self._branches: list[ChoiceBranch] = _normalize_choice_branches(when)
         self._otherwise = otherwise or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        for predicate, branch_processors in self._when:
-            if predicate(exchange):
-                await run_sub_processors(branch_processors, exchange, context)
+        for branch in self._branches:
+            if branch.matches(exchange):
+                await run_sub_processors(branch.processors, exchange, context)
                 return
 
         await run_sub_processors(self._otherwise, exchange, context)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует Choice в YAML-spec при наличии JMESPath-веток.
+
+        Если хотя бы одна ветка использует callable-predicate (legacy),
+        возвращается ``None`` — write-back для такого Choice невозможен.
+        """
+        when_specs: list[dict[str, Any]] = []
+        for branch in self._branches:
+            if branch.expr is None:
+                return None
+            sub = _serialize_sub(branch.processors)
+            if sub is None:
+                return None
+            when_specs.append({"expr": branch.expr, "processors": sub})
+
+        result: dict[str, Any] = {"when": when_specs}
+        if self._otherwise:
+            otherwise_sub = _serialize_sub(self._otherwise)
+            if otherwise_sub is None:
+                return None
+            result["otherwise"] = otherwise_sub
+        return {"choice": result}
 
 
 class TryCatchProcessor(BaseProcessor):
@@ -105,6 +207,27 @@ class TryCatchProcessor(BaseProcessor):
                 await proc.process(exchange, context)
             except Exception as exc:
                 _cf_logger.error("Finally processor error: %s", exc)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует Try/Catch/Finally в YAML-spec.
+
+        ``None`` если хоть один child sub-pipeline не сериализуется.
+        """
+        try_sub = _serialize_sub(self._try)
+        if try_sub is None:
+            return None
+        spec: dict[str, Any] = {"try_processors": try_sub}
+        if self._catch:
+            catch_sub = _serialize_sub(self._catch)
+            if catch_sub is None:
+                return None
+            spec["catch_processors"] = catch_sub
+        if self._finally:
+            finally_sub = _serialize_sub(self._finally)
+            if finally_sub is None:
+                return None
+            spec["finally_processors"] = finally_sub
+        return {"do_try": spec}
 
 
 class _RetryAbort(Exception):
@@ -201,6 +324,26 @@ class RetryProcessor(BaseProcessor):
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
+
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует Retry-обёртку в YAML-spec.
+
+        Returns:
+            ``{"retry": {processors, max_attempts, delay_seconds, backoff,
+            jitter_seconds?}}`` или ``None``, если sub-pipeline не сериализуется.
+        """
+        sub = _serialize_sub(self._processors)
+        if sub is None:
+            return None
+        spec: dict[str, Any] = {
+            "processors": sub,
+            "max_attempts": self._max_attempts,
+            "delay_seconds": self._delay,
+            "backoff": self._backoff,
+        }
+        if self._jitter > 0:
+            spec["jitter_seconds"] = self._jitter
+        return {"retry": spec}
 
 
 class PipelineRefProcessor(BaseProcessor):
@@ -329,6 +472,25 @@ class ParallelProcessor(BaseProcessor):
         if errors:
             exchange.set_property("parallel_errors", errors)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует параллельные ветки в YAML-spec.
+
+        Returns:
+            ``{"parallel": {branches: {name: [...]}, strategy}}`` или ``None``.
+        """
+        branches_spec: dict[str, list[dict[str, Any]]] = {}
+        for name, procs in self._branches.items():
+            sub = _serialize_sub(procs)
+            if sub is None:
+                return None
+            branches_spec[name] = sub
+        return {
+            "parallel": {
+                "branches": branches_spec,
+                "strategy": self._strategy,
+            }
+        }
+
 
 @dataclass
 class SagaStep:
@@ -378,3 +540,24 @@ class SagaProcessor(BaseProcessor):
                 return
 
         exchange.set_property("saga_completed", True)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализует Saga-шаги в YAML-spec.
+
+        Каждый шаг сериализуется как ``{forward: {...}, compensate: {...}}``;
+        если хоть один step не сериализуется (callable forward/compensate)
+        — возвращается ``None`` для всего Saga.
+        """
+        steps_spec: list[dict[str, Any]] = []
+        for step in self._steps:
+            forward_spec = step.forward.to_spec()
+            if forward_spec is None:
+                return None
+            entry: dict[str, Any] = {"forward": forward_spec}
+            if step.compensate is not None:
+                comp_spec = step.compensate.to_spec()
+                if comp_spec is None:
+                    return None
+                entry["compensate"] = comp_spec
+            steps_spec.append(entry)
+        return {"saga": {"steps": steps_spec}}

@@ -61,6 +61,7 @@ from src.dsl.engine.processors.components import (
     TimerProcessor,
 )
 from src.dsl.engine.processors.control_flow import (
+    ChoiceBranch,
     ChoiceProcessor,
     ParallelProcessor,
     PipelineRefProcessor,
@@ -214,6 +215,7 @@ __all__ = (
     "MCPToolProcessor",
     "AgentGraphProcessor",
     "CDCProcessor",
+    "ChoiceBranch",
     "ChoiceProcessor",
     "TryCatchProcessor",
     "RetryProcessor",
