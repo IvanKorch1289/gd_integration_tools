@@ -1,15 +1,20 @@
 """Эндпоинты для импорта схем и массового создания объектов.
 
-Поддерживаемые сценарии импорта (запрошены в ТЗ):
+W26.5: маршруты регистрируются через ``router.add_api_route`` без
+``@router``-декораторов. ``ActionSpec`` не используется, так как все
+4 эндпоинта работают с ``multipart/form-data`` (UploadFile + Form),
+несовместимым с генерацией сигнатуры ActionRouterBuilder'а.
 
-* ``POST /import/openapi`` — генерация DSL-роутов из OpenAPI 3.x spec.
-* ``POST /import/postman`` — генерация DSL-роутов из Postman Collection v2.1.
-* ``POST /import/process-schema`` — описание процесса (BPMN-like JSON) → pipeline.
-* ``POST /import/bulk-objects`` — CSV/Excel файл → пакетное создание объектов +
-  запуск DSL-роута для каждой строки.
+Поддерживаемые сценарии:
 
-Все эндпоинты возвращают отчёт о количестве импортированных элементов.
-Маршрут ``dry_run=true`` генерирует только preview без реальной регистрации.
+* ``POST /import/openapi``         — DSL-роуты из OpenAPI 3.x spec.
+* ``POST /import/postman``         — DSL-роуты из Postman Collection v2.1.
+* ``POST /import/process-schema``  — BPMN-like JSON → pipeline.
+* ``POST /import/bulk-objects``    — CSV/Excel → пакетное создание +
+  DSL-роут per строка.
+
+Маршрут ``dry_run=true`` генерирует только preview без реальной
+регистрации.
 """
 
 from __future__ import annotations
@@ -29,28 +34,13 @@ router = APIRouter()
 # ──────────────────── OpenAPI ────────────────────
 
 
-@router.post(
-    "/openapi",
-    summary="Импорт OpenAPI-спецификации",
-    description="Загружает OpenAPI 3.x spec (JSON) и генерирует DSL-роуты для каждой операции.",
-)
-async def import_openapi(
+async def _import_openapi(
     spec_url: str | None = Form(default=None),
     prefix: str = Form(default="ext"),
     file: UploadFile | None = File(default=None),
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
-    """Импортирует OpenAPI spec (file или URL) через W24 ImportGateway.
-
-    Args:
-        spec_url: URL spec'а — если передан, file игнорируется.
-        prefix: Префикс для route_id.
-        file: Multipart upload JSON/YAML spec'а.
-        dry_run: Если ``True`` — register_actions=False (только парсинг + persist).
-
-    Returns:
-        Отчёт об импорте: connector / version / endpoints / secret_refs.
-    """
+    """Импортирует OpenAPI spec (file или URL) через W24 ImportGateway."""
     from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
     from src.services.integrations import get_import_service
 
@@ -85,31 +75,29 @@ async def import_openapi(
         raise HTTPException(400, f"OpenAPI import failed: {exc}") from exc
 
 
+router.add_api_route(
+    path="/openapi",
+    endpoint=_import_openapi,
+    methods=["POST"],
+    summary="Импорт OpenAPI-спецификации",
+    description=(
+        "Загружает OpenAPI 3.x spec (JSON) и генерирует DSL-роуты для "
+        "каждой операции."
+    ),
+    name="import_openapi",
+)
+
+
 # ──────────────────── Postman ────────────────────
 
 
-@router.post(
-    "/postman",
-    summary="Импорт Postman-коллекции",
-    description="Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты.",
-)
-async def import_postman(
+async def _import_postman(
     prefix: str = Form(default="postman"),
     file: UploadFile | None = File(default=None),
     collection_url: str | None = Form(default=None),
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
-    """Импортирует Postman-коллекцию через W24 ImportGateway.
-
-    Args:
-        prefix: Префикс route_id.
-        file: Multipart upload JSON коллекции.
-        collection_url: URL коллекции (если нет файла).
-        dry_run: Только парсинг + persist, без регистрации actions.
-
-    Returns:
-        Отчёт об импорте: connector / version / endpoints / secret_refs.
-    """
+    """Импортирует Postman-коллекцию через W24 ImportGateway."""
     from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
     from src.services.integrations import get_import_service
 
@@ -142,15 +130,22 @@ async def import_postman(
         raise HTTPException(400, f"Postman import failed: {exc}") from exc
 
 
+router.add_api_route(
+    path="/postman",
+    endpoint=_import_postman,
+    methods=["POST"],
+    summary="Импорт Postman-коллекции",
+    description=(
+        "Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты."
+    ),
+    name="import_postman",
+)
+
+
 # ──────────────────── Process Schema (BPMN-like) ────────────────────
 
 
-@router.post(
-    "/process-schema",
-    summary="Импорт схемы процесса",
-    description="JSON-схема бизнес-процесса (шаги + связи) → DSL-pipeline.",
-)
-async def import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
+async def _import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
     """Создаёт DSL-pipeline из описания бизнес-процесса.
 
     Ожидаемая структура ``payload``::
@@ -165,8 +160,9 @@ async def import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
           ]
         }
 
-    Поддерживаемые типы шагов: ``action``, ``log``, ``transform``, ``choice``,
-    ``http_call``, ``dispatch_action``. Расширяется в ``_build_step`` ниже.
+    Поддерживаемые типы шагов: ``action``, ``log``, ``transform``,
+    ``choice``, ``http_call``, ``dispatch_action``. Расширяется в
+    ``_apply_steps`` ниже.
     """
     from src.dsl.builder import RouteBuilder
 
@@ -191,12 +187,18 @@ async def import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _apply_steps(builder: Any, steps: list[dict[str, Any]]) -> Any:
-    """Рекурсивно применяет шаги из схемы процесса к RouteBuilder.
+router.add_api_route(
+    path="/process-schema",
+    endpoint=_import_process_schema,
+    methods=["POST"],
+    summary="Импорт схемы процесса",
+    description="JSON-схема бизнес-процесса (шаги + связи) → DSL-pipeline.",
+    name="import_process_schema",
+)
 
-    Функция намеренно держит ограниченный набор типов — расширяется по мере
-    появления новых сценариев. Каждый шаг сопоставляется с builder-методом.
-    """
+
+def _apply_steps(builder: Any, steps: list[dict[str, Any]]) -> Any:
+    """Рекурсивно применяет шаги из схемы процесса к RouteBuilder."""
     for step in steps:
         step_type = step.get("type")
         match step_type:
@@ -218,30 +220,15 @@ def _apply_steps(builder: Any, steps: list[dict[str, Any]]) -> Any:
 # ──────────────────── Bulk Objects (CSV/Excel) ────────────────────
 
 
-@router.post(
-    "/bulk-objects",
-    summary="Массовое создание объектов + запуск процесса",
-    description="CSV/Excel файл → создаёт объекты по каждой строке и запускает указанный DSL-роут.",
-)
-async def import_bulk_objects(
+async def _import_bulk_objects(
     route_id: str = Form(...),
     file: UploadFile = File(...),
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
-    """Парсит CSV/Excel и для каждой строки запускает DSL-роут.
-
-    Args:
-        route_id: ID маршрута, который будет вызван для каждой строки.
-        file: CSV или XLSX с данными (первая строка — имена колонок).
-        dry_run: Только распарсить, не выполнять роут.
-
-    Returns:
-        Отчёт со статистикой успешных/провалившихся запусков.
-    """
+    """Парсит CSV/Excel и для каждой строки запускает DSL-роут."""
     content = await file.read()
     filename = file.filename or ""
 
-    # Выбираем парсер по расширению файла.
     try:
         if filename.endswith((".xlsx", ".xls")):
             import io
@@ -289,3 +276,16 @@ async def import_bulk_objects(
         "failed": len(failed),
         "failures": failed[:20],
     }
+
+
+router.add_api_route(
+    path="/bulk-objects",
+    endpoint=_import_bulk_objects,
+    methods=["POST"],
+    summary="Массовое создание объектов + запуск процесса",
+    description=(
+        "CSV/Excel файл → создаёт объекты по каждой строке и запускает "
+        "указанный DSL-роут."
+    ),
+    name="import_bulk_objects",
+)
