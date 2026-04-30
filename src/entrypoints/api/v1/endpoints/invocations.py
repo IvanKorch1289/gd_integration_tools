@@ -4,10 +4,15 @@
 :class:`InvocationMode`:
 
 * ``POST /api/v1/invocations`` — выполнить request.
-* ``GET /api/v1/invocations/{invocation_id}`` — polling результата
+* ``GET  /api/v1/invocations/{invocation_id}`` — polling результата
   (для режимов ``async-api`` и ``streaming`` через ``api`` reply-канал).
 
 Streaming через WebSocket — в отдельном эндпоинте ``/ws/invocations``.
+
+W26.5: маршруты регистрируются через ``router.add_api_route`` без
+``@router``-декораторов. ``ActionSpec`` не используется, так как обоим
+endpoint'ам нужен FastAPI ``Depends`` для DI Invoker/ReplyRegistry, что
+не вписывается в ``service_getter``-контракт ActionRouterBuilder.
 """
 
 from __future__ import annotations
@@ -33,11 +38,6 @@ __all__ = ("router",)
 router = APIRouter(tags=["Invocations"])
 
 
-@router.post(
-    "",
-    response_model=InvocationResponseSchema,
-    summary="Выполнить action через Invoker",
-)
 async def post_invocation(
     request_body: InvocationRequestSchema,
     response: Response,
@@ -69,11 +69,6 @@ async def post_invocation(
     )
 
 
-@router.get(
-    "/{invocation_id}",
-    response_model=InvocationResponseSchema,
-    summary="Получить результат async/streaming-вызова (polling)",
-)
 async def get_invocation(
     invocation_id: str,
     registry: "ReplyChannelRegistryProtocol" = Depends(get_reply_registry),
@@ -103,3 +98,21 @@ async def get_invocation(
         result=response.result,
         error=response.error,
     )
+
+
+router.add_api_route(
+    path="",
+    endpoint=post_invocation,
+    methods=["POST"],
+    response_model=InvocationResponseSchema,
+    summary="Выполнить action через Invoker",
+    name="post_invocation",
+)
+router.add_api_route(
+    path="/{invocation_id}",
+    endpoint=get_invocation,
+    methods=["GET"],
+    response_model=InvocationResponseSchema,
+    summary="Получить результат async/streaming-вызова (polling)",
+    name="get_invocation",
+)
