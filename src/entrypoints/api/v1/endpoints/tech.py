@@ -1,7 +1,15 @@
+"""Tech-эндпоинты: HTML-редиректы на инфраструктурные UI + healthchecks.
+
+W26.5: маршруты регистрируются декларативно — ActionSpec для healthcheck
+и `add_api_route` для HTML-редиректов / multipart upload (последние не
+вписываются в ActionSpec из-за нестандартного response_class и
+``UploadFile``). Прямых ``@router.get/.post`` нет.
+"""
+
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Header, Query, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, File, Header, Query, UploadFile, status
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from src.core.config.settings import settings
 from src.core.enums.invocation import BrokerKind
@@ -22,71 +30,79 @@ router = APIRouter()
 builder = ActionRouterBuilder(router)
 
 
-# 1. HTML-роуты обернем в обычные методы, так как ActionSpec
-# по умолчанию возвращает JSONResponse.
-@router.get(
-    "/log-storage", response_class=HTMLResponse, summary="Ссылка на хранилище логов"
+# --- HTML redirects (link-getters; нестандартный response_class) -----------
+
+
+def _html_redirect_factory(method_name: str):
+    """Возвращает endpoint-функцию, отдающую HTML-ссылку из tech-сервиса.
+
+    Использование ``add_api_route`` вместо ``@router.get`` соответствует
+    DoD W26.5: маршрутный декоратор отсутствует, регистрация — явная.
+    """
+
+    async def endpoint() -> str:
+        method = getattr(get_tech_service(), method_name)
+        return await method()
+
+    endpoint.__name__ = method_name
+    return endpoint
+
+
+_HTML_LINKS: tuple[tuple[str, str, str], ...] = (
+    ("/log-storage", "get_log_storage_link", "Ссылка на хранилище логов"),
+    ("/file-storage", "get_file_storage_link", "Ссылка на файловое хранилище"),
+    ("/queue-monitor", "get_queue_monitor_link", "Ссылка на мониторинг очередей"),
+    ("/langfuse", "get_langfuse_link", "Ссылка на LangFuse Dashboard"),
+    ("/langgraph", "get_langgraph_link", "Ссылка на LangGraph Studio"),
 )
-async def redirect_to_log_storage():
-    return await get_tech_service().get_log_storage_link()
+for path, method_name, summary in _HTML_LINKS:
+    router.add_api_route(
+        path=path,
+        endpoint=_html_redirect_factory(method_name),
+        methods=["GET"],
+        response_class=HTMLResponse,
+        summary=summary,
+        name=method_name,
+    )
 
 
-@router.get(
-    "/file-storage", response_class=HTMLResponse, summary="Ссылка на файловое хранилище"
-)
-async def redirect_to_file_storage():
-    return await get_tech_service().get_file_storage_link()
+# --- Excel mass-create upload (multipart/form-data) ------------------------
 
 
-@router.get(
-    "/queue-monitor",
-    response_class=HTMLResponse,
-    summary="Ссылка на мониторинг очередей",
-)
-async def redirect_to_queue_monitor():
-    return await get_tech_service().get_queue_monitor_link()
-
-
-@router.get(
-    "/langfuse", response_class=HTMLResponse, summary="Ссылка на LangFuse Dashboard"
-)
-async def redirect_to_langfuse():
-    return await get_tech_service().get_langfuse_link()
-
-
-@router.get(
-    "/langgraph", response_class=HTMLResponse, summary="Ссылка на LangGraph Studio"
-)
-async def redirect_to_langgraph():
-    return await get_tech_service().get_langgraph_link()
-
-
-# 2. Массовая загрузка из Excel (из-за UploadFile используем обычный роут)
-@router.post(
-    "/upload-excel-for-mass-create",
-    summary="Загрузить Excel-файл для массового создания объектов",
-)
-async def upload_excel(
+async def _upload_excel(
     file: UploadFile = File(...),
-    table_name: str = Query(..., description="Название таблицы для загрузки данных"),
+    table_name: str = Query(..., description="Название таблицы для загрузки данных."),
     model_enum: Any = Depends(get_model_enum),
     x_api_key: str = Header(...),
-):
+) -> Any:
+    """Массовое создание объектов по Excel-файлу.
+
+    UploadFile + Depends несовместимы с ActionSpec-генерацией сигнатуры,
+    поэтому endpoint регистрируется через ``add_api_route``.
+    """
     service = get_tech_service()
     content = await file.read()
-
     try:
-        results = await service.upload_excel_for_mass_create(
+        return await service.upload_excel_for_mass_create(
             file_bytes=content, table_name=table_name, model_enum=model_enum
         )
-        return results
-    except ValueError as e:
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=404, content={"error": str(e)})
+    except ValueError as exc:
+        return JSONResponse(status_code=404, content={"error": str(exc)})
 
 
-# 3. Action Bus роуты для Healthchecks и отправки email
+router.add_api_route(
+    path="/upload-excel-for-mass-create",
+    endpoint=_upload_excel,
+    methods=["POST"],
+    status_code=status.HTTP_200_OK,
+    summary="Загрузить Excel-файл для массового создания объектов",
+    name="upload_excel_for_mass_create",
+)
+
+
+# --- Action-bus healthchecks + send-email ----------------------------------
+
+
 builder.add_actions(
     [
         ActionSpec(
@@ -170,7 +186,8 @@ builder.add_actions(
             description="Публикует событие отправки email в Redis-стрим.",
             service_getter=get_tech_service,
             # Для event-only вызовов сервис-метод может быть пустышкой,
-            # но мы укажем любой метод, реальная публикация произойдет через invocation.
+            # но мы укажем любой метод; реальная публикация произойдёт
+            # через invocation.event.
             service_method="get_log_storage_link",
             body_model=EmailSchema,
             invocation=InvocationSpec(
