@@ -1,3 +1,4 @@
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any, Final
@@ -7,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config.settings import settings
+from src.core.di.providers import get_external_session_manager_provider
 from src.core.enums.database import DatabaseTypeChoices
 from src.core.enums.external_db import (
     ExternalDBObjectChoices,
@@ -16,8 +18,6 @@ from src.core.enums.external_db import (
     ExternalDBParameterModeChoices,
 )
 from src.core.errors import DatabaseError
-from src.infrastructure.database.session_manager import get_external_session_manager
-from src.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("external_db_service", "ExternalDatabaseService")
 
@@ -73,7 +73,7 @@ class ExternalDatabaseService:
     """
 
     def __init__(self) -> None:
-        self.logger = app_logger
+        self.logger = logging.getLogger("services.io.external_database")
 
     async def execute(
         self,
@@ -96,7 +96,7 @@ class ExternalDatabaseService:
         prepared_params = self._build_db_params(meta, validated_payload)
         execute_params = self._to_execute_params(prepared_params)
         profile_settings = self._get_profile_settings(meta.profile_name)
-        session_manager = get_external_session_manager(meta.profile_name)
+        session_manager = get_external_session_manager_provider()(meta.profile_name)
 
         try:
             async with session_manager.create_session() as session:

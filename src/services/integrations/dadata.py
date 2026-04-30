@@ -4,11 +4,15 @@ from typing import Any
 from urllib.parse import urljoin
 
 from src.core.config.settings import DadataAPISettings, settings
+from src.core.di.providers import get_response_cache_provider
 from src.core.errors import ServiceError
-from src.infrastructure.decorators.caching import response_cache
 from src.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("APIDADATAService", "get_dadata_service")
+
+# Lazy резолв декоратора через провайдер: services-слой не имеет права
+# импортировать ``infrastructure.*`` напрямую (Wave 6.4).
+_response_cache = get_response_cache_provider()
 
 
 class APIDADATAService(BaseExternalAPIClient):
@@ -19,7 +23,7 @@ class APIDADATAService(BaseExternalAPIClient):
     def __init__(self, dadata_settings: DadataAPISettings) -> None:
         super().__init__(settings=dadata_settings, name="dadata")
 
-    @response_cache
+    @_response_cache
     async def get_geolocate(
         self,
         lat: float,

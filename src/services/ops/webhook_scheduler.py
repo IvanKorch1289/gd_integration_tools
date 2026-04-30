@@ -8,7 +8,7 @@ from typing import Any
 
 import orjson
 
-from src.infrastructure.clients.storage.redis import redis_client
+from src.core.di.providers import get_redis_kv_client_provider
 
 __all__ = ("WebhookScheduler", "get_webhook_scheduler")
 
@@ -47,8 +47,9 @@ class WebhookScheduler:
             "status": "scheduled",
         }
 
+        client = get_redis_kv_client_provider()
         key = f"{_PREFIX}:{schedule_id}"
-        await redis_client.client.set(
+        await client.set(
             key, orjson.dumps(task, default=str), ex=86400 * 7
         )
 
@@ -57,29 +58,32 @@ class WebhookScheduler:
 
     async def cancel(self, schedule_id: str) -> bool:
         """Отменяет запланированный webhook."""
+        client = get_redis_kv_client_provider()
         key = f"{_PREFIX}:{schedule_id}"
-        deleted = await redis_client.client.delete(key)
+        deleted = await client.delete(key)
         if deleted:
             logger.info("Webhook cancelled: %s", schedule_id)
         return bool(deleted)
 
     async def list_scheduled(self) -> list[dict[str, Any]]:
         """Возвращает список запланированных webhooks."""
+        client = get_redis_kv_client_provider()
         keys = []
-        async for key in redis_client.client.scan_iter(f"{_PREFIX}:*"):
+        async for key in client.scan_iter(f"{_PREFIX}:*"):
             keys.append(key)
 
         tasks = []
         for key in keys:
-            raw = await redis_client.client.get(key)
+            raw = await client.get(key)
             if raw:
                 tasks.append(orjson.loads(raw))
         return tasks
 
     async def get(self, schedule_id: str) -> dict[str, Any] | None:
         """Получает информацию о задаче."""
+        client = get_redis_kv_client_provider()
         key = f"{_PREFIX}:{schedule_id}"
-        raw = await redis_client.client.get(key)
+        raw = await client.get(key)
         return orjson.loads(raw) if raw else None
 
     async def execute_webhook(self, schedule_id: str) -> dict[str, Any]:

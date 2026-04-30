@@ -51,8 +51,9 @@ class EmailNotificationAdapter:
 
     async def send(self, message: NotificationMessage) -> bool:
         try:
-            from src.infrastructure.clients.transport.smtp import smtp_client
+            from src.core.di.providers import get_smtp_client_provider
 
+            smtp_client = get_smtp_client_provider()
             content_type = message.metadata.get("content_type", "text/plain")
             for rcpt in message.recipients:
                 await smtp_client.send_email(
@@ -68,9 +69,9 @@ class EmailNotificationAdapter:
 
     async def health(self) -> bool:
         try:
-            from src.infrastructure.clients.transport.smtp import smtp_client
+            from src.core.di.providers import get_smtp_client_provider
 
-            return await smtp_client.test_connection()
+            return await get_smtp_client_provider().test_connection()
         except Exception:  # noqa: BLE001
             return False
 
@@ -85,9 +86,9 @@ class ExpressNotificationAdapter:
 
     async def send(self, message: NotificationMessage) -> bool:
         try:
-            from src.infrastructure.clients.external.express import get_express_client
+            from src.core.di.providers import get_express_client_provider
 
-            client = get_express_client()
+            client = get_express_client_provider()
             for rcpt in message.recipients:
                 await client.send_message(chat_id=rcpt, text=message.body)
             return True
@@ -97,9 +98,9 @@ class ExpressNotificationAdapter:
 
     async def health(self) -> bool:
         try:
-            from src.infrastructure.clients.external.express import get_express_client
+            from src.core.di.providers import get_express_client_provider
 
-            client = get_express_client()
+            client = get_express_client_provider()
             return await client.ping() if hasattr(client, "ping") else True
         except Exception:  # noqa: BLE001
             return False

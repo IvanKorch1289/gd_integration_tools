@@ -203,7 +203,9 @@ class Invoker(InvokerProtocol):
         try:
             from apscheduler.triggers.date import DateTrigger
 
-            from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+            from src.core.di.providers import get_scheduler_manager_provider
+
+            scheduler_manager = get_scheduler_manager_provider()
         except Exception as exc:  # noqa: BLE001
             logger.exception("DEFERRED: APScheduler недоступен")
             return InvocationResponse(
@@ -302,7 +304,9 @@ class Invoker(InvokerProtocol):
         указанный ``reply_channel`` (по умолчанию ``api``).
         """
         try:
-            from src.infrastructure.execution.taskiq_broker import get_invocation_task
+            from src.core.di.providers import get_taskiq_invocation_task_provider
+
+            get_invocation_task = get_taskiq_invocation_task_provider()
         except Exception as exc:  # noqa: BLE001
             return InvocationResponse(
                 invocation_id=request.invocation_id,

@@ -8,10 +8,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.infrastructure.clients.transport.browser import (
-    BrowserClient,
-    get_browser_client,
-)
+from src.core.di.providers import get_browser_client_provider
+from src.core.interfaces.integrations import BrowserClientProtocol
 
 __all__ = ("WebAutomationService", "get_web_automation_service")
 
@@ -21,8 +19,8 @@ logger = logging.getLogger(__name__)
 class WebAutomationService:
     """Web automation — парсинг, заполнение форм, мониторинг, сценарии."""
 
-    def __init__(self, client: BrowserClient | None = None) -> None:
-        self._client = client or get_browser_client()
+    def __init__(self, client: BrowserClientProtocol | None = None) -> None:
+        self._client = client or get_browser_client_provider()
 
     async def navigate(self, url: str) -> dict[str, Any]:
         return await self._client.navigate(url)

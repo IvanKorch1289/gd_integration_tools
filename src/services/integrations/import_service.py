@@ -28,7 +28,6 @@ from typing import Any
 from src.core.di import app_state_singleton
 from src.core.interfaces.import_gateway import ImportSource
 from src.core.models.connector_spec import ConnectorSpec
-from src.infrastructure.import_gateway import build_import_gateway
 
 __all__ = ("ImportService", "get_import_service")
 
@@ -127,7 +126,9 @@ class ImportService:
             dict со статусом:
             ``{status, connector, version, endpoints, secret_refs_required, removed_orphans}``.
         """
-        gateway = build_import_gateway(source.kind)
+        from src.core.di.providers import get_import_gateway_factory_provider
+
+        gateway = get_import_gateway_factory_provider()(source.kind)
         spec = await gateway.import_spec(source)
 
         store = self._resolve_store()
@@ -195,11 +196,9 @@ class ImportService:
         if self._connector_store is not None:
             return self._connector_store
         try:
-            from src.infrastructure.repositories.connector_configs_mongo import (
-                get_connector_config_store,
-            )
+            from src.core.di.providers import get_connector_config_store_provider
 
-            return get_connector_config_store()
+            return get_connector_config_store_provider()
         except Exception as exc:
             logger.warning(
                 "ImportService: connector_config_store недоступен (%s), импорт без persist",

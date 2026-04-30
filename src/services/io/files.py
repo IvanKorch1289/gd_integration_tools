@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-from src.infrastructure.repositories.files import FileRepository, get_file_repo
+from src.core.di.providers import get_file_repo_provider
+from src.core.interfaces.repositories import FileRepositoryProtocol
 from src.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
@@ -12,7 +13,7 @@ __all__ = ("get_file_service",)
 
 
 class FileService(
-    BaseService[FileRepository, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut]
+    BaseService[FileRepositoryProtocol, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut]
 ):
     """
     Сервис для работы с файлами. Обеспечивает создание, обновление, получение и обработку файлов.
@@ -23,7 +24,7 @@ class FileService(
         schema_in: type[BaseModel],
         schema_out: type[BaseModel],
         version_schema: type[BaseModel],
-        repo: FileRepository,
+        repo: FileRepositoryProtocol,
     ) -> None:
         super().__init__(
             repo=repo,
@@ -43,7 +44,7 @@ def get_file_service() -> FileService:
     global _file_service_instance
     if _file_service_instance is None:
         _file_service_instance = FileService(
-            repo=get_file_repo(),
+            repo=get_file_repo_provider(),
             schema_in=FileSchemaIn,
             schema_out=FileSchemaOut,
             version_schema=FileVersionSchemaOut,

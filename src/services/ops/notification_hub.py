@@ -104,8 +104,9 @@ class NotificationHub:
     ) -> dict[str, Any]:
         """Отправка email через SMTP."""
         try:
-            from src.infrastructure.clients.transport.smtp import smtp_client
+            from src.core.di.providers import get_smtp_client_provider
 
+            smtp_client = get_smtp_client_provider()
             await smtp_client.send_email(
                 to=[to] if isinstance(to, str) else to, subject=subject, body=message
             )
@@ -130,9 +131,9 @@ class NotificationHub:
             message: Тело сообщения.
             is_direct: True → отправить личное сообщение по HUID.
         """
-        from src.infrastructure.clients.external.express import get_express_client
+        from src.core.di.providers import get_express_client_provider
 
-        client = get_express_client()
+        client = get_express_client_provider()
         text = f"**{subject}**\n\n{message}" if subject else message
 
         if is_direct:
@@ -143,9 +144,9 @@ class NotificationHub:
         self, chat_ids: list[str], subject: str, message: str
     ) -> dict[str, Any]:
         """Broadcast в несколько eXpress чатов."""
-        from src.infrastructure.clients.external.express import get_express_client
+        from src.core.di.providers import get_express_client_provider
 
-        client = get_express_client()
+        client = get_express_client_provider()
         text = f"**{subject}**\n\n{message}" if subject else message
         return await client.send_notification(group_chat_ids=chat_ids, text=text)
 
@@ -157,9 +158,9 @@ class NotificationHub:
         chat_type: str = "group_chat",
     ) -> dict[str, Any]:
         """Создаёт групповой чат в eXpress."""
-        from src.infrastructure.clients.external.express import get_express_client
+        from src.core.di.providers import get_express_client_provider
 
-        client = get_express_client()
+        client = get_express_client_provider()
         return await client.create_chat(
             name=name, members=members, description=description, chat_type=chat_type
         )
@@ -201,9 +202,9 @@ class NotificationHub:
         headers = {"Content-Type": "application/json"}
 
         if secret:
-            from src.infrastructure.security.signatures import build_signature_headers
+            from src.core.di.providers import get_signature_builder_provider
 
-            headers.update(build_signature_headers(payload, secret))
+            headers.update(get_signature_builder_provider()(payload, secret))
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:

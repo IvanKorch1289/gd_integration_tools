@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.infrastructure.clients.storage.clickhouse import (
-    ClickHouseClient,
-    get_clickhouse_client,
-)
+from src.core.di.providers import get_clickhouse_client_provider
+from src.core.interfaces.integrations import ClickHouseClientProtocol
 
 __all__ = ("AnalyticsService", "get_analytics_service")
 
@@ -15,7 +13,7 @@ __all__ = ("AnalyticsService", "get_analytics_service")
 class AnalyticsService:
     """Сервис аналитики — batch insert, query, aggregations через ClickHouse."""
 
-    def __init__(self, client: ClickHouseClient) -> None:
+    def __init__(self, client: ClickHouseClientProtocol) -> None:
         self._client = client
 
     async def insert_event(self, table: str, event: dict[str, Any]) -> int:
@@ -63,5 +61,7 @@ _analytics_service_instance: AnalyticsService | None = None
 def get_analytics_service() -> AnalyticsService:
     global _analytics_service_instance
     if _analytics_service_instance is None:
-        _analytics_service_instance = AnalyticsService(client=get_clickhouse_client())
+        _analytics_service_instance = AnalyticsService(
+            client=get_clickhouse_client_provider()
+        )
     return _analytics_service_instance
