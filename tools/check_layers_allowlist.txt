@@ -53,6 +53,7 @@ src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.mid
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.soap.soap_handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.sse.handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.webhook.handler
+src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.webhook.sources_router
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.websocket.ws_handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.websocket.ws_invocations
 src/infrastructure/application/di.py	infrastructure	src.entrypoints.mqtt.mqtt_handler

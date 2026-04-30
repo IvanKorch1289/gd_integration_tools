@@ -113,6 +113,9 @@ rag = [
 dev-light = [
     "aiosqlite>=0.20.0,<1.0.0",
 ]
+sources-cdc = [
+    "psycopg[binary]>=3.1,<4.0.0",
+]
 iot = []
 web3 = []
 legacy = []

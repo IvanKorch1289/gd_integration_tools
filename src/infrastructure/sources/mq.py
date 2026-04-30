@@ -74,7 +74,7 @@ class MQSource:
             async def _handler(msg: Any) -> None:
                 await self._on_message(on_event, msg)
 
-            self._broker.subscriber(self._topic, **self._subscriber_kwargs())(_handler)
+            self._register_subscriber(_handler)
             await self._broker.start()
         logger.info(
             "MQSource started: id=%s transport=%s topic=%s",
@@ -119,23 +119,44 @@ class MQSource:
             case _:
                 raise ValueError(f"Unknown MQ transport: {self._transport!r}")
 
-    def _subscriber_kwargs(self) -> dict[str, Any]:
-        """Параметры подписки, специфичные для transport."""
+    def _register_subscriber(self, handler: Any) -> None:
+        """Регистрирует subscriber на ``self._broker`` под каждый transport.
+
+        Подписка зависит от API конкретного брокера:
+        Redis — kwargs ``stream=`` (str | StreamSub); Kafka — позиционный
+        topic + ``group_id``; Rabbit — позиционный queue; NATS —
+        позиционный subject + ``queue=`` для group.
+        """
         match self._transport:
             case "redis_streams":
-                # У faststream-redis stream-subscription задаётся через `stream=`.
-                kwargs: dict[str, Any] = {"stream": self._topic}
-                if self._group:
-                    kwargs["stream"] = {"name": self._topic, "group": self._group}
-                return {k: v for k, v in kwargs.items() if k != "stream" or v}
+                stream_arg = self._make_stream_arg()
+                self._broker.subscriber(stream=stream_arg)(handler)
             case "kafka":
-                return {"group_id": self._group} if self._group else {}
+                if self._group:
+                    self._broker.subscriber(self._topic, group_id=self._group)(handler)
+                else:
+                    self._broker.subscriber(self._topic)(handler)
             case "rabbitmq":
-                return {}
+                self._broker.subscriber(self._topic)(handler)
             case "nats":
-                return {"queue": self._group} if self._group else {}
+                if self._group:
+                    self._broker.subscriber(self._topic, queue=self._group)(handler)
+                else:
+                    self._broker.subscriber(self._topic)(handler)
             case _:
-                return {}
+                raise ValueError(f"Unknown MQ transport: {self._transport!r}")
+
+    def _make_stream_arg(self) -> Any:
+        """Stream-аргумент Redis-subscriber: str (без group) или StreamSub."""
+        if not self._group:
+            return self._topic
+        # faststream 0.6+ требует StreamSub для group-consumer'ов;
+        # dict-вариант роняет factory с AttributeError.
+        from faststream.redis import StreamSub
+
+        return StreamSub(
+            stream=self._topic, group=self._group, consumer=str(self.source_id)
+        )
 
     # ─────────────────── on_message ───────────────────
 

@@ -9,6 +9,9 @@ from src.entrypoints.middlewares.setup_middlewares import setup_middlewares
 from src.entrypoints.soap.soap_handler import soap_router
 from src.entrypoints.sse.handler import sse_router
 from src.entrypoints.webhook.handler import webhook_router
+from src.entrypoints.webhook.sources_router import (
+    sources_router as webhook_sources_router,
+)
 from src.entrypoints.websocket.ws_handler import ws_router
 from src.entrypoints.websocket.ws_invocations import ws_invocations_router
 from src.infrastructure.application.index import root_page
@@ -133,6 +136,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     app.include_router(soap_router)
     app.include_router(sse_router)
     app.include_router(webhook_router)
+    app.include_router(webhook_sources_router)
 
     # CDC
     from src.entrypoints.cdc.cdc_routes import cdc_router

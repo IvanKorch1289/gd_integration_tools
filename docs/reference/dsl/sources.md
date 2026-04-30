@@ -115,6 +115,16 @@ sources:
 **пропускается** (psycopg3 не установлен; spec остаётся валидным,
 но `start()` поднимет понятный `RuntimeError`).
 
+Установка extras:
+
+```bash
+uv sync --extra sources-cdc
+# или: uv pip install "gd_advanced_tools[sources-cdc]"
+```
+
+Группа объявлена в `pyproject.toml` как
+`[project.optional-dependencies] sources-cdc = ["psycopg[binary]>=3.1,<4.0.0"]`.
+
 ## MQ (FastStream)
 
 Все 4 transport идут через единый API `faststream.{redis,kafka,rabbit,nats}`:
