@@ -1,11 +1,13 @@
-"""Переэкспорт invocation-DTO из ``core/types``.
+"""Переэкспорт invocation-DTO из ``core/types`` и ``core/enums``.
 
 Модели физически живут в :mod:`src.core.types.invocation_command`
-(перемещены для устранения зависимости core → schemas). Этот модуль
-сохранён как точка обратной совместимости для существующих 16+
-импортёров ``from src.schemas.invocation import ActionCommandSchema``.
+(перемещены для устранения зависимости core → schemas). ``InvokeMode``
+живёт в :mod:`src.core.enums.invocation`. Этот модуль сохранён как
+точка обратной совместимости для существующих импортёров
+``from src.schemas.invocation import ActionCommandSchema | InvokeMode``.
 """
 
+from src.core.enums.invocation import InvokeMode
 from src.core.types.invocation_command import (
     ActionCommandMetaSchema,
     ActionCommandSchema,
@@ -18,4 +20,5 @@ __all__ = (
     "ActionCommandSchema",
     "InvocationOptionsSchema",
     "InvocationResultSchema",
+    "InvokeMode",
 )
