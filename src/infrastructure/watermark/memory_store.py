@@ -26,9 +26,7 @@ class MemoryWatermarkStore:
         self._data: dict[tuple[str, str], WatermarkState] = {}
         self._lock = asyncio.Lock()
 
-    async def load(
-        self, route_id: str, processor_name: str
-    ) -> WatermarkState | None:
+    async def load(self, route_id: str, processor_name: str) -> WatermarkState | None:
         async with self._lock:
             stored = self._data.get((route_id, processor_name))
             return replace(stored) if stored is not None else None

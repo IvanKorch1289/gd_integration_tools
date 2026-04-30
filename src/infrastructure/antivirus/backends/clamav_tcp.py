@@ -38,7 +38,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0
             )
-        except (OSError, asyncio.TimeoutError):
+        except OSError, asyncio.TimeoutError:
             return False
         try:
             writer.write(b"zPING\0")
@@ -71,9 +71,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             writer.write(struct.pack(">I", 0))
             await writer.drain()
 
-            response = await asyncio.wait_for(
-                reader.read(4096), timeout=self._timeout
-            )
+            response = await asyncio.wait_for(reader.read(4096), timeout=self._timeout)
         finally:
             writer.close()
             try:
@@ -82,4 +80,6 @@ class ClamAVTcpBackend(AntivirusBackend):
                 pass
 
         latency_ms = (time.monotonic() - start) * 1000
-        return _parse_clamav_response(response, backend=self.name, latency_ms=latency_ms)
+        return _parse_clamav_response(
+            response, backend=self.name, latency_ms=latency_ms
+        )

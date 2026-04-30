@@ -31,10 +31,7 @@ class AuthContext:
     __slots__ = ("method", "principal", "metadata")
 
     def __init__(
-        self,
-        method: AuthMethod,
-        principal: str,
-        metadata: dict[str, Any] | None = None,
+        self, method: AuthMethod, principal: str, metadata: dict[str, Any] | None = None
     ) -> None:
         self.method = method
         self.principal = principal

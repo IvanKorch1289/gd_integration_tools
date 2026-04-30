@@ -58,7 +58,7 @@ def _extract_path(body: Any, path: str) -> Any:
 def _serialize(body: Any) -> str:
     try:
         return json.dumps(body, ensure_ascii=False, sort_keys=True)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return str(body)
 
 

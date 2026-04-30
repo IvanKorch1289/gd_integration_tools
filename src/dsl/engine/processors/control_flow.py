@@ -63,9 +63,7 @@ class ChoiceBranch:
 
     def __post_init__(self) -> None:
         if (self.predicate is None) == (self.expr is None):
-            raise ValueError(
-                "ChoiceBranch требует ровно одно из 'predicate' / 'expr'"
-            )
+            raise ValueError("ChoiceBranch требует ровно одно из 'predicate' / 'expr'")
 
     def matches(self, exchange: Exchange[Any]) -> bool:
         """Проверяет условие ветки против текущего ``Exchange``."""
@@ -320,7 +318,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except (RetryError, _RetryAbort):
+        except RetryError, _RetryAbort:
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )
@@ -484,12 +482,7 @@ class ParallelProcessor(BaseProcessor):
             if sub is None:
                 return None
             branches_spec[name] = sub
-        return {
-            "parallel": {
-                "branches": branches_spec,
-                "strategy": self._strategy,
-            }
-        }
+        return {"parallel": {"branches": branches_spec, "strategy": self._strategy}}
 
 
 @dataclass

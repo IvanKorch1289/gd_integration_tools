@@ -208,10 +208,7 @@ async def put_connector_config(
         ) from exc
 
     entry = await store.save(
-        name,
-        payload.config,
-        enabled=payload.enabled,
-        user=payload.user,
+        name, payload.config, enabled=payload.enabled, user=payload.user
     )
 
     reload_status: dict[str, Any] = {"attempted": False}

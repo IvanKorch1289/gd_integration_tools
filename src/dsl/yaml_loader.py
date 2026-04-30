@@ -151,9 +151,7 @@ def _is_allowed_processor(builder: RouteBuilder, name: str) -> bool:
     return False
 
 
-def _build_sub(
-    parent: RouteBuilder, specs: list[Any]
-) -> list[Any]:
+def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
     """Строит sub-pipeline из nested-spec'ов через временный ``RouteBuilder``.
 
     Используется для control-flow процессоров (do_try / retry / parallel /
@@ -270,9 +268,7 @@ def _materialize_control_flow_params(
                     compensate = None
                     if entry.get("compensate") is not None:
                         compensate = _build_sub(builder, [entry["compensate"]])[0]
-                    saga_steps.append(
-                        SagaStep(forward=forward, compensate=compensate)
-                    )
+                    saga_steps.append(SagaStep(forward=forward, compensate=compensate))
                 materialized["steps"] = saga_steps
         case "choice":
             when = materialized.get("when")

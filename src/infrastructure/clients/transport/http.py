@@ -188,9 +188,7 @@ class HttpClient(BaseHttpClient):
         connect = connect_timeout or self.settings.connect_timeout
         read = read_timeout or self.settings.sock_read_timeout
         total = total_timeout or max(connect + read, connect, read)
-        timeout = httpx.Timeout(
-            connect=connect, read=read, write=read, pool=total
-        )
+        timeout = httpx.Timeout(connect=connect, read=read, write=read, pool=total)
 
         retry_policy = retry(
             stop=stop_after_attempt(self.settings.max_retries + 1),
@@ -385,9 +383,7 @@ class HttpClient(BaseHttpClient):
             files_info = {}
             for field_name, file_part in files.items():
                 content = file_part.get("content")
-                size = (
-                    len(content) if isinstance(content, (bytes, bytearray)) else None
-                )
+                size = len(content) if isinstance(content, (bytes, bytearray)) else None
                 files_info[field_name] = {
                     "filename": file_part.get("filename"),
                     "content_type": file_part.get("content_type"),

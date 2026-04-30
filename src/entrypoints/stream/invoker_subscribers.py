@@ -26,10 +26,7 @@ from src.core.config.settings import settings
 from src.infrastructure.clients.messaging.stream import stream_client
 from src.infrastructure.external_apis.logging_service import stream_logger
 
-__all__ = (
-    "handle_redis_invocation",
-    "handle_rabbit_invocation",
-)
+__all__ = ("handle_redis_invocation", "handle_rabbit_invocation")
 
 
 @stream_client.redis_router.subscriber(  # type: ignore
@@ -47,9 +44,7 @@ async def handle_redis_invocation(
 @stream_client.rabbit_router.subscriber(  # type: ignore
     settings.queue.get_queue_name("invocations-in")
 )
-async def handle_rabbit_invocation(
-    body: dict[str, Any], msg: RabbitMessage
-) -> None:
+async def handle_rabbit_invocation(body: dict[str, Any], msg: RabbitMessage) -> None:
     """Подписчик RabbitMQ: принимает InvocationRequest и вызывает Invoker."""
     await _dispatch_invocation_message(
         body, correlation_id=getattr(msg, "correlation_id", None), source="rabbit"

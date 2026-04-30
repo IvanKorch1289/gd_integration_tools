@@ -184,7 +184,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         pass
 
     return _web_search

@@ -38,11 +38,7 @@ class MemcachedBackend(CacheBackend):
     """
 
     def __init__(
-        self,
-        host: str = "127.0.0.1",
-        port: int = 11211,
-        *,
-        default_ttl: int = 3600,
+        self, host: str = "127.0.0.1", port: int = 11211, *, default_ttl: int = 3600
     ) -> None:
         try:
             import aiomcache
@@ -65,7 +61,9 @@ class MemcachedBackend(CacheBackend):
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
         await self._client.set(
-            self._to_bytes(key), value, exptime=ttl if ttl is not None else self._default_ttl
+            self._to_bytes(key),
+            value,
+            exptime=ttl if ttl is not None else self._default_ttl,
         )
 
     async def delete(self, *keys: str) -> None:

@@ -83,9 +83,7 @@ def get_invoker_singleton() -> "InvokerProtocol":
     что нарушает layer policy для core/. Composition root в
     ``register_app_state`` обязан положить готовый Invoker в app.state.
     """
-    raise RuntimeError(
-        "invoker должен быть зарегистрирован через register_app_state()"
-    )
+    raise RuntimeError("invoker должен быть зарегистрирован через register_app_state()")
 
 
 @app_state_singleton("watermark_store")

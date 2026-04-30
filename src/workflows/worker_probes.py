@@ -140,8 +140,7 @@ class WorkerProbesServer:
             )
         if not bool(getattr(self._runner, "_running", False)):
             return JSONResponse(
-                {"status": "not_ready", "reason": "runner_not_started"},
-                status_code=503,
+                {"status": "not_ready", "reason": "runner_not_started"}, status_code=503
             )
         if self._readiness_check is not None:
             try:

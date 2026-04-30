@@ -65,9 +65,7 @@ class SqliteDocStore(DocStoreBackend):
             row = await cursor.fetchone()
         return json.loads(row[0]) if row else None
 
-    async def update(
-        self, namespace: str, doc_id: str, patch: dict[str, Any]
-    ) -> bool:
+    async def update(self, namespace: str, doc_id: str, patch: dict[str, Any]) -> bool:
         existing = await self.get(namespace, doc_id)
         if existing is None:
             return False
@@ -106,9 +104,7 @@ class SqliteDocStore(DocStoreBackend):
             docs = docs[:limit]
         return docs
 
-    async def count(
-        self, namespace: str, filters: dict[str, Any] | None = None
-    ) -> int:
+    async def count(self, namespace: str, filters: dict[str, Any] | None = None) -> int:
         if filters is None:
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:

@@ -34,11 +34,7 @@ from src.infrastructure.notifications.templates import (
     get_template_registry,
 )
 
-__all__ = (
-    "DEFAULT_TEMPLATES_DIR",
-    "load_templates_from_dir",
-    "load_template_file",
-)
+__all__ = ("DEFAULT_TEMPLATES_DIR", "load_templates_from_dir", "load_template_file")
 
 _logger = logging.getLogger(__name__)
 
@@ -90,9 +86,7 @@ def load_template_file(
 
 
 def load_templates_from_dir(
-    directory: Path | str | None = None,
-    *,
-    registry: TemplateRegistry | None = None,
+    directory: Path | str | None = None, *, registry: TemplateRegistry | None = None
 ) -> list[str]:
     """Загружает все ``*.yaml|*.yml|*.toml`` шаблоны из директории.
 

@@ -1,6 +1,5 @@
 """HTML/URL-helper'ы для tech-эндпоинтов."""
 
-
 from fastapi.responses import HTMLResponse
 
 __all__ = ("ensure_url_protocol", "generate_link_page")

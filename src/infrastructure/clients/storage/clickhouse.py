@@ -151,7 +151,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

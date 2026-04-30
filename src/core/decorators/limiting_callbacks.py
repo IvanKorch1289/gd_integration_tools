@@ -28,9 +28,7 @@ async def default_identifier(request: Request) -> str:
     return f"ip:{client_ip}:{request.url.path}"
 
 
-async def default_callback(
-    request: Request, response: Response, pexpire: int
-) -> None:
+async def default_callback(request: Request, response: Response, pexpire: int) -> None:
     """Обработчик превышения лимита: HTTP 429 с Retry-After."""
     retry_after = max(1, pexpire // 1000)
     raise HTTPException(

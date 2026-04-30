@@ -37,7 +37,11 @@ class OpenAPIImportGateway:
     kind: ImportSourceKind = ImportSourceKind.OPENAPI
 
     async def import_spec(self, source: ImportSource) -> ConnectorSpec:
-        raw = source.content if isinstance(source.content, bytes) else source.content.encode()
+        raw = (
+            source.content
+            if isinstance(source.content, bytes)
+            else source.content.encode()
+        )
         data = self._parse_text(raw)
 
         version_str = str(data.get("openapi", ""))
@@ -66,7 +70,15 @@ class OpenAPIImportGateway:
 
         endpoints: list[EndpointSpec] = []
         for path, path_item in (spec.paths or {}).items():
-            for http_method in ("get", "post", "put", "patch", "delete", "head", "options"):
+            for http_method in (
+                "get",
+                "post",
+                "put",
+                "patch",
+                "delete",
+                "head",
+                "options",
+            ):
                 operation = getattr(path_item, http_method, None)
                 if operation is None:
                     continue
@@ -121,7 +133,10 @@ class OpenAPIImportGateway:
     def _sanitize_name(title: str) -> str:
         import re
 
-        return re.sub(r"[^a-zA-Z0-9_]+", "_", title.strip().lower()).strip("_") or "openapi"
+        return (
+            re.sub(r"[^a-zA-Z0-9_]+", "_", title.strip().lower()).strip("_")
+            or "openapi"
+        )
 
     def _build_endpoint(
         self, *, prefix: str, method: str, path: str, operation: Any
@@ -252,7 +267,12 @@ class OpenAPIImportGateway:
             scopes: list[str] = []
             flows = getattr(scheme, "flows", None)
             if flows is not None:
-                for flow_name in ("implicit", "password", "clientCredentials", "authorizationCode"):
+                for flow_name in (
+                    "implicit",
+                    "password",
+                    "clientCredentials",
+                    "authorizationCode",
+                ):
                     flow = getattr(flows, flow_name, None)
                     if flow and getattr(flow, "scopes", None):
                         scopes.extend(flow.scopes.keys())

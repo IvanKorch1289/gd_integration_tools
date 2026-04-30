@@ -4,7 +4,6 @@ Auth-схема СКБ — query-параметр ``api-key``, поэтому п
 во все запросы через override ``_request``.
 """
 
-
 from typing import Any
 from uuid import UUID
 
@@ -58,9 +57,7 @@ class APISKBService(BaseExternalAPIClient):
     async def add_request(self, data: dict[str, Any]) -> dict[str, Any]:
         """Создать запрос на получение данных по залогу в СКБ-Техно."""
         try:
-            return await self._request(
-                "POST", self._url("CREATE_REQUEST"), json=data
-            )
+            return await self._request("POST", self._url("CREATE_REQUEST"), json=data)
         except Exception as exc:
             raise ServiceError from exc
 

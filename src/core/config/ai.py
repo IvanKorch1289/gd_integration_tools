@@ -155,8 +155,7 @@ class NimSettings(BaseSettingsWithLoader):
 
     api_key: str = Field(default="", description="API-ключ build.nvidia.com")
     model: str = Field(
-        default="meta/llama-3.1-70b-instruct",
-        description="Слаг модели в каталоге NIM.",
+        default="meta/llama-3.1-70b-instruct", description="Слаг модели в каталоге NIM."
     )
     base_url: str = Field(
         default="https://integrate.api.nvidia.com/v1",
@@ -178,8 +177,7 @@ class OpenAISettings(BaseSettingsWithLoader):
 
     api_key: str = Field(default="", description="API-ключ провайдера.")
     model: str = Field(
-        default="gpt-4o-mini",
-        description="Имя/slug модели у выбранного провайдера.",
+        default="gpt-4o-mini", description="Имя/slug модели у выбранного провайдера."
     )
     base_url: str = Field(
         default="https://api.openai.com/v1",

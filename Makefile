@@ -579,4 +579,5 @@ readiness-check: ## Run all anti-forget guards locally
 	@$(INFO) "Running anti-forget guards..."
 	$(UV_RUN) python3 tools/check_phase_order.py
 	$(UV_RUN) python3 tools/check_deps_matrix.py
+	$(UV_RUN) python3 tools/check_fallback_matrix.py
 	@$(SUCCESS) "All guards passed!"

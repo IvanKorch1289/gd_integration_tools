@@ -23,9 +23,7 @@ class MemoryBackend(CacheBackend):
 
     def __init__(self, maxsize: int = 1000, default_ttl: int = 3600) -> None:
         self._default_ttl = default_ttl
-        self._cache: TTLCache[str, bytes] = TTLCache(
-            maxsize=maxsize, ttl=default_ttl
-        )
+        self._cache: TTLCache[str, bytes] = TTLCache(maxsize=maxsize, ttl=default_ttl)
         self._lock = asyncio.Lock()
 
     async def get(self, key: str) -> bytes | None:

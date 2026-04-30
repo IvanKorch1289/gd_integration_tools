@@ -14,6 +14,12 @@ from src.core.config.services.queue import (
     queue_settings,
     tasks_settings,
 )
+from src.core.config.services.resilience import (
+    BreakerProfile,
+    FallbackPolicy,
+    ResilienceSettings,
+    resilience_settings,
+)
 from src.core.config.services.storage import FileStorageSettings, fs_settings
 from src.core.config.services.watermark import WatermarkSettings, watermark_settings
 
@@ -36,4 +42,8 @@ __all__ = (
     "grpc_settings",
     "WatermarkSettings",
     "watermark_settings",
+    "BreakerProfile",
+    "FallbackPolicy",
+    "ResilienceSettings",
+    "resilience_settings",
 )

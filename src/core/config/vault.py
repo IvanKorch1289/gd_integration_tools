@@ -26,8 +26,7 @@ class VaultSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="VAULT_", extra="forbid")
 
     enabled: bool = Field(
-        default=True,
-        description="Включить чтение секретов из Vault.",
+        default=True, description="Включить чтение секретов из Vault."
     )
 
     @field_validator("enabled", mode="before")
@@ -48,17 +47,11 @@ class VaultSettings(BaseSettingsWithLoader):
             if stripped.lower() in {"1", "true", "yes"}:
                 return True
         return value
-    addr: str = Field(
-        default="",
-        description="URL Vault-сервера (env VAULT_ADDR).",
-    )
-    token: str = Field(
-        default="",
-        description="Токен авторизации (env VAULT_TOKEN).",
-    )
+
+    addr: str = Field(default="", description="URL Vault-сервера (env VAULT_ADDR).")
+    token: str = Field(default="", description="Токен авторизации (env VAULT_TOKEN).")
     secret_path: str = Field(
-        default="",
-        description="Путь KV v2 к секретам (env VAULT_SECRET_PATH).",
+        default="", description="Путь KV v2 к секретам (env VAULT_SECRET_PATH)."
     )
 
 

@@ -101,7 +101,9 @@ class GrpcSource:
         while not self._stop_event.is_set():
             try:
                 channel = (
-                    grpc.aio.secure_channel(self._target, grpc.ssl_channel_credentials())
+                    grpc.aio.secure_channel(
+                        self._target, grpc.ssl_channel_credentials()
+                    )
                     if self._secure
                     else grpc.aio.insecure_channel(self._target)
                 )

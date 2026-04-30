@@ -106,9 +106,7 @@ class PollingSource:
                         try:
                             await on_event(event)
                         except Exception as exc:
-                            logger.error(
-                                "PollingSource on_event failed: %s", exc
-                            )
+                            logger.error("PollingSource on_event failed: %s", exc)
                     self._last_hash = body_hash
                     first = False
                 try:

@@ -48,10 +48,7 @@ class InMemoryMessageBroker(MessageBroker):
         self._consumers.clear()
 
     async def publish(
-        self,
-        topic: str,
-        message: bytes,
-        headers: dict[str, str] | None = None,
+        self, topic: str, message: bytes, headers: dict[str, str] | None = None
     ) -> None:
         del headers  # in-memory broker не использует headers
         for q in list(self._consumers.get(topic, ())):

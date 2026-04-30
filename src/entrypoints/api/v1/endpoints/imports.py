@@ -65,7 +65,9 @@ async def import_openapi(
                 resp.raise_for_status()
                 content = resp.content
         except Exception as exc:
-            raise HTTPException(400, f"Не удалось загрузить spec по URL: {exc}") from exc
+            raise HTTPException(
+                400, f"Не удалось загрузить spec по URL: {exc}"
+            ) from exc
     else:
         raise HTTPException(400, "Требуется file или spec_url")
 

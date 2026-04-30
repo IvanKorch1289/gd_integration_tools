@@ -101,7 +101,9 @@ class WebSocketSource:
                         except Exception as exc:
                             logger.error("WebSocketSource on_event failed: %s", exc)
             except Exception as exc:
-                logger.warning("WebSocketSource %s: connection error: %s", self._url, exc)
+                logger.warning(
+                    "WebSocketSource %s: connection error: %s", self._url, exc
+                )
                 try:
                     await asyncio.wait_for(
                         self._stop_event.wait(), timeout=self._reconnect

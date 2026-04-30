@@ -93,7 +93,9 @@ class Invoker(InvokerProtocol):
 
     async def _invoke_sync(self, request: InvocationRequest) -> InvocationResponse:
         try:
-            command = ActionCommandSchema(action=request.action, payload=request.payload)
+            command = ActionCommandSchema(
+                action=request.action, payload=request.payload
+            )
             result: Any = await self._dispatcher.dispatch(command)
             return InvocationResponse(
                 invocation_id=request.invocation_id,
@@ -157,8 +159,7 @@ class Invoker(InvokerProtocol):
                 invocation_id=request.invocation_id,
                 status=InvocationStatus.ERROR,
                 error=(
-                    "STREAMING требует доступного reply_channel "
-                    "(по умолчанию 'ws')"
+                    "STREAMING требует доступного reply_channel (по умолчанию 'ws')"
                 ),
                 mode=request.mode,
             )
@@ -259,9 +260,7 @@ class Invoker(InvokerProtocol):
         )
 
     @staticmethod
-    def _select_deferred_jobstore(
-        request: InvocationRequest,
-    ) -> tuple[str, bool]:
+    def _select_deferred_jobstore(request: InvocationRequest) -> tuple[str, bool]:
         """Возвращает имя jobstore и флаг durability.
 
         ``metadata['deferred_durable']``:
@@ -273,9 +272,7 @@ class Invoker(InvokerProtocol):
         durable = bool(durable_raw)
         return ("default" if durable else "backup", durable)
 
-    def _resolve_deferred_run_at(
-        self, request: InvocationRequest
-    ) -> datetime | None:
+    def _resolve_deferred_run_at(self, request: InvocationRequest) -> datetime | None:
         meta = request.metadata or {}
         run_at_raw = meta.get("run_at")
         if isinstance(run_at_raw, datetime):
@@ -320,8 +317,7 @@ class Invoker(InvokerProtocol):
             await task.kiq(_serialize_request(request))
         except Exception as exc:  # noqa: BLE001
             logger.exception(
-                "ASYNC_QUEUE kiq failed (invocation_id=%s)",
-                request.invocation_id,
+                "ASYNC_QUEUE kiq failed (invocation_id=%s)", request.invocation_id
             )
             return InvocationResponse(
                 invocation_id=request.invocation_id,
@@ -350,9 +346,7 @@ class Invoker(InvokerProtocol):
         task.add_done_callback(self._tasks.discard)
 
     async def _run_and_publish(
-        self,
-        request: InvocationRequest,
-        channel: InvocationReplyChannel | None,
+        self, request: InvocationRequest, channel: InvocationReplyChannel | None
     ) -> None:
         response = await self._invoke_sync(request)
         # SYNC уже корректно ловит исключения; нам остаётся только
@@ -373,13 +367,13 @@ class Invoker(InvokerProtocol):
         try:
             await channel.send(response)
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "ReplyChannel.send failed (id=%s)", request.invocation_id
-            )
+            logger.exception("ReplyChannel.send failed (id=%s)", request.invocation_id)
 
     async def _run_silent(self, request: InvocationRequest) -> None:
         try:
-            command = ActionCommandSchema(action=request.action, payload=request.payload)
+            command = ActionCommandSchema(
+                action=request.action, payload=request.payload
+            )
             await self._dispatcher.dispatch(command)
         except Exception:  # noqa: BLE001
             logger.exception(
@@ -389,14 +383,14 @@ class Invoker(InvokerProtocol):
             )
 
     async def _run_and_stream(
-        self,
-        request: InvocationRequest,
-        channel: InvocationReplyChannel,
+        self, request: InvocationRequest, channel: InvocationReplyChannel
     ) -> None:
         """Стримит yield'ы action'а в reply-канал по одному InvocationResponse."""
         meta = dict(request.metadata)
         try:
-            command = ActionCommandSchema(action=request.action, payload=request.payload)
+            command = ActionCommandSchema(
+                action=request.action, payload=request.payload
+            )
             result = await self._dispatcher.dispatch(command)
         except KeyError as exc:
             await channel.send(
@@ -454,8 +448,10 @@ class Invoker(InvokerProtocol):
 
 def _is_async_iterator(obj: Any) -> bool:
     """True если ``obj`` поддерживает ``async for`` (AsyncIterable/Iterator)."""
-    return hasattr(obj, "__aiter__") and isinstance(obj, AsyncIterator) or hasattr(
-        obj, "__aiter__"
+    return (
+        hasattr(obj, "__aiter__")
+        and isinstance(obj, AsyncIterator)
+        or hasattr(obj, "__aiter__")
     )
 
 

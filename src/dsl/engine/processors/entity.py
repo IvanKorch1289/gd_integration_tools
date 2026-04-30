@@ -91,7 +91,10 @@ class _BaseEntityProcessor(BaseProcessor):
         return f"{self._entity}.{self._verb}"
 
     async def _dispatch(
-        self, payload: dict[str, Any], context: ExecutionContext, exchange: Exchange[Any]
+        self,
+        payload: dict[str, Any],
+        context: ExecutionContext,
+        exchange: Exchange[Any],
     ) -> None:
         command = ActionCommandSchema(action=self._action, payload=payload)
         result = await context.action_registry.dispatch(command)
@@ -167,9 +170,7 @@ class EntityGetProcessor(_BaseEntityProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         entity_id = _resolve(exchange, self._id_from)
         if entity_id is None:
-            exchange.fail(
-                f"{type(self).__name__}: id_from={self._id_from!r} пуст"
-            )
+            exchange.fail(f"{type(self).__name__}: id_from={self._id_from!r} пуст")
             return
         await self._dispatch({"id": entity_id}, context, exchange)
 
@@ -212,9 +213,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
         entity_id = _resolve(exchange, self._id_from)
         payload = _resolve(exchange, self._payload_from)
         if entity_id is None:
-            exchange.fail(
-                f"{type(self).__name__}: id_from={self._id_from!r} пуст"
-            )
+            exchange.fail(f"{type(self).__name__}: id_from={self._id_from!r} пуст")
             return
         if not isinstance(payload, dict):
             exchange.fail(
@@ -260,9 +259,7 @@ class EntityDeleteProcessor(_BaseEntityProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         entity_id = _resolve(exchange, self._id_from)
         if entity_id is None:
-            exchange.fail(
-                f"{type(self).__name__}: id_from={self._id_from!r} пуст"
-            )
+            exchange.fail(f"{type(self).__name__}: id_from={self._id_from!r} пуст")
             return
         await self._dispatch({"id": entity_id}, context, exchange)
 
@@ -323,7 +320,9 @@ class EntityListProcessor(_BaseEntityProcessor):
             if value is not None:
                 size = int(value)
 
-        payload: dict[str, Any] = {"filters": filters if isinstance(filters, dict) else {}}
+        payload: dict[str, Any] = {
+            "filters": filters if isinstance(filters, dict) else {}
+        }
         if page is not None:
             payload["page"] = page
         if size is not None:

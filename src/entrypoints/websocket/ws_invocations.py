@@ -101,16 +101,16 @@ async def websocket_invocations(websocket: WebSocket) -> None:
                 continue
 
             invocation_id = data.get("invocation_id") or uuid4().hex
-            payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
+            payload = (
+                data.get("payload") if isinstance(data.get("payload"), dict) else {}
+            )
 
             # Привязываем сокет к invocation_id ДО запуска вызова, иначе
             # ранние chunks от STREAMING-task'а потеряются.
             await ws_channel.register(invocation_id, websocket)
             bound.append(invocation_id)
 
-            await websocket.send_json(
-                {"type": "ack", "invocation_id": invocation_id}
-            )
+            await websocket.send_json({"type": "ack", "invocation_id": invocation_id})
 
             request = InvocationRequest(
                 action=action,

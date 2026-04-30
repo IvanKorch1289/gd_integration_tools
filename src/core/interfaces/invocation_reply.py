@@ -27,11 +27,7 @@ from typing import Protocol, runtime_checkable
 
 from src.core.interfaces.invoker import InvocationResponse
 
-__all__ = (
-    "ReplyChannelKind",
-    "InvocationReplyChannel",
-    "ReplyChannelRegistryProtocol",
-)
+__all__ = ("ReplyChannelKind", "InvocationReplyChannel", "ReplyChannelRegistryProtocol")
 
 
 class ReplyChannelKind(str, Enum):
@@ -91,9 +87,7 @@ class ReplyChannelRegistryProtocol(Protocol):
         """Регистрирует backend; перезаписывает уже существующий той же kind."""
         ...
 
-    def get(
-        self, kind: ReplyChannelKind | str
-    ) -> InvocationReplyChannel | None:
+    def get(self, kind: ReplyChannelKind | str) -> InvocationReplyChannel | None:
         """Возвращает backend по типу; ``None`` — если не зарегистрирован."""
         ...
 

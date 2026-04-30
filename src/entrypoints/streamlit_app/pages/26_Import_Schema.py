@@ -51,9 +51,7 @@ if uploaded and st.button("Импортировать"):
 
     content = uploaded.getvalue()
     source = ImportSource(
-        kind=ImportSourceKind(_kind_value(source_kind)),
-        content=content,
-        prefix=prefix,
+        kind=ImportSourceKind(_kind_value(source_kind)), content=content, prefix=prefix
     )
     try:
         result = asyncio.run(

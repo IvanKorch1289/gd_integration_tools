@@ -1,8 +1,8 @@
 import time
 from typing import Any
 
-from src.core.state.runtime import disabled_feature_flags
 from src.core.errors import RouteDisabledError
+from src.core.state.runtime import disabled_feature_flags
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.dsl.engine.middleware import (
@@ -106,7 +106,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(

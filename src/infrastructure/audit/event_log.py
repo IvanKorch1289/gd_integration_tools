@@ -130,7 +130,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             safe_limit = 100
 
         conditions = []

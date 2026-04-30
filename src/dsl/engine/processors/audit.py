@@ -154,9 +154,7 @@ class AuditProcessor(BaseProcessor):
         from src.infrastructure.database.session_manager import main_session_manager
         from src.infrastructure.observability.immutable_audit import ImmutableAuditStore
 
-        return ImmutableAuditStore(
-            session_factory=main_session_manager.create_session
-        )
+        return ImmutableAuditStore(session_factory=main_session_manager.create_session)
 
     def to_spec(self) -> dict:
         """YAML-spec round-trip."""

@@ -65,9 +65,7 @@ class AntivirusHashCache:
         try:
             await self._client.set(
                 self._key(payload),
-                orjson.dumps(
-                    {"clean": result.clean, "signature": result.signature}
-                ),
+                orjson.dumps({"clean": result.clean, "signature": result.signature}),
                 ex=ttl or self._ttl,
             )
         except Exception as exc:  # noqa: BLE001

@@ -60,7 +60,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         try:
             await client.get_collection(self._collection_name)
-        except (UnexpectedResponse, ValueError):
+        except UnexpectedResponse, ValueError:
             await client.create_collection(
                 collection_name=self._collection_name,
                 vectors_config=VectorParams(

@@ -39,9 +39,7 @@ class ImportService:
     """Orchestration: ImportGateway → idempotency → persist → register."""
 
     def __init__(
-        self,
-        connector_store: Any | None = None,
-        action_registry: Any | None = None,
+        self, connector_store: Any | None = None, action_registry: Any | None = None
     ) -> None:
         """Args:
         connector_store: ``ConnectorConfigStore`` (из DI). Если ``None`` —
@@ -110,7 +108,11 @@ class ImportService:
         }
 
     async def import_and_register(
-        self, source: ImportSource, *, force: bool = False, register_actions: bool = True
+        self,
+        source: ImportSource,
+        *,
+        force: bool = False,
+        register_actions: bool = True,
     ) -> dict[str, Any]:
         """Полный цикл импорта.
 
@@ -200,7 +202,8 @@ class ImportService:
             return get_connector_config_store()
         except Exception as exc:
             logger.warning(
-                "ImportService: connector_config_store недоступен (%s), импорт без persist", exc
+                "ImportService: connector_config_store недоступен (%s), импорт без persist",
+                exc,
             )
             return None
 
@@ -223,7 +226,9 @@ class ImportService:
             return []
         prev_config = previous.config or {}
         prev_endpoints = prev_config.get("endpoints", []) or []
-        prev_ids = {ep.get("operation_id") for ep in prev_endpoints if ep.get("operation_id")}
+        prev_ids = {
+            ep.get("operation_id") for ep in prev_endpoints if ep.get("operation_id")
+        }
         current_ids = {ep.operation_id for ep in current.endpoints}
         return sorted(prev_ids - current_ids)
 

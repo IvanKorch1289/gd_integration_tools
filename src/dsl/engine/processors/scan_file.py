@@ -64,9 +64,7 @@ class ScanFileProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=name or "scan_file")
         if not s3_key_from and not data_property:
-            raise ValueError(
-                "ScanFileProcessor: укажите s3_key_from или data_property"
-            )
+            raise ValueError("ScanFileProcessor: укажите s3_key_from или data_property")
         if on_threat not in _VALID_ON_THREAT:
             raise ValueError(
                 f"ScanFileProcessor: on_threat={on_threat!r} не из "

@@ -1,17 +1,12 @@
 """Конвертеры значений: numpy-скаляры, regex-паттерны, pydantic-модели."""
 
-
 from typing import Any, Type
 
 from pydantic import BaseModel
 
 from src.infrastructure.external_apis.logging_service import app_logger
 
-__all__ = (
-    "convert_numpy_types",
-    "convert_pattern",
-    "transfer_model_to_schema",
-)
+__all__ = ("convert_numpy_types", "convert_pattern", "transfer_model_to_schema")
 
 
 def convert_numpy_types(value: Any) -> Any:

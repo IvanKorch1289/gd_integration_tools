@@ -86,6 +86,7 @@ class ServiceDSLRegistry:
                         service_method=method_name,
                     )
 
+
 service_dsl_registry = ServiceDSLRegistry()
 
 

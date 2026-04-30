@@ -109,8 +109,7 @@ def _parse_yaml_or_400(yaml_str: str) -> Pipeline:
         return load_pipeline_from_yaml(yaml_str)
     except (ValueError, ImportError) as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Невалидный YAML: {exc}",
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Невалидный YAML: {exc}"
         ) from exc
 
 

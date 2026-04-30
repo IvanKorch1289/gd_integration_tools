@@ -21,11 +21,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Protocol, runtime_checkable
 
-__all__ = (
-    "ImportSourceKind",
-    "ImportSource",
-    "ImportGateway",
-)
+__all__ = ("ImportSourceKind", "ImportSource", "ImportGateway")
 
 
 class ImportSourceKind(str, Enum):

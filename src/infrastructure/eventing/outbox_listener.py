@@ -122,14 +122,14 @@ class OutboxListener:
             self._backup_task.cancel()
             try:
                 await self._backup_task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._backup_task = None
         if self._debounce_task is not None:
             self._debounce_task.cancel()
             try:
                 await self._debounce_task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._debounce_task = None
         if self._conn is not None:

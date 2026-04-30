@@ -74,9 +74,7 @@ class WsReplyChannel(InvocationReplyChannel):
             await connection.send_json(_response_to_dict(response))
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "WS push failed (invocation_id=%s): %s",
-                response.invocation_id,
-                exc,
+                "WS push failed (invocation_id=%s): %s", response.invocation_id, exc
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:

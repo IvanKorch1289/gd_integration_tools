@@ -88,9 +88,7 @@ class StreamClient:
 
     def _setup_redis_router(self) -> None:
         if not getattr(self.redis_settings, "enabled", True):
-            stream_logger.info(
-                "redis disabled — Redis FastStream router skipped"
-            )
+            stream_logger.info("redis disabled — Redis FastStream router skipped")
             return
 
         from faststream.redis.fastapi import RedisRouter
@@ -113,9 +111,7 @@ class StreamClient:
 
     def _setup_rabbit_router(self) -> None:
         if not getattr(self.rabbit_settings, "enabled", True):
-            stream_logger.info(
-                "queue disabled — RabbitMQ FastStream router skipped"
-            )
+            stream_logger.info("queue disabled — RabbitMQ FastStream router skipped")
             return
 
         from faststream.rabbit.fastapi import RabbitRouter
@@ -266,9 +262,7 @@ class StreamClient:
     ) -> None:
         # Wave 6.2: rabbit publish защищён CB через единый фасад.
         # Дефолты из BreakerSpec (consts.DEFAULT_CB_*).
-        breaker = breaker_registry.get_or_create(
-            "rabbit:publish", BreakerSpec()
-        )
+        breaker = breaker_registry.get_or_create("rabbit:publish", BreakerSpec())
         async with breaker.guard():
             await self.rabbit_router.broker.publish(  # type: ignore
                 message=message, queue=queue, mandatory=True

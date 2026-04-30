@@ -35,7 +35,11 @@ class WsdlImportGateway:
         from zeep import Client
         from zeep.exceptions import XMLParseError
 
-        raw = source.content if isinstance(source.content, bytes) else source.content.encode()
+        raw = (
+            source.content
+            if isinstance(source.content, bytes)
+            else source.content.encode()
+        )
 
         # zeep.Client принимает URL или путь — для in-memory content
         # пишем во временный файл (atomic, удаляется после использования).
@@ -47,9 +51,7 @@ class WsdlImportGateway:
             wsdl_path = source.source_url
             tmp_path: Path | None = None
         else:
-            tmp = tempfile.NamedTemporaryFile(
-                mode="wb", suffix=".wsdl", delete=False
-            )
+            tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".wsdl", delete=False)
             tmp.write(raw)
             tmp.close()
             tmp_path = Path(tmp.name)
@@ -78,9 +80,7 @@ class WsdlImportGateway:
                     binding_name = binding.name.localname if binding.name else port_name
                     for op_name, op in binding._operations.items():
                         operation_id = f"{source.prefix}.{service_name}.{op_name}"
-                        soap_action = (
-                            getattr(op, "soapaction", "") or op_name
-                        )
+                        soap_action = getattr(op, "soapaction", "") or op_name
                         request_schema = self._extract_signature(op, "input")
                         response_schema = self._extract_signature(op, "output")
                         endpoints.append(
@@ -146,7 +146,9 @@ class WsdlImportGateway:
             for ns_name, ns in (types.documents._documents or {}).items():
                 for doc in ns:
                     for elm_name, elm in doc._elements.items():
-                        result[str(elm_name)] = str(elm.signature() if hasattr(elm, "signature") else elm)
+                        result[str(elm_name)] = str(
+                            elm.signature() if hasattr(elm, "signature") else elm
+                        )
         except Exception as exc:
             logger.debug("WSDL: не удалось собрать XSD types: %s", exc)
         return result
@@ -155,7 +157,9 @@ class WsdlImportGateway:
     def _sanitize_name(title: str) -> str:
         import re
 
-        return re.sub(r"[^a-zA-Z0-9_]+", "_", title.strip().lower()).strip("_") or "wsdl"
+        return (
+            re.sub(r"[^a-zA-Z0-9_]+", "_", title.strip().lower()).strip("_") or "wsdl"
+        )
 
 
 # ruff: noqa: F401

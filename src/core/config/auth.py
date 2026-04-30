@@ -27,7 +27,9 @@ class JwtConfig(BaseModel):
 
     secret_key: str = Field(..., description="Секретный ключ подписи токена")
     algorithm: str = Field("HS256", description="Алгоритм подписи (HS256/HS512/RS256)")
-    token_lifetime: int = Field(3600, ge=60, description="Время жизни токена в секундах")
+    token_lifetime: int = Field(
+        3600, ge=60, description="Время жизни токена в секундах"
+    )
 
 
 class ExpressJwtConfig(BaseModel):
@@ -52,8 +54,7 @@ class AuthConfig(BaseModel):
 
 
 def build_auth_config(
-    secure: SecureSettings | None = None,
-    express: ExpressSettings | None = None,
+    secure: SecureSettings | None = None, express: ExpressSettings | None = None
 ) -> AuthConfig:
     """Строит ``AuthConfig`` из живых ``SecureSettings``/``ExpressSettings``.
 
@@ -71,7 +72,9 @@ def build_auth_config(
 
     secret = secure.secret_key
     secret_value = (
-        secret.get_secret_value() if hasattr(secret, "get_secret_value") else str(secret)
+        secret.get_secret_value()
+        if hasattr(secret, "get_secret_value")
+        else str(secret)
     )
 
     return AuthConfig(

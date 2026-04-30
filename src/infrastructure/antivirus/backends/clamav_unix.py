@@ -36,9 +36,7 @@ class ClamAVUnixBackend(AntivirusBackend):
     name = "clamav_unix"
 
     def __init__(
-        self,
-        socket_path: str = "/var/run/clamav/clamd.ctl",
-        timeout: float = 30.0,
+        self, socket_path: str = "/var/run/clamav/clamd.ctl", timeout: float = 30.0
     ) -> None:
         self._socket_path = socket_path
         self._timeout = timeout
@@ -50,7 +48,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(self._socket_path), timeout=2.0
             )
-        except (OSError, asyncio.TimeoutError):
+        except OSError, asyncio.TimeoutError:
             return False
         try:
             writer.write(b"zPING\0")
@@ -68,8 +66,7 @@ class ClamAVUnixBackend(AntivirusBackend):
         start = time.monotonic()
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_unix_connection(self._socket_path),
-                timeout=self._timeout,
+                asyncio.open_unix_connection(self._socket_path), timeout=self._timeout
             )
         except (OSError, asyncio.TimeoutError) as exc:
             raise ConnectionError(f"ClamAV unix socket недоступен: {exc}") from exc
@@ -82,9 +79,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             writer.write(struct.pack(">I", 0))
             await writer.drain()
 
-            response = await asyncio.wait_for(
-                reader.read(4096), timeout=self._timeout
-            )
+            response = await asyncio.wait_for(reader.read(4096), timeout=self._timeout)
         finally:
             writer.close()
             try:
@@ -93,7 +88,9 @@ class ClamAVUnixBackend(AntivirusBackend):
                 pass
 
         latency_ms = (time.monotonic() - start) * 1000
-        return _parse_clamav_response(response, backend=self.name, latency_ms=latency_ms)
+        return _parse_clamav_response(
+            response, backend=self.name, latency_ms=latency_ms
+        )
 
 
 def _parse_clamav_response(

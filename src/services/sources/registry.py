@@ -23,12 +23,7 @@ from src.core.interfaces.source import Source
 if TYPE_CHECKING:
     pass
 
-__all__ = (
-    "SourceRegistry",
-    "SinkRegistry",
-    "get_source_registry",
-    "get_sink_registry",
-)
+__all__ = ("SourceRegistry", "SinkRegistry", "get_source_registry", "get_sink_registry")
 
 logger = logging.getLogger("services.sources.registry")
 

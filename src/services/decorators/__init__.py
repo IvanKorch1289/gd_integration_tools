@@ -7,9 +7,4 @@ from src.services.decorators.limiting import (
     route_limiting,
 )
 
-__all__ = (
-    "RouteLimiter",
-    "default_callback",
-    "default_identifier",
-    "route_limiting",
-)
+__all__ = ("RouteLimiter", "default_callback", "default_identifier", "route_limiting")

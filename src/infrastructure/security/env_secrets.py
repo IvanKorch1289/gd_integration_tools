@@ -31,7 +31,7 @@ class EnvSecretsBackend(SecretsBackend):
         if self._path is not None and self._path.is_file():
             try:
                 self._cache = json.loads(self._path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
+            except json.JSONDecodeError, OSError:
                 # Повреждённый файл — стартуем с пустого кеша, не падаем.
                 self._cache = {}
 
@@ -65,8 +65,7 @@ class EnvSecretsBackend(SecretsBackend):
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(
-                json.dumps(self._cache, ensure_ascii=False, indent=2),
-                encoding="utf-8",
+                json.dumps(self._cache, ensure_ascii=False, indent=2), encoding="utf-8"
             )
         except OSError:
             # Запись на диск best-effort: in-memory state остаётся валидным.

@@ -60,10 +60,7 @@ def create_antivirus_backend() -> AntivirusBackend:
     from src.infrastructure.antivirus.backends.clamav_unix import ClamAVUnixBackend
     from src.infrastructure.antivirus.backends.http import HttpAntivirusBackend
 
-    backends: list[AntivirusBackend] = [
-        ClamAVUnixBackend(),
-        ClamAVTcpBackend(),
-    ]
+    backends: list[AntivirusBackend] = [ClamAVUnixBackend(), ClamAVTcpBackend()]
     try:
         from src.infrastructure.external_apis.antivirus import get_antivirus_service
 

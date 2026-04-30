@@ -49,11 +49,7 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), primary_key=True, autoincrement=True),
         sa.Column("route_id", sa.Text(), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False),
-        sa.Column(
-            "spec",
-            postgresql.JSONB(astext_type=sa.Text()),
-            nullable=False,
-        ),
+        sa.Column("spec", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("feature_flag", sa.Text(), nullable=True),
         sa.Column("source", sa.Text(), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
@@ -65,11 +61,7 @@ def upgrade() -> None:
         ),
         sa.UniqueConstraint("route_id", "version", name="uq_dsl_snapshots_route_ver"),
     )
-    op.create_index(
-        "idx_dsl_snapshots_route",
-        "dsl_snapshots",
-        ["route_id"],
-    )
+    op.create_index("idx_dsl_snapshots_route", "dsl_snapshots", ["route_id"])
     op.create_index(
         "idx_dsl_snapshots_latest",
         "dsl_snapshots",

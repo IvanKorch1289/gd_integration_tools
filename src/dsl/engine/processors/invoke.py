@@ -93,8 +93,7 @@ class InvokeProcessor(BaseProcessor):
             case InvocationStatus.OK:
                 exchange.set_property(self.result_property, response.result)
                 exchange.set_out(
-                    body=response.result,
-                    headers=dict(exchange.in_message.headers),
+                    body=response.result, headers=dict(exchange.in_message.headers)
                 )
             case InvocationStatus.ACCEPTED:
                 exchange.set_property(
@@ -102,9 +101,7 @@ class InvokeProcessor(BaseProcessor):
                     {"accepted": True, "invocation_id": response.invocation_id},
                 )
             case InvocationStatus.ERROR:
-                exchange.set_property(
-                    self.result_property, {"error": response.error}
-                )
+                exchange.set_property(self.result_property, {"error": response.error})
                 exchange.stop()
 
     def to_spec(self) -> dict[str, Any] | None:

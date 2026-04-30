@@ -46,6 +46,7 @@ from src.core.config.services import (
     MailSettings,
     QueueSettings,
     RedisSettings,
+    ResilienceSettings,
     TasksSettings,
     WatermarkSettings,
     cache_settings,
@@ -55,6 +56,7 @@ from src.core.config.services import (
     mail_settings,
     queue_settings,
     redis_settings,
+    resilience_settings,
     tasks_settings,
     watermark_settings,
 )
@@ -114,6 +116,9 @@ class Settings(BaseSettings):
 
     # DSL hot-reload (W25)
     dsl: DSLSettings = dsl_settings
+
+    # Устойчивая инфраструктура (W26): per-service breaker-профили + fallback-политики
+    resilience: ResilienceSettings = resilience_settings
 
 
 @lru_cache()

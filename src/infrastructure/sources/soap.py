@@ -123,4 +123,6 @@ class SoapSource:
             try:
                 await client.transport.aclose()
             except Exception as exc:
-                logger.debug("SoapSource %s: transport close warning: %s", self._wsdl, exc)
+                logger.debug(
+                    "SoapSource %s: transport close warning: %s", self._wsdl, exc
+                )

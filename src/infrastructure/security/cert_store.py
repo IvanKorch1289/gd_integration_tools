@@ -175,9 +175,7 @@ class PostgresCertBackend(CertBackend):
             async with main_session_manager.transaction(session):
                 existing = (
                     await session.execute(
-                        select(CertRecord).where(
-                            CertRecord.service_id == service_id
-                        )
+                        select(CertRecord).where(CertRecord.service_id == service_id)
                     )
                 ).scalar_one_or_none()
                 version = (existing.version + 1) if existing else 1
@@ -220,12 +218,16 @@ class PostgresCertBackend(CertBackend):
     async def history(self, service_id: str) -> list[CertEntry]:
         async with main_session_manager.create_session() as session:
             rows = (
-                await session.execute(
-                    select(CertHistory)
-                    .where(CertHistory.service_id == service_id)
-                    .order_by(CertHistory.version.asc())
+                (
+                    await session.execute(
+                        select(CertHistory)
+                        .where(CertHistory.service_id == service_id)
+                        .order_by(CertHistory.version.asc())
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         return [
             CertEntry(
                 service_id=r.service_id,
@@ -241,10 +243,14 @@ class PostgresCertBackend(CertBackend):
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         async with main_session_manager.create_session() as session:
             rows = (
-                await session.execute(
-                    select(CertRecord).where(CertRecord.expires_at <= before)
+                (
+                    await session.execute(
+                        select(CertRecord).where(CertRecord.expires_at <= before)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         return [self._to_entry(r) for r in rows]
 
     @staticmethod

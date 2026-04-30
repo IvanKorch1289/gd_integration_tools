@@ -213,9 +213,7 @@ class APIClient:
     def update_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any]:
         """PUT /api/v1/admin/dsl-routes/{id} — обновить маршрут."""
         return self._request(
-            "PUT",
-            f"/api/v1/admin/dsl-routes/{route_id}",
-            json={"yaml": yaml_str},
+            "PUT", f"/api/v1/admin/dsl-routes/{route_id}", json={"yaml": yaml_str}
         )
 
     def delete_dsl_route(self, route_id: str) -> bool:
@@ -230,9 +228,7 @@ class APIClient:
         """POST /api/v1/admin/dsl-routes/validate — валидация без записи."""
         try:
             return self._request(
-                "POST",
-                "/api/v1/admin/dsl-routes/validate",
-                json={"yaml": yaml_str},
+                "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
             )
         except Exception as exc:
             return {"valid": False, "error": str(exc)}

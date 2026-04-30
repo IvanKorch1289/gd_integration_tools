@@ -50,7 +50,7 @@ class Expectation:
             if self.range is not None and v is not None:
                 try:
                     nv = float(v)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     failed += 1
                     continue
                 lo, hi = self.range

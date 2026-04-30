@@ -1,6 +1,5 @@
 """DaData API сервис — геокодирование адресов поверх ``BaseExternalAPIClient``."""
 
-
 from typing import Any
 from urllib.parse import urljoin
 

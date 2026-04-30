@@ -16,7 +16,9 @@ import json
 
 import streamlit as st
 
-st.set_page_config(page_title="Express Bots", page_icon=":speech_balloon:", layout="wide")
+st.set_page_config(
+    page_title="Express Bots", page_icon=":speech_balloon:", layout="wide"
+)
 st.header(":speech_balloon: Express Bots")
 
 try:
@@ -68,9 +70,7 @@ with tab_send:
     else:
         col1, col2 = st.columns(2)
         with col1:
-            bot_name = st.selectbox(
-                "Бот", options=[b["name"] for b in bots], index=0
-            )
+            bot_name = st.selectbox("Бот", options=[b["name"] for b in bots], index=0)
             chat_id = st.text_input(
                 "group_chat_id",
                 value=express_settings.default_chat_id or "",
@@ -101,9 +101,7 @@ with tab_send:
                         async with client:
                             return await client.send_message(
                                 BotxMessage(
-                                    group_chat_id=chat_id,
-                                    body=body,
-                                    status=status,
+                                    group_chat_id=chat_id, body=body, status=status
                                 ),
                                 sync=sync_send,
                             )
@@ -137,9 +135,7 @@ with tab_buttons:
             grid.append(row)
 
     if grid:
-        st.code(
-            json.dumps({kind: grid}, ensure_ascii=False, indent=2), language="json"
-        )
+        st.code(json.dumps({kind: grid}, ensure_ascii=False, indent=2), language="json")
 
 with tab_metrics:
     st.subheader("Express метрики")

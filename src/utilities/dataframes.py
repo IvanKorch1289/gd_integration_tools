@@ -6,7 +6,6 @@
 Для табличных операций приложения смотри ``src.services.io.dataframe``.
 """
 
-
 from typing import Any
 
 import polars as pl

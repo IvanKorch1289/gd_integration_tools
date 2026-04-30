@@ -107,10 +107,7 @@ def register_scheduled_invocation(spec: ScheduleSpec) -> str:
     if spec.cron:
         trigger = CronTrigger.from_crontab(spec.cron, timezone=spec.timezone)
     else:
-        trigger = IntervalTrigger(
-            seconds=spec.interval_seconds,
-            timezone=spec.timezone,
-        )
+        trigger = IntervalTrigger(seconds=spec.interval_seconds, timezone=spec.timezone)
 
     job_id = spec.job_id or f"scheduled_invocation_{spec.action}"
     scheduler_manager.scheduler.add_job(

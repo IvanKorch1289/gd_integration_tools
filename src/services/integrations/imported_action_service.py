@@ -21,11 +21,7 @@ from typing import Any
 from src.core.di import app_state_singleton
 from src.core.models.connector_spec import EndpointSpec
 
-__all__ = (
-    "EndpointMeta",
-    "ImportedActionService",
-    "get_imported_action_service",
-)
+__all__ = ("EndpointMeta", "ImportedActionService", "get_imported_action_service")
 
 
 @dataclass(slots=True, frozen=True)
@@ -82,9 +78,7 @@ class ImportedActionService:
         """Очищает каталог (используется в тестах между сценариями)."""
         self._endpoints.clear()
 
-    async def dispatch_endpoint(
-        self, *, action: str, **payload: Any
-    ) -> dict[str, Any]:
+    async def dispatch_endpoint(self, *, action: str, **payload: Any) -> dict[str, Any]:
         """Stub-диспатч импортированного endpoint'а.
 
         Args:
@@ -107,9 +101,7 @@ class ImportedActionService:
         }
 
 
-@app_state_singleton(
-    "imported_action_service", factory=lambda: ImportedActionService()
-)
+@app_state_singleton("imported_action_service", factory=lambda: ImportedActionService())
 def get_imported_action_service() -> ImportedActionService:
     """Singleton-аксессор :class:`ImportedActionService`."""
     raise RuntimeError("unreachable — фабрика создаёт ImportedActionService()")

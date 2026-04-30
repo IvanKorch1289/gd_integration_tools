@@ -39,9 +39,7 @@ class MemoryMetricsBackend(MetricsBackend):
         with self._lock:
             self._counters[k] = self._counters.get(k, 0.0) + value
 
-    def set_gauge(
-        self, name: str, value: float, labels: Labels | None = None
-    ) -> None:
+    def set_gauge(self, name: str, value: float, labels: Labels | None = None) -> None:
         k = _key(name, labels)
         with self._lock:
             self._gauges[k] = value

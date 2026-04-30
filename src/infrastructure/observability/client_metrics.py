@@ -39,6 +39,7 @@ _logger = logging.getLogger(__name__)
 Outcome = Literal["success", "error", "timeout", "circuit_open"]
 PoolState = Literal["active", "idle", "waiting", "max"]
 CircuitState = Literal["closed", "open", "half_open"]
+DegradationLabel = Literal["normal", "degraded", "down"]
 
 
 #: Бакеты Histogram — покрывают диапазон от 10ms до 10s, подходят для
@@ -49,6 +50,7 @@ _LATENCY_BUCKETS: Final = (0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
 _LABELS: Final = ("client", "operation", "outcome", "tenant")
 _POOL_LABELS: Final = ("client", "state")
 _CIRCUIT_LABELS: Final = ("client", "host")
+_DEGRADATION_LABELS: Final = ("component",)
 
 
 # --- Ядро метрик -----------------------------------------------------
@@ -78,11 +80,27 @@ circuit_state: Final = Gauge(
     labelnames=_CIRCUIT_LABELS,
 )
 
+degradation_mode: Final = Gauge(
+    "app_degradation_mode",
+    (
+        "Component-level degradation indicator (W26 ResilienceCoordinator): "
+        "0=normal, 1=degraded (fallback active), 2=down (all backends "
+        "exhausted)."
+    ),
+    labelnames=_DEGRADATION_LABELS,
+)
+
 
 _CIRCUIT_VALUES: Final[dict[CircuitState, int]] = {
     "closed": 0,
     "open": 1,
     "half_open": 2,
+}
+
+_DEGRADATION_VALUES: Final[dict[DegradationLabel, int]] = {
+    "normal": 0,
+    "degraded": 1,
+    "down": 2,
 }
 
 
@@ -136,6 +154,16 @@ def record_pool_state(
 def record_circuit_state(*, client: str, host: str, state: CircuitState) -> None:
     """Обновить gauge состояния circuit-breaker'а."""
     circuit_state.labels(client=client, host=host).set(_CIRCUIT_VALUES[state])
+
+
+def record_degradation_mode(*, component: str, label: DegradationLabel) -> None:
+    """Обновить gauge degradation-уровня компонента (W26).
+
+    Источник — ``ResilienceCoordinator.degradation_mode(component)``;
+    публикуется при каждом успешном/неуспешном вызове в pipeline'е и
+    периодически из health-aggregator (см. W26.2).
+    """
+    degradation_mode.labels(component=component).set(_DEGRADATION_VALUES[label])
 
 
 @asynccontextmanager
@@ -265,11 +293,14 @@ class ClientMetricsMixin:
 __all__ = (
     "CircuitState",
     "ClientMetricsMixin",
+    "DegradationLabel",
     "Outcome",
     "PoolState",
     "circuit_state",
+    "degradation_mode",
     "pool_size",
     "record_circuit_state",
+    "record_degradation_mode",
     "record_pool_state",
     "record_request",
     "request_duration_seconds",

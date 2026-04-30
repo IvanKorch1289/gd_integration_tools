@@ -77,9 +77,7 @@ class WebhookSource:
         """Регистрирует callback. Повторный start без stop → ``RuntimeError``."""
         async with self._lock:
             if self._on_event is not None:
-                raise RuntimeError(
-                    f"WebhookSource(id={self.source_id!r}) уже запущен"
-                )
+                raise RuntimeError(f"WebhookSource(id={self.source_id!r}) уже запущен")
             self._on_event = on_event
         logger.info("WebhookSource started: id=%s path=%s", self.source_id, self.path)
 
@@ -112,9 +110,7 @@ class WebhookSource:
         try:
             ts = float(raw)
         except ValueError as exc:
-            raise WebhookVerificationError(
-                f"Invalid timestamp value: {raw!r}"
-            ) from exc
+            raise WebhookVerificationError(f"Invalid timestamp value: {raw!r}") from exc
         if abs(time.time() - ts) > self._ts_window:
             raise WebhookVerificationError(
                 f"Timestamp drift exceeds window of {self._ts_window}s"

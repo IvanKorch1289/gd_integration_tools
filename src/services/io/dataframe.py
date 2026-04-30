@@ -13,7 +13,6 @@ Usage::
     write_excel(rows, output_path)
 """
 
-
 import io
 import logging
 from typing import Any, Iterable

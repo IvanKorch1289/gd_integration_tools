@@ -9,6 +9,7 @@ try:
         ClientError as BotoClientError,
     )
 except ImportError:  # botocore — опциональная зависимость dev_light
+
     class BotoClientError(Exception):  # type: ignore[no-redef]
         """Stub для случая, когда botocore не установлен (dev_light без S3).
 
@@ -235,7 +236,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:

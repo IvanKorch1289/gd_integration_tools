@@ -34,9 +34,7 @@ class MetricsBackend(ABC):
         ...
 
     @abstractmethod
-    def set_gauge(
-        self, name: str, value: float, labels: Labels | None = None
-    ) -> None:
+    def set_gauge(self, name: str, value: float, labels: Labels | None = None) -> None:
         """Устанавливает текущее значение gauge ``name``."""
         ...
 

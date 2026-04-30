@@ -52,8 +52,7 @@ class ClientCircuitBreaker:
         self._breaker = breaker_registry.get_or_create(
             f"{name}@{host}",
             BreakerSpec(
-                failure_threshold=failure_threshold,
-                recovery_timeout=recovery_timeout,
+                failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
             ),
             host=host,
         )

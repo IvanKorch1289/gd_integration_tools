@@ -66,9 +66,7 @@ class FileWatcherSource:
 
     async def start(self, on_event: EventCallback) -> None:
         if self._task is not None and not self._task.done():
-            raise RuntimeError(
-                f"FileWatcherSource(id={self.source_id!r}) уже запущен"
-            )
+            raise RuntimeError(f"FileWatcherSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = asyncio.create_task(self._run(on_event))
         logger.info(

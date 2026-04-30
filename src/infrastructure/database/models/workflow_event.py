@@ -91,9 +91,7 @@ class WorkflowEvent(BaseModel):
     # Отключаем унаследованные id/created_at/updated_at — для event log
     # используется BIGSERIAL seq как PK; created_at/updated_at бессмысленны
     # (события immutable, есть occurred_at).
-    id: Mapped[int] = mapped_column(
-        BigInteger, primary_key=True, autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     @property
     def seq(self) -> int:

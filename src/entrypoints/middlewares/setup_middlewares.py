@@ -40,6 +40,7 @@ def setup_middlewares(app: FastAPI) -> None:
     )
     from src.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
     from src.entrypoints.middlewares.data_masking import DataMaskingMiddleware
+    from src.entrypoints.middlewares.degradation import DegradationMiddleware
     from src.entrypoints.middlewares.exception_handler import ExceptionHandlerMiddleware
     from src.entrypoints.middlewares.otel_middleware import OtelMiddleware
     from src.entrypoints.middlewares.request_body_cache import (
@@ -77,6 +78,11 @@ def setup_middlewares(app: FastAPI) -> None:
         # NOTE: CircuitBreakerMiddleware удалён в A2 (ADR-005) — global-state баг.
         # Circuit breaker применяется per-route на уровне HTTP-клиентов.
         (RequestIDMiddleware, {}),
+        # W26.5: блокирует POST/PUT/PATCH/DELETE при degraded db_main
+        # (sqlite_ro fallback). Стоит ПОСЛЕ RequestID (для трассировки)
+        # и ПЕРЕД RequestBodyCache (чтобы не читать body заблокированных
+        # запросов).
+        (DegradationMiddleware, {}),
         # IL-OBS1 (ADR-032): кешируем body один раз, чтобы downstream
         # middleware (audit_log / audit_replay / request_log) читали
         # `request.state.body` вместо повторного `await request.body()`.

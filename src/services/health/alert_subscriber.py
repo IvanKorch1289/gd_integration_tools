@@ -7,7 +7,6 @@
 ``HealthAlertSubscriber.start()``.
 """
 
-
 import logging
 from typing import Any
 

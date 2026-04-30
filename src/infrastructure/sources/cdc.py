@@ -112,9 +112,7 @@ class CDCSource:
                 )
             except Exception as exc:
                 # Slot уже существует — нормально для повторного запуска.
-                logger.debug(
-                    "CDCSource %s: slot create skipped: %s", self._slot, exc
-                )
+                logger.debug("CDCSource %s: slot create skipped: %s", self._slot, exc)
             cursor = conn.cursor()
             await cursor.start_replication(
                 slot_name=self._slot, options=options, decode=False
@@ -141,7 +139,8 @@ class CDCSource:
                 "wal_end": str(getattr(msg, "wal_end", "")),
                 "data": (
                     msg.payload.decode(errors="replace")
-                    if hasattr(msg, "payload") and isinstance(msg.payload, (bytes, bytearray))
+                    if hasattr(msg, "payload")
+                    and isinstance(msg.payload, (bytes, bytearray))
                     else getattr(msg, "payload", None)
                 ),
             }
@@ -155,5 +154,3 @@ class CDCSource:
             await on_event(event)
         except Exception as exc:
             logger.error("CDCSource on_event failed: %s", exc)
-
-

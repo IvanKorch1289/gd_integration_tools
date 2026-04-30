@@ -177,7 +177,7 @@ class DatabaseInitializer:
                 "Асинхронный пул соединений инициализирован",
                 extra={"db_name": self.name},
             )
-        except (OSError, TimeoutError):
+        except OSError, TimeoutError:
             self.logger.error(
                 "Ошибка инициализации асинхронного пула соединений",
                 extra={"db_name": self.name},
@@ -208,7 +208,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Синхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия синхронных соединений",
                 extra={"db_name": self.name},
@@ -224,7 +224,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Асинхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия асинхронных соединений",
                 extra={"db_name": self.name},

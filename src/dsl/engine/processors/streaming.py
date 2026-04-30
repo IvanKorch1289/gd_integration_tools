@@ -96,7 +96,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
 
         if age <= self._ttl:
@@ -244,7 +244,7 @@ class _BaseWindow(BaseProcessor):
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
             event_time = float(event_time_raw) if event_time_raw is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             event_time = None
         if event_time is None:
             return False

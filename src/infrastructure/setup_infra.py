@@ -188,9 +188,7 @@ ending_operations: list[OperationItem] = [
 ]
 
 
-async def perform_infrastructure_operation(
-    components: list[OperationItem],
-) -> None:
+async def perform_infrastructure_operation(components: list[OperationItem]) -> None:
     """
     Последовательно выполняет startup/shutdown операции инфраструктуры.
 

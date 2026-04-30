@@ -38,9 +38,7 @@ class DocStoreBackend(ABC):
         ...
 
     @abstractmethod
-    async def update(
-        self, namespace: str, doc_id: str, patch: dict[str, Any]
-    ) -> bool:
+    async def update(self, namespace: str, doc_id: str, patch: dict[str, Any]) -> bool:
         """Применяет patch к документу (merge).
 
         Возвращает ``True``, если документ существовал.
@@ -65,8 +63,6 @@ class DocStoreBackend(ABC):
         ...
 
     @abstractmethod
-    async def count(
-        self, namespace: str, filters: dict[str, Any] | None = None
-    ) -> int:
+    async def count(self, namespace: str, filters: dict[str, Any] | None = None) -> int:
         """Возвращает количество документов в namespace по фильтру."""
         ...

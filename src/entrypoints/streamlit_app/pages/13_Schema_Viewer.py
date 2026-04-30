@@ -112,15 +112,12 @@ with tab_xml:
                     for t in root.findall(f"{xs}complexType")
                     + root.findall(f"{xs}simpleType")
                 ]
-                st.success(
-                    f"XSD: {len(elements)} элемент(ов), {len(types)} тип(ов)"
-                )
+                st.success(f"XSD: {len(elements)} элемент(ов), {len(types)} тип(ов)")
                 st.write({"elements": elements, "types": types})
             else:
                 st.success(f"XML root: <{etree.QName(root).localname}>")
                 st.code(
-                    etree.tostring(root, pretty_print=True).decode(),
-                    language="xml",
+                    etree.tostring(root, pretty_print=True).decode(), language="xml"
                 )
         except Exception as exc:  # noqa: BLE001
             st.error(f"Парсинг XML/XSD не удался: {exc}")

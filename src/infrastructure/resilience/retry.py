@@ -9,7 +9,6 @@ API:
 и опциональным ``RetryBudget`` (token bucket) против retry-storm'ов.
 """
 
-
 import functools
 import logging
 from dataclasses import dataclass, field

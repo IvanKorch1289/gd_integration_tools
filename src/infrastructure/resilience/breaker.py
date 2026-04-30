@@ -14,7 +14,6 @@ API:
 ``infrastructure.observability.client_metrics.record_circuit_state``.
 """
 
-
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass

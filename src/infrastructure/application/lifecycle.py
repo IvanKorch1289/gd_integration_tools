@@ -235,6 +235,33 @@ def _validate_cache_layers() -> None:
     )
 
 
+def _bootstrap_resilience_coordinator(app: FastAPI) -> None:
+    """W26.1/W26.2 — регистрирует 11 компонентов в ``ResilienceCoordinator``
+    и подключает их к ``HealthAggregator``.
+
+    На этапе W26.1 backend'ы — stubs (``NotImplementedError``); цель —
+    чтобы health-check matrix (W26.2) сразу видела весь список из 11
+    компонентов. Реальные wiring'и подставляются в W26.3/W26.4.
+    """
+    try:
+        from src.core.config.settings import settings as app_settings
+        from src.infrastructure.application.health_aggregator import (
+            get_health_aggregator,
+        )
+        from src.infrastructure.resilience.coordinator import get_resilience_coordinator
+        from src.infrastructure.resilience.health import (
+            register_resilience_health_checks,
+        )
+        from src.infrastructure.resilience.registration import register_all_components
+
+        coordinator = get_resilience_coordinator()
+        register_all_components(coordinator, app_settings.resilience)
+        register_resilience_health_checks(get_health_aggregator(), coordinator)
+        app.state.resilience_coordinator = coordinator
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("ResilienceCoordinator bootstrap skipped: %s", exc)
+
+
 async def _start_dsl_yaml_watcher(app: FastAPI) -> None:
     """W25.1 — поднимает ``DSLYamlWatcher`` под флагом dsl.hot_reload_enabled.
 
@@ -296,6 +323,7 @@ async def lifespan(app: FastAPI):
         register_all_services()
         register_action_handlers()
         register_dsl_routes()
+        _bootstrap_resilience_coordinator(app)
         await _start_dsl_yaml_watcher(app)
         await starting()
         await _register_protocol_providers()

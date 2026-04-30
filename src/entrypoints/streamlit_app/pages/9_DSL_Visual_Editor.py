@@ -261,11 +261,7 @@ with tab_visual:
                 st.rerun()
 
         rebuilt = _build_yaml_from_steps(
-            {
-                "route_id": new_route_id,
-                "source": new_source,
-                "description": new_desc,
-            },
+            {"route_id": new_route_id, "source": new_source, "description": new_desc},
             steps,
         )
         if rebuilt != st.session_state.yaml:

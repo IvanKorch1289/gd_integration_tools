@@ -37,12 +37,7 @@ class ExpressNotifier(Protocol):
     """
 
     async def send(
-        self,
-        *,
-        recipient: str,
-        subject: str,
-        body: str,
-        metadata: dict[str, Any],
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None: ...
 
 
@@ -104,9 +99,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
                 metadata={
                     "bot": bot,
                     "status": (
-                        "error"
-                        if response.status is InvocationStatus.ERROR
-                        else "ok"
+                        "error" if response.status is InvocationStatus.ERROR else "ok"
                     ),
                 },
             )
@@ -146,6 +139,6 @@ def _format_body(response: InvocationResponse) -> str:
     payload["mode"] = response.mode.value
     try:
         body = json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         body = repr(response)
     return f"```\n{body}\n```"

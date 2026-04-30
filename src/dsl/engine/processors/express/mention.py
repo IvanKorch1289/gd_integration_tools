@@ -91,7 +91,9 @@ class ExpressMentionProcessor(BaseProcessor):
         mention = BotxMention(
             mention_type=self._mention_type,
             mention_id=self._mention_id or uuid.uuid4().hex,
-            user_huid=str(target) if self._mention_type in {"user", "contact"} else None,
+            user_huid=str(target)
+            if self._mention_type in {"user", "contact"}
+            else None,
             group_chat_id=str(target)
             if self._mention_type in {"chat", "channel"}
             else None,

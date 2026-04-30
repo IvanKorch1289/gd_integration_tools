@@ -158,7 +158,7 @@ class ElasticSearchClient:
         try:
             await client.delete(index=self._prefixed(index), id=doc_id)
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
     async def create_index(
@@ -177,7 +177,7 @@ class ElasticSearchClient:
         try:
             client = await self._ensure_client()
             return await client.ping()
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

@@ -1,6 +1,5 @@
 """Pre-registered breakers для всех внешних I/O клиентов (поверх фасада)."""
 
-
 import logging
 from typing import Any
 
@@ -20,9 +19,7 @@ class CircuitBreakerRegistry:
     для совместимости со старыми callsite-ами; внутри делегирует в фасад.
     """
 
-    def get_or_create(
-        self, name: str, spec: BreakerSpec | None = None
-    ) -> Breaker:
+    def get_or_create(self, name: str, spec: BreakerSpec | None = None) -> Breaker:
         return _facade_registry.get_or_create(name, spec)
 
     def get(self, name: str) -> Breaker | None:

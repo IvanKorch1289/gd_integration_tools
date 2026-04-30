@@ -98,7 +98,7 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return "mode" in sig.parameters
 
@@ -239,9 +239,7 @@ class HealthAggregator:
 
             bus = get_event_bus()
             event = HealthTransitionEvent(
-                previous_status=previous,
-                current_status=current,
-                components=components,
+                previous_status=previous, current_status=current, components=components
             )
             await bus.publish("events.health", event)
         except Exception as exc:  # noqa: BLE001

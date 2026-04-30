@@ -172,7 +172,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except (RetryError, CircuitOpen, httpx.HTTPError):
+        except RetryError, CircuitOpen, httpx.HTTPError:
             raise
 
 

@@ -1,6 +1,5 @@
 """События смены overall-статуса health-aggregator (Wave 6.4)."""
 
-
 from typing import Any
 
 from pydantic import BaseModel, Field

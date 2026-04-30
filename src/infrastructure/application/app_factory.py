@@ -112,7 +112,10 @@ def _configure_business_routers(app: FastAPI) -> None:
     # Явные импорты subscriber-модулей: декораторы ``@router.subscriber(...)``
     # регистрируются при импорте, поэтому их нужно подгрузить ДО
     # ``app.include_router(redis_router/rabbit_router)``.
-    if stream_client.redis_router is not None or stream_client.rabbit_router is not None:
+    if (
+        stream_client.redis_router is not None
+        or stream_client.rabbit_router is not None
+    ):
         from src.entrypoints.stream import (  # noqa: F401
             invoker_subscribers,
             subscribers,

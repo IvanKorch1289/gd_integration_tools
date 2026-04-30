@@ -25,17 +25,12 @@ import websockets
 
 __all__: tuple[str, ...] = ()
 
-st.set_page_config(
-    page_title="Invocation Console",
-    page_icon=":zap:",
-    layout="wide",
-)
+st.set_page_config(page_title="Invocation Console", page_icon=":zap:", layout="wide")
 st.header(":zap: Invocation Console (W22)")
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 WS_URL = os.environ.get(
-    "API_WS_URL",
-    BASE_URL.replace("https://", "wss://").replace("http://", "ws://"),
+    "API_WS_URL", BASE_URL.replace("https://", "wss://").replace("http://", "ws://")
 )
 WS_INVOCATIONS_PATH = "/ws/invocations"
 WS_IDLE_TIMEOUT_SECONDS = 5.0
@@ -79,6 +74,7 @@ async def _stream_invocation(
                     chunks.append({"raw": raw})
     except Exception as exc:  # noqa: BLE001
         return chunks, f"{type(exc).__name__}: {exc}"
+
 
 MODES = ("sync", "async-api", "async-queue", "deferred", "background", "streaming")
 REPLY_KINDS = ("", "api", "ws", "queue", "email", "express")
@@ -151,9 +147,7 @@ if submitted:
                 ):
                     st.json(chunk)
             ack_chunks = [c for c in chunks if c.get("type") == "ack"]
-            invocation_id = (
-                ack_chunks[0].get("invocation_id") if ack_chunks else "—"
-            )
+            invocation_id = ack_chunks[0].get("invocation_id") if ack_chunks else "—"
             last_status = next(
                 (c.get("status") for c in reversed(chunks) if c.get("status")),
                 "streamed",
@@ -172,9 +166,9 @@ if submitted:
                 "ms": round(elapsed_ms),
             },
         )
-        st.session_state["invocation_history"] = st.session_state[
-            "invocation_history"
-        ][:20]
+        st.session_state["invocation_history"] = st.session_state["invocation_history"][
+            :20
+        ]
     else:
         try:
             with httpx.Client(timeout=30) as client:

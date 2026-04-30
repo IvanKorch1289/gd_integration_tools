@@ -57,7 +57,9 @@ async def start_all_sources(
         try:
             source = registry.get(spec.id)
         except KeyError:
-            logger.warning("start_all_sources: source %s не в реестре, пропуск", spec.id)
+            logger.warning(
+                "start_all_sources: source %s не в реестре, пропуск", spec.id
+            )
             continue
         adapter = SourceToInvokerAdapter(
             invoker,

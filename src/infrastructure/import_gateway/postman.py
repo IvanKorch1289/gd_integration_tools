@@ -45,19 +45,27 @@ class PostmanImportGateway:
 
     async def import_spec(self, source: ImportSource) -> ConnectorSpec:
         """Распарсить Postman collection → ConnectorSpec."""
-        raw = source.content if isinstance(source.content, bytes) else source.content.encode()
+        raw = (
+            source.content
+            if isinstance(source.content, bytes)
+            else source.content.encode()
+        )
         try:
             data = orjson.loads(raw)
         except orjson.JSONDecodeError as exc:
             raise ImportError(f"Postman: невалидный JSON: {exc}") from exc
 
         if not isinstance(data, dict) or "info" not in data:
-            raise ValueError("Postman: отсутствует поле 'info' (некорректная коллекция)")
+            raise ValueError(
+                "Postman: отсутствует поле 'info' (некорректная коллекция)"
+            )
 
         info = data.get("info", {})
         schema = info.get("schema", "")
         if "v2.1" not in schema:
-            logger.warning("Postman schema not v2.1: %r — продолжаем best-effort", schema)
+            logger.warning(
+                "Postman schema not v2.1: %r — продолжаем best-effort", schema
+            )
 
         title = info.get("name") or "postman_collection"
         version = info.get("version") or info.get("_postman_id") or ""
@@ -194,20 +202,26 @@ class PostmanImportGateway:
             return AuthSpec(
                 kind=AuthSchemeKind.BASIC,
                 secret_refs={
-                    "username": SecretRef(ref="${POSTMAN_BASIC_USERNAME}", hint="Basic auth user"),
-                    "password": SecretRef(ref="${POSTMAN_BASIC_PASSWORD}", hint="Basic auth pass"),
+                    "username": SecretRef(
+                        ref="${POSTMAN_BASIC_USERNAME}", hint="Basic auth user"
+                    ),
+                    "password": SecretRef(
+                        ref="${POSTMAN_BASIC_PASSWORD}", hint="Basic auth pass"
+                    ),
                 },
             )
         if auth_type == "apikey":
-            params = {p["key"]: p.get("value", "") for p in auth_obj.get("apikey", []) if p.get("key")}
+            params = {
+                p["key"]: p.get("value", "")
+                for p in auth_obj.get("apikey", [])
+                if p.get("key")
+            }
             return AuthSpec(
                 kind=AuthSchemeKind.API_KEY,
                 location=params.get("in", "header"),
                 param_name=params.get("key", "X-API-Key"),
                 secret_refs={
-                    "value": SecretRef(
-                        ref="${POSTMAN_API_KEY}", hint="API-key value"
-                    )
+                    "value": SecretRef(ref="${POSTMAN_API_KEY}", hint="API-key value")
                 },
             )
         if auth_type == "oauth2":

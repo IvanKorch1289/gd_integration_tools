@@ -17,12 +17,7 @@ from fastapi import HTTPException, Request, Response, status
 from src.core.config.settings import settings
 from src.core.decorators.limiting_callbacks import default_callback, default_identifier
 
-__all__ = (
-    "RouteLimiter",
-    "default_callback",
-    "default_identifier",
-    "route_limiting",
-)
+__all__ = ("RouteLimiter", "default_callback", "default_identifier", "route_limiting")
 
 
 logger = logging.getLogger("services.decorators.limiting")

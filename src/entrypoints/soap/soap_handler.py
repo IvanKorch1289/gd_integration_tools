@@ -376,7 +376,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:
@@ -386,9 +386,7 @@ def _build_invoke_response_envelope(
         '<?xml version="1.0" encoding="UTF-8"?>'
         f'<soap:Envelope xmlns:soap="{_SOAP_NS}">'
         "<soap:Body>"
-        "<InvokeResponse>"
-        + "".join(parts)
-        + "</InvokeResponse>"
+        "<InvokeResponse>" + "".join(parts) + "</InvokeResponse>"
         "</soap:Body>"
         "</soap:Envelope>"
     )
@@ -404,8 +402,7 @@ def _build_invoke_response_envelope(
     ),
 )
 async def soap_invoke(
-    request: Request,
-    invoker: "Invoker" = Depends(get_invoker_dep),
+    request: Request, invoker: "Invoker" = Depends(get_invoker_dep)
 ) -> Response:
     """Единая SOAP-точка входа для всех :class:`InvocationMode` через Invoker."""
     content_type = "text/xml; charset=utf-8"
@@ -417,8 +414,10 @@ async def soap_invoke(
 
     response = await invoker.invoke(invocation_request)
     status_code = (
-        202 if response.status is InvocationStatus.ACCEPTED
-        else 500 if response.status is InvocationStatus.ERROR
+        202
+        if response.status is InvocationStatus.ACCEPTED
+        else 500
+        if response.status is InvocationStatus.ERROR
         else 200
     )
     xml = _build_invoke_response_envelope(

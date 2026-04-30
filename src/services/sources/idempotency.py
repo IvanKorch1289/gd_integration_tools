@@ -23,11 +23,7 @@ from cachetools import TTLCache
 if TYPE_CHECKING:
     from redis.asyncio import Redis
 
-__all__ = (
-    "DedupeStore",
-    "MemoryDedupeStore",
-    "RedisDedupeStore",
-)
+__all__ = ("DedupeStore", "MemoryDedupeStore", "RedisDedupeStore")
 
 logger = logging.getLogger("services.sources.idempotency")
 
@@ -56,7 +52,9 @@ class MemoryDedupeStore:
     ``ttl_seconds`` — время удержания записи.
     """
 
-    def __init__(self, *, maxsize: int = 100_000, ttl_seconds: float = 86_400.0) -> None:
+    def __init__(
+        self, *, maxsize: int = 100_000, ttl_seconds: float = 86_400.0
+    ) -> None:
         self._cache: TTLCache[str, bool] = TTLCache(maxsize=maxsize, ttl=ttl_seconds)
         self._lock = asyncio.Lock()
 

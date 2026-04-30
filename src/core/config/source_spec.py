@@ -55,19 +55,19 @@ class SourceSpec(BaseModel):
     id: str = Field(..., min_length=1, description="Уникальный source_id.")
     kind: SourceKind = Field(..., description="Тип источника.")
     action: str = Field(
-        ..., min_length=1, description="Имя action, на который маршрутизируется событие."
+        ...,
+        min_length=1,
+        description="Имя action, на который маршрутизируется событие.",
     )
     mode: InvocationMode = Field(
         default=InvocationMode.SYNC,
         description="Режим Invoker (sync/async-api/async-queue/...).",
     )
     reply_channel: str | None = Field(
-        default=None,
-        description="Канал ответа (для асинхронных режимов). null = нет.",
+        default=None, description="Канал ответа (для асинхронных режимов). null = нет."
     )
     idempotency: bool = Field(
-        default=True,
-        description="Включить dedup по event_id перед вызовом Invoker.",
+        default=True, description="Включить dedup по event_id перед вызовом Invoker."
     )
     config: dict[str, Any] = Field(
         default_factory=dict,

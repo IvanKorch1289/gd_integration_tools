@@ -56,9 +56,7 @@ class PostgresWatermarkStore:
     def __init__(self, session_manager: DatabaseSessionManager) -> None:
         self._sm = session_manager
 
-    async def load(
-        self, route_id: str, processor_name: str
-    ) -> WatermarkState | None:
+    async def load(self, route_id: str, processor_name: str) -> WatermarkState | None:
         async with self._sm.create_session() as session:
             row = await self._fetch_row(session, route_id, processor_name)
         if row is None:
@@ -95,8 +93,7 @@ class PostgresWatermarkStore:
         session: AsyncSession, route_id: str, processor_name: str
     ) -> tuple[float, float, int] | None:
         result = await session.execute(
-            _LOAD_SQL,
-            {"route_id": route_id, "processor_name": processor_name},
+            _LOAD_SQL, {"route_id": route_id, "processor_name": processor_name}
         )
         row = result.first()
         if row is None:

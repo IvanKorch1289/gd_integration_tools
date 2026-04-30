@@ -28,9 +28,7 @@ __all__ = ("sources_router",)
 
 logger = logging.getLogger(__name__)
 
-sources_router = APIRouter(
-    prefix="/webhooks/sources", tags=["Webhooks · W23 Sources"]
-)
+sources_router = APIRouter(prefix="/webhooks/sources", tags=["Webhooks · W23 Sources"])
 
 
 @sources_router.post(

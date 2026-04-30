@@ -211,7 +211,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                except asyncio.CancelledError, Exception:  # noqa: BLE001
                     pass
         # Ждём завершения активных executions (до lock_ttl_s — иначе drop).
         loop = asyncio.get_running_loop()

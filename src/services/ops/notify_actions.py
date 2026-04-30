@@ -87,10 +87,7 @@ def get_notify_gateway_actions() -> NotifyGatewayActions:
 
 
 def register_notify_actions(
-    registry: ActionHandlerRegistry,
-    *,
-    prefix: str = "notifyv2",
-    override: bool = False,
+    registry: ActionHandlerRegistry, *, prefix: str = "notifyv2", override: bool = False
 ) -> list[str]:
     """Регистрирует action'ы ``<prefix>.email``, ``<prefix>.telegram``...
 

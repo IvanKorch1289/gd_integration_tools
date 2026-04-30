@@ -3,7 +3,6 @@
 Используется S3-клиентом для безопасной упаковки бинарных метаданных.
 """
 
-
 from base64 import b64decode, b64encode
 from binascii import Error as BinasciiError
 from typing import Any
@@ -34,7 +33,7 @@ def decode_base64(data: Any) -> Any:
     if isinstance(data, str):
         try:
             decoded_bytes = b64decode(data, validate=True)
-        except (BinasciiError, ValueError):
+        except BinasciiError, ValueError:
             return data
         try:
             return decoded_bytes.decode("utf-8")

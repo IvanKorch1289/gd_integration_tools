@@ -14,7 +14,6 @@
     await sup.run()
 """
 
-
 import asyncio
 import logging
 import secrets
@@ -42,9 +41,7 @@ class BackoffPolicy:
 
     def delay_for(self, attempt: int) -> float:
         """Возвращает delay для попытки ``attempt`` (0-индексированной)."""
-        base = min(
-            self.initial_seconds * (self.multiplier**attempt), self.max_seconds
-        )
+        base = min(self.initial_seconds * (self.multiplier**attempt), self.max_seconds)
         # secrets.SystemRandom — без cryptographic warning (S311) и достаточно
         # для jittered backoff.
         return base + secrets.SystemRandom().uniform(0.0, self.jitter)

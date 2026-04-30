@@ -13,19 +13,11 @@ from pydantic import Field
 
 from src.schemas.base import BaseSchema
 
-__all__ = (
-    "InvocationRequestSchema",
-    "InvocationResponseSchema",
-)
+__all__ = ("InvocationRequestSchema", "InvocationResponseSchema")
 
 #: Допустимые режимы вызова (string-aliases :class:`InvocationMode`).
 InvocationModeLiteral = Literal[
-    "sync",
-    "async-api",
-    "async-queue",
-    "deferred",
-    "background",
-    "streaming",
+    "sync", "async-api", "async-queue", "deferred", "background", "streaming"
 ]
 
 
@@ -63,11 +55,15 @@ class InvocationRequestSchema(BaseSchema):
 class InvocationResponseSchema(BaseSchema):
     """Унифицированный JSON-ответ Invoker."""
 
-    invocation_id: str = Field(description="Уникальный id вызова — единый для трейсинга.")
+    invocation_id: str = Field(
+        description="Уникальный id вызова — единый для трейсинга."
+    )
     status: Literal["ok", "accepted", "error"] = Field(
         description="Финальный статус (sync/streaming) либо подтверждение приёма."
     )
-    mode: InvocationModeLiteral = Field(description="Режим, с которым был запущен вызов.")
+    mode: InvocationModeLiteral = Field(
+        description="Режим, с которым был запущен вызов."
+    )
     result: Any | None = Field(
         default=None, description="Результат (только для sync; иначе null)."
     )

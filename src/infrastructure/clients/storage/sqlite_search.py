@@ -45,13 +45,12 @@ class SqliteFTS5Search:
     # ─────────────────────── SearchClient API ───────────────────────
 
     async def index_document(
-        self,
-        index: str,
-        document: dict[str, Any],
-        doc_id: str | None = None,
+        self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
         table = await self._ensure_index(index)
-        doc_id = doc_id or document.get("id") or document.get("_id") or _hash_doc(document)
+        doc_id = (
+            doc_id or document.get("id") or document.get("_id") or _hash_doc(document)
+        )
         body = json.dumps(document, ensure_ascii=False, default=str)
         # Имя таблицы валидируется в _ensure_index регуляркой — S608 false positive.
         async with aiosqlite.connect(self._path) as db:
@@ -67,10 +66,7 @@ class SqliteFTS5Search:
         return {"_id": doc_id, "result": "indexed"}
 
     async def bulk_index(
-        self,
-        index: str,
-        documents: list[dict[str, Any]],
-        id_field: str | None = None,
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
     ) -> dict[str, Any]:
         for d in documents:
             doc_id = d.get(id_field) if id_field else None
@@ -101,16 +97,11 @@ class SqliteFTS5Search:
         results = [json.loads(body) for _, body in rows]
         if sort:
             sort_key, sort_dir = self._parse_sort(sort[0])
-            results.sort(
-                key=lambda d: d.get(sort_key, 0), reverse=(sort_dir == "desc")
-            )
+            results.sort(key=lambda d: d.get(sort_key, 0), reverse=(sort_dir == "desc"))
         return results
 
     async def aggregate(
-        self,
-        index: str,
-        aggs: dict[str, Any],
-        query: dict[str, Any] | None = None,
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         table = await self._ensure_index(index)
         match = self._build_match(query) if query else ""
@@ -123,7 +114,9 @@ class SqliteFTS5Search:
             cursor = await db.execute(sql, tuple(params))
             row = await cursor.fetchone()
         return {
-            "aggregations": {name: {"value": int(row[0]) if row else 0} for name in aggs}
+            "aggregations": {
+                name: {"value": int(row[0]) if row else 0} for name in aggs
+            }
         }
 
     async def delete_document(self, index: str, doc_id: str) -> bool:

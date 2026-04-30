@@ -56,7 +56,9 @@ class ExpressStatusProcessor(BaseProcessor):
             client = get_express_client(self._bot)
             async with client:
                 status = await client.get_event_status(str(sync_id))
-            payload = status.get("result", status) if isinstance(status, dict) else status
+            payload = (
+                status.get("result", status) if isinstance(status, dict) else status
+            )
             exchange.set_property(self._result_property, payload)
             _logger.debug(
                 "ExpressStatus: sync_id=%s payload_keys=%s",

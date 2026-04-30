@@ -29,12 +29,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:  # pragma: no cover
     from taskiq import AsyncBroker, AsyncTaskiqDecoratedTask
 
-__all__ = (
-    "get_broker",
-    "get_invocation_task",
-    "run_taskiq_invocation",
-    "broker",
-)
+__all__ = ("get_broker", "get_invocation_task", "run_taskiq_invocation", "broker")
 
 logger = logging.getLogger("infrastructure.execution.taskiq_broker")
 

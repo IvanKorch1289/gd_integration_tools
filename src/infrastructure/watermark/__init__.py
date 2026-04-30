@@ -15,11 +15,7 @@ from src.infrastructure.watermark.memory_store import MemoryWatermarkStore
 if TYPE_CHECKING:
     from src.infrastructure.watermark.postgres_store import PostgresWatermarkStore
 
-__all__ = (
-    "MemoryWatermarkStore",
-    "PostgresWatermarkStore",
-    "create_watermark_store",
-)
+__all__ = ("MemoryWatermarkStore", "PostgresWatermarkStore", "create_watermark_store")
 
 
 def __getattr__(name: str) -> Any:

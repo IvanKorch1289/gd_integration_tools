@@ -452,3 +452,46 @@ telegram:
   parse_mode: "HTML"
   disable_notification: false
   polling_mode: false
+
+
+# ──────────────────────────────────────────────────────────────────────
+# resilience — Wave W26: per-service breaker-профили + fallback-политики
+#
+# breakers.<component>:
+#   threshold — порог отказов до перехода в open
+#   ttl       — секунды до перехода в half-open
+#   exclude   — qualified-имена исключений, не учитывающихся как failure
+#
+# fallbacks.<component>:
+#   chain — упорядоченный список идентификаторов backend'ов
+#   mode  — auto | forced | off
+#
+# Идентификаторы chain соответствуют именам, под которыми backend'ы
+# зарегистрированы в ResilienceCoordinator (см.
+# src/infrastructure/resilience/registration.py).
+# ──────────────────────────────────────────────────────────────────────
+resilience:
+  breakers:
+    db_main:        {threshold: 5, ttl: 30}
+    redis:          {threshold: 5, ttl: 15}
+    minio:          {threshold: 5, ttl: 30}
+    vault:          {threshold: 3, ttl: 60}
+    clickhouse:     {threshold: 5, ttl: 30}
+    mongodb:        {threshold: 5, ttl: 30}
+    elasticsearch:  {threshold: 5, ttl: 30}
+    kafka:          {threshold: 3, ttl: 60}
+    clamav:         {threshold: 3, ttl: 60}
+    smtp:           {threshold: 3, ttl: 120}
+    express:        {threshold: 3, ttl: 60}
+  fallbacks:
+    db_main:        {chain: ["sqlite_ro"],                  mode: auto}
+    redis:          {chain: ["memcached", "memory"],        mode: auto}
+    minio:          {chain: ["local_fs"],                   mode: auto}
+    vault:          {chain: ["env_keyring"],                mode: auto}
+    clickhouse:     {chain: ["pg_audit", "jsonl"],          mode: auto}
+    mongodb:        {chain: ["pg_jsonb"],                   mode: auto}
+    elasticsearch:  {chain: ["sqlite_fts5"],                mode: auto}
+    kafka:          {chain: ["redis_streams", "memory_mq"], mode: auto}
+    clamav:         {chain: ["http_av", "skip_warn"],       mode: auto}
+    smtp:           {chain: ["file_mailer"],                mode: auto}
+    express:        {chain: ["smtp", "slack"],              mode: auto}

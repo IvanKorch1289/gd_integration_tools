@@ -41,10 +41,7 @@ class AuditBackend(ABC):
 
     @abstractmethod
     async def query(
-        self,
-        *,
-        limit: int = 100,
-        filters: dict[str, Any] | None = None,
+        self, *, limit: int = 100, filters: dict[str, Any] | None = None
     ) -> list[AuditRecord]:
         """Возвращает последние ``limit`` записей, опционально по фильтру.
 

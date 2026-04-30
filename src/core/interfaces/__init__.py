@@ -282,9 +282,7 @@ class AuthProvider(ABC):
         ...
 
     @abstractmethod
-    async def authorize(
-        self, user: dict[str, Any], resource: str, action: str
-    ) -> bool:
+    async def authorize(self, user: dict[str, Any], resource: str, action: str) -> bool:
         """Авторизация: может ли user выполнить action на resource."""
         ...
 
@@ -296,10 +294,7 @@ class AsyncBatcher:
     """Generic async batcher — накапливает items, flush по batch_size или interval."""
 
     def __init__(
-        self,
-        flush_fn: Any,
-        batch_size: int = 100,
-        flush_interval_seconds: float = 5.0,
+        self, flush_fn: Any, batch_size: int = 100, flush_interval_seconds: float = 5.0
     ) -> None:
         import asyncio
 

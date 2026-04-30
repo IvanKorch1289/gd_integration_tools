@@ -31,9 +31,7 @@ class WatermarkStore(Protocol):
     Идентификатор записи — пара ``(route_id, processor_name)``.
     """
 
-    async def load(
-        self, route_id: str, processor_name: str
-    ) -> WatermarkState | None:
+    async def load(self, route_id: str, processor_name: str) -> WatermarkState | None:
         """Загрузить состояние, если оно ранее сохранялось.
 
         Args:
