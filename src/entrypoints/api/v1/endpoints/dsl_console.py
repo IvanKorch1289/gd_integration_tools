@@ -1,7 +1,9 @@
 """DSL Console — inline pipeline execution для отладки.
 
-Позволяет отправить YAML-определение pipeline + payload
-и получить результат с трейсом процессоров.
+W26.5: маршрут регистрируется декларативно через ActionSpec.
+
+Позволяет отправить YAML-определение pipeline + payload и получить
+результат с трейсом процессоров.
 """
 
 from typing import Any
@@ -9,9 +11,9 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-__all__ = ("router",)
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 
-router = APIRouter(tags=["DSL Console"])
+__all__ = ("router",)
 
 
 class InlineDSLRequest(BaseModel):
@@ -42,62 +44,101 @@ class InlineDSLResponse(BaseModel):
     trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
-@router.post(
-    "/dsl/execute-inline",
-    response_model=InlineDSLResponse,
-    summary="Выполнить inline DSL pipeline",
-    description=(
-        "Принимает YAML-определение pipeline + payload. "
-        "Выполняет без регистрации. Возвращает результат и trace."
-    ),
+class _DSLConsoleFacade:
+    """Адаптер для inline-выполнения DSL pipeline."""
+
+    async def execute_inline(
+        self,
+        *,
+        route_yaml: str,
+        payload: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+    ) -> InlineDSLResponse:
+        """Выполняет DSL pipeline из YAML для отладки."""
+        payload = payload or {}
+        headers = headers or {}
+        try:
+            import yaml
+
+            if len(route_yaml) > 65536:
+                return InlineDSLResponse(
+                    status="error", error="YAML too large (max 64KB)"
+                )
+
+            route_def = yaml.safe_load(route_yaml)
+            if not isinstance(route_def, dict) or "route_id" not in route_def:
+                return InlineDSLResponse(
+                    status="error", error="Invalid YAML: missing 'route_id'"
+                )
+
+            import re
+
+            route_id = route_def["route_id"]
+            if not re.match(r"^[a-zA-Z0-9_.\-]+$", route_id):
+                return InlineDSLResponse(
+                    status="error",
+                    error=(
+                        "Invalid route_id: only alphanumeric, dots, hyphens, "
+                        "underscores"
+                    ),
+                )
+
+            from src.dsl.yaml_loader import load_pipeline_from_yaml
+
+            pipeline = load_pipeline_from_yaml(route_yaml)
+
+            from src.dsl.engine.execution_engine import ExecutionEngine
+
+            engine = ExecutionEngine()
+            exchange = await engine.execute(
+                pipeline, body=payload, headers=headers
+            )
+
+            result = (
+                exchange.out_message.body
+                if exchange.out_message
+                else exchange.in_message.body
+            )
+            trace = exchange.get_property("_trace", [])
+
+            return InlineDSLResponse(
+                status=exchange.status.value,
+                result=result,
+                error=exchange.error,
+                trace=trace,
+            )
+
+        except Exception as exc:  # noqa: BLE001
+            return InlineDSLResponse(status="error", error=str(exc))
+
+
+_FACADE = _DSLConsoleFacade()
+
+
+def _get_facade() -> _DSLConsoleFacade:
+    return _FACADE
+
+
+router = APIRouter(tags=["DSL Console"])
+builder = ActionRouterBuilder(router)
+
+
+builder.add_actions(
+    [
+        ActionSpec(
+            name="execute_inline_dsl",
+            method="POST",
+            path="/dsl/execute-inline",
+            summary="Выполнить inline DSL pipeline",
+            description=(
+                "Принимает YAML-определение pipeline + payload. "
+                "Выполняет без регистрации. Возвращает результат и trace."
+            ),
+            service_getter=_get_facade,
+            service_method="execute_inline",
+            body_model=InlineDSLRequest,
+            response_model=InlineDSLResponse,
+            tags=("DSL Console",),
+        ),
+    ]
 )
-async def execute_inline_dsl(body: InlineDSLRequest) -> InlineDSLResponse:
-    """Выполняет DSL pipeline из YAML для отладки."""
-    try:
-        import yaml
-
-        if len(body.route_yaml) > 65536:
-            return InlineDSLResponse(status="error", error="YAML too large (max 64KB)")
-
-        route_def = yaml.safe_load(body.route_yaml)
-        if not isinstance(route_def, dict) or "route_id" not in route_def:
-            return InlineDSLResponse(
-                status="error", error="Invalid YAML: missing 'route_id'"
-            )
-
-        import re
-
-        route_id = route_def["route_id"]
-        if not re.match(r"^[a-zA-Z0-9_.\-]+$", route_id):
-            return InlineDSLResponse(
-                status="error",
-                error="Invalid route_id: only alphanumeric, dots, hyphens, underscores",
-            )
-
-        from src.dsl.yaml_loader import load_pipeline_from_yaml
-
-        pipeline = load_pipeline_from_yaml(body.route_yaml)
-
-        from src.dsl.engine.execution_engine import ExecutionEngine
-
-        engine = ExecutionEngine()
-        exchange = await engine.execute(
-            pipeline, body=body.payload, headers=body.headers
-        )
-
-        result = (
-            exchange.out_message.body
-            if exchange.out_message
-            else exchange.in_message.body
-        )
-        trace = exchange.get_property("_trace", [])
-
-        return InlineDSLResponse(
-            status=exchange.status.value,
-            result=result,
-            error=exchange.error,
-            trace=trace,
-        )
-
-    except Exception as exc:
-        return InlineDSLResponse(status="error", error=str(exc))
