@@ -25,6 +25,17 @@ __all__ = (
     "set_health_aggregator_provider",
     "set_healthcheck_session_provider",
     "set_admin_cache_storage_provider",
+    # Wave 6.3: services/ai/* → providers
+    "get_http_client_provider",
+    "get_ai_sanitizer_provider",
+    "get_redis_stream_client_provider",
+    "get_mongo_client_provider",
+    "get_llm_judge_metrics_provider",
+    "set_http_client_provider",
+    "set_ai_sanitizer_provider",
+    "set_redis_stream_client_provider",
+    "set_mongo_client_provider",
+    "set_llm_judge_metrics_provider",
 )
 
 
@@ -36,6 +47,10 @@ _SLO_MOD = f"{_INFRA}.application.slo_tracker"
 _HEALTH_AGG_MOD = f"{_INFRA}.application.health_aggregator"
 _HEALTH_CHECK_MOD = f"{_INFRA}.monitoring.health_check"
 _REDIS_MOD = f"{_INFRA}.clients.storage.redis"
+_HTTP_CLIENT_MOD = f"{_INFRA}.clients.transport.http"
+_AI_SANITIZER_MOD = f"{_INFRA}.security.ai_sanitizer"
+_MONGO_MOD = f"{_INFRA}.clients.storage.mongodb"
+_OBS_METRICS_MOD = f"{_INFRA}.observability.metrics"
 
 
 # ─────────────── Test/runtime overrides ───────────────
@@ -122,3 +137,94 @@ def get_admin_cache_storage_provider() -> Any:
 
 def set_admin_cache_storage_provider(client: Any) -> None:
     _overrides["admin_cache_storage"] = client
+
+
+# ─────────────── HTTP-клиент (Wave 6.3, services/ai/ai_agent.py) ───────────────
+
+
+def get_http_client_provider() -> Any:
+    """Возвращает singleton ``HttpClient`` (см. ``HttpClientProtocol``)."""
+    if "http_client" in _overrides:
+        return _overrides["http_client"]
+    module = importlib.import_module(_HTTP_CLIENT_MOD)
+    return module.get_http_client_dependency()
+
+
+def set_http_client_provider(client: Any) -> None:
+    _overrides["http_client"] = client
+
+
+# ─────────────── AI sanitizer (Wave 6.3) ───────────────
+
+
+def get_ai_sanitizer_provider() -> Any:
+    """Возвращает фабрику ``AIDataSanitizer`` (см. ``AISanitizerProtocol``)."""
+    if "ai_sanitizer" in _overrides:
+        return _overrides["ai_sanitizer"]
+    module = importlib.import_module(_AI_SANITIZER_MOD)
+    return module.get_ai_sanitizer()
+
+
+def set_ai_sanitizer_provider(sanitizer: Any) -> None:
+    _overrides["ai_sanitizer"] = sanitizer
+
+
+# ─────────────── Redis stream client (Wave 6.3, llm_judge / semantic_cache) ───────────────
+
+
+def get_redis_stream_client_provider() -> Any:
+    """Возвращает singleton ``redis_client`` (см. ``RedisStreamClientProtocol``).
+
+    Используется в ``services/ai/llm_judge.py`` для публикации verdicts
+    в Redis stream и в ``services/ai/semantic_cache.py`` для exact-lookup.
+    """
+    if "redis_stream_client" in _overrides:
+        return _overrides["redis_stream_client"]
+    module = importlib.import_module(_REDIS_MOD)
+    return module.redis_client
+
+
+def set_redis_stream_client_provider(client: Any) -> None:
+    _overrides["redis_stream_client"] = client
+
+
+# ─────────────── Mongo client (Wave 6.3, agent_memory) ───────────────
+
+
+def get_mongo_client_provider() -> Any:
+    """Возвращает фабрику ``MongoDBClient`` (см. ``MongoClientProtocol``)."""
+    if "mongo_client" in _overrides:
+        return _overrides["mongo_client"]
+    module = importlib.import_module(_MONGO_MOD)
+    return module.get_mongo_client
+
+
+def set_mongo_client_provider(factory: Any) -> None:
+    _overrides["mongo_client"] = factory
+
+
+# ─────────────── LLM-judge metrics recorder (Wave 6.3) ───────────────
+
+
+def get_llm_judge_metrics_provider() -> Any:
+    """Возвращает callable ``record_llm_judge`` (см. ``LLMJudgeMetricsProtocol``).
+
+    Реализация: ``infrastructure.observability.metrics.record_llm_judge``.
+    Если функция отсутствует (минимальный профиль без prometheus_client),
+    возвращается no-op.
+    """
+    if "llm_judge_metrics" in _overrides:
+        return _overrides["llm_judge_metrics"]
+    module = importlib.import_module(_OBS_METRICS_MOD)
+    return getattr(module, "record_llm_judge", _noop_llm_judge_metrics)
+
+
+def set_llm_judge_metrics_provider(recorder: Any) -> None:
+    _overrides["llm_judge_metrics"] = recorder
+
+
+def _noop_llm_judge_metrics(
+    *, model: str, hallucination: float, relevance: float, toxicity: float
+) -> None:
+    """Заглушка, если backend метрик недоступен."""
+    return None

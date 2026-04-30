@@ -122,23 +122,28 @@ class LLMJudge:
 
     async def _publish_metrics(self, verdict: JudgeVerdict) -> None:
         """Публикует scores в Prometheus + Redis для dashboard."""
-        try:
-            from src.infrastructure.observability.metrics import record_llm_judge
+        # Wave 6.3: метрики и Redis-клиент — через core/di.providers,
+        # без прямого импорта infrastructure/*.
+        from src.core.di.providers import (
+            get_llm_judge_metrics_provider,
+            get_redis_stream_client_provider,
+        )
 
-            record_llm_judge(
+        try:
+            recorder = get_llm_judge_metrics_provider()
+            recorder(
                 model=verdict.model,
                 hallucination=verdict.hallucination_score,
                 relevance=verdict.relevance_score,
                 toxicity=verdict.toxicity_score,
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
         try:
             import orjson as _orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
-
+            redis_client = get_redis_stream_client_provider()
             await redis_client.add_to_stream(
                 stream_name="llm_judge:verdicts",
                 data={
@@ -152,7 +157,7 @@ class LLMJudge:
                     "metadata": _orjson.dumps(verdict.metadata).decode(),
                 },
             )
-        except ImportError, AttributeError, ConnectionError:
+        except (ImportError, AttributeError, ConnectionError):
             pass
 
     async def evaluate_recent(self, *, limit: int = 50) -> list[JudgeVerdict]:
@@ -160,14 +165,16 @@ class LLMJudge:
 
         Использует APScheduler с Redis jobstore для периодического запуска.
         """
+        # Wave 6.3: Redis-клиент — через core/di.providers.
+        from src.core.di.providers import get_redis_stream_client_provider
+
         verdicts: list[JudgeVerdict] = []
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
-
+            redis_client = get_redis_stream_client_provider()
             records = await redis_client.read_stream(
                 stream_name="llm_calls", count=limit
             )
-        except ImportError, AttributeError, ConnectionError:
+        except (ImportError, AttributeError, ConnectionError):
             return verdicts
 
         for record in records or []:

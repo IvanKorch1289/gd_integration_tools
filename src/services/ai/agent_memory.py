@@ -23,7 +23,8 @@ import logging
 import time
 from typing import Any
 
-from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
+from src.core.di.providers import get_mongo_client_provider
+from src.core.interfaces.ai_clients import MongoClientProtocol
 
 __all__ = ("AgentMemoryService", "get_agent_memory_service")
 
@@ -53,10 +54,13 @@ class AgentMemoryService:
         self._max_messages = max_short_term_messages
         self._short_ttl = short_term_ttl_seconds
         self._long_ttl = long_term_ttl_seconds
-        self._client_factory = client_factory or get_mongo_client
+        # Wave 6.3: lazy-провайдер вместо direct infrastructure import.
+        # Реальная фабрика резолвится в момент первого вызова `_client()`.
+        self._client_factory = client_factory
 
-    def _client(self) -> MongoDBClient:
-        return self._client_factory()
+    def _client(self) -> MongoClientProtocol:
+        factory = self._client_factory or get_mongo_client_provider()
+        return factory()
 
     async def ensure_indexes(self) -> None:
         """Создаёт TTL-индексы (idempotent). Вызывать после старта Mongo."""

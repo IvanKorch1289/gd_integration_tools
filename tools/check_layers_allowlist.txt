@@ -55,12 +55,6 @@ src/schemas/filter_schemas/orders.py	schemas	src.infrastructure.database.models.
 src/schemas/filter_schemas/users.py	schemas	src.infrastructure.database.models.users
 src/schemas/workflow.py	schemas	src.infrastructure.database.models.workflow_event
 src/schemas/workflow.py	schemas	src.infrastructure.database.models.workflow_instance
-src/services/ai/agent_memory.py	services	src.infrastructure.clients.storage.mongodb
-src/services/ai/ai_agent.py	services	src.infrastructure.external_apis.http_client
-src/services/ai/ai_agent.py	services	src.infrastructure.security.ai_sanitizer
-src/services/ai/llm_judge.py	services	src.infrastructure.clients.storage.redis
-src/services/ai/llm_judge.py	services	src.infrastructure.observability.metrics
-src/services/ai/semantic_cache.py	services	src.infrastructure.clients.storage.redis
 src/services/core/base_external_api.py	services	src.infrastructure.clients.transport.http
 src/services/execution/invoker.py	services	src.infrastructure.execution.taskiq_broker
 src/services/execution/invoker.py	services	src.infrastructure.scheduler.scheduler_manager

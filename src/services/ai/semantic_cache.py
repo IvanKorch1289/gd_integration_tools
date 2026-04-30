@@ -91,10 +91,13 @@ class SemanticCache:
         self, query: str, provider: str | None, model: str | None
     ) -> dict[str, Any] | None:
         """Redis-backed exact lookup (fast path)."""
+        # Wave 6.3: Redis-клиент — через core/di.providers.
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_stream_client_provider
+
+            redis_client = get_redis_stream_client_provider()
         except ImportError:
             return None
 
@@ -111,10 +114,13 @@ class SemanticCache:
     async def _exact_store(
         self, query: str, response: Any, provider: str | None, model: str | None
     ) -> None:
+        # Wave 6.3: Redis-клиент — через core/di.providers.
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_stream_client_provider
+
+            redis_client = get_redis_stream_client_provider()
         except ImportError:
             return
 

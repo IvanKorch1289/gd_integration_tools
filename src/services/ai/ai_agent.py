@@ -8,7 +8,8 @@
 import logging
 from typing import Any
 
-from src.infrastructure.security.ai_sanitizer import AIDataSanitizer, get_ai_sanitizer
+from src.core.di.providers import get_ai_sanitizer_provider, get_http_client_provider
+from src.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 
@@ -35,7 +36,8 @@ class AIAgentService:
         self._open_webui = OpenWebUISettings()
         self._ai_cfg = AIProvidersSettings()
 
-        self._sanitizer: AIDataSanitizer = get_ai_sanitizer()
+        # Wave 6.3: lazy-провайдер sanitizer + http-клиент через core/di.
+        self._sanitizer: AISanitizerProtocol = get_ai_sanitizer_provider()
 
         self._providers = {
             "perplexity": self._call_perplexity,
@@ -43,12 +45,10 @@ class AIAgentService:
             "open_webui": self._call_open_webui,
         }
 
-    def _get_http_client(self):
-        from src.infrastructure.external_apis.http_client import (
-            get_http_client_dependency,
-        )
-
-        return get_http_client_dependency()
+    def _get_http_client(self) -> HttpClientProtocol:
+        # Wave 6.3: lazy-резолв через core/di.providers — без прямого
+        # импорта infrastructure/*.
+        return get_http_client_provider()
 
     # ------------------------------------------------------------------
     #  Провайдеры
