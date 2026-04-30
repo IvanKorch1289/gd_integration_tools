@@ -137,15 +137,7 @@ ActionRouterBuilder(router).add_actions(
 )
 
 
-@router.post(
-    "/config/reload",
-    summary="Горячая перезагрузка конфигурации",
-    description=(
-        "Вручную запускает все зарегистрированные config-reload колбеки "
-        "(без рестарта процесса). Используйте когда FS watcher недоступен."
-    ),
-)
-async def reload_config() -> dict[str, object]:
+async def _reload_config() -> dict[str, object]:
     """Эндпоинт ручного триггера hot-reload.
 
     Возвращает агрегированный отчёт из :class:`ConfigHotReloader`.
@@ -153,3 +145,16 @@ async def reload_config() -> dict[str, object]:
     from src.core.config.hot_reload import get_hot_reloader
 
     return await get_hot_reloader().trigger_reload(reason="api-request")
+
+
+router.add_api_route(
+    path="/config/reload",
+    endpoint=_reload_config,
+    methods=["POST"],
+    summary="Горячая перезагрузка конфигурации",
+    description=(
+        "Вручную запускает все зарегистрированные config-reload колбеки "
+        "(без рестарта процесса). Используйте когда FS watcher недоступен."
+    ),
+    name="reload_config",
+)
