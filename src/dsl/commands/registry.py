@@ -166,5 +166,38 @@ class RouteRegistry:
         """
         self._routes.clear()
 
+    def unregister(self, route_id: str) -> bool:
+        """Удаляет маршрут из реестра.
+
+        Используется ``DSLYamlWatcher`` при удалении YAML-файла.
+
+        Args:
+            route_id: Идентификатор маршрута.
+
+        Returns:
+            bool: ``True`` если маршрут был удалён, ``False`` если не найден.
+        """
+        return self._routes.pop(route_id, None) is not None
+
+    def snapshot_state(self) -> dict[str, "Pipeline"]:
+        """Возвращает копию текущего внутреннего состояния (W25.1).
+
+        Используется ``DSLYamlWatcher`` для atomic reload: при ошибке
+        валидации YAML-файла registry откатывается через
+        :meth:`restore_state` к этому снимку.
+
+        Returns:
+            dict[str, Pipeline]: Поверхностная копия ``route_id -> Pipeline``.
+        """
+        return dict(self._routes)
+
+    def restore_state(self, snapshot: dict[str, "Pipeline"]) -> None:
+        """Заменяет текущее состояние снимком (W25.1).
+
+        Args:
+            snapshot: Словарь, ранее полученный из :meth:`snapshot_state`.
+        """
+        self._routes = dict(snapshot)
+
 
 route_registry = RouteRegistry()

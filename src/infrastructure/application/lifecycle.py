@@ -235,6 +235,45 @@ def _validate_cache_layers() -> None:
     )
 
 
+async def _start_dsl_yaml_watcher(app: FastAPI) -> None:
+    """W25.1 — поднимает ``DSLYamlWatcher`` под флагом dsl.hot_reload_enabled.
+
+    Watcher отслеживает ``dsl_routes/`` и атомарно перезагружает Pipeline'ы
+    при изменении файлов. На dev_light/тестах флаг по умолчанию выключен —
+    startup продолжается без watcher'а.
+    """
+    from src.core.config.settings import settings as app_settings
+
+    if not app_settings.dsl.hot_reload_enabled:
+        app_logger.info("DSL hot-reload disabled (DSL_HOT_RELOAD_ENABLED=false)")
+        return
+
+    try:
+        from src.dsl.commands.registry import route_registry
+        from src.dsl.yaml_watcher import DSLYamlWatcher
+
+        watcher = DSLYamlWatcher(
+            routes_dir=app_settings.dsl.routes_dir,
+            route_registry=route_registry,
+            debounce_ms=app_settings.dsl.hot_reload_debounce_ms,
+        )
+        await watcher.start()
+        app.state.dsl_yaml_watcher = watcher
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("DSLYamlWatcher startup skipped: %s", exc)
+
+
+async def _stop_dsl_yaml_watcher(app: FastAPI) -> None:
+    """Останавливает ``DSLYamlWatcher`` если он был запущен."""
+    watcher = getattr(app.state, "dsl_yaml_watcher", None)
+    if watcher is None:
+        return
+    try:
+        await watcher.stop()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("DSLYamlWatcher shutdown error: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -257,6 +296,7 @@ async def lifespan(app: FastAPI):
         register_all_services()
         register_action_handlers()
         register_dsl_routes()
+        await _start_dsl_yaml_watcher(app)
         await starting()
         await _register_protocol_providers()
         _validate_cache_layers()
@@ -300,6 +340,8 @@ async def lifespan(app: FastAPI):
     finally:
         app_logger.info("Завершение работы приложения...")
         app.state.infrastructure_ready = False
+
+        await _stop_dsl_yaml_watcher(app)
 
         try:
             from src.workflows.outbox_worker import stop_outbox_worker

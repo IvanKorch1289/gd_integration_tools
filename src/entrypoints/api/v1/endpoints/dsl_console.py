@@ -19,10 +19,11 @@ class InlineDSLRequest(BaseModel):
 
     route_yaml: str = Field(
         ...,
-        description="YAML-определение маршрута (route_id, processors)",
-        examples=[
-            "route_id: test\nprocessors:\n  - type: LogProcessor\n    level: info"
-        ],
+        description=(
+            "YAML-определение маршрута (route_id + processors). "
+            "Формат — RouteBuilder whitelist (см. yaml_loader)."
+        ),
+        examples=["route_id: test\nprocessors:\n  - log: {level: info}"],
     )
     payload: dict[str, Any] = Field(
         default_factory=dict, description="Payload для Exchange body"
@@ -52,8 +53,6 @@ class InlineDSLResponse(BaseModel):
 )
 async def execute_inline_dsl(body: InlineDSLRequest) -> InlineDSLResponse:
     """Выполняет DSL pipeline из YAML для отладки."""
-    from pathlib import Path
-
     try:
         import yaml
 
@@ -75,16 +74,9 @@ async def execute_inline_dsl(body: InlineDSLRequest) -> InlineDSLResponse:
                 error="Invalid route_id: only alphanumeric, dots, hyphens, underscores",
             )
 
-        import tempfile
+        from src.dsl.yaml_loader import load_pipeline_from_yaml
 
-        from src.dsl.hot_reload import load_yaml_route
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".dsl.yaml", delete=True, encoding="utf-8"
-        ) as tmp:
-            tmp.write(body.route_yaml)
-            tmp.flush()
-            pipeline = load_yaml_route(Path(tmp.name))
+        pipeline = load_pipeline_from_yaml(body.route_yaml)
 
         from src.dsl.engine.execution_engine import ExecutionEngine
 

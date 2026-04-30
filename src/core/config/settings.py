@@ -20,6 +20,7 @@ from src.core.config.base import (
 )
 from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
 from src.core.config.database import DatabaseConnectionSettings, db_connection_settings
+from src.core.config.dsl import DSLSettings, dsl_settings
 from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from src.core.config.express import ExpressSettings, express_settings
 from src.core.config.external_apis import (
@@ -110,6 +111,9 @@ class Settings(BaseSettings):
     mongo: MongoConnectionSettings = mongo_connection_settings
     cache: CacheSettings = cache_settings
     watermark: WatermarkSettings = watermark_settings
+
+    # DSL hot-reload (W25)
+    dsl: DSLSettings = dsl_settings
 
 
 @lru_cache()

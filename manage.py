@@ -24,9 +24,7 @@ from pathlib import Path
 import typer
 
 app = typer.Typer(
-    name="gd-tools",
-    help="GD Integration Tools — management CLI",
-    add_completion=True,
+    name="gd-tools", help="GD Integration Tools — management CLI", add_completion=True
 )
 
 
@@ -37,7 +35,9 @@ app = typer.Typer(
 def run(
     host: str | None = typer.Option(None, help="Bind host (override APP_HOST)"),
     port: int | None = typer.Option(None, help="Bind port (override APP_PORT)"),
-    workers: int | None = typer.Option(None, help="Worker count (override APP_WORKERS)"),
+    workers: int | None = typer.Option(
+        None, help="Worker count (override APP_WORKERS)"
+    ),
     server: str | None = typer.Option(
         None, help="ASGI server: uvicorn | granian (override APP_SERVER)"
     ),
@@ -64,15 +64,18 @@ def run(
 
 
 @app.command("run-frontend")
-def run_frontend(
-    port: int = typer.Option(8501, help="Streamlit port"),
-):
+def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
     """Запуск Streamlit dashboard."""
     cmd = [
-        sys.executable, "-m", "streamlit", "run",
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
         "src/entrypoints/streamlit_app/app.py",
-        "--server.port", str(port),
-        "--server.headless", "true",
+        "--server.port",
+        str(port),
+        "--server.headless",
+        "true",
     ]
     typer.echo(f"Starting Streamlit on :{port}...")
     os.execvp(cmd[0], cmd)
@@ -87,20 +90,37 @@ def run_all(
     procs: list[subprocess.Popen] = []
 
     try:
-        typer.echo(f"Starting backend on :{backend_port} + frontend on :{frontend_port}...")
+        typer.echo(
+            f"Starting backend on :{backend_port} + frontend on :{frontend_port}..."
+        )
 
-        backend = subprocess.Popen([
-            sys.executable, "-m", "uvicorn", "src.main:app",
-            "--host", "0.0.0.0", "--port", str(backend_port),
-        ])
+        backend = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "src.main:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                str(backend_port),
+            ]
+        )
         procs.append(backend)
 
-        frontend = subprocess.Popen([
-            sys.executable, "-m", "streamlit", "run",
-            "src/entrypoints/streamlit_app/app.py",
-            "--server.port", str(frontend_port),
-            "--server.headless", "true",
-        ])
+        frontend = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "streamlit",
+                "run",
+                "src/entrypoints/streamlit_app/app.py",
+                "--server.port",
+                str(frontend_port),
+                "--server.headless",
+                "true",
+            ]
+        )
         procs.append(frontend)
 
         typer.echo("Both services running. Press Ctrl+C to stop.")
@@ -122,15 +142,15 @@ def run_all(
 @app.command()
 def migrate():
     """Применить все накопившиеся миграции (alembic upgrade head)."""
-    subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"], check=True
-    )
+    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
     typer.echo("Migrations applied.")
 
 
 @app.command("makemigration")
 def make_migration(
-    message: str = typer.Argument(..., help="Описание миграции (станет частью имени файла)"),
+    message: str = typer.Argument(
+        ..., help="Описание миграции (станет частью имени файла)"
+    ),
     autogenerate: bool = typer.Option(
         True,
         "--autogenerate/--empty",
@@ -160,9 +180,7 @@ def downgrade(
     target: str = typer.Argument("-1", help="Revision id или шаг (-1, -2, base)"),
 ):
     """Откатить миграцию к указанной ревизии (по умолчанию на одну назад)."""
-    subprocess.run(
-        [sys.executable, "-m", "alembic", "downgrade", target], check=True
-    )
+    subprocess.run([sys.executable, "-m", "alembic", "downgrade", target], check=True)
     typer.echo(f"Downgraded to {target}.")
 
 
@@ -234,18 +252,21 @@ def services():
 def health():
     """Проверка здоровья всех компонентов."""
     import asyncio
+
     _bootstrap()
 
     async def _check():
         checks = {}
         try:
             from src.infrastructure.clients.storage.redis import redis_client
+
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
 
         try:
             from src.infrastructure.database.database import db_initializer
+
             checks["database"] = await db_initializer.check_connection()
         except Exception:
             checks["database"] = False
@@ -254,7 +275,11 @@ def health():
 
     results = asyncio.run(_check())
     for name, ok in results.items():
-        status = typer.style("OK", fg=typer.colors.GREEN) if ok else typer.style("FAIL", fg=typer.colors.RED)
+        status = (
+            typer.style("OK", fg=typer.colors.GREEN)
+            if ok
+            else typer.style("FAIL", fg=typer.colors.RED)
+        )
         typer.echo(f"  {name:<20} {status}")
 
 
@@ -266,7 +291,9 @@ def breakers():
     for info in breaker_registry.get_all_status():
         state = info["state"]
         color = typer.colors.GREEN if state == "closed" else typer.colors.RED
-        typer.echo(f"  {info['name']:<20} {typer.style(state, fg=color)} (failures: {info['failure_count']})")
+        typer.echo(
+            f"  {info['name']:<20} {typer.style(state, fg=color)} (failures: {info['failure_count']})"
+        )
 
 
 # ────────────── Scaffolding ──────────────
@@ -316,7 +343,9 @@ def get_{name}_service() -> {class_name}:
 '''
     service_file.write_text(content)
     typer.echo(f"Created: {service_file}")
-    typer.echo("Next: register in src/core/service_setup.py and src/dsl/commands/setup.py")
+    typer.echo(
+        "Next: register in src/core/service_setup.py and src/dsl/commands/setup.py"
+    )
 
 
 @scaffold_app.command("processor")
@@ -390,13 +419,9 @@ def _import_schema_via_gateway(
     from src.services.integrations import get_import_service
 
     content = Path(source_path).read_bytes()
-    src_obj = ImportSource(
-        kind=ImportSourceKind(kind), content=content, prefix=prefix
-    )
+    src_obj = ImportSource(kind=ImportSourceKind(kind), content=content, prefix=prefix)
     result = asyncio.run(
-        get_import_service().import_and_register(
-            src_obj, register_actions=not dry_run
-        )
+        get_import_service().import_and_register(src_obj, register_actions=not dry_run)
     )
     typer.echo(f"connector: {result['connector']} (status={result['status']})")
     typer.echo(f"endpoints: {result['endpoints']}, version: {result['version']}")
@@ -450,7 +475,10 @@ def list_tools() -> None:
     tools = registry.list()
     for tool in tools:
         required = tool.parameters.get("required") or []
-        params = ", ".join(f"{p}" + ("*" if p in required else "") for p in tool.parameters.get("properties", {}))
+        params = ", ".join(
+            f"{p}" + ("*" if p in required else "")
+            for p in tool.parameters.get("properties", {})
+        )
         typer.echo(f"  {tool.id:<40} {tool.description[:60]}")
         if params:
             typer.echo(f"      args: {params}")
@@ -497,6 +525,75 @@ def expose_tool(
         typer.echo(f"Exposed: {tool.id} — {tool.description[:80]}")
 
 
+# ────────────── DSL CLI (W25.1+) ──────────────
+
+
+dsl_app = typer.Typer(help="DSL operations: hot-reload, write-back, migrations.")
+app.add_typer(dsl_app, name="dsl")
+
+
+@dsl_app.command("reload")
+def dsl_reload(
+    route_id: str | None = typer.Option(
+        None, "--route-id", help="Перезагрузить один route_id; если не указано — все."
+    ),
+    all_routes: bool = typer.Option(
+        False, "--all", help="Полностью пересканировать каталог dsl_routes."
+    ),
+):
+    """W25.1 — ручной триггер reload без watchdog.
+
+    Используется когда watcher отключён (production read-only FS) либо
+    для форсированного обновления после ручной правки YAML.
+    """
+    _bootstrap()
+    import asyncio
+
+    from src.core.config.settings import settings as app_settings
+    from src.dsl.commands.registry import route_registry
+    from src.dsl.yaml_watcher import DSLYamlWatcher
+
+    if route_id is None and not all_routes:
+        typer.echo("Укажи --route-id <id> или --all", err=True)
+        raise typer.Exit(2)
+
+    watcher = DSLYamlWatcher(
+        routes_dir=app_settings.dsl.routes_dir, route_registry=route_registry
+    )
+    if route_id is not None:
+        path = app_settings.dsl.routes_dir / f"{route_id}.yaml"
+        if not path.exists():
+            typer.echo(f"YAML не найден: {path}", err=True)
+            raise typer.Exit(1)
+        from src.dsl.yaml_loader import load_pipeline_from_file
+
+        try:
+            pipeline = load_pipeline_from_file(path)
+            route_registry.register(pipeline)
+            typer.echo(
+                typer.style(f"Reloaded: {pipeline.route_id}", fg=typer.colors.GREEN)
+            )
+        except Exception as exc:
+            typer.echo(
+                typer.style(f"Reload failed: {exc}", fg=typer.colors.RED), err=True
+            )
+            raise typer.Exit(1) from exc
+        return
+
+    report = asyncio.run(watcher.reload_all())
+    if report["errors"]:
+        typer.echo(
+            typer.style(f"Errors: {report['errors']}", fg=typer.colors.RED), err=True
+        )
+        raise typer.Exit(1)
+    typer.echo(
+        typer.style(
+            f"Reloaded {report['loaded']} routes from {app_settings.dsl.routes_dir}",
+            fg=typer.colors.GREEN,
+        )
+    )
+
+
 # ────────────── Validation ──────────────
 
 
@@ -511,14 +608,24 @@ def validate(route_id: str):
     result = pipeline_validator.validate(pipeline)
 
     if result.valid:
-        typer.echo(typer.style(f"Pipeline '{route_id}' is valid.", fg=typer.colors.GREEN))
+        typer.echo(
+            typer.style(f"Pipeline '{route_id}' is valid.", fg=typer.colors.GREEN)
+        )
     else:
-        typer.echo(typer.style(f"Pipeline '{route_id}' has issues:", fg=typer.colors.RED))
+        typer.echo(
+            typer.style(f"Pipeline '{route_id}' has issues:", fg=typer.colors.RED)
+        )
 
     for issue in result.issues:
         color = typer.colors.RED if issue.level == "error" else typer.colors.YELLOW
-        proc_info = f" (processor #{issue.processor_index})" if issue.processor_index is not None else ""
-        typer.echo(f"  [{issue.level.upper()}]{proc_info} {typer.style(issue.message, fg=color)}")
+        proc_info = (
+            f" (processor #{issue.processor_index})"
+            if issue.processor_index is not None
+            else ""
+        )
+        typer.echo(
+            f"  [{issue.level.upper()}]{proc_info} {typer.style(issue.message, fg=color)}"
+        )
 
 
 # ────────────── Utils ──────────────
