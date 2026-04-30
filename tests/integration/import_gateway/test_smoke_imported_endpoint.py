@@ -1,61 +1,47 @@
-"""W24 deferred — smoke-test импорта OpenAPI и dispatch через action-registry.
+"""W24/pre-W26 — smoke-test импорта OpenAPI и dispatch через action-registry.
 
 Сценарий:
 1. ``ImportService.import_and_register`` парсит ``petstore_minimal.yaml``.
-2. Action'ы регистрируются в фейковом registry с positional API
-   (повторяет фактический вызов в ``ImportService._register_actions``).
-3. Через ``dispatch`` проверяем, что stub-handler возвращает метаданные
-   импортированного endpoint'а — это и есть "endpoint вызывается".
+2. Action'ы регистрируются в **production** ``ActionHandlerRegistry`` через
+   kw-only API: ``service_method="dispatch_endpoint"`` (единая точка диспатча
+   через :class:`ImportedActionService`).
+3. Через ``ActionHandlerRegistry.dispatch`` проверяем, что stub возвращает
+   метаданные импортированного endpoint'а — это и есть "endpoint вызывается".
 
-Тест намеренно не использует production ``ActionHandlerRegistry`` —
-его сигнатура keyword-only, и ``_register_actions`` вызывает его
-позиционно (legacy-поведение, миграция к kw-only — отдельный долг).
-Smoke-test покрывает фактический контур import → register → dispatch.
+Проверяет интеграцию с настоящей kw-only сигнатурой реестра, без fake-shim'ов.
 """
 
 # ruff: noqa: S101
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Awaitable, Callable
 
 import pytest
 
 from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.services.integrations import ImportService
+from src.dsl.commands.action_registry import ActionHandlerRegistry
+from src.schemas.invocation import ActionCommandSchema
+from src.services.integrations import ImportService, get_imported_action_service
 from tests.integration.import_gateway.test_import_service import _FakeStore
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway"
 
 
-class _FakeActionRegistry:
-    """Минимальный action-registry для smoke-теста.
-
-    Совпадает по сигнатуре ``register(name, handler)`` с фактическим
-    вызовом в ``ImportService._register_actions``. Поддерживает
-    ``is_registered`` и ``dispatch``.
-    """
-
-    def __init__(self) -> None:
-        self._handlers: dict[str, Callable[[dict[str, Any]], Awaitable[Any]]] = {}
-
-    def register(
-        self, action: str, handler: Callable[[dict[str, Any]], Awaitable[Any]]
-    ) -> None:
-        self._handlers[action] = handler
-
-    def is_registered(self, action: str) -> bool:
-        return action in self._handlers
-
-    async def dispatch(self, action: str, payload: dict[str, Any]) -> Any:
-        return await self._handlers[action](payload)
+@pytest.fixture(autouse=True)
+def _reset_imported_action_catalog() -> Iterator[None]:
+    """Гарантирует чистый ImportedActionService между тестами."""
+    catalog = get_imported_action_service()
+    catalog.clear()
+    yield
+    catalog.clear()
 
 
 @pytest.mark.asyncio
 async def test_imported_openapi_endpoint_is_registered_and_dispatchable() -> None:
     store = _FakeStore()
-    registry = _FakeActionRegistry()
+    registry = ActionHandlerRegistry()
     svc = ImportService(connector_store=store, action_registry=registry)
     src = ImportSource(
         kind=ImportSourceKind.OPENAPI,
@@ -73,8 +59,14 @@ async def test_imported_openapi_endpoint_is_registered_and_dispatchable() -> Non
     assert set(result["registered_actions"]) == expected
     for action in expected:
         assert registry.is_registered(action)
+        assert get_imported_action_service().is_registered(action)
 
-    response = await registry.dispatch("connector.petstore.listPets", {"limit": 10})
+    response = await registry.dispatch(
+        ActionCommandSchema(
+            action="connector.petstore.listPets",
+            payload={"action": "connector.petstore.listPets", "limit": 10},
+        )
+    )
     assert response["status"] == "stub"
     assert response["operation_id"].endswith("listPets")
     assert response["method"].upper() == "GET"
@@ -85,7 +77,7 @@ async def test_imported_openapi_endpoint_is_registered_and_dispatchable() -> Non
 @pytest.mark.asyncio
 async def test_imported_endpoint_dispatch_handles_post_with_body() -> None:
     store = _FakeStore()
-    registry = _FakeActionRegistry()
+    registry = ActionHandlerRegistry()
     svc = ImportService(connector_store=store, action_registry=registry)
     src = ImportSource(
         kind=ImportSourceKind.OPENAPI,
@@ -95,7 +87,12 @@ async def test_imported_endpoint_dispatch_handles_post_with_body() -> None:
     await svc.import_and_register(src, register_actions=True)
 
     body = {"id": 1, "name": "Rex"}
-    response = await registry.dispatch("connector.petstore.createPet", body)
+    response = await registry.dispatch(
+        ActionCommandSchema(
+            action="connector.petstore.createPet",
+            payload={"action": "connector.petstore.createPet", **body},
+        )
+    )
     assert response["status"] == "stub"
     assert response["method"].upper() == "POST"
     assert response["path"] == "/pets"

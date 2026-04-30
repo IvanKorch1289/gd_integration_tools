@@ -228,45 +228,40 @@ class ImportService:
         return sorted(prev_ids - current_ids)
 
     def _register_actions(self, spec: ConnectorSpec) -> list[str]:
-        """Best-effort регистрация actions в ActionHandlerRegistry.
+        """Best-effort регистрация actions в ActionHandlerRegistry (kw-only API).
+
+        Каждый endpoint регистрируется в singleton'е :class:`ImportedActionService`
+        и в реестре указывается ``service_method="dispatch_endpoint"`` —
+        фактический dispatch выполняется через единую точку входа.
 
         Action-name = ``connector.{spec.name}.{operation_id_short}``.
-        При отсутствии метода ``register`` в registry — пропускаем.
         """
         registered: list[str] = []
         registry = self._action_registry
         if registry is None or not hasattr(registry, "register"):
             return registered
+
+        from src.services.integrations.imported_action_service import (
+            get_imported_action_service,
+        )
+
+        catalog = get_imported_action_service()
         for ep in spec.endpoints:
             short = ep.operation_id.rsplit(".", 1)[-1]
             action_name = f"connector.{spec.name}.{short}"
             try:
-                registry.register(action_name, _make_stub_handler(ep))
+                catalog.register_endpoint(action_name, ep)
+                registry.register(
+                    action=action_name,
+                    service_getter=get_imported_action_service,
+                    service_method="dispatch_endpoint",
+                )
                 registered.append(action_name)
             except Exception as exc:
                 logger.warning(
                     "ImportService: failed to register action %s: %s", action_name, exc
                 )
         return registered
-
-
-def _make_stub_handler(endpoint: Any) -> Any:
-    """Возвращает stub-handler для зарегистрированного endpoint'а.
-
-    Реальная реализация вызова — через ``Invoker`` (W22) с настроенным Sink.
-    Здесь только метаданные, чтобы action-name появился в ``make actions``.
-    """
-
-    async def _handler(payload: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "status": "stub",
-            "operation_id": endpoint.operation_id,
-            "method": endpoint.method,
-            "path": endpoint.path,
-            "payload": payload,
-        }
-
-    return _handler
 
 
 @app_state_singleton("import_service", factory=ImportService)

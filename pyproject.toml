@@ -152,7 +152,8 @@ dev = [
     "pytest-cov>=6.0.0,<7.0.0",
     "libcst>=1.5.0,<2.0.0",
     "ruamel-yaml>=0.18.0,<1.0.0",
-    "questionary>=2.0.0,<3.0.0"
+    "questionary>=2.0.0,<3.0.0",
+    "testcontainers[postgres]>=4.7.2,<5.0.0"
 ]
 
 [build-system]
@@ -232,6 +233,9 @@ minversion = "9.0"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-ra --strict-markers"
+markers = [
+    "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
+]
 
 
 [tool.coverage.run]
