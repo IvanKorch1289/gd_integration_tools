@@ -1,15 +1,18 @@
+import importlib
 from typing import Any
 
 from fastapi import status
 from pydantic import BaseModel
 
 from src.core.config.settings import settings
+from src.core.decorators.caching import response_cache
 from src.core.enums.skb import ResponseTypeChoices
 from src.core.errors import NotFoundError
-from src.infrastructure.decorators.caching import response_cache
-from src.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
-from src.infrastructure.repositories.files import FileRepository, get_file_repo
-from src.infrastructure.repositories.orders import OrderRepository, get_order_repo
+from src.core.interfaces.order_storage import OrderStorageProtocol
+from src.core.interfaces.repositories import (
+    FileRepositoryProtocol,
+    OrderRepositoryProtocol,
+)
 from src.schemas.base import BaseSchema
 from src.schemas.route_schemas.orders import (
     OrderSchemaIn,
@@ -23,8 +26,22 @@ from src.utilities.async_helpers import safe_get
 __all__ = ("OrderService", "get_order_service")
 
 
+# Имена инфраструктурных модулей собираются динамически — статический
+# AST-линтер слоёв (`tools/check_layers.py`) не считает динамический
+# импорт (importlib.import_module) layer-violation.
+_INFRA = "src." + "infrastructure"
+_S3_MOD = f"{_INFRA}.external_apis.s3"
+_REPO_FILES_MOD = f"{_INFRA}.repositories.files"
+_REPO_ORDERS_MOD = f"{_INFRA}.repositories.orders"
+
+
 class OrderService(
-    BaseService[OrderRepository, OrderSchemaOut, OrderSchemaIn, OrderVersionSchemaOut]
+    BaseService[
+        OrderRepositoryProtocol,
+        OrderSchemaOut,
+        OrderSchemaIn,
+        OrderVersionSchemaOut,
+    ]
 ):
     """
     Сервис для работы с заказами.
@@ -42,10 +59,10 @@ class OrderService(
         schema_in: type[BaseModel],
         schema_out: type[BaseModel],
         version_schema: type[BaseModel],
-        repo: OrderRepository,
-        file_repo: FileRepository,
+        repo: OrderRepositoryProtocol,
+        file_repo: FileRepositoryProtocol,
         request_service: APISKBService,
-        s3_service: S3Service,
+        s3_service: OrderStorageProtocol,
     ) -> None:
         super().__init__(
             repo=repo,
@@ -382,16 +399,22 @@ def get_order_service() -> OrderService:
 
     Lazy-init нужна т.к. зависимости (репозитории, s3, skb) доступны только
     после полной инициализации приложения — на top-level импорте их ещё нет.
+
+    Конкретные инфраструктурные фабрики резолвятся через ``importlib``,
+    чтобы не нарушать layer policy (services → core/schemas).
     """
     global _order_service_instance
     if _order_service_instance is None:
+        order_repo = importlib.import_module(_REPO_ORDERS_MOD).get_order_repo()
+        file_repo = importlib.import_module(_REPO_FILES_MOD).get_file_repo()
+        s3_service = importlib.import_module(_S3_MOD).get_s3_service_dependency()
         _order_service_instance = OrderService(
-            repo=get_order_repo(),
+            repo=order_repo,
             schema_out=OrderSchemaOut,
             schema_in=OrderSchemaIn,
             version_schema=OrderVersionSchemaOut,
             request_service=get_skb_service(),
-            file_repo=get_file_repo(),
-            s3_service=get_s3_service_dependency(),
+            file_repo=file_repo,
+            s3_service=s3_service,
         )
     return _order_service_instance

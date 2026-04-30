@@ -22,6 +22,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.core.di.providers import (
+    get_health_aggregator_provider,
+    get_slo_tracker_provider,
+)
+
 __all__ = ("SystemService", "get_system_service")
 
 logger = logging.getLogger("services.system")
@@ -59,21 +64,13 @@ class SystemService:
     async def health(self) -> dict[str, Any]:
         """Unified health check через HealthAggregator."""
         try:
-            from src.infrastructure.application.health_aggregator import (
-                get_health_aggregator,
-            )
-
-            return await get_health_aggregator().check_all()
+            return await get_health_aggregator_provider().check_all()
         except ImportError:
             return await self.tech.check_all_services()
 
     async def component_health(self, name: str) -> dict[str, Any]:
         """Health одного компонента."""
-        from src.infrastructure.application.health_aggregator import (
-            get_health_aggregator,
-        )
-
-        return await get_health_aggregator().check_single(name)
+        return await get_health_aggregator_provider().check_single(name)
 
     # ── Configuration ───────────────────────────────────────
 
@@ -117,9 +114,7 @@ class SystemService:
     async def slo_report(self) -> dict[str, Any]:
         """P50/P95/P99 по всем DSL маршрутам."""
         try:
-            from src.infrastructure.application.slo_tracker import get_slo_tracker
-
-            return get_slo_tracker().get_report()
+            return get_slo_tracker_provider().get_report()
         except ImportError:
             return {}
 

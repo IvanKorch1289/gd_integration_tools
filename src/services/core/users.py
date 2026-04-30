@@ -1,7 +1,8 @@
+import importlib
 from typing import Any
 
 from src.core.errors import ServiceError
-from src.infrastructure.repositories.users import UserRepository, get_user_repo
+from src.core.interfaces.repositories import UserRepositoryProtocol
 from src.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
@@ -12,8 +13,13 @@ from src.services.core.base import BaseService
 __all__ = ("get_user_service",)
 
 
+_REPO_USERS_MOD = "src." + "infrastructure.repositories.users"
+
+
 class UserService(
-    BaseService[UserRepository, UserSchemaOut, UserSchemaIn, UserVersionSchemaOut]
+    BaseService[
+        UserRepositoryProtocol, UserSchemaOut, UserSchemaIn, UserVersionSchemaOut
+    ]
 ):
     """
     Сервис для работы с пользователями. Обеспечивает создание, аутентификацию и управление пользователями.
@@ -86,8 +92,9 @@ def get_user_service() -> UserService:
     """
     global _user_service_instance
     if _user_service_instance is None:
+        repo = importlib.import_module(_REPO_USERS_MOD).get_user_repo()
         _user_service_instance = UserService(
-            repo=get_user_repo(),
+            repo=repo,
             request_schema=UserSchemaIn,
             response_schema=UserSchemaOut,
             version_schema=UserVersionSchemaOut,

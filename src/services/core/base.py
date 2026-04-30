@@ -5,16 +5,28 @@ from typing import Any, cast
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
+from src.core.decorators.caching import response_cache
+from src.core.di.providers import get_cache_invalidator_provider
 from src.core.errors import NotFoundError, ServiceError
-from src.infrastructure.database.models.base import BaseModel
-from src.infrastructure.decorators.caching import response_cache
-from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.core.interfaces.db_model import DBModelProtocol
+from src.core.interfaces.repositories import RepositoryProtocol
 from src.schemas.base import BaseSchema, PaginatedResult
 from src.utilities.converters import transfer_model_to_schema
 
 logger = logging.getLogger(__name__)
 
 __all__ = ("create_service_class", "BaseService", "get_service_for_model")
+
+
+def _is_orm_model(instance: Any) -> bool:
+    """Структурная проверка ORM-модели без зависимости от infrastructure.
+
+    Проект использует SQLAlchemy DeclarativeBase: у любой модели есть
+    атрибут ``__tablename__`` (через ``declared_attr``) и ``__table__``.
+    Этого достаточно для duck-typing в сервисах.
+    """
+    cls = instance.__class__
+    return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
 class BaseService[
@@ -74,7 +86,7 @@ class BaseService[
             Returns:
                 Схема ответа или ``None``.
             """
-            if isinstance(instance, BaseModel) or hasattr(
+            if _is_orm_model(instance) or hasattr(
                 instance.__class__, "version_parent"
             ):
                 return transfer_model_to_schema(  # type: ignore[return-value]
@@ -174,12 +186,11 @@ class BaseService[
             entity_id: Идентификатор конкретной записи (опционально).
         """
         await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
-        from src.infrastructure.cache import get_cache_invalidator
 
         tags = [self._entity_tag()]
         if entity_id is not None:
             tags.append(f"{self._entity_tag()}:{entity_id}")
-        await get_cache_invalidator().invalidate(*tags)
+        await get_cache_invalidator_provider().invalidate(*tags)
 
     async def add(self, data: dict[str, Any]) -> ConcreteResponseSchema | None:
         """Добавляет объект и инвалидирует кэш.
@@ -356,7 +367,7 @@ class BaseService[
             value: Значение поля.
         """
         async with self._service_error_boundary():
-            await self.repo.delete(key=key, value=value)  # type: ignore
+            await self.repo.delete(key=key, value=value)
             await self._invalidate_entity_cache(entity_id=value)
 
     @response_cache
@@ -373,7 +384,7 @@ class BaseService[
             Список версий в виде схем.
         """
         async with self._service_error_boundary():
-            versions = await self.repo.get_all_versions(  # type: ignore[attr-defined]
+            versions = await self.repo.get_all_versions(
                 object_id=object_id, order=order
             )
 
@@ -400,7 +411,7 @@ class BaseService[
             Последняя версия или ``None``.
         """
         async with self._service_error_boundary():
-            version = await self.repo.get_latest_version(  # type: ignore
+            version = await self.repo.get_latest_version(
                 object_id=object_id
             )
             return await self.helper._transfer(version, self.version_schema)
@@ -418,7 +429,7 @@ class BaseService[
             Восстановленный объект или ``None``.
         """
         async with self._service_error_boundary():
-            restored_object = await self.repo.restore_to_version(  # type: ignore
+            restored_object = await self.repo.restore_to_version(
                 object_id=object_id, transaction_id=transaction_id
             )
             return await self.helper._transfer(restored_object, self.response_schema)
@@ -471,11 +482,11 @@ class BaseService[
             return changes
 
 
-async def get_service_for_model(model: type[BaseModel]) -> Any:
-    """Возвращает сервис для указанной модели.
+async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
+    """Возвращает сервис для указанной ORM-модели.
 
     Args:
-        model: Класс модели.
+        model: Класс ORM-модели (структурно — :class:`DBModelProtocol`).
 
     Returns:
         Класс сервиса.
@@ -500,7 +511,7 @@ def create_service_class(
     request_schema: type[BaseSchema],
     response_schema: type[BaseSchema],
     version_schema: type[BaseSchema],
-    repo: type[SQLAlchemyRepository],
-) -> BaseService:  # type: ignore[type-arg]
+    repo: type[RepositoryProtocol],
+) -> BaseService:
     """Фабрика для создания экземпляра BaseService."""
     return BaseService(repo, response_schema, request_schema, version_schema)

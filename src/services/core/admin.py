@@ -3,11 +3,14 @@ from typing import Any
 from fastapi import HTTPException, Request
 
 from src.core.config.settings import settings
+from src.core.di.providers import (
+    get_admin_cache_storage_provider,
+    get_slo_tracker_provider,
+)
 from src.core.state.runtime import disabled_feature_flags
 from src.core.svcs_registry import list_services as _list_services
 from src.dsl.commands.action_registry import action_handler_registry
 from src.dsl.commands.registry import route_registry
-from src.infrastructure.clients.storage.redis import redis_client
 
 __all__ = ("AdminService", "get_admin_service")
 
@@ -66,36 +69,36 @@ class AdminService:
 
     async def list_cache_keys(self, pattern: str = "*") -> Any:
         """
-        Возвращает список ключей Redis по шаблону.
+        Возвращает список ключей кэша по шаблону.
 
         Args:
-            pattern: Redis pattern для поиска ключей.
+            pattern: Pattern для поиска ключей.
 
         Returns:
             Any: Список ключей или совместимый с ним тип ответа.
         """
-        return await redis_client.list_cache_keys(pattern)
+        return await get_admin_cache_storage_provider().list_cache_keys(pattern)
 
     async def get_cache_value(self, key: str) -> Any:
         """
-        Возвращает значение по ключу Redis.
+        Возвращает значение по ключу кэша.
 
         Args:
-            key: Ключ Redis.
+            key: Ключ кэша.
 
         Returns:
             Any: Значение, сохранённое по ключу.
         """
-        return await redis_client.get_cache_value(key)
+        return await get_admin_cache_storage_provider().get_cache_value(key)
 
     async def invalidate_cache(self) -> Any:
         """
-        Полностью инвалидирует Redis-кэш.
+        Полностью инвалидирует кэш.
 
         Returns:
             Any: Результат операции очистки кэша.
         """
-        return await redis_client.invalidate_cache()
+        return await get_admin_cache_storage_provider().invalidate_cache()
 
     # ------------------------------------------------------------------
     #  Информационные методы (introspection)
@@ -168,9 +171,7 @@ class AdminService:
 
     async def slo_report(self) -> dict[str, Any]:
         """SLO-отчёт: P50/P95/P99 per route."""
-        from src.infrastructure.application.slo_tracker import get_slo_tracker
-
-        return get_slo_tracker().get_report()
+        return get_slo_tracker_provider().get_report()
 
 
 _admin_service_instance = AdminService()

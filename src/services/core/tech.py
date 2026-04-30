@@ -6,7 +6,7 @@ import polars as pl
 from fastapi.responses import HTMLResponse
 
 from src.core.config.settings import settings
-from src.infrastructure.monitoring.health_check import get_healthcheck_service
+from src.core.di.providers import get_healthcheck_session_provider
 from src.services.core.base import BaseService, get_service_for_model
 from src.utilities.converters import convert_numpy_types
 from src.utilities.web import generate_link_page
@@ -43,35 +43,35 @@ class TechService:
         )
 
     async def check_database(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_database()
 
     async def check_redis(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_redis()
 
     async def check_s3(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3()
 
     async def check_s3_bucket(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3_bucket()
 
     async def check_graylog(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_graylog()
 
     async def check_smtp(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_smtp()
 
     async def check_rabbitmq(self) -> bool:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_rabbitmq()
 
     async def check_all_services(self) -> dict[str, Any]:
-        async with get_healthcheck_service() as health_check:
+        async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_all_services()
 
     async def get_all_custom_tables(self, model_enum: Enum) -> set[str]:

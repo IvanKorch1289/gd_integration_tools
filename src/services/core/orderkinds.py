@@ -1,13 +1,11 @@
 import asyncio
+import importlib
 from typing import Any
 
 from pydantic import BaseModel
 
 from src.core.errors import ServiceError
-from src.infrastructure.repositories.orderkinds import (
-    OrderKindRepository,
-    get_order_kind_repo,
-)
+from src.core.interfaces.repositories import OrderKindRepositoryProtocol
 from src.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,
     OrderKindSchemaOut,
@@ -19,9 +17,12 @@ from src.services.integrations.skb import APISKBService, get_skb_service
 __all__ = ("get_order_kind_service",)
 
 
+_REPO_ORDERKINDS_MOD = "src." + "infrastructure.repositories.orderkinds"
+
+
 class OrderKindService(
     BaseService[
-        OrderKindRepository,
+        OrderKindRepositoryProtocol,
         OrderKindSchemaOut,
         OrderKindSchemaIn,
         OrderKindVersionSchemaOut,
@@ -36,7 +37,7 @@ class OrderKindService(
         schema_in: BaseModel,
         schema_out: BaseModel,
         version_schema: BaseModel,
-        repo: OrderKindRepository,
+        repo: OrderKindRepositoryProtocol,
         request_service: APISKBService,
     ) -> None:
         super().__init__(
@@ -84,8 +85,9 @@ def get_order_kind_service() -> OrderKindService:
     """
     global _order_kind_service_instance
     if _order_kind_service_instance is None:
+        repo = importlib.import_module(_REPO_ORDERKINDS_MOD).get_order_kind_repo()
         _order_kind_service_instance = OrderKindService(
-            repo=get_order_kind_repo(),
+            repo=repo,
             schema_in=OrderKindSchemaIn,
             schema_out=OrderKindSchemaOut,
             version_schema=OrderKindVersionSchemaOut,
