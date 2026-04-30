@@ -14,7 +14,6 @@ from src.entrypoints.api.generator.invocation import (
     build_http_command_meta,
     default_payload_factory,
 )
-from src.infrastructure.decorators.limiting import route_limiting
 from src.schemas.filter_schemas.orders import OrderFilter
 from src.schemas.route_schemas.orders import (
     OrderIdPathSchema,
@@ -23,6 +22,7 @@ from src.schemas.route_schemas.orders import (
     OrderVersionSchemaOut,
 )
 from src.services.core.orders import get_order_service
+from src.services.decorators.limiting import route_limiting
 
 __all__ = ("router",)
 

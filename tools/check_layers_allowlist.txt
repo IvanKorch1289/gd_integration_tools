@@ -10,16 +10,12 @@ src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructu
 src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.database.session_manager
 src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.workflow.event_store
 src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.workflow.state_store
-src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.decorators.limiting
 src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.antivirus
 src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.s3
 src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.application.health_aggregator
 src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.database.database
 src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.monitoring.health_check
-src/entrypoints/api/v1/endpoints/orderkinds.py	entrypoints	src.infrastructure.decorators.limiting
-src/entrypoints/api/v1/endpoints/orders.py	entrypoints	src.infrastructure.decorators.limiting
 src/entrypoints/api/v1/endpoints/tech.py	entrypoints	src.infrastructure.database.model_registry
-src/entrypoints/api/v1/endpoints/users.py	entrypoints	src.infrastructure.decorators.limiting
 src/entrypoints/cdc/cdc_routes.py	entrypoints	src.infrastructure.clients.external.cdc
 src/entrypoints/email/imap_monitor.py	entrypoints	src.infrastructure.application.vault_refresher
 src/entrypoints/express/router.py	entrypoints	src.infrastructure.observability.metrics

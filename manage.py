@@ -192,12 +192,16 @@ def routes():
     _bootstrap()
     from src.dsl.commands.registry import route_registry
 
-    for route in route_registry.list_routes():
-        flag = f" [FF:{route.feature_flag}]" if route.feature_flag else ""
-        procs = len(route.processors)
-        typer.echo(f"  {route.route_id:<40} ({procs} processors){flag}")
+    route_ids = route_registry.list_routes()
+    for route_id in route_ids:
+        pipeline = route_registry.get(route_id)
+        if pipeline is None:
+            continue
+        flag = f" [FF:{pipeline.feature_flag}]" if pipeline.feature_flag else ""
+        procs = len(pipeline.processors)
+        typer.echo(f"  {pipeline.route_id:<40} ({procs} processors){flag}")
 
-    typer.echo(f"\nTotal: {len(route_registry.list_routes())} routes")
+    typer.echo(f"\nTotal: {len(route_ids)} routes")
 
 
 @app.command()

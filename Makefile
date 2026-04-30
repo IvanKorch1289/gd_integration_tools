@@ -23,6 +23,10 @@ GIT_NO_VERIFY ?= 1
 DOCKER ?= docker
 UV_RUN := uv run
 MANAGE_SCRIPT := $(UV_RUN) python manage.py
+# Lightweight-вариант для introspection-команд (routes/actions/scaffold):
+# использует --extra dev-light, чтобы sqlite/aiosqlite-стек поднимался
+# без полного набора prod-зависимостей (psycopg2 и т.п.).
+MANAGE_LIGHT := $(UV_RUN) --extra dev-light python manage.py
 
 CONFIG_FILE ?= ./config_profiles/dev.yml
 RUN_DIR ?= ./.run
@@ -304,10 +308,10 @@ scaffold: check-env ## Scaffold new component (usage: make scaffold type=service
 	@$(MANAGE_SCRIPT) scaffold $(type) $(name)
 
 routes: check-env ## List DSL routes
-	@$(MANAGE_SCRIPT) routes
+	@APP_PROFILE=dev_light $(MANAGE_LIGHT) routes
 
 actions: check-env ## List registered actions
-	@$(MANAGE_SCRIPT) actions
+	@APP_PROFILE=dev_light $(MANAGE_LIGHT) actions
 
 ##@ Profiling
 

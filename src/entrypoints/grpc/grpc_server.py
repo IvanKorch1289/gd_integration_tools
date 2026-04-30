@@ -5,9 +5,12 @@
 """
 
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import orjson
+
+if TYPE_CHECKING:
+    import grpc
 
 from src.core.config.settings import settings
 from src.core.errors import BaseError

@@ -8,7 +8,6 @@ from src.entrypoints.api.generator.actions import (
     ActionSpec,
     CrudSpec,
 )
-from src.infrastructure.decorators.limiting import route_limiting
 from src.infrastructure.external_apis.antivirus import (
     AntivirusService,
     get_antivirus_service_dependency,
@@ -20,6 +19,7 @@ from src.schemas.route_schemas.files import (
     FileSchemaOut,
     FileVersionSchemaOut,
 )
+from src.services.decorators.limiting import route_limiting
 from src.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")

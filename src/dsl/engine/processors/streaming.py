@@ -30,6 +30,7 @@ from typing import Any
 
 from src.core.clock import RealClock
 from src.core.interfaces.clock import Clock
+from src.core.interfaces.watermark_store import WatermarkStore
 from src.core.types.watermark import LatePolicy, WatermarkState
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
@@ -153,6 +154,12 @@ class _BaseWindow(BaseProcessor):
             (W14.3). 0 = строгий watermark.
         late_policy: Что делать с late events: ``DROP`` (default),
             ``SIDE_OUTPUT``, ``REPROCESS``.
+        watermark_store: Опциональный персистентный backend (W14.5).
+            При наличии вместе с ``route_id`` watermark переживает рестарт.
+        route_id: Идентификатор DSL-маршрута; обязателен совместно с
+            ``watermark_store`` для уникальности ключа в store.
+        persist_min_interval: Минимальный интервал между сохранениями в
+            store (секунды wall-clock). Дебаунс защищает горячий путь.
     """
 
     def __init__(
@@ -163,6 +170,9 @@ class _BaseWindow(BaseProcessor):
         clock: Clock | None = None,
         allowed_lateness_seconds: float = 0.0,
         late_policy: LatePolicy = LatePolicy.DROP,
+        watermark_store: WatermarkStore | None = None,
+        route_id: str | None = None,
+        persist_min_interval: float = 1.0,
     ) -> None:
         super().__init__(name=name)
         # ``sink`` — callable, которому передаём список собранных сообщений
@@ -172,11 +182,48 @@ class _BaseWindow(BaseProcessor):
         self._allowed_lateness = allowed_lateness_seconds
         self._late_policy = late_policy
         self._watermark = WatermarkState()
+        self._store = watermark_store
+        self._route_id = route_id
+        self._persist_min_interval = persist_min_interval
+        self._last_persisted_at: float = 0.0
+        self._loaded_from_store: bool = False
 
     @property
     def watermark_state(self) -> WatermarkState:
         """Снимок текущего watermark (для тестов и метрик)."""
         return self._watermark
+
+    async def _ensure_loaded(self) -> None:
+        """Lazy-загрузка watermark из store при первом обращении.
+
+        Вызов идемпотентен. Если store/route_id не заданы — no-op.
+        """
+        if self._loaded_from_store or self._store is None or self._route_id is None:
+            return
+        loaded = await self._store.load(self._route_id, self.name)
+        if loaded is not None and loaded.current > self._watermark.current:
+            self._watermark = loaded
+        self._loaded_from_store = True
+
+    async def _maybe_persist(self) -> None:
+        """Сохранить watermark в store с дебаунсом.
+
+        Persist выполняется не чаще, чем раз в ``persist_min_interval``
+        секунд wall-clock. ``-inf`` (advance ещё не происходил) пропускаем
+        — состояние не несёт информации.
+        """
+        if self._store is None or self._route_id is None:
+            return
+        if self._watermark.current == float("-inf"):
+            return
+        now = self._clock.time()
+        if (now - self._last_persisted_at) < self._persist_min_interval:
+            return
+        try:
+            await self._store.save(self._route_id, self.name, self._watermark)
+            self._last_persisted_at = now
+        except Exception as exc:
+            logger.error("Watermark persist failed: %s", exc)
 
     async def _is_late_and_handle(self, exchange: Exchange[Any]) -> bool:
         """Проверить exchange на late event и применить политику.
@@ -185,11 +232,14 @@ class _BaseWindow(BaseProcessor):
             ``True`` если событие отброшено (engine должен прекратить
             обработку), ``False`` если можно класть в bucket.
         """
+        await self._ensure_loaded()
         msg_watermark = exchange.in_message.watermark
         if msg_watermark is None:
             return False
         # Продвигаем watermark процессора до значения из сообщения.
-        self._watermark.advance(msg_watermark, now=self._clock.time())
+        advanced = self._watermark.advance(msg_watermark, now=self._clock.time())
+        if advanced:
+            await self._maybe_persist()
         # event_time = заголовок x-event-time или wall-clock.
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
@@ -205,6 +255,8 @@ class _BaseWindow(BaseProcessor):
         keep = await apply_late_policy(
             exchange, state=self._watermark, policy=self._late_policy
         )
+        # Late-counter изменился — пробуем персистнуть (тоже под дебаунсом).
+        await self._maybe_persist()
         return not keep
 
     async def _emit(self, bucket: list[Any]) -> None:
@@ -235,6 +287,9 @@ class TumblingWindowProcessor(_BaseWindow):
         clock: Clock | None = None,
         allowed_lateness_seconds: float = 0.0,
         late_policy: LatePolicy = LatePolicy.DROP,
+        watermark_store: WatermarkStore | None = None,
+        route_id: str | None = None,
+        persist_min_interval: float = 1.0,
     ) -> None:
         super().__init__(
             sink=sink,
@@ -242,6 +297,9 @@ class TumblingWindowProcessor(_BaseWindow):
             clock=clock,
             allowed_lateness_seconds=allowed_lateness_seconds,
             late_policy=late_policy,
+            watermark_store=watermark_store,
+            route_id=route_id,
+            persist_min_interval=persist_min_interval,
         )
         self._size = size
         self._interval = interval_seconds
@@ -273,6 +331,10 @@ class SlidingWindowProcessor(_BaseWindow):
     """Sliding-окно: фиксированная длительность, шаг меньше размера.
 
     Пример: окно 10с, шаг 2с — каждые 2 секунды эмитим все сообщения за последние 10с.
+
+    Late events отбрасываются согласно ``late_policy`` (по аналогии с
+    Tumbling). Watermark берётся из ``message.watermark``, event_time —
+    из заголовка ``x-event-time``.
     """
 
     def __init__(
@@ -283,14 +345,30 @@ class SlidingWindowProcessor(_BaseWindow):
         step_seconds: float = 2.0,
         name: str | None = None,
         clock: Clock | None = None,
+        allowed_lateness_seconds: float = 0.0,
+        late_policy: LatePolicy = LatePolicy.DROP,
+        watermark_store: WatermarkStore | None = None,
+        route_id: str | None = None,
+        persist_min_interval: float = 1.0,
     ) -> None:
-        super().__init__(sink=sink, name=name or "sliding-window", clock=clock)
+        super().__init__(
+            sink=sink,
+            name=name or "sliding-window",
+            clock=clock,
+            allowed_lateness_seconds=allowed_lateness_seconds,
+            late_policy=late_policy,
+            watermark_store=watermark_store,
+            route_id=route_id,
+            persist_min_interval=persist_min_interval,
+        )
         self._window = window_seconds
         self._step = step_seconds
         self._buffer: deque[tuple[float, Any]] = deque()
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        if await self._is_late_and_handle(exchange):
+            return
         now = self._clock.monotonic()
         async with self._lock:
             self._buffer.append((now, exchange.in_message.body))
@@ -316,6 +394,9 @@ class SessionWindowProcessor(_BaseWindow):
 
     Применяется для группировки связанных событий (например, действий
     пользователя в одной сессии).
+
+    Late events отбрасываются согласно ``late_policy``: событие, чей
+    ``event_time`` уже отстал от watermark, не попадает в текущую сессию.
     """
 
     def __init__(
@@ -325,14 +406,30 @@ class SessionWindowProcessor(_BaseWindow):
         gap_seconds: float = 30.0,
         name: str | None = None,
         clock: Clock | None = None,
+        allowed_lateness_seconds: float = 0.0,
+        late_policy: LatePolicy = LatePolicy.DROP,
+        watermark_store: WatermarkStore | None = None,
+        route_id: str | None = None,
+        persist_min_interval: float = 1.0,
     ) -> None:
-        super().__init__(sink=sink, name=name or "session-window", clock=clock)
+        super().__init__(
+            sink=sink,
+            name=name or "session-window",
+            clock=clock,
+            allowed_lateness_seconds=allowed_lateness_seconds,
+            late_policy=late_policy,
+            watermark_store=watermark_store,
+            route_id=route_id,
+            persist_min_interval=persist_min_interval,
+        )
         self._gap = gap_seconds
         self._buffer: list[Any] = []
         self._last_seen: float = 0.0
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        if await self._is_late_and_handle(exchange):
+            return
         async with self._lock:
             self._last_seen = self._clock.monotonic()
             self._buffer.append(exchange.in_message.body)
@@ -624,8 +721,8 @@ class SamplingProcessor(BaseProcessor):
         self._p = probability
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        # random.random() < p — эквивалентно Bernoulli trial.
-        if random.random() >= self._p:
+        # random.random() < p — эквивалентно Bernoulli trial (sampling, не крипто).
+        if random.random() >= self._p:  # noqa: S311
             exchange.properties["_sampled_out"] = True
             # Помечаем как завершённое без ошибки, но downstream должен фильтровать.
             exchange.properties["_skip_downstream"] = True

@@ -25,7 +25,11 @@ from src.core.types.watermark import LatePolicy, WatermarkState
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange, Message
 from src.dsl.engine.late_event_policy import apply_late_policy
-from src.dsl.engine.processors.streaming import TumblingWindowProcessor
+from src.dsl.engine.processors.streaming import (
+    SessionWindowProcessor,
+    SlidingWindowProcessor,
+    TumblingWindowProcessor,
+)
 
 
 def _make_exchange(
@@ -167,6 +171,111 @@ class TestTumblingWindowWatermarks:
         ctx = ExecutionContext(route_id="r1")
         await proc.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
         # Сообщение с меньшим watermark не сдвигает state назад.
+        await proc.process(_make_exchange("b", watermark=150.0, event_time=205.0), ctx)
+        assert proc.watermark_state.current == 200.0
+
+
+class TestSlidingWindowWatermarks:
+    @pytest.fixture
+    def fake_clock(self) -> FakeClock:
+        return FakeClock(wall_start=1_000_000.0)
+
+    @pytest.mark.asyncio
+    async def test_late_event_dropped_by_default(self, fake_clock: FakeClock) -> None:
+        proc = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=fake_clock,
+        )
+        ctx = ExecutionContext(route_id="r1")
+
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        ex_late = _make_exchange("late", watermark=100.0, event_time=80.0)
+        await proc.process(ex_late, ctx)
+        assert ex_late.properties.get("_late_dropped") is True
+        assert proc.watermark_state.late_events_total == 1
+        # Late не должен попасть в буфер.
+        assert [body for _, body in proc._buffer] == ["a"]
+
+    @pytest.mark.asyncio
+    async def test_late_within_allowed_lateness_passes(
+        self, fake_clock: FakeClock
+    ) -> None:
+        proc = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=fake_clock,
+            allowed_lateness_seconds=30.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        ex = _make_exchange("border", watermark=100.0, event_time=85.0)
+        await proc.process(ex, ctx)
+        assert ex.properties.get("_late_dropped") is None
+        assert [body for _, body in proc._buffer] == ["a", "border"]
+
+    @pytest.mark.asyncio
+    async def test_watermark_does_not_regress(self, fake_clock: FakeClock) -> None:
+        proc = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=fake_clock,
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
+        await proc.process(_make_exchange("b", watermark=150.0, event_time=205.0), ctx)
+        assert proc.watermark_state.current == 200.0
+
+
+class TestSessionWindowWatermarks:
+    @pytest.fixture
+    def fake_clock(self) -> FakeClock:
+        return FakeClock(wall_start=1_000_000.0)
+
+    @pytest.mark.asyncio
+    async def test_late_event_dropped_by_default(self, fake_clock: FakeClock) -> None:
+        proc = SessionWindowProcessor(
+            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock
+        )
+        ctx = ExecutionContext(route_id="r1")
+
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        ex_late = _make_exchange("late", watermark=100.0, event_time=80.0)
+        await proc.process(ex_late, ctx)
+        assert ex_late.properties.get("_late_dropped") is True
+        assert proc.watermark_state.late_events_total == 1
+        # Late не должен попасть в session-буфер.
+        assert proc._buffer == ["a"]
+
+    @pytest.mark.asyncio
+    async def test_late_within_allowed_lateness_passes(
+        self, fake_clock: FakeClock
+    ) -> None:
+        proc = SessionWindowProcessor(
+            sink=lambda b: None,
+            gap_seconds=999.0,
+            clock=fake_clock,
+            allowed_lateness_seconds=30.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        ex = _make_exchange("border", watermark=100.0, event_time=85.0)
+        await proc.process(ex, ctx)
+        assert ex.properties.get("_late_dropped") is None
+        assert proc._buffer == ["a", "border"]
+
+    @pytest.mark.asyncio
+    async def test_watermark_does_not_regress(self, fake_clock: FakeClock) -> None:
+        proc = SessionWindowProcessor(
+            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
         await proc.process(_make_exchange("b", watermark=150.0, event_time=205.0), ctx)
         assert proc.watermark_state.current == 200.0
 
