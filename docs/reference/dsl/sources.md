@@ -145,6 +145,24 @@ sources:
 Прямые `aiokafka`/`aio_pika` в новом коде не используются (только как
 транзитивные зависимости faststream).
 
+### Установка transport-extras
+
+| Transport | Extras-команда | pyproject extra |
+|---|---|---|
+| `redis_streams` | базовая зависимость (`redis>=5.0`) | — |
+| `kafka` | базовая зависимость (`faststream[kafka]>=0.5.34`) | — |
+| `rabbitmq` | базовая зависимость (`aio-pika>=9.5.5`) | — |
+| `nats` | `pip install '.[sources-mq-nats]'` | `sources-mq-nats` |
+
+NATS-транспорт вынесен в опциональную группу, чтобы основной образ не
+тянул `nats-py` без необходимости. На dev_light без extras `MQSource`
+с `transport: nats` поднимет понятный `RuntimeError`.
+
+```bash
+uv sync --extra sources-mq-nats
+# или: uv pip install "gd_advanced_tools[sources-mq-nats]"
+```
+
 ## Расширение: новый backend
 
 1. Создать `src/infrastructure/sources/<my_kind>.py` с классом,

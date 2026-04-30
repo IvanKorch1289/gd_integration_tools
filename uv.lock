@@ -1347,6 +1347,9 @@ wheels = [
 kafka = [
     { name = "aiokafka" },
 ]
+nats = [
+    { name = "nats-py" },
+]
 
 [[package]]
 name = "filelock"
@@ -1528,6 +1531,9 @@ security = [
 sources-cdc = [
     { name = "psycopg", extra = ["binary"] },
 ]
+sources-mq-nats = [
+    { name = "faststream", extra = ["nats"] },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1583,6 +1589,7 @@ requires-dist = [
     { name = "fastembed", specifier = ">=0.4.0,<1.0.0" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=2.0.0" },
     { name = "faststream", extras = ["kafka"], specifier = ">=0.5.34,<1.0.0" },
+    { name = "faststream", extras = ["nats"], marker = "extra == 'sources-mq-nats'", specifier = ">=0.6.7,<1.0.0" },
     { name = "granian", specifier = ">=2.0.0" },
     { name = "greenlet", specifier = ">=3.1.1,<4.0.0" },
     { name = "grpc-interceptor", specifier = ">=0.15.4,<1.0.0" },
@@ -1649,7 +1656,7 @@ requires-dist = [
     { name = "xmltodict", specifier = ">=0.14.0,<1.0.0" },
     { name = "zeep", specifier = ">=4.3.1,<5.0.0" },
 ]
-provides-extras = ["ai", "security", "mcp", "rpa", "rag", "dev-light", "sources-cdc", "iot", "web3", "legacy", "banking", "enterprise", "datalake", "temporal", "beam"]
+provides-extras = ["ai", "security", "mcp", "rpa", "rag", "dev-light", "sources-cdc", "sources-mq-nats", "iot", "web3", "legacy", "banking", "enterprise", "datalake", "temporal", "beam"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2992,6 +2999,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/33/fa/7b45eef11b7971f0beb29d27b7bfe0d747d063aa29e170d9edd004733c8a/myst_parser-5.0.0.tar.gz", hash = "sha256:f6f231452c56e8baa662cc352c548158f6a16fcbd6e3800fc594978002b94f3a", size = 98535, upload-time = "2026-01-15T09:08:18.036Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d3/ac/686789b9145413f1a61878c407210e41bfdb097976864e0913078b24098c/myst_parser-5.0.0-py3-none-any.whl", hash = "sha256:ab31e516024918296e169139072b81592336f2fef55b8986aa31c9f04b5f7211", size = 84533, upload-time = "2026-01-15T09:08:16.788Z" },
+]
+
+[[package]]
+name = "nats-py"
+version = "2.14.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/f8/b956c4621ba88748ed707c52e69f95b7a50c8914e750edca59a5bef84a76/nats_py-2.14.0.tar.gz", hash = "sha256:4ed02cb8e3b55c68074a063aa2687087115d805d1513297da90cb2068fb07bed", size = 120751, upload-time = "2026-02-23T22:44:58.988Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/39/0e87753df1072254bac190b33ed34b264f28f6aa9bea0f01b7e818071756/nats_py-2.14.0-py3-none-any.whl", hash = "sha256:4116f5d2233ce16e63c3d5538fa40a5e207f75fcf42a741773929ddf1e29d19d", size = 82259, upload-time = "2026-02-23T22:45:00.152Z" },
 ]
 
 [[package]]
