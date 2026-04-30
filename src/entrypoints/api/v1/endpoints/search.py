@@ -1,5 +1,7 @@
 """Единый поисковый API поверх Elasticsearch (Wave 9.3.3).
 
+W26.5: маршруты регистрируются декларативно через ActionSpec.
+
 Эндпоинты ``/api/v1/search/*`` — полнотекст по audit-логам, заказам,
 notebooks. Если индекс отсутствует или ES недоступен — возвращается
 пустой массив (а не 5xx), чтобы UI оставался работоспособным.
@@ -11,15 +13,63 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
 
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from src.services.io.search import get_search_service
 
 __all__ = ("router",)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+
+# --- Query schemas ---------------------------------------------------------
+
+
+class _RangeQuery(BaseModel):
+    """Базовые поля для range-фильтра."""
+
+    from_: datetime | None = Field(default=None, alias="from")
+    to_: datetime | None = Field(default=None, alias="to")
+    limit: int = Field(default=20, ge=1, le=200)
+    offset: int = Field(default=0, ge=0)
+
+
+class LogsSearchQuery(_RangeQuery):
+    """Query-параметры /logs."""
+
+    q: str | None = Field(default=None, description="Полнотекстовый запрос.")
+    entity_type: str | None = Field(default=None, description="Фильтр по entity_type.")
+    tenant_id: str | None = Field(default=None, description="Фильтр по tenant_id.")
+
+
+class OrdersSearchQuery(_RangeQuery):
+    """Query-параметры /orders."""
+
+    q: str | None = Field(default=None, description="Полнотекстовый запрос.")
+    status: str | None = Field(default=None, description="Фильтр по статусу.")
+
+
+class NotebooksSearchQuery(BaseModel):
+    """Query-параметры /notebooks."""
+
+    q: str | None = Field(default=None, description="Полнотекстовый запрос.")
+    tag: str | None = Field(default=None, description="Фильтр по тегу.")
+    limit: int = Field(default=20, ge=1, le=200)
+    offset: int = Field(default=0, ge=0)
+
+
+class AggregationsQuery(BaseModel):
+    """Query-параметры /aggregations."""
+
+    index: str = Field(..., description="Имя индекса (без префикса gd_).")
+    field: str = Field(..., description="Поле для terms-агрегации.")
+    q: str | None = Field(default=None, description="Опциональный фильтр.")
+    size: int = Field(default=10, ge=1, le=100)
+
+
+# --- ES query builders -----------------------------------------------------
 
 
 def _build_text_query(
@@ -71,94 +121,161 @@ async def _safe_search(
         return []
 
 
-@router.get("/logs")
-async def search_logs(
-    q: str | None = Query(default=None),
-    entity_type: str | None = Query(default=None),
-    tenant_id: str | None = Query(default=None),
-    from_: datetime | None = Query(default=None, alias="from"),
-    to_: datetime | None = Query(default=None, alias="to"),
-    limit: int = Query(default=20, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-) -> list[dict[str, Any]]:
-    """Полнотекстовый поиск по audit-логам (индекс ``gd_audit_logs``)."""
-    range_filter: dict[str, dict[str, Any]] = {}
-    if from_ is not None or to_ is not None:
-        when_range: dict[str, Any] = {}
-        if from_ is not None:
-            when_range["gte"] = from_.isoformat()
-        if to_ is not None:
-            when_range["lte"] = to_.isoformat()
-        range_filter["when"] = when_range
-
-    query = _build_text_query(
-        q,
-        fields=["who", "what", "entity_id", "action"],
-        filters={"entity_type": entity_type, "tenant_id": tenant_id},
-        range_filter=range_filter,
-    )
-    return await _safe_search(
-        "audit_logs", query, limit=limit, offset=offset, sort=[{"when": "desc"}]
-    )
-
-
-@router.get("/orders")
-async def search_orders(
-    q: str | None = Query(default=None),
-    status: str | None = Query(default=None),
-    from_: datetime | None = Query(default=None, alias="from"),
-    to_: datetime | None = Query(default=None, alias="to"),
-    limit: int = Query(default=20, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-) -> list[dict[str, Any]]:
-    """Поиск по заказам (индекс ``gd_orders``)."""
-    range_filter: dict[str, dict[str, Any]] = {}
-    if from_ is not None or to_ is not None:
-        created_range: dict[str, Any] = {}
-        if from_ is not None:
-            created_range["gte"] = from_.isoformat()
-        if to_ is not None:
-            created_range["lte"] = to_.isoformat()
-        range_filter["created_at"] = created_range
-
-    query = _build_text_query(
-        q,
-        fields=["pledge_gd_id", "order_kind_id"],
-        filters={"status": status},
-        range_filter=range_filter,
-    )
-    return await _safe_search(
-        "orders", query, limit=limit, offset=offset, sort=[{"created_at": "desc"}]
-    )
-
-
-@router.get("/notebooks")
-async def search_notebooks(
-    q: str | None = Query(default=None),
-    tag: str | None = Query(default=None),
-    limit: int = Query(default=20, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-) -> list[dict[str, Any]]:
-    """Поиск по notebooks (индекс ``gd_notebooks``)."""
-    query = _build_text_query(q, fields=["title", "content"], filters={"tags": tag})
-    return await _safe_search(
-        "notebooks", query, limit=limit, offset=offset, sort=[{"updated_at": "desc"}]
-    )
-
-
-@router.get("/aggregations")
-async def aggregations(
-    index: str = Query(...),
-    field: str = Query(...),
-    q: str | None = Query(default=None),
-    size: int = Query(default=10, ge=1, le=100),
-) -> dict[str, Any]:
-    """Простая terms-агрегация по указанному полю."""
-    try:
-        service = get_search_service()
-        aggs = {"by_field": {"terms": {"field": field, "size": size}}}
-        es_query = _build_text_query(q) if q else None
-        return await service.aggregate(index, aggs, query=es_query)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Aggregation failed for %s: %s", index, exc)
+def _date_range(
+    from_: datetime | None, to_: datetime | None, key: str
+) -> dict[str, dict[str, Any]]:
+    """Строит range-фильтр по датам, опуская пустые границы."""
+    if from_ is None and to_ is None:
         return {}
+    body: dict[str, Any] = {}
+    if from_ is not None:
+        body["gte"] = from_.isoformat()
+    if to_ is not None:
+        body["lte"] = to_.isoformat()
+    return {key: body}
+
+
+# --- Service facade --------------------------------------------------------
+
+
+class _SearchFacade:
+    """Адаптер над ``SearchService`` для action-маршрутов."""
+
+    async def search_logs(
+        self,
+        *,
+        q: str | None = None,
+        entity_type: str | None = None,
+        tenant_id: str | None = None,
+        from_: datetime | None = None,
+        to_: datetime | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        query = _build_text_query(
+            q,
+            fields=["who", "what", "entity_id", "action"],
+            filters={"entity_type": entity_type, "tenant_id": tenant_id},
+            range_filter=_date_range(from_, to_, "when"),
+        )
+        return await _safe_search(
+            "audit_logs", query, limit=limit, offset=offset, sort=[{"when": "desc"}]
+        )
+
+    async def search_orders(
+        self,
+        *,
+        q: str | None = None,
+        status: str | None = None,
+        from_: datetime | None = None,
+        to_: datetime | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        query = _build_text_query(
+            q,
+            fields=["pledge_gd_id", "order_kind_id"],
+            filters={"status": status},
+            range_filter=_date_range(from_, to_, "created_at"),
+        )
+        return await _safe_search(
+            "orders", query, limit=limit, offset=offset, sort=[{"created_at": "desc"}]
+        )
+
+    async def search_notebooks(
+        self,
+        *,
+        q: str | None = None,
+        tag: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        query = _build_text_query(q, fields=["title", "content"], filters={"tags": tag})
+        return await _safe_search(
+            "notebooks",
+            query,
+            limit=limit,
+            offset=offset,
+            sort=[{"updated_at": "desc"}],
+        )
+
+    async def aggregate(
+        self,
+        *,
+        index: str,
+        field: str,
+        q: str | None = None,
+        size: int = 10,
+    ) -> dict[str, Any]:
+        try:
+            service = get_search_service()
+            aggs = {"by_field": {"terms": {"field": field, "size": size}}}
+            es_query = _build_text_query(q) if q else None
+            return await service.aggregate(index, aggs, query=es_query)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Aggregation failed for %s: %s", index, exc)
+            return {}
+
+
+_FACADE = _SearchFacade()
+
+
+def _get_facade() -> _SearchFacade:
+    return _FACADE
+
+
+# --- Router ----------------------------------------------------------------
+
+
+router = APIRouter()
+builder = ActionRouterBuilder(router)
+
+common_tags = ("Search",)
+
+
+builder.add_actions(
+    [
+        ActionSpec(
+            name="search_logs",
+            method="GET",
+            path="/logs",
+            summary="Полнотекстовый поиск по audit-логам",
+            service_getter=_get_facade,
+            service_method="search_logs",
+            query_model=LogsSearchQuery,
+            argument_aliases={"from": "from_", "to": "to_"},
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="search_orders",
+            method="GET",
+            path="/orders",
+            summary="Поиск по заказам",
+            service_getter=_get_facade,
+            service_method="search_orders",
+            query_model=OrdersSearchQuery,
+            argument_aliases={"from": "from_", "to": "to_"},
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="search_notebooks",
+            method="GET",
+            path="/notebooks",
+            summary="Поиск по notebooks",
+            service_getter=_get_facade,
+            service_method="search_notebooks",
+            query_model=NotebooksSearchQuery,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="search_aggregations",
+            method="GET",
+            path="/aggregations",
+            summary="Terms-агрегация по полю",
+            service_getter=_get_facade,
+            service_method="aggregate",
+            query_model=AggregationsQuery,
+            tags=common_tags,
+        ),
+    ]
+)
