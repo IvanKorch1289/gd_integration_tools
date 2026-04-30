@@ -183,6 +183,15 @@ make migrate             # alembic upgrade head (только для PG)
 make test                # pytest (unit + integration)
 ```
 
+> **Замечание про `make routes` / `make actions`**: цели запускают
+> `_bootstrap()` `manage.py`, который импортирует БД-драйвер из активного
+> профиля. Если БД в `.env` указывает на PostgreSQL без суффикса
+> `+asyncpg` — будет требоваться синхронный `psycopg2` (не входит в
+> `dev-light`). Решения: (1) использовать `postgresql+asyncpg://` URL,
+> (2) запускать с `APP_PROFILE=dev_light` (SQLite + `aiosqlite`),
+> (3) `uv sync --extra prod` если действительно нужен PG-драйвер для
+> CLI-интроспекции.
+
 ---
 
 ## 10. Связанные документы

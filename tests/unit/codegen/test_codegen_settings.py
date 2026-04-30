@@ -267,3 +267,86 @@ class TestExtractSpec:
         monkeypatch.setattr(cg, "SERVICES_DIR", services_dir)
         with pytest.raises(LookupError):
             cg.extract_spec_from_class("DoesNotExist")
+
+
+class TestLiteralType:
+    """W21.5f: поддержка Literal[...] в config-spec round-trip."""
+
+    def test_parse_literal_field(self) -> None:
+        f = cg._parse_field('mode:Literal["a","b"]:"a":non-secret')
+        assert f.type_ == 'Literal["a","b"]'
+        assert f.default == "a"
+        assert cg._is_literal_type(f.type_)
+
+    def test_render_literal_imports_typing(self) -> None:
+        out = cg._render_class_module(
+            "demo", "DEMO_", [cg._parse_field('mode:Literal["a","b"]:"a":non-secret')]
+        )
+        assert "from typing import ClassVar, Literal" in out
+        assert 'mode: Literal["a","b"] = Field(' in out
+        ast.parse(out)
+
+    def test_render_without_literal_keeps_imports(self) -> None:
+        out = cg._render_class_module(
+            "demo", "DEMO_", [cg._parse_field("host:str:x:non-secret")]
+        )
+        assert "from typing import ClassVar\n" in out
+        assert "Literal" not in out
+
+    def test_validate_literal_in_spec(self) -> None:
+        spec = cg.CodegenSpec(
+            name="demo",
+            env_prefix="DEMO_",
+            fields=[
+                cg.FieldSpec(
+                    name="mode",
+                    type_='Literal["a","b"]',
+                    default='"a"',
+                    visibility="non-secret",
+                )
+            ],
+        )
+        cg._validate_spec(spec)  # must not raise
+
+    def test_validate_unknown_type_raises(self) -> None:
+        spec = cg.CodegenSpec(
+            name="demo",
+            env_prefix="DEMO_",
+            fields=[
+                cg.FieldSpec(
+                    name="x", type_="dict", default="", visibility="non-secret"
+                )
+            ],
+        )
+        with pytest.raises(ValueError, match="не поддержан"):
+            cg._validate_spec(spec)
+
+    def test_extract_literal_round_trip(self, tmp_path, monkeypatch) -> None:
+        services_dir = tmp_path / "services"
+        services_dir.mkdir()
+        (services_dir / "demo.py").write_text(
+            textwrap.dedent(
+                """
+                from typing import ClassVar, Literal
+                from pydantic import Field
+                from pydantic_settings import SettingsConfigDict
+                from src.core.config.config_loader import BaseSettingsWithLoader
+
+
+                class DemoSettings(BaseSettingsWithLoader):
+                    yaml_group: ClassVar[str] = "demo"
+                    model_config = SettingsConfigDict(env_prefix="DEMO_", extra="forbid")
+
+                    mode: Literal["a", "b", "c"] = Field("a", description="x")
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(cg, "SERVICES_DIR", services_dir)
+        spec = cg.extract_spec_from_class("DemoSettings")
+        mode = next(f for f in spec.fields if f.name == "mode")
+        # ast.unparse использует одинарные кавычки и убирает пробелы.
+        assert mode.type_ == "Literal['a','b','c']"
+        assert mode.default == "a"
+        # Tип валиден для apply.
+        assert cg._is_valid_type(mode.type_)

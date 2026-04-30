@@ -24,13 +24,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-import time
 import uuid
 from collections import defaultdict, deque
 from typing import Any
 
+from src.core.clock import RealClock
+from src.core.interfaces.clock import Clock
+from src.core.types.watermark import LatePolicy, WatermarkState
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
+from src.dsl.engine.late_event_policy import apply_late_policy
 from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
@@ -75,11 +78,13 @@ class MessageExpirationProcessor(BaseProcessor):
         header_name: str = "x-created-at",
         drop_action: str = "fail",
         name: str | None = None,
+        clock: Clock | None = None,
     ) -> None:
         super().__init__(name=name or "expiration")
         self._ttl = ttl_seconds
         self._header = header_name
         self._drop = drop_action
+        self._clock: Clock = clock or RealClock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         created_at = exchange.in_message.headers.get(self._header)
@@ -89,7 +94,7 @@ class MessageExpirationProcessor(BaseProcessor):
             return  # Нет данных о возрасте — считаем сообщение свежим
 
         try:
-            age = time.time() - float(created_at)
+            age = self._clock.time() - float(created_at)
         except (TypeError, ValueError):
             return
 
@@ -137,13 +142,70 @@ class CorrelationIdProcessor(BaseProcessor):
 
 
 class _BaseWindow(BaseProcessor):
-    """Общая логика для оконных процессоров."""
+    """Общая логика для оконных процессоров.
 
-    def __init__(self, *, sink: Any, name: str) -> None:
+    Args:
+        sink: Callable, получающий список накопленных сообщений.
+        name: Имя процессора (для логирования и метрик).
+        clock: Источник времени; default ``RealClock`` (production).
+            В тестах подменяется на ``FakeClock``.
+        allowed_lateness_seconds: Дополнительный допуск для late events
+            (W14.3). 0 = строгий watermark.
+        late_policy: Что делать с late events: ``DROP`` (default),
+            ``SIDE_OUTPUT``, ``REPROCESS``.
+    """
+
+    def __init__(
+        self,
+        *,
+        sink: Any,
+        name: str,
+        clock: Clock | None = None,
+        allowed_lateness_seconds: float = 0.0,
+        late_policy: LatePolicy = LatePolicy.DROP,
+    ) -> None:
         super().__init__(name=name)
         # ``sink`` — callable, которому передаём список собранных сообщений
         self._sink = sink
         self._lock = asyncio.Lock()
+        self._clock: Clock = clock or RealClock()
+        self._allowed_lateness = allowed_lateness_seconds
+        self._late_policy = late_policy
+        self._watermark = WatermarkState()
+
+    @property
+    def watermark_state(self) -> WatermarkState:
+        """Снимок текущего watermark (для тестов и метрик)."""
+        return self._watermark
+
+    async def _is_late_and_handle(self, exchange: Exchange[Any]) -> bool:
+        """Проверить exchange на late event и применить политику.
+
+        Returns:
+            ``True`` если событие отброшено (engine должен прекратить
+            обработку), ``False`` если можно класть в bucket.
+        """
+        msg_watermark = exchange.in_message.watermark
+        if msg_watermark is None:
+            return False
+        # Продвигаем watermark процессора до значения из сообщения.
+        self._watermark.advance(msg_watermark, now=self._clock.time())
+        # event_time = заголовок x-event-time или wall-clock.
+        event_time_raw = exchange.in_message.headers.get("x-event-time")
+        try:
+            event_time = float(event_time_raw) if event_time_raw is not None else None
+        except (TypeError, ValueError):
+            event_time = None
+        if event_time is None:
+            return False
+        if not self._watermark.is_late(
+            event_time, allowed_lateness=self._allowed_lateness
+        ):
+            return False
+        keep = await apply_late_policy(
+            exchange, state=self._watermark, policy=self._late_policy
+        )
+        return not keep
 
     async def _emit(self, bucket: list[Any]) -> None:
         if not bucket:
@@ -170,14 +232,26 @@ class TumblingWindowProcessor(_BaseWindow):
         size: int = 100,
         interval_seconds: float = 10.0,
         name: str | None = None,
+        clock: Clock | None = None,
+        allowed_lateness_seconds: float = 0.0,
+        late_policy: LatePolicy = LatePolicy.DROP,
     ) -> None:
-        super().__init__(sink=sink, name=name or "tumbling-window")
+        super().__init__(
+            sink=sink,
+            name=name or "tumbling-window",
+            clock=clock,
+            allowed_lateness_seconds=allowed_lateness_seconds,
+            late_policy=late_policy,
+        )
         self._size = size
         self._interval = interval_seconds
         self._buffer: list[Any] = []
         self._flush_task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # Late event — engine применяет политику и прекращает обработку.
+        if await self._is_late_and_handle(exchange):
+            return
         async with self._lock:
             self._buffer.append(exchange.in_message.body)
             if self._flush_task is None or self._flush_task.done():
@@ -208,15 +282,16 @@ class SlidingWindowProcessor(_BaseWindow):
         window_seconds: float = 10.0,
         step_seconds: float = 2.0,
         name: str | None = None,
+        clock: Clock | None = None,
     ) -> None:
-        super().__init__(sink=sink, name=name or "sliding-window")
+        super().__init__(sink=sink, name=name or "sliding-window", clock=clock)
         self._window = window_seconds
         self._step = step_seconds
         self._buffer: deque[tuple[float, Any]] = deque()
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        now = time.monotonic()
+        now = self._clock.monotonic()
         async with self._lock:
             self._buffer.append((now, exchange.in_message.body))
             if self._task is None or self._task.done():
@@ -227,7 +302,7 @@ class SlidingWindowProcessor(_BaseWindow):
         while True:
             await asyncio.sleep(self._step)
             async with self._lock:
-                cutoff = time.monotonic() - self._window
+                cutoff = self._clock.monotonic() - self._window
                 while self._buffer and self._buffer[0][0] < cutoff:
                     self._buffer.popleft()
                 if not self._buffer:
@@ -244,9 +319,14 @@ class SessionWindowProcessor(_BaseWindow):
     """
 
     def __init__(
-        self, *, sink: Any, gap_seconds: float = 30.0, name: str | None = None
+        self,
+        *,
+        sink: Any,
+        gap_seconds: float = 30.0,
+        name: str | None = None,
+        clock: Clock | None = None,
     ) -> None:
-        super().__init__(sink=sink, name=name or "session-window")
+        super().__init__(sink=sink, name=name or "session-window", clock=clock)
         self._gap = gap_seconds
         self._buffer: list[Any] = []
         self._last_seen: float = 0.0
@@ -254,7 +334,7 @@ class SessionWindowProcessor(_BaseWindow):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         async with self._lock:
-            self._last_seen = time.monotonic()
+            self._last_seen = self._clock.monotonic()
             self._buffer.append(exchange.in_message.body)
             if self._task is None or self._task.done():
                 self._task = asyncio.create_task(self._gap_watcher())
@@ -263,7 +343,7 @@ class SessionWindowProcessor(_BaseWindow):
         while True:
             await asyncio.sleep(self._gap / 2)
             async with self._lock:
-                idle = time.monotonic() - self._last_seen
+                idle = self._clock.monotonic() - self._last_seen
                 if idle >= self._gap and self._buffer:
                     bucket = list(self._buffer)
                     self._buffer.clear()
@@ -290,8 +370,9 @@ class GroupByKeyProcessor(_BaseWindow):
         key_path: str,
         window_seconds: float = 60.0,
         name: str | None = None,
+        clock: Clock | None = None,
     ) -> None:
-        super().__init__(sink=sink, name=name or f"group-by:{key_path}")
+        super().__init__(sink=sink, name=name or f"group-by:{key_path}", clock=clock)
         self._key_path = key_path
         self._window = window_seconds
         self._groups: dict[Any, list[Any]] = defaultdict(list)

@@ -5,6 +5,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from src.core.types.data_kind import DataKind
 from src.dsl.adapters.types import ProtocolType
 
 __all__ = ("ExchangeStatus", "Message", "ExchangeMeta", "Exchange")
@@ -30,10 +31,18 @@ class Message(BaseModel, Generic[T]):
     Attributes:
         headers: Транспортно-агностичные заголовки.
         body: Полезная нагрузка.
+        data_kind: Форма payload'а — ``SINGLE`` (default), ``BATCH`` или
+            ``STREAM`` (W14.2). Процессоры, реализующие ``BatchCapable``,
+            используют это поле для выбора оптимизированного пути.
+        watermark: Wall-clock секунды (Unix epoch); граница "не позже"
+            для оконных процессоров (W14.3). ``None`` = watermark не
+            эмитился источником.
     """
 
     headers: dict[str, Any] = Field(default_factory=dict)
     body: T | None = None
+    data_kind: DataKind = Field(default=DataKind.SINGLE)
+    watermark: float | None = Field(default=None)
 
     def get_header(self, key: str, default: Any = None) -> Any:
         """

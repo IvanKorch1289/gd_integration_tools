@@ -74,6 +74,20 @@ _VALID_TYPES: frozenset[str] = frozenset(
 _VALID_VISIBILITY: frozenset[str] = frozenset({"secret", "non-secret"})
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _ENV_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9_]*_$")
+# Literal[...] — динамический тип; внутри допускаются строковые/числовые
+# значения, но не вложенные ``]`` (для round-trip extract↔apply этого хватает).
+_LITERAL_TYPE_RE = re.compile(r"^Literal\[[^\]]+\]$")
+
+
+def _is_literal_type(type_: str) -> bool:
+    """True, если ``type_`` — корректная аннотация ``Literal[...]``."""
+    return bool(_LITERAL_TYPE_RE.match(type_))
+
+
+def _is_valid_type(type_: str) -> bool:
+    """Универсальная проверка типа поля: примитив или Literal[...]."""
+    return type_ in _VALID_TYPES or _is_literal_type(type_)
+
 
 # Реестр шаблонов: имя base-класса → модуль импорта.
 TEMPLATES: dict[str, str] = {
@@ -109,6 +123,10 @@ class FieldSpec:
         """Литерал default'а в Python-коде Settings-класса."""
         if self.is_secret:
             return "..."
+        if _is_literal_type(self.type_):
+            # Default уже хранится как сериализованный Python-литерал
+            # (`"a"` / `1`). Если default пустой — берём первое значение.
+            return self.default or _first_literal_value(self.type_)
         if "None" in self.type_ and self.default in ("", "None"):
             return "None"
         if self.type_ == "bool":
@@ -126,6 +144,11 @@ class FieldSpec:
         Для optional типов (``X|None``) пустой default = ``null``,
         иначе — по правилам конкретного типа.
         """
+        if _is_literal_type(self.type_):
+            value = self.default or _first_literal_value(self.type_)
+            # YAML принимает Python-числа без кавычек, строки в кавычках
+            # уже экранированы в исходном default.
+            return value
         if "None" in self.type_ and self.default in ("", "None"):
             return "null"
         if self.type_ == "bool":
@@ -135,9 +158,16 @@ class FieldSpec:
         return self.default if self.default else '""'
 
 
+def _first_literal_value(type_: str) -> str:
+    """Вернуть первое допустимое значение из ``Literal[...]`` как Python-литерал."""
+    inner = type_[len("Literal[") : -1]
+    first = inner.split(",", 1)[0].strip()
+    return first or '""'
+
+
 _FIELD_RE = re.compile(
     r"^(?P<name>[a-z][a-z0-9_]*):"
-    r"(?P<type>str\|None|int\|None|float\|None|str|int|float|bool):"
+    r"(?P<type>Literal\[[^\]]+\]|str\|None|int\|None|float\|None|str|int|float|bool):"
     r"(?P<default>.*?):"
     r"(?P<visibility>secret|non-secret)"
     r"(?::(?P<constraints>.*))?$"
@@ -194,6 +224,7 @@ def _render_class_module(
         )
     cls = _cls_name(name)
     singleton = _singleton_name(name)
+    has_literal = any(_is_literal_type(f.type_) for f in fields)
     field_defs: list[str] = []
     for f in fields:
         kw_parts: list[str] = [f.python_default_literal]
@@ -204,9 +235,14 @@ def _render_class_module(
         field_defs.append(f"    {f.name}: {f.type_} = Field(\n        {body},\n    )")
     fields_block = "\n".join(field_defs) if field_defs else "    pass"
     base_module = TEMPLATES[base]
+    typing_import = (
+        "from typing import ClassVar, Literal\n"
+        if has_literal
+        else "from typing import ClassVar\n"
+    )
     return (
         f'"""Сгенерировано tools/codegen_settings.py — настройки {cls}."""\n\n'
-        "from typing import ClassVar\n\n"
+        f"{typing_import}\n"
         "from pydantic import Field\n"
         "from pydantic_settings import SettingsConfigDict\n\n"
         f"from {base_module} import {base}\n\n\n"
@@ -551,6 +587,12 @@ def _validate_spec(spec: CodegenSpec) -> None:
         )
     if not spec.fields:
         raise ValueError("fields пустой — должно быть хотя бы одно поле")
+    for f in spec.fields:
+        if not _is_valid_type(f.type_):
+            raise ValueError(
+                f"field={f.name!r}: тип {f.type_!r} не поддержан. "
+                f"Допустимы: {sorted(_VALID_TYPES)} или Literal[...]"
+            )
 
 
 def _apply_spec(spec: CodegenSpec, *, run_audit: bool = True) -> int:
@@ -692,10 +734,17 @@ def _stringify_ast_value(node: ast.AST) -> str:
 
 
 def _stringify_annotation(node: ast.AST) -> str:
-    """Превратить ast-узел аннотации в один из ``_VALID_TYPES``."""
-    text = ast.unparse(node).replace(" ", "")
+    """Превратить ast-узел аннотации в строку ``_VALID_TYPES`` или ``Literal[...]``.
+
+    Сохраняет ``Literal[...]`` как-есть (без пробелов), для всех остальных
+    случаев приводит ``Optional[X]`` → ``X|None``.
+    """
+    raw = ast.unparse(node)
+    text = raw.replace(" ", "")
+    if text.startswith("Literal["):
+        return text
     text = text.replace("Optional[", "")
-    if text.endswith("]") and "Optional" in ast.unparse(node):
+    if text.endswith("]") and "Optional" in raw:
         text = text.rstrip("]")
         text = f"{text}|None"
     return text

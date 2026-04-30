@@ -1,8 +1,11 @@
+import logging
 from logging import Handler
 
 from src.core.config.settings import LogStorageSettings, settings
 
 __all__ = ("graylog_handler",)
+
+_logger = logging.getLogger(__name__)
 
 
 class GraylogHandler:
@@ -42,10 +45,12 @@ class GraylogHandler:
 
         try:
             import graypy  # type: ignore[import-not-found]
-        except ImportError as exc:
-            raise ConnectionError(
-                "graypy не установлен. Установите: pip install graypy"
-            ) from exc
+        except ImportError:
+            _logger.warning(
+                "graypy не установлен — Graylog-обработчик отключён "
+                "(установите: pip install graypy для активации)"
+            )
+            return None
 
         try:
             handler_class = (

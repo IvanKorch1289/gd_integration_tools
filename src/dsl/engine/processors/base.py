@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, ClassVar
 
+from src.core.types.side_effect import SideEffectKind
 from src.dsl.engine.exchange import Exchange
 
 if TYPE_CHECKING:
@@ -21,7 +22,21 @@ ProcessorCallable = Callable[[Exchange[Any], "ExecutionContext"], Any | Awaitabl
 
 
 class BaseProcessor(ABC):
-    """Базовый класс для всех DSL-процессоров."""
+    """Базовый класс для всех DSL-процессоров.
+
+    Class attributes:
+        side_effect: Классификация побочных эффектов (W14.4).
+            Default ``PURE`` — наследник обязан переопределить, если
+            читает state или производит наблюдаемый внешний эффект.
+            Используется engine для retry-стратегии и Saga compensation.
+        compensatable: Можно ли откатить операцию (W14.4). Default ``True``.
+            ``False`` для irreversible-операций (отправка email, физическое
+            действие RPA). Saga блокирует compensate-цепочку, если
+            процессор без compensatable.
+    """
+
+    side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
+    compensatable: ClassVar[bool] = True
 
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__

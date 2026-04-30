@@ -247,6 +247,12 @@ layers: ## Проверка архитектурных слоёв (ADR-001)
 layers-update: ## Обновить allowlist архитектурных нарушений (после сокращения legacy)
 	@uv run python tools/check_layers.py --update-allowlist
 
+side-effect-audit: ## W14.4 — аудит классификации side-effects процессоров
+	@$(UV_RUN) python tools/check_side_effects.py --allow-default
+
+dsl-w14-check: layers side-effect-audit ## W14.2-14.4 контракты + side-effects + слои
+	@$(SUCCESS) "DSL W14 контракты в порядке"
+
 config-audit: check-env ## Двусторонний аудит конфигов (orphans + missing secrets)
 	@$(UV_RUN) python tools/config_audit.py
 
