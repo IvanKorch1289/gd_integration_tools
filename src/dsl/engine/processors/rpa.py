@@ -101,6 +101,12 @@ class PdfReadProcessor(BaseProcessor):
 
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._tables:
+            spec["extract_tables"] = True
+        return {"pdf_read": spec}
+
 
 class PdfMergeProcessor(BaseProcessor):
     """Объединяет несколько PDF в один.
@@ -138,6 +144,9 @@ class PdfMergeProcessor(BaseProcessor):
             body=output.getvalue(), headers=dict(exchange.in_message.headers)
         )
 
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"pdf_merge": {}}
+
 
 class WordReadProcessor(BaseProcessor):
     """Извлекает текст из .docx файла.
@@ -171,6 +180,9 @@ class WordReadProcessor(BaseProcessor):
             body={"text": "\n".join(paragraphs), "paragraphs": paragraphs},
             headers=dict(exchange.in_message.headers),
         )
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"word_read": {}}
 
 
 class WordWriteProcessor(BaseProcessor):
@@ -209,6 +221,9 @@ class WordWriteProcessor(BaseProcessor):
         buf = io.BytesIO()
         doc.save(buf)
         exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"word_write": {}}
 
 
 class ExcelReadProcessor(BaseProcessor):
@@ -252,6 +267,12 @@ class ExcelReadProcessor(BaseProcessor):
         headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]
         data = [dict(zip(headers, row)) for row in rows[1:]]
         exchange.set_out(body=data, headers=dict(exchange.in_message.headers))
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._sheet is not None:
+            spec["sheet_name"] = self._sheet
+        return {"excel_read": spec}
 
 
 class FileMoveProcessor(BaseProcessor):
@@ -300,6 +321,16 @@ class FileMoveProcessor(BaseProcessor):
             )
         except (FileNotFoundError, PermissionError, OSError) as exc:
             exchange.fail(f"File {self._mode} failed: {exc}")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._src is not None:
+            spec["src"] = self._src
+        if self._dst is not None:
+            spec["dst"] = self._dst
+        if self._mode != "copy":
+            spec["mode"] = self._mode
+        return {"file_move": spec}
 
 
 class ArchiveProcessor(BaseProcessor):
@@ -398,6 +429,14 @@ class ArchiveProcessor(BaseProcessor):
                     tf.addfile(ti, io.BytesIO(data))
         return buf.getvalue()
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._mode != "extract":
+            spec["mode"] = self._mode
+        if self._format != "zip":
+            spec["format"] = self._format
+        return {"archive": spec}
+
 
 class ImageOcrProcessor(BaseProcessor):
     """OCR — извлечение текста с изображений через Tesseract.
@@ -432,6 +471,12 @@ class ImageOcrProcessor(BaseProcessor):
             body={"text": text.strip(), "lang": self._lang},
             headers=dict(exchange.in_message.headers),
         )
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._lang != "eng+rus":
+            spec["lang"] = self._lang
+        return {"ocr": spec}
 
 
 class ImageResizeProcessor(BaseProcessor):
@@ -481,6 +526,16 @@ class ImageResizeProcessor(BaseProcessor):
         img.save(buf, format=self._format)
         exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._width is not None:
+            spec["width"] = self._width
+        if self._height is not None:
+            spec["height"] = self._height
+        if self._format != "PNG":
+            spec["output_format"] = self._format
+        return {"image_resize": spec}
+
 
 class RegexProcessor(BaseProcessor):
     """Regex операции: extract, replace, match.
@@ -522,6 +577,14 @@ class RegexProcessor(BaseProcessor):
             else:
                 exchange.set_property("regex_matched", True)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"pattern": self._pattern}
+        if self._action != "extract":
+            spec["action"] = self._action
+        if self._replacement != "":
+            spec["replacement"] = self._replacement
+        return {"regex": spec}
+
 
 class TemplateRenderProcessor(BaseProcessor):
     """Рендеринг Jinja2 шаблонов.
@@ -550,6 +613,9 @@ class TemplateRenderProcessor(BaseProcessor):
         except Exception as exc:
             exchange.fail(f"Template render failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"render_template": {"template": self._template}}
+
 
 class HashProcessor(BaseProcessor):
     """Вычисляет hash от body.
@@ -577,6 +643,12 @@ class HashProcessor(BaseProcessor):
         h = hashlib.new(self._algorithm, data)
         exchange.set_out(body=h.hexdigest(), headers=dict(exchange.in_message.headers))
         exchange.set_property("hash_algorithm", self._algorithm)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._algorithm != "sha256":
+            spec["algorithm"] = self._algorithm
+        return {"hash": spec}
 
 
 class EncryptProcessor(BaseProcessor):
@@ -614,6 +686,9 @@ class EncryptProcessor(BaseProcessor):
         except Exception as exc:
             exchange.fail(f"Encryption failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"encrypt": {"key": self._key}}
+
 
 class DecryptProcessor(BaseProcessor):
     """AES расшифровка body через Fernet.
@@ -644,6 +719,9 @@ class DecryptProcessor(BaseProcessor):
             exchange.set_out(body=decrypted, headers=dict(exchange.in_message.headers))
         except Exception as exc:
             exchange.fail(f"Decryption failed: {exc}")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"decrypt": {"key": self._key}}
 
 
 class ShellExecProcessor(BaseProcessor):
@@ -705,6 +783,14 @@ class ShellExecProcessor(BaseProcessor):
         except (FileNotFoundError, PermissionError) as exc:
             exchange.fail(f"Shell exec failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"command": self._command}
+        if self._args:
+            spec["args"] = list(self._args)
+        if self._allowed:
+            spec["allowed_commands"] = sorted(self._allowed)
+        return {"shell": spec}
+
 
 class EmailComposeProcessor(BaseProcessor):
     """Compose и отправка email через SMTP.
@@ -727,7 +813,7 @@ class EmailComposeProcessor(BaseProcessor):
 
         try:
             email_body = self._body_template.format(**variables)
-        except (KeyError, IndexError):
+        except KeyError, IndexError:
             email_body = self._body_template
 
         try:
@@ -740,3 +826,12 @@ class EmailComposeProcessor(BaseProcessor):
             exchange.set_property("email_to", self._to)
         except Exception as exc:
             exchange.fail(f"Email send failed: {exc}")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {
+            "email": {
+                "to": self._to,
+                "subject": self._subject,
+                "body_template": self._body_template,
+            }
+        }

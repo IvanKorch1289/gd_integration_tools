@@ -79,6 +79,16 @@ class TenantScopeProcessor(BaseProcessor):
             return
         exchange.properties["tenant_id"] = str(tenant_id)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._header != "x-tenant-id":
+            spec["header"] = self._header
+        if self._body_path is not None:
+            spec["body_path"] = self._body_path
+        if self._required is not True:
+            spec["required"] = self._required
+        return {"tenant_scope": spec}
+
 
 # ──────────────────── Cost tracking ────────────────────
 
@@ -111,6 +121,9 @@ class CostTrackerProcessor(BaseProcessor):
                 "started_at": time.time(),
             },
         )
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"cost_tracker": {}}
 
 
 # ──────────────────── Human-in-the-loop approval ────────────────────
@@ -217,6 +230,11 @@ class OutboxProcessor(BaseProcessor):
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"Outbox write failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        if self._writer is not None:
+            return None
+        return {"outbox": {"topic": self._topic}}
+
 
 # ──────────────────── Data masking ────────────────────
 
@@ -248,6 +266,7 @@ class DataMaskingProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=name or "mask")
         chosen = patterns or list(_DEFAULT_PATTERNS.keys())
+        self._patterns_arg = patterns
         self._patterns = [
             _DEFAULT_PATTERNS[p] for p in chosen if p in _DEFAULT_PATTERNS
         ]
@@ -271,6 +290,14 @@ class DataMaskingProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.in_message.body = self._mask_value(exchange.in_message.body)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._patterns_arg is not None:
+            spec["patterns"] = list(self._patterns_arg)
+        if self._replacement != "***":
+            spec["replacement"] = self._replacement
+        return {"mask": spec}
+
 
 # ──────────────────── Compliance labels ────────────────────
 
@@ -291,3 +318,6 @@ class ComplianceLabelProcessor(BaseProcessor):
         existing = set(exchange.properties.get("compliance_labels", []))
         existing.update(self._labels)
         exchange.properties["compliance_labels"] = sorted(existing)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"compliance_labels": {"labels": list(self._labels)}}

@@ -108,6 +108,16 @@ class GeoIpProcessor(BaseProcessor):
         except Exception as exc:
             exchange.set_property(self._output, {"ip": ip, "error": str(exc)})
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._ip_field != "client_ip":
+            spec["ip_field"] = self._ip_field
+        if self._ip_header is not None:
+            spec["ip_header"] = self._ip_header
+        if self._output != "geo":
+            spec["output_property"] = self._output
+        return {"geoip": spec}
+
 
 class JwtSignProcessor(BaseProcessor):
     """Sign payload as JWT with secret + algorithm.
@@ -153,6 +163,16 @@ class JwtSignProcessor(BaseProcessor):
         except Exception as exc:
             exchange.fail(f"JWT sign failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"secret_key": self._secret}
+        if self._algo != "HS256":
+            spec["algorithm"] = self._algo
+        if self._exp != 3600:
+            spec["expires_in_seconds"] = self._exp
+        if self._output != "jwt":
+            spec["output_property"] = self._output
+        return {"jwt_sign": spec}
+
 
 class JwtVerifyProcessor(BaseProcessor):
     """Verify JWT from header. Stores claims в property или fail.
@@ -197,6 +217,16 @@ class JwtVerifyProcessor(BaseProcessor):
             exchange.fail("JWT expired")
         except jwt.InvalidTokenError as exc:
             exchange.fail(f"Invalid JWT: {exc}")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"secret_key": self._secret}
+        if self._algo != "HS256":
+            spec["algorithm"] = self._algo
+        if self._header != "Authorization":
+            spec["header"] = self._header
+        if self._output != "jwt_claims":
+            spec["output_property"] = self._output
+        return {"jwt_verify": spec}
 
 
 class CompressProcessor(BaseProcessor):
@@ -250,6 +280,14 @@ class CompressProcessor(BaseProcessor):
         except ImportError as exc:
             exchange.fail(f"Compression library missing: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._algo != "gzip":
+            spec["algorithm"] = self._algo
+        if self._level != 6:
+            spec["level"] = self._level
+        return {"compress": spec}
+
 
 class DecompressProcessor(BaseProcessor):
     """Decompress body (auto-detect или указанный algorithm)."""
@@ -296,6 +334,12 @@ class DecompressProcessor(BaseProcessor):
         except Exception as exc:
             exchange.fail(f"Decompress failed: {exc}")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._algo != "auto":
+            spec["algorithm"] = self._algo
+        return {"decompress": spec}
+
 
 class WebhookSignProcessor(BaseProcessor):
     """Sign outgoing webhook body with HMAC-SHA256.
@@ -340,6 +384,14 @@ class WebhookSignProcessor(BaseProcessor):
         exchange.in_message.set_header(self._header, signature)
         exchange.set_property("webhook_signature", signature)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"secret": self._secret}
+        if self._header != "X-Webhook-Signature":
+            spec["header"] = self._header
+        if self._algo != "sha256":
+            spec["algorithm"] = self._algo
+        return {"webhook_sign": spec}
+
 
 class DeadlineProcessor(BaseProcessor):
     """Устанавливает дedline для pipeline — проверяется последующими процессорами.
@@ -373,3 +425,11 @@ class DeadlineProcessor(BaseProcessor):
 
         exchange.set_property("_deadline_at", now + self._timeout)
         exchange.set_property("_deadline_set_at", now)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._timeout != 30.0:
+            spec["timeout_seconds"] = self._timeout
+        if self._fail is not True:
+            spec["fail_on_exceed"] = self._fail
+        return {"deadline": spec}

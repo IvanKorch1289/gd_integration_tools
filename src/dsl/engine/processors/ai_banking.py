@@ -47,6 +47,12 @@ class KycAmlVerifyProcessor(BaseProcessor):
         exchange.set_property("kyc_jurisdiction", self.jurisdiction)
         exchange.set_property("banking_action", "ai.kyc_aml.verify")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.jurisdiction != "ru":
+            spec["jurisdiction"] = self.jurisdiction
+        return {"kyc_aml_verify": spec}
+
 
 class AntiFraudScoreProcessor(BaseProcessor):
     """LLM-скоринг антифрода поверх детерминистических правил.
@@ -62,6 +68,12 @@ class AntiFraudScoreProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property("antifraud_model", self.model)
         exchange.set_property("banking_action", "ai.antifraud.score")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.model != "default":
+            spec["model"] = self.model
+        return {"antifraud_score": spec}
 
 
 class CreditScoringRagProcessor(BaseProcessor):
@@ -79,6 +91,12 @@ class CreditScoringRagProcessor(BaseProcessor):
         exchange.set_property("credit_product", self.product)
         exchange.set_property("banking_action", "ai.credit.score_rag")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.product != "retail":
+            spec["product"] = self.product
+        return {"credit_scoring_rag": spec}
+
 
 class CustomerChatbotProcessor(BaseProcessor):
     """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
@@ -90,6 +108,12 @@ class CustomerChatbotProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property("chatbot_channel", self.channel)
         exchange.set_property("banking_action", "ai.chatbot.respond")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.channel != "web":
+            spec["channel"] = self.channel
+        return {"customer_chatbot": spec}
 
 
 class AppealProcessorAI(BaseProcessor):
@@ -105,6 +129,9 @@ class AppealProcessorAI(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property("banking_action", "ai.appeals.process")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"appeal_ai": {}}
+
 
 class TransactionCategorizerProcessor(BaseProcessor):
     """Категоризация транзакций (MCC + subcategory + merchant normalization)."""
@@ -117,6 +144,12 @@ class TransactionCategorizerProcessor(BaseProcessor):
         exchange.set_property("tx_taxonomy", self.taxonomy)
         exchange.set_property("banking_action", "ai.tx.categorize")
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.taxonomy != "mcc":
+            spec["taxonomy"] = self.taxonomy
+        return {"tx_categorize": spec}
+
 
 class FinDocOcrLlmProcessor(BaseProcessor):
     """OCR + LLM для финансовых документов (счета, договоры, выписки)."""
@@ -128,3 +161,9 @@ class FinDocOcrLlmProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property("findoc_type", self.doc_type)
         exchange.set_property("banking_action", "ai.findoc.ocr_and_extract")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.doc_type != "invoice":
+            spec["doc_type"] = self.doc_type
+        return {"findoc_ocr_llm": spec}

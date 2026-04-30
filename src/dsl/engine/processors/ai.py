@@ -60,6 +60,12 @@ class PromptComposerProcessor(BaseProcessor):
             )
         exchange.set_property(self._output_property, prompt)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"template": self._template}
+        if self._context_property != "vector_results":
+            spec["context_property"] = self._context_property
+        return {"compose_prompt": spec}
+
 
 class LLMCallProcessor(BaseProcessor):
     """Вызывает LLM с retry, rate-limit detection и cost tracking.
@@ -171,6 +177,14 @@ class LLMCallProcessor(BaseProcessor):
             f"LLM call failed after {self._max_retries + 1} attempts: {last_error}"
         )
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._provider is not None:
+            spec["provider"] = self._provider
+        if self._model is not None:
+            spec["model"] = self._model
+        return {"call_llm": spec}
+
 
 class LLMParserProcessor(BaseProcessor):
     """Парсит ответ LLM в структурированный формат."""
@@ -194,7 +208,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except (orjson.JSONDecodeError, ValueError):
+            except orjson.JSONDecodeError, ValueError:
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:
@@ -293,6 +307,16 @@ class VectorSearchProcessor(BaseProcessor):
         )
         exchange.set_property(self._output_property, results)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._query_field != "question":
+            spec["query_field"] = self._query_field
+        if self._top_k != 5:
+            spec["top_k"] = self._top_k
+        if self._namespace is not None:
+            spec["namespace"] = self._namespace
+        return {"rag_search": spec}
+
 
 class SanitizePIIProcessor(BaseProcessor):
     """Маскирует PII в body перед передачей дальше."""
@@ -311,6 +335,9 @@ class SanitizePIIProcessor(BaseProcessor):
         exchange.set_property("_pii_original", exchange.in_message.body)
         exchange.set_property("_pii_mapping", result.replacements)
         exchange.in_message.set_body(result.sanitized_text)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"sanitize_pii": {}}
 
 
 class RestorePIIProcessor(BaseProcessor):
@@ -424,7 +451,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)
@@ -470,7 +497,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
 

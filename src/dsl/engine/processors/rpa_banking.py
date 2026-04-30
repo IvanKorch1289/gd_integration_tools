@@ -1,21 +1,17 @@
-"""RPA-процессоры для банковских приложений без API.
+"""RPA-процессоры для прикладной автоматизации.
 
 Покрывает:
 - Citrix/RDP/Terminal server (pywinauto/pyautogui)
-- SAP GUI (через pywin32 SAP GUI scripting API)
 - 3270 терминал-эмулятор (классический мейнфрейм)
 - Mobile app automation (Appium)
 - Email-driven pipeline (IMAP → structured data)
 - Keystroke recording/playback
-- PDF bank statement parser (выписки по счёту в ЛК банка-партнёра)
-- Excel/Word шаблоны (сводки для ЦБ РФ)
 
 Все опциональные зависимости проверяются на импорте; ясные ошибки в __init__.
 """
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from src.dsl.engine.context import ExecutionContext
@@ -24,13 +20,10 @@ from src.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "CitrixSessionProcessor",
-    "SapGuiProcessor",
     "TerminalEmulator3270Processor",
     "AppiumMobileProcessor",
     "EmailDrivenProcessor",
     "KeystrokeReplayProcessor",
-    "BankStatementPdfParserProcessor",
-    "CbrReportExcelProcessor",
 )
 
 
@@ -59,32 +52,16 @@ class CitrixSessionProcessor(BaseProcessor):
         exchange.set_property("rpa_backend", "citrix")
         exchange.set_property("rpa_operation", self.operation)
         exchange.set_property("rpa_session_id", self.session_id)
-        exchange.set_property("banking_action", "rpa.citrix.invoke")
+        exchange.set_property("rpa_action", "rpa.citrix.invoke")
 
-
-class SapGuiProcessor(BaseProcessor):
-    """SAP GUI Scripting (через pywin32). Windows-only.
-
-    Операции: launch, navigate, input, press, extract.
-    """
-
-    def __init__(self, operation: str, transaction: str | None = None) -> None:
-        super().__init__(name=f"sap_gui:{operation}")
-        self.operation = operation
-        self.transaction = transaction
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        exchange.set_property("rpa_backend", "sap_gui")
-        exchange.set_property("rpa_operation", self.operation)
-        if self.transaction:
-            exchange.set_property("sap_transaction", self.transaction)
-        exchange.set_property("banking_action", "rpa.sap_gui.invoke")
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"citrix": {"operation": self.operation, "session_id": self.session_id}}
 
 
 class TerminalEmulator3270Processor(BaseProcessor):
     """IBM 3270 терминальный эмулятор. Нужен x3270/py3270.
 
-    Для интеграции с легаси мейнфрейм-системами банков (COBOL-back-office).
+    Для интеграции с легаси мейнфрейм-системами (COBOL-back-office).
     """
 
     def __init__(self, host: str, port: int = 23, action: str = "query") -> None:
@@ -97,11 +74,19 @@ class TerminalEmulator3270Processor(BaseProcessor):
         exchange.set_property("rpa_backend", "3270")
         exchange.set_property("rpa_host", self.host)
         exchange.set_property("rpa_port", self.port)
-        exchange.set_property("banking_action", f"rpa.3270.{self.action}")
+        exchange.set_property("rpa_action", f"rpa.3270.{self.action}")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"host": self.host}
+        if self.port != 23:
+            spec["port"] = self.port
+        if self.action != "query":
+            spec["action"] = self.action
+        return {"terminal_3270": spec}
 
 
 class AppiumMobileProcessor(BaseProcessor):
-    """Appium для автоматизации мобильных банковских приложений.
+    """Appium для автоматизации мобильных приложений.
 
     Используется только для внутренних сценариев (тест-кабинеты, партнёрские
     приложения с контрактом). НЕ для обхода защиты боевых приложений.
@@ -120,7 +105,16 @@ class AppiumMobileProcessor(BaseProcessor):
         exchange.set_property("appium_platform", self.platform)
         exchange.set_property("appium_app", self.app_package)
         exchange.set_property("rpa_operation", self.operation)
-        exchange.set_property("banking_action", "rpa.appium.invoke")
+        exchange.set_property("rpa_action", "rpa.appium.invoke")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {
+            "appium_mobile": {
+                "platform": self.platform,
+                "app_package": self.app_package,
+                "operation": self.operation,
+            }
+        }
 
 
 class EmailDrivenProcessor(BaseProcessor):
@@ -146,7 +140,17 @@ class EmailDrivenProcessor(BaseProcessor):
         exchange.set_property("email_mailbox", self.mailbox)
         exchange.set_property("email_subject_filter", self.subject_filter or "")
         exchange.set_property("email_extract", self.extract)
-        exchange.set_property("banking_action", "email.poll_and_extract")
+        exchange.set_property("rpa_action", "email.poll_and_extract")
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.mailbox != "INBOX":
+            spec["mailbox"] = self.mailbox
+        if self.subject_filter is not None:
+            spec["subject_filter"] = self.subject_filter
+        if self.extract != "body_table":
+            spec["extract"] = self.extract
+        return {"email_driven": spec}
 
 
 class KeystrokeReplayProcessor(BaseProcessor):
@@ -163,35 +167,7 @@ class KeystrokeReplayProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property("rpa_backend", "keystroke")
         exchange.set_property("keystroke_script", self.script_name)
-        exchange.set_property("banking_action", "rpa.keystroke.replay")
+        exchange.set_property("rpa_action", "rpa.keystroke.replay")
 
-
-_BANK_LINE_RE = re.compile(
-    r"(?P<date>\d{2}\.\d{2}\.\d{4})\s+"
-    r"(?P<desc>.+?)\s+"
-    r"(?P<amount>-?[\d\s,]+\.\d{2})"
-)
-
-
-class BankStatementPdfParserProcessor(BaseProcessor):
-    """Парсер PDF-выписок по счёту (Сбер, ВТБ, Альфа и т.д.).
-
-    Извлекает транзакции таблицей. Если разметка PDF специфична —
-    указать format='sber' | 'vtb' | 'alfa' | 'generic'.
-
-    Реальный PDF-парсинг — через сервис (pdfplumber/pymupdf),
-    чтобы не тянуть тяжёлые зависимости в ядро.
-    """
-
-    def __init__(self, bank_format: str = "generic") -> None:
-        super().__init__(name=f"bank_pdf:{bank_format}")
-        self.bank_format = bank_format
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        exchange.set_property("pdf_bank_format", self.bank_format)
-        exchange.set_property("banking_action", "bank_statement.parse_pdf")
-
-    @staticmethod
-    def parse_text_lines(text: str) -> list[dict[str, str]]:
-        """Быстрый парсер плоского текста выписки (fallback)."""
-        return [m.groupdict() for m in _BANK_LINE_RE.finditer(text)]
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"keystroke_replay": {"script_name": self.script_name}}

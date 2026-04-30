@@ -81,6 +81,140 @@ Pipeline.to_dict пропускает процессоры, у которых ``
 Entity CRUD / Telegram / Express / WindowedDedup / MulticastRoutes /
 Redirect и пр.
 
+### W27 — AI primitive-args batch
+
+| Builder method | Processor | Файл |
+|---|---|---|
+| `sanitize_pii` | SanitizePIIProcessor | `processors/ai.py` |
+| `rag_search` | VectorSearchProcessor | `processors/ai.py` |
+| `compose_prompt` | PromptComposerProcessor | `processors/ai.py` |
+| `call_llm` | LLMCallProcessor | `processors/ai.py` |
+
+### W28 — enrichment + business batch
+
+12 новых builder-методов + to_spec:
+
+| Builder method | Processor | Файл |
+|---|---|---|
+| `geoip` | GeoIpProcessor | `processors/enrichment.py` |
+| `jwt_sign` | JwtSignProcessor | `processors/enrichment.py` |
+| `jwt_verify` | JwtVerifyProcessor | `processors/enrichment.py` |
+| `compress` | CompressProcessor | `processors/enrichment.py` |
+| `decompress` | DecompressProcessor | `processors/enrichment.py` |
+| `webhook_sign` | WebhookSignProcessor | `processors/enrichment.py` |
+| `deadline` | DeadlineProcessor | `processors/enrichment.py` |
+| `tenant_scope` | TenantScopeProcessor | `processors/business.py` |
+| `cost_tracker` | CostTrackerProcessor | `processors/business.py` |
+| `outbox` | OutboxProcessor (без custom writer) | `processors/business.py` |
+| `mask` | DataMaskingProcessor | `processors/business.py` |
+| `compliance_labels` | ComplianceLabelProcessor | `processors/business.py` |
+
+`HumanApprovalProcessor` пропущен (DI ``approval_store`` + callable
+``notifier`` не сериализуются).
+
+**Безопасность секретов**: `jwt_sign` / `jwt_verify` / `webhook_sign`
+сохраняют ``secret_key`` / ``secret`` как literal в YAML. Для production
+используйте SecretRef-маркеры (см. ``to_spec_audit.md``).
+
+### W29 — ai_banking AI pipelines
+
+7 процессоров AI-pipelines для banking-домена; builder-методы уже
+существовали — добавлен только ``to_spec()``:
+
+| Builder method | Processor | Файл |
+|---|---|---|
+| `kyc_aml_verify` | KycAmlVerifyProcessor | `processors/ai_banking.py` |
+| `antifraud_score` | AntiFraudScoreProcessor | `processors/ai_banking.py` |
+| `credit_scoring_rag` | CreditScoringRagProcessor | `processors/ai_banking.py` |
+| `customer_chatbot` | CustomerChatbotProcessor | `processors/ai_banking.py` |
+| `appeal_ai` | AppealProcessorAI | `processors/ai_banking.py` |
+| `tx_categorize` | TransactionCategorizerProcessor | `processors/ai_banking.py` |
+| `findoc_ocr_llm` | FinDocOcrLlmProcessor | `processors/ai_banking.py` |
+
+### W30 — RPA batch (UiPath-style + RPA terminal/desktop/mobile)
+
+21 процессор; builder-методы уже существовали — добавлен только
+`to_spec()`.
+
+`rpa.py` (16):
+
+| Builder method | Processor |
+|---|---|
+| `pdf_read` | PdfReadProcessor |
+| `pdf_merge` | PdfMergeProcessor |
+| `word_read` | WordReadProcessor |
+| `word_write` | WordWriteProcessor |
+| `excel_read` | ExcelReadProcessor |
+| `file_move` | FileMoveProcessor |
+| `archive` | ArchiveProcessor |
+| `ocr` | ImageOcrProcessor |
+| `image_resize` | ImageResizeProcessor |
+| `regex` | RegexProcessor |
+| `render_template` | TemplateRenderProcessor |
+| `hash` | HashProcessor |
+| `encrypt` | EncryptProcessor |
+| `decrypt` | DecryptProcessor |
+| `shell` | ShellExecProcessor |
+| `email` | EmailComposeProcessor |
+
+`rpa_banking.py` (5):
+
+| Builder method | Processor |
+|---|---|
+| `citrix` | CitrixSessionProcessor |
+| `terminal_3270` | TerminalEmulator3270Processor |
+| `appium_mobile` | AppiumMobileProcessor |
+| `email_driven` | EmailDrivenProcessor |
+| `keystroke_replay` | KeystrokeReplayProcessor |
+
+Особенности W30:
+
+- `ShellExecProcessor.allowed_commands` хранится как `set` —
+  `to_spec` отдаёт `sorted(list(...))` для детерминизма round-trip'а.
+- `ShellExecProcessor.timeout_seconds` не экспонируется через
+  builder и теряется при write-back.
+- `ImageResizeProcessor.output_format` нормализуется к UPPERCASE
+  (`Pillow` API), поэтому `output_format="jpeg"` становится `"JPEG"`
+  после первого round-trip'а — идемпотентно.
+- `encrypt` / `decrypt` / `email` / `webhook_sign` — **literal
+  secret в YAML**: для production используйте SecretRef-маркеры
+  (см. `to_spec_audit.md`).
+
+### post-W30 cleanup — удаление специализированных интеграций
+
+Удалены 8 процессоров и 8 builder-методов:
+
+- `processors/banking.py` (файл удалён целиком, 6 классов): SWIFT MT/MX
+  parse-builder, ISO 20022 parser, FIX message, EDIFACT parser, 1С
+  exchange.
+- `processors/rpa_banking.py` — 2 класса: SAP GUI Scripting, bank
+  statement PDF parser (Сбер/ВТБ/Альфа форматы).
+
+Builder-методы удалены: `swift_mt_parse`, `swift_mx_build`,
+`iso20022_parse`, `fix_message`, `edifact_parse`, `onec_exchange`,
+`sap_gui`, `bank_statement_pdf`.
+
+Специализированные финансовые протоколы (SWIFT / ISO 20022 / FIX /
+EDIFACT), интеграции с проприетарными ERP/CRM (1С / SAP) и форматами
+банк-выписок маршрутизируются через корпоративную интеграционную
+шину предприятия — не из этого сервиса.
+
+Контракт W27: `to_spec` сохраняет только те kwargs, что приняты
+builder-методом (см. `to_spec_audit.md`). Не-builder параметры
+(`output_property` для rag/prompt, `prompt_property` / `max_retries`
+/ `retry_delay` для LLM) при write-back теряются — by design.
+
+Пример round-trip RAG-цепочки:
+
+```yaml
+processors:
+  - sanitize_pii: {}
+  - rag_search: {namespace: kb_main, top_k: 3}
+  - compose_prompt:
+      template: "Контекст:\n{context}\n\nВопрос: {input}"
+  - call_llm: {provider: perplexity}
+```
+
 ## Ограничения
 
 1. **Callable-аргументы**: процессоры с ``payload_factory``,

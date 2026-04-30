@@ -118,11 +118,7 @@ class RouteBuilder:
 
     @classmethod
     def from_registered_source(
-        cls,
-        route_id: str,
-        source_id: str,
-        *,
-        description: str | None = None,
+        cls, route_id: str, source_id: str, *, description: str | None = None
     ) -> "RouteBuilder":
         """Точка входа W23: маршрут запитывается от зарегистрированного Source.
 
@@ -146,9 +142,7 @@ class RouteBuilder:
             )
         """
         return cls(
-            route_id=route_id,
-            source=f"source:{source_id}",
-            description=description,
+            route_id=route_id, source=f"source:{source_id}", description=description
         )
 
     def _add(self, processor: BaseProcessor) -> "RouteBuilder":
@@ -2296,51 +2290,7 @@ class RouteBuilder:
         self.cache(_key_fn, ttl=ttl)
         return self.cache_write(_key_fn, ttl=ttl)
 
-    # ── Banking protocols ──
-
-    def swift_mt_parse(self, message_type: str = "auto") -> "RouteBuilder":
-        """Парсит SWIFT MT-сообщение (MT103/MT202/MT940) в dict."""
-        from src.dsl.engine.processors.banking import SwiftMTParserProcessor
-
-        return self._add(SwiftMTParserProcessor(message_type=message_type))
-
-    def swift_mx_build(
-        self, schema: str, action: str = "banking.swift_mx.build"
-    ) -> "RouteBuilder":
-        """Формирует SWIFT MX (ISO 20022 XML)."""
-        from src.dsl.engine.processors.banking import SwiftMXBuilderProcessor
-
-        return self._add(SwiftMXBuilderProcessor(schema=schema, action=action))
-
-    def iso20022_parse(self, namespace: str | None = None) -> "RouteBuilder":
-        """Парсит ISO 20022 XML (pain.001, camt.053, pacs.008)."""
-        from src.dsl.engine.processors.banking import Iso20022ParserProcessor
-
-        return self._add(Iso20022ParserProcessor(namespace=namespace))
-
-    def fix_message(self, mode: str = "parse") -> "RouteBuilder":
-        """Парсер/билдер FIX-сообщений."""
-        from src.dsl.engine.processors.banking import FixMessageProcessor
-
-        return self._add(FixMessageProcessor(mode=mode))
-
-    def edifact_parse(self) -> "RouteBuilder":
-        """Парсит UN/EDIFACT сегменты (FINPAY, PAYMUL)."""
-        from src.dsl.engine.processors.banking import EdifactParserProcessor
-
-        return self._add(EdifactParserProcessor())
-
-    def onec_exchange(
-        self, operation: str, entity: str, action: str = "onec.invoke"
-    ) -> "RouteBuilder":
-        """Интеграция с 1С:Предприятие через OData/HTTP-сервисы."""
-        from src.dsl.engine.processors.banking import OneCExchangeProcessor
-
-        return self._add(
-            OneCExchangeProcessor(operation=operation, entity=entity, action=action)
-        )
-
-    # ── RPA для банковских приложений ──
+    # ── RPA terminal/desktop/mobile ──
 
     def citrix(self, operation: str, session_id: str) -> "RouteBuilder":
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
@@ -2349,12 +2299,6 @@ class RouteBuilder:
         return self._add(
             CitrixSessionProcessor(operation=operation, session_id=session_id)
         )
-
-    def sap_gui(self, operation: str, transaction: str | None = None) -> "RouteBuilder":
-        """SAP GUI Scripting (Windows-only)."""
-        from src.dsl.engine.processors.rpa_banking import SapGuiProcessor
-
-        return self._add(SapGuiProcessor(operation=operation, transaction=transaction))
 
     def terminal_3270(
         self, host: str, port: int = 23, action: str = "query"
@@ -2398,14 +2342,6 @@ class RouteBuilder:
         from src.dsl.engine.processors.rpa_banking import KeystrokeReplayProcessor
 
         return self._add(KeystrokeReplayProcessor(script_name=script_name))
-
-    def bank_statement_pdf(self, bank_format: str = "generic") -> "RouteBuilder":
-        """Парсер PDF-выписок по счёту."""
-        from src.dsl.engine.processors.rpa_banking import (
-            BankStatementPdfParserProcessor,
-        )
-
-        return self._add(BankStatementPdfParserProcessor(bank_format=bank_format))
 
     # ── AI-пайплайны для банка ──
 
@@ -2776,3 +2712,150 @@ class RouteBuilder:
     def sample(self, probability: float = 0.1) -> "RouteBuilder":
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
         return self._add(SamplingProcessor(probability=probability))
+
+    # ── Enrichment (W28) ──
+
+    def geoip(
+        self,
+        *,
+        ip_field: str = "client_ip",
+        ip_header: str | None = None,
+        output_property: str = "geo",
+    ) -> "RouteBuilder":
+        """GeoIP enrichment (MaxMind GeoLite2) — country/city/timezone в property."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "GeoIpProcessor",
+            ip_field=ip_field,
+            ip_header=ip_header,
+            output_property=output_property,
+        )
+
+    def jwt_sign(
+        self,
+        *,
+        secret_key: str,
+        algorithm: str = "HS256",
+        expires_in_seconds: int | None = 3600,
+        output_property: str = "jwt",
+    ) -> "RouteBuilder":
+        """Подпись payload как JWT-токен (PyJWT)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "JwtSignProcessor",
+            secret_key=secret_key,
+            algorithm=algorithm,
+            expires_in_seconds=expires_in_seconds,
+            output_property=output_property,
+        )
+
+    def jwt_verify(
+        self,
+        *,
+        secret_key: str,
+        algorithm: str = "HS256",
+        header: str = "Authorization",
+        output_property: str = "jwt_claims",
+    ) -> "RouteBuilder":
+        """Проверка JWT из заголовка; claims → property или fail."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "JwtVerifyProcessor",
+            secret_key=secret_key,
+            algorithm=algorithm,
+            header=header,
+            output_property=output_property,
+        )
+
+    def compress(self, *, algorithm: str = "gzip", level: int = 6) -> "RouteBuilder":
+        """Сжатие body (gzip/brotli/zstd)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "CompressProcessor",
+            algorithm=algorithm,
+            level=level,
+        )
+
+    def decompress(self, *, algorithm: str = "auto") -> "RouteBuilder":
+        """Распаковка body (auto-detect или явный algorithm)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "DecompressProcessor",
+            algorithm=algorithm,
+        )
+
+    def webhook_sign(
+        self,
+        *,
+        secret: str,
+        header: str = "X-Webhook-Signature",
+        algorithm: str = "sha256",
+    ) -> "RouteBuilder":
+        """HMAC-подпись outgoing webhook'а."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "WebhookSignProcessor",
+            secret=secret,
+            header=header,
+            algorithm=algorithm,
+        )
+
+    def deadline(
+        self, *, timeout_seconds: float = 30.0, fail_on_exceed: bool = True
+    ) -> "RouteBuilder":
+        """Установка дedline pipeline; downstream проверяет _deadline_at."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.enrichment",
+            "DeadlineProcessor",
+            timeout_seconds=timeout_seconds,
+            fail_on_exceed=fail_on_exceed,
+        )
+
+    # ── Business (W28) ──
+
+    def tenant_scope(
+        self,
+        *,
+        header: str = "x-tenant-id",
+        body_path: str | None = None,
+        required: bool = True,
+    ) -> "RouteBuilder":
+        """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.business",
+            "TenantScopeProcessor",
+            header=header,
+            body_path=body_path,
+            required=required,
+        )
+
+    def cost_tracker(self) -> "RouteBuilder":
+        """Инициализация cost-словаря в properties (LLM-токены, HTTP, DB, USD)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.business", "CostTrackerProcessor"
+        )
+
+    def outbox(self, *, topic: str) -> "RouteBuilder":
+        """Transactional Outbox: запись события в outbox-таблицу."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.business", "OutboxProcessor", topic=topic
+        )
+
+    def mask(
+        self, *, patterns: list[str] | None = None, replacement: str = "***"
+    ) -> "RouteBuilder":
+        """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.business",
+            "DataMaskingProcessor",
+            patterns=patterns,
+            replacement=replacement,
+        )
+
+    def compliance_labels(self, *, labels: list[str]) -> "RouteBuilder":
+        """Compliance-метки на Exchange (PII/PCI/FIN/GDPR)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.business",
+            "ComplianceLabelProcessor",
+            labels=labels,
+        )

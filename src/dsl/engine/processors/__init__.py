@@ -29,14 +29,6 @@ from src.dsl.engine.processors.ai_banking import (
     TransactionCategorizerProcessor,
 )
 from src.dsl.engine.processors.audit import AuditProcessor
-from src.dsl.engine.processors.banking import (
-    EdifactParserProcessor,
-    FixMessageProcessor,
-    Iso20022ParserProcessor,
-    OneCExchangeProcessor,
-    SwiftMTParserProcessor,
-    SwiftMXBuilderProcessor,
-)
 from src.dsl.engine.processors.base import (
     BaseProcessor,
     CallableProcessor,
@@ -162,11 +154,9 @@ from src.dsl.engine.processors.rpa import (
 )
 from src.dsl.engine.processors.rpa_banking import (
     AppiumMobileProcessor,
-    BankStatementPdfParserProcessor,
     CitrixSessionProcessor,
     EmailDrivenProcessor,
     KeystrokeReplayProcessor,
-    SapGuiProcessor,
     TerminalEmulator3270Processor,
 )
 from src.dsl.engine.processors.scan_file import ScanFileProcessor
@@ -302,19 +292,11 @@ __all__ = (
     "DeduplicateProcessor",
     "FormatterProcessor",
     "DebounceProcessor",
-    "SwiftMTParserProcessor",
-    "SwiftMXBuilderProcessor",
-    "Iso20022ParserProcessor",
-    "FixMessageProcessor",
-    "EdifactParserProcessor",
-    "OneCExchangeProcessor",
     "CitrixSessionProcessor",
-    "SapGuiProcessor",
     "TerminalEmulator3270Processor",
     "AppiumMobileProcessor",
     "EmailDrivenProcessor",
     "KeystrokeReplayProcessor",
-    "BankStatementPdfParserProcessor",
     "KycAmlVerifyProcessor",
     "AntiFraudScoreProcessor",
     "CreditScoringRagProcessor",
