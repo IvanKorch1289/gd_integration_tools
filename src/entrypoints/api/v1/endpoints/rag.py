@@ -1,13 +1,16 @@
 """RAG API — публичный CRUD к ``RAGService``.
 
-* ``POST /ingest``  — загрузить документ (chunking + embedding + upsert).
-* ``POST /search``  — семантический поиск top-k.
-* ``POST /augment`` — подтянуть контекст и вернуть готовый prompt.
-* ``DELETE /{doc_id}`` — удалить chunks по id.
-* ``GET /stats``    — количество документов в store.
+W26.5: маршруты регистрируются декларативно через ActionSpec.
 
-Все ответы — JSON. Если ``rag_settings.enabled = False`` — каждый
-endpoint возвращает 503, чтобы не дёргать неподнятый Qdrant.
+* ``POST /ingest``    — загрузить документ (chunking + embedding + upsert).
+* ``POST /search``    — семантический поиск top-k.
+* ``POST /augment``   — подтянуть контекст и вернуть готовый prompt.
+* ``DELETE /{doc_id}`` — удалить chunks по id.
+* ``GET  /stats``     — количество документов в store.
+
+Если ``rag_settings.enabled=False`` — модифицирующие endpoints возвращают
+503; ``/stats`` отдаёт agg-объект с ``enabled=False`` без обращения к
+бэкенду.
 """
 
 from __future__ import annotations
@@ -18,11 +21,13 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.core.config.rag import rag_settings
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from src.services.ai.rag_service import get_rag_service
 
 __all__ = ("router",)
 
-router = APIRouter()
+
+# --- Schemas ---------------------------------------------------------------
 
 
 class IngestRequest(BaseModel):
@@ -38,16 +43,22 @@ class IngestRequest(BaseModel):
 
 
 class IngestResponse(BaseModel):
+    """Ответ /ingest."""
+
     doc_id: str = Field(..., description="Идентификатор документа (sha256 prefix).")
 
 
 class SearchRequest(BaseModel):
+    """Запрос /search."""
+
     query: str = Field(..., min_length=1, description="Поисковый запрос.")
     top_k: int = Field(default=5, ge=1, le=100)
     namespace: str | None = Field(default=None)
 
 
 class SearchHit(BaseModel):
+    """Один результат поиска."""
+
     id: str
     document: str
     metadata: dict[str, Any]
@@ -55,10 +66,14 @@ class SearchHit(BaseModel):
 
 
 class SearchResponse(BaseModel):
+    """Список найденных документов."""
+
     items: list[SearchHit]
 
 
 class AugmentRequest(BaseModel):
+    """Запрос /augment."""
+
     query: str = Field(..., min_length=1)
     system_prompt: str = Field(default="", description="Системная инструкция.")
     top_k: int = Field(default=5, ge=1, le=100)
@@ -66,14 +81,33 @@ class AugmentRequest(BaseModel):
 
 
 class AugmentResponse(BaseModel):
+    """Готовый prompt с RAG-контекстом."""
+
     prompt: str = Field(..., description="Готовый prompt с RAG-контекстом.")
 
 
 class StatsResponse(BaseModel):
+    """Состояние индекса."""
+
     enabled: bool
     backend: str
     embedding_provider: str
     count: int
+
+
+class DeleteResponse(BaseModel):
+    """Ответ /delete."""
+
+    deleted: bool
+
+
+class DocIdPath(BaseModel):
+    """Path-параметр идентификатора документа."""
+
+    doc_id: str = Field(..., description="ID документа (sha256 prefix).")
+
+
+# --- Helpers ---------------------------------------------------------------
 
 
 def _check_enabled() -> None:
@@ -84,61 +118,144 @@ def _check_enabled() -> None:
         )
 
 
-@router.post("/ingest", response_model=IngestResponse, summary="Загрузить документ")
-async def ingest(payload: IngestRequest) -> IngestResponse:
-    _check_enabled()
-    service = get_rag_service()
-    doc_id = await service.ingest(
-        content=payload.content, metadata=payload.metadata, namespace=payload.namespace
-    )
-    return IngestResponse(doc_id=doc_id)
+# --- Service facade --------------------------------------------------------
 
 
-@router.post("/search", response_model=SearchResponse, summary="Семантический поиск")
-async def search(payload: SearchRequest) -> SearchResponse:
-    _check_enabled()
-    service = get_rag_service()
-    hits = await service.search(
-        query=payload.query, top_k=payload.top_k, namespace=payload.namespace
-    )
-    return SearchResponse(items=[SearchHit(**hit) for hit in hits])
+class _RAGFacade:
+    """Адаптер над ``RAGService`` с проверкой rag_settings.enabled."""
 
+    async def ingest(
+        self,
+        *,
+        content: str,
+        namespace: str = "default",
+        metadata: dict[str, Any] | None = None,
+    ) -> IngestResponse:
+        _check_enabled()
+        doc_id = await get_rag_service().ingest(
+            content=content, metadata=metadata, namespace=namespace
+        )
+        return IngestResponse(doc_id=doc_id)
 
-@router.post("/augment", response_model=AugmentResponse, summary="Готовый RAG-prompt")
-async def augment(payload: AugmentRequest) -> AugmentResponse:
-    _check_enabled()
-    service = get_rag_service()
-    prompt = await service.augment_prompt(
-        query=payload.query,
-        system_prompt=payload.system_prompt,
-        top_k=payload.top_k,
-        namespace=payload.namespace,
-    )
-    return AugmentResponse(prompt=prompt)
+    async def search(
+        self, *, query: str, top_k: int = 5, namespace: str | None = None
+    ) -> SearchResponse:
+        _check_enabled()
+        hits = await get_rag_service().search(
+            query=query, top_k=top_k, namespace=namespace
+        )
+        return SearchResponse(items=[SearchHit(**hit) for hit in hits])
 
+    async def augment(
+        self,
+        *,
+        query: str,
+        system_prompt: str = "",
+        top_k: int = 5,
+        namespace: str | None = None,
+    ) -> AugmentResponse:
+        _check_enabled()
+        prompt = await get_rag_service().augment_prompt(
+            query=query,
+            system_prompt=system_prompt,
+            top_k=top_k,
+            namespace=namespace,
+        )
+        return AugmentResponse(prompt=prompt)
 
-@router.delete("/{doc_id}", summary="Удалить chunk по id")
-async def delete(doc_id: str) -> dict[str, bool]:
-    _check_enabled()
-    service = get_rag_service()
-    ok = await service.delete(doc_id)
-    return {"deleted": ok}
+    async def delete(self, *, doc_id: str) -> DeleteResponse:
+        _check_enabled()
+        ok = await get_rag_service().delete(doc_id)
+        return DeleteResponse(deleted=ok)
 
-
-@router.get("/stats", response_model=StatsResponse, summary="Состояние индекса")
-async def stats() -> StatsResponse:
-    if not rag_settings.enabled:
+    async def stats(self) -> StatsResponse:
+        if not rag_settings.enabled:
+            return StatsResponse(
+                enabled=False,
+                backend=rag_settings.vector_backend,
+                embedding_provider=rag_settings.embedding_provider,
+                count=0,
+            )
+        count = await get_rag_service().count()
         return StatsResponse(
-            enabled=False,
+            enabled=True,
             backend=rag_settings.vector_backend,
             embedding_provider=rag_settings.embedding_provider,
-            count=0,
+            count=count,
         )
-    service = get_rag_service()
-    count = await service.count()
-    return StatsResponse(
-        enabled=True,
-        backend=rag_settings.vector_backend,
-        embedding_provider=rag_settings.embedding_provider,
-        count=count,
-    )
+
+
+_FACADE = _RAGFacade()
+
+
+def _get_facade() -> _RAGFacade:
+    return _FACADE
+
+
+# --- Router ----------------------------------------------------------------
+
+
+router = APIRouter()
+builder = ActionRouterBuilder(router)
+
+common_tags = ("RAG",)
+
+
+builder.add_actions(
+    [
+        ActionSpec(
+            name="rag_ingest",
+            method="POST",
+            path="/ingest",
+            summary="Загрузить документ",
+            service_getter=_get_facade,
+            service_method="ingest",
+            body_model=IngestRequest,
+            response_model=IngestResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_search",
+            method="POST",
+            path="/search",
+            summary="Семантический поиск",
+            service_getter=_get_facade,
+            service_method="search",
+            body_model=SearchRequest,
+            response_model=SearchResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_augment",
+            method="POST",
+            path="/augment",
+            summary="Готовый RAG-prompt",
+            service_getter=_get_facade,
+            service_method="augment",
+            body_model=AugmentRequest,
+            response_model=AugmentResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_delete",
+            method="DELETE",
+            path="/{doc_id}",
+            summary="Удалить chunk по id",
+            service_getter=_get_facade,
+            service_method="delete",
+            path_model=DocIdPath,
+            response_model=DeleteResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_stats",
+            method="GET",
+            path="/stats",
+            summary="Состояние индекса",
+            service_getter=_get_facade,
+            service_method="stats",
+            response_model=StatsResponse,
+            tags=common_tags,
+        ),
+    ]
+)
