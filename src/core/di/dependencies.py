@@ -21,13 +21,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.di.app_state import app_state_singleton
+from src.core.di.app_state import _get_from_app_state, app_state_singleton
 
 if TYPE_CHECKING:
     from fastapi import Request, WebSocket
 
     from src.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
     from src.core.interfaces.invoker import Invoker as InvokerProtocol
+    from src.core.interfaces.watermark_store import WatermarkStore
 
 __all__ = (
     "get_reply_registry",
@@ -35,6 +36,8 @@ __all__ = (
     "get_invoker_dep",
     "get_reply_registry_singleton",
     "get_invoker_singleton",
+    "get_watermark_store_singleton",
+    "get_watermark_store_optional",
 )
 
 
@@ -83,3 +86,27 @@ def get_invoker_singleton() -> "InvokerProtocol":
     raise RuntimeError(
         "invoker должен быть зарегистрирован через register_app_state()"
     )
+
+
+@app_state_singleton("watermark_store")
+def get_watermark_store_singleton() -> "WatermarkStore":
+    """Singleton-аксессор :class:`WatermarkStore` (W14.5).
+
+    Lazy-резолв из ``app.state.watermark_store``. Factory не задаётся,
+    т.к. PG-реализация требует ``DatabaseSessionManager`` из infra-слоя
+    (нарушение layer policy для core/). Composition root обязан положить
+    готовый store в app.state.
+    """
+    raise RuntimeError(
+        "watermark_store должен быть зарегистрирован через register_app_state()"
+    )
+
+
+def get_watermark_store_optional() -> "WatermarkStore | None":
+    """Безопасный аксессор: возвращает ``None`` без зарегистрированного store.
+
+    Используется в DSL-builder и unit-тестах, где app.state может быть не
+    инициализирован. В отличие от :func:`get_watermark_store_singleton`
+    не бросает ``RuntimeError`` — окно просто работает без durability.
+    """
+    return _get_from_app_state("watermark_store")

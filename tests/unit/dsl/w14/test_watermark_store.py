@@ -23,7 +23,11 @@ from src.core.clock import FakeClock
 from src.core.types.watermark import WatermarkState
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.streaming import TumblingWindowProcessor
+from src.dsl.engine.processors.streaming import (
+    SessionWindowProcessor,
+    SlidingWindowProcessor,
+    TumblingWindowProcessor,
+)
 from src.infrastructure.watermark.memory_store import MemoryWatermarkStore
 
 
@@ -135,3 +139,160 @@ class TestTumblingWindowDurable:
         await proc2.process(ex, ctx)
         assert ex.properties.get("_late_dropped") is True
         assert proc2.watermark_state.current == 200.0
+
+
+class TestSlidingWindowDurable:
+    @pytest.mark.asyncio
+    async def test_advance_persists(self) -> None:
+        clock = FakeClock(wall_start=1_000.0)
+        store = MemoryWatermarkStore()
+        proc = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        loaded = await store.load("r1", proc.name)
+        assert loaded is not None
+        assert loaded.current == 100.0
+
+    @pytest.mark.asyncio
+    async def test_restart_restores_watermark(self) -> None:
+        """После «рестарта» SlidingWindow читает watermark и дропает late."""
+        clock = FakeClock(wall_start=1_000.0)
+        store = MemoryWatermarkStore()
+        proc1 = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc1.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
+        # «Рестарт» — новая инстанция с тем же store/route_id/name.
+        proc2 = SlidingWindowProcessor(
+            sink=lambda b: None,
+            window_seconds=10.0,
+            step_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ex = _make_exchange("late", watermark=200.0, event_time=150.0)
+        await proc2.process(ex, ctx)
+        assert ex.properties.get("_late_dropped") is True
+        assert proc2.watermark_state.current == 200.0
+        # Late не должен попасть в скользящий буфер.
+        assert [body for _, body in proc2._buffer] == []
+
+
+class TestSessionWindowDurable:
+    @pytest.mark.asyncio
+    async def test_advance_persists(self) -> None:
+        clock = FakeClock(wall_start=1_000.0)
+        store = MemoryWatermarkStore()
+        proc = SessionWindowProcessor(
+            sink=lambda b: None,
+            gap_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc.process(_make_exchange("a", watermark=100.0, event_time=105.0), ctx)
+        loaded = await store.load("r1", proc.name)
+        assert loaded is not None
+        assert loaded.current == 100.0
+
+    @pytest.mark.asyncio
+    async def test_restart_restores_watermark(self) -> None:
+        """После «рестарта» SessionWindow читает watermark и дропает late."""
+        clock = FakeClock(wall_start=1_000.0)
+        store = MemoryWatermarkStore()
+        proc1 = SessionWindowProcessor(
+            sink=lambda b: None,
+            gap_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ctx = ExecutionContext(route_id="r1")
+        await proc1.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
+        # «Рестарт» — новая инстанция, тот же store/route_id/name.
+        proc2 = SessionWindowProcessor(
+            sink=lambda b: None,
+            gap_seconds=999.0,
+            clock=clock,
+            watermark_store=store,
+            route_id="r1",
+            persist_min_interval=0.0,
+        )
+        ex = _make_exchange("late", watermark=200.0, event_time=150.0)
+        await proc2.process(ex, ctx)
+        assert ex.properties.get("_late_dropped") is True
+        assert proc2.watermark_state.current == 200.0
+        # Late не должен попасть в session-буфер.
+        assert proc2._buffer == []
+
+
+class TestWatermarkFactoryAndBuilder:
+    """W14.5 DI: фабрика по конфигу + автоподхват store в RouteBuilder."""
+
+    def test_factory_returns_memory_by_default(self) -> None:
+        from src.core.config.services.watermark import WatermarkSettings
+        from src.infrastructure.watermark.factory import create_watermark_store
+
+        store = create_watermark_store(WatermarkSettings(backend="memory"))
+        assert isinstance(store, MemoryWatermarkStore)
+
+    def test_factory_postgres_requires_session_manager(self) -> None:
+        from src.core.config.services.watermark import WatermarkSettings
+        from src.infrastructure.watermark.factory import create_watermark_store
+
+        with pytest.raises(RuntimeError):
+            create_watermark_store(WatermarkSettings(backend="postgres"))
+
+    def test_builder_autopicks_registered_store(self) -> None:
+        """RouteBuilder подхватывает store, зарегистрированный в app.state."""
+        from types import SimpleNamespace
+
+        from src.core.di.app_state import set_app_ref
+        from src.dsl.builder import RouteBuilder
+
+        store = MemoryWatermarkStore()
+        fake_app = SimpleNamespace(state=SimpleNamespace(watermark_store=store))
+        try:
+            set_app_ref(fake_app)  # type: ignore[arg-type]
+            route = RouteBuilder.from_("r-tw", source="internal:t").tumbling_window(
+                sink=lambda b: None
+            )
+            proc = route._processors[-1]
+            assert proc._store is store
+            assert proc._route_id == "r-tw"
+        finally:
+            set_app_ref(None)  # type: ignore[arg-type]
+
+    def test_builder_works_without_store(self) -> None:
+        """Без зарегистрированного store builder создаёт окно без durability."""
+        from src.core.di.app_state import set_app_ref
+        from src.dsl.builder import RouteBuilder
+
+        # Гарантируем чистое состояние app_ref (другие тесты могли его менять).
+        set_app_ref(None)  # type: ignore[arg-type]
+        route = RouteBuilder.from_("r-sl", source="internal:t").sliding_window(
+            sink=lambda b: None
+        )
+        proc = route._processors[-1]
+        assert proc._store is None
+        assert proc._route_id is None

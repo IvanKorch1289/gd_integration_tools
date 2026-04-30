@@ -116,3 +116,10 @@ dadata:
 
 antivirus:
   base_url: "https://kkdrweb.bank.srv:443"
+
+
+# W14.5 — durable WatermarkStore. В prod используем PG (таблица
+# ``streaming_watermarks`` создаётся миграцией a7b8c9d0e1f2).
+watermark:
+  backend: "postgres"
+  persist_min_interval: 1.0

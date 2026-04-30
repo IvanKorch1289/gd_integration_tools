@@ -15,6 +15,7 @@ from src.core.config.services.queue import (
     tasks_settings,
 )
 from src.core.config.services.storage import FileStorageSettings, fs_settings
+from src.core.config.services.watermark import WatermarkSettings, watermark_settings
 
 __all__ = (
     "FileStorageSettings",
@@ -33,4 +34,6 @@ __all__ = (
     "tasks_settings",
     "GRPCSettings",
     "grpc_settings",
+    "WatermarkSettings",
+    "watermark_settings",
 )

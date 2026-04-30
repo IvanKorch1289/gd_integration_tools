@@ -4,7 +4,7 @@ Wave 6.1: backend переведён с ``aiocircuitbreaker`` на ``purgatory``
 единый фасад ``infrastructure.resilience.breaker.BreakerRegistry``.
 
 Класс ``ClientCircuitBreaker`` сохраняет публичный API (``guard()``,
-``is_open()``, ``from_profile()``) — ``RedisClient``, ``KafkaClient``,
+``is_open()``, ``from_profile()``) — ``RedisClient``, FastStream-брокеры,
 ``HttpUpstream`` и т. п. callsite-ы продолжают работать без изменений.
 
 State machine:

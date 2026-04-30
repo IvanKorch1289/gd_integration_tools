@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from src.core.di.dependencies import get_watermark_store_optional
+from src.core.interfaces.watermark_store import WatermarkStore
 from src.dsl.adapters.types import ProtocolType, TransportConfig
 from src.dsl.engine.exchange import Exchange
 from src.dsl.engine.pipeline import Pipeline
@@ -112,6 +114,41 @@ class RouteBuilder:
             )
         """
         return cls(route_id=route_id, source=source, description=description)
+
+    @classmethod
+    def from_registered_source(
+        cls,
+        route_id: str,
+        source_id: str,
+        *,
+        description: str | None = None,
+    ) -> "RouteBuilder":
+        """Точка входа W23: маршрут запитывается от зарегистрированного Source.
+
+        Связь Source → DSL делается на уровне ``services.sources.lifecycle``
+        через :class:`SourceToInvokerAdapter`; этот метод нужен только
+        для **декларации** в DSL ("этот route ждёт события от source X")
+        и метаданных ``Pipeline``.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            source_id: ID source-инстанса в :class:`SourceRegistry`.
+            description: Человекочитаемое описание.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_registered_source("orders.audit", "orders_cdc")
+                .normalize()
+                .dispatch_action("analytics.insert_batch")
+                .build()
+            )
+        """
+        return cls(
+            route_id=route_id,
+            source=f"source:{source_id}",
+            description=description,
+        )
 
     def _add(self, processor: BaseProcessor) -> "RouteBuilder":
         self._processors.append(processor)
@@ -2593,11 +2630,23 @@ class RouteBuilder:
         *,
         size: int = 100,
         interval_seconds: float = 10.0,
+        watermark_store: WatermarkStore | None = None,
     ) -> "RouteBuilder":
-        """Streaming tumbling-окно фиксированного размера."""
+        """Streaming tumbling-окно фиксированного размера.
+
+        Если ``watermark_store`` не задан и в ``app.state`` уже
+        зарегистрирован durable store (W14.5), он подхватывается
+        автоматически вместе с ``route_id`` маршрута. В тестах без
+        composition root окно ведёт себя как in-memory.
+        """
+        store = watermark_store or get_watermark_store_optional()
         return self._add(
             TumblingWindowProcessor(
-                sink=sink, size=size, interval_seconds=interval_seconds
+                sink=sink,
+                size=size,
+                interval_seconds=interval_seconds,
+                watermark_store=store,
+                route_id=self.route_id if store is not None else None,
             )
         )
 
@@ -2607,19 +2656,45 @@ class RouteBuilder:
         *,
         window_seconds: float = 10.0,
         step_seconds: float = 2.0,
+        watermark_store: WatermarkStore | None = None,
     ) -> "RouteBuilder":
-        """Streaming sliding-окно с перекрытием."""
+        """Streaming sliding-окно с перекрытием.
+
+        ``watermark_store`` подхватывается из ``app.state`` (W14.5),
+        если не передан явно. См. :meth:`tumbling_window`.
+        """
+        store = watermark_store or get_watermark_store_optional()
         return self._add(
             SlidingWindowProcessor(
-                sink=sink, window_seconds=window_seconds, step_seconds=step_seconds
+                sink=sink,
+                window_seconds=window_seconds,
+                step_seconds=step_seconds,
+                watermark_store=store,
+                route_id=self.route_id if store is not None else None,
             )
         )
 
     def session_window(
-        self, sink: Callable[[list[Any]], Any], *, gap_seconds: float = 30.0
+        self,
+        sink: Callable[[list[Any]], Any],
+        *,
+        gap_seconds: float = 30.0,
+        watermark_store: WatermarkStore | None = None,
     ) -> "RouteBuilder":
-        """Streaming session-окно (закрывается по паузе)."""
-        return self._add(SessionWindowProcessor(sink=sink, gap_seconds=gap_seconds))
+        """Streaming session-окно (закрывается по паузе).
+
+        ``watermark_store`` подхватывается из ``app.state`` (W14.5),
+        если не передан явно. См. :meth:`tumbling_window`.
+        """
+        store = watermark_store or get_watermark_store_optional()
+        return self._add(
+            SessionWindowProcessor(
+                sink=sink,
+                gap_seconds=gap_seconds,
+                watermark_store=store,
+                route_id=self.route_id if store is not None else None,
+            )
+        )
 
     def group_by_key(
         self,

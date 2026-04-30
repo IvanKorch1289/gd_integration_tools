@@ -135,6 +135,12 @@ cache:
   l1_enabled: true
 
 
+# W14.5 — в dev_light watermark store держим in-memory (без БД).
+watermark:
+  backend: "memory"
+  persist_min_interval: 0.0
+
+
 elasticsearch:
   enabled: false
 

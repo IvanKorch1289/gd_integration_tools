@@ -192,6 +192,11 @@ cache:
   keydb_active_replica: false
 
 
+watermark:
+  backend: "memory"
+  persist_min_interval: 1.0
+
+
 mongo:
   timeout: 5000
   max_pool_size: 10

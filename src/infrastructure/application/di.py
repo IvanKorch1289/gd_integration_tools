@@ -27,6 +27,7 @@ from src.core.di.app_state import _get_from_app_state
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
+    from src.core.interfaces.watermark_store import WatermarkStore
     from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
     from src.dsl.engine.tracer import ExecutionTracer
     from src.dsl.engine.versioning import PipelineVersionManager
@@ -34,7 +35,6 @@ if TYPE_CHECKING:
     from src.infrastructure.application.slo_tracker import SLOTracker
     from src.infrastructure.application.vault_refresher import VaultSecretRefresher
     from src.infrastructure.clients.external.langfuse_client import LangFuseClient
-    from src.infrastructure.clients.messaging.kafka import KafkaClient
     from src.infrastructure.database.pool_monitor import PoolMonitor
     from src.infrastructure.security.api_key_manager import APIKeyManager
 
@@ -47,11 +47,11 @@ __all__ = (
     "get_plugin_registry",
     "get_pipeline_version_manager",
     "get_slo_tracker",
-    "get_kafka_client",
     "get_pool_monitor",
     "get_vault_refresher",
     "get_mqtt_handler",
     "get_langfuse_client",
+    "get_watermark_store",
 )
 
 
@@ -73,7 +73,6 @@ def register_app_state(app: FastAPI) -> None:
     from src.dsl.engine.versioning import PipelineVersionManager
     from src.infrastructure.application.slo_tracker import SLOTracker
     from src.infrastructure.clients.external.langfuse_client import LangFuseClient
-    from src.infrastructure.clients.messaging.kafka import KafkaClient
     from src.infrastructure.database.pool_monitor import PoolMonitor
     from src.infrastructure.security.api_key_manager import APIKeyManager
 
@@ -82,7 +81,6 @@ def register_app_state(app: FastAPI) -> None:
     app.state.plugin_registry = ProcessorPluginRegistry()
     app.state.pipeline_version_manager = PipelineVersionManager()
     app.state.slo_tracker = SLOTracker()
-    app.state.kafka_client = KafkaClient()
     app.state.pool_monitor = PoolMonitor()
     app.state.langfuse_client = LangFuseClient()
 
@@ -100,6 +98,19 @@ def register_app_state(app: FastAPI) -> None:
     from src.infrastructure.application.vault_refresher import VaultSecretRefresher
 
     app.state.vault_refresher = VaultSecretRefresher()
+
+    # W14.5: durable WatermarkStore — выбор бэкенда (memory/postgres) по
+    # ``WatermarkSettings``. PG-вариант берёт главный session_manager;
+    # memory не требует БД и пригоден для dev_light/тестов.
+    from src.core.config.services.watermark import (
+        watermark_settings as _watermark_settings,
+    )
+    from src.infrastructure.database.session_manager import main_session_manager
+    from src.infrastructure.watermark.factory import create_watermark_store
+
+    app.state.watermark_store = create_watermark_store(
+        _watermark_settings, session_manager=main_session_manager
+    )
 
     from src.entrypoints.mqtt.mqtt_handler import MqttHandler, MqttSettings
 
@@ -141,11 +152,6 @@ async def get_slo_tracker(request: Request) -> SLOTracker:
     return request.app.state.slo_tracker
 
 
-async def get_kafka_client(request: Request) -> KafkaClient:
-    """Возвращает KafkaClient из app.state (FastAPI Depends)."""
-    return request.app.state.kafka_client
-
-
 async def get_pool_monitor(request: Request) -> PoolMonitor:
     """Возвращает PoolMonitor из app.state (FastAPI Depends)."""
     return request.app.state.pool_monitor
@@ -164,3 +170,8 @@ async def get_mqtt_handler(request: Request) -> MqttHandler:
 async def get_langfuse_client(request: Request) -> LangFuseClient:
     """Возвращает LangFuseClient из app.state (FastAPI Depends)."""
     return request.app.state.langfuse_client
+
+
+async def get_watermark_store(request: Request) -> WatermarkStore:
+    """Возвращает :class:`WatermarkStore` из app.state (FastAPI Depends)."""
+    return request.app.state.watermark_store

@@ -46,6 +46,7 @@ from src.core.config.services import (
     QueueSettings,
     RedisSettings,
     TasksSettings,
+    WatermarkSettings,
     cache_settings,
     fs_settings,
     grpc_settings,
@@ -54,6 +55,7 @@ from src.core.config.services import (
     queue_settings,
     redis_settings,
     tasks_settings,
+    watermark_settings,
 )
 from src.core.config.telegram import TelegramBotSettings, telegram_bot_settings
 from src.core.config.vault import VaultSettings, vault_settings
@@ -107,6 +109,7 @@ class Settings(BaseSettings):
     redis: RedisSettings = redis_settings
     mongo: MongoConnectionSettings = mongo_connection_settings
     cache: CacheSettings = cache_settings
+    watermark: WatermarkSettings = watermark_settings
 
 
 @lru_cache()

@@ -4,11 +4,11 @@ Worker запускается в lifecycle startup, каждые ``interval_seco
 таблицу ``outbox_messages`` со статусом ``pending``, публикует в соответствующий
 брокер (Kafka/Rabbit/Redis Streams) по правилам routing и помечает запись.
 
-Routing по topic:
+Routing по topic (все через FastStream ``StreamClient``):
 
-* ``kafka:<topic>`` → KafkaClient.
-* ``rabbit:<queue>`` → aio-pika.
-* ``redis:<stream>`` → Redis Streams.
+* ``kafka:<topic>`` → ``publish_to_kafka``.
+* ``rabbit:<queue>`` → ``publish_to_rabbit``.
+* ``redis:<stream>`` → ``publish_to_redis``.
 * без префикса → Kafka по умолчанию.
 
 Идемпотентность: обновление ``status`` защищает от повторной публикации.
