@@ -40,40 +40,47 @@ async def import_openapi(
     file: UploadFile | None = File(default=None),
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
-    """Импортирует OpenAPI spec (file или URL).
+    """Импортирует OpenAPI spec (file или URL) через W24 ImportGateway.
 
     Args:
         spec_url: URL spec'а — если передан, file игнорируется.
         prefix: Префикс для route_id.
         file: Multipart upload JSON/YAML spec'а.
-        dry_run: Только preview, без регистрации.
+        dry_run: Если ``True`` — register_actions=False (только парсинг + persist).
 
     Returns:
-        Отчёт об импорте со списком ``route_id``.
+        Отчёт об импорте: connector / version / endpoints / secret_refs.
     """
-    from src.dsl.importers.openapi_parser import get_openapi_importer
+    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+    from src.services.integrations import get_import_service
 
-    spec: dict[str, Any] | str
     if file is not None:
         content = await file.read()
-        try:
-            import orjson
-
-            spec = orjson.loads(content)
-        except Exception:
-            try:
-                import yaml
-
-                spec = yaml.safe_load(content)
-            except Exception as exc:
-                raise HTTPException(400, f"Не удалось распарсить spec: {exc}") from exc
     elif spec_url:
-        spec = spec_url
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=30) as cli:
+                resp = await cli.get(spec_url)
+                resp.raise_for_status()
+                content = resp.content
+        except Exception as exc:
+            raise HTTPException(400, f"Не удалось загрузить spec по URL: {exc}") from exc
     else:
         raise HTTPException(400, "Требуется file или spec_url")
 
-    importer = get_openapi_importer()
-    return await importer.import_spec(spec, prefix=prefix)
+    source = ImportSource(
+        kind=ImportSourceKind.OPENAPI,
+        content=content,
+        source_url=spec_url,
+        prefix=prefix,
+    )
+    try:
+        return await get_import_service().import_and_register(
+            source, register_actions=not dry_run
+        )
+    except (ImportError, ValueError) as exc:
+        raise HTTPException(400, f"OpenAPI import failed: {exc}") from exc
 
 
 # ──────────────────── Postman ────────────────────
@@ -88,34 +95,49 @@ async def import_postman(
     prefix: str = Form(default="postman"),
     file: UploadFile | None = File(default=None),
     collection_url: str | None = Form(default=None),
+    dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
-    """Импортирует Postman-коллекцию.
+    """Импортирует Postman-коллекцию через W24 ImportGateway.
 
     Args:
         prefix: Префикс route_id.
         file: Multipart upload JSON коллекции.
         collection_url: URL коллекции (если нет файла).
+        dry_run: Только парсинг + persist, без регистрации actions.
 
     Returns:
-        Список сгенерированных ``route_id``.
+        Отчёт об импорте: connector / version / endpoints / secret_refs.
     """
-    from src.dsl.importers.postman_parser import get_postman_importer
+    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+    from src.services.integrations import get_import_service
 
     if file is not None:
-        import orjson
-
         content = await file.read()
-        try:
-            collection = orjson.loads(content)
-        except Exception as exc:
-            raise HTTPException(400, f"Невалидный JSON коллекции: {exc}") from exc
     elif collection_url:
-        collection = collection_url
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=15) as cli:
+                resp = await cli.get(collection_url)
+                resp.raise_for_status()
+                content = resp.content
+        except Exception as exc:
+            raise HTTPException(400, f"Не удалось загрузить коллекцию: {exc}") from exc
     else:
         raise HTTPException(400, "Требуется file или collection_url")
 
-    importer = get_postman_importer()
-    return await importer.import_collection(collection, prefix=prefix)
+    source = ImportSource(
+        kind=ImportSourceKind.POSTMAN,
+        content=content,
+        source_url=collection_url,
+        prefix=prefix,
+    )
+    try:
+        return await get_import_service().import_and_register(
+            source, register_actions=not dry_run
+        )
+    except (ImportError, ValueError) as exc:
+        raise HTTPException(400, f"Postman import failed: {exc}") from exc
 
 
 # ──────────────────── Process Schema (BPMN-like) ────────────────────

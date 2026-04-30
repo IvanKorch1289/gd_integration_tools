@@ -115,6 +115,8 @@ src/services/core/system.py	services	src.infrastructure.application.slo_tracker
 src/services/core/tech.py	services	src.infrastructure.monitoring.health_check
 src/services/core/users.py	services	src.infrastructure.repositories.users
 src/services/integrations/dadata.py	services	src.infrastructure.decorators.caching
+src/services/integrations/import_service.py	services	src.infrastructure.import_gateway
+src/services/integrations/import_service.py	services	src.infrastructure.repositories.connector_configs_mongo
 src/services/io/external_database.py	services	src.infrastructure.database.session_manager
 src/services/io/external_database.py	services	src.infrastructure.external_apis.logging_service
 src/services/io/files.py	services	src.infrastructure.repositories.files

@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info:
+  title: Webhooks API
+  version: 1.0.0
+paths:
+  /events:
+    post:
+      operationId: postEvent
+      responses:
+        "204": {description: no content}

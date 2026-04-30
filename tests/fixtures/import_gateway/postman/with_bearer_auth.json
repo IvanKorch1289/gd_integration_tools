@@ -1,0 +1,20 @@
+{
+  "info": {
+    "name": "AuthCollection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{"key": "token", "value": "{{TOKEN}}"}]
+  },
+  "item": [
+    {
+      "name": "Secure call",
+      "request": {
+        "method": "GET",
+        "url": {"raw": "https://api.example.com/secure"},
+        "header": [{"key": "Accept", "value": "application/json"}]
+      }
+    }
+  ]
+}

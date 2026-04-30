@@ -379,38 +379,62 @@ import_schema_app = typer.Typer(help="Импорт OpenAPI/Postman → Pydantic 
 app.add_typer(import_schema_app, name="import-schema")
 
 
+def _import_schema_via_gateway(
+    source_path: str, *, kind: str, prefix: str, dry_run: bool
+) -> None:
+    """W24 ImportGateway CLI helper (общий для openapi/postman/wsdl)."""
+    import asyncio
+    from pathlib import Path
+
+    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+    from src.services.integrations import get_import_service
+
+    content = Path(source_path).read_bytes()
+    src_obj = ImportSource(
+        kind=ImportSourceKind(kind), content=content, prefix=prefix
+    )
+    result = asyncio.run(
+        get_import_service().import_and_register(
+            src_obj, register_actions=not dry_run
+        )
+    )
+    typer.echo(f"connector: {result['connector']} (status={result['status']})")
+    typer.echo(f"endpoints: {result['endpoints']}, version: {result['version']}")
+    refs = result.get("secret_refs_required") or []
+    if refs:
+        typer.echo("secret_refs_required:")
+        for r in refs:
+            typer.echo(f"  - {r['key']}: {r['ref']}  ({r['hint']})")
+
+
 @import_schema_app.command("openapi")
 def import_schema_openapi(
     source: str = typer.Argument(..., help="Путь к OpenAPI 3.x YAML/JSON"),
-    models_out: str = typer.Option(None, "--models-out", help="Путь для Pydantic-моделей"),
-    routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
+    prefix: str = typer.Option("ext", "--prefix", help="Префикс operation_id"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Не регистрировать actions"),
 ):
-    """Генерация Pydantic + DSL-routes из OpenAPI-спеки."""
-    from src.tools.schema_importer import SchemaImporter
-
-    importer = SchemaImporter()
-    models_path, routes_path = importer.from_openapi(
-        source, models_out=models_out, routes_out=routes_out
-    )
-    typer.echo(f"Models: {models_path}")
-    typer.echo(f"Routes: {routes_path}")
+    """W24 ImportGateway: OpenAPI 3.x → ConnectorSpec в connector_configs."""
+    _import_schema_via_gateway(source, kind="openapi", prefix=prefix, dry_run=dry_run)
 
 
 @import_schema_app.command("postman")
 def import_schema_postman(
     source: str = typer.Argument(..., help="Путь к Postman Collection v2.1 JSON"),
-    models_out: str = typer.Option(None, "--models-out", help="Путь для Pydantic-моделей"),
-    routes_out: str = typer.Option(None, "--routes-out", help="Путь для YAML-роутов"),
+    prefix: str = typer.Option("postman", "--prefix", help="Префикс operation_id"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Не регистрировать actions"),
 ):
-    """Генерация Pydantic + DSL-routes из Postman-коллекции."""
-    from src.tools.schema_importer import SchemaImporter
+    """W24 ImportGateway: Postman v2.1 → ConnectorSpec в connector_configs."""
+    _import_schema_via_gateway(source, kind="postman", prefix=prefix, dry_run=dry_run)
 
-    importer = SchemaImporter()
-    models_path, routes_path = importer.from_postman(
-        source, models_out=models_out, routes_out=routes_out
-    )
-    typer.echo(f"Models: {models_path}")
-    typer.echo(f"Routes: {routes_path}")
+
+@import_schema_app.command("wsdl")
+def import_schema_wsdl(
+    source: str = typer.Argument(..., help="Путь к WSDL XML или URL"),
+    prefix: str = typer.Option("soap", "--prefix", help="Префикс operation_id"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Не регистрировать actions"),
+):
+    """W24 ImportGateway: WSDL → ConnectorSpec в connector_configs."""
+    _import_schema_via_gateway(source, kind="wsdl", prefix=prefix, dry_run=dry_run)
 
 
 # ────────────── AI Tools ──────────────
@@ -504,7 +528,6 @@ def _bootstrap():
     """Минимальная инициализация для introspection команд."""
     from src.dsl.commands.setup import register_action_handlers
     from src.dsl.routes import register_dsl_routes
-
     from src.infrastructure.application.service_setup import register_all_services
 
     register_all_services()

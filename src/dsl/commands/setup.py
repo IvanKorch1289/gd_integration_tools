@@ -697,24 +697,19 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── OpenAPI Importer ──
-    from src.dsl.importers.openapi_parser import get_openapi_importer
+    # ── ImportGateway (W24): унифицированный импорт OpenAPI/Postman/WSDL ──
+    from src.services.integrations import get_import_service
 
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
-                action="openapi.import",
-                service_getter=get_openapi_importer,
-                service_method="import_spec",
+                action="connector.import",
+                service_getter=get_import_service,
+                service_method="import_action",
             ),
             ActionHandlerSpec(
-                action="openapi.preview",
-                service_getter=get_openapi_importer,
-                service_method="preview",
-            ),
-            ActionHandlerSpec(
-                action="openapi.list_imported",
-                service_getter=get_openapi_importer,
+                action="connector.list_imported",
+                service_getter=get_import_service,
                 service_method="list_imported",
             ),
         ]
@@ -753,5 +748,5 @@ def register_action_handlers() -> None:
 
     service_dsl_registry.register_all_actions()
     scan_and_register_actions(
-        ["src.services", "src.entrypoints.webhook", "src.dsl.importers"]
+        ["src.services", "src.entrypoints.webhook", "src.services.integrations"]
     )
