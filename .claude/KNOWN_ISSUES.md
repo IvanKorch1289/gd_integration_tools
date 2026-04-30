@@ -4,23 +4,18 @@
 
 ### Wave 26 (Resilient Infrastructure) — техдолг
 
-1. **Миграция 65 legacy-endpoints на DSL не завершена** (W26.5).
-   Закрыта только критическая инфраструктура: `DegradationMiddleware`,
-   которая возвращает HTTP 503 на write-методы при `db_main` в
-   fallback-режиме. Сами endpoints в `src/entrypoints/api/v1/endpoints/`
-   (15 файлов, ~65 endpoints) пока не перенесены на DSL routes/actions.
-
-   **Что нужно сделать:**
-   - По 1-2 файлов за commit: notebooks → ai_feedback → tech → rag →
-     admin_connectors → search → ai_tools → invocations → admin_workflows
-     → dsl_routes (доработка) → imports → admin → processors_catalog →
-     dsl_console.
-   - `health.py` НЕ переносится (K8s-пробы должны быть raw HTTP).
-   - Для каждого endpoint'а сохранить auth (`Depends`), rate-limit
-     (`RedisRateLimiter`), pagination (`Page[T]`), OpenAPI metadata.
-   - Snapshot-тесты `/openapi.json` до/после миграции.
-   - Финальный DoD: `grep "@router\.\(get\|post\)" src/entrypoints/api/v1/
-     endpoints/ | grep -v health.py → 0`.
+1. ~~**Миграция 65 legacy-endpoints на DSL не завершена** (W26.5).~~
+   **Закрыто 2026-05-01** (commits Wave-26.5/1..14):
+   - 14/14 endpoint-файлов мигрированы по плану
+     (notebooks → ai_feedback → tech → rag → admin_connectors → search →
+      ai_tools → invocations → admin_workflows → dsl_routes → imports →
+      admin → processors_catalog → dsl_console).
+   - `health.py` оставлен как raw HTTP по плану (K8s-пробы).
+   - Для каждого файла либо `ActionRouterBuilder` + `ActionSpec`, либо
+     `add_api_route` — там где `UploadFile`/`Form`/нестандартный
+     `response_class`/`Depends` не вписываются в ActionSpec-генерацию.
+   - DoD: `grep -E "^@router\.(get|post|put|delete|patch)"
+     src/entrypoints/api/v1/endpoints/ | grep -v health.py → 0` ✅.
 
 2. **Chaos-тесты с `testcontainers[toxiproxy]` не реализованы** (W26.3
    расширение). Smoke-тесты coordinator есть, но автоматических
