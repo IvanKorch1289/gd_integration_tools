@@ -98,6 +98,12 @@ class ThrottlerProcessor(BaseProcessor):
             else:
                 self._tokens -= 1.0
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {"rate": self._rate}
+        if self._burst != 1:
+            spec["burst"] = self._burst
+        return {"throttle": spec}
+
 
 class DelayProcessor(BaseProcessor):
     """Задержка обработки на N миллисекунд или до timestamp."""
@@ -122,6 +128,12 @@ class DelayProcessor(BaseProcessor):
                 await asyncio.sleep(target - now)
         elif self._delay_ms is not None and self._delay_ms > 0:
             await asyncio.sleep(self._delay_ms / 1000.0)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        # scheduled_time_fn — callable, не сериализуется.
+        if self._scheduled_fn is not None:
+            return None
+        return {"delay": {"delay_ms": self._delay_ms or 0}}
 
 
 class AggregatorProcessor(BaseProcessor):

@@ -84,15 +84,17 @@ def test_pipeline_route_id_preserved() -> None:
 
 
 def test_processors_without_to_spec_are_dropped_silently() -> None:
-    """Процессоры без ``to_spec()`` (например, LogProcessor) — не попадают в YAML.
+    """Процессоры без ``to_spec()`` — не попадают в YAML (Pipeline.to_dict пропускает None).
 
-    Это документированное поведение ``Pipeline.to_dict()``: пропускает None.
+    После W25.2 LogProcessor получил собственный to_spec, поэтому в качестве
+    "недробящегося" процессора используется FilterProcessor (callable predicate
+    не сериализуется).
     """
     p = (
         RouteBuilder.from_("partial", source="internal:p")
-        .log("info")  # LogProcessor.to_spec() = None
+        .filter(predicate=lambda ex: True)  # FilterProcessor.to_spec() = None
         .redirect(target_url="http://example.com/", status_code=302)
-        .log("debug")
+        .filter(predicate=lambda ex: False)
         .build(validate_actions=False)
     )
     yaml_str = p.to_yaml()

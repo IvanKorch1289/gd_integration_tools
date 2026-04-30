@@ -33,6 +33,9 @@ class SetHeaderProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.in_message.set_header(self.key, self.value)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"set_header": {"key": self.key, "value": self.value}}
+
 
 class SetPropertyProcessor(BaseProcessor):
     """Устанавливает runtime-свойство Exchange.
@@ -48,6 +51,9 @@ class SetPropertyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         exchange.set_property(self.key, self.value)
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"set_property": {"key": self.key, "value": self.value}}
 
 
 class DispatchActionProcessor(BaseProcessor):
@@ -83,6 +89,15 @@ class DispatchActionProcessor(BaseProcessor):
         exchange.set_property(self.result_property, result)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
+    def to_spec(self) -> dict[str, Any] | None:
+        # payload_factory — callable, не сериализуется в YAML.
+        if self.payload_factory is not None:
+            return None
+        spec: dict[str, Any] = {"action": self.action}
+        if self.result_property != "action_result":
+            spec["result_property"] = self.result_property
+        return {"dispatch_action": spec}
+
 
 class TransformProcessor(BaseProcessor):
     """Трансформирует body через JMESPath-выражение.
@@ -103,6 +118,9 @@ class TransformProcessor(BaseProcessor):
         body = exchange.in_message.body
         result = jmespath.search(self.expression, body)
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"transform": {"expression": self.expression}}
 
 
 class FilterProcessor(BaseProcessor):
@@ -150,6 +168,14 @@ class EnrichProcessor(BaseProcessor):
         result = await context.action_registry.dispatch(command)
         exchange.set_property(self.result_property, result)
 
+    def to_spec(self) -> dict[str, Any] | None:
+        if self.payload_factory is not None:
+            return None
+        spec: dict[str, Any] = {"action": self.action}
+        if self.result_property != "enrichment":
+            spec["result_property"] = self.result_property
+        return {"enrich": spec}
+
 
 class LogProcessor(BaseProcessor):
     """Логирует текущее состояние Exchange (тип body, список properties).
@@ -170,6 +196,9 @@ class LogProcessor(BaseProcessor):
             type(exchange.in_message.body).__name__,
             list(exchange.properties.keys()),
         )
+
+    def to_spec(self) -> dict[str, Any] | None:
+        return {"log": {"level": self._level}}
 
 
 class ValidateProcessor(BaseProcessor):

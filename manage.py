@@ -594,6 +594,60 @@ def dsl_reload(
     )
 
 
+@dsl_app.command("write-yaml")
+def dsl_write_yaml(
+    route_id: str = typer.Argument(..., help="route_id для сохранения"),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        help="Путь для записи (по умолчанию — store_dir/<route_id>.yaml)",
+    ),
+    show_diff: bool = typer.Option(
+        False, "--diff", help="Показать unified-diff с текущим файлом до записи"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Не писать файл, только показать diff"
+    ),
+):
+    """W25.2 — write-back: Pipeline из RouteRegistry → YAML на диск.
+
+    Доступно только в development environment (env-guard в
+    DSLBuilderService). На staging/prod выходит с ошибкой.
+    """
+    _bootstrap()
+    from src.services.dsl.builder_service import DSLBuilderService
+
+    svc = DSLBuilderService(store_dir=output.parent if output else None)
+    if not svc.is_write_enabled() and not dry_run:
+        typer.echo(
+            typer.style(
+                "Write-back доступен только в development. Используй --dry-run.",
+                fg=typer.colors.RED,
+            ),
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    try:
+        result = svc.save_route(route_id, dry_run=dry_run)
+    except KeyError as exc:
+        typer.echo(
+            typer.style(f"Route не найден: {exc}", fg=typer.colors.RED), err=True
+        )
+        raise typer.Exit(1) from exc
+
+    if show_diff or dry_run:
+        if result.diff:
+            typer.echo("--- DIFF ---")
+            typer.echo(result.diff)
+        else:
+            typer.echo("(no diff)")
+    if result.written:
+        typer.echo(typer.style(f"Saved: {result.path}", fg=typer.colors.GREEN))
+    else:
+        typer.echo(typer.style(f"Skipped: {result.reason}", fg=typer.colors.YELLOW))
+
+
 # ────────────── Validation ──────────────
 
 
