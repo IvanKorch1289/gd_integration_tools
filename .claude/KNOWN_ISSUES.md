@@ -49,19 +49,21 @@
    deferred). `secrets_chain.py` использует прямой Vault/env+keyring
    без ABC. После разблокировки → переключить на DI.
 
-6. **Vault недоступен в dev-окружении** — Settings-loader выводит
+6. ~~**Vault недоступен в dev-окружении** — Settings-loader выводит
    ошибку при каждом запуске Python (16 раз). Pre-existing с момента
    введения VaultConfigSettingsSource. Не блокирует функционал, но
-   шумит в логах.
+   шумит в логах.~~ **Закрыто (post-W26-techdebt)**: добавлен module-
+   level флаг `_VAULT_UNREACHABLE` + один warning через `RequestException`/
+   `VaultError`-handlers вместо логирования каждой попытки.
 
 7. **`make lint-strict` показывает 91 pre-existing ошибку** (S608
    SQL injection в legacy-коде, S603/S606 в `manage.py`). Не вносить
    новые S-ошибки в W26.
 
-8. **Pre-existing синтаксис `except TypeError, ValueError:`** в
-   `health_aggregator.py:101`. AST parse не падает, но семантически
-   неверно (Python 3 требует `except (TypeError, ValueError):`). Не
-   моя правка — pre-existing, отложено.
+8. ~~**Pre-existing синтаксис `except TypeError, ValueError:`** в
+   `health_aggregator.py:101`.~~ **Закрыто (post-W26-techdebt)**: заменено
+   на `except (TypeError, ValueError):` для совместимости с конвенциями
+   Python 3.x (хотя Python 3.14 парсер семантически принимает оба).
 
 ## Технические особенности
 

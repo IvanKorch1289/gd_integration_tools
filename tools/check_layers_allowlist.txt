@@ -13,8 +13,8 @@ src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructu
 src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.antivirus
 src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.s3
 src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.application.health_aggregator
-src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.database.database
-src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.monitoring.health_check
+src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.resilience.coordinator
+src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.resilience.health
 src/entrypoints/api/v1/endpoints/tech.py	entrypoints	src.infrastructure.database.model_registry
 src/entrypoints/cdc/cdc_routes.py	entrypoints	src.infrastructure.clients.external.cdc
 src/entrypoints/email/imap_monitor.py	entrypoints	src.infrastructure.application.vault_refresher
@@ -30,9 +30,13 @@ src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.clients.
 src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.clients.storage.redis
 src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/middlewares/audit_replay.py	entrypoints	src.infrastructure.clients.storage.redis
+src/entrypoints/middlewares/degradation.py	entrypoints	src.infrastructure.resilience.coordinator
 src/entrypoints/middlewares/request_log.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/middlewares/tenant.py	entrypoints	src.infrastructure.observability.correlation
 src/entrypoints/middlewares/timeout.py	entrypoints	src.infrastructure.external_apis.logging_service
+src/entrypoints/scheduler/invoker_schedule.py	entrypoints	src.infrastructure.scheduler.scheduler_manager
+src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
+src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
 src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/streamlit_app/pages/30_Express_Bots.py	entrypoints	src.infrastructure.clients.external.express_bot
@@ -52,6 +56,7 @@ src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.grp
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.middlewares.setup_middlewares
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.soap.soap_handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.sse.handler
+src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.stream
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.webhook.handler
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.webhook.sources_router
 src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.websocket.ws_handler
@@ -85,6 +90,7 @@ src/infrastructure/application/service_setup.py	infrastructure	src.services.io.s
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ops.analytics
 src/infrastructure/application/service_setup.py	infrastructure	src.services.ops.webhook_scheduler
 src/infrastructure/audit/event_log.py	infrastructure	src.services.io.indexers.log_indexer
+src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
 src/infrastructure/setup_infra.py	infrastructure	src.entrypoints.filewatcher.watcher_manager
 src/schemas/filter_schemas/files.py	schemas	src.infrastructure.database.models.files
 src/schemas/filter_schemas/orderkinds.py	schemas	src.infrastructure.database.models.orderkinds
@@ -114,6 +120,8 @@ src/services/core/system.py	services	src.infrastructure.application.health_aggre
 src/services/core/system.py	services	src.infrastructure.application.slo_tracker
 src/services/core/tech.py	services	src.infrastructure.monitoring.health_check
 src/services/core/users.py	services	src.infrastructure.repositories.users
+src/services/execution/invoker.py	services	src.infrastructure.execution.taskiq_broker
+src/services/execution/invoker.py	services	src.infrastructure.scheduler.scheduler_manager
 src/services/integrations/dadata.py	services	src.infrastructure.decorators.caching
 src/services/integrations/import_service.py	services	src.infrastructure.import_gateway
 src/services/integrations/import_service.py	services	src.infrastructure.repositories.connector_configs_mongo
@@ -128,10 +136,3 @@ src/services/ops/notification_hub.py	services	src.infrastructure.clients.externa
 src/services/ops/notification_hub.py	services	src.infrastructure.clients.transport.smtp
 src/services/ops/notification_hub.py	services	src.infrastructure.security.signatures
 src/services/ops/webhook_scheduler.py	services	src.infrastructure.clients.storage.redis
-src/entrypoints/scheduler/invoker_schedule.py	entrypoints	src.infrastructure.scheduler.scheduler_manager
-src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
-src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
-src/services/execution/invoker.py	services	src.infrastructure.execution.taskiq_broker
-src/services/execution/invoker.py	services	src.infrastructure.scheduler.scheduler_manager
-src/infrastructure/application/app_factory.py	infrastructure	src.entrypoints.stream

@@ -171,6 +171,16 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
         return _deep_merge(_read_yaml(base_path), _read_yaml(overlay_path))
 
 
+_VAULT_UNREACHABLE: bool = False
+"""Module-level флаг: Vault уже признан недоступным в текущем процессе.
+
+Используется ``VaultConfigSettingsSource`` для подавления повторных
+warning-сообщений: при загрузке N Settings-классов попытка достучаться до
+Vault выполняется N раз, поэтому 30+ одинаковых строк забивают логи. После
+первой неудачи флаг ставится в ``True`` и источник тихо возвращает ``{}``.
+"""
+
+
 class VaultConfigSettingsSource(FilteredSettingsSource):
     """Vault config loader with filtering.
 
@@ -179,13 +189,22 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     переменных ``VAULT_ADDR``/``VAULT_TOKEN``/``VAULT_SECRET_PATH``. На
     профиле ``dev_light`` поставляется overlay ``vault.enabled: false``,
     что отключает источник без необходимости трогать env.
+
+    Если Vault недоступен (connection refused, таймаут, auth-fail) —
+    источник один раз пишет warning и затем тихо возвращает ``{}`` для
+    остальных Settings-классов (см. ``_VAULT_UNREACHABLE``).
     """
 
     def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
+        global _VAULT_UNREACHABLE
+
         from os import getenv
 
         if not _is_vault_enabled():
+            return {}
+
+        if _VAULT_UNREACHABLE:
             return {}
 
         vault_addr = getenv("VAULT_ADDR")
@@ -196,16 +215,36 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             return {}
 
         from hvac import Client
+        from hvac.exceptions import VaultError
+        from requests.exceptions import RequestException
 
         try:
             client = Client(url=vault_addr, token=vault_token)
             if not client.is_authenticated():
+                _VAULT_UNREACHABLE = True
+                self._log_vault_unreachable("authentication failed")
                 return {}
 
             response = client.secrets.kv.v2.read_secret_version(path=vault_secret_path)
             return response.get("data", {}).get("data", {})
+        except (RequestException, VaultError) as exc:
+            _VAULT_UNREACHABLE = True
+            self._log_vault_unreachable(str(exc) or type(exc).__name__)
+            return {}
         except Exception as exc:
             raise RuntimeError(f"Vault error: {str(exc)}") from exc
+
+    @staticmethod
+    def _log_vault_unreachable(detail: str) -> None:
+        """Один warning на процесс при недоступности Vault."""
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Vault недоступен (%s) — secrets-источник пропущен. "
+            "Установите vault.enabled=false или поднимите Vault, "
+            "чтобы убрать это сообщение.",
+            detail,
+        )
 
 
 class BaseSettingsWithLoader(BaseSettings):
