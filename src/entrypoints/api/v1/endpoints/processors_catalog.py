@@ -1,12 +1,16 @@
 """DX-3: Processor introspection API.
 
+W26.5: маршруты регистрируются декларативно через ActionSpec.
+
 Возвращает JSON-каталог всех DSL-процессоров с signatures и docstrings.
 Используется:
 - Streamlit UI для auto-complete
 - AI агентами для route-building
 - Developer docs
 
-Endpoint: GET /api/v1/dsl/processors/catalog
+Endpoints:
+  * GET /api/v1/dsl/processors/catalog
+  * GET /api/v1/dsl/processors/{name}
 """
 
 from __future__ import annotations
@@ -14,12 +18,18 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 
 __all__ = ("router",)
 
-router = APIRouter(prefix="/dsl", tags=["DSL Catalog"])
+
+class ProcessorNamePath(BaseModel):
+    """Path-параметр имени процессора."""
+
+    name: str = Field(..., description="Имя процессора (exact match).")
 
 
 def _collect_processors() -> list[dict[str, Any]]:
@@ -93,7 +103,7 @@ def _collect_processors() -> list[dict[str, Any]]:
                     for p in init_sig.parameters.values()
                     if p.name not in ("self", "name")
                 ]
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 params = []
 
             doc = (inspect.getdoc(obj) or "").strip()
@@ -145,7 +155,7 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
                 for p in sig.parameters.values()
                 if p.name != "self"
             ]
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             params = []
 
         doc = (inspect.getdoc(method) or "").strip()
@@ -160,21 +170,13 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
     return sorted(results, key=lambda x: x["name"])
 
 
-@router.get("/processors/catalog", summary="DSL processor catalog (introspection)")
-async def processors_catalog() -> JSONResponse:
-    """Возвращает полный каталог DSL-процессоров с metadata.
+class _ProcessorsCatalogFacade:
+    """Адаптер для introspection-эндпоинтов DSL-процессоров."""
 
-    Response:
-    {
-        "processors": [{name, category, module, description, docstring, parameters}, ...],
-        "builder_methods": [{name, description, parameters}, ...],
-        "total": {"processors": N, "builder_methods": M}
-    }
-    """
-    processors = _collect_processors()
-    builder_methods = _collect_builder_methods()
-    return JSONResponse(
-        content={
+    async def catalog(self) -> dict[str, Any]:
+        processors = _collect_processors()
+        builder_methods = _collect_builder_methods()
+        return {
             "processors": processors,
             "builder_methods": builder_methods,
             "total": {
@@ -182,16 +184,47 @@ async def processors_catalog() -> JSONResponse:
                 "builder_methods": len(builder_methods),
             },
         }
-    )
+
+    async def details(self, *, name: str) -> dict[str, Any]:
+        for p in _collect_processors():
+            if p["name"] == name:
+                return p
+        raise HTTPException(
+            status_code=404, detail=f"Processor '{name}' not found"
+        )
 
 
-@router.get("/processors/{name}", summary="Details for single processor")
-async def processor_details(name: str) -> JSONResponse:
-    """Details одного процессора по имени (exact match)."""
-    processors = _collect_processors()
-    for p in processors:
-        if p["name"] == name:
-            return JSONResponse(content=p)
-    return JSONResponse(
-        status_code=404, content={"error": f"Processor '{name}' not found"}
-    )
+_FACADE = _ProcessorsCatalogFacade()
+
+
+def _get_facade() -> _ProcessorsCatalogFacade:
+    return _FACADE
+
+
+router = APIRouter(prefix="/dsl", tags=["DSL Catalog"])
+builder = ActionRouterBuilder(router)
+
+
+builder.add_actions(
+    [
+        ActionSpec(
+            name="processors_catalog",
+            method="GET",
+            path="/processors/catalog",
+            summary="DSL processor catalog (introspection)",
+            service_getter=_get_facade,
+            service_method="catalog",
+            tags=("DSL Catalog",),
+        ),
+        ActionSpec(
+            name="processor_details",
+            method="GET",
+            path="/processors/{name}",
+            summary="Details for single processor",
+            service_getter=_get_facade,
+            service_method="details",
+            path_model=ProcessorNamePath,
+            tags=("DSL Catalog",),
+        ),
+    ]
+)
