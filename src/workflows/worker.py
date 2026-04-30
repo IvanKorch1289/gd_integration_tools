@@ -145,7 +145,7 @@ async def _bootstrap() -> None:
     """
     from src.dsl.commands.setup import register_action_handlers
     from src.dsl.routes import register_dsl_routes
-    from src.infrastructure.application.service_setup import register_all_services
+    from src.plugins.composition.service_setup import register_all_services
 
     register_all_services()
     register_action_handlers()

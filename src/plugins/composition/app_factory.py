@@ -15,7 +15,7 @@ from src.entrypoints.webhook.sources_router import (
 from src.entrypoints.websocket.ws_handler import ws_router
 from src.entrypoints.websocket.ws_invocations import ws_invocations_router
 from src.infrastructure.application.index import root_page
-from src.infrastructure.application.lifecycle import lifespan
+from src.plugins.composition.lifecycle import lifespan
 from src.infrastructure.application.monitoring import setup_monitoring
 from src.infrastructure.application.telemetry import setup_tracing
 from src.infrastructure.clients.messaging.stream import stream_client

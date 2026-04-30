@@ -53,7 +53,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
 
     DI: ``ReplyChannelRegistry`` и ``Invoker`` берутся из
     ``websocket.app.state`` (composition root в
-    :func:`src.infrastructure.application.di.register_app_state`).
+    :func:`src.plugins.composition.di.register_app_state`).
     """
     await websocket.accept()
     registry = websocket.app.state.reply_registry

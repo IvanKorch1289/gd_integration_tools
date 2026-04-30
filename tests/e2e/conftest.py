@@ -21,7 +21,7 @@ async def client():
         Настроенный AsyncClient без запуска реального сервера.
     """
     try:
-        from src.infrastructure.application.app_factory import create_app
+        from src.plugins.composition.app_factory import create_app
 
         app = create_app()
         async with httpx.AsyncClient(

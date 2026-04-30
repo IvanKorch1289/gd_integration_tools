@@ -544,7 +544,7 @@ def get_invoker() -> Invoker:
     """Singleton-доступ к Invoker'у (для DI и DSL processors).
 
     Сначала ищет инстанс в ``app.state.invoker`` (composition root в
-    :func:`src.infrastructure.application.di.register_app_state`);
+    :func:`src.plugins.composition.di.register_app_state`);
     для non-request контекстов lazy-создаёт через factory ``Invoker()``.
     Тело перезаписывается декоратором; ``raise`` — для mypy.
     """

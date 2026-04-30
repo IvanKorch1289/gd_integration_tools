@@ -308,14 +308,14 @@ async def lifespan(app: FastAPI):
     """
     from src.dsl.commands.setup import register_action_handlers
     from src.dsl.routes import register_dsl_routes
-    from src.infrastructure.application.service_setup import register_all_services
-    from src.infrastructure.setup_infra import ending, starting
+    from src.plugins.composition.service_setup import register_all_services
+    from src.plugins.composition.setup_infra import ending, starting
 
     app_logger.info("Запуск приложения...")
     startup_completed = False
 
     try:
-        from src.infrastructure.application.di import register_app_state
+        from src.plugins.composition.di import register_app_state
 
         register_app_state(app)
         _register_storage_singletons(app)

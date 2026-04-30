@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from src.core.config.settings import settings
-from src.infrastructure.application.app_factory import create_app
+from src.plugins.composition.app_factory import create_app
 
 app: FastAPI = create_app()
 
