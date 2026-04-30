@@ -1,14 +1,16 @@
 """AI Feedback API — разметка ответов AI-агентов и перевод в RAG.
 
-Предоставляет оператору HTTP-интерфейс к ``AIFeedbackService``
-и ``FeedbackIndexer``:
+W26.5: маршруты регистрируются декларативно через ActionSpec;
+прямых ``@router.{get,post}`` нет.
 
-  * ``GET  /pending``               — ответы, ожидающие разметки;
-  * ``GET  /labeled``               — размеченные ответы;
-  * ``GET  /stats``                 — счётчики по меткам и индексации;
-  * ``GET  /{doc_id}``              — подробности одного ответа;
-  * ``POST /{doc_id}/label``        — проставить метку;
-  * ``POST /index-to-rag``          — ручной запуск индексации в RAG.
+Эндпоинты под ``/api/v1/ai/feedback/*``:
+
+  * ``GET  /pending``         — ответы, ожидающие разметки;
+  * ``GET  /labeled``         — размеченные ответы;
+  * ``GET  /stats``           — счётчики по меткам и индексации;
+  * ``GET  /{doc_id}``        — подробности одного ответа;
+  * ``POST /{doc_id}/label``  — проставить метку;
+  * ``POST /index-to-rag``    — ручной запуск индексации в RAG.
 
 Все эндпоинты возвращают JSON; ошибки — стандартный FastAPI detail.
 """
@@ -17,14 +19,16 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from src.services.ai.feedback import get_ai_feedback_service, get_feedback_indexer
 
 __all__ = ("router",)
 
-router = APIRouter()
+
+# --- Body schemas ----------------------------------------------------------
 
 
 class LabelRequest(BaseModel):
@@ -50,141 +54,219 @@ class IndexRequest(BaseModel):
     )
 
 
+# --- Path / Query schemas --------------------------------------------------
+
+
+class DocIdPath(BaseModel):
+    """Path-параметр идентификатора feedback-документа."""
+
+    doc_id: str = Field(..., description="ID документа AIFeedbackDoc.")
+
+
+class PendingQuery(BaseModel):
+    """Query для list_pending."""
+
+    agent_id: str | None = Field(default=None, description="Фильтр по агенту.")
+    limit: int = Field(default=50, ge=1, le=200, description="Размер страницы.")
+    offset: int = Field(default=0, ge=0, description="Смещение пагинации.")
+
+
+class LabeledQuery(BaseModel):
+    """Query для list_labeled."""
+
+    label: Literal["positive", "negative", "skip"] | None = Field(
+        default=None, description="Фильтр по метке."
+    )
+    agent_id: str | None = Field(default=None, description="Фильтр по агенту.")
+    indexed_in_rag: bool | None = Field(
+        default=None, description="Фильтр по статусу индексации."
+    )
+    limit: int = Field(default=100, ge=1, le=500, description="Размер страницы.")
+    offset: int = Field(default=0, ge=0, description="Смещение пагинации.")
+
+
+# --- Helpers ---------------------------------------------------------------
+
+
 def _doc_to_dict(doc: Any) -> dict[str, Any]:
-    """Сериализует ``AIFeedbackDoc`` в dict (для JSON-ответа).
-
-    Args:
-        doc: Документ ``AIFeedbackDoc`` либо ``None``.
-
-    Returns:
-        Словарь с ISO-форматированием дат.
-    """
+    """Сериализует AIFeedbackDoc → dict (для JSON-ответа)."""
     return doc.model_dump(mode="json") if doc else {}
 
 
-@router.get("/pending", summary="Ответы, ожидающие разметки")
-async def list_pending(
-    agent_id: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-) -> dict:
-    """Возвращает ответы агентов без проставленной метки.
-
-    Args:
-        agent_id: Фильтр по идентификатору агента.
-        limit: Размер страницы.
-        offset: Смещение пагинации.
-
-    Returns:
-        ``{"items": [...], "total": N}``.
-    """
-    service = get_ai_feedback_service()
-    items = await service.list_pending(agent_id=agent_id, limit=limit, offset=offset)
-    return {"items": [_doc_to_dict(d) for d in items], "total": len(items)}
+def _list_response_handler(
+    result: list[Any], _: dict[str, Any]
+) -> dict[str, Any]:
+    """list[doc] → ``{"items": [...], "total": N}``."""
+    return {"items": [_doc_to_dict(d) for d in result], "total": len(result)}
 
 
-@router.get("/labeled", summary="Размеченные ответы")
-async def list_labeled(
-    label: Literal["positive", "negative", "skip"] | None = Query(default=None),
-    agent_id: str | None = Query(default=None),
-    indexed_in_rag: bool | None = Query(default=None),
-    limit: int = Query(default=100, ge=1, le=500),
-    offset: int = Query(default=0, ge=0),
-) -> dict:
-    """Возвращает размеченные ответы с комбинированным фильтром.
-
-    Args:
-        label: Фильтр по метке.
-        agent_id: Фильтр по агенту.
-        indexed_in_rag: Фильтр по статусу индексации.
-        limit: Размер страницы.
-        offset: Смещение.
-
-    Returns:
-        ``{"items": [...], "total": N}``.
-    """
-    service = get_ai_feedback_service()
-    items = await service.list_labeled(
-        label=label,
-        agent_id=agent_id,
-        indexed_in_rag=indexed_in_rag,
-        limit=limit,
-        offset=offset,
-    )
-    return {"items": [_doc_to_dict(d) for d in items], "total": len(items)}
-
-
-@router.get("/stats", summary="Статистика feedback")
-async def feedback_stats() -> dict[str, int]:
-    """Возвращает агрегированные счётчики по меткам.
-
-    Returns:
-        ``{"pending": N, "positive": N, "negative": N, "skip": N, "indexed": N}``.
-    """
-    service = get_ai_feedback_service()
-    return await service.stats()
-
-
-@router.get("/{doc_id}", summary="Подробности ответа")
-async def get_doc(doc_id: str) -> dict:
-    """Возвращает документ ответа по идентификатору.
-
-    Args:
-        doc_id: Идентификатор документа.
-
-    Returns:
-        JSON-представление документа.
-
-    Raises:
-        HTTPException: 404, если документ не найден.
-    """
-    service = get_ai_feedback_service()
-    doc = await service.get(doc_id)
-    if doc is None:
+def _get_doc_handler(result: Any | None, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """doc → dict; 404 если None."""
+    if result is None:
+        doc_id = kwargs.get("doc_id")
         raise HTTPException(status_code=404, detail=f"Feedback {doc_id!r} not found")
-    return _doc_to_dict(doc)
+    return _doc_to_dict(result)
 
 
-@router.post("/{doc_id}/label", summary="Проставить метку обратной связи")
-async def label_doc(doc_id: str, payload: LabelRequest) -> dict:
-    """Сохраняет метку оператора для ответа.
-
-    Args:
-        doc_id: Идентификатор документа.
-        payload: Тело запроса с меткой и комментарием.
-
-    Returns:
-        Обновлённый документ.
-
-    Raises:
-        HTTPException: 404, если документ не найден.
-    """
-    service = get_ai_feedback_service()
-    try:
-        updated = await service.set_feedback(
-            doc_id=doc_id,
-            label=payload.label,
-            comment=payload.comment,
-            operator_id=payload.operator_id,
-        )
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return _doc_to_dict(updated)
+def _label_doc_handler(result: Any, _: dict[str, Any]) -> dict[str, Any]:
+    """Обёртка над dict — успех."""
+    return _doc_to_dict(result)
 
 
-@router.post("/index-to-rag", summary="Перевести размеченные ответы в RAG-индекс")
-async def index_to_rag(payload: IndexRequest | None = None) -> dict:
-    """Запускает индексацию размеченных ответов в RAG.
-
-    Args:
-        payload: Параметры (опционально). Если отсутствует —
-            индексируются все агенты, limit=100.
-
-    Returns:
-        Счётчики результата (``indexed_positive``, ``errors`` и т.д.).
-    """
-    indexer = get_feedback_indexer()
-    agent_id = payload.agent_id if payload else None
-    limit = payload.limit if payload else 100
-    result = await indexer.index_batch(agent_id=agent_id, limit=limit)
+def _index_result_handler(result: Any, _: dict[str, Any]) -> dict[str, int]:
+    """IndexResult → dict через as_dict()."""
     return result.as_dict()
+
+
+# --- Service facade --------------------------------------------------------
+
+
+class _AIFeedbackFacade:
+    """Адаптер над ``AIFeedbackService`` для action-маршрутов.
+
+    Нужен, чтобы ловить ``KeyError`` из ``set_feedback`` и пробрасывать
+    как HTTP 404 (legacy-поведение). ``ActionRouterBuilder`` не имеет
+    встроенного маппинга исключений, поэтому обёртка живёт здесь.
+    """
+
+    async def list_pending(
+        self, *, agent_id: str | None, limit: int, offset: int
+    ) -> list[Any]:
+        return await get_ai_feedback_service().list_pending(
+            agent_id=agent_id, limit=limit, offset=offset
+        )
+
+    async def list_labeled(
+        self,
+        *,
+        label: Literal["positive", "negative", "skip"] | None,
+        agent_id: str | None,
+        indexed_in_rag: bool | None,
+        limit: int,
+        offset: int,
+    ) -> list[Any]:
+        return await get_ai_feedback_service().list_labeled(
+            label=label,
+            agent_id=agent_id,
+            indexed_in_rag=indexed_in_rag,
+            limit=limit,
+            offset=offset,
+        )
+
+    async def stats(self) -> dict[str, int]:
+        return await get_ai_feedback_service().stats()
+
+    async def get(self, *, doc_id: str) -> Any | None:
+        return await get_ai_feedback_service().get(doc_id)
+
+    async def label(
+        self,
+        *,
+        doc_id: str,
+        label: Literal["positive", "negative", "skip"],
+        comment: str | None = None,
+        operator_id: str | None = None,
+    ) -> Any:
+        try:
+            return await get_ai_feedback_service().set_feedback(
+                doc_id=doc_id,
+                label=label,
+                comment=comment,
+                operator_id=operator_id,
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    async def index_batch(
+        self, *, agent_id: str | None = None, limit: int = 100
+    ) -> Any:
+        return await get_feedback_indexer().index_batch(
+            agent_id=agent_id, limit=limit
+        )
+
+
+_FACADE = _AIFeedbackFacade()
+
+
+def _get_facade() -> _AIFeedbackFacade:
+    return _FACADE
+
+
+# --- Router ----------------------------------------------------------------
+
+
+router = APIRouter()
+builder = ActionRouterBuilder(router)
+
+common_tags = ("AI · Feedback",)
+
+
+builder.add_actions(
+    [
+        ActionSpec(
+            name="list_pending_feedback",
+            method="GET",
+            path="/pending",
+            summary="Ответы, ожидающие разметки",
+            service_getter=_get_facade,
+            service_method="list_pending",
+            query_model=PendingQuery,
+            response_handler=_list_response_handler,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="list_labeled_feedback",
+            method="GET",
+            path="/labeled",
+            summary="Размеченные ответы",
+            service_getter=_get_facade,
+            service_method="list_labeled",
+            query_model=LabeledQuery,
+            response_handler=_list_response_handler,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="feedback_stats",
+            method="GET",
+            path="/stats",
+            summary="Статистика feedback",
+            service_getter=_get_facade,
+            service_method="stats",
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="get_feedback_doc",
+            method="GET",
+            path="/{doc_id}",
+            summary="Подробности ответа",
+            service_getter=_get_facade,
+            service_method="get",
+            path_model=DocIdPath,
+            response_handler=_get_doc_handler,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="label_feedback_doc",
+            method="POST",
+            path="/{doc_id}/label",
+            summary="Проставить метку обратной связи",
+            service_getter=_get_facade,
+            service_method="label",
+            path_model=DocIdPath,
+            body_model=LabelRequest,
+            response_handler=_label_doc_handler,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="index_feedback_to_rag",
+            method="POST",
+            path="/index-to-rag",
+            summary="Перевести размеченные ответы в RAG-индекс",
+            service_getter=_get_facade,
+            service_method="index_batch",
+            body_model=IndexRequest,
+            response_handler=_index_result_handler,
+            tags=common_tags,
+        ),
+    ]
+)
