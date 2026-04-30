@@ -45,6 +45,10 @@ logger = logging.getLogger("dsl.yaml_loader")
 def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
     """Парсит YAML-строку в Pipeline.
 
+    Если в spec'е указан ``apiVersion`` отличный от текущего (W25.3
+    ``CURRENT_VERSION``), перед сборкой spec прогоняется через
+    зарегистрированные миграции (см. ``src/dsl/versioning``).
+
     Args:
         yaml_str: YAML-описание маршрута.
 
@@ -62,6 +66,11 @@ def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
     data = yaml.safe_load(yaml_str)
     if not isinstance(data, dict):
         raise ValueError("YAML root must be a mapping (dict)")
+
+    from src.dsl.versioning import CURRENT_VERSION, apply_migrations
+
+    if data.get("apiVersion") != CURRENT_VERSION:
+        data = apply_migrations(data, target_version=CURRENT_VERSION)
 
     return _build_pipeline(data)
 

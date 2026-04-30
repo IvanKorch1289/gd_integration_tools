@@ -36,6 +36,7 @@ class PipelineSnapshot:
     source: str | None
     description: str | None
     created_at: float
+    api_version: str = "v2"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -46,6 +47,7 @@ class PipelineSnapshot:
             "source": self.source,
             "description": self.description,
             "created_at": self.created_at,
+            "api_version": self.api_version,
         }
 
 
@@ -73,6 +75,8 @@ class PipelineVersionManager:
 
     async def snapshot(self, pipeline: Any) -> PipelineSnapshot:
         """Создаёт снэпшот маршрута и сохраняет в PostgreSQL."""
+        from src.dsl.versioning import CURRENT_VERSION
+
         route_id = pipeline.route_id
         version = await self._next_version(route_id)
         processors = self._serialize_pipeline(pipeline)
@@ -84,6 +88,7 @@ class PipelineVersionManager:
             source=pipeline.source,
             description=pipeline.description,
             created_at=time.time(),
+            api_version=CURRENT_VERSION,
         )
 
         try:
@@ -97,6 +102,7 @@ class PipelineVersionManager:
                             feature_flag=snap.feature_flag,
                             source=snap.source,
                             description=snap.description,
+                            api_version=snap.api_version,
                         )
                     )
             logger.info(
@@ -128,6 +134,7 @@ class PipelineVersionManager:
                     "feature_flag": row.feature_flag,
                     "source": row.source,
                     "description": row.description,
+                    "api_version": getattr(row, "api_version", "v2"),
                     "created_at": row.created_at.timestamp() if row.created_at else 0.0,
                 }
                 for row in rows
@@ -137,21 +144,37 @@ class PipelineVersionManager:
             return []
 
     async def compare(self, route_id: str, v1: int, v2: int) -> dict[str, Any]:
-        """Сравнивает две версии маршрута."""
+        """Сравнивает две версии маршрута.
+
+        Если снапшоты сохранены в разных ``api_version`` — старший
+        мигрируется к актуальной (``CURRENT_VERSION``) перед diff'ом,
+        чтобы сравнение было корректным.
+        """
+        from src.dsl.versioning import CURRENT_VERSION, apply_migrations
+
         try:
             async with main_session_manager.create_session() as session:
                 stmt = select(DslSnapshot).where(
-                    DslSnapshot.route_id == route_id,
-                    DslSnapshot.version.in_([v1, v2]),
+                    DslSnapshot.route_id == route_id, DslSnapshot.version.in_([v1, v2])
                 )
                 rows = (await session.execute(stmt)).scalars().all()
             by_ver = {row.version: row for row in rows}
             if v1 not in by_ver or v2 not in by_ver:
                 return {"error": "Version not found"}
-            snap1 = by_ver[v1].spec or {}
-            snap2 = by_ver[v2].spec or {}
-            procs1 = {p["name"]: p["type"] for p in snap1.get("processors", [])}
-            procs2 = {p["name"]: p["type"] for p in snap2.get("processors", [])}
+
+            spec1 = self._spec_with_version(by_ver[v1])
+            spec2 = self._spec_with_version(by_ver[v2])
+            if spec1.get("apiVersion") != CURRENT_VERSION:
+                spec1 = apply_migrations(spec1, target_version=CURRENT_VERSION)
+            if spec2.get("apiVersion") != CURRENT_VERSION:
+                spec2 = apply_migrations(spec2, target_version=CURRENT_VERSION)
+
+            procs1 = {
+                p["name"]: p["type"] for p in spec1.get("processors", []) if "name" in p
+            }
+            procs2 = {
+                p["name"]: p["type"] for p in spec2.get("processors", []) if "name" in p
+            }
             added = [k for k in procs2 if k not in procs1]
             removed = [k for k in procs1 if k not in procs2]
             changed = [k for k in procs1 if k in procs2 and procs1[k] != procs2[k]]
@@ -159,6 +182,8 @@ class PipelineVersionManager:
                 "route_id": route_id,
                 "v1": v1,
                 "v2": v2,
+                "api_version_v1": spec1.get("apiVersion"),
+                "api_version_v2": spec2.get("apiVersion"),
                 "added_processors": added,
                 "removed_processors": removed,
                 "changed_processors": changed,
@@ -167,6 +192,14 @@ class PipelineVersionManager:
             }
         except Exception as exc:
             return {"error": str(exc)}
+
+    @staticmethod
+    def _spec_with_version(row: Any) -> dict[str, Any]:
+        """Достаёт spec и приклеивает api_version из ORM-row."""
+        spec = dict(row.spec or {})
+        if "apiVersion" not in spec:
+            spec["apiVersion"] = getattr(row, "api_version", "v2")
+        return spec
 
 
 from src.core.di import app_state_singleton  # noqa: E402

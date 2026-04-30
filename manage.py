@@ -648,6 +648,80 @@ def dsl_write_yaml(
         typer.echo(typer.style(f"Skipped: {result.reason}", fg=typer.colors.YELLOW))
 
 
+@dsl_app.command("migrate")
+def dsl_migrate(
+    target: str = typer.Option(
+        "v2", "--target", help="Целевая apiVersion (default: текущая)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Показать diff'ы вместо записи"
+    ),
+    routes_dir: Path | None = typer.Option(
+        None, "--routes-dir", help="Override каталог DSL-маршрутов"
+    ),
+):
+    """W25.3 — массовая миграция dsl_routes/*.yaml до целевой apiVersion.
+
+    Без ``--dry-run`` файлы перезаписываются. С ``--dry-run`` показывает
+    unified-diff'ы. Уже актуальные spec'ы пропускаются.
+    """
+    import difflib
+
+    import yaml
+
+    from src.core.config.settings import settings as app_settings
+    from src.dsl.versioning import apply_migrations
+
+    target_dir = routes_dir or app_settings.dsl.routes_dir
+    if not target_dir.exists():
+        typer.echo(f"Каталог не существует: {target_dir}", err=True)
+        raise typer.Exit(1)
+
+    files = sorted(target_dir.glob("**/*.yaml")) + sorted(
+        target_dir.glob("**/*.dsl.yaml")
+    )
+    if not files:
+        typer.echo(f"Нет YAML-файлов в {target_dir}")
+        return
+
+    migrated = 0
+    skipped = 0
+    for path in files:
+        original = path.read_text(encoding="utf-8")
+        spec = yaml.safe_load(original) or {}
+        if not isinstance(spec, dict):
+            typer.echo(f"  skip {path}: root не dict")
+            skipped += 1
+            continue
+
+        if spec.get("apiVersion") == target:
+            skipped += 1
+            continue
+
+        new_spec = apply_migrations(spec, target_version=target)
+        new_yaml = yaml.safe_dump(new_spec, sort_keys=False, allow_unicode=True)
+
+        if dry_run:
+            diff = "".join(
+                difflib.unified_diff(
+                    original.splitlines(keepends=True),
+                    new_yaml.splitlines(keepends=True),
+                    fromfile=str(path),
+                    tofile=f"{path} (migrated)",
+                )
+            )
+            if diff:
+                typer.echo(diff)
+            migrated += 1
+        else:
+            path.write_text(new_yaml, encoding="utf-8")
+            typer.echo(typer.style(f"  migrated: {path}", fg=typer.colors.GREEN))
+            migrated += 1
+
+    summary = f"Migrate {target}: {migrated} migrated, {skipped} already at target"
+    typer.echo(typer.style(summary, fg=typer.colors.CYAN))
+
+
 # ────────────── Validation ──────────────
 
 

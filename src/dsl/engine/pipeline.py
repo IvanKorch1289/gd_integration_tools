@@ -66,12 +66,20 @@ class Pipeline:
     def to_dict(self) -> dict[str, Any]:
         """Сериализует Pipeline в словарь совместимый с YAML-лоадером.
 
-        Процессоры без реализации ``to_spec()`` пропускаются.
+        Процессоры без реализации ``to_spec()`` пропускаются. Поле
+        ``apiVersion`` всегда выставляется равным ``CURRENT_VERSION`` —
+        новая запись на диск или БД считается актуальной.
 
         Returns:
-            Словарь с ключами route_id, source, description, processors.
+            Словарь с ключами apiVersion, route_id, source, description,
+            processors.
         """
-        result: dict[str, Any] = {"route_id": self.route_id}
+        from src.dsl.versioning import CURRENT_VERSION
+
+        result: dict[str, Any] = {
+            "apiVersion": CURRENT_VERSION,
+            "route_id": self.route_id,
+        }
         if self.source:
             result["source"] = self.source
         if self.description:

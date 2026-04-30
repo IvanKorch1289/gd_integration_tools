@@ -15,6 +15,7 @@ from sqlalchemy import (
     DateTime,
     Index,
     Integer,
+    String,
     Text,
     UniqueConstraint,
     func,
@@ -45,6 +46,10 @@ class DslSnapshot(BaseModel):
     feature_flag: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    api_version: Mapped[str] = mapped_column(
+        String(8), nullable=False, server_default="v2"
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
