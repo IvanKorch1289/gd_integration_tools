@@ -51,16 +51,16 @@ def _build_skeleton(name: str, mem_type: str, title: str | None) -> str:
     )
     if mem_type == "feedback":
         body = (
-            f"**Правило**: TODO — кратко, как делать.\n\n"
-            f"**Why:** TODO — обоснование (incident / измерение / "
-            f"продакшен-фидбек).\n\n"
-            f"**How to apply:** TODO — когда применять и где.\n"
+            "**Правило**: TODO — кратко, как делать.\n\n"
+            "**Why:** TODO — обоснование (incident / измерение / "
+            "продакшен-фидбек).\n\n"
+            "**How to apply:** TODO — когда применять и где.\n"
         )
     elif mem_type == "project":
         body = (
-            f"**Факт**: TODO.\n\n"
-            f"**Why:** TODO — мотивация / стейкхолдер / срок.\n\n"
-            f"**How to apply:** TODO — как использовать в решениях.\n"
+            "**Факт**: TODO.\n\n"
+            "**Why:** TODO — мотивация / стейкхолдер / срок.\n\n"
+            "**How to apply:** TODO — как использовать в решениях.\n"
         )
     else:
         body = "TODO: содержательная сводка.\n"
