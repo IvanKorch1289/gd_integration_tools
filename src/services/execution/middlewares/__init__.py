@@ -21,8 +21,4 @@ from src.services.execution.middlewares.idempotency_middleware import (
 )
 from src.services.execution.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-__all__ = (
-    "AuditMiddleware",
-    "IdempotencyMiddleware",
-    "RateLimitMiddleware",
-)
+__all__ = ("AuditMiddleware", "IdempotencyMiddleware", "RateLimitMiddleware")

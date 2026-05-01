@@ -94,8 +94,7 @@ def _ensure_metrics() -> None:
             "Duration of last PG → SQLite snapshot sync",
         )
         _errors_counter = Counter(
-            "snapshot_sync_errors_total",
-            "Total failed PG → SQLite snapshot syncs",
+            "snapshot_sync_errors_total", "Total failed PG → SQLite snapshot syncs"
         )
         _metrics_initialized = True
     except ImportError:
@@ -160,9 +159,7 @@ def _select_tables(metadata_tables: dict[str, Table], wanted: list[str]) -> list
     return result
 
 
-def _replicate_table(
-    pg_conn: Connection, sqlite_conn: Connection, table: Table
-) -> int:
+def _replicate_table(pg_conn: Connection, sqlite_conn: Connection, table: Table) -> int:
     """Реплицирует одну таблицу: ``DELETE FROM tbl; INSERT ...``.
 
     Возвращает кол-во вставленных строк. Использует batch-вставку через

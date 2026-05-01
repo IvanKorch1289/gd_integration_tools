@@ -84,7 +84,10 @@ def _scrub_pii(event: dict[str, Any], hint: Any) -> dict[str, Any] | None:
             get_presidio_sanitizer,
         )
 
-        sanitizer = get_presidio_sanitizer()
+        # Probe доступности Presidio. Реальный скраб через PII-detection
+        # пока не реализован (TODO/W21 PII pipeline) — переменная
+        # удерживается только для проверки импорта.
+        _ = get_presidio_sanitizer()
     except ImportError:
         return event
 

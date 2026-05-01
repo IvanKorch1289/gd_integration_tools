@@ -208,6 +208,54 @@ ignore = [
     "S104"
 ]
 
+# Wave-6.1 lazy singletons:
+#
+#   * F822 — имена в ``__all__`` создаются через module-level
+#     ``__getattr__`` shim (``lru_cache(maxsize=1)`` + lazy accessor);
+#     Ruff не видит динамическое разрешение.
+#   * E402 — ``from src.core.di import app_state_singleton`` (и
+#     обернутая ``@app_state_singleton`` фабрика) намеренно стоит
+#     ПОСЛЕ определения класса — это разрывает circular import
+#     ``core.di → infrastructure.X`` и сохраняет lazy-init.
+#
+# Файлы ниже — единственный список, где паттерны применены; добавление
+# новой записи требует обновления.
+#
+# Streamlit pages: ``st.set_page_config()`` обязан вызываться **первым**
+# Streamlit-вызовом (требование платформы), поэтому module-level imports
+# после него — конвенция, не баг.
+[tool.ruff.lint.per-file-ignores]
+"src/infrastructure/clients/external/circuit_breakers.py" = ["F822"]
+"src/infrastructure/clients/external/logger.py" = ["F822"]
+"src/infrastructure/clients/messaging/stream.py" = ["F822"]
+"src/infrastructure/clients/storage/redis.py" = ["F822"]
+"src/infrastructure/clients/storage/s3_pool.py" = ["F822"]
+"src/infrastructure/clients/transport/smtp.py" = ["F822"]
+"src/infrastructure/database/database.py" = ["F822"]
+"src/infrastructure/database/session_manager.py" = ["F822"]
+"src/infrastructure/external_apis/logging_service.py" = ["F822"]
+"src/infrastructure/resilience/breaker.py" = ["F822"]
+"src/infrastructure/scheduler/scheduler_manager.py" = ["F822"]
+"src/services/decorators/limiting.py" = ["F822"]
+"src/services/io/external_database.py" = ["F822"]
+# Wave-6.1 lazy ``@app_state_singleton`` (E402: import после класса).
+"src/dsl/engine/plugin_registry.py" = ["E402"]
+"src/dsl/engine/tracer.py" = ["E402"]
+"src/entrypoints/mqtt/mqtt_handler.py" = ["E402"]
+"src/infrastructure/application/slo_tracker.py" = ["E402"]
+"src/infrastructure/application/vault_refresher.py" = ["E402"]
+"src/infrastructure/clients/external/express.py" = ["E402"]
+"src/infrastructure/clients/external/langfuse_client.py" = ["E402"]
+"src/infrastructure/clients/messaging/event_bus.py" = ["E402"]
+"src/infrastructure/clients/storage/clickhouse.py" = ["E402"]
+"src/infrastructure/clients/storage/elasticsearch.py" = ["E402"]
+"src/infrastructure/clients/storage/mongodb.py" = ["E402"]
+"src/infrastructure/database/pool_monitor.py" = ["E402"]
+"src/infrastructure/security/api_key_manager.py" = ["E402"]
+# Streamlit pages: set_page_config() требует быть первым st-вызовом.
+"src/entrypoints/streamlit_app/app.py" = ["E402"]
+"src/entrypoints/streamlit_app/pages/*.py" = ["E402"]
+
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
 

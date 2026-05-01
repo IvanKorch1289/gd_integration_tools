@@ -14,7 +14,7 @@ Watermark — wall-clock секунды (Unix epoch), маркирующий г�
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 __all__ = ("WatermarkState", "LatePolicy")

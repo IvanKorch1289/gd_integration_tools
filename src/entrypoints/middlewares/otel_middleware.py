@@ -104,7 +104,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
         attributes = self._build_attributes(request)
 
         try:
-            from opentelemetry import trace
+            from opentelemetry import trace  # noqa: F401  # availability probe
             from opentelemetry.trace import SpanKind
         except ImportError:
             return await call_next(request)

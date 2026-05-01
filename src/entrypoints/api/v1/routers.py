@@ -105,9 +105,7 @@ def get_v1_routers() -> APIRouter:
     # Wave 14.1.E: Action Inventory API — каталог зарегистрированных
     # actions для Streamlit Action Console / MCP / OpenAPI enrichment.
     api_router_v1.include_router(
-        actions_inventory_router,
-        prefix="/actions",
-        tags=["Actions Inventory"],
+        actions_inventory_router, prefix="/actions", tags=["Actions Inventory"]
     )
 
     return api_router_v1

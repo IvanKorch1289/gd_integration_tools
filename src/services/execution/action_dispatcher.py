@@ -86,9 +86,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         # Gateway-режим.
         action = command_or_action
         return await self.dispatch_action(
-            action,
-            payload or {},
-            context or DispatchContext(),
+            action, payload or {}, context or DispatchContext()
         )
 
     def is_registered(self, action: str) -> bool:
@@ -99,10 +97,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
     # ------------------------------------------------------------------ #
 
     async def dispatch_action(
-        self,
-        action: str,
-        payload: Mapping[str, Any],
-        context: DispatchContext,
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         """Gateway-вариант dispatch с middleware-цепочкой.
 
@@ -128,9 +123,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
     def get_metadata(self, action: str) -> ActionMetadata | None:
         return self._registry.get_metadata(action)
 
-    def list_actions(
-        self, transport: TransportName | None = None
-    ) -> tuple[str, ...]:
+    def list_actions(self, transport: TransportName | None = None) -> tuple[str, ...]:
         """Список action-имён, опционально отфильтрованный по транспорту."""
         if transport is None:
             return self._registry.list_actions()
@@ -169,25 +162,19 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
 
     @staticmethod
     def _wrap(
-        middleware: ActionMiddleware,
-        next_handler: MiddlewareNextHandler,
+        middleware: ActionMiddleware, next_handler: MiddlewareNextHandler
     ) -> MiddlewareNextHandler:
         """Превращает (middleware, next) в новый MiddlewareNextHandler."""
 
         async def _wrapped(
-            action: str,
-            payload: Mapping[str, Any],
-            context: DispatchContext,
+            action: str, payload: Mapping[str, Any], context: DispatchContext
         ) -> ActionResult:
             return await middleware(action, payload, context, next_handler)
 
         return _wrapped
 
     async def _terminal_handler(
-        self,
-        action: str,
-        payload: Mapping[str, Any],
-        context: DispatchContext,
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext
     ) -> ActionResult:
         """Терминальный обработчик: вызов реестра + маппинг в ActionResult."""
         command = ActionCommandSchema(action=action, payload=dict(payload))

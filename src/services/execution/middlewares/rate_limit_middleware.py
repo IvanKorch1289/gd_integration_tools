@@ -85,15 +85,10 @@ class RateLimitMiddleware:
         RateLimitExceeded = module.RateLimitExceeded
 
         identifier = (
-            context.tenant_id
-            or context.user_id
-            or context.correlation_id
-            or "global"
+            context.tenant_id or context.user_id or context.correlation_id or "global"
         )
         policy = RateLimit(
-            limit=metadata.rate_limit,
-            window_seconds=1,
-            key_prefix=f"action:{action}",
+            limit=metadata.rate_limit, window_seconds=1, key_prefix=f"action:{action}"
         )
         try:
             await limiter.check(identifier, policy)

@@ -2,7 +2,7 @@
 
 ## Известные ограничения и quirks
 
-### Открытый техдолг (после сессии 2026-05-01)
+### Открытый техдолг (после сессии 2026-05-01 PM — pre-Wave 22)
 
 1. **Chaos-тесты с `testcontainers[toxiproxy]`** (Wave 26.3 расширение)
    — не реализованы. Зависят от Wave 26.8 PG→SQLite snapshot
@@ -30,20 +30,42 @@
    в `create_app()`. Лечится conditional skip `setup_admin` в
    dev_light или установкой psycopg2 в окружении.
 
-5. **`make lint-strict`: 39 non-S ошибок** (E402, F821, E741, F401,
-   F841) — pre-existing, вне scope Wave 26.6. Отдельная задача
-   (Wave 26.6 расширение).
+5. ~~**`make lint-strict`: 39 non-S ошибок**~~ → **закрыто
+   2026-05-01 PM** (Wave 14.1 post-sprint-2 + lint-strict-cleanup).
+   Финальное состояние: 30 E402 (Wave-6.1 lazy-import паттерн) и
+   24 F822 (lazy `__getattr__` shim) централизованы в
+   `[tool.ruff.lint.per-file-ignores]` с архитектурным обоснованием.
+   3 F821 в `dsl/templates_library.py` — реальный bug (forward-ref
+   на функции в module-level dict), починен переносом dict ниже
+   функций. 3 E741 (`l` ambiguous) → переименованы в `log`.
+   2 F401 / 1 F841 — точечные правки. `make lint-strict` clean.
 
-6. **W14.1 — миграция 119 actions через
-   `USE_ACTION_DISPATCHER_FOR_HTTP`** (Wave 14.1 sprint 2 расширение).
-   Phase D добавил feature flag, по умолчанию **OFF**. Для полного
-   включения Gateway-цепочки на каждый action нужно:
-   - объявить `transports / side_effect / idempotent / permissions /
-     rate_limit / timeout_ms` в `ActionSpec` (или отдельной декларации);
-   - прогнать contract-test «registered metadata = expected» по всем
-     119 action;
-   - включить флаг поэтапно (10-20 action за итерацию).
-   Эффорт: M (4-8ч). Связано с ADR-038 open questions.
+6. ~~**W14.1 — миграция 119 actions через
+   `USE_ACTION_DISPATCHER_FOR_HTTP`**~~ → **частично закрыто
+   2026-05-01 PM** (Wave 14.1 post-sprint-2 миграция). Реализовано:
+   - `ActionSpec` расширен 9 полями (`action_id`, `use_dispatcher`,
+     `transports`, `side_effect`, `idempotent`, `permissions`,
+     `rate_limit`, `timeout_ms`, `deprecated`, `since_version`).
+   - Адаптер `core/actions/spec_to_metadata.py` переносит расширения
+     в `ActionMetadata`; `side_effect`/`idempotent` выводятся из
+     HTTP-метода по REST-конвенции.
+   - Per-spec override `use_dispatcher` через
+     `_should_use_dispatcher(spec)`: spec.use_dispatcher=True
+     всегда через Gateway, False — всегда прямой путь, None —
+     env-flag. Глобальный env-flag остаётся default-OFF.
+   - `ActionSpec.action_id` решает обнаруженную проблему расхождения
+     namespace между HTTP-роутом (`name`) и handler в
+     `action_handler_registry` (исторически пересечение = 0).
+   - Contract-test `tests/unit/dsl/test_action_metadata_contract.py`
+     (20 тестов): инварианты metadata + REST-инференция.
+   - Пилотная группа 4 healthcheck-action (`tech.check_database`,
+     `tech.check_redis`, `tech.check_s3`, `tech.check_all_services`)
+     включены через Gateway.
+   - ADR-038 обновлён секцией «Дополнение: per-spec миграция».
+
+   **Открытым остаётся:** расширение пилота на 84 ActionSpec без
+   `action_id` — требует регистрации недостающих handler'ов в
+   `dsl/commands/setup.py` или унификации именования. Эффорт: M.
 
 7. **W14.1 — integration-тесты middleware по транспортам.**
    `AuditMiddleware`, `IdempotencyMiddleware`, `RateLimitMiddleware`

@@ -127,9 +127,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
             # каналами и task-life-cycle.
             if mode is InvocationMode.SYNC:
                 envelope = await _dispatch_sync_via_gateway(
-                    action=action,
-                    payload=payload,
-                    invocation_id=invocation_id,
+                    action=action, payload=payload, invocation_id=invocation_id
                 )
                 await websocket.send_json(
                     _envelope_to_payload(envelope, invocation_id, mode)
@@ -199,9 +197,7 @@ async def _dispatch_sync_via_gateway(
 
 
 def _envelope_to_payload(
-    envelope: ActionResult,
-    invocation_id: str,
-    mode: InvocationMode,
+    envelope: ActionResult, invocation_id: str, mode: InvocationMode
 ) -> dict[str, Any]:
     """Маппит :class:`ActionResult` → WS-сообщение в формате клиента.
 

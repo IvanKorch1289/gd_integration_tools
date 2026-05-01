@@ -34,14 +34,16 @@ except Exception:
 
 if route_filter:
     logs = [
-        l for l in logs if route_filter.lower() in str(l.get("route_id", "")).lower()
+        log
+        for log in logs
+        if route_filter.lower() in str(log.get("route_id", "")).lower()
     ]
 
 if corr_filter:
-    logs = [l for l in logs if corr_filter in str(l.get("correlation_id", ""))]
+    logs = [log for log in logs if corr_filter in str(log.get("correlation_id", ""))]
 
 if level_filter != "All":
-    logs = [l for l in logs if l.get("level", "").lower() == level_filter.lower()]
+    logs = [log for log in logs if log.get("level", "").lower() == level_filter.lower()]
 
 # ──────────── Отображение ────────────
 

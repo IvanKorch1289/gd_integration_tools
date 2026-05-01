@@ -187,6 +187,74 @@ def _scheduled_export(
     return builder.build()
 
 
+def _http_api_bridge(
+    source_url: str,
+    target_action: str,
+    method: str = "GET",
+    convert_from: str = "json",
+    convert_to: str = "json",
+    route_id: str = "bridge.http",
+) -> Pipeline:
+    """HTTP API bridge: fetch → convert → store."""
+    builder = RouteBuilder.from_(
+        route_id, source=f"http:{source_url}", description=f"HTTP bridge: {source_url}"
+    )
+    builder = builder.http_call(source_url, method=method, timeout=30.0)
+    if convert_from != convert_to:
+        builder = builder.convert(convert_from, convert_to)
+    return builder.normalize().dispatch_action(target_action).build()
+
+
+def _polling_sync(
+    source_action: str,
+    target_action: str,
+    interval_seconds: float = 300.0,
+    route_id: str = "sync.polling",
+    sort_field: str | None = None,
+) -> Pipeline:
+    """Polling sync: timer → poll → sort → sync с circuit breaker."""
+    builder = (
+        RouteBuilder.from_(
+            route_id,
+            source=f"timer:{interval_seconds}s",
+            description=f"Polling sync: {source_action}",
+        )
+        .timer(interval_seconds=interval_seconds)
+        .poll(source_action)
+    )
+    if sort_field:
+        builder = builder.sort(key_field=sort_field)
+    return (
+        builder.circuit_breaker(
+            processors=[DispatchActionProcessor(action=target_action)],
+            failure_threshold=3,
+        )
+        .on_completion(processors=[LogProcessor(level="info")])
+        .build()
+    )
+
+
+def _data_quality_pipeline(
+    source_action: str,
+    dq_rules: list | None = None,
+    on_violation_action: str = "notify.send",
+    route_id: str = "dq.check",
+) -> Pipeline:
+    """Data Quality pipeline: poll → DQ check → report/alert."""
+    return (
+        RouteBuilder.from_(
+            route_id, source="internal:dq", description="Data Quality pipeline"
+        )
+        .poll(source_action)
+        .dq_check(rules=dq_rules, fail_on_violation=False)
+        .on_completion(
+            processors=[DispatchActionProcessor(action=on_violation_action)],
+            on_failure_only=True,
+        )
+        .build()
+    )
+
+
 templates: dict[str, TemplateInfo] = {
     "etl.postgres_to_clickhouse": TemplateInfo(
         name="ETL PostgreSQL → ClickHouse",
@@ -296,74 +364,6 @@ templates: dict[str, TemplateInfo] = {
         builder=_data_quality_pipeline,
     ),
 }
-
-
-def _http_api_bridge(
-    source_url: str,
-    target_action: str,
-    method: str = "GET",
-    convert_from: str = "json",
-    convert_to: str = "json",
-    route_id: str = "bridge.http",
-) -> Pipeline:
-    """HTTP API bridge: fetch → convert → store."""
-    builder = RouteBuilder.from_(
-        route_id, source=f"http:{source_url}", description=f"HTTP bridge: {source_url}"
-    )
-    builder = builder.http_call(source_url, method=method, timeout=30.0)
-    if convert_from != convert_to:
-        builder = builder.convert(convert_from, convert_to)
-    return builder.normalize().dispatch_action(target_action).build()
-
-
-def _polling_sync(
-    source_action: str,
-    target_action: str,
-    interval_seconds: float = 300.0,
-    route_id: str = "sync.polling",
-    sort_field: str | None = None,
-) -> Pipeline:
-    """Polling sync: timer → poll → sort → sync с circuit breaker."""
-    builder = (
-        RouteBuilder.from_(
-            route_id,
-            source=f"timer:{interval_seconds}s",
-            description=f"Polling sync: {source_action}",
-        )
-        .timer(interval_seconds=interval_seconds)
-        .poll(source_action)
-    )
-    if sort_field:
-        builder = builder.sort(key_field=sort_field)
-    return (
-        builder.circuit_breaker(
-            processors=[DispatchActionProcessor(action=target_action)],
-            failure_threshold=3,
-        )
-        .on_completion(processors=[LogProcessor(level="info")])
-        .build()
-    )
-
-
-def _data_quality_pipeline(
-    source_action: str,
-    dq_rules: list | None = None,
-    on_violation_action: str = "notify.send",
-    route_id: str = "dq.check",
-) -> Pipeline:
-    """Data Quality pipeline: poll → DQ check → report/alert."""
-    return (
-        RouteBuilder.from_(
-            route_id, source="internal:dq", description="Data Quality pipeline"
-        )
-        .poll(source_action)
-        .dq_check(rules=dq_rules, fail_on_violation=False)
-        .on_completion(
-            processors=[DispatchActionProcessor(action=on_violation_action)],
-            on_failure_only=True,
-        )
-        .build()
-    )
 
 
 def list_templates() -> list[dict[str, Any]]:

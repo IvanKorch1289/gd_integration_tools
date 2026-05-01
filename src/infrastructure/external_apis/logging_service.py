@@ -15,7 +15,10 @@ from socket import gethostname
 from typing import Any
 
 from src.core.config.settings import LogStorageSettings, settings
-from src.infrastructure.clients.external.logger import GraylogHandler, get_graylog_handler
+from src.infrastructure.clients.external.logger import (
+    GraylogHandler,
+    get_graylog_handler,
+)
 
 __all__ = (
     "app_logger",

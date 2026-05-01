@@ -50,42 +50,31 @@ class ActionMetadataView(BaseModel):
     action: str = Field(..., description="Уникальное имя action.")
     description: str | None = Field(default=None, description="Описание.")
     input_model: str | None = Field(
-        default=None,
-        description="Полное имя Pydantic-модели payload (или None).",
+        default=None, description="Полное имя Pydantic-модели payload (или None)."
     )
     output_model: str | None = Field(
-        default=None,
-        description="Полное имя Pydantic-модели ответа (или None).",
+        default=None, description="Полное имя Pydantic-модели ответа (или None)."
     )
     transports: tuple[str, ...] = Field(
-        default=(),
-        description="Транспорты, через которые action доступен.",
+        default=(), description="Транспорты, через которые action доступен."
     )
     side_effect: str = Field(
-        default="none",
-        description='"none" | "read" | "write" | "external".',
+        default="none", description='"none" | "read" | "write" | "external".'
     )
     idempotent: bool = Field(default=False, description="Идемпотентен ли action.")
     permissions: tuple[str, ...] = Field(
-        default=(),
-        description="Требуемые RBAC/ABAC scopes.",
+        default=(), description="Требуемые RBAC/ABAC scopes."
     )
     rate_limit: int | None = Field(
-        default=None,
-        description="Лимит вызовов в секунду на арендатора.",
+        default=None, description="Лимит вызовов в секунду на арендатора."
     )
-    timeout_ms: int | None = Field(
-        default=None,
-        description="Таймаут выполнения, мс.",
-    )
+    timeout_ms: int | None = Field(default=None, description="Таймаут выполнения, мс.")
     deprecated: bool = Field(default=False, description="Помечен ли как устаревший.")
     since_version: str | None = Field(
-        default=None,
-        description="Версия API, в которой action появился.",
+        default=None, description="Версия API, в которой action появился."
     )
     error_types: tuple[str, ...] = Field(
-        default=(),
-        description="Известные коды ошибок.",
+        default=(), description="Известные коды ошибок."
     )
     tags: tuple[str, ...] = Field(default=(), description="Теги для группировки.")
 
@@ -106,13 +95,11 @@ class ActionInventoryResponse(BaseModel):
     """Каталог зарегистрированных actions."""
 
     actions: list[ActionMetadataView] = Field(
-        default_factory=list,
-        description="Метаданные всех зарегистрированных action.",
+        default_factory=list, description="Метаданные всех зарегистрированных action."
     )
     total: int = Field(..., description="Количество actions в выдаче.")
     transport: str | None = Field(
-        default=None,
-        description="Применённый фильтр транспорта (None — без фильтра).",
+        default=None, description="Применённый фильтр транспорта (None — без фильтра)."
     )
 
 
@@ -174,9 +161,7 @@ class _ActionInventoryFacade:
         metas = dispatcher.list_metadata(transport)
         views = [_metadata_to_view(m) for m in metas]
         return ActionInventoryResponse(
-            actions=views,
-            total=len(views),
-            transport=transport,
+            actions=views, total=len(views), transport=transport
         )
 
 
@@ -214,6 +199,6 @@ builder.add_actions(
             query_model=ActionInventoryQuery,
             response_model=ActionInventoryResponse,
             tags=("Actions Inventory",),
-        ),
+        )
     ]
 )
