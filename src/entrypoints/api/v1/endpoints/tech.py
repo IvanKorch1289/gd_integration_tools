@@ -123,6 +123,13 @@ builder.add_actions(
             summary="Проверить состояние базы данных",
             service_getter=get_tech_service,
             service_method="check_database",
+            # Wave 14.1 post-sprint-2: пилотная группа Gateway-миграции.
+            # ``action_id`` связывает HTTP-роут с handler в
+            # ``action_handler_registry`` (см. ``dsl/commands/setup.py``).
+            # ``use_dispatcher=True`` — всегда через middleware-цепочку
+            # (audit/idempotency/rate_limit).
+            action_id="tech.check_database",
+            use_dispatcher=True,
         ),
         ActionSpec(
             name="healthcheck_redis",
@@ -131,6 +138,8 @@ builder.add_actions(
             summary="Проверить состояние Redis",
             service_getter=get_tech_service,
             service_method="check_redis",
+            action_id="tech.check_redis",
+            use_dispatcher=True,
         ),
         ActionSpec(
             name="healthcheck_s3",
@@ -139,6 +148,8 @@ builder.add_actions(
             summary="Проверить состояние S3",
             service_getter=get_tech_service,
             service_method="check_s3",
+            action_id="tech.check_s3",
+            use_dispatcher=True,
         ),
         ActionSpec(
             name="healthcheck_s3_bucket",
@@ -179,6 +190,8 @@ builder.add_actions(
             summary="Проверить состояние всех сервисов",
             service_getter=get_tech_service,
             service_method="check_all_services",
+            action_id="tech.check_all_services",
+            use_dispatcher=True,
         ),
         ActionSpec(
             name="get_all_custom_tables",

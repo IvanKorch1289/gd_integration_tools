@@ -203,22 +203,99 @@ middleware-цепочку:
 
 ## Open questions / технический долг
 
-1. **Миграция всех 119 actions** через `USE_ACTION_DISPATCHER_FOR_HTTP`
-   с поэтапным включением (10–20 action за итерацию + контрактный
-   тест). Эффорт: M (4–8ч).
+1. ~~**Миграция всех 119 actions**~~ → **частично закрыто
+   2026-05-01 post-sprint-2** (см. ниже «Дополнение: per-spec миграция»).
+   Закрыты пункты 3 (per-action декларация Gateway-полей) и
+   стартовая инфраструктура для пункта 1 (per-spec включение
+   `use_dispatcher`). Открытым остаётся вопрос — расширение пилота
+   с 4 healthcheck-action на остальные 84 ActionSpec через
+   декларацию `action_id` + `use_dispatcher=True`.
 2. **Integration-тесты middleware** по транспортам (HTTP / WS /
    Scheduler) с реальным Redis-cache для `IdempotencyMiddleware` и
    `testcontainers[redis]`. Эффорт: M.
-3. **Per-action декларация Gateway-полей** (`side_effect`,
-   `permissions`, `rate_limit`, `timeout_ms`) — расширение `ActionSpec`
-   или отдельная декларация поверх. Без них `ActionMetadata` остаётся
-   с дефолтами `("http",) / "none" / 0 / None`.
+3. ~~**Per-action декларация Gateway-полей**~~ → **закрыто
+   2026-05-01** (см. «Дополнение»): `ActionSpec` расширен полями
+   `side_effect / idempotent / permissions / rate_limit / timeout_ms /
+   deprecated / since_version / transports`; адаптер
+   `action_spec_to_metadata` выводит `side_effect`/`idempotent` из
+   HTTP-метода по REST-конвенции. Контракт-тест
+   `tests/unit/dsl/test_action_metadata_contract.py` фиксирует
+   инварианты.
 4. **MCP auto-export** — отдельный endpoint / CLI, который
    читает `GET /api/v1/actions/inventory` и публикует tool-каталог во
    внешний MCP server. Часть W14.3.
 5. **Bypass-список для hot-path** — действия с очень коротким SLA
    (например, кэш-warmup), которые не должны проходить через цепочку
    middleware. Возможная стратегия: атрибут `ActionMetadata.skip_middleware`.
+
+## Дополнение: per-spec миграция (post-sprint-2, 2026-05-01)
+
+### Обнаружение проблемы пространств имён
+
+При попытке включения `USE_ACTION_DISPATCHER_FOR_HTTP=true` выявлено,
+что `ActionSpec.name` (имя HTTP-роута, например `healthcheck_database`)
+и имя handler в `ActionHandlerRegistry` (например `tech.check_database`)
+исторически принадлежат **разным пространствам имён**: пересечение
+по 119 actions было `0`. Без связи `_dispatch_via_gateway` всегда
+уходил на fallback (прямой `service.method(**)`), и Gateway-цепочка
+никогда не выполнялась.
+
+### Решение: явная связь через `ActionSpec.action_id`
+
+Добавлено опциональное поле `ActionSpec.action_id: str | None = None`.
+Если задано — это идентификатор handler'а в реестре; если `None` —
+fallback на `spec.name` (обратная совместимость).
+
+Адаптер `action_spec_to_metadata` использует `action_id or name` для
+`ActionMetadata.action`. `ActionRouterBuilder.add_action()` регистрирует
+metadata под этим же ключом. Таким образом, если разработчик задаёт
+`ActionSpec(action_id="tech.check_database", ...)`, то и handler (из
+`setup.register_action_handlers`), и metadata (из `add_action`) лежат
+в реестре под одним ключом, а Gateway-dispatch попадает на handler.
+
+### Per-spec включение Gateway
+
+Добавлено поле `ActionSpec.use_dispatcher: bool | None = None`.
+Precedence (см. `_should_use_dispatcher` в `actions.py`):
+
+| `spec.use_dispatcher` | env `USE_ACTION_DISPATCHER_FOR_HTTP` | Путь |
+|---|---|---|
+| `True` | (любое) | через Gateway (middleware + envelope) |
+| `False` | (любое) | прямой путь |
+| `None` (default) | `false` (default) | прямой путь |
+| `None` (default) | `true` | через Gateway |
+
+Это даёт безопасную поэтапную миграцию: разработчик помечает
+`use_dispatcher=True` пилотную группу, остальные остаются на прямом
+пути до своей очереди.
+
+### Пилотная группа (4 healthcheck-action)
+
+Включены через `action_id` + `use_dispatcher=True` в
+`src/entrypoints/api/v1/endpoints/tech.py`:
+
+* `healthcheck_database` → `tech.check_database`
+* `healthcheck_redis` → `tech.check_redis`
+* `healthcheck_s3` → `tech.check_s3`
+* `healthcheck_all_services` → `tech.check_all_services`
+
+Все четыре — GET, `side_effect="read"`, `idempotent=True`. Остальные
+4 healthcheck (`s3_bucket`, `graylog`, `smtp`, `rabbitmq`) пока
+не имеют handler в `setup.py` и не входят в пилот.
+
+### Дальнейшая миграция
+
+Расширение пилота — за счёт:
+
+1. регистрации недостающих handler'ов в `dsl/commands/setup.py`
+   (для оставшихся 84 ActionSpec без handler-привязки);
+2. постепенного добавления `action_id="<service>.<method>"` +
+   `use_dispatcher=True` группами по 10–20 actions;
+3. прогон `tests/unit/dsl/test_action_metadata_contract.py` после
+   каждой группы.
+
+Глобальный env-flag `USE_ACTION_DISPATCHER_FOR_HTTP` остаётся
+default-OFF до завершения миграции — сохраняет одношаговый rollback.
 
 ## Связанные ADR
 

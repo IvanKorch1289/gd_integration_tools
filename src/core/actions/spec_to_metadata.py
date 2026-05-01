@@ -1,4 +1,4 @@
-"""Адаптер ``ActionSpec`` → :class:`ActionMetadata` (Wave 14.1.B).
+"""Адаптер ``ActionSpec`` → :class:`ActionMetadata` (Wave 14.1.B + post-sprint-2).
 
 ``ActionSpec`` определён в ``src/entrypoints/api/generator/specs.py`` —
 прямой импорт из ``core/`` запрещён политикой слоёв
@@ -20,13 +20,22 @@
         ?? query_model        (если path_model отсутствует)
     ActionSpec.response_model → ActionMetadata.output_model
     ActionSpec.tags           → ActionMetadata.tags
-    transports                = ("http",)  по умолчанию для ActionSpec
 
-Поля Gateway, не выводимые из ``ActionSpec`` (``side_effect``,
-``idempotent``, ``permissions``, ``rate_limit``, ``timeout_ms``,
-``deprecated``, ``since_version``, ``error_types``) остаются
-дефолтными — их можно дополнять отдельной декларацией поверх
-``ActionSpec`` в последующих фазах W14.1.
+    Wave 14.1 post-sprint-2 расширение:
+    ActionSpec.transports     → ActionMetadata.transports (default ("http",))
+    ActionSpec.side_effect    → ActionMetadata.side_effect
+        (если None — выводится из HTTP method)
+    ActionSpec.idempotent     → ActionMetadata.idempotent
+        (если None — выводится из HTTP method)
+    ActionSpec.permissions    → ActionMetadata.permissions
+    ActionSpec.rate_limit     → ActionMetadata.rate_limit
+    ActionSpec.timeout_ms     → ActionMetadata.timeout_ms
+    ActionSpec.deprecated     → ActionMetadata.deprecated
+    ActionSpec.since_version  → ActionMetadata.since_version
+
+Поле ``ActionSpec.use_dispatcher`` относится к control-plane
+(per-action override env-флага) и в :class:`ActionMetadata` не
+переносится — оно читается отдельно ``actions.py``.
 """
 
 from __future__ import annotations
@@ -36,6 +45,14 @@ from typing import Any
 from src.core.interfaces.action_dispatcher import ActionMetadata
 
 __all__ = ("action_spec_to_metadata",)
+
+
+# REST-конвенция: GET — чтение, всё остальное — запись.
+_READ_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+# REST-конвенция: GET, PUT, DELETE, HEAD, OPTIONS — идемпотентны;
+# POST и PATCH — нет.
+_IDEMPOTENT_METHODS = frozenset({"GET", "PUT", "DELETE", "HEAD", "OPTIONS"})
 
 
 def _coerce_tuple(value: Any) -> tuple[str, ...]:
@@ -49,6 +66,26 @@ def _coerce_tuple(value: Any) -> tuple[str, ...]:
     return tuple(value)
 
 
+def _infer_side_effect(method: str | None) -> str:
+    """Вывести ``side_effect`` из HTTP-метода по REST-конвенции.
+
+    Если метод неизвестен или None — возвращается ``"none"`` (явная
+    декларация в ``ActionSpec.side_effect`` всегда переопределяет).
+    """
+    if method is None:
+        return "none"
+    if method.upper() in _READ_METHODS:
+        return "read"
+    return "write"
+
+
+def _infer_idempotent(method: str | None) -> bool:
+    """Вывести ``idempotent`` из HTTP-метода по REST-конвенции."""
+    if method is None:
+        return False
+    return method.upper() in _IDEMPOTENT_METHODS
+
+
 def action_spec_to_metadata(spec: Any) -> ActionMetadata:
     """Сконвертировать ``ActionSpec`` в :class:`ActionMetadata`.
 
@@ -58,15 +95,18 @@ def action_spec_to_metadata(spec: Any) -> ActionMetadata:
             как ``Any`` — см. docstring модуля о соблюдении слоёв.
 
     Returns:
-        :class:`ActionMetadata` с заполненными полями
-        ``action``, ``description``, ``input_model``,
-        ``output_model``, ``tags`` и ``transports=("http",)``.
+        :class:`ActionMetadata` с заполненными полями. Если в
+        ``spec.side_effect`` или ``spec.idempotent`` стоит ``None``,
+        значение выводится из ``spec.method`` по REST-конвенции.
 
     Raises:
         AttributeError: Если у ``spec`` нет поля ``name`` —
             это обязательный признак ``ActionSpec``.
     """
-    action_name: str = spec.name  # обязательное поле — пусть упадёт явно
+    # action_id (если задан) — приоритетнее name. Это позволяет HTTP-роуту
+    # с собственным OpenAPI-именем делегировать в handler, зарегистрированный
+    # под другим именем в action_handler_registry.
+    action_name: str = getattr(spec, "action_id", None) or spec.name
 
     # input_model: body_model > path_model > query_model.
     input_model = (
@@ -79,11 +119,39 @@ def action_spec_to_metadata(spec: Any) -> ActionMetadata:
     description = getattr(spec, "description", None) or ""
     tags = _coerce_tuple(getattr(spec, "tags", None))
 
+    # transports: явная декларация ИЛИ дефолт ``("http",)``.
+    transports_raw = getattr(spec, "transports", None)
+    transports = _coerce_tuple(transports_raw) if transports_raw else ("http",)
+
+    method = getattr(spec, "method", None)
+
+    # side_effect / idempotent: ``None`` → вывести из HTTP method.
+    side_effect = getattr(spec, "side_effect", None)
+    if side_effect is None:
+        side_effect = _infer_side_effect(method)
+
+    idempotent = getattr(spec, "idempotent", None)
+    if idempotent is None:
+        idempotent = _infer_idempotent(method)
+
+    permissions = _coerce_tuple(getattr(spec, "permissions", None))
+    rate_limit = getattr(spec, "rate_limit", None)
+    timeout_ms = getattr(spec, "timeout_ms", None)
+    deprecated = bool(getattr(spec, "deprecated", False))
+    since_version = getattr(spec, "since_version", None)
+
     return ActionMetadata(
         action=action_name,
         description=description,
         input_model=input_model,
         output_model=output_model,
-        transports=("http",),
+        transports=transports,
+        side_effect=side_effect,
+        idempotent=idempotent,
+        permissions=permissions,
+        rate_limit=rate_limit,
+        timeout_ms=timeout_ms,
+        deprecated=deprecated,
+        since_version=since_version,
         tags=tags,
     )

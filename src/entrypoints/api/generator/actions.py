@@ -62,7 +62,7 @@ _USE_DISPATCHER_ENV = "USE_ACTION_DISPATCHER_FOR_HTTP"
 
 
 def _http_dispatcher_enabled() -> bool:
-    """Проверяет feature flag ``USE_ACTION_DISPATCHER_FOR_HTTP``.
+    """Проверяет глобальный feature flag ``USE_ACTION_DISPATCHER_FOR_HTTP``.
 
     Чтение env'а на каждый запрос — допустимо: оверхед минимальный,
     зато можно горячо переключать без рестарта при отладке.
@@ -73,6 +73,30 @@ def _http_dispatcher_enabled() -> bool:
         "yes",
         "on",
     }
+
+
+def _should_use_dispatcher(spec: ActionSpec) -> bool:
+    """Решает, использовать ли Gateway-цепочку для конкретного action.
+
+    Wave 14.1 post-sprint-2 техдолг #6: per-action override
+    глобального env-флага через поле ``ActionSpec.use_dispatcher``.
+
+    Precedence:
+
+    * ``spec.use_dispatcher is True`` — всегда через Gateway;
+    * ``spec.use_dispatcher is False`` — всегда прямой путь
+      (даже если глобальный flag = ON);
+    * ``spec.use_dispatcher is None`` (дефолт) — следовать
+      env-флагу ``USE_ACTION_DISPATCHER_FOR_HTTP``.
+
+    Это даёт безопасную поэтапную миграцию: разработчик помечает
+    ``use_dispatcher=True`` пилотную группу actions, остальные
+    остаются на прямом пути до своей очереди.
+    """
+    override = getattr(spec, "use_dispatcher", None)
+    if override is not None:
+        return bool(override)
+    return _http_dispatcher_enabled()
 
 
 def _build_dispatcher_payload(call_kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -156,19 +180,15 @@ async def _dispatch_via_gateway(
         return await fallback()
 
     payload = _build_dispatcher_payload(direct_kwargs)
-    correlation_id = (
-        request.headers.get("x-correlation-id")
-        or request.headers.get("x-request-id")
+    correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
+        "x-request-id"
     )
     idempotency_key = request.headers.get("idempotency-key")
     context = make_dispatch_context(
         source="http",
         correlation_id=correlation_id,
         idempotency_key=idempotency_key,
-        attributes={
-            "method": request.method,
-            "path": request.url.path,
-        },
+        attributes={"method": request.method, "path": request.url.path},
     )
     envelope = await dispatcher.dispatch(action, payload, context)
     return _action_result_to_response(envelope)
@@ -211,9 +231,11 @@ class ActionRouterBuilder:
         # (исторически), либо может быть привязан позже — здесь мы
         # сохраняем только metadata (``handler=None``), чтобы не
         # перезаписать уже существующую привязку.
+        # Wave 14.1 post-sprint-2: ключ — ``action_id`` (если задан),
+        # иначе ``name`` (обратная совместимость).
         metadata = action_spec_to_metadata(spec)
         action_handler_registry.register_with_metadata(
-            action=spec.name, handler=None, metadata=metadata
+            action=metadata.action, handler=None, metadata=metadata
         )
 
     def add_actions(self, specs: Sequence[ActionSpec]) -> APIRouter:
@@ -309,20 +331,22 @@ class ActionRouterBuilder:
                     )
                     result = bus_result
                     is_delegated = True
-                elif _http_dispatcher_enabled():
-                    # Wave 14.1.D: feature-flag путь через
-                    # ActionGatewayDispatcher (middleware + envelope).
+                elif _should_use_dispatcher(spec):
+                    # Wave 14.1.D + post-sprint-2: per-spec override
+                    # глобального флага. ActionGatewayDispatcher
+                    # (middleware + envelope) либо прямой путь.
+                    # Имя action для dispatcher: action_id, иначе name.
                     result = await _dispatch_via_gateway(
-                        action=spec.name,
+                        action=spec.action_id or spec.name,
                         request=request,
                         direct_kwargs=direct_kwargs,
                         fallback=direct_call,
                     )
                 else:
                     result = await direct_call()
-            elif _http_dispatcher_enabled():
+            elif _should_use_dispatcher(spec):
                 result = await _dispatch_via_gateway(
-                    action=spec.name,
+                    action=spec.action_id or spec.name,
                     request=request,
                     direct_kwargs=direct_kwargs,
                     fallback=direct_call,

@@ -26,7 +26,18 @@ ResponseHandler = Callable[[Any, dict[str, Any]], Any | Awaitable[Any]]
 
 @dataclass(slots=True)
 class ActionSpec:
-    """Декларативное описание action-роута."""
+    """Декларативное описание action-роута.
+
+    Wave 14.1 (post-sprint-2 техдолг #6): расширение полями
+    Gateway-метаданных. ``ActionSpec`` остаётся декларативным
+    описанием HTTP-роута; адаптер ``core/actions/spec_to_metadata.py``
+    переносит расширения в :class:`ActionMetadata` для регистрации
+    в ``ActionGatewayDispatcher``. Поля ``use_dispatcher`` /
+    ``transports`` / ``side_effect`` / ``idempotent`` /
+    ``permissions`` / ``rate_limit`` / ``timeout_ms`` / ``deprecated`` /
+    ``since_version`` опциональны — у существующих 119 ActionSpec
+    значения остаются дефолтными до явной декларации.
+    """
 
     name: str
     method: HttpMethod
@@ -53,6 +64,32 @@ class ActionSpec:
     response_handler: ResponseHandler | None = None
     request_argument_name: str | None = None
     invocation: InvocationSpec | None = None
+
+    # Wave 14.1 Gateway-метаданные (опциональные расширения).
+    # ``action_id``: явная связь HTTP-роута с handler в
+    # ``action_handler_registry`` (например, HTTP-роут с
+    # ``name="healthcheck_database"`` делегирует в handler с
+    # ``action="tech.check_database"``). По умолчанию — ``None``,
+    # тогда используется ``spec.name`` (исторический случай, когда
+    # spec.name совпадает с именем handler'а).
+    action_id: str | None = None
+    # ``use_dispatcher``: per-action override env-флага
+    # ``USE_ACTION_DISPATCHER_FOR_HTTP``. ``True`` — всегда через Gateway
+    # (middleware: audit/idempotency/rate_limit), ``False`` — всегда
+    # прямой путь, ``None`` — следовать env-флагу (default OFF).
+    use_dispatcher: bool | None = None
+    transports: Sequence[str] = field(default_factory=lambda: ("http",))
+    # ``None`` — адаптер выведет ``side_effect`` из HTTP method
+    # (GET → "read"; POST/PUT/PATCH/DELETE → "write").
+    side_effect: str | None = None
+    # ``None`` — адаптер выведет ``idempotent`` из HTTP method
+    # (GET/PUT/DELETE — True; POST/PATCH — False по REST-конвенции).
+    idempotent: bool | None = None
+    permissions: Sequence[str] = field(default_factory=tuple)
+    rate_limit: int | None = None
+    timeout_ms: int | None = None
+    deprecated: bool = False
+    since_version: str | None = None
 
 
 @dataclass(slots=True)
