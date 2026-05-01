@@ -38,6 +38,10 @@ env/
 *.pid.lock
 /.run/
 
+# Wave F.5: LocalFS object storage runtime data
+/dev_storage/
+/var/storage/
+
 # Local DB / temp
 *.sqlite3
 *.db
