@@ -47,21 +47,62 @@ class InvokeProcessor(BaseProcessor):
         reply_channel: str | None = None,
         result_property: str = "invoke_result",
         invocation_id_property: str = "invocation_id",
+        timeout: float | None = None,
+        correlation_id: str | None = None,
         invoker: Invoker | None = None,
     ) -> None:
         super().__init__(name=f"invoke:{action}")
         self.action = action
-        self.mode: InvocationMode = (
-            mode if isinstance(mode, InvocationMode) else InvocationMode(mode)
-        )
+        self.mode = self._coerce_mode(mode, action=action)
         self.payload_factory = payload_factory
         self.reply_channel = reply_channel
         self.result_property = result_property
         self.invocation_id_property = invocation_id_property
+        self.timeout = self._coerce_timeout(timeout, action=action)
+        self.correlation_id = correlation_id
         # Invoker инжектится через DI; при отсутствии берём singleton — но
         # импорт singleton'а откладываем до runtime, чтобы избежать
         # циклических импортов при регистрации pipeline в reflection.
         self._invoker_override = invoker
+
+    @staticmethod
+    def _coerce_mode(
+        value: str | InvocationMode, *, action: str
+    ) -> InvocationMode:
+        """Pretty-валидация mode с перечнем допустимых значений (B1).
+
+        Голый ``InvocationMode(value)`` бросает Python-ValueError без
+        контекста. На уровне DSL/YAML это приводит к непрозрачному
+        сообщению — оборачиваем в типизированный ValueError с указанием
+        action и допустимого набора режимов.
+        """
+        if isinstance(value, InvocationMode):
+            return value
+        try:
+            return InvocationMode(value)
+        except ValueError as exc:
+            allowed = ", ".join(m.value for m in InvocationMode)
+            raise ValueError(
+                f"invoke[{action}]: невалидный mode={value!r}. "
+                f"Допустимые: {allowed}."
+            ) from exc
+
+    @staticmethod
+    def _coerce_timeout(value: float | int | str | None, *, action: str) -> float | None:
+        """Валидация timeout: положительное число или ``None``."""
+        if value is None:
+            return None
+        try:
+            timeout = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"invoke[{action}]: timeout={value!r} не является числом."
+            ) from exc
+        if timeout <= 0:
+            raise ValueError(
+                f"invoke[{action}]: timeout должен быть > 0, получено {timeout}."
+            )
+        return timeout
 
     def _resolve_invoker(self) -> Invoker:
         if self._invoker_override is not None:
@@ -84,6 +125,8 @@ class InvokeProcessor(BaseProcessor):
             payload=payload,
             mode=self.mode,
             reply_channel=self.reply_channel,
+            timeout=self.timeout,
+            correlation_id=self.correlation_id,
         )
         response = await self._resolve_invoker().invoke(request)
 
@@ -112,4 +155,8 @@ class InvokeProcessor(BaseProcessor):
             spec["result_property"] = self.result_property
         if self.invocation_id_property != "invocation_id":
             spec["invocation_id_property"] = self.invocation_id_property
+        if self.timeout is not None:
+            spec["timeout"] = self.timeout
+        if self.correlation_id is not None:
+            spec["correlation_id"] = self.correlation_id
         return {"invoke": spec}

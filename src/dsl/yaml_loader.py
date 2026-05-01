@@ -213,7 +213,7 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
 
     try:
         method(**params)
-    except TypeError as exc:
+    except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid params for '{proc_name}': {exc}") from exc
 
 

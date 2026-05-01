@@ -86,6 +86,48 @@ class TestInvokerSync:
         assert response.status is InvocationStatus.ERROR
         assert response.error == "boom"
 
+    async def test_sync_passes_dispatch_context_with_correlation_id(self) -> None:
+        """A1: Invoker формирует DispatchContext и передаёт его в dispatcher."""
+        dispatcher = _make_dispatcher(result={"ok": True})
+        invoker = Invoker(dispatcher=dispatcher)
+
+        await invoker.invoke(
+            InvocationRequest(
+                action="x.y",
+                mode=InvocationMode.SYNC,
+                correlation_id="corr-XYZ",
+            )
+        )
+
+        dispatcher.dispatch.assert_awaited_once()
+        _args, kwargs = dispatcher.dispatch.call_args
+        ctx = kwargs.get("context")
+        assert ctx is not None, "Invoker должен передавать context kwarg"
+        assert ctx.correlation_id == "corr-XYZ"
+        assert ctx.source == "invoker"
+        assert ctx.attributes.get("invocation_mode") == "sync"
+
+    async def test_sync_timeout_returns_error(self) -> None:
+        """B2: при превышении timeout в SYNC возвращается ERROR с понятным текстом."""
+
+        async def _slow(_command: Any) -> dict[str, Any]:
+            await asyncio.sleep(0.5)
+            return {"never": True}
+
+        dispatcher = MagicMock()
+        dispatcher.dispatch = AsyncMock(side_effect=_slow)
+        invoker = Invoker(dispatcher=dispatcher)
+
+        response = await invoker.invoke(
+            InvocationRequest(
+                action="slow.action", mode=InvocationMode.SYNC, timeout=0.05
+            )
+        )
+
+        assert response.status is InvocationStatus.ERROR
+        assert response.error is not None
+        assert "timeout" in response.error.lower()
+
 
 class TestInvokerAsyncApi:
     async def test_async_api_accepted_then_polling_returns_result(self) -> None:

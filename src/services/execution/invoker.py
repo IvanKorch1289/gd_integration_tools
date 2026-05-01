@@ -29,7 +29,7 @@ from typing import Any, AsyncIterator
 
 from src.core.di import app_state_singleton
 from src.core.di.dependencies import get_reply_registry_singleton
-from src.core.interfaces.action_dispatcher import ActionDispatcher
+from src.core.interfaces.action_dispatcher import ActionDispatcher, DispatchContext
 from src.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
@@ -76,6 +76,46 @@ class Invoker(InvokerProtocol):
         except RuntimeError:
             return None
 
+    async def _dispatch(
+        self, command: ActionCommandSchema, context: DispatchContext
+    ) -> Any:
+        """Прокси к dispatcher.dispatch с проброшенным DispatchContext.
+
+        Контекст пробрасывается keyword-аргументом, чтобы legacy-моки в
+        тестах (без kwarg ``context``) могли быть совместимы — для них
+        делается fallback на однопозиционный вызов.
+        """
+        try:
+            return await self._dispatcher.dispatch(command, context=context)
+        except TypeError:
+            # Legacy ActionDispatcher Protocol (без context-параметра) —
+            # вызываем без context, теряем middleware-цепочку только в
+            # этом узком сценарии (тесты/устаревшие реализации).
+            return await self._dispatcher.dispatch(command)
+
+    @staticmethod
+    def _build_context(request: InvocationRequest) -> DispatchContext:
+        """Строит :class:`DispatchContext` из :class:`InvocationRequest` (W22 F.2 A1).
+
+        Поля контекста:
+        * ``correlation_id`` берётся из request.correlation_id (если задан).
+        * ``source`` = ``"invoker"`` — обозначает, что вызов инициирован
+          через Invoker Gateway (а не напрямую транспортом).
+        * ``attributes`` дополнительно несут ``invocation_id`` и
+          ``invocation_mode`` для middleware (audit/idempotency).
+        """
+        attrs: dict[str, Any] = {
+            "invocation_id": request.invocation_id,
+            "invocation_mode": request.mode.value,
+        }
+        if request.metadata:
+            attrs["request_metadata"] = dict(request.metadata)
+        return DispatchContext(
+            correlation_id=request.correlation_id,
+            source="invoker",
+            attributes=attrs,
+        )
+
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:
         match request.mode:
             case InvocationMode.SYNC:
@@ -96,11 +136,31 @@ class Invoker(InvokerProtocol):
             command = ActionCommandSchema(
                 action=request.action, payload=request.payload
             )
-            result: Any = await self._dispatcher.dispatch(command)
+            context = self._build_context(request)
+            if request.timeout is not None:
+                result: Any = await asyncio.wait_for(
+                    self._dispatch(command, context), timeout=request.timeout
+                )
+            else:
+                result = await self._dispatch(command, context)
             return InvocationResponse(
                 invocation_id=request.invocation_id,
                 status=InvocationStatus.OK,
                 result=result,
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Invoker SYNC timeout: action=%s id=%s after %ss",
+                request.action,
+                request.invocation_id,
+                request.timeout,
+            )
+            return InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=f"SYNC timeout after {request.timeout}s",
                 mode=request.mode,
                 metadata=dict(request.metadata),
             )
@@ -378,7 +438,7 @@ class Invoker(InvokerProtocol):
             command = ActionCommandSchema(
                 action=request.action, payload=request.payload
             )
-            await self._dispatcher.dispatch(command)
+            await self._dispatch(command, self._build_context(request))
         except Exception:  # noqa: BLE001
             logger.exception(
                 "BACKGROUND task failed: action=%s id=%s",
@@ -389,13 +449,17 @@ class Invoker(InvokerProtocol):
     async def _run_and_stream(
         self, request: InvocationRequest, channel: InvocationReplyChannel
     ) -> None:
-        """Стримит yield'ы action'а в reply-канал по одному InvocationResponse."""
+        """Стримит yield'ы action'а в reply-канал по одному InvocationResponse (W22 F.2 A3).
+
+        Middleware-цепочка применяется через :meth:`_dispatch` — audit /
+        rate-limit видят STREAMING-вызов так же, как SYNC.
+        """
         meta = dict(request.metadata)
         try:
             command = ActionCommandSchema(
                 action=request.action, payload=request.payload
             )
-            result = await self._dispatcher.dispatch(command)
+            result = await self._dispatch(command, self._build_context(request))
         except KeyError as exc:
             await channel.send(
                 InvocationResponse(
@@ -474,6 +538,8 @@ def _serialize_request(request: InvocationRequest) -> dict[str, Any]:
         "invocation_id": request.invocation_id,
         "created_at": request.created_at.isoformat(),
         "metadata": dict(request.metadata),
+        "timeout": request.timeout,
+        "correlation_id": request.correlation_id,
     }
 
 
@@ -485,6 +551,8 @@ def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
     else:
         created_at = datetime.now(UTC)
     mode_raw = raw.get("mode") or InvocationMode.SYNC.value
+    timeout_raw = raw.get("timeout")
+    timeout = float(timeout_raw) if isinstance(timeout_raw, (int, float)) else None
     return InvocationRequest(
         action=str(raw["action"]),
         payload=dict(raw.get("payload") or {}),
@@ -493,6 +561,8 @@ def _deserialize_request(raw: dict[str, Any]) -> InvocationRequest:
         invocation_id=str(raw.get("invocation_id") or ""),
         created_at=created_at,
         metadata=dict(raw.get("metadata") or {}),
+        timeout=timeout,
+        correlation_id=raw.get("correlation_id"),
     )
 
 

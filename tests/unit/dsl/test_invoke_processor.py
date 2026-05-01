@@ -59,6 +59,34 @@ class TestInvokeProcessor:
         with pytest.raises(ValueError):
             InvokeProcessor(action="x", mode="not-a-real-mode")
 
+    def test_invalid_mode_message_lists_allowed_values(self) -> None:
+        """B1: pretty-message должен называть action и допустимые режимы."""
+        with pytest.raises(ValueError) as exc_info:
+            InvokeProcessor(action="orders.add", mode="bogus")
+        msg = str(exc_info.value)
+        assert "orders.add" in msg
+        assert "bogus" in msg
+        for expected in ("sync", "async-api", "async-queue", "background", "deferred", "streaming"):
+            assert expected in msg, f"missing {expected!r} in error: {msg}"
+
+    def test_timeout_passed_to_invocation_request(self) -> None:
+        """B2: timeout пробрасывается в InvocationRequest."""
+        proc = InvokeProcessor(action="x", timeout=5.0)
+        assert proc.timeout == 5.0
+
+    def test_timeout_invalid_raises(self) -> None:
+        with pytest.raises(ValueError):
+            InvokeProcessor(action="x", timeout=0)
+        with pytest.raises(ValueError):
+            InvokeProcessor(action="x", timeout=-1)
+        with pytest.raises(ValueError):
+            InvokeProcessor(action="x", timeout="not-a-number")  # type: ignore[arg-type]
+
+    def test_correlation_id_passed_to_invocation_request(self) -> None:
+        """B2: correlation_id сохраняется в процессоре."""
+        proc = InvokeProcessor(action="x", correlation_id="corr-123")
+        assert proc.correlation_id == "corr-123"
+
     async def test_sync_ok_writes_result(self) -> None:
         """SYNC + status=OK → result в body+property, invocation_id в property."""
         response = InvocationResponse(

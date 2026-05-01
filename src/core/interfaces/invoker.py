@@ -61,6 +61,14 @@ class InvocationRequest:
     """Унифицированный запрос на выполнение action.
 
     Создаётся транспортным адаптером (HTTP-router, gRPC-handler, ...).
+
+    ``timeout`` ограничивает время выполнения SYNC-режима через
+    ``asyncio.wait_for``; ``None`` означает "без таймаута на стороне Invoker"
+    (вышестоящие слои — middleware/gateway — могут установить свой).
+
+    ``correlation_id`` — клиентский идентификатор, прокидывается сквозь
+    middleware/трейсинг и сохраняется в reply-канале. Не путать с
+    ``invocation_id`` (внутренний uuid).
     """
 
     action: str
@@ -70,6 +78,8 @@ class InvocationRequest:
     invocation_id: str = field(default_factory=lambda: str(uuid4()))
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
+    timeout: float | None = None
+    correlation_id: str | None = None
 
 
 @dataclass(slots=True)

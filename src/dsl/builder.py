@@ -222,6 +222,8 @@ class RouteBuilder:
         reply_channel: str | None = None,
         result_property: str = "invoke_result",
         invocation_id_property: str = "invocation_id",
+        timeout: float | None = None,
+        correlation_id: str | None = None,
     ) -> "RouteBuilder":
         """Вызывает action через :class:`Invoker` (W22) с заданным режимом.
 
@@ -229,6 +231,9 @@ class RouteBuilder:
         (``sync``/``async-api``/``async-queue``/``deferred``/``background``/
         ``streaming``) и возвращает единый ``invocation_id`` для трассировки
         и polling-результата через ReplyChannel registry.
+
+        ``timeout`` ограничивает SYNC-исполнение через ``asyncio.wait_for``;
+        ``correlation_id`` — клиентский id для трассировки middleware/reply.
         """
         return self._add(
             InvokeProcessor(
@@ -238,6 +243,8 @@ class RouteBuilder:
                 reply_channel=reply_channel,
                 result_property=result_property,
                 invocation_id_property=invocation_id_property,
+                timeout=timeout,
+                correlation_id=correlation_id,
             )
         )
 

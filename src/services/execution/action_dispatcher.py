@@ -72,16 +72,34 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
 
         Поведение зависит от типа первого аргумента:
 
-        * :class:`ActionCommandSchema` — легаси-режим (W14.1):
-          вызывает реестр напрямую, возвращает «сырое» значение
-          (без middleware и без envelope).
+        * :class:`ActionCommandSchema` — легаси-сигнатура (W14.1).
+          При ``context is None`` вызывается реестр напрямую без
+          middleware (для тестов и узких legacy-callers).
+          При наличии ``context`` (W22 F.2 A1) применяется
+          middleware-цепочка, но наружу возвращается «сырое» значение
+          (legacy callers не работают с :class:`ActionResult`).
+          ``ActionResult`` маппится так: ``success=True`` → ``data``;
+          ``action_not_found`` → ``KeyError`` (контракт Invoker SYNC);
+          любая другая ошибка → ``RuntimeError(message)``.
         * ``str`` (имя action) — Gateway-режим (W14.1.A):
           применяет middleware-цепочку и возвращает
           :class:`ActionResult`.
         """
         if isinstance(command_or_action, ActionCommandSchema):
-            # Legacy: payload/context игнорируются, средние — нет.
-            return await self._registry.dispatch(command_or_action)
+            if context is None:
+                return await self._registry.dispatch(command_or_action)
+            result = await self._run_middleware_chain(
+                command_or_action.action,
+                command_or_action.payload,
+                context,
+                self._terminal_handler,
+            )
+            if result.success:
+                return result.data
+            if result.error and result.error.code == "action_not_found":
+                raise KeyError(command_or_action.action)
+            message = (result.error.message if result.error else "dispatch failed")
+            raise RuntimeError(message)
 
         # Gateway-режим.
         action = command_or_action
