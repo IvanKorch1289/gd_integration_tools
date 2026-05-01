@@ -12,7 +12,28 @@ from __future__ import annotations
 
 from src.core.svcs_registry import register_factory
 
-__all__ = ("register_all_services",)
+__all__ = ("register_all_services", "register_default_action_middlewares")
+
+
+def register_default_action_middlewares() -> None:
+    """Регистрирует встроенные middleware action-диспетчера (W14.1.C).
+
+    Порядок: ``audit`` → ``idempotency`` → ``rate_limit``.
+    Идемпотентность по факту повторного вызова: проверяем, что
+    middleware с тем же типом ещё не зарегистрирован, чтобы избежать
+    двойной регистрации при перезапуске lifespan в тестах.
+    """
+    from src.dsl.commands.action_registry import action_handler_registry
+    from src.services.execution.middlewares import (
+        AuditMiddleware,
+        IdempotencyMiddleware,
+        RateLimitMiddleware,
+    )
+
+    existing_types = {type(mw) for mw in action_handler_registry.list_middleware()}
+    for cls in (AuditMiddleware, IdempotencyMiddleware, RateLimitMiddleware):
+        if cls not in existing_types:
+            action_handler_registry.register_middleware(cls())
 
 
 def register_all_services() -> None:
@@ -53,3 +74,6 @@ def register_all_services() -> None:
     register_factory("rag", get_rag_service)
     register_factory("agent_memory", get_agent_memory_service)
     register_factory("webhook", get_webhook_scheduler)
+
+    # W14.1.C: встроенные middleware action-диспетчера.
+    register_default_action_middlewares()

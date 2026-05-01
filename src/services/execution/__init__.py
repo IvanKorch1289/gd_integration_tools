@@ -15,6 +15,11 @@ from src.services.execution.action_dispatcher import (
     get_action_dispatcher,
 )
 from src.services.execution.invoker import InvocationMode, Invoker, get_invoker
+from src.services.execution.middlewares import (
+    AuditMiddleware,
+    IdempotencyMiddleware,
+    RateLimitMiddleware,
+)
 
 __all__ = (
     "DefaultActionDispatcher",
@@ -22,4 +27,7 @@ __all__ = (
     "Invoker",
     "InvocationMode",
     "get_invoker",
+    "AuditMiddleware",
+    "IdempotencyMiddleware",
+    "RateLimitMiddleware",
 )
