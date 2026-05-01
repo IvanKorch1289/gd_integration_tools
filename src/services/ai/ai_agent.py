@@ -8,6 +8,7 @@
 import logging
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_ai_sanitizer_provider, get_http_client_provider
 from src.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
 
@@ -553,9 +554,7 @@ class AIAgentService:
         return str(result)
 
 
-_ai_agent_service_instance = AIAgentService()
-
-
+@app_state_singleton("ai_agent_service", factory=AIAgentService)
 def get_ai_agent_service() -> AIAgentService:
     """Фабрика AI-сервиса."""
-    return _ai_agent_service_instance
+    raise NotImplementedError  # заменяется декоратором

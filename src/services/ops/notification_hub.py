@@ -42,6 +42,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
 
 logger = logging.getLogger(__name__)
@@ -283,8 +285,6 @@ class NotificationHub:
         }
 
 
-_notification_hub_instance = NotificationHub()
-
-
+@app_state_singleton("notification_hub", factory=NotificationHub)
 def get_notification_hub() -> NotificationHub:
-    return _notification_hub_instance
+    raise NotImplementedError  # заменяется декоратором

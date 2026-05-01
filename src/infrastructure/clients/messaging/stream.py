@@ -357,4 +357,8 @@ def get_stream_client() -> StreamClient:
     return _stream_client
 
 
-stream_client = get_stream_client()
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``stream_client``."""
+    if name == "stream_client":
+        return get_stream_client()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

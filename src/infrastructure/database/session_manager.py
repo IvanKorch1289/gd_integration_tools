@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
-from functools import wraps
-from typing import AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
+from functools import lru_cache, wraps
+from typing import Any, AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.core.config.settings import settings
 from src.core.errors import DatabaseError, NotFoundError
-from src.infrastructure.database.database import db_initializer, external_db_registry
+from src.infrastructure.database.database import (
+    get_db_initializer,
+    get_external_db_registry,
+)
 from src.infrastructure.external_apis.logging_service import db_logger
 from src.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
 
@@ -14,6 +17,7 @@ __all__ = (
     "DatabaseSessionManager",
     "main_session_manager",
     "get_external_session_manager",
+    "get_main_session_manager",
 )
 
 
@@ -151,17 +155,27 @@ class DatabaseSessionManager:
         return decorator
 
 
-main_session_manager = DatabaseSessionManager(
-    session_maker=db_initializer.async_session_maker, db_name="main"
-)
+@lru_cache(maxsize=1)
+def get_main_session_manager() -> "DatabaseSessionManager":
+    """Lazy singleton ``DatabaseSessionManager`` для main-БД (Wave 6.1)."""
+    return DatabaseSessionManager(
+        session_maker=get_db_initializer().async_session_maker, db_name="main"
+    )
 
 
 def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
     """
     Возвращает session manager для внешней БД по profile_name.
     """
-    initializer = external_db_registry.get_initializer(profile_name)
+    initializer = get_external_db_registry().get_initializer(profile_name)
 
     return DatabaseSessionManager(
         session_maker=initializer.async_session_maker, db_name=profile_name
     )
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``main_session_manager``."""
+    if name == "main_session_manager":
+        return get_main_session_manager()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

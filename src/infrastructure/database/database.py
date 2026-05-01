@@ -1,5 +1,6 @@
 import ssl
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, TypeAlias
 
 from sqlalchemy import Engine, create_engine, text
@@ -25,6 +26,8 @@ __all__ = (
     "ExternalDatabaseRegistry",
     "db_initializer",
     "external_db_registry",
+    "get_db_initializer",
+    "get_external_db_registry",
 )
 
 
@@ -333,8 +336,22 @@ class ExternalDatabaseRegistry:
             await initializer.close()
 
 
-db_initializer = DatabaseInitializer(settings=settings.database, name="main")
+@lru_cache(maxsize=1)
+def get_db_initializer() -> "DatabaseInitializer":
+    """Lazy singleton ``DatabaseInitializer`` для main-БД (Wave 6.1)."""
+    return DatabaseInitializer(settings=settings.database, name="main")
 
-external_db_registry = ExternalDatabaseRegistry(
-    configs=settings.external_databases.profiles
-)
+
+@lru_cache(maxsize=1)
+def get_external_db_registry() -> "ExternalDatabaseRegistry":
+    """Lazy singleton реестра внешних БД (Wave 6.1)."""
+    return ExternalDatabaseRegistry(configs=settings.external_databases.profiles)
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat импортов (Wave 6.1)."""
+    if name == "db_initializer":
+        return get_db_initializer()
+    if name == "external_db_registry":
+        return get_external_db_registry()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

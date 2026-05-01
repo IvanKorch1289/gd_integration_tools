@@ -8,6 +8,7 @@ from typing import Any
 
 import orjson
 
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_redis_kv_client_provider
 
 __all__ = ("WebhookScheduler", "get_webhook_scheduler")
@@ -122,8 +123,6 @@ class WebhookScheduler:
             return result
 
 
-_webhook_scheduler_instance = WebhookScheduler()
-
-
+@app_state_singleton("webhook_scheduler", factory=WebhookScheduler)
 def get_webhook_scheduler() -> WebhookScheduler:
-    return _webhook_scheduler_instance
+    raise NotImplementedError  # заменяется декоратором

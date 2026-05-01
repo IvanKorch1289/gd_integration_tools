@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from asyncio import TimeoutError, sleep
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
@@ -9,7 +10,7 @@ from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 from src.core.config.settings import MailSettings, settings
 from src.core.utils.circuit_breaker import get_circuit_breaker
 
-__all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient")
+__all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient", "get_smtp_client")
 
 
 class BaseSmtpClient(ABC):
@@ -291,4 +292,18 @@ class SmtpClient(BaseSmtpClient):
             return False
 
 
-smtp_client = SmtpClient(settings=settings.mail)
+@lru_cache(maxsize=1)
+def get_smtp_client() -> SmtpClient:
+    """Lazy singleton ``SmtpClient`` (Wave 6.1).
+
+    ``__init__`` создаёт ``asyncio.Queue`` — отложено до первого
+    обращения, чтобы избежать привязки к event-loop'у времён импорта.
+    """
+    return SmtpClient(settings=settings.mail)
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``smtp_client``."""
+    if name == "smtp_client":
+        return get_smtp_client()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

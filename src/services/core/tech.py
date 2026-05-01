@@ -6,6 +6,7 @@ import polars as pl
 from fastapi.responses import HTMLResponse
 
 from src.core.config.settings import settings
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_healthcheck_session_provider
 from src.services.core.base import BaseService, get_service_for_model
 from src.utilities.converters import convert_numpy_types
@@ -107,8 +108,6 @@ class TechService:
         return results
 
 
-_tech_service_instance = TechService()
-
-
+@app_state_singleton("tech_service", factory=TechService)
 def get_tech_service() -> TechService:
-    return _tech_service_instance
+    raise NotImplementedError  # заменяется декоратором

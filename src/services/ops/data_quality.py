@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = ("DataQualityMonitor", "DQRule", "DQCheckResult", "get_dq_monitor")
 
 logger = logging.getLogger(__name__)
@@ -260,8 +262,6 @@ class DataQualityMonitor:
         return None
 
 
-_dq_monitor_instance = DataQualityMonitor()
-
-
+@app_state_singleton("dq_monitor", factory=DataQualityMonitor)
 def get_dq_monitor() -> DataQualityMonitor:
-    return _dq_monitor_instance
+    raise NotImplementedError  # заменяется декоратором

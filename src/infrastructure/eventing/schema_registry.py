@@ -12,9 +12,10 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any
 
-__all__ = ("SchemaRegistry", "SchemaRegistryError")
+__all__ = ("SchemaRegistry", "SchemaRegistryError", "get_schema_registry")
 
 logger = logging.getLogger("eventing.schema_registry")
 
@@ -81,5 +82,14 @@ class SchemaRegistry:
             )
 
 
-# Module-level singleton (опционально; обычно резолвится через svcs).
-registry = SchemaRegistry()
+@lru_cache(maxsize=1)
+def get_schema_registry() -> SchemaRegistry:
+    """Lazy singleton (Wave 6.1; обычно резолвится через svcs)."""
+    return SchemaRegistry()
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``registry``."""
+    if name == "registry":
+        return get_schema_registry()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -15,6 +15,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from logging import DEBUG
 from time import monotonic
 from typing import Any, BinaryIO, TypedDict
@@ -506,8 +507,7 @@ async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     yield client
 
 
-_http_client_dependency_instance = HttpClient()
-
-
+@lru_cache(maxsize=1)
 def get_http_client_dependency() -> HttpClient:
-    return _http_client_dependency_instance
+    """Lazy singleton глобального ``HttpClient`` (Wave 6.1)."""
+    return HttpClient()

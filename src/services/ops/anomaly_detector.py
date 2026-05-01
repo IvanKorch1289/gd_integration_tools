@@ -16,6 +16,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = ("AnomalyDetector", "Anomaly", "get_anomaly_detector")
 
 logger = logging.getLogger(__name__)
@@ -141,8 +143,6 @@ class AnomalyDetector:
         return list(self._series.keys())
 
 
-_anomaly_detector_instance = AnomalyDetector()
-
-
+@app_state_singleton("anomaly_detector", factory=AnomalyDetector)
 def get_anomaly_detector() -> AnomalyDetector:
-    return _anomaly_detector_instance
+    raise NotImplementedError  # заменяется декоратором

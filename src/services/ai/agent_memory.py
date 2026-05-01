@@ -23,6 +23,7 @@ import logging
 import time
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_mongo_client_provider
 from src.core.interfaces.ai_clients import MongoClientProtocol
 
@@ -206,8 +207,6 @@ class AgentMemoryService:
         return bool(await client.count(_MESSAGES, {"session_id": session_id}))
 
 
-_agent_memory_service_instance = AgentMemoryService()
-
-
+@app_state_singleton("agent_memory_service", factory=AgentMemoryService)
 def get_agent_memory_service() -> AgentMemoryService:
-    return _agent_memory_service_instance
+    raise NotImplementedError  # заменяется декоратором

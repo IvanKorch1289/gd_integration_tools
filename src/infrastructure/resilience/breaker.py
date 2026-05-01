@@ -17,7 +17,8 @@ API:
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncIterator, Final
+from functools import lru_cache
+from typing import Any, AsyncIterator, Final
 
 from purgatory import AsyncCircuitBreakerFactory
 from purgatory.domain.messages.base import Event
@@ -32,6 +33,7 @@ __all__ = (
     "BreakerSpec",
     "CircuitOpen",
     "breaker_registry",
+    "get_breaker_registry",
 )
 
 logger = logging.getLogger(__name__)
@@ -149,4 +151,14 @@ class BreakerRegistry:
             pass
 
 
-breaker_registry = BreakerRegistry()
+@lru_cache(maxsize=1)
+def get_breaker_registry() -> "BreakerRegistry":
+    """Lazy singleton глобального ``BreakerRegistry`` (Wave 6.1)."""
+    return BreakerRegistry()
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``breaker_registry``."""
+    if name == "breaker_registry":
+        return get_breaker_registry()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

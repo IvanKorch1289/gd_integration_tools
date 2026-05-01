@@ -17,7 +17,7 @@ from src.entrypoints.websocket.ws_invocations import ws_invocations_router
 from src.infrastructure.application.index import root_page
 from src.infrastructure.application.monitoring import setup_monitoring
 from src.infrastructure.application.telemetry import setup_tracing
-from src.infrastructure.clients.messaging.stream import stream_client
+from src.infrastructure.clients.messaging.stream import get_stream_client
 from src.plugins.composition.lifecycle import lifespan
 from src.utilities.admin_panel.setup_admin import setup_admin
 
@@ -112,6 +112,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     # Явные импорты subscriber-модулей: декораторы ``@router.subscriber(...)``
     # регистрируются при импорте, поэтому их нужно подгрузить ДО
     # ``app.include_router(redis_router/rabbit_router)``.
+    stream_client = get_stream_client()
     if (
         stream_client.redis_router is not None
         or stream_client.rabbit_router is not None

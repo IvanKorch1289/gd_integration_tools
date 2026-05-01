@@ -9,7 +9,7 @@ callbacks из ``core/decorators/limiting_callbacks`` и внешний паке
 from __future__ import annotations
 
 import logging
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request, Response, status
@@ -17,7 +17,13 @@ from fastapi import HTTPException, Request, Response, status
 from src.core.config.settings import settings
 from src.core.decorators.limiting_callbacks import default_callback, default_identifier
 
-__all__ = ("RouteLimiter", "default_callback", "default_identifier", "route_limiting")
+__all__ = (
+    "RouteLimiter",
+    "default_callback",
+    "default_identifier",
+    "route_limiting",
+    "get_route_limiting",
+)
 
 
 logger = logging.getLogger("services.decorators.limiting")
@@ -81,4 +87,14 @@ class RouteLimiter:
         return wrapper
 
 
-route_limiting = RouteLimiter()
+@lru_cache(maxsize=1)
+def get_route_limiting() -> "RouteLimiter":
+    """Lazy singleton ``RouteLimiter`` (Wave 6.1)."""
+    return RouteLimiter()
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``route_limiting``."""
+    if name == "route_limiting":
+        return get_route_limiting()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

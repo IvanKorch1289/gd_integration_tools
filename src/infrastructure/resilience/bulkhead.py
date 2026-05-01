@@ -16,9 +16,10 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncIterator
+from functools import lru_cache
+from typing import Any, AsyncIterator
 
-__all__ = ("Bulkhead", "BulkheadRegistry", "BulkheadExhausted")
+__all__ = ("Bulkhead", "BulkheadRegistry", "BulkheadExhausted", "get_bulkhead_registry")
 
 logger = logging.getLogger("resilience.bulkhead")
 
@@ -92,5 +93,14 @@ class BulkheadRegistry:
         return sorted(self._items.keys())
 
 
-# Module-level singleton.
-registry = BulkheadRegistry()
+@lru_cache(maxsize=1)
+def get_bulkhead_registry() -> BulkheadRegistry:
+    """Lazy singleton глобального ``BulkheadRegistry`` (Wave 6.1)."""
+    return BulkheadRegistry()
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``registry``."""
+    if name == "registry":
+        return get_bulkhead_registry()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

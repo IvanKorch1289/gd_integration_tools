@@ -25,10 +25,12 @@ except ImportError:  # botocore — опциональная зависимос�
             self.operation_name = kwargs.get("operation_name", "")
 
 
+from functools import lru_cache
+
 from src.core.config.settings import FileStorageSettings, settings
 from src.core.errors import ServiceError
 
-__all__ = ("S3Client", "s3_client")
+__all__ = ("S3Client", "s3_client", "get_s3_client")
 
 
 P = ParamSpec("P")
@@ -461,5 +463,19 @@ class S3Client(BaseS3Client):
                 raise ServiceError(f"Файл {key} не найден") from exc
 
 
-# Экземпляр клиента для работы с S3
-s3_client = S3Client(settings=settings.storage)
+@lru_cache(maxsize=1)
+def get_s3_client() -> S3Client:
+    """Lazy singleton ``S3Client`` (Wave 6.1).
+
+    aiobotocore — опциональная зависимость; ``S3Client.__init__`` лениво
+    обходит её отсутствие. Откладываем инициализацию до первого
+    обращения, чтобы не падать на import в dev_light окружении.
+    """
+    return S3Client(settings=settings.storage)
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``s3_client``."""
+    if name == "s3_client":
+        return get_s3_client()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

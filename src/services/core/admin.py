@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import HTTPException, Request
 
 from src.core.config.settings import settings
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import (
     get_admin_cache_storage_provider,
     get_slo_tracker_provider,
@@ -174,9 +175,7 @@ class AdminService:
         return get_slo_tracker_provider().get_report()
 
 
-_admin_service_instance = AdminService()
-
-
+@app_state_singleton("admin_service", factory=AdminService)
 def get_admin_service() -> AdminService:
     """
     Фабрика административного сервиса.
@@ -184,4 +183,4 @@ def get_admin_service() -> AdminService:
     Returns:
         AdminRouteService: Экземпляр сервиса admin-роутов.
     """
-    return _admin_service_instance
+    raise NotImplementedError  # заменяется декоратором

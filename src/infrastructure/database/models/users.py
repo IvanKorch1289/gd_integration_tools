@@ -12,6 +12,8 @@ Argon2id выбран как победитель Password Hashing Competition 2
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from argon2 import PasswordHasher
 from argon2 import exceptions as argon2_exceptions
 from pydantic import SecretStr
@@ -22,12 +24,19 @@ from src.infrastructure.database.models.base import BaseModel
 
 __all__ = ("User",)
 
-# OWASP-рекомендованные параметры для интерактивных сервисов:
-# time_cost=3, memory_cost=64 MiB, parallelism=4, hash_len=32.
-# Для более чувствительных кейсов (корпоративный SSO) — tune через settings.
-_password_hasher = PasswordHasher(
-    time_cost=3, memory_cost=64 * 1024, parallelism=4, hash_len=32, salt_len=16
-)
+
+@lru_cache(maxsize=1)
+def _get_password_hasher() -> PasswordHasher:
+    """Lazy singleton ``argon2.PasswordHasher`` (Wave 6.1).
+
+    OWASP-рекомендованные параметры для интерактивных сервисов:
+    ``time_cost=3, memory_cost=64 MiB, parallelism=4, hash_len=32``.
+    Для более чувствительных кейсов (корпоративный SSO) — tune через
+    settings.
+    """
+    return PasswordHasher(
+        time_cost=3, memory_cost=64 * 1024, parallelism=4, hash_len=32, salt_len=16
+    )
 
 
 class User(BaseModel):
@@ -47,15 +56,16 @@ class User(BaseModel):
         raw = (
             password.get_secret_value() if isinstance(password, SecretStr) else password
         )
-        self.password = _password_hasher.hash(raw)
+        self.password = _get_password_hasher().hash(raw)
 
     def verify_password(self, password: SecretStr | str) -> bool:
         """Проверяет пароль; ``True``, если совпадает с хранимым хешем."""
         raw = (
             password.get_secret_value() if isinstance(password, SecretStr) else password
         )
+        hasher = _get_password_hasher()
         try:
-            _password_hasher.verify(self.password, raw)
+            hasher.verify(self.password, raw)
         except (
             argon2_exceptions.VerifyMismatchError,
             argon2_exceptions.InvalidHashError,
@@ -63,6 +73,6 @@ class User(BaseModel):
             return False
         # Опционально: если параметры argon2 устарели (политика компании
         # усилена), пере-хешируем и запишем обратно — caller должен закоммитить.
-        if _password_hasher.check_needs_rehash(self.password):
-            self.password = _password_hasher.hash(raw)
+        if hasher.check_needs_rehash(self.password):
+            self.password = hasher.hash(raw)
         return True

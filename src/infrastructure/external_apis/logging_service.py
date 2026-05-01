@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from logging import (
     Filter,
     Formatter,
@@ -11,9 +12,10 @@ from logging import (
 )
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from socket import gethostname
+from typing import Any
 
 from src.core.config.settings import LogStorageSettings, settings
-from src.infrastructure.clients.external.logger import GraylogHandler, graylog_handler
+from src.infrastructure.clients.external.logger import GraylogHandler, get_graylog_handler
 
 __all__ = (
     "app_logger",
@@ -25,6 +27,9 @@ __all__ = (
     "tasks_logger",
     "redis_logger",
     "stream_logger",
+    "grpc_logger",
+    "log_manager",
+    "get_log_manager",
 )
 
 
@@ -212,23 +217,43 @@ class LoggerManager:
         self.graylog.close()
 
 
-# Инициализация системы логирования
-log_manager = LoggerManager(
-    log_config=settings.logging,
-    environment=settings.app.environment,
-    hostname=gethostname(),
-    handler=graylog_handler,
-    debug=settings.app.debug_mode,
-)
+@lru_cache(maxsize=1)
+def get_log_manager() -> LoggerManager:
+    """Lazy singleton ``LoggerManager`` (Wave 6.1).
 
-# Экспорт общих логгеров
-app_logger = log_manager.application_logger  # type: ignore
-db_logger = log_manager.database_logger  # type: ignore
-fs_logger = log_manager.storage_logger  # type: ignore
-smtp_logger = log_manager.smtp_logger  # type: ignore
-scheduler_logger = log_manager.scheduler_logger  # type: ignore
-request_logger = log_manager.request_logger  # type: ignore
-tasks_logger = log_manager.tasks_logger  # type: ignore
-redis_logger = log_manager.redis_logger  # type: ignore
-stream_logger = log_manager.stream_logger  # type: ignore
-grpc_logger = log_manager.grpc_logger  # type: ignore
+    Создание handler'ов и QueueListener откладывается до первого
+    обращения, чтобы избежать сетевого resolve и привязки к event-loop'у
+    в момент import.
+    """
+    return LoggerManager(
+        log_config=settings.logging,
+        environment=settings.app.environment,
+        hostname=gethostname(),
+        handler=get_graylog_handler(),
+        debug=settings.app.debug_mode,
+    )
+
+
+# Module-level lazy resolution: ``from logging_service import db_logger``
+# триггерит ``__getattr__`` → ``get_log_manager().database_logger``.
+_LOGGER_ATTR_MAP: dict[str, str] = {
+    "app_logger": "application_logger",
+    "db_logger": "database_logger",
+    "fs_logger": "storage_logger",
+    "smtp_logger": "smtp_logger",
+    "scheduler_logger": "scheduler_logger",
+    "request_logger": "request_logger",
+    "tasks_logger": "tasks_logger",
+    "redis_logger": "redis_logger",
+    "stream_logger": "stream_logger",
+    "grpc_logger": "grpc_logger",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для ``log_manager`` и всех ``*_logger``."""
+    if name == "log_manager":
+        return get_log_manager()
+    if name in _LOGGER_ATTR_MAP:
+        return getattr(get_log_manager(), _LOGGER_ATTR_MAP[name])
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

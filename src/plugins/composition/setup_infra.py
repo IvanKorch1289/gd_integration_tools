@@ -2,15 +2,18 @@ from asyncio import to_thread
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable
 
-from src.infrastructure.clients.external.logger import graylog_handler
-from src.infrastructure.clients.storage.redis import redis_client
-from src.infrastructure.clients.storage.s3_pool import s3_client
-from src.infrastructure.clients.transport.smtp import smtp_client
-from src.infrastructure.database.database import db_initializer, external_db_registry
+from src.infrastructure.clients.external.logger import get_graylog_handler
+from src.infrastructure.clients.storage.redis import get_redis_client
+from src.infrastructure.clients.storage.s3_pool import get_s3_client
+from src.infrastructure.clients.transport.smtp import get_smtp_client
+from src.infrastructure.database.database import (
+    get_db_initializer,
+    get_external_db_registry,
+)
 from src.infrastructure.decorators.caching import close_caches
 from src.infrastructure.decorators.limiting import init_limiter
-from src.infrastructure.external_apis.logging_service import app_logger
-from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+from src.infrastructure.external_apis.logging_service import get_log_manager
+from src.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 __all__ = ("starting", "ending")
 
@@ -49,6 +52,7 @@ async def _register_health_checks() -> None:
 
         start = time.monotonic()
         try:
+            redis_client = get_redis_client()
             raw = getattr(redis_client, "_raw_client", None) or redis_client
             await raw.ping()
             return {
@@ -66,7 +70,7 @@ async def _register_health_checks() -> None:
 
         start = time.monotonic()
         try:
-            async with db_initializer.get_async_engine().connect() as conn:
+            async with get_db_initializer().get_async_engine().connect() as conn:
                 await conn.execute(text("SELECT 1"))
             return {
                 "status": "ok",
@@ -81,7 +85,7 @@ async def _register_health_checks() -> None:
 
         start = time.monotonic()
         try:
-            is_ok = await s3_client.check_bucket_exists()
+            is_ok = await get_s3_client().check_bucket_exists()
             return {
                 "status": "ok" if is_ok else "degraded",
                 "latency_ms": round((time.monotonic() - start) * 1000, 2),
@@ -92,7 +96,9 @@ async def _register_health_checks() -> None:
     aggregator.register("redis", _redis_health)
     aggregator.register("database", _db_health)
     aggregator.register("s3", _s3_health)
-    app_logger.info("Health checks registered: redis, database, s3")
+    get_log_manager().application_logger.info(
+        "Health checks registered: redis, database, s3"
+    )
 
 
 def _redis_enabled() -> bool:
@@ -160,31 +166,41 @@ async def _taskiq_shutdown() -> None:
     await broker.shutdown()
 
 
+# Wave 6.1: операции обёрнуты в lambda — singletons резолвятся лениво,
+# при первом исполнении операции, а не на module-level import.
 starting_operations: list[OperationItem] = [
-    ("graylog_client", lambda: to_thread(graylog_handler.connect), None),
-    ("redis", redis_client.ensure_connected, _redis_enabled),
-    ("db_async_pool_main", db_initializer.initialize_async_pool, None),
-    ("db_async_pool_external", external_db_registry.initialize_all_pools, None),
-    ("s3_client", s3_client.connect, _s3_enabled),
-    ("smtp_pool", smtp_client.initialize_pool, None),
+    ("graylog_client", lambda: to_thread(get_graylog_handler().connect), None),
+    ("redis", lambda: get_redis_client().ensure_connected(), _redis_enabled),
+    ("db_async_pool_main", lambda: get_db_initializer().initialize_async_pool(), None),
+    (
+        "db_async_pool_external",
+        lambda: get_external_db_registry().initialize_all_pools(),
+        None,
+    ),
+    ("s3_client", lambda: get_s3_client().connect(), _s3_enabled),
+    ("smtp_pool", lambda: get_smtp_client().initialize_pool(), None),
     ("rate_limiter", init_limiter, _redis_enabled),
-    ("redis_streams", redis_client.create_initial_streams, _redis_enabled),
-    ("scheduler", scheduler_manager.start, None),
+    (
+        "redis_streams",
+        lambda: get_redis_client().create_initial_streams(),
+        _redis_enabled,
+    ),
+    ("scheduler", lambda: get_scheduler_manager().start(), None),
     ("taskiq_broker", _taskiq_startup, _taskiq_enabled),
     ("health_aggregator", _register_health_checks, None),  # ARCH-3
 ]
 
 ending_operations: list[OperationItem] = [
     ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
-    ("scheduler", scheduler_manager.stop, None),
+    ("scheduler", lambda: get_scheduler_manager().stop(), None),
     ("taskiq_broker", _taskiq_shutdown, _taskiq_enabled),
-    ("smtp_pool", smtp_client.close_pool, None),
-    ("s3_client", s3_client.close, _s3_enabled),
-    ("db_async_pool_external", external_db_registry.close_all, None),
-    ("db_async_pool_main", db_initializer.close, None),
-    ("graylog_client", lambda: to_thread(graylog_handler.close), None),
+    ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
+    ("s3_client", lambda: get_s3_client().close(), _s3_enabled),
+    ("db_async_pool_external", lambda: get_external_db_registry().close_all(), None),
+    ("db_async_pool_main", lambda: get_db_initializer().close(), None),
+    ("graylog_client", lambda: to_thread(get_graylog_handler().close), None),
     ("cache_backends", close_caches, None),
-    ("redis", redis_client.close, _redis_enabled),
+    ("redis", lambda: get_redis_client().close(), _redis_enabled),
 ]
 
 
@@ -200,6 +216,7 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
     - при первой критической ошибке выполнение прерывается;
     - подробности ошибки логируются в app_logger.
     """
+    app_logger = get_log_manager().application_logger
     for name, operation, enabled_check in components:
         if enabled_check is not None and not enabled_check():
             app_logger.info(

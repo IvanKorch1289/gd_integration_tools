@@ -15,6 +15,8 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = (
     "MessageReplayService",
     "ReplayMessage",
@@ -175,8 +177,6 @@ class MessageReplayService:
         }
 
 
-_replay_service_instance = MessageReplayService()
-
-
+@app_state_singleton("replay_service", factory=MessageReplayService)
 def get_replay_service() -> MessageReplayService:
-    return _replay_service_instance
+    raise NotImplementedError  # заменяется декоратором

@@ -21,6 +21,8 @@ import json
 import logging
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = (
     "CsvExporter",
     "ExcelExporter",
@@ -278,13 +280,11 @@ class ExportFacade:
         return _EXPORTERS["parquet"].export(rows)
 
 
-_export_facade = ExportFacade()
-
-
+@app_state_singleton("export_facade", factory=ExportFacade)
 def get_export_service() -> ExportFacade:
     """Возвращает async-facade над синхронными экспортёрами.
 
     Нужен для action-registry и scheduled-reports: callsite'ы вызывают
     ``await service.to_csv(rows)`` — facade даёт именно такой API.
     """
-    return _export_facade
+    raise NotImplementedError  # заменяется декоратором

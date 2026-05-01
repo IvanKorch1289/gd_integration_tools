@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
+from src.core.di.app_state import app_state_singleton
+
 __all__ = ("ScheduledReportsService", "ReportSchedule", "get_reports_service")
 
 logger = logging.getLogger(__name__)
@@ -198,8 +200,6 @@ class ScheduledReportsService:
         }
 
 
-_reports_service_instance = ScheduledReportsService()
-
-
+@app_state_singleton("reports_service", factory=ScheduledReportsService)
 def get_reports_service() -> ScheduledReportsService:
-    return _reports_service_instance
+    raise NotImplementedError  # заменяется декоратором

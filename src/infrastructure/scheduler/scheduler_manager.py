@@ -1,9 +1,12 @@
+from functools import lru_cache
+from typing import Any
+
 from src.core.config.constants import consts
 from src.core.config.settings import settings
 from src.infrastructure.external_apis.logging_service import scheduler_logger
 from src.infrastructure.scheduler.scheduled_tasks import check_all_services
 
-__all__ = ("scheduler_manager", "SchedulerManager")
+__all__ = ("scheduler_manager", "SchedulerManager", "get_scheduler_manager")
 
 
 class SchedulerManager:
@@ -123,19 +126,34 @@ class SchedulerManager:
                     )
 
 
-# Инициализация менеджера планировщика
-scheduler_manager = SchedulerManager()
-scheduler_manager.register_job_cleanup("resume_")
+@lru_cache(maxsize=1)
+def get_scheduler_manager() -> SchedulerManager:
+    """Lazy singleton ``SchedulerManager`` (Wave 6.1).
+
+    На первое обращение:
+    - регистрирует job-cleanup ``resume_*`` (см. ``register_job_cleanup``);
+    - добавляет canonical job ``check_all_services``.
+
+    Это переносит side-effects из module-level в первое обращение —
+    все DB/scheduler-инициализации делаются лениво.
+    """
+    manager = SchedulerManager()
+    manager.register_job_cleanup("resume_")
+    manager.scheduler.add_job(
+        func=check_all_services,
+        trigger="interval",
+        minutes=consts.CHECK_SERVICES_JOB["minutes"],
+        replace_existing=True,
+        id=consts.CHECK_SERVICES_JOB["name"],
+        name="Проверка состояния всех сервисов",
+        jobstore=settings.scheduler.default_jobstore_name,
+        executor="async",
+    )
+    return manager
 
 
-# Добавление задачи проверки сервисов в планировщик
-scheduler_manager.scheduler.add_job(
-    func=check_all_services,
-    trigger="interval",
-    minutes=consts.CHECK_SERVICES_JOB["minutes"],  # Проверка каждую минуту
-    replace_existing=True,
-    id=consts.CHECK_SERVICES_JOB["name"],
-    name="Проверка состояния всех сервисов",
-    jobstore=settings.scheduler.default_jobstore_name,
-    executor="async",
-)
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``scheduler_manager``."""
+    if name == "scheduler_manager":
+        return get_scheduler_manager()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_browser_client_provider
 from src.core.interfaces.integrations import BrowserClientProtocol
 
@@ -76,8 +77,6 @@ class WebAutomationService:
         return changes
 
 
-_web_automation_service_instance = WebAutomationService()
-
-
+@app_state_singleton("web_automation_service", factory=WebAutomationService)
 def get_web_automation_service() -> WebAutomationService:
-    return _web_automation_service_instance
+    raise NotImplementedError  # заменяется декоратором

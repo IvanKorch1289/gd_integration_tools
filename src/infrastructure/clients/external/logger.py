@@ -1,9 +1,11 @@
 import logging
+from functools import lru_cache
 from logging import Handler
+from typing import Any
 
 from src.core.config.settings import LogStorageSettings, settings
 
-__all__ = ("graylog_handler",)
+__all__ = ("graylog_handler", "GraylogHandler", "get_graylog_handler")
 
 _logger = logging.getLogger(__name__)
 
@@ -95,4 +97,19 @@ class GraylogHandler:
             ) from exc
 
 
-graylog_handler = GraylogHandler(config=settings.logging)
+@lru_cache(maxsize=1)
+def get_graylog_handler() -> GraylogHandler:
+    """Lazy singleton ``GraylogHandler`` (Wave 6.1).
+
+    Создание handler'а отложено до первого обращения, чтобы избежать
+    сетевого resolve в момент import (включая ``LogStorageSettings``
+    может тянуть DNS).
+    """
+    return GraylogHandler(config=settings.logging)
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``graylog_handler``."""
+    if name == "graylog_handler":
+        return get_graylog_handler()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

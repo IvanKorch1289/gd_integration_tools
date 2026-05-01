@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config.settings import settings
+from src.core.di.app_state import app_state_singleton
 from src.core.di.providers import get_external_session_manager_provider
 from src.core.enums.database import DatabaseTypeChoices
 from src.core.enums.external_db import (
@@ -19,7 +20,7 @@ from src.core.enums.external_db import (
 )
 from src.core.errors import DatabaseError
 
-__all__ = ("external_db_service", "ExternalDatabaseService")
+__all__ = ("external_db_service", "ExternalDatabaseService", "get_external_db_service")
 
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
@@ -478,4 +479,14 @@ class ExternalDatabaseService:
         return settings.external_databases.get_profile(profile_name)
 
 
-external_db_service = ExternalDatabaseService()
+@app_state_singleton("external_db_service", factory=ExternalDatabaseService)
+def get_external_db_service() -> ExternalDatabaseService:
+    """Lazy accessor singleton ``ExternalDatabaseService``."""
+    raise NotImplementedError  # заменяется декоратором
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``external_db_service``."""
+    if name == "external_db_service":
+        return get_external_db_service()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -1,5 +1,6 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
+from functools import lru_cache
 from typing import Any, Awaitable, Callable, Literal
 
 from redis.asyncio import Redis
@@ -14,7 +15,7 @@ from src.infrastructure.resilience.client_breaker import (
     ClientCircuitBreaker,
 )
 
-__all__ = ("redis_client", "RedisClient")
+__all__ = ("redis_client", "RedisClient", "get_redis_client")
 
 
 RedisKind = Literal["cache", "queue", "limits"]
@@ -425,4 +426,18 @@ class RedisClient:
         return await self.execute("queue", op)
 
 
-redis_client = RedisClient(settings=settings.redis)
+@lru_cache(maxsize=1)
+def get_redis_client() -> RedisClient:
+    """Lazy singleton ``RedisClient`` (Wave 6.1).
+
+    Создаёт ``asyncio.Lock``-и в ``__init__`` — отложено до первого
+    обращения, чтобы избежать привязки к event-loop'у времён импорта.
+    """
+    return RedisClient(settings=settings.redis)
+
+
+def __getattr__(name: str) -> Any:
+    """Module-level lazy accessor для backward compat ``redis_client``."""
+    if name == "redis_client":
+        return get_redis_client()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
