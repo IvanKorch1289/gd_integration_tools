@@ -581,3 +581,14 @@ readiness-check: ## Run all anti-forget guards locally
 	$(UV_RUN) python3 tools/check_deps_matrix.py
 	$(UV_RUN) python3 tools/check_fallback_matrix.py
 	@$(SUCCESS) "All guards passed!"
+
+# ---------------------------------------------------------------------- #
+# Wave F.7 — post-wave memory скелет (Roadmap V10 #13).                  #
+# Использование: make wave-memory NAME=<slug> [TYPE=feedback|project]    #
+# ---------------------------------------------------------------------- #
+wave-memory: ## Generate post-wave memory note skeleton (NAME=<slug> [TYPE=feedback])
+	@if [ -z "$(NAME)" ]; then \
+		printf '\033[31mERROR: NAME=<slug> обязателен. Пример: make wave-memory NAME=invoker_consolidation\033[0m\n'; \
+		exit 2; \
+	fi
+	$(UV_RUN) python3 tools/wave_memory.py --name "$(NAME)" --type "$(or $(TYPE),feedback)"
