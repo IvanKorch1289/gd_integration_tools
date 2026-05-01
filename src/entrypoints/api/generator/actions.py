@@ -7,7 +7,9 @@ from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 from pydantic import BaseModel
 
+from src.core.actions.spec_to_metadata import action_spec_to_metadata
 from src.core.enums.ordering import OrderingTypeChoices
+from src.dsl.commands.action_registry import action_handler_registry
 from src.entrypoints.api.generator.marshaller import (
     decorate_endpoint,
     extract_invocation_kwargs,
@@ -80,6 +82,17 @@ class ActionRouterBuilder:
             dependencies=list(spec.dependencies),
             responses=spec.responses,
             tags=list(spec.tags) or None,
+        )
+
+        # Wave 14.1.B: автоматически регистрируем расширенные
+        # метаданные action в ``action_handler_registry``. Сам handler
+        # привязывается отдельно через ``setup.register_action_handlers``
+        # (исторически), либо может быть привязан позже — здесь мы
+        # сохраняем только metadata (``handler=None``), чтобы не
+        # перезаписать уже существующую привязку.
+        metadata = action_spec_to_metadata(spec)
+        action_handler_registry.register_with_metadata(
+            action=spec.name, handler=None, metadata=metadata
         )
 
     def add_actions(self, specs: Sequence[ActionSpec]) -> APIRouter:
