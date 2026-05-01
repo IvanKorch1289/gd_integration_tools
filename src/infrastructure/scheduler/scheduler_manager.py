@@ -19,8 +19,12 @@ class SchedulerManager:
     def __init__(self):
         """
         Инициализирует планировщик с указанной конфигурацией.
-        Использует SQLAlchemyJobStore в качестве основного хранилища задач
-        и MemoryJobStore в качестве резервного.
+
+        Default jobstore — SQLAlchemyJobStore поверх sync_engine (durable).
+        Если sync_engine отсутствует (Wave F.3: sync-драйвер не установлен),
+        default-jobstore тоже становится MemoryJobStore — durable отсутствует,
+        warning в лог.
+
         Настраивает как асинхронные, так и пул-потоковые исполнители.
         """
         from apscheduler.jobstores.memory import MemoryJobStore
@@ -30,6 +34,21 @@ class SchedulerManager:
         from src.infrastructure.database.database import db_initializer
 
         self.logger = scheduler_logger
+
+        if db_initializer.sync_engine is None:
+            self.logger.warning(
+                "APScheduler: sync_engine отсутствует — default-jobstore "
+                "становится MemoryJobStore (durable отключен). "
+                "Установите sync-драйвер БД для durable-режима."
+            )
+            default_jobstore = MemoryJobStore()
+        else:
+            default_jobstore = SQLAlchemyJobStore(
+                url=settings.database.sync_connection_url,
+                engine=db_initializer.sync_engine,
+                engine_options={"pool_pre_ping": True, "pool_size": 10},
+            )
+
         self.scheduler = AsyncIOScheduler(
             timezone=settings.scheduler.timezone,
             coalesce=settings.scheduler.coalesce,
@@ -37,12 +56,8 @@ class SchedulerManager:
             misfire_grace_time=settings.scheduler.misfire_grace_time,
             logger=scheduler_logger,
             jobstores={
-                settings.scheduler.default_jobstore_name: SQLAlchemyJobStore(
-                    url=settings.database.sync_connection_url,
-                    engine=db_initializer.sync_engine,
-                    engine_options={"pool_pre_ping": True, "pool_size": 10},
-                ),
-                settings.scheduler.backup_jobstore_name: MemoryJobStore(),  # Резервное хранилище
+                settings.scheduler.default_jobstore_name: default_jobstore,
+                settings.scheduler.backup_jobstore_name: MemoryJobStore(),
             },
             executors=settings.scheduler.executors,
         )

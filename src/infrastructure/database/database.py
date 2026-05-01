@@ -41,22 +41,32 @@ class DatabaseBundle:
     """
     Контейнер инфраструктурных объектов одной БД.
 
+    Принцип проекта — async-first: все hot-path SQL-вызовы идут через
+    ``async_engine`` / ``async_session_maker``. Sync-варианты (Wave F.3
+    F.3) опциональны и поднимаются только если установлен sync-драйвер
+    (``psycopg``/``oracledb``/``pysqlite``); используются библиотеками,
+    которые ещё не поддерживают async (APScheduler SQLAlchemyJobStore).
+    При недоступности sync-драйвера соответствующие потребители
+    получают ``None`` и должны иметь fallback (memory jobstore и т.п.).
+
     Attributes:
         name (str): Логическое имя БД или profile_name.
         settings (DatabaseSettings): Настройки подключения.
-        async_engine (AsyncEngine): Асинхронный engine.
+        async_engine (AsyncEngine): Асинхронный engine (обязателен).
         async_session_maker (async_sessionmaker[AsyncSession]):
-            Фабрика асинхронных сессий.
-        sync_engine (Engine): Синхронный engine.
-        sync_session_maker (sessionmaker): Фабрика синхронных сессий.
+            Фабрика асинхронных сессий (обязательна).
+        sync_engine (Engine | None): Синхронный engine; ``None`` если
+            sync-драйвер не установлен.
+        sync_session_maker (sessionmaker | None): Фабрика синхронных
+            сессий; ``None`` если ``sync_engine is None``.
     """
 
     name: str
     settings: DatabaseSettings
     async_engine: AsyncEngine
     async_session_maker: async_sessionmaker[AsyncSession]
-    sync_engine: Engine
-    sync_session_maker: sessionmaker
+    sync_engine: Engine | None
+    sync_session_maker: sessionmaker | None
 
 
 class DatabaseInitializer:
@@ -78,10 +88,27 @@ class DatabaseInitializer:
             bind=self.async_engine, autoflush=False, expire_on_commit=False
         )
 
-        self.sync_engine = self._create_sync_engine()
-        self.sync_session_maker = sessionmaker(
-            bind=self.sync_engine, autoflush=False, expire_on_commit=False
-        )
+        # Wave F.3: async-first. Sync-engine опционален — если sync-драйвер
+        # (psycopg/oracledb/pysqlite) не установлен, не валим старт; вместо
+        # этого пишем warning и оставляем None. Потребители (APScheduler
+        # SQLAlchemyJobStore) обязаны иметь fallback.
+        self.sync_engine: Engine | None
+        self.sync_session_maker: sessionmaker | None
+        try:
+            self.sync_engine = self._create_sync_engine()
+            self.sync_session_maker = sessionmaker(
+                bind=self.sync_engine, autoflush=False, expire_on_commit=False
+            )
+        except ModuleNotFoundError as exc:
+            self.logger.warning(
+                "Sync-драйвер для БД '%s' недоступен (%s); sync_engine=None. "
+                "Async-путь продолжит работу; durable APScheduler jobstore "
+                "будет заменён на memory.",
+                self.name,
+                exc,
+            )
+            self.sync_engine = None
+            self.sync_session_maker = None
 
         self.db_listener = DatabaseListener(
             async_engine=self.async_engine,
@@ -196,16 +223,20 @@ class DatabaseInitializer:
         """
         return self.async_engine
 
-    def get_sync_engine(self) -> Engine:
-        """
-        Возвращает синхронный engine.
+    def get_sync_engine(self) -> Engine | None:
+        """Возвращает синхронный engine или ``None`` (Wave F.3 async-first).
+
+        Sync-engine может быть ``None``, если sync-драйвер не установлен;
+        вызывающие должны иметь fallback (например, memory jobstore).
         """
         return self.sync_engine
 
     async def dispose_sync(self) -> None:
         """
-        Закрывает синхронные соединения.
+        Закрывает синхронные соединения (no-op если sync_engine is None).
         """
+        if self.sync_engine is None:
+            return
         try:
             self.sync_engine.dispose()
             self.logger.info(
