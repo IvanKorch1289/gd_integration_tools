@@ -724,7 +724,9 @@ phases:
     owner: "claude"
     adr: [ADR-031]
     # P1 workflow engine: чанки 1.1-1.5 + IL-WF2 migration + IL-WF3
-    # deprecation markers. Физическое удаление prefect — в H3_PLUS.
+    # deprecation markers. Физическое удаление prefect завершено в Wave F.1
+    # (2026-05-01): удалены 5 IL-WF3 prefect-shim из DEPRECATIONS.md, prefect
+    # отсутствует в pyproject.toml/uv.lock, egg-info regenerate clean.
     depends_on: [IL1]
     started_at: "2026-04-22"
     finished_at: "2026-04-22"

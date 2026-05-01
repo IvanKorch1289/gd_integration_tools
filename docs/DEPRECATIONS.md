@@ -17,15 +17,16 @@
 | `app.infrastructure.clients.transport.http.HttpClient` (aiohttp) | `app.infrastructure.clients.transport.http_httpx.HttpxClient` | A4 / 2026-04-21 | 2026-07-01 (H3) | class/module |
 | `app.dsl.engine.processors.control_flow.RetryProcessor` (custom loop) | wraps `tenacity.AsyncRetrying` | A4 / 2026-04-21 | поведение совместимо — удаление не планируется | class |
 | `app.infrastructure.clients.transport.soap` (zeep) | `soap_async.AsyncSoapClient` | C11 / 2026-04-21 | 2026-07-01 (H3) | module |
-| `app.workflows.utils.managed_pause` (Prefect `suspend_flow_run`) | `WorkflowBuilder.wait(duration_s=N)` + DurableWorkflowRunner | IL-WF3 / 2026-04-22 | 2026-07-01 (H3_PLUS) | function |
-| `app.workflows.tasks` (Prefect `@task`) | `app.workflows.orders_dsl._call_*` processors | IL-WF3 / 2026-04-22 | 2026-07-01 (H3_PLUS) | module |
-| `app.workflows.order_flows` (Prefect `@flow`) | `app.workflows.orders_dsl.build_all_order_workflows()` | IL-WF3 / 2026-04-22 | 2026-07-01 (H3_PLUS) | module |
-| `app.workflows.task_factory.create_service_task` (Prefect auto-gen) | MCP auto-export via `app.entrypoints.mcp.workflow_tools.register_workflow_tools` | IL-WF3 / 2026-04-22 | 2026-07-01 (H3_PLUS) | function |
-| `prefect` (pyproject.toml dependency) | `app.infrastructure.workflow.*` + `app.workflows.orders_dsl` (DSL durable engine, ADR-031) | IL-WF3 / 2026-04-22 | 2026-07-01 (H3_PLUS) | dependency |
 
 ## Удалённые (для истории)
 
-_Пусто._
+| Путь/Имя | Заменён на | Введён (фаза/дата) | Удалено (фаза/дата) | Тип |
+|---|---|---|---|---|
+| `app.workflows.utils.managed_pause` (Prefect `suspend_flow_run`) | `WorkflowBuilder.wait(duration_s=N)` + DurableWorkflowRunner | IL-WF3 / 2026-04-22 | Wave F.1 / 2026-05-01 | function |
+| `app.workflows.tasks` (Prefect `@task`) | `app.workflows.orders_dsl._call_*` processors | IL-WF3 / 2026-04-22 | Wave F.1 / 2026-05-01 | module |
+| `app.workflows.order_flows` (Prefect `@flow`) | `app.workflows.orders_dsl.build_all_order_workflows()` | IL-WF3 / 2026-04-22 | Wave F.1 / 2026-05-01 | module |
+| `app.workflows.task_factory.create_service_task` (Prefect auto-gen) | MCP auto-export via `app.entrypoints.mcp.workflow_tools.register_workflow_tools` | IL-WF3 / 2026-04-22 | Wave F.1 / 2026-05-01 | function |
+| `prefect` (pyproject.toml dependency) | `app.infrastructure.workflow.*` + `app.workflows.orders_dsl` (DSL durable engine, ADR-031) | IL-WF3 / 2026-04-22 | Wave F.1 / 2026-05-01 | dependency |
 
 ---
 

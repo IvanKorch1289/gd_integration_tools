@@ -1,6 +1,6 @@
 """WebAutomationService — универсальный сервис для web automation.
 
-Доступен через все протоколы: REST API, Queue, Prefect, gRPC, MCP.
+Доступен через все протоколы: REST API, gRPC, GraphQL, SOAP, WebSocket, Queue, MCP.
 """
 
 from __future__ import annotations

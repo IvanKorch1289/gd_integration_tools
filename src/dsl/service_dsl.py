@@ -3,7 +3,7 @@
 @service_dsl автоматически создаёт:
 - ActionHandlerRegistry entries (→ REST/GraphQL/gRPC/SOAP/WS/SSE/MCP)
 - Queue consumers (RabbitMQ/Kafka)
-- Prefect tasks (через task_factory)
+- DSL durable-workflow tasks (через WorkflowBuilder, ADR-031)
 - DSL routes
 
 @register_action — метод-декоратор для точечной регистрации без правки setup.py.
@@ -102,7 +102,7 @@ def service_dsl(
     """Декоратор для декларативной регистрации сервиса.
 
     Пример:
-        @service_dsl(name="invoices", schema_in=InvoiceIn, protocols=["rest", "grpc", "prefect"])
+        @service_dsl(name="invoices", schema_in=InvoiceIn, protocols=["rest", "grpc", "soap"])
         class InvoiceService(BaseService):
             async def create(self, data): ...
             async def approve(self, invoice_id): ...

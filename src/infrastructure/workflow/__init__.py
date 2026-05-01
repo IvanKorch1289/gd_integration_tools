@@ -1,7 +1,7 @@
 """Durable workflow engine (event-sourcing поверх Postgres).
 
-Пакет содержит инфраструктуру для собственного durable-workflow движка,
-заменяющего Prefect:
+Пакет содержит инфраструктуру для собственного durable-workflow движка
+(см. ADR-031, заменил устаревший внешний workflow-движок):
 
 * :mod:`app.infrastructure.workflow.event_store` — append-only event API
   (:class:`WorkflowEventStore`, :class:`WorkflowEventRow`).

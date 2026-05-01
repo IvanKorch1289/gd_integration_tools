@@ -1,12 +1,11 @@
-"""DSL durable workflows (IL-WF2): эквиваленты Prefect flows из order_flows.py.
+"""DSL durable workflows: единственная реализация order-флоу проекта.
 
-Сосуществуют с Prefect-версиями до IL-WF3 (физическое удаление prefect из
-pyproject.toml). Переключение между ними — feature-flag
-``settings.tasks.use_dsl_workflows`` (default False до финальной валидации).
+Заменили устаревший внешний workflow-движок (см. ADR-031 и ``docs/DEPRECATIONS.md``);
+зависимость физически удалена из ``pyproject.toml`` в Wave F.1 / 2026-05-01.
 
-Отображение Prefect → DSL::
+Соответствие старых workflow-флоу и текущих DSL-workflow::
 
-    Prefect flow                          │ DSL workflow
+    Старый workflow flow                  │ DSL workflow
     ──────────────────────────────────────┼─────────────────────────────
     send_notification_workflow            │ notifications.send_email
     create_skb_order_workflow             │ orders.create_skb
@@ -14,7 +13,7 @@ pyproject.toml). Переключение между ними — feature-flag
     send_skb_order_result_workflow        │ orders.send_skb_result
     order_processing_workflow             │ orders.full_processing (композит)
 
-Основные отличия от Prefect-реализации::
+Архитектурные отличия от прежней реализации::
 
     * ``managed_pause(delay)`` → ``WorkflowBuilder.wait(duration_s=delay)``
       (state-sourced, перевыживает рестарт worker'а).
@@ -180,7 +179,7 @@ def create_skb_order_workflow_spec() -> DurableWorkflowProcessor:
 def poll_skb_result_workflow_spec() -> DurableWorkflowProcessor:
     """Эквивалент ``get_skb_order_result_workflow`` с durable poll-loop.
 
-    Логика Prefect-версии: ``for _ in range(MAX_RESULT_ATTEMPTS + 1):
+    Логика прежней реализации: ``for _ in range(MAX_RESULT_ATTEMPTS + 1):
     result = get_skb_result(); if not result: managed_pause(RETRY_DELAY);
     else: break``.
 
@@ -249,7 +248,7 @@ def order_processing_workflow_spec() -> DurableWorkflowProcessor:
     Использует ``.sub_workflow(..., wait=True)`` — parent pause до
     child completion.
 
-    Преимущества над Prefect-версией:
+    Преимущества над прежней реализацией:
       * durable-pause (INITIAL_DELAY 60min) переживает рестарт worker'а.
       * poll-loop персистится — видно сколько попыток было.
       * compensate chain — при failure parent-а автоматически откатывает

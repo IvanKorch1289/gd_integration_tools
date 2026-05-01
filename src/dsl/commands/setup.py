@@ -450,7 +450,7 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Web Automation (multi-protocol: API, queue, Prefect, gRPC, MCP) ──
+    # ── Web Automation (multi-protocol: REST, gRPC, GraphQL, SOAP, queue, MCP) ──
     from src.services.io.web_automation import get_web_automation_service
 
     action_handler_registry.register_many(

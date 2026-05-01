@@ -10,9 +10,9 @@ infrastructure/application/ согласно Clean Architecture — composition 
 Все singletons инициализируются в ``register_app_state`` при старте
 приложения и доступны через ``Depends(get_xxx)`` в FastAPI-эндпоинтах.
 
-Для non-FastAPI контекстов (Prefect, scripts, DSL engine) каждый модуль
-использует ``app_state_singleton`` — декоратор-фабрику, устраняющий
-дублирование ``get_xxx()`` функций.
+Для non-FastAPI контекстов (CLI scripts, DSL engine, durable workflow runner)
+каждый модуль использует ``app_state_singleton`` — декоратор-фабрику,
+устраняющий дублирование ``get_xxx()`` функций.
 """
 
 from __future__ import annotations
