@@ -313,6 +313,12 @@ routes: check-env ## List DSL routes
 actions: check-env ## List registered actions
 	@APP_PROFILE=dev_light $(MANAGE_LIGHT) actions
 
+grpc-codegen: check-env ## Wave 1.3: generate .proto + compile pb2/pb2_grpc for gRPC actions
+	@APP_PROFILE=dev_light $(UV_RUN) --extra dev-light python tools/codegen_proto.py --clean
+
+grpc-codegen-dry: check-env ## Wave 1.3: dry-run — print plan only
+	@APP_PROFILE=dev_light $(UV_RUN) --extra dev-light python tools/codegen_proto.py --dry-run
+
 ##@ Profiling
 
 profile-memray: check-env ## Run FastAPI under Memray

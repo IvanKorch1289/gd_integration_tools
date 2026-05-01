@@ -467,12 +467,17 @@ class ActionRouterBuilder:
         # ``core/actions/spec_to_metadata.py``.
         side_effect = "read" if method.upper() == "GET" else "write"
         idempotent = method.upper() in {"GET", "PUT", "DELETE", "HEAD", "OPTIONS"}
+        # Wave 1.3 / 1.4 (Roadmap V10): Tier 1 CRUD-actions автоматически
+        # появляются во всех 6+ протоколах. Здесь декларируем поддержку
+        # ``http`` / ``grpc`` / ``graphql`` — тройка покрывается авто-кодогеном
+        # и runtime-схемой. SOAP / MCP / MQTT подключаются на Wave 1.5
+        # через generic-обёртки.
         metadata = ActionMetadata(
             action=action_id,
             description=description,
             input_model=input_model,
             output_model=output_model,
-            transports=("http",),
+            transports=("http", "grpc", "graphql"),
             side_effect=side_effect,
             idempotent=idempotent,
             tags=tuple(spec.tags),

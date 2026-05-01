@@ -113,6 +113,11 @@ def _configure_business_routers(app: FastAPI) -> None:
     # повторный вызов не добавит дубликаты.
     _configure_auto_registered_actions(app)
 
+    # Wave 1.4 (Roadmap V10): GraphQL auto-schema на ``/api/v1/graphql``.
+    # Сосуществует с hand-written ``graphql_router`` на ``/graphql``,
+    # покрывает Tier 1/2 actions, у которых ``"graphql"`` в transports.
+    _configure_auto_graphql_schema(app)
+
     # Интеграция с системами потоковой обработки. На dev_light профиле
     # ``redis.enabled=false`` / ``queue.enabled=false`` делают
     # соответствующий FastStream router None — пропускаем.
@@ -204,6 +209,28 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
         logging.getLogger("app_factory").info(
             "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers",
             added,
+        )
+
+
+def _configure_auto_graphql_schema(app: FastAPI) -> None:
+    """Подключить Strawberry auto-schema на ``/api/v1/graphql``.
+
+    Wave 1.4 (Roadmap V10): динамически собираем Query/Mutation из
+    ``ActionMetadata`` (transports содержит ``"graphql"``). Не ломает
+    существующий ``graphql_router`` (``/graphql`` остаётся живым).
+    Любые ошибки сборки логгируются и не блокируют старт приложения.
+    """
+    import logging
+
+    try:
+        from src.entrypoints.graphql.auto_schema import (
+            auto_register_strawberry_schema,
+        )
+
+        auto_register_strawberry_schema(app, path="/api/v1/graphql")
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger("app_factory").warning(
+            "Wave 1.4 auto-schema пропущена: %s", exc
         )
 
 

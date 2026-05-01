@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package orderkinds.auto;
+
+import "google/protobuf/any.proto";
+
+// Схема для входящих данных вида запроса.
+message OrderKindSchemaIn {
+  optional string name = 1;
+  optional string description = 2;
+  optional string skb_uuid = 3;
+}
+
+// Схема для исходящих данных вида запроса.
+message OrderKindSchemaOut {
+  optional string name = 1;
+  optional string description = 2;
+  optional string skb_uuid = 3;
+  int64 id = 4;
+  google.protobuf.Any created_at = 5;  // unsupported <class 'datetime.datetime'>
+  google.protobuf.Any updated_at = 6;  // unsupported <class 'datetime.datetime'>
+}
+
+// Пустое response (action без response_model).
+message EmptyResponse {
+}
+
+// Пустое request (action без request_model).
+message EmptyRequest {
+}
+
+// Авто-сгенерированный сервис для домена 'orderkinds' (Wave 1.3 Roadmap V10).
+service OrderkindsAutoService {
+  // Создаёт новый объект ресурса 'orderkinds'.
+  rpc Create(OrderKindSchemaIn) returns (OrderKindSchemaOut);
+  // Создаёт несколько объектов ресурса 'orderkinds'.
+  rpc CreateMany(OrderKindSchemaIn) returns (EmptyResponse);
+  // Возвращает объект ресурса 'orderkinds' по идентификатору.
+  rpc Get(EmptyRequest) returns (OrderKindSchemaOut);
+  // Возвращает список объектов ресурса 'orderkinds'.
+  rpc List(EmptyRequest) returns (OrderKindSchemaOut);
+  // Обновляет объект ресурса 'orderkinds'.
+  rpc Update(OrderKindSchemaIn) returns (OrderKindSchemaOut);
+}
