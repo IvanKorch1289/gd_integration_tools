@@ -19,18 +19,16 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-__all__ = (
-    "MongoFindCallable",
-    "build_mongo_fallbacks",
-    "build_mongo_primary",
-)
+__all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 
 logger = logging.getLogger(__name__)
 
 MongoFindCallable = Callable[[str, dict[str, Any]], Awaitable[dict[str, Any] | None]]
 
 
-async def _mongo_find_one(collection: str, query: dict[str, Any]) -> dict[str, Any] | None:
+async def _mongo_find_one(
+    collection: str, query: dict[str, Any]
+) -> dict[str, Any] | None:
     from src.infrastructure.clients.storage.mongodb import get_mongo_client
 
     client = get_mongo_client()

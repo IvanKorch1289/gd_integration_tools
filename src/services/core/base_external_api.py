@@ -49,11 +49,15 @@ class BaseExternalAPIClient:
     _auth_scheme: str = "Bearer"
 
     def __init__(self, *, settings: Any, name: str | None = None) -> None:
-        from src.infrastructure.clients.transport.http import get_http_client_dependency
+        # Wave 6 finalize: HTTP-клиент резолвится через DI-провайдер
+        # (см. ``core.di.providers.get_http_client_provider``) — это
+        # снимает прямой импорт ``infrastructure.clients.transport.http``
+        # из services-слоя.
+        from src.core.di.providers import get_http_client_provider
 
         self.settings = settings
         self._name = name or self.__class__.__name__
-        self.client = get_http_client_dependency()
+        self.client = get_http_client_provider()
         self.base_url = (
             getattr(settings, "prod_url", None)
             or getattr(settings, "base_url", None)

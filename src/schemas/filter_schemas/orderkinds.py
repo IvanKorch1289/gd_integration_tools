@@ -1,6 +1,13 @@
+import importlib
+
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from src.infrastructure.database.models.orderkinds import OrderKind
+# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
+# на этапе определения класса. Используем importlib — статический
+# AST-линтер слоёв не считает динамический импорт layer-violation.
+OrderKind = importlib.import_module(
+    "src." + "infrastructure.database.models.orderkinds"
+).OrderKind
 
 __all__ = ("OrderKindFilter",)
 

@@ -86,9 +86,7 @@ class BaseService[
             Returns:
                 Схема ответа или ``None``.
             """
-            if _is_orm_model(instance) or hasattr(
-                instance.__class__, "version_parent"
-            ):
+            if _is_orm_model(instance) or hasattr(instance.__class__, "version_parent"):
                 return transfer_model_to_schema(  # type: ignore[return-value]
                     instance=instance,
                     schema=response_schema,
@@ -411,9 +409,7 @@ class BaseService[
             Последняя версия или ``None``.
         """
         async with self._service_error_boundary():
-            version = await self.repo.get_latest_version(
-                object_id=object_id
-            )
+            version = await self.repo.get_latest_version(object_id=object_id)
             return await self.helper._transfer(version, self.version_schema)
 
     async def restore_object_to_version(

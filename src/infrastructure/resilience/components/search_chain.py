@@ -17,11 +17,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
-__all__ = (
-    "SearchCallable",
-    "build_search_fallbacks",
-    "build_search_primary",
-)
+__all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +33,7 @@ async def _es_search(
 
     client = get_elasticsearch_client()
     response = await client.search(
-        index=index,
-        query={"match": {"_all": query}},
-        size=limit,
+        index=index, query={"match": {"_all": query}}, size=limit
     )
     return [hit["_source"] for hit in response["hits"]["hits"]]
 

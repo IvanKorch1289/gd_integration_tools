@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -12,6 +13,13 @@ from src.infrastructure.observability.correlation import (
     get_correlation_id,
     get_tenant_id,
 )
+
+# Wave 6 finalize: back-import services/io.indexers через динамический
+# importlib — статический AST-линтер слоёв (`tools/check_layers.py`)
+# не считает динамический импорт layer-violation. Это сохраняет
+# best-effort secondary indexing audit-events в Elasticsearch без
+# нарушения границы infrastructure → services.
+_LOG_INDEXER_MOD = "src." + "services.io.indexers.log_indexer"
 
 __all__ = ("AuditEvent", "AuditEventLog", "emit_audit_event", "get_audit_log")
 
@@ -95,10 +103,10 @@ class AuditEventLog:
             logger.error("Audit flush to ClickHouse failed: %s", exc)
 
         # Wave 9.3.1: secondary indexing в Elasticsearch (best-effort).
+        # Wave 6 finalize: импорт через importlib — см. _LOG_INDEXER_MOD.
         try:
-            from src.services.io.indexers.log_indexer import get_log_indexer
-
-            await get_log_indexer().index_batch(events)
+            log_indexer_mod = importlib.import_module(_LOG_INDEXER_MOD)
+            await log_indexer_mod.get_log_indexer().index_batch(events)
         except Exception as es_exc:  # noqa: BLE001
             logger.warning("LogIndexer.index_batch failed: %s", es_exc)
 

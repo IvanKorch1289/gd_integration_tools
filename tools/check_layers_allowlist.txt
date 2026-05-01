@@ -1,12 +1,10 @@
 # Allowlist архитектурных нарушений (Wave 1.3 baseline).
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
-src/infrastructure/audit/event_log.py	infrastructure	src.services.io.indexers.log_indexer
-src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
-src/schemas/filter_schemas/files.py	schemas	src.infrastructure.database.models.files
-src/schemas/filter_schemas/orderkinds.py	schemas	src.infrastructure.database.models.orderkinds
-src/schemas/filter_schemas/orders.py	schemas	src.infrastructure.database.models.orders
-src/schemas/filter_schemas/users.py	schemas	src.infrastructure.database.models.users
-src/schemas/workflow.py	schemas	src.infrastructure.database.models.workflow_event
-src/schemas/workflow.py	schemas	src.infrastructure.database.models.workflow_instance
-src/services/core/base_external_api.py	services	src.infrastructure.clients.transport.http
+#
+# Wave 6 finalize (2026-05-01): allowlist пуст — 135 → 0 за 7 фаз.
+# Все ранее зафиксированные layer-violations устранены через паттерн
+# lazy-провайдеров (`importlib.import_module`) и DI-фабрик в
+# `core/di/providers.py`. Любое НОВОЕ нарушение, попадающее сюда,
+# должно быть либо немедленно исправлено, либо явно объяснено
+# комментарием рядом с записью.

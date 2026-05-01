@@ -17,18 +17,18 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
-__all__ = (
-    "DBQueryCallable",
-    "build_database_fallbacks",
-    "build_database_primary",
-)
+__all__ = ("DBQueryCallable", "build_database_fallbacks", "build_database_primary")
 
 logger = logging.getLogger(__name__)
 
-DBQueryCallable = Callable[[str, dict[str, Any] | None], Awaitable[list[dict[str, Any]]]]
+DBQueryCallable = Callable[
+    [str, dict[str, Any] | None], Awaitable[list[dict[str, Any]]]
+]
 
 
-async def _pg_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+async def _pg_query(
+    sql: str, params: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
     from sqlalchemy import text
 
     from src.infrastructure.database.database import get_db_session

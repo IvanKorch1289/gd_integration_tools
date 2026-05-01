@@ -26,11 +26,7 @@ from typing import Any
 
 from src.core.interfaces.audit import AuditBackend, AuditRecord
 
-__all__ = (
-    "AuditCallable",
-    "build_audit_fallbacks",
-    "build_audit_primary",
-)
+__all__ = ("AuditCallable", "build_audit_fallbacks", "build_audit_primary")
 
 logger = logging.getLogger(__name__)
 
@@ -102,10 +98,7 @@ def build_audit_fallbacks(
     Идентификаторы ``pg_audit`` и ``jsonl`` соответствуют ``chain``
     в ``config_profiles/base.yml`` (резерв порядок имеет значение).
     """
-    return {
-        "pg_audit": _pg_audit_append,
-        "jsonl": build_jsonl_append(jsonl_path),
-    }
+    return {"pg_audit": _pg_audit_append, "jsonl": build_jsonl_append(jsonl_path)}
 
 
 def coerce_record(record: Any) -> AuditRecord:

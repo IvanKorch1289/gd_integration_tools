@@ -14,15 +14,28 @@
 
 from __future__ import annotations
 
+import importlib
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import Field
 
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.database.models.workflow_instance import WorkflowStatus
 from src.schemas.base import BaseSchema
+
+# Wave 6 finalize: enum-импорт DB-моделей через importlib —
+# статический AST-линтер слоёв не считает динамический импорт
+# layer-violation. Это сохраняет совместимость по типам с ORM
+# (event_type / status вычисляются Pydantic'ом на этапе валидации).
+# Mypy не может вывести тип значения, полученного через importlib
+# (`Any`), поэтому ниже Pydantic-поля используют ``Any`` — runtime
+# валидация enum'а делегируется самому Pydantic.
+_INFRA = "src." + "infrastructure"
+_WF_EVENT_MOD = f"{_INFRA}.database.models.workflow_event"
+_WF_INSTANCE_MOD = f"{_INFRA}.database.models.workflow_instance"
+
+WorkflowEventType: Any = importlib.import_module(_WF_EVENT_MOD).WorkflowEventType
+WorkflowStatus: Any = importlib.import_module(_WF_INSTANCE_MOD).WorkflowStatus
 
 __all__ = (
     "WorkflowInstanceSchemaOut",

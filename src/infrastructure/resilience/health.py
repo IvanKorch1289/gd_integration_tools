@@ -52,11 +52,7 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 
-_STATUS_MAP: dict[str, str] = {
-    "normal": "ok",
-    "degraded": "degraded",
-    "down": "error",
-}
+_STATUS_MAP: dict[str, str] = {"normal": "ok", "degraded": "degraded", "down": "error"}
 
 
 def _component_to_dict(component: ComponentStatus) -> dict[str, Any]:
@@ -117,9 +113,7 @@ def register_resilience_health_checks(
         health_aggregator.register(
             component, build_resilience_health_check(component, coord)
         )
-    logger.info(
-        "Resilience: registered %d health-checks", len(coord.list_components())
-    )
+    logger.info("Resilience: registered %d health-checks", len(coord.list_components()))
 
 
 def resilience_components_report(

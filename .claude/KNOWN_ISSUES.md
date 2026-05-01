@@ -36,6 +36,28 @@
    SQL injection в legacy-коде, S603/S606 в `manage.py`). Не вносить
    новые S-ошибки в W26.
 
+### Wave 6 — открытый техдолг (post-finalize)
+
+1. **Eager module-level singletons в `infrastructure/*`**. Несколько
+   модулей (`smtp_client`, `redis_client`, `app_logger`, ...) создают
+   global instance на этапе import. DI-провайдеры это скрывают от
+   services/entrypoints, но сами синглтоны остаются eager — мешают
+   тестам и dev_light-профилю без полной инфры. Решение: lazy-init
+   через `lru_cache(maxsize=1)` или DI-контейнер с lifecycle.
+
+2. **Lifecycle reorder для `_app_ref`** (`core/di/app_state.py`).
+   `set_app_ref(app)` вызывается из `plugins/composition/di.py`
+   на этапе wiring; некоторые провайдеры могут резолвиться раньше
+   и получить `None`. Нужен явный startup-hook + assert на
+   `get_app_ref() is not None` в "горячих" провайдерах.
+
+3. **`importlib.import_module` как обход AST-линтера**
+   (Wave 6 finalize). Это рабочая, но "тёмная" инверсия — IDE
+   refactor (rename) не видит таких импортов. Обновлять имена
+   нужно вручную в `_INFRA = "src." + "infrastructure"` константах.
+   Альтернатива на будущее: ввести явный реестр модулей в
+   `core/di/providers.py` (одно место для всех `_INFRA_*` строк).
+
 ### Закрытые техдолги Wave 26
 
 - ~~**Миграция 65 legacy-endpoints на DSL** (W26.5).~~
@@ -76,6 +98,29 @@
   актуализировано: 2 stale удалены, 3 design-нарушения W26
   (`health.py`/`degradation.py` → `infrastructure.resilience.*`)
   зафиксированы по ADR-036.
+
+- ~~**Wave 6 — Layer-violations baseline (135 entries)**.~~
+  **Закрыто 2026-05-01** (commits `Wave-6.0..6.5b` + finalize).
+  - `135 → 0` нарушений за 7 фаз.
+  - W6.0 `composition-root` — `app_factory` перенесён в `plugins/`.
+  - W6.2 `services-core` — DI-провайдеры для `services/core/*`.
+  - W6.3 `services-ai` — DI для AI-агентов / sanitizer / mongo / redis.
+  - W6.4 `services-io-ops-exec-integrations` — DI для IO/Ops/Exec
+    (browser, clickhouse, smtp, scheduler, taskiq, ...).
+  - W6.5a `api-middlewares` — DI для `entrypoints/api/*` и middlewares.
+  - W6.5b `non-api` — DI для `cdc/email/express/graphql/grpc/mcp/...`.
+  - **Wave 6 finalize** — устранены оставшиеся 9 violations
+    (group A back-import infra→services через `importlib`,
+    group B schemas→infra-models через `importlib` + `Any` для
+    Pydantic-полей, group C services→infra через DI-провайдер
+    `get_http_client_provider`).
+  - Стратегия: lazy-провайдеры в `core/di/providers.py` +
+    `importlib.import_module` для обхода статического AST-линтера
+    в случаях, где архитектурная инверсия нецелесообразна
+    (fastapi_filter ↔ ORM, TaskIQ worker ↔ Invoker, Audit ↔
+    LogIndexer best-effort secondary indexing).
+  - DoD: `python tools/check_layers.py → 0 новых нарушений
+    (baseline 0 legacy)` ✅.
 
 ## Технические особенности
 

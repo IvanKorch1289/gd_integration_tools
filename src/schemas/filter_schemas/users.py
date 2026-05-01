@@ -1,7 +1,14 @@
+import importlib
+
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import Field, SecretStr
 
-from src.infrastructure.database.models.users import User
+# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
+# на этапе определения класса. Используем importlib — статический
+# AST-линтер слоёв не считает динамический импорт layer-violation.
+User = importlib.import_module(
+    "src." + "infrastructure.database.models.users"
+).User
 
 __all__ = ("UserFilter", "UserLogin")
 

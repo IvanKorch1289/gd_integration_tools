@@ -49,9 +49,7 @@ class WebhookScheduler:
 
         client = get_redis_kv_client_provider()
         key = f"{_PREFIX}:{schedule_id}"
-        await client.set(
-            key, orjson.dumps(task, default=str), ex=86400 * 7
-        )
+        await client.set(key, orjson.dumps(task, default=str), ex=86400 * 7)
 
         logger.info("Webhook scheduled: %s -> %s", schedule_id, url)
         return schedule_id

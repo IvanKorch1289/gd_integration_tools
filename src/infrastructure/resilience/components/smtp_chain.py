@@ -20,11 +20,7 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
-__all__ = (
-    "SmtpSendCallable",
-    "build_smtp_fallbacks",
-    "build_smtp_primary",
-)
+__all__ = ("SmtpSendCallable", "build_smtp_fallbacks", "build_smtp_primary")
 
 logger = logging.getLogger(__name__)
 

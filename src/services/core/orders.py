@@ -37,10 +37,7 @@ _REPO_ORDERS_MOD = f"{_INFRA}.repositories.orders"
 
 class OrderService(
     BaseService[
-        OrderRepositoryProtocol,
-        OrderSchemaOut,
-        OrderSchemaIn,
-        OrderVersionSchemaOut,
+        OrderRepositoryProtocol, OrderSchemaOut, OrderSchemaIn, OrderVersionSchemaOut
     ]
 ):
     """

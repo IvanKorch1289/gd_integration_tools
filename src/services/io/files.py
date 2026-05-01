@@ -13,7 +13,9 @@ __all__ = ("get_file_service",)
 
 
 class FileService(
-    BaseService[FileRepositoryProtocol, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut]
+    BaseService[
+        FileRepositoryProtocol, FileSchemaOut, FileSchemaIn, FileVersionSchemaOut
+    ]
 ):
     """
     Сервис для работы с файлами. Обеспечивает создание, обновление, получение и обработку файлов.

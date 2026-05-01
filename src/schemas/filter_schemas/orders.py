@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import importlib
 from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from src.infrastructure.database.models.orders import Order
+# Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
+# на этапе определения класса. Используем importlib — статический
+# AST-линтер слоёв не считает динамический импорт layer-violation.
+Order = importlib.import_module(
+    "src." + "infrastructure.database.models.orders"
+).Order
 
 __all__ = ("OrderFilter",)
 

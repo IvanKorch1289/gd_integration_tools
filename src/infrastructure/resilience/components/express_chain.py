@@ -16,11 +16,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-__all__ = (
-    "NotificationCallable",
-    "build_express_fallbacks",
-    "build_express_primary",
-)
+__all__ = ("NotificationCallable", "build_express_fallbacks", "build_express_primary")
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +28,7 @@ async def _express_send(payload: dict[str, Any]) -> None:
     from src.infrastructure.clients.transport.express import get_express_client
 
     client = get_express_client()
-    await client.send_message(
-        chat_id=payload["recipient"],
-        text=payload["message"],
-    )
+    await client.send_message(chat_id=payload["recipient"], text=payload["message"])
 
 
 async def _smtp_send(payload: dict[str, Any]) -> None:
@@ -63,8 +56,7 @@ async def _slack_send(payload: dict[str, Any]) -> None:
         raise RuntimeError("SLACK_WEBHOOK_URL не задан — Slack-fallback недоступен")
     async with httpx.AsyncClient(timeout=5.0) as client:
         response = await client.post(
-            webhook,
-            json={"text": f"[{payload.get('recipient')}] {payload['message']}"},
+            webhook, json={"text": f"[{payload.get('recipient')}] {payload['message']}"}
         )
         response.raise_for_status()
 

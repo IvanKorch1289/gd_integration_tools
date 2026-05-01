@@ -23,11 +23,7 @@ import logging
 import os
 from collections.abc import Awaitable, Callable
 
-__all__ = (
-    "SecretResolveCallable",
-    "build_secrets_fallbacks",
-    "build_secrets_primary",
-)
+__all__ = ("SecretResolveCallable", "build_secrets_fallbacks", "build_secrets_primary")
 
 logger = logging.getLogger(__name__)
 

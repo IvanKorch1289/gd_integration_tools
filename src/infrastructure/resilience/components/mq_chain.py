@@ -21,11 +21,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-__all__ = (
-    "MQPublishCallable",
-    "build_mq_fallbacks",
-    "build_mq_primary",
-)
+__all__ = ("MQPublishCallable", "build_mq_fallbacks", "build_mq_primary")
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +79,4 @@ def build_mq_fallbacks() -> dict[str, MQPublishCallable]:
     Идентификаторы соответствуют ``chain`` в base.yml:
     ``["redis_streams", "memory_mq"]``.
     """
-    return {
-        "redis_streams": _redis_streams_publish,
-        "memory_mq": _memory_publish,
-    }
+    return {"redis_streams": _redis_streams_publish, "memory_mq": _memory_publish}
