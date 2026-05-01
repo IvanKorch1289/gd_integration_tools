@@ -7,8 +7,12 @@
 * ``ollama`` — HTTP к Ollama-серверу (через ``OllamaProvider.embeddings``).
 * ``openai`` — HTTP к OpenAI-compatible эндпоинту
   (через ``OpenAIProvider.embeddings``).
-* ``fastembed`` — opt-in (ONNX), на Python 3.14 рантайм нестабилен;
-  используется только если явно выбран в ``rag_settings``.
+* ``fastembed`` — **legacy opt-in** (ONNX). Wave F.4 / V10 #11:
+  fastembed несовместим с Python 3.14 (отсутствуют wheels onnxruntime,
+  см. https://github.com/microsoft/onnxruntime/issues/26473).
+  Установка через extra ``embeddings-fastembed-legacy``; на Python 3.14+
+  ``FastembedEmbeddingProvider`` поднимает ``EmbeddingProviderUnavailable``
+  при создании.
 
 Все провайдеры реализуют ``EmbeddingProvider`` Protocol с одним методом
 ``embed(texts) -> list[list[float]]``.
@@ -18,10 +22,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
     "EmbeddingProvider",
+    "EmbeddingProviderUnavailable",
     "FastembedEmbeddingProvider",
     "OllamaEmbeddingProvider",
     "OpenAIEmbeddingProvider",
@@ -30,6 +36,15 @@ __all__ = (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class EmbeddingProviderUnavailable(RuntimeError):
+    """Embedding-провайдер недоступен на текущем стеке.
+
+    Поднимается при попытке использовать провайдер, чьи зависимости либо
+    несовместимы с Python (fastembed на 3.14+), либо не установлены.
+    Различается с обычным ``ImportError`` для маршрутизации в DI/CB.
+    """
 
 
 @runtime_checkable
@@ -75,15 +90,32 @@ class SentenceTransformerEmbeddingProvider:
 
 
 class FastembedEmbeddingProvider:
-    """ONNX-эмбеддинги через ``fastembed`` (opt-in).
+    """ONNX-эмбеддинги через ``fastembed`` (legacy opt-in).
 
-    Внимание: на Python 3.14 рантайм fastembed нестабилен (загрузка
-    ONNX-моделей зависает); используйте только если выбран явно.
+    Wave F.4 / V10 #11: fastembed помечен как legacy. На Python 3.14+
+    создание провайдера сразу поднимает ``EmbeddingProviderUnavailable``
+    — onnxruntime не имеет колёс для 3.14, рантайм fastembed на 3.14
+    зависает на загрузке моделей. Поддерживается только на Python ≤ 3.13
+    при установленном extra ``embeddings-fastembed-legacy``.
+
+    Defaults RAG-проекта — ``SentenceTransformerEmbeddingProvider``.
     """
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5") -> None:
+        self._check_runtime_compatibility()
         self._model_name = model_name
         self._model: Any = None
+
+    @staticmethod
+    def _check_runtime_compatibility() -> None:
+        """Wave F.4 / V10 #11: блок-guard на Python 3.14+."""
+        if sys.version_info >= (3, 14):
+            raise EmbeddingProviderUnavailable(
+                "fastembed несовместим с Python 3.14+ "
+                f"(текущий: {sys.version_info.major}.{sys.version_info.minor}). "
+                "Используйте embedding_provider=sentence-transformers / ollama / "
+                "openai. См. Wave F.4 / Roadmap V10 #11."
+            )
 
     def _ensure_model(self) -> Any:
         if self._model is not None:
@@ -91,9 +123,11 @@ class FastembedEmbeddingProvider:
         try:
             from fastembed import TextEmbedding
         except ImportError as exc:
-            raise RuntimeError(
-                "fastembed не установлен — установите fastembed или выберите "
-                "другой embedding_provider в rag_settings"
+            raise EmbeddingProviderUnavailable(
+                "fastembed не установлен — это legacy-extra. Установите "
+                "'.[embeddings-fastembed-legacy]' (только Python ≤ 3.13) или "
+                "выберите embedding_provider=sentence-transformers / ollama / "
+                "openai в rag_settings."
             ) from exc
         self._model = TextEmbedding(model_name=self._model_name)
         return self._model

@@ -68,7 +68,6 @@ dependencies = [
     "cbor2>=5.6.0,<6.0.0",
     "xmltodict>=0.14.0,<1.0.0",
     "qdrant-client>=1.12.0,<2.0.0",
-    "fastembed>=0.4.0,<1.0.0",
     "granian>=2.0.0",
     "msgspec>=0.18.0,<1.0.0",
     "uvloop>=0.21.0,<1.0.0",
@@ -110,6 +109,13 @@ rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
     "chromadb>=0.5.0,<2.0.0",
+]
+# Wave F.4 (V10 #11): fastembed несовместим с Python 3.14 — нет
+# onnxruntime wheels. Доступен только как opt-in для legacy-стендов на
+# Python 3.12 / 3.13. Default RAG embedding-провайдер — sentence-transformers
+# (см. services/ai/embedding_providers.py).
+embeddings-fastembed-legacy = [
+    "fastembed>=0.4.0,<1.0.0",
 ]
 dev-light = [
     "aiosqlite>=0.20.0,<1.0.0",

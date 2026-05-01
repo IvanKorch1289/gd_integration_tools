@@ -1459,7 +1459,6 @@ dependencies = [
     { name = "fastapi-limiter" },
     { name = "fastapi-pagination" },
     { name = "fastavro" },
-    { name = "fastembed" },
     { name = "faststream", extra = ["kafka"] },
     { name = "granian" },
     { name = "greenlet" },
@@ -1527,6 +1526,9 @@ ai = [
 ]
 dev-light = [
     { name = "aiosqlite" },
+]
+embeddings-fastembed-legacy = [
+    { name = "fastembed" },
 ]
 mcp = [
     { name = "fastmcp" },
@@ -1602,7 +1604,7 @@ requires-dist = [
     { name = "fastapi-limiter", specifier = ">=0.1.6,<1.0.0" },
     { name = "fastapi-pagination", specifier = ">=0.12.34,<1.0.0" },
     { name = "fastavro", specifier = ">=1.9.0,<2.0.0" },
-    { name = "fastembed", specifier = ">=0.4.0,<1.0.0" },
+    { name = "fastembed", marker = "extra == 'embeddings-fastembed-legacy'", specifier = ">=0.4.0,<1.0.0" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=2.0.0" },
     { name = "faststream", extras = ["kafka"], specifier = ">=0.5.34,<1.0.0" },
     { name = "faststream", extras = ["nats"], marker = "extra == 'sources-mq-nats'", specifier = ">=0.6.7,<1.0.0" },
@@ -1672,7 +1674,7 @@ requires-dist = [
     { name = "xmltodict", specifier = ">=0.14.0,<1.0.0" },
     { name = "zeep", specifier = ">=4.3.1,<5.0.0" },
 ]
-provides-extras = ["ai", "security", "mcp", "rpa", "rag", "dev-light", "sources-cdc", "sources-mq-nats", "iot", "web3", "legacy", "banking", "enterprise", "datalake", "temporal", "beam"]
+provides-extras = ["ai", "security", "mcp", "rpa", "rag", "embeddings-fastembed-legacy", "dev-light", "sources-cdc", "sources-mq-nats", "iot", "web3", "legacy", "banking", "enterprise", "datalake", "temporal", "beam"]
 
 [package.metadata.requires-dev]
 dev = [

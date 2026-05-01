@@ -47,7 +47,8 @@ class RAGSettings(BaseSettingsWithLoader):
         "sentence-transformers",
         description=(
             "Провайдер эмбеддингов: sentence-transformers (default), ollama, "
-            "openai, fastembed."
+            "openai. Legacy: fastembed (только Python ≤ 3.13, через "
+            "extra embeddings-fastembed-legacy)."
         ),
     )
     embedding_model: str = Field(
