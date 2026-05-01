@@ -101,7 +101,9 @@ def register_scheduled_invocation(spec: ScheduleSpec) -> str:
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger
 
-    from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+    from src.core.di.providers import get_scheduler_manager_provider
+
+    scheduler_manager = get_scheduler_manager_provider()
 
     trigger: Any
     if spec.cron:

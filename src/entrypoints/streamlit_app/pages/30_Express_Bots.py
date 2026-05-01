@@ -89,12 +89,13 @@ with tab_send:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
                 try:
-                    from src.dsl.engine.processors.express._common import (
-                        get_express_client,
+                    from src.core.di.providers import (
+                        get_express_bot_client_factory_provider,
+                        get_express_botx_message_class_provider,
                     )
-                    from src.infrastructure.clients.external.express_bot import (
-                        BotxMessage,
-                    )
+
+                    get_express_client = get_express_bot_client_factory_provider()
+                    BotxMessage = get_express_botx_message_class_provider()
 
                     async def _send() -> str:
                         client = get_express_client(bot_name)

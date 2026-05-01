@@ -70,11 +70,10 @@ class ImapMonitor:
         ref = self.config.password_vault_ref
         if ref:
             try:
-                from src.infrastructure.application.vault_refresher import (
-                    VaultSecretRefresher,
-                )
+                from src.core.di.providers import get_vault_refresher_provider
 
-                return await VaultSecretRefresher.get().resolve(ref)
+                refresher = get_vault_refresher_provider()
+                return await refresher.resolve(ref)
             except Exception as exc:
                 logger.error(
                     "IMAP Vault-resolve fail (%s): %s — fallback to config.password",

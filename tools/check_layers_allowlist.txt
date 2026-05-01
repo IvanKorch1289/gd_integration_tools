@@ -1,29 +1,6 @@
 # Allowlist архитектурных нарушений (Wave 1.3 baseline).
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
-src/entrypoints/cdc/cdc_routes.py	entrypoints	src.infrastructure.clients.external.cdc
-src/entrypoints/email/imap_monitor.py	entrypoints	src.infrastructure.application.vault_refresher
-src/entrypoints/express/router.py	entrypoints	src.infrastructure.observability.metrics
-src/entrypoints/express/router.py	entrypoints	src.infrastructure.repositories.express_dialogs_mongo
-src/entrypoints/express/router.py	entrypoints	src.infrastructure.repositories.express_sessions_mongo
-src/entrypoints/graphql/schema.py	entrypoints	src.infrastructure.monitoring.health_check
-src/entrypoints/grpc/grpc_server.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/entrypoints/mcp/mcp_server.py	entrypoints	src.infrastructure.application.slo_tracker
-src/entrypoints/mcp/workflow_tools.py	entrypoints	src.infrastructure.database.models.workflow_instance
-src/entrypoints/mcp/workflow_tools.py	entrypoints	src.infrastructure.workflow.state_store
-src/entrypoints/scheduler/invoker_schedule.py	entrypoints	src.infrastructure.scheduler.scheduler_manager
-src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
-src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
-src/entrypoints/stream/subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/entrypoints/streamlit_app/pages/30_Express_Bots.py	entrypoints	src.infrastructure.clients.external.express_bot
-src/entrypoints/webhook/handler.py	entrypoints	src.infrastructure.resilience.unified_rate_limiter
-src/entrypoints/webhook/redis_registry.py	entrypoints	src.infrastructure.clients.storage.redis_coordinator
-src/entrypoints/webhook/transformer.py	entrypoints	src.infrastructure.clients.storage.redis
-src/entrypoints/webhook/transformer.py	entrypoints	src.infrastructure.security.signatures
-src/entrypoints/websocket/ws_auth.py	entrypoints	src.infrastructure.clients.storage.redis
-src/entrypoints/websocket/ws_auth.py	entrypoints	src.infrastructure.security.api_key_manager
-src/entrypoints/websocket/ws_broadcast.py	entrypoints	src.infrastructure.clients.storage.redis_coordinator
 src/infrastructure/audit/event_log.py	infrastructure	src.services.io.indexers.log_indexer
 src/infrastructure/execution/taskiq_broker.py	infrastructure	src.services.execution.invoker
 src/schemas/filter_schemas/files.py	schemas	src.infrastructure.database.models.files

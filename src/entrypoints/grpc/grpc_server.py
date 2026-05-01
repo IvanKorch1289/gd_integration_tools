@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     import grpc
 
 from src.core.config.settings import settings
+from src.core.di.providers import get_grpc_logger_provider
 from src.core.errors import BaseError
 from src.entrypoints.base import dispatch_action
 from src.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
@@ -30,7 +31,8 @@ from src.entrypoints.grpc.protobuf.orders_pb2_grpc import (
     OrderServiceServicer,
     add_OrderServiceServicer_to_server,
 )
-from src.infrastructure.external_apis.logging_service import grpc_logger
+
+grpc_logger = get_grpc_logger_provider()
 
 
 def _safe_error(exc: Exception, correlation_id: str) -> str:

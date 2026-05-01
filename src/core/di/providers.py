@@ -94,6 +94,38 @@ __all__ = (
     "set_model_enum_provider",
     "set_app_logger_provider",
     "set_correlation_context_setter_provider",
+    # Wave 6.5b: entrypoints/{cdc,email,express,graphql,grpc,mcp,scheduler,
+    # stream,streamlit,webhook,websocket}/* → providers
+    "get_rate_limiter_provider",
+    "get_rate_limit_classes_provider",
+    "get_redis_hash_factory_provider",
+    "get_redis_set_factory_provider",
+    "get_redis_pubsub_factory_provider",
+    "get_redis_cursor_factory_provider",
+    "get_cdc_client_provider",
+    "get_vault_refresher_provider",
+    "get_grpc_logger_provider",
+    "get_stream_logger_provider",
+    "get_express_dialog_store_provider",
+    "get_express_session_store_provider",
+    "get_express_metrics_recorder_provider",
+    "get_stream_client_provider",
+    "get_express_bot_client_factory_provider",
+    "get_express_botx_message_class_provider",
+    "set_rate_limiter_provider",
+    "set_redis_hash_factory_provider",
+    "set_redis_set_factory_provider",
+    "set_redis_pubsub_factory_provider",
+    "set_redis_cursor_factory_provider",
+    "set_cdc_client_provider",
+    "set_vault_refresher_provider",
+    "set_grpc_logger_provider",
+    "set_stream_logger_provider",
+    "set_express_dialog_store_provider",
+    "set_express_session_store_provider",
+    "set_express_metrics_recorder_provider",
+    "set_stream_client_provider",
+    "set_express_bot_client_factory_provider",
 )
 
 
@@ -137,6 +169,16 @@ _RESILIENCE_HEALTH_MOD = f"{_INFRA}.resilience.health"
 _MODEL_REGISTRY_MOD = f"{_INFRA}.database.model_registry"
 _LOGGING_SERVICE_MOD = f"{_INFRA}.external_apis.logging_service"
 _CORRELATION_MOD = f"{_INFRA}.observability.correlation"
+
+# Wave 6.5b: entrypoints/* провайдеры
+_RATE_LIMITER_MOD = f"{_INFRA}.resilience.unified_rate_limiter"
+_REDIS_COORD_MOD = f"{_INFRA}.clients.storage.redis_coordinator"
+_CDC_MOD = f"{_INFRA}.clients.external.cdc"
+_VAULT_MOD = f"{_INFRA}.application.vault_refresher"
+_EXPRESS_DIALOGS_MOD = f"{_INFRA}.repositories.express_dialogs_mongo"
+_EXPRESS_SESSIONS_MOD = f"{_INFRA}.repositories.express_sessions_mongo"
+_STREAM_CLIENT_MOD = f"{_INFRA}.clients.messaging.stream"
+_EXPRESS_BOT_MOD = f"{_INFRA}.clients.external.express_bot"
 
 
 # ─────────────── Test/runtime overrides ───────────────
@@ -743,3 +785,233 @@ def get_correlation_context_setter_provider() -> Any:
 
 def set_correlation_context_setter_provider(setter: Any) -> None:
     _overrides["correlation_context_setter"] = setter
+
+
+# ─────────────── Wave 6.5b: Rate limiter (webhook) ───────────────
+
+
+def get_rate_limiter_provider() -> Any:
+    """Возвращает singleton ``RedisRateLimiter`` (см. ``RateLimiterProtocol``)."""
+    if "rate_limiter" in _overrides:
+        return _overrides["rate_limiter"]
+    module = importlib.import_module(_RATE_LIMITER_MOD)
+    return module.get_rate_limiter()
+
+
+def set_rate_limiter_provider(limiter: Any) -> None:
+    _overrides["rate_limiter"] = limiter
+
+
+def get_rate_limit_classes_provider() -> tuple[Any, Any]:
+    """Возвращает классы ``(RateLimit, RateLimitExceeded)`` из infra-модуля.
+
+    Используется webhook-handler'ом для ловли ``RateLimitExceeded`` и
+    конструирования ``RateLimit(...)`` policy без статического импорта infra.
+    """
+    if "rate_limit_classes" in _overrides:
+        return _overrides["rate_limit_classes"]
+    module = importlib.import_module(_RATE_LIMITER_MOD)
+    return module.RateLimit, module.RateLimitExceeded
+
+
+# ─────────────── Wave 6.5b: Redis coordinator primitives ───────────────
+
+
+def get_redis_hash_factory_provider() -> Any:
+    """Возвращает класс ``RedisHash`` (фабрика per-key инстансов)."""
+    if "redis_hash_factory" in _overrides:
+        return _overrides["redis_hash_factory"]
+    module = importlib.import_module(_REDIS_COORD_MOD)
+    return module.RedisHash
+
+
+def set_redis_hash_factory_provider(factory: Any) -> None:
+    _overrides["redis_hash_factory"] = factory
+
+
+def get_redis_set_factory_provider() -> Any:
+    """Возвращает класс ``RedisSet`` (фабрика per-key инстансов)."""
+    if "redis_set_factory" in _overrides:
+        return _overrides["redis_set_factory"]
+    module = importlib.import_module(_REDIS_COORD_MOD)
+    return module.RedisSet
+
+
+def set_redis_set_factory_provider(factory: Any) -> None:
+    _overrides["redis_set_factory"] = factory
+
+
+def get_redis_pubsub_factory_provider() -> Any:
+    """Возвращает класс ``RedisPubSub`` (фабрика per-channel инстансов)."""
+    if "redis_pubsub_factory" in _overrides:
+        return _overrides["redis_pubsub_factory"]
+    module = importlib.import_module(_REDIS_COORD_MOD)
+    return module.RedisPubSub
+
+
+def set_redis_pubsub_factory_provider(factory: Any) -> None:
+    _overrides["redis_pubsub_factory"] = factory
+
+
+def get_redis_cursor_factory_provider() -> Any:
+    """Возвращает класс ``RedisCursor`` (CAS-cursor)."""
+    if "redis_cursor_factory" in _overrides:
+        return _overrides["redis_cursor_factory"]
+    module = importlib.import_module(_REDIS_COORD_MOD)
+    return module.RedisCursor
+
+
+def set_redis_cursor_factory_provider(factory: Any) -> None:
+    _overrides["redis_cursor_factory"] = factory
+
+
+# ─────────────── Wave 6.5b: CDC client ───────────────
+
+
+def get_cdc_client_provider() -> Any:
+    """Возвращает singleton ``CDCClient`` (см. ``CDCClientProtocol``)."""
+    if "cdc_client" in _overrides:
+        return _overrides["cdc_client"]
+    module = importlib.import_module(_CDC_MOD)
+    return module.get_cdc_client()
+
+
+def set_cdc_client_provider(client: Any) -> None:
+    _overrides["cdc_client"] = client
+
+
+# ─────────────── Wave 6.5b: Vault secret refresher ───────────────
+
+
+def get_vault_refresher_provider() -> Any:
+    """Возвращает singleton ``VaultSecretRefresher`` (см. ``VaultRefresherProtocol``)."""
+    if "vault_refresher" in _overrides:
+        return _overrides["vault_refresher"]
+    module = importlib.import_module(_VAULT_MOD)
+    return module.VaultSecretRefresher.get()
+
+
+def set_vault_refresher_provider(refresher: Any) -> None:
+    _overrides["vault_refresher"] = refresher
+
+
+# ─────────────── Wave 6.5b: gRPC / stream loggers ───────────────
+
+
+def get_grpc_logger_provider() -> Any:
+    """Возвращает ``grpc_logger`` из ``logging_service``."""
+    if "grpc_logger" in _overrides:
+        return _overrides["grpc_logger"]
+    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    return module.grpc_logger
+
+
+def set_grpc_logger_provider(logger: Any) -> None:
+    _overrides["grpc_logger"] = logger
+
+
+def get_stream_logger_provider() -> Any:
+    """Возвращает ``stream_logger`` из ``logging_service``."""
+    if "stream_logger" in _overrides:
+        return _overrides["stream_logger"]
+    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    return module.stream_logger
+
+
+def set_stream_logger_provider(logger: Any) -> None:
+    _overrides["stream_logger"] = logger
+
+
+# ─────────────── Wave 6.5b: Express Mongo stores ───────────────
+
+
+def get_express_dialog_store_provider() -> Any:
+    """Возвращает singleton ``MongoExpressDialogStore``."""
+    if "express_dialog_store" in _overrides:
+        return _overrides["express_dialog_store"]
+    module = importlib.import_module(_EXPRESS_DIALOGS_MOD)
+    return module.get_express_dialog_store()
+
+
+def set_express_dialog_store_provider(store: Any) -> None:
+    _overrides["express_dialog_store"] = store
+
+
+def get_express_session_store_provider() -> Any:
+    """Возвращает singleton ``MongoExpressSessionStore``."""
+    if "express_session_store" in _overrides:
+        return _overrides["express_session_store"]
+    module = importlib.import_module(_EXPRESS_SESSIONS_MOD)
+    return module.get_express_session_store()
+
+
+def set_express_session_store_provider(store: Any) -> None:
+    _overrides["express_session_store"] = store
+
+
+# ─────────────── Wave 6.5b: Express metrics recorder ───────────────
+
+
+def get_express_metrics_recorder_provider() -> Any:
+    """Возвращает callable ``record_express_command_received``.
+
+    Если функция отсутствует (минимальный профиль без prometheus_client),
+    возвращается no-op.
+    """
+    if "express_metrics_recorder" in _overrides:
+        return _overrides["express_metrics_recorder"]
+    module = importlib.import_module(_OBS_METRICS_MOD)
+    return getattr(
+        module, "record_express_command_received", _noop_express_metrics_recorder
+    )
+
+
+def set_express_metrics_recorder_provider(recorder: Any) -> None:
+    _overrides["express_metrics_recorder"] = recorder
+
+
+def _noop_express_metrics_recorder(bot: str, command: str) -> None:
+    """Заглушка, если backend метрик недоступен."""
+    return None
+
+
+# ─────────────── Wave 6.5b: FastStream client (subscriber decorators) ───────────────
+
+
+def get_stream_client_provider() -> Any:
+    """Возвращает singleton ``StreamClient`` (FastStream роутеры)."""
+    if "stream_client" in _overrides:
+        return _overrides["stream_client"]
+    module = importlib.import_module(_STREAM_CLIENT_MOD)
+    return module.stream_client
+
+
+def set_stream_client_provider(client: Any) -> None:
+    _overrides["stream_client"] = client
+
+
+# ─────────────── Wave 6.5b: Express BotX client (streamlit) ───────────────
+
+
+def get_express_bot_client_factory_provider() -> Any:
+    """Возвращает фабрику ``get_express_client(bot_name)`` для Express BotX.
+
+    Реализация: ``dsl.engine.processors.express._common.get_express_client``.
+    Этот common-модуль нагружает infra-клиент через ленивый импорт.
+    """
+    if "express_bot_client_factory" in _overrides:
+        return _overrides["express_bot_client_factory"]
+    module = importlib.import_module("src.dsl.engine.processors.express._common")
+    return module.get_express_client
+
+
+def set_express_bot_client_factory_provider(factory: Any) -> None:
+    _overrides["express_bot_client_factory"] = factory
+
+
+def get_express_botx_message_class_provider() -> Any:
+    """Возвращает класс ``BotxMessage`` (DTO для Express)."""
+    if "express_botx_message_class" in _overrides:
+        return _overrides["express_botx_message_class"]
+    module = importlib.import_module(_EXPRESS_BOT_MOD)
+    return module.BotxMessage

@@ -40,21 +40,23 @@ async def _check_rate_limit(
 ) -> None:
     """Применяет rate limit через RedisRateLimiter."""
     try:
-        from src.infrastructure.resilience.unified_rate_limiter import (
-            RateLimit,
-            RateLimitExceeded,
-            get_rate_limiter,
+        from src.core.di.providers import (
+            get_rate_limit_classes_provider,
+            get_rate_limiter_provider,
         )
 
-        limiter = get_rate_limiter()
+        RateLimit, RateLimitExceeded = get_rate_limit_classes_provider()
+        limiter = get_rate_limiter_provider()
+    except ImportError:
+        return
+
+    try:
         await limiter.check(
             identifier=f"webhook:{identifier}",
             policy=RateLimit(
                 limit=limit, window_seconds=window, key_prefix="webhook_rl"
             ),
         )
-    except ImportError:
-        return
     except RateLimitExceeded as exc:
         raise HTTPException(
             status_code=429,

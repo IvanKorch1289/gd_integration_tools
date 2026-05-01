@@ -15,7 +15,10 @@ import asyncio
 import logging
 from typing import Any
 
-from src.infrastructure.clients.storage.redis_coordinator import RedisPubSub, RedisSet
+from src.core.di.providers import (
+    get_redis_pubsub_factory_provider,
+    get_redis_set_factory_provider,
+)
 
 __all__ = ("WSBroadcast", "ws_broadcast")
 
@@ -34,7 +37,8 @@ class WSBroadcast:
     """
 
     def __init__(self) -> None:
-        self._pubsub = RedisPubSub(_BROADCAST_CHANNEL)
+        redis_pubsub_cls = get_redis_pubsub_factory_provider()
+        self._pubsub = redis_pubsub_cls(_BROADCAST_CHANNEL)
         self._listener_task: asyncio.Task | None = None
         self._local_handler: Any = None
 
@@ -86,9 +90,10 @@ class WSBroadcast:
         payload = {"group": group, "message": message}
         return await self._pubsub.publish(payload)
 
-    def group(self, name: str) -> RedisSet:
+    def group(self, name: str) -> Any:
         """Возвращает RedisSet для group membership."""
-        return RedisSet(f"ws:group:{name}")
+        redis_set_cls = get_redis_set_factory_provider()
+        return redis_set_cls(f"ws:group:{name}")
 
 
 ws_broadcast = WSBroadcast()

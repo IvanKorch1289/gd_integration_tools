@@ -42,11 +42,9 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
     Best-effort — Mongo-сбой не должен срывать обработку команды.
     """
     try:
-        from src.infrastructure.repositories.express_dialogs_mongo import (
-            get_express_dialog_store,
-        )
-        from src.infrastructure.repositories.express_sessions_mongo import (
-            get_express_session_store,
+        from src.core.di.providers import (
+            get_express_dialog_store_provider,
+            get_express_session_store_provider,
         )
 
         chat = payload.get("chat") or {}
@@ -61,7 +59,7 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
 
         session_id = sync_id or group_chat_id or "unknown"
 
-        await get_express_dialog_store().append_message(
+        await get_express_dialog_store_provider().append_message(
             session_id=session_id,
             role="user",
             body=body,
@@ -71,7 +69,7 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
             sync_id=sync_id or None,
         )
         if session_id and session_id != "unknown":
-            await get_express_session_store().ping(session_id)
+            await get_express_session_store_provider().ping(session_id)
     except Exception as exc:  # noqa: BLE001
         _logger.debug("Express incoming log skipped: %s", exc)
 
@@ -119,12 +117,11 @@ async def receive_command(request: Request) -> JSONResponse:
     )
 
     try:
-        from src.infrastructure.observability.metrics import (
-            record_express_command_received,
-        )
+        from src.core.di.providers import get_express_metrics_recorder_provider
 
+        recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
-        record_express_command_received(bot_name, command_name)
+        recorder(bot_name, command_name)
     except Exception:  # noqa: BLE001, S110
         pass
 
@@ -158,11 +155,9 @@ async def receive_callback(request: Request) -> JSONResponse:
     # Wave 9.2.4: ping сессии при получении callback'а.
     if sync_id:
         try:
-            from src.infrastructure.repositories.express_sessions_mongo import (
-                get_express_session_store,
-            )
+            from src.core.di.providers import get_express_session_store_provider
 
-            await get_express_session_store().ping(sync_id)
+            await get_express_session_store_provider().ping(sync_id)
         except Exception as exc:  # noqa: BLE001
             _logger.debug("Express callback session ping skipped: %s", exc)
 

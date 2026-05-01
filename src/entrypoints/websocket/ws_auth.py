@@ -53,9 +53,9 @@ class WSAuthenticator:
         token = token.replace("Bearer ", "").strip()
 
         try:
-            from src.infrastructure.security.api_key_manager import get_api_key_manager
+            from src.core.di.providers import get_api_key_manager_provider
 
-            mgr = get_api_key_manager()
+            mgr = get_api_key_manager_provider()
             info = await mgr.validate(token)
         except ImportError:
             raise WSAuthError("API key manager unavailable")
@@ -80,9 +80,9 @@ class WSAuthenticator:
         if not api_key_hash:
             return set()
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_kv_client_provider
 
-            raw = getattr(redis_client, "_raw_client", None) or redis_client
+            raw = get_redis_kv_client_provider()
             members = await raw.smembers(f"ws:groups:{api_key_hash}")
             return {
                 m.decode() if isinstance(m, bytes) else str(m) for m in (members or [])
@@ -99,9 +99,9 @@ class WSAuthenticator:
     async def grant_group(self, api_key_hash: str, group: str) -> None:
         """Выдаёт доступ к группе (admin operation)."""
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_kv_client_provider
 
-            raw = getattr(redis_client, "_raw_client", None) or redis_client
+            raw = get_redis_kv_client_provider()
             await raw.sadd(f"ws:groups:{api_key_hash}", group)
         except (ImportError, AttributeError, ConnectionError) as exc:
             logger.warning("grant_group failed: %s", exc)
@@ -109,9 +109,9 @@ class WSAuthenticator:
     async def revoke_group(self, api_key_hash: str, group: str) -> None:
         """Отзывает доступ к группе."""
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_kv_client_provider
 
-            raw = getattr(redis_client, "_raw_client", None) or redis_client
+            raw = get_redis_kv_client_provider()
             await raw.srem(f"ws:groups:{api_key_hash}", group)
         except (ImportError, AttributeError, ConnectionError) as exc:
             logger.warning("revoke_group failed: %s", exc)

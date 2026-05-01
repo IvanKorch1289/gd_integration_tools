@@ -502,11 +502,10 @@ class Subscription:
 
         while True:
             try:
-                from src.infrastructure.monitoring.health_check import (
-                    get_healthcheck_service,
-                )
+                from src.core.di.providers import get_healthcheck_session_provider
 
-                async with get_healthcheck_service() as hc:
+                hc_factory = get_healthcheck_session_provider()
+                async with hc_factory() as hc:
                     result = await hc.check_all_services()
 
                 yield SystemEventType(

@@ -170,11 +170,15 @@ async def _trigger_and_maybe_wait(
     import asyncio
     from datetime import datetime, timezone
 
+    from src.core.di.providers import (
+        get_workflow_state_store_provider,
+        get_workflow_status_enum_provider,
+    )
     from src.dsl.commands.registry import action_handler_registry
     from src.entrypoints.base import dispatch_action
-    from src.infrastructure.database.models.workflow_instance import WorkflowStatus
-    from src.infrastructure.workflow.state_store import WorkflowInstanceStore
 
+    WorkflowStatus = get_workflow_status_enum_provider()
+    WorkflowInstanceStore = get_workflow_state_store_provider()
     store = WorkflowInstanceStore()
 
     # Приоритет — через action-registry, иначе fallback на store напрямую.
@@ -292,13 +296,14 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_status(instance_id: str) -> str:
-        from src.infrastructure.workflow.state_store import WorkflowInstanceStore
+        from src.core.di.providers import get_workflow_state_store_provider
 
         try:
             uid = UUID(instance_id)
         except ValueError, TypeError:
             return orjson.dumps({"error": f"invalid UUID: {instance_id!r}"}).decode()
 
+        WorkflowInstanceStore = get_workflow_state_store_provider()
         store = WorkflowInstanceStore()
         row = await store.get(uid)
         if row is None:

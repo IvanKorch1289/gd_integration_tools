@@ -2,12 +2,14 @@ from faststream.rabbit.fastapi import RabbitMessage
 from faststream.redis.fastapi import Redis, RedisMessage
 
 from src.core.config.settings import settings
+from src.core.di.providers import get_stream_client_provider, get_stream_logger_provider
 from src.entrypoints.api.generator.registry import action_handler_registry
-from src.infrastructure.clients.messaging.stream import stream_client
-from src.infrastructure.external_apis.logging_service import stream_logger
 from src.schemas.invocation import ActionCommandSchema
 
 __all__ = ("handle_universal_redis_action", "handle_universal_rabbit_action")
+
+stream_client = get_stream_client_provider()
+stream_logger = get_stream_logger_provider()
 
 
 @stream_client.redis_router.subscriber(  # type: ignore

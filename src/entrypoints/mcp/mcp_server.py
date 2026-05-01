@@ -498,9 +498,9 @@ def _register_yaml_tools(mcp: Any) -> None:
     )
     async def route_metrics(route_id: str | None = None) -> str:
         try:
-            from src.infrastructure.application.slo_tracker import get_slo_tracker
+            from src.core.di.providers import get_slo_tracker_provider
 
-            tracker = get_slo_tracker()
+            tracker = get_slo_tracker_provider()
             report = tracker.get_report()
             if route_id:
                 return orjson.dumps({route_id: report.get(route_id, {})}).decode()

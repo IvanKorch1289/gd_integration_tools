@@ -12,7 +12,10 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from src.infrastructure.clients.storage.redis_coordinator import RedisHash, RedisPubSub
+from src.core.di.providers import (
+    get_redis_hash_factory_provider,
+    get_redis_pubsub_factory_provider,
+)
 
 __all__ = ("WebhookSubscription", "RedisWebhookRegistry", "redis_webhook_registry")
 
@@ -38,8 +41,10 @@ class RedisWebhookRegistry:
     """
 
     def __init__(self) -> None:
-        self._store = RedisHash("webhook:subs")
-        self._invalidation = RedisPubSub("webhook:subs:invalidate")
+        redis_hash_cls = get_redis_hash_factory_provider()
+        redis_pubsub_cls = get_redis_pubsub_factory_provider()
+        self._store = redis_hash_cls("webhook:subs")
+        self._invalidation = redis_pubsub_cls("webhook:subs:invalidate")
         self._cache: dict[str, WebhookSubscription] = {}
         self._cache_updated: float = 0
         self._cache_ttl = 60.0
