@@ -37,6 +37,20 @@ class ActionSpec:
     ``permissions`` / ``rate_limit`` / ``timeout_ms`` / ``deprecated`` /
     ``since_version`` опциональны — у существующих 119 ActionSpec
     значения остаются дефолтными до явной декларации.
+
+    Wave F.8 (Roadmap V10 — 3-tier model):
+
+    * ``tier=1`` — CRUD-actions (GET/POST/PUT/DELETE с payload-model);
+      будут авторегистрироваться во всех 6 протоколах (REST/gRPC/GraphQL/
+      SOAP/MCP/MQTT) на этапе Wave 1.
+    * ``tier=2`` — custom actions; авто только REST+gRPC+GraphQL.
+    * ``tier=3`` — manual через DSL invoke (e.g. RPA-цепочки, человекочные).
+
+    При ``tier=1`` и пустом ``action_id`` :py:meth:`__post_init__`
+    автоматически инферрит идентификатор по конвенции
+    ``"<resource>.<verb>"`` (resource — последнее имя в path
+    после ``/api/v1/``; verb — `list`/`get`/`create`/`update`/`delete`
+    по HTTP method и path-suffix).
     """
 
     name: str
@@ -90,6 +104,54 @@ class ActionSpec:
     timeout_ms: int | None = None
     deprecated: bool = False
     since_version: str | None = None
+    # Wave F.8: 3-tier модель. Default — 2 (custom action).
+    tier: Literal[1, 2, 3] = 2
+
+    def __post_init__(self) -> None:
+        """Wave F.8: для Tier 1 без явного ``action_id`` инферрим из path/method."""
+        if self.tier == 1 and not self.action_id:
+            self.action_id = _infer_tier1_action_id(self.path, self.method)
+
+
+def _infer_tier1_action_id(path: str, method: HttpMethod) -> str:
+    """Инференция ``action_id`` для Tier 1 actions по REST-конвенции.
+
+    Алгоритм::
+
+        /api/v1/orders/all/                   GET    → "orders.list"
+        /api/v1/orders/id/{object_id}         GET    → "orders.get"
+        /api/v1/orders/create/                POST   → "orders.create"
+        /api/v1/orders/update/{object_id}     PUT    → "orders.update"
+        /api/v1/orders/delete/{object_id}     DELETE → "orders.delete"
+
+    Если path не вписывается в шаблон — берётся последний значимый сегмент
+    как resource + verb по HTTP method.
+    """
+    segments = [s for s in path.split("/") if s and not s.startswith("{")]
+    resource = segments[-1] if segments else "unknown"
+    if "api" in segments and "v1" in segments:
+        # Берём первый сегмент после api/v1 как resource.
+        idx = segments.index("v1")
+        if idx + 1 < len(segments):
+            resource = segments[idx + 1]
+
+    suffix = path.rstrip("/").rsplit("/", 1)[-1].lower()
+    method_upper = method.upper()
+    verb: str
+    if method_upper == "GET":
+        verb = "list" if suffix in {"all", "filter"} else "get"
+    elif method_upper == "POST":
+        if suffix in {"create_many"}:
+            verb = "create_many"
+        else:
+            verb = "create"
+    elif method_upper in {"PUT", "PATCH"}:
+        verb = "update"
+    elif method_upper == "DELETE":
+        verb = "delete"
+    else:
+        verb = method_upper.lower()
+    return f"{resource}.{verb}"
 
 
 @dataclass(slots=True)
