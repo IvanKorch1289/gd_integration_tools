@@ -1,9 +1,16 @@
-"""Wiring W26.4: MinIO/S3 → LocalFS.
+"""Wiring W26.4: MinIO/S3 → LocalFS (Wave F.5a/b: contract fix + factory).
 
 Контракт callable: ``async def storage_get(key: str) -> bytes``.
 
 Only-read операция. Write идёт в primary; LocalFS-fallback хранит
 кэш-копии прочитанных файлов (best-effort).
+
+Wave F.5a: ранее использовались устаревшие имена ``LocalFsObjectStorage``
+и метод ``.get()`` — реальный ABC :class:`ObjectStorage` определяет
+``download()``, а реализация называется :class:`LocalFSStorage`. Это
+делало chain неработающим. Сейчас всё идёт через
+:func:`infrastructure.storage.factory.get_object_storage` /
+:func:`get_local_fs_storage`.
 """
 
 from __future__ import annotations
@@ -22,36 +29,24 @@ logger = logging.getLogger(__name__)
 StorageGetCallable = Callable[[str], Awaitable[bytes]]
 
 
-async def _minio_get(key: str) -> bytes:
+async def _primary_get(key: str) -> bytes:
+    """Чтение через primary backend (S3/MinIO либо LocalFS-fallback)."""
     from src.infrastructure.storage.factory import get_object_storage
 
-    backend = get_object_storage()  # primary через factory (S3/MinIO)
-    return await backend.get(key)
+    backend = get_object_storage()
+    return await backend.download(key)
 
 
 async def _local_fs_get(key: str) -> bytes:
-    from src.infrastructure.storage.local_fs import LocalFsObjectStorage
+    """Чтение через LocalFS-fallback (W26.4)."""
+    from src.infrastructure.storage.factory import get_local_fs_storage
 
-    backend: LocalFsObjectStorage = _local_fs_singleton()
-    return await backend.get(key)
-
-
-_local_fs_backend = None
-
-
-def _local_fs_singleton():
-    global _local_fs_backend
-    if _local_fs_backend is None:
-        from pathlib import Path
-
-        from src.infrastructure.storage.local_fs import LocalFsObjectStorage
-
-        _local_fs_backend = LocalFsObjectStorage(base_path=Path("var/storage"))
-    return _local_fs_backend
+    backend = get_local_fs_storage()
+    return await backend.download(key)
 
 
 def build_object_storage_primary() -> StorageGetCallable:
-    return _minio_get
+    return _primary_get
 
 
 def build_object_storage_fallbacks() -> dict[str, StorageGetCallable]:
