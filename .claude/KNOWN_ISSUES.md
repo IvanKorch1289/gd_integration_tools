@@ -2,12 +2,12 @@
 
 ## Известные ограничения и quirks
 
-### Wave 26 (Resilient Infrastructure) — открытый техдолг
+### Открытый техдолг (после сессии 2026-05-01)
 
-1. **Chaos-тесты с `testcontainers[toxiproxy]` не реализованы** (W26.3
-   расширение). Smoke-тесты coordinator есть, но автоматических
-   сценариев «kill primary → 200 через fallback» для каждого из 11
-   chain'ов — нет.
+1. **Chaos-тесты с `testcontainers[toxiproxy]`** (Wave 26.3 расширение)
+   — не реализованы. Зависят от Wave 26.8 PG→SQLite snapshot
+   (теперь закрыт), готовы к старту. ~12 тестовых файлов + 2 helper'а
+   ≈ 800-1200 LOC, требует Docker в CI. Эффорт: L (8-20ч).
 
    **Что нужно сделать:**
    - Добавить `testcontainers[toxiproxy]` в dev-deps.
@@ -15,48 +15,24 @@
    - 11 сценариев (по одному на chain): kill / pause / partition.
    - Отдельный CI job (matrix 3-4 jobs).
 
-2. **DSL `CircuitBreakerProcessor` ↔ infra `BreakerRegistry`** — два
-   независимых state-machine. Раздельные метрики, нет агрегации.
-   Унификация: либо DSL делегирует в `breaker_registry`, либо явно
-   разделяется namespace (`pipeline_circuit_state` vs
-   `infra_client_circuit_state`). Документировано в ADR-036, отложено
-   в W27+.
-
-3. **Real background snapshot job для PG → SQLite не реализован**.
-   `database_chain.py::_sqlite_ro_query` ожидает уже существующий
-   `var/db/snapshot.sqlite`. Без incremental-sync fallback вернёт
-   stale-данные. Потребуется: cron-job c `pgcopydb` или ручная
-   `metadata.create_all(sqlite_engine)` + INSERT-на-старте.
-
-4. **SecretsBackend ABC заблокирован permission system** (W24
+2. **SecretsBackend ABC заблокирован permission system** (W24
    deferred). `secrets_chain.py` использует прямой Vault/env+keyring
    без ABC. После разблокировки → переключить на DI.
 
-5. **`make lint-strict` показывает 91 pre-existing ошибку** (S608
-   SQL injection в legacy-коде, S603/S606 в `manage.py`). Не вносить
-   новые S-ошибки в W26.
+3. **`importlib.import_module` как обход AST-линтера** — частично
+   снято в Wave 6.1 module-registry (единый реестр в
+   `core/di/module_registry.py`), но dynamic-resolution всё ещё не
+   виден IDE refactor. Возможная будущая итерация —
+   `importlib_metadata` plugin entrypoints.
 
-### Wave 6 — открытый техдолг (post-finalize)
+4. **Pre-existing блокер `psycopg2 ModuleNotFoundError` в dev_light**
+   (`setup_admin()`). До Wave 6.1 проявлялся на module level, теперь
+   в `create_app()`. Лечится conditional skip `setup_admin` в
+   dev_light или установкой psycopg2 в окружении.
 
-1. **Eager module-level singletons в `infrastructure/*`**. Несколько
-   модулей (`smtp_client`, `redis_client`, `app_logger`, ...) создают
-   global instance на этапе import. DI-провайдеры это скрывают от
-   services/entrypoints, но сами синглтоны остаются eager — мешают
-   тестам и dev_light-профилю без полной инфры. Решение: lazy-init
-   через `lru_cache(maxsize=1)` или DI-контейнер с lifecycle.
-
-2. **Lifecycle reorder для `_app_ref`** (`core/di/app_state.py`).
-   `set_app_ref(app)` вызывается из `plugins/composition/di.py`
-   на этапе wiring; некоторые провайдеры могут резолвиться раньше
-   и получить `None`. Нужен явный startup-hook + assert на
-   `get_app_ref() is not None` в "горячих" провайдерах.
-
-3. **`importlib.import_module` как обход AST-линтера**
-   (Wave 6 finalize). Это рабочая, но "тёмная" инверсия — IDE
-   refactor (rename) не видит таких импортов. Обновлять имена
-   нужно вручную в `_INFRA = "src." + "infrastructure"` константах.
-   Альтернатива на будущее: ввести явный реестр модулей в
-   `core/di/providers.py` (одно место для всех `_INFRA_*` строк).
+5. **`make lint-strict`: 39 non-S ошибок** (E402, F821, E741, F401,
+   F841) — pre-existing, вне scope Wave 26.6. Отдельная задача
+   (Wave 26.6 расширение).
 
 ### Закрытые техдолги Wave 26
 
@@ -98,6 +74,41 @@
   актуализировано: 2 stale удалены, 3 design-нарушения W26
   (`health.py`/`degradation.py` → `infrastructure.resilience.*`)
   зафиксированы по ADR-036.
+
+- ~~**Wave 6 post-finalize: eager singletons (31 шт)**~~,
+  ~~**lifecycle `_app_ref`**~~, ~~**importlib registry**~~.
+  **Закрыто 2026-05-01** (commits `Wave-6.1/_app_ref-hardening`,
+  `Wave-6.1/module-registry`, `Wave-6.1/eager-singletons`).
+  - `_app_ref` теперь имеет `require_app_ref()` (strict),
+    `reset_app_state()` (для тестов), warning при двойном
+    `set_app_ref()` без сброса. `_DECORATOR_CACHES` registry
+    очищается при reset.
+  - `core/di/module_registry.py` — единый реестр 45 infra-модулей с
+    namespace-prefix (`app.*`, `clients.*`, `repos.*`, ...).
+    `resolve_module(key)` + `validate_modules()` (find_spec без
+    import) + `ModuleRegistryError`. 7 unit-тестов.
+  - 31 module-level eager singleton переведён на lazy: 13 services
+    через `app_state_singleton`, 16 infrastructure через
+    `lru_cache(maxsize=1)` + module `__getattr__` shim для
+    backward compat. Bonus: 3 ещё не упомянутых singleton'а
+    (s3_client, route_limiting, _export_facade).
+
+- ~~**Wave 26 закрытый техдолг: CircuitBreaker унификация**~~,
+  ~~**lint-strict S-errors**~~, ~~**PG→SQLite snapshot job**~~.
+  **Закрыто 2026-05-01** (commits `Wave-26.6/lint-strict`,
+  `Wave-26.7/circuit-breaker-unification`,
+  `Wave-26.8/pg-sqlite-snapshot`).
+  - DSL `CircuitBreakerProcessor` теперь делегирует в общий
+    `breaker_registry` (purgatory-based). Namespace `dsl.pipeline.<id>`
+    (host="dsl"). Метрика `infra_client_circuit_state` покрывает
+    DSL-breakers. ADR-036 обновлён.
+  - 59 S-ошибок устранены (39 noqa с обоснованием + 19 fix через
+    `logger.debug` + 3 точечных fix). `ruff check --select S` clean.
+  - Background snapshot job: `infrastructure/resilience/snapshot_job.py`
+    через SQLAlchemy + APScheduler (`IntervalTrigger`, default 10 min).
+    Метрики Prometheus (`snapshot_age_seconds`, `snapshot_rows_total`,
+    `snapshot_sync_duration_seconds`, `snapshot_sync_errors_total`,
+    `db_fallback_used_with_stale_snapshot_total`). ADR-037.
 
 - ~~**Wave 6 — Layer-violations baseline (135 entries)**.~~
   **Закрыто 2026-05-01** (commits `Wave-6.0..6.5b` + finalize).
