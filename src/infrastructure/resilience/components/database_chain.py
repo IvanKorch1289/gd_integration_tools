@@ -57,10 +57,66 @@ def _get_sqlite_engine():
     return _sqlite_engine
 
 
+_stale_warning_counter: Any = None
+
+
+def _ensure_stale_metric() -> None:
+    """Lazy-init Prometheus-counter'а stale-fallback'ов."""
+    global _stale_warning_counter
+    if _stale_warning_counter is not None:
+        return
+    try:
+        from prometheus_client import Counter
+
+        _stale_warning_counter = Counter(
+            "db_fallback_used_with_stale_snapshot_total",
+            "Times db_main fallback returned data from a stale snapshot",
+        )
+    except ImportError:
+        return
+
+
+def _check_snapshot_freshness() -> None:
+    """Логирует degraded-confidence, если snapshot устарел.
+
+    Не блокирует запрос: при stale-snapshot'е fallback всё равно
+    возвращает данные (лучше stale, чем 503). Но операторы должны
+    видеть ситуацию — поэтому warning + Prometheus counter.
+    """
+    try:
+        from src.core.config.settings import settings
+        from src.infrastructure.resilience.snapshot_job import (
+            get_snapshot_age_seconds,
+            is_snapshot_fresh,
+        )
+
+        threshold = settings.snapshot.fresh_threshold_seconds
+        if is_snapshot_fresh(threshold):
+            return
+
+        age = get_snapshot_age_seconds()
+        age_repr = f"{age:.0f}s" if age is not None else "never"
+        logger.warning(
+            "STALE snapshot, returning anyway with degraded confidence "
+            "(age=%s, threshold=%ds)",
+            age_repr,
+            threshold,
+        )
+        _ensure_stale_metric()
+        if _stale_warning_counter is not None:
+            _stale_warning_counter.inc()
+    except Exception as exc:  # noqa: BLE001
+        # Snapshot-job или метрики могут быть недоступны (dev_light/тесты);
+        # не ломаем fallback из-за вспомогательной телеметрии.
+        logger.debug("Snapshot freshness check skipped: %s", exc)
+
+
 async def _sqlite_ro_query(
     sql: str, params: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
     from sqlalchemy import text
+
+    _check_snapshot_freshness()
 
     engine = _get_sqlite_engine()
     async with engine.connect() as conn:

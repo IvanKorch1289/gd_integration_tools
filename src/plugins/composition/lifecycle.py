@@ -235,6 +235,44 @@ def _validate_cache_layers() -> None:
     )
 
 
+def _bootstrap_snapshot_job(app: FastAPI) -> None:
+    """W26.8 — initial PG → SQLite sync + регистрация interval-job'а.
+
+    Initial sync необходим для холодного старта (snapshot-файл ещё
+    отсутствует), interval-job — для последующего регулярного refresh'а.
+    Оба шага опциональны: ошибки не блокируют startup (fallback продолжит
+    работать на устаревшем файле; alert придёт через метрику
+    ``snapshot_age_seconds``).
+    """
+    try:
+        from src.core.config.settings import settings as app_settings
+
+        if not app_settings.snapshot.enabled:
+            app_logger.info(
+                "Snapshot job отключён (snapshot.enabled=false), пропуск bootstrap"
+            )
+            return
+
+        from src.infrastructure.resilience.snapshot_job import (
+            register_snapshot_job,
+            run_snapshot_now,
+        )
+        from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+
+        if app_settings.snapshot.run_on_startup:
+            try:
+                run_snapshot_now()
+            except Exception as exc:  # noqa: BLE001
+                app_logger.warning(
+                    "Initial PG → SQLite snapshot failed (продолжаем с stale-файлом): %s",
+                    exc,
+                )
+
+        register_snapshot_job(scheduler_manager.scheduler)
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("Snapshot job bootstrap skipped: %s", exc)
+
+
 def _bootstrap_resilience_coordinator(app: FastAPI) -> None:
     """W26.1/W26.2 — регистрирует 11 компонентов в ``ResilienceCoordinator``
     и подключает их к ``HealthAggregator``.
@@ -324,6 +362,7 @@ async def lifespan(app: FastAPI):
         register_action_handlers()
         register_dsl_routes()
         _bootstrap_resilience_coordinator(app)
+        _bootstrap_snapshot_job(app)
         await _start_dsl_yaml_watcher(app)
         await starting()
         await _register_protocol_providers()

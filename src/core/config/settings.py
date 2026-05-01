@@ -47,6 +47,7 @@ from src.core.config.services import (
     QueueSettings,
     RedisSettings,
     ResilienceSettings,
+    SnapshotSettings,
     TasksSettings,
     WatermarkSettings,
     cache_settings,
@@ -57,6 +58,7 @@ from src.core.config.services import (
     queue_settings,
     redis_settings,
     resilience_settings,
+    snapshot_settings,
     tasks_settings,
     watermark_settings,
 )
@@ -119,6 +121,9 @@ class Settings(BaseSettings):
 
     # Устойчивая инфраструктура (W26): per-service breaker-профили + fallback-политики
     resilience: ResilienceSettings = resilience_settings
+
+    # PG → SQLite snapshot job (W26.8): incremental sync для resilience-fallback
+    snapshot: SnapshotSettings = snapshot_settings
 
 
 @lru_cache()

@@ -455,6 +455,31 @@ telegram:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# snapshot — Wave W26.8: PG → SQLite incremental sync для resilience-fallback
+#
+# Job периодически реплицирует read-only critical таблицы из PostgreSQL
+# в локальный SQLite-файл (var/db/snapshot.sqlite). При OPEN-breaker'е
+# компонента db_main ResilienceCoordinator переключается на этот snapshot
+# (см. database_chain.py::_sqlite_ro_query).
+#
+# В dev_light snapshot отключается (там SQLite — primary).
+# Подробности: ADR-037-pg-sqlite-snapshot.md.
+# ──────────────────────────────────────────────────────────────────────
+snapshot:
+  enabled: true
+  interval_minutes: 10
+  fresh_threshold_seconds: 1800
+  target_path: "var/db/snapshot.sqlite"
+  run_on_startup: true
+  tables:
+    - orderkinds          # lookup-таблица, должна реплицироваться первой
+    - users
+    - orders
+    - certs
+    - cert_history
+
+
+# ──────────────────────────────────────────────────────────────────────
 # resilience — Wave W26: per-service breaker-профили + fallback-политики
 #
 # breakers.<component>:

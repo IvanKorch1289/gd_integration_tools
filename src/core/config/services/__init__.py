@@ -20,6 +20,7 @@ from src.core.config.services.resilience import (
     ResilienceSettings,
     resilience_settings,
 )
+from src.core.config.services.snapshot import SnapshotSettings, snapshot_settings
 from src.core.config.services.storage import FileStorageSettings, fs_settings
 from src.core.config.services.watermark import WatermarkSettings, watermark_settings
 
@@ -46,4 +47,6 @@ __all__ = (
     "FallbackPolicy",
     "ResilienceSettings",
     "resilience_settings",
+    "SnapshotSettings",
+    "snapshot_settings",
 )

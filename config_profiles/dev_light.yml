@@ -152,3 +152,8 @@ clickhouse:
 # W26: в dev_light все fallback'ы forced — primary-backend'ы не поднимаются.
 resilience:
   fallback_mode_override: "forced"
+
+
+# W26.8: dev_light использует SQLite как primary — snapshot job не нужен.
+snapshot:
+  enabled: false
