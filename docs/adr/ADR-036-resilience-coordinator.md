@@ -92,9 +92,17 @@ ABC в `core/interfaces/` намеренно НЕ создаётся: единс
 
 ### Отрицательные
 
-- DSL `CircuitBreakerProcessor` (pipeline-level) и infra
+- ~~DSL `CircuitBreakerProcessor` (pipeline-level) и infra
   `BreakerRegistry` (client-level) — два независимых state-machine.
-  Унификация — отдельная задача (W27+).
+  Унификация — отдельная задача (W27+).~~ **Закрыто в Wave 26.7.**
+  *Resolution:* DSL `CircuitBreakerProcessor` делегирует state-machine
+  в shared `breaker_registry` (purgatory). Локальные `_state` /
+  `_failure_count` / `_last_failure_time` / `asyncio.Lock` удалены;
+  имя breaker'а — `dsl.pipeline.<route_id>` (host-label `dsl`),
+  что разделяет namespace с infra-breaker'ами (`<client>@<host>`).
+  Метрика `infra_client_circuit_state{client,host}` публикуется в
+  Prometheus автоматически — DSL-breakers теперь видны в `/metrics` и
+  доступны `HealthAggregator` через `breaker_registry.list_states()`.
 - SecretsBackend ABC заблокирован permission system (W24 deferred);
   реализован обходной путь Vault → env+keyring без ABC. После
   разблокировки переключить на DI.

@@ -541,14 +541,22 @@ class RouteBuilder:
         failure_threshold: int = 5,
         recovery_timeout: float = 30.0,
         fallback_processors: list[BaseProcessor] | None = None,
+        breaker_name: str | None = None,
     ) -> "RouteBuilder":
-        """Camel Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN)."""
+        """Camel Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN).
+
+        Wave 26.7: state-machine делегируется в shared ``breaker_registry``;
+        ``breaker_name`` опционально переопределяет имя (по умолчанию —
+        ``dsl.pipeline.<route_id>``), чтобы шарить один breaker между
+        несколькими процессорами одного маршрута.
+        """
         return self._add(
             CircuitBreakerProcessor(
                 processors=processors,
                 failure_threshold=failure_threshold,
                 recovery_timeout=recovery_timeout,
                 fallback_processors=fallback_processors,
+                breaker_name=breaker_name,
             )
         )
 

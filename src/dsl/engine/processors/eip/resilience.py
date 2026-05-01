@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 from typing import Any
 
 import orjson
@@ -117,12 +116,29 @@ class FallbackChainProcessor(BaseProcessor):
         exchange.fail(f"All fallbacks exhausted. Last error: {last_error}")
 
 
+class _SubPipelineFailure(Exception):
+    """Внутренний сигнал: sub-pipeline завершился со статусом ``failed``.
+
+    Поднимается внутри ``guard()`` purgatory-breaker'а, чтобы failure-counter
+    зафиксировал отказ. Наружу из ``CircuitBreakerProcessor.process`` не
+    пробрасывается — обрабатывается локально.
+    """
+
+
 class CircuitBreakerProcessor(BaseProcessor):
     """Camel Circuit Breaker EIP — fail-fast pattern inside DSL pipeline.
 
-    Wraps sub-processors with CLOSED → OPEN → HALF_OPEN state machine.
-    When open, immediately routes to fallback or fails.
+    Wave 26.7: делегирует state-machine в общий ``breaker_registry``
+    (purgatory-based). Метрика ``infra_client_circuit_state`` публикуется
+    автоматически. Локальное состояние не хранится — единый источник
+    правды на процесс.
+
+    Namespace в имени breaker'а:
+        ``dsl.pipeline.<route_id>`` — если ``name`` не задан явно;
+        ``dsl.<custom>`` — если передан ``name``.
     """
+
+    _DSL_NAMESPACE = "dsl.pipeline"
 
     def __init__(
         self,
@@ -133,60 +149,69 @@ class CircuitBreakerProcessor(BaseProcessor):
         half_open_max: int = 1,
         fallback_processors: list[BaseProcessor] | None = None,
         name: str | None = None,
+        breaker_name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"circuit_breaker(threshold={failure_threshold})")
         self._processors = processors
         self._fallback = fallback_processors or []
         self._threshold = failure_threshold
         self._recovery_timeout = recovery_timeout
+        # half_open_max — параметр оставлен в публичной сигнатуре для
+        # обратной совместимости; purgatory сам управляет half-open
+        # пропуском (single trial), поэтому значение в делегированном
+        # режиме не используется.
         self._half_open_max = half_open_max
-        self._failure_count = 0
-        self._state = "closed"
-        self._last_failure_time = 0.0
-        self._half_open_calls = 0
-        self._lock = asyncio.Lock()
+        self._breaker_name_override = breaker_name
 
-    def _check_state(self) -> str:
-        if self._state == "open":
-            if time.monotonic() - self._last_failure_time >= self._recovery_timeout:
-                self._state = "half_open"
-                self._half_open_calls = 0
-        return self._state
+    def _resolve_breaker_name(self, exchange: Exchange[Any]) -> str:
+        """Сформировать имя breaker'а с DSL-namespace."""
+        if self._breaker_name_override:
+            return self._breaker_name_override
+        route_id = exchange.meta.route_id or "_anonymous"
+        return f"{self._DSL_NAMESPACE}.{route_id}"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from src.dsl.engine.processors.base import run_sub_processors
+        from src.infrastructure.resilience.breaker import (
+            BreakerSpec,
+            CircuitOpen,
+            breaker_registry,
+        )
 
-        async with self._lock:
-            state = self._check_state()
+        breaker_name = self._resolve_breaker_name(exchange)
+        breaker = breaker_registry.get_or_create(
+            breaker_name,
+            BreakerSpec(
+                failure_threshold=self._threshold,
+                recovery_timeout=self._recovery_timeout,
+            ),
+            host="dsl",
+        )
 
-            if state == "open":
-                if self._fallback:
-                    exchange.set_property("cb_state", "open_fallback")
-                    await run_sub_processors(self._fallback, exchange, context)
-                    return
-                exchange.fail("Circuit breaker is OPEN")
+        try:
+            async with breaker.guard():
+                await run_sub_processors(self._processors, exchange, context)
+                if exchange.status == ExchangeStatus.failed:
+                    # Сигнализируем purgatory о неуспехе через исключение,
+                    # чтобы failure-counter инкрементился корректно.
+                    raise _SubPipelineFailure(exchange.error or "sub-pipeline failed")
+        except CircuitOpen:
+            if self._fallback:
+                exchange.status = ExchangeStatus.processing
+                exchange.error = None
+                exchange.set_property("cb_state", "open_fallback")
+                await run_sub_processors(self._fallback, exchange, context)
                 return
+            exchange.fail("Circuit breaker is OPEN")
+            exchange.set_property("cb_state", "open")
+            return
+        except _SubPipelineFailure:
+            # Sub-pipeline уже выставил ``exchange.fail(...)`` — не
+            # перезаписываем error. purgatory зафиксировал failure.
+            exchange.set_property("cb_state", breaker.state)
+            return
 
-            if state == "half_open":
-                self._half_open_calls += 1
-                if self._half_open_calls > self._half_open_max:
-                    exchange.fail("Circuit breaker HALF_OPEN: max calls exceeded")
-                    return
-
-        await run_sub_processors(self._processors, exchange, context)
-
-        async with self._lock:
-            if exchange.status == ExchangeStatus.failed:
-                self._failure_count += 1
-                self._last_failure_time = time.monotonic()
-                if self._failure_count >= self._threshold:
-                    self._state = "open"
-                exchange.set_property("cb_state", self._state)
-            else:
-                if self._state == "half_open":
-                    self._state = "closed"
-                self._failure_count = 0
-                exchange.set_property("cb_state", self._state)
+        exchange.set_property("cb_state", breaker.state)
 
 
 class TimeoutProcessor(BaseProcessor):
