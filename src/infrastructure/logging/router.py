@@ -40,6 +40,8 @@ __all__ = (
     "build_sinks_for_profile",
     "configure_router",
     "get_router",
+    "is_router_configured",
+    "reset_router",
     "route_to_sinks",
 )
 
@@ -168,13 +170,38 @@ def configure_router(
 
 
 def get_router() -> SinkRouter:
-    """Получить (или лениво создать) глобальный :class:`SinkRouter`."""
+    """Получить (или лениво создать) глобальный :class:`SinkRouter`.
+
+    Если router ещё не инициализирован явно через :func:`configure_router`,
+    создаёт его на основе активного профиля окружения. Безопасен для
+    использования в structlog-processor'ах в pre-init контексте.
+    """
     global _router
     if _router is None:
         with _router_lock:
             if _router is None:
                 _router = SinkRouter(build_sinks_for_profile())
     return _router
+
+
+def is_router_configured() -> bool:
+    """Возвращает ``True``, если глобальный :class:`SinkRouter` уже инициализирован.
+
+    Используется в :func:`route_to_sinks`, чтобы избежать ленивого
+    создания router'а в pre-init и тестовых контекстах: до явного
+    вызова :func:`configure_router` processor работает как no-op.
+    """
+    return _router is not None
+
+
+def reset_router() -> None:
+    """Сбросить глобальный :class:`SinkRouter` (для тестов).
+
+    Не вызывает ``aclose`` — это ответственность вызывающего кода.
+    """
+    global _router
+    with _router_lock:
+        _router = None
 
 
 # ---------------------------------------------------------------------- structlog processor
@@ -199,7 +226,14 @@ def route_to_sinks(
 
     Processor возвращает ``event_dict`` без изменений — он не должен
     мешать дальнейшему рендерингу.
+
+    Если глобальный router ещё не инициализирован явно через
+    :func:`configure_router` — processor работает как no-op
+    (избегаем ленивого spawn'а sink-ов и dispatch-потоков в pre-init
+    и тестовых контекстах).
     """
+    if not is_router_configured():
+        return event_dict
     router = get_router()
     snapshot = dict(event_dict)
     try:

@@ -10,6 +10,8 @@ from __future__ import annotations
 from src.infrastructure.logging.factory import (
     configure_logging,
     get_logger,
+    init_log_sinks,
+    shutdown_log_sinks,
     shutdown_logging,
 )
 from src.infrastructure.logging.router import (
@@ -17,6 +19,8 @@ from src.infrastructure.logging.router import (
     build_sinks_for_profile,
     configure_router,
     get_router,
+    is_router_configured,
+    reset_router,
     route_to_sinks,
 )
 
@@ -27,6 +31,10 @@ __all__ = (
     "configure_router",
     "get_logger",
     "get_router",
+    "init_log_sinks",
+    "is_router_configured",
+    "reset_router",
     "route_to_sinks",
+    "shutdown_log_sinks",
     "shutdown_logging",
 )

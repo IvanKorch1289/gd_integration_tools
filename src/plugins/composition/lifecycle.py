@@ -355,6 +355,21 @@ async def lifespan(app: FastAPI):
     try:
         from src.plugins.composition.di import register_app_state
 
+        # Wave 2.5: инициализация LogSink-стека (router + sinks по профилю)
+        # должна произойти ДО регистрации сервисов, чтобы их startup-логи
+        # уже доезжали до sink-ов (Console JSON / Disk Rotating / Graylog).
+        # Падение инициализации не должно блокировать старт — приложение
+        # продолжит работать с legacy stdlib-логированием.
+        try:
+            from src.infrastructure.logging import init_log_sinks
+
+            init_log_sinks()
+        except Exception as log_exc:  # noqa: BLE001
+            app_logger.warning(
+                "LogSink router init skipped: %s (приложение продолжит на stdlib-логах)",
+                log_exc,
+            )
+
         register_app_state(app)
         _register_storage_singletons(app)
 
@@ -427,3 +442,13 @@ async def lifespan(app: FastAPI):
             )
 
         app_logger.info("Приложение остановлено")
+
+        # Wave 2.5: финальный flush + close всех LogSink-ов. Делается
+        # после ``ending()`` и финального лога, чтобы зафиксировать в
+        # sink-ах все события штатной остановки.
+        try:
+            from src.infrastructure.logging import shutdown_log_sinks
+
+            await shutdown_log_sinks()
+        except Exception as sink_exc:  # noqa: BLE001
+            app_logger.warning("LogSink shutdown error: %s", sink_exc)

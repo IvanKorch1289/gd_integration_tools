@@ -167,7 +167,17 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                 pass
             return event_dict
 
-        # Structlog pipeline
+        # Structlog pipeline.
+        #
+        # Wave 2.5 (Roadmap V10): после всех обогащающих processor'ов и
+        # ДО ``wrap_for_formatter`` подключаем :func:`route_to_sinks`.
+        # Sinks получают финальный обогащённый event_dict (с timestamp,
+        # log_level, correlation_id, …) и сами решают, как сериализовать
+        # его в свой транспорт. Если глобальный :class:`SinkRouter`
+        # ещё не инициализирован, ``route_to_sinks`` работает как no-op
+        # (см. :func:`is_router_configured`).
+        from src.infrastructure.logging.router import route_to_sinks
+
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,
             _inject_correlation,
@@ -177,6 +187,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.UnicodeDecoder(),
+            route_to_sinks,
         ]
 
         if debug:
