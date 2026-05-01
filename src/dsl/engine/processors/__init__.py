@@ -52,6 +52,7 @@ from src.dsl.engine.processors.components import (
     S3WriteProcessor,
     TimerProcessor,
 )
+from src.dsl.engine.processors.composed_message import ComposedMessageProcessor
 from src.dsl.engine.processors.control_flow import (
     ChoiceBranch,
     ChoiceProcessor,
@@ -73,6 +74,7 @@ from src.dsl.engine.processors.core import (
     TransformProcessor,
     ValidateProcessor,
 )
+from src.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
 from src.dsl.engine.processors.eip import (
     AggregatorProcessor,
     CircuitBreakerProcessor,
@@ -267,6 +269,8 @@ __all__ = (
     "TimerProcessor",
     "PollingConsumerProcessor",
     "ConvertProcessor",
+    "ComposedMessageProcessor",
+    "ExternalDbQueryProcessor",
     "ScrapeProcessor",
     "PaginateProcessor",
     "ApiProxyProcessor",
