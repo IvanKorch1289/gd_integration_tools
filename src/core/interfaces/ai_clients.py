@@ -125,9 +125,7 @@ class RedisStreamClientProtocol(Protocol):
     (singleton ``redis_client``).
     """
 
-    async def add_to_stream(
-        self, stream_name: str, data: dict[str, Any]
-    ) -> Any: ...
+    async def add_to_stream(self, stream_name: str, data: dict[str, Any]) -> Any: ...
 
     async def read_stream(
         self, stream_name: str, count: int = 50
@@ -142,10 +140,5 @@ class LLMJudgeMetricsProtocol(Protocol):
     """
 
     def __call__(
-        self,
-        *,
-        model: str,
-        hallucination: float,
-        relevance: float,
-        toxicity: float,
+        self, *, model: str, hallucination: float, relevance: float, toxicity: float
     ) -> None: ...

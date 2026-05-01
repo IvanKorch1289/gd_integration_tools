@@ -53,10 +53,11 @@ class _AdminConnectorsFacade:
     """
 
     async def list_connectors(self) -> dict[str, Any]:
+        # Wave 6.5a: registry резолвится через core.di.providers (lazy).
         try:
-            from src.infrastructure.registry import ConnectorRegistry
+            from src.core.di.providers import get_connector_registry_provider
 
-            registry = ConnectorRegistry.instance()
+            registry = get_connector_registry_provider()
         except ImportError as exc:
             raise HTTPException(
                 status_code=503, detail=f"registry unavailable: {exc}"
@@ -86,17 +87,19 @@ class _AdminConnectorsFacade:
         return {"total": len(connectors), "connectors": connectors}
 
     async def reload_connector(self, *, name: str) -> dict[str, Any]:
+        # Wave 6.5a: registry + error class — через DI providers.
         try:
-            from src.infrastructure.registry import (
-                ConnectorNotRegisteredError,
-                ConnectorRegistry,
+            from src.core.di.providers import (
+                get_connector_registry_errors_provider,
+                get_connector_registry_provider,
             )
+
+            registry = get_connector_registry_provider()
+            ConnectorNotRegisteredError = get_connector_registry_errors_provider()
         except ImportError as exc:
             raise HTTPException(
                 status_code=503, detail=f"Registry unavailable: {exc}"
             ) from exc
-
-        registry = ConnectorRegistry.instance()
 
         start = time.perf_counter()
         try:
@@ -107,8 +110,7 @@ class _AdminConnectorsFacade:
             ) from None
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(
-                status_code=500,
-                detail=f"Reload failed: {type(exc).__name__}: {exc}",
+                status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}"
             ) from exc
 
         try:
@@ -148,12 +150,14 @@ class _AdminConnectorsFacade:
 
         reload_status: dict[str, Any] = {"attempted": False}
         try:
-            from src.infrastructure.registry import (
-                ConnectorNotRegisteredError,
-                ConnectorRegistry,
+            # Wave 6.5a: registry + error class — через DI providers.
+            from src.core.di.providers import (
+                get_connector_registry_errors_provider,
+                get_connector_registry_provider,
             )
 
-            registry = ConnectorRegistry.instance()
+            registry = get_connector_registry_provider()
+            ConnectorNotRegisteredError = get_connector_registry_errors_provider()
             reload_status["attempted"] = True
             try:
                 duration_ms = await registry.reload(name)
@@ -176,13 +180,16 @@ class _AdminConnectorsFacade:
 
 
 def _resolve_config_store_or_503() -> Any:
-    """Лениво подгружает ``ConnectorConfigStore`` или поднимает 503."""
-    try:
-        from src.infrastructure.repositories.connector_configs_mongo import (
-            get_connector_config_store,
-        )
+    """Lazy резолв ``ConnectorConfigStore`` через DI provider или 503.
 
-        return get_connector_config_store()
+    Wave 6.5a: вместо прямого импорта ``infrastructure.repositories...``
+    используется ``core.di.providers.get_connector_config_store_provider``
+    (paттерн W6.4 — provider уже существует).
+    """
+    try:
+        from src.core.di.providers import get_connector_config_store_provider
+
+        return get_connector_config_store_provider()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
             status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"

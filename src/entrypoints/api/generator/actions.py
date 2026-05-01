@@ -39,15 +39,16 @@ __all__ = ("ActionSpec", "CrudSpec", "ActionRouterBuilder")
 
 
 def _resolve_action_bus_service():
-    """Ленивый импорт action-bus сервиса.
+    """Lazy resolve action-bus сервиса через DI provider.
 
-    Модуль ``src.infrastructure.external_apis.action_bus`` может
-    отсутствовать в усечённой dev_light-сборке; импорт переехал в
-    function-scope, чтобы не блокировать загрузку app_factory.
+    Wave 6.5a: вместо прямого импорта ``infrastructure.external_apis.action_bus``
+    используется ``core.di.providers.get_action_bus_service_provider`` —
+    это сохраняет lazy-семантику (модуль может отсутствовать в
+    усечённой dev_light-сборке) и убирает layer violation.
     """
-    from src.infrastructure.external_apis.action_bus import get_action_bus_service
+    from src.core.di.providers import get_action_bus_service_provider
 
-    return get_action_bus_service()
+    return get_action_bus_service_provider()
 
 
 class ActionRouterBuilder:

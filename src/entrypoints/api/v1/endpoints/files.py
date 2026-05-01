@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
@@ -8,11 +10,6 @@ from src.entrypoints.api.generator.actions import (
     ActionSpec,
     CrudSpec,
 )
-from src.infrastructure.external_apis.antivirus import (
-    AntivirusService,
-    get_antivirus_service_dependency,
-)
-from src.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
 from src.schemas.filter_schemas.files import FileFilter
 from src.schemas.route_schemas.files import (
     FileSchemaIn,
@@ -56,18 +53,22 @@ crud_builder.add_crud_resource(
 
 
 # --- Storage API (storage_router) ---
-# Для storage_router нам нужны инстансы инфраструктурных сервисов.
-# Поскольку ActionSpec ожидает service_getter, создадим фабрики.
+# Wave 6.5a: instances инфраструктурных сервисов резолвятся через
+# core.di.providers (lazy importlib), что снимает entrypoints → infra.
 
 
-def get_s3_service() -> S3Service:
-    # Зависимость возвращает инстанс
-    return next(get_s3_service_dependency())
+def get_s3_service() -> Any:
+    """S3-сервис singleton — через DI provider."""
+    from src.core.di.providers import get_s3_service_provider
+
+    return get_s3_service_provider()
 
 
-def get_av_service() -> AntivirusService:
-    # Зависимость возвращает инстанс
-    return next(get_antivirus_service_dependency())
+def get_av_service() -> Any:
+    """Antivirus-сервис singleton — через DI provider."""
+    from src.core.di.providers import get_antivirus_service_provider
+
+    return get_antivirus_service_provider()
 
 
 # Вспомогательный обработчик (wrapper) для загрузки файла,

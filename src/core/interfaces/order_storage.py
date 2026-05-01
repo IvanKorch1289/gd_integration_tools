@@ -20,10 +20,7 @@ class OrderStorageProtocol(Protocol):
     """S3-подобный сервис для работы с файлами заказов."""
 
     async def upload_file(
-        self,
-        key: str,
-        original_filename: str,
-        content: bytes,
+        self, key: str, original_filename: str, content: bytes
     ) -> Any:
         """Загружает файл в хранилище."""
         ...

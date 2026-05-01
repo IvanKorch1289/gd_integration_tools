@@ -32,9 +32,7 @@ class SLOTrackerProtocol(Protocol):
     Реализация: ``infrastructure.application.slo_tracker.SLOTracker``.
     """
 
-    def record(
-        self, route_id: str, latency_ms: float, is_error: bool = False
-    ) -> None:
+    def record(self, route_id: str, latency_ms: float, is_error: bool = False) -> None:
         """Регистрирует latency-измерение для маршрута."""
         ...
 

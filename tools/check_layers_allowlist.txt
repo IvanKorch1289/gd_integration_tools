@@ -1,21 +1,6 @@
 # Allowlist архитектурных нарушений (Wave 1.3 baseline).
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
-src/entrypoints/api/dependencies/auth.py	entrypoints	src.infrastructure.security.api_key_manager
-src/entrypoints/api/dependencies/auth_selector.py	entrypoints	src.infrastructure.security.api_key_manager
-src/entrypoints/api/generator/actions.py	entrypoints	src.infrastructure.external_apis.action_bus
-src/entrypoints/api/v1/endpoints/admin_connectors.py	entrypoints	src.infrastructure.registry
-src/entrypoints/api/v1/endpoints/admin_connectors.py	entrypoints	src.infrastructure.repositories.connector_configs_mongo
-src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.database.models.workflow_instance
-src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.database.session_manager
-src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.workflow.event_store
-src/entrypoints/api/v1/endpoints/admin_workflows.py	entrypoints	src.infrastructure.workflow.state_store
-src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.antivirus
-src/entrypoints/api/v1/endpoints/files.py	entrypoints	src.infrastructure.external_apis.s3
-src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.application.health_aggregator
-src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.resilience.coordinator
-src/entrypoints/api/v1/endpoints/health.py	entrypoints	src.infrastructure.resilience.health
-src/entrypoints/api/v1/endpoints/tech.py	entrypoints	src.infrastructure.database.model_registry
 src/entrypoints/cdc/cdc_routes.py	entrypoints	src.infrastructure.clients.external.cdc
 src/entrypoints/email/imap_monitor.py	entrypoints	src.infrastructure.application.vault_refresher
 src/entrypoints/express/router.py	entrypoints	src.infrastructure.observability.metrics
@@ -26,14 +11,6 @@ src/entrypoints/grpc/grpc_server.py	entrypoints	src.infrastructure.external_apis
 src/entrypoints/mcp/mcp_server.py	entrypoints	src.infrastructure.application.slo_tracker
 src/entrypoints/mcp/workflow_tools.py	entrypoints	src.infrastructure.database.models.workflow_instance
 src/entrypoints/mcp/workflow_tools.py	entrypoints	src.infrastructure.workflow.state_store
-src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.clients.storage.clickhouse
-src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.clients.storage.redis
-src/entrypoints/middlewares/audit_log.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/entrypoints/middlewares/audit_replay.py	entrypoints	src.infrastructure.clients.storage.redis
-src/entrypoints/middlewares/degradation.py	entrypoints	src.infrastructure.resilience.coordinator
-src/entrypoints/middlewares/request_log.py	entrypoints	src.infrastructure.external_apis.logging_service
-src/entrypoints/middlewares/tenant.py	entrypoints	src.infrastructure.observability.correlation
-src/entrypoints/middlewares/timeout.py	entrypoints	src.infrastructure.external_apis.logging_service
 src/entrypoints/scheduler/invoker_schedule.py	entrypoints	src.infrastructure.scheduler.scheduler_manager
 src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.clients.messaging.stream
 src/entrypoints/stream/invoker_subscribers.py	entrypoints	src.infrastructure.external_apis.logging_service

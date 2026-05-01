@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, File, Header, Query, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from src.core.config.settings import settings
+from src.core.di.providers import get_model_enum_provider
 from src.core.enums.invocation import BrokerKind
 from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from src.entrypoints.api.generator.invocation import (
@@ -19,9 +20,19 @@ from src.entrypoints.api.generator.invocation import (
     InvocationSpec,
     default_payload_factory,
 )
-from src.infrastructure.database.model_registry import get_model_enum
 from src.schemas.base import EmailSchema
 from src.services.core.tech import get_tech_service
+
+
+def get_model_enum() -> Any:
+    """Wave 6.5a: thin-wrapper над DI provider.
+
+    FastAPI ``Depends(get_model_enum)`` ожидает callable с правильной
+    сигнатурой — сохраняем имя для совместимости с старыми вызовами.
+    """
+    factory = get_model_enum_provider()
+    return factory()
+
 
 __all__ = ("router",)
 

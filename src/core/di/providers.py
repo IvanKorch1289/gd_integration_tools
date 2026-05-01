@@ -63,6 +63,37 @@ __all__ = (
     "set_connector_config_store_provider",
     "set_import_gateway_factory_provider",
     "set_file_repo_provider",
+    # Wave 6.5a: entrypoints/api/* → providers
+    "get_api_key_manager_provider",
+    "get_action_bus_service_provider",
+    "get_connector_registry_provider",
+    "get_connector_registry_errors_provider",
+    "get_workflow_event_store_provider",
+    "get_workflow_state_store_provider",
+    "get_workflow_state_row_class_provider",
+    "get_workflow_main_session_provider",
+    "get_workflow_instance_model_provider",
+    "get_workflow_status_enum_provider",
+    "get_s3_service_provider",
+    "get_antivirus_service_provider",
+    "get_resilience_coordinator_provider",
+    "get_resilience_components_report_provider",
+    "get_model_enum_provider",
+    "get_app_logger_provider",
+    "get_correlation_context_setter_provider",
+    "set_api_key_manager_provider",
+    "set_action_bus_service_provider",
+    "set_connector_registry_provider",
+    "set_workflow_event_store_provider",
+    "set_workflow_state_store_provider",
+    "set_workflow_main_session_provider",
+    "set_s3_service_provider",
+    "set_antivirus_service_provider",
+    "set_resilience_coordinator_provider",
+    "set_resilience_components_report_provider",
+    "set_model_enum_provider",
+    "set_app_logger_provider",
+    "set_correlation_context_setter_provider",
 )
 
 
@@ -90,6 +121,22 @@ _RESPONSE_CACHE_MOD = f"{_INFRA}.decorators.caching"
 _CONN_CFG_MOD = f"{_INFRA}.repositories.connector_configs_mongo"
 _FILE_REPO_MOD = f"{_INFRA}.repositories.files"
 _IMPORT_GATEWAY_MOD = f"{_INFRA}.import_gateway"
+
+# Wave 6.5a: entrypoints/api/* и entrypoints/middlewares/*
+_API_KEY_MGR_MOD = f"{_INFRA}.security.api_key_manager"
+_ACTION_BUS_MOD = f"{_INFRA}.external_apis.action_bus"
+_REGISTRY_MOD = f"{_INFRA}.registry"
+_WF_EVENT_STORE_MOD = f"{_INFRA}.workflow.event_store"
+_WF_STATE_STORE_MOD = f"{_INFRA}.workflow.state_store"
+_WF_DB_SESSION_MOD = f"{_INFRA}.database.session_manager"
+_WF_INSTANCE_MODEL_MOD = f"{_INFRA}.database.models.workflow_instance"
+_S3_MOD = f"{_INFRA}.external_apis.s3"
+_ANTIVIRUS_MOD = f"{_INFRA}.external_apis.antivirus"
+_RESILIENCE_COORDINATOR_MOD = f"{_INFRA}.resilience.coordinator"
+_RESILIENCE_HEALTH_MOD = f"{_INFRA}.resilience.health"
+_MODEL_REGISTRY_MOD = f"{_INFRA}.database.model_registry"
+_LOGGING_SERVICE_MOD = f"{_INFRA}.external_apis.logging_service"
+_CORRELATION_MOD = f"{_INFRA}.observability.correlation"
 
 
 # ─────────────── Test/runtime overrides ───────────────
@@ -456,3 +503,243 @@ def get_taskiq_invocation_task_provider() -> Any:
 
 def set_taskiq_invocation_task_provider(factory: Any) -> None:
     _overrides["taskiq_invocation_task"] = factory
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/dependencies — auth ───────────────
+
+
+def get_api_key_manager_provider() -> Any:
+    """Возвращает singleton ``APIKeyManager``.
+
+    Реализация: ``infrastructure.security.api_key_manager.get_api_key_manager``.
+    Используется в ``entrypoints/api/dependencies/{auth,auth_selector}.py``.
+    """
+    if "api_key_manager" in _overrides:
+        return _overrides["api_key_manager"]
+    module = importlib.import_module(_API_KEY_MGR_MOD)
+    return module.get_api_key_manager()
+
+
+def set_api_key_manager_provider(manager: Any) -> None:
+    _overrides["api_key_manager"] = manager
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/generator — action bus ───────────────
+
+
+def get_action_bus_service_provider() -> Any:
+    """Возвращает singleton ``ActionBusService``.
+
+    Реализация: ``infrastructure.external_apis.action_bus.get_action_bus_service``.
+    Модуль может отсутствовать в усечённой dev_light-сборке — провайдер
+    бросает ``ImportError``, вызывающий код обязан его обработать.
+    """
+    if "action_bus_service" in _overrides:
+        return _overrides["action_bus_service"]
+    module = importlib.import_module(_ACTION_BUS_MOD)
+    return module.get_action_bus_service()
+
+
+def set_action_bus_service_provider(service: Any) -> None:
+    _overrides["action_bus_service"] = service
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/v1/endpoints/admin_connectors ───────────────
+
+
+def get_connector_registry_provider() -> Any:
+    """Возвращает singleton ``ConnectorRegistry`` через ``ConnectorRegistry.instance()``."""
+    if "connector_registry" in _overrides:
+        return _overrides["connector_registry"]
+    module = importlib.import_module(_REGISTRY_MOD)
+    return module.ConnectorRegistry.instance()
+
+
+def set_connector_registry_provider(registry: Any) -> None:
+    _overrides["connector_registry"] = registry
+
+
+def get_connector_registry_errors_provider() -> Any:
+    """Возвращает класс исключения ``ConnectorNotRegisteredError``.
+
+    Используется ``admin_connectors.py`` для типизированной обработки ошибок
+    reload без прямого импорта ``infrastructure.registry``.
+    """
+    if "connector_registry_errors" in _overrides:
+        return _overrides["connector_registry_errors"]
+    module = importlib.import_module(_REGISTRY_MOD)
+    return module.ConnectorNotRegisteredError
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/v1/endpoints/admin_workflows ───────────────
+
+
+def get_workflow_event_store_provider() -> Any:
+    """Возвращает класс ``WorkflowEventStore`` (без инстанцирования).
+
+    Реализация: ``infrastructure.workflow.event_store.WorkflowEventStore``.
+    """
+    if "workflow_event_store" in _overrides:
+        return _overrides["workflow_event_store"]
+    module = importlib.import_module(_WF_EVENT_STORE_MOD)
+    return module.WorkflowEventStore
+
+
+def set_workflow_event_store_provider(cls: Any) -> None:
+    _overrides["workflow_event_store"] = cls
+
+
+def get_workflow_state_store_provider() -> Any:
+    """Возвращает класс ``WorkflowInstanceStore`` (без инстанцирования)."""
+    if "workflow_state_store" in _overrides:
+        return _overrides["workflow_state_store"]
+    module = importlib.import_module(_WF_STATE_STORE_MOD)
+    return module.WorkflowInstanceStore
+
+
+def set_workflow_state_store_provider(cls: Any) -> None:
+    _overrides["workflow_state_store"] = cls
+
+
+def get_workflow_state_row_class_provider() -> Any:
+    """Возвращает DTO-класс ``WorkflowInstanceRow`` (для ORM→DTO маппинга)."""
+    if "workflow_state_row_class" in _overrides:
+        return _overrides["workflow_state_row_class"]
+    module = importlib.import_module(_WF_STATE_STORE_MOD)
+    return module.WorkflowInstanceRow
+
+
+def get_workflow_main_session_provider() -> Any:
+    """Возвращает singleton ``main_session_manager`` для админских SQL-запросов."""
+    if "workflow_main_session" in _overrides:
+        return _overrides["workflow_main_session"]
+    module = importlib.import_module(_WF_DB_SESSION_MOD)
+    return module.main_session_manager
+
+
+def set_workflow_main_session_provider(manager: Any) -> None:
+    _overrides["workflow_main_session"] = manager
+
+
+def get_workflow_instance_model_provider() -> Any:
+    """Возвращает ORM-класс ``WorkflowInstance`` для админских фильтров."""
+    if "workflow_instance_model" in _overrides:
+        return _overrides["workflow_instance_model"]
+    module = importlib.import_module(_WF_INSTANCE_MODEL_MOD)
+    return module.WorkflowInstance
+
+
+def get_workflow_status_enum_provider() -> Any:
+    """Возвращает enum ``WorkflowStatus`` (pending/running/succeeded/...)."""
+    if "workflow_status_enum" in _overrides:
+        return _overrides["workflow_status_enum"]
+    module = importlib.import_module(_WF_INSTANCE_MODEL_MOD)
+    return module.WorkflowStatus
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/v1/endpoints/files — S3 / antivirus ───────────────
+
+
+def get_s3_service_provider() -> Any:
+    """Возвращает singleton ``S3Service`` (см. ``S3Protocol``)."""
+    if "s3_service" in _overrides:
+        return _overrides["s3_service"]
+    module = importlib.import_module(_S3_MOD)
+    return module.get_s3_service_dependency()
+
+
+def set_s3_service_provider(service: Any) -> None:
+    _overrides["s3_service"] = service
+
+
+def get_antivirus_service_provider() -> Any:
+    """Возвращает singleton ``AntivirusService``."""
+    if "antivirus_service" in _overrides:
+        return _overrides["antivirus_service"]
+    module = importlib.import_module(_ANTIVIRUS_MOD)
+    return module.get_antivirus_service_dependency()
+
+
+def set_antivirus_service_provider(service: Any) -> None:
+    _overrides["antivirus_service"] = service
+
+
+# ─────────────── Wave 6.5a: entrypoints/middlewares + health — resilience ───────────────
+
+
+def get_resilience_coordinator_provider() -> Any:
+    """Возвращает singleton ``ResilienceCoordinator``.
+
+    Реализация: ``infrastructure.resilience.coordinator.get_resilience_coordinator``.
+    """
+    if "resilience_coordinator" in _overrides:
+        return _overrides["resilience_coordinator"]
+    module = importlib.import_module(_RESILIENCE_COORDINATOR_MOD)
+    return module.get_resilience_coordinator()
+
+
+def set_resilience_coordinator_provider(coordinator: Any) -> None:
+    _overrides["resilience_coordinator"] = coordinator
+
+
+def get_resilience_components_report_provider() -> Any:
+    """Возвращает callable ``resilience_components_report`` для health/components."""
+    if "resilience_components_report" in _overrides:
+        return _overrides["resilience_components_report"]
+    module = importlib.import_module(_RESILIENCE_HEALTH_MOD)
+    return module.resilience_components_report
+
+
+def set_resilience_components_report_provider(callable_: Any) -> None:
+    _overrides["resilience_components_report"] = callable_
+
+
+# ─────────────── Wave 6.5a: entrypoints/api/v1/endpoints/tech — model_enum ───────────────
+
+
+def get_model_enum_provider() -> Any:
+    """Возвращает callable ``get_model_enum`` (Enum-фабрика SQLA-моделей)."""
+    if "model_enum" in _overrides:
+        return _overrides["model_enum"]
+    module = importlib.import_module(_MODEL_REGISTRY_MOD)
+    return module.get_model_enum
+
+
+def set_model_enum_provider(callable_: Any) -> None:
+    _overrides["model_enum"] = callable_
+
+
+# ─────────────── Wave 6.5a: entrypoints/middlewares — app_logger ───────────────
+
+
+def get_app_logger_provider() -> Any:
+    """Возвращает singleton ``app_logger`` (структурированный logger).
+
+    Используется в audit_log / request_log / timeout middlewares.
+    """
+    if "app_logger" in _overrides:
+        return _overrides["app_logger"]
+    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    return module.app_logger
+
+
+def set_app_logger_provider(logger: Any) -> None:
+    _overrides["app_logger"] = logger
+
+
+# ─────────────── Wave 6.5a: entrypoints/middlewares — correlation context ───────────────
+
+
+def get_correlation_context_setter_provider() -> Any:
+    """Возвращает callable ``set_correlation_context`` (contextvar-setter).
+
+    Используется в TenantMiddleware для передачи tenant_id в logging-контекст.
+    """
+    if "correlation_context_setter" in _overrides:
+        return _overrides["correlation_context_setter"]
+    module = importlib.import_module(_CORRELATION_MOD)
+    return module.set_correlation_context
+
+
+def set_correlation_context_setter_provider(setter: Any) -> None:
+    _overrides["correlation_context_setter"] = setter

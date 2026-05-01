@@ -21,8 +21,9 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
 
         :param app: ASGI-приложение, к которому применяется middleware.
         """
+        # Wave 6.5a: app_logger — через DI provider.
         from src.core.config.settings import settings
-        from src.infrastructure.external_apis.logging_service import app_logger
+        from src.core.di.providers import get_app_logger_provider
 
         super().__init__(app)
         self.log_body = (
@@ -31,7 +32,7 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         self.max_body_size = (
             settings.logging.max_body_log_size
         )  # Максимальный размер тела для логирования
-        self.logger = app_logger  # Логгер
+        self.logger = get_app_logger_provider()  # Логгер
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint

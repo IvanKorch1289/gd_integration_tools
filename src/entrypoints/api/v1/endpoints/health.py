@@ -45,10 +45,7 @@ async def liveness_probe() -> JSONResponse:
     crashloop, хотя fallback мог бы сохранить функциональность.
     """
     return JSONResponse(
-        content={
-            "status": "alive",
-            "timestamp": datetime.now(UTC).isoformat(),
-        },
+        content={"status": "alive", "timestamp": datetime.now(UTC).isoformat()},
         headers=_no_store_headers(),
     )
 
@@ -76,9 +73,10 @@ async def readiness_probe(request: Request) -> JSONResponse:
         )
 
     try:
-        from src.infrastructure.resilience.coordinator import get_resilience_coordinator
+        # Wave 6.5a: ResilienceCoordinator — через DI provider.
+        from src.core.di.providers import get_resilience_coordinator_provider
 
-        statuses = get_resilience_coordinator().status()
+        statuses = get_resilience_coordinator_provider().status()
     except Exception as exc:  # noqa: BLE001
         return JSONResponse(
             status_code=503,
@@ -126,9 +124,7 @@ async def startup_probe(request: Request) -> JSONResponse:
     """
     if not getattr(request.app.state, "infrastructure_ready", False):
         return JSONResponse(
-            status_code=503,
-            content={"status": "starting"},
-            headers=_no_store_headers(),
+            status_code=503, content={"status": "starting"}, headers=_no_store_headers()
         )
 
     from src.dsl.commands.registry import action_handler_registry, route_registry
@@ -168,16 +164,19 @@ async def components_health(mode: str = "fast") -> JSONResponse:
         )
 
     try:
-        from src.infrastructure.application.health_aggregator import (
-            get_health_aggregator,
+        # Wave 6.5a: health_aggregator + resilience_components_report —
+        # через DI providers (lazy importlib).
+        from src.core.di.providers import (
+            get_health_aggregator_provider,
+            get_resilience_components_report_provider,
         )
-        from src.infrastructure.resilience.health import resilience_components_report
 
-        aggregator = get_health_aggregator()
+        aggregator = get_health_aggregator_provider()
         report = await aggregator.check_all(mode=mode)  # type: ignore[arg-type]
 
         # Для deep-режима добавляем подробный per-chain отчёт.
         if mode == "deep":
+            resilience_components_report = get_resilience_components_report_provider()
             report["resilience_chains"] = resilience_components_report()
 
         overall = report.get("status", "ok")

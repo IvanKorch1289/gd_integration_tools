@@ -90,9 +90,7 @@ class _DSLConsoleFacade:
             from src.dsl.engine.execution_engine import ExecutionEngine
 
             engine = ExecutionEngine()
-            exchange = await engine.execute(
-                pipeline, body=payload, headers=headers
-            )
+            exchange = await engine.execute(pipeline, body=payload, headers=headers)
 
             result = (
                 exchange.out_message.body
@@ -139,6 +137,6 @@ builder.add_actions(
             body_model=InlineDSLRequest,
             response_model=InlineDSLResponse,
             tags=("DSL Console",),
-        ),
+        )
     ]
 )

@@ -156,10 +156,7 @@ class _RAGFacade:
     ) -> AugmentResponse:
         _check_enabled()
         prompt = await get_rag_service().augment_prompt(
-            query=query,
-            system_prompt=system_prompt,
-            top_k=top_k,
-            namespace=namespace,
+            query=query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
         return AugmentResponse(prompt=prompt)
 

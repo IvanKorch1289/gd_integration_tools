@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from src.core.config.settings import settings
-from src.infrastructure.external_apis.logging_service import app_logger
+from src.core.di.providers import get_app_logger_provider
 
 __all__ = ("TimeoutMiddleware",)
 
@@ -41,8 +41,10 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                 call_next(request), timeout=settings.secure.request_timeout
             )
         except TimeoutError:
-            # Логируем факт таймаута
-            app_logger.warning(f"Превышено время обработки запроса: {request.url}")
+            # Логируем факт таймаута. Wave 6.5a: app_logger — через DI provider.
+            get_app_logger_provider().warning(
+                f"Превышено время обработки запроса: {request.url}"
+            )
 
             # Возвращаем стандартизированный ответ
             return JSONResponse(

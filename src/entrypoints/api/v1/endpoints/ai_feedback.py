@@ -93,9 +93,7 @@ def _doc_to_dict(doc: Any) -> dict[str, Any]:
     return doc.model_dump(mode="json") if doc else {}
 
 
-def _list_response_handler(
-    result: list[Any], _: dict[str, Any]
-) -> dict[str, Any]:
+def _list_response_handler(result: list[Any], _: dict[str, Any]) -> dict[str, Any]:
     """list[doc] → ``{"items": [...], "total": N}``."""
     return {"items": [_doc_to_dict(d) for d in result], "total": len(result)}
 
@@ -169,10 +167,7 @@ class _AIFeedbackFacade:
     ) -> Any:
         try:
             return await get_ai_feedback_service().set_feedback(
-                doc_id=doc_id,
-                label=label,
-                comment=comment,
-                operator_id=operator_id,
+                doc_id=doc_id, label=label, comment=comment, operator_id=operator_id
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -180,9 +175,7 @@ class _AIFeedbackFacade:
     async def index_batch(
         self, *, agent_id: str | None = None, limit: int = 100
     ) -> Any:
-        return await get_feedback_indexer().index_batch(
-            agent_id=agent_id, limit=limit
-        )
+        return await get_feedback_indexer().index_batch(agent_id=agent_id, limit=limit)
 
 
 _FACADE = _AIFeedbackFacade()

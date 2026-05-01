@@ -200,12 +200,7 @@ class _SearchFacade:
         )
 
     async def aggregate(
-        self,
-        *,
-        index: str,
-        field: str,
-        q: str | None = None,
-        size: int = 10,
+        self, *, index: str, field: str, q: str | None = None, size: int = 10
     ) -> dict[str, Any]:
         try:
             service = get_search_service()

@@ -103,7 +103,7 @@ def _collect_processors() -> list[dict[str, Any]]:
                     for p in init_sig.parameters.values()
                     if p.name not in ("self", "name")
                 ]
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 params = []
 
             doc = (inspect.getdoc(obj) or "").strip()
@@ -155,7 +155,7 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
                 for p in sig.parameters.values()
                 if p.name != "self"
             ]
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             params = []
 
         doc = (inspect.getdoc(method) or "").strip()
@@ -189,9 +189,7 @@ class _ProcessorsCatalogFacade:
         for p in _collect_processors():
             if p["name"] == name:
                 return p
-        raise HTTPException(
-            status_code=404, detail=f"Processor '{name}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Processor '{name}' not found")
 
 
 _FACADE = _ProcessorsCatalogFacade()

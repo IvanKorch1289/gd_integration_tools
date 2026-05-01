@@ -29,12 +29,10 @@ from pydantic import BaseModel, Field, TypeAdapter
 
 from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
 from src.entrypoints.base import dispatch_action
-from src.infrastructure.database.models.workflow_instance import WorkflowStatus
-from src.infrastructure.workflow.event_store import WorkflowEventStore
-from src.infrastructure.workflow.state_store import (
-    WorkflowInstanceRow,
-    WorkflowInstanceStore,
-)
+
+# Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
+# не нарушать layer policy (entrypoints → infrastructure запрещено).
+# Runtime-доступ к классам — через core.di.providers (lazy importlib).
 from src.schemas.workflow import (
     WorkflowCancelRequest,
     WorkflowEventSchemaOut,
@@ -44,25 +42,47 @@ from src.schemas.workflow import (
 )
 from src.workflows.registry import workflow_registry
 
+
+# Wave 6.5a: ``WorkflowStatus`` нужен Pydantic'у на этапе построения
+# схемы ``ListWorkflowsQuery`` (форвард-референс резолвится через
+# модульный namespace), поэтому единожды резолвится через DI provider
+# при импорте этого модуля. Это сохраняет статический check_layers.py
+# чистым (нет AST-импорта infrastructure), но на runtime даёт
+# конкретный enum.
+def _bind_workflow_status() -> Any:
+    from src.core.di.providers import get_workflow_status_enum_provider
+
+    return get_workflow_status_enum_provider()
+
+
+# ``WorkflowStatus`` — резолвится динамически, но используется как
+# enum в Pydantic-схемах (``ListWorkflowsQuery.status_filter``).
+# ``type: ignore`` снимает mypy-ошибку ``valid-type`` (dynamic = Any).
+WorkflowStatus: Any = _bind_workflow_status()
+
 __all__ = ("router",)
 
 _logger = logging.getLogger("admin.workflows")
 
 
-# --- Lazy singletons -------------------------------------------------------
+# --- Lazy singletons (Wave 6.5a — через core.di.providers) ----------------
 
 
-def _instance_store() -> WorkflowInstanceStore:
-    """Ленивый singleton :class:`WorkflowInstanceStore`."""
-    return WorkflowInstanceStore()
+def _instance_store() -> Any:
+    """Ленивый singleton :class:`WorkflowInstanceStore` через DI provider."""
+    from src.core.di.providers import get_workflow_state_store_provider
+
+    return get_workflow_state_store_provider()()
 
 
-def _event_store() -> WorkflowEventStore:
-    """Ленивый singleton :class:`WorkflowEventStore`."""
-    return WorkflowEventStore()
+def _event_store() -> Any:
+    """Ленивый singleton :class:`WorkflowEventStore` через DI provider."""
+    from src.core.di.providers import get_workflow_event_store_provider
+
+    return get_workflow_event_store_provider()()
 
 
-def _row_to_schema(row: WorkflowInstanceRow) -> WorkflowInstanceSchemaOut:
+def _row_to_schema(row: Any) -> WorkflowInstanceSchemaOut:
     """DTO-строка store'а → Pydantic-схему."""
     last_error: str | None = None
     if row.snapshot_state and isinstance(row.snapshot_state, dict):
@@ -97,7 +117,7 @@ async def _list_instances_filtered(
     workflow_name: str | None,
     tenant_id: str | None,
     limit: int,
-) -> list[WorkflowInstanceRow]:
+) -> list[Any]:
     """Читает header'ы с фильтрами напрямую (без обёртки store'а).
 
     ``WorkflowInstanceStore.list_pending`` заточен под worker-poll
@@ -106,8 +126,16 @@ async def _list_instances_filtered(
     """
     from sqlalchemy import select
 
-    from src.infrastructure.database.models.workflow_instance import WorkflowInstance
-    from src.infrastructure.database.session_manager import main_session_manager
+    # Wave 6.5a: ORM-класс и session_manager — через DI providers.
+    from src.core.di.providers import (
+        get_workflow_instance_model_provider,
+        get_workflow_main_session_provider,
+        get_workflow_state_row_class_provider,
+    )
+
+    WorkflowInstance = get_workflow_instance_model_provider()
+    main_session_manager = get_workflow_main_session_provider()
+    WorkflowInstanceRow = get_workflow_state_row_class_provider()
 
     async with main_session_manager.create_session() as session:
         stmt = select(WorkflowInstance)
@@ -163,8 +191,7 @@ class TriggerQuery(BaseModel):
     """Query-параметры trigger-эндпоинта."""
 
     wait: bool = Field(
-        default=False,
-        description="Ждать завершения (polling до terminal или timeout).",
+        default=False, description="Ждать завершения (polling до terminal или timeout)."
     )
     timeout_s: int = Field(
         default=30, ge=1, le=600, description="Timeout ожидания (только при wait=True)."
@@ -205,8 +232,7 @@ class _AdminWorkflowsFacade:
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"Workflow instance '{instance_id}' not found",
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
             )
 
         base = _row_to_schema(row)
@@ -235,8 +261,7 @@ class _AdminWorkflowsFacade:
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"Workflow instance '{instance_id}' not found",
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
             )
 
         events_rows = await _event_store().read_events(
@@ -259,8 +284,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"Workflow instance '{instance_id}' not found",
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
             )
 
         terminal = {WorkflowStatus.succeeded, WorkflowStatus.cancelled}
@@ -299,8 +323,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"Workflow instance '{instance_id}' not found",
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
             )
 
         terminal = {
@@ -320,9 +343,7 @@ class _AdminWorkflowsFacade:
             next_attempt_at=datetime.now(timezone.utc),
             error=(f"cancelled: {reason}" if reason else None),
         )
-        _logger.info(
-            "cancel requested: workflow_id=%s reason=%s", instance_id, reason
-        )
+        _logger.info("cancel requested: workflow_id=%s reason=%s", instance_id, reason)
         return {
             "status": "accepted",
             "instance_id": str(instance_id),
@@ -335,8 +356,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"Workflow instance '{instance_id}' not found",
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
             )
         if row.status != WorkflowStatus.paused:
             raise HTTPException(
@@ -391,10 +411,7 @@ class _AdminWorkflowsFacade:
 
         store = _instance_store()
         instance_id = await _trigger_via_action_or_store(
-            store=store,
-            workflow_name=workflow_name,
-            route_id=route_id,
-            payload=payload,
+            store=store, workflow_name=workflow_name, route_id=route_id, payload=payload
         )
         _logger.info(
             "workflow triggered: name=%s instance_id=%s wait=%s",
@@ -406,8 +423,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=500,
-                detail="Created instance disappeared (race condition)",
+                status_code=500, detail="Created instance disappeared (race condition)"
             )
 
         if wait:
@@ -449,11 +465,7 @@ def _get_facade() -> _AdminWorkflowsFacade:
 
 
 async def _trigger_via_action_or_store(
-    *,
-    store: WorkflowInstanceStore,
-    workflow_name: str,
-    route_id: str,
-    payload: dict[str, Any],
+    *, store: Any, workflow_name: str, route_id: str, payload: dict[str, Any]
 ) -> UUID:
     """Создаёт workflow-инстанс.
 
@@ -487,12 +499,8 @@ async def _trigger_via_action_or_store(
 
 
 async def _wait_for_terminal(
-    *,
-    store: WorkflowInstanceStore,
-    instance_id: UUID,
-    timeout_s: int,
-    poll_interval_s: float = 2.0,
-) -> WorkflowInstanceRow:
+    *, store: Any, instance_id: UUID, timeout_s: int, poll_interval_s: float = 2.0
+) -> Any:
     """Блокирующее ожидание terminal-статуса через polling."""
     import asyncio
 
@@ -507,8 +515,7 @@ async def _wait_for_terminal(
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=410,
-                detail=f"Workflow instance '{instance_id}' disappeared",
+                status_code=410, detail=f"Workflow instance '{instance_id}' disappeared"
             )
         if row.status in terminal:
             return row

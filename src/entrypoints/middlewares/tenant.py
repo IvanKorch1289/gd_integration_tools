@@ -1,4 +1,9 @@
-"""Tenant middleware — извлекает tenant_id из запроса и устанавливает в contextvar."""
+"""Tenant middleware — извлекает tenant_id из запроса и устанавливает в contextvar.
+
+Wave 6.5a: ``set_correlation_context`` резолвится через DI provider
+(``core.di.providers.get_correlation_context_setter_provider``), что
+снимает entrypoints → infrastructure layer-violation.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +11,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.infrastructure.observability.correlation import set_correlation_context
+from src.core.di.providers import get_correlation_context_setter_provider
 
 __all__ = ("TenantMiddleware",)
 
@@ -38,7 +43,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             tenant_id = self._default
 
         request.state.tenant_id = tenant_id
-        set_correlation_context(tenant_id=tenant_id)
+        get_correlation_context_setter_provider()(tenant_id=tenant_id)
 
         response = await call_next(request)
         response.headers["X-Tenant-ID"] = tenant_id

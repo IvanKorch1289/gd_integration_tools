@@ -88,19 +88,19 @@ class DegradationMiddleware(BaseHTTPMiddleware):
         других компонентов write-fallback допустим (cache-write, audit-
         write и т.п.).
         """
+        # Wave 6.5a: ResilienceCoordinator — через DI provider.
         try:
-            from src.infrastructure.resilience.coordinator import (
-                get_resilience_coordinator,
-            )
+            from src.core.di.providers import get_resilience_coordinator_provider
 
-            statuses = get_resilience_coordinator().status()
+            statuses = get_resilience_coordinator_provider().status()
         except Exception:  # noqa: BLE001
             return []
         blocked: list[str] = []
         db = statuses.get("db_main")
-        if db is not None and db.last_used_backend != "primary" and db.degradation in (
-            "degraded",
-            "down",
+        if (
+            db is not None
+            and db.last_used_backend != "primary"
+            and db.degradation in ("degraded", "down")
         ):
             blocked.append("db_main")
         return blocked

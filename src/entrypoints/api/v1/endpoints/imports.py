@@ -81,8 +81,7 @@ router.add_api_route(
     methods=["POST"],
     summary="Импорт OpenAPI-спецификации",
     description=(
-        "Загружает OpenAPI 3.x spec (JSON) и генерирует DSL-роуты для "
-        "каждой операции."
+        "Загружает OpenAPI 3.x spec (JSON) и генерирует DSL-роуты для каждой операции."
     ),
     name="import_openapi",
 )
@@ -135,9 +134,7 @@ router.add_api_route(
     endpoint=_import_postman,
     methods=["POST"],
     summary="Импорт Postman-коллекции",
-    description=(
-        "Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты."
-    ),
+    description=("Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты."),
     name="import_postman",
 )
 

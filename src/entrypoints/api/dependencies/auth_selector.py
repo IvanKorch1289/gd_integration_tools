@@ -51,9 +51,10 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
     if not key:
         return None
     try:
-        from src.infrastructure.security.api_key_manager import get_api_key_manager
+        # Wave 6.5a: APIKeyManager — через lazy DI provider.
+        from src.core.di.providers import get_api_key_manager_provider
 
-        manager = get_api_key_manager()
+        manager = get_api_key_manager_provider()
         info = await manager.validate_key(key)
         if info is None:
             return None

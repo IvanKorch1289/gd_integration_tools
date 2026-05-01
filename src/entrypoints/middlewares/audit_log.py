@@ -31,10 +31,12 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
     """Расширенный аудит-лог HTTP-запросов."""
 
     def __init__(self, app: ASGIApp) -> None:
-        from src.infrastructure.external_apis.logging_service import app_logger
+        # Wave 6.5a: app_logger — через DI provider (lazy resolve в __init__,
+        # т.к. logger глобальный singleton, доступен сразу при импорте).
+        from src.core.di.providers import get_app_logger_provider
 
         super().__init__(app)
-        self.logger = app_logger
+        self.logger = get_app_logger_provider()
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
@@ -97,10 +99,12 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             correlation_id,
         )
 
-        # Асинхронная запись в Redis stream (fire-and-forget)
+        # Асинхронная запись в Redis stream (fire-and-forget).
+        # Wave 6.5a: redis_client — через DI provider.
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.core.di.providers import get_redis_stream_client_provider
 
+            redis_client = get_redis_stream_client_provider()
             await redis_client.add_to_stream(
                 stream_name="audit-log",
                 data={k: str(v) for k, v in audit_event.items()},
@@ -108,11 +112,10 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         except Exception:  # noqa: BLE001, S110
             pass
 
-        # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget)
+        # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget).
+        # Wave 6.5a: clickhouse_client — через DI provider.
         try:
-            from src.infrastructure.clients.storage.clickhouse import (
-                get_clickhouse_client,
-            )
+            from src.core.di.providers import get_clickhouse_client_provider
 
             ch_row = {
                 "ts": datetime.fromtimestamp(
@@ -130,7 +133,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
                 "request_id": audit_event["request_id"],
                 "correlation_id": audit_event["correlation_id"],
             }
-            ch = get_clickhouse_client()
+            ch = get_clickhouse_client_provider()
             await ch.insert("audit_log", [ch_row])
         except Exception as exc:  # noqa: BLE001
             _clickhouse_logger.debug("ClickHouse audit insert failed: %s", exc)

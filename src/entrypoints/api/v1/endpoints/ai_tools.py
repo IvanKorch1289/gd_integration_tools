@@ -38,9 +38,7 @@ class _AIToolsFacade:
         registry = get_tool_registry()
         tool = registry.get(tool_id)
         if tool is None:
-            raise HTTPException(
-                status_code=404, detail=f"Tool {tool_id!r} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Tool {tool_id!r} not found")
         return tool.to_dict()
 
 
