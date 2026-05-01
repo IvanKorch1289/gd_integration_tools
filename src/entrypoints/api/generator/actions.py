@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from src.core.actions.spec_to_metadata import action_spec_to_metadata
 from src.core.enums.ordering import OrderingTypeChoices
+from src.core.interfaces.action_dispatcher import ActionMetadata
 from src.dsl.commands.action_registry import action_handler_registry
 from src.entrypoints.api.generator.marshaller import (
     decorate_endpoint,
@@ -402,6 +403,98 @@ class ActionRouterBuilder:
     # CRUD endpoint builders
     # ------------------------------------------------------------------ #
 
+    # Маппинг CRUD-глагола → метод BaseService.
+    # ``list``/``get`` оба используют ``get`` (с/без фильтра — на стороне сервиса).
+    # ``create``/``create_many`` → ``add``/``add_many``.
+    _CRUD_VERB_TO_SERVICE_METHOD: dict[str, str] = {
+        "list": "get",
+        "get": "get",
+        "create": "add",
+        "create_many": "add_many",
+        "update": "update",
+        "delete": "delete",
+    }
+
+    @classmethod
+    def _register_crud_action_metadata(
+        cls,
+        *,
+        spec: CrudSpec,
+        verb: str,
+        method: HttpMethod,
+        path: str,
+        description: str,
+        input_model: type[BaseModel] | None,
+        output_model: type[BaseModel] | None,
+    ) -> str:
+        """Регистрирует Tier 1 action для CRUD-роута: handler + metadata.
+
+        Wave 1.1 (Roadmap V10): каждый CRUD-роут, создаваемый
+        :class:`ActionRouterBuilder`, дополнительно регистрирует
+        соответствующий action в ``action_handler_registry`` с
+        ``tier=1``-семантикой. Идентификатор формируется по конвенции
+        F.8 ``"<resource>.<verb>"``.
+
+        Регистрация:
+
+        * ``register_with_metadata`` сохраняет :class:`ActionMetadata`
+          (transports/side_effect/idempotent/tags) для Gateway/Developer
+          portal;
+        * ``register`` привязывает handler через ``service_getter`` +
+          метод BaseService по конвенции (см.
+          :attr:`_CRUD_VERB_TO_SERVICE_METHOD`). Если action с тем же
+          именем уже зарегистрирован (например, ``orders.get`` из
+          ``setup.register_action_handlers``) — повторная регистрация
+          перезаписывает handler идентичной семантикой (idempotent).
+
+        Args:
+            spec: CRUD-описание ресурса.
+            verb: Глагол action ("list", "get", "create", "create_many",
+                "update", "delete").
+            method: HTTP-метод роута для вывода ``side_effect``/
+                ``idempotent`` через REST-конвенцию.
+            path: Полный path роута (для трассировки/документации).
+            description: Описание для OpenAPI и developer portal.
+            input_model: Pydantic-модель payload (тело или путь).
+            output_model: Pydantic-модель ответа.
+
+        Returns:
+            Сформированный ``action_id``.
+        """
+        action_id = f"{spec.name}.{verb}"
+        # REST-конвенция: GET — read; PUT/DELETE — idempotent write;
+        # POST/PATCH — non-idempotent write. Логика согласована с
+        # ``core/actions/spec_to_metadata.py``.
+        side_effect = "read" if method.upper() == "GET" else "write"
+        idempotent = method.upper() in {"GET", "PUT", "DELETE", "HEAD", "OPTIONS"}
+        metadata = ActionMetadata(
+            action=action_id,
+            description=description,
+            input_model=input_model,
+            output_model=output_model,
+            transports=("http",),
+            side_effect=side_effect,
+            idempotent=idempotent,
+            tags=tuple(spec.tags),
+        )
+        action_handler_registry.register_with_metadata(
+            action=action_id, handler=None, metadata=metadata
+        )
+
+        # Wave 1.1: привязка handler'а через BaseService-конвенцию.
+        # Это делает action callable из любого транспорта (auto-loop
+        # Wave 1.2 + DSL/Gateway), не дожидаясь ручной регистрации
+        # в ``setup.register_action_handlers``.
+        service_method = cls._CRUD_VERB_TO_SERVICE_METHOD.get(verb)
+        if service_method is not None:
+            action_handler_registry.register(
+                action=action_id,
+                service_getter=spec.service_getter,
+                service_method=service_method,
+                payload_model=input_model,
+            )
+        return action_id
+
     def _register_route(
         self,
         *,
@@ -480,6 +573,16 @@ class ActionRouterBuilder:
             tags=spec.tags,
             decorators=spec.decorators,
         )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="list",
+            method="GET",
+            path=spec.list_path,
+            description=f"Возвращает список объектов ресурса '{spec.name}'.",
+            input_model=None,
+            output_model=spec.schema_out,
+        )
 
     def _register_get_by_id(self, spec: CrudSpec) -> None:
         async def endpoint(request: Request, **kwargs: Any) -> Any:
@@ -509,6 +612,16 @@ class ActionRouterBuilder:
             dependencies=spec.dependencies,
             tags=spec.tags,
             decorators=spec.decorators,
+        )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="get",
+            method="GET",
+            path=spec.by_id_path,
+            description=f"Возвращает объект ресурса '{spec.name}' по идентификатору.",
+            input_model=None,
+            output_model=spec.schema_out,
         )
 
     def _register_get_first_or_last(self, spec: CrudSpec) -> None:
@@ -580,6 +693,16 @@ class ActionRouterBuilder:
             tags=spec.tags,
             decorators=spec.decorators,
         )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="create",
+            method="POST",
+            path=spec.create_path,
+            description=f"Создаёт новый объект ресурса '{spec.name}'.",
+            input_model=spec.schema_in,
+            output_model=spec.schema_out,
+        )
 
     def _register_create_many(self, spec: CrudSpec) -> None:
         async def endpoint(request: Request, payloads: list[BaseModel]) -> Any:
@@ -610,6 +733,16 @@ class ActionRouterBuilder:
             dependencies=spec.dependencies,
             tags=spec.tags,
             decorators=spec.decorators,
+        )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="create_many",
+            method="POST",
+            path=spec.create_many_path,
+            description=f"Создаёт несколько объектов ресурса '{spec.name}'.",
+            input_model=spec.schema_in,
+            output_model=None,
         )
 
     def _register_update(self, spec: CrudSpec) -> None:
@@ -646,6 +779,16 @@ class ActionRouterBuilder:
             tags=spec.tags,
             decorators=spec.decorators,
         )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="update",
+            method="PUT",
+            path=spec.update_path,
+            description=f"Обновляет объект ресурса '{spec.name}'.",
+            input_model=spec.schema_in,
+            output_model=spec.schema_out,
+        )
 
     def _register_delete(self, spec: CrudSpec) -> None:
         async def endpoint(request: Request, **kwargs: Any) -> None:
@@ -676,6 +819,16 @@ class ActionRouterBuilder:
             dependencies=spec.dependencies,
             tags=spec.tags,
             decorators=spec.decorators,
+        )
+        # Wave 1.1: Tier 1 metadata в action_handler_registry.
+        self._register_crud_action_metadata(
+            spec=spec,
+            verb="delete",
+            method="DELETE",
+            path=spec.delete_path,
+            description=f"Удаляет объект ресурса '{spec.name}'.",
+            input_model=None,
+            output_model=None,
         )
 
     def _register_all_versions(self, spec: CrudSpec) -> None:

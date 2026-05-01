@@ -769,6 +769,23 @@ def _bootstrap():
     register_action_handlers()
     register_dsl_routes()
 
+    # Wave 1.1 (Roadmap V10): импорт v1 routers триггерит регистрацию
+    # Tier 1 CRUD-actions через ``ActionRouterBuilder`` (в дополнение к
+    # ручным action handlers выше). Без этого ``manage.py actions`` не
+    # отображал бы CRUD-action_id (``orders.list``/``orders.create`` и т.п.).
+    try:
+        from src.entrypoints.api.v1.routers import get_v1_routers
+
+        get_v1_routers()
+    except Exception as exc:  # noqa: BLE001, S110
+        # Introspection не должна падать из-за опциональных зависимостей
+        # (например, vault/graypy/мини-профилей). Логируем на DEBUG.
+        import logging
+
+        logging.getLogger("manage").debug(
+            "get_v1_routers пропущен в bootstrap: %s", exc
+        )
+
 
 if __name__ == "__main__":
     app()

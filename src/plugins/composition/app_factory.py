@@ -106,6 +106,13 @@ def _configure_business_routers(app: FastAPI) -> None:
     # Основное API приложения
     app.include_router(get_v1_routers(), prefix="/api/v1")
 
+    # Wave 1.2 (Roadmap V10): REST auto-loop. Регистрируем все
+    # зарегистрированные action-handlers (через
+    # ``action_handler_registry``), для которых ещё нет HTTP-роута,
+    # как авто-эндпоинты на ``/api/v1/auto/<action>``. Идемпотентно —
+    # повторный вызов не добавит дубликаты.
+    _configure_auto_registered_actions(app)
+
     # Интеграция с системами потоковой обработки. На dev_light профиле
     # ``redis.enabled=false`` / ``queue.enabled=false`` делают
     # соответствующий FastStream router None — пропускаем.
@@ -151,6 +158,53 @@ def _configure_business_routers(app: FastAPI) -> None:
     from src.entrypoints.express import router as express_router
 
     app.include_router(express_router)
+
+
+def _configure_auto_registered_actions(app: FastAPI) -> None:
+    """Подключение авто-роутов для action-handlers без явного REST-маршрута.
+
+    Wave 1.2: после регистрации основных бизнес-роутов сканируем
+    ``ActionHandlerRegistry.list_actions()`` и для каждого action без
+    соответствующего FastAPI-роута создаём sane-default endpoint на
+    ``/api/v1/auto/<action>``.
+
+    Чтобы реестр был наполнен на момент вызова, сначала идемпотентно
+    вызываем ``register_action_handlers()`` (тот же путь использует
+    ``manage.py`` для introspection). Если вызов упадёт из-за
+    отсутствующих опциональных зависимостей (dev_light) — log + skip,
+    стартап приложения не блокируем.
+    """
+    import logging
+
+    from src.entrypoints.api.generator.auto_register import (
+        auto_register_unrouted_actions,
+    )
+
+    try:
+        from src.dsl.commands.setup import register_action_handlers
+
+        register_action_handlers()
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger("app_factory").warning(
+            "register_action_handlers пропущен: %s "
+            "(action auto-loop пройдёт по уже существующим handler'ам)",
+            exc,
+        )
+
+    try:
+        added = auto_register_unrouted_actions(app)
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger("app_factory").warning(
+            "auto_register_unrouted_actions упал: %s — пропускаем",
+            exc,
+        )
+        return
+
+    if added:
+        logging.getLogger("app_factory").info(
+            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers",
+            added,
+        )
 
 
 def _configure_root_endpoint(app: FastAPI) -> None:
