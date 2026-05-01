@@ -136,7 +136,7 @@ class ImapMonitor:
             try:
                 await client.logout()
             except Exception:
-                pass
+                logger.debug("IMAP logout failed", exc_info=True)
 
     async def _poll_loop(self) -> None:
         """Цикл опроса IMAP-ящика."""

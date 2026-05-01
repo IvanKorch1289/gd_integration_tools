@@ -138,7 +138,7 @@ def _json_encode(payload: dict[str, Any]) -> bytes:
 
 
 # Явный Protocol check (опционально).
-assert isinstance(WebhookAdapter(), NotificationChannel)
+assert isinstance(WebhookAdapter(), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
 
 
 __all__ = ("WebhookAdapter",)

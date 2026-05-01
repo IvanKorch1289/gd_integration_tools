@@ -84,7 +84,7 @@ class SlackAdapter:
             return False
 
 
-assert isinstance(SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel)
+assert isinstance(SlackAdapter(webhook_url_provider=lambda: ""), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
 
 
 __all__ = ("SlackAdapter",)

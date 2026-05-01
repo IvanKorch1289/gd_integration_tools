@@ -116,7 +116,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
         except ImportError, Exception:
-            pass
+            logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 
     async def run(
@@ -148,7 +148,7 @@ class _PollingStrategy(_CDCStrategy):
                 try:
                     async with engine.connect() as conn:
                         query = text(
-                            f"SELECT * FROM {table} "
+                            f"SELECT * FROM {table} "  # noqa: S608  # table/timestamp_column — DSL/config параметры подписки, не runtime user input
                             f"WHERE {sub.timestamp_column} > :last "
                             f"ORDER BY {sub.timestamp_column} "
                             f"LIMIT :limit"
@@ -280,7 +280,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
                 await conn.remove_listener(channel, _notify_handler)
                 await conn.close()
             except Exception:
-                pass
+                logger.debug("CDC LISTEN connection cleanup failed", exc_info=True)
 
 
 class _LogMinerStrategy(_CDCStrategy):
@@ -328,7 +328,7 @@ class _LogMinerStrategy(_CDCStrategy):
                           AND OPERATION IN ('INSERT', 'UPDATE', 'DELETE')
                         ORDER BY SCN
                         FETCH FIRST :limit ROWS ONLY
-                    """)
+                    """)  # noqa: S608  # table_list собран из sub.tables (DSL config), upper-cased
                     result = await conn.execute(
                         query, {"last_scn": last_scn, "limit": sub.batch_size}
                     )
@@ -465,7 +465,7 @@ class CDCClient:
             try:
                 await task
             except asyncio.CancelledError, Exception:
-                pass
+                logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)
         return True

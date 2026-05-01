@@ -72,7 +72,7 @@ class TeamsAdapter:
             return False
 
 
-assert isinstance(TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel)
+assert isinstance(TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
 
 
 __all__ = ("TeamsAdapter",)

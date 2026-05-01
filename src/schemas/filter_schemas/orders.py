@@ -8,9 +8,7 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 # Wave 6 finalize: fastapi_filter требует SQLA-модель в `Constants.model`
 # на этапе определения класса. Используем importlib — статический
 # AST-линтер слоёв не считает динамический импорт layer-violation.
-Order = importlib.import_module(
-    "src." + "infrastructure.database.models.orders"
-).Order
+Order = importlib.import_module("src." + "infrastructure.database.models.orders").Order
 
 __all__ = ("OrderFilter",)
 

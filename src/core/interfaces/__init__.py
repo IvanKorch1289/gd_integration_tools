@@ -17,6 +17,7 @@ PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле
 
 from __future__ import annotations
 
+import logging
 import time  # PERF-5: top-level import (hot path — CircuitBreaker state checks)
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -31,6 +32,8 @@ from src.core.interfaces.metrics import MetricsBackend
 from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
 from src.core.interfaces.secrets import SecretsBackend
 from src.core.interfaces.storage import ObjectStorage
+
+logger = logging.getLogger(__name__)
 
 __all__ = (
     # Health
@@ -322,7 +325,7 @@ class AsyncBatcher:
             if hasattr(result, "__await__"):
                 await result
         except Exception:
-            pass
+            logger.debug("AsyncBatcher flush_fn raised; batch dropped", exc_info=True)
 
     async def start(self) -> None:
         import asyncio

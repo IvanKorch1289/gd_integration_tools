@@ -151,7 +151,7 @@ class AuditEventLog:
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
         sql = (
-            f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"
+            f"SELECT * FROM {_safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # noqa: S608  # _safe_table allowlisted, _escape санирует string-литералы, safe_limit — int
         )
         return await client.query(sql)
 

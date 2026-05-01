@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Protocol
+
+logger = logging.getLogger(__name__)
 
 __all__ = (
     "CryptoProvider",
@@ -150,6 +153,9 @@ class AntiFraudEngine:
                 if rule.predicate(tx):
                     triggered.append(rule)
             except Exception:  # noqa: BLE001
+                logger.debug(
+                    "anti-fraud rule predicate raised; rule skipped", exc_info=True
+                )
                 continue
         return triggered
 

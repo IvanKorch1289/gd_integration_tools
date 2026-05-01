@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import queue
 import threading
@@ -14,6 +15,8 @@ from typing import Any
 
 import httpx
 import streamlit as st
+
+logger = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Realtime Logs", page_icon=":memo:", layout="wide")
 st.header(":memo: Realtime Logs (live tail)")
@@ -44,7 +47,11 @@ def _start_sse_thread() -> None:
     def consume() -> None:
         """Фоновый поток: читает /sse/logs и кладёт строки в очередь."""
         try:
-            with httpx.stream("GET", f"{BASE_URL}/sse/logs", timeout=None) as resp:
+            with httpx.stream(
+                "GET",
+                f"{BASE_URL}/sse/logs",
+                timeout=httpx.Timeout(connect=10.0, read=None, write=10.0, pool=10.0),
+            ) as resp:
                 for line in resp.iter_lines():
                     if line.startswith("data:"):
                         payload = line[5:].strip()
@@ -55,7 +62,7 @@ def _start_sse_thread() -> None:
                                 q.get_nowait()  # вытесняем старое
                                 q.put_nowait(payload)
         except Exception:  # noqa: BLE001
-            pass  # backend недоступен; UI покажет это в хедере
+            logger.debug("SSE logs stream consumer terminated", exc_info=True)
 
     threading.Thread(target=consume, daemon=True, name="sse-logs").start()
     st.session_state["_sse_started"] = True
@@ -72,6 +79,7 @@ while not q.empty() and len(batch) < 100:
 
         batch.append(orjson.loads(q.get_nowait()))
     except Exception:  # noqa: BLE001
+        logger.debug("failed to parse log payload from SSE queue", exc_info=True)
         continue
 
 if "log_history" not in st.session_state:

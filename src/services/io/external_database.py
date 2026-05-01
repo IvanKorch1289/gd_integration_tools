@@ -326,7 +326,7 @@ class ExternalDatabaseService:
         Выполняет SELECT * FROM разрешённого view.
         """
         safe_name = self._validate_identifier(meta.qualified_name, context="view")
-        sql = f"SELECT * FROM {safe_name}"  # identifier провалидирован regex-ом
+        sql = f"SELECT * FROM {safe_name}"  # noqa: S608  # safe_name провалидирован _validate_identifier (regex)
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
 
@@ -346,21 +346,21 @@ class ExternalDatabaseService:
 
         if db_type == DatabaseTypeChoices.postgresql:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result"
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
         if db_type == DatabaseTypeChoices.oracle:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # noqa: S608  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 

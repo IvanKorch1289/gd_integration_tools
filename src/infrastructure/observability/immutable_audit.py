@@ -215,7 +215,7 @@ class ImmutableAuditStore:
             prev_row = (
                 await session.execute(
                     text(
-                        f"SELECT event_hash FROM {self._table} "
+                        f"SELECT event_hash FROM {self._table} "  # noqa: S608  # self._table — ctor-parameter, не user input
                         f"ORDER BY seq DESC LIMIT 1"
                     )
                 )
@@ -225,7 +225,7 @@ class ImmutableAuditStore:
 
             await session.execute(
                 text(
-                    f"INSERT INTO {self._table} "
+                    f"INSERT INTO {self._table} "  # noqa: S608  # self._table — ctor-parameter, не user input
                     f"(actor, action, resource, outcome, metadata, "
                     f" tenant_id, correlation_id, prev_hash, event_hash, "
                     f" occurred_at) "
@@ -267,7 +267,7 @@ class ImmutableAuditStore:
         from sqlalchemy import text
 
         sql = (
-            f"SELECT seq, actor, action, resource, outcome, metadata, "
+            f"SELECT seq, actor, action, resource, outcome, metadata, "  # noqa: S608  # self._table — ctor-parameter, не user input
             f" tenant_id, correlation_id, prev_hash, event_hash, occurred_at "
             f"FROM {self._table} "
             f"WHERE seq >= :from_seq "
@@ -296,7 +296,7 @@ class ImmutableAuditStore:
             async with self._session_scope() as session:
                 anchor_row = (
                     await session.execute(
-                        text(f"SELECT event_hash FROM {self._table} WHERE seq = :s"),
+                        text(f"SELECT event_hash FROM {self._table} WHERE seq = :s"),  # noqa: S608  # self._table — ctor-parameter, не user input
                         {"s": int(first[0]) - 1},
                     )
                 ).first()

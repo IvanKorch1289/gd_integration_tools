@@ -226,12 +226,12 @@ class LoadBalancerProcessor(BaseProcessor):
         if self._strategy == "random":
             import random as _random
 
-            return _random.choice(self._targets)
+            return _random.choice(self._targets)  # noqa: S311  # load-balancing, не криптография
 
         if self._strategy == "weighted" and self._weights:
             import random as _random
 
-            return _random.choices(self._targets, weights=self._weights, k=1)[0]
+            return _random.choices(self._targets, weights=self._weights, k=1)[0]  # noqa: S311  # weighted load-balancing, не криптография
 
         if self._strategy == "sticky" and self._sticky_header:
             key = exchange.in_message.headers.get(self._sticky_header, "")

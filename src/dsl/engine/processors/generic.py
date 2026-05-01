@@ -213,7 +213,9 @@ class AbTestRouterProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         key = self._key_fn(exchange)
-        bucket = int(hashlib.sha1(key.encode()).hexdigest(), 16) % 100
+        bucket = (
+            int(hashlib.sha1(key.encode(), usedforsecurity=False).hexdigest(), 16) % 100
+        )
         variant = "B" if bucket < self.split_percent else "A"
         exchange.set_property("ab_variant", variant)
         branch = self._b if variant == "B" else self._a

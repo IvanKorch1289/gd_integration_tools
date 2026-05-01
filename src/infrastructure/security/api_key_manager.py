@@ -99,6 +99,9 @@ class APIKeyManager:
                         if isinstance(parsed, dict):
                             result.append(parsed)
                     except Exception:
+                        logger.debug(
+                            "API key Redis value parse failed; skipped", exc_info=True
+                        )
                         continue
                 return result
 

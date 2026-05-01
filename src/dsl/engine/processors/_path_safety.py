@@ -12,6 +12,7 @@ Allowed префиксы конфигурируются через env var DSL_A
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 __all__ = ("validate_path", "PathTraversalError")
@@ -28,7 +29,8 @@ def _get_allowed_prefixes() -> tuple[str, ...]:
         prefixes = tuple(p.strip() for p in env.split(":") if p.strip())
         if prefixes:
             return prefixes
-    return ("/data/uploads", "/data/exports", "/tmp/dsl", "/var/data")
+    tmp_dsl = os.path.join(tempfile.gettempdir(), "dsl")
+    return ("/data/uploads", "/data/exports", tmp_dsl, "/var/data")
 
 
 def validate_path(path: str) -> str:

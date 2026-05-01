@@ -149,7 +149,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         columns = ["timestamp", *self._tags, self._field]
         placeholders = ", ".join(f":{c}" for c in columns)
         col_names = ", ".join(columns)
-        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"
+        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # noqa: S608  # _table/_tags/_field — DSL-config параметры, не runtime input
 
         async with engine.connect() as conn:
             for point in points:

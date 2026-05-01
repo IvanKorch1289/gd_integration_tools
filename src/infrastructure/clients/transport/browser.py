@@ -67,10 +67,10 @@ class BrowserClient:
     async def _new_context(self) -> Any:
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
-                "width": random.randint(1280, 1920),
-                "height": random.randint(720, 1080),
+                "width": random.randint(1280, 1920),  # noqa: S311  # stealth fingerprint randomization, не криптография
+                "height": random.randint(720, 1080),  # noqa: S311  # stealth fingerprint randomization, не криптография
             },
-            "user_agent": random.choice(_USER_AGENTS),
+            "user_agent": random.choice(_USER_AGENTS),  # noqa: S311  # stealth UA rotation, не криптография
         }
         if self._stealth:
             ctx_kwargs["java_script_enabled"] = True
@@ -80,7 +80,7 @@ class BrowserClient:
 
     async def _human_delay(self, min_ms: int = 100, max_ms: int = 500) -> None:
         if self._human_delays:
-            await asyncio.sleep(random.randint(min_ms, max_ms) / 1000)
+            await asyncio.sleep(random.randint(min_ms, max_ms) / 1000)  # noqa: S311  # human-like delay jitter, не криптография
 
     async def navigate(
         self, url: str, wait_until: str = "domcontentloaded"

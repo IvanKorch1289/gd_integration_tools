@@ -60,7 +60,7 @@ def run(
     typer.echo(
         f"Starting backend (server={os.environ.get('APP_SERVER', 'uvicorn')})..."
     )
-    os.execvp(cmd[0], cmd)
+    os.execvp(cmd[0], cmd)  # noqa: S606  # CLI developer tool: cmd сформирован из sys.executable + фиксированных аргументов
 
 
 @app.command("run-frontend")
@@ -78,7 +78,7 @@ def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
         "true",
     ]
     typer.echo(f"Starting Streamlit on :{port}...")
-    os.execvp(cmd[0], cmd)
+    os.execvp(cmd[0], cmd)  # noqa: S606  # CLI developer tool: cmd сформирован из sys.executable + фиксированных аргументов
 
 
 @app.command("run-all")
@@ -94,21 +94,21 @@ def run_all(
             f"Starting backend on :{backend_port} + frontend on :{frontend_port}..."
         )
 
-        backend = subprocess.Popen(
+        backend = subprocess.Popen(  # noqa: S603  # CLI developer tool: фиксированный sys.executable + literal args
             [
                 sys.executable,
                 "-m",
                 "uvicorn",
                 "src.main:app",
                 "--host",
-                "0.0.0.0",
+                "0.0.0.0",  # noqa: S104  # CLI developer tool: dev-режим, listen на всех интерфейсах
                 "--port",
                 str(backend_port),
             ]
         )
         procs.append(backend)
 
-        frontend = subprocess.Popen(
+        frontend = subprocess.Popen(  # noqa: S603  # CLI developer tool: фиксированный sys.executable + literal args
             [
                 sys.executable,
                 "-m",
@@ -142,7 +142,7 @@ def run_all(
 @app.command()
 def migrate():
     """Применить все накопившиеся миграции (alembic upgrade head)."""
-    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
+    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)  # noqa: S603  # CLI developer tool: фиксированные args
     typer.echo("Migrations applied.")
 
 
@@ -168,7 +168,7 @@ def make_migration(
     if autogenerate:
         cmd.append("--autogenerate")
     cmd.extend(["-m", message])
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # noqa: S603  # CLI developer tool: cmd собран из sys.executable + literal alembic args + user-supplied message
     typer.echo(
         "Migration created. Проверь сгенерированный файл в "
         "src/infrastructure/database/migrations/versions/ перед `migrate`."
@@ -180,7 +180,7 @@ def downgrade(
     target: str = typer.Argument("-1", help="Revision id или шаг (-1, -2, base)"),
 ):
     """Откатить миграцию к указанной ревизии (по умолчанию на одну назад)."""
-    subprocess.run([sys.executable, "-m", "alembic", "downgrade", target], check=True)
+    subprocess.run([sys.executable, "-m", "alembic", "downgrade", target], check=True)  # noqa: S603  # CLI developer tool: фиксированные args + revision id
     typer.echo(f"Downgraded to {target}.")
 
 
@@ -192,7 +192,7 @@ def migration_history(
     cmd = [sys.executable, "-m", "alembic", "history"]
     if verbose:
         cmd.append("-v")
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # noqa: S603  # CLI developer tool: cmd собран из sys.executable + literal alembic args
 
 
 @app.command("migration-current")

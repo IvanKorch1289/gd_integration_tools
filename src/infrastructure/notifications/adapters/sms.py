@@ -139,7 +139,7 @@ class SMSAdapter:
             return False
 
 
-assert isinstance(SMSAdapter(credentials_provider=lambda: ""), NotificationChannel)
+assert isinstance(SMSAdapter(credentials_provider=lambda: ""), NotificationChannel)  # noqa: S101  # Protocol-conformance check на import
 
 
 __all__ = ("SMSAdapter", "SMSProvider")

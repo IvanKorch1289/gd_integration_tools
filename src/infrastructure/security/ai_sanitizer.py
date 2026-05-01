@@ -14,9 +14,12 @@
 - API-ключи/токены → [REDACTED]
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("AIDataSanitizer", "SanitizationResult", "MaskingEvent")
 
@@ -203,7 +206,7 @@ class AIDataSanitizer:
                         maxlen=10000,
                     )
             except Exception:
-                pass
+                logger.debug("PII masking audit publish to Redis failed", exc_info=True)
 
         return result, result.audit_events
 

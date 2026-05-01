@@ -81,9 +81,9 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     import random
 
     headers = {
-        "User-Agent": random.choice(_USER_AGENTS),
+        "User-Agent": random.choice(_USER_AGENTS),  # noqa: S311  # stealth header rotation, не криптография
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": random.choice(_ACCEPT_LANGUAGES),
+        "Accept-Language": random.choice(_ACCEPT_LANGUAGES),  # noqa: S311  # stealth header rotation, не криптография
         "Accept-Encoding": "gzip, deflate, br",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
@@ -98,7 +98,7 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     import asyncio
     import random
 
-    await asyncio.sleep(min_s + random.random() * (max_s - min_s))
+    await asyncio.sleep(min_s + random.random() * (max_s - min_s))  # noqa: S311  # rate-limit jitter, не криптография
 
 
 class ScrapeProcessor(BaseProcessor):

@@ -339,7 +339,7 @@ class OutboxProcessor(BaseProcessor):
                     text(f"""
                         INSERT INTO {self._table} (id, topic, payload)
                         VALUES (:id, :topic, CAST(:payload AS JSONB))
-                    """),
+                    """),  # noqa: S608  # self._table провалидирован через .isalnum() в __init__
                     {"id": msg_id, "topic": self._topic, "payload": payload_json},
                 )
                 await conn.commit()

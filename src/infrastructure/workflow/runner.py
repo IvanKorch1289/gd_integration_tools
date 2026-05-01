@@ -212,7 +212,9 @@ class DurableWorkflowRunner:
                 try:
                     await task
                 except asyncio.CancelledError, Exception:  # noqa: BLE001
-                    pass
+                    _logger.debug(
+                        "workflow runner task cancellation raised", exc_info=True
+                    )
         # Ждём завершения активных executions (до lock_ttl_s — иначе drop).
         loop = asyncio.get_running_loop()
         deadline = loop.time() + self._config.lock_ttl_s
@@ -229,7 +231,7 @@ class DurableWorkflowRunner:
             _logger.warning("asyncpg not installed; LISTEN path disabled")
             return
 
-        assert self._listener_dsn is not None
+        assert self._listener_dsn is not None  # noqa: S101  # mypy narrowing (проверка осуществлена выше через ImportError-guard)
         conn = None
         try:
             conn = await asyncpg.connect(self._listener_dsn)
@@ -437,4 +439,4 @@ class DurableWorkflowRunner:
         max_delay = self._config.retry_max_delay_s
         raw = min(max_delay, base * (mult ** max(0, attempt)))
         jitter = self._config.retry_jitter
-        return raw * (1 + random.uniform(-jitter, jitter))
+        return raw * (1 + random.uniform(-jitter, jitter))  # noqa: S311  # retry-jitter, не криптография
