@@ -38,7 +38,14 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.core.interfaces.invoker import InvocationMode, InvocationRequest
+from src.core.di.contexts import make_dispatch_context
+from src.core.di.providers import get_action_dispatcher_provider
+from src.core.interfaces.action_dispatcher import ActionResult
+from src.core.interfaces.invoker import (
+    InvocationMode,
+    InvocationRequest,
+    InvocationStatus,
+)
 
 __all__ = ("ws_invocations_router",)
 
@@ -112,6 +119,23 @@ async def websocket_invocations(websocket: WebSocket) -> None:
 
             await websocket.send_json({"type": "ack", "invocation_id": invocation_id})
 
+            # Wave 14.1.D: для SYNC-режима делегируем напрямую в
+            # ActionGatewayDispatcher (middleware-цепочка + envelope),
+            # минуя Invoker — у SYNC нет reply-channel-семантики.
+            # Остальные режимы (streaming/async-api/background/...)
+            # продолжают идти через Invoker, который сам управляет
+            # каналами и task-life-cycle.
+            if mode is InvocationMode.SYNC:
+                envelope = await _dispatch_sync_via_gateway(
+                    action=action,
+                    payload=payload,
+                    invocation_id=invocation_id,
+                )
+                await websocket.send_json(
+                    _envelope_to_payload(envelope, invocation_id, mode)
+                )
+                continue
+
             request = InvocationRequest(
                 action=action,
                 payload=payload,
@@ -119,12 +143,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
                 reply_channel="ws",
                 invocation_id=invocation_id,
             )
-            response = await invoker.invoke(request)
-
-            # Если invoker вернул синхронный результат (sync-режим случайно),
-            # пушим его сами — иначе клиент не дождётся.
-            if mode is InvocationMode.SYNC:
-                await websocket.send_json(_response_payload(response))
+            await invoker.invoke(request)
 
     except WebSocketDisconnect:
         logger.debug("WS /ws/invocations disconnected")
@@ -158,4 +177,52 @@ def _response_payload(response: Any) -> dict[str, Any]:
         "mode": response.mode.value,
         "result": response.result,
         "error": response.error,
+    }
+
+
+async def _dispatch_sync_via_gateway(
+    *, action: str, payload: dict[str, Any], invocation_id: str
+) -> ActionResult:
+    """Делегирует SYNC-вызов в :class:`ActionGatewayDispatcher` (W14.1.D).
+
+    Возвращает унифицированный :class:`ActionResult`. Если action
+    не зарегистрирован, dispatcher сам вернёт envelope с
+    ``code="action_not_found"``.
+    """
+    dispatcher = get_action_dispatcher_provider()
+    context = make_dispatch_context(
+        source="ws",
+        correlation_id=invocation_id,
+        attributes={"invocation_id": invocation_id},
+    )
+    return await dispatcher.dispatch(action, payload, context)
+
+
+def _envelope_to_payload(
+    envelope: ActionResult,
+    invocation_id: str,
+    mode: InvocationMode,
+) -> dict[str, Any]:
+    """Маппит :class:`ActionResult` → WS-сообщение в формате клиента.
+
+    Сохраняет совместимость с существующим протоколом
+    (``status``/``result``/``error``), чтобы клиенты, ожидающие
+    WS-формат :class:`InvocationResponse`, продолжали работать.
+    """
+    if envelope.success:
+        status_value = InvocationStatus.OK.value
+        error_value: str | None = None
+    else:
+        status_value = InvocationStatus.ERROR.value
+        if envelope.error is not None:
+            error_value = f"{envelope.error.code}: {envelope.error.message}"
+        else:
+            error_value = "dispatch_failed"
+
+    return {
+        "invocation_id": invocation_id,
+        "status": status_value,
+        "mode": mode.value,
+        "result": envelope.data,
+        "error": error_value,
     }

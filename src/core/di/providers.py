@@ -128,6 +128,9 @@ __all__ = (
     "set_express_metrics_recorder_provider",
     "set_stream_client_provider",
     "set_express_bot_client_factory_provider",
+    # Wave 14.1.D: action gateway dispatcher
+    "get_action_dispatcher_provider",
+    "set_action_dispatcher_provider",
 )
 
 
@@ -1023,3 +1026,31 @@ def get_express_botx_message_class_provider() -> Any:
         return _overrides["express_botx_message_class"]
     module = resolve_module("clients.external.express_bot")
     return module.BotxMessage
+
+
+# ─────────────── Wave 14.1.D: ActionGatewayDispatcher ───────────────
+
+
+def get_action_dispatcher_provider() -> Any:
+    """Возвращает singleton ``DefaultActionDispatcher`` (см. ``ActionGatewayDispatcher``).
+
+    Используется entrypoint-адаптерами (HTTP/WS/Scheduler) для делегирования
+    action-вызовов через middleware-цепочку (audit / idempotency / rate_limit)
+    и получения унифицированного :class:`ActionResult` envelope.
+    """
+    if "action_dispatcher" in _overrides:
+        return _overrides["action_dispatcher"]
+    # Импорт через services-слой (не infrastructure) — не нарушает layer policy.
+    module = importlib.import_module("src.services.execution.action_dispatcher")
+    return module.get_action_dispatcher()
+
+
+def set_action_dispatcher_provider(dispatcher: Any) -> None:
+    """Подменяет ``DefaultActionDispatcher`` (для тестов).
+
+    Передайте ``None``, чтобы сбросить override и вернуться к singleton.
+    """
+    if dispatcher is None:
+        _overrides.pop("action_dispatcher", None)
+    else:
+        _overrides["action_dispatcher"] = dispatcher

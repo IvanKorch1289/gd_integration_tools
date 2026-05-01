@@ -137,9 +137,18 @@ def register_scheduled_invocations(specs: Iterable[ScheduleSpec]) -> list[str]:
 
 
 async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
-    """Tick-handler: формирует InvocationRequest и зовёт Invoker."""
+    """Tick-handler: вызывает action через ActionGatewayDispatcher (W14.1.D).
+
+    Для SYNC/BACKGROUND/DEFERRED-режимов scheduler-tick выполняет action
+    напрямую через :class:`ActionGatewayDispatcher` — это применяет
+    middleware-цепочку (audit / idempotency / rate_limit) и даёт
+    унифицированный :class:`ActionResult` envelope. Для streaming/
+    async-api/async-queue (где нужна reply-channel-семантика) сохраняется
+    делегирование в :class:`Invoker`.
+    """
+    from src.core.di.contexts import make_dispatch_context
+    from src.core.di.providers import get_action_dispatcher_provider
     from src.core.interfaces.invoker import InvocationMode, InvocationRequest
-    from src.services.execution.invoker import get_invoker
 
     try:
         mode = InvocationMode(spec.mode)
@@ -148,6 +157,43 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
             "Schedule tick: unknown mode=%r — fallback на background", spec.mode
         )
         mode = InvocationMode.BACKGROUND
+
+    job_id = spec.job_id or f"scheduled_invocation_{spec.action}"
+
+    if mode in {InvocationMode.SYNC, InvocationMode.BACKGROUND}:
+        # Wave 14.1.D: прямое делегирование в ActionGatewayDispatcher.
+        dispatcher = get_action_dispatcher_provider()
+        context = make_dispatch_context(
+            source="scheduler",
+            attributes={
+                "job_id": job_id,
+                "mode": mode.value,
+                "schedule_metadata": dict(spec.metadata),
+            },
+        )
+        try:
+            envelope = await dispatcher.dispatch(
+                spec.action, dict(spec.payload), context
+            )
+        except Exception:  # noqa: BLE001 — лог и выходим, повторим на следующий tick.
+            logger.exception(
+                "Scheduled invocation failed: action=%s job_id=%s",
+                spec.action,
+                job_id,
+            )
+            return
+        if not envelope.success:
+            logger.warning(
+                "Scheduled invocation returned error: action=%s job_id=%s code=%s message=%s",
+                spec.action,
+                job_id,
+                envelope.error.code if envelope.error else "unknown",
+                envelope.error.message if envelope.error else "",
+            )
+        return
+
+    # streaming / async-api / async-queue / deferred — fallback в Invoker.
+    from src.services.execution.invoker import get_invoker
 
     request = InvocationRequest(
         action=spec.action,
@@ -163,5 +209,5 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
         logger.exception(
             "Scheduled invocation failed: action=%s job_id=%s",
             spec.action,
-            spec.job_id or f"scheduled_invocation_{spec.action}",
+            job_id,
         )

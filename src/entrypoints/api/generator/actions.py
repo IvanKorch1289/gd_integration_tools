@@ -1,8 +1,10 @@
 import inspect
+import os
 from inspect import Parameter, Signature
 from typing import Any, Awaitable, Callable, Sequence
 
 from fastapi import APIRouter, Request, status
+from fastapi.responses import JSONResponse
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 from pydantic import BaseModel
@@ -51,6 +53,125 @@ def _resolve_action_bus_service():
     from src.core.di.providers import get_action_bus_service_provider
 
     return get_action_bus_service_provider()
+
+
+# Wave 14.1.D: feature flag для постепенной миграции HTTP-вызовов на
+# ``ActionGatewayDispatcher`` (с middleware-цепочкой и унифицированным
+# envelope). По умолчанию OFF — старый прямой путь ``service.method()``.
+_USE_DISPATCHER_ENV = "USE_ACTION_DISPATCHER_FOR_HTTP"
+
+
+def _http_dispatcher_enabled() -> bool:
+    """Проверяет feature flag ``USE_ACTION_DISPATCHER_FOR_HTTP``.
+
+    Чтение env'а на каждый запрос — допустимо: оверхед минимальный,
+    зато можно горячо переключать без рестарта при отладке.
+    """
+    return os.getenv(_USE_DISPATCHER_ENV, "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _build_dispatcher_payload(call_kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Сворачивает kwargs endpoint'а в плоский payload для dispatcher.
+
+    ``prepare_call_kwargs`` уже распаковал body/path/query в общий dict;
+    остаются только service-specific аргументы (без ``request``,
+    которое не сериализуется и не нужно дисспетчеру).
+    """
+    payload: dict[str, Any] = {}
+    for key, value in call_kwargs.items():
+        if isinstance(value, Request):
+            continue
+        payload[key] = value
+    return payload
+
+
+def _action_result_to_response(result: Any) -> Any:
+    """Маппит :class:`ActionResult` в FastAPI-friendly response.
+
+    * ``success=True`` → возвращается ``result.data`` напрямую
+      (FastAPI сам сериализует через response_model).
+    * ``success=False`` → :class:`JSONResponse` с кодом ``400``
+      для recoverable-ошибок и ``500`` для non-recoverable.
+    """
+    # Импорт лениво — чтобы не плодить циклические зависимости
+    # entrypoints → core (этот файл импортируется на старте).
+    from src.core.interfaces.action_dispatcher import ActionResult
+
+    if not isinstance(result, ActionResult):
+        # Совместимость на случай, если dispatcher вернул что-то иное
+        # (например, легаси-режим с raw payload).
+        return result
+
+    if result.success:
+        return result.data
+
+    error = result.error
+    code = "internal_error"
+    message = "Action dispatch failed"
+    details: dict[str, Any] | None = None
+    status_code = 500
+    if error is not None:
+        code = error.code
+        message = error.message
+        details = dict(error.details) if error.details else None
+        # recoverable=True → 400 (клиент может повторить с правкой);
+        # recoverable=False → 500 (внутренний сбой / unknown).
+        status_code = 400 if error.recoverable else 500
+        # action_not_found — это 404, оно ни recoverable=True, ни 500.
+        if code == "action_not_found":
+            status_code = 404
+
+    body: dict[str, Any] = {"error": {"code": code, "message": message}}
+    if details:
+        body["error"]["details"] = details
+    if result.metadata:
+        body["metadata"] = dict(result.metadata)
+    return JSONResponse(status_code=status_code, content=body)
+
+
+async def _dispatch_via_gateway(
+    *,
+    action: str,
+    request: Request,
+    direct_kwargs: dict[str, Any],
+    fallback: Callable[[], Awaitable[Any]],
+) -> Any:
+    """Делегирует вызов в :class:`ActionGatewayDispatcher` и маппит envelope.
+
+    Если action не зарегистрирован в реестре или диспетчер недоступен —
+    откатывается на ``fallback`` (старый прямой путь), чтобы feature-flag
+    включение не ломало незарегистрированные эндпоинты.
+    """
+    from src.core.di.contexts import make_dispatch_context
+    from src.core.di.providers import get_action_dispatcher_provider
+
+    dispatcher = get_action_dispatcher_provider()
+    if not dispatcher.is_registered(action):
+        # Action ещё не привязан к handler'у — старый путь актуален.
+        return await fallback()
+
+    payload = _build_dispatcher_payload(direct_kwargs)
+    correlation_id = (
+        request.headers.get("x-correlation-id")
+        or request.headers.get("x-request-id")
+    )
+    idempotency_key = request.headers.get("idempotency-key")
+    context = make_dispatch_context(
+        source="http",
+        correlation_id=correlation_id,
+        idempotency_key=idempotency_key,
+        attributes={
+            "method": request.method,
+            "path": request.url.path,
+        },
+    )
+    envelope = await dispatcher.dispatch(action, payload, context)
+    return _action_result_to_response(envelope)
 
 
 class ActionRouterBuilder:
@@ -188,13 +309,34 @@ class ActionRouterBuilder:
                     )
                     result = bus_result
                     is_delegated = True
+                elif _http_dispatcher_enabled():
+                    # Wave 14.1.D: feature-flag путь через
+                    # ActionGatewayDispatcher (middleware + envelope).
+                    result = await _dispatch_via_gateway(
+                        action=spec.name,
+                        request=request,
+                        direct_kwargs=direct_kwargs,
+                        fallback=direct_call,
+                    )
                 else:
                     result = await direct_call()
+            elif _http_dispatcher_enabled():
+                result = await _dispatch_via_gateway(
+                    action=spec.name,
+                    request=request,
+                    direct_kwargs=direct_kwargs,
+                    fallback=direct_call,
+                )
             else:
                 result = await direct_call()
 
             if is_delegated:
                 return InvocationResultSchema.model_validate(result)
+
+            if isinstance(result, JSONResponse):
+                # Dispatcher вернул error envelope — пробрасываем как есть
+                # (FastAPI не пытается применить response_model к JSONResponse).
+                return result
 
             if spec.response_handler is not None:
                 handled_result = spec.response_handler(result, direct_kwargs)
