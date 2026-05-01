@@ -15,7 +15,12 @@ __all__ = ("SinkKind", "SinkResult", "Sink")
 
 
 class SinkKind(str, Enum):
-    """Тип исходящего канала."""
+    """Тип исходящего канала.
+
+    Wave 3 (Roadmap V10): добавлены ``ws`` / ``webhook`` / ``file``
+    для покрытия исходящего WebSocket-вещания, webhook-доставки и
+    local-FS append (Sink-симметрия с входящими источниками 9 → 9).
+    """
 
     HTTP = "http"
     SOAP = "soap"
@@ -23,6 +28,9 @@ class SinkKind(str, Enum):
     MQ = "mq"
     MAIL = "mail"
     SMS = "sms"
+    WS = "ws"
+    WEBHOOK = "webhook"
+    FILE = "file"
 
 
 @dataclass(slots=True)

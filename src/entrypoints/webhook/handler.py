@@ -18,7 +18,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from src.dsl.service import get_dsl_service
+from src.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.entrypoints.webhook.registry import WebhookSubscription, webhook_registry
 
 __all__ = ("webhook_router",)
@@ -174,25 +174,25 @@ async def receive_webhook(event_type: str, request: Request) -> dict[str, Any]:
         client_ip,
     )
 
-    try:
-        dsl = get_dsl_service()
-        route_id = f"webhook.{event_type}"
-
-        exchange = await dsl.dispatch(
-            route_id=route_id,
-            body=payload,
-            headers={
-                "x-source": "webhook",
-                "x-webhook-event": event_type,
-                "x-webhook-signature": signature or "",
-            },
-        )
-
-        return {"status": exchange.status.value, "error": exchange.error}
-    except KeyError:
+    # Wave 1.5: унифицированный мост ActionDispatcher → DSL fallback.
+    bridge = await dispatch_action_or_dsl(
+        action_id=f"webhook.{event_type}",
+        dsl_route_id=f"webhook.{event_type}",
+        payload=payload,
+        transport="webhook",
+        headers={
+            "x-source": "webhook",
+            "x-webhook-event": event_type,
+            "x-webhook-signature": signature or "",
+        },
+        attributes={"event_type": event_type, "client_ip": client_ip},
+    )
+    if bridge.error_code == "action_not_found":
         raise HTTPException(
             status_code=404, detail=f"Маршрут 'webhook.{event_type}' не найден"
         )
+    status_value = "success" if bridge.success else "error"
+    return {"status": status_value, "error": bridge.error}
 
 
 # --- Outbound webhook ---

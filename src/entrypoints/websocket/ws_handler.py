@@ -1,8 +1,10 @@
-"""WebSocket-обработчик с маршрутизацией через DSL.
+"""WebSocket-обработчик с унифицированной диспетчеризацией (Wave 1.5).
 
-Каждое входящее WS-сообщение парсится как JSON, определяется
-route_id и диспетчеризуется через DslService. Результат
-отправляется обратно клиенту.
+Каждое входящее WS-сообщение парсится как JSON и диспетчеризуется
+через :func:`dispatch_action_or_dsl`: сначала пробуется
+:class:`ActionGatewayDispatcher` (Tier 1/2 — если флаг
+``USE_ACTION_DISPATCHER_FOR_WS`` включён и action зарегистрирован),
+затем fallback на DSL-маршрут (Tier 3).
 """
 
 import logging
@@ -10,7 +12,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.dsl.service import get_dsl_service
+from src.entrypoints._action_bridge import dispatch_action_or_dsl
 from src.entrypoints.websocket.ws_manager import ws_manager
 
 __all__ = ("ws_router",)
@@ -38,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             action = data.get("action", "")
 
-            # Подписка на группы
+            # Подписка на группы.
             if action == "subscribe":
                 groups = data.get("groups", [])
                 for group in groups:
@@ -53,30 +55,29 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 )
                 continue
 
-            # Маршрутизация через DSL
+            # Унифицированная диспетчеризация Wave 1.5.
             try:
-                dsl = get_dsl_service()
-                exchange = await dsl.dispatch(
-                    route_id=action,
-                    body=data.get("payload", {}),
+                bridge = await dispatch_action_or_dsl(
+                    action_id=action,
+                    dsl_route_id=action,
+                    payload=data.get("payload", {}),
+                    transport="ws",
                     headers={"ws-client-id": client_id, "ws-action": action},
+                    attributes={"client_id": client_id},
                 )
-
-                result = exchange.out_message.body if exchange.out_message else None
-                error = exchange.error
-
-                await ws_manager.send_json(
-                    client_id, {"action": action, "result": result, "error": error}
-                )
-
-            except KeyError:
+                if bridge.error_code == "action_not_found":
+                    await ws_manager.send_json(
+                        client_id,
+                        {
+                            "action": action,
+                            "result": None,
+                            "error": f"Маршрут '{action}' не найден",
+                        },
+                    )
+                    continue
                 await ws_manager.send_json(
                     client_id,
-                    {
-                        "action": action,
-                        "result": None,
-                        "error": f"Маршрут '{action}' не найден",
-                    },
+                    {"action": action, "result": bridge.data, "error": bridge.error},
                 )
             except Exception as exc:
                 logger.exception("WS ошибка обработки action=%s: %s", action, exc)

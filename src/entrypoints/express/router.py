@@ -168,30 +168,23 @@ async def receive_callback(request: Request) -> JSONResponse:
 async def _dispatch_to_route(
     route_id: str, fallback_id: str | None, payload: dict[str, Any], sync_id: str
 ) -> dict[str, Any]:
-    """Маршрутизирует payload в DSL-pipeline.
+    """Маршрутизирует payload в action или DSL-pipeline (Wave 1.5).
+
+    Сначала пробует :class:`ActionGatewayDispatcher` (если включён
+    ``USE_ACTION_DISPATCHER_FOR_EXPRESS`` и action зарегистрирован),
+    затем DSL-маршрут ``route_id``, затем DSL-маршрут ``fallback_id``.
+    Контракт ответа BotX сохранён.
 
     Args:
-        route_id: Основной route_id.
-        fallback_id: Fallback route_id (если основной не найден).
+        route_id: Основной идентификатор action/DSL-маршрута.
+        fallback_id: Запасной DSL-маршрут (если основной не найден).
         payload: Тело входящего запроса BotX.
         sync_id: UUID входящего сообщения.
 
     Returns:
         Сериализуемый dict ответа для BotX.
     """
-    from src.dsl.commands.registry import route_registry
-    from src.dsl.engine.context import ExecutionContext
-    from src.dsl.engine.exchange import Exchange, Message
-    from src.dsl.engine.execution_engine import DSLExecutionEngine
-
-    pipeline = route_registry.get_optional(route_id)
-    if pipeline is None and fallback_id:
-        pipeline = route_registry.get_optional(fallback_id)
-        if pipeline is not None:
-            _logger.debug("Express dispatch: %s → fallback %s", route_id, fallback_id)
-    if pipeline is None:
-        _logger.warning("Express dispatch: маршрут %s не найден", route_id)
-        return {"status": "ok", "reason": "no_route"}
+    from src.entrypoints._action_bridge import dispatch_action_or_dsl
 
     chat = payload.get("chat") or {}
     headers = {
@@ -199,16 +192,32 @@ async def _dispatch_to_route(
         "X-Express-Chat-Id": chat.get("group_chat_id", ""),
         "X-Express-User-Huid": (payload.get("from") or {}).get("user_huid", ""),
     }
-    exchange = Exchange(in_message=Message(body=payload, headers=headers))
-    context = ExecutionContext(route_id=pipeline.route_id)
 
-    engine = DSLExecutionEngine(route_registry=route_registry)
-    try:
-        await engine.run_pipeline(pipeline, exchange, context)
-    except Exception as exc:
-        _logger.exception("Express dispatch ошибка: %s", exc)
-        return {"status": "error", "reason": str(exc)}
+    bridge = await dispatch_action_or_dsl(
+        action_id=route_id,
+        dsl_route_id=route_id,
+        payload=payload,
+        transport="express",
+        headers=headers,
+        correlation_id=sync_id or None,
+        attributes={"sync_id": sync_id} if sync_id else None,
+    )
+    if bridge.error_code == "action_not_found" and fallback_id:
+        _logger.debug("Express dispatch: %s → fallback %s", route_id, fallback_id)
+        bridge = await dispatch_action_or_dsl(
+            action_id=fallback_id,
+            dsl_route_id=fallback_id,
+            payload=payload,
+            transport="express",
+            headers=headers,
+            correlation_id=sync_id or None,
+            attributes={"sync_id": sync_id} if sync_id else None,
+        )
 
-    if exchange.error:
-        return {"status": "error", "reason": exchange.error}
+    if bridge.error_code == "action_not_found":
+        _logger.warning("Express dispatch: маршрут %s не найден", route_id)
+        return {"status": "ok", "reason": "no_route"}
+    if not bridge.success:
+        _logger.warning("Express dispatch ошибка: %s", bridge.error)
+        return {"status": "error", "reason": bridge.error or "dispatch failed"}
     return {"status": "ok"}

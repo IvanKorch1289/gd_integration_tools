@@ -1644,7 +1644,7 @@ requires-dist = [
     { name = "fastavro", specifier = ">=1.9.0,<2.0.0" },
     { name = "fastembed", marker = "extra == 'embeddings-fastembed-legacy'", specifier = ">=0.4.0,<1.0.0" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=2.0.0" },
-    { name = "faststream", extras = ["kafka"], specifier = ">=0.5.34,<1.0.0" },
+    { name = "faststream", extras = ["kafka"], specifier = ">=0.6.7,<1.0.0" },
     { name = "faststream", extras = ["nats"], marker = "extra == 'sources-mq-nats'", specifier = ">=0.6.7,<1.0.0" },
     { name = "granian", specifier = ">=2.0.0" },
     { name = "greenlet", specifier = ">=3.1.1,<4.0.0" },

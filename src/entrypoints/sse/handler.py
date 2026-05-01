@@ -1,16 +1,25 @@
 """Server-Sent Events (SSE) endpoint.
 
-Предоставляет однонаправленный стриминг событий
-сервер→клиент через HTTP. Сервисы публикуют события
-через ``event_bus``, SSE стримит их подключённым клиентам.
+Предоставляет:
+
+* ``GET /events/stream`` — однонаправленный pub/sub-стриминг событий
+  сервер→клиент через ``event_bus`` (исторический endpoint).
+* ``POST /events/invoke`` — Wave 1.5: однократный вызов action через
+  :class:`ActionGatewayDispatcher` (с DSL fallback Tier 3) с ответом
+  в SSE-формате (start → result/error → end). Симметрично
+  WS/Webhook/Express.
 """
 
 import asyncio
+import json
 import logging
 from typing import Any
 
 from fastapi import APIRouter, Request
+from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
+
+from src.entrypoints._action_bridge import dispatch_action_or_dsl
 
 __all__ = ("sse_router", "event_bus")
 
@@ -101,6 +110,92 @@ async def sse_stream(request: Request) -> StreamingResponse:
 
     return StreamingResponse(
         event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+class _InvokeRequest(BaseModel):
+    """Тело POST /events/invoke (Wave 1.5).
+
+    Минимальный контракт для запуска action через SSE: имя action +
+    payload. Заголовки запроса передаются в ``DispatchContext`` (через
+    bridge) для сохранения correlation/idempotency.
+    """
+
+    action: str = Field(description="Имя action или DSL-маршрута.")
+    payload: dict[str, Any] = Field(
+        default_factory=dict, description="Полезная нагрузка вызова."
+    )
+
+
+@sse_router.post(
+    "/invoke",
+    summary="SSE invoke: однократный action → SSE response",
+    description=(
+        "Wave 1.5: вызывает action через ActionDispatcher (Tier 1/2) или "
+        "DSL-маршрут (Tier 3) и стримит результат как SSE-события "
+        "``start``, ``result``/``error``, ``end``."
+    ),
+)
+async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingResponse:
+    """Однократный action-вызов с SSE-ответом.
+
+    Поток событий:
+
+    1. ``event: start\\ndata: {"action": "..."}``
+    2. ``event: result\\ndata: <result-json>`` или
+       ``event: error\\ndata: {"code": "...", "message": "..."}``
+    3. ``event: end\\ndata: {}``
+
+    Это симметрично WS/Webhook/Express и закрывает scope Wave 1.5
+    для SSE: SSE из чисто push-канала превращается также в
+    request-response-канал поверх HTTP.
+    """
+    correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
+        "x-request-id"
+    )
+    idempotency_key = request.headers.get("idempotency-key")
+
+    async def stream() -> Any:
+        """Генератор SSE-событий: start → result|error → end."""
+        yield (
+            f"event: start\ndata: {json.dumps({'action': body.action}, ensure_ascii=False)}\n\n"
+        )
+        try:
+            bridge = await dispatch_action_or_dsl(
+                action_id=body.action,
+                dsl_route_id=body.action,
+                payload=body.payload,
+                transport="sse",
+                correlation_id=correlation_id,
+                idempotency_key=idempotency_key,
+                attributes={"path": str(request.url.path)},
+            )
+        except Exception as exc:  # noqa: BLE001 — стримим как event.
+            logger.exception("SSE invoke ошибка: %s", exc)
+            err = {"code": "dispatch_failed", "message": str(exc)}
+            yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+            yield "event: end\ndata: {}\n\n"
+            return
+
+        if bridge.success:
+            payload = json.dumps(bridge.data, ensure_ascii=False, default=str)
+            yield f"event: result\ndata: {payload}\n\n"
+        else:
+            err = {
+                "code": bridge.error_code or "dispatch_failed",
+                "message": bridge.error or "dispatch failed",
+            }
+            yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+        yield "event: end\ndata: {}\n\n"
+
+    return StreamingResponse(
+        stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
