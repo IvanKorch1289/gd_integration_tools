@@ -4,6 +4,12 @@ from src.core.config.services.cache import (
     cache_settings,
     redis_settings,
 )
+from src.core.config.services.invoker import (
+    InvokerSettings,
+    TaskiqSettings,
+    invoker_settings,
+    taskiq_settings,
+)
 from src.core.config.services.logging import LogStorageSettings, log_settings
 from src.core.config.services.mail import MailSettings, mail_settings
 from src.core.config.services.queue import (
@@ -27,6 +33,8 @@ from src.core.config.services.watermark import WatermarkSettings, watermark_sett
 __all__ = (
     "FileStorageSettings",
     "fs_settings",
+    "InvokerSettings",
+    "invoker_settings",
     "LogStorageSettings",
     "log_settings",
     "RedisSettings",
@@ -37,6 +45,8 @@ __all__ = (
     "mail_settings",
     "QueueSettings",
     "queue_settings",
+    "TaskiqSettings",
+    "taskiq_settings",
     "TasksSettings",
     "tasks_settings",
     "GRPCSettings",

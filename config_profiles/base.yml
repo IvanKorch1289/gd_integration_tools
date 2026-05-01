@@ -76,6 +76,28 @@ tasks:
   flow_timeout_seconds: 90000
 
 
+# W22 F.2 C1 — главный Invoker Gateway (см. ADR-038).
+invoker:
+  default_mode: "sync"
+  default_timeout_seconds: null
+  allowed_modes:
+    - "sync"
+    - "async-api"
+    - "async-queue"
+    - "deferred"
+    - "background"
+    - "streaming"
+  streaming_chunk_buffer_size: 64
+
+
+# W22 F.2 C2 — TaskIQ-брокер для ASYNC_QUEUE.
+taskiq:
+  enabled: false
+  broker_url: "memory://"
+  result_backend_url: "memory://"
+  queue_name: "invocations"
+
+
 grpc:
   socket_path: "/tmp/order_service.sock"
   max_workers: 20

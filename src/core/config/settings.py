@@ -42,23 +42,27 @@ from src.core.config.services import (
     CacheSettings,
     FileStorageSettings,
     GRPCSettings,
+    InvokerSettings,
     LogStorageSettings,
     MailSettings,
     QueueSettings,
     RedisSettings,
     ResilienceSettings,
     SnapshotSettings,
+    TaskiqSettings,
     TasksSettings,
     WatermarkSettings,
     cache_settings,
     fs_settings,
     grpc_settings,
+    invoker_settings,
     log_settings,
     mail_settings,
     queue_settings,
     redis_settings,
     resilience_settings,
     snapshot_settings,
+    taskiq_settings,
     tasks_settings,
     watermark_settings,
 )
@@ -95,6 +99,10 @@ class Settings(BaseSettings):
     mail: MailSettings = mail_settings
     tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
+
+    # Invoker / TaskIQ (W22 F.2 C1-C3)
+    invoker: InvokerSettings = invoker_settings
+    taskiq: TaskiqSettings = taskiq_settings
 
     # Аналитика / поиск
     clickhouse: ClickHouseSettings = clickhouse_settings

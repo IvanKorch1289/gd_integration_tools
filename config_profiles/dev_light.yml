@@ -157,3 +157,24 @@ resilience:
 # W26.8: dev_light использует SQLite как primary — snapshot job не нужен.
 snapshot:
   enabled: false
+
+
+# W22 F.2 C3 — на dev_light тяжёлые режимы выключены (ASYNC_QUEUE требует
+# TaskIQ-брокера). DEFERRED работает через memory-jobstore (см. invoker.py).
+invoker:
+  default_mode: "sync"
+  default_timeout_seconds: 30
+  allowed_modes:
+    - "sync"
+    - "async-api"
+    - "deferred"
+    - "background"
+    - "streaming"
+  streaming_chunk_buffer_size: 16
+
+
+taskiq:
+  enabled: false
+  broker_url: "memory://"
+  result_backend_url: "memory://"
+  queue_name: "invocations.dev_light"
