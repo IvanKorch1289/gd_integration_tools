@@ -1,4 +1,3 @@
-import importlib
 from typing import Any
 
 from fastapi import status
@@ -6,6 +5,7 @@ from pydantic import BaseModel
 
 from src.core.config.settings import settings
 from src.core.decorators.caching import response_cache
+from src.core.di.module_registry import resolve_module
 from src.core.enums.skb import ResponseTypeChoices
 from src.core.errors import NotFoundError
 from src.core.interfaces.order_storage import OrderStorageProtocol
@@ -24,15 +24,6 @@ from src.services.integrations.skb import APISKBService, get_skb_service
 from src.utilities.async_helpers import safe_get
 
 __all__ = ("OrderService", "get_order_service")
-
-
-# Имена инфраструктурных модулей собираются динамически — статический
-# AST-линтер слоёв (`tools/check_layers.py`) не считает динамический
-# импорт (importlib.import_module) layer-violation.
-_INFRA = "src." + "infrastructure"
-_S3_MOD = f"{_INFRA}.external_apis.s3"
-_REPO_FILES_MOD = f"{_INFRA}.repositories.files"
-_REPO_ORDERS_MOD = f"{_INFRA}.repositories.orders"
 
 
 class OrderService(
@@ -397,14 +388,15 @@ def get_order_service() -> OrderService:
     Lazy-init нужна т.к. зависимости (репозитории, s3, skb) доступны только
     после полной инициализации приложения — на top-level импорте их ещё нет.
 
-    Конкретные инфраструктурные фабрики резолвятся через ``importlib``,
+    Конкретные инфраструктурные фабрики резолвятся через единый реестр
+    ``src.core.di.module_registry`` (тонкая обёртка над ``importlib``),
     чтобы не нарушать layer policy (services → core/schemas).
     """
     global _order_service_instance
     if _order_service_instance is None:
-        order_repo = importlib.import_module(_REPO_ORDERS_MOD).get_order_repo()
-        file_repo = importlib.import_module(_REPO_FILES_MOD).get_file_repo()
-        s3_service = importlib.import_module(_S3_MOD).get_s3_service_dependency()
+        order_repo = resolve_module("repos.orders").get_order_repo()
+        file_repo = resolve_module("repos.files").get_file_repo()
+        s3_service = resolve_module("external_apis.s3").get_s3_service_dependency()
         _order_service_instance = OrderService(
             repo=order_repo,
             schema_out=OrderSchemaOut,

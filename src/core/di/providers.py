@@ -14,6 +14,8 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
+from src.core.di.module_registry import resolve_module
+
 __all__ = (
     "get_cache_invalidator_provider",
     "get_slo_tracker_provider",
@@ -129,6 +131,12 @@ __all__ = (
 )
 
 
+# DEPRECATED (Wave 6.1): локальные ``_*_MOD`` константы оставлены ради
+# обратной совместимости и для возможного in-place отладочного
+# использования. Все провайдеры ниже резолвят модули через единый
+# реестр ``src.core.di.module_registry.resolve_module(...)`` —
+# при дальнейшей чистке этот блок можно удалить.
+#
 # Имена инфраструктурных модулей собираются динамически, чтобы
 # `tools/check_layers.py` не считал их прямыми статическими импортами.
 _INFRA = "src." + "infrastructure"
@@ -202,7 +210,7 @@ def get_cache_invalidator_provider() -> Any:
     """Возвращает глобальный CacheInvalidator (см. ``core.interfaces.admin_cache``)."""
     if "cache_invalidator" in _overrides:
         return _overrides["cache_invalidator"]
-    module = importlib.import_module(_CACHE_MOD)
+    module = resolve_module("cache")
     return module.get_cache_invalidator()
 
 
@@ -216,7 +224,7 @@ def set_cache_invalidator_provider(invalidator: Any) -> None:
 def get_slo_tracker_provider() -> Any:
     if "slo_tracker" in _overrides:
         return _overrides["slo_tracker"]
-    module = importlib.import_module(_SLO_MOD)
+    module = resolve_module("app.slo_tracker")
     return module.get_slo_tracker()
 
 
@@ -230,7 +238,7 @@ def set_slo_tracker_provider(tracker: Any) -> None:
 def get_health_aggregator_provider() -> Any:
     if "health_aggregator" in _overrides:
         return _overrides["health_aggregator"]
-    module = importlib.import_module(_HEALTH_AGG_MOD)
+    module = resolve_module("app.health_aggregator")
     return module.get_health_aggregator()
 
 
@@ -245,7 +253,7 @@ def get_healthcheck_session_provider() -> Any:
     """Возвращает фабрику healthcheck-сессий (async context manager)."""
     if "healthcheck_session" in _overrides:
         return _overrides["healthcheck_session"]
-    module = importlib.import_module(_HEALTH_CHECK_MOD)
+    module = resolve_module("monitoring.health_check")
     return module.get_healthcheck_service
 
 
@@ -259,7 +267,7 @@ def set_healthcheck_session_provider(factory: Any) -> None:
 def get_admin_cache_storage_provider() -> Any:
     if "admin_cache_storage" in _overrides:
         return _overrides["admin_cache_storage"]
-    module = importlib.import_module(_REDIS_MOD)
+    module = resolve_module("clients.storage.redis")
     return module.redis_client
 
 
@@ -274,7 +282,7 @@ def get_http_client_provider() -> Any:
     """Возвращает singleton ``HttpClient`` (см. ``HttpClientProtocol``)."""
     if "http_client" in _overrides:
         return _overrides["http_client"]
-    module = importlib.import_module(_HTTP_CLIENT_MOD)
+    module = resolve_module("clients.transport.http")
     return module.get_http_client_dependency()
 
 
@@ -289,7 +297,7 @@ def get_ai_sanitizer_provider() -> Any:
     """Возвращает фабрику ``AIDataSanitizer`` (см. ``AISanitizerProtocol``)."""
     if "ai_sanitizer" in _overrides:
         return _overrides["ai_sanitizer"]
-    module = importlib.import_module(_AI_SANITIZER_MOD)
+    module = resolve_module("security.ai_sanitizer")
     return module.get_ai_sanitizer()
 
 
@@ -308,7 +316,7 @@ def get_redis_stream_client_provider() -> Any:
     """
     if "redis_stream_client" in _overrides:
         return _overrides["redis_stream_client"]
-    module = importlib.import_module(_REDIS_MOD)
+    module = resolve_module("clients.storage.redis")
     return module.redis_client
 
 
@@ -323,7 +331,7 @@ def get_mongo_client_provider() -> Any:
     """Возвращает фабрику ``MongoDBClient`` (см. ``MongoClientProtocol``)."""
     if "mongo_client" in _overrides:
         return _overrides["mongo_client"]
-    module = importlib.import_module(_MONGO_MOD)
+    module = resolve_module("clients.storage.mongodb")
     return module.get_mongo_client
 
 
@@ -343,7 +351,7 @@ def get_llm_judge_metrics_provider() -> Any:
     """
     if "llm_judge_metrics" in _overrides:
         return _overrides["llm_judge_metrics"]
-    module = importlib.import_module(_OBS_METRICS_MOD)
+    module = resolve_module("observability.metrics")
     return getattr(module, "record_llm_judge", _noop_llm_judge_metrics)
 
 
@@ -365,7 +373,7 @@ def get_browser_client_provider() -> Any:
     """Возвращает singleton ``BrowserClient`` (см. ``BrowserClientProtocol``)."""
     if "browser_client" in _overrides:
         return _overrides["browser_client"]
-    module = importlib.import_module(_BROWSER_MOD)
+    module = resolve_module("clients.transport.browser")
     return module.get_browser_client()
 
 
@@ -381,7 +389,7 @@ def get_external_session_manager_provider() -> Any:
     """
     if "external_session_manager" in _overrides:
         return _overrides["external_session_manager"]
-    module = importlib.import_module(_EXT_DB_SESSION_MOD)
+    module = resolve_module("database.session_manager")
     return module.get_external_session_manager
 
 
@@ -393,7 +401,7 @@ def get_file_repo_provider() -> Any:
     """Возвращает фабрику ``FileRepository`` (см. ``FileRepositoryProtocol``)."""
     if "file_repo" in _overrides:
         return _overrides["file_repo"]
-    module = importlib.import_module(_FILE_REPO_MOD)
+    module = resolve_module("repos.files")
     return module.get_file_repo()
 
 
@@ -408,7 +416,7 @@ def get_clickhouse_client_provider() -> Any:
     """Возвращает singleton ``ClickHouseClient`` (см. ``ClickHouseClientProtocol``)."""
     if "clickhouse_client" in _overrides:
         return _overrides["clickhouse_client"]
-    module = importlib.import_module(_CLICKHOUSE_MOD)
+    module = resolve_module("clients.storage.clickhouse")
     return module.get_clickhouse_client()
 
 
@@ -420,7 +428,7 @@ def get_smtp_client_provider() -> Any:
     """Возвращает singleton ``SmtpClient`` (см. ``SmtpClientProtocol``)."""
     if "smtp_client" in _overrides:
         return _overrides["smtp_client"]
-    module = importlib.import_module(_SMTP_MOD)
+    module = resolve_module("clients.transport.smtp")
     return module.smtp_client
 
 
@@ -432,7 +440,7 @@ def get_express_client_provider() -> Any:
     """Возвращает singleton ``ExpressClient`` (см. ``ExpressClientProtocol``)."""
     if "express_client" in _overrides:
         return _overrides["express_client"]
-    module = importlib.import_module(_EXPRESS_MOD)
+    module = resolve_module("clients.external.express")
     return module.get_express_client()
 
 
@@ -448,7 +456,7 @@ def get_redis_kv_client_provider() -> Any:
     """
     if "redis_kv_client" in _overrides:
         return _overrides["redis_kv_client"]
-    module = importlib.import_module(_REDIS_MOD)
+    module = resolve_module("clients.storage.redis")
     return getattr(module.redis_client, "client", None) or module.redis_client
 
 
@@ -460,7 +468,7 @@ def get_signature_builder_provider() -> Any:
     """Возвращает callable ``build_signature_headers`` (HMAC headers)."""
     if "signature_builder" in _overrides:
         return _overrides["signature_builder"]
-    module = importlib.import_module(_SIGNATURES_MOD)
+    module = resolve_module("security.signatures")
     return module.build_signature_headers
 
 
@@ -480,7 +488,7 @@ def get_response_cache_provider() -> Any:
     """
     if "response_cache" in _overrides:
         return _overrides["response_cache"]
-    module = importlib.import_module(_RESPONSE_CACHE_MOD)
+    module = resolve_module("decorators.caching")
     return module.response_cache
 
 
@@ -492,7 +500,7 @@ def get_connector_config_store_provider() -> Any:
     """Возвращает singleton ``MongoConnectorConfigStore``."""
     if "connector_config_store" in _overrides:
         return _overrides["connector_config_store"]
-    module = importlib.import_module(_CONN_CFG_MOD)
+    module = resolve_module("repos.connector_configs")
     return module.get_connector_config_store()
 
 
@@ -507,7 +515,7 @@ def get_import_gateway_factory_provider() -> Any:
     """
     if "import_gateway_factory" in _overrides:
         return _overrides["import_gateway_factory"]
-    module = importlib.import_module(_IMPORT_GATEWAY_MOD)
+    module = resolve_module("import_gateway")
     return module.build_import_gateway
 
 
@@ -522,7 +530,7 @@ def get_scheduler_manager_provider() -> Any:
     """Возвращает singleton ``SchedulerManager`` (APScheduler-обёртка)."""
     if "scheduler_manager" in _overrides:
         return _overrides["scheduler_manager"]
-    module = importlib.import_module(_SCHEDULER_MOD)
+    module = resolve_module("scheduler.scheduler_manager")
     return module.scheduler_manager
 
 
@@ -539,7 +547,7 @@ def get_taskiq_invocation_task_provider() -> Any:
     """
     if "taskiq_invocation_task" in _overrides:
         return _overrides["taskiq_invocation_task"]
-    module = importlib.import_module(_TASKIQ_MOD)
+    module = resolve_module("execution.taskiq_broker")
     return module.get_invocation_task
 
 
@@ -558,7 +566,7 @@ def get_api_key_manager_provider() -> Any:
     """
     if "api_key_manager" in _overrides:
         return _overrides["api_key_manager"]
-    module = importlib.import_module(_API_KEY_MGR_MOD)
+    module = resolve_module("security.api_key_manager")
     return module.get_api_key_manager()
 
 
@@ -578,7 +586,7 @@ def get_action_bus_service_provider() -> Any:
     """
     if "action_bus_service" in _overrides:
         return _overrides["action_bus_service"]
-    module = importlib.import_module(_ACTION_BUS_MOD)
+    module = resolve_module("external_apis.action_bus")
     return module.get_action_bus_service()
 
 
@@ -593,7 +601,7 @@ def get_connector_registry_provider() -> Any:
     """Возвращает singleton ``ConnectorRegistry`` через ``ConnectorRegistry.instance()``."""
     if "connector_registry" in _overrides:
         return _overrides["connector_registry"]
-    module = importlib.import_module(_REGISTRY_MOD)
+    module = resolve_module("registry")
     return module.ConnectorRegistry.instance()
 
 
@@ -609,7 +617,7 @@ def get_connector_registry_errors_provider() -> Any:
     """
     if "connector_registry_errors" in _overrides:
         return _overrides["connector_registry_errors"]
-    module = importlib.import_module(_REGISTRY_MOD)
+    module = resolve_module("registry")
     return module.ConnectorNotRegisteredError
 
 
@@ -623,7 +631,7 @@ def get_workflow_event_store_provider() -> Any:
     """
     if "workflow_event_store" in _overrides:
         return _overrides["workflow_event_store"]
-    module = importlib.import_module(_WF_EVENT_STORE_MOD)
+    module = resolve_module("workflow.event_store")
     return module.WorkflowEventStore
 
 
@@ -635,7 +643,7 @@ def get_workflow_state_store_provider() -> Any:
     """Возвращает класс ``WorkflowInstanceStore`` (без инстанцирования)."""
     if "workflow_state_store" in _overrides:
         return _overrides["workflow_state_store"]
-    module = importlib.import_module(_WF_STATE_STORE_MOD)
+    module = resolve_module("workflow.state_store")
     return module.WorkflowInstanceStore
 
 
@@ -647,7 +655,7 @@ def get_workflow_state_row_class_provider() -> Any:
     """Возвращает DTO-класс ``WorkflowInstanceRow`` (для ORM→DTO маппинга)."""
     if "workflow_state_row_class" in _overrides:
         return _overrides["workflow_state_row_class"]
-    module = importlib.import_module(_WF_STATE_STORE_MOD)
+    module = resolve_module("workflow.state_store")
     return module.WorkflowInstanceRow
 
 
@@ -655,7 +663,7 @@ def get_workflow_main_session_provider() -> Any:
     """Возвращает singleton ``main_session_manager`` для админских SQL-запросов."""
     if "workflow_main_session" in _overrides:
         return _overrides["workflow_main_session"]
-    module = importlib.import_module(_WF_DB_SESSION_MOD)
+    module = resolve_module("database.session_manager")
     return module.main_session_manager
 
 
@@ -667,7 +675,7 @@ def get_workflow_instance_model_provider() -> Any:
     """Возвращает ORM-класс ``WorkflowInstance`` для админских фильтров."""
     if "workflow_instance_model" in _overrides:
         return _overrides["workflow_instance_model"]
-    module = importlib.import_module(_WF_INSTANCE_MODEL_MOD)
+    module = resolve_module("database.models.workflow_instance")
     return module.WorkflowInstance
 
 
@@ -675,7 +683,7 @@ def get_workflow_status_enum_provider() -> Any:
     """Возвращает enum ``WorkflowStatus`` (pending/running/succeeded/...)."""
     if "workflow_status_enum" in _overrides:
         return _overrides["workflow_status_enum"]
-    module = importlib.import_module(_WF_INSTANCE_MODEL_MOD)
+    module = resolve_module("database.models.workflow_instance")
     return module.WorkflowStatus
 
 
@@ -686,7 +694,7 @@ def get_s3_service_provider() -> Any:
     """Возвращает singleton ``S3Service`` (см. ``S3Protocol``)."""
     if "s3_service" in _overrides:
         return _overrides["s3_service"]
-    module = importlib.import_module(_S3_MOD)
+    module = resolve_module("external_apis.s3")
     return module.get_s3_service_dependency()
 
 
@@ -698,7 +706,7 @@ def get_antivirus_service_provider() -> Any:
     """Возвращает singleton ``AntivirusService``."""
     if "antivirus_service" in _overrides:
         return _overrides["antivirus_service"]
-    module = importlib.import_module(_ANTIVIRUS_MOD)
+    module = resolve_module("external_apis.antivirus")
     return module.get_antivirus_service_dependency()
 
 
@@ -716,7 +724,7 @@ def get_resilience_coordinator_provider() -> Any:
     """
     if "resilience_coordinator" in _overrides:
         return _overrides["resilience_coordinator"]
-    module = importlib.import_module(_RESILIENCE_COORDINATOR_MOD)
+    module = resolve_module("resilience.coordinator")
     return module.get_resilience_coordinator()
 
 
@@ -728,7 +736,7 @@ def get_resilience_components_report_provider() -> Any:
     """Возвращает callable ``resilience_components_report`` для health/components."""
     if "resilience_components_report" in _overrides:
         return _overrides["resilience_components_report"]
-    module = importlib.import_module(_RESILIENCE_HEALTH_MOD)
+    module = resolve_module("resilience.health")
     return module.resilience_components_report
 
 
@@ -743,7 +751,7 @@ def get_model_enum_provider() -> Any:
     """Возвращает callable ``get_model_enum`` (Enum-фабрика SQLA-моделей)."""
     if "model_enum" in _overrides:
         return _overrides["model_enum"]
-    module = importlib.import_module(_MODEL_REGISTRY_MOD)
+    module = resolve_module("database.model_registry")
     return module.get_model_enum
 
 
@@ -761,7 +769,7 @@ def get_app_logger_provider() -> Any:
     """
     if "app_logger" in _overrides:
         return _overrides["app_logger"]
-    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    module = resolve_module("external_apis.logging_service")
     return module.app_logger
 
 
@@ -779,7 +787,7 @@ def get_correlation_context_setter_provider() -> Any:
     """
     if "correlation_context_setter" in _overrides:
         return _overrides["correlation_context_setter"]
-    module = importlib.import_module(_CORRELATION_MOD)
+    module = resolve_module("observability.correlation")
     return module.set_correlation_context
 
 
@@ -794,7 +802,7 @@ def get_rate_limiter_provider() -> Any:
     """Возвращает singleton ``RedisRateLimiter`` (см. ``RateLimiterProtocol``)."""
     if "rate_limiter" in _overrides:
         return _overrides["rate_limiter"]
-    module = importlib.import_module(_RATE_LIMITER_MOD)
+    module = resolve_module("resilience.unified_rate_limiter")
     return module.get_rate_limiter()
 
 
@@ -810,7 +818,7 @@ def get_rate_limit_classes_provider() -> tuple[Any, Any]:
     """
     if "rate_limit_classes" in _overrides:
         return _overrides["rate_limit_classes"]
-    module = importlib.import_module(_RATE_LIMITER_MOD)
+    module = resolve_module("resilience.unified_rate_limiter")
     return module.RateLimit, module.RateLimitExceeded
 
 
@@ -821,7 +829,7 @@ def get_redis_hash_factory_provider() -> Any:
     """Возвращает класс ``RedisHash`` (фабрика per-key инстансов)."""
     if "redis_hash_factory" in _overrides:
         return _overrides["redis_hash_factory"]
-    module = importlib.import_module(_REDIS_COORD_MOD)
+    module = resolve_module("clients.storage.redis_coordinator")
     return module.RedisHash
 
 
@@ -833,7 +841,7 @@ def get_redis_set_factory_provider() -> Any:
     """Возвращает класс ``RedisSet`` (фабрика per-key инстансов)."""
     if "redis_set_factory" in _overrides:
         return _overrides["redis_set_factory"]
-    module = importlib.import_module(_REDIS_COORD_MOD)
+    module = resolve_module("clients.storage.redis_coordinator")
     return module.RedisSet
 
 
@@ -845,7 +853,7 @@ def get_redis_pubsub_factory_provider() -> Any:
     """Возвращает класс ``RedisPubSub`` (фабрика per-channel инстансов)."""
     if "redis_pubsub_factory" in _overrides:
         return _overrides["redis_pubsub_factory"]
-    module = importlib.import_module(_REDIS_COORD_MOD)
+    module = resolve_module("clients.storage.redis_coordinator")
     return module.RedisPubSub
 
 
@@ -857,7 +865,7 @@ def get_redis_cursor_factory_provider() -> Any:
     """Возвращает класс ``RedisCursor`` (CAS-cursor)."""
     if "redis_cursor_factory" in _overrides:
         return _overrides["redis_cursor_factory"]
-    module = importlib.import_module(_REDIS_COORD_MOD)
+    module = resolve_module("clients.storage.redis_coordinator")
     return module.RedisCursor
 
 
@@ -872,7 +880,7 @@ def get_cdc_client_provider() -> Any:
     """Возвращает singleton ``CDCClient`` (см. ``CDCClientProtocol``)."""
     if "cdc_client" in _overrides:
         return _overrides["cdc_client"]
-    module = importlib.import_module(_CDC_MOD)
+    module = resolve_module("clients.external.cdc")
     return module.get_cdc_client()
 
 
@@ -887,7 +895,7 @@ def get_vault_refresher_provider() -> Any:
     """Возвращает singleton ``VaultSecretRefresher`` (см. ``VaultRefresherProtocol``)."""
     if "vault_refresher" in _overrides:
         return _overrides["vault_refresher"]
-    module = importlib.import_module(_VAULT_MOD)
+    module = resolve_module("app.vault_refresher")
     return module.VaultSecretRefresher.get()
 
 
@@ -902,7 +910,7 @@ def get_grpc_logger_provider() -> Any:
     """Возвращает ``grpc_logger`` из ``logging_service``."""
     if "grpc_logger" in _overrides:
         return _overrides["grpc_logger"]
-    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    module = resolve_module("external_apis.logging_service")
     return module.grpc_logger
 
 
@@ -914,7 +922,7 @@ def get_stream_logger_provider() -> Any:
     """Возвращает ``stream_logger`` из ``logging_service``."""
     if "stream_logger" in _overrides:
         return _overrides["stream_logger"]
-    module = importlib.import_module(_LOGGING_SERVICE_MOD)
+    module = resolve_module("external_apis.logging_service")
     return module.stream_logger
 
 
@@ -929,7 +937,7 @@ def get_express_dialog_store_provider() -> Any:
     """Возвращает singleton ``MongoExpressDialogStore``."""
     if "express_dialog_store" in _overrides:
         return _overrides["express_dialog_store"]
-    module = importlib.import_module(_EXPRESS_DIALOGS_MOD)
+    module = resolve_module("repos.express_dialogs")
     return module.get_express_dialog_store()
 
 
@@ -941,7 +949,7 @@ def get_express_session_store_provider() -> Any:
     """Возвращает singleton ``MongoExpressSessionStore``."""
     if "express_session_store" in _overrides:
         return _overrides["express_session_store"]
-    module = importlib.import_module(_EXPRESS_SESSIONS_MOD)
+    module = resolve_module("repos.express_sessions")
     return module.get_express_session_store()
 
 
@@ -960,7 +968,7 @@ def get_express_metrics_recorder_provider() -> Any:
     """
     if "express_metrics_recorder" in _overrides:
         return _overrides["express_metrics_recorder"]
-    module = importlib.import_module(_OBS_METRICS_MOD)
+    module = resolve_module("observability.metrics")
     return getattr(
         module, "record_express_command_received", _noop_express_metrics_recorder
     )
@@ -982,7 +990,7 @@ def get_stream_client_provider() -> Any:
     """Возвращает singleton ``StreamClient`` (FastStream роутеры)."""
     if "stream_client" in _overrides:
         return _overrides["stream_client"]
-    module = importlib.import_module(_STREAM_CLIENT_MOD)
+    module = resolve_module("clients.messaging.stream")
     return module.stream_client
 
 
@@ -1001,7 +1009,7 @@ def get_express_bot_client_factory_provider() -> Any:
     """
     if "express_bot_client_factory" in _overrides:
         return _overrides["express_bot_client_factory"]
-    module = importlib.import_module("src.dsl.engine.processors.express._common")
+    module = resolve_module("dsl.processors.express_common")
     return module.get_express_client
 
 
@@ -1013,5 +1021,5 @@ def get_express_botx_message_class_provider() -> Any:
     """Возвращает класс ``BotxMessage`` (DTO для Express)."""
     if "express_botx_message_class" in _overrides:
         return _overrides["express_botx_message_class"]
-    module = importlib.import_module(_EXPRESS_BOT_MOD)
+    module = resolve_module("clients.external.express_bot")
     return module.BotxMessage

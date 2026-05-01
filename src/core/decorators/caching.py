@@ -14,15 +14,11 @@ Wave 6.2: services/core/* не имеет права импортировать
 
 from __future__ import annotations
 
-import importlib
 from typing import Any
 
-__all__ = ("response_cache", "set_response_cache")
+from src.core.di.module_registry import resolve_module
 
-# Имя модуля собирается динамически, чтобы AST-линтер слоёв
-# (`tools/check_layers.py`) не считал его статическим импортом
-# `infrastructure.*` из core.
-_INFRA_CACHING_MODULE = "src." + "infrastructure.decorators.caching"
+__all__ = ("response_cache", "set_response_cache")
 
 
 class _LazyResponseCache:
@@ -40,7 +36,7 @@ class _LazyResponseCache:
 
     def _resolve(self) -> Any:
         if self._impl is None:
-            module = importlib.import_module(_INFRA_CACHING_MODULE)
+            module = resolve_module("decorators.caching")
             self._impl = module.response_cache
         return self._impl
 
