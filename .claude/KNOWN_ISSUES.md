@@ -34,6 +34,46 @@
    F841) — pre-existing, вне scope Wave 26.6. Отдельная задача
    (Wave 26.6 расширение).
 
+6. **W14.1 — миграция 119 actions через
+   `USE_ACTION_DISPATCHER_FOR_HTTP`** (Wave 14.1 sprint 2 расширение).
+   Phase D добавил feature flag, по умолчанию **OFF**. Для полного
+   включения Gateway-цепочки на каждый action нужно:
+   - объявить `transports / side_effect / idempotent / permissions /
+     rate_limit / timeout_ms` в `ActionSpec` (или отдельной декларации);
+   - прогнать contract-test «registered metadata = expected» по всем
+     119 action;
+   - включить флаг поэтапно (10-20 action за итерацию).
+   Эффорт: M (4-8ч). Связано с ADR-038 open questions.
+
+7. **W14.1 — integration-тесты middleware по транспортам.**
+   `AuditMiddleware`, `IdempotencyMiddleware`, `RateLimitMiddleware`
+   зарегистрированы в composition root, но end-to-end проверка по
+   HTTP / WS / Scheduler с `testcontainers[redis]` не написана.
+   Объединяется с пунктом 1 (chaos-тесты) — общая инфраструктура
+   контейнеров. Эффорт: M.
+
+### Закрытые техдолги Wave 14.1 (Sprint 2 завершён 2026-05-01)
+
+- ~~**ActionDispatcher Gateway — единая точка диспетчеризации**.~~
+  **Закрыто 2026-05-01** (commits `Wave-14.1.A..E` + ADR-038).
+  - **Phase A** (`9911182`) — контракты: `ActionMetadata`,
+    `DispatchContext`, `ActionResult` / `ActionError`,
+    `ActionMiddleware` Protocol, `ActionGatewayDispatcher` Protocol.
+  - **Phase B** (`eb45b09`) — `ActionHandlerRegistry` расширен
+    parallel storage метаданных + middleware-цепочкой; адаптер
+    `ActionSpec → ActionMetadata`.
+  - **Phase C** (`2aefff7`) — `DefaultActionDispatcher` реализует
+    оба Protocol (legacy + Gateway); 3 middleware (`audit`,
+    `idempotency`, `rate_limit`) зарегистрированы в composition root.
+  - **Phase D** (`cd3dc03`) — HTTP / WS / Scheduler делегируют в
+    Gateway через feature flag (`USE_ACTION_DISPATCHER_FOR_*`,
+    default OFF) с fallback на прямой путь.
+  - **Phase E** — `GET /api/v1/actions/inventory` + ADR-038 +
+    обновлены `KNOWN_ISSUES.md` / `CONTEXT.md`.
+  - DoD: `python tools/check_layers.py → 0 новых нарушений`,
+    `make routes` 119, `make actions` 119, новый FastAPI-эндпоинт
+    `/api/v1/actions/inventory` ✅.
+
 ### Закрытые техдолги Wave 26
 
 - ~~**Миграция 65 legacy-endpoints на DSL** (W26.5).~~

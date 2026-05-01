@@ -4,6 +4,9 @@ __all__ = ("get_v1_routers",)
 
 
 def get_v1_routers() -> APIRouter:
+    from src.entrypoints.api.v1.endpoints.actions_inventory import (
+        router as actions_inventory_router,
+    )
     from src.entrypoints.api.v1.endpoints.admin import router as admin_router
     from src.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
@@ -98,6 +101,13 @@ def get_v1_routers() -> APIRouter:
     # W22.2: Single Invoker — единый REST-вход для всех режимов.
     api_router_v1.include_router(
         invocations_router, prefix="/invocations", tags=["Invocations"]
+    )
+    # Wave 14.1.E: Action Inventory API — каталог зарегистрированных
+    # actions для Streamlit Action Console / MCP / OpenAPI enrichment.
+    api_router_v1.include_router(
+        actions_inventory_router,
+        prefix="/actions",
+        tags=["Actions Inventory"],
     )
 
     return api_router_v1
