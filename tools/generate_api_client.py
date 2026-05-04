@@ -618,11 +618,11 @@ def render_actions_fragment(name: str, class_prefix: str, endpoints: list[Endpoi
             schema_class = f"{class_prefix}{method_camel}Request"
             schema_import = f"  # payload_model: {schema_class}"
 
-        lines.append(f'action_handler_registry.register(')
+        lines.append('action_handler_registry.register(')
         lines.append(f'    action="{name}.{ep.method_name}",')
         lines.append(f'    service_getter=get_{name}_service,')
         lines.append(f'    service_method="{ep.method_name}",{schema_import}')
-        lines.append(f')')
+        lines.append(')')
 
     return "\n".join(lines)
 

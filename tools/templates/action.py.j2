@@ -1,0 +1,86 @@
+"""DSL-actions для {{ entity }} (codegen Wave 5.1)."""
+
+from __future__ import annotations
+
+from src.core.interfaces.action_dispatcher import ActionMetadata
+from src.dsl.commands.action_registry import ActionHandlerSpec
+from src.schemas.{{ name }} import {{ class_name_short }}Create, {{ class_name_short }}Update
+
+__all__ = (
+    "{{ name }}_create_metadata",
+    "{{ name }}_update_metadata",
+    "{{ name }}_get_metadata",
+    "{{ name }}_delete_metadata",
+)
+
+
+def _service_getter():
+    """Lazy-DI getter — возвращает {{ class_name }} из app.state."""
+    from src.core.di.app_state import require_app_ref
+
+    app = require_app_ref()
+    return app.state.{{ name }}_service
+
+
+{{ name }}_create_metadata = ActionMetadata(
+    action="{{ domain }}.{{ name }}.create",
+    description="Создать {{ entity_short }}",
+    input_model={{ class_name_short }}Create,
+    side_effect="write",
+    idempotent=False,
+    transports=("http", "grpc"),
+)
+
+{{ name }}_create_spec = ActionHandlerSpec(
+    action="{{ domain }}.{{ name }}.create",
+    service_getter=_service_getter,
+    service_method="create",
+    payload_model={{ class_name_short }}Create,
+)
+
+
+{{ name }}_update_metadata = ActionMetadata(
+    action="{{ domain }}.{{ name }}.update",
+    description="Обновить {{ entity_short }} по ID",
+    input_model={{ class_name_short }}Update,
+    side_effect="write",
+    idempotent=True,
+    transports=("http", "grpc"),
+)
+
+{{ name }}_update_spec = ActionHandlerSpec(
+    action="{{ domain }}.{{ name }}.update",
+    service_getter=_service_getter,
+    service_method="update",
+    payload_model={{ class_name_short }}Update,
+)
+
+
+{{ name }}_get_metadata = ActionMetadata(
+    action="{{ domain }}.{{ name }}.get",
+    description="Получить {{ entity_short }} по ID",
+    side_effect="read",
+    idempotent=True,
+    transports=("http", "grpc"),
+)
+
+{{ name }}_get_spec = ActionHandlerSpec(
+    action="{{ domain }}.{{ name }}.get",
+    service_getter=_service_getter,
+    service_method="get",
+)
+
+
+{{ name }}_delete_metadata = ActionMetadata(
+    action="{{ domain }}.{{ name }}.delete",
+    description="Удалить {{ entity_short }} по ID",
+    side_effect="write",
+    idempotent=True,
+    transports=("http", "grpc"),
+)
+
+{{ name }}_delete_spec = ActionHandlerSpec(
+    action="{{ domain }}.{{ name }}.delete",
+    service_getter=_service_getter,
+    service_method="delete",
+)

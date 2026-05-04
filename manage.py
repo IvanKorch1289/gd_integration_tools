@@ -401,6 +401,45 @@ processors:
     typer.echo(f"Created: {file_path}")
 
 
+@scaffold_app.command("codegen-service")
+def scaffold_codegen_service(
+    name: str = typer.Option(..., help="snake_case имя сервиса (мн.ч.)"),
+    domain: str = typer.Option(..., help="core | ai | integrations | ..."),
+    crud: bool = typer.Option(False, "--crud/--no-crud", help="включить CRUD-методы"),
+    fields: str = typer.Option(
+        "{}", help='JSON {"field":"py_type"} для Create/Update схем'
+    ),
+    model_class: str | None = typer.Option(
+        None, "--model-class", help="имя SQLAlchemy-модели (default: PascalCase singular)"
+    ),
+    overwrite: bool = typer.Option(False, "--overwrite", help="разрешить перезапись"),
+) -> None:
+    """Wave 5.1 — фасад над `tools/codegen_service.py` через Typer."""
+    from tools.codegen_service import main as _codegen_main
+
+    argv: list[str] = ["--name", name, "--domain", domain, "--fields", fields]
+    if crud:
+        argv.append("--crud")
+    if model_class is not None:
+        argv.extend(["--model-class", model_class])
+    if overwrite:
+        argv.append("--overwrite")
+    raise typer.Exit(_codegen_main(argv))
+
+
+@scaffold_app.command("codegen-extract")
+def scaffold_codegen_extract(
+    service: str = typer.Option(..., help="путь к service .py"),
+    output: str = typer.Option(
+        "-", help="путь YAML; '-' (default) — stdout"
+    ),
+) -> None:
+    """Wave 5.5 — фасад над `tools/codegen_extract.py` через Typer."""
+    from tools.codegen_extract import main as _extract_main
+
+    raise typer.Exit(_extract_main(["--service", service, "--output", output]))
+
+
 # ────────────── Schema Import ──────────────
 
 

@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -225,7 +224,7 @@ def main() -> None:
     args = parser.parse_args()
 
     resource = args.resource.strip().lower()
-    
+
     if not resource.isidentifier():
         print(f"❌ Ошибка: '{resource}' не является валидным именем для Python (используй snake_case).", file=sys.stderr)
         sys.exit(1)

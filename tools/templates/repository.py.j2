@@ -1,0 +1,19 @@
+"""{{ class_name }} — репозиторий для {{ entity }} (codegen Wave 5.2)."""
+
+from __future__ import annotations
+
+from src.infrastructure.database.models.{{ name }} import {{ model_class }}
+from src.infrastructure.repositories.base import SQLAlchemyRepository
+
+__all__ = ("{{ class_name }}",)
+
+
+class {{ class_name }}(SQLAlchemyRepository[{{ model_class }}]):
+    """SQLAlchemy-репозиторий для {{ entity }}.
+
+    Базовый CRUD унаследован из :class:`SQLAlchemyRepository`. Для
+    нестандартных запросов добавляйте методы здесь, а сервис должен
+    обращаться к ним только через свой Protocol.
+    """
+
+    model = {{ model_class }}
