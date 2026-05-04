@@ -1,0 +1,17 @@
+name: example_plugin
+version: 0.1.0
+python_requires: ">=3.14"
+entry_class: plugins.example_plugin.plugin.ExamplePlugin
+
+actions:
+  - example.echo
+
+repositories:
+  - orders
+
+hooks:
+  - repo: orders
+    event: before_create
+
+config:
+  greeting: "hello from example_plugin"

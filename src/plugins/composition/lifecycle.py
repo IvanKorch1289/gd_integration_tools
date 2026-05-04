@@ -396,6 +396,40 @@ async def lifespan(app: FastAPI):
         await _register_protocol_providers()
         _validate_cache_layers()
 
+        # Wave 4-tail: PluginLoader bootstrap (in-tree + entry_points).
+        # in-tree плагины из plugins/<dir>/plugin.yaml загружаются явно;
+        # entry_points плагины — через importlib.metadata.entry_points.
+        # Падения отдельных плагинов не блокируют startup.
+        try:
+            from pathlib import Path
+
+            from src.services.plugins import get_plugin_loader
+
+            loader = get_plugin_loader()
+            plugins_dir = Path("plugins")
+            if plugins_dir.is_dir():
+                for entry in plugins_dir.iterdir():
+                    if not entry.is_dir():
+                        continue
+                    if (entry / "plugin.yaml").is_file():
+                        try:
+                            await loader.load_from_path(entry)
+                        except Exception as plugin_exc:  # noqa: BLE001
+                            app_logger.warning(
+                                "In-tree plugin %s skipped: %s",
+                                entry.name,
+                                plugin_exc,
+                            )
+            try:
+                await loader.discover_and_load()
+            except Exception as ep_exc:  # noqa: BLE001
+                app_logger.warning(
+                    "entry_points plugin discovery skipped: %s", ep_exc
+                )
+            app.state.plugin_loader = loader
+        except Exception as exc:  # noqa: BLE001
+            app_logger.warning("Plugin loader bootstrap skipped: %s", exc)
+
         try:
             from src.workflows.outbox_worker import start_outbox_worker
 
@@ -444,6 +478,15 @@ async def lifespan(app: FastAPI):
             await stop_outbox_worker()
         except Exception as worker_exc:  # noqa: BLE001
             app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
+
+        # Wave 4-tail: graceful plugin shutdown — каждому плагину
+        # даётся on_shutdown() до общего ending().
+        plugin_loader = getattr(app.state, "plugin_loader", None)
+        if plugin_loader is not None:
+            try:
+                await plugin_loader.shutdown_all()
+            except Exception as plugin_exc:  # noqa: BLE001
+                app_logger.warning("Plugin shutdown error: %s", plugin_exc)
 
         try:
             await ending()
