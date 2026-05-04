@@ -1510,6 +1510,123 @@ class RouteBuilder:
             to_format=to_format,
         )
 
+    # ── Wave 7.2: polars-extended (query / join / aggregate / pivot / window) ──
+
+    def polars_query(
+        self,
+        *,
+        select: list[str] | None = None,
+        filter_expr: str | None = None,
+        with_columns: dict[str, str] | None = None,
+        sort_by: list[str] | None = None,
+        descending: bool = False,
+    ) -> "RouteBuilder":
+        """Polars-query: filter / select / with_columns / sort (Wave 7.2)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.polars_extended",
+            "PolarsQueryProcessor",
+            select=select,
+            filter_expr=filter_expr,
+            with_columns=with_columns,
+            sort_by=sort_by,
+            descending=descending,
+        )
+
+    def polars_join(
+        self, *, other_path: str, on: str | list[str], how: str = "inner"
+    ) -> "RouteBuilder":
+        """Polars-join body с таблицей по ``other_path`` (Wave 7.2)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.polars_extended",
+            "PolarsJoinProcessor",
+            other_path=other_path,
+            on=on,
+            how=how,
+        )
+
+    def polars_aggregate(
+        self, *, group_by: str | list[str], aggregations: dict[str, str]
+    ) -> "RouteBuilder":
+        """Polars group_by + agg (Wave 7.2)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.polars_extended",
+            "PolarsAggregateProcessor",
+            group_by=group_by,
+            aggregations=aggregations,
+        )
+
+    def polars_pivot(
+        self,
+        *,
+        index: str | list[str],
+        columns: str,
+        values: str,
+        aggregate_function: str = "sum",
+    ) -> "RouteBuilder":
+        """Polars pivot-таблица (Wave 7.2)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.polars_extended",
+            "PolarsPivotProcessor",
+            index=index,
+            columns=columns,
+            values=values,
+            aggregate_function=aggregate_function,
+        )
+
+    def polars_window(
+        self,
+        *,
+        partition_by: str | list[str],
+        windowed_columns: dict[str, str],
+        order_by: list[str] | None = None,
+    ) -> "RouteBuilder":
+        """Polars window-функции (Wave 7.2)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.polars_extended",
+            "PolarsWindowProcessor",
+            partition_by=partition_by,
+            windowed_columns=windowed_columns,
+            order_by=order_by,
+        )
+
+    # ── Wave 7.1: Dask compute (heavy distributed jobs) ──
+
+    def dask_compute(
+        self,
+        *,
+        graph: list[dict[str, Any]],
+        output_to: str = "body",
+        scheduler_address: str | None = None,
+        n_workers: int = 4,
+    ) -> "RouteBuilder":
+        """Dask compute graph: ``map`` / ``filter`` / ``reduce`` (Wave 7.1)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.dask_compute",
+            "DaskComputeProcessor",
+            graph=graph,
+            output_to=output_to,
+            scheduler_address=scheduler_address,
+            n_workers=n_workers,
+        )
+
+    # ── Wave 7.3: DuckDB analytical SQL ──
+
+    def duckdb_query(
+        self,
+        *,
+        sql: str,
+        sources: dict[str, str] | None = None,
+        persistent_path: str | None = None,
+    ) -> "RouteBuilder":
+        """DuckDB-SQL над ``body`` + lookup-таблиц из headers (Wave 7.3)."""
+        return self._add_lazy(
+            "src.dsl.engine.processors.duckdb_query",
+            "DuckDbQueryProcessor",
+            sql=sql,
+            sources=sources,
+            persistent_path=persistent_path,
+        )
+
     # ── Wave 6.1: Format converters (Avro / Protobuf / TOML / Markdown / JSONL) ──
 
     def avro_encode(self, schema: dict[str, Any]) -> "RouteBuilder":

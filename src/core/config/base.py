@@ -96,6 +96,66 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[1, 4, 8],
     )
 
+    # Wave 7.5 — performance tuning ASGI-сервера.
+    listen_backlog: int = Field(
+        default=2048,
+        title="Listen backlog",
+        ge=64,
+        le=65535,
+        description=(
+            "TCP listen backlog (granian/uvicorn). Поднимаем до 2048 для "
+            "выдерживания пиковой нагрузки 1k+ RPS без drop'ов на accept-очереди."
+        ),
+        examples=[1024, 2048, 4096],
+    )
+
+    keep_alive_timeout: int = Field(
+        default=30,
+        title="Keep-Alive timeout (сек)",
+        ge=1,
+        le=600,
+        description="Таймаут keep-alive соединений в секундах.",
+    )
+
+    granian_http: Literal["1", "2", "auto"] = Field(
+        default="auto",
+        title="Granian HTTP-режим",
+        description=(
+            "Версия HTTP в granian: '1' (HTTP/1.1), '2' (HTTP/2 only), 'auto' "
+            "(ALPN-negotiation). Default 'auto' — рекомендуется для production."
+        ),
+    )
+
+    granian_runtime_mode: Literal["auto", "mt", "st"] = Field(
+        default="auto",
+        title="Granian runtime mode",
+        description=(
+            "Режим Rust-runtime: 'st' — single-thread (low overhead для I/O-bound), "
+            "'mt' — multi-thread (для CPU-bound), 'auto' — granian решает по нагрузке."
+        ),
+    )
+
+    granian_runtime_threads: int = Field(
+        default=1,
+        title="Granian runtime threads",
+        ge=1,
+        le=64,
+        description=(
+            "Число Rust-потоков на воркер (имеет смысл при ``runtime_mode=mt``)."
+        ),
+    )
+
+    granian_blocking_threads: int | None = Field(
+        default=None,
+        title="Granian blocking threads",
+        ge=1,
+        le=256,
+        description=(
+            "Размер blocking thread pool на воркер для sync-вставок "
+            "(sync DB-driver, file I/O). ``None`` — granian default."
+        ),
+    )
+
     langfuse_url: str = Field(
         default="",
         title="URL LangFuse",

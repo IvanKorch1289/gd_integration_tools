@@ -9,11 +9,11 @@ fully-qualified ``service`` + ``method`` имена. Ленивый импорт
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.utilities.json_codec import dumps_bytes
 
 __all__ = ("GrpcSink",)
 
@@ -57,11 +57,7 @@ class GrpcSink(Sink):
                 ok=False, details={"error": "grpcio not installed"}
             )
 
-        body = (
-            payload
-            if isinstance(payload, bytes)
-            else json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
-        )
+        body = payload if isinstance(payload, bytes) else dumps_bytes(payload)
 
         try:
             if self.secure:

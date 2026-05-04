@@ -48,12 +48,13 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import json
 import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable
+
+from src.utilities.json_codec import canonical_json_bytes, dumps_str
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -138,14 +139,13 @@ class ImmutableAuditStore:
 
     @staticmethod
     def _canonical_json(event: dict[str, Any]) -> bytes:
-        """Детерминированный JSON для HMAC (sorted keys, без пробелов)."""
-        return json.dumps(
-            event,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            default=str,
-        ).encode("utf-8")
+        """Детерминированный JSON для HMAC.
+
+        Делегирует в общий ``canonical_json_bytes`` (json_codec) — единая
+        формула канонизации для HMAC-chain / doc_id / dedup-key. На stdlib
+        json для byte-стабильности с ранее записанными в БД хешами.
+        """
+        return canonical_json_bytes(event)
 
     def _hmac(self, payload: bytes, prev_hash: str) -> str:
         h = hmac.new(self._secret, digestmod=hashlib.sha256)
@@ -239,7 +239,7 @@ class ImmutableAuditStore:
                     "action": action,
                     "resource": resource,
                     "outcome": outcome,
-                    "metadata": json.dumps(metadata or {}, ensure_ascii=False),
+                    "metadata": dumps_str(metadata or {}),
                     "tenant_id": tenant_id,
                     "correlation_id": correlation_id,
                     "prev_hash": prev_hash,

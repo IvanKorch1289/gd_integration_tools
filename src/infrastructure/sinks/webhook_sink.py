@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.utilities.json_codec import dumps_bytes
 
 __all__ = ("WebhookSink",)
 
@@ -50,7 +50,7 @@ class WebhookSink(Sink):
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
-        body_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        body_bytes = dumps_bytes(payload)
         headers: dict[str, str] = {
             "Content-Type": "application/json",
             "X-Webhook-Event": self.event,

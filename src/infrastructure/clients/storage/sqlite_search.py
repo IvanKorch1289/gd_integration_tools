@@ -192,7 +192,13 @@ class SqliteFTS5Search:
 
 
 def _hash_doc(doc: dict[str, Any]) -> str:
-    """Стабильный hash от документа (для авто-генерации doc_id)."""
+    """Стабильный hash от документа (для авто-генерации doc_id).
+
+    Формула отличается от ``canonical_json_bytes`` (нет ``separators`` и
+    ``ensure_ascii=False``): сохранена ради byte-стабильности с уже
+    выданными doc_id в существующих SQLite FTS5 индексах. Менять формулу
+    нельзя — иначе при reindex'е изменятся ID всех старых документов.
+    """
     import hashlib
 
     # sha256 используется не для security, а для стабильного doc_id

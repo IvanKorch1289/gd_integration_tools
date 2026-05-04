@@ -9,7 +9,6 @@ debug-dump). Атомарность достигается через write-temp
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -17,6 +16,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.utilities.json_codec import dumps_str
 
 __all__ = ("FileSink",)
 
@@ -47,11 +47,7 @@ class FileSink(Sink):
         if self.ensure_dir:
             target.parent.mkdir(parents=True, exist_ok=True)
 
-        text = (
-            payload
-            if isinstance(payload, str)
-            else json.dumps(payload, ensure_ascii=False, default=str)
-        )
+        text = payload if isinstance(payload, str) else dumps_str(payload)
 
         try:
             written = await asyncio.to_thread(self._write_sync, target, text)

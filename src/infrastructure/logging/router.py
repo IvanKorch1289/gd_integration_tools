@@ -37,6 +37,7 @@ from src.infrastructure.logging.backends import (
 
 __all__ = (
     "SinkRouter",
+    "RouterLike",
     "build_sinks_for_profile",
     "configure_router",
     "get_router",
@@ -44,6 +45,22 @@ __all__ = (
     "reset_router",
     "route_to_sinks",
 )
+
+
+class RouterLike:
+    """Минимальный protocol-like контракт router'а (sync + batching).
+
+    Реализуют :class:`SinkRouter` и :class:`BatchingSinkRouter`. Введён,
+    чтобы :func:`route_to_sinks` мог одинаково работать с обоими типами.
+    """
+
+    async def dispatch(self, record: dict[str, Any]) -> None:  # pragma: no cover
+        """Разослать record по sink-ам (или поставить в очередь batch'а)."""
+        raise NotImplementedError
+
+    async def aclose(self) -> None:  # pragma: no cover
+        """Корректно закрыть router и все sink-ы."""
+        raise NotImplementedError
 
 _INTERNAL_LOG = logging.getLogger("logging.router")
 
@@ -150,31 +167,66 @@ class SinkRouter:
 
 
 # ---------------------------------------------------------------------- module-level
-_router: SinkRouter | None = None
+_router: SinkRouter | Any | None = None
 _router_lock = threading.Lock()
 
 
 def configure_router(
-    sinks: Iterable[LogSink] | None = None, *, profile: AppProfileChoices | None = None
-) -> SinkRouter:
-    """Настроить глобальный :class:`SinkRouter`.
+    sinks: Iterable[LogSink] | None = None,
+    *,
+    profile: AppProfileChoices | None = None,
+    batching: bool | None = None,
+    batch_size: int = 100,
+    flush_interval_ms: int = 200,
+    queue_maxsize: int = 10_000,
+) -> Any:
+    """Настроить глобальный router.
 
-    Если ``sinks`` не передан, sink-ы строятся из ``profile``
-    (или активного профиля окружения) через :func:`build_sinks_for_profile`.
+    Args:
+        sinks: Явный список sink-ов; если ``None`` — строится по profile.
+        profile: Профиль (``dev_light`` / ``prod`` / ...). По умолчанию
+            берётся из окружения.
+        batching: Принудительно вкл/выкл async batching (Wave 7.7).
+            При ``None`` — auto-on для ``staging`` / ``prod``.
+        batch_size: Размер пачки в batching-режиме.
+        flush_interval_ms: Период принудительного flush'а.
+        queue_maxsize: Лимит очереди (защита от unbounded growth).
+
+    Returns:
+        :class:`SinkRouter` либо :class:`BatchingSinkRouter` (зависит от
+        ``batching``).
     """
     global _router
     with _router_lock:
-        chosen = list(sinks) if sinks is not None else build_sinks_for_profile(profile)
-        _router = SinkRouter(chosen)
+        active = profile if profile is not None else get_active_profile()
+        chosen = list(sinks) if sinks is not None else build_sinks_for_profile(active)
+        base = SinkRouter(chosen)
+
+        use_batching = batching
+        if use_batching is None:
+            use_batching = active in (AppProfileChoices.staging, AppProfileChoices.prod)
+
+        if use_batching:
+            from src.infrastructure.logging.batching_router import BatchingSinkRouter
+
+            _router = BatchingSinkRouter(
+                base,
+                batch_size=batch_size,
+                flush_interval_ms=flush_interval_ms,
+                queue_maxsize=queue_maxsize,
+            )
+        else:
+            _router = base
         return _router
 
 
-def get_router() -> SinkRouter:
-    """Получить (или лениво создать) глобальный :class:`SinkRouter`.
+def get_router() -> Any:
+    """Получить (или лениво создать) глобальный router.
 
     Если router ещё не инициализирован явно через :func:`configure_router`,
-    создаёт его на основе активного профиля окружения. Безопасен для
-    использования в structlog-processor'ах в pre-init контексте.
+    создаёт :class:`SinkRouter` (без batching) на основе активного профиля
+    окружения. Безопасен для использования в structlog-processor'ах в
+    pre-init контексте.
     """
     global _router
     if _router is None:

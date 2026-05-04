@@ -75,9 +75,9 @@ class AuditEventLog:
 
             client = get_clickhouse_client()
             rows = []
-            for e in events:
-                import json
+            from src.utilities.json_codec import dumps_str
 
+            for e in events:
                 rows.append(
                     {
                         "who": e.who,
@@ -86,15 +86,11 @@ class AuditEventLog:
                         "entity_id": e.entity_id,
                         "action": e.action,
                         "when": e.when.isoformat(),
-                        "before_data": json.dumps(e.before, default=str)
-                        if e.before
-                        else "",
-                        "after_data": json.dumps(e.after, default=str)
-                        if e.after
-                        else "",
+                        "before_data": dumps_str(e.before) if e.before else "",
+                        "after_data": dumps_str(e.after) if e.after else "",
                         "correlation_id": e.correlation_id,
                         "tenant_id": e.tenant_id,
-                        "metadata": json.dumps(e.metadata, default=str),
+                        "metadata": dumps_str(e.metadata),
                     }
                 )
             await client.insert(self._table, rows)

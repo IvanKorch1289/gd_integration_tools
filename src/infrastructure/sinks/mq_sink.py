@@ -12,11 +12,11 @@ default; здесь используется только `Broker.publish(...)`,
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.utilities.json_codec import dumps_str
 
 __all__ = ("MqSink",)
 
@@ -56,9 +56,7 @@ class MqSink(Sink):
             )
 
         body = (
-            payload
-            if isinstance(payload, (bytes, str))
-            else json.dumps(payload, ensure_ascii=False, default=str)
+            payload if isinstance(payload, (bytes, str)) else dumps_str(payload)
         )
 
         try:

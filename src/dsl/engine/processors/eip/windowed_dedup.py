@@ -30,13 +30,14 @@ MulticastRoutesProcessor:
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from typing import Any
 
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
 from src.dsl.engine.processors.base import BaseProcessor
+from src.utilities.json_codec import canonical_json_bytes
+from src.utilities.json_codec import loads as _json_loads
 
 __all__ = ("WindowedDedupProcessor", "WindowedCollectProcessor")
 
@@ -56,9 +57,10 @@ def _extract_path(body: Any, path: str) -> Any:
 
 
 def _serialize(body: Any) -> str:
+    """Канонический JSON для in-memory dedup-key (через json_codec helper)."""
     try:
-        return json.dumps(body, ensure_ascii=False, sort_keys=True)
-    except TypeError, ValueError:
+        return canonical_json_bytes(body).decode("utf-8")
+    except (TypeError, ValueError):
         return str(body)
 
 
@@ -205,7 +207,7 @@ class WindowedDedupProcessor(BaseProcessor):
                 return None
             if isinstance(raw, bytes):
                 raw = raw.decode()
-            return json.loads(raw)
+            return _json_loads(raw)
         except Exception as exc:
             _logger.warning("windowed_dedup.get_latest: %s", exc)
             return None
@@ -323,7 +325,7 @@ class WindowedCollectProcessor(BaseProcessor):
         for raw in raw_items:
             try:
                 text = raw.decode() if isinstance(raw, bytes) else raw
-                items.append(json.loads(text))
+                items.append(_json_loads(text))
             except Exception:  # noqa: BLE001, S112
                 continue
 
@@ -361,7 +363,7 @@ class WindowedCollectProcessor(BaseProcessor):
             for raw in raw_items:
                 try:
                     text = raw.decode() if isinstance(raw, bytes) else raw
-                    items.append(json.loads(text))
+                    items.append(_json_loads(text))
                 except Exception:  # noqa: BLE001, S112
                     continue
             return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)

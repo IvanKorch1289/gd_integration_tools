@@ -223,9 +223,9 @@ async def send_webhook_event(
         }
 
         if sub.secret:
-            import json
+            from src.utilities.json_codec import dumps_bytes
 
-            body_bytes = json.dumps(payload).encode()
+            body_bytes = dumps_bytes(payload)
             sig = hmac.new(sub.secret.encode(), body_bytes, hashlib.sha256).hexdigest()
             headers["X-Webhook-Signature"] = sig
 

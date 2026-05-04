@@ -14,11 +14,11 @@ close».
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.utilities.json_codec import dumps_str
 
 __all__ = ("WsSink",)
 
@@ -49,11 +49,7 @@ class WsSink(Sink):
                 ok=False, details={"error": "websockets not installed"}
             )
 
-        text = (
-            payload
-            if isinstance(payload, str)
-            else json.dumps(payload, ensure_ascii=False, default=str)
-        )
+        text = payload if isinstance(payload, str) else dumps_str(payload)
 
         try:
             async with websockets.connect(

@@ -223,9 +223,7 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
     import logging
 
     try:
-        from src.entrypoints.graphql.auto_schema import (
-            auto_register_strawberry_schema,
-        )
+        from src.entrypoints.graphql.auto_schema import auto_register_strawberry_schema
 
         auto_register_strawberry_schema(app, path="/api/v1/graphql")
     except Exception as exc:  # noqa: BLE001

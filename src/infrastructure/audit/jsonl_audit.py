@@ -8,14 +8,16 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import orjson
+
 from src.core.interfaces.audit import AuditBackend, AuditRecord
+from src.utilities.json_codec import dumps_str
 
 __all__ = ("JsonlAuditBackend",)
 
@@ -64,8 +66,8 @@ class JsonlAuditBackend(AuditBackend):
                 if not raw:
                     continue
                 try:
-                    rec = AuditRecord(json.loads(raw))
-                except json.JSONDecodeError:
+                    rec = AuditRecord(orjson.loads(raw))
+                except orjson.JSONDecodeError:
                     continue
                 if filters is None or all(rec.get(k) == v for k, v in filters.items()):
                     buf.append(rec)
@@ -76,4 +78,4 @@ class JsonlAuditBackend(AuditBackend):
         # ``timestamp`` дополняется автоматически, если caller не задал.
         if "timestamp" not in record:
             record["timestamp"] = datetime.now(UTC).isoformat()
-        return json.dumps(record, ensure_ascii=False, default=str)
+        return dumps_str(record)
