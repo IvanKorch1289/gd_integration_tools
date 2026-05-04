@@ -143,6 +143,47 @@ class QdrantVectorStore(BaseVectorStore):
         result = await client.count(collection_name=self._collection_name, exact=True)
         return int(result.count)
 
+    async def delete_where(self, where: dict[str, Any]) -> int:
+        from qdrant_client.models import (
+            FieldCondition,
+            Filter,
+            FilterSelector,
+            MatchValue,
+        )
+
+        client = await self._ensure_collection()
+        f = Filter(
+            must=[
+                FieldCondition(key=k, match=MatchValue(value=v))
+                for k, v in where.items()
+            ]
+        )
+        before = (
+            await client.count(
+                collection_name=self._collection_name, count_filter=f, exact=True
+            )
+        ).count
+        await client.delete(
+            collection_name=self._collection_name,
+            points_selector=FilterSelector(filter=f),
+        )
+        return int(before)
+
+    async def count_where(self, where: dict[str, Any]) -> int:
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+        client = await self._ensure_collection()
+        f = Filter(
+            must=[
+                FieldCondition(key=k, match=MatchValue(value=v))
+                for k, v in where.items()
+            ]
+        )
+        result = await client.count(
+            collection_name=self._collection_name, count_filter=f, exact=True
+        )
+        return int(result.count)
+
 
 class ChromaVectorStore(BaseVectorStore):
     """Vector store через Chroma DB."""
@@ -240,6 +281,27 @@ class ChromaVectorStore(BaseVectorStore):
         collection = await self._ensure_collection()
         return await asyncio.to_thread(collection.count)
 
+    async def delete_where(self, where: dict[str, Any]) -> int:
+        import asyncio
+
+        collection = await self._ensure_collection()
+        before = await asyncio.to_thread(collection.count)
+        await asyncio.to_thread(collection.delete, where=where)
+        after = await asyncio.to_thread(collection.count)
+        return int(before - after)
+
+    async def count_where(self, where: dict[str, Any]) -> int:
+        import asyncio
+
+        collection = await self._ensure_collection()
+        result = await asyncio.to_thread(collection.get, where=where, include=[])
+        ids = (
+            result.get("ids")
+            if isinstance(result, dict)
+            else getattr(result, "ids", [])
+        )
+        return len(ids) if ids else 0
+
 
 class FAISSVectorStore(BaseVectorStore):
     """In-memory FAISS vector store (для разработки и тестов)."""
@@ -319,6 +381,25 @@ class FAISSVectorStore(BaseVectorStore):
 
     async def count(self) -> int:
         return len(self._docs)
+
+    async def delete_where(self, where: dict[str, Any]) -> int:
+        to_remove = [
+            doc_id
+            for doc_id, meta in self._metas.items()
+            if all(meta.get(k) == v for k, v in where.items())
+        ]
+        for doc_id in to_remove:
+            self._id_map.pop(doc_id, None)
+            self._docs.pop(doc_id, None)
+            self._metas.pop(doc_id, None)
+        return len(to_remove)
+
+    async def count_where(self, where: dict[str, Any]) -> int:
+        return sum(
+            1
+            for meta in self._metas.values()
+            if all(meta.get(k) == v for k, v in where.items())
+        )
 
 
 def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorStore:

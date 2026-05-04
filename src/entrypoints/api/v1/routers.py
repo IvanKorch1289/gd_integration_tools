@@ -14,8 +14,14 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
+    from src.entrypoints.api.v1.endpoints.agent_memory import (
+        router as agent_memory_router,
+    )
     from src.entrypoints.api.v1.endpoints.ai_feedback import (
         router as ai_feedback_router,
+    )
+    from src.entrypoints.api.v1.endpoints.ai_agents import (
+        router as ai_agents_router,
     )
     from src.entrypoints.api.v1.endpoints.ai_tools import router as ai_tools_router
     from src.entrypoints.api.v1.endpoints.dadata import router as dadata_router
@@ -87,6 +93,8 @@ def get_v1_routers() -> APIRouter:
         imports_router, prefix="/import", tags=["Импорт схем и объектов"]
     )
     api_router_v1.include_router(ai_tools_router, prefix="/ai", tags=["AI · Tools"])
+    # Wave 8.7: специализированные AI-агенты (analytics, search).
+    api_router_v1.include_router(ai_agents_router, prefix="/ai", tags=["AI · Agents"])
     api_router_v1.include_router(
         ai_feedback_router, prefix="/ai/feedback", tags=["AI · Feedback"]
     )
@@ -98,6 +106,10 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(search_router, prefix="/search", tags=["Search"])
     # Wave 12: Retrieval-Augmented Generation.
     api_router_v1.include_router(rag_router, prefix="/rag", tags=["RAG"])
+    # Wave 8.4: Agent Memory REST CRUD (messages / scratchpad / facts).
+    api_router_v1.include_router(
+        agent_memory_router, prefix="/agent_memory", tags=["AgentMemory"]
+    )
     # W22.2: Single Invoker — единый REST-вход для всех режимов.
     api_router_v1.include_router(
         invocations_router, prefix="/invocations", tags=["Invocations"]

@@ -172,6 +172,65 @@ class ElasticSearchClient:
             await client.indices.create(index=prefixed, body=body)
             logger.info("Index %s created", prefixed)
 
+    async def ensure_indices(
+        self,
+        names: list[str],
+        mappings_by_name: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, bool]:
+        """Гарантирует наличие нескольких индексов, возвращает map name → created.
+
+        ``True`` — индекс создан, ``False`` — уже существовал.
+        Любые ошибки логируются, но не пробрасываются (опциональный bootstrap).
+        """
+        result: dict[str, bool] = {}
+        try:
+            client = await self._ensure_client()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ensure_indices: ES недоступен (%s)", exc)
+            return {n: False for n in names}
+
+        for name in names:
+            prefixed = self._prefixed(name)
+            try:
+                exists = await client.indices.exists(index=prefixed)
+                if exists:
+                    result[name] = False
+                    continue
+                mappings = (mappings_by_name or {}).get(name)
+                body = {"mappings": mappings} if mappings else {}
+                await client.indices.create(index=prefixed, body=body)
+                logger.info("Index %s created (ensure_indices)", prefixed)
+                result[name] = True
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ensure_indices(%s) failed: %s", prefixed, exc)
+                result[name] = False
+        return result
+
+    async def aggregate_terms(
+        self,
+        index: str,
+        field: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        size: int = 20,
+    ) -> dict[str, Any]:
+        """Высокоуровневая обёртка над ``aggregate``: чистая terms-агрегация.
+
+        ``filters`` транслируется в bool/term-clauses; пустой ``filters``
+        означает aggregate-over-all.
+        """
+        body_query: dict[str, Any] | None = None
+        if filters:
+            body_query = {
+                "bool": {
+                    "filter": [
+                        {"term": {k: v}} for k, v in filters.items() if v is not None
+                    ]
+                }
+            }
+        aggs = {"by_field": {"terms": {"field": field, "size": size}}}
+        return await self.aggregate(index, aggs, body_query)
+
     async def ping(self) -> bool:
         """Проверка доступности Elasticsearch."""
         try:

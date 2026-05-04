@@ -15,14 +15,18 @@ W26.5: маршруты регистрируются декларативно ч
 
 from __future__ import annotations
 
-from typing import Any
+import logging
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.core.config.rag import rag_settings
 from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.services.ai.document_parsers import parse_document, sniff_mime
 from src.services.ai.rag_service import get_rag_service
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("router",)
 
@@ -93,6 +97,17 @@ class StatsResponse(BaseModel):
     backend: str
     embedding_provider: str
     count: int
+    collection: str | None = Field(
+        default=None, description="Если задан — count в рамках namespace."
+    )
+
+
+class StatsQuery(BaseModel):
+    """Query-параметры /stats."""
+
+    collection: str | None = Field(
+        default=None, description="Опциональный namespace для статистики."
+    )
 
 
 class DeleteResponse(BaseModel):
@@ -105,6 +120,37 @@ class DocIdPath(BaseModel):
     """Path-параметр идентификатора документа."""
 
     doc_id: str = Field(..., description="ID документа (sha256 prefix).")
+
+
+class CollectionNamePath(BaseModel):
+    """Path-параметр для namespace (имени коллекции)."""
+
+    name: str = Field(..., min_length=1, description="Имя namespace.")
+
+
+class DeleteCollectionResponse(BaseModel):
+    """Ответ DELETE /collections/{name}."""
+
+    namespace: str
+    deleted: int = Field(..., description="Количество удалённых chunks.")
+
+
+class CollectionStatsResponse(BaseModel):
+    """Ответ GET /collections/{name}."""
+
+    namespace: str
+    count: int
+    exists: bool
+
+
+class UploadResponse(BaseModel):
+    """Ответ POST /upload."""
+
+    doc_id: str
+    chunks: int
+    mime: str
+    size_bytes: int
+    extraction_warnings: list[str] = Field(default_factory=list)
 
 
 # --- Helpers ---------------------------------------------------------------
@@ -165,20 +211,85 @@ class _RAGFacade:
         ok = await get_rag_service().delete(doc_id)
         return DeleteResponse(deleted=ok)
 
-    async def stats(self) -> StatsResponse:
+    async def stats(self, *, collection: str | None = None) -> StatsResponse:
         if not rag_settings.enabled:
             return StatsResponse(
                 enabled=False,
                 backend=rag_settings.vector_backend,
                 embedding_provider=rag_settings.embedding_provider,
                 count=0,
+                collection=collection,
             )
-        count = await get_rag_service().count()
+        count = await get_rag_service().count(collection=collection)
         return StatsResponse(
             enabled=True,
             backend=rag_settings.vector_backend,
             embedding_provider=rag_settings.embedding_provider,
             count=count,
+            collection=collection,
+        )
+
+    async def delete_collection(self, *, name: str) -> DeleteCollectionResponse:
+        _check_enabled()
+        deleted = await get_rag_service().delete_collection(name)
+        return DeleteCollectionResponse(namespace=name, deleted=deleted)
+
+    async def collection_stats(self, *, name: str) -> CollectionStatsResponse:
+        _check_enabled()
+        info = await get_rag_service().get_collection_stats(name)
+        return CollectionStatsResponse(**info)
+
+    async def upload(
+        self,
+        *,
+        file: UploadFile,
+        namespace: str = "default",
+        metadata_json: str | None = None,
+    ) -> UploadResponse:
+        """Multipart-upload: парсит PDF/DOCX/MD/TXT → ingest в RAG."""
+        _check_enabled()
+
+        raw = await file.read()
+        if not raw:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Файл пустой."
+            )
+        mime = sniff_mime(file.filename, file.content_type)
+        try:
+            text, parse_meta = await parse_document(raw, mime, filename=file.filename)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(exc)
+            ) from exc
+
+        if not text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Не удалось извлечь текст из файла.",
+            )
+
+        meta: dict[str, Any] = {"source": "upload"}
+        if file.filename:
+            meta["filename"] = file.filename
+        if metadata_json:
+            import json
+
+            try:
+                user_meta = json.loads(metadata_json)
+                if isinstance(user_meta, dict):
+                    meta.update(user_meta)
+            except json.JSONDecodeError:
+                logger.warning("rag_upload: metadata_json invalid, ignored")
+
+        rag = get_rag_service()
+        doc_id = await rag.ingest(content=text, metadata=meta, namespace=namespace)
+        chunks = len(rag.chunk_text(text))
+        return UploadResponse(
+            doc_id=doc_id,
+            chunks=chunks,
+            mime=parse_meta["mime"],
+            size_bytes=parse_meta["size_bytes"],
+            extraction_warnings=list(parse_meta.get("warnings") or []),
         )
 
 
@@ -248,11 +359,53 @@ builder.add_actions(
             name="rag_stats",
             method="GET",
             path="/stats",
-            summary="Состояние индекса",
+            summary="Состояние индекса (опционально по namespace)",
             service_getter=_get_facade,
             service_method="stats",
+            query_model=StatsQuery,
             response_model=StatsResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_collection_stats",
+            method="GET",
+            path="/collections/{name}",
+            summary="Статистика по namespace",
+            service_getter=_get_facade,
+            service_method="collection_stats",
+            path_model=CollectionNamePath,
+            response_model=CollectionStatsResponse,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="rag_delete_collection",
+            method="DELETE",
+            path="/collections/{name}",
+            summary="Удалить все chunks из namespace",
+            service_getter=_get_facade,
+            service_method="delete_collection",
+            path_model=CollectionNamePath,
+            response_model=DeleteCollectionResponse,
             tags=common_tags,
         ),
     ]
 )
+
+
+# Multipart /upload не вписывается в декларативный ActionSpec
+# (ожидает pydantic body); регистрируем вручную.
+@router.post(
+    "/upload",
+    response_model=UploadResponse,
+    summary="Загрузить файл (PDF/DOCX/MD/TXT) и проиндексировать",
+    tags=list(common_tags),
+)
+async def rag_upload(
+    file: Annotated[UploadFile, File(description="PDF/DOCX/MD/TXT.")],
+    namespace: Annotated[str, Form()] = "default",
+    metadata_json: Annotated[str | None, Form()] = None,
+) -> UploadResponse:
+    """Принимает multipart-файл, парсит, шардирует и грузит в RAG."""
+    return await _FACADE.upload(
+        file=file, namespace=namespace, metadata_json=metadata_json
+    )

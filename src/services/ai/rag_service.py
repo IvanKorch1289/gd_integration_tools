@@ -31,7 +31,8 @@ class RAGService:
         self._store = store
         self._embedder = embedder or get_embedding_provider()
 
-    def _chunk_text(self, text: str) -> list[str]:
+    def chunk_text(self, text: str) -> list[str]:
+        """Разбивает текст на overlap-чанки согласно ``rag_settings``."""
         from src.core.config.rag import rag_settings
 
         size = rag_settings.chunk_size
@@ -45,6 +46,9 @@ class RAGService:
             start = end - overlap
         return chunks
 
+    # Backward-compat alias — публичный путь предпочтителен.
+    _chunk_text = chunk_text
+
     async def _embed(self, texts: list[str]) -> list[list[float]]:
         return await self._embedder.embed(texts)
 
@@ -56,7 +60,7 @@ class RAGService:
     ) -> str:
         """Загружает документ → chunking → embedding → vector store."""
         doc_id = hashlib.sha256(content.encode()).hexdigest()[:16]
-        chunks = self._chunk_text(content)
+        chunks = self.chunk_text(content)
         embeddings = await self._embed(chunks)
 
         ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
@@ -117,9 +121,54 @@ class RAGService:
         except Exception:
             return False
 
-    async def count(self) -> int:
-        """Количество документов в store."""
-        return await self._store.count()
+    async def delete_collection(self, namespace: str) -> int:
+        """Удаляет все документы из логической партиции (namespace).
+
+        Использует ``BaseVectorStore.delete_where({"namespace": namespace})``.
+        Возвращает количество удалённых chunks. При ошибке — 0.
+        """
+        try:
+            return int(await self._store.delete_where({"namespace": namespace}))
+        except NotImplementedError:
+            logger.warning(
+                "delete_where не поддерживается backend'ом — namespace %s не очищен",
+                namespace,
+            )
+            return 0
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("delete_collection(%s) failed: %s", namespace, exc)
+            return 0
+
+    async def get_collection_stats(self, namespace: str) -> dict[str, Any]:
+        """Статистика по namespace: количество chunks + базовые метаданные.
+
+        Возвращает: ``{"namespace": str, "count": int, "exists": bool}``.
+        Backend'ы без ``count_where`` отдают ``count=0``.
+        """
+        try:
+            cnt = int(await self._store.count_where({"namespace": namespace}))
+        except NotImplementedError:
+            cnt = 0
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("get_collection_stats(%s) failed: %s", namespace, exc)
+            cnt = 0
+        return {"namespace": namespace, "count": cnt, "exists": cnt > 0}
+
+    async def count(self, collection: str | None = None) -> int:
+        """Количество документов: всего или в конкретной namespace.
+
+        ``collection`` — если задан, фильтрует по metadata ``namespace``.
+        Возвращает 0 при недоступности backend.
+        """
+        try:
+            if collection is None:
+                return int(await self._store.count())
+            return int(await self._store.count_where({"namespace": collection}))
+        except NotImplementedError:
+            return 0
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("count(%s) failed: %s", collection, exc)
+            return 0
 
 
 @app_state_singleton("rag_service")

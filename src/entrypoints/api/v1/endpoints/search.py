@@ -69,6 +69,23 @@ class AggregationsQuery(BaseModel):
     size: int = Field(default=10, ge=1, le=100)
 
 
+class FacetsPath(BaseModel):
+    """Path-параметр /facets/{index}."""
+
+    index: str = Field(..., description="Имя индекса (без префикса gd_).")
+
+
+class FacetsQuery(BaseModel):
+    """Query-параметры /facets."""
+
+    field: str = Field(..., description="Поле для terms-агрегации.")
+    filter: str | None = Field(
+        default=None,
+        description='JSON-объект term-фильтров, например {"status":"OPEN"}.',
+    )
+    size: int = Field(default=20, ge=1, le=200)
+
+
 # --- ES query builders -----------------------------------------------------
 
 
@@ -211,6 +228,39 @@ class _SearchFacade:
             logger.warning("Aggregation failed for %s: %s", index, exc)
             return {}
 
+    async def facets(
+        self, *, index: str, field: str, filter: str | None = None, size: int = 20
+    ) -> dict[str, Any]:
+        """Возвращает terms-агрегацию для UI-faceting.
+
+        ``filter`` — JSON ``{"field": value}``. SQLite-FTS5 fallback
+        возвращает пустой dict. Никогда не пробрасывает 5xx — UI должен
+        получить 200 + пустые buckets.
+        """
+        import json
+
+        filters: dict[str, Any] = {}
+        if filter:
+            try:
+                parsed = json.loads(filter)
+                if isinstance(parsed, dict):
+                    filters = parsed
+            except json.JSONDecodeError:
+                logger.warning("facets: invalid filter JSON, ignored")
+
+        try:
+            from src.infrastructure.clients.storage.elasticsearch import (
+                get_elasticsearch_client,
+            )
+
+            client = get_elasticsearch_client()
+            return await client.aggregate_terms(
+                index, field, filters=filters or None, size=size
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("facets failed for %s.%s: %s", index, field, exc)
+            return {}
+
 
 _FACADE = _SearchFacade()
 
@@ -270,6 +320,17 @@ builder.add_actions(
             service_getter=_get_facade,
             service_method="aggregate",
             query_model=AggregationsQuery,
+            tags=common_tags,
+        ),
+        ActionSpec(
+            name="search_facets",
+            method="GET",
+            path="/facets/{index}",
+            summary="Facets/aggregations для UI-faceting",
+            service_getter=_get_facade,
+            service_method="facets",
+            path_model=FacetsPath,
+            query_model=FacetsQuery,
             tags=common_tags,
         ),
     ]

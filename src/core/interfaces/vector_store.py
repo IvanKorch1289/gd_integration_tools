@@ -38,3 +38,24 @@ class BaseVectorStore(ABC):
 
     @abstractmethod
     async def count(self) -> int: ...
+
+    async def delete_where(self, where: dict[str, Any]) -> int:
+        """Удаляет документы по metadata-фильтру, возвращает кол-во удалённых.
+
+        Default-реализация: ``query`` (limit ~10000) → собрать ``id``'ы → ``delete``.
+        Бэкенды с native filter-delete (Qdrant, Chroma) переопределяют для
+        эффективности; FAISS использует in-memory сканирование.
+        """
+        raise NotImplementedError(
+            "delete_where не поддерживается этим backend'ом — переопределите в подклассе."
+        )
+
+    async def count_where(self, where: dict[str, Any]) -> int:
+        """Количество документов, проходящих metadata-фильтр.
+
+        Default — поднять NotImplementedError; backend'ы с native count-by-filter
+        переопределяют. Используется для ``RAGService.count(collection=...)``.
+        """
+        raise NotImplementedError(
+            "count_where не поддерживается этим backend'ом — переопределите в подклассе."
+        )

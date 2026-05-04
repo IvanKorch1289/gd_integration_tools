@@ -403,6 +403,9 @@ docs-rebuild: docs-clean docs-apidoc docs-html
 
 docs: docs-rebuild
 
+docs-coverage: ## Wave 10.8 — docstring + HTML coverage gate
+	@$(UV_RUN) python tools/docs_coverage.py --strict
+
 ##@ Git & Release
 
 pre-commit: check-env ## Install and run pre-commit hooks

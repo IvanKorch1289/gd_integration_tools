@@ -76,12 +76,17 @@ dependencies = [
     "casbin>=1.36.0,<2.0.0",
     "polars>=1.20.0,<2.0.0",
     "pyarrow>=20.0.0",
+    "duckdb>=1.5.2,<2.0.0",
+    "dask[distributed]>=2026.3.0",
     "cachetools>=5.3.0,<8.0.0",
     "motor>=3.5,<4.0",
     "elasticsearch[async]>=8.0,<9.0",
     "taskiq>=0.11.0,<1.0.0",
     "taskiq-redis>=1.0.0,<2.0.0",
     "openapi-pydantic>=0.5.0,<1.0.0",
+    "pypdf>=5.0,<6.0",
+    "python-docx>=1.1,<2.0",
+    "whoosh-reloaded>=2.7.5,<3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -135,6 +140,9 @@ enterprise = []
 datalake = []
 temporal = []
 beam = []
+perf = [
+    "locust>=2.43.4,<3.0.0",
+]
 
 [dependency-groups]
 dev = [
@@ -146,6 +154,7 @@ dev = [
     "sphinx-autoapi>=3.3.2,<4.0.0",
     "pydata-sphinx-theme>=0.16.0,<1.0.0",
     "myst-parser>=5.0.0,<6.0.0",
+    "sphinx-design>=0.6,<1.0",
     "schemathesis>=4.15.2,<5.0.0",
     "python-semantic-release>=10.5.3,<11.0.0",
     "detect-secrets>=1.5.0,<2.0.0",

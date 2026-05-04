@@ -124,6 +124,19 @@ async def _register_protocol_providers() -> None:
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("ES indexers ensure_index skipped: %s", exc)
 
+    # Wave 8.3: ensure 4 индексов для facets/aggregations API
+    # (audit_logs / orders / documents / rag_chunks).
+    try:
+        from src.infrastructure.clients.storage.elasticsearch import (
+            get_elasticsearch_client,
+        )
+
+        await get_elasticsearch_client().ensure_indices(
+            ["audit_logs", "orders", "documents", "rag_chunks"]
+        )
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("ES ensure_indices (4 facets) skipped: %s", exc)
+
     # Notification channels — каждый канал отдельно через адаптер.
     try:
         from src.infrastructure.notifications.gateway import get_gateway
