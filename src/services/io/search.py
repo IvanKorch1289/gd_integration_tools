@@ -47,6 +47,19 @@ class SearchService:
         """Запрос агрегации."""
         return await self._client.aggregate(index, aggs, query)
 
+    async def aggregate_terms(
+        self,
+        index: str,
+        field: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        size: int = 20,
+    ) -> dict[str, Any]:
+        """Terms-агрегация для UI-faceting через ``SearchClient``."""
+        return await self._client.aggregate_terms(
+            index, field, filters=filters, size=size
+        )
+
     async def delete_document(self, index: str, doc_id: str) -> bool:
         """Удаляет документ по ID."""
         return await self._client.delete_document(index, doc_id)

@@ -37,6 +37,15 @@ class SearchClient(Protocol):
         self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
     ) -> dict[str, Any]: ...
 
+    async def aggregate_terms(
+        self,
+        index: str,
+        field: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        size: int = 20,
+    ) -> dict[str, Any]: ...
+
     async def delete_document(self, index: str, doc_id: str) -> bool: ...
 
     async def create_index(

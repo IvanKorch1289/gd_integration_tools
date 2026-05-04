@@ -249,12 +249,8 @@ class _SearchFacade:
                 logger.warning("facets: invalid filter JSON, ignored")
 
         try:
-            from src.infrastructure.clients.storage.elasticsearch import (
-                get_elasticsearch_client,
-            )
-
-            client = get_elasticsearch_client()
-            return await client.aggregate_terms(
+            service = get_search_service()
+            return await service.aggregate_terms(
                 index, field, filters=filters or None, size=size
             )
         except Exception as exc:  # noqa: BLE001

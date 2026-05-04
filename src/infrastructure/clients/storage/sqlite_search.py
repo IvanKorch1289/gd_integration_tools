@@ -119,6 +119,20 @@ class SqliteFTS5Search:
             }
         }
 
+    async def aggregate_terms(
+        self,
+        index: str,
+        field: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        size: int = 20,
+    ) -> dict[str, Any]:
+        """SQLite-FTS5 fallback не поддерживает terms-агрегацию.
+
+        Возвращает пустые buckets, чтобы UI получил 200 + пусто, а не 5xx.
+        """
+        return {"aggregations": {"by_field": {"buckets": []}}}
+
     async def delete_document(self, index: str, doc_id: str) -> bool:
         table = await self._ensure_index(index)
         async with aiosqlite.connect(self._path) as db:
