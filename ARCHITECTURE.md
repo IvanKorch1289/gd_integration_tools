@@ -83,6 +83,35 @@ AI-агентами и developer portal на Streamlit.
 - `src/dsl/commands/registry.py` — `RouteRegistry` + feature flags
 - `src/dsl/yaml_store.py` — DSL YAML persistence
 - `src/dsl/hot_reload.py` — горячая перезагрузка DSL-маршрутов
+- `src/dsl/yaml_watcher.py` — Wave B: единый FS-watcher для DSL YAML
+  поверх ``watchfiles.awatch`` (см. ADR-041); заменил watchdog-based
+  threading-реализацию
+
+#### Hot reload (Wave B, ADR-041)
+
+```
+            ┌────────────────────────┐
+DSL YAML →  │ watchfiles.awatch      │  ← async-нативный rust `notify`
+files       │  (debounce=500 ms)     │
+            └──────────┬─────────────┘
+                       │ batch of changes
+                       ▼
+            ┌────────────────────────┐
+            │ DSLYamlWatcher         │  rescan каталога →
+            │  ._sync_reload_all()   │  snapshot + atomic apply
+            └──────────┬─────────────┘
+                       │
+                       ▼
+            ┌────────────────────────┐
+            │ RouteRegistry          │  register / unregister
+            │  (atomic snapshot      │  при ошибке — restore_state
+            │   on failure)          │
+            └────────────────────────┘
+```
+
+`WatcherManager` (REST-managed file watchers) использует тот же
+`watchfiles.awatch` через `WatcherSpec.poll_interval` → `debounce_ms`.
+Зависимость `watchdog` удалена в Wave B.
 
 ### 2. Workflow / orchestration
 

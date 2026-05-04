@@ -1,37 +1,32 @@
-"""W25.1 — watchdog-наблюдатель за DSL-маршрутами в YAML.
+"""Wave B — DSL hot-reload поверх ``watchfiles``.
 
-Заменяет legacy ``DSLHotReloader`` (watchfiles). Поднимает
-``watchdog.observers.Observer`` в отдельном потоке и async-consumer,
-который дебаунсит file-event'ы и атомарно перезагружает маршруты в
-``RouteRegistry``.
+Заменяет watchdog-based реализацию (W25.1). Использует rust-based
+``watchfiles.awatch`` — единый FS-watcher для всего проекта (см.
+ADR-041 ``fs-watcher-unification``).
 
-Гарантии:
+Гарантии (сохранены от watchdog-версии):
 
-* ``Observer`` живёт в отдельном threading-потоке (watchdog API);
-  события публикуются в ``asyncio.Queue`` через
-  ``loop.call_soon_threadsafe`` — никаких прямых cross-thread мутаций
-  registry.
-* Между первым event'ом и reload'ом проходит окно ``debounce_ms``.
-  За это окно агрегируются последующие события (типичный сценарий —
-  редактор пишет tmp-файл и переименовывает его).
 * Reload **атомарен**: перед изменениями делается ``snapshot_state``;
   при ошибке — ``restore_state`` + событие пишется в лог. Реестр никогда
   не остаётся в полу-применённом виде.
 * При удалении YAML-файла соответствующий маршрут удаляется из реестра
-  через ``RouteRegistry.unregister`` (трекинг ``path -> route_id``).
+  через :meth:`RouteRegistry.unregister`.
+* Дебаунс file-event'ов делегирован ``awatch(debounce=...)`` —
+  не дублируем логику ожидания «окна тишины» в Python.
+* Public API (``DSLYamlWatcher``, ``PipelineLoader``) сохранён —
+  существующие импортёры (``manage.py``, ``plugins/composition/lifecycle``,
+  тесты) продолжают работать без правок.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import threading
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from watchdog.observers import Observer
+from watchfiles import awatch
 
 if TYPE_CHECKING:
     from src.dsl.commands.registry import RouteRegistry
@@ -47,49 +42,6 @@ PipelineLoader = Callable[[Path], "Pipeline"]
 _YAML_SUFFIXES: tuple[str, ...] = (".yaml", ".yml", ".dsl.yaml")
 
 
-class _DSLEventHandler(FileSystemEventHandler):
-    """watchdog event-handler — публикует пути в asyncio-очередь.
-
-    Все методы запускаются в потоке Observer'а (не в asyncio loop'е).
-    Поэтому используется ``loop.call_soon_threadsafe`` для безопасной
-    передачи событий потребителю.
-    """
-
-    def __init__(
-        self, queue: asyncio.Queue[tuple[str, str]], loop: asyncio.AbstractEventLoop
-    ) -> None:
-        self._queue = queue
-        self._loop = loop
-
-    def _push(self, kind: str, path: str) -> None:
-        if not _is_yaml_path(path):
-            return
-        try:
-            self._loop.call_soon_threadsafe(self._queue.put_nowait, (kind, path))
-        except RuntimeError:
-            # Loop закрыт — игнорируем, watcher уже останавливается.
-            pass
-
-    def on_created(self, event: FileSystemEvent) -> None:
-        if not event.is_directory:
-            self._push("created", str(event.src_path))
-
-    def on_modified(self, event: FileSystemEvent) -> None:
-        if not event.is_directory:
-            self._push("modified", str(event.src_path))
-
-    def on_deleted(self, event: FileSystemEvent) -> None:
-        if not event.is_directory:
-            self._push("deleted", str(event.src_path))
-
-    def on_moved(self, event: FileSystemEvent) -> None:
-        if event.is_directory:
-            return
-        # rename = delete(src) + create(dest)
-        self._push("deleted", str(event.src_path))
-        self._push("created", str(getattr(event, "dest_path", event.src_path)))
-
-
 def _is_yaml_path(path: str) -> bool:
     """Проверяет, что путь похож на DSL-YAML.
 
@@ -99,7 +51,7 @@ def _is_yaml_path(path: str) -> bool:
 
 
 class DSLYamlWatcher:
-    """watchdog-based hot-reload для DSL-маршрутов из YAML.
+    """watchfiles-based hot-reload для DSL-маршрутов из YAML.
 
     Args:
         routes_dir: Каталог с DSL-файлами.
@@ -107,6 +59,7 @@ class DSLYamlWatcher:
         loader: Функция загрузки одного YAML в Pipeline. По умолчанию —
             :func:`src.dsl.yaml_loader.load_pipeline_from_file`.
         debounce_ms: Окно агрегирования file-event'ов (мс).
+            Передаётся напрямую в ``watchfiles.awatch(debounce=...)``.
     """
 
     def __init__(
@@ -120,16 +73,14 @@ class DSLYamlWatcher:
         self._dir = Path(routes_dir)
         self._registry = route_registry
         self._loader: PipelineLoader = loader or _default_loader
-        self._debounce_s = max(debounce_ms, 0) / 1000.0
+        self._debounce_ms = max(debounce_ms, 0)
 
-        self._observer: Any | None = None
         self._task: asyncio.Task[None] | None = None
-        self._queue: asyncio.Queue[tuple[str, str]] | None = None
+        self._stop_event: asyncio.Event = asyncio.Event()
         self._yaml_route_ids: dict[Path, str] = {}
-        self._lock = threading.Lock()
 
     async def start(self) -> None:
-        """Поднимает Observer + async-consumer.
+        """Поднимает async-consumer поверх ``awatch``.
 
         Идемпотентно: повторный вызов на работающем watcher'е — no-op.
         """
@@ -139,42 +90,37 @@ class DSLYamlWatcher:
         self._dir.mkdir(parents=True, exist_ok=True)
         self._initial_load()
 
-        loop = asyncio.get_running_loop()
-        self._queue = asyncio.Queue()
-        observer = Observer()
-        handler = _DSLEventHandler(self._queue, loop)
-        observer.schedule(handler, str(self._dir), recursive=True)
-        observer.start()
-        self._observer = observer
+        self._stop_event = asyncio.Event()
         self._task = asyncio.create_task(self._consume_loop(), name="dsl-yaml-watcher")
         logger.info(
             "DSLYamlWatcher started: dir=%s, debounce=%dms, initial_routes=%d",
             self._dir,
-            int(self._debounce_s * 1000),
+            self._debounce_ms,
             len(self._yaml_route_ids),
         )
 
     async def stop(self) -> None:
-        """Останавливает Observer и async-consumer.
+        """Останавливает async-consumer.
 
         Идемпотентно: повторный вызов на остановленном watcher'е — no-op.
         """
-        if self._observer is not None:
-            self._observer.stop()
-            self._observer.join(timeout=5.0)
-            self._observer = None
-        if self._task is not None:
-            self._task.cancel()
+        self._stop_event.set()
+        if self._task is not None and not self._task.done():
             try:
-                await self._task
+                await asyncio.wait_for(self._task, timeout=5.0)
+            except asyncio.TimeoutError:
+                self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    pass
             except asyncio.CancelledError:
                 pass
-            self._task = None
-        self._queue = None
+        self._task = None
         logger.info("DSLYamlWatcher stopped: dir=%s", self._dir)
 
     async def reload_all(self) -> dict[str, Any]:
-        """Принудительный full reload без watchdog (для CLI).
+        """Принудительный full reload без watchfiles (для CLI).
 
         Возвращает отчёт ``{loaded, errors}``.
         """
@@ -214,37 +160,28 @@ class DSLYamlWatcher:
         self._yaml_route_ids = loaded
 
     async def _consume_loop(self) -> None:
-        """Цикл потребления file-event'ов с дебаунсом и atomic reload."""
-        if self._queue is None:
-            raise RuntimeError("DSLYamlWatcher: очередь событий не инициализирована")
+        """Цикл потребления file-event'ов через ``awatch``.
+
+        Дебаунс делегирован ``watchfiles`` (ничего не блокирует loop).
+        Каждая итерация — атомарный rescan каталога: гарантирует
+        консистентность при удалениях, переименованиях и параллельных
+        правках.
+        """
         try:
-            while True:
-                _first_event = await self._queue.get()
-                # Дебаунс: ждём окно тишины перед reload.
-                await self._drain_debounce()
-                # Полный rescan каталога — гарантирует консистентность
-                # при удалениях, переименованиях и параллельных правках.
+            async for changes in awatch(
+                self._dir,
+                stop_event=self._stop_event,
+                recursive=True,
+                debounce=self._debounce_ms,
+            ):
+                if not any(_is_yaml_path(path) for _, path in changes):
+                    continue
                 await asyncio.to_thread(self._sync_reload_all)
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
             logger.error("DSLYamlWatcher consume_loop crashed: %s", exc, exc_info=True)
             raise
-
-    async def _drain_debounce(self) -> None:
-        """Поглощает события до окна тишины ``_debounce_s``.
-
-        Возвращается, когда между двумя событиями прошло больше окна.
-        """
-        if self._queue is None:
-            raise RuntimeError("DSLYamlWatcher: очередь событий не инициализирована")
-        if self._debounce_s == 0:
-            return
-        while True:
-            try:
-                await asyncio.wait_for(self._queue.get(), timeout=self._debounce_s)
-            except asyncio.TimeoutError:
-                return
 
     def _collect_and_apply(self) -> dict[Path, str]:
         """Полный rescan + atomic apply.
@@ -260,24 +197,23 @@ class DSLYamlWatcher:
             Exception: При ошибке загрузки любого файла — поднимается
             наверх, ``_sync_reload_all`` откатит снапшот.
         """
-        with self._lock:
-            current_files = sorted(self._iter_yaml_files())
-            new_yaml_ids: dict[Path, str] = {}
-            new_pipelines: list[Pipeline] = []
-            for path in current_files:
-                pipeline = self._loader(path)
-                new_yaml_ids[path] = pipeline.route_id
-                new_pipelines.append(pipeline)
+        current_files = sorted(self._iter_yaml_files())
+        new_yaml_ids: dict[Path, str] = {}
+        new_pipelines: list[Pipeline] = []
+        for path in current_files:
+            pipeline = self._loader(path)
+            new_yaml_ids[path] = pipeline.route_id
+            new_pipelines.append(pipeline)
 
-            still_owned = set(new_yaml_ids.values())
-            for old_path, old_rid in self._yaml_route_ids.items():
-                if old_rid not in still_owned and old_path not in new_yaml_ids:
-                    self._registry.unregister(old_rid)
+        still_owned = set(new_yaml_ids.values())
+        for old_path, old_rid in self._yaml_route_ids.items():
+            if old_rid not in still_owned and old_path not in new_yaml_ids:
+                self._registry.unregister(old_rid)
 
-            for pipeline in new_pipelines:
-                self._registry.register(pipeline)
+        for pipeline in new_pipelines:
+            self._registry.register(pipeline)
 
-            return new_yaml_ids
+        return new_yaml_ids
 
     def _iter_yaml_files(self) -> list[Path]:
         if not self._dir.exists():

@@ -315,6 +315,9 @@ routes: check-env ## List DSL routes
 actions: check-env ## List registered actions
 	@APP_PROFILE=dev_light $(MANAGE_LIGHT) actions
 
+actions-strict: check-env ## Wave B: list actions + fail on inferred action_id
+	@APP_PROFILE=dev_light $(MANAGE_LIGHT) actions --strict
+
 grpc-codegen: check-env ## Wave 1.3: generate .proto + compile pb2/pb2_grpc for gRPC actions
 	@APP_PROFILE=dev_light $(UV_RUN) --extra dev-light python tools/codegen_proto.py --clean
 

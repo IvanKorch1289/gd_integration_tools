@@ -1,8 +1,8 @@
-"""DSL-настройки приложения (W25).
+"""DSL-настройки приложения (W25; Wave B — watchfiles).
 
 Управляет:
 - директорией с DSL-маршрутами в YAML;
-- включением hot-reload watchdog'а;
+- включением hot-reload watcher'а (``watchfiles.awatch``);
 - параметром debounce для группировки file-event'ов.
 
 Все поля имеют разумные defaults — секция в YAML-профилях опциональна.
@@ -27,7 +27,7 @@ class DSLSettings(BaseSettingsWithLoader):
     Поля:
         routes_dir: Каталог с ``*.dsl.yaml``/``*.yaml``-маршрутами.
             По умолчанию ``dsl_routes`` относительно корня проекта.
-        hot_reload_enabled: Включает watchdog-наблюдателя за
+        hot_reload_enabled: Включает watchfiles-наблюдателя за
             ``routes_dir``. По умолчанию ``False`` — watcher запускается
             явно (ENV ``DSL_HOT_RELOAD_ENABLED=true`` или dev-профиль).
         hot_reload_debounce_ms: Окно агрегирования file-event'ов
@@ -48,7 +48,7 @@ class DSLSettings(BaseSettingsWithLoader):
     hot_reload_enabled: bool = Field(
         default=False,
         title="Hot-reload DSL-маршрутов",
-        description="Если True — startup поднимает watchdog Observer для routes_dir.",
+        description="Если True — startup поднимает watchfiles awatch для routes_dir.",
     )
     hot_reload_debounce_ms: int = Field(
         default=500,

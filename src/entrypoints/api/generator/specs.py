@@ -13,7 +13,15 @@ __all__ = (
     "ResponseHandler",
     "ActionSpec",
     "CrudSpec",
+    "iter_registered_action_specs",
+    "audit_action_specs",
 )
+
+
+# Wave B: глобальный реестр созданных ActionSpec для аудита
+# explicit/inferred ``action_id``. Заполняется из ``__post_init__``;
+# используется ``manage.py actions --strict`` и аналитикой в Streamlit.
+_REGISTERED_ACTION_SPECS: list["ActionSpec"] = []
 
 
 HttpMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
@@ -107,10 +115,56 @@ class ActionSpec:
     # Wave F.8: 3-tier модель. Default — 2 (custom action).
     tier: Literal[1, 2, 3] = 2
 
+    # Wave B: ``True`` если caller передал ``action_id`` в конструктор;
+    # ``False`` если значение получилось через tier-1 inference или
+    # фолбэк на ``self.name``. ``manage.py actions --strict`` валит
+    # exit 1 при наличии хотя бы одной spec с ``False``.
+    _action_id_explicit: bool = field(init=False, default=False, repr=False)
+
     def __post_init__(self) -> None:
-        """Wave F.8: для Tier 1 без явного ``action_id`` инферрим из path/method."""
-        if self.tier == 1 and not self.action_id:
-            self.action_id = _infer_tier1_action_id(self.path, self.method)
+        """Гарантирует, что ``action_id`` не ``None`` после инициализации.
+
+        Порядок:
+
+        1. Если caller передал ``action_id`` явно — фиксируем
+           ``_action_id_explicit=True``.
+        2. Иначе для ``tier=1`` пытаемся вывести по REST-конвенции через
+           :func:`_infer_tier1_action_id`.
+        3. Если значение всё ещё ``None`` (любой tier без явной декларации) —
+           фолбэк на ``self.name`` (исторический случай, когда
+           ``spec.name`` совпадает с handler-key).
+
+        Инвариант: ``self.action_id is not None`` после ``__post_init__``.
+        """
+        if self.action_id is not None:
+            self._action_id_explicit = True
+        else:
+            if self.tier == 1:
+                self.action_id = _infer_tier1_action_id(self.path, self.method)
+            if self.action_id is None:
+                self.action_id = self.name
+            self._action_id_explicit = False
+        _REGISTERED_ACTION_SPECS.append(self)
+
+
+def iter_registered_action_specs() -> tuple["ActionSpec", ...]:
+    """Снимок реестра созданных ActionSpec (Wave B).
+
+    Возвращает копию, чтобы внешний код не мог мутировать внутренний список.
+    """
+    return tuple(_REGISTERED_ACTION_SPECS)
+
+
+def audit_action_specs() -> tuple[tuple["ActionSpec", ...], tuple["ActionSpec", ...]]:
+    """Раскладывает зарегистрированные ActionSpec на (explicit, inferred).
+
+    Используется командой ``manage.py actions --strict``.
+    """
+    explicit: list[ActionSpec] = []
+    inferred: list[ActionSpec] = []
+    for spec in _REGISTERED_ACTION_SPECS:
+        (explicit if spec._action_id_explicit else inferred).append(spec)
+    return tuple(explicit), tuple(inferred)
 
 
 def _infer_tier1_action_id(path: str, method: HttpMethod) -> str:

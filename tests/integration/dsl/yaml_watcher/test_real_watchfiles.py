@@ -1,4 +1,4 @@
-"""W25.1 — Integration-тесты с реальным watchdog.Observer."""
+"""Wave B — Integration-тесты DSLYamlWatcher поверх ``watchfiles.awatch``."""
 
 # ruff: noqa: S101
 
@@ -31,7 +31,7 @@ async def _wait_until(predicate, timeout: float = 5.0, step: float = 0.05) -> bo
 
 
 @pytest.mark.asyncio
-async def test_observer_registers_new_yaml_file(tmp_path: Path) -> None:
+async def test_watcher_registers_new_yaml_file(tmp_path: Path) -> None:
     """Создание нового YAML → watcher регистрирует route в течение секунды."""
     registry = RouteRegistry()
 
@@ -42,6 +42,8 @@ async def test_observer_registers_new_yaml_file(tmp_path: Path) -> None:
         routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
     )
     await watcher.start()
+    # awatch подписывается асинхронно; даём ему успеть до первой записи.
+    await asyncio.sleep(0.3)
     try:
         new_yaml = tmp_path / "fresh.yaml"
         new_yaml.write_text("route_id: fresh\n", encoding="utf-8")
@@ -53,7 +55,7 @@ async def test_observer_registers_new_yaml_file(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_observer_unregisters_deleted_yaml(tmp_path: Path) -> None:
+async def test_watcher_unregisters_deleted_yaml(tmp_path: Path) -> None:
     """Удаление YAML → route уходит из registry."""
     registry = RouteRegistry()
 
@@ -67,6 +69,7 @@ async def test_observer_unregisters_deleted_yaml(tmp_path: Path) -> None:
         routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
     )
     await watcher.start()
+    await asyncio.sleep(0.3)  # awatch warmup
     try:
         assert "alpha" in registry.list_routes()
         initial.unlink()
@@ -80,7 +83,7 @@ async def test_observer_unregisters_deleted_yaml(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_observer_invalid_yaml_does_not_break_registry(tmp_path: Path) -> None:
+async def test_watcher_invalid_yaml_does_not_break_registry(tmp_path: Path) -> None:
     """Невалидный YAML → snapshot откатывается, существующие routes живы."""
     registry = RouteRegistry()
     registry.register(_StubPipeline("baseline"))
@@ -97,6 +100,7 @@ async def test_observer_invalid_yaml_does_not_break_registry(tmp_path: Path) -> 
         routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
     )
     await watcher.start()
+    await asyncio.sleep(0.3)  # awatch warmup
     try:
         bad = tmp_path / "broken.yaml"
         bad.write_text(f"route_id: broken\n# {invalid_marker}\n", encoding="utf-8")

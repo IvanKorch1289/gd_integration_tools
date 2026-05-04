@@ -223,16 +223,51 @@ def routes():
 
 
 @app.command()
-def actions():
-    """Список зарегистрированных actions."""
+def actions(
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help=(
+            "Wave B: завершиться с exit 1, если хоть один ActionSpec получил "
+            "action_id неявно (через tier-1 inference или fallback на name)."
+        ),
+    ),
+):
+    """Список зарегистрированных actions.
+
+    В strict-режиме дополнительно аудитирует ``ActionSpec``-инстансы и
+    завершает процесс с кодом 1 при наличии неявного ``action_id``
+    (Wave B — переход к обязательной декларации).
+    """
     _bootstrap()
     from src.dsl.commands.registry import action_handler_registry
+    from src.entrypoints.api.generator.specs import audit_action_specs
 
     action_list = sorted(action_handler_registry.list_actions())
     for action in action_list:
         typer.echo(f"  {action}")
 
     typer.echo(f"\nTotal: {len(action_list)} actions")
+
+    explicit, inferred = audit_action_specs()
+    typer.echo(
+        f"\nActionSpec audit: explicit={len(explicit)} inferred={len(inferred)}"
+    )
+
+    if inferred:
+        typer.echo("\nInferred action_id (Wave B fallback):")
+        for spec in sorted(inferred, key=lambda s: (s.path, s.method)):
+            typer.echo(
+                f"  - {spec.method:<7} {spec.path:<60} "
+                f"action_id={spec.action_id!r} (tier={spec.tier}, name={spec.name!r})"
+            )
+
+    if strict and inferred:
+        typer.echo(
+            "\n[strict] FAIL: указанные ActionSpec не содержат явного action_id.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
 
 @app.command()
