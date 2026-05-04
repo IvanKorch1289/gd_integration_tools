@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Any
 
 from src.dsl.engine.context import ExecutionContext
@@ -80,8 +81,12 @@ class DslService:
         route_registry.toggle_feature_flag(flag_name, enable=enable)
 
 
+@lru_cache(maxsize=1)
 def get_dsl_service() -> DslService:
     """
     Возвращает facade DSL.
+
+    Singleton на процесс (R1.4): `ExecutionEngine` создаётся один раз,
+    устраняя linear scan `_find_timeout_middleware` при каждом вызове.
     """
     return DslService()
