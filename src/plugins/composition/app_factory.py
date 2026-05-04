@@ -200,15 +200,13 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
         added = auto_register_unrouted_actions(app)
     except Exception as exc:  # noqa: BLE001
         logging.getLogger("app_factory").warning(
-            "auto_register_unrouted_actions упал: %s — пропускаем",
-            exc,
+            "auto_register_unrouted_actions упал: %s — пропускаем", exc
         )
         return
 
     if added:
         logging.getLogger("app_factory").info(
-            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers",
-            added,
+            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added
         )
 
 

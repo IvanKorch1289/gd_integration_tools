@@ -60,11 +60,9 @@ def _run_granian() -> None:
     from granian.constants import HTTPModes, Interfaces, Loops, RuntimeModes
     from granian.log import LogLevels
 
-    http_mode = {
-        "auto": HTTPModes.auto,
-        "1": HTTPModes.http1,
-        "2": HTTPModes.http2,
-    }[settings.app.granian_http]
+    http_mode = {"auto": HTTPModes.auto, "1": HTTPModes.http1, "2": HTTPModes.http2}[
+        settings.app.granian_http
+    ]
 
     runtime_mode = {
         "auto": RuntimeModes.auto,

@@ -98,12 +98,7 @@ class DaskBackend:
                 self._client = Client(self._cluster)
             return self._client
 
-    def submit(
-        self,
-        fn: Callable[..., Any],
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
+    def submit(self, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Отправить job в Dask-cluster, вернуть Future.
 
         Returns:

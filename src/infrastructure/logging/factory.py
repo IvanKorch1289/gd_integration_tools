@@ -110,9 +110,7 @@ def shutdown_logging() -> None:
         _backend = None
 
 
-def init_log_sinks(
-    profile: AppProfileChoices | None = None, **kwargs: Any
-) -> None:
+def init_log_sinks(profile: AppProfileChoices | None = None, **kwargs: Any) -> None:
     """Инициализировать профильный :class:`SinkRouter`.
 
     Wave 2.5: должен вызываться один раз на старте приложения (lifespan

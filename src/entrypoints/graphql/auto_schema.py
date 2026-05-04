@@ -108,10 +108,7 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
     # Принудительно прописываем аннотации — Strawberry резолвит через
     # get_type_hints, и для closure-функций с from __future__-нет-аннотаций
     # это надёжный способ донести типы.
-    resolver.__annotations__ = {
-        "payload": JSON | None,
-        "return": JSON,
-    }
+    resolver.__annotations__ = {"payload": JSON | None, "return": JSON}
     resolver.__name__ = f"auto_{_action_to_field_name(action_id)}"
     resolver.__doc__ = f"Авто-резолвер для action '{action_id}' (Wave 1.4)."
     return resolver
@@ -176,9 +173,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
                 mutation_count += 1
         except Exception as exc:  # noqa: BLE001 — не валим сборку из-за одного action
             skipped.append((meta.action, str(exc)))
-            logger.warning(
-                "auto-schema: action %r пропущен (%s)", meta.action, exc
-            )
+            logger.warning("auto-schema: action %r пропущен (%s)", meta.action, exc)
 
     if query_count == 0:
         # Нужно хотя бы одно поле, чтобы Strawberry не ругался.
@@ -187,8 +182,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
 
         _auto_health.__annotations__ = {"return": str}
         query_attrs["_auto_health"] = strawberry.field(
-            resolver=_auto_health,
-            description="Health-check авто-схемы (заглушка).",
+            resolver=_auto_health, description="Health-check авто-схемы (заглушка)."
         )
 
     Query = strawberry.type(name="AutoQuery")(type("AutoQuery", (), query_attrs))

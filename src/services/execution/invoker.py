@@ -111,9 +111,7 @@ class Invoker(InvokerProtocol):
         if request.metadata:
             attrs["request_metadata"] = dict(request.metadata)
         return DispatchContext(
-            correlation_id=request.correlation_id,
-            source="invoker",
-            attributes=attrs,
+            correlation_id=request.correlation_id, source="invoker", attributes=attrs
         )
 
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:

@@ -1,0 +1,123 @@
+{
+  "$defs": {
+    "CapabilityRef": {
+      "additionalProperties": false,
+      "description": "Декларация одной capability с опциональным scope-glob.\n\nСоответствует таблице ``[[capabilities]]`` в `plugin.toml` /\n`route.toml`. ``name`` валидируется грамматикой\n:data:`CAPABILITY_NAME_PATTERN`; ``scope`` — свободная строка,\nинтерпретация делегируется :class:`ScopeMatcher` runtime-gate'а.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scope"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "CapabilityRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Манифест маршрута V11 (``routes/<name>/route.toml``).\n\nСм. ADR-043 для полного описания формата, lifecycle и\ninvariant'а ``route.capabilities ⊆ union(plugins.capabilities)``.\n\nAttributes:\n    name: snake_case-имя маршрута; совпадает с каталогом\n        ``routes/<name>/``.\n    version: SemVer-строка маршрута.\n    requires_core: PEP-440 SpecifierSet — диапазон версий ядра.\n    requires_plugins: Mapping ``plugin_name → SemVer-spec`` для\n        плагинов, чьи Processor/Source/Sink/Action использует\n        pipeline.\n    tenant_aware: Если ``True`` — pipeline сознательно работает\n        в TenantContext.\n    feature_flag: ``True``/``False`` (статически вкл./выкл.),\n        ``str`` (имя ENV или dotted-path к\n        ``IFeatureFlagProvider``), ``None`` (по умолчанию вкл.).\n    tags: Тэги для admin-grouping и DSL-Linter.\n    description: Опц. человекочитаемая аннотация.\n    pipelines: Список path'ей ``*.dsl.yaml`` относительно\n        ``routes/<name>/`` (главный — первый, остальные — fragments).\n    capabilities: Декларация runtime-gate (см. ADR-044).\n        Должна быть подмножеством объединения capabilities\n        требуемых плагинов + публичных capabilities ядра\n        (проверка в :class:`RouteLoader`, а не в pydantic).",
+  "properties": {
+    "capabilities": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CapabilityRef"
+      },
+      "title": "Capabilities",
+      "type": "array"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "feature_flag": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feature Flag"
+    },
+    "name": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Name",
+      "type": "string"
+    },
+    "pipelines": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Pipelines",
+      "type": "array"
+    },
+    "requires_core": {
+      "minLength": 1,
+      "title": "Requires Core",
+      "type": "string"
+    },
+    "requires_plugins": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Requires Plugins",
+      "type": "object"
+    },
+    "tags": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "tenant_aware": {
+      "default": false,
+      "title": "Tenant Aware",
+      "type": "boolean"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "requires_core",
+    "pipelines"
+  ],
+  "title": "RouteManifestV11",
+  "type": "object"
+}

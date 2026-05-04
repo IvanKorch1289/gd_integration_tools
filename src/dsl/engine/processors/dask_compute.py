@@ -98,9 +98,7 @@ class DaskComputeProcessor(BaseProcessor):
             scheduler_address=scheduler_address, n_workers=n_workers
         )
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет graph и сохраняет результат в body / header."""
         import dask.bag as db
 
@@ -115,7 +113,11 @@ class DaskComputeProcessor(BaseProcessor):
 
         if hasattr(bag, "compute"):
             result_iterable = self._backend.compute(bag)
-            result = list(result_iterable) if hasattr(result_iterable, "__iter__") else result_iterable
+            result = (
+                list(result_iterable)
+                if hasattr(result_iterable, "__iter__")
+                else result_iterable
+            )
         else:
             result = bag
 
@@ -153,8 +155,5 @@ class DaskComputeProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any]:
         """YAML-spec round-trip."""
         return {
-            "dask_compute": {
-                "graph": list(self._graph),
-                "output_to": self._output_to,
-            }
+            "dask_compute": {"graph": list(self._graph), "output_to": self._output_to}
         }

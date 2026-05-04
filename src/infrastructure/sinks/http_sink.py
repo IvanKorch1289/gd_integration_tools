@@ -53,8 +53,7 @@ class HttpSink(Sink):
                 )
         except Exception as exc:  # noqa: BLE001 — мап в SinkResult.
             return SinkResult(
-                ok=False,
-                details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
         ok = 200 <= response.status_code < 300

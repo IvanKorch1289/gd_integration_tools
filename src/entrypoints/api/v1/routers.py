@@ -17,11 +17,9 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
+    from src.entrypoints.api.v1.endpoints.ai_agents import router as ai_agents_router
     from src.entrypoints.api.v1.endpoints.ai_feedback import (
         router as ai_feedback_router,
-    )
-    from src.entrypoints.api.v1.endpoints.ai_agents import (
-        router as ai_agents_router,
     )
     from src.entrypoints.api.v1.endpoints.ai_tools import router as ai_tools_router
     from src.entrypoints.api.v1.endpoints.dadata import router as dadata_router
@@ -44,6 +42,12 @@ def get_v1_routers() -> APIRouter:
     from src.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.entrypoints.api.v1.endpoints.tech import router as tech_router
     from src.entrypoints.api.v1.endpoints.users import router as users_router
+    from src.entrypoints.api.v1.endpoints.v11_inventory import (
+        plugins_router as v11_plugins_router,
+    )
+    from src.entrypoints.api.v1.endpoints.v11_inventory import (
+        routes_router as v11_routes_router,
+    )
 
     api_router_v1 = APIRouter()
 
@@ -118,6 +122,13 @@ def get_v1_routers() -> APIRouter:
     # actions для Streamlit Action Console / MCP / OpenAPI enrichment.
     api_router_v1.include_router(
         actions_inventory_router, prefix="/actions", tags=["Actions Inventory"]
+    )
+    # R1.fin (V11): admin-инвентари V11-плагинов и маршрутов.
+    api_router_v1.include_router(
+        v11_plugins_router, prefix="/plugins", tags=["V11 · Plugins"]
+    )
+    api_router_v1.include_router(
+        v11_routes_router, prefix="/routes", tags=["V11 · Routes"]
     )
 
     return api_router_v1

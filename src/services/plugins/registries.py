@@ -69,10 +69,7 @@ class RepositoryHookRegistry:
         self._overrides: dict[tuple[str, str], Callable[..., Awaitable[Any]]] = {}
 
     def register_hook(
-        self,
-        repo_name: str,
-        event: str,
-        callback: Callable[..., Awaitable[Any]],
+        self, repo_name: str, event: str, callback: Callable[..., Awaitable[Any]]
     ) -> None:
         """Регистрирует hook на событие репозитория.
 
@@ -100,10 +97,7 @@ class RepositoryHookRegistry:
         )
 
     def override_method(
-        self,
-        repo_name: str,
-        method: str,
-        replacement: Callable[..., Awaitable[Any]],
+        self, repo_name: str, method: str, replacement: Callable[..., Awaitable[Any]]
     ) -> None:
         """Подменяет метод репозитория целиком.
 
@@ -141,12 +135,7 @@ class RepositoryHookRegistry:
         return self._overrides.get((repo_name, method))
 
     async def dispatch(
-        self,
-        repo_name: str,
-        event: str,
-        repo: Any,
-        *args: Any,
-        **kwargs: Any,
+        self, repo_name: str, event: str, repo: Any, *args: Any, **kwargs: Any
     ) -> None:
         """Вызвать все hooks для `(repo, event)` последовательно.
 
@@ -216,8 +205,10 @@ class ActionRegistryAdapter:
         from src.core.interfaces.action_dispatcher import ActionMetadata
         from src.dsl.commands.action_registry import ActionHandlerSpec
 
-        metadata = spec if isinstance(spec, ActionMetadata) else ActionMetadata(
-            action=action_id, input_model=None
+        metadata = (
+            spec
+            if isinstance(spec, ActionMetadata)
+            else ActionMetadata(action=action_id, input_model=None)
         )
         carrier = _PluginCallableCarrier(handler)
 

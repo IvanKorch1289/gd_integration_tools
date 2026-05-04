@@ -19,11 +19,7 @@ import yaml
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-__all__ = (
-    "PluginManifest",
-    "PluginManifestError",
-    "load_manifest",
-)
+__all__ = ("PluginManifest", "PluginManifestError", "load_manifest")
 
 
 class PluginManifestError(ValueError):

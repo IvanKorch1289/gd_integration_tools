@@ -21,11 +21,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-__all__ = (
-    "BridgeResult",
-    "dispatch_action_or_dsl",
-    "is_dispatcher_enabled_for",
-)
+__all__ = ("BridgeResult", "dispatch_action_or_dsl", "is_dispatcher_enabled_for")
 
 
 _TRANSPORT_FLAG_ENV: dict[str, str] = {
@@ -118,9 +114,7 @@ async def dispatch_action_or_dsl(
             return result
 
     return await _dispatch_dsl(
-        dsl_route_id=dsl_route_id,
-        payload=payload,
-        headers=headers,
+        dsl_route_id=dsl_route_id, payload=payload, headers=headers
     )
 
 
@@ -167,10 +161,7 @@ async def _try_dispatcher(
 
 
 async def _dispatch_dsl(
-    *,
-    dsl_route_id: str,
-    payload: Mapping[str, Any],
-    headers: Mapping[str, Any] | None,
+    *, dsl_route_id: str, payload: Mapping[str, Any], headers: Mapping[str, Any] | None
 ) -> BridgeResult:
     """Tier 3 fallback: классический DSL-dispatch через ``DslService``.
 
@@ -216,8 +207,7 @@ async def _dispatch_dsl(
 
 
 def _merge_attributes(
-    headers: Mapping[str, Any] | None,
-    attributes: Mapping[str, Any] | None,
+    headers: Mapping[str, Any] | None, attributes: Mapping[str, Any] | None
 ) -> dict[str, Any]:
     """Готовит ``DispatchContext.attributes`` из headers + явных атрибутов.
 

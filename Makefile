@@ -318,6 +318,33 @@ actions: check-env ## List registered actions
 actions-strict: check-env ## Wave B: list actions + fail on inferred action_id
 	@APP_PROFILE=dev_light $(MANAGE_LIGHT) actions --strict
 
+##@ V11 R1.2 — manifest schemas + capability catalog (ADR-042/043/044)
+
+plugin-schema: check-env ## Wave R1.2: dump plugin.toml JSON-Schema → docs/reference/schemas/
+	@$(UV_RUN) python tools/export_v11_artefacts.py plugin-schema
+
+route-schema: check-env ## Wave R1.2a: dump route.toml JSON-Schema → docs/reference/schemas/
+	@$(UV_RUN) python tools/export_v11_artefacts.py route-schema
+
+capability-catalog: check-env ## Wave R1.1: dump capability vocabulary → docs/reference/capabilities.md
+	@$(UV_RUN) python tools/export_v11_artefacts.py capability-catalog
+
+v11-artefacts: check-env ## Wave R1: regenerate plugin/route schemas + capability catalog
+	@$(UV_RUN) python tools/export_v11_artefacts.py all
+
+v11-artefacts-check: check-env ## Wave R1: проверить, что committed schemas/capabilities в синке с кодом
+	@$(UV_RUN) python tools/check_v11_artefacts.py
+
+migrate-plugin-manifest: check-env ## Wave R1.2.b: convert plugins/<name>/plugin.yaml → plugin.toml (PLUGIN_DIR=...)
+	@if [ -z "$(PLUGIN_DIR)" ]; then \
+		echo "Использование: make migrate-plugin-manifest PLUGIN_DIR=plugins/example_plugin"; \
+		exit 2; \
+	fi
+	@$(UV_RUN) python tools/migrate_plugin_manifest.py "$(PLUGIN_DIR)"
+
+migrate-dsl-routes: check-env ## Wave R1.2a.b: wrap dsl_routes/*.yaml into routes/<name>/ (FROM=dsl_routes/ TO=routes/)
+	@$(UV_RUN) python tools/migrate_dsl_routes_to_v11.py "$(or $(FROM),dsl_routes)" "$(or $(TO),routes)"
+
 grpc-codegen: check-env ## Wave 1.3: generate .proto + compile pb2/pb2_grpc for gRPC actions
 	@APP_PROFILE=dev_light $(UV_RUN) --extra dev-light python tools/codegen_proto.py --clean
 

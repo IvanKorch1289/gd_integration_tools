@@ -34,17 +34,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "AutoServicerBundle",
-    "build_auto_servicers",
-    "register_auto_servicers",
-)
+__all__ = ("AutoServicerBundle", "build_auto_servicers", "register_auto_servicers")
 
 
 _AUTO_PROTO_PACKAGE = "src.entrypoints.grpc.protobuf.auto"
-_AUTO_PROTO_DIR = (
-    Path(__file__).resolve().parent / "protobuf" / "auto"
-)
+_AUTO_PROTO_DIR = Path(__file__).resolve().parent / "protobuf" / "auto"
 
 
 class AutoServicerBundle:
@@ -93,9 +87,7 @@ def _discover_services() -> list[str]:
             names.add(path.stem.removesuffix("_pb2"))
     # Только те, где есть и _pb2_grpc.py.
     return sorted(
-        name
-        for name in names
-        if (_AUTO_PROTO_DIR / f"{name}_pb2_grpc.py").exists()
+        name for name in names if (_AUTO_PROTO_DIR / f"{name}_pb2_grpc.py").exists()
     )
 
 
@@ -193,8 +185,7 @@ def build_auto_servicers() -> tuple[AutoServicerBundle, ...]:
         add_fn = _find_add_to_server(pb2_grpc, service)
         if base_cls is None or add_fn is None:
             logger.warning(
-                "В %s_pb2_grpc.py не найден ожидаемый Servicer/add_*; пропуск",
-                service,
+                "В %s_pb2_grpc.py не найден ожидаемый Servicer/add_*; пропуск", service
             )
             continue
 

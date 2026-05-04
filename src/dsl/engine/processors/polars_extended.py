@@ -102,9 +102,7 @@ class PolarsQueryProcessor(BaseProcessor):
         self._sort_by = sort_by
         self._descending = descending
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет declarative polars-операции к telu exchange."""
         import polars as pl
 
@@ -113,7 +111,10 @@ class PolarsQueryProcessor(BaseProcessor):
             df = df.filter(pl.sql_expr(self._filter))
         if self._with_columns:
             df = df.with_columns(
-                [pl.sql_expr(expr).alias(col) for col, expr in self._with_columns.items()]
+                [
+                    pl.sql_expr(expr).alias(col)
+                    for col, expr in self._with_columns.items()
+                ]
             )
         if self._select:
             df = df.select(self._select)
@@ -164,9 +165,7 @@ class PolarsJoinProcessor(BaseProcessor):
         self._on = on
         self._how = how
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет join body с DataFrame по ``other_path``."""
         left = _ensure_dataframe(exchange.in_message.body)
         right_raw = self._resolve_right(exchange)
@@ -222,9 +221,7 @@ class PolarsAggregateProcessor(BaseProcessor):
         self._group_by = [group_by] if isinstance(group_by, str) else list(group_by)
         self._aggs = dict(aggregations)
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет group_by + agg к body."""
         import polars as pl
 
@@ -273,9 +270,7 @@ class PolarsPivotProcessor(BaseProcessor):
         self._values = values
         self._agg = aggregate_function
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Делает pivot-таблицу и сохраняет результат в body."""
         df = _ensure_dataframe(exchange.in_message.body)
         result = df.pivot(
@@ -329,9 +324,7 @@ class PolarsWindowProcessor(BaseProcessor):
         self._order = order_by
         self._cols = dict(windowed_columns)
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Применяет window-агрегаты как новые колонки."""
         import polars as pl
 

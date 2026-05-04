@@ -66,9 +66,7 @@ class InvokeProcessor(BaseProcessor):
         self._invoker_override = invoker
 
     @staticmethod
-    def _coerce_mode(
-        value: str | InvocationMode, *, action: str
-    ) -> InvocationMode:
+    def _coerce_mode(value: str | InvocationMode, *, action: str) -> InvocationMode:
         """Pretty-валидация mode с перечнем допустимых значений (B1).
 
         Голый ``InvocationMode(value)`` бросает Python-ValueError без
@@ -83,12 +81,13 @@ class InvokeProcessor(BaseProcessor):
         except ValueError as exc:
             allowed = ", ".join(m.value for m in InvocationMode)
             raise ValueError(
-                f"invoke[{action}]: невалидный mode={value!r}. "
-                f"Допустимые: {allowed}."
+                f"invoke[{action}]: невалидный mode={value!r}. Допустимые: {allowed}."
             ) from exc
 
     @staticmethod
-    def _coerce_timeout(value: float | int | str | None, *, action: str) -> float | None:
+    def _coerce_timeout(
+        value: float | int | str | None, *, action: str
+    ) -> float | None:
         """Валидация timeout: положительное число или ``None``."""
         if value is None:
             return None

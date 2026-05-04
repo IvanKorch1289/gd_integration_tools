@@ -21,10 +21,7 @@ from pathlib import Path
 
 from src.core.interfaces.storage import ObjectStorage
 
-__all__ = (
-    "get_object_storage",
-    "get_local_fs_storage",
-)
+__all__ = ("get_object_storage", "get_local_fs_storage")
 
 logger = logging.getLogger(__name__)
 

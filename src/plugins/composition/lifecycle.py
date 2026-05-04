@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -313,6 +314,230 @@ def _bootstrap_resilience_coordinator(app: FastAPI) -> None:
         app_logger.warning("ResilienceCoordinator bootstrap skipped: %s", exc)
 
 
+async def _bootstrap_v11_plugin_loader(app: FastAPI) -> None:
+    """R1.fin (ADR-042/044) — поднять PluginLoaderV11 под feature-flag.
+
+    По умолчанию выключено (``v11.plugin_loader_enabled=False``). При
+    включении сканирует ``extensions/<name>/plugin.toml``, выделяет
+    capabilities в ``CapabilityGate`` до import и запускает lifecycle.
+    Параллельно с Wave 4.4 PluginLoader (``app.state.plugin_loader``);
+    падение V11-loader не валит startup.
+    """
+    from src.core.config.settings import settings as app_settings
+
+    if not app_settings.v11.plugin_loader_enabled:
+        app_logger.info("V11 PluginLoader disabled (V11_PLUGIN_LOADER_ENABLED=false)")
+        return
+
+    try:
+        from src.core.security.capabilities import CapabilityGate
+        from src.dsl.commands.action_registry import action_handler_registry
+        from src.dsl.engine.plugin_registry import get_processor_plugin_registry
+        from src.services.plugins.loader_v11 import PluginLoaderV11
+        from src.services.plugins.registries import (
+            ActionRegistryAdapter,
+            ProcessorRegistryAdapter,
+            get_repository_hook_registry,
+        )
+
+        gate = CapabilityGate()
+        loader = PluginLoaderV11(
+            extensions_dir=app_settings.v11.extensions_dir,
+            capability_gate=gate,
+            action_registry=ActionRegistryAdapter(action_handler_registry),
+            repository_registry=get_repository_hook_registry(),
+            processor_registry=ProcessorRegistryAdapter(
+                get_processor_plugin_registry()
+            ),
+            core_version=app_settings.v11.core_version,
+        )
+        await loader.discover_and_load()
+        app.state.capability_gate = gate
+        app.state.plugin_loader_v11 = loader
+        app_logger.info(
+            "V11 PluginLoader: %d плагин(ов) загружено", len(loader.successful)
+        )
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("V11 PluginLoader bootstrap skipped: %s", exc)
+
+
+async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
+    """R1.fin (ADR-043/044) — поднять RouteLoader под feature-flag.
+
+    По умолчанию выключено. При включении сканирует
+    ``routes/<name>/route.toml``, проверяет ``requires_plugins`` через
+    ранее загруженные V11-плагины (из :func:`_bootstrap_v11_plugin_loader`),
+    делает invariant-check ``capabilities ⊆ plugins ∪ public-core`` и
+    регистрирует pipeline-файлы через ``route_registry``.
+    """
+    from src.core.config.settings import settings as app_settings
+
+    if not app_settings.v11.route_loader_enabled:
+        app_logger.info("V11 RouteLoader disabled (V11_ROUTE_LOADER_ENABLED=false)")
+        return
+
+    gate = getattr(app.state, "capability_gate", None)
+    if gate is None:
+        # RouteLoader без gate работать не может; используем чистый
+        # gate (route может не использовать capabilities).
+        from src.core.security.capabilities import CapabilityGate
+
+        gate = CapabilityGate()
+        app.state.capability_gate = gate
+
+    try:
+        from src.core.security.capabilities import build_default_vocabulary
+        from src.dsl.commands.registry import route_registry
+        from src.dsl.yaml_loader import load_pipeline_from_file
+        from src.services.routes.loader import InstalledPlugin, RouteLoader
+
+        # installed_plugins из V11 PluginLoader (если поднят).
+        installed: dict[str, InstalledPlugin] = {}
+        v11_loader = getattr(app.state, "plugin_loader_v11", None)
+        if v11_loader is not None:
+            for entry in v11_loader.successful:
+                if entry.manifest is None:
+                    continue
+                installed[entry.name] = InstalledPlugin(
+                    name=entry.name,
+                    version=entry.version,
+                    capabilities=tuple(entry.manifest.capabilities),
+                )
+
+        def _registrar(route_name: str, pipeline_path: Path) -> None:
+            """Делегирует загрузку pipeline-файла в ``route_registry``."""
+            pipeline = load_pipeline_from_file(pipeline_path)
+            route_registry.register(pipeline)
+
+        loader = RouteLoader(
+            routes_dir=app_settings.v11.routes_dir,
+            capability_gate=gate,
+            vocabulary=build_default_vocabulary(),
+            core_version=app_settings.v11.core_version,
+            installed_plugins=installed,
+            pipeline_registrar=_registrar,
+        )
+        await loader.discover_and_load()
+        app.state.route_loader_v11 = loader
+        app_logger.info("V11 RouteLoader: %d маршрут(ов) активно", len(loader.enabled))
+    except Exception as exc:  # noqa: BLE001
+        app_logger.warning("V11 RouteLoader bootstrap skipped: %s", exc)
+
+
+async def _shutdown_v11_loaders(app: FastAPI) -> None:
+    """R1.fin — обратный порядок: сначала RouteLoader, затем PluginLoaderV11."""
+    watcher_task = getattr(app.state, "v11_hot_reload_task", None)
+    if watcher_task is not None and not watcher_task.done():
+        watcher_task.cancel()
+        try:
+            await watcher_task
+        except BaseException as cancel_exc:  # noqa: BLE001 — cancellation/await
+            app_logger.debug("V11 hot-reload task cancelled: %s", cancel_exc)
+
+    route_loader = getattr(app.state, "route_loader_v11", None)
+    if route_loader is not None:
+        try:
+            await route_loader.unload_all()
+        except Exception as exc:  # noqa: BLE001
+            app_logger.warning("V11 RouteLoader shutdown error: %s", exc)
+
+    plugin_loader = getattr(app.state, "plugin_loader_v11", None)
+    if plugin_loader is not None:
+        try:
+            await plugin_loader.shutdown_all()
+        except Exception as exc:  # noqa: BLE001
+            app_logger.warning("V11 PluginLoader shutdown error: %s", exc)
+
+
+async def _start_v11_hot_reload(app: FastAPI) -> None:
+    """R1.fin — поднимает watchfiles awatch на ``extensions/`` + ``routes/``.
+
+    Под флагом ``v11.hot_reload_enabled`` (default OFF). При file-event:
+
+    * изменение ``plugin.toml`` — full reload плагина (сложный путь);
+    * изменение ``route.toml`` — full re-register маршрута;
+    * изменение ``*.dsl.yaml`` внутри ``routes/<name>/`` — pipeline-reload
+      без перепроверки manifest'а.
+
+    Реализован через единственный ``asyncio.Task``; cancel в shutdown.
+    Семантика debounce — наследуется из watchfiles.awatch.
+    """
+    import asyncio
+
+    from src.core.config.settings import settings as app_settings
+
+    if not app_settings.v11.hot_reload_enabled:
+        app_logger.info("V11 hot-reload disabled (V11_HOT_RELOAD_ENABLED=false)")
+        return
+
+    plugin_loader = getattr(app.state, "plugin_loader_v11", None)
+    route_loader = getattr(app.state, "route_loader_v11", None)
+    if plugin_loader is None and route_loader is None:
+        app_logger.info(
+            "V11 hot-reload skipped: ни PluginLoaderV11, ни RouteLoader не активны"
+        )
+        return
+
+    candidate_dirs: list[Path] = []
+    if plugin_loader is not None:
+        candidate_dirs.append(app_settings.v11.extensions_dir)
+    if route_loader is not None:
+        candidate_dirs.append(app_settings.v11.routes_dir)
+    watch_dirs: list[str] = [str(p) for p in candidate_dirs if Path(p).is_dir()]
+    if not watch_dirs:
+        app_logger.info("V11 hot-reload: ни одного существующего каталога")
+        return
+
+    debounce_ms = app_settings.v11.hot_reload_debounce_ms
+
+    async def _watch_loop() -> None:
+        """Цикл awatch с graceful cancel."""
+        from watchfiles import awatch
+
+        async for changes in awatch(*watch_dirs, debounce=debounce_ms):
+            try:
+                await _handle_v11_changes(app, changes)
+            except Exception as exc:  # noqa: BLE001
+                app_logger.warning("V11 hot-reload handler error: %s", exc)
+
+    task = asyncio.create_task(_watch_loop(), name="v11-hot-reload")
+    app.state.v11_hot_reload_task = task
+    app_logger.info(
+        "V11 hot-reload started: watching %s (debounce=%dms)", watch_dirs, debounce_ms
+    )
+
+
+async def _handle_v11_changes(app: FastAPI, changes: set) -> None:
+    """Обработать batch file-event'ов от watchfiles.
+
+    Логика:
+    * Любое изменение ``plugin.toml`` → re-discover (PluginLoaderV11
+      идемпотентен по name; уже загруженный пропускается).
+    * Любое изменение ``route.toml`` → RouteLoader.unload_all +
+      discover_and_load (дёшево, всё равно ≤ 50 маршрутов).
+    * ``*.dsl.yaml`` без manifest-изменений → re-load только
+      затронутых route'ов.
+    """
+    plugin_loader = getattr(app.state, "plugin_loader_v11", None)
+    route_loader = getattr(app.state, "route_loader_v11", None)
+
+    plugin_event = any(p.endswith("plugin.toml") for _, p in changes)
+    route_event = any(p.endswith("route.toml") for _, p in changes)
+    pipeline_event = any(p.endswith((".dsl.yaml", ".yaml")) for _, p in changes)
+
+    if plugin_event and plugin_loader is not None:
+        app_logger.info("V11 hot-reload: plugin.toml change detected")
+        await plugin_loader.discover_and_load()
+
+    if (route_event or pipeline_event) and route_loader is not None:
+        app_logger.info(
+            "V11 hot-reload: %s change detected — reloading routes",
+            "route.toml" if route_event else "*.dsl.yaml",
+        )
+        await route_loader.unload_all()
+        await route_loader.discover_and_load()
+
+
 async def _start_dsl_yaml_watcher(app: FastAPI) -> None:
     """W25.1 — поднимает ``DSLYamlWatcher`` под флагом dsl.hot_reload_enabled.
 
@@ -368,6 +593,19 @@ async def lifespan(app: FastAPI):
     try:
         from src.plugins.composition.di import register_app_state
 
+        # Wave A: Sentry init выполняется в самом начале lifespan, чтобы
+        # последующие падения регистрации сервисов попадали в error tracking.
+        # Без SENTRY_DSN init возвращает False и не блокирует старт.
+        try:
+            from src.infrastructure.observability.sentry_init import init_sentry
+
+            init_sentry()
+        except Exception as sentry_exc:  # noqa: BLE001
+            app_logger.warning(
+                "Sentry init skipped: %s (приложение продолжит без error tracking)",
+                sentry_exc,
+            )
+
         # Wave 2.5: инициализация LogSink-стека (router + sinks по профилю)
         # должна произойти ДО регистрации сервисов, чтобы их startup-логи
         # уже доезжали до sink-ов (Console JSON / Disk Rotating / Graylog).
@@ -416,19 +654,21 @@ async def lifespan(app: FastAPI):
                             await loader.load_from_path(entry)
                         except Exception as plugin_exc:  # noqa: BLE001
                             app_logger.warning(
-                                "In-tree plugin %s skipped: %s",
-                                entry.name,
-                                plugin_exc,
+                                "In-tree plugin %s skipped: %s", entry.name, plugin_exc
                             )
             try:
                 await loader.discover_and_load()
             except Exception as ep_exc:  # noqa: BLE001
-                app_logger.warning(
-                    "entry_points plugin discovery skipped: %s", ep_exc
-                )
+                app_logger.warning("entry_points plugin discovery skipped: %s", ep_exc)
             app.state.plugin_loader = loader
         except Exception as exc:  # noqa: BLE001
             app_logger.warning("Plugin loader bootstrap skipped: %s", exc)
+
+        # R1.fin (V11): bootstrap PluginLoaderV11 + RouteLoader под feature-flag.
+        # Default OFF — wave 4.4 PluginLoader продолжает работать как раньше.
+        await _bootstrap_v11_plugin_loader(app)
+        await _bootstrap_v11_route_loader(app)
+        await _start_v11_hot_reload(app)
 
         try:
             from src.workflows.outbox_worker import start_outbox_worker
@@ -478,6 +718,11 @@ async def lifespan(app: FastAPI):
             await stop_outbox_worker()
         except Exception as worker_exc:  # noqa: BLE001
             app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
+
+        # R1.fin (V11): shutdown V11-loader'ов в обратном порядке
+        # (route → plugin) ДО Wave 4 PluginLoader, чтобы их on_shutdown
+        # успел отработать до закрытия общих ресурсов.
+        await _shutdown_v11_loaders(app)
 
         # Wave 4-tail: graceful plugin shutdown — каждому плагину
         # даётся on_shutdown() до общего ending().

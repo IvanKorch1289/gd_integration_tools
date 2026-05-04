@@ -69,18 +69,14 @@ class WebhookSink(Sink):
                 )
         except Exception as exc:  # noqa: BLE001
             return SinkResult(
-                ok=False,
-                details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
         ok = 200 <= response.status_code < 300
         return SinkResult(
             ok=ok,
             external_id=response.headers.get("x-request-id"),
-            details={
-                "status_code": response.status_code,
-                "signed": bool(self.secret),
-            },
+            details={"status_code": response.status_code, "signed": bool(self.secret)},
         )
 
     async def health(self) -> bool:

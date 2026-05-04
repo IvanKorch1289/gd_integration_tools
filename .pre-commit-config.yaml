@@ -38,3 +38,14 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
+
+      # Wave R1.2 — V11 manifest schemas + capability catalog gate.
+      # Запускается только при push: артефакты редко меняются, нет смысла
+      # тратить время на каждый локальный commit.
+      - id: v11-artefacts-check
+        name: "V11 manifest schemas + capability catalog в синке"
+        entry: uv run python tools/check_v11_artefacts.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]

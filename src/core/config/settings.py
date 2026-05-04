@@ -21,6 +21,7 @@ from src.core.config.base import (
 from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
 from src.core.config.database import DatabaseConnectionSettings, db_connection_settings
 from src.core.config.dsl import DSLSettings, dsl_settings
+from src.core.config.v11 import V11Settings, v11_settings
 from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from src.core.config.express import ExpressSettings, express_settings
 from src.core.config.external_apis import (
@@ -126,6 +127,9 @@ class Settings(BaseSettings):
 
     # DSL hot-reload (W25)
     dsl: DSLSettings = dsl_settings
+
+    # V11 R1.fin (ADR-042/043/044): PluginLoaderV11 + RouteLoader feature-flags.
+    v11: V11Settings = v11_settings
 
     # Устойчивая инфраструктура (W26): per-service breaker-профили + fallback-политики
     resilience: ResilienceSettings = resilience_settings

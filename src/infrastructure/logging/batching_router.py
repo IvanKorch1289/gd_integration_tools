@@ -54,7 +54,9 @@ class BatchingSinkRouter:
         self._inner = inner
         self._batch_size = max(1, batch_size)
         self._flush_interval = max(0.001, flush_interval_ms / 1000.0)
-        self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=queue_maxsize)
+        self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
+            maxsize=queue_maxsize
+        )
         self._worker_task: asyncio.Task[None] | None = None
         self._closed = False
         self._dropped: int = 0

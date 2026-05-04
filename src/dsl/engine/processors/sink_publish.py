@@ -58,9 +58,7 @@ def _resolve_payload(exchange: Exchange[Any], payload_property: str | None) -> A
     return exchange.in_message.body
 
 
-def _store_result(
-    exchange: Exchange[Any], spec: _OutSpec, result: Any
-) -> None:
+def _store_result(exchange: Exchange[Any], spec: _OutSpec, result: Any) -> None:
     """Сохраняет result в property и опционально в out_message."""
     exchange.set_property(spec.result_property, result)
     if spec.set_out:
@@ -91,9 +89,7 @@ class GrpcCallProcessor(BaseProcessor):
         self._out = _OutSpec(result_property=result_property)
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`GrpcSink` и публикует ``payload``."""
         from src.infrastructure.sinks.grpc_sink import GrpcSink
 
@@ -106,11 +102,7 @@ class GrpcCallProcessor(BaseProcessor):
         )
         payload = _resolve_payload(exchange, self._payload_property)
         result = await sink.send(payload)
-        _store_result(
-            exchange,
-            self._out,
-            {"ok": result.ok, **result.details},
-        )
+        _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
 
 class SoapCallProcessor(BaseProcessor):
@@ -139,9 +131,7 @@ class SoapCallProcessor(BaseProcessor):
         self._out = _OutSpec(result_property=result_property)
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`SoapSink` и вызывает SOAP-операцию."""
         from src.infrastructure.sinks.soap_sink import SoapSink
 
@@ -155,9 +145,7 @@ class SoapCallProcessor(BaseProcessor):
         )
         payload = _resolve_payload(exchange, self._payload_property)
         result = await sink.send(payload)
-        _store_result(
-            exchange, self._out, {"ok": result.ok, **result.details}
-        )
+        _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
 
 class MqPublishProcessor(BaseProcessor):
@@ -184,9 +172,7 @@ class MqPublishProcessor(BaseProcessor):
         self._out = _OutSpec(result_property=result_property)
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`MqSink` и публикует ``payload``."""
         from src.infrastructure.sinks.mq_sink import MqSink
 
@@ -199,9 +185,7 @@ class MqPublishProcessor(BaseProcessor):
         )
         payload = _resolve_payload(exchange, self._payload_property)
         result = await sink.send(payload)
-        _store_result(
-            exchange, self._out, {"ok": result.ok, **result.details}
-        )
+        _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
 
 class WsPublishProcessor(BaseProcessor):
@@ -226,9 +210,7 @@ class WsPublishProcessor(BaseProcessor):
         self._out = _OutSpec(result_property=result_property)
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`WsSink` и публикует payload."""
         from src.infrastructure.sinks.ws_sink import WsSink
 
@@ -240,9 +222,7 @@ class WsPublishProcessor(BaseProcessor):
         )
         payload = _resolve_payload(exchange, self._payload_property)
         result = await sink.send(payload)
-        _store_result(
-            exchange, self._out, {"ok": result.ok, **result.details}
-        )
+        _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
 
 class MqttPublishProcessor(BaseProcessor):
@@ -280,17 +260,13 @@ class MqttPublishProcessor(BaseProcessor):
         self._out = _OutSpec(result_property=result_property)
 
     @handle_processor_error
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Открывает MQTT-соединение через aiomqtt и публикует payload."""
         try:
             import aiomqtt
         except ImportError:
             _store_result(
-                exchange,
-                self._out,
-                {"ok": False, "error": "aiomqtt not installed"},
+                exchange, self._out, {"ok": False, "error": "aiomqtt not installed"}
             )
             return
 
@@ -320,7 +296,5 @@ class MqttPublishProcessor(BaseProcessor):
             return
 
         _store_result(
-            exchange,
-            self._out,
-            {"ok": True, "topic": self._topic, "qos": self._qos},
+            exchange, self._out, {"ok": True, "topic": self._topic, "qos": self._qos}
         )

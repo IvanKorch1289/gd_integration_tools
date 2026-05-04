@@ -55,9 +55,7 @@ class MqSink(Sink):
                 ok=False, details={"error": f"faststream/{self.broker} not installed"}
             )
 
-        body = (
-            payload if isinstance(payload, (bytes, str)) else dumps_str(payload)
-        )
+        body = payload if isinstance(payload, (bytes, str)) else dumps_str(payload)
 
         try:
             await broker.connect()
@@ -70,9 +68,7 @@ class MqSink(Sink):
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
-        return SinkResult(
-            ok=True, details={"broker": self.broker, "topic": self.topic}
-        )
+        return SinkResult(ok=True, details={"broker": self.broker, "topic": self.topic})
 
     async def health(self) -> bool:
         """Health: connect/close без публикации."""

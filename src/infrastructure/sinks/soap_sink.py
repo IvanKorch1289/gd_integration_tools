@@ -40,7 +40,9 @@ class SoapSink(Sink):
     timeout: float = 30.0
     kind: SinkKind = field(default=SinkKind.SOAP, init=False)
     _client: Any = field(default=None, init=False, repr=False)
-    _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
+    _lock: threading.Lock = field(
+        default_factory=threading.Lock, init=False, repr=False
+    )
 
     async def send(self, payload: Any) -> SinkResult:
         """Вызывает SOAP-операцию через ``asyncio.to_thread`` (zeep — sync)."""
@@ -53,7 +55,9 @@ class SoapSink(Sink):
         if client is None:
             return SinkResult(ok=False, details={"error": "zeep not installed"})
 
-        kwargs: dict[str, Any] = payload if isinstance(payload, dict) else {"body": payload}
+        kwargs: dict[str, Any] = (
+            payload if isinstance(payload, dict) else {"body": payload}
+        )
 
         try:
             result = await asyncio.to_thread(self._invoke_sync, client, kwargs)
@@ -63,7 +67,8 @@ class SoapSink(Sink):
             )
 
         return SinkResult(
-            ok=True, details={"operation": self.operation, "response": _summarize(result)}
+            ok=True,
+            details={"operation": self.operation, "response": _summarize(result)},
         )
 
     def _get_client(self) -> Any:

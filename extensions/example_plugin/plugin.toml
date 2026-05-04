@@ -1,0 +1,19 @@
+# Reference V11 plugin manifest (Wave R1.fin demo).
+# Полное описание формата — docs/adr/ADR-042-plugin-toml-schema.md.
+# Каталог capabilities — docs/adr/ADR-044-capability-vocabulary.md.
+
+name = "example_plugin"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.example_plugin.plugin.ExamplePlugin"
+tenant_aware = false
+description = "Reference V11 plugin (Wave R1.fin demo)"
+
+# ─── Runtime capabilities (sandbox gate) ──────────────────────────
+[[capabilities]]
+name = "mq.publish"
+scope = "example.events.*"
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+actions = ["example.echo"]

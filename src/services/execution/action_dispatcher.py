@@ -98,7 +98,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
                 return result.data
             if result.error and result.error.code == "action_not_found":
                 raise KeyError(command_or_action.action)
-            message = (result.error.message if result.error else "dispatch failed")
+            message = result.error.message if result.error else "dispatch failed"
             raise RuntimeError(message)
 
         # Gateway-режим.

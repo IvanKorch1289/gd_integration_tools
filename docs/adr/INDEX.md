@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR: **45**.
+Всего ADR: **51**.
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
@@ -49,5 +49,11 @@
 | 037 | ADR-037: PostgreSQL → SQLite Snapshot Job для resilience-fallback | — | [ADR-037-pg-sqlite-snapshot.md](ADR-037-pg-sqlite-snapshot.md) |
 | 038 | ADR-038: ActionDispatcher Gateway — единая точка диспетчеризации action | — | [ADR-038-action-dispatcher.md](ADR-038-action-dispatcher.md) |
 | 039 | ADR-039: EmailReplyChannel vs NotificationGateway | — | [ADR-039-email-reply-vs-notification-gateway.md](ADR-039-email-reply-vs-notification-gateway.md) |
+| 040 | ADR-040 — SecretsBackend через svcs (Wave A) | — | [ADR-040-secrets-di.md](ADR-040-secrets-di.md) |
+| 041 | ADR-041: Унификация FS-watcher на `watchfiles` | — | [ADR-041-fs-watcher-unification.md](ADR-041-fs-watcher-unification.md) |
+| 042 | ADR-042: `plugin.toml` — манифест плагина V11 (R1.2) | — | [ADR-042-plugin-toml-schema.md](ADR-042-plugin-toml-schema.md) |
+| 043 | ADR-043: `route.toml` — манифест маршрута V11 (R1.2a) | — | [ADR-043-route-toml-schema.md](ADR-043-route-toml-schema.md) |
+| 044 | ADR-044: Capability vocabulary V11 (R1.1) | — | [ADR-044-capability-vocabulary.md](ADR-044-capability-vocabulary.md) |
+| 045 | ADR-045: Temporal как default workflow-backend (Wave C) | — | [ADR-045-temporal-migration-spec.md](ADR-045-temporal-migration-spec.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

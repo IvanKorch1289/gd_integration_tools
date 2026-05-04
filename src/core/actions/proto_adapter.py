@@ -209,9 +209,7 @@ class PydanticToProtoConverter:
         """Сконвертировать одну аннотацию поля Pydantic в :class:`ProtoField`."""
         if annotation is None:
             self._record_any(f"{name}: None type")
-            return ProtoField(
-                name=name, type_name="google.protobuf.Any", number=number
-            )
+            return ProtoField(name=name, type_name="google.protobuf.Any", number=number)
 
         # Optional[T] / T | None → optional
         if _is_optional(annotation):
@@ -241,18 +239,12 @@ class PydanticToProtoConverter:
         # Union (не Optional) — используем Any
         if origin is Union or origin is types.UnionType:
             self._record_any(f"{name}: complex Union {annotation!r}")
-            return ProtoField(
-                name=name,
-                type_name="google.protobuf.Any",
-                number=number,
-            )
+            return ProtoField(name=name, type_name="google.protobuf.Any", number=number)
 
         # dict[K, V] → google.protobuf.Any (proto3 map тяжёл для адаптера)
         if origin in (dict,):
             self._record_any(f"{name}: dict — fallback to Any")
-            return ProtoField(
-                name=name, type_name="google.protobuf.Any", number=number
-            )
+            return ProtoField(name=name, type_name="google.protobuf.Any", number=number)
 
         # Scalar
         if isinstance(annotation, type) and annotation in _SCALAR_MAP:

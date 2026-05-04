@@ -76,16 +76,12 @@ class DuckDbQueryProcessor(BaseProcessor):
         self._sources = dict(sources or {})
         self._persistent_path = persistent_path
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет SQL и кладёт результат в body как list[dict]."""
         try:
             import duckdb
         except ImportError:
-            raise RuntimeError(
-                "duckdb не установлен — добавьте в зависимости проекта"
-            )
+            raise RuntimeError("duckdb не установлен — добавьте в зависимости проекта")
 
         conn = (
             duckdb.connect(self._persistent_path)

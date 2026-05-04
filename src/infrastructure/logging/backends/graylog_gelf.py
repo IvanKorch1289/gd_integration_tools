@@ -113,7 +113,7 @@ class GraylogGelfLogSink(LogSink):
 
         try:
             payload = self._serialize(record)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             # fallback: всё неизвестное → str
             payload = self._serialize({k: _coerce(v) for k, v in record.items()})
 

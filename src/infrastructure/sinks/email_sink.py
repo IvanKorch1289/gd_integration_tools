@@ -57,9 +57,7 @@ class EmailSink(Sink):
         try:
             import aiosmtplib
         except ImportError:
-            return SinkResult(
-                ok=False, details={"error": "aiosmtplib not installed"}
-            )
+            return SinkResult(ok=False, details={"error": "aiosmtplib not installed"})
 
         msg = self._build_message(payload)
         if msg is None:

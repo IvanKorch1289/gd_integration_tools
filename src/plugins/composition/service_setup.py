@@ -10,9 +10,18 @@ Architecture: composition root должен знать о всех слоях п
 
 from __future__ import annotations
 
-from src.core.svcs_registry import register_factory
+import logging
+import os
 
-__all__ = ("register_all_services", "register_default_action_middlewares")
+from src.core.svcs_registry import has_service, register_factory
+
+__all__ = (
+    "register_all_services",
+    "register_default_action_middlewares",
+    "register_secrets_backend",
+)
+
+_logger = logging.getLogger("composition.service_setup")
 
 
 def register_default_action_middlewares() -> None:
@@ -34,6 +43,44 @@ def register_default_action_middlewares() -> None:
     for cls in (AuditMiddleware, IdempotencyMiddleware, RateLimitMiddleware):
         if cls not in existing_types:
             action_handler_registry.register_middleware(cls())
+
+
+def register_secrets_backend() -> None:
+    """Регистрирует ``SecretsBackend`` в svcs по флагу ``SECRETS_BACKEND``.
+
+    * ``env`` (по умолчанию) — :class:`EnvSecretsBackend` (os.environ).
+    * ``vault`` — заглушка: реальная реализация выполняется в Wave K вместе
+      с ``docker-compose.prod.yml``. До этого момента lookup по ключу
+      ``vault`` падает осмысленным ``NotImplementedError``.
+
+    Идемпотентно: повторный вызов не пересоздаёт фабрику.
+    """
+    from src.core.interfaces.secrets import SecretsBackend
+
+    if has_service(SecretsBackend):
+        return
+
+    backend_kind = os.environ.get("SECRETS_BACKEND", "env").strip().lower()
+
+    def _factory() -> SecretsBackend:
+        match backend_kind:
+            case "env":
+                from src.infrastructure.security.env_secrets import EnvSecretsBackend
+
+                return EnvSecretsBackend()
+            case "vault":
+                raise NotImplementedError(
+                    "VaultSecretsBackend будет реализован в Wave K. "
+                    "До этого момента используйте SECRETS_BACKEND=env."
+                )
+            case _:
+                raise ValueError(
+                    f"Неизвестный SECRETS_BACKEND={backend_kind!r}; "
+                    "поддерживаются: env, vault."
+                )
+
+    register_factory(SecretsBackend, _factory)
+    _logger.info("SecretsBackend registered: kind=%s", backend_kind)
 
 
 def register_all_services() -> None:
@@ -74,6 +121,9 @@ def register_all_services() -> None:
     register_factory("rag", get_rag_service)
     register_factory("agent_memory", get_agent_memory_service)
     register_factory("webhook", get_webhook_scheduler)
+
+    # Wave A: SecretsBackend через svcs (env/vault dispatch).
+    register_secrets_backend()
 
     # W14.1.C: встроенные middleware action-диспетчера.
     register_default_action_middlewares()

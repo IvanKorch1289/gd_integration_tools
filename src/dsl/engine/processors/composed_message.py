@@ -81,9 +81,7 @@ class ComposedMessageProcessor(BaseProcessor):
         self._processors = list(processors)
         self._aggregator = aggregator
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
             parts = await _maybe_await(self._splitter(exchange))
         except Exception as exc:  # noqa: BLE001

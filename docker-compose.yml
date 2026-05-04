@@ -8,6 +8,9 @@ services:
     environment:
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_MODE: ${CLAMAV_MODE:-tcp}
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +64,24 @@ services:
       retries: 5
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "${CLAMAV_PORT:-3310}:3310"
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "false"
+      CLAMD_STARTUP_TIMEOUT: "300"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "echo PING | nc -w 5 127.0.0.1 3310 | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
+  clamav_db:

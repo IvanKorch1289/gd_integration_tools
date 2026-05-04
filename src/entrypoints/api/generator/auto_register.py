@@ -100,9 +100,7 @@ def _collect_existing_route_names(app: FastAPI) -> set[str]:
 
 
 def _build_auto_endpoint(
-    *,
-    action: str,
-    registry: ActionHandlerRegistry,
+    *, action: str, registry: ActionHandlerRegistry
 ) -> Callable[..., Awaitable[Any]]:
     """Построить endpoint-замыкание, делегирующее в ``registry.dispatch``.
 
@@ -120,7 +118,7 @@ def _build_auto_endpoint(
         else:
             try:
                 body = await request.json()
-            except (ValueError, RuntimeError):
+            except ValueError, RuntimeError:
                 # Тело отсутствует или не валидный JSON — допустимо для
                 # action'а без payload_model; падать не нужно.
                 body = None
@@ -147,8 +145,7 @@ def _build_auto_endpoint(
 
 
 def auto_register_unrouted_actions(
-    app: FastAPI,
-    registry: ActionHandlerRegistry | None = None,
+    app: FastAPI, registry: ActionHandlerRegistry | None = None
 ) -> int:
     """Зарегистрировать REST-роуты для action'ов без явного маршрута.
 

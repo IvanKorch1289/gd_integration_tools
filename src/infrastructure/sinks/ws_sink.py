@@ -45,9 +45,7 @@ class WsSink(Sink):
         try:
             import websockets
         except ImportError:
-            return SinkResult(
-                ok=False, details={"error": "websockets not installed"}
-            )
+            return SinkResult(ok=False, details={"error": "websockets not installed"})
 
         text = payload if isinstance(payload, str) else dumps_str(payload)
 
@@ -64,9 +62,7 @@ class WsSink(Sink):
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
-        return SinkResult(
-            ok=True, details={"bytes": len(text), "url": self.url}
-        )
+        return SinkResult(ok=True, details={"bytes": len(text), "url": self.url})
 
     async def health(self) -> bool:
         """Health: успешный handshake + close без отправки данных."""

@@ -62,6 +62,7 @@ class RouterLike:
         """Корректно закрыть router и все sink-ы."""
         raise NotImplementedError
 
+
 _INTERNAL_LOG = logging.getLogger("logging.router")
 
 

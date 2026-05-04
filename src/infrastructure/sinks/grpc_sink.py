@@ -53,22 +53,20 @@ class GrpcSink(Sink):
             from grpc import aio as grpc_aio
             from grpc import ssl_channel_credentials
         except ImportError:
-            return SinkResult(
-                ok=False, details={"error": "grpcio not installed"}
-            )
+            return SinkResult(ok=False, details={"error": "grpcio not installed"})
 
         body = payload if isinstance(payload, bytes) else dumps_bytes(payload)
 
         try:
             if self.secure:
-                channel = grpc_aio.secure_channel(self.target, ssl_channel_credentials())
+                channel = grpc_aio.secure_channel(
+                    self.target, ssl_channel_credentials()
+                )
             else:
                 channel = grpc_aio.insecure_channel(self.target)
             try:
                 response = await channel.unary_unary(self.full_method)(
-                    body,
-                    timeout=self.timeout,
-                    metadata=self.metadata or None,
+                    body, timeout=self.timeout, metadata=self.metadata or None
                 )
             finally:
                 await channel.close()
@@ -94,7 +92,9 @@ class GrpcSink(Sink):
             return False
         try:
             if self.secure:
-                channel = grpc_aio.secure_channel(self.target, ssl_channel_credentials())
+                channel = grpc_aio.secure_channel(
+                    self.target, ssl_channel_credentials()
+                )
             else:
                 channel = grpc_aio.insecure_channel(self.target)
             try:

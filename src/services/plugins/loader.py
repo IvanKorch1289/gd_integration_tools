@@ -134,11 +134,7 @@ class PluginLoader:
         )
 
     async def _load_one(
-        self,
-        *,
-        ep_name: str,
-        loader,
-        manifest: PluginManifest | None = None,
+        self, *, ep_name: str, loader, manifest: PluginManifest | None = None
     ) -> PluginInfo | None:
         """Загрузить один плагин (общий путь для entry_points и in-tree)."""
         if ep_name in self._loaded:
@@ -213,9 +209,7 @@ def _resolve_plugin_class(target: object) -> type[BasePlugin]:
         result = target()
         if isinstance(result, type) and issubclass(result, BasePlugin):
             return result
-    raise TypeError(
-        f"Entry point must resolve to BasePlugin subclass, got {target!r}"
-    )
+    raise TypeError(f"Entry point must resolve to BasePlugin subclass, got {target!r}")
 
 
 def _import_dotted(dotted: str) -> type[BasePlugin]:

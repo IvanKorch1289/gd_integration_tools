@@ -29,11 +29,7 @@ def _run(args: list[str]) -> tuple[int, str, str]:
     """Запускает CLI как subprocess, возвращает (rc, stdout, stderr)."""
     python = shutil.which("python") or sys.executable
     result = subprocess.run(  # noqa: S603 — args полностью контролируются формой
-        [python, *args],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
+        [python, *args], cwd=str(ROOT), capture_output=True, text=True, check=False
     )
     return result.returncode, result.stdout, result.stderr
 
@@ -52,16 +48,19 @@ with tab_service:
     fields_json = st.text_area(
         "fields JSON",
         value='{"name": "str", "email": "str"}',
-        help='Словарь поле:py_type для Create/Update схем',
+        help="Словарь поле:py_type для Create/Update схем",
     )
     if st.button("Сгенерировать"):
         try:
             json.loads(fields_json)
             cmd = [
                 "tools/codegen_service.py",
-                "--name", name,
-                "--domain", domain,
-                "--fields", fields_json,
+                "--name",
+                name,
+                "--domain",
+                domain,
+                "--fields",
+                fields_json,
             ]
             if crud:
                 cmd.append("--crud")
@@ -87,8 +86,10 @@ with tab_swagger:
         tmp_path.write_bytes(uploaded.read())
         cmd = [
             "tools/import_swagger.py",
-            "--url", str(tmp_path),
-            "--connector", connector,
+            "--url",
+            str(tmp_path),
+            "--connector",
+            connector,
         ]
         if write_module:
             cmd.append("--write")

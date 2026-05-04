@@ -78,10 +78,7 @@ class AvroEncodeProcessor(BaseProcessor):
 
         buf = io.BytesIO()
         fastavro.writer(buf, parsed, records)
-        exchange.set_out(
-            body=buf.getvalue(),
-            headers=dict(exchange.in_message.headers),
-        )
+        exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"avro_encode": {"schema": self._schema}}
@@ -119,9 +116,7 @@ class AvroDecodeProcessor(BaseProcessor):
             else fastavro.reader(buf)
         )
         records = list(reader)
-        exchange.set_out(
-            body=records, headers=dict(exchange.in_message.headers)
-        )
+        exchange.set_out(body=records, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         spec: dict[str, Any] = {}
@@ -293,9 +288,7 @@ def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
                     )
                 if sub_value is None:
                     continue
-                sub_lines.append(
-                    f"{_toml_key(sub_key)} = {_toml_value(sub_value)}"
-                )
+                sub_lines.append(f"{_toml_key(sub_key)} = {_toml_value(sub_value)}")
             sections.append("\n".join(sub_lines))
 
     return "\n\n".join(s for s in sections if s)
@@ -453,14 +446,23 @@ def _simple_html_to_markdown(html: str) -> str:
             self._stack: list[str] = []
             self._href: str | None = None
 
-        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        def handle_starttag(
+            self, tag: str, attrs: list[tuple[str, str | None]]
+        ) -> None:
             self._stack.append(tag)
             mapping = {
-                "h1": "\n# ", "h2": "\n## ", "h3": "\n### ",
-                "h4": "\n#### ", "h5": "\n##### ", "h6": "\n###### ",
-                "p": "\n", "br": "\n",
-                "strong": "**", "b": "**",
-                "em": "*", "i": "*",
+                "h1": "\n# ",
+                "h2": "\n## ",
+                "h3": "\n### ",
+                "h4": "\n#### ",
+                "h5": "\n##### ",
+                "h6": "\n###### ",
+                "p": "\n",
+                "br": "\n",
+                "strong": "**",
+                "b": "**",
+                "em": "*",
+                "i": "*",
                 "code": "`",
                 "li": "\n- ",
                 "pre": "\n```\n",
@@ -477,8 +479,10 @@ def _simple_html_to_markdown(html: str) -> str:
             if self._stack and self._stack[-1] == tag:
                 self._stack.pop()
             mapping_close = {
-                "strong": "**", "b": "**",
-                "em": "*", "i": "*",
+                "strong": "**",
+                "b": "**",
+                "em": "*",
+                "i": "*",
                 "code": "`",
                 "pre": "\n```\n",
                 "p": "\n",
@@ -524,9 +528,7 @@ class JsonLinesEncodeProcessor(BaseProcessor):
         for record in records:
             buf.write(json.dumps(record, ensure_ascii=False, default=str))
             buf.write("\n")
-        exchange.set_out(
-            body=buf.getvalue(), headers=dict(exchange.in_message.headers)
-        )
+        exchange.set_out(body=buf.getvalue(), headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         return {"jsonl_encode": {}}

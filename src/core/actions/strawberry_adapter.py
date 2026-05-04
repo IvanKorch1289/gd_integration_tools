@@ -24,11 +24,7 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "StrawberryTypeRegistry",
-    "pydantic_to_strawberry",
-    "global_registry",
-)
+__all__ = ("StrawberryTypeRegistry", "pydantic_to_strawberry", "global_registry")
 
 
 class StrawberryTypeRegistry:
@@ -93,9 +89,7 @@ class StrawberryTypeRegistry:
         self._prewarm_nested(model)
 
         # Динамически создаём пустой класс — Strawberry заполнит поля.
-        attrs: dict[str, Any] = {
-            "__doc__": (model.__doc__ or "").strip() or None,
-        }
+        attrs: dict[str, Any] = {"__doc__": (model.__doc__ or "").strip() or None}
         new_type_name = f"{model.__name__}Type"
         decorator = strawberry_pydantic_type(model=model, all_fields=True)
         new_cls = type(new_type_name, (), attrs)
@@ -143,7 +137,9 @@ class StrawberryTypeRegistry:
         import strawberry
         from strawberry.scalars import JSON
 
-        @strawberry.type(name=f"{model.__name__}Json", description=(model.__doc__ or ""))
+        @strawberry.type(
+            name=f"{model.__name__}Json", description=(model.__doc__ or "")
+        )
         class _JsonStub:
             """JSON-fallback (полная модель не сконвертирована)."""
 
