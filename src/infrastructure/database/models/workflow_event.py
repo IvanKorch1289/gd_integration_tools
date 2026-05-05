@@ -48,6 +48,12 @@ class WorkflowEventType(str, enum.Enum):
         * ``sub_spawned`` — запущен дочерний workflow.
         * ``sub_completed`` — дочерний workflow завершился.
         * ``compensated`` — выполнена Saga-компенсация.
+
+    Backend-bridge (Wave D.1, ADR-045):
+        * ``signal_received`` — внешний сигнал (Temporal-style); payload
+          содержит ``{"signal_name": ..., "data": ...}``. Для PG-runner
+          этот тип используется adapter'ом ``PgRunnerWorkflowBackend``,
+          чтобы эмулировать ``WorkflowBackend.signal_workflow``.
     """
 
     created = "created"
@@ -63,6 +69,7 @@ class WorkflowEventType(str, enum.Enum):
     cancelled = "cancelled"
     compensated = "compensated"
     snapshotted = "snapshotted"
+    signal_received = "signal_received"
 
 
 class WorkflowEvent(BaseModel):
