@@ -8,3 +8,17 @@
 # `core/di/providers.py`. Любое НОВОЕ нарушение, попадающее сюда,
 # должно быть либо немедленно исправлено, либо явно объяснено
 # комментарием рядом с записью.
+#
+# R3.10d (2026-05-05): после back/front split введено правило frontend →
+# узкий фасад backend{core,services,schemas,utilities.codecs}. Ниже —
+# 6 pre-existing нарушений в developer-portal pages (Streamlit), которые
+# тянут DSL engine/registry/tracer/audit_replay напрямую. Будущая задача
+# (track: Wave R3.x DSL portal facade): вынести эти зависимости в
+# service-фасад внутри backend.services.dsl_portal и переписать pages
+# на единый clean-фасад. До тех пор — допустимый baseline.
+src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.engine.pipeline
+src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.yaml_loader
+src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.engine.execution_engine
+src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.engine.tracer
+src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.registry
+src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.entrypoints.middlewares.audit_replay
