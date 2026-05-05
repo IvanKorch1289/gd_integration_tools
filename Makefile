@@ -609,6 +609,8 @@ clean: ## Clean temporary files and caches
 	find . -type f -name "*.pyo" -delete
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name ".ruff_cache" -exec rm -rf {} +
+	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type d -name ".hypothesis" -exec rm -rf {} +
 	rm -rf .coverage .coverage.* htmlcov .benchmarks dist build .eggs .run profiles
 	@$(SUCCESS) "Cleaning complete!"
 
