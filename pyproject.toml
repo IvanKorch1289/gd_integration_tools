@@ -291,6 +291,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
+known-first-party = ["src.backend", "src.frontend"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -336,7 +337,7 @@ exclude_lines = [
 #   2. CDC scaffold (R2.1) — реальная имплементация в R3.4, до тех пор unreachable
 #      branches ожидаемы; путь исключается до закрытия R3.4.
 #   3. gRPC autogen — сгенерированные protobuf-модули.
-paths = ["src"]
+paths = ["src/backend", "src/frontend"]
 min_confidence = 80
 exclude = [
     "src/backend/entrypoints/grpc/protobuf/auto/",

@@ -68,10 +68,10 @@ myst_enable_extensions = [
 
 autoapi_type = "python"
 autoapi_dirs = [
-    str(_root / "src" / "core"),
-    str(_root / "src" / "dsl"),
-    str(_root / "src" / "services"),
-    str(_root / "src" / "schemas"),
+    str(_root / "src" / "backend" / "core"),
+    str(_root / "src" / "backend" / "dsl"),
+    str(_root / "src" / "backend" / "services"),
+    str(_root / "src" / "backend" / "schemas"),
 ]
 autoapi_root = "api"
 autoapi_keep_files = False

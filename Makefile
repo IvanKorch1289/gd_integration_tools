@@ -32,7 +32,7 @@ CONFIG_FILE ?= ./config_profiles/dev.yml
 RUN_DIR ?= ./.run
 LOG_DIR ?= ./logs
 
-UVICORN_APP ?= src.main:app
+UVICORN_APP ?= src.backend.main:app
 UVICORN_HOST ?= 0.0.0.0
 UVICORN_PORT ?= 8000
 
@@ -56,7 +56,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	type-check type-check-strict \
 	vulture-check refurb-check \
 	clean clean-all code-clean \
-	run run-fg stop restart status migrate rabbit-init \
+	run run-fg stop restart status migrate rabbit-init frontend streamlit \
 	profile-memray profile-memray-flamegraph profile-memray-stats profile-mprof profile-pyspy \
 	deps-check deps-check-strict \
 	secrets-check audit api-fuzz \
@@ -305,6 +305,8 @@ rabbit-init: check-env ## Initialize RabbitMQ entities
 
 frontend: check-env ## Start Streamlit dashboard
 	@$(MANAGE_SCRIPT) run-frontend
+
+streamlit: frontend ## Alias: Streamlit dashboard (R3.10c)
 
 scaffold: check-env ## Scaffold new component (usage: make scaffold type=service name=invoices)
 	@$(MANAGE_SCRIPT) scaffold $(type) $(name)
