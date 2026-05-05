@@ -18,7 +18,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.utilities.async_helpers import AsyncChunkIterator
+from src.backend.utilities.async_helpers import AsyncChunkIterator
 
 __all__ = ("ResponseCacheMiddleware",)
 

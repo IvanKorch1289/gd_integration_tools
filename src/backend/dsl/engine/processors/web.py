@@ -2,9 +2,9 @@
 
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "NavigateProcessor",
@@ -30,7 +30,7 @@ class NavigateProcessor(BaseProcessor):
         self._url_property = url_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         url = self._url
@@ -52,7 +52,7 @@ class ClickProcessor(BaseProcessor):
         self._selector = selector
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         result = await svc.click(self._url, self._selector)
@@ -75,7 +75,7 @@ class FillFormProcessor(BaseProcessor):
         self._submit = submit
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         fields = self._fields
@@ -102,7 +102,7 @@ class ExtractProcessor(BaseProcessor):
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         url = self._url
@@ -127,7 +127,7 @@ class ScreenshotProcessor(BaseProcessor):
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         url = self._url
@@ -149,7 +149,7 @@ class RunScenarioProcessor(BaseProcessor):
         self._steps = steps
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.web_automation import get_web_automation_service
+        from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
         steps = self._steps

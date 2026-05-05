@@ -11,10 +11,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 if TYPE_CHECKING:
-    from src.services.io.search import SearchService
+    from src.backend.services.io.search import SearchService
 
 __all__ = ("LogIndexer", "get_log_indexer")
 
@@ -86,7 +86,7 @@ class LogIndexer:
 
 
 def _factory() -> LogIndexer:
-    from src.services.io.search import get_search_service
+    from src.backend.services.io.search import get_search_service
 
     return LogIndexer(get_search_service())
 

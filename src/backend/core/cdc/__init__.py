@@ -5,7 +5,7 @@ Generic ``CDCSource`` Protocol + Pydantic-модели событий.
 ``src/infrastructure/cdc/`` и подключаются через factory.
 """
 
-from src.core.cdc.source import (
+from src.backend.core.cdc.source import (
     CDCCursor,
     CDCEvent,
     CDCOperation,

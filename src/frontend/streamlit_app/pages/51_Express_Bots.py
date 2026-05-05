@@ -22,7 +22,7 @@ st.set_page_config(
 st.header(":speech_balloon: Express Bots")
 
 try:
-    from src.core.config.express import express_settings
+    from src.backend.core.config.express import express_settings
 except Exception as exc:  # noqa: BLE001
     st.error(f"Не удалось загрузить настройки Express: {exc}")
     st.stop()
@@ -89,7 +89,7 @@ with tab_send:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
                 try:
-                    from src.core.di.providers import (
+                    from src.backend.core.di.providers import (
                         get_express_bot_client_factory_provider,
                         get_express_botx_message_class_provider,
                     )

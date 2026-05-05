@@ -20,8 +20,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.scan_file import ScanFileProcessor
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
 
 
 def _make_exchange(
@@ -57,28 +57,28 @@ def _patch_factory(monkeypatch: pytest.MonkeyPatch, backend: Any) -> None:
     поэтому подменяем сам атрибут модуля ``factory`` через
     ``sys.modules``.
     """
-    fake_module = types.ModuleType("src.infrastructure.antivirus.factory")
+    fake_module = types.ModuleType("src.backend.infrastructure.antivirus.factory")
     fake_module.create_antivirus_backend = lambda: backend  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.infrastructure.antivirus.factory", fake_module
+        sys.modules, "src.backend.infrastructure.antivirus.factory", fake_module
     )
 
 
 def _patch_s3(monkeypatch: pytest.MonkeyPatch, s3_client: Any) -> None:
     """Подменяет lazy-импорт ``s3_client`` через ``sys.modules``."""
-    fake_module = types.ModuleType("src.infrastructure.clients.storage.s3_pool")
+    fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.s3_pool")
     fake_module.s3_client = s3_client  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.infrastructure.clients.storage.s3_pool", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module
     )
 
 
 def _patch_metrics_noop(monkeypatch: pytest.MonkeyPatch) -> None:
     """Чтобы ``_record_metric`` не пытался импортировать реальный модуль."""
-    fake_module = types.ModuleType("src.infrastructure.observability.metrics")
+    fake_module = types.ModuleType("src.backend.infrastructure.observability.metrics")
     fake_module.record_antivirus_scan = lambda *, threat: None  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.infrastructure.observability.metrics", fake_module
+        sys.modules, "src.backend.infrastructure.observability.metrics", fake_module
     )
 
 

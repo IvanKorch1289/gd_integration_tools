@@ -13,8 +13,6 @@
 from __future__ import annotations
 
 import importlib
-import sys
-from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -42,7 +40,7 @@ class _CreateResp(BaseModel):
 
 def _make_meta(action: str, *, side_effect: str = "read", input_model=None, output_model=None):
     """Создать ActionMetadata-stub без обращения к реестру."""
-    from src.core.interfaces.action_dispatcher import ActionMetadata
+    from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
     return ActionMetadata(
         action=action,
@@ -89,7 +87,7 @@ class TestVerbToRpcName:
 
 class TestBuildProtoFileForGroup:
     def test_minimal_group_with_models(self):
-        from src.core.actions.proto_adapter import ProtoFile
+        from src.backend.core.actions.proto_adapter import ProtoFile
 
         group = codegen._ServiceGroup(
             service="orders",

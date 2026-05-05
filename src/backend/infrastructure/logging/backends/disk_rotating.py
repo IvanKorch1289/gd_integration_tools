@@ -16,7 +16,7 @@ from typing import Any, Final
 
 import orjson
 
-from src.core.interfaces.log_sink import LogSink
+from src.backend.core.interfaces.log_sink import LogSink
 
 __all__ = ("DiskRotatingLogSink",)
 

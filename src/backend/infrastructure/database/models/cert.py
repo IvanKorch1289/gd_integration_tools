@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, Index, Integer, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.models.base import Base
+from src.backend.infrastructure.database.models.base import Base
 
 __all__ = ("CertRecord", "CertHistory")
 

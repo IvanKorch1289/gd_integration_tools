@@ -5,8 +5,8 @@ from typing import Any
 
 from diskcache import Cache
 
-from src.infrastructure.decorators.caching.envelope import CacheEnvelope
-from src.utilities.codecs.json import json_dumps, json_loads
+from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
+from src.backend.utilities.codecs.json import json_dumps, json_loads
 
 __all__ = ("DiskTTLCache",)
 

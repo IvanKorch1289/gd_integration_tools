@@ -30,12 +30,12 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from src.infrastructure.notifications.priority import (
+from src.backend.infrastructure.notifications.priority import (
     NotificationBacklogError,
     Priority,
     PriorityRouter,
 )
-from src.infrastructure.notifications.templates import (
+from src.backend.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,
 )

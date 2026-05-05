@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.core.interfaces.action_dispatcher import ActionMetadata
+    from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
 # Корень репозитория = parent(parent(__file__)).
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -64,13 +64,13 @@ def _bootstrap_registry() -> None:
     ``action_handler_registry`` будет пуст (CRUD-actions регистрируются
     при импорте v1-роутеров).
     """
-    from src.dsl.commands.setup import register_action_handlers
-    from src.plugins.composition.service_setup import register_all_services
+    from src.backend.dsl.commands.setup import register_action_handlers
+    from src.backend.plugins.composition.service_setup import register_all_services
 
     register_all_services()
     register_action_handlers()
     try:
-        from src.entrypoints.api.v1.routers import get_v1_routers
+        from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
         get_v1_routers()
     except Exception as exc:  # noqa: BLE001
@@ -79,7 +79,7 @@ def _bootstrap_registry() -> None:
 
 def _filter_grpc_actions() -> tuple[ActionMetadata, ...]:
     """Вернуть actions, у которых в ``transports`` есть ``"grpc"``."""
-    from src.dsl.commands.action_registry import action_handler_registry
+    from src.backend.dsl.commands.action_registry import action_handler_registry
 
     return action_handler_registry.list_metadata("grpc")
 
@@ -111,7 +111,7 @@ def _verb_to_rpc_name(action_id: str) -> str:
 
 def _build_proto_file_for_group(group: _ServiceGroup) -> _ProtoBuildResult:
     """Собрать :class:`ProtoFile` для группы actions сервиса."""
-    from src.core.actions.proto_adapter import (
+    from src.backend.core.actions.proto_adapter import (
         ProtoFile,
         ProtoService,
         ProtoServiceRpc,
@@ -191,7 +191,10 @@ def _ensure_message(
     """
     from pydantic import BaseModel
 
-    from src.core.actions.proto_adapter import ProtoMessage, PydanticToProtoConverter
+    from src.backend.core.actions.proto_adapter import (
+        ProtoMessage,
+        PydanticToProtoConverter,
+    )
 
     assert isinstance(converter, PydanticToProtoConverter)
     if isinstance(model, type) and issubclass(model, BaseModel):
@@ -212,7 +215,7 @@ def _ensure_message(
 
 def _write_proto(group: _ServiceGroup, proto: object) -> Path:
     """Записать ``.proto`` файл на диск, вернуть путь."""
-    from src.core.actions.proto_adapter import ProtoFile, render_proto_file
+    from src.backend.core.actions.proto_adapter import ProtoFile, render_proto_file
 
     assert isinstance(proto, ProtoFile)
     _AUTO_PROTO_DIR.mkdir(parents=True, exist_ok=True)
@@ -293,7 +296,7 @@ def run_codegen(
         result = _build_proto_file_for_group(group)
         proto = result.proto
         # Пропускаем сервисы без RPC.
-        from src.core.actions.proto_adapter import ProtoFile
+        from src.backend.core.actions.proto_adapter import ProtoFile
 
         assert isinstance(proto, ProtoFile)
         if not proto.services or not proto.services[0].rpcs:

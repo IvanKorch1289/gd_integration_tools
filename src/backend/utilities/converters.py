@@ -4,7 +4,7 @@ from typing import Any, Type
 
 from pydantic import BaseModel
 
-from src.infrastructure.external_apis.logging_service import app_logger
+from src.backend.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("convert_numpy_types", "convert_pattern", "transfer_model_to_schema")
 

@@ -18,8 +18,8 @@ from typing import Any
 
 import orjson
 
-from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.core.models.connector_spec import (
+from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+from src.backend.core.models.connector_spec import (
     AuthSchemeKind,
     AuthSpec,
     ConnectorSpec,

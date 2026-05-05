@@ -2,11 +2,11 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.errors import NotFoundError
-from src.infrastructure.database.models.base import BaseModel
-from src.infrastructure.database.models.files import File, OrderFile
-from src.infrastructure.database.session_manager import main_session_manager
-from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.backend.core.errors import NotFoundError
+from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.models.files import File, OrderFile
+from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("FileRepository", "get_file_repo")
 

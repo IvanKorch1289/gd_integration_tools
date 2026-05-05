@@ -19,7 +19,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from src.core.enums.invocation import InvokeMode
+from src.backend.core.enums.invocation import InvokeMode
 
 __all__ = (
     "ActionCommandMetaSchema",

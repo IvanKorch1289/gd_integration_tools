@@ -7,14 +7,22 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.orm import configure_mappers
 
-from src.core.config.settings import settings
-from src.infrastructure.database.database import db_initializer  # noqa: F401
-from src.infrastructure.database.migrations.types import load_types
-from src.infrastructure.database.models.base import BaseModel, metadata  # noqa: F401
-from src.infrastructure.database.models.files import File, OrderFile  # noqa: F401
-from src.infrastructure.database.models.orderkinds import OrderKind  # noqa: F401
-from src.infrastructure.database.models.orders import Order  # noqa: F401
-from src.infrastructure.database.models.users import User  # noqa: F401
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
+from src.backend.infrastructure.database.migrations.types import load_types
+from src.backend.infrastructure.database.models.base import (  # noqa: F401
+    BaseModel,
+    metadata,
+)
+from src.backend.infrastructure.database.models.files import (  # noqa: F401
+    File,
+    OrderFile,
+)
+from src.backend.infrastructure.database.models.orderkinds import (
+    OrderKind,  # noqa: F401
+)
+from src.backend.infrastructure.database.models.orders import Order  # noqa: F401
+from src.backend.infrastructure.database.models.users import User  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -102,7 +110,9 @@ async def run_async_migrations() -> None:
 
     # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
     try:
-        from src.infrastructure.clients.storage.redis_lock import distributed_lock
+        from src.backend.infrastructure.clients.storage.redis_lock import (
+            distributed_lock,
+        )
 
         lock_ctx = distributed_lock(
             "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0

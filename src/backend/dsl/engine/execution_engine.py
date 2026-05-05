@@ -1,19 +1,19 @@
 import time
 from typing import Any
 
-from src.core.errors import RouteDisabledError
-from src.core.state.runtime import disabled_feature_flags
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.middleware import (
+from src.backend.core.errors import RouteDisabledError
+from src.backend.core.state.runtime import disabled_feature_flags
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.middleware import (
     ErrorNormalizerMiddleware,
     MetricsMiddleware,
     MiddlewareChain,
     TimeoutMiddleware,
 )
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.validation import pipeline_validator
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)
 
@@ -99,7 +99,9 @@ class ExecutionEngine:
                 exchange.status = ExchangeStatus.completed
 
         try:
-            from src.infrastructure.application.slo_tracker import get_slo_tracker
+            from src.backend.infrastructure.application.slo_tracker import (
+                get_slo_tracker,
+            )
 
             get_slo_tracker().record(
                 route_id=pipeline.route_id,
@@ -138,7 +140,7 @@ class ExecutionEngine:
         current_exchange.meta.source = pipeline.source
         current_exchange.status = ExchangeStatus.processing
 
-        from src.dsl.engine.tracer import get_tracer
+        from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         trace_log: list[dict[str, Any]] = []

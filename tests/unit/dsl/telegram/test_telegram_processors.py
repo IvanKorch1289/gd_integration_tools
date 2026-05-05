@@ -24,9 +24,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.telegram import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.telegram import (
     TelegramEditProcessor,
     TelegramMentionProcessor,
     TelegramReplyProcessor,
@@ -88,7 +88,7 @@ def _install_client(
 ) -> None:
     """Подменяет ``get_telegram_client`` в модуле процессора."""
     monkeypatch.setattr(
-        f"src.dsl.engine.processors.telegram.{module}.get_telegram_client",
+        f"src.backend.dsl.engine.processors.telegram.{module}.get_telegram_client",
         lambda bot_name="main_bot": client,
         raising=True,
     )

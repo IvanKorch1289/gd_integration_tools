@@ -6,8 +6,8 @@ Scaffold-уровень: публичные классы и интерфейсы
 FastAPI и `docs/openapi/` артефактах.
 """
 
-from src.infrastructure.api_management.api_key_auth import APIKeyAuth
-from src.infrastructure.api_management.quotas import QuotaTracker
-from src.infrastructure.api_management.versioning import APIVersion
+from src.backend.infrastructure.api_management.api_key_auth import APIKeyAuth
+from src.backend.infrastructure.api_management.quotas import QuotaTracker
+from src.backend.infrastructure.api_management.versioning import APIVersion
 
 __all__ = ("APIKeyAuth", "QuotaTracker", "APIVersion")

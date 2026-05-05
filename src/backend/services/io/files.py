@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
-from src.core.di.providers import get_file_repo_provider
-from src.core.interfaces.repositories import FileRepositoryProtocol
-from src.schemas.route_schemas.files import (
+from src.backend.core.di.providers import get_file_repo_provider
+from src.backend.core.interfaces.repositories import FileRepositoryProtocol
+from src.backend.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from src.services.core.base import BaseService
+from src.backend.services.core.base import BaseService
 
 __all__ = ("get_file_service",)
 

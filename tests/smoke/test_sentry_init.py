@@ -9,12 +9,11 @@
 
 from __future__ import annotations
 
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.infrastructure.observability.sentry_init import init_sentry
+from src.backend.infrastructure.observability.sentry_init import init_sentry
 
 
 @pytest.fixture(autouse=True)
@@ -76,7 +75,7 @@ def test_lifespan_swallows_sentry_init_failure() -> None:
     Минимальный smoke: симулируем raise внутри init_sentry и убеждаемся,
     что lifespan-блок ловит исключение через try/except и продолжает.
     """
-    from src.plugins.composition import lifecycle as lifecycle_module
+    from src.backend.plugins.composition import lifecycle as lifecycle_module
 
     # Просто проверяем, что lifespan-функция доступна и содержит
     # защитный try-блок вокруг init_sentry. Это контрактный smoke,
@@ -92,9 +91,9 @@ def test_secrets_backend_factory_dispatches_env(monkeypatch: pytest.MonkeyPatch)
     """Wave A.3: SECRETS_BACKEND=env даёт EnvSecretsBackend через svcs."""
     monkeypatch.setenv("SECRETS_BACKEND", "env")
 
-    from src.core.interfaces.secrets import SecretsBackend
-    from src.core.svcs_registry import clear_registry, get_service
-    from src.plugins.composition.service_setup import register_secrets_backend
+    from src.backend.core.interfaces.secrets import SecretsBackend
+    from src.backend.core.svcs_registry import clear_registry, get_service
+    from src.backend.plugins.composition.service_setup import register_secrets_backend
 
     clear_registry()
     register_secrets_backend()
@@ -109,9 +108,9 @@ def test_secrets_backend_vault_raises_until_wave_k(
     """SECRETS_BACKEND=vault до Wave K — осмысленный NotImplementedError."""
     monkeypatch.setenv("SECRETS_BACKEND", "vault")
 
-    from src.core.interfaces.secrets import SecretsBackend
-    from src.core.svcs_registry import clear_registry, get_service
-    from src.plugins.composition.service_setup import register_secrets_backend
+    from src.backend.core.interfaces.secrets import SecretsBackend
+    from src.backend.core.svcs_registry import clear_registry, get_service
+    from src.backend.plugins.composition.service_setup import register_secrets_backend
 
     clear_registry()
     register_secrets_backend()

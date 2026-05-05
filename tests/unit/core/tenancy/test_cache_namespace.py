@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.interfaces.cache import CacheBackend
-from src.core.tenancy import TenantContext, tenant_scope
-from src.core.tenancy.cache import (
+from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.core.tenancy import TenantContext, tenant_scope
+from src.backend.core.tenancy.cache import (
     DEFAULT_TENANT_PREFIX,
     TenantNamespacedCache,
     build_tenant_key,

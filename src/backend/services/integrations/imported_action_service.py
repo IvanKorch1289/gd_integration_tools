@@ -18,8 +18,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.core.models.connector_spec import EndpointSpec
+from src.backend.core.di import app_state_singleton
+from src.backend.core.models.connector_spec import EndpointSpec
 
 __all__ = ("EndpointMeta", "ImportedActionService", "get_imported_action_service")
 

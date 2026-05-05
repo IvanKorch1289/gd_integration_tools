@@ -17,8 +17,8 @@ from typing import Any
 
 from sqlalchemy import desc, select
 
-from src.infrastructure.database.models.dsl_snapshot import DslSnapshot
-from src.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
+from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = ("PipelineVersionManager", "PipelineSnapshot", "get_pipeline_version_manager")
 
@@ -75,7 +75,7 @@ class PipelineVersionManager:
 
     async def snapshot(self, pipeline: Any) -> PipelineSnapshot:
         """Создаёт снэпшот маршрута и сохраняет в PostgreSQL."""
-        from src.dsl.versioning import CURRENT_VERSION
+        from src.backend.dsl.versioning import CURRENT_VERSION
 
         route_id = pipeline.route_id
         version = await self._next_version(route_id)
@@ -150,7 +150,7 @@ class PipelineVersionManager:
         мигрируется к актуальной (``CURRENT_VERSION``) перед diff'ом,
         чтобы сравнение было корректным.
         """
-        from src.dsl.versioning import CURRENT_VERSION, apply_migrations
+        from src.backend.dsl.versioning import CURRENT_VERSION, apply_migrations
 
         try:
             async with main_session_manager.create_session() as session:
@@ -202,7 +202,7 @@ class PipelineVersionManager:
         return spec
 
 
-from src.core.di import app_state_singleton  # noqa: E402
+from src.backend.core.di import app_state_singleton  # noqa: E402
 
 
 @app_state_singleton("pipeline_version_manager", PipelineVersionManager)

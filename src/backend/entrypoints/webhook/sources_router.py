@@ -21,8 +21,8 @@ from typing import Any
 import orjson
 from fastapi import APIRouter, HTTPException, Request
 
-from src.core.interfaces.source import SourceKind
-from src.services.sources import get_source_registry
+from src.backend.core.interfaces.source import SourceKind
+from src.backend.services.sources import get_source_registry
 
 __all__ = ("sources_router",)
 

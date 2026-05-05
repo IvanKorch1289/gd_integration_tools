@@ -13,7 +13,7 @@ sys.path.insert(0, str(_TOOLS))
 
 import migrate_dsl_routes_to_v11 as mod  # noqa: E402
 
-from src.services.routes.manifest_v11 import load_route_manifest  # noqa: E402
+from src.backend.services.routes.manifest_v11 import load_route_manifest  # noqa: E402
 
 
 def test_migrate_one_creates_dir_and_manifest(tmp_path: Path) -> None:

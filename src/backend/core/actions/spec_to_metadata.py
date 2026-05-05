@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.interfaces.action_dispatcher import ActionMetadata
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
 __all__ = ("action_spec_to_metadata",)
 

@@ -43,17 +43,23 @@ async def _publish(
 
     match protocol:
         case "kafka":
-            from src.infrastructure.clients.messaging.stream import get_stream_client
+            from src.backend.infrastructure.clients.messaging.stream import (
+                get_stream_client,
+            )
 
             await get_stream_client().publish_to_kafka(
                 topic=dest, message=payload, headers=headers
             )
         case "rabbit":
-            from src.infrastructure.clients.messaging.stream import get_stream_client
+            from src.backend.infrastructure.clients.messaging.stream import (
+                get_stream_client,
+            )
 
             await get_stream_client().publish_to_rabbit(queue=dest, message=payload)
         case "redis":
-            from src.infrastructure.clients.messaging.stream import get_stream_client
+            from src.backend.infrastructure.clients.messaging.stream import (
+                get_stream_client,
+            )
 
             await get_stream_client().publish_to_redis(
                 stream=dest, message=payload, headers=headers
@@ -68,7 +74,7 @@ async def run_once(*, batch_size: int = 100) -> dict[str, int]:
     Вынесена в отдельную функцию для удобства юнит-тестов и ручного запуска
     через admin-эндпоинт.
     """
-    from src.infrastructure.repositories import outbox as outbox_repo
+    from src.backend.infrastructure.repositories import outbox as outbox_repo
 
     pending = await outbox_repo.fetch_pending(limit=batch_size)
     stats = {"fetched": len(pending), "sent": 0, "failed": 0}

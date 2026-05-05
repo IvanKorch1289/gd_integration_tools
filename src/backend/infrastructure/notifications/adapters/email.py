@@ -33,7 +33,9 @@ class EmailAdapter:
         """
         # Поздний импорт — SMTPClient может иметь тяжёлые зависимости.
         try:
-            from src.infrastructure.clients.transport.smtp import get_smtp_client
+            from src.backend.infrastructure.clients.transport.smtp import (
+                get_smtp_client,
+            )
         except ImportError as exc:
             raise RuntimeError(f"SMTP client unavailable: {exc}") from exc
 
@@ -48,7 +50,9 @@ class EmailAdapter:
 
     async def health(self) -> bool:
         try:
-            from src.infrastructure.clients.transport.smtp import get_smtp_client
+            from src.backend.infrastructure.clients.transport.smtp import (
+                get_smtp_client,
+            )
 
             smtp = get_smtp_client()
             # SMTPClient обычно имеет свой check — используем его или просто

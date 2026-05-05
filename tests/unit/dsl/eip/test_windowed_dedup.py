@@ -22,9 +22,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.eip.windowed_dedup import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.eip.windowed_dedup import (
     WindowedCollectProcessor,
     WindowedDedupProcessor,
 )
@@ -129,10 +129,10 @@ class _FakeRedisProxy:
 def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedisClient:
     """Подменяет ``src.infrastructure.clients.storage.redis.redis_client``."""
     fake = _FakeRedisClient()
-    fake_module = types.ModuleType("src.infrastructure.clients.storage.redis")
+    fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
     setattr(fake_module, "redis_client", fake)
     monkeypatch.setitem(
-        sys.modules, "src.infrastructure.clients.storage.redis", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
     )
     return fake
 
@@ -226,10 +226,10 @@ async def test_empty_key_passes_without_redis(fake_redis: _FakeRedisClient) -> N
 async def test_redis_failure_passes_message(monkeypatch: pytest.MonkeyPatch) -> None:
     """Если Redis-вызов бросает исключение — сообщение проходит (graceful)."""
     failing = AsyncMock(side_effect=RuntimeError("redis down"))
-    fake_module = types.ModuleType("src.infrastructure.clients.storage.redis")
+    fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
     setattr(fake_module, "redis_client", types.SimpleNamespace(execute=failing))
     monkeypatch.setitem(
-        sys.modules, "src.infrastructure.clients.storage.redis", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
     )
 
     proc = WindowedDedupProcessor(key_from="id", mode="first")

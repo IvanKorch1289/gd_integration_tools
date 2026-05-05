@@ -21,12 +21,12 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
-from src.core.types.side_effect import SideEffectKind
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
-    from src.dsl.engine.context import ExecutionContext
-    from src.dsl.engine.exchange import Exchange
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = (
     "PolarsAggregateProcessor",

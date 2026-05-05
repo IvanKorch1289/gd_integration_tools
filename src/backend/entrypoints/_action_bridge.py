@@ -133,8 +133,8 @@ async def _try_dispatcher(
     идёт по DSL-fallback. Возвращает :class:`BridgeResult` (success или
     error envelope), если dispatcher отработал.
     """
-    from src.core.di.contexts import make_dispatch_context
-    from src.core.di.providers import get_action_dispatcher_provider
+    from src.backend.core.di.contexts import make_dispatch_context
+    from src.backend.core.di.providers import get_action_dispatcher_provider
 
     dispatcher = get_action_dispatcher_provider()
     if not dispatcher.is_registered(action_id):
@@ -170,7 +170,7 @@ async def _dispatch_dsl(
     «маршрут не найден» (``via="missing"``), любая другая — как сбой
     выполнения (``via="dsl"``, ``success=False``).
     """
-    from src.dsl.service import get_dsl_service
+    from src.backend.dsl.service import get_dsl_service
 
     dsl = get_dsl_service()
     try:

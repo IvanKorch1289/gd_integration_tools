@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.storage.sqlite_doc_store import SqliteDocStore
+from src.backend.infrastructure.storage.sqlite_doc_store import SqliteDocStore
 
 
 @pytest.mark.asyncio

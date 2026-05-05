@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.state.runtime import disabled_feature_flags
-from src.dsl.commands.action_registry import (
+from src.backend.core.state.runtime import disabled_feature_flags
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     ActionHandlerSpec,
     action_handler_registry,
 )
 
 if TYPE_CHECKING:
-    from src.dsl.engine.pipeline import Pipeline
+    from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = (
     "RouteRegistry",

@@ -16,7 +16,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.core.actions.strawberry_adapter import (
+from src.backend.core.actions.strawberry_adapter import (
     StrawberryTypeRegistry,
     pydantic_to_strawberry,
 )

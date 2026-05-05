@@ -8,14 +8,14 @@ from typing import Any
 
 import pytest
 
-from src.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (
     ActionError,
     ActionResult,
     DispatchContext,
 )
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.invoke_async import InvokeAsyncProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.invoke_async import InvokeAsyncProcessor
 
 
 class _RecordingDispatcher:

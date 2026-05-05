@@ -1,6 +1,6 @@
 """Apache Camel EIP processors — re-export from submodules."""
 
-from src.dsl.engine.processors.eip.flow_control import (
+from src.backend.dsl.engine.processors.eip.flow_control import (
     AggregatorProcessor,
     DelayProcessor,
     LoopProcessor,
@@ -8,14 +8,16 @@ from src.dsl.engine.processors.eip.flow_control import (
     ThrottlerProcessor,
     WireTapProcessor,
 )
-from src.dsl.engine.processors.eip.idempotency import IdempotentConsumerProcessor
-from src.dsl.engine.processors.eip.resilience import (
+from src.backend.dsl.engine.processors.eip.idempotency import (
+    IdempotentConsumerProcessor,
+)
+from src.backend.dsl.engine.processors.eip.resilience import (
     CircuitBreakerProcessor,
     DeadLetterProcessor,
     FallbackChainProcessor,
     TimeoutProcessor,
 )
-from src.dsl.engine.processors.eip.routing import (
+from src.backend.dsl.engine.processors.eip.routing import (
     DynamicRouterProcessor,
     LoadBalancerProcessor,
     MulticastProcessor,
@@ -23,15 +25,15 @@ from src.dsl.engine.processors.eip.routing import (
     RecipientListProcessor,
     ScatterGatherProcessor,
 )
-from src.dsl.engine.processors.eip.sequencing import ResequencerProcessor
-from src.dsl.engine.processors.eip.transformation import (
+from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor
+from src.backend.dsl.engine.processors.eip.transformation import (
     ClaimCheckProcessor,
     MessageTranslatorProcessor,
     NormalizerProcessor,
     SortProcessor,
     SplitterProcessor,
 )
-from src.dsl.engine.processors.eip.windowed_dedup import (
+from src.backend.dsl.engine.processors.eip.windowed_dedup import (
     WindowedCollectProcessor,
     WindowedDedupProcessor,
 )

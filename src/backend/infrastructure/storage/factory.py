@@ -19,7 +19,7 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
-from src.core.interfaces.storage import ObjectStorage
+from src.backend.core.interfaces.storage import ObjectStorage
 
 __all__ = ("get_object_storage", "get_local_fs_storage")
 
@@ -33,11 +33,11 @@ def get_local_fs_storage() -> ObjectStorage:
     Путь берётся из ``settings.storage.local_storage_path`` если задан;
     иначе — ``var/storage``.
     """
-    from src.infrastructure.storage.local_fs import LocalFSStorage
+    from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 
     base_path: Path
     try:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         configured = getattr(settings.storage, "local_storage_path", None)
         base_path = Path(configured) if configured else Path("var/storage")
@@ -56,7 +56,7 @@ def get_object_storage() -> ObjectStorage:
       ``provider != "local"`` возвращаем LocalFS с предупреждением.
     """
     try:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         provider = (getattr(settings.storage, "provider", "local") or "local").lower()
     except Exception:  # noqa: BLE001

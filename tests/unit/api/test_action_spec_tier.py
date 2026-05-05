@@ -12,7 +12,10 @@
 
 from __future__ import annotations
 
-from src.entrypoints.api.generator.specs import ActionSpec, _infer_tier1_action_id
+from src.backend.entrypoints.api.generator.specs import (
+    ActionSpec,
+    _infer_tier1_action_id,
+)
 
 
 def _stub_service():

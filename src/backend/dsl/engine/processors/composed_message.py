@@ -26,10 +26,10 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable, ClassVar
 
-from src.core.types.side_effect import SideEffectKind
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ComposedMessageProcessor",)
 

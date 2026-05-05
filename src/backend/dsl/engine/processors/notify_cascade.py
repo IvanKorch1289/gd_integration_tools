@@ -36,10 +36,13 @@ import logging
 from collections.abc import Sequence
 from typing import Any
 
-from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.interfaces.notification import (
+    NotificationAdapter,
+    NotificationMessage,
+)
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("NotifyCascadeProcessor",)
 

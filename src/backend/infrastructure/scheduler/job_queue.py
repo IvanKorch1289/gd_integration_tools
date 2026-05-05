@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable
 from uuid import uuid4
 
-from src.core.config.settings import settings
+from src.backend.core.config.settings import settings
 
 __all__ = ("JobQueue", "get_job_queue")
 
@@ -34,7 +34,9 @@ class JobQueue:
     def _ensure_scheduler(self) -> Any:
         """Получает scheduler из менеджера."""
         if self._scheduler is None:
-            from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+            from src.backend.infrastructure.scheduler.scheduler_manager import (
+                scheduler_manager,
+            )
 
             self._scheduler = scheduler_manager.scheduler
         return self._scheduler

@@ -18,8 +18,11 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from src.core.di import app_state_singleton
-from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
+from src.backend.core.di import app_state_singleton
+from src.backend.infrastructure.clients.storage.mongodb import (
+    MongoDBClient,
+    get_mongo_client,
+)
 
 __all__ = ("WorkflowStateProjector", "get_workflow_state_projector")
 

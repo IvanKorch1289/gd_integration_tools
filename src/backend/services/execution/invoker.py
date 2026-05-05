@@ -27,23 +27,26 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any, AsyncIterator
 
-from src.core.di import app_state_singleton
-from src.core.di.dependencies import get_reply_registry_singleton
-from src.core.interfaces.action_dispatcher import ActionDispatcher, DispatchContext
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.di import app_state_singleton
+from src.backend.core.di.dependencies import get_reply_registry_singleton
+from src.backend.core.interfaces.action_dispatcher import (
+    ActionDispatcher,
+    DispatchContext,
+)
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
     ReplyChannelRegistryProtocol,
 )
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,
 )
-from src.core.interfaces.invoker import Invoker as InvokerProtocol
-from src.core.types.invocation_command import ActionCommandSchema
-from src.services.execution.action_dispatcher import get_action_dispatcher
+from src.backend.core.interfaces.invoker import Invoker as InvokerProtocol
+from src.backend.core.types.invocation_command import ActionCommandSchema
+from src.backend.services.execution.action_dispatcher import get_action_dispatcher
 
 __all__ = ("Invoker", "InvocationMode", "get_invoker")
 
@@ -261,7 +264,7 @@ class Invoker(InvokerProtocol):
         try:
             from apscheduler.triggers.date import DateTrigger
 
-            from src.core.di.providers import get_scheduler_manager_provider
+            from src.backend.core.di.providers import get_scheduler_manager_provider
 
             scheduler_manager = get_scheduler_manager_provider()
         except Exception as exc:  # noqa: BLE001
@@ -362,7 +365,9 @@ class Invoker(InvokerProtocol):
         указанный ``reply_channel`` (по умолчанию ``api``).
         """
         try:
-            from src.core.di.providers import get_taskiq_invocation_task_provider
+            from src.backend.core.di.providers import (
+                get_taskiq_invocation_task_provider,
+            )
 
             get_invocation_task = get_taskiq_invocation_task_provider()
         except Exception as exc:  # noqa: BLE001

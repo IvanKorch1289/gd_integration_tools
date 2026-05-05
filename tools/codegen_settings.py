@@ -91,12 +91,12 @@ def _is_valid_type(type_: str) -> bool:
 
 # Реестр шаблонов: имя base-класса → модуль импорта.
 TEMPLATES: dict[str, str] = {
-    "BaseSettingsWithLoader": "src.core.config.config_loader",
-    "BaseConnectorSettings": "src.core.config.integration_base",
-    "BaseBotChannelSettings": "src.core.config.integration_base",
-    "BaseQueueSettings": "src.core.config.integration_base",
-    "BaseWebhookChannelSettings": "src.core.config.integration_base",
-    "BaseIntegrationSettings": "src.core.config.integration_base",
+    "BaseSettingsWithLoader": "src.backend.core.config.config_loader",
+    "BaseConnectorSettings": "src.backend.core.config.integration_base",
+    "BaseBotChannelSettings": "src.backend.core.config.integration_base",
+    "BaseQueueSettings": "src.backend.core.config.integration_base",
+    "BaseWebhookChannelSettings": "src.backend.core.config.integration_base",
+    "BaseIntegrationSettings": "src.backend.core.config.integration_base",
 }
 DEFAULT_BASE = "BaseSettingsWithLoader"
 
@@ -438,7 +438,7 @@ def _patch_services_init(name: str) -> None:
     text = SERVICES_INIT.read_text(encoding="utf-8")
     module = cst.parse_module(text)
     module, _ = _add_to_import_from(
-        module, f"src.core.config.services.{name}", [cls, singleton]
+        module, f"src.backend.core.config.services.{name}", [cls, singleton]
     )
     module, _ = _extend_all_tuple(module, [cls, singleton])
     SERVICES_INIT.write_text(module.code, encoding="utf-8")
@@ -451,7 +451,7 @@ def _patch_settings_root(name: str) -> None:
     text = SETTINGS_FILE.read_text(encoding="utf-8")
     module = cst.parse_module(text)
     module, _ = _add_to_import_from(
-        module, "src.core.config.services", [cls, singleton]
+        module, "src.backend.core.config.services", [cls, singleton]
     )
     module, _ = _add_class_attribute(module, "Settings", name, cls, singleton)
     SETTINGS_FILE.write_text(module.code, encoding="utf-8")

@@ -24,13 +24,13 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from src.services.sources.adapter import SourceToInvokerAdapter
+from src.backend.services.sources.adapter import SourceToInvokerAdapter
 
 if TYPE_CHECKING:
-    from src.core.config.source_spec import SourceSpec
-    from src.core.interfaces.invoker import Invoker
-    from src.services.sources.idempotency import DedupeStore
-    from src.services.sources.registry import SourceRegistry
+    from src.backend.core.config.source_spec import SourceSpec
+    from src.backend.core.interfaces.invoker import Invoker
+    from src.backend.services.sources.idempotency import DedupeStore
+    from src.backend.services.sources.registry import SourceRegistry
 
 __all__ = ("start_all_sources", "stop_all_sources")
 

@@ -21,15 +21,15 @@ import importlib
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.core.types.side_effect import SideEffectKind
-from src.dsl.engine.processors.base import BaseProcessor
-from src.infrastructure.execution.dask_backend import get_dask_backend
+from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.infrastructure.execution.dask_backend import get_dask_backend
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from src.dsl.engine.context import ExecutionContext
-    from src.dsl.engine.exchange import Exchange
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("DaskComputeProcessor",)
 

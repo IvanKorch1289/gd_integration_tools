@@ -19,7 +19,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
-from src.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 
 __all__ = ("sse_router", "event_bus")
 

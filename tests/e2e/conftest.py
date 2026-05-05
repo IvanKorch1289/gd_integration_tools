@@ -9,8 +9,8 @@ Conftest для E2E тестов.
 
 from __future__ import annotations
 
-import pytest
 import httpx
+import pytest
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ async def client():
         Настроенный AsyncClient без запуска реального сервера.
     """
     try:
-        from src.plugins.composition.app_factory import create_app
+        from src.backend.plugins.composition.app_factory import create_app
 
         app = create_app()
         async with httpx.AsyncClient(

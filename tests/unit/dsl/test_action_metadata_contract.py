@@ -28,10 +28,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.actions.spec_to_metadata import action_spec_to_metadata
-from src.core.interfaces.action_dispatcher import ActionMetadata
-from src.dsl.commands.action_registry import action_handler_registry
-from src.entrypoints.api.generator.specs import ActionSpec
+from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.entrypoints.api.generator.specs import ActionSpec
 
 _ALLOWED_SIDE_EFFECTS = frozenset({"none", "read", "write", "external"})
 
@@ -45,7 +45,7 @@ def registered_metadata() -> tuple[ActionMetadata, ...]:
     ``ActionMetadata`` в ``action_handler_registry``. Тест работает с
     реальным content реестра — это и есть «контракт по факту».
     """
-    from src.entrypoints.api.v1.routers import get_v1_routers
+    from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
     get_v1_routers()
     return action_handler_registry.list_metadata()

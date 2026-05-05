@@ -5,6 +5,6 @@ Wave 0.11: ``PromptRegistry`` живёт в ``src.services.ai.prompt_registry``
 дублирования.
 """
 
-from src.infrastructure.ai.semantic_cache import SemanticCache
+from src.backend.infrastructure.ai.semantic_cache import SemanticCache
 
 __all__ = ("SemanticCache",)

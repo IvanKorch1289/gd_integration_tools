@@ -17,8 +17,11 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.schemas.agent_memory import (
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.schemas.agent_memory import (
     FactCreate,
     FactKeyPath,
     FactRead,
@@ -30,7 +33,7 @@ from src.schemas.agent_memory import (
     SessionListQuery,
     SessionPath,
 )
-from src.services.ai.agent_memory import get_agent_memory_service
+from src.backend.services.ai.agent_memory import get_agent_memory_service
 
 __all__ = ("router",)
 

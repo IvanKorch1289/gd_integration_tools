@@ -30,10 +30,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.entity import _resolve
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.entity import _resolve
 
 __all__ = ("ScanFileProcessor",)
 
@@ -83,7 +83,9 @@ class ScanFileProcessor(BaseProcessor):
             return
 
         try:
-            from src.infrastructure.antivirus.factory import create_antivirus_backend
+            from src.backend.infrastructure.antivirus.factory import (
+                create_antivirus_backend,
+            )
 
             backend = create_antivirus_backend()
             result = await backend.scan_bytes(payload)
@@ -123,7 +125,9 @@ class ScanFileProcessor(BaseProcessor):
             key = _resolve(exchange, self._s3_key_from)
             if key:
                 try:
-                    from src.infrastructure.clients.storage.s3_pool import s3_client
+                    from src.backend.infrastructure.clients.storage.s3_pool import (
+                        s3_client,
+                    )
 
                     data = await s3_client.get_object_bytes(str(key))
                     if data is not None:
@@ -148,7 +152,9 @@ class ScanFileProcessor(BaseProcessor):
         """Best-effort метрика; ``infrastructure.observability.metrics``
         может быть недоступен в тестах."""
         try:
-            from src.infrastructure.observability.metrics import record_antivirus_scan
+            from src.backend.infrastructure.observability.metrics import (
+                record_antivirus_scan,
+            )
 
             record_antivirus_scan(threat=threat)
         except Exception:  # noqa: BLE001, S110

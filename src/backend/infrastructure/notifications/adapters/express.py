@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("ExpressAdapter",)
 
@@ -47,8 +47,8 @@ class ExpressAdapter:
         Raises:
             RuntimeError: Если Express отключён или BotX недоступен.
         """
-        from src.dsl.engine.processors.express._common import get_express_client
-        from src.infrastructure.clients.external.express_bot import (
+        from src.backend.dsl.engine.processors.express._common import get_express_client
+        from src.backend.infrastructure.clients.external.express_bot import (
             BotxButton,
             BotxMention,
             BotxMessage,
@@ -88,7 +88,7 @@ class ExpressAdapter:
     async def health(self) -> bool:
         """Проверка доступности Express интеграции."""
         try:
-            from src.core.config.express import express_settings
+            from src.backend.core.config.express import express_settings
 
             return bool(express_settings.enabled and express_settings.bot_id)
         except Exception:  # noqa: BLE001

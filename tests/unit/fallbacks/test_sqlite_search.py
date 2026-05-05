@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.clients.storage.sqlite_search import SqliteFTS5Search
+from src.backend.infrastructure.clients.storage.sqlite_search import SqliteFTS5Search
 
 
 @pytest.mark.asyncio

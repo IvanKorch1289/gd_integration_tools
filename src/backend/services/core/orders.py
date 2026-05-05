@@ -4,24 +4,24 @@ import pydash
 from fastapi import status
 from pydantic import BaseModel
 
-from src.core.config.settings import settings
-from src.core.decorators.caching import response_cache
-from src.core.di.module_registry import resolve_module
-from src.core.enums.skb import ResponseTypeChoices
-from src.core.errors import NotFoundError
-from src.core.interfaces.order_storage import OrderStorageProtocol
-from src.core.interfaces.repositories import (
+from src.backend.core.config.settings import settings
+from src.backend.core.decorators.caching import response_cache
+from src.backend.core.di.module_registry import resolve_module
+from src.backend.core.enums.skb import ResponseTypeChoices
+from src.backend.core.errors import NotFoundError
+from src.backend.core.interfaces.order_storage import OrderStorageProtocol
+from src.backend.core.interfaces.repositories import (
     FileRepositoryProtocol,
     OrderRepositoryProtocol,
 )
-from src.schemas.base import BaseSchema
-from src.schemas.route_schemas.orders import (
+from src.backend.schemas.base import BaseSchema
+from src.backend.schemas.route_schemas.orders import (
     OrderSchemaIn,
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from src.services.core.base import BaseService
-from src.services.integrations.skb import APISKBService, get_skb_service
+from src.backend.services.core.base import BaseService
+from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("OrderService", "get_order_service")
 
@@ -88,7 +88,7 @@ class OrderService(
         if instance is None:
             return
         try:
-            from src.services.io.indexers import get_order_indexer
+            from src.backend.services.io.indexers import get_order_indexer
 
             get_order_indexer().index_one_fire_and_forget(instance)
         except Exception:  # noqa: BLE001
@@ -99,7 +99,7 @@ class OrderService(
         try:
             import asyncio
 
-            from src.services.io.indexers import get_order_indexer
+            from src.backend.services.io.indexers import get_order_indexer
 
             asyncio.create_task(get_order_indexer().delete_one(value))
         except Exception:  # noqa: BLE001

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.schemas.base import BaseSchema
+from src.backend.schemas.base import BaseSchema
 
 __all__ = ("OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut")
 

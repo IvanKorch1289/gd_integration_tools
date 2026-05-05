@@ -18,7 +18,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from src.core.actions.proto_adapter import (
+from src.backend.core.actions.proto_adapter import (
     ProtoFile,
     PydanticToProtoConverter,
     render_proto_file,
@@ -129,7 +129,7 @@ class TestUnionFallback:
 
 class TestRenderProtoFile:
     def test_render_minimal(self):
-        from src.core.actions.proto_adapter import (
+        from src.backend.core.actions.proto_adapter import (
             ProtoMessage,
             ProtoService,
             ProtoServiceRpc,

@@ -12,13 +12,15 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
-from src.core.config.database import DatabaseConnectionSettings
-from src.core.config.external_databases import ExternalDatabaseConnectionSettings
-from src.core.config.settings import settings
-from src.core.enums.database import DatabaseTypeChoices
-from src.core.errors import DatabaseError
-from src.infrastructure.database.listeners import DatabaseListener
-from src.infrastructure.external_apis.logging_service import db_logger
+from src.backend.core.config.database import DatabaseConnectionSettings
+from src.backend.core.config.external_databases import (
+    ExternalDatabaseConnectionSettings,
+)
+from src.backend.core.config.settings import settings
+from src.backend.core.enums.database import DatabaseTypeChoices
+from src.backend.core.errors import DatabaseError
+from src.backend.infrastructure.database.listeners import DatabaseListener
+from src.backend.infrastructure.external_apis.logging_service import db_logger
 
 __all__ = (
     "DatabaseBundle",

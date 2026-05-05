@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.infrastructure.observability.memory_metrics import MemoryMetricsBackend
+from src.backend.infrastructure.observability.memory_metrics import MemoryMetricsBackend
 
 
 def test_inc_counter_accumulates():

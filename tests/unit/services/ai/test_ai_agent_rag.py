@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.services.ai.ai_agent import AIAgentService
+from src.backend.services.ai.ai_agent import AIAgentService
 
 
 class _StubRag:
@@ -69,7 +69,7 @@ async def test_disabled_rag_skips_augmentation(agent: AIAgentService) -> None:
     rag = _StubRag(response="ENRICHED")
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", False),
+        patch("src.backend.core.config.rag.rag_settings.enabled", False),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
@@ -92,8 +92,8 @@ async def test_enabled_rag_augments_last_user_message(agent: AIAgentService) -> 
     rag = _StubRag(response="AUGMENTED")
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", True),
-        patch("src.core.config.rag.rag_settings.top_k", 7),
+        patch("src.backend.core.config.rag.rag_settings.enabled", True),
+        patch("src.backend.core.config.rag.rag_settings.top_k", 7),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
@@ -124,8 +124,8 @@ async def test_explicit_top_k_overrides_settings(agent: AIAgentService) -> None:
     rag = _StubRag(response="X")
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", True),
-        patch("src.core.config.rag.rag_settings.top_k", 5),
+        patch("src.backend.core.config.rag.rag_settings.enabled", True),
+        patch("src.backend.core.config.rag.rag_settings.top_k", 5),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         await agent._maybe_augment_with_rag(
@@ -141,7 +141,7 @@ async def test_augment_failure_falls_back_to_original(agent: AIAgentService) -> 
     rag = _StubRag(response="N/A", raises=RuntimeError("vector store down"))
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", True),
+        patch("src.backend.core.config.rag.rag_settings.enabled", True),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
@@ -157,7 +157,7 @@ async def test_resolve_rag_service_returns_none_skips(agent: AIAgentService) -> 
     messages = [{"role": "user", "content": "q"}]
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", True),
+        patch("src.backend.core.config.rag.rag_settings.enabled", True),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=None),
     ):
         used, result = await agent._maybe_augment_with_rag(
@@ -181,7 +181,7 @@ async def test_chat_propagates_rag_flag_in_response(agent: AIAgentService) -> No
     provider_mock = AsyncMock(return_value=fake_provider_response)
 
     with (
-        patch("src.core.config.rag.rag_settings.enabled", True),
+        patch("src.backend.core.config.rag.rag_settings.enabled", True),
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
         patch.dict(agent._providers, {"perplexity": provider_mock}),
         patch.object(agent, "_record_feedback", new=AsyncMock(return_value="fb-1")),

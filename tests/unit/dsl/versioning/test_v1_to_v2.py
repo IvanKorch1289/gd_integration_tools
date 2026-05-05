@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from src.dsl.versioning.migrations_v1_to_v2 import V1ToV2Migration
+from src.backend.dsl.versioning.migrations_v1_to_v2 import V1ToV2Migration
 
 
 def test_migration_appends_v1_marker() -> None:

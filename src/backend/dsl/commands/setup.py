@@ -8,7 +8,7 @@ gRPC, SOAP, WebSocket, SSE, RabbitMQ, Redis и т.д.).
 
 from typing import Callable
 
-from src.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
+from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 
 __all__ = ("register_action_handlers",)
 
@@ -28,24 +28,24 @@ def register_action_handlers() -> None:
 
     Функция идемпотентна — вызывается на startup приложения.
     """
-    from src.schemas.base import EmailSchema
-    from src.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
-    from src.schemas.route_schemas.orders import OrderIdQuerySchema
-    from src.schemas.route_schemas.skb import (
+    from src.backend.schemas.base import EmailSchema
+    from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
+    from src.backend.schemas.route_schemas.orders import OrderIdQuerySchema
+    from src.backend.schemas.route_schemas.skb import (
         APISKBOrderSchemaIn,
         SKBObjectsByAddressQuerySchema,
         SKBOrdersListQuerySchema,
         SKBResultQuerySchema,
     )
-    from src.services.ai.ai_agent import get_ai_agent_service
-    from src.services.core.admin import get_admin_service
-    from src.services.core.orderkinds import get_order_kind_service
-    from src.services.core.orders import get_order_service
-    from src.services.core.tech import get_tech_service
-    from src.services.core.users import get_user_service
-    from src.services.integrations.dadata import get_dadata_service
-    from src.services.integrations.skb import get_skb_service
-    from src.services.io.files import get_file_service
+    from src.backend.services.ai.ai_agent import get_ai_agent_service
+    from src.backend.services.core.admin import get_admin_service
+    from src.backend.services.core.orderkinds import get_order_kind_service
+    from src.backend.services.core.orders import get_order_service
+    from src.backend.services.core.tech import get_tech_service
+    from src.backend.services.core.users import get_user_service
+    from src.backend.services.integrations.dadata import get_dadata_service
+    from src.backend.services.integrations.skb import get_skb_service
+    from src.backend.services.io.files import get_file_service
 
     # ── Orders: CRUD + кастомные методы ──
     _register_crud_actions("orders", get_order_service)
@@ -243,7 +243,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Analytics (ClickHouse) ──
-    from src.services.ops.analytics import get_analytics_service
+    from src.backend.services.ops.analytics import get_analytics_service
 
     action_handler_registry.register_many(
         [
@@ -276,7 +276,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Search (Elasticsearch) ──
-    from src.services.io.search import get_search_service
+    from src.backend.services.io.search import get_search_service
 
     action_handler_registry.register_many(
         [
@@ -309,7 +309,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Notebooks (Wave 9.1) ──
-    from src.services.notebooks import get_notebook_service
+    from src.backend.services.notebooks import get_notebook_service
 
     action_handler_registry.register_many(
         [
@@ -347,7 +347,7 @@ def register_action_handlers() -> None:
     )
 
     # ── RAG (Vector DB + LLM) ──
-    from src.services.ai.rag_service import get_rag_service
+    from src.backend.services.ai.rag_service import get_rag_service
 
     action_handler_registry.register_many(
         [
@@ -380,7 +380,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Agent Memory ──
-    from src.services.ai.agent_memory import get_agent_memory_service
+    from src.backend.services.ai.agent_memory import get_agent_memory_service
 
     action_handler_registry.register_many(
         [
@@ -423,7 +423,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Webhook Scheduler ──
-    from src.services.ops.webhook_scheduler import get_webhook_scheduler
+    from src.backend.services.ops.webhook_scheduler import get_webhook_scheduler
 
     action_handler_registry.register_many(
         [
@@ -451,7 +451,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Web Automation (multi-protocol: REST, gRPC, GraphQL, SOAP, queue, MCP) ──
-    from src.services.io.web_automation import get_web_automation_service
+    from src.backend.services.io.web_automation import get_web_automation_service
 
     action_handler_registry.register_many(
         [
@@ -504,7 +504,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Web Search (Perplexity + Tavily) ──
-    from src.infrastructure.clients.external.search_providers import (
+    from src.backend.infrastructure.clients.external.search_providers import (
         get_web_search_service,
     )
 
@@ -524,7 +524,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Data Export (Excel/CSV/PDF) ──
-    from src.services.io.export_service import get_export_service
+    from src.backend.services.io.export_service import get_export_service
 
     action_handler_registry.register_many(
         [
@@ -547,7 +547,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Notifications (email/express/webhook/telegram) ──
-    from src.services.ops.notification_hub import get_notification_hub
+    from src.backend.services.ops.notification_hub import get_notification_hub
 
     action_handler_registry.register_many(
         [
@@ -600,7 +600,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Anomaly Detection ──
-    from src.services.ops.anomaly_detector import get_anomaly_detector
+    from src.backend.services.ops.anomaly_detector import get_anomaly_detector
 
     action_handler_registry.register_many(
         [
@@ -623,7 +623,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Message Replay ──
-    from src.services.ops.message_replay import get_replay_service
+    from src.backend.services.ops.message_replay import get_replay_service
 
     action_handler_registry.register_many(
         [
@@ -651,7 +651,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Webhook Relay ──
-    from src.entrypoints.webhook.transformer import get_webhook_relay
+    from src.backend.entrypoints.webhook.transformer import get_webhook_relay
 
     action_handler_registry.register_many(
         [
@@ -679,7 +679,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Data Quality ──
-    from src.services.ops.data_quality import get_dq_monitor
+    from src.backend.services.ops.data_quality import get_dq_monitor
 
     action_handler_registry.register_many(
         [
@@ -698,7 +698,7 @@ def register_action_handlers() -> None:
     )
 
     # ── ImportGateway (W24): унифицированный импорт OpenAPI/Postman/WSDL ──
-    from src.services.integrations import get_import_service
+    from src.backend.services.integrations import get_import_service
 
     action_handler_registry.register_many(
         [
@@ -716,7 +716,7 @@ def register_action_handlers() -> None:
     )
 
     # ── Scheduled Reports ──
-    from src.services.ops.scheduled_reports import get_reports_service
+    from src.backend.services.ops.scheduled_reports import get_reports_service
 
     action_handler_registry.register_many(
         [
@@ -744,9 +744,12 @@ def register_action_handlers() -> None:
     )
 
     # ── ServiceDSL auto-register ──
-    from src.dsl.service_dsl import scan_and_register_actions, service_dsl_registry
+    from src.backend.dsl.service_dsl import (
+        scan_and_register_actions,
+        service_dsl_registry,
+    )
 
     service_dsl_registry.register_all_actions()
     scan_and_register_actions(
-        ["src.services", "src.entrypoints.webhook", "src.services.integrations"]
+        ["src.backend.services", "src.backend.entrypoints.webhook", "src.backend.services.integrations"]
     )

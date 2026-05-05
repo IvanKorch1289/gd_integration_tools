@@ -10,8 +10,8 @@ import time
 
 import pytest
 
-from src.core.interfaces.source import SourceEvent
-from src.infrastructure.sources.webhook import (
+from src.backend.core.interfaces.source import SourceEvent
+from src.backend.infrastructure.sources.webhook import (
     WebhookSource,
     WebhookVerificationError,
 )

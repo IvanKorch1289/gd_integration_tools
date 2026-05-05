@@ -8,7 +8,7 @@ __init__ — кодинг ошибки имени аргументов и обя
 
 from __future__ import annotations
 
-from src.dsl.engine.processors.polars_extended import (
+from src.backend.dsl.engine.processors.polars_extended import (
     PolarsAggregateProcessor,
     PolarsJoinProcessor,
     PolarsPivotProcessor,

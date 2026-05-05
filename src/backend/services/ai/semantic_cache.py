@@ -95,7 +95,7 @@ class SemanticCache:
         try:
             import orjson
 
-            from src.core.di.providers import get_redis_stream_client_provider
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -118,7 +118,7 @@ class SemanticCache:
         try:
             import orjson
 
-            from src.core.di.providers import get_redis_stream_client_provider
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -145,7 +145,7 @@ class SemanticCache:
     ) -> dict[str, Any] | None:
         """Vector similarity поиск через RAG service."""
         try:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:
@@ -178,7 +178,7 @@ class SemanticCache:
     ) -> None:
         """Сохраняет query + response в vector store для semantic search."""
         try:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:

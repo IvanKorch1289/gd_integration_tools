@@ -20,12 +20,12 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from src.core.clock import FakeClock
-from src.core.types.watermark import LatePolicy, WatermarkState
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.late_event_policy import apply_late_policy
-from src.dsl.engine.processors.streaming import (
+from src.backend.core.clock import FakeClock
+from src.backend.core.types.watermark import LatePolicy, WatermarkState
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.late_event_policy import apply_late_policy
+from src.backend.dsl.engine.processors.streaming import (
     SessionWindowProcessor,
     SlidingWindowProcessor,
     TumblingWindowProcessor,

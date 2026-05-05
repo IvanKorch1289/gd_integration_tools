@@ -22,7 +22,7 @@ _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from src.entrypoints.streamlit_app.api_client import get_api_client  # noqa: E402
+from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="AI Feedback", page_icon=":brain:", layout="wide")
 st.header("AI Feedback Loop")

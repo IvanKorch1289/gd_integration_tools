@@ -27,7 +27,7 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.messaging.event_bus import EventBus
+    from src.backend.infrastructure.clients.messaging.event_bus import EventBus
 
 __all__ = ("ReplyChannel", "ReplyTimeoutError", "DEFAULT_REPLY_TIMEOUT_S")
 
@@ -78,7 +78,9 @@ class ReplyChannel:
         """Возвращает singleton. На первый вызов обязателен ``event_bus``."""
         if cls._instance is None:
             if event_bus is None:
-                from src.infrastructure.clients.messaging.event_bus import get_event_bus
+                from src.backend.infrastructure.clients.messaging.event_bus import (
+                    get_event_bus,
+                )
 
                 event_bus = get_event_bus()
             cls._instance = cls(event_bus)

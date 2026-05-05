@@ -18,11 +18,11 @@ import logging
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.core.interfaces.invoker import InvocationResponse
+from src.backend.core.interfaces.invoker import InvocationResponse
 
 __all__ = ("WsReplyChannel", "WsConnection")
 

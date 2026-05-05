@@ -41,8 +41,8 @@ class _CountingMCP:
 async def main() -> int:
     """Регистрирует actions и проверяет MCP экспорт."""
     # Импорт «late» — даёт DSL-setup'у выполниться лениво.
-    from src.dsl.commands.registry import action_handler_registry
-    from src.dsl.commands.setup import register_action_handlers
+    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.dsl.commands.setup import register_action_handlers
 
     register_action_handlers()
 
@@ -52,7 +52,7 @@ async def main() -> int:
         "ActionHandlerRegistry пуст — register_action_handlers() не отработал",
     )
 
-    from src.entrypoints.mcp.mcp_server import register_mcp_tools
+    from src.backend.entrypoints.mcp.mcp_server import register_mcp_tools
 
     mcp = _CountingMCP()
     register_mcp_tools(mcp)

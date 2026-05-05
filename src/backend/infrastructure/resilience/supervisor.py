@@ -20,7 +20,7 @@ import secrets
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
-from src.core.config.constants import consts
+from src.backend.core.config.constants import consts
 
 __all__ = ("BackoffPolicy", "Supervisor")
 

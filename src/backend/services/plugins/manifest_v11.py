@@ -21,7 +21,7 @@ from typing import Any
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from src.core.security.capabilities import CapabilityRef
+from src.backend.core.security.capabilities import CapabilityRef
 
 __all__ = (
     "PluginManifestError",

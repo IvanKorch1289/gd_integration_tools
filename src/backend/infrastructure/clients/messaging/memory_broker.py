@@ -20,7 +20,7 @@ import contextlib
 from collections import defaultdict
 from collections.abc import AsyncIterator
 
-from src.core.interfaces import MessageBroker
+from src.backend.core.interfaces import MessageBroker
 
 __all__ = ("InMemoryMessageBroker",)
 

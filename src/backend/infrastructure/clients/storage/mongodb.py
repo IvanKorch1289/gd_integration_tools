@@ -122,14 +122,14 @@ class MongoDBClient:
 
 
 def _create_mongo_client() -> MongoDBClient:
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     return MongoDBClient(
         connection_url=settings.mongo.connection_url, database=settings.mongo.database
     )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("mongo_client", _create_mongo_client)

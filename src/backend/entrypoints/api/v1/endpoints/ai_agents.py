@@ -15,8 +15,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.services.ai.agents import get_analytics_agent, get_search_agent
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.services.ai.agents import get_analytics_agent, get_search_agent
 
 __all__ = ("router",)
 

@@ -42,7 +42,7 @@ async def _log_incoming(payload: dict[str, Any], *, sync_id: str) -> None:
     Best-effort — Mongo-сбой не должен срывать обработку команды.
     """
     try:
-        from src.core.di.providers import (
+        from src.backend.core.di.providers import (
             get_express_dialog_store_provider,
             get_express_session_store_provider,
         )
@@ -117,7 +117,7 @@ async def receive_command(request: Request) -> JSONResponse:
     )
 
     try:
-        from src.core.di.providers import get_express_metrics_recorder_provider
+        from src.backend.core.di.providers import get_express_metrics_recorder_provider
 
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
@@ -155,7 +155,7 @@ async def receive_callback(request: Request) -> JSONResponse:
     # Wave 9.2.4: ping сессии при получении callback'а.
     if sync_id:
         try:
-            from src.core.di.providers import get_express_session_store_provider
+            from src.backend.core.di.providers import get_express_session_store_provider
 
             await get_express_session_store_provider().ping(sync_id)
         except Exception as exc:  # noqa: BLE001
@@ -184,7 +184,7 @@ async def _dispatch_to_route(
     Returns:
         Сериализуемый dict ответа для BotX.
     """
-    from src.entrypoints._action_bridge import dispatch_action_or_dsl
+    from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 
     chat = payload.get("chat") or {}
     headers = {

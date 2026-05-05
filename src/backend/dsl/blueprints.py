@@ -20,9 +20,9 @@
 
 from __future__ import annotations
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "api_normalize_persist_webhook",
@@ -179,8 +179,8 @@ def request_response_with_compensation(
     :param description: человекочитаемое описание.
     :param extra_processors: пользовательские processors после http_call.
     """
-    from src.dsl.engine.processors import SagaStep
-    from src.dsl.engine.processors.components import HttpCallProcessor
+    from src.backend.dsl.engine.processors import SagaStep
+    from src.backend.dsl.engine.processors.components import HttpCallProcessor
 
     builder = RouteBuilder.from_(
         route_id,

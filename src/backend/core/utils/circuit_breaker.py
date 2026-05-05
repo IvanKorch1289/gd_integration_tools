@@ -13,8 +13,8 @@ state machine в interfaces.CircuitBreaker.
 
 from __future__ import annotations
 
-from src.core.interfaces import CircuitBreaker as _CircuitBreakerImpl
-from src.core.interfaces import CircuitBreakerConfig
+from src.backend.core.interfaces import CircuitBreaker as _CircuitBreakerImpl
+from src.backend.core.interfaces import CircuitBreakerConfig
 
 __all__ = ("CircuitBreaker", "get_circuit_breaker")
 

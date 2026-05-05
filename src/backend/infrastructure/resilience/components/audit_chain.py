@@ -24,7 +24,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
-from src.core.interfaces.audit import AuditBackend, AuditRecord
+from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
 
 __all__ = ("AuditCallable", "build_audit_fallbacks", "build_audit_primary")
 
@@ -35,7 +35,7 @@ AuditCallable = Callable[[AuditRecord], Awaitable[None]]
 
 async def _clickhouse_append(record: AuditRecord) -> None:
     """Primary: ClickHouse через ``AuditEventLog``."""
-    from src.infrastructure.audit.event_log import AuditEvent, get_audit_log
+    from src.backend.infrastructure.audit.event_log import AuditEvent, get_audit_log
 
     event = AuditEvent(
         who=str(record.get("who", "")),
@@ -60,7 +60,7 @@ async def _pg_audit_append(record: AuditRecord) -> None:
     """
     from sqlalchemy import text
 
-    from src.infrastructure.database.database import get_db_session
+    from src.backend.infrastructure.database.database import get_db_session
 
     async with get_db_session() as session:
         await session.execute(
@@ -75,7 +75,7 @@ async def _pg_audit_append(record: AuditRecord) -> None:
 
 def build_jsonl_append(path: str | Path) -> AuditCallable:
     """Fallback 2: append-only JSONL (нерушимый — диск всегда доступен)."""
-    from src.infrastructure.audit.jsonl_audit import JsonlAuditBackend
+    from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend
 
     backend: AuditBackend = JsonlAuditBackend(path)
 

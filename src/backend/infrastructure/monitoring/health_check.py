@@ -5,7 +5,7 @@ from typing import Any
 
 from aio_pika import connect
 
-from src.core.config.settings import settings
+from src.backend.core.config.settings import settings
 
 __all__ = ("get_healthcheck_service",)
 
@@ -72,7 +72,7 @@ class HealthCheck:
         Возвращает:
             bool: True если подключение успешно, False в случае ошибки
         """
-        from src.infrastructure.database.database import db_initializer
+        from src.backend.infrastructure.database.database import db_initializer
 
         return await db_initializer.check_connection()
 
@@ -87,7 +87,7 @@ class HealthCheck:
         """
         if not getattr(settings.redis, "enabled", True):
             return True
-        from src.infrastructure.clients.storage.redis import redis_client
+        from src.backend.infrastructure.clients.storage.redis import redis_client
 
         return await redis_client.check_connection("cache")
 
@@ -104,7 +104,7 @@ class HealthCheck:
             return True
         if getattr(settings.storage, "provider", "minio") == "local":
             return True
-        from src.infrastructure.clients.storage.s3_pool import s3_client
+        from src.backend.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_connection()
 
@@ -122,7 +122,7 @@ class HealthCheck:
             return True
         if getattr(settings.storage, "provider", "minio") == "local":
             return True
-        from src.infrastructure.clients.storage.s3_pool import s3_client
+        from src.backend.infrastructure.clients.storage.s3_pool import s3_client
 
         return await s3_client.check_bucket_exists()
 
@@ -132,7 +132,7 @@ class HealthCheck:
         Возвращает:
             bool: Статус подключения к Graylog
         """
-        from src.infrastructure.clients.external.logger import graylog_handler
+        from src.backend.infrastructure.clients.external.logger import graylog_handler
 
         return await graylog_handler.check_connection()
 
@@ -142,7 +142,7 @@ class HealthCheck:
         Возвращает:
             bool: Результат проверки почтового сервера
         """
-        from src.infrastructure.clients.transport.smtp import smtp_client
+        from src.backend.infrastructure.clients.transport.smtp import smtp_client
 
         return await smtp_client.test_connection()
 

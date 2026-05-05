@@ -20,10 +20,10 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from src.entrypoints.webhook.sources_router import sources_router
-from src.infrastructure.sources.webhook import WebhookSource
-from src.services.sources import get_source_registry
-from src.services.sources.registry import SourceRegistry
+from src.backend.entrypoints.webhook.sources_router import sources_router
+from src.backend.infrastructure.sources.webhook import WebhookSource
+from src.backend.services.sources import get_source_registry
+from src.backend.services.sources.registry import SourceRegistry
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ async def test_non_webhook_source_returns_404(
     client: httpx.AsyncClient, fresh_registry: SourceRegistry
 ) -> None:
     """Source существует, но имеет kind != webhook → 404."""
-    from src.infrastructure.sources.file_watcher import FileWatcherSource
+    from src.backend.infrastructure.sources.file_watcher import FileWatcherSource
 
     fresh_registry.register(FileWatcherSource("fw1", directory="/tmp", pattern="*.json"))
     resp = await client.post("/webhooks/sources/fw1", json={})

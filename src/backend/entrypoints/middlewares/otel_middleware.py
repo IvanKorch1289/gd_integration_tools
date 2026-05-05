@@ -181,7 +181,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
         tenant_id = request.headers.get("x-tenant-id", "")
         if not tenant_id:
             try:
-                from src.core.tenancy import current_tenant
+                from src.backend.core.tenancy import current_tenant
 
                 ctx = current_tenant()
                 if ctx is not None:

@@ -5,7 +5,7 @@
 - Casbin: app-level RBAC/ABAC — роли пользователей и ресурсы.
 """
 
-from src.infrastructure.policy.casbin_adapter import CasbinAdapter
-from src.infrastructure.policy.opa import OPAClient, PolicyDecision
+from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
+from src.backend.infrastructure.policy.opa import OPAClient, PolicyDecision
 
 __all__ = ("OPAClient", "PolicyDecision", "CasbinAdapter")

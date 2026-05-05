@@ -4,20 +4,20 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from src.core.errors import ServiceError
-from src.core.interfaces.repositories import OrderKindRepositoryProtocol
-from src.schemas.route_schemas.orderkinds import (
+from src.backend.core.errors import ServiceError
+from src.backend.core.interfaces.repositories import OrderKindRepositoryProtocol
+from src.backend.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,
     OrderKindSchemaOut,
     OrderKindVersionSchemaOut,
 )
-from src.services.core.base import BaseService
-from src.services.integrations.skb import APISKBService, get_skb_service
+from src.backend.services.core.base import BaseService
+from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("get_order_kind_service",)
 
 
-_REPO_ORDERKINDS_MOD = "src." + "infrastructure.repositories.orderkinds"
+_REPO_ORDERKINDS_MOD = "src." + "backend.infrastructure.repositories.orderkinds"
 
 
 class OrderKindService(

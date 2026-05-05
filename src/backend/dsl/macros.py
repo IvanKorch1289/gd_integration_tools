@@ -17,10 +17,10 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.engine.processors import (
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.processors import (
     DeadLetterProcessor,
     DispatchActionProcessor,
     LogProcessor,

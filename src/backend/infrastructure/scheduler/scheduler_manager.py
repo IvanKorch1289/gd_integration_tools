@@ -1,10 +1,10 @@
 from functools import lru_cache
 from typing import Any
 
-from src.core.config.constants import consts
-from src.core.config.settings import settings
-from src.infrastructure.external_apis.logging_service import scheduler_logger
-from src.infrastructure.scheduler.scheduled_tasks import check_all_services
+from src.backend.core.config.constants import consts
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.external_apis.logging_service import scheduler_logger
+from src.backend.infrastructure.scheduler.scheduled_tasks import check_all_services
 
 __all__ = ("scheduler_manager", "SchedulerManager", "get_scheduler_manager")
 
@@ -31,7 +31,7 @@ class SchedulerManager:
         from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-        from src.infrastructure.database.database import db_initializer
+        from src.backend.infrastructure.database.database import db_initializer
 
         self.logger = scheduler_logger
 

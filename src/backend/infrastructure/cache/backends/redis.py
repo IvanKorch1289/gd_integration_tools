@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.interfaces.cache import CacheBackend
+from src.backend.core.interfaces.cache import CacheBackend
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 __all__ = ("Hit", "WhooshIndex", "get_wiki_index")
 

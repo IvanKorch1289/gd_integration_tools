@@ -13,8 +13,8 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.infrastructure.sources._lifecycle import graceful_cancel
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("WebSocketSource",)
 

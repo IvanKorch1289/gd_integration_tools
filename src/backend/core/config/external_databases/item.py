@@ -9,7 +9,7 @@ from pydantic import (
     model_validator,
 )
 
-from src.core.enums.database import DatabaseTypeChoices
+from src.backend.core.enums.database import DatabaseTypeChoices
 
 __all__ = ("ExternalDatabaseItemSettings",)
 

@@ -18,9 +18,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
 
 
 def _ctx() -> ExecutionContext:
@@ -66,7 +66,7 @@ def patch_provider(monkeypatch: pytest.MonkeyPatch) -> Any:
             return lambda profile: manager
 
         monkeypatch.setattr(
-            "src.core.di.providers.get_external_session_manager_provider",
+            "src.backend.core.di.providers.get_external_session_manager_provider",
             _provider,
         )
         return holder

@@ -20,7 +20,7 @@ CacheGetCallable = Callable[[str], Awaitable[bytes | None]]
 
 
 async def _redis_get(key: str) -> bytes | None:
-    from src.infrastructure.cache.factory import get_cache_backend
+    from src.backend.infrastructure.cache.factory import get_cache_backend
 
     backend = get_cache_backend("redis")
     value = await backend.get(key)
@@ -28,7 +28,7 @@ async def _redis_get(key: str) -> bytes | None:
 
 
 async def _memcached_get(key: str) -> bytes | None:
-    from src.infrastructure.cache.factory import get_cache_backend
+    from src.backend.infrastructure.cache.factory import get_cache_backend
 
     backend = get_cache_backend("memcached")
     value = await backend.get(key)
@@ -36,7 +36,7 @@ async def _memcached_get(key: str) -> bytes | None:
 
 
 async def _memory_get(key: str) -> bytes | None:
-    from src.infrastructure.cache.backends.memory import MemoryCacheBackend
+    from src.backend.infrastructure.cache.backends.memory import MemoryCacheBackend
 
     backend: MemoryCacheBackend = _memory_singleton()
     value = await backend.get(key)
@@ -49,7 +49,7 @@ _memory_backend = None
 def _memory_singleton():
     global _memory_backend
     if _memory_backend is None:
-        from src.infrastructure.cache.backends.memory import MemoryCacheBackend
+        from src.backend.infrastructure.cache.backends.memory import MemoryCacheBackend
 
         _memory_backend = MemoryCacheBackend(maxsize=1000)
     return _memory_backend

@@ -29,13 +29,13 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.database.models.workflow_instance import (
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.database.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )
-from src.infrastructure.database.session_manager import main_session_manager
-from src.infrastructure.workflow.event_store import WorkflowEventStore
+from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.workflow.event_store import WorkflowEventStore
 
 __all__ = ("WorkflowInstanceRow", "WorkflowInstanceStore")
 
@@ -336,7 +336,7 @@ class WorkflowInstanceStore:
     async def _project_to_mongo(self, workflow_id: UUID) -> None:
         """Отправляет актуальное состояние в Mongo (fire-and-forget)."""
         try:
-            from src.infrastructure.workflow.state_projector import (
+            from src.backend.infrastructure.workflow.state_projector import (
                 get_workflow_state_projector,
             )
 

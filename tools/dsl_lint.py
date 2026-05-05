@@ -28,7 +28,7 @@ from typing import Any
 
 import yaml
 
-from src.dsl.builder import RouteBuilder
+from src.backend.dsl.builder import RouteBuilder
 
 __all__ = ("Finding", "lint_file", "lint_yaml", "main")
 

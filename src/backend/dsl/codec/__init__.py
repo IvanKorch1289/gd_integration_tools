@@ -7,7 +7,7 @@
 
 Публичный API::
 
-    from src.dsl.codec import decode_as, encode_as
+    from src.backend.dsl.codec import decode_as, encode_as
     data = decode_as('msgpack', raw_bytes)
     payload = encode_as('parquet', dataframe)
 """

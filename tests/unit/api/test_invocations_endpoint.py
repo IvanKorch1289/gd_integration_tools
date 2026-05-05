@@ -15,18 +15,21 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import HTTPException, Response, status
 
-from src.core.interfaces.invocation_reply import ReplyChannelKind
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationResponse,
     InvocationStatus,
 )
-from src.entrypoints.api.v1.endpoints.invocations import get_invocation, post_invocation
-from src.infrastructure.messaging.invocation_replies import (
+from src.backend.entrypoints.api.v1.endpoints.invocations import (
+    get_invocation,
+    post_invocation,
+)
+from src.backend.infrastructure.messaging.invocation_replies import (
     MemoryReplyChannel,
     ReplyChannelRegistry,
 )
-from src.schemas.invocation_api import InvocationRequestSchema
+from src.backend.schemas.invocation_api import InvocationRequestSchema
 
 
 def _make_invoker(response: InvocationResponse) -> MagicMock:

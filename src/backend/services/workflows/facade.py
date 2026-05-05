@@ -18,8 +18,12 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
-from src.core.security.capabilities import CapabilityGate
-from src.core.workflow.backend import WorkflowBackend, WorkflowHandle, WorkflowResult
+from src.backend.core.security.capabilities import CapabilityGate
+from src.backend.core.workflow.backend import (
+    WorkflowBackend,
+    WorkflowHandle,
+    WorkflowResult,
+)
 
 __all__ = ("WorkflowFacade",)
 

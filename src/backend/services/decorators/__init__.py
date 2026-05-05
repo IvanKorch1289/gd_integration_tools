@@ -1,6 +1,6 @@
 """Декораторы сервисного слоя (без зависимости от ``infrastructure/``)."""
 
-from src.services.decorators.limiting import (
+from src.backend.services.decorators.limiting import (
     RouteLimiter,
     default_callback,
     default_identifier,

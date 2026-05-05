@@ -9,8 +9,8 @@
 Использование:
 
 ```python
-from src.dsl.commands.action_registry import action_handler_registry
-from src.services.ops.notify_actions import register_notify_actions
+from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.services.ops.notify_actions import register_notify_actions
 
 register_notify_actions(action_handler_registry, prefix="notifyv2")
 ```
@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
 __all__ = (
     "NotifyGatewayActions",
@@ -44,7 +44,7 @@ class NotifyGatewayActions:
     """
 
     async def _send(self, *, channel: str, **kwargs: Any) -> Any:
-        from src.core.providers_registry import get_provider
+        from src.backend.core.providers_registry import get_provider
 
         gateway = get_provider("notifier", "gateway")
         return await gateway.send(channel=channel, **kwargs)
@@ -100,7 +100,7 @@ def register_notify_actions(
     Returns:
         Список зарегистрированных имён action'ов.
     """
-    from src.dsl.commands.action_registry import ActionHandlerSpec
+    from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
     channels = ("email", "telegram", "slack", "teams", "sms", "webhook", "express")
     base_prefix = "notify" if override else prefix

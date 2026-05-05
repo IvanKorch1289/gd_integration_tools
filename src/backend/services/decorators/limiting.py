@@ -14,8 +14,11 @@ from typing import Any, Callable
 
 from fastapi import HTTPException, Request, Response, status
 
-from src.core.config.settings import settings
-from src.core.decorators.limiting_callbacks import default_callback, default_identifier
+from src.backend.core.config.settings import settings
+from src.backend.core.decorators.limiting_callbacks import (
+    default_callback,
+    default_identifier,
+)
 
 __all__ = (
     "RouteLimiter",

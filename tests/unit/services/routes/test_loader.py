@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     CapabilityGate,
     CapabilityRef,
     build_default_vocabulary,
 )
-from src.services.routes.loader import (
+from src.backend.services.routes.loader import (
     InstalledPlugin,
     LoadedRoute,
     RouteLoader,

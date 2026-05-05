@@ -51,7 +51,7 @@ class APIKeyManager:
     def _init_global_key(self) -> None:
         """Кэширует хеш глобального ключа из настроек."""
         if self._global_key_hash is None:
-            from src.core.config.settings import settings
+            from src.backend.core.config.settings import settings
 
             self._global_key_hash = self._hash_key(settings.secure.api_key)
 
@@ -81,7 +81,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             async def _mget_keys(conn: Any) -> list[dict[str, Any]]:
                 keys: list[str] = []
@@ -164,7 +164,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             await redis_client.add_to_stream(
                 stream_name=_AUDIT_PREFIX + "events",
@@ -190,7 +190,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             raw = await redis_client._redis.get(f"{_KEY_PREFIX}{client_id}")
             if not raw:
@@ -237,7 +237,7 @@ class APIKeyManager:
     async def revoke_client_key(self, client_id: str) -> bool:
         """Отзывает ключ клиента (немедленно, без grace period)."""
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             await redis_client._redis.delete(f"{_KEY_PREFIX}{client_id}")
             await redis_client.add_to_stream(
@@ -259,7 +259,7 @@ class APIKeyManager:
         try:
             import orjson
 
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             result: list[dict[str, Any]] = []
             keys = await redis_client.list_cache_keys(f"{_KEY_PREFIX}*")
@@ -282,7 +282,7 @@ class APIKeyManager:
             return []
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("api_key_manager", APIKeyManager)

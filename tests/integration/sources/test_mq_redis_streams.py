@@ -17,8 +17,8 @@ import asyncio
 import pytest
 from faststream.redis import RedisBroker, StreamSub, TestRedisBroker
 
-from src.core.interfaces.source import SourceEvent
-from src.infrastructure.sources.mq import MQSource
+from src.backend.core.interfaces.source import SourceEvent
+from src.backend.infrastructure.sources.mq import MQSource
 
 
 def test_make_stream_arg_no_group_returns_topic_string() -> None:

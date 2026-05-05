@@ -15,10 +15,12 @@
 не заданы.
 """
 
-from src.services.execution.middlewares.audit_middleware import AuditMiddleware
-from src.services.execution.middlewares.idempotency_middleware import (
+from src.backend.services.execution.middlewares.audit_middleware import AuditMiddleware
+from src.backend.services.execution.middlewares.idempotency_middleware import (
     IdempotencyMiddleware,
 )
-from src.services.execution.middlewares.rate_limit_middleware import RateLimitMiddleware
+from src.backend.services.execution.middlewares.rate_limit_middleware import (
+    RateLimitMiddleware,
+)
 
 __all__ = ("AuditMiddleware", "IdempotencyMiddleware", "RateLimitMiddleware")

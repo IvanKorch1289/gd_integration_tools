@@ -6,12 +6,11 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from src.core.interfaces.source import SourceEvent
-from src.infrastructure.sources.file_watcher import FileWatcherSource
+from src.backend.core.interfaces.source import SourceEvent
+from src.backend.infrastructure.sources.file_watcher import FileWatcherSource
 
 
 @pytest.mark.asyncio

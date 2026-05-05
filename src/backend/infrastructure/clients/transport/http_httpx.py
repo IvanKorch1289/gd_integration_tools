@@ -30,20 +30,20 @@ from tenacity import (
     wait_random,
 )
 
-from src.core.config.settings import settings
-from src.infrastructure.resilience.breaker import (
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.resilience.breaker import (
     Breaker,
     BreakerSpec,
     CircuitOpen,
     breaker_registry,
 )
-from src.infrastructure.resilience.bulkhead import registry as bulkhead_registry
-from src.infrastructure.resilience.rate_limiter import (
+from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
+from src.backend.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,
     ResourceRateLimiter,
 )
-from src.infrastructure.resilience.time_limiter import TimeLimiter
-from src.utilities.codecs.json import json_dumps
+from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
+from src.backend.utilities.codecs.json import json_dumps
 
 __all__ = ("HttpxClient", "get_httpx_client")
 

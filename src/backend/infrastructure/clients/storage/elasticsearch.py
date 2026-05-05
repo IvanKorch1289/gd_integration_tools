@@ -244,7 +244,7 @@ _es_client: ElasticSearchClient | None = None
 
 
 def _create_elasticsearch_client() -> ElasticSearchClient:
-    from src.core.config.elasticsearch import elasticsearch_settings
+    from src.backend.core.config.elasticsearch import elasticsearch_settings
 
     return ElasticSearchClient(
         hosts=elasticsearch_settings.hosts,
@@ -259,7 +259,7 @@ def _create_elasticsearch_client() -> ElasticSearchClient:
     )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("elasticsearch_client", _create_elasticsearch_client)

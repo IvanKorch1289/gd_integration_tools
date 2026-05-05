@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.interfaces.cache import CacheBackend
+from src.backend.core.interfaces.cache import CacheBackend
 
 if TYPE_CHECKING:  # pragma: no cover
     import aiomcache

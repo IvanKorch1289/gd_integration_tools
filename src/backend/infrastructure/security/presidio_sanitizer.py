@@ -101,7 +101,9 @@ class PresidioSanitizer:
     async def _sanitize_fallback(self, text: str) -> SanitizeResult:
         """Regex fallback через существующий AIDataSanitizer."""
         try:
-            from src.infrastructure.security.ai_sanitizer import get_ai_sanitizer
+            from src.backend.infrastructure.security.ai_sanitizer import (
+                get_ai_sanitizer,
+            )
 
             legacy = get_ai_sanitizer()
             result = await legacy.sanitize(text)

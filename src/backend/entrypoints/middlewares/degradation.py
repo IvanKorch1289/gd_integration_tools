@@ -90,7 +90,9 @@ class DegradationMiddleware(BaseHTTPMiddleware):
         """
         # Wave 6.5a: ResilienceCoordinator — через DI provider.
         try:
-            from src.core.di.providers import get_resilience_coordinator_provider
+            from src.backend.core.di.providers import (
+                get_resilience_coordinator_provider,
+            )
 
             statuses = get_resilience_coordinator_provider().status()
         except Exception:  # noqa: BLE001

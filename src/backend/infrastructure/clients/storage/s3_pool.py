@@ -27,8 +27,8 @@ except ImportError:  # botocore — опциональная зависимос�
 
 from functools import lru_cache
 
-from src.core.config.settings import FileStorageSettings, settings
-from src.core.errors import ServiceError
+from src.backend.core.config.settings import FileStorageSettings, settings
+from src.backend.core.errors import ServiceError
 
 __all__ = ("S3Client", "s3_client", "get_s3_client")
 
@@ -124,7 +124,7 @@ class S3Client(BaseS3Client):
     """Реализация клиента S3 с расширенными функциями."""
 
     def __init__(self, settings: FileStorageSettings):
-        from src.infrastructure.external_apis.logging_service import fs_logger
+        from src.backend.infrastructure.external_apis.logging_service import fs_logger
 
         self._connect_lock = Lock()
         self._settings = settings

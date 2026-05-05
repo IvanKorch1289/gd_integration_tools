@@ -5,13 +5,13 @@ from typing import Any, cast
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 
-from src.core.decorators.caching import response_cache
-from src.core.di.providers import get_cache_invalidator_provider
-from src.core.errors import NotFoundError, ServiceError
-from src.core.interfaces.db_model import DBModelProtocol
-from src.core.interfaces.repositories import RepositoryProtocol
-from src.schemas.base import BaseSchema, PaginatedResult
-from src.utilities.converters import transfer_model_to_schema
+from src.backend.core.decorators.caching import response_cache
+from src.backend.core.di.providers import get_cache_invalidator_provider
+from src.backend.core.errors import NotFoundError, ServiceError
+from src.backend.core.interfaces.db_model import DBModelProtocol
+from src.backend.core.interfaces.repositories import RepositoryProtocol
+from src.backend.schemas.base import BaseSchema, PaginatedResult
+from src.backend.utilities.converters import transfer_model_to_schema
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +242,7 @@ class BaseService[
                 errors.append({"index": idx, "data": data, "error": str(exc)})
 
         if errors:
-            from src.core.errors import ServiceError
+            from src.backend.core.errors import ServiceError
 
             raise ServiceError(
                 detail=(
@@ -495,7 +495,7 @@ async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
     service_name = f"{model.__name__}Service"
 
     try:
-        service_module = import_module(f"src.services.{model.__tablename__}")
+        service_module = import_module(f"src.backend.services.{model.__tablename__}")
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
         raise ValueError(

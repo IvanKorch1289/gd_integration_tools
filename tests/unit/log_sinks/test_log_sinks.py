@@ -27,15 +27,18 @@ from unittest.mock import patch
 import orjson
 import pytest
 
-from src.core.config.profile import AppProfileChoices
-from src.core.interfaces.log_sink import LogSink
-from src.infrastructure.logging.backends import (
+from src.backend.core.config.profile import AppProfileChoices
+from src.backend.core.interfaces.log_sink import LogSink
+from src.backend.infrastructure.logging.backends import (
     ConsoleJsonLogSink,
     DiskRotatingLogSink,
     GraylogGelfLogSink,
 )
-from src.infrastructure.logging.router import SinkRouter, build_sinks_for_profile
-from src.infrastructure.resilience.breaker import BreakerSpec
+from src.backend.infrastructure.logging.router import (
+    SinkRouter,
+    build_sinks_for_profile,
+)
+from src.backend.infrastructure.resilience.breaker import BreakerSpec
 
 
 # ---------------------------------------------------------------------- ConsoleJson

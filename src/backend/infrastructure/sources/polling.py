@@ -17,8 +17,8 @@ from typing import Any
 
 import httpx
 
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.infrastructure.sources._lifecycle import graceful_cancel
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("PollingSource",)
 

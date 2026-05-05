@@ -7,7 +7,7 @@ trusted-сети). Семантика идентична :class:`WebhookSource`,
 
 from __future__ import annotations
 
-from src.infrastructure.sources.webhook import WebhookSource
+from src.backend.infrastructure.sources.webhook import WebhookSource
 
 __all__ = ("HttpSource",)
 

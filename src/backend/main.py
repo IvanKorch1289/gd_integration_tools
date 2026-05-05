@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from src.core.config.settings import settings
-from src.plugins.composition.app_factory import create_app
+from src.backend.core.config.settings import settings
+from src.backend.plugins.composition.app_factory import create_app
 
 app: FastAPI = create_app()
 
@@ -31,7 +31,7 @@ def _run_uvicorn() -> None:
 
     is_dev = settings.app.environment in {"development", "testing"}
     uvicorn_kwargs: dict[str, object] = {
-        "app": "src.main:app",
+        "app": "src.backend.main:app",
         "host": settings.app.host,
         "port": settings.app.port,
         "log_level": "debug" if settings.app.debug_mode else "info",
@@ -71,7 +71,7 @@ def _run_granian() -> None:
     }[settings.app.granian_runtime_mode]
 
     kwargs: dict[str, object] = {
-        "target": "src.main:app",
+        "target": "src.backend.main:app",
         "address": settings.app.host,
         "port": settings.app.port,
         "interface": Interfaces.ASGI,

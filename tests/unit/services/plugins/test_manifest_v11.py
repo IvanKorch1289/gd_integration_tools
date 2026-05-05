@@ -8,8 +8,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.core.security.capabilities import CAPABILITY_NAME_PATTERN, CapabilityRef
-from src.services.plugins.manifest_v11 import (
+from src.backend.core.security.capabilities import (
+    CAPABILITY_NAME_PATTERN,
+    CapabilityRef,
+)
+from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,
     PluginProvides,

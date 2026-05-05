@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends
 
-from src.entrypoints.api.dependencies.auth import require_api_key
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
-from src.services.integrations.dadata import get_dadata_service
+from src.backend.entrypoints.api.dependencies.auth import require_api_key
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
+from src.backend.services.integrations.dadata import get_dadata_service
 
 __all__ = ("router",)
 

@@ -6,7 +6,7 @@ Apache Arrow memory model (zero-copy с Parquet/Arrow), быстрее pandas
 
 Usage::
 
-    from src.services.io.dataframe import read_csv, write_excel, to_records
+    from src.backend.services.io.dataframe import read_csv, write_excel, to_records
 
     df = read_csv(buffer)        # polars.DataFrame
     rows = to_records(df)        # list[dict] для service-API совместимости

@@ -153,7 +153,7 @@ class OllamaEmbeddingProvider:
     def _ensure_provider(self) -> Any:
         if self._provider is not None:
             return self._provider
-        from src.services.ai.ai_providers import OllamaProvider
+        from src.backend.services.ai.ai_providers import OllamaProvider
 
         self._provider = OllamaProvider(base_url=self._base_url, model=self._model_name)
         return self._provider
@@ -180,7 +180,7 @@ class OpenAIEmbeddingProvider:
     def _ensure_provider(self) -> Any:
         if self._provider is not None:
             return self._provider
-        from src.services.ai.ai_providers import OpenAIProvider
+        from src.backend.services.ai.ai_providers import OpenAIProvider
 
         self._provider = OpenAIProvider(
             api_key=self._api_key, model=self._model_name, base_url=self._base_url
@@ -194,7 +194,7 @@ class OpenAIEmbeddingProvider:
 
 def get_embedding_provider() -> EmbeddingProvider:
     """Собирает провайдер по ``rag_settings.embedding_provider``."""
-    from src.core.config.rag import rag_settings
+    from src.backend.core.config.rag import rag_settings
 
     provider_name = (rag_settings.embedding_provider or "sentence-transformers").lower()
     model = rag_settings.embedding_model

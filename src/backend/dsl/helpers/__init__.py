@@ -4,7 +4,7 @@
 каталог + re-exports (где уместно).
 """
 
-from src.dsl.helpers import (  # noqa: F401
+from src.backend.dsl.helpers import (  # noqa: F401
     banking,
     datetime_utils,
     regex_presets,

@@ -23,8 +23,8 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 
 def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
@@ -137,7 +137,7 @@ def test_w28_pipeline_full_chain() -> None:
 
 def test_outbox_with_custom_writer_skipped_in_spec() -> None:
     """OutboxProcessor с custom outbox_writer — to_spec → None (skipped)."""
-    from src.dsl.engine.processors.business import OutboxProcessor
+    from src.backend.dsl.engine.processors.business import OutboxProcessor
 
     async def _custom_writer(*, topic, payload, headers):  # noqa: ANN001, ARG001
         return None

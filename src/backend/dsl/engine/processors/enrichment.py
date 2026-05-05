@@ -9,9 +9,9 @@ import logging
 import time
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "GeoIpProcessor",

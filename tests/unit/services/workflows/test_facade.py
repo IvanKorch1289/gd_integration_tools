@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     CapabilityDeniedError,
     CapabilityGate,
     CapabilityRef,
 )
-from src.core.workflow import FakeWorkflowBackend, WorkflowResult
-from src.services.workflows import WorkflowFacade
+from src.backend.core.workflow import FakeWorkflowBackend, WorkflowResult
+from src.backend.services.workflows import WorkflowFacade
 
 
 @pytest.fixture

@@ -9,6 +9,6 @@
 оставался работоспособным.
 """
 
-from src.infrastructure.sources.factory import build_source
+from src.backend.infrastructure.sources.factory import build_source
 
 __all__ = ("build_source",)

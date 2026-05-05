@@ -1,10 +1,10 @@
 """DSL Processors — re-export для обратной совместимости.
 
 Все процессоры доступны через:
-    from src.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
+    from src.backend.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
 """
 
-from src.dsl.engine.processors.ai import (
+from src.backend.dsl.engine.processors.ai import (
     CacheProcessor,
     CacheWriteProcessor,
     GetFeedbackExamplesProcessor,
@@ -19,7 +19,7 @@ from src.dsl.engine.processors.ai import (
     TokenBudgetProcessor,
     VectorSearchProcessor,
 )
-from src.dsl.engine.processors.ai_banking import (
+from src.backend.dsl.engine.processors.ai_banking import (
     AntiFraudScoreProcessor,
     AppealProcessorAI,
     CreditScoringRagProcessor,
@@ -28,13 +28,13 @@ from src.dsl.engine.processors.ai_banking import (
     KycAmlVerifyProcessor,
     TransactionCategorizerProcessor,
 )
-from src.dsl.engine.processors.audit import AuditProcessor
-from src.dsl.engine.processors.base import (
+from src.backend.dsl.engine.processors.audit import AuditProcessor
+from src.backend.dsl.engine.processors.base import (
     BaseProcessor,
     CallableProcessor,
     ProcessorCallable,
 )
-from src.dsl.engine.processors.business import (
+from src.backend.dsl.engine.processors.business import (
     ComplianceLabelProcessor,
     CostTrackerProcessor,
     DataMaskingProcessor,
@@ -42,7 +42,7 @@ from src.dsl.engine.processors.business import (
     OutboxProcessor,
     TenantScopeProcessor,
 )
-from src.dsl.engine.processors.components import (
+from src.backend.dsl.engine.processors.components import (
     DatabaseQueryProcessor,
     FileReadProcessor,
     FileWriteProcessor,
@@ -52,8 +52,8 @@ from src.dsl.engine.processors.components import (
     S3WriteProcessor,
     TimerProcessor,
 )
-from src.dsl.engine.processors.composed_message import ComposedMessageProcessor
-from src.dsl.engine.processors.control_flow import (
+from src.backend.dsl.engine.processors.composed_message import ComposedMessageProcessor
+from src.backend.dsl.engine.processors.control_flow import (
     ChoiceBranch,
     ChoiceProcessor,
     ParallelProcessor,
@@ -63,8 +63,8 @@ from src.dsl.engine.processors.control_flow import (
     SagaStep,
     TryCatchProcessor,
 )
-from src.dsl.engine.processors.converters import ConvertProcessor
-from src.dsl.engine.processors.core import (
+from src.backend.dsl.engine.processors.converters import ConvertProcessor
+from src.backend.dsl.engine.processors.core import (
     DispatchActionProcessor,
     EnrichProcessor,
     FilterProcessor,
@@ -74,8 +74,8 @@ from src.dsl.engine.processors.core import (
     TransformProcessor,
     ValidateProcessor,
 )
-from src.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
-from src.dsl.engine.processors.eip import (
+from src.backend.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
+from src.backend.dsl.engine.processors.eip import (
     AggregatorProcessor,
     CircuitBreakerProcessor,
     ClaimCheckProcessor,
@@ -99,20 +99,20 @@ from src.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
-from src.dsl.engine.processors.entity import (
+from src.backend.dsl.engine.processors.entity import (
     EntityCreateProcessor,
     EntityDeleteProcessor,
     EntityGetProcessor,
     EntityListProcessor,
     EntityUpdateProcessor,
 )
-from src.dsl.engine.processors.export import ExportProcessor
-from src.dsl.engine.processors.external import (
+from src.backend.dsl.engine.processors.export import ExportProcessor
+from src.backend.dsl.engine.processors.external import (
     AgentGraphProcessor,
     CDCProcessor,
     MCPToolProcessor,
 )
-from src.dsl.engine.processors.generic import (
+from src.backend.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     BulkheadProcessor,
     FeatureFlagGuardProcessor,
@@ -121,14 +121,14 @@ from src.dsl.engine.processors.generic import (
     ShadowModeProcessor,
     SseSourceProcessor,
 )
-from src.dsl.engine.processors.integration import (
+from src.backend.dsl.engine.processors.integration import (
     EventPublishProcessor,
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
-from src.dsl.engine.processors.invoke import InvokeProcessor
-from src.dsl.engine.processors.notify import NotifyProcessor
-from src.dsl.engine.processors.patterns import (
+from src.backend.dsl.engine.processors.invoke import InvokeProcessor
+from src.backend.dsl.engine.processors.notify import NotifyProcessor
+from src.backend.dsl.engine.processors.patterns import (
     BatchWindowProcessor,
     DebounceProcessor,
     DeduplicateProcessor,
@@ -136,7 +136,7 @@ from src.dsl.engine.processors.patterns import (
     MergeProcessor,
     SwitchProcessor,
 )
-from src.dsl.engine.processors.rpa import (
+from src.backend.dsl.engine.processors.rpa import (
     ArchiveProcessor,
     DecryptProcessor,
     EmailComposeProcessor,
@@ -154,21 +154,21 @@ from src.dsl.engine.processors.rpa import (
     WordReadProcessor,
     WordWriteProcessor,
 )
-from src.dsl.engine.processors.rpa_banking import (
+from src.backend.dsl.engine.processors.rpa_banking import (
     AppiumMobileProcessor,
     CitrixSessionProcessor,
     EmailDrivenProcessor,
     KeystrokeReplayProcessor,
     TerminalEmulator3270Processor,
 )
-from src.dsl.engine.processors.scan_file import ScanFileProcessor
-from src.dsl.engine.processors.scraping import (
+from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
+from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
     PaginateProcessor,
     ScrapeProcessor,
 )
-from src.dsl.engine.processors.security import AuthValidateProcessor
-from src.dsl.engine.processors.streaming import (
+from src.backend.dsl.engine.processors.security import AuthValidateProcessor
+from src.backend.dsl.engine.processors.streaming import (
     ChannelPurgerProcessor,
     CorrelationIdProcessor,
     DurableSubscriberProcessor,
@@ -182,7 +182,7 @@ from src.dsl.engine.processors.streaming import (
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
-from src.dsl.engine.processors.web import (
+from src.backend.dsl.engine.processors.web import (
     ClickProcessor,
     ExtractProcessor,
     FillFormProcessor,

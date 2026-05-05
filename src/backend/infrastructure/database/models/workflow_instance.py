@@ -27,9 +27,9 @@ from typing import Any
 from sqlalchemy import BigInteger, DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.migrations._compat import json_b, uuid_t
-from src.infrastructure.database.models.base import BaseModel
-from src.infrastructure.database.tenant_filter import TenantMixin
+from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
+from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
 __all__ = ("WorkflowInstance", "WorkflowStatus")
 

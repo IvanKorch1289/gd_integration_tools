@@ -22,7 +22,7 @@ _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from src.services.dsl.builder_service import (  # noqa: E402
+from src.backend.services.dsl.builder_service import (  # noqa: E402
     DSLBuilderService,
     get_dsl_builder_service,
 )

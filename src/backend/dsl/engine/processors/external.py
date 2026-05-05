@@ -1,8 +1,8 @@
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("MCPToolProcessor", "AgentGraphProcessor", "CDCProcessor")
 
@@ -50,7 +50,7 @@ class AgentGraphProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.ai.ai_graph import build_and_run_agent
+        from src.backend.services.ai.ai_graph import build_and_run_agent
 
         body = exchange.in_message.body
         prompt = body if isinstance(body, str) else str(body)
@@ -100,7 +100,7 @@ class CDCProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if not self._subscribed:
-            from src.infrastructure.clients.external.cdc import get_cdc_client
+            from src.backend.infrastructure.clients.external.cdc import get_cdc_client
 
             client = get_cdc_client()
             sub_id = await client.subscribe(

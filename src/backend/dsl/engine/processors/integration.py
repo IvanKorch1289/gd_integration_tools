@@ -2,9 +2,9 @@
 
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "EventPublishProcessor",
@@ -30,7 +30,7 @@ class EventPublishProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from pydantic import BaseModel
 
-        from src.infrastructure.clients.messaging.event_bus import get_event_bus
+        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         if self._event_factory:
@@ -58,7 +58,7 @@ class MemoryLoadProcessor(BaseProcessor):
         session_id = exchange.in_message.headers.get(self._session_header)
         if not session_id:
             session_id = exchange.correlation_id
-        from src.services.ai.agent_memory import get_agent_memory_service
+        from src.backend.services.ai.agent_memory import get_agent_memory_service
 
         memory_svc = get_agent_memory_service()
         memory = await memory_svc.load_memory(session_id)
@@ -76,7 +76,7 @@ class MemorySaveProcessor(BaseProcessor):
         session_id = exchange.properties.get("_session_id")
         if not session_id:
             return
-        from src.services.ai.agent_memory import get_agent_memory_service
+        from src.backend.services.ai.agent_memory import get_agent_memory_service
 
         memory_svc = get_agent_memory_service()
         body = exchange.in_message.body
@@ -110,7 +110,7 @@ class AwaitReplyProcessor(BaseProcessor):
         self._payload_factory = payload_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.messaging.event_bus import get_event_bus
+        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         if self._payload_factory is not None:

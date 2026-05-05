@@ -44,7 +44,7 @@ def run(
 ):
     """Запуск FastAPI backend через выбранный ASGI-сервер.
 
-    Делегирует выбор бэкенда (uvicorn/granian) в ``src.main:run`` —
+    Делегирует выбор бэкенда (uvicorn/granian) в ``src.backend.main:run`` —
     управляется ``settings.app.server`` (env ``APP_SERVER``).
     """
     if host is not None:
@@ -56,7 +56,7 @@ def run(
     if server is not None:
         os.environ["APP_SERVER"] = server
 
-    cmd = [sys.executable, "-m", "src.main"]
+    cmd = [sys.executable, "-m", "src.backend.main"]
     typer.echo(
         f"Starting backend (server={os.environ.get('APP_SERVER', 'uvicorn')})..."
     )
@@ -71,7 +71,7 @@ def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
         "-m",
         "streamlit",
         "run",
-        "src/entrypoints/streamlit_app/app.py",
+        "src/frontend/streamlit_app/app.py",
         "--server.port",
         str(port),
         "--server.headless",
@@ -99,7 +99,7 @@ def run_all(
                 sys.executable,
                 "-m",
                 "uvicorn",
-                "src.main:app",
+                "src.backend.main:app",
                 "--host",
                 "0.0.0.0",  # noqa: S104  # CLI developer tool: dev-режим, listen на всех интерфейсах
                 "--port",
@@ -114,7 +114,7 @@ def run_all(
                 "-m",
                 "streamlit",
                 "run",
-                "src/entrypoints/streamlit_app/app.py",
+                "src/frontend/streamlit_app/app.py",
                 "--server.port",
                 str(frontend_port),
                 "--server.headless",
@@ -171,7 +171,7 @@ def make_migration(
     subprocess.run(cmd, check=True)  # noqa: S603  # CLI developer tool: cmd собран из sys.executable + literal alembic args + user-supplied message
     typer.echo(
         "Migration created. Проверь сгенерированный файл в "
-        "src/infrastructure/database/migrations/versions/ перед `migrate`."
+        "src/backend/infrastructure/database/migrations/versions/ перед `migrate`."
     )
 
 
@@ -208,7 +208,7 @@ def migration_current():
 def routes():
     """Список зарегистрированных DSL routes."""
     _bootstrap()
-    from src.dsl.commands.registry import route_registry
+    from src.backend.dsl.commands.registry import route_registry
 
     route_ids = route_registry.list_routes()
     for route_id in route_ids:
@@ -240,8 +240,8 @@ def actions(
     (Wave B — переход к обязательной декларации).
     """
     _bootstrap()
-    from src.dsl.commands.registry import action_handler_registry
-    from src.entrypoints.api.generator.specs import audit_action_specs
+    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.entrypoints.api.generator.specs import audit_action_specs
 
     action_list = sorted(action_handler_registry.list_actions())
     for action in action_list:
@@ -274,7 +274,7 @@ def actions(
 def services():
     """Список зарегистрированных сервисов."""
     _bootstrap()
-    from src.core.svcs_registry import list_services
+    from src.backend.core.svcs_registry import list_services
 
     names = sorted(list_services())
     for name in names:
@@ -293,14 +293,14 @@ def health():
     async def _check():
         checks = {}
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             checks["redis"] = await redis_client.check_connection()
         except Exception:
             checks["redis"] = False
 
         try:
-            from src.infrastructure.database.database import db_initializer
+            from src.backend.infrastructure.database.database import db_initializer
 
             checks["database"] = await db_initializer.check_connection()
         except Exception:
@@ -321,7 +321,7 @@ def health():
 @app.command()
 def breakers():
     """Состояние circuit breakers."""
-    from src.infrastructure.clients.external.circuit_breakers import breaker_registry
+    from src.backend.infrastructure.clients.external.circuit_breakers import breaker_registry
 
     for info in breaker_registry.get_all_status():
         state = info["state"]
@@ -350,7 +350,7 @@ def scaffold_service(name: str):
     class_name = name.capitalize() + "Service"
     content = f'''"""Сервис {name} — автогенерация через manage.py scaffold."""
 
-from src.infrastructure.decorators.singleton import singleton
+from src.backend.infrastructure.decorators.singleton import singleton
 
 __all__ = ("{class_name}", "get_{name}_service")
 
@@ -387,7 +387,7 @@ def get_{name}_service() -> {class_name}:
 def scaffold_processor(name: str):
     """Генерация DSL processor."""
     class_name = "".join(w.capitalize() for w in name.split("_")) + "Processor"
-    file_path = Path("src/dsl/engine/processors") / f"{name}.py"
+    file_path = Path("src/backend/dsl/engine/processors") / f"{name}.py"
     if file_path.exists():
         typer.echo(f"Processor {name} already exists!", err=True)
         raise typer.Exit(1)
@@ -396,9 +396,9 @@ def scaffold_processor(name: str):
 
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("{class_name}",)
 
@@ -489,8 +489,8 @@ def _import_schema_via_gateway(
     import asyncio
     from pathlib import Path
 
-    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-    from src.services.integrations import get_import_service
+    from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+    from src.backend.services.integrations import get_import_service
 
     content = Path(source_path).read_bytes()
     src_obj = ImportSource(kind=ImportSourceKind(kind), content=content, prefix=prefix)
@@ -543,7 +543,7 @@ def import_schema_wsdl(
 def list_tools() -> None:
     """Список зарегистрированных AI-инструментов."""
     _bootstrap()
-    from src.services.ai.tools import get_tool_registry
+    from src.backend.services.ai.tools import get_tool_registry
 
     registry = get_tool_registry()
     tools = registry.list()
@@ -563,7 +563,7 @@ def list_tools() -> None:
 @app.command("expose-tool")
 def expose_tool(
     service_class: str = typer.Argument(
-        ..., help="Dotted path класса сервиса (src.services.X.Y:ServiceCls)."
+        ..., help="Dotted path класса сервиса (src.backend.services.X.Y:ServiceCls)."
     ),
     method: str = typer.Argument(..., help="Имя метода сервиса."),
 ) -> None:
@@ -571,12 +571,12 @@ def expose_tool(
 
     Пример::
 
-        python manage.py expose-tool src.services.ops.analytics:AnalyticsService summarise
+        python manage.py expose-tool src.backend.services.ops.analytics:AnalyticsService summarise
     """
     _bootstrap()
     import importlib
 
-    from src.services.ai.tools import get_tool_registry
+    from src.backend.services.ai.tools import get_tool_registry
 
     if ":" not in service_class:
         typer.echo("Формат: <module>:<ClassName>", err=True)
@@ -623,9 +623,9 @@ def dsl_reload(
     _bootstrap()
     import asyncio
 
-    from src.core.config.settings import settings as app_settings
-    from src.dsl.commands.registry import route_registry
-    from src.dsl.yaml_watcher import DSLYamlWatcher
+    from src.backend.core.config.settings import settings as app_settings
+    from src.backend.dsl.commands.registry import route_registry
+    from src.backend.dsl.yaml_watcher import DSLYamlWatcher
 
     if route_id is None and not all_routes:
         typer.echo("Укажи --route-id <id> или --all", err=True)
@@ -639,7 +639,7 @@ def dsl_reload(
         if not path.exists():
             typer.echo(f"YAML не найден: {path}", err=True)
             raise typer.Exit(1)
-        from src.dsl.yaml_loader import load_pipeline_from_file
+        from src.backend.dsl.yaml_loader import load_pipeline_from_file
 
         try:
             pipeline = load_pipeline_from_file(path)
@@ -689,7 +689,7 @@ def dsl_write_yaml(
     DSLBuilderService). На staging/prod выходит с ошибкой.
     """
     _bootstrap()
-    from src.services.dsl.builder_service import DSLBuilderService
+    from src.backend.services.dsl.builder_service import DSLBuilderService
 
     svc = DSLBuilderService(store_dir=output.parent if output else None)
     if not svc.is_write_enabled() and not dry_run:
@@ -743,8 +743,8 @@ def dsl_migrate(
 
     import yaml
 
-    from src.core.config.settings import settings as app_settings
-    from src.dsl.versioning import apply_migrations
+    from src.backend.core.config.settings import settings as app_settings
+    from src.backend.dsl.versioning import apply_migrations
 
     target_dir = routes_dir or app_settings.dsl.routes_dir
     if not target_dir.exists():
@@ -803,8 +803,8 @@ def dsl_migrate(
 def validate(route_id: str):
     """Валидация DSL pipeline."""
     _bootstrap()
-    from src.dsl.commands.registry import route_registry
-    from src.dsl.engine.validation import pipeline_validator
+    from src.backend.dsl.commands.registry import route_registry
+    from src.backend.dsl.engine.validation import pipeline_validator
 
     pipeline = route_registry.get(route_id)
     result = pipeline_validator.validate(pipeline)
@@ -835,9 +835,9 @@ def validate(route_id: str):
 
 def _bootstrap():
     """Минимальная инициализация для introspection команд."""
-    from src.dsl.commands.setup import register_action_handlers
-    from src.dsl.routes import register_dsl_routes
-    from src.plugins.composition.service_setup import register_all_services
+    from src.backend.dsl.commands.setup import register_action_handlers
+    from src.backend.dsl.routes import register_dsl_routes
+    from src.backend.plugins.composition.service_setup import register_all_services
 
     register_all_services()
     register_action_handlers()
@@ -848,7 +848,7 @@ def _bootstrap():
     # ручным action handlers выше). Без этого ``manage.py actions`` не
     # отображал бы CRUD-action_id (``orders.list``/``orders.create`` и т.п.).
     try:
-        from src.entrypoints.api.v1.routers import get_v1_routers
+        from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
         get_v1_routers()
     except Exception as exc:  # noqa: BLE001, S110

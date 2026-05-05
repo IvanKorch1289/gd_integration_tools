@@ -175,7 +175,7 @@ def get_web_search_service() -> WebSearchService:
     _web_search = WebSearchService()
 
     try:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         perplexity_key = getattr(settings, "perplexity_api_key", None) or ""
         tavily_key = getattr(settings, "tavily_api_key", None) or ""

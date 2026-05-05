@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.di.module_registry import resolve_module
+from src.backend.core.di.module_registry import resolve_module
 
 __all__ = ("response_cache", "set_response_cache")
 

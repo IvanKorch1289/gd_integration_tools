@@ -37,7 +37,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.infrastructure.resilience.coordinator import (
+from src.backend.infrastructure.resilience.coordinator import (
     ComponentStatus,
     ResilienceCoordinator,
     get_resilience_coordinator,

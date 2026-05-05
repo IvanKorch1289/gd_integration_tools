@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.services.plugins.manifest_v11 import load_plugin_manifest
+from src.backend.services.plugins.manifest_v11 import load_plugin_manifest
 
 _MANIFEST_PATH = (
     Path(__file__).resolve().parents[4]

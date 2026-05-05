@@ -11,10 +11,10 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 if TYPE_CHECKING:
-    from src.services.io.search import SearchService
+    from src.backend.services.io.search import SearchService
 
 __all__ = ("OrderIndexer", "get_order_indexer")
 
@@ -105,7 +105,7 @@ class OrderIndexer:
 
 
 def _factory() -> OrderIndexer:
-    from src.services.io.search import get_search_service
+    from src.backend.services.io.search import get_search_service
 
     return OrderIndexer(get_search_service())
 

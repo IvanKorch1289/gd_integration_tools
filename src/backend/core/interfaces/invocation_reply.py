@@ -25,7 +25,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Protocol, runtime_checkable
 
-from src.core.interfaces.invoker import InvocationResponse
+from src.backend.core.interfaces.invoker import InvocationResponse
 
 __all__ = ("ReplyChannelKind", "InvocationReplyChannel", "ReplyChannelRegistryProtocol")
 

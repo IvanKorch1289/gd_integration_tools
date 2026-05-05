@@ -17,11 +17,11 @@ import logging
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.core.interfaces.invoker import InvocationResponse, InvocationStatus
+from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 
 __all__ = ("EmailReplyChannel", "EmailNotifier")
 
@@ -130,8 +130,10 @@ class EmailReplyChannel(InvocationReplyChannel):
         (например, в dev_light без SMTP).
         """
         try:
-            from src.core.config.settings import settings
-            from src.infrastructure.notifications.adapters.email import EmailAdapter
+            from src.backend.core.config.settings import settings
+            from src.backend.infrastructure.notifications.adapters.email import (
+                EmailAdapter,
+            )
 
             from_address = getattr(getattr(settings, "smtp", None), "username", None)
             if not from_address:

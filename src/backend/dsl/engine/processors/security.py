@@ -17,12 +17,12 @@ import importlib
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.auth import AuthContext, AuthMethod
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.auth import AuthContext, AuthMethod
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.context import ExecutionContext
 
 __all__ = ("AuthValidateProcessor",)
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # Путь модуля с verifier-реестром. Импортируется через importlib, чтобы
 # не нарушать архитектурную границу dsl→entrypoints (verifier'ы держат
 # FastAPI/Request, поэтому живут в entrypoints).
-_VERIFIERS_MODULE = "src.entrypoints.api.dependencies.auth_selector"
+_VERIFIERS_MODULE = "src.backend.entrypoints.api.dependencies.auth_selector"
 
 
 def _load_verifiers() -> dict[AuthMethod, Any]:

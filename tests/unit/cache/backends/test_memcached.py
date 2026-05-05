@@ -17,7 +17,9 @@ import pytest
 # aiomcache опционален — без него MemcachedBackend.__init__ бросает RuntimeError.
 pytest.importorskip("aiomcache")
 
-from src.infrastructure.cache.backends.memcached import MemcachedBackend  # noqa: E402
+from src.backend.infrastructure.cache.backends.memcached import (
+    MemcachedBackend,  # noqa: E402
+)
 
 
 @pytest.fixture

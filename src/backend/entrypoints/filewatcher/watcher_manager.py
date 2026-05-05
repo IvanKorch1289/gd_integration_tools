@@ -20,7 +20,7 @@ from uuid import uuid4
 
 from watchfiles import Change, awatch
 
-from src.dsl.service import get_dsl_service
+from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("WatcherManager", "WatcherSpec", "watcher_manager")
 

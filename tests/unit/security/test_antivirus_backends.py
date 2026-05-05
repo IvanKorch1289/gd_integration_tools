@@ -24,13 +24,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.core.interfaces.antivirus import AntivirusScanResult
-from src.infrastructure.antivirus.backends.clamav_tcp import ClamAVTcpBackend
-from src.infrastructure.antivirus.backends.clamav_unix import (
+from src.backend.core.interfaces.antivirus import AntivirusScanResult
+from src.backend.infrastructure.antivirus.backends.clamav_tcp import ClamAVTcpBackend
+from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     ClamAVUnixBackend,
     _parse_clamav_response,
 )
-from src.infrastructure.antivirus.backends.http import HttpAntivirusBackend
+from src.backend.infrastructure.antivirus.backends.http import HttpAntivirusBackend
 
 # ── HttpAntivirusBackend ───────────────────────────────────────────────────
 

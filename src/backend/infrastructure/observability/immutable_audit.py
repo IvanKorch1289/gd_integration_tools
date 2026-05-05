@@ -54,7 +54,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable
 
-from src.utilities.codecs.json import canonical_json_bytes, dumps_str
+from src.backend.utilities.codecs.json import canonical_json_bytes, dumps_str
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -118,7 +118,7 @@ class ImmutableAuditStore:
         # Fallback на глобальный secret_key; это не идеально (shared blast
         # radius), но лучше чем hardcoded default.
         try:
-            from src.core.config.settings import settings  # local import
+            from src.backend.core.config.settings import settings  # local import
 
             fallback = getattr(settings.secure, "secret_key", None)
             if fallback:

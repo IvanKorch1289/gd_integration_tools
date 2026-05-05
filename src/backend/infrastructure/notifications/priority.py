@@ -21,7 +21,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Final, Literal
 
-from src.core.config.pooling import PoolingProfile
+from src.backend.core.config.pooling import PoolingProfile
 
 _logger = logging.getLogger(__name__)
 

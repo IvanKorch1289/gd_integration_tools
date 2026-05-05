@@ -29,8 +29,8 @@ from typing import Any, Final, Literal
 
 import orjson
 
-from src.core.interfaces.log_sink import LogSink
-from src.infrastructure.resilience.breaker import (
+from src.backend.core.interfaces.log_sink import LogSink
+from src.backend.infrastructure.resilience.breaker import (
     Breaker,
     BreakerSpec,
     CircuitOpen,

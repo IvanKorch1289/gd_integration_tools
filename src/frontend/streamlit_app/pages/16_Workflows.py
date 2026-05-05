@@ -21,7 +21,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.entrypoints.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.api_client import get_api_client
 
 st.set_page_config(
     page_title="Workflows · gd_integration_tools", page_icon="🔁", layout="wide"

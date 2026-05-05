@@ -11,17 +11,20 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Header, Query, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from src.core.config.settings import settings
-from src.core.di.providers import get_model_enum_provider
-from src.core.enums.invocation import BrokerKind
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.entrypoints.api.generator.invocation import (
+from src.backend.core.config.settings import settings
+from src.backend.core.di.providers import get_model_enum_provider
+from src.backend.core.enums.invocation import BrokerKind
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.entrypoints.api.generator.invocation import (
     EventPublishSpec,
     InvocationSpec,
     default_payload_factory,
 )
-from src.schemas.base import EmailSchema
-from src.services.core.tech import get_tech_service
+from src.backend.schemas.base import EmailSchema
+from src.backend.services.core.tech import get_tech_service
 
 
 def get_model_enum() -> Any:

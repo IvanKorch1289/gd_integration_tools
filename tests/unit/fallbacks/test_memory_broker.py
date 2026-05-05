@@ -6,7 +6,9 @@ import asyncio
 
 import pytest
 
-from src.infrastructure.clients.messaging.memory_broker import InMemoryMessageBroker
+from src.backend.infrastructure.clients.messaging.memory_broker import (
+    InMemoryMessageBroker,
+)
 
 
 @pytest.mark.asyncio

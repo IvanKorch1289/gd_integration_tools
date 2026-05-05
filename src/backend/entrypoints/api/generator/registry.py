@@ -3,7 +3,7 @@
 Канонический модуль: ``app.dsl.commands.action_registry``.
 """
 
-from src.dsl.commands.action_registry import (
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     ActionHandlerSpec,
     action_handler_registry,

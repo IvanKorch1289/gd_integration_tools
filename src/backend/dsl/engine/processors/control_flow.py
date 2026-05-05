@@ -3,9 +3,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
 
 _cf_logger = logging.getLogger("dsl.control_flow")
 
@@ -363,7 +363,7 @@ class PipelineRefProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         result, error = await SubPipelineExecutor.execute_route(
             self._route_id,

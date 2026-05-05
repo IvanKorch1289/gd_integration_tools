@@ -23,16 +23,16 @@ from typing import Any
 
 import pytest
 
-from src.core.config.profile import AppProfileChoices
-from src.core.interfaces.log_sink import LogSink
-from src.infrastructure.logging import (
+from src.backend.core.config.profile import AppProfileChoices
+from src.backend.core.interfaces.log_sink import LogSink
+from src.backend.infrastructure.logging import (
     init_log_sinks,
     is_router_configured,
     reset_router,
     shutdown_log_sinks,
 )
-from src.infrastructure.logging.backends import ConsoleJsonLogSink
-from src.infrastructure.logging.router import (
+from src.backend.infrastructure.logging.backends import ConsoleJsonLogSink
+from src.backend.infrastructure.logging.router import (
     configure_router,
     get_router,
     route_to_sinks,

@@ -10,9 +10,12 @@
 
 from __future__ import annotations
 
-from src.core.decorators.limiting_callbacks import default_callback, default_identifier
-from src.infrastructure.clients.storage.redis import redis_client
-from src.infrastructure.external_apis.logging_service import app_logger
+from src.backend.core.decorators.limiting_callbacks import (
+    default_callback,
+    default_identifier,
+)
+from src.backend.infrastructure.clients.storage.redis import redis_client
+from src.backend.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("init_limiter",)
 

@@ -79,7 +79,7 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
     """
 
     async def resolver(payload: JSON | None = None) -> JSON:
-        from src.entrypoints.base import dispatch_action
+        from src.backend.entrypoints.base import dispatch_action
 
         try:
             data = await dispatch_action(
@@ -128,7 +128,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
     import strawberry
 
     if metadatas is None:
-        from src.dsl.commands.action_registry import action_handler_registry
+        from src.backend.dsl.commands.action_registry import action_handler_registry
 
         metadatas = action_handler_registry.list_metadata("graphql")
 

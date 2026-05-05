@@ -31,10 +31,13 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.yaml_loader import load_pipeline_from_yaml
-from src.dsl.yaml_store import YAMLStore
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.yaml_store import YAMLStore
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
 
 __all__ = ("router",)
 
@@ -51,7 +54,7 @@ def _yaml_store() -> YAMLStore:
     if raw:
         store_dir = Path(raw)
     else:
-        from src.core.config.base import app_base_settings
+        from src.backend.core.config.base import app_base_settings
 
         store_dir = Path(app_base_settings.root_dir) / "routes_store"
     return YAMLStore(store_dir)

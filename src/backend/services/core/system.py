@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.core.di.providers import (
+from src.backend.core.di.providers import (
     get_health_aggregator_provider,
     get_slo_tracker_provider,
 )
@@ -46,7 +46,7 @@ class SystemService:
     @property
     def tech(self) -> Any:
         if self._tech is None:
-            from src.services.core.tech import get_tech_service
+            from src.backend.services.core.tech import get_tech_service
 
             self._tech = get_tech_service()
         return self._tech
@@ -54,7 +54,7 @@ class SystemService:
     @property
     def admin(self) -> Any:
         if self._admin is None:
-            from src.services.core.admin import get_admin_service
+            from src.backend.services.core.admin import get_admin_service
 
             self._admin = get_admin_service()
         return self._admin

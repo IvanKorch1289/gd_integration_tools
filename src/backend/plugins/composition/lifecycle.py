@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from src.infrastructure.external_apis.logging_service import app_logger
+from src.backend.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("lifespan",)
 
@@ -19,11 +19,11 @@ async def _register_protocol_providers() -> None:
     соответствующая опциональная зависимость не установлена (например, нет
     ollama или langfuse), провайдер просто не регистрируется.
     """
-    from src.core.providers_registry import register_provider
+    from src.backend.core.providers_registry import register_provider
 
     # LLM провайдеры (работают если есть env-переменные с ключами).
     try:
-        from src.services.ai.ai_providers import (
+        from src.backend.services.ai.ai_providers import (
             ClaudeProvider,
             GeminiProvider,
             OllamaProvider,
@@ -41,7 +41,7 @@ async def _register_protocol_providers() -> None:
     # Позволяет бизнес-коду делать get_provider("exporter", "csv") и
     # подменять реализации (csv-по-другому, xlsx-через polars и т.п.).
     try:
-        from src.services.io.export_service import (
+        from src.backend.services.io.export_service import (
             CsvExporter,
             ExcelExporter,
             JsonExporter,
@@ -59,7 +59,7 @@ async def _register_protocol_providers() -> None:
 
     # Agent memory (MongoDB-backed, Wave 0.10).
     try:
-        from src.services.ai.agent_memory import get_agent_memory_service
+        from src.backend.services.ai.agent_memory import get_agent_memory_service
 
         memory_service = get_agent_memory_service()
         await memory_service.ensure_indexes()
@@ -69,14 +69,14 @@ async def _register_protocol_providers() -> None:
 
     # Wave 9: ensure_indexes для остальных Mongo-коллекций.
     try:
-        from src.services.notebooks import get_notebook_service
+        from src.backend.services.notebooks import get_notebook_service
 
         await get_notebook_service().ensure_indexes()
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Notebooks ensure_indexes skipped: %s", exc)
 
     try:
-        from src.services.ai.feedback.repository import get_feedback_repository
+        from src.backend.services.ai.feedback.repository import get_feedback_repository
 
         repo = get_feedback_repository()
         ensure = getattr(repo, "ensure_indexes", None)
@@ -86,7 +86,7 @@ async def _register_protocol_providers() -> None:
         app_logger.debug("ai_feedback ensure_indexes skipped: %s", exc)
 
     try:
-        from src.infrastructure.workflow.state_projector import (
+        from src.backend.infrastructure.workflow.state_projector import (
             get_workflow_state_projector,
         )
 
@@ -95,7 +95,7 @@ async def _register_protocol_providers() -> None:
         app_logger.debug("workflow_state ensure_indexes skipped: %s", exc)
 
     try:
-        from src.infrastructure.repositories.connector_configs_mongo import (
+        from src.backend.infrastructure.repositories.connector_configs_mongo import (
             get_connector_config_store,
         )
 
@@ -104,10 +104,10 @@ async def _register_protocol_providers() -> None:
         app_logger.debug("connector_configs ensure_indexes skipped: %s", exc)
 
     try:
-        from src.infrastructure.repositories.express_dialogs_mongo import (
+        from src.backend.infrastructure.repositories.express_dialogs_mongo import (
             get_express_dialog_store,
         )
-        from src.infrastructure.repositories.express_sessions_mongo import (
+        from src.backend.infrastructure.repositories.express_sessions_mongo import (
             get_express_session_store,
         )
 
@@ -118,7 +118,7 @@ async def _register_protocol_providers() -> None:
 
     # Wave 9.3: индексы Elasticsearch для logs/orders.
     try:
-        from src.services.io.indexers import get_log_indexer, get_order_indexer
+        from src.backend.services.io.indexers import get_log_indexer, get_order_indexer
 
         await get_log_indexer().ensure_index()
         await get_order_indexer().ensure_index()
@@ -128,7 +128,7 @@ async def _register_protocol_providers() -> None:
     # Wave 8.3: ensure 4 индексов для facets/aggregations API
     # (audit_logs / orders / documents / rag_chunks).
     try:
-        from src.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (
             get_elasticsearch_client,
         )
 
@@ -140,14 +140,14 @@ async def _register_protocol_providers() -> None:
 
     # Notification channels — каждый канал отдельно через адаптер.
     try:
-        from src.infrastructure.notifications.gateway import get_gateway
-        from src.services.ops.notification_adapters import (
+        from src.backend.infrastructure.notifications.gateway import get_gateway
+        from src.backend.services.ops.notification_adapters import (
             EmailNotificationAdapter,
             ExpressNotificationAdapter,
             TelegramNotificationAdapter,
             WebhookNotificationAdapter,
         )
-        from src.services.ops.notification_hub import get_notification_hub
+        from src.backend.services.ops.notification_hub import get_notification_hub
 
         register_provider("notifier", "email", EmailNotificationAdapter())
         register_provider("notifier", "express", ExpressNotificationAdapter())
@@ -163,7 +163,7 @@ async def _register_protocol_providers() -> None:
 
     # EventBus — для services/health/alert_subscriber и др. подписчиков.
     try:
-        from src.infrastructure.clients.messaging.event_bus import get_event_bus
+        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         register_provider("event_bus", "default", get_event_bus())
     except Exception as exc:  # noqa: BLE001
@@ -171,13 +171,13 @@ async def _register_protocol_providers() -> None:
 
     # Prompt store (in-memory fallback, при наличии LangFuse — он приоритетен).
     try:
-        from src.services.ai.prompt_registry import get_prompt_registry
+        from src.backend.services.ai.prompt_registry import get_prompt_registry
 
         register_provider("prompt_store", "default", get_prompt_registry())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Prompt store registration skipped: %s", exc)
 
-    from src.core.providers_registry import list_providers
+    from src.backend.core.providers_registry import list_providers
 
     app_logger.info("Protocol providers registered: %s", list_providers())
 
@@ -190,7 +190,7 @@ def _register_storage_singletons(app: FastAPI) -> None:
     ``app_state_singleton``; конкретный backend ставится здесь.
     """
     try:
-        from src.infrastructure.repositories.ai_feedback_mongo import (
+        from src.backend.infrastructure.repositories.ai_feedback_mongo import (
             MongoFeedbackRepository,
         )
 
@@ -199,28 +199,30 @@ def _register_storage_singletons(app: FastAPI) -> None:
         app_logger.debug("MongoFeedbackRepository registration skipped: %s", exc)
 
     try:
-        from src.infrastructure.repositories.notebooks_mongo import (
+        from src.backend.infrastructure.repositories.notebooks_mongo import (
             MongoNotebookRepository,
         )
-        from src.services.notebooks.service import NotebookService
+        from src.backend.services.notebooks.service import NotebookService
 
         app.state.notebook_service = NotebookService(MongoNotebookRepository())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("MongoNotebookRepository registration skipped: %s", exc)
 
     try:
-        from src.infrastructure.clients.storage.vector_store import get_vector_store
-        from src.services.ai.rag_service import RAGService
+        from src.backend.infrastructure.clients.storage.vector_store import (
+            get_vector_store,
+        )
+        from src.backend.services.ai.rag_service import RAGService
 
         app.state.rag_service = RAGService(store=get_vector_store())
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("RAGService registration skipped: %s", exc)
 
     try:
-        from src.infrastructure.clients.storage.elasticsearch import (
+        from src.backend.infrastructure.clients.storage.elasticsearch import (
             get_elasticsearch_client,
         )
-        from src.services.io.search import SearchService
+        from src.backend.services.io.search import SearchService
 
         app.state.search_service = SearchService(client=get_elasticsearch_client())
     except Exception as exc:  # noqa: BLE001
@@ -239,8 +241,8 @@ def _validate_cache_layers() -> None:
     — лучше не запустить приложение, чем работать с неконсистентной
     инвалидацией кэша.
     """
-    from src.infrastructure.cache import cache_config_registry
-    from src.infrastructure.cache.validator import CacheLayerValidator
+    from src.backend.infrastructure.cache import cache_config_registry
+    from src.backend.infrastructure.cache.validator import CacheLayerValidator
 
     CacheLayerValidator().validate(cache_config_registry)
     app_logger.info(
@@ -259,7 +261,7 @@ def _bootstrap_snapshot_job(app: FastAPI) -> None:
     ``snapshot_age_seconds``).
     """
     try:
-        from src.core.config.settings import settings as app_settings
+        from src.backend.core.config.settings import settings as app_settings
 
         if not app_settings.snapshot.enabled:
             app_logger.info(
@@ -267,11 +269,13 @@ def _bootstrap_snapshot_job(app: FastAPI) -> None:
             )
             return
 
-        from src.infrastructure.resilience.snapshot_job import (
+        from src.backend.infrastructure.resilience.snapshot_job import (
             register_snapshot_job,
             run_snapshot_now,
         )
-        from src.infrastructure.scheduler.scheduler_manager import scheduler_manager
+        from src.backend.infrastructure.scheduler.scheduler_manager import (
+            scheduler_manager,
+        )
 
         if app_settings.snapshot.run_on_startup:
             try:
@@ -296,15 +300,19 @@ def _bootstrap_resilience_coordinator(app: FastAPI) -> None:
     компонентов. Реальные wiring'и подставляются в W26.3/W26.4.
     """
     try:
-        from src.core.config.settings import settings as app_settings
-        from src.infrastructure.application.health_aggregator import (
+        from src.backend.core.config.settings import settings as app_settings
+        from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
-        from src.infrastructure.resilience.coordinator import get_resilience_coordinator
-        from src.infrastructure.resilience.health import (
+        from src.backend.infrastructure.resilience.coordinator import (
+            get_resilience_coordinator,
+        )
+        from src.backend.infrastructure.resilience.health import (
             register_resilience_health_checks,
         )
-        from src.infrastructure.resilience.registration import register_all_components
+        from src.backend.infrastructure.resilience.registration import (
+            register_all_components,
+        )
 
         coordinator = get_resilience_coordinator()
         register_all_components(coordinator, app_settings.resilience)
@@ -323,18 +331,18 @@ async def _bootstrap_v11_plugin_loader(app: FastAPI) -> None:
     Параллельно с Wave 4.4 PluginLoader (``app.state.plugin_loader``);
     падение V11-loader не валит startup.
     """
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     if not app_settings.v11.plugin_loader_enabled:
         app_logger.info("V11 PluginLoader disabled (V11_PLUGIN_LOADER_ENABLED=false)")
         return
 
     try:
-        from src.core.security.capabilities import CapabilityGate
-        from src.dsl.commands.action_registry import action_handler_registry
-        from src.dsl.engine.plugin_registry import get_processor_plugin_registry
-        from src.services.plugins.loader_v11 import PluginLoaderV11
-        from src.services.plugins.registries import (
+        from src.backend.core.security.capabilities import CapabilityGate
+        from src.backend.dsl.commands.action_registry import action_handler_registry
+        from src.backend.dsl.engine.plugin_registry import get_processor_plugin_registry
+        from src.backend.services.plugins.loader_v11 import PluginLoaderV11
+        from src.backend.services.plugins.registries import (
             ActionRegistryAdapter,
             ProcessorRegistryAdapter,
             get_repository_hook_registry,
@@ -370,7 +378,7 @@ async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
     делает invariant-check ``capabilities ⊆ plugins ∪ public-core`` и
     регистрирует pipeline-файлы через ``route_registry``.
     """
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     if not app_settings.v11.route_loader_enabled:
         app_logger.info("V11 RouteLoader disabled (V11_ROUTE_LOADER_ENABLED=false)")
@@ -380,16 +388,16 @@ async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
     if gate is None:
         # RouteLoader без gate работать не может; используем чистый
         # gate (route может не использовать capabilities).
-        from src.core.security.capabilities import CapabilityGate
+        from src.backend.core.security.capabilities import CapabilityGate
 
         gate = CapabilityGate()
         app.state.capability_gate = gate
 
     try:
-        from src.core.security.capabilities import build_default_vocabulary
-        from src.dsl.commands.registry import route_registry
-        from src.dsl.yaml_loader import load_pipeline_from_file
-        from src.services.routes.loader import InstalledPlugin, RouteLoader
+        from src.backend.core.security.capabilities import build_default_vocabulary
+        from src.backend.dsl.commands.registry import route_registry
+        from src.backend.dsl.yaml_loader import load_pipeline_from_file
+        from src.backend.services.routes.loader import InstalledPlugin, RouteLoader
 
         # installed_plugins из V11 PluginLoader (если поднят).
         installed: dict[str, InstalledPlugin] = {}
@@ -464,7 +472,7 @@ async def _start_v11_hot_reload(app: FastAPI) -> None:
     """
     import asyncio
 
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     if not app_settings.v11.hot_reload_enabled:
         app_logger.info("V11 hot-reload disabled (V11_HOT_RELOAD_ENABLED=false)")
@@ -545,15 +553,15 @@ async def _start_dsl_yaml_watcher(app: FastAPI) -> None:
     при изменении файлов. На dev_light/тестах флаг по умолчанию выключен —
     startup продолжается без watcher'а.
     """
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     if not app_settings.dsl.hot_reload_enabled:
         app_logger.info("DSL hot-reload disabled (DSL_HOT_RELOAD_ENABLED=false)")
         return
 
     try:
-        from src.dsl.commands.registry import route_registry
-        from src.dsl.yaml_watcher import DSLYamlWatcher
+        from src.backend.dsl.commands.registry import route_registry
+        from src.backend.dsl.yaml_watcher import DSLYamlWatcher
 
         watcher = DSLYamlWatcher(
             routes_dir=app_settings.dsl.routes_dir,
@@ -582,22 +590,22 @@ async def lifespan(app: FastAPI):
     """
     Управляет жизненным циклом приложения FastAPI.
     """
-    from src.dsl.commands.setup import register_action_handlers
-    from src.dsl.routes import register_dsl_routes
-    from src.plugins.composition.service_setup import register_all_services
-    from src.plugins.composition.setup_infra import ending, starting
+    from src.backend.dsl.commands.setup import register_action_handlers
+    from src.backend.dsl.routes import register_dsl_routes
+    from src.backend.plugins.composition.service_setup import register_all_services
+    from src.backend.plugins.composition.setup_infra import ending, starting
 
     app_logger.info("Запуск приложения...")
     startup_completed = False
 
     try:
-        from src.plugins.composition.di import register_app_state
+        from src.backend.plugins.composition.di import register_app_state
 
         # Wave A: Sentry init выполняется в самом начале lifespan, чтобы
         # последующие падения регистрации сервисов попадали в error tracking.
         # Без SENTRY_DSN init возвращает False и не блокирует старт.
         try:
-            from src.infrastructure.observability.sentry_init import init_sentry
+            from src.backend.infrastructure.observability.sentry_init import init_sentry
 
             init_sentry()
         except Exception as sentry_exc:  # noqa: BLE001
@@ -612,7 +620,7 @@ async def lifespan(app: FastAPI):
         # Падение инициализации не должно блокировать старт — приложение
         # продолжит работать с legacy stdlib-логированием.
         try:
-            from src.infrastructure.logging import init_log_sinks
+            from src.backend.infrastructure.logging import init_log_sinks
 
             init_log_sinks()
         except Exception as log_exc:  # noqa: BLE001
@@ -641,7 +649,7 @@ async def lifespan(app: FastAPI):
         try:
             from pathlib import Path
 
-            from src.services.plugins import get_plugin_loader
+            from src.backend.services.plugins import get_plugin_loader
 
             loader = get_plugin_loader()
             plugins_dir = Path("plugins")
@@ -671,7 +679,7 @@ async def lifespan(app: FastAPI):
         await _start_v11_hot_reload(app)
 
         try:
-            from src.workflows.outbox_worker import start_outbox_worker
+            from src.backend.workflows.outbox_worker import start_outbox_worker
 
             start_outbox_worker(interval_seconds=5, batch_size=100)
         except Exception as exc:  # noqa: BLE001
@@ -682,8 +690,8 @@ async def lifespan(app: FastAPI):
         startup_completed = True
         app.state.infrastructure_ready = True
 
-        from src.dsl.commands.registry import action_handler_registry
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.dsl.registry import route_registry
 
         app_logger.info(
             "Приложение успешно запущено: %d actions, %d DSL-маршрутов",
@@ -713,7 +721,7 @@ async def lifespan(app: FastAPI):
         await _stop_dsl_yaml_watcher(app)
 
         try:
-            from src.workflows.outbox_worker import stop_outbox_worker
+            from src.backend.workflows.outbox_worker import stop_outbox_worker
 
             await stop_outbox_worker()
         except Exception as worker_exc:  # noqa: BLE001
@@ -748,7 +756,7 @@ async def lifespan(app: FastAPI):
         # после ``ending()`` и финального лога, чтобы зафиксировать в
         # sink-ах все события штатной остановки.
         try:
-            from src.infrastructure.logging import shutdown_log_sinks
+            from src.backend.infrastructure.logging import shutdown_log_sinks
 
             await shutdown_log_sinks()
         except Exception as sink_exc:  # noqa: BLE001

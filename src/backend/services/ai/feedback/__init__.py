@@ -16,17 +16,17 @@
 
 from __future__ import annotations
 
-from src.services.ai.feedback.feedback_indexer import (
+from src.backend.services.ai.feedback.feedback_indexer import (
     FeedbackIndexer,
     FeedbackIndexResult,
     get_feedback_indexer,
 )
-from src.services.ai.feedback.feedback_service import (
+from src.backend.services.ai.feedback.feedback_service import (
     AIFeedbackService,
     get_ai_feedback_service,
 )
-from src.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
-from src.services.ai.feedback.repository import (
+from src.backend.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
+from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,
     InMemoryFeedbackRepository,
     get_feedback_repository,

@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable, Literal, Sequence
 from fastapi import status
 from pydantic import BaseModel
 
-from src.entrypoints.api.generator.invocation import InvocationSpec
+from src.backend.entrypoints.api.generator.invocation import InvocationSpec
 
 __all__ = (
     "HttpMethod",

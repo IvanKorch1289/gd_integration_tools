@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.interfaces.import_gateway import ImportSourceKind
-from src.infrastructure.import_gateway import build_import_gateway
+from src.backend.core.interfaces.import_gateway import ImportSourceKind
+from src.backend.infrastructure.import_gateway import build_import_gateway
 
 
 @pytest.mark.parametrize("kind", list(ImportSourceKind))

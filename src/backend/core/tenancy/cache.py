@@ -17,10 +17,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.tenancy import current_tenant
+from src.backend.core.tenancy import current_tenant
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.core.interfaces.cache import CacheBackend
+    from src.backend.core.interfaces.cache import CacheBackend
 
 __all__ = ("TenantNamespacedCache", "build_tenant_key", "DEFAULT_TENANT_PREFIX")
 

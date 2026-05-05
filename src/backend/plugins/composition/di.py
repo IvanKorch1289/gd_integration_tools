@@ -21,22 +21,26 @@ from typing import TYPE_CHECKING
 
 from fastapi import Request
 
-from src.core.di import app_state_singleton, set_app_ref
-from src.core.di.app_state import _get_from_app_state
+from src.backend.core.di import app_state_singleton, set_app_ref
+from src.backend.core.di.app_state import _get_from_app_state
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
-    from src.core.interfaces.watermark_store import WatermarkStore
-    from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
-    from src.dsl.engine.tracer import ExecutionTracer
-    from src.dsl.engine.versioning import PipelineVersionManager
-    from src.entrypoints.mqtt.mqtt_handler import MqttHandler
-    from src.infrastructure.application.slo_tracker import SLOTracker
-    from src.infrastructure.application.vault_refresher import VaultSecretRefresher
-    from src.infrastructure.clients.external.langfuse_client import LangFuseClient
-    from src.infrastructure.database.pool_monitor import PoolMonitor
-    from src.infrastructure.security.api_key_manager import APIKeyManager
+    from src.backend.core.interfaces.watermark_store import WatermarkStore
+    from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
+    from src.backend.dsl.engine.tracer import ExecutionTracer
+    from src.backend.dsl.engine.versioning import PipelineVersionManager
+    from src.backend.entrypoints.mqtt.mqtt_handler import MqttHandler
+    from src.backend.infrastructure.application.slo_tracker import SLOTracker
+    from src.backend.infrastructure.application.vault_refresher import (
+        VaultSecretRefresher,
+    )
+    from src.backend.infrastructure.clients.external.langfuse_client import (
+        LangFuseClient,
+    )
+    from src.backend.infrastructure.database.pool_monitor import PoolMonitor
+    from src.backend.infrastructure.security.api_key_manager import APIKeyManager
 
 __all__ = (
     "register_app_state",
@@ -68,13 +72,15 @@ def register_app_state(app: FastAPI) -> None:
     """
     set_app_ref(app)
 
-    from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
-    from src.dsl.engine.tracer import ExecutionTracer
-    from src.dsl.engine.versioning import PipelineVersionManager
-    from src.infrastructure.application.slo_tracker import SLOTracker
-    from src.infrastructure.clients.external.langfuse_client import LangFuseClient
-    from src.infrastructure.database.pool_monitor import PoolMonitor
-    from src.infrastructure.security.api_key_manager import APIKeyManager
+    from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
+    from src.backend.dsl.engine.tracer import ExecutionTracer
+    from src.backend.dsl.engine.versioning import PipelineVersionManager
+    from src.backend.infrastructure.application.slo_tracker import SLOTracker
+    from src.backend.infrastructure.clients.external.langfuse_client import (
+        LangFuseClient,
+    )
+    from src.backend.infrastructure.database.pool_monitor import PoolMonitor
+    from src.backend.infrastructure.security.api_key_manager import APIKeyManager
 
     app.state.api_key_manager = APIKeyManager()
     app.state.tracer = ExecutionTracer()
@@ -87,32 +93,34 @@ def register_app_state(app: FastAPI) -> None:
     # W22 техдолг: composition root для Invoker + ReplyChannelRegistry.
     # Concrete реализация регистрируется здесь, чтобы services/execution
     # и entrypoints зависели только от Protocol через core/di.dependencies.
-    from src.infrastructure.messaging.invocation_replies import (
+    from src.backend.infrastructure.messaging.invocation_replies import (
         get_reply_channel_registry,
     )
-    from src.services.execution.invoker import Invoker
+    from src.backend.services.execution.invoker import Invoker
 
     app.state.reply_registry = get_reply_channel_registry()
     app.state.invoker = Invoker()
 
-    from src.infrastructure.application.vault_refresher import VaultSecretRefresher
+    from src.backend.infrastructure.application.vault_refresher import (
+        VaultSecretRefresher,
+    )
 
     app.state.vault_refresher = VaultSecretRefresher()
 
     # W14.5: durable WatermarkStore — выбор бэкенда (memory/postgres) по
     # ``WatermarkSettings``. PG-вариант берёт главный session_manager;
     # memory не требует БД и пригоден для dev_light/тестов.
-    from src.core.config.services.watermark import (
+    from src.backend.core.config.services.watermark import (
         watermark_settings as _watermark_settings,
     )
-    from src.infrastructure.database.session_manager import main_session_manager
-    from src.infrastructure.watermark.factory import create_watermark_store
+    from src.backend.infrastructure.database.session_manager import main_session_manager
+    from src.backend.infrastructure.watermark.factory import create_watermark_store
 
     app.state.watermark_store = create_watermark_store(
         _watermark_settings, session_manager=main_session_manager
     )
 
-    from src.entrypoints.mqtt.mqtt_handler import MqttHandler, MqttSettings
+    from src.backend.entrypoints.mqtt.mqtt_handler import MqttHandler, MqttSettings
 
     try:
         mqtt_settings = MqttSettings()

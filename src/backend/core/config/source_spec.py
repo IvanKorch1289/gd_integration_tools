@@ -30,8 +30,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.core.interfaces.invoker import InvocationMode
-from src.core.interfaces.source import SourceKind
+from src.backend.core.interfaces.invoker import InvocationMode
+from src.backend.core.interfaces.source import SourceKind
 
 __all__ = ("SourceSpec", "SourcesSpecFile")
 

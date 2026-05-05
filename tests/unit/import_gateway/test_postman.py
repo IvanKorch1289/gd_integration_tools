@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.core.models.connector_spec import AuthSchemeKind
-from src.infrastructure.import_gateway.postman import PostmanImportGateway
+from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+from src.backend.core.models.connector_spec import AuthSchemeKind
+from src.backend.infrastructure.import_gateway.postman import PostmanImportGateway
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "postman"
 

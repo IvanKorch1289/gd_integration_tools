@@ -22,8 +22,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.migrations._compat import json_b
-from src.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.migrations._compat import json_b
+from src.backend.infrastructure.database.models.base import BaseModel
 
 __all__ = ("DslSnapshot",)
 

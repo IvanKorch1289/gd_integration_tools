@@ -7,7 +7,7 @@
 См. ``docs/reference/dsl/versioning.md`` и ADR-034.
 """
 
-from src.dsl.versioning.migrations import (
+from src.backend.dsl.versioning.migrations import (
     CURRENT_VERSION,
     DEFAULT_LEGACY_VERSION,
     DSLMigration,

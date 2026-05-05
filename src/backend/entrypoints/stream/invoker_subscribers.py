@@ -22,8 +22,11 @@ from typing import Any
 from faststream.rabbit.fastapi import RabbitMessage
 from faststream.redis.fastapi import Redis, RedisMessage
 
-from src.core.config.settings import settings
-from src.core.di.providers import get_stream_client_provider, get_stream_logger_provider
+from src.backend.core.config.settings import settings
+from src.backend.core.di.providers import (
+    get_stream_client_provider,
+    get_stream_logger_provider,
+)
 
 __all__ = ("handle_redis_invocation", "handle_rabbit_invocation")
 
@@ -63,7 +66,7 @@ async def _dispatch_invocation_message(
     в любом случае, чтобы избежать infinite redelivery — повторная попытка
     через :class:`InvocationStatus.ERROR` в reply-канале.
     """
-    from src.services.execution.invoker import _deserialize_request, get_invoker
+    from src.backend.services.execution.invoker import _deserialize_request, get_invoker
 
     try:
         request = _deserialize_request(body)

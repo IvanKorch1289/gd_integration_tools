@@ -44,11 +44,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.database.models.workflow_instance import WorkflowStatus
-from src.infrastructure.workflow.event_store import WorkflowEventStore
-from src.infrastructure.workflow.state import WorkflowState
-from src.infrastructure.workflow.state_store import (
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.backend.infrastructure.workflow.event_store import WorkflowEventStore
+from src.backend.infrastructure.workflow.state import WorkflowState
+from src.backend.infrastructure.workflow.state_store import (
     WorkflowInstanceRow,
     WorkflowInstanceStore,
 )

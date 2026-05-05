@@ -20,13 +20,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterable
 
-    from src.dsl.commands.action_registry import ActionHandlerRegistry
-    from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
+    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
 
 __all__ = (
     "ActionRegistryAdapter",
@@ -202,8 +202,8 @@ class ActionRegistryAdapter:
         Если `spec` предоставлен (`ActionMetadata`) — используется как есть,
         иначе создаётся минимальный stub.
         """
-        from src.core.interfaces.action_dispatcher import ActionMetadata
-        from src.dsl.commands.action_registry import ActionHandlerSpec
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         metadata = (
             spec
@@ -255,7 +255,7 @@ class ProcessorRegistryAdapter:
 
     def register_class(self, name: str, cls: type) -> None:
         """Регистрирует класс DSL-процессора."""
-        from src.dsl.engine.processors import BaseProcessor
+        from src.backend.dsl.engine.processors import BaseProcessor
 
         if not (isinstance(cls, type) and issubclass(cls, BaseProcessor)):
             raise TypeError(

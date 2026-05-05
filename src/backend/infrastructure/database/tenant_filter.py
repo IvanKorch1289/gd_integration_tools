@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import String, event
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from src.infrastructure.observability.correlation import get_tenant_id
+from src.backend.infrastructure.observability.correlation import get_tenant_id
 
 __all__ = ("TenantMixin", "apply_tenant_filter")
 

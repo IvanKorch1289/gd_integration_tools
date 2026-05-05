@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.infrastructure.storage.s3_cache import S3CacheAdapter
+from src.backend.infrastructure.storage.s3_cache import S3CacheAdapter
 
 
 class _FakeS3:

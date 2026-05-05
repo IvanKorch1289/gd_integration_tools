@@ -10,9 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.services.notebooks.models import Notebook, NotebookVersion
-from src.services.notebooks.repository import (
+from src.backend.core.di import app_state_singleton
+from src.backend.services.notebooks.models import Notebook, NotebookVersion
+from src.backend.services.notebooks.repository import (
     InMemoryNotebookRepository,
     NotebookRepository,
 )
@@ -107,7 +107,7 @@ class NotebookService:
 def _trigger_rag_index(notebook: Notebook) -> None:
     """Best-effort fire-and-forget индексация в RAG. Тихо игнорирует ошибки."""
     try:
-        from src.services.notebooks.indexer import get_notebook_indexer
+        from src.backend.services.notebooks.indexer import get_notebook_indexer
 
         get_notebook_indexer().index_one_fire_and_forget(notebook)
     except Exception as exc:  # noqa: BLE001
@@ -119,7 +119,7 @@ def _trigger_rag_delete(notebook_id: str) -> None:
     try:
         import asyncio
 
-        from src.services.notebooks.indexer import get_notebook_indexer
+        from src.backend.services.notebooks.indexer import get_notebook_indexer
 
         asyncio.create_task(get_notebook_indexer().delete_one(notebook_id))
     except Exception as exc:  # noqa: BLE001

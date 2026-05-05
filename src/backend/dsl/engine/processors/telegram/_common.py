@@ -11,10 +11,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # Переиспользуем resolve_value из Express — единый формат точечного пути.
-from src.dsl.engine.processors.express._common import resolve_value
+from src.backend.dsl.engine.processors.express._common import resolve_value
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.external.telegram_bot import TelegramBotClient
+    from src.backend.infrastructure.clients.external.telegram_bot import (
+        TelegramBotClient,
+    )
 
 __all__ = ("get_telegram_client", "resolve_value")
 
@@ -31,8 +33,8 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
     Raises:
         RuntimeError: Если Telegram отключён или бот не найден.
     """
-    from src.core.config.telegram import telegram_bot_settings
-    from src.infrastructure.clients.external.telegram_bot import (
+    from src.backend.core.config.telegram import telegram_bot_settings
+    from src.backend.infrastructure.clients.external.telegram_bot import (
         TelegramBotClient,
         TelegramBotConfig,
     )

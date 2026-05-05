@@ -9,6 +9,6 @@ duck-typing (``getattr`` с дефолтами), чтобы оставаться
 слоя ``core/``.
 """
 
-from src.core.actions.spec_to_metadata import action_spec_to_metadata
+from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata
 
 __all__ = ("action_spec_to_metadata",)

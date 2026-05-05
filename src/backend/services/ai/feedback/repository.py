@@ -16,8 +16,8 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Protocol, runtime_checkable
 
-from src.core.di import app_state_singleton
-from src.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
+from src.backend.core.di import app_state_singleton
+from src.backend.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
 
 __all__ = (
     "FeedbackRepository",

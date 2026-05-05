@@ -9,16 +9,16 @@ from fastapi_filter import FilterDepends
 from fastapi_pagination import Params
 from pydantic import BaseModel
 
-from src.core.actions.spec_to_metadata import action_spec_to_metadata
-from src.core.enums.ordering import OrderingTypeChoices
-from src.core.interfaces.action_dispatcher import ActionMetadata
-from src.dsl.commands.action_registry import action_handler_registry
-from src.entrypoints.api.generator.marshaller import (
+from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata
+from src.backend.core.enums.ordering import OrderingTypeChoices
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.entrypoints.api.generator.marshaller import (
     decorate_endpoint,
     extract_invocation_kwargs,
     prepare_call_kwargs,
 )
-from src.entrypoints.api.generator.reflection import (
+from src.backend.entrypoints.api.generator.reflection import (
     body_parameter,
     build_invocation_parameters,
     build_model_parameters,
@@ -28,13 +28,13 @@ from src.entrypoints.api.generator.reflection import (
     request_parameter,
     required_query_parameter,
 )
-from src.entrypoints.api.generator.specs import (
+from src.backend.entrypoints.api.generator.specs import (
     ActionSpec,
     CrudSpec,
     HttpMethod,
     RouteDecorator,
 )
-from src.schemas.invocation import (
+from src.backend.schemas.invocation import (
     InvocationOptionsSchema,
     InvocationResultSchema,
     InvokeMode,
@@ -51,7 +51,7 @@ def _resolve_action_bus_service():
     это сохраняет lazy-семантику (модуль может отсутствовать в
     усечённой dev_light-сборке) и убирает layer violation.
     """
-    from src.core.di.providers import get_action_bus_service_provider
+    from src.backend.core.di.providers import get_action_bus_service_provider
 
     return get_action_bus_service_provider()
 
@@ -125,7 +125,7 @@ def _action_result_to_response(result: Any) -> Any:
     """
     # Импорт лениво — чтобы не плодить циклические зависимости
     # entrypoints → core (этот файл импортируется на старте).
-    from src.core.interfaces.action_dispatcher import ActionResult
+    from src.backend.core.interfaces.action_dispatcher import ActionResult
 
     if not isinstance(result, ActionResult):
         # Совместимость на случай, если dispatcher вернул что-то иное
@@ -172,8 +172,8 @@ async def _dispatch_via_gateway(
     откатывается на ``fallback`` (старый прямой путь), чтобы feature-flag
     включение не ломало незарегистрированные эндпоинты.
     """
-    from src.core.di.contexts import make_dispatch_context
-    from src.core.di.providers import get_action_dispatcher_provider
+    from src.backend.core.di.contexts import make_dispatch_context
+    from src.backend.core.di.providers import get_action_dispatcher_provider
 
     dispatcher = get_action_dispatcher_provider()
     if not dispatcher.is_registered(action):

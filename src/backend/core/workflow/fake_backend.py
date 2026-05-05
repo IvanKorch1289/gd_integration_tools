@@ -19,7 +19,11 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.core.workflow.backend import WorkflowBackend, WorkflowHandle, WorkflowResult
+from src.backend.core.workflow.backend import (
+    WorkflowBackend,
+    WorkflowHandle,
+    WorkflowResult,
+)
 
 __all__ = ("FakeWorkflowBackend",)
 

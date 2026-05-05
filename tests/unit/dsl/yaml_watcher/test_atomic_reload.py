@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from src.dsl.commands.registry import RouteRegistry
-from src.dsl.yaml_watcher import DSLYamlWatcher
+from src.backend.dsl.commands.registry import RouteRegistry
+from src.backend.dsl.yaml_watcher import DSLYamlWatcher
 
 
 class _StubPipeline:

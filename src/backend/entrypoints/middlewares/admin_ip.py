@@ -4,7 +4,7 @@ from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from src.core.config.settings import settings
+from src.backend.core.config.settings import settings
 
 __all__ = ("IPRestrictionMiddleware",)
 
@@ -15,7 +15,7 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
         from re import compile
 
-        from src.utilities.converters import convert_pattern
+        from src.backend.utilities.converters import convert_pattern
 
         super().__init__(app)
         self.allowed_ips: set[str] = settings.secure.admin_ips

@@ -21,17 +21,22 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from src.core.di.dependencies import get_invoker_dep, get_reply_registry
-from src.core.interfaces.invoker import (
+from src.backend.core.di.dependencies import get_invoker_dep, get_reply_registry
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
 )
-from src.schemas.invocation_api import InvocationRequestSchema, InvocationResponseSchema
+from src.backend.schemas.invocation_api import (
+    InvocationRequestSchema,
+    InvocationResponseSchema,
+)
 
 if TYPE_CHECKING:
-    from src.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
-    from src.core.interfaces.invoker import Invoker
+    from src.backend.core.interfaces.invocation_reply import (
+        ReplyChannelRegistryProtocol,
+    )
+    from src.backend.core.interfaces.invoker import Invoker
 
 __all__ = ("router",)
 

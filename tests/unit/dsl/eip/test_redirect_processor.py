@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.proxy.redirect import RedirectProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.proxy.redirect import RedirectProcessor
 
 
 def _make_exchange(*, body=None, headers=None, properties=None) -> Exchange:

@@ -11,9 +11,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ScrapeProcessor", "PaginateProcessor", "ApiProxyProcessor")
 
@@ -143,7 +143,7 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from src.infrastructure.clients.transport.http import HttpClient
+            from src.backend.infrastructure.clients.transport.http import HttpClient
 
             client = HttpClient()
             response = await client.make_request(
@@ -211,7 +211,7 @@ class PaginateProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import HttpClient
 
         url = self._start_url
         if not url:
@@ -336,7 +336,7 @@ class ApiProxyProcessor(BaseProcessor):
         self._timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import HttpClient
 
         path = self._path
         if "{" in path and isinstance(exchange.in_message.body, dict):

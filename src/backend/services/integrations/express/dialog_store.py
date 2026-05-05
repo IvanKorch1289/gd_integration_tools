@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.models.express import ExpressDialog, ExpressMessage
+from src.backend.core.models.express import ExpressDialog, ExpressMessage
 
 __all__ = ("ExpressMessage", "ExpressDialog", "ExpressDialogStore")
 

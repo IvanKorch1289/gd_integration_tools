@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from email.message import Message
 from typing import Any
 
-from src.dsl.service import get_dsl_service
+from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("ImapMonitor", "ImapConfig")
 
@@ -70,7 +70,7 @@ class ImapMonitor:
         ref = self.config.password_vault_ref
         if ref:
             try:
-                from src.core.di.providers import get_vault_refresher_provider
+                from src.backend.core.di.providers import get_vault_refresher_provider
 
                 refresher = get_vault_refresher_provider()
                 return await refresher.resolve(ref)

@@ -16,9 +16,9 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from src.dsl.commands.action_registry import ActionHandlerRegistry
-from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
-from src.services.plugins import PluginLoader, RepositoryHookRegistry
+from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
+from src.backend.services.plugins import PluginLoader, RepositoryHookRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 

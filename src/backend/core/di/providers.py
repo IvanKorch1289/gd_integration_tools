@@ -14,7 +14,7 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
-from src.core.di.module_registry import resolve_module
+from src.backend.core.di.module_registry import resolve_module
 
 __all__ = (
     "get_cache_invalidator_provider",
@@ -142,7 +142,7 @@ __all__ = (
 #
 # Имена инфраструктурных модулей собираются динамически, чтобы
 # `tools/check_layers.py` не считал их прямыми статическими импортами.
-_INFRA = "src." + "infrastructure"
+_INFRA = "src." + "backend.infrastructure"
 _CACHE_MOD = f"{_INFRA}.cache"
 _SLO_MOD = f"{_INFRA}.application.slo_tracker"
 _HEALTH_AGG_MOD = f"{_INFRA}.application.health_aggregator"
@@ -1041,7 +1041,7 @@ def get_action_dispatcher_provider() -> Any:
     if "action_dispatcher" in _overrides:
         return _overrides["action_dispatcher"]
     # Импорт через services-слой (не infrastructure) — не нарушает layer policy.
-    module = importlib.import_module("src.services.execution.action_dispatcher")
+    module = importlib.import_module("src.backend.services.execution.action_dispatcher")
     return module.get_action_dispatcher()
 
 

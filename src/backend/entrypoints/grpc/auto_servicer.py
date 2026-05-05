@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 __all__ = ("AutoServicerBundle", "build_auto_servicers", "register_auto_servicers")
 
 
-_AUTO_PROTO_PACKAGE = "src.entrypoints.grpc.protobuf.auto"
+_AUTO_PROTO_PACKAGE = "src.backend.entrypoints.grpc.protobuf.auto"
 _AUTO_PROTO_DIR = Path(__file__).resolve().parent / "protobuf" / "auto"
 
 
@@ -125,7 +125,7 @@ def _build_rpc_method(action_id: str) -> Callable[..., Any]:
     async def rpc_impl(  # type: ignore[override]
         self: Any, request: Any, context: Any
     ) -> Any:
-        from src.entrypoints.base import dispatch_action
+        from src.backend.entrypoints.base import dispatch_action
 
         payload = MessageToDict(
             request, preserving_proto_field_name=True, use_integers_for_enums=True
@@ -209,7 +209,7 @@ def _build_servicer_class(service: str, base_cls: type, pb2: Any) -> type:
     ``<Service>AutoServiceServicer``) ищем соответствующий
     ``action_id`` через реестр и подключаем :func:`_build_rpc_method`.
     """
-    from src.dsl.commands.action_registry import action_handler_registry
+    from src.backend.dsl.commands.action_registry import action_handler_registry
 
     grpc_actions = [
         m

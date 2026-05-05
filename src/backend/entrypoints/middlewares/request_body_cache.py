@@ -152,7 +152,7 @@ def cached_body(request: Request) -> bytes | None:
 
     Использование::
 
-        from src.entrypoints.middlewares.request_body_cache import cached_body
+        from src.backend.entrypoints.middlewares.request_body_cache import cached_body
 
         body = cached_body(request)
         if body is None:

@@ -3,7 +3,7 @@ from functools import lru_cache
 from logging import Handler
 from typing import Any
 
-from src.core.config.settings import LogStorageSettings, settings
+from src.backend.core.config.settings import LogStorageSettings, settings
 
 __all__ = ("graylog_handler", "GraylogHandler", "get_graylog_handler")
 

@@ -70,7 +70,7 @@ class DLQEntry:
 async def _redis_raw() -> Any:
     """Возвращает raw redis-клиент (или ``None`` если Redis недоступен)."""
     try:
-        from src.core.di.providers import get_redis_kv_client_provider
+        from src.backend.core.di.providers import get_redis_kv_client_provider
 
         return get_redis_kv_client_provider()
     except Exception as exc:  # noqa: BLE001
@@ -182,7 +182,7 @@ class WebhookRelay:
 
         headers = {"Content-Type": "application/json"}
         if rule.secret:
-            from src.core.di.providers import get_signature_builder_provider
+            from src.backend.core.di.providers import get_signature_builder_provider
 
             build_signature_headers = get_signature_builder_provider()
             headers.update(build_signature_headers(payload, rule.secret))

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from src.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (
     ActionDispatcher,
     ActionError,
     ActionGatewayDispatcher,
@@ -31,11 +31,11 @@ from src.core.interfaces.action_dispatcher import (
     MiddlewareNextHandler,
     TransportName,
 )
-from src.dsl.commands.action_registry import (
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("DefaultActionDispatcher", "get_action_dispatcher")
 

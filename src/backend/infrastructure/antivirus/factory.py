@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Iterable
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("ChainedAntivirusBackend", "create_antivirus_backend")
 
@@ -56,13 +56,19 @@ def create_antivirus_backend() -> AntivirusBackend:
     Порядок: ClamAV unix → ClamAV TCP → HTTP-сервис. Hash-кэш оборачивается
     отдельно вызывающей стороной (см. ``AntivirusHashCache``).
     """
-    from src.infrastructure.antivirus.backends.clamav_tcp import ClamAVTcpBackend
-    from src.infrastructure.antivirus.backends.clamav_unix import ClamAVUnixBackend
-    from src.infrastructure.antivirus.backends.http import HttpAntivirusBackend
+    from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
+        ClamAVTcpBackend,
+    )
+    from src.backend.infrastructure.antivirus.backends.clamav_unix import (
+        ClamAVUnixBackend,
+    )
+    from src.backend.infrastructure.antivirus.backends.http import HttpAntivirusBackend
 
     backends: list[AntivirusBackend] = [ClamAVUnixBackend(), ClamAVTcpBackend()]
     try:
-        from src.infrastructure.external_apis.antivirus import get_antivirus_service
+        from src.backend.infrastructure.external_apis.antivirus import (
+            get_antivirus_service,
+        )
 
         backends.append(HttpAntivirusBackend(service=get_antivirus_service()))
     except Exception as exc:  # noqa: BLE001

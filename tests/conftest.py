@@ -22,7 +22,7 @@ def svcs_container() -> svcs.Container:
     Создаётся поверх глобального Registry; все регистрации видны,
     но стейт сбрасывается после теста.
     """
-    from src.core.svcs_registry import registry
+    from src.backend.core.svcs_registry import registry
 
     container = svcs.Container(registry)
     yield container

@@ -5,8 +5,8 @@ from typing import Any, Awaitable, Callable, Sequence
 from fastapi import Request
 from pydantic import BaseModel
 
-from src.entrypoints.api.generator.specs import ActionSpec, RouteDecorator
-from src.schemas.invocation import InvocationOptionsSchema
+from src.backend.entrypoints.api.generator.specs import ActionSpec, RouteDecorator
+from src.backend.schemas.invocation import InvocationOptionsSchema
 
 __all__ = ("prepare_call_kwargs", "extract_invocation_kwargs", "decorate_endpoint")
 

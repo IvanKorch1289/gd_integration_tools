@@ -111,7 +111,9 @@ def _current_tenant() -> str:
     """Получить tenant_id из ContextVar; `_system` если не задан."""
     try:
         # Поздний импорт, чтобы не создавать цикл.
-        from src.core.tenancy import current_tenant  # type: ignore[attr-defined]
+        from src.backend.core.tenancy import (
+            current_tenant,  # type: ignore[attr-defined]
+        )
 
         tenant = current_tenant()
         if tenant is None:

@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Final, Literal
 
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class SMSAdapter:
         if not creds:
             raise RuntimeError(f"SMS credentials missing for provider={self._provider}")
 
-        from src.infrastructure.clients.transport.http_upstream import upstream
+        from src.backend.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
 

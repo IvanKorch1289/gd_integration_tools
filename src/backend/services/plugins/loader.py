@@ -16,18 +16,18 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.core.di import app_state_singleton
-from src.core.interfaces.plugin import BasePlugin, PluginContext, PluginInfo
-from src.services.plugins.decorators import (
+from src.backend.core.di import app_state_singleton
+from src.backend.core.interfaces.plugin import BasePlugin, PluginContext, PluginInfo
+from src.backend.services.plugins.decorators import (
     collect_hook_methods,
     collect_override_methods,
 )
-from src.services.plugins.manifest import (
+from src.backend.services.plugins.manifest import (
     PluginManifest,
     PluginManifestError,
     load_manifest,
 )
-from src.services.plugins.registries import (
+from src.backend.services.plugins.registries import (
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
     RepositoryHookRegistry,
@@ -35,8 +35,8 @@ from src.services.plugins.registries import (
 )
 
 if TYPE_CHECKING:
-    from src.dsl.commands.action_registry import ActionHandlerRegistry
-    from src.dsl.engine.plugin_registry import ProcessorPluginRegistry
+    from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+    from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
 
 __all__ = ("ENTRY_POINT_GROUP", "PluginLoader", "get_plugin_loader")
 
@@ -83,7 +83,7 @@ class PluginLoader:
     def _resolve_action_registry(self) -> ActionHandlerRegistry:
         """Lazy-resolve action-реестра (импорт здесь, чтобы избежать циклов)."""
         if self._action_registry is None:
-            from src.dsl.commands.action_registry import action_handler_registry
+            from src.backend.dsl.commands.action_registry import action_handler_registry
 
             self._action_registry = action_handler_registry
         return self._action_registry
@@ -91,7 +91,9 @@ class PluginLoader:
     def _resolve_processor_registry(self) -> ProcessorPluginRegistry:
         """Lazy-resolve реестра DSL-процессоров."""
         if self._processor_registry is None:
-            from src.dsl.engine.plugin_registry import get_processor_plugin_registry
+            from src.backend.dsl.engine.plugin_registry import (
+                get_processor_plugin_registry,
+            )
 
             self._processor_registry = get_processor_plugin_registry()
         return self._processor_registry

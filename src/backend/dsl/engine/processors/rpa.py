@@ -16,9 +16,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "PdfReadProcessor",
@@ -817,7 +817,7 @@ class EmailComposeProcessor(BaseProcessor):
             email_body = self._body_template
 
         try:
-            from src.infrastructure.clients.transport.smtp import smtp_client
+            from src.backend.infrastructure.clients.transport.smtp import smtp_client
 
             await smtp_client.send_email(
                 to=self._to, subject=self._subject, body=email_body

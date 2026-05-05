@@ -38,7 +38,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.core.interfaces.invoker import InvocationMode, InvocationRequest
+from src.backend.core.interfaces.invoker import InvocationMode, InvocationRequest
 
 __all__ = ("ws_invocations_router",)
 

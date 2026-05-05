@@ -81,8 +81,8 @@ def _render_actions_module(connector: str, endpoints: list[dict[str, Any]]) -> s
         "",
         "from __future__ import annotations",
         "",
-        "from src.core.interfaces.action_dispatcher import ActionMetadata",
-        "from src.dsl.commands.action_registry import ActionHandlerSpec",
+        "from src.backend.core.interfaces.action_dispatcher import ActionMetadata",
+        "from src.backend.dsl.commands.action_registry import ActionHandlerSpec",
         "",
         "__all__ = (",
     ]

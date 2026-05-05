@@ -15,7 +15,7 @@ from typing import Any
 
 from fastapi import Depends, Header, HTTPException
 
-from src.core.di.providers import get_api_key_manager_provider
+from src.backend.core.di.providers import get_api_key_manager_provider
 
 __all__ = ("require_api_key",)
 

@@ -20,11 +20,11 @@ import logging
 from dataclasses import asdict
 from typing import Any, Awaitable, Callable, Literal, Protocol, runtime_checkable
 
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.core.interfaces.invoker import InvocationResponse
+from src.backend.core.interfaces.invoker import InvocationResponse
 
 __all__ = ("QueueReplyChannel", "QueueBackend", "QueuePublisher")
 
@@ -121,7 +121,9 @@ class QueueReplyChannel(InvocationReplyChannel):
         """
         backend = self._extract_backend(meta)
         try:
-            from src.infrastructure.clients.messaging.stream import get_stream_client
+            from src.backend.infrastructure.clients.messaging.stream import (
+                get_stream_client,
+            )
 
             client = get_stream_client()
         except Exception:  # noqa: BLE001

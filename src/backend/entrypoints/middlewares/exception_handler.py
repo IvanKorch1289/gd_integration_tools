@@ -12,7 +12,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.core.errors import BaseError
+from src.backend.core.errors import BaseError
 
 __all__ = ("ExceptionHandlerMiddleware",)
 

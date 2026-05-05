@@ -20,10 +20,10 @@ from pathlib import Path
 
 import pytest
 
-from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.dsl.commands.action_registry import ActionHandlerRegistry
-from src.schemas.invocation import ActionCommandSchema
-from src.services.integrations import ImportService, get_imported_action_service
+from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+from src.backend.schemas.invocation import ActionCommandSchema
+from src.backend.services.integrations import ImportService, get_imported_action_service
 from tests.integration.import_gateway.test_import_service import _FakeStore
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway"

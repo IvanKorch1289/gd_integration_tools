@@ -30,10 +30,10 @@ from tenacity import (
     wait_exponential,
 )
 
-from src.core.config.constants import consts
-from src.core.config.settings import settings
-from src.core.utils.circuit_breaker import get_circuit_breaker
-from src.utilities.codecs.json import json_dumps
+from src.backend.core.config.constants import consts
+from src.backend.core.config.settings import settings
+from src.backend.core.utils.circuit_breaker import get_circuit_breaker
+from src.backend.utilities.codecs.json import json_dumps
 
 __all__ = (
     "BaseHttpClient",
@@ -87,7 +87,9 @@ class HttpClient(BaseHttpClient):
     """
 
     def __init__(self) -> None:
-        from src.infrastructure.external_apis.logging_service import request_logger
+        from src.backend.infrastructure.external_apis.logging_service import (
+            request_logger,
+        )
 
         self.settings = settings.http_base_settings
         self.logger = request_logger

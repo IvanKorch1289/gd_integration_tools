@@ -16,7 +16,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("AnomalyDetector", "Anomaly", "get_anomaly_detector")
 
@@ -107,7 +107,7 @@ class AnomalyDetector:
             return
 
         try:
-            from src.services.ops.notification_hub import get_notification_hub
+            from src.backend.services.ops.notification_hub import get_notification_hub
 
             hub = get_notification_hub()
             subject = f"[{anomaly.severity.upper()}] Anomaly: {anomaly.metric}"

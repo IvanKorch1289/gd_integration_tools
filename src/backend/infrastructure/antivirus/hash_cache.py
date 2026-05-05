@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import orjson
 
-from src.core.interfaces.antivirus import AntivirusScanResult
+from src.backend.core.interfaces.antivirus import AntivirusScanResult
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

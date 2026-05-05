@@ -2,7 +2,7 @@
 
 Публичный re-export:
 
-    from src.dsl.engine.processors.proxy import (
+    from src.backend.dsl.engine.processors.proxy import (
         ExposeProxyProcessor,
         ForwardToProcessor,
         HeaderMapPolicy,
@@ -12,16 +12,16 @@
 
 from __future__ import annotations
 
-from src.dsl.engine.processors.proxy.expose import (
+from src.backend.dsl.engine.processors.proxy.expose import (
     ExposeProxyProcessor,
     ProxyInboundSpec,
 )
-from src.dsl.engine.processors.proxy.forward import (
+from src.backend.dsl.engine.processors.proxy.forward import (
     ForwardToProcessor,
     ProxyOutboundSpec,
 )
-from src.dsl.engine.processors.proxy.headers import HeaderMapPolicy
-from src.dsl.engine.processors.proxy.redirect import RedirectProcessor
+from src.backend.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.backend.dsl.engine.processors.proxy.redirect import RedirectProcessor
 
 __all__ = (
     "ExposeProxyProcessor",

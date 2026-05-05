@@ -10,8 +10,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.dsl.engine.exchange import Exchange
-    from src.infrastructure.clients.external.express_bot import ExpressBotClient
+    from src.backend.dsl.engine.exchange import Exchange
+    from src.backend.infrastructure.clients.external.express_bot import ExpressBotClient
 
 __all__ = ("resolve_value", "get_express_client", "log_outgoing_message")
 
@@ -34,10 +34,12 @@ async def log_outgoing_message(
     if not session_id:
         return
     try:
-        from src.infrastructure.repositories.express_dialogs_mongo import (
+        from src.backend.infrastructure.repositories.express_dialogs_mongo import (
             get_express_dialog_store,
         )
-        from src.services.integrations.express.dialog_store import ExpressDialogStore
+        from src.backend.services.integrations.express.dialog_store import (
+            ExpressDialogStore,
+        )
 
         store: ExpressDialogStore = get_express_dialog_store()
         await store.append_message(
@@ -100,8 +102,8 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
     Raises:
         RuntimeError: Если бот не найден или Express отключён.
     """
-    from src.core.config.express import express_settings
-    from src.infrastructure.clients.external.express_bot import (
+    from src.backend.core.config.express import express_settings
+    from src.backend.infrastructure.clients.external.express_bot import (
         BotConfig,
         ExpressBotClient,
     )

@@ -16,9 +16,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from src.core.di import app_state_singleton
-from src.core.interfaces.sink import Sink
-from src.core.interfaces.source import Source
+from src.backend.core.di import app_state_singleton
+from src.backend.core.interfaces.sink import Sink
+from src.backend.core.interfaces.source import Source
 
 if TYPE_CHECKING:
     pass

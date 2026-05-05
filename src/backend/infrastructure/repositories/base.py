@@ -18,9 +18,9 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy_continuum import version_class
 
-from src.core.errors import DatabaseError, NotFoundError
-from src.infrastructure.database.models.base import BaseModel
-from src.infrastructure.database.session_manager import main_session_manager
+from src.backend.core.errors import DatabaseError, NotFoundError
+from src.backend.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = ("SQLAlchemyRepository",)
 
@@ -484,7 +484,7 @@ async def get_repository_for_model(
     try:
         # Импортируем модуль репозитория для указанной модели
         repository_module = import_module(
-            f"src.infrastructure.repositories.{model.__tablename__}"
+            f"src.backend.infrastructure.repositories.{model.__tablename__}"
         )
         return getattr(repository_module, repository_name)  # Получаем класс репозитория
     except (ImportError, AttributeError) as exc:

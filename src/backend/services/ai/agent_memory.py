@@ -23,9 +23,9 @@ import logging
 import time
 from typing import Any
 
-from src.core.di.app_state import app_state_singleton
-from src.core.di.providers import get_mongo_client_provider
-from src.core.interfaces.ai_clients import MongoClientProtocol
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import get_mongo_client_provider
+from src.backend.core.interfaces.ai_clients import MongoClientProtocol
 
 __all__ = ("AgentMemoryService", "get_agent_memory_service")
 

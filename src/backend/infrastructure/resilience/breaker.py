@@ -25,7 +25,7 @@ from purgatory.domain.messages.base import Event
 from purgatory.domain.messages.events import ContextChanged
 from purgatory.domain.model import OpenedState
 
-from src.core.config.constants import consts
+from src.backend.core.config.constants import consts
 
 __all__ = (
     "Breaker",
@@ -142,7 +142,7 @@ class BreakerRegistry:
     @staticmethod
     def _publish_metric(name: str, host: str, state: str) -> None:
         try:
-            from src.infrastructure.observability.client_metrics import (
+            from src.backend.infrastructure.observability.client_metrics import (
                 record_circuit_state,
             )
 

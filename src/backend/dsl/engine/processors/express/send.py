@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.express._common import (
     get_express_client,
     log_outgoing_message,
     resolve_value,
@@ -68,7 +68,7 @@ class ExpressSendProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет сообщение и сохраняет sync_id в exchange property."""
-        from src.infrastructure.clients.external.express_bot import (
+        from src.backend.infrastructure.clients.external.express_bot import (
             BotxButton,
             BotxMessage,
         )
@@ -117,7 +117,7 @@ class ExpressSendProcessor(BaseProcessor):
                 sync_id=str(sync_id) if sync_id else None,
             )
             try:
-                from src.infrastructure.observability.metrics import (
+                from src.backend.infrastructure.observability.metrics import (
                     record_express_message_sent,
                 )
 
@@ -128,7 +128,7 @@ class ExpressSendProcessor(BaseProcessor):
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
             try:
-                from src.infrastructure.observability.metrics import (
+                from src.backend.infrastructure.observability.metrics import (
                     record_express_message_sent,
                 )
 

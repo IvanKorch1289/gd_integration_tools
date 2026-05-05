@@ -11,8 +11,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.dsl.adapters.types import ProtocolType
-from src.dsl.engine.exchange import Exchange
+from src.backend.dsl.adapters.types import ProtocolType
+from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("BaseProtocolAdapter",)
 

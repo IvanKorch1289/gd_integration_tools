@@ -22,9 +22,12 @@
    другой worker подхватывает после истечения ``locked_until``.
 """
 
-from src.infrastructure.workflow.event_store import WorkflowEventRow, WorkflowEventStore
-from src.infrastructure.workflow.state import WorkflowState
-from src.infrastructure.workflow.state_store import (
+from src.backend.infrastructure.workflow.event_store import (
+    WorkflowEventRow,
+    WorkflowEventStore,
+)
+from src.backend.infrastructure.workflow.state import WorkflowState
+from src.backend.infrastructure.workflow.state_store import (
     WorkflowInstanceRow,
     WorkflowInstanceStore,
 )

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.models.express import ExpressSession
+from src.backend.core.models.express import ExpressSession
 
 __all__ = ("ExpressSession", "ExpressSessionStore")
 

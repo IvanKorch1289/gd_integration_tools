@@ -15,11 +15,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from src.core.config.services.cache import CacheSettings, cache_settings
-from src.core.interfaces.cache import CacheBackend
-from src.infrastructure.cache.backends.keydb import KeyDBBackend
-from src.infrastructure.cache.backends.memory import MemoryBackend
-from src.infrastructure.cache.backends.redis import RedisBackend
+from src.backend.core.config.services.cache import CacheSettings, cache_settings
+from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
+from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
@@ -31,7 +31,7 @@ logger = logging.getLogger("infrastructure.cache.factory")
 
 def _redis_client() -> Redis:
     """Достаёт raw redis-клиент из инфраструктурного синглтона."""
-    from src.infrastructure.clients.storage.redis import redis_client
+    from src.backend.infrastructure.clients.storage.redis import redis_client
 
     raw = getattr(redis_client, "_raw_client", None) or getattr(
         redis_client, "client", None
@@ -71,7 +71,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
                     "Memcached-бэкенд требует пакет 'aiomcache'. "
                     "Добавьте его в pyproject.toml и переинициализируйте."
                 ) from exc
-            from src.infrastructure.cache.backends.memcached import (  # type: ignore[import-not-found]
+            from src.backend.infrastructure.cache.backends.memcached import (  # type: ignore[import-not-found]
                 MemcachedBackend,
             )
 

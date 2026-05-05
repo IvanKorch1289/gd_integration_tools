@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.dsl.engine.processors.dask_compute import (
+from src.backend.dsl.engine.processors.dask_compute import (
     DaskComputeProcessor,
     _resolve_callable,
 )

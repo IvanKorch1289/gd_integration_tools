@@ -16,7 +16,7 @@ _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from src.entrypoints.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.api_client import get_api_client
 
 st.set_page_config(page_title="SQL", page_icon=":floppy_disk:", layout="wide")
 st.header(":floppy_disk: SQL Admin Console")

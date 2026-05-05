@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.dsl.engine.processors.duckdb_query import DuckDbQueryProcessor
+from src.backend.dsl.engine.processors.duckdb_query import DuckDbQueryProcessor
 
 
 def test_duckdb_minimal_constructs() -> None:

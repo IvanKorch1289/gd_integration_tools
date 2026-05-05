@@ -137,7 +137,9 @@ class EventBus:
         Делегирует в :class:`ReplyChannel` — вся логика future-ов
         и subscription-ов живёт там.
         """
-        from src.infrastructure.clients.messaging.reply_channel import ReplyChannel
+        from src.backend.infrastructure.clients.messaging.reply_channel import (
+            ReplyChannel,
+        )
 
         return await ReplyChannel.instance(self).request(
             target_channel=channel,
@@ -147,7 +149,7 @@ class EventBus:
         )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("event_bus", EventBus)

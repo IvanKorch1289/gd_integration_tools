@@ -148,7 +148,7 @@ class ExecutionTracer:
                 subs.remove(queue)
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("tracer", ExecutionTracer)

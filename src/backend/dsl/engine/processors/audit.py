@@ -20,10 +20,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.entity import _resolve
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.entity import _resolve
 
 __all__ = ("AuditProcessor",)
 
@@ -151,8 +151,12 @@ class AuditProcessor(BaseProcessor):
     @staticmethod
     def _build_store() -> Any:
         """Лениво создаёт ``ImmutableAuditStore`` поверх main_session_manager."""
-        from src.infrastructure.database.session_manager import main_session_manager
-        from src.infrastructure.observability.immutable_audit import ImmutableAuditStore
+        from src.backend.infrastructure.database.session_manager import (
+            main_session_manager,
+        )
+        from src.backend.infrastructure.observability.immutable_audit import (
+            ImmutableAuditStore,
+        )
 
         return ImmutableAuditStore(session_factory=main_session_manager.create_session)
 

@@ -20,17 +20,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
     Invoker,
 )
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
-    from src.dsl.engine.context import ExecutionContext
-    from src.dsl.engine.exchange import Exchange
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("InvokeProcessor",)
 
@@ -106,7 +106,7 @@ class InvokeProcessor(BaseProcessor):
     def _resolve_invoker(self) -> Invoker:
         if self._invoker_override is not None:
             return self._invoker_override
-        from src.services.execution.invoker import get_invoker
+        from src.backend.services.execution.invoker import get_invoker
 
         return get_invoker()
 

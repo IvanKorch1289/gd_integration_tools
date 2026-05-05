@@ -1,18 +1,18 @@
-from src.core.config.services.cache import (
+from src.backend.core.config.services.cache import (
     CacheSettings,
     RedisSettings,
     cache_settings,
     redis_settings,
 )
-from src.core.config.services.invoker import (
+from src.backend.core.config.services.invoker import (
     InvokerSettings,
     TaskiqSettings,
     invoker_settings,
     taskiq_settings,
 )
-from src.core.config.services.logging import LogStorageSettings, log_settings
-from src.core.config.services.mail import MailSettings, mail_settings
-from src.core.config.services.queue import (
+from src.backend.core.config.services.logging import LogStorageSettings, log_settings
+from src.backend.core.config.services.mail import MailSettings, mail_settings
+from src.backend.core.config.services.queue import (
     GRPCSettings,
     QueueSettings,
     TasksSettings,
@@ -20,15 +20,21 @@ from src.core.config.services.queue import (
     queue_settings,
     tasks_settings,
 )
-from src.core.config.services.resilience import (
+from src.backend.core.config.services.resilience import (
     BreakerProfile,
     FallbackPolicy,
     ResilienceSettings,
     resilience_settings,
 )
-from src.core.config.services.snapshot import SnapshotSettings, snapshot_settings
-from src.core.config.services.storage import FileStorageSettings, fs_settings
-from src.core.config.services.watermark import WatermarkSettings, watermark_settings
+from src.backend.core.config.services.snapshot import (
+    SnapshotSettings,
+    snapshot_settings,
+)
+from src.backend.core.config.services.storage import FileStorageSettings, fs_settings
+from src.backend.core.config.services.watermark import (
+    WatermarkSettings,
+    watermark_settings,
+)
 
 __all__ = (
     "FileStorageSettings",

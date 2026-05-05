@@ -23,7 +23,7 @@ import logging
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class WebhookAdapter:
             headers[self._signature_header] = f"sha256={signature}"
 
         # Используем per-upstream httpx-клиент (IL2.6).
-        from src.infrastructure.clients.transport.http_upstream import upstream
+        from src.backend.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         response = await client.request(
@@ -86,7 +86,7 @@ class WebhookAdapter:
     async def health(self) -> bool:
         """Проверить, что upstream зарегистрирован."""
         try:
-            from src.infrastructure.clients.transport.http_upstream import (
+            from src.backend.infrastructure.clients.transport.http_upstream import (
                 upstream_registry,
             )
 

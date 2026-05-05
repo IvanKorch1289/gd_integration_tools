@@ -87,4 +87,4 @@ class ImportGateway(Protocol):
 
 # Прямой forward-ref на ConnectorSpec — модель в core/models/, импорт
 # отложенный, чтобы избежать циклов при сериализации Protocol-сигнатур.
-from src.core.models.connector_spec import ConnectorSpec  # noqa: E402,F401
+from src.backend.core.models.connector_spec import ConnectorSpec  # noqa: E402,F401

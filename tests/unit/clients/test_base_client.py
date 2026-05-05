@@ -23,7 +23,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from src.services.core.base_external_api import BaseExternalAPIClient
+from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 # ---------------------------------------------------------------------------
 # BaseExternalAPIClient — wrapper-level тесты (mock HttpClient)
@@ -249,7 +249,7 @@ async def test_request_logs_and_reraises_on_failure(
 @pytest.fixture
 def fast_retry(monkeypatch: pytest.MonkeyPatch) -> None:
     """Убирает реальные задержки tenacity (multiplier=0 → wait≈0)."""
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     monkeypatch.setattr(
         app_settings.http_base_settings, "retry_backoff_factor", 0.0
@@ -258,7 +258,7 @@ def fast_retry(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _patched_http_client(handler: httpx.MockTransport):
     """Создаёт HttpClient с подменённой ``_create_new_session`` под MockTransport."""
-    from src.infrastructure.clients.transport.http import HttpClient
+    from src.backend.infrastructure.clients.transport.http import HttpClient
 
     client = HttpClient()
 
@@ -381,7 +381,7 @@ async def test_http_client_circuit_breaker_opens_after_threshold(
     адаптер устанавливает его только при ``check_state``. Чтобы первый
     провал гарантированно открыл CB, выставляем порог напрямую в impl.
     """
-    from src.core.config.settings import settings as app_settings
+    from src.backend.core.config.settings import settings as app_settings
 
     monkeypatch.setattr(app_settings.http_base_settings, "max_retries", 0)
 

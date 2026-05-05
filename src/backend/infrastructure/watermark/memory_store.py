@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import replace
 
-from src.core.types.watermark import WatermarkState
+from src.backend.core.types.watermark import WatermarkState
 
 __all__ = ("MemoryWatermarkStore",)
 

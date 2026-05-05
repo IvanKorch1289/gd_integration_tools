@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Protocol, runtime_checkable
 
-from src.services.notebooks.models import Notebook, NotebookVersion
+from src.backend.services.notebooks.models import Notebook, NotebookVersion
 
 __all__ = ("NotebookRepository", "InMemoryNotebookRepository")
 

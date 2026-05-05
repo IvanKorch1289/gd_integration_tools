@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 
 def test_invoke_invalid_mode_yaml_message() -> None:

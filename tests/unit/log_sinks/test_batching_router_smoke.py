@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from src.infrastructure.logging.batching_router import BatchingSinkRouter
-from src.infrastructure.logging.router import SinkRouter
+from src.backend.infrastructure.logging.batching_router import BatchingSinkRouter
+from src.backend.infrastructure.logging.router import SinkRouter
 
 
 class _StubInner(SinkRouter):

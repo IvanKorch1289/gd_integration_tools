@@ -25,9 +25,9 @@ import logging
 from dataclasses import asdict
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.core.interfaces.import_gateway import ImportSource
-from src.core.models.connector_spec import ConnectorSpec
+from src.backend.core.di import app_state_singleton
+from src.backend.core.interfaces.import_gateway import ImportSource
+from src.backend.core.models.connector_spec import ConnectorSpec
 
 __all__ = ("ImportService", "get_import_service")
 
@@ -61,7 +61,7 @@ class ImportService:
         Raises:
             ValueError: Невалидный payload.
         """
-        from src.core.interfaces.import_gateway import ImportSourceKind
+        from src.backend.core.interfaces.import_gateway import ImportSourceKind
 
         try:
             kind = ImportSourceKind(payload["kind"])
@@ -126,7 +126,7 @@ class ImportService:
             dict со статусом:
             ``{status, connector, version, endpoints, secret_refs_required, removed_orphans}``.
         """
-        from src.core.di.providers import get_import_gateway_factory_provider
+        from src.backend.core.di.providers import get_import_gateway_factory_provider
 
         gateway = get_import_gateway_factory_provider()(source.kind)
         spec = await gateway.import_spec(source)
@@ -196,7 +196,9 @@ class ImportService:
         if self._connector_store is not None:
             return self._connector_store
         try:
-            from src.core.di.providers import get_connector_config_store_provider
+            from src.backend.core.di.providers import (
+                get_connector_config_store_provider,
+            )
 
             return get_connector_config_store_provider()
         except Exception as exc:
@@ -245,7 +247,7 @@ class ImportService:
         if registry is None or not hasattr(registry, "register"):
             return registered
 
-        from src.services.integrations.imported_action_service import (
+        from src.backend.services.integrations.imported_action_service import (
             get_imported_action_service,
         )
 

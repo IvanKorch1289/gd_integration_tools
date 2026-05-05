@@ -4,8 +4,8 @@ import logging
 from functools import lru_cache
 from typing import Any
 
-from src.core.config.constants import consts
-from src.infrastructure.resilience.breaker import (
+from src.backend.core.config.constants import consts
+from src.backend.infrastructure.resilience.breaker import (
     Breaker,
     BreakerSpec,
     get_breaker_registry,

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.interfaces.audit import AuditRecord
-from src.infrastructure.audit.jsonl_audit import JsonlAuditBackend
+from src.backend.core.interfaces.audit import AuditRecord
+from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend
 
 
 @pytest.mark.asyncio

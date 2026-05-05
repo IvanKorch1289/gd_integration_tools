@@ -14,10 +14,10 @@
 
 from __future__ import annotations
 
-from src.services.plugins.decorators import override_method, repository_hook
-from src.services.plugins.loader import PluginLoader, get_plugin_loader
-from src.services.plugins.manifest import PluginManifest, load_manifest
-from src.services.plugins.registries import (
+from src.backend.services.plugins.decorators import override_method, repository_hook
+from src.backend.services.plugins.loader import PluginLoader, get_plugin_loader
+from src.backend.services.plugins.manifest import PluginManifest, load_manifest
+from src.backend.services.plugins.registries import (
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
     RepositoryHookRegistry,

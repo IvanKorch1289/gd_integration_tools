@@ -30,26 +30,34 @@ def setup_middlewares(app: FastAPI) -> None:
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
 
-    from src.core.config.settings import settings
-    from src.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
-    from src.entrypoints.middlewares.api_key import APIKeyMiddleware
-    from src.entrypoints.middlewares.audit_log import AuditLogMiddleware
-    from src.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
-    from src.entrypoints.middlewares.auth_method_header import (
+    from src.backend.core.config.settings import settings
+    from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
+    from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
+    from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
+    from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
     )
-    from src.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
-    from src.entrypoints.middlewares.data_masking import DataMaskingMiddleware
-    from src.entrypoints.middlewares.degradation import DegradationMiddleware
-    from src.entrypoints.middlewares.exception_handler import ExceptionHandlerMiddleware
-    from src.entrypoints.middlewares.otel_middleware import OtelMiddleware
-    from src.entrypoints.middlewares.request_body_cache import (
+    from src.backend.entrypoints.middlewares.blocked_routes import (
+        BlockedRoutesMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
+    from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
+    from src.backend.entrypoints.middlewares.exception_handler import (
+        ExceptionHandlerMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.otel_middleware import OtelMiddleware
+    from src.backend.entrypoints.middlewares.request_body_cache import (
         RequestBodyCacheMiddleware,
     )
-    from src.entrypoints.middlewares.request_id import RequestIDMiddleware
-    from src.entrypoints.middlewares.request_log import InnerRequestLoggingMiddleware
-    from src.entrypoints.middlewares.response_cache import ResponseCacheMiddleware
-    from src.entrypoints.middlewares.timeout import TimeoutMiddleware
+    from src.backend.entrypoints.middlewares.request_id import RequestIDMiddleware
+    from src.backend.entrypoints.middlewares.request_log import (
+        InnerRequestLoggingMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.response_cache import (
+        ResponseCacheMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     # Порядок оптимизирован для high-load:
     # 1. Дешёвые проверки + early exit (отсекаем до обработки)

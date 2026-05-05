@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from src.dsl.versioning.migrations_v0_to_v1 import V0ToV1Migration
+from src.backend.dsl.versioning.migrations_v0_to_v1 import V0ToV1Migration
 
 
 def test_migration_marks_history_and_keeps_payload() -> None:

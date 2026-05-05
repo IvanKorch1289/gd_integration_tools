@@ -3,10 +3,10 @@
 from typing import Any
 from urllib.parse import urljoin
 
-from src.core.config.settings import DadataAPISettings, settings
-from src.core.di.providers import get_response_cache_provider
-from src.core.errors import ServiceError
-from src.services.core.base_external_api import BaseExternalAPIClient
+from src.backend.core.config.settings import DadataAPISettings, settings
+from src.backend.core.di.providers import get_response_cache_provider
+from src.backend.core.errors import ServiceError
+from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("APIDADATAService", "get_dadata_service")
 

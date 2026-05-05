@@ -23,8 +23,11 @@ from tenacity import (
     wait_random,
 )
 
-from src.core.config.constants import consts
-from src.infrastructure.resilience.retry_budget import RetryBudget, RetryBudgetExhausted
+from src.backend.core.config.constants import consts
+from src.backend.infrastructure.resilience.retry_budget import (
+    RetryBudget,
+    RetryBudgetExhausted,
+)
 
 __all__ = ("RetryPolicy", "with_retry")
 

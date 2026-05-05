@@ -26,7 +26,7 @@ if mode == "Step-through Debugger":
     """)
 
     try:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         available_routes = list(route_registry._routes.keys())
     except Exception as exc:
@@ -47,7 +47,7 @@ if mode == "Step-through Debugger":
             st.error(f"Invalid JSON: {exc}")
         else:
             try:
-                from src.dsl.engine.execution_engine import ExecutionEngine
+                from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
                 pipeline = route_registry.get(route_id)
                 engine = ExecutionEngine()
@@ -88,7 +88,9 @@ elif mode == "Replay Audit":
     limit = st.slider("Записей", 10, 500, 50)
     if st.button("🔄 Refresh"):
         try:
-            from src.entrypoints.middlewares.audit_replay import list_audit_records
+            from src.backend.entrypoints.middlewares.audit_replay import (
+                list_audit_records,
+            )
 
             records = asyncio.run(list_audit_records(count=limit))
             if not records:
@@ -112,7 +114,7 @@ elif mode == "Replay Audit":
 else:  # Route Trace
     st.markdown("Live route executions через DSL tracer.")
     try:
-        from src.dsl.engine.tracer import get_tracer
+        from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         events = (

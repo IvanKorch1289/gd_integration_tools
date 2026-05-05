@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from src.entrypoints.scheduler.invoker_schedule import (
+from src.backend.entrypoints.scheduler.invoker_schedule import (
     ScheduleSpec,
     register_scheduled_invocation,
     register_scheduled_invocations,

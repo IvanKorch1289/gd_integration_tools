@@ -20,7 +20,7 @@ from pydantic import SecretStr
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.models.base import BaseModel
 
 __all__ = ("User",)
 

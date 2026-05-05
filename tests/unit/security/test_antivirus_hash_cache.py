@@ -29,8 +29,8 @@ from unittest.mock import AsyncMock
 import orjson
 import pytest
 
-from src.core.interfaces.antivirus import AntivirusScanResult
-from src.infrastructure.antivirus.hash_cache import AntivirusHashCache
+from src.backend.core.interfaces.antivirus import AntivirusScanResult
+from src.backend.infrastructure.antivirus.hash_cache import AntivirusHashCache
 
 # ── Fixtures ───────────────────────────────────────────────────────────────
 

@@ -99,7 +99,7 @@ class LangFuseClient:
             return None
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("langfuse_client", LangFuseClient)

@@ -1,25 +1,25 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from src.core.config.settings import settings
-from src.entrypoints.api.v1.routers import get_v1_routers
-from src.entrypoints.graphql.schema import graphql_router
-from src.entrypoints.grpc.proto_viewer import proto_viewer_router
-from src.entrypoints.middlewares.setup_middlewares import setup_middlewares
-from src.entrypoints.soap.soap_handler import soap_router
-from src.entrypoints.sse.handler import sse_router
-from src.entrypoints.webhook.handler import webhook_router
-from src.entrypoints.webhook.sources_router import (
+from src.backend.core.config.settings import settings
+from src.backend.entrypoints.api.v1.routers import get_v1_routers
+from src.backend.entrypoints.graphql.schema import graphql_router
+from src.backend.entrypoints.grpc.proto_viewer import proto_viewer_router
+from src.backend.entrypoints.middlewares.setup_middlewares import setup_middlewares
+from src.backend.entrypoints.soap.soap_handler import soap_router
+from src.backend.entrypoints.sse.handler import sse_router
+from src.backend.entrypoints.webhook.handler import webhook_router
+from src.backend.entrypoints.webhook.sources_router import (
     sources_router as webhook_sources_router,
 )
-from src.entrypoints.websocket.ws_handler import ws_router
-from src.entrypoints.websocket.ws_invocations import ws_invocations_router
-from src.infrastructure.application.index import root_page
-from src.infrastructure.application.monitoring import setup_monitoring
-from src.infrastructure.application.telemetry import setup_tracing
-from src.infrastructure.clients.messaging.stream import get_stream_client
-from src.plugins.composition.lifecycle import lifespan
-from src.utilities.admin_panel.setup_admin import setup_admin
+from src.backend.entrypoints.websocket.ws_handler import ws_router
+from src.backend.entrypoints.websocket.ws_invocations import ws_invocations_router
+from src.backend.infrastructure.application.index import root_page
+from src.backend.infrastructure.application.monitoring import setup_monitoring
+from src.backend.infrastructure.application.telemetry import setup_tracing
+from src.backend.infrastructure.clients.messaging.stream import get_stream_client
+from src.backend.plugins.composition.lifecycle import lifespan
+from src.backend.utilities.admin_panel.setup_admin import setup_admin
 
 __all__ = ("create_app",)
 
@@ -101,7 +101,7 @@ def _configure_application_components(app: FastAPI) -> None:
 
 def _configure_business_routers(app: FastAPI) -> None:
     """Подключение бизнес-маршрутизаторов"""
-    from src.entrypoints.filewatcher.watcher_routes import watcher_router
+    from src.backend.entrypoints.filewatcher.watcher_routes import watcher_router
 
     # Основное API приложения
     app.include_router(get_v1_routers(), prefix="/api/v1")
@@ -129,7 +129,7 @@ def _configure_business_routers(app: FastAPI) -> None:
         stream_client.redis_router is not None
         or stream_client.rabbit_router is not None
     ):
-        from src.entrypoints.stream import (  # noqa: F401
+        from src.backend.entrypoints.stream import (  # noqa: F401
             invoker_subscribers,
             subscribers,
         )
@@ -155,12 +155,12 @@ def _configure_business_routers(app: FastAPI) -> None:
     app.include_router(webhook_sources_router)
 
     # CDC
-    from src.entrypoints.cdc.cdc_routes import cdc_router
+    from src.backend.entrypoints.cdc.cdc_routes import cdc_router
 
     app.include_router(cdc_router)
 
     # Express BotX (Wave 4.2)
-    from src.entrypoints.express import router as express_router
+    from src.backend.entrypoints.express import router as express_router
 
     app.include_router(express_router)
 
@@ -181,12 +181,12 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     """
     import logging
 
-    from src.entrypoints.api.generator.auto_register import (
+    from src.backend.entrypoints.api.generator.auto_register import (
         auto_register_unrouted_actions,
     )
 
     try:
-        from src.dsl.commands.setup import register_action_handlers
+        from src.backend.dsl.commands.setup import register_action_handlers
 
         register_action_handlers()
     except Exception as exc:  # noqa: BLE001
@@ -221,7 +221,9 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
     import logging
 
     try:
-        from src.entrypoints.graphql.auto_schema import auto_register_strawberry_schema
+        from src.backend.entrypoints.graphql.auto_schema import (
+            auto_register_strawberry_schema,
+        )
 
         auto_register_strawberry_schema(app, path="/api/v1/graphql")
     except Exception as exc:  # noqa: BLE001
@@ -265,7 +267,7 @@ def _configure_root_endpoint(app: FastAPI) -> None:
         """
         from fastapi.responses import JSONResponse
 
-        from src.infrastructure.application.health_aggregator import (
+        from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
 

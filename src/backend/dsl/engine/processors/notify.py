@@ -17,11 +17,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.context import ExecutionContext
 
 __all__ = ("NotifyProcessor",)
 
@@ -65,7 +65,7 @@ class NotifyProcessor(BaseProcessor):
         self.result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.notifications.gateway import get_gateway
+        from src.backend.infrastructure.notifications.gateway import get_gateway
 
         body = exchange.in_message.body
         recipient = self.recipient or (

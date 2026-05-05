@@ -18,11 +18,11 @@ import logging
 from dataclasses import asdict
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.core.interfaces.invoker import InvocationResponse, InvocationStatus
+from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 
 __all__ = ("ExpressReplyChannel", "ExpressNotifier")
 
@@ -123,7 +123,9 @@ class ExpressReplyChannel(InvocationReplyChannel):
     def _lazy_notifier(self) -> ExpressNotifier | None:
         """Lazy-резолв :class:`ExpressAdapter`; ``None`` если Express отключён."""
         try:
-            from src.infrastructure.notifications.adapters.express import ExpressAdapter
+            from src.backend.infrastructure.notifications.adapters.express import (
+                ExpressAdapter,
+            )
 
             return ExpressAdapter(default_bot=self._default_bot)
         except Exception:  # noqa: BLE001

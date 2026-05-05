@@ -10,13 +10,13 @@ from typing import Any
 
 import pytest
 
-from src.core.interfaces.plugin import (
+from src.backend.core.interfaces.plugin import (
     ActionRegistryProtocol,
     ProcessorRegistryProtocol,
     RepositoryRegistryProtocol,
 )
-from src.core.security.capabilities import CapabilityGate
-from src.services.plugins.loader_v11 import LoadedPluginV11, PluginLoaderV11
+from src.backend.core.security.capabilities import CapabilityGate
+from src.backend.services.plugins.loader_v11 import LoadedPluginV11, PluginLoaderV11
 
 # ── фейковые реестры ──────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ def _write_extension(
     if not skip_module:
         body = plugin_module_body or textwrap.dedent(
             f"""
-            from src.core.interfaces.plugin import BasePlugin
+            from src.backend.core.interfaces.plugin import BasePlugin
 
             class {plugin_class}(BasePlugin):
                 name = "{name}"
@@ -158,7 +158,7 @@ class TestPluginLoaderV11Lifecycle:
     async def test_lifecycle_invokes_hooks(self, isolated_extensions_dir: Path) -> None:
         body = textwrap.dedent(
             """
-            from src.core.interfaces.plugin import BasePlugin
+            from src.backend.core.interfaces.plugin import BasePlugin
 
             CALLS = []
 
@@ -265,7 +265,7 @@ class TestPluginLoaderV11Lifecycle:
     ) -> None:
         body = textwrap.dedent(
             """
-            from src.core.interfaces.plugin import BasePlugin
+            from src.backend.core.interfaces.plugin import BasePlugin
 
             class Plugin(BasePlugin):
                 name = "fake_explode"

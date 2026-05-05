@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from src.core.interfaces import AsyncBatcher
-from src.infrastructure.observability.correlation import (
+from src.backend.core.interfaces import AsyncBatcher
+from src.backend.infrastructure.observability.correlation import (
     get_correlation_id,
     get_tenant_id,
 )
@@ -19,7 +19,7 @@ from src.infrastructure.observability.correlation import (
 # не считает динамический импорт layer-violation. Это сохраняет
 # best-effort secondary indexing audit-events в Elasticsearch без
 # нарушения границы infrastructure → services.
-_LOG_INDEXER_MOD = "src." + "services.io.indexers.log_indexer"
+_LOG_INDEXER_MOD = "src." + "backend.services.io.indexers.log_indexer"
 
 __all__ = ("AuditEvent", "AuditEventLog", "emit_audit_event", "get_audit_log")
 
@@ -69,13 +69,13 @@ class AuditEventLog:
 
     async def _flush_to_clickhouse(self, events: list[AuditEvent]) -> None:
         try:
-            from src.infrastructure.clients.storage.clickhouse import (
+            from src.backend.infrastructure.clients.storage.clickhouse import (
                 get_clickhouse_client,
             )
 
             client = get_clickhouse_client()
             rows = []
-            from src.utilities.codecs.json import dumps_str
+            from src.backend.utilities.codecs.json import dumps_str
 
             for e in events:
                 rows.append(
@@ -113,7 +113,9 @@ class AuditEventLog:
         who: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        from src.infrastructure.clients.storage.clickhouse import get_clickhouse_client
+        from src.backend.infrastructure.clients.storage.clickhouse import (
+            get_clickhouse_client,
+        )
 
         client = get_clickhouse_client()
 

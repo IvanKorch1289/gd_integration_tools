@@ -31,7 +31,7 @@ async def _smtp_send(message: dict[str, Any]) -> None:
     """Primary: SMTP через стандартный mail-client."""
     from aiosmtplib import SMTP  # type: ignore[import-untyped]
 
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     msg = _build_eml(message)
     smtp = SMTP(

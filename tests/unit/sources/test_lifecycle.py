@@ -4,20 +4,18 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
-from src.core.config.source_spec import SourceSpec
-from src.core.interfaces.invoker import (
+from src.backend.core.config.source_spec import SourceSpec
+from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,
 )
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.services.sources.idempotency import MemoryDedupeStore
-from src.services.sources.lifecycle import start_all_sources, stop_all_sources
-from src.services.sources.registry import SourceRegistry
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.services.sources.idempotency import MemoryDedupeStore
+from src.backend.services.sources.lifecycle import start_all_sources, stop_all_sources
+from src.backend.services.sources.registry import SourceRegistry
 
 
 class _StubSource:

@@ -15,7 +15,7 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from src.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = (
     "MessageReplayService",
@@ -109,8 +109,8 @@ class MessageReplayService:
             }
 
         try:
-            from src.dsl.commands.registry import action_handler_registry
-            from src.schemas.invocation import ActionCommandSchema
+            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=msg.action,

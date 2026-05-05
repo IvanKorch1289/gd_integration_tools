@@ -5,7 +5,7 @@ from typing import ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.integration_base import BaseBotChannelSettings
+from src.backend.core.config.integration_base import BaseBotChannelSettings
 
 __all__ = ("ExpressSettings", "express_settings")
 

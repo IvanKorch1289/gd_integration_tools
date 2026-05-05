@@ -33,7 +33,7 @@ from uuid import UUID
 
 import orjson
 
-from src.workflows.registry import WorkflowDescriptor, workflow_registry
+from src.backend.workflows.registry import WorkflowDescriptor, workflow_registry
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -170,12 +170,12 @@ async def _trigger_and_maybe_wait(
     import asyncio
     from datetime import datetime, timezone
 
-    from src.core.di.providers import (
+    from src.backend.core.di.providers import (
         get_workflow_state_store_provider,
         get_workflow_status_enum_provider,
     )
-    from src.dsl.commands.registry import action_handler_registry
-    from src.entrypoints.base import dispatch_action
+    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.entrypoints.base import dispatch_action
 
     WorkflowStatus = get_workflow_status_enum_provider()
     WorkflowInstanceStore = get_workflow_state_store_provider()
@@ -270,7 +270,9 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_list() -> str:
-        from src.entrypoints.api.v1.endpoints.admin_workflows import input_schema_json
+        from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
+            input_schema_json,
+        )
 
         items: list[dict[str, Any]] = []
         for descriptor in workflow_registry.list_all():
@@ -296,7 +298,7 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_status(instance_id: str) -> str:
-        from src.core.di.providers import get_workflow_state_store_provider
+        from src.backend.core.di.providers import get_workflow_state_store_provider
 
         try:
             uid = UUID(instance_id)

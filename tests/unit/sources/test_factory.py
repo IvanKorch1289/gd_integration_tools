@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.config.source_spec import SourceSpec, SourcesSpecFile
-from src.core.interfaces.source import Source, SourceKind
-from src.infrastructure.sources.factory import build_source
+from src.backend.core.config.source_spec import SourceSpec, SourcesSpecFile
+from src.backend.core.interfaces.source import Source, SourceKind
+from src.backend.infrastructure.sources.factory import build_source
 
 
 def test_spec_validates_known_kind() -> None:

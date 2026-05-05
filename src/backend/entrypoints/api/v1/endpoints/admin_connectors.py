@@ -20,7 +20,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
 
 __all__ = ("router",)
 
@@ -55,7 +58,7 @@ class _AdminConnectorsFacade:
     async def list_connectors(self) -> dict[str, Any]:
         # Wave 6.5a: registry резолвится через core.di.providers (lazy).
         try:
-            from src.core.di.providers import get_connector_registry_provider
+            from src.backend.core.di.providers import get_connector_registry_provider
 
             registry = get_connector_registry_provider()
         except ImportError as exc:
@@ -89,7 +92,7 @@ class _AdminConnectorsFacade:
     async def reload_connector(self, *, name: str) -> dict[str, Any]:
         # Wave 6.5a: registry + error class — через DI providers.
         try:
-            from src.core.di.providers import (
+            from src.backend.core.di.providers import (
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )
@@ -151,7 +154,7 @@ class _AdminConnectorsFacade:
         reload_status: dict[str, Any] = {"attempted": False}
         try:
             # Wave 6.5a: registry + error class — через DI providers.
-            from src.core.di.providers import (
+            from src.backend.core.di.providers import (
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )
@@ -187,7 +190,7 @@ def _resolve_config_store_or_503() -> Any:
     (paттерн W6.4 — provider уже существует).
     """
     try:
-        from src.core.di.providers import get_connector_config_store_provider
+        from src.backend.core.di.providers import get_connector_config_store_provider
 
         return get_connector_config_store_provider()
     except Exception as exc:  # noqa: BLE001

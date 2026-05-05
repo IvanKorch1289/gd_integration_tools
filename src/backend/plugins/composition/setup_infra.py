@@ -2,25 +2,25 @@ from asyncio import to_thread
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable
 
-from src.infrastructure.clients.external.logger import get_graylog_handler
-from src.infrastructure.clients.storage.redis import get_redis_client
-from src.infrastructure.clients.storage.s3_pool import get_s3_client
-from src.infrastructure.clients.transport.smtp import get_smtp_client
-from src.infrastructure.database.database import (
+from src.backend.infrastructure.clients.external.logger import get_graylog_handler
+from src.backend.infrastructure.clients.storage.redis import get_redis_client
+from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
+from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
+from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )
-from src.infrastructure.decorators.caching import close_caches
-from src.infrastructure.decorators.limiting import init_limiter
-from src.infrastructure.external_apis.logging_service import get_log_manager
-from src.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
+from src.backend.infrastructure.decorators.caching import close_caches
+from src.backend.infrastructure.decorators.limiting import init_limiter
+from src.backend.infrastructure.external_apis.logging_service import get_log_manager
+from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 __all__ = ("starting", "ending")
 
 
 def _get_watcher_manager():
     """Ленивый импорт WatcherManager для избежания циклических зависимостей."""
-    from src.entrypoints.filewatcher.watcher_manager import watcher_manager
+    from src.backend.entrypoints.filewatcher.watcher_manager import watcher_manager
 
     return watcher_manager
 
@@ -38,7 +38,7 @@ async def _register_health_checks() -> None:
     Aggregator exposes unified /health endpoint for K8s probes.
     """
     try:
-        from src.infrastructure.application.health_aggregator import (
+        from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )
     except ImportError:
@@ -109,14 +109,14 @@ def _redis_enabled() -> bool:
     блокировала бы запуск (``perform_infrastructure_operation``
     падает на первой ошибке).
     """
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     return bool(getattr(settings.redis, "enabled", True))
 
 
 def _s3_enabled() -> bool:
     """Возвращает ``True`` для S3-провайдеров (skip для ``local`` и ``enabled=False``)."""
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     fs = settings.storage
     return bool(getattr(fs, "enabled", True)) and fs.provider != "local"
@@ -146,7 +146,7 @@ async def _taskiq_startup() -> None:
     Также гарантирует регистрацию task ``invoker.run`` (декоратор
     срабатывает при первом ``get_invocation_task()``).
     """
-    from src.infrastructure.execution.taskiq_broker import (
+    from src.backend.infrastructure.execution.taskiq_broker import (
         get_broker,
         get_invocation_task,
     )
@@ -160,7 +160,7 @@ async def _taskiq_startup() -> None:
 
 async def _taskiq_shutdown() -> None:
     """Останавливает TaskIQ broker."""
-    from src.infrastructure.execution.taskiq_broker import get_broker
+    from src.backend.infrastructure.execution.taskiq_broker import get_broker
 
     broker = get_broker()
     await broker.shutdown()

@@ -32,7 +32,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.base_connector import HealthMode
+    from src.backend.infrastructure.clients.base_connector import HealthMode
 
 __all__ = ("HealthAggregator", "get_health_aggregator")
 
@@ -148,7 +148,7 @@ class HealthAggregator:
         if not self._include_registry:
             return {}
         try:
-            from src.infrastructure.registry import ConnectorRegistry
+            from src.backend.infrastructure.registry import ConnectorRegistry
         except ImportError:
             return {}
         registry = ConnectorRegistry.instance()
@@ -234,8 +234,10 @@ class HealthAggregator:
         if previous is None or previous == current:
             return
         try:
-            from src.infrastructure.clients.messaging.event_bus import get_event_bus
-            from src.schemas.health_events import HealthTransitionEvent
+            from src.backend.infrastructure.clients.messaging.event_bus import (
+                get_event_bus,
+            )
+            from src.backend.schemas.health_events import HealthTransitionEvent
 
             bus = get_event_bus()
             event = HealthTransitionEvent(
@@ -255,7 +257,7 @@ class HealthAggregator:
         # Попробовать через ConnectorRegistry.
         if self._include_registry:
             try:
-                from src.infrastructure.registry import ConnectorRegistry
+                from src.backend.infrastructure.registry import ConnectorRegistry
 
                 client = ConnectorRegistry.instance().get(name)
             except Exception:  # noqa: BLE001

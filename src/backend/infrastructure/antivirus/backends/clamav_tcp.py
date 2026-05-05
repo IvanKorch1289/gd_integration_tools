@@ -11,8 +11,10 @@ import logging
 import struct
 import time
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.infrastructure.antivirus.backends.clamav_unix import _parse_clamav_response
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.infrastructure.antivirus.backends.clamav_unix import (
+    _parse_clamav_response,
+)
 
 __all__ = ("ClamAVTcpBackend",)
 

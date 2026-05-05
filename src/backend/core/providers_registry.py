@@ -13,8 +13,8 @@
 
 Использование::
 
-    from src.core.protocols import LLMProvider
-    from src.core.providers_registry import get_provider
+    from src.backend.core.protocols import LLMProvider
+    from src.backend.core.providers_registry import get_provider
 
     llm: LLMProvider = get_provider("llm", "ollama")
     answer = await llm.chat([{"role": "user", "content": "hi"}])

@@ -10,7 +10,7 @@ from typing import ClassVar, Literal
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.integration_base import BaseBotChannelSettings
+from src.backend.core.config.integration_base import BaseBotChannelSettings
 
 __all__ = ("TelegramBotSettings", "telegram_bot_settings")
 

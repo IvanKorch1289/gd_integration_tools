@@ -15,8 +15,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.audit import AuditProcessor
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.audit import AuditProcessor
 
 
 def _make_exchange(

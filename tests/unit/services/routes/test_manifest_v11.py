@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.core.security.capabilities import CapabilityRef
-from src.services.routes.manifest_v11 import (
+from src.backend.core.security.capabilities import CapabilityRef
+from src.backend.services.routes.manifest_v11 import (
     RouteManifestError,
     RouteManifestV11,
     load_route_manifest,

@@ -4,7 +4,7 @@
 aiokafka / aio-pika / PyMongo (Motor) / gRPC client без ручных spans в коде.
 
 Активируется в main.py::
-    from src.infrastructure.observability.otel_auto import init_otel
+    from src.backend.infrastructure.observability.otel_auto import init_otel
     init_otel(app=fastapi_app)
 
 Требует env OTEL_EXPORTER_OTLP_ENDPOINT (иначе skip).

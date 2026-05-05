@@ -13,11 +13,11 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 if TYPE_CHECKING:
-    from src.services.ai.rag_service import RAGService
-    from src.services.notebooks.models import Notebook
+    from src.backend.services.ai.rag_service import RAGService
+    from src.backend.services.notebooks.models import Notebook
 
 __all__ = ("NotebookIndexer", "get_notebook_indexer")
 
@@ -84,7 +84,7 @@ class NotebookIndexer:
 
 
 def _factory() -> NotebookIndexer:
-    from src.services.ai.rag_service import get_rag_service
+    from src.backend.services.ai.rag_service import get_rag_service
 
     return NotebookIndexer(get_rag_service())
 

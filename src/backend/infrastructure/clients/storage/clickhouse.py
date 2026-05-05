@@ -156,7 +156,7 @@ class ClickHouseClient:
 
 
 def _create_clickhouse_client() -> ClickHouseClient:
-    from src.core.config.clickhouse import clickhouse_settings
+    from src.backend.core.config.clickhouse import clickhouse_settings
 
     return ClickHouseClient(
         host=clickhouse_settings.host,
@@ -171,7 +171,7 @@ def _create_clickhouse_client() -> ClickHouseClient:
     )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("clickhouse_client", _create_clickhouse_client)

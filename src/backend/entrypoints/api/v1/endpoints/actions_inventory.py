@@ -28,8 +28,11 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from src.core.interfaces.action_dispatcher import ActionMetadata
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
 
 __all__ = ("router",)
 
@@ -155,7 +158,7 @@ class _ActionInventoryFacade:
     ) -> ActionInventoryResponse:
         # Lazy import — диспетчер строится в composition root, импорт
         # из entrypoints в core.di выполняется только в runtime.
-        from src.core.di.providers import get_action_dispatcher_provider
+        from src.backend.core.di.providers import get_action_dispatcher_provider
 
         dispatcher = get_action_dispatcher_provider()
         metas = dispatcher.list_metadata(transport)

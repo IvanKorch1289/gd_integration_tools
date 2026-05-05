@@ -11,6 +11,6 @@
 Composition root: ``services/integrations/import_service.py``.
 """
 
-from src.infrastructure.import_gateway.factory import build_import_gateway
+from src.backend.infrastructure.import_gateway.factory import build_import_gateway
 
 __all__ = ("build_import_gateway",)

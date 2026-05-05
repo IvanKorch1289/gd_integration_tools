@@ -13,7 +13,7 @@ import fnmatch
 
 from cachetools import TTLCache
 
-from src.core.interfaces.cache import CacheBackend
+from src.backend.core.interfaces.cache import CacheBackend
 
 __all__ = ("MemoryBackend",)
 

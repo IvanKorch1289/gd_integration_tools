@@ -21,7 +21,7 @@ from typing import Any
 
 import aiosqlite
 
-from src.core.interfaces.doc_store import DocStoreBackend
+from src.backend.core.interfaces.doc_store import DocStoreBackend
 
 __all__ = ("SqliteDocStore",)
 

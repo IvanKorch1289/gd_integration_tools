@@ -11,11 +11,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-import pytest
-
-from src.infrastructure.cache.invalidator import (
+from src.backend.infrastructure.cache.invalidator import (
     CacheInvalidator,
     InMemoryCacheBackend,
 )

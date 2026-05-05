@@ -11,7 +11,10 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
 
 __all__ = ("router",)
 
@@ -83,11 +86,11 @@ class _DSLConsoleFacade:
                     ),
                 )
 
-            from src.dsl.yaml_loader import load_pipeline_from_yaml
+            from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
             pipeline = load_pipeline_from_yaml(route_yaml)
 
-            from src.dsl.engine.execution_engine import ExecutionEngine
+            from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
             engine = ExecutionEngine()
             exchange = await engine.execute(pipeline, body=payload, headers=headers)

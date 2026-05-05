@@ -70,7 +70,7 @@ class LLMJudge:
         try:
             import orjson
 
-            from src.services.ai.ai_agent import get_ai_agent_service
+            from src.backend.services.ai.ai_agent import get_ai_agent_service
 
             agent = get_ai_agent_service()
             judge_prompt = _JUDGE_PROMPT.format(
@@ -124,7 +124,7 @@ class LLMJudge:
         """Публикует scores в Prometheus + Redis для dashboard."""
         # Wave 6.3: метрики и Redis-клиент — через core/di.providers,
         # без прямого импорта infrastructure/*.
-        from src.core.di.providers import (
+        from src.backend.core.di.providers import (
             get_llm_judge_metrics_provider,
             get_redis_stream_client_provider,
         )
@@ -166,7 +166,7 @@ class LLMJudge:
         Использует APScheduler с Redis jobstore для периодического запуска.
         """
         # Wave 6.3: Redis-клиент — через core/di.providers.
-        from src.core.di.providers import get_redis_stream_client_provider
+        from src.backend.core.di.providers import get_redis_stream_client_provider
 
         verdicts: list[JudgeVerdict] = []
         try:

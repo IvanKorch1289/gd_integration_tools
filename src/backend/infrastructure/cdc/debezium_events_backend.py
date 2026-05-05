@@ -28,7 +28,7 @@ from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from typing import Any
 
-from src.core.cdc.source import CDCCursor, CDCEvent, CDCOperation, CDCSource
+from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCOperation, CDCSource
 
 __all__ = ("DebeziumEventsCDCBackend", "parse_debezium_event")
 

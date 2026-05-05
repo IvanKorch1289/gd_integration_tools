@@ -11,7 +11,7 @@ Wave 1.1: монолитный ``core/interfaces.py`` разбит на тема
 PoolMetrics, AuthProvider, AsyncBatcher) остаются в этом файле — они
 плотно связаны и переезд в отдельные модули не уменьшает зацепления.
 
-Публичный API сохранён: ``from src.core.interfaces import X`` продолжает
+Публичный API сохранён: ``from src.backend.core.interfaces import X`` продолжает
 работать для всех ранее экспортируемых имён.
 """
 
@@ -24,14 +24,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.core.interfaces.audit import AuditBackend, AuditRecord
-from src.core.interfaces.cache import CacheBackend
-from src.core.interfaces.doc_store import DocStoreBackend
-from src.core.interfaces.metrics import MetricsBackend
-from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
-from src.core.interfaces.secrets import SecretsBackend
-from src.core.interfaces.storage import ObjectStorage
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
+from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.core.interfaces.doc_store import DocStoreBackend
+from src.backend.core.interfaces.metrics import MetricsBackend
+from src.backend.core.interfaces.notification import (
+    NotificationAdapter,
+    NotificationMessage,
+)
+from src.backend.core.interfaces.secrets import SecretsBackend
+from src.backend.core.interfaces.storage import ObjectStorage
 
 logger = logging.getLogger(__name__)
 

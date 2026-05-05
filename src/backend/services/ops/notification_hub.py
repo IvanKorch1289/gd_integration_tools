@@ -6,7 +6,7 @@ IL2.2 (ADR-023): **DEPRECATED** — новый путь через
 
 Новый API:
 
-    from src.infrastructure.notifications import get_gateway
+    from src.backend.infrastructure.notifications import get_gateway
     gateway = get_gateway()
     await gateway.send_tx(
         channel="email",
@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from src.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("NotificationHub", "Channel", "NotificationRequest", "get_notification_hub")
 
@@ -106,7 +106,7 @@ class NotificationHub:
     ) -> dict[str, Any]:
         """Отправка email через SMTP."""
         try:
-            from src.core.di.providers import get_smtp_client_provider
+            from src.backend.core.di.providers import get_smtp_client_provider
 
             smtp_client = get_smtp_client_provider()
             await smtp_client.send_email(
@@ -133,7 +133,7 @@ class NotificationHub:
             message: Тело сообщения.
             is_direct: True → отправить личное сообщение по HUID.
         """
-        from src.core.di.providers import get_express_client_provider
+        from src.backend.core.di.providers import get_express_client_provider
 
         client = get_express_client_provider()
         text = f"**{subject}**\n\n{message}" if subject else message
@@ -146,7 +146,7 @@ class NotificationHub:
         self, chat_ids: list[str], subject: str, message: str
     ) -> dict[str, Any]:
         """Broadcast в несколько eXpress чатов."""
-        from src.core.di.providers import get_express_client_provider
+        from src.backend.core.di.providers import get_express_client_provider
 
         client = get_express_client_provider()
         text = f"**{subject}**\n\n{message}" if subject else message
@@ -160,7 +160,7 @@ class NotificationHub:
         chat_type: str = "group_chat",
     ) -> dict[str, Any]:
         """Создаёт групповой чат в eXpress."""
-        from src.core.di.providers import get_express_client_provider
+        from src.backend.core.di.providers import get_express_client_provider
 
         client = get_express_client_provider()
         return await client.create_chat(
@@ -204,7 +204,7 @@ class NotificationHub:
         headers = {"Content-Type": "application/json"}
 
         if secret:
-            from src.core.di.providers import get_signature_builder_provider
+            from src.backend.core.di.providers import get_signature_builder_provider
 
             headers.update(get_signature_builder_provider()(payload, secret))
 
@@ -227,7 +227,7 @@ class NotificationHub:
         import httpx
 
         try:
-            from src.core.config.settings import settings
+            from src.backend.core.config.settings import settings
 
             bot_token = getattr(settings, "telegram_bot_token", "")
         except Exception:

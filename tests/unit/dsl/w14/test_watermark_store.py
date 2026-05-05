@@ -19,16 +19,16 @@ from typing import Any
 
 import pytest
 
-from src.core.clock import FakeClock
-from src.core.types.watermark import WatermarkState
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.streaming import (
+from src.backend.core.clock import FakeClock
+from src.backend.core.types.watermark import WatermarkState
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.streaming import (
     SessionWindowProcessor,
     SlidingWindowProcessor,
     TumblingWindowProcessor,
 )
-from src.infrastructure.watermark.memory_store import MemoryWatermarkStore
+from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkStore
 
 
 def _make_exchange(
@@ -250,15 +250,15 @@ class TestWatermarkFactoryAndBuilder:
     """W14.5 DI: фабрика по конфигу + автоподхват store в RouteBuilder."""
 
     def test_factory_returns_memory_by_default(self) -> None:
-        from src.core.config.services.watermark import WatermarkSettings
-        from src.infrastructure.watermark.factory import create_watermark_store
+        from src.backend.core.config.services.watermark import WatermarkSettings
+        from src.backend.infrastructure.watermark.factory import create_watermark_store
 
         store = create_watermark_store(WatermarkSettings(backend="memory"))
         assert isinstance(store, MemoryWatermarkStore)
 
     def test_factory_postgres_requires_session_manager(self) -> None:
-        from src.core.config.services.watermark import WatermarkSettings
-        from src.infrastructure.watermark.factory import create_watermark_store
+        from src.backend.core.config.services.watermark import WatermarkSettings
+        from src.backend.infrastructure.watermark.factory import create_watermark_store
 
         with pytest.raises(RuntimeError):
             create_watermark_store(WatermarkSettings(backend="postgres"))
@@ -267,8 +267,8 @@ class TestWatermarkFactoryAndBuilder:
         """RouteBuilder подхватывает store, зарегистрированный в app.state."""
         from types import SimpleNamespace
 
-        from src.core.di.app_state import set_app_ref
-        from src.dsl.builder import RouteBuilder
+        from src.backend.core.di.app_state import set_app_ref
+        from src.backend.dsl.builder import RouteBuilder
 
         store = MemoryWatermarkStore()
         fake_app = SimpleNamespace(state=SimpleNamespace(watermark_store=store))
@@ -285,8 +285,8 @@ class TestWatermarkFactoryAndBuilder:
 
     def test_builder_works_without_store(self) -> None:
         """Без зарегистрированного store builder создаёт окно без durability."""
-        from src.core.di.app_state import set_app_ref
-        from src.dsl.builder import RouteBuilder
+        from src.backend.core.di.app_state import set_app_ref
+        from src.backend.dsl.builder import RouteBuilder
 
         # Гарантируем чистое состояние app_ref (другие тесты могли его менять).
         set_app_ref(None)  # type: ignore[arg-type]

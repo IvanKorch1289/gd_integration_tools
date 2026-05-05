@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 from uuid import uuid4
 
-from src.core.interfaces.action_dispatcher import DispatchContext
+from src.backend.core.interfaces.action_dispatcher import DispatchContext
 
 __all__ = ("make_dispatch_context",)
 

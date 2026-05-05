@@ -26,9 +26,12 @@ from typing import TYPE_CHECKING, Any, AsyncIterator
 if TYPE_CHECKING:
     from aioimaplib import IMAP4_SSL
 
-from src.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
-from src.infrastructure.clients.base_connector import HealthResult, InfrastructureClient
-from src.infrastructure.observability.client_metrics import ClientMetricsMixin
+from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
+from src.backend.infrastructure.clients.base_connector import (
+    HealthResult,
+    InfrastructureClient,
+)
+from src.backend.infrastructure.observability.client_metrics import ClientMetricsMixin
 
 _logger = logging.getLogger(__name__)
 

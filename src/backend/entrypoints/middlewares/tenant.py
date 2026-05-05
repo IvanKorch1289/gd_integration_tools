@@ -11,7 +11,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.core.di.providers import get_correlation_context_setter_provider
+from src.backend.core.di.providers import get_correlation_context_setter_provider
 
 __all__ = ("TenantMiddleware",)
 

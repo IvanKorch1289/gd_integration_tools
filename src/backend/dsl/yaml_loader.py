@@ -30,8 +30,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = (
     "load_pipeline_from_yaml",
@@ -67,7 +67,7 @@ def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
     if not isinstance(data, dict):
         raise ValueError("YAML root must be a mapping (dict)")
 
-    from src.dsl.versioning import CURRENT_VERSION, apply_migrations
+    from src.backend.dsl.versioning import CURRENT_VERSION, apply_migrations
 
     if data.get("apiVersion") != CURRENT_VERSION:
         data = apply_migrations(data, target_version=CURRENT_VERSION)
@@ -231,7 +231,7 @@ def _materialize_control_flow_params(
         Новый dict kwargs с подставленными ``BaseProcessor`` / ``ChoiceBranch``
         / ``SagaStep`` объектами.
     """
-    from src.dsl.engine.processors import ChoiceBranch, SagaStep
+    from src.backend.dsl.engine.processors import ChoiceBranch, SagaStep
 
     materialized = dict(params)
 

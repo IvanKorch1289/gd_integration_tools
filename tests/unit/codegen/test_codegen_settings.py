@@ -85,7 +85,7 @@ class TestRenderClassModule:
             base="BaseConnectorSettings",
         )
         assert (
-            "from src.core.config.integration_base import BaseConnectorSettings" in out
+            "from src.backend.core.config.integration_base import BaseConnectorSettings" in out
         )
         assert "class KafkaSettings(BaseConnectorSettings):" in out
         ast.parse(out)
@@ -236,7 +236,7 @@ class TestExtractSpec:
                 from typing import ClassVar
                 from pydantic import Field
                 from pydantic_settings import SettingsConfigDict
-                from src.core.config.integration_base import BaseConnectorSettings
+                from src.backend.core.config.integration_base import BaseConnectorSettings
 
 
                 class KafkaSettings(BaseConnectorSettings):
@@ -330,7 +330,7 @@ class TestLiteralType:
                 from typing import ClassVar, Literal
                 from pydantic import Field
                 from pydantic_settings import SettingsConfigDict
-                from src.core.config.config_loader import BaseSettingsWithLoader
+                from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 
                 class DemoSettings(BaseSettingsWithLoader):

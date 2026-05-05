@@ -17,9 +17,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
-from src.services.ai.feedback.repository import (
+from src.backend.core.di import app_state_singleton
+from src.backend.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
+from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,
     get_feedback_repository,
 )
@@ -145,7 +145,7 @@ class AIFeedbackService:
             label: Проставленная метка.
         """
         try:
-            from src.services.ai.metrics import get_agent_metrics_service
+            from src.backend.services.ai.metrics import get_agent_metrics_service
 
             get_agent_metrics_service().record_feedback(agent_id=agent_id, label=label)
         except Exception as exc:

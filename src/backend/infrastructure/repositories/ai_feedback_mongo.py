@@ -12,8 +12,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.core.models.feedback import AIFeedbackDoc, FeedbackLabel
-from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
+from src.backend.core.models.feedback import AIFeedbackDoc, FeedbackLabel
+from src.backend.infrastructure.clients.storage.mongodb import (
+    MongoDBClient,
+    get_mongo_client,
+)
 
 __all__ = ("MongoFeedbackRepository",)
 

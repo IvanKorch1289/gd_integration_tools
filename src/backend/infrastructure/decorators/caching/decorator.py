@@ -9,14 +9,14 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.core.config.settings import settings
-from src.infrastructure.cache.backends.memory import MemoryBackend
-from src.infrastructure.clients.storage.redis import redis_client
-from src.infrastructure.decorators.caching.envelope import CacheEnvelope
-from src.infrastructure.decorators.caching.stampede import KeyLockManager
-from src.infrastructure.decorators.caching.storage.disk import DiskTTLCache
-from src.infrastructure.external_apis.logging_service import redis_logger
-from src.utilities.codecs.json import json_dumps, json_loads
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+from src.backend.infrastructure.clients.storage.redis import redis_client
+from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
+from src.backend.infrastructure.decorators.caching.stampede import KeyLockManager
+from src.backend.infrastructure.decorators.caching.storage.disk import DiskTTLCache
+from src.backend.infrastructure.external_apis.logging_service import redis_logger
+from src.backend.utilities.codecs.json import json_dumps, json_loads
 
 __all__ = ("CachingDecorator",)
 

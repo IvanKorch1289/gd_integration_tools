@@ -11,7 +11,7 @@ import json
 import os
 from pathlib import Path
 
-from src.core.interfaces.secrets import SecretsBackend
+from src.backend.core.interfaces.secrets import SecretsBackend
 
 __all__ = ("EnvSecretsBackend",)
 

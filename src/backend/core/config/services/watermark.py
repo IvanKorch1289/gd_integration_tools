@@ -11,7 +11,7 @@ from typing import ClassVar, Literal
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("WatermarkSettings", "watermark_settings")
 

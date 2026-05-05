@@ -31,7 +31,7 @@ StorageGetCallable = Callable[[str], Awaitable[bytes]]
 
 async def _primary_get(key: str) -> bytes:
     """Чтение через primary backend (S3/MinIO либо LocalFS-fallback)."""
-    from src.infrastructure.storage.factory import get_object_storage
+    from src.backend.infrastructure.storage.factory import get_object_storage
 
     backend = get_object_storage()
     return await backend.download(key)
@@ -39,7 +39,7 @@ async def _primary_get(key: str) -> bytes:
 
 async def _local_fs_get(key: str) -> bytes:
     """Чтение через LocalFS-fallback (W26.4)."""
-    from src.infrastructure.storage.factory import get_local_fs_storage
+    from src.backend.infrastructure.storage.factory import get_local_fs_storage
 
     backend = get_local_fs_storage()
     return await backend.download(key)

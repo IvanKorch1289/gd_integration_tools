@@ -69,7 +69,7 @@ class HybridRAGSearch:
 
     def _get_rag(self) -> Any:
         if self._rag is None:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             self._rag = get_rag_service()
         return self._rag

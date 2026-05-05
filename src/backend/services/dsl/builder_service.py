@@ -16,12 +16,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.core.config.settings import settings as app_settings
-from src.dsl.commands.registry import route_registry
-from src.dsl.yaml_store import YAMLStore
+from src.backend.core.config.settings import settings as app_settings
+from src.backend.dsl.commands.registry import route_registry
+from src.backend.dsl.yaml_store import YAMLStore
 
 if TYPE_CHECKING:
-    from src.dsl.engine.pipeline import Pipeline
+    from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = ("DSLBuilderService", "SaveResult", "get_dsl_builder_service")
 

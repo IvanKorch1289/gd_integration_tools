@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.services.notebooks.repository import InMemoryNotebookRepository
-from src.services.notebooks.service import NotebookService
+from src.backend.services.notebooks.repository import InMemoryNotebookRepository
+from src.backend.services.notebooks.service import NotebookService
 
 
 @pytest.fixture

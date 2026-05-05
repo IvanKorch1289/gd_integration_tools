@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.cache.validator import (
+from src.backend.infrastructure.cache.validator import (
     CacheConfigRegistry,
     CacheDuplicationError,
     CacheLayerValidator,

@@ -15,7 +15,7 @@ sys.path.insert(0, str(_TOOLS))
 
 import migrate_plugin_manifest as mod  # noqa: E402
 
-from src.services.plugins.manifest_v11 import load_plugin_manifest  # noqa: E402
+from src.backend.services.plugins.manifest_v11 import load_plugin_manifest  # noqa: E402
 
 
 def _legacy_yaml(content: str) -> str:

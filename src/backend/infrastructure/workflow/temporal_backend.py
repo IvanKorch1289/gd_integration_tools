@@ -22,8 +22,12 @@ import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from src.core.workflow.backend import WorkflowBackend, WorkflowHandle, WorkflowResult
-from src.utilities.codecs.json import canonical_json_bytes
+from src.backend.core.workflow.backend import (
+    WorkflowBackend,
+    WorkflowHandle,
+    WorkflowResult,
+)
+from src.backend.utilities.codecs.json import canonical_json_bytes
 
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient

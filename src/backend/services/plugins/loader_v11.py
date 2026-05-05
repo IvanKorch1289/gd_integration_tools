@@ -19,15 +19,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.core.interfaces.plugin import (
+from src.backend.core.interfaces.plugin import (
     ActionRegistryProtocol,
     BasePlugin,
     PluginContext,
     ProcessorRegistryProtocol,
     RepositoryRegistryProtocol,
 )
-from src.core.security.capabilities import CapabilityError, CapabilityGate
-from src.services.plugins.manifest_v11 import (
+from src.backend.core.security.capabilities import CapabilityError, CapabilityGate
+from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
     PluginManifestV11,
     load_plugin_manifest,

@@ -21,8 +21,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.core.config.cert_store import CertStoreSettings
-from src.infrastructure.security.cert_store import (
+from src.backend.core.config.cert_store import CertStoreSettings
+from src.backend.infrastructure.security.cert_store import (
     CertEntry,
     CertStore,
     MemoryCertBackend,

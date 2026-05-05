@@ -8,7 +8,7 @@ from datetime import timedelta
 import pytest
 from pydantic import ValidationError
 
-from src.core.workflow import (
+from src.backend.core.workflow import (
     FakeWorkflowBackend,
     WorkflowBackend,
     WorkflowHandle,

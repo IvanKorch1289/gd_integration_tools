@@ -38,9 +38,9 @@ from typing import Any, AsyncIterator, Awaitable, Callable
 
 from sqlalchemy import select
 
-from src.core.config.cert_store import CertStoreSettings, cert_store_settings
-from src.infrastructure.database.models.cert import CertHistory, CertRecord
-from src.infrastructure.database.session_manager import main_session_manager
+from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
+from src.backend.infrastructure.database.models.cert import CertHistory, CertRecord
+from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = (
     "CertStore",
@@ -285,7 +285,7 @@ class VaultCertBackend(CertBackend):
     def _client(self) -> Any:
         from hvac import Client  # лениво, чтобы тесты без Vault работали
 
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         url = getattr(settings, "vault_url", None) or getattr(
             settings.app, "vault_url", None
@@ -417,7 +417,7 @@ class MongoCertBackend(CertBackend):
                     "Установите: uv add pymongo>=4.9"
                 ) from exc
 
-            from src.core.config.mongo import mongo_connection_settings as cfg
+            from src.backend.core.config.mongo import mongo_connection_settings as cfg
 
             self._client = AsyncMongoClient(
                 cfg.connection_string,

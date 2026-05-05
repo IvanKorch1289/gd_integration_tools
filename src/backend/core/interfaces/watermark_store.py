@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from src.core.types.watermark import WatermarkState
+from src.backend.core.types.watermark import WatermarkState
 
 __all__ = ("WatermarkStore",)
 

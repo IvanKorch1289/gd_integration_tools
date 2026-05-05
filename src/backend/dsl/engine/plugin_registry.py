@@ -18,7 +18,7 @@ import importlib
 import logging
 from typing import Any
 
-from src.dsl.engine.processors import BaseProcessor
+from src.backend.dsl.engine.processors import BaseProcessor
 
 __all__ = ("ProcessorPluginRegistry", "get_processor_plugin_registry")
 
@@ -79,7 +79,7 @@ class ProcessorPluginRegistry:
         return name in self._plugins
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("plugin_registry", ProcessorPluginRegistry)

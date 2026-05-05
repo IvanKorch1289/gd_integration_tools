@@ -1,5 +1,5 @@
-from src.infrastructure.database.models.orderkinds import OrderKind
-from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.backend.infrastructure.database.models.orderkinds import OrderKind
+from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("OrderKindRepository", "get_order_kind_repo")
 

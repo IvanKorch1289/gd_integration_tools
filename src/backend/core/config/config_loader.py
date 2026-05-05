@@ -10,8 +10,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from src.core.config.constants import consts
-from src.core.config.profile import get_active_profile
+from src.backend.core.config.constants import consts
+from src.backend.core.config.profile import get_active_profile
 
 __all__ = ("BaseSettingsWithLoader",)
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from src.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = ("ScheduledReportsService", "ReportSchedule", "get_reports_service")
 
@@ -115,8 +115,8 @@ class ScheduledReportsService:
         start = time.monotonic()
 
         try:
-            from src.dsl.commands.registry import action_handler_registry
-            from src.schemas.invocation import ActionCommandSchema
+            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=report.action,
@@ -136,7 +136,7 @@ class ScheduledReportsService:
 
             export_result = None
             if data and report.export_format != "none":
-                from src.services.io.export_service import get_export_service
+                from src.backend.services.io.export_service import get_export_service
 
                 export_svc = get_export_service()
                 export_method = getattr(
@@ -145,7 +145,9 @@ class ScheduledReportsService:
                 export_result = await export_method(data=data, title=report.name)
 
             if report.delivery_to and export_result:
-                from src.services.ops.notification_hub import get_notification_hub
+                from src.backend.services.ops.notification_hub import (
+                    get_notification_hub,
+                )
 
                 hub = get_notification_hub()
                 await hub.send(

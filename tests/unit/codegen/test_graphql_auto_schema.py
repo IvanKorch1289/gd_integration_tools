@@ -13,8 +13,8 @@
 
 from __future__ import annotations
 
-from src.core.interfaces.action_dispatcher import ActionMetadata
-from src.entrypoints.graphql.auto_schema import (
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+from src.backend.entrypoints.graphql.auto_schema import (
     _action_to_field_name,
     build_auto_strawberry_schema,
 )

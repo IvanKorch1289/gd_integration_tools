@@ -8,9 +8,9 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.core.config.settings import RedisSettings, settings
-from src.infrastructure.external_apis.logging_service import redis_logger
-from src.infrastructure.resilience.client_breaker import (
+from src.backend.core.config.settings import RedisSettings, settings
+from src.backend.infrastructure.external_apis.logging_service import redis_logger
+from src.backend.infrastructure.resilience.client_breaker import (
     CircuitOpen,
     ClientCircuitBreaker,
 )

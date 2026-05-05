@@ -19,9 +19,9 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import UUID
 
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.database.models.workflow_instance import WorkflowStatus
-from src.infrastructure.workflow.event_store import WorkflowEventRow
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.backend.infrastructure.workflow.event_store import WorkflowEventRow
 
 __all__ = ("WorkflowState",)
 

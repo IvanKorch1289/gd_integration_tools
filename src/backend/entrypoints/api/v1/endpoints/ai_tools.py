@@ -14,8 +14,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.services.ai.tools import get_tool_registry
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.services.ai.tools import get_tool_registry
 
 __all__ = ("router",)
 

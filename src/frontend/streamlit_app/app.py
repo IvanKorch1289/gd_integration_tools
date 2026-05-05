@@ -12,7 +12,7 @@ _project_root = Path(__file__).resolve().parents[3]
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from src.entrypoints.streamlit_app.api_client import get_api_client
+from src.frontend.streamlit_app.api_client import get_api_client
 
 st.set_page_config(
     page_title="GD Integration Tools",

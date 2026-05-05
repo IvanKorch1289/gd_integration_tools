@@ -69,7 +69,7 @@ class PoolMonitor:
     async def collect_stats(self) -> dict[str, Any] | None:
         """Собирает текущую статистику пула."""
         try:
-            from src.infrastructure.database.database import db_initializer
+            from src.backend.infrastructure.database.database import db_initializer
 
             pool = db_initializer._async_engine.pool  # type: ignore[union-attr]
 
@@ -104,7 +104,7 @@ class PoolMonitor:
         return self._stats_history[-limit:]
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("pool_monitor", PoolMonitor)

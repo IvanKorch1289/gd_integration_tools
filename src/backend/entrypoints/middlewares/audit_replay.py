@@ -88,7 +88,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
         """Отправляет запись в Redis stream."""
         # Wave 6.5a: redis_client — через DI provider.
         try:
-            from src.core.di.providers import get_redis_stream_client_provider
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -120,7 +120,7 @@ async def list_audit_records(
     """Читает последние записи из audit stream для Replay UI."""
     # Wave 6.5a: redis_client — через DI provider.
     try:
-        from src.core.di.providers import get_redis_stream_client_provider
+        from src.backend.core.di.providers import get_redis_stream_client_provider
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(
@@ -139,7 +139,7 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
     """
     # Wave 6.5a: redis_client — через DI provider.
     try:
-        from src.core.di.providers import get_redis_stream_client_provider
+        from src.backend.core.di.providers import get_redis_stream_client_provider
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(

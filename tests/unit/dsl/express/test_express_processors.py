@@ -25,9 +25,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.express import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.express import (
     ExpressEditProcessor,
     ExpressMentionProcessor,
     ExpressReplyProcessor,
@@ -36,7 +36,7 @@ from src.dsl.engine.processors.express import (
     ExpressStatusProcessor,
     ExpressTypingProcessor,
 )
-from src.infrastructure.clients.external.express_bot import BotxMention
+from src.backend.infrastructure.clients.external.express_bot import BotxMention
 
 # ── Хелперы ──────────────────────────────────────────────────────────────
 
@@ -103,9 +103,9 @@ def _patch_log_outgoing(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     noop = AsyncMock(return_value=None)
     for module_name in (
-        "src.dsl.engine.processors.express.send",
-        "src.dsl.engine.processors.express.reply",
-        "src.dsl.engine.processors.express.send_file",
+        "src.backend.dsl.engine.processors.express.send",
+        "src.backend.dsl.engine.processors.express.reply",
+        "src.backend.dsl.engine.processors.express.send_file",
     ):
         monkeypatch.setattr(f"{module_name}.log_outgoing_message", noop, raising=True)
 
@@ -115,7 +115,7 @@ def _install_client(
 ) -> None:
     """Подменяет ``get_express_client`` в модуле процессора на возврат ``client``."""
     monkeypatch.setattr(
-        f"src.dsl.engine.processors.express.{module}.get_express_client",
+        f"src.backend.dsl.engine.processors.express.{module}.get_express_client",
         lambda bot_name="main_bot": client,
         raising=True,
     )
@@ -540,11 +540,11 @@ class TestExpressSendFileProcessor:
         fake_s3 = MagicMock()
         fake_s3.get_object_bytes = AsyncMock(return_value=b"S3-DATA")
         fake_module = types.ModuleType(
-            "src.infrastructure.clients.storage.s3_pool"
+            "src.backend.infrastructure.clients.storage.s3_pool"
         )
         fake_module.s3_client = fake_s3  # type: ignore[attr-defined]
         monkeypatch.setitem(
-            sys.modules, "src.infrastructure.clients.storage.s3_pool", fake_module
+            sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module
         )
 
         proc = ExpressSendFileProcessor(

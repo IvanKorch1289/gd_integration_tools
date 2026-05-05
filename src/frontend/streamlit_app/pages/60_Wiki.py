@@ -12,7 +12,7 @@ st.set_page_config(page_title="Wiki", layout="wide")
 st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.
-from src.services.wiki.whoosh_index import WhooshIndex
+from src.backend.services.wiki.whoosh_index import WhooshIndex
 
 
 @st.cache_resource(show_spinner=False)

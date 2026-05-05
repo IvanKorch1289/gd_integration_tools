@@ -2,16 +2,16 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
-from src.core.config.settings import settings
-from src.core.di.app_state import app_state_singleton
-from src.core.di.providers import (
+from src.backend.core.config.settings import settings
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import (
     get_admin_cache_storage_provider,
     get_slo_tracker_provider,
 )
-from src.core.state.runtime import disabled_feature_flags
-from src.core.svcs_registry import list_services as _list_services
-from src.dsl.commands.action_registry import action_handler_registry
-from src.dsl.commands.registry import route_registry
+from src.backend.core.state.runtime import disabled_feature_flags
+from src.backend.core.svcs_registry import list_services as _list_services
+from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.dsl.commands.registry import route_registry
 
 __all__ = ("AdminService", "get_admin_service")
 
@@ -55,7 +55,7 @@ class AdminService:
         Raises:
             HTTPException: Если маршрут с указанным путём не найден.
         """
-        from src.core.state.runtime import blocked_routes
+        from src.backend.core.state.runtime import blocked_routes
 
         route_exists = any(route.path == route_path for route in request.app.routes)
         if not route_exists:

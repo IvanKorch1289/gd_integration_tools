@@ -77,8 +77,10 @@ class OutboxPublisher:
         Returns:
             Список id успешно опубликованных событий.
         """
-        from src.infrastructure.clients.messaging.stream import get_stream_client
-        from src.infrastructure.eventing.cloudevents import envelope
+        from src.backend.infrastructure.clients.messaging.stream import (
+            get_stream_client,
+        )
+        from src.backend.infrastructure.eventing.cloudevents import envelope
 
         client = get_stream_client()
         published: list[UUID] = []
@@ -119,7 +121,7 @@ class OutboxPublisher:
         Returns:
             Список успешно опубликованных ``OutboxEvent.id``.
         """
-        from src.infrastructure.repositories import outbox as outbox_repo
+        from src.backend.infrastructure.repositories import outbox as outbox_repo
 
         pending = await outbox_repo.fetch_pending(limit=self.batch_size)
         if event_ids is not None:

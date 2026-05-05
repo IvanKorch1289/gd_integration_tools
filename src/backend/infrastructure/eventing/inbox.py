@@ -26,7 +26,7 @@ class Inbox:
     async def seen_or_mark(self, event_id: str) -> bool:
         """True, если событие уже было обработано (дубликат)."""
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
         except ImportError:
             logger.debug("Redis недоступен — inbox dedup отключён")
             return False

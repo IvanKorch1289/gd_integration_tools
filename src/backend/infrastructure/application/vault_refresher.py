@@ -213,7 +213,7 @@ class VaultSecretRefresher:
                 )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("vault_refresher", VaultSecretRefresher)

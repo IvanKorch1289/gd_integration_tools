@@ -41,8 +41,11 @@ async def _import_openapi(
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
     """Импортирует OpenAPI spec (file или URL) через W24 ImportGateway."""
-    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-    from src.services.integrations import get_import_service
+    from src.backend.core.interfaces.import_gateway import (
+        ImportSource,
+        ImportSourceKind,
+    )
+    from src.backend.services.integrations import get_import_service
 
     if file is not None:
         content = await file.read()
@@ -97,8 +100,11 @@ async def _import_postman(
     dry_run: bool = Form(default=False),
 ) -> dict[str, Any]:
     """Импортирует Postman-коллекцию через W24 ImportGateway."""
-    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-    from src.services.integrations import get_import_service
+    from src.backend.core.interfaces.import_gateway import (
+        ImportSource,
+        ImportSourceKind,
+    )
+    from src.backend.services.integrations import get_import_service
 
     if file is not None:
         content = await file.read()
@@ -161,7 +167,7 @@ async def _import_process_schema(payload: dict[str, Any]) -> dict[str, Any]:
     ``choice``, ``http_call``, ``dispatch_action``. Расширяется в
     ``_apply_steps`` ниже.
     """
-    from src.dsl.builder import RouteBuilder
+    from src.backend.dsl.builder import RouteBuilder
 
     try:
         route_id = payload["route_id"]
@@ -247,8 +253,8 @@ async def _import_bulk_objects(
     if dry_run:
         return {"parsed": len(rows), "sample": rows[:3], "dry_run": True}
 
-    from src.dsl.engine.execution_engine import get_execution_engine
-    from src.dsl.engine.pipeline_registry import get_pipeline_registry
+    from src.backend.dsl.engine.execution_engine import get_execution_engine
+    from src.backend.dsl.engine.pipeline_registry import get_pipeline_registry
 
     pipeline = get_pipeline_registry().get(route_id)
     if pipeline is None:

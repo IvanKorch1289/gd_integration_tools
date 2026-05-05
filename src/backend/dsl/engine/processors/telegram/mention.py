@@ -15,10 +15,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.telegram._common import resolve_value
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.telegram._common import resolve_value
 
 __all__ = ("TelegramMentionProcessor",)
 
@@ -62,7 +62,9 @@ class TelegramMentionProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Формирует фрагмент-упоминание и записывает в exchange-property."""
-        from src.infrastructure.clients.external.telegram_bot import TelegramMention
+        from src.backend.infrastructure.clients.external.telegram_bot import (
+            TelegramMention,
+        )
 
         user_id = resolve_value(exchange, self._user_id_from)
         if not user_id:

@@ -6,10 +6,10 @@ action из ActionHandlerRegistry. После регистрации все acti
 протоколы без дополнительного кода.
 """
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.commands.registry import action_handler_registry
-from src.dsl.engine.exchange import Exchange
-from src.dsl.registry import route_registry
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.registry import route_registry
 
 __all__ = ("register_dsl_routes",)
 

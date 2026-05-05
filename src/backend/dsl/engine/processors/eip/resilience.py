@@ -4,9 +4,9 @@ from typing import Any
 
 import orjson
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
@@ -41,7 +41,7 @@ class DeadLetterProcessor(BaseProcessor):
 
     async def _send_to_dlq(self, exchange: Exchange[Any]) -> None:
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             dlq_entry = {
                 "exchange_id": exchange.meta.exchange_id,
@@ -70,7 +70,7 @@ class DeadLetterProcessor(BaseProcessor):
             _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import run_sub_processors
+        from src.backend.dsl.engine.processors.base import run_sub_processors
 
         try:
             await run_sub_processors(self._processors, exchange, context)
@@ -171,8 +171,8 @@ class CircuitBreakerProcessor(BaseProcessor):
         return f"{self._DSL_NAMESPACE}.{route_id}"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import run_sub_processors
-        from src.infrastructure.resilience.breaker import (
+        from src.backend.dsl.engine.processors.base import run_sub_processors
+        from src.backend.infrastructure.resilience.breaker import (
             BreakerSpec,
             CircuitOpen,
             breaker_registry,
@@ -240,7 +240,7 @@ class TimeoutProcessor(BaseProcessor):
         self._fallback = fallback_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import run_sub_processors
+        from src.backend.dsl.engine.processors.base import run_sub_processors
 
         try:
             await asyncio.wait_for(

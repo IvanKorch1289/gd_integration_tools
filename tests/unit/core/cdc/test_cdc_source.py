@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
 
-from src.core.cdc import CDCCursor, CDCEvent, CDCSource, FakeCDCSource
-from src.infrastructure.cdc.debezium_events_backend import parse_debezium_event
+from src.backend.core.cdc import CDCCursor, CDCEvent, CDCSource, FakeCDCSource
+from src.backend.infrastructure.cdc.debezium_events_backend import parse_debezium_event
 
 
 def _ev(
@@ -152,19 +152,19 @@ class TestInfrastructureBackendsAreProtocol:
     """Smoke: каждый infrastructure backend реализует CDCSource."""
 
     def test_poll_backend(self) -> None:
-        from src.infrastructure.cdc import PollCDCBackend
+        from src.backend.infrastructure.cdc import PollCDCBackend
 
         backend = PollCDCBackend(profile="default")
         assert isinstance(backend, CDCSource)
 
     def test_listen_notify_backend(self) -> None:
-        from src.infrastructure.cdc import ListenNotifyCDCBackend
+        from src.backend.infrastructure.cdc import ListenNotifyCDCBackend
 
         backend = ListenNotifyCDCBackend(dsn="postgresql://localhost/db")
         assert isinstance(backend, CDCSource)
 
     def test_debezium_events_backend(self) -> None:
-        from src.infrastructure.cdc import DebeziumEventsCDCBackend
+        from src.backend.infrastructure.cdc import DebeziumEventsCDCBackend
 
         backend = DebeziumEventsCDCBackend(bootstrap_servers="localhost:9092")
         assert isinstance(backend, CDCSource)

@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.workflow import FakeWorkflowBackend, WorkflowBackend
-from src.infrastructure.workflow.factory import create_workflow_backend
+from src.backend.core.workflow import FakeWorkflowBackend, WorkflowBackend
+from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
 
 @pytest.mark.asyncio
@@ -26,7 +26,7 @@ class TestCreateWorkflowBackend:
         backend = await create_workflow_backend(kind="auto", profile="dev_light")
         assert isinstance(backend, WorkflowBackend)
         # pg_runner adapter — конкретный класс из infrastructure/.
-        from src.infrastructure.workflow.pg_runner_backend import (
+        from src.backend.infrastructure.workflow.pg_runner_backend import (
             PgRunnerWorkflowBackend,
         )
 
@@ -42,18 +42,18 @@ class TestCreateWorkflowBackend:
         import sys
         import types
 
-        fake_module = types.ModuleType("src.infrastructure.workflow.temporal_backend")
+        fake_module = types.ModuleType("src.backend.infrastructure.workflow.temporal_backend")
 
         class _Shim:
             connect = staticmethod(_broken_connect)
 
         fake_module.TemporalWorkflowBackend = _Shim  # type: ignore[attr-defined]
         monkeypatch.setitem(
-            sys.modules, "src.infrastructure.workflow.temporal_backend", fake_module
+            sys.modules, "src.backend.infrastructure.workflow.temporal_backend", fake_module
         )
 
         backend = await create_workflow_backend(kind="auto", profile="prod")
-        from src.infrastructure.workflow.pg_runner_backend import (
+        from src.backend.infrastructure.workflow.pg_runner_backend import (
             PgRunnerWorkflowBackend,
         )
 

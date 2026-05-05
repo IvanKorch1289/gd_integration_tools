@@ -17,8 +17,8 @@ from typing import ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
-from src.core.config.constants import consts
+from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.constants import consts
 
 __all__ = (
     "BreakerProfile",

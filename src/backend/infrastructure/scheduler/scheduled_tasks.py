@@ -1,6 +1,6 @@
-from src.core.config.settings import settings
-from src.infrastructure.external_apis.logging_service import scheduler_logger
-from src.schemas.base import EmailSchema
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.external_apis.logging_service import scheduler_logger
+from src.backend.schemas.base import EmailSchema
 
 __all__ = ("check_all_services",)
 
@@ -10,7 +10,9 @@ async def check_all_services():
     Проверяет статус всех сервисов.
     Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
     """
-    from src.infrastructure.monitoring.health_check import get_healthcheck_service
+    from src.backend.infrastructure.monitoring.health_check import (
+        get_healthcheck_service,
+    )
 
     try:
         scheduler_logger.info("Запуск проверки состояния всех сервисов...")
@@ -19,7 +21,9 @@ async def check_all_services():
             result = await health_check.check_all_services()
 
         if not result.get("is_all_services_active"):
-            from src.infrastructure.clients.messaging.stream import stream_client
+            from src.backend.infrastructure.clients.messaging.stream import (
+                stream_client,
+            )
 
             data = {
                 "to_emails": ["cards25@rt.bak"],

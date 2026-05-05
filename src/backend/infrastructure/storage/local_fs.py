@@ -26,7 +26,7 @@ from pathlib import Path
 import aiofiles
 import aiofiles.os
 
-from src.core.interfaces.storage import ObjectStorage
+from src.backend.core.interfaces.storage import ObjectStorage
 
 __all__ = ("LocalFSStorage",)
 

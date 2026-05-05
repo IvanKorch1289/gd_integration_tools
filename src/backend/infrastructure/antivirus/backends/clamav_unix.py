@@ -21,7 +21,7 @@ import struct
 import time
 from pathlib import Path
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("ClamAVUnixBackend",)
 

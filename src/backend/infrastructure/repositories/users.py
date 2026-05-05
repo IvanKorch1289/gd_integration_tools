@@ -3,10 +3,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.errors import DatabaseError
-from src.infrastructure.database.models.users import User
-from src.infrastructure.database.session_manager import main_session_manager
-from src.infrastructure.repositories.base import SQLAlchemyRepository
+from src.backend.core.errors import DatabaseError
+from src.backend.infrastructure.database.models.users import User
+from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
 
 __all__ = ("UserRepository", "get_user_repo")
 

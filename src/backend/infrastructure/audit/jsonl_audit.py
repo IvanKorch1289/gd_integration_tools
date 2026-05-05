@@ -16,8 +16,8 @@ from typing import Any
 
 import orjson
 
-from src.core.interfaces.audit import AuditBackend, AuditRecord
-from src.utilities.codecs.json import dumps_str
+from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
+from src.backend.utilities.codecs.json import dumps_str
 
 __all__ = ("JsonlAuditBackend",)
 

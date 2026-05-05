@@ -29,7 +29,7 @@ import httpx
 import jwt
 import pytest
 
-from src.infrastructure.clients.external.express_bot import (
+from src.backend.infrastructure.clients.external.express_bot import (
     BotConfig,
     BotxButton,
     BotxMention,

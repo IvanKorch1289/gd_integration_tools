@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
-    from src.infrastructure.workflow.executor import WorkflowSpec
+    from src.backend.infrastructure.workflow.executor import WorkflowSpec
 
 __all__ = ("WorkflowDescriptor", "WorkflowRegistry", "workflow_registry")
 

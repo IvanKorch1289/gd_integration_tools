@@ -42,11 +42,11 @@ from typing import Any, Awaitable, Callable
 
 from fastapi import APIRouter, FastAPI, Request
 
-from src.dsl.commands.action_registry import (
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("auto_register_unrouted_actions",)
 

@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
 
-from src.services.notebooks.models import Notebook, NotebookVersion
+from src.backend.services.notebooks.models import Notebook, NotebookVersion
 
 
 def test_notebook_defaults_minimal_fields() -> None:

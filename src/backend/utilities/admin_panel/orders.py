@@ -1,7 +1,7 @@
 from sqladmin import ModelView
 
-from src.infrastructure.database.models.orders import Order
-from src.utilities.admin_panel.base import BaseAdmin
+from src.backend.infrastructure.database.models.orders import Order
+from src.backend.utilities.admin_panel.base import BaseAdmin
 
 __all__ = ("OrderAdmin",)
 

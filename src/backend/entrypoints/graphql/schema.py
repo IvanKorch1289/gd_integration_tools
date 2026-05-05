@@ -17,7 +17,7 @@ from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from src.dsl.service import get_dsl_service
+from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("graphql_router",)
 
@@ -118,7 +118,7 @@ async def _dispatch_action(
     IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
     с `source="graphql"`. Meta и correlation_id — автоматически.
     """
-    from src.entrypoints.base import dispatch_action as _unified_dispatch
+    from src.backend.entrypoints.base import dispatch_action as _unified_dispatch
 
     try:
         result = await _unified_dispatch(
@@ -330,13 +330,13 @@ class Query:
 
     @strawberry.field(description="Список зарегистрированных DSL-маршрутов.")
     async def dsl_routes(self) -> list[str]:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         return list(route_registry.list_routes())
 
     @strawberry.field(description="Список зарегистрированных actions.")
     async def actions(self) -> list[str]:
-        from src.dsl.commands.registry import action_handler_registry
+        from src.backend.dsl.commands.registry import action_handler_registry
 
         return list(action_handler_registry.list_actions())
 
@@ -463,7 +463,7 @@ class Subscription:
     async def route_trace(
         self, route_id: str, info: Info
     ) -> AsyncGenerator[TraceEventType, None]:
-        from src.dsl.engine.tracer import get_tracer
+        from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         async for event in tracer.subscribe(route_id):
@@ -479,7 +479,7 @@ class Subscription:
 
     @strawberry.subscription(description="Все trace-события (для dashboard).")
     async def all_traces(self, info: Info) -> AsyncGenerator[TraceEventType, None]:
-        from src.dsl.engine.tracer import get_tracer
+        from src.backend.dsl.engine.tracer import get_tracer
 
         tracer = get_tracer()
         async for event in tracer.subscribe_all():
@@ -502,7 +502,9 @@ class Subscription:
 
         while True:
             try:
-                from src.core.di.providers import get_healthcheck_session_provider
+                from src.backend.core.di.providers import (
+                    get_healthcheck_session_provider,
+                )
 
                 hc_factory = get_healthcheck_session_provider()
                 async with hc_factory() as hc:

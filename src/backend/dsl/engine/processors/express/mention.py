@@ -16,10 +16,10 @@ import logging
 import uuid
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import resolve_value
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.express._common import resolve_value
 
 __all__ = ("ExpressMentionProcessor",)
 
@@ -71,7 +71,7 @@ class ExpressMentionProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Формирует BotxMention и добавляет в exchange-property списком."""
-        from src.infrastructure.clients.external.express_bot import BotxMention
+        from src.backend.infrastructure.clients.external.express_bot import BotxMention
 
         target = (
             resolve_value(exchange, self._target_from) if self._target_from else None

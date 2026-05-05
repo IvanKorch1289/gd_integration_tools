@@ -74,7 +74,7 @@ async def readiness_probe(request: Request) -> JSONResponse:
 
     try:
         # Wave 6.5a: ResilienceCoordinator — через DI provider.
-        from src.core.di.providers import get_resilience_coordinator_provider
+        from src.backend.core.di.providers import get_resilience_coordinator_provider
 
         statuses = get_resilience_coordinator_provider().status()
     except Exception as exc:  # noqa: BLE001
@@ -127,7 +127,10 @@ async def startup_probe(request: Request) -> JSONResponse:
             status_code=503, content={"status": "starting"}, headers=_no_store_headers()
         )
 
-    from src.dsl.commands.registry import action_handler_registry, route_registry
+    from src.backend.dsl.commands.registry import (
+        action_handler_registry,
+        route_registry,
+    )
 
     return JSONResponse(
         content={
@@ -166,7 +169,7 @@ async def components_health(mode: str = "fast") -> JSONResponse:
     try:
         # Wave 6.5a: health_aggregator + resilience_components_report —
         # через DI providers (lazy importlib).
-        from src.core.di.providers import (
+        from src.backend.core.di.providers import (
             get_health_aggregator_provider,
             get_resilience_components_report_provider,
         )

@@ -4,48 +4,60 @@ __all__ = ("get_v1_routers",)
 
 
 def get_v1_routers() -> APIRouter:
-    from src.entrypoints.api.v1.endpoints.actions_inventory import (
+    from src.backend.entrypoints.api.v1.endpoints.actions_inventory import (
         router as actions_inventory_router,
     )
-    from src.entrypoints.api.v1.endpoints.admin import router as admin_router
-    from src.entrypoints.api.v1.endpoints.admin_connectors import (
+    from src.backend.entrypoints.api.v1.endpoints.admin import router as admin_router
+    from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
-    from src.entrypoints.api.v1.endpoints.admin_workflows import (
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
-    from src.entrypoints.api.v1.endpoints.agent_memory import (
+    from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
-    from src.entrypoints.api.v1.endpoints.ai_agents import router as ai_agents_router
-    from src.entrypoints.api.v1.endpoints.ai_feedback import (
+    from src.backend.entrypoints.api.v1.endpoints.ai_agents import (
+        router as ai_agents_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (
         router as ai_feedback_router,
     )
-    from src.entrypoints.api.v1.endpoints.ai_tools import router as ai_tools_router
-    from src.entrypoints.api.v1.endpoints.dadata import router as dadata_router
-    from src.entrypoints.api.v1.endpoints.dsl_console import (
+    from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
+        router as ai_tools_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.dadata import router as dadata_router
+    from src.backend.entrypoints.api.v1.endpoints.dsl_console import (
         router as dsl_console_router,
     )
-    from src.entrypoints.api.v1.endpoints.dsl_routes import router as dsl_routes_router
-    from src.entrypoints.api.v1.endpoints.files import router as files_router
-    from src.entrypoints.api.v1.endpoints.files import storage_router
-    from src.entrypoints.api.v1.endpoints.health import router as health_router
-    from src.entrypoints.api.v1.endpoints.imports import router as imports_router
-    from src.entrypoints.api.v1.endpoints.invocations import (
+    from src.backend.entrypoints.api.v1.endpoints.dsl_routes import (
+        router as dsl_routes_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.files import router as files_router
+    from src.backend.entrypoints.api.v1.endpoints.files import storage_router
+    from src.backend.entrypoints.api.v1.endpoints.health import router as health_router
+    from src.backend.entrypoints.api.v1.endpoints.imports import (
+        router as imports_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.invocations import (
         router as invocations_router,
     )
-    from src.entrypoints.api.v1.endpoints.notebooks import router as notebooks_router
-    from src.entrypoints.api.v1.endpoints.orderkinds import router as orderkinds_router
-    from src.entrypoints.api.v1.endpoints.orders import router as orders_router
-    from src.entrypoints.api.v1.endpoints.rag import router as rag_router
-    from src.entrypoints.api.v1.endpoints.search import router as search_router
-    from src.entrypoints.api.v1.endpoints.skb import router as skb_router
-    from src.entrypoints.api.v1.endpoints.tech import router as tech_router
-    from src.entrypoints.api.v1.endpoints.users import router as users_router
-    from src.entrypoints.api.v1.endpoints.v11_inventory import (
+    from src.backend.entrypoints.api.v1.endpoints.notebooks import (
+        router as notebooks_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.orderkinds import (
+        router as orderkinds_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.orders import router as orders_router
+    from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
+    from src.backend.entrypoints.api.v1.endpoints.search import router as search_router
+    from src.backend.entrypoints.api.v1.endpoints.skb import router as skb_router
+    from src.backend.entrypoints.api.v1.endpoints.tech import router as tech_router
+    from src.backend.entrypoints.api.v1.endpoints.users import router as users_router
+    from src.backend.entrypoints.api.v1.endpoints.v11_inventory import (
         plugins_router as v11_plugins_router,
     )
-    from src.entrypoints.api.v1.endpoints.v11_inventory import (
+    from src.backend.entrypoints.api.v1.endpoints.v11_inventory import (
         routes_router as v11_routes_router,
     )
 

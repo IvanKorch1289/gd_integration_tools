@@ -4,8 +4,8 @@ from typing import Any, ClassVar, Literal
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
-from src.core.config.constants import consts
+from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.constants import consts
 
 __all__ = (
     "AppBaseSettings",

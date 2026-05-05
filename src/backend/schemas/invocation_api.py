@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from src.schemas.base import BaseSchema
+from src.backend.schemas.base import BaseSchema
 
 __all__ = ("InvocationRequestSchema", "InvocationResponseSchema")
 

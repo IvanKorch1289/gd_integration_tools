@@ -28,14 +28,14 @@ import uuid
 from collections import defaultdict, deque
 from typing import Any
 
-from src.core.clock import RealClock
-from src.core.interfaces.clock import Clock
-from src.core.interfaces.watermark_store import WatermarkStore
-from src.core.types.watermark import LatePolicy, WatermarkState
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.late_event_policy import apply_late_policy
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.clock import RealClock
+from src.backend.core.interfaces.clock import Clock
+from src.backend.core.interfaces.watermark_store import WatermarkStore
+from src.backend.core.types.watermark import LatePolicy, WatermarkState
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.late_event_policy import apply_late_policy
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "MessageExpirationProcessor",

@@ -51,10 +51,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from src.core.tenancy import current_tenant
+from src.backend.core.tenancy import current_tenant
 
 if TYPE_CHECKING:
-    from src.infrastructure.policy.casbin_adapter import CasbinAdapter
+    from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
 
 
 __all__ = ("TenantScopedCasbin",)

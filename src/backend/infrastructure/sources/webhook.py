@@ -24,7 +24,7 @@ import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

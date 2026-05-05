@@ -2,9 +2,9 @@ import asyncio
 import logging
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
@@ -36,8 +36,8 @@ class DynamicRouterProcessor(BaseProcessor):
         self._expr = route_expression
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.commands.registry import route_registry
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.commands.registry import route_registry
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         target_route_id = self._expr(exchange)
         if not route_registry.is_registered(target_route_id):
@@ -81,7 +81,7 @@ class ScatterGatherProcessor(BaseProcessor):
     async def _call_route(
         self, route_id: str, body: Any, headers: dict, context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         return await SubPipelineExecutor.execute_route_safe(
             route_id, body, headers, context
@@ -148,7 +148,7 @@ class RecipientListProcessor(BaseProcessor):
     async def _send_to(
         self, route_id: str, body: Any, headers: dict, context: ExecutionContext
     ) -> tuple[str, Any, str | None]:
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         return await SubPipelineExecutor.execute_route_safe(
             route_id, body, headers, context
@@ -241,7 +241,7 @@ class LoadBalancerProcessor(BaseProcessor):
         return self._targets[0]
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         target = await self._select_target(exchange)
         exchange.set_property("lb_target", target)
@@ -390,8 +390,8 @@ class MulticastRoutesProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет fan-out на зарегистрированные маршруты."""
-        from src.dsl.commands.registry import route_registry
-        from src.dsl.engine.execution_engine import DSLExecutionEngine
+        from src.backend.dsl.commands.registry import route_registry
+        from src.backend.dsl.engine.execution_engine import DSLExecutionEngine
 
         body = exchange.in_message.body
         headers = dict(exchange.in_message.headers)

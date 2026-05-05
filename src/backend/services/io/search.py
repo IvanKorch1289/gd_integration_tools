@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.core.interfaces.search import SearchClient
+from src.backend.core.di import app_state_singleton
+from src.backend.core.interfaces.search import SearchClient
 
 __all__ = ("SearchService", "get_search_service")
 

@@ -15,8 +15,8 @@ encrypt/decrypt point-ы в коде (код-ревью проще).
 
 Пример использования в сервисе::
 
-    from src.core.security.vault_cipher import VaultTransitCipher
-    from src.core.security.vault_cipher_sqlalchemy import (
+    from src.backend.core.security.vault_cipher import VaultTransitCipher
+    from src.backend.core.security.vault_cipher_sqlalchemy import (
         encrypt_field,
         decrypt_field,
     )
@@ -47,7 +47,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
-    from src.core.security.vault_cipher import VaultTransitCipher
+    from src.backend.core.security.vault_cipher import VaultTransitCipher
 
 
 __all__ = ("encrypt_field", "decrypt_field", "encrypt_mapping", "decrypt_mapping")

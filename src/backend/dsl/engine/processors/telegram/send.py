@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.telegram._common import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.telegram._common import (
     get_telegram_client,
     resolve_value,
 )
@@ -68,7 +68,7 @@ class TelegramSendProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет сообщение и сохраняет message_id в exchange-property."""
-        from src.infrastructure.clients.external.telegram_bot import (
+        from src.backend.infrastructure.clients.external.telegram_bot import (
             TelegramButton,
             TelegramMessage,
         )

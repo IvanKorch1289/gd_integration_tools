@@ -1,9 +1,9 @@
 import logging
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
@@ -31,7 +31,7 @@ class IdempotentConsumerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             dedup_key = f"idempotent:{self._key_expr(exchange)}"
             is_new = await redis_client.set_if_not_exists(

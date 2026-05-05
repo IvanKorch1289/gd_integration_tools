@@ -16,18 +16,18 @@ from xml.etree import ElementTree as ET
 import orjson
 from fastapi import APIRouter, Depends, Request, Response
 
-from src.core.di.dependencies import get_invoker_dep
-from src.core.errors import BaseError
-from src.core.interfaces.invoker import (
+from src.backend.core.di.dependencies import get_invoker_dep
+from src.backend.core.errors import BaseError
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
 )
-from src.dsl.commands.registry import action_handler_registry
-from src.dsl.service import get_dsl_service
+from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.service import get_dsl_service
 
 if TYPE_CHECKING:
-    from src.core.interfaces.invoker import Invoker
+    from src.backend.core.interfaces.invoker import Invoker
 
 __all__ = ("soap_router",)
 
@@ -136,7 +136,7 @@ async def _dispatch_via_action(operation: str, payload: dict[str, Any]) -> Any:
     IL-CRIT1.5: inline ActionCommandSchema-сборка → `dispatch_action`
     с `source="soap"`. Унифицирует с REST/gRPC/GraphQL.
     """
-    from src.entrypoints.base import dispatch_action
+    from src.backend.entrypoints.base import dispatch_action
 
     return await dispatch_action(action=operation, payload=payload, source="soap")
 

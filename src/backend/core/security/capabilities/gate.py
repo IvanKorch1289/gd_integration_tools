@@ -13,13 +13,13 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import Final
 
-from src.core.security.capabilities.errors import (
+from src.backend.core.security.capabilities.errors import (
     CapabilityDeniedError,
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
-from src.core.security.capabilities.models import CapabilityRef
-from src.core.security.capabilities.vocabulary import (
+from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.vocabulary import (
     CapabilityVocabulary,
     build_default_vocabulary,
 )

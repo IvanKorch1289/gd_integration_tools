@@ -5,7 +5,7 @@
 - /api/v2/... — текущая стабильная
 
 Usage:
-    from src.entrypoints.api.versioning import VersionedRouter, APIVersion
+    from src.backend.entrypoints.api.versioning import VersionedRouter, APIVersion
 
     router_v1 = VersionedRouter(version="v1", deprecated=True, sunset_date="2026-01-01")
     router_v2 = VersionedRouter(version="v2")

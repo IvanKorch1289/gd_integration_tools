@@ -18,8 +18,8 @@ def _make_action_tool(action_name: str) -> Any:
 
     from langchain_core.tools import StructuredTool
 
-    from src.dsl.commands.registry import action_handler_registry
-    from src.schemas.invocation import ActionCommandSchema
+    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.schemas.invocation import ActionCommandSchema
 
     async def _run_action(**kwargs: Any) -> str:
         command = ActionCommandSchema(

@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from src.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
+from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
 
 HealthMode = Literal["fast", "deep"]
 HealthStatus = Literal["ok", "degraded", "failed"]

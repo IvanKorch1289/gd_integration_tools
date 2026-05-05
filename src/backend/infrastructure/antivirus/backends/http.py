@@ -11,7 +11,7 @@ import logging
 import time
 from typing import Any
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("HttpAntivirusBackend",)
 

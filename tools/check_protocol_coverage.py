@@ -32,7 +32,7 @@ _TARGETS: dict[str, Path] = {
     "sse": ENTRYPOINTS / "sse" / "handler.py",
 }
 
-_BRIDGE_IMPORT_MARKER = "from src.entrypoints._action_bridge import"  # noqa: S105
+_BRIDGE_IMPORT_MARKER = "from src.backend.entrypoints._action_bridge import"  # noqa: S105
 _BRIDGE_CALL_MARKER = "dispatch_action_or_dsl"  # noqa: S105
 
 
@@ -83,7 +83,7 @@ def _check_actions_registered() -> list[str]:
     text = setup_file.read_text(encoding="utf-8")
     if "action_handler_registry.register" not in text:
         return [
-            "src/dsl/commands/setup.py — не найдено action_handler_registry.register(...)"
+            "src/backend/dsl/commands/setup.py — не найдено action_handler_registry.register(...)"
         ]
     return []
 

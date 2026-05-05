@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING
 
 from watchfiles import Change, awatch
 
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.infrastructure.sources._lifecycle import graceful_cancel
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 if TYPE_CHECKING:
     pass

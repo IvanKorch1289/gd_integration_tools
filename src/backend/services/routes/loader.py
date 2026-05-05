@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     CapabilityError,
     CapabilityGate,
     CapabilityRef,
@@ -30,7 +30,7 @@ from src.core.security.capabilities import (
     CapabilityVocabulary,
     check_capabilities_subset,
 )
-from src.services.routes.manifest_v11 import (
+from src.backend.services.routes.manifest_v11 import (
     RouteManifestError,
     RouteManifestV11,
     load_route_manifest,

@@ -8,7 +8,7 @@ extras.
 
 from __future__ import annotations
 
-from src.core.interfaces.import_gateway import ImportGateway, ImportSourceKind
+from src.backend.core.interfaces.import_gateway import ImportGateway, ImportSourceKind
 
 __all__ = ("build_import_gateway",)
 
@@ -24,15 +24,19 @@ def build_import_gateway(kind: ImportSourceKind) -> ImportGateway:
     """
     match kind:
         case ImportSourceKind.POSTMAN:
-            from src.infrastructure.import_gateway.postman import PostmanImportGateway
+            from src.backend.infrastructure.import_gateway.postman import (
+                PostmanImportGateway,
+            )
 
             return PostmanImportGateway()
         case ImportSourceKind.OPENAPI:
-            from src.infrastructure.import_gateway.openapi import OpenAPIImportGateway
+            from src.backend.infrastructure.import_gateway.openapi import (
+                OpenAPIImportGateway,
+            )
 
             return OpenAPIImportGateway()
         case ImportSourceKind.WSDL:
-            from src.infrastructure.import_gateway.wsdl import WsdlImportGateway
+            from src.backend.infrastructure.import_gateway.wsdl import WsdlImportGateway
 
             return WsdlImportGateway()
         case _:

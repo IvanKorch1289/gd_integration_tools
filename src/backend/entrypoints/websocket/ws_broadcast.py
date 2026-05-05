@@ -15,7 +15,7 @@ import asyncio
 import logging
 from typing import Any
 
-from src.core.di.providers import (
+from src.backend.core.di.providers import (
     get_redis_pubsub_factory_provider,
     get_redis_set_factory_provider,
 )

@@ -36,7 +36,7 @@ class RedisLock:
 
     async def _client(self):
         """Достаёт raw redis-клиент из инфраструктурного синглтона."""
-        from src.infrastructure.clients.storage.redis import redis_client
+        from src.backend.infrastructure.clients.storage.redis import redis_client
 
         return getattr(redis_client, "_raw_client", None) or redis_client
 

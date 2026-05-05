@@ -14,16 +14,16 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationResponse,
 )
 
 if TYPE_CHECKING:
-    from src.core.interfaces.invoker import Invoker
-    from src.core.interfaces.source import SourceEvent
-    from src.services.sources.idempotency import DedupeStore
+    from src.backend.core.interfaces.invoker import Invoker
+    from src.backend.core.interfaces.source import SourceEvent
+    from src.backend.services.sources.idempotency import DedupeStore
 
 PayloadMapper = Callable[["SourceEvent"], dict[str, object]]
 

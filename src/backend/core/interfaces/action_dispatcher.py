@@ -33,7 +33,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.types.invocation_command import ActionCommandSchema
+from src.backend.core.types.invocation_command import ActionCommandSchema
 
 __all__ = (
     "ActionDispatcher",

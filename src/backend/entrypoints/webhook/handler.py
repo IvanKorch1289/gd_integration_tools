@@ -18,8 +18,11 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from src.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.entrypoints.webhook.registry import WebhookSubscription, webhook_registry
+from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.entrypoints.webhook.registry import (
+    WebhookSubscription,
+    webhook_registry,
+)
 
 __all__ = ("webhook_router",)
 
@@ -30,7 +33,7 @@ webhook_router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 def _require_auth_dep():
     """Lazy import require_auth to avoid circular imports."""
-    from src.entrypoints.api.dependencies.auth_selector import require_auth
+    from src.backend.entrypoints.api.dependencies.auth_selector import require_auth
 
     return require_auth()
 
@@ -40,7 +43,7 @@ async def _check_rate_limit(
 ) -> None:
     """Применяет rate limit через RedisRateLimiter."""
     try:
-        from src.core.di.providers import (
+        from src.backend.core.di.providers import (
             get_rate_limit_classes_provider,
             get_rate_limiter_provider,
         )
@@ -82,7 +85,7 @@ async def create_subscription(
 ) -> dict[str, Any]:
     """Создаёт webhook-подписку. Требует authentication."""
     # SSRF protection — валидация target_url
-    from src.dsl.engine.processors.scraping import _validate_url
+    from src.backend.dsl.engine.processors.scraping import _validate_url
 
     try:
         _validate_url(body.target_url)
@@ -223,7 +226,7 @@ async def send_webhook_event(
         }
 
         if sub.secret:
-            from src.utilities.codecs.json import dumps_bytes
+            from src.backend.utilities.codecs.json import dumps_bytes
 
             body_bytes = dumps_bytes(payload)
             sig = hmac.new(sub.secret.encode(), body_bytes, hashlib.sha256).hexdigest()

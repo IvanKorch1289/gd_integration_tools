@@ -21,14 +21,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.di.app_state import _get_from_app_state, app_state_singleton
+from src.backend.core.di.app_state import _get_from_app_state, app_state_singleton
 
 if TYPE_CHECKING:
     from fastapi import Request, WebSocket
 
-    from src.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
-    from src.core.interfaces.invoker import Invoker as InvokerProtocol
-    from src.core.interfaces.watermark_store import WatermarkStore
+    from src.backend.core.interfaces.invocation_reply import (
+        ReplyChannelRegistryProtocol,
+    )
+    from src.backend.core.interfaces.invoker import Invoker as InvokerProtocol
+    from src.backend.core.interfaces.watermark_store import WatermarkStore
 
 __all__ = (
     "get_reply_registry",

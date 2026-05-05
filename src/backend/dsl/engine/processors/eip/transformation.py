@@ -3,9 +3,9 @@ from typing import Any, Callable
 
 import orjson
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
@@ -198,7 +198,9 @@ class ClaimCheckProcessor(BaseProcessor):
             token = f"claim:{uuid.uuid4()}"
             body_bytes = orjson.dumps(exchange.in_message.body, default=str)
             try:
-                from src.infrastructure.clients.storage.redis import redis_client
+                from src.backend.infrastructure.clients.storage.redis import (
+                    redis_client,
+                )
 
                 await redis_client.set_if_not_exists(
                     key=token, value=body_bytes.decode(), ttl=self._ttl
@@ -224,7 +226,9 @@ class ClaimCheckProcessor(BaseProcessor):
                 return
 
             try:
-                from src.infrastructure.clients.storage.redis import redis_client
+                from src.backend.infrastructure.clients.storage.redis import (
+                    redis_client,
+                )
 
                 raw = await redis_client.get(token)
                 if raw is None:

@@ -4,9 +4,9 @@ from typing import Any, Callable
 
 import orjson
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "PromptComposerProcessor",
@@ -112,7 +112,7 @@ class LLMCallProcessor(BaseProcessor):
         logger = logging.getLogger("dsl.ai")
 
         try:
-            from src.services.ai.ai_agent import get_ai_agent_service
+            from src.backend.services.ai.ai_agent import get_ai_agent_service
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
             return
@@ -299,7 +299,7 @@ class VectorSearchProcessor(BaseProcessor):
         if not query:
             exchange.set_property(self._output_property, [])
             return
-        from src.services.ai.rag_service import get_rag_service
+        from src.backend.services.ai.rag_service import get_rag_service
 
         rag = get_rag_service()
         results = await rag.search(
@@ -328,7 +328,7 @@ class SanitizePIIProcessor(BaseProcessor):
         body = exchange.in_message.body
         if not isinstance(body, str):
             body = str(body)
-        from src.infrastructure.security.ai_sanitizer import get_ai_sanitizer
+        from src.backend.infrastructure.security.ai_sanitizer import get_ai_sanitizer
 
         sanitizer = get_ai_sanitizer()
         result = await sanitizer.sanitize(body)
@@ -393,7 +393,7 @@ class LLMFallbackProcessor(BaseProcessor):
                 else str(exchange.in_message.body)
             )
 
-        from src.services.ai.ai_agent import get_ai_agent_service
+        from src.backend.services.ai.ai_agent import get_ai_agent_service
 
         agent = get_ai_agent_service()
 
@@ -442,7 +442,7 @@ class CacheProcessor(BaseProcessor):
         exchange.set_property("_cache_ttl", self._ttl)
 
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             cached = await redis_client.get(key)
             if cached is not None:
@@ -493,7 +493,7 @@ class CacheWriteProcessor(BaseProcessor):
         )
 
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
@@ -596,7 +596,7 @@ class SemanticRouterProcessor(BaseProcessor):
             return
 
         try:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
             results = await rag.search(query=query, top_k=1, namespace=self._namespace)
@@ -636,7 +636,7 @@ class SemanticRouterProcessor(BaseProcessor):
     async def _route_to(
         route_id: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
-        from src.dsl.engine.processors.base import SubPipelineExecutor
+        from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         result, error = await SubPipelineExecutor.execute_route(
             route_id,
@@ -764,7 +764,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
         if top_k <= 0:
             return []
         try:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
             results = await rag.search(

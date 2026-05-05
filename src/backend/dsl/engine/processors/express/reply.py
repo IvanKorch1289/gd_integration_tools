@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.express._common import (
     get_express_client,
     log_outgoing_message,
     resolve_value,
@@ -54,7 +54,7 @@ class ExpressReplyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Отправляет reply на исходное сообщение."""
-        from src.infrastructure.clients.external.express_bot import BotxMessage
+        from src.backend.infrastructure.clients.external.express_bot import BotxMessage
 
         source_sync_id = resolve_value(exchange, self._source_sync_id_from)
         if not source_sync_id:

@@ -3,7 +3,7 @@ from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTPException
 
-from src.infrastructure.clients.transport.smtp import SmtpClient, smtp_client
+from src.backend.infrastructure.clients.transport.smtp import SmtpClient, smtp_client
 
 __all__ = ("get_mail_service", "MailService")
 
@@ -18,7 +18,7 @@ class MailService:
         Args:
             mail_client (SmtpClient): Клиент для работы с SMTP-сервером.
         """
-        from src.infrastructure.external_apis.logging_service import smtp_logger
+        from src.backend.infrastructure.external_apis.logging_service import smtp_logger
 
         self.client = mail_client
         self.logger = smtp_logger

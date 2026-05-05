@@ -1,13 +1,16 @@
 from fastapi import APIRouter
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.schemas.route_schemas.admin import (
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.schemas.route_schemas.admin import (
     AdminCacheKeysQuerySchema,
     AdminCacheValuePathSchema,
     AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
-from src.services.core.admin import get_admin_service
+from src.backend.services.core.admin import get_admin_service
 
 __all__ = ("router",)
 
@@ -142,7 +145,7 @@ async def _reload_config() -> dict[str, object]:
 
     Возвращает агрегированный отчёт из :class:`ConfigHotReloader`.
     """
-    from src.core.config.hot_reload import get_hot_reloader
+    from src.backend.core.config.hot_reload import get_hot_reloader
 
     return await get_hot_reloader().trigger_reload(reason="api-request")
 

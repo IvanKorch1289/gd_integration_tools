@@ -53,7 +53,7 @@ class BaseExternalAPIClient:
         # (см. ``core.di.providers.get_http_client_provider``) — это
         # снимает прямой импорт ``infrastructure.clients.transport.http``
         # из services-слоя.
-        from src.core.di.providers import get_http_client_provider
+        from src.backend.core.di.providers import get_http_client_provider
 
         self.settings = settings
         self._name = name or self.__class__.__name__
@@ -81,7 +81,7 @@ class BaseExternalAPIClient:
         WAF режим (production): заменяет Authorization/endpoint на WAF-прокси.
         Dev режим: прямая передача API key.
         """
-        from src.core.config.settings import settings as app_settings
+        from src.backend.core.config.settings import settings as app_settings
 
         headers: dict[str, str] = {"Content-Type": "application/json"}
 

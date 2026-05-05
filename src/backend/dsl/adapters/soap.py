@@ -6,9 +6,9 @@
 
 from typing import Any
 
-from src.dsl.adapters.base import BaseProtocolAdapter
-from src.dsl.adapters.types import ProtocolType
-from src.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.adapters.base import BaseProtocolAdapter
+from src.backend.dsl.adapters.types import ProtocolType
+from src.backend.dsl.engine.exchange import Exchange, Message
 
 __all__ = ("SoapAdapter",)
 

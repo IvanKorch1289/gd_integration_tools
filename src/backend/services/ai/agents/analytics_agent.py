@@ -13,8 +13,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.services.ai.tools import AgentTool, ToolRegistry
+from src.backend.core.di import app_state_singleton
+from src.backend.services.ai.tools import AgentTool, ToolRegistry
 
 __all__ = ("AnalyticsAgent", "get_analytics_agent")
 

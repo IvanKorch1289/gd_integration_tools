@@ -22,7 +22,7 @@ import asyncio
 import logging
 from typing import Any
 
-from src.infrastructure.logging.router import SinkRouter
+from src.backend.infrastructure.logging.router import SinkRouter
 
 __all__ = ("BatchingSinkRouter",)
 

@@ -17,8 +17,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from src.dsl.engine.context import ExecutionContext
-    from src.dsl.engine.exchange import Exchange
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("BatchCapable",)
 

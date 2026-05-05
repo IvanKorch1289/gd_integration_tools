@@ -169,8 +169,8 @@ def default_registry() -> MigrationRegistry:
     global _default
     if _default is None:
         _default = MigrationRegistry()
-        from src.dsl.versioning.migrations_v0_to_v1 import V0ToV1Migration
-        from src.dsl.versioning.migrations_v1_to_v2 import V1ToV2Migration
+        from src.backend.dsl.versioning.migrations_v0_to_v1 import V0ToV1Migration
+        from src.backend.dsl.versioning.migrations_v1_to_v2 import V1ToV2Migration
 
         _default.register(V0ToV1Migration())
         _default.register(V1ToV2Migration())

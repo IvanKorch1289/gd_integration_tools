@@ -8,7 +8,7 @@
 
 .. code-block:: python
 
-    from src.entrypoints.scheduler import (
+    from src.backend.entrypoints.scheduler import (
         ScheduleSpec, register_scheduled_invocation,
     )
 
@@ -101,7 +101,7 @@ def register_scheduled_invocation(spec: ScheduleSpec) -> str:
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger
 
-    from src.core.di.providers import get_scheduler_manager_provider
+    from src.backend.core.di.providers import get_scheduler_manager_provider
 
     scheduler_manager = get_scheduler_manager_provider()
 
@@ -146,9 +146,9 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
     async-api/async-queue (где нужна reply-channel-семантика) сохраняется
     делегирование в :class:`Invoker`.
     """
-    from src.core.di.contexts import make_dispatch_context
-    from src.core.di.providers import get_action_dispatcher_provider
-    from src.core.interfaces.invoker import InvocationMode, InvocationRequest
+    from src.backend.core.di.contexts import make_dispatch_context
+    from src.backend.core.di.providers import get_action_dispatcher_provider
+    from src.backend.core.interfaces.invoker import InvocationMode, InvocationRequest
 
     try:
         mode = InvocationMode(spec.mode)
@@ -191,7 +191,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
         return
 
     # streaming / async-api / async-queue / deferred — fallback в Invoker.
-    from src.services.execution.invoker import get_invoker
+    from src.backend.services.execution.invoker import get_invoker
 
     request = InvocationRequest(
         action=spec.action,

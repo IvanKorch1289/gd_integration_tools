@@ -4,12 +4,15 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from src.core.config.settings import settings
-from src.infrastructure.clients.transport.http import (
+from src.backend.core.config.settings import settings
+from src.backend.infrastructure.clients.transport.http import (
     HttpClient,
     get_http_client_dependency,
 )
-from src.infrastructure.external_apis.s3 import S3Service, get_s3_service_dependency
+from src.backend.infrastructure.external_apis.s3 import (
+    S3Service,
+    get_s3_service_dependency,
+)
 
 __all__ = (
     "AntivirusService",
@@ -38,7 +41,9 @@ class AntivirusService:
     """
 
     def __init__(self, http_client: HttpClient, s3_service: S3Service):
-        from src.infrastructure.external_apis.logging_service import request_logger
+        from src.backend.infrastructure.external_apis.logging_service import (
+            request_logger,
+        )
 
         self.http_client = http_client
         self.s3_service = s3_service

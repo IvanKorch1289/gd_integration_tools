@@ -12,15 +12,23 @@
 
 from __future__ import annotations
 
-from src.infrastructure.messaging.invocation_replies.email import EmailReplyChannel
-from src.infrastructure.messaging.invocation_replies.express import ExpressReplyChannel
-from src.infrastructure.messaging.invocation_replies.memory import MemoryReplyChannel
-from src.infrastructure.messaging.invocation_replies.queue import QueueReplyChannel
-from src.infrastructure.messaging.invocation_replies.registry import (
+from src.backend.infrastructure.messaging.invocation_replies.email import (
+    EmailReplyChannel,
+)
+from src.backend.infrastructure.messaging.invocation_replies.express import (
+    ExpressReplyChannel,
+)
+from src.backend.infrastructure.messaging.invocation_replies.memory import (
+    MemoryReplyChannel,
+)
+from src.backend.infrastructure.messaging.invocation_replies.queue import (
+    QueueReplyChannel,
+)
+from src.backend.infrastructure.messaging.invocation_replies.registry import (
     ReplyChannelRegistry,
     get_reply_channel_registry,
 )
-from src.infrastructure.messaging.invocation_replies.ws import WsReplyChannel
+from src.backend.infrastructure.messaging.invocation_replies.ws import WsReplyChannel
 
 __all__ = (
     "MemoryReplyChannel",

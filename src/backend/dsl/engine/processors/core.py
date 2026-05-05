@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
     "SetHeaderProcessor",

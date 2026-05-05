@@ -7,9 +7,9 @@ Auth-схема СКБ — query-параметр ``api-key``, поэтому п
 from typing import Any
 from uuid import UUID
 
-from src.core.config.settings import SKBAPISettings, settings
-from src.core.errors import ServiceError
-from src.services.core.base_external_api import BaseExternalAPIClient
+from src.backend.core.config.settings import SKBAPISettings, settings
+from src.backend.core.errors import ServiceError
+from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("APISKBService", "get_skb_service")
 

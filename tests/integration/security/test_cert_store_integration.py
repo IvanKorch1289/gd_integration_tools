@@ -68,8 +68,8 @@ async def pg_session_manager(monkeypatch):
         )
         engine = create_async_engine(async_url, future=True)
 
-        from src.infrastructure.database.models.base import BaseModel
-        from src.infrastructure.database.models.cert import (  # noqa: F401
+        from src.backend.infrastructure.database.models.base import BaseModel
+        from src.backend.infrastructure.database.models.cert import (  # noqa: F401
             CertHistory,
             CertRecord,
         )
@@ -87,7 +87,7 @@ async def pg_session_manager(monkeypatch):
 
         session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
-        from src.infrastructure.database import session_manager as sm
+        from src.backend.infrastructure.database import session_manager as sm
 
         monkeypatch.setattr(sm.main_session_manager, "session_maker", session_maker)
         yield sm.main_session_manager
@@ -102,7 +102,7 @@ async def pg_session_manager(monkeypatch):
 
 async def test_postgres_set_get_roundtrip(pg_session_manager) -> None:
     """``set`` сохраняет PEM, ``get`` возвращает идентичную копию."""
-    from src.infrastructure.security.cert_store import PostgresCertBackend
+    from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
     expires = datetime.now(tz=timezone.utc) + timedelta(days=365)
@@ -119,7 +119,7 @@ async def test_postgres_set_get_roundtrip(pg_session_manager) -> None:
 
 async def test_postgres_history_two_versions(pg_session_manager) -> None:
     """Двойной ``set`` создаёт две записи в ``cert_history``."""
-    from src.infrastructure.security.cert_store import PostgresCertBackend
+    from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
     expires = datetime.now(tz=timezone.utc) + timedelta(days=180)
@@ -136,7 +136,7 @@ async def test_postgres_history_two_versions(pg_session_manager) -> None:
 
 async def test_postgres_get_expiring_soon(pg_session_manager) -> None:
     """``list_expiring`` возвращает только сертификаты до дедлайна."""
-    from src.infrastructure.security.cert_store import PostgresCertBackend
+    from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
     now = datetime.now(tz=timezone.utc)
@@ -183,7 +183,7 @@ class _FakeVaultClient:
 
 async def test_vault_backend_with_mock(monkeypatch) -> None:
     """``set`` → ``get`` → PEM идентичен через фейковый Vault."""
-    from src.infrastructure.security.cert_store import VaultCertBackend
+    from src.backend.infrastructure.security.cert_store import VaultCertBackend
 
     fake = _FakeVaultClient()
     backend = VaultCertBackend(base_path="secret/certs")
@@ -209,8 +209,11 @@ async def test_vault_backend_with_mock(monkeypatch) -> None:
 
 async def test_subscribe_updates_invalidates_cache() -> None:
     """``set`` уведомляет подписчиков и обновляет hot-cache."""
-    from src.core.config.cert_store import CertStoreSettings
-    from src.infrastructure.security.cert_store import CertStore, MemoryCertBackend
+    from src.backend.core.config.cert_store import CertStoreSettings
+    from src.backend.infrastructure.security.cert_store import (
+        CertStore,
+        MemoryCertBackend,
+    )
 
     backend = MemoryCertBackend()
     store = CertStore(backend=backend, settings=CertStoreSettings())

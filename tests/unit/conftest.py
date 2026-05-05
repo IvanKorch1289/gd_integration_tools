@@ -26,7 +26,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.core.config.constants import consts
+from src.backend.core.config.constants import consts
 
 
 def _find_repo_root_with_config() -> Path | None:

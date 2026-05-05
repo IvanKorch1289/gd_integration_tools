@@ -1,10 +1,10 @@
 from functools import lru_cache
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.execution_engine import ExecutionEngine
-from src.dsl.registry import route_registry
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.execution_engine import ExecutionEngine
+from src.backend.dsl.registry import route_registry
 
 __all__ = ("DslService", "get_dsl_service")
 

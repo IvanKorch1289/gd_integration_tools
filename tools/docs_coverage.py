@@ -26,7 +26,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DOCSTRING_DIRS: tuple[str, ...] = ("src/core", "src/dsl/engine")
+DOCSTRING_DIRS: tuple[str, ...] = ("src/backend/core", "src/backend/dsl/engine")
 
 DOCS_DIR = PROJECT_ROOT / "docs"
 DOCS_BUILD = DOCS_DIR / "build" / "html"

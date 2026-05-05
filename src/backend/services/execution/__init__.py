@@ -10,12 +10,12 @@
   sync/async-api/async-queue/deferred/background/streaming.
 """
 
-from src.services.execution.action_dispatcher import (
+from src.backend.services.execution.action_dispatcher import (
     DefaultActionDispatcher,
     get_action_dispatcher,
 )
-from src.services.execution.invoker import InvocationMode, Invoker, get_invoker
-from src.services.execution.middlewares import (
+from src.backend.services.execution.invoker import InvocationMode, Invoker, get_invoker
+from src.backend.services.execution.middlewares import (
     AuditMiddleware,
     IdempotencyMiddleware,
     RateLimitMiddleware,

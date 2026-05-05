@@ -25,9 +25,9 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 
-from src.core.security.capabilities import build_default_vocabulary
-from src.services.plugins.manifest_v11 import PluginManifestV11
-from src.services.routes.manifest_v11 import RouteManifestV11
+from src.backend.core.security.capabilities import build_default_vocabulary
+from src.backend.services.plugins.manifest_v11 import PluginManifestV11
+from src.backend.services.routes.manifest_v11 import RouteManifestV11
 
 __all__ = (
     "export_capability_catalog",

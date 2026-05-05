@@ -12,22 +12,25 @@ import orjson
 if TYPE_CHECKING:
     import grpc
 
-from src.core.config.settings import settings
-from src.core.di.providers import get_grpc_logger_provider
-from src.core.errors import BaseError
-from src.entrypoints.base import dispatch_action
-from src.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
+from src.backend.core.config.settings import settings
+from src.backend.core.di.providers import get_grpc_logger_provider
+from src.backend.core.errors import BaseError
+from src.backend.entrypoints.base import dispatch_action
+from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
     InvokeResponse as InvokerInvokeResponse,
 )
-from src.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
+from src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc import (
     InvokerServiceServicer,
     add_InvokerServiceServicer_to_server,
 )
-from src.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
+from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (  # type: ignore
     DeleteResponse as OrderDeleteResponse,
 )
-from src.entrypoints.grpc.protobuf.orders_pb2 import OrderDetailResponse, OrderResponse
-from src.entrypoints.grpc.protobuf.orders_pb2_grpc import (
+from src.backend.entrypoints.grpc.protobuf.orders_pb2 import (
+    OrderDetailResponse,
+    OrderResponse,
+)
+from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
     OrderServiceServicer,
     add_OrderServiceServicer_to_server,
 )
@@ -213,12 +216,12 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         self.logger.info("InvokerGRPCServicer инициализирован")
 
     async def Invoke(self, request, context):  # noqa: N802 — proto-name
-        from src.core.interfaces.invoker import (
+        from src.backend.core.interfaces.invoker import (
             InvocationMode,
             InvocationRequest,
             InvocationStatus,
         )
-        from src.services.execution.invoker import get_invoker
+        from src.backend.services.execution.invoker import get_invoker
 
         try:
             payload = orjson.loads(request.payload_json) if request.payload_json else {}

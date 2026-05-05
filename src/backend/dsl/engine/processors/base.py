@@ -4,11 +4,11 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, ClassVar
 
-from src.core.types.side_effect import SideEffectKind
-from src.dsl.engine.exchange import Exchange
+from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.exchange import Exchange
 
 if TYPE_CHECKING:
-    from src.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.context import ExecutionContext
 
 __all__ = (
     "ProcessorCallable",
@@ -77,8 +77,8 @@ class SubPipelineExecutor:
         route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext
     ) -> tuple[Any, str | None]:
         """Выполняет DSL route и возвращает (result_body, error_or_None)."""
-        from src.dsl.commands.registry import route_registry
-        from src.dsl.engine.execution_engine import ExecutionEngine
+        from src.backend.dsl.commands.registry import route_registry
+        from src.backend.dsl.engine.execution_engine import ExecutionEngine
 
         pipeline = route_registry.get(route_id)
         engine = ExecutionEngine()
@@ -106,7 +106,7 @@ async def run_sub_processors(
     processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
     """Общий цикл выполнения sub-processor list с проверкой failed/stopped."""
-    from src.dsl.engine.exchange import ExchangeStatus
+    from src.backend.dsl.engine.exchange import ExchangeStatus
 
     for proc in processors:
         if exchange.status == ExchangeStatus.failed or exchange.stopped:

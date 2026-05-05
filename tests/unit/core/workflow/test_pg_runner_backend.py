@@ -13,11 +13,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.core.workflow import WorkflowHandle, WorkflowResult
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.database.models.workflow_instance import WorkflowStatus
-from src.infrastructure.workflow.pg_runner_backend import PgRunnerWorkflowBackend
-from src.infrastructure.workflow.state_store import WorkflowInstanceRow
+from src.backend.core.workflow import WorkflowHandle, WorkflowResult
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
+from src.backend.infrastructure.workflow.pg_runner_backend import (
+    PgRunnerWorkflowBackend,
+)
+from src.backend.infrastructure.workflow.state_store import WorkflowInstanceRow
 
 
 class _FakeEventStore:

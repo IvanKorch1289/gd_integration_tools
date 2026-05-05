@@ -7,18 +7,18 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.config.settings import settings
-from src.core.di.app_state import app_state_singleton
-from src.core.di.providers import get_external_session_manager_provider
-from src.core.enums.database import DatabaseTypeChoices
-from src.core.enums.external_db import (
+from src.backend.core.config.settings import settings
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import get_external_session_manager_provider
+from src.backend.core.enums.database import DatabaseTypeChoices
+from src.backend.core.enums.external_db import (
     ExternalDBObjectChoices,
     ExternalDBObjectMeta,
     ExternalDBObjectTypeChoices,
     ExternalDBParameterMeta,
     ExternalDBParameterModeChoices,
 )
-from src.core.errors import DatabaseError
+from src.backend.core.errors import DatabaseError
 
 __all__ = ("external_db_service", "ExternalDatabaseService", "get_external_db_service")
 

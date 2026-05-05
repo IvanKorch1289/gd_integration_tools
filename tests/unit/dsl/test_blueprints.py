@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from src.dsl.blueprints import (
+from src.backend.dsl.blueprints import (
     api_normalize_persist_webhook,
     cdc_enrich_publish,
     file_watch_parse_validate_action,
     request_response_with_compensation,
 )
-from src.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.pipeline import Pipeline
 
 
 class _Sample(BaseModel):
@@ -97,9 +97,9 @@ class TestRequestResponseWithCompensation:
         assert "saga" in proc.name
 
     def test_with_extra_processors(self) -> None:
-        from src.dsl.engine.context import ExecutionContext
-        from src.dsl.engine.exchange import Exchange
-        from src.dsl.engine.processors.base import BaseProcessor
+        from src.backend.dsl.engine.context import ExecutionContext
+        from src.backend.dsl.engine.exchange import Exchange
+        from src.backend.dsl.engine.processors.base import BaseProcessor
 
         class _Noop(BaseProcessor):
             def __init__(self) -> None:

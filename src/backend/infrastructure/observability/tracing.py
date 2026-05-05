@@ -8,10 +8,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.middleware import ProcessorMiddleware
-from src.infrastructure.observability.correlation import get_correlation_id
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.middleware import ProcessorMiddleware
+from src.backend.infrastructure.observability.correlation import get_correlation_id
 
 __all__ = ("TracingMiddleware", "get_tracer")
 

@@ -15,8 +15,8 @@ import hmac
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.utilities.codecs.json import dumps_bytes
+from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.utilities.codecs.json import dumps_bytes
 
 __all__ = ("WebhookSink",)
 

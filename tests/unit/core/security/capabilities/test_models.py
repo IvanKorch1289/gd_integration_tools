@@ -6,7 +6,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     CAPABILITY_NAME_PATTERN,
     DEFAULT_CAPABILITY_CATALOG,
     CapabilityRef,

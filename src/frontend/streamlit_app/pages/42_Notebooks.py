@@ -12,7 +12,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.services.notebooks import get_notebook_service
+from src.backend.services.notebooks import get_notebook_service
 
 
 def _run(coro: Any) -> Any:

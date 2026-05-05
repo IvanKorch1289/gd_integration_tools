@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-from src.dsl import yaml_watcher as yaml_watcher_mod
-from src.dsl.yaml_watcher import DSLYamlWatcher
+from src.backend.dsl import yaml_watcher as yaml_watcher_mod
+from src.backend.dsl.yaml_watcher import DSLYamlWatcher
 
 
 class _StubRegistry:

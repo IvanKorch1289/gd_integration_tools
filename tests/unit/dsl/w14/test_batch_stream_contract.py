@@ -17,11 +17,11 @@ from typing import Any
 
 import pytest
 
-from src.core.interfaces.batch_capable import BatchCapable
-from src.core.types.data_kind import DataKind
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.core.interfaces.batch_capable import BatchCapable
+from src.backend.core.types.data_kind import DataKind
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
 class TestDataKindEnum:

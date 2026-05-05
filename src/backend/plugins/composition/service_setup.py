@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import os
 
-from src.core.svcs_registry import has_service, register_factory
+from src.backend.core.svcs_registry import has_service, register_factory
 
 __all__ = (
     "register_all_services",
@@ -32,8 +32,8 @@ def register_default_action_middlewares() -> None:
     middleware с тем же типом ещё не зарегистрирован, чтобы избежать
     двойной регистрации при перезапуске lifespan в тестах.
     """
-    from src.dsl.commands.action_registry import action_handler_registry
-    from src.services.execution.middlewares import (
+    from src.backend.dsl.commands.action_registry import action_handler_registry
+    from src.backend.services.execution.middlewares import (
         AuditMiddleware,
         IdempotencyMiddleware,
         RateLimitMiddleware,
@@ -55,7 +55,7 @@ def register_secrets_backend() -> None:
 
     Идемпотентно: повторный вызов не пересоздаёт фабрику.
     """
-    from src.core.interfaces.secrets import SecretsBackend
+    from src.backend.core.interfaces.secrets import SecretsBackend
 
     if has_service(SecretsBackend):
         return
@@ -65,7 +65,9 @@ def register_secrets_backend() -> None:
     def _factory() -> SecretsBackend:
         match backend_kind:
             case "env":
-                from src.infrastructure.security.env_secrets import EnvSecretsBackend
+                from src.backend.infrastructure.security.env_secrets import (
+                    EnvSecretsBackend,
+                )
 
                 return EnvSecretsBackend()
             case "vault":
@@ -90,15 +92,15 @@ def register_all_services() -> None:
     Импорты фабрик сервисов делаются lazy (внутри функции), чтобы
     избежать cycle-импортов и держать холодный старт быстрым.
     """
-    from src.services.ai.ai_agent import get_ai_agent_service
-    from src.services.core.admin import get_admin_service
-    from src.services.core.orderkinds import get_order_kind_service
-    from src.services.core.orders import get_order_service
-    from src.services.core.tech import get_tech_service
-    from src.services.core.users import get_user_service
-    from src.services.integrations.dadata import get_dadata_service
-    from src.services.integrations.skb import get_skb_service
-    from src.services.io.files import get_file_service
+    from src.backend.services.ai.ai_agent import get_ai_agent_service
+    from src.backend.services.core.admin import get_admin_service
+    from src.backend.services.core.orderkinds import get_order_kind_service
+    from src.backend.services.core.orders import get_order_service
+    from src.backend.services.core.tech import get_tech_service
+    from src.backend.services.core.users import get_user_service
+    from src.backend.services.integrations.dadata import get_dadata_service
+    from src.backend.services.integrations.skb import get_skb_service
+    from src.backend.services.io.files import get_file_service
 
     register_factory("orders", get_order_service)
     register_factory("users", get_user_service)
@@ -110,11 +112,11 @@ def register_all_services() -> None:
     register_factory("admin", get_admin_service)
     register_factory("ai", get_ai_agent_service)
 
-    from src.services.ai.agent_memory import get_agent_memory_service
-    from src.services.ai.rag_service import get_rag_service
-    from src.services.io.search import get_search_service
-    from src.services.ops.analytics import get_analytics_service
-    from src.services.ops.webhook_scheduler import get_webhook_scheduler
+    from src.backend.services.ai.agent_memory import get_agent_memory_service
+    from src.backend.services.ai.rag_service import get_rag_service
+    from src.backend.services.io.search import get_search_service
+    from src.backend.services.ops.analytics import get_analytics_service
+    from src.backend.services.ops.webhook_scheduler import get_webhook_scheduler
 
     register_factory("analytics", get_analytics_service)
     register_factory("search", get_search_service)

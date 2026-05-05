@@ -15,10 +15,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.proxy.headers import HeaderMapPolicy
 
 __all__ = ("ForwardToProcessor", "ProxyOutboundSpec")
 
@@ -200,7 +200,9 @@ class ForwardToProcessor(BaseProcessor):
         headers: dict[str, str],
         exchange: Exchange[Any],  # noqa: ARG002
     ) -> None:
-        from src.infrastructure.clients.messaging.stream import get_stream_client
+        from src.backend.infrastructure.clients.messaging.stream import (
+            get_stream_client,
+        )
 
         client = get_stream_client()
         payload = body if isinstance(body, dict) else {"body": body}

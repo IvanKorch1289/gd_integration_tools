@@ -25,10 +25,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from src.core.types.side_effect import SideEffectKind
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("ExternalDbQueryProcessor",)
 
@@ -97,7 +97,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
         """Выполняет SQL-запрос на внешнем профиле БД и кладёт результат в ``result_property``."""
         from sqlalchemy import text
 
-        from src.core.di.providers import get_external_session_manager_provider
+        from src.backend.core.di.providers import get_external_session_manager_provider
 
         params = self._collect_params(exchange)
         session_manager = get_external_session_manager_provider()(self._profile)

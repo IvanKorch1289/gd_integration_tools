@@ -13,17 +13,16 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from fastapi import WebSocketDisconnect
 
-from src.core.interfaces.invocation_reply import ReplyChannelKind
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationResponse,
     InvocationStatus,
 )
-from src.entrypoints.websocket.ws_invocations import websocket_invocations
-from src.infrastructure.messaging.invocation_replies import (
+from src.backend.entrypoints.websocket.ws_invocations import websocket_invocations
+from src.backend.infrastructure.messaging.invocation_replies import (
     ReplyChannelRegistry,
     WsReplyChannel,
 )

@@ -36,13 +36,13 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from src.core.config.services.resilience import (
+from src.backend.core.config.services.resilience import (
     BreakerProfile,
     FallbackPolicy,
     ResilienceSettings,
 )
-from src.core.resilience import DegradationManager, degradation_manager
-from src.infrastructure.resilience.breaker import (
+from src.backend.core.resilience import DegradationManager, degradation_manager
+from src.backend.infrastructure.resilience.breaker import (
     Breaker,
     BreakerRegistry,
     BreakerSpec,
@@ -295,7 +295,7 @@ class ResilienceCoordinator:
         ломало работу coordinator'а.
         """
         try:
-            from src.infrastructure.observability.client_metrics import (
+            from src.backend.infrastructure.observability.client_metrics import (
                 record_degradation_mode,
             )
 

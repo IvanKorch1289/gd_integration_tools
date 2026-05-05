@@ -16,8 +16,8 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.types.watermark import WatermarkState
-from src.infrastructure.database.session_manager import DatabaseSessionManager
+from src.backend.core.types.watermark import WatermarkState
+from src.backend.infrastructure.database.session_manager import DatabaseSessionManager
 
 __all__ = ("PostgresWatermarkStore",)
 

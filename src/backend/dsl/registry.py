@@ -3,6 +3,6 @@
 Канонический модуль: ``app.dsl.commands.registry``.
 """
 
-from src.dsl.commands.registry import RouteRegistry, route_registry
+from src.backend.dsl.commands.registry import RouteRegistry, route_registry
 
 __all__ = ("RouteRegistry", "route_registry")

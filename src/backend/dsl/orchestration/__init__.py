@@ -37,7 +37,7 @@ class Sensor:
     _task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
-        from src.dsl.service import get_dsl_service
+        from src.backend.dsl.service import get_dsl_service
 
         async def _loop() -> None:
             while True:
@@ -72,7 +72,7 @@ class Backfill:
     step_days: int = 1
 
     async def run(self, payload_for_day: Callable[[date], dict[str, Any]]) -> list[Any]:
-        from src.dsl.service import get_dsl_service
+        from src.backend.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
         results: list[Any] = []
@@ -96,7 +96,7 @@ class DryRun:
     route_id: str
 
     async def run(self, payload: dict[str, Any]) -> Any:
-        from src.dsl.service import get_dsl_service
+        from src.backend.dsl.service import get_dsl_service
 
         return await get_dsl_service().dispatch(
             route_id=self.route_id, body=payload, headers={"x-dry-run": "1"}

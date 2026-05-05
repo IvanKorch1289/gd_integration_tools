@@ -53,8 +53,8 @@ class OutboxListener:
 
     Usage:
 
-        from src.infrastructure.eventing.outbox_listener import OutboxListener
-        from src.infrastructure.eventing.outbox import OutboxPublisher
+        from src.backend.infrastructure.eventing.outbox_listener import OutboxListener
+        from src.backend.infrastructure.eventing.outbox import OutboxPublisher
 
         publisher = OutboxPublisher()
         listener = OutboxListener(

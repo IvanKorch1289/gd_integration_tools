@@ -20,8 +20,8 @@ from __future__ import annotations
 
 import yaml
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.engine.processors import (
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.engine.processors import (
     ChoiceBranch,
     LogProcessor,
     RetryProcessor,
@@ -30,7 +30,7 @@ from src.dsl.engine.processors import (
     TransformProcessor,
     TryCatchProcessor,
 )
-from src.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 
 def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
@@ -177,7 +177,7 @@ def test_choice_with_callable_skipped() -> None:
 
 def test_try_catch_with_callable_child_skipped() -> None:
     """TryCatch с несериализуемым child (dispatch_action+payload_factory) → None."""
-    from src.dsl.engine.processors import DispatchActionProcessor
+    from src.backend.dsl.engine.processors import DispatchActionProcessor
 
     inner = TryCatchProcessor(
         try_processors=[

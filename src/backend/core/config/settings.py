@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
-from src.core.config.ai import (
+from src.backend.core.config.ai import (
     AIProvidersSettings,
     NimSettings,
     OpenAISettings,
@@ -12,18 +12,24 @@ from src.core.config.ai import (
     openai_settings,
     openrouter_settings,
 )
-from src.core.config.base import (
+from src.backend.core.config.base import (
     AppBaseSettings,
     SchedulerSettings,
     app_base_settings,
     scheduler_settings,
 )
-from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
-from src.core.config.database import DatabaseConnectionSettings, db_connection_settings
-from src.core.config.dsl import DSLSettings, dsl_settings
-from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
-from src.core.config.express import ExpressSettings, express_settings
-from src.core.config.external_apis import (
+from src.backend.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from src.backend.core.config.database import (
+    DatabaseConnectionSettings,
+    db_connection_settings,
+)
+from src.backend.core.config.dsl import DSLSettings, dsl_settings
+from src.backend.core.config.elasticsearch import (
+    ElasticsearchSettings,
+    elasticsearch_settings,
+)
+from src.backend.core.config.express import ExpressSettings, express_settings
+from src.backend.core.config.external_apis import (
     AntivirusAPISettings,
     DadataAPISettings,
     SKBAPISettings,
@@ -31,14 +37,17 @@ from src.core.config.external_apis import (
     dadata_api_settings,
     skb_api_settings,
 )
-from src.core.config.external_databases import (
+from src.backend.core.config.external_databases import (
     ExternalDatabasesSettings,
     external_databases_settings,
 )
-from src.core.config.http_base import HttpBaseSettings, http_base_settings
-from src.core.config.mongo import MongoConnectionSettings, mongo_connection_settings
-from src.core.config.security import SecureSettings, secure_settings
-from src.core.config.services import (
+from src.backend.core.config.http_base import HttpBaseSettings, http_base_settings
+from src.backend.core.config.mongo import (
+    MongoConnectionSettings,
+    mongo_connection_settings,
+)
+from src.backend.core.config.security import SecureSettings, secure_settings
+from src.backend.core.config.services import (
     CacheSettings,
     FileStorageSettings,
     GRPCSettings,
@@ -66,9 +75,9 @@ from src.core.config.services import (
     tasks_settings,
     watermark_settings,
 )
-from src.core.config.telegram import TelegramBotSettings, telegram_bot_settings
-from src.core.config.v11 import V11Settings, v11_settings
-from src.core.config.vault import VaultSettings, vault_settings
+from src.backend.core.config.telegram import TelegramBotSettings, telegram_bot_settings
+from src.backend.core.config.v11 import V11Settings, v11_settings
+from src.backend.core.config.vault import VaultSettings, vault_settings
 
 __all__ = ("Settings", "settings")
 

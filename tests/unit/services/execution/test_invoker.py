@@ -14,18 +14,18 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.core.interfaces.invocation_reply import ReplyChannelKind
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
 )
-from src.infrastructure.messaging.invocation_replies import (
+from src.backend.infrastructure.messaging.invocation_replies import (
     MemoryReplyChannel,
     ReplyChannelRegistry,
     WsReplyChannel,
 )
-from src.services.execution.invoker import Invoker
+from src.backend.services.execution.invoker import Invoker
 
 
 def _make_dispatcher(result: Any = None, raises: BaseException | None = None) -> MagicMock:
@@ -324,7 +324,7 @@ class TestInvokerDeferred:
         import sys
         import types
 
-        module_name = "src.infrastructure.scheduler.scheduler_manager"
+        module_name = "src.backend.infrastructure.scheduler.scheduler_manager"
         stub_module = types.ModuleType(module_name)
         stub_module.scheduler_manager = stub_manager  # type: ignore[attr-defined]
         monkeypatch.setitem(sys.modules, module_name, stub_module)
@@ -333,7 +333,7 @@ class TestInvokerDeferred:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """С metadata.delay_seconds регистрирует job через scheduler.add_job."""
-        from src.services.execution import invoker as invoker_module
+        from src.backend.services.execution import invoker as invoker_module
 
         captured: dict[str, Any] = {}
 
@@ -443,7 +443,7 @@ class TestInvokerAsyncQueue:
     ) -> None:
         """kiq() в InMemoryBroker → ACCEPTED + invocation_id."""
         # Сбрасываем module-state, чтобы получить свежий broker.
-        import src.infrastructure.execution.taskiq_broker as broker_module
+        import src.backend.infrastructure.execution.taskiq_broker as broker_module
 
         monkeypatch.setattr(broker_module, "_broker", None)
         monkeypatch.setattr(broker_module, "_invocation_task", None)
@@ -479,7 +479,7 @@ class TestInvokerAsyncQueue:
 
         monkeypatch.setitem(
             sys.modules,
-            "src.infrastructure.execution.taskiq_broker",
+            "src.backend.infrastructure.execution.taskiq_broker",
             None,  # type: ignore[arg-type]
         )
 

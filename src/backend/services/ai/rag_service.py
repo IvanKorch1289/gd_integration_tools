@@ -6,9 +6,9 @@ import hashlib
 import logging
 from typing import Any
 
-from src.core.di import app_state_singleton
-from src.core.interfaces.vector_store import BaseVectorStore
-from src.services.ai.embedding_providers import (
+from src.backend.core.di import app_state_singleton
+from src.backend.core.interfaces.vector_store import BaseVectorStore
+from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
 )
@@ -33,7 +33,7 @@ class RAGService:
 
     def chunk_text(self, text: str) -> list[str]:
         """Разбивает текст на overlap-чанки согласно ``rag_settings``."""
-        from src.core.config.rag import rag_settings
+        from src.backend.core.config.rag import rag_settings
 
         size = rag_settings.chunk_size
         overlap = rag_settings.chunk_overlap

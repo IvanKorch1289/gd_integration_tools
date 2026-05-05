@@ -17,8 +17,8 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.database.models.outbox import OutboxMessage
-from src.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.database.models.outbox import OutboxMessage
+from src.backend.infrastructure.database.session_manager import main_session_manager
 
 __all__ = ("write", "fetch_pending", "mark_sent", "mark_failed", "write_within_session")
 

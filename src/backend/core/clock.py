@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time as _time
 
-from src.core.interfaces.clock import Clock
+from src.backend.core.interfaces.clock import Clock
 
 __all__ = ("RealClock", "FakeClock")
 

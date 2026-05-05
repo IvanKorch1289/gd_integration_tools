@@ -10,16 +10,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-import pytest
-
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 
 def test_email_adapter_conforms_to_protocol() -> None:
     """EmailAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.email import EmailAdapter
+    from src.backend.infrastructure.notifications.adapters.email import EmailAdapter
 
     adapter = EmailAdapter(from_address="noreply@example.com")
 
@@ -29,7 +25,7 @@ def test_email_adapter_conforms_to_protocol() -> None:
 
 def test_sms_adapter_conforms_to_protocol() -> None:
     """SMSAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.sms import SMSAdapter
+    from src.backend.infrastructure.notifications.adapters.sms import SMSAdapter
 
     adapter = SMSAdapter(
         provider="smsru",
@@ -43,7 +39,9 @@ def test_sms_adapter_conforms_to_protocol() -> None:
 
 def test_telegram_adapter_conforms_to_protocol() -> None:
     """TelegramAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.telegram import TelegramAdapter
+    from src.backend.infrastructure.notifications.adapters.telegram import (
+        TelegramAdapter,
+    )
 
     adapter = TelegramAdapter(
         bot_token_provider=lambda: "123:abc",
@@ -56,7 +54,7 @@ def test_telegram_adapter_conforms_to_protocol() -> None:
 
 def test_slack_adapter_conforms_to_protocol() -> None:
     """SlackAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.slack import SlackAdapter
+    from src.backend.infrastructure.notifications.adapters.slack import SlackAdapter
 
     adapter = SlackAdapter(
         webhook_url_provider=lambda: "https://hooks.slack.com/services/XYZ",
@@ -69,7 +67,7 @@ def test_slack_adapter_conforms_to_protocol() -> None:
 
 def test_teams_adapter_conforms_to_protocol() -> None:
     """TeamsAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.teams import TeamsAdapter
+    from src.backend.infrastructure.notifications.adapters.teams import TeamsAdapter
 
     adapter = TeamsAdapter(
         webhook_url_provider=lambda: "https://outlook.office.com/webhook/ABC",
@@ -82,7 +80,7 @@ def test_teams_adapter_conforms_to_protocol() -> None:
 
 def test_webhook_adapter_conforms_to_protocol() -> None:
     """WebhookAdapter реализует NotificationChannel."""
-    from src.infrastructure.notifications.adapters.webhook import WebhookAdapter
+    from src.backend.infrastructure.notifications.adapters.webhook import WebhookAdapter
 
     adapter = WebhookAdapter(upstream_name="webhook")
 
@@ -94,12 +92,14 @@ def test_all_adapters_have_unique_kinds() -> None:
     """Каждый адаптер имеет уникальный ``kind`` — это гарантирует
     корректную маршрутизацию в ``PriorityRouter`` и идентификацию
     в логах / метриках."""
-    from src.infrastructure.notifications.adapters.email import EmailAdapter
-    from src.infrastructure.notifications.adapters.slack import SlackAdapter
-    from src.infrastructure.notifications.adapters.sms import SMSAdapter
-    from src.infrastructure.notifications.adapters.teams import TeamsAdapter
-    from src.infrastructure.notifications.adapters.telegram import TelegramAdapter
-    from src.infrastructure.notifications.adapters.webhook import WebhookAdapter
+    from src.backend.infrastructure.notifications.adapters.email import EmailAdapter
+    from src.backend.infrastructure.notifications.adapters.slack import SlackAdapter
+    from src.backend.infrastructure.notifications.adapters.sms import SMSAdapter
+    from src.backend.infrastructure.notifications.adapters.teams import TeamsAdapter
+    from src.backend.infrastructure.notifications.adapters.telegram import (
+        TelegramAdapter,
+    )
+    from src.backend.infrastructure.notifications.adapters.webhook import WebhookAdapter
 
     adapters = [
         EmailAdapter(from_address="no@e.com"),

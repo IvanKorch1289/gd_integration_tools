@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.infrastructure.resilience.unified_rate_limiter import (
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

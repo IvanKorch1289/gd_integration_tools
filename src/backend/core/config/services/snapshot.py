@@ -21,7 +21,7 @@ from typing import ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("SnapshotSettings", "snapshot_settings")
 

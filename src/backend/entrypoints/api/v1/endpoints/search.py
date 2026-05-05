@@ -16,8 +16,11 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.services.io.search import get_search_service
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.services.io.search import get_search_service
 
 __all__ = ("router",)
 

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from src.dsl.versioning.migrations import (
+from src.backend.dsl.versioning.migrations import (
     MigrationError,
     MigrationRegistry,
     apply_migrations,

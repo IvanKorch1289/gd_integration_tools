@@ -30,7 +30,7 @@ MQPublishCallable = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 def _stream_client():
     """Lazy-import StreamClient (избегаем циклического импорта при старте)."""
-    from src.infrastructure.clients.messaging.stream import get_stream_client
+    from src.backend.infrastructure.clients.messaging.stream import get_stream_client
 
     return get_stream_client()
 
@@ -51,7 +51,7 @@ _memory_broker_singleton = None
 def _get_memory_broker():
     global _memory_broker_singleton
     if _memory_broker_singleton is None:
-        from src.infrastructure.clients.messaging.memory_broker import (
+        from src.backend.infrastructure.clients.messaging.memory_broker import (
             InMemoryMessageBroker,
         )
 

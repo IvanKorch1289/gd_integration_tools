@@ -33,7 +33,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp) -> None:
         # Wave 6.5a: app_logger — через DI provider (lazy resolve в __init__,
         # т.к. logger глобальный singleton, доступен сразу при импорте).
-        from src.core.di.providers import get_app_logger_provider
+        from src.backend.core.di.providers import get_app_logger_provider
 
         super().__init__(app)
         self.logger = get_app_logger_provider()
@@ -102,7 +102,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         # Асинхронная запись в Redis stream (fire-and-forget).
         # Wave 6.5a: redis_client — через DI provider.
         try:
-            from src.core.di.providers import get_redis_stream_client_provider
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
             await redis_client.add_to_stream(
@@ -115,7 +115,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget).
         # Wave 6.5a: clickhouse_client — через DI provider.
         try:
-            from src.core.di.providers import get_clickhouse_client_provider
+            from src.backend.core.di.providers import get_clickhouse_client_provider
 
             ch_row = {
                 "ts": datetime.fromtimestamp(

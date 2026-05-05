@@ -39,10 +39,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Literal
 
-from src.infrastructure.database.models.workflow_event import WorkflowEventType
-from src.infrastructure.workflow.runner import StepExecutor, StepOutcome, StepResult
-from src.infrastructure.workflow.state import WorkflowState
-from src.infrastructure.workflow.state_store import WorkflowInstanceRow
+from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.workflow.runner import (
+    StepExecutor,
+    StepOutcome,
+    StepResult,
+)
+from src.backend.infrastructure.workflow.state import WorkflowState
+from src.backend.infrastructure.workflow.state_store import WorkflowInstanceRow
 
 __all__ = (
     "WorkflowStep",

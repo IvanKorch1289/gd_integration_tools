@@ -20,8 +20,8 @@ from uuid import UUID
 
 from pydantic import Field
 
-from src.core.di.module_registry import resolve_module
-from src.schemas.base import BaseSchema
+from src.backend.core.di.module_registry import resolve_module
+from src.backend.schemas.base import BaseSchema
 
 # Wave 6 finalize / Wave 6.1: enum-импорт DB-моделей через единый
 # реестр infrastructure-модулей (см. ``src.core.di.module_registry``).

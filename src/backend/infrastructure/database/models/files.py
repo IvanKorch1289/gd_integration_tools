@@ -1,7 +1,7 @@
 from sqlalchemy import UUID, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.infrastructure.database.models.base import Base, BaseModel
+from src.backend.infrastructure.database.models.base import Base, BaseModel
 
 __all__ = ("File", "OrderFile")
 

@@ -13,7 +13,7 @@
 
 Примеры::
 
-    from src.core.svcs_registry import register_factory, get_service
+    from src.backend.core.svcs_registry import register_factory, get_service
 
     register_factory("orders", get_order_service)
     register_factory(OrderService, get_order_service)

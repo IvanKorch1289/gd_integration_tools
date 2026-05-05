@@ -11,9 +11,9 @@ from collections import OrderedDict
 from threading import Lock
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "OnnxInferenceProcessor",
@@ -143,7 +143,7 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from src.services.ai.ai_agent import get_ai_agent_service
+            from src.backend.services.ai.ai_agent import get_ai_agent_service
 
             agent = get_ai_agent_service()
 
@@ -179,7 +179,7 @@ class StreamingLLMProcessor(BaseProcessor):
         self, session_id: str, content: Any, *, is_final: bool
     ) -> None:
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             await redis_client.add_to_stream(
                 stream_name=f"llm_stream:{session_id}",
@@ -238,7 +238,7 @@ class EmbeddingProcessor(BaseProcessor):
             exchange.fail(f"Embedding failed: {exc}")
 
     async def _st_embed(self, text: str) -> list[float]:
-        from src.services.ai.rag_service import get_rag_service
+        from src.backend.services.ai.rag_service import get_rag_service
 
         rag = get_rag_service()
         if hasattr(rag, "_embed"):
@@ -322,7 +322,7 @@ class OutboxProcessor(BaseProcessor):
         from sqlalchemy import text
 
         try:
-            from src.infrastructure.database.database import db_initializer
+            from src.backend.infrastructure.database.database import db_initializer
         except ImportError:
             exchange.fail("Database not configured for outbox")
             return

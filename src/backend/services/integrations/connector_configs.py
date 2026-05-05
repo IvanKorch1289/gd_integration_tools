@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from src.core.models.connector_configs import ConnectorConfigEntry
+from src.backend.core.models.connector_configs import ConnectorConfigEntry
 
 __all__ = ("ConnectorConfigEntry", "ConnectorConfigStore")
 

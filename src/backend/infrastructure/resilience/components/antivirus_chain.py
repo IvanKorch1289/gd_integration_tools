@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 
-from src.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 
 __all__ = ("AntivirusCallable", "build_antivirus_fallbacks", "build_antivirus_primary")
 
@@ -34,7 +34,9 @@ def _wrap_backend(backend: AntivirusBackend) -> AntivirusCallable:
 
 def _build_clamav_unix() -> AntivirusCallable | None:
     try:
-        from src.infrastructure.antivirus.backends.clamav_unix import ClamAVUnixBackend
+        from src.backend.infrastructure.antivirus.backends.clamav_unix import (
+            ClamAVUnixBackend,
+        )
     except ImportError:
         return None
     return _wrap_backend(ClamAVUnixBackend())
@@ -42,7 +44,9 @@ def _build_clamav_unix() -> AntivirusCallable | None:
 
 def _build_clamav_tcp() -> AntivirusCallable | None:
     try:
-        from src.infrastructure.antivirus.backends.clamav_tcp import ClamAVTcpBackend
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
+            ClamAVTcpBackend,
+        )
     except ImportError:
         return None
     return _wrap_backend(ClamAVTcpBackend())
@@ -59,8 +63,12 @@ def _build_http_av() -> AntivirusCallable:
     """
 
     async def _http_scan(payload: bytes) -> AntivirusScanResult:
-        from src.infrastructure.antivirus.backends.http import HttpAntivirusBackend
-        from src.infrastructure.external_apis.antivirus import get_antivirus_service
+        from src.backend.infrastructure.antivirus.backends.http import (
+            HttpAntivirusBackend,
+        )
+        from src.backend.infrastructure.external_apis.antivirus import (
+            get_antivirus_service,
+        )
 
         try:
             service = get_antivirus_service()

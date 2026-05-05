@@ -52,7 +52,7 @@ def create_mcp_server() -> Any:
     # (CrewAI / LangChain / LangGraph получают каждый workflow
     # отдельным tool'ом с валидацией payload через input_schema).
     try:
-        from src.entrypoints.mcp.workflow_tools import register_workflow_tools
+        from src.backend.entrypoints.mcp.workflow_tools import register_workflow_tools
 
         register_workflow_tools(mcp)
     except Exception as exc:  # noqa: BLE001
@@ -67,7 +67,7 @@ def register_mcp_tools(mcp: Any) -> None:
     Args:
         mcp: Экземпляр FastMCP.
     """
-    from src.dsl.commands.registry import action_handler_registry
+    from src.backend.dsl.commands.registry import action_handler_registry
 
     for action_name in action_handler_registry.list_actions():
         _register_single_tool(mcp, action_name)
@@ -80,8 +80,8 @@ def register_mcp_tools(mcp: Any) -> None:
 
 def _register_single_tool(mcp: Any, action_name: str) -> None:
     """Регистрирует один action как MCP tool."""
-    from src.dsl.commands.registry import action_handler_registry
-    from src.schemas.invocation import ActionCommandSchema
+    from src.backend.dsl.commands.registry import action_handler_registry
+    from src.backend.schemas.invocation import ActionCommandSchema
 
     @mcp.tool(
         name=action_name.replace(".", "_"),
@@ -117,7 +117,7 @@ def _register_route_tools(mcp: Any) -> None:
         description="Список всех зарегистрированных DSL-маршрутов с описаниями и процессорами",
     )
     async def route_list() -> str:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         routes = []
         for rid in route_registry.list_routes():
@@ -142,8 +142,8 @@ def _register_route_tools(mcp: Any) -> None:
         description="Выполняет DSL-маршрут по route_id с указанным payload. Возвращает результат Exchange.",
     )
     async def route_execute(route_id: str, payload: str = "{}") -> str:
-        from src.dsl.engine.execution_engine import ExecutionEngine
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.engine.execution_engine import ExecutionEngine
+        from src.backend.dsl.registry import route_registry
 
         try:
             pipeline = route_registry.get(route_id)
@@ -182,7 +182,7 @@ def _register_route_tools(mcp: Any) -> None:
         description="Детальная информация о DSL-маршруте: процессоры, pipeline metadata, feature flags.",
     )
     async def route_inspect(route_id: str) -> str:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
@@ -215,7 +215,7 @@ def _register_template_tools(mcp: Any) -> None:
         "Шаблоны — готовые паттерны для типовых задач (ETL, scraping, AI Q&A, CRUD и т.д.).",
     )
     async def template_list() -> str:
-        from src.dsl.templates_library import list_templates
+        from src.backend.dsl.templates_library import list_templates
 
         return orjson.dumps(list_templates()).decode()
 
@@ -225,7 +225,7 @@ def _register_template_tools(mcp: Any) -> None:
         'Пример: template_id=\'etl.postgres_to_clickhouse\', params=\'{"source_query": "SELECT...", "target_table": "analytics.orders"}\'',
     )
     async def template_instantiate(template_id: str, params: str = "{}") -> str:
-        from src.dsl.templates_library import templates
+        from src.backend.dsl.templates_library import templates
 
         tmpl = templates.get(template_id)
         if not tmpl:
@@ -269,7 +269,7 @@ def _register_template_tools(mcp: Any) -> None:
     async def macro_list() -> str:
         import inspect
 
-        from src.dsl import macros
+        from src.backend.dsl import macros
 
         result = []
         for name in macros.__all__:
@@ -306,7 +306,7 @@ def _register_convert_tools(mcp: Any) -> None:
         "Пример: from_format='json', to_format='yaml', data='{\"key\": \"value\"}'",
     )
     async def convert_format(from_format: str, to_format: str, data: str) -> str:
-        from src.dsl.engine.processors.converters import _STRATEGIES
+        from src.backend.dsl.engine.processors.converters import _STRATEGIES
 
         key = f"{from_format}→{to_format}"
         strategy = _STRATEGIES.get(key)
@@ -349,7 +349,7 @@ def _register_convert_tools(mcp: Any) -> None:
         description="Показывает все доступные конвертации форматов (from→to пары).",
     )
     async def convert_list_formats() -> str:
-        from src.dsl.engine.processors.converters import _STRATEGIES
+        from src.backend.dsl.engine.processors.converters import _STRATEGIES
 
         return orjson.dumps(list(_STRATEGIES.keys())).decode()
 
@@ -365,8 +365,8 @@ def _register_system_tools(mcp: Any) -> None:
         description="Проверка здоровья всех компонентов системы (DB, Redis, S3, ES, etc.).",
     )
     async def system_health() -> str:
-        from src.dsl.commands.registry import action_handler_registry
-        from src.schemas.invocation import ActionCommandSchema
+        from src.backend.dsl.commands.registry import action_handler_registry
+        from src.backend.schemas.invocation import ActionCommandSchema
 
         try:
             result = await action_handler_registry.dispatch(
@@ -384,7 +384,7 @@ def _register_system_tools(mcp: Any) -> None:
         "Полезно для обнаружения возможностей системы.",
     )
     async def system_actions() -> str:
-        from src.dsl.commands.registry import action_handler_registry
+        from src.backend.dsl.commands.registry import action_handler_registry
 
         actions = action_handler_registry.list_actions()
         domains: dict[str, list[str]] = {}
@@ -402,7 +402,7 @@ def _register_system_tools(mcp: Any) -> None:
     async def system_processors() -> str:
         import inspect
 
-        from src.dsl.engine import processors as proc_module
+        from src.backend.dsl.engine import processors as proc_module
 
         result = []
         for name in dir(proc_module):
@@ -425,7 +425,7 @@ def _register_system_tools(mcp: Any) -> None:
         "Feature flags позволяют включать/отключать маршруты без рестарта.",
     )
     async def system_feature_flags() -> str:
-        from src.core.state.runtime import disabled_feature_flags
+        from src.backend.core.state.runtime import disabled_feature_flags
 
         return orjson.dumps({"disabled_flags": list(disabled_feature_flags)}).decode()
 
@@ -442,7 +442,7 @@ def _register_yaml_tools(mcp: Any) -> None:
         "Полезно для backup, версионирования, передачи конфигураций.",
     )
     async def pipeline_export(route_id: str) -> str:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         try:
             import yaml
@@ -471,10 +471,10 @@ def _register_yaml_tools(mcp: Any) -> None:
         "YAML должен содержать: route_id, source, processors (list).",
     )
     async def pipeline_from_yaml(yaml_str: str) -> str:
-        from src.dsl.registry import route_registry
+        from src.backend.dsl.registry import route_registry
 
         try:
-            from src.dsl.yaml_loader import load_pipeline_from_yaml
+            from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
         except ImportError:
             return orjson.dumps({"error": "yaml_loader not available"}).decode()
 
@@ -498,7 +498,7 @@ def _register_yaml_tools(mcp: Any) -> None:
     )
     async def route_metrics(route_id: str | None = None) -> str:
         try:
-            from src.core.di.providers import get_slo_tracker_provider
+            from src.backend.core.di.providers import get_slo_tracker_provider
 
             tracker = get_slo_tracker_provider()
             report = tracker.get_report()

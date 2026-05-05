@@ -12,8 +12,8 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.entrypoints._action_bridge import dispatch_action_or_dsl
-from src.entrypoints.websocket.ws_manager import ws_manager
+from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.entrypoints.websocket.ws_manager import ws_manager
 
 __all__ = ("ws_router",)
 

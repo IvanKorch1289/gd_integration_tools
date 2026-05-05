@@ -6,7 +6,7 @@
 
 Использование в моделях::
 
-    from src.infrastructure.database.migrations._compat import json_b, uuid_t
+    from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
 
     class MyModel(BaseModel):
         payload: Mapped[dict] = mapped_column(json_b(), nullable=False)
@@ -14,7 +14,7 @@
 
 Использование в миграциях::
 
-    from src.infrastructure.database.migrations._compat import json_b, uuid_t
+    from src.backend.infrastructure.database.migrations._compat import json_b, uuid_t
 
     op.create_table("foo", sa.Column("payload", json_b(), nullable=False))
 """

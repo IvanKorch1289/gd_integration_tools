@@ -100,7 +100,9 @@ class _PollingStrategy(_CDCStrategy):
     async def _get_cursor(self, key: str, default: datetime) -> datetime:
         """Загружает cursor из Redis (или возвращает default при недоступности)."""
         try:
-            from src.infrastructure.clients.storage.redis_coordinator import RedisCursor
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
+                RedisCursor,
+            )
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
@@ -111,7 +113,9 @@ class _PollingStrategy(_CDCStrategy):
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
         """Atomic advance cursor через Redis CAS."""
         try:
-            from src.infrastructure.clients.storage.redis_coordinator import RedisCursor
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
+                RedisCursor,
+            )
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
@@ -127,7 +131,9 @@ class _PollingStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.infrastructure.database.database import get_external_db_manager
+            from src.backend.infrastructure.database.database import (
+                get_external_db_manager,
+            )
         except ImportError:
             logger.error("CDC polling: SQLAlchemy or external DB manager unavailable")
             return
@@ -214,7 +220,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
             import asyncpg
             import orjson
 
-            from src.core.config.external_databases.registry import (
+            from src.backend.core.config.external_databases.registry import (
                 external_databases_settings,
             )
         except ImportError:
@@ -301,7 +307,9 @@ class _LogMinerStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.infrastructure.database.database import get_external_db_manager
+            from src.backend.infrastructure.database.database import (
+                get_external_db_manager,
+            )
         except ImportError:
             logger.error("CDC LogMiner: SQLAlchemy unavailable")
             return
@@ -495,8 +503,8 @@ class CDCClient:
                 logger.error("CDC callback error [%s]: %s", sub.id, exc)
 
         if sub.target_action:
-            from src.dsl.commands.registry import action_handler_registry
-            from src.schemas.invocation import ActionCommandSchema
+            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=sub.target_action,

@@ -20,7 +20,7 @@ from typing import Any, ClassVar
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("MqttSettings", "MqttHandler", "get_mqtt_handler")
 
@@ -175,8 +175,8 @@ class MqttHandler:
         logger.debug("MQTT message: topic=%s, action=%s", topic, action)
 
         try:
-            from src.dsl.commands.registry import action_handler_registry
-            from src.schemas.invocation import ActionCommandSchema
+            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.schemas.invocation import ActionCommandSchema
 
             command = ActionCommandSchema(
                 action=action, payload=data, meta={"source": "mqtt", "topic": topic}
@@ -235,7 +235,7 @@ def _create_mqtt_handler() -> MqttHandler:
     return MqttHandler(settings)
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("mqtt_handler", _create_mqtt_handler)

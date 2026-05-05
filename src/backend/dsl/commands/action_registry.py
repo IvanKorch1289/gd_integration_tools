@@ -28,8 +28,11 @@ from typing import Any, Callable
 
 from pydantic import BaseModel
 
-from src.core.interfaces.action_dispatcher import ActionMetadata, ActionMiddleware
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.core.interfaces.action_dispatcher import (
+    ActionMetadata,
+    ActionMiddleware,
+)
+from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("ActionHandlerSpec", "ActionHandlerRegistry", "action_handler_registry")
 

@@ -9,9 +9,9 @@ from typing import Any, Callable
 
 import orjson
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "HttpCallProcessor",
@@ -55,7 +55,7 @@ class HttpCallProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.transport.http import HttpClient
+        from src.backend.infrastructure.clients.transport.http import HttpClient
 
         client = HttpClient()
 
@@ -124,7 +124,7 @@ class DatabaseQueryProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from sqlalchemy import text
 
-        from src.infrastructure.database.database import get_db_manager
+        from src.backend.infrastructure.database.database import get_db_manager
 
         try:
             self._validate_sql(self._sql)
@@ -181,7 +181,7 @@ class FileReadProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
-        from src.dsl.engine.processors._path_safety import (
+        from src.backend.dsl.engine.processors._path_safety import (
             PathTraversalError,
             validate_path,
         )
@@ -239,7 +239,7 @@ class FileWriteProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         import aiofiles
 
-        from src.dsl.engine.processors._path_safety import (
+        from src.backend.dsl.engine.processors._path_safety import (
             PathTraversalError,
             validate_path,
         )
@@ -320,7 +320,7 @@ class S3ReadProcessor(BaseProcessor):
         self._key_property = key_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.storage.s3_pool import storage_client
+        from src.backend.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:
@@ -360,7 +360,7 @@ class S3WriteProcessor(BaseProcessor):
         self._content_type = content_type
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.infrastructure.clients.storage.s3_pool import storage_client
+        from src.backend.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key
         if self._key_property:
@@ -443,7 +443,7 @@ class PollingConsumerProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.schemas.invocation import ActionCommandSchema
+        from src.backend.schemas.invocation import ActionCommandSchema
 
         command = ActionCommandSchema(action=self._action, payload=self._payload)
         try:

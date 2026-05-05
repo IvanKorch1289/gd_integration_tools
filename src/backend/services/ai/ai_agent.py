@@ -8,9 +8,15 @@
 import logging
 from typing import Any
 
-from src.core.di.app_state import app_state_singleton
-from src.core.di.providers import get_ai_sanitizer_provider, get_http_client_provider
-from src.core.interfaces.ai_clients import AISanitizerProtocol, HttpClientProtocol
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import (
+    get_ai_sanitizer_provider,
+    get_http_client_provider,
+)
+from src.backend.core.interfaces.ai_clients import (
+    AISanitizerProtocol,
+    HttpClientProtocol,
+)
 
 __all__ = ("AIAgentService", "get_ai_agent_service")
 
@@ -21,13 +27,13 @@ class AIAgentService:
     """Сервис для AI-операций с маскировкой PII."""
 
     def __init__(self) -> None:
-        from src.core.config.ai import (
+        from src.backend.core.config.ai import (
             AIProvidersSettings,
             HuggingFaceSettings,
             OpenWebUISettings,
             PerplexitySettings,
         )
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         self._waf_url = settings.http_base_settings.waf_url
         self._waf_headers = dict(settings.http_base_settings.waf_route_header)
@@ -342,7 +348,7 @@ class AIAgentService:
             ``AgentMetricsService`` либо ``None``.
         """
         try:
-            from src.services.ai.metrics import get_agent_metrics_service
+            from src.backend.services.ai.metrics import get_agent_metrics_service
 
             return get_agent_metrics_service()
         except Exception:
@@ -376,7 +382,7 @@ class AIAgentService:
         sanitized = self._sanitizer.sanitize_text(prompt)
 
         try:
-            from src.services.ai.ai_graph import build_and_run_agent
+            from src.backend.services.ai.ai_graph import build_and_run_agent
 
             result = await build_and_run_agent(
                 prompt=sanitized.sanitized, tool_actions=tools or []
@@ -425,7 +431,7 @@ class AIAgentService:
             ``feedback_id`` записи либо ``None`` при ошибке.
         """
         try:
-            from src.services.ai.feedback import get_ai_feedback_service
+            from src.backend.services.ai.feedback import get_ai_feedback_service
 
             service = get_ai_feedback_service()
             query = next(
@@ -476,7 +482,7 @@ class AIAgentService:
             return False, messages
 
         try:
-            from src.core.config.rag import rag_settings
+            from src.backend.core.config.rag import rag_settings
         except Exception as exc:
             logger.warning("rag_settings недоступны: %s", exc)
             return False, messages
@@ -529,7 +535,7 @@ class AIAgentService:
             ``RAGService`` либо ``None``.
         """
         try:
-            from src.services.ai.rag_service import get_rag_service
+            from src.backend.services.ai.rag_service import get_rag_service
 
             return get_rag_service()
         except Exception as exc:

@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:  # pragma: no cover
-    from src.core.config.express import ExpressSettings
-    from src.core.config.security import SecureSettings
+    from src.backend.core.config.express import ExpressSettings
+    from src.backend.core.config.security import SecureSettings
 
 __all__ = ("JwtConfig", "ExpressJwtConfig", "AuthConfig", "build_auth_config")
 
@@ -66,9 +66,13 @@ def build_auth_config(
         Агрегированная конфигурация авторизации.
     """
     if secure is None:
-        from src.core.config.security import secure_settings as secure  # noqa: PLW0127
+        from src.backend.core.config.security import (
+            secure_settings as secure,  # noqa: PLW0127
+        )
     if express is None:
-        from src.core.config.express import express_settings as express  # noqa: PLW0127
+        from src.backend.core.config.express import (
+            express_settings as express,  # noqa: PLW0127
+        )
 
     secret = secure.secret_key
     secret_value = (

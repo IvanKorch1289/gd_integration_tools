@@ -21,13 +21,13 @@ from __future__ import annotations
 import importlib
 from typing import Any, Callable, Mapping
 
-from src.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (
     ActionError,
     ActionResult,
     DispatchContext,
     MiddlewareNextHandler,
 )
-from src.dsl.commands.action_registry import (
+from src.backend.dsl.commands.action_registry import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
@@ -38,7 +38,7 @@ __all__ = ("RateLimitMiddleware",)
 # чтобы не импортировать ``infrastructure.*`` напрямую из services-слоя
 # (см. ADR-001 / tools/check_layers.py). Доступ ленивый, на каждый
 # вызов; в hot-path кэшируется в инстансе.
-_LIMITER_MODULE_NAME = "src.infrastructure.resilience.unified_rate_limiter"
+_LIMITER_MODULE_NAME = "src.backend.infrastructure.resilience.unified_rate_limiter"
 
 
 class RateLimitMiddleware:
@@ -117,7 +117,7 @@ class RateLimitMiddleware:
             except Exception:
                 return None
         try:
-            from src.core.di.providers import get_rate_limiter_provider
+            from src.backend.core.di.providers import get_rate_limiter_provider
 
             return get_rate_limiter_provider()
         except Exception:

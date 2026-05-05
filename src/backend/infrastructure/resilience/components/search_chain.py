@@ -27,7 +27,7 @@ SearchCallable = Callable[..., Awaitable[list[dict[str, Any]]]]
 async def _es_search(
     index: str, query: str, *, limit: int = 20
 ) -> list[dict[str, Any]]:
-    from src.infrastructure.clients.storage.elasticsearch import (
+    from src.backend.infrastructure.clients.storage.elasticsearch import (
         get_elasticsearch_client,
     )
 

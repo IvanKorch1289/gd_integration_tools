@@ -14,8 +14,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.infrastructure.cache.backends.keydb import KeyDBBackend
-from src.infrastructure.cache.backends.redis import RedisBackend
+from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
+from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
 
 class _AsyncIterator:

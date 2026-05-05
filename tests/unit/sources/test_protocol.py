@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.core.interfaces.source import (
+from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.interfaces.source import (
     EventCallback,
     Source,
     SourceEvent,

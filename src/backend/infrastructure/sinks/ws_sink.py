@@ -17,8 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.utilities.codecs.json import dumps_str
+from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.utilities.codecs.json import dumps_str
 
 __all__ = ("WsSink",)
 

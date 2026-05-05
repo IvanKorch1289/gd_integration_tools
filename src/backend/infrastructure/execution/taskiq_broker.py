@@ -38,7 +38,7 @@ __all__ = ("get_broker", "get_invocation_task", "run_taskiq_invocation", "broker
 # чтобы воспользоваться Invoker.invoke и сериализационными хелперами,
 # инверсию здесь делать архитектурно нецелесообразно (это интеграция
 # рантайма TaskIQ с Invoker'ом).
-_INVOKER_MOD = "src." + "services.execution.invoker"
+_INVOKER_MOD = "src." + "backend.services.execution.invoker"
 
 logger = logging.getLogger("infrastructure.execution.taskiq_broker")
 
@@ -56,7 +56,7 @@ def _resolve_backend_name() -> str:
     3. fallback ``memory`` для dev_light.
     """
     try:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         backend = getattr(getattr(settings, "taskiq", None), "backend", None)
         if backend:
@@ -70,7 +70,7 @@ def _resolve_backend_name() -> str:
 def _resolve_redis_url() -> str:
     """URL Redis для taskiq-redis broker и result backend."""
     try:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         url = getattr(getattr(settings, "taskiq", None), "redis_url", None)
         if url:
@@ -139,13 +139,13 @@ async def run_taskiq_invocation(raw_request: dict[str, Any]) -> dict[str, Any]:
         Сериализованный :class:`InvocationResponse` (для diagnostics
         worker'а; основной канал доставки — ``reply_channel``).
     """
-    from src.core.interfaces.invoker import (
+    from src.backend.core.interfaces.invoker import (
         InvocationMode,
         InvocationRequest,
         InvocationResponse,
         InvocationStatus,
     )
-    from src.infrastructure.messaging.invocation_replies.registry import (
+    from src.backend.infrastructure.messaging.invocation_replies.registry import (
         get_reply_channel_registry,
     )
 

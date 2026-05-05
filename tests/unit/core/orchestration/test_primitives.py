@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from src.core.orchestration import (
+from src.backend.core.orchestration import (
     ApprovalDecision,
     ApprovalRequest,
     DeadlinePolicy,

@@ -7,7 +7,7 @@
 слоя (services, entrypoints, dsl) без нарушения layer policy.
 """
 
-from src.core.di.app_state import (
+from src.backend.core.di.app_state import (
     app_state_singleton,
     get_app_ref,
     require_app_ref,

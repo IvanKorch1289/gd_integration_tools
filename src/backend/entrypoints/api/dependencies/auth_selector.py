@@ -10,7 +10,7 @@
 - ANY — любая из настроенных прошла = OK
 
 Usage:
-    from src.entrypoints.api.dependencies.auth_selector import require_auth, AuthMethod
+    from src.backend.entrypoints.api.dependencies.auth_selector import require_auth, AuthMethod
 
     @router.get("/protected", dependencies=[Depends(require_auth(AuthMethod.API_KEY))])
     async def protected(): ...
@@ -30,7 +30,7 @@ from typing import Any, Callable
 
 from fastapi import HTTPException, Request
 
-from src.core.auth import AuthContext, AuthMethod
+from src.backend.core.auth import AuthContext, AuthMethod
 
 __all__ = ("AuthMethod", "AuthContext", "require_auth", "set_default_auth")
 
@@ -52,7 +52,7 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
         return None
     try:
         # Wave 6.5a: APIKeyManager — через lazy DI provider.
-        from src.core.di.providers import get_api_key_manager_provider
+        from src.backend.core.di.providers import get_api_key_manager_provider
 
         manager = get_api_key_manager_provider()
         info = await manager.validate_key(key)
@@ -72,7 +72,7 @@ async def _verify_jwt(request: Request) -> AuthContext | None:
     try:
         from jose import jwt
 
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         secret = (
             settings.secure.secret_key.get_secret_value()
@@ -139,7 +139,7 @@ async def _verify_express_jwt(request: Request) -> AuthContext | None:
     try:
         from jose import jwt
 
-        from src.core.config.auth import build_auth_config
+        from src.backend.core.config.auth import build_auth_config
 
         cfg = build_auth_config().express_jwt
         if not cfg.enabled or not cfg.secret_key:

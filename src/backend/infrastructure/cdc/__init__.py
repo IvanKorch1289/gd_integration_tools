@@ -7,8 +7,10 @@
 * ``DebeziumEventsCDCBackend`` — Kafka topic с Debezium-сообщениями.
 """
 
-from src.infrastructure.cdc.debezium_events_backend import DebeziumEventsCDCBackend
-from src.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
-from src.infrastructure.cdc.poll_backend import PollCDCBackend
+from src.backend.infrastructure.cdc.debezium_events_backend import (
+    DebeziumEventsCDCBackend,
+)
+from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
+from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
 
 __all__ = ("DebeziumEventsCDCBackend", "ListenNotifyCDCBackend", "PollCDCBackend")

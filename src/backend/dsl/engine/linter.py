@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.engine.validation import ValidationIssue, ValidationResult
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.validation import ValidationIssue, ValidationResult
 
 __all__ = ("DSLLinter", "LintIssue", "dsl_linter")
 
@@ -76,7 +76,7 @@ class DSLLinter:
     ) -> None:
         """E002: DispatchAction/Enrich ссылается на несуществующий action."""
         try:
-            from src.dsl.commands.registry import action_handler_registry
+            from src.backend.dsl.commands.registry import action_handler_registry
 
             known_actions = set(action_handler_registry.list_actions())
         except Exception:

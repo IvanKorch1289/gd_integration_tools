@@ -31,8 +31,8 @@ async def test_dsl_snapshot_round_trip_with_api_version() -> None:
     except ImportError:
         pytest.skip("aiosqlite не установлен (extra dev-light)")
 
-    from src.infrastructure.database.models.base import BaseModel
-    from src.infrastructure.database.models.dsl_snapshot import DslSnapshot
+    from src.backend.infrastructure.database.models.base import BaseModel
+    from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     async with engine.begin() as conn:

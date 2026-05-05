@@ -14,10 +14,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.telegram._common import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.telegram._common import (
     get_telegram_client,
     resolve_value,
 )
@@ -136,7 +136,7 @@ class TelegramSendFileProcessor(BaseProcessor):
         if self._s3_key_from:
             key = resolve_value(exchange, self._s3_key_from)
             if key:
-                from src.infrastructure.clients.storage.s3_pool import s3_client
+                from src.backend.infrastructure.clients.storage.s3_pool import s3_client
 
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:

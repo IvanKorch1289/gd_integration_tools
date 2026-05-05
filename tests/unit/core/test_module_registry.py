@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.di.module_registry import (
+from src.backend.core.di.module_registry import (
     INFRA_MODULES,
     ModuleRegistryError,
     resolve_module,

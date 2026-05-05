@@ -16,9 +16,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.services.notebooks import get_notebook_service
-from src.services.notebooks.models import Notebook, NotebookVersion
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.services.notebooks import get_notebook_service
+from src.backend.services.notebooks.models import Notebook, NotebookVersion
 
 __all__ = ("router",)
 

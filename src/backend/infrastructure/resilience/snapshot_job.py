@@ -129,7 +129,7 @@ def _build_pg_url() -> str:
     ``sync_connection_url`` — pydantic ``@computed_field``; mypy видит его
     как метод-property (Callable[[], str]), поэтому приводим к ``str`` явно.
     """
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     return str(settings.database.sync_connection_url)
 
@@ -197,8 +197,8 @@ def sync_pg_to_sqlite(
     """
     # Импорт моделей для side-effect: они регистрируются в metadata.tables.
     # Без этого metadata.create_all вернёт пустую структуру.
-    import src.infrastructure.database.models  # noqa: F401  pyright: ignore[reportUnusedImport]
-    from src.infrastructure.database.models.base import metadata
+    import src.backend.infrastructure.database.models  # noqa: F401  pyright: ignore[reportUnusedImport]
+    from src.backend.infrastructure.database.models.base import metadata
 
     target_tables = _select_tables(metadata.tables, tables)
     if not target_tables:
@@ -228,7 +228,7 @@ def run_snapshot_now() -> dict[str, int]:
     """
     global _last_sync_ts, _last_sync_duration, _last_sync_rows
 
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     snapshot_cfg = settings.snapshot
     if not snapshot_cfg.enabled:
@@ -289,7 +289,7 @@ def is_snapshot_fresh(threshold_seconds: int | None = None) -> bool:
     if _last_sync_ts is None:
         return False
     if threshold_seconds is None:
-        from src.core.config.settings import settings
+        from src.backend.core.config.settings import settings
 
         threshold_seconds = settings.snapshot.fresh_threshold_seconds
     return (time.time() - _last_sync_ts) < threshold_seconds
@@ -318,7 +318,7 @@ def register_snapshot_job(scheduler: Any) -> None:
 
     Если ``snapshot.enabled=false`` — job НЕ регистрируется.
     """
-    from src.core.config.settings import settings
+    from src.backend.core.config.settings import settings
 
     snapshot_cfg = settings.snapshot
     if not snapshot_cfg.enabled:

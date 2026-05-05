@@ -29,8 +29,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.dsl.commands.registry import action_handler_registry
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("BaseEntrypoint", "dispatch_action")
 

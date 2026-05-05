@@ -9,7 +9,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from src.entrypoints.filewatcher.watcher_manager import WatcherSpec, watcher_manager
+from src.backend.entrypoints.filewatcher.watcher_manager import (
+    WatcherSpec,
+    watcher_manager,
+)
 
 __all__ = ("watcher_router",)
 

@@ -25,8 +25,8 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
-from src.dsl.commands.action_registry import ActionHandlerRegistry
-from src.entrypoints.api.generator.auto_register import (
+from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
+from src.backend.entrypoints.api.generator.auto_register import (
     _AUTO_PREFIX,
     _infer_method_for_action,
     auto_register_unrouted_actions,

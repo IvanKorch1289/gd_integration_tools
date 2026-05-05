@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.dsl.engine.pipeline import Pipeline
+    from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = ("YAMLStore",)
 
@@ -80,7 +80,7 @@ class YAMLStore:
             FileNotFoundError: Если файл не найден.
             ValueError: Если YAML некорректен.
         """
-        from src.dsl.yaml_loader import load_pipeline_from_yaml
+        from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
         filename = _route_to_filename(route_id)
         path = self._dir / filename
@@ -146,7 +146,7 @@ class YAMLStore:
         Returns:
             Список Pipeline (ошибочные файлы пропускаются с предупреждением).
         """
-        from src.dsl.yaml_loader import load_pipeline_from_file
+        from src.backend.dsl.yaml_loader import load_pipeline_from_file
 
         pipelines = []
         for path in sorted(self._dir.glob("*.yaml")):

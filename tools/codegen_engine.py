@@ -10,7 +10,7 @@
     eng = CodegenEngine()
     code = eng.render("service.py.j2", name="customers", domain="core",
                       class_name="CustomersService", crud=True)
-    eng.write(Path("src/services/core/customers_service.py"), code)
+    eng.write(Path("src/backend/services/core/customers_service.py"), code)
 """
 
 from __future__ import annotations

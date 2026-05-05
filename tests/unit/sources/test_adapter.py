@@ -8,15 +8,15 @@ from typing import Any
 
 import pytest
 
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationResponse,
     InvocationStatus,
 )
-from src.core.interfaces.source import SourceEvent, SourceKind
-from src.services.sources.adapter import SourceToInvokerAdapter
-from src.services.sources.idempotency import MemoryDedupeStore
+from src.backend.core.interfaces.source import SourceEvent, SourceKind
+from src.backend.services.sources.adapter import SourceToInvokerAdapter
+from src.backend.services.sources.idempotency import MemoryDedupeStore
 
 
 class _StubInvoker:

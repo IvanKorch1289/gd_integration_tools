@@ -33,7 +33,7 @@ class MessagingGateway:
     async def invoke(
         self, payload: dict[str, Any], headers: dict[str, str] | None = None
     ) -> Any:
-        from src.dsl.service import get_dsl_service
+        from src.backend.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
         return await dsl.dispatch(

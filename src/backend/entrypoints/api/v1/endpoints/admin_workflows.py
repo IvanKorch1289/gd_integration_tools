@@ -27,20 +27,23 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, TypeAdapter
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
-from src.entrypoints.base import dispatch_action
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
+from src.backend.entrypoints.base import dispatch_action
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
 # не нарушать layer policy (entrypoints → infrastructure запрещено).
 # Runtime-доступ к классам — через core.di.providers (lazy importlib).
-from src.schemas.workflow import (
+from src.backend.schemas.workflow import (
     WorkflowCancelRequest,
     WorkflowEventSchemaOut,
     WorkflowInstanceDetailSchemaOut,
     WorkflowInstanceRef,
     WorkflowInstanceSchemaOut,
 )
-from src.workflows.registry import workflow_registry
+from src.backend.workflows.registry import workflow_registry
 
 
 # Wave 6.5a: ``WorkflowStatus`` нужен Pydantic'у на этапе построения
@@ -50,7 +53,7 @@ from src.workflows.registry import workflow_registry
 # чистым (нет AST-импорта infrastructure), но на runtime даёт
 # конкретный enum.
 def _bind_workflow_status() -> Any:
-    from src.core.di.providers import get_workflow_status_enum_provider
+    from src.backend.core.di.providers import get_workflow_status_enum_provider
 
     return get_workflow_status_enum_provider()
 
@@ -70,14 +73,14 @@ _logger = logging.getLogger("admin.workflows")
 
 def _instance_store() -> Any:
     """Ленивый singleton :class:`WorkflowInstanceStore` через DI provider."""
-    from src.core.di.providers import get_workflow_state_store_provider
+    from src.backend.core.di.providers import get_workflow_state_store_provider
 
     return get_workflow_state_store_provider()()
 
 
 def _event_store() -> Any:
     """Ленивый singleton :class:`WorkflowEventStore` через DI provider."""
-    from src.core.di.providers import get_workflow_event_store_provider
+    from src.backend.core.di.providers import get_workflow_event_store_provider
 
     return get_workflow_event_store_provider()()
 
@@ -127,7 +130,7 @@ async def _list_instances_filtered(
     from sqlalchemy import select
 
     # Wave 6.5a: ORM-класс и session_manager — через DI providers.
-    from src.core.di.providers import (
+    from src.backend.core.di.providers import (
         get_workflow_instance_model_provider,
         get_workflow_main_session_provider,
         get_workflow_state_row_class_provider,
@@ -475,7 +478,7 @@ async def _trigger_via_action_or_store(
            :func:`dispatch_action`.
         2. Fallback — прямой вызов ``store.create()``.
     """
-    from src.dsl.commands.registry import action_handler_registry
+    from src.backend.dsl.commands.registry import action_handler_registry
 
     if action_handler_registry.is_registered("workflows.trigger"):
         result = await dispatch_action(

@@ -25,9 +25,9 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = (
     "GrpcCallProcessor",
@@ -91,7 +91,7 @@ class GrpcCallProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`GrpcSink` и публикует ``payload``."""
-        from src.infrastructure.sinks.grpc_sink import GrpcSink
+        from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
 
         sink = GrpcSink(
             sink_id=self.name or "grpc_call",
@@ -133,7 +133,7 @@ class SoapCallProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`SoapSink` и вызывает SOAP-операцию."""
-        from src.infrastructure.sinks.soap_sink import SoapSink
+        from src.backend.infrastructure.sinks.soap_sink import SoapSink
 
         sink = SoapSink(
             sink_id=self.name or "soap_call",
@@ -174,7 +174,7 @@ class MqPublishProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`MqSink` и публикует ``payload``."""
-        from src.infrastructure.sinks.mq_sink import MqSink
+        from src.backend.infrastructure.sinks.mq_sink import MqSink
 
         sink = MqSink(
             sink_id=self.name or f"mq:{self._broker}",
@@ -212,7 +212,7 @@ class WsPublishProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`WsSink` и публикует payload."""
-        from src.infrastructure.sinks.ws_sink import WsSink
+        from src.backend.infrastructure.sinks.ws_sink import WsSink
 
         sink = WsSink(
             sink_id=self.name or "ws_publish",

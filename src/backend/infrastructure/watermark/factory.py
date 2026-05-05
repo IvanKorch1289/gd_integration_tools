@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.core.interfaces.watermark_store import WatermarkStore
-from src.infrastructure.watermark.memory_store import MemoryWatermarkStore
+from src.backend.core.interfaces.watermark_store import WatermarkStore
+from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkStore
 
 if TYPE_CHECKING:
-    from src.core.config.services.watermark import WatermarkSettings
-    from src.infrastructure.database.session_manager import DatabaseSessionManager
+    from src.backend.core.config.services.watermark import WatermarkSettings
+    from src.backend.infrastructure.database.session_manager import (
+        DatabaseSessionManager,
+    )
 
 __all__ = ("create_watermark_store",)
 
@@ -47,7 +49,7 @@ def create_watermark_store(
                     "PostgresWatermarkStore требует DatabaseSessionManager; "
                     "передайте main_session_manager в composition root."
                 )
-            from src.infrastructure.watermark.postgres_store import (
+            from src.backend.infrastructure.watermark.postgres_store import (
                 PostgresWatermarkStore,
             )
 

@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.base_connector import (
+    from src.backend.infrastructure.clients.base_connector import (
         HealthMode,
         HealthResult,
         InfrastructureClient,
@@ -206,7 +206,7 @@ class ConnectorRegistry:
         for name, result in zip(names, results, strict=True):
             if isinstance(result, Exception):
                 # Импорт-поздний чтобы избежать циклов.
-                from src.infrastructure.clients.base_connector import (
+                from src.backend.infrastructure.clients.base_connector import (
                     HealthResult as _HR,
                 )
 

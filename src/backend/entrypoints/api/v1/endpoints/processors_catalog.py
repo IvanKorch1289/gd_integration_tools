@@ -21,7 +21,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from src.entrypoints.api.generator.actions import ActionRouterBuilder, ActionSpec
+from src.backend.entrypoints.api.generator.actions import (
+    ActionRouterBuilder,
+    ActionSpec,
+)
 
 __all__ = ("router",)
 
@@ -34,31 +37,31 @@ class ProcessorNamePath(BaseModel):
 
 def _collect_processors() -> list[dict[str, Any]]:
     """Scan all DSL processor modules + collect metadata."""
-    from src.dsl.engine.processors import base
+    from src.backend.dsl.engine.processors import base
 
     results: list[dict[str, Any]] = []
     visited: set[str] = set()
 
     module_paths = [
-        "src.dsl.engine.processors.core",
-        "src.dsl.engine.processors.control_flow",
-        "src.dsl.engine.processors.eip.routing",
-        "src.dsl.engine.processors.eip.transformation",
-        "src.dsl.engine.processors.eip.resilience",
-        "src.dsl.engine.processors.eip.flow_control",
-        "src.dsl.engine.processors.eip.idempotency",
-        "src.dsl.engine.processors.eip.sequencing",
-        "src.dsl.engine.processors.components",
-        "src.dsl.engine.processors.converters",
-        "src.dsl.engine.processors.patterns",
-        "src.dsl.engine.processors.scraping",
-        "src.dsl.engine.processors.ai",
-        "src.dsl.engine.processors.rpa",
-        "src.dsl.engine.processors.web",
-        "src.dsl.engine.processors.external",
-        "src.dsl.engine.processors.integration",
-        "src.dsl.engine.processors.export",
-        "src.dsl.engine.processors.dq_check",
+        "src.backend.dsl.engine.processors.core",
+        "src.backend.dsl.engine.processors.control_flow",
+        "src.backend.dsl.engine.processors.eip.routing",
+        "src.backend.dsl.engine.processors.eip.transformation",
+        "src.backend.dsl.engine.processors.eip.resilience",
+        "src.backend.dsl.engine.processors.eip.flow_control",
+        "src.backend.dsl.engine.processors.eip.idempotency",
+        "src.backend.dsl.engine.processors.eip.sequencing",
+        "src.backend.dsl.engine.processors.components",
+        "src.backend.dsl.engine.processors.converters",
+        "src.backend.dsl.engine.processors.patterns",
+        "src.backend.dsl.engine.processors.scraping",
+        "src.backend.dsl.engine.processors.ai",
+        "src.backend.dsl.engine.processors.rpa",
+        "src.backend.dsl.engine.processors.web",
+        "src.backend.dsl.engine.processors.external",
+        "src.backend.dsl.engine.processors.integration",
+        "src.backend.dsl.engine.processors.export",
+        "src.backend.dsl.engine.processors.dq_check",
     ]
 
     import importlib
@@ -125,7 +128,7 @@ def _collect_processors() -> list[dict[str, Any]]:
 
 def _collect_builder_methods() -> list[dict[str, Any]]:
     """Scan RouteBuilder methods + collect signatures."""
-    from src.dsl.builder import RouteBuilder
+    from src.backend.dsl.builder import RouteBuilder
 
     results: list[dict[str, Any]] = []
 

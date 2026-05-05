@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 _logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class SlackAdapter:
             },
         }
 
-        from src.infrastructure.clients.transport.http_upstream import upstream
+        from src.backend.infrastructure.clients.transport.http_upstream import upstream
 
         client = upstream(self._upstream_name)
         response = await client.request("POST", url, json=payload)

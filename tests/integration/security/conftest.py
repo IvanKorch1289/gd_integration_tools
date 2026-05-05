@@ -17,7 +17,7 @@ import os
 from pathlib import Path
 
 # (1) ROOT_DIR → корень репозитория, чтобы config_profiles/ нашёлся.
-from src.core.config.constants import consts
+from src.backend.core.config.constants import consts
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 if (_REPO_ROOT / "pyproject.toml").is_file():

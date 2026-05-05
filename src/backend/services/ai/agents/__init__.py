@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from src.services.ai.agents.analytics_agent import AnalyticsAgent, get_analytics_agent
-from src.services.ai.agents.search_agent import SearchAgent, get_search_agent
+from src.backend.services.ai.agents.analytics_agent import (
+    AnalyticsAgent,
+    get_analytics_agent,
+)
+from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent
 
 __all__ = ("AnalyticsAgent", "SearchAgent", "get_analytics_agent", "get_search_agent")

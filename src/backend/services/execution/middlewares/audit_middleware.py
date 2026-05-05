@@ -18,7 +18,7 @@ import logging
 import time
 from typing import Any, Mapping
 
-from src.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (
     ActionResult,
     DispatchContext,
     MiddlewareNextHandler,

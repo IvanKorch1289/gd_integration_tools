@@ -29,8 +29,8 @@ from typing import TYPE_CHECKING, Any
 from watchfiles import awatch
 
 if TYPE_CHECKING:
-    from src.dsl.commands.registry import RouteRegistry
-    from src.dsl.engine.pipeline import Pipeline
+    from src.backend.dsl.commands.registry import RouteRegistry
+    from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = ("DSLYamlWatcher", "PipelineLoader")
 
@@ -228,6 +228,6 @@ class DSLYamlWatcher:
 
 def _default_loader(path: Path) -> Pipeline:
     """Default-loader: использует ``load_pipeline_from_file`` из yaml_loader."""
-    from src.dsl.yaml_loader import load_pipeline_from_file
+    from src.backend.dsl.yaml_loader import load_pipeline_from_file
 
     return load_pipeline_from_file(path)

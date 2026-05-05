@@ -4,7 +4,7 @@
 
 import grpc
 
-import src.entrypoints.grpc.protobuf.orders_pb2 as orders__pb2
+import src.backend.entrypoints.grpc.protobuf.orders_pb2 as orders__pb2
 
 
 GRPC_GENERATED_VERSION = "1.70.0"

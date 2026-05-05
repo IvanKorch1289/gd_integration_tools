@@ -6,7 +6,7 @@
 
 Usage в settings classes::
 
-    from src.core.secrets_sources import VaultSettingsSource
+    from src.backend.core.secrets_sources import VaultSettingsSource
 
     class MySettings(BaseSettings):
         db_password: str

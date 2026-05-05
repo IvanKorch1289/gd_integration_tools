@@ -193,7 +193,9 @@ class AIDataSanitizer:
 
         if result.audit_events:
             try:
-                from src.infrastructure.clients.storage.redis import redis_client
+                from src.backend.infrastructure.clients.storage.redis import (
+                    redis_client,
+                )
 
                 for event in result.audit_events:
                     await redis_client.client.xadd(
@@ -281,7 +283,7 @@ class AIDataSanitizer:
 
 def get_ai_sanitizer() -> AIDataSanitizer:
     """Фабрика AIDataSanitizer с настройками из конфига."""
-    from src.core.config.ai import ai_providers_settings as cfg
+    from src.backend.core.config.ai import ai_providers_settings as cfg
 
     return AIDataSanitizer(
         mask_emails=cfg.sanitize_emails,

@@ -16,7 +16,7 @@ from zeep import Client, Settings
 from zeep.exceptions import Error as ZeepError
 from zeep.exceptions import Fault as ZeepFault
 
-from src.core.errors import ServiceError
+from src.backend.core.errors import ServiceError
 
 __all__ = ("SoapClient", "get_soap_client")
 

@@ -16,8 +16,8 @@ import time as _time
 
 import pytest
 
-from src.core.clock import FakeClock, RealClock
-from src.core.interfaces.clock import Clock
+from src.backend.core.clock import FakeClock, RealClock
+from src.backend.core.interfaces.clock import Clock
 
 
 class TestProtocolConformance:

@@ -16,10 +16,10 @@ from typing import Any
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.composed_message import ComposedMessageProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.composed_message import ComposedMessageProcessor
 
 
 def _ctx() -> ExecutionContext:

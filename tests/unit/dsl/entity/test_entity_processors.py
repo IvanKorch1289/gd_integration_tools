@@ -16,15 +16,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.entity import (
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.entity import (
     EntityCreateProcessor,
     EntityDeleteProcessor,
     EntityGetProcessor,
     EntityListProcessor,
     EntityUpdateProcessor,
 )
-from src.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import ActionCommandSchema
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 

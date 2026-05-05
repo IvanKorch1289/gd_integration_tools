@@ -17,7 +17,7 @@
 
 Пример::
 
-    from src.infrastructure.cache.validator import (
+    from src.backend.infrastructure.cache.validator import (
         CacheConfigRegistry, CacheLayerValidator, CacheDuplicationError,
     )
 

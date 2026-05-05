@@ -18,13 +18,13 @@ from __future__ import annotations
 import sys
 import types
 
-_session_mod_name = "src.infrastructure.database.session_manager"
+_session_mod_name = "src.backend.infrastructure.database.session_manager"
 if _session_mod_name not in sys.modules:
     _session_stub = types.ModuleType(_session_mod_name)
     _session_stub.main_session_manager = None  # type: ignore[attr-defined]
     sys.modules[_session_mod_name] = _session_stub
 
-_cert_model_mod_name = "src.infrastructure.database.models.cert"
+_cert_model_mod_name = "src.backend.infrastructure.database.models.cert"
 if _cert_model_mod_name not in sys.modules:
     _cert_model_stub = types.ModuleType(_cert_model_mod_name)
     _cert_model_stub.CertHistory = type("CertHistory", (), {})  # type: ignore[attr-defined]

@@ -6,8 +6,8 @@ from typing import Any, Literal
 from fastapi import Body, Path, Query
 from pydantic import BaseModel
 
-from src.entrypoints.api.generator.invocation import InvocationSpec
-from src.schemas.invocation import InvokeMode
+from src.backend.entrypoints.api.generator.invocation import InvocationSpec
+from src.backend.schemas.invocation import InvokeMode
 
 __all__ = (
     "build_model_parameters",

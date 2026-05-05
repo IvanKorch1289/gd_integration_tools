@@ -19,8 +19,8 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-from src.core.workflow.backend import WorkflowBackend
-from src.core.workflow.fake_backend import FakeWorkflowBackend
+from src.backend.core.workflow.backend import WorkflowBackend
+from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
 
 __all__ = ("BackendKind", "create_workflow_backend")
 
@@ -59,7 +59,7 @@ async def create_workflow_backend(
         return FakeWorkflowBackend()
 
     if resolved == "pg_runner":
-        from src.infrastructure.workflow.pg_runner_backend import (
+        from src.backend.infrastructure.workflow.pg_runner_backend import (
             PgRunnerWorkflowBackend,
         )
 
@@ -67,7 +67,7 @@ async def create_workflow_backend(
 
     if resolved == "temporal":
         try:
-            from src.infrastructure.workflow.temporal_backend import (
+            from src.backend.infrastructure.workflow.temporal_backend import (
                 TemporalWorkflowBackend,
             )
 
@@ -80,7 +80,7 @@ async def create_workflow_backend(
             _logger.warning(
                 "Temporal SDK unavailable (%s); falling back to pg_runner", exc
             )
-            from src.infrastructure.workflow.pg_runner_backend import (
+            from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,
             )
 

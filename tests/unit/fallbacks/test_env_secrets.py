@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.security.env_secrets import EnvSecretsBackend
+from src.backend.infrastructure.security.env_secrets import EnvSecretsBackend
 
 
 @pytest.mark.asyncio

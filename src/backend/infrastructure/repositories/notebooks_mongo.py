@@ -10,8 +10,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from src.core.models.notebooks import Notebook, NotebookVersion
-from src.infrastructure.clients.storage.mongodb import MongoDBClient, get_mongo_client
+from src.backend.core.models.notebooks import Notebook, NotebookVersion
+from src.backend.infrastructure.clients.storage.mongodb import (
+    MongoDBClient,
+    get_mongo_client,
+)
 
 __all__ = ("MongoNotebookRepository",)
 

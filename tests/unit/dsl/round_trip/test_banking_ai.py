@@ -19,8 +19,8 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 
 def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:

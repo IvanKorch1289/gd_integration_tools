@@ -29,7 +29,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from src.infrastructure.notifications.templates import (
+from src.backend.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,
 )

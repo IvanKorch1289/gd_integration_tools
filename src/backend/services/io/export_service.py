@@ -5,7 +5,7 @@
 
 Доступ через реестр::
 
-    from src.core.providers_registry import get_provider
+    from src.backend.core.providers_registry import get_provider
     csv_bytes = get_provider("exporter", "csv").export(rows)
 
 Или через универсальный диспатчер :func:`export`, который выбирает экспортёр
@@ -21,7 +21,7 @@ import json
 import logging
 from typing import Any
 
-from src.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton
 
 __all__ = (
     "CsvExporter",

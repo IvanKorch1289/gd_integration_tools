@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from email.message import EmailMessage
 from typing import Any
 
-from src.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 
 __all__ = ("EmailSink",)
 

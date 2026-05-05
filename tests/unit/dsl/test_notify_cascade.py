@@ -8,10 +8,13 @@ from typing import Any
 
 import pytest
 
-from src.core.interfaces.notification import NotificationAdapter, NotificationMessage
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.notify_cascade import NotifyCascadeProcessor
+from src.backend.core.interfaces.notification import (
+    NotificationAdapter,
+    NotificationMessage,
+)
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.notify_cascade import NotifyCascadeProcessor
 
 
 class _FakeAdapter(NotificationAdapter):

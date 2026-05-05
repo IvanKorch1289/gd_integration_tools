@@ -18,13 +18,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationResponse,
     InvocationStatus,
 )
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.invoke import InvokeProcessor
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 
 
 def _make_exchange(body: Any = None) -> Exchange[Any]:

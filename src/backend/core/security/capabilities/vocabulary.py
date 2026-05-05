@@ -12,15 +12,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from src.core.security.capabilities.errors import CapabilityNotFoundError
-from src.core.security.capabilities.matchers import (
+from src.backend.core.security.capabilities.errors import CapabilityNotFoundError
+from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
     GlobScopeMatcher,
     ScopeMatcher,
     SegmentedGlobMatcher,
     URISchemeMatcher,
 )
-from src.core.security.capabilities.models import CapabilityRef
+from src.backend.core.security.capabilities.models import CapabilityRef
 
 __all__ = ("CapabilityDef", "CapabilityVocabulary", "build_default_vocabulary")
 

@@ -6,6 +6,6 @@
 
 from __future__ import annotations
 
-from src.infrastructure.clients.storage.vector_store import QdrantVectorStore
+from src.backend.infrastructure.clients.storage.vector_store import QdrantVectorStore
 
 __all__ = ("QdrantVectorStore",)

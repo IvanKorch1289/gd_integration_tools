@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-from src.infrastructure.import_gateway.wsdl import WsdlImportGateway
+from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+from src.backend.infrastructure.import_gateway.wsdl import WsdlImportGateway
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway" / "wsdl"
 

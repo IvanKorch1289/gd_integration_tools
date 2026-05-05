@@ -5,7 +5,7 @@
 контекста, обогащение метаданными.
 
 Переключение на этот бэкенд:
-    from src.infrastructure.logging.structlog_backend import StructlogGraylogBackend
+    from src.backend.infrastructure.logging.structlog_backend import StructlogGraylogBackend
     backend = StructlogGraylogBackend()
     backend.configure(host="graylog.example.com", port=12201, ...)
     logger = backend.get_logger("application")
@@ -17,7 +17,7 @@ import logging.handlers
 import sys
 from typing import Any
 
-from src.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
+from src.backend.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
 
 __all__ = ("StructlogGraylogBackend",)
 
@@ -151,7 +151,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
-                from src.infrastructure.observability.correlation import (
+                from src.backend.infrastructure.observability.correlation import (
                     get_correlation_id,
                     get_request_id,
                     get_tenant_id,
@@ -176,7 +176,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # его в свой транспорт. Если глобальный :class:`SinkRouter`
         # ещё не инициализирован, ``route_to_sinks`` работает как no-op
         # (см. :func:`is_router_configured`).
-        from src.infrastructure.logging.router import route_to_sinks
+        from src.backend.infrastructure.logging.router import route_to_sinks
 
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,

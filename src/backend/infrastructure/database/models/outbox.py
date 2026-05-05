@@ -17,7 +17,7 @@ from typing import Any
 from sqlalchemy import JSON, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.infrastructure.database.models.base import BaseModel
+from src.backend.infrastructure.database.models.base import BaseModel
 
 __all__ = ("OutboxMessage",)
 

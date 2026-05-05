@@ -21,9 +21,9 @@ from typing import Any
 
 import pytest
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, Message
-from src.dsl.engine.processors.eip.routing import MulticastRoutesProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.processors.eip.routing import MulticastRoutesProcessor
 
 # ---------------------------------------------------------------------------
 # Утилиты
@@ -97,24 +97,24 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
     fake_registry = _FakeRouteRegistry()
 
     # Подменяем src.dsl.commands.registry.route_registry.
-    cmd_registry_mod = sys.modules.get("src.dsl.commands.registry")
+    cmd_registry_mod = sys.modules.get("src.backend.dsl.commands.registry")
     if cmd_registry_mod is None:  # pragma: no cover
-        import src.dsl.commands.registry as cmd_registry_mod  # noqa: F401
+        import src.backend.dsl.commands.registry as cmd_registry_mod  # noqa: F401
 
-        cmd_registry_mod = sys.modules["src.dsl.commands.registry"]
+        cmd_registry_mod = sys.modules["src.backend.dsl.commands.registry"]
     monkeypatch.setattr(cmd_registry_mod, "route_registry", fake_registry)
 
     # Подменяем src.dsl.engine.execution_engine с DSLExecutionEngine.
     fake_engine_holder: dict[str, _FakeEngine] = {}
 
-    fake_engine_mod = types.ModuleType("src.dsl.engine.execution_engine")
+    fake_engine_mod = types.ModuleType("src.backend.dsl.engine.execution_engine")
 
     def _engine_factory(*, route_registry: Any):  # noqa: ARG001
         return fake_engine_holder["engine"]
 
     fake_engine_mod.DSLExecutionEngine = _engine_factory  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.dsl.engine.execution_engine", fake_engine_mod
+        sys.modules, "src.backend.dsl.engine.execution_engine", fake_engine_mod
     )
 
     return fake_registry, fake_engine_holder

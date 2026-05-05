@@ -88,19 +88,19 @@ COMPOSITION_ROOT_FILES: frozenset[str] = frozenset(
     {
         # FastAPI application factory — подключает middleware, роуты,
         # graphql/grpc/soap/sse/websocket/webhook/filewatcher/cdc.
-        "src/infrastructure/application/app_factory.py",
+        "src/backend/infrastructure/application/app_factory.py",
         # Lifespan / startup / shutdown — инициализирует инфраструктуру
         # и регистрирует сервисы в DI-контейнере.
-        "src/infrastructure/application/lifecycle.py",
+        "src/backend/infrastructure/application/lifecycle.py",
         # DI composition root — связывает singletons из infrastructure,
         # security, dsl с FastAPI через app.state.
-        "src/infrastructure/application/di.py",
+        "src/backend/infrastructure/application/di.py",
         # Service registration — регистрирует все бизнес-сервисы в svcs.
-        "src/infrastructure/application/service_setup.py",
+        "src/backend/infrastructure/application/service_setup.py",
         # Infrastructure bootstrap — поднимает внешние клиенты.
-        "src/infrastructure/setup_infra.py",
+        "src/backend/infrastructure/setup_infra.py",
         # DSL command setup — регистрирует action handlers и их схемы.
-        "src/dsl/commands/setup.py",
+        "src/backend/dsl/commands/setup.py",
     }
 )
 

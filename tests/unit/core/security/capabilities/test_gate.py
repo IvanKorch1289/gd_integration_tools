@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     CapabilityDef,
     CapabilityDeniedError,
     CapabilityGate,
@@ -119,7 +119,7 @@ class TestCapabilityGate:
         assert gate.declarations("p1") == (ref,)
 
     def test_unknown_capability_in_declare_raises(self) -> None:
-        from src.core.security.capabilities import CapabilityNotFoundError
+        from src.backend.core.security.capabilities import CapabilityNotFoundError
 
         gate = CapabilityGate()
         with pytest.raises(CapabilityNotFoundError):

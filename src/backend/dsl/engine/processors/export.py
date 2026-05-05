@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ExportProcessor",)
 
@@ -36,7 +36,7 @@ class ExportProcessor(BaseProcessor):
         self._title = title
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.services.io.export_service import export
+        from src.backend.services.io.export_service import export
 
         body = exchange.in_message.body
         rows = (

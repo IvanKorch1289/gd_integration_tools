@@ -1,19 +1,19 @@
 import importlib
 from typing import Any
 
-from src.core.errors import ServiceError
-from src.core.interfaces.repositories import UserRepositoryProtocol
-from src.schemas.route_schemas.users import (
+from src.backend.core.errors import ServiceError
+from src.backend.core.interfaces.repositories import UserRepositoryProtocol
+from src.backend.schemas.route_schemas.users import (
     UserSchemaIn,
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from src.services.core.base import BaseService
+from src.backend.services.core.base import BaseService
 
 __all__ = ("get_user_service",)
 
 
-_REPO_USERS_MOD = "src." + "infrastructure.repositories.users"
+_REPO_USERS_MOD = "src." + "backend.infrastructure.repositories.users"
 
 
 class UserService(

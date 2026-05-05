@@ -29,7 +29,7 @@ MongoFindCallable = Callable[[str, dict[str, Any]], Awaitable[dict[str, Any] | N
 async def _mongo_find_one(
     collection: str, query: dict[str, Any]
 ) -> dict[str, Any] | None:
-    from src.infrastructure.clients.storage.mongodb import get_mongo_client
+    from src.backend.infrastructure.clients.storage.mongodb import get_mongo_client
 
     client = get_mongo_client()
     db = client.get_database()  # имя берётся из connection settings
@@ -42,7 +42,7 @@ async def _pg_jsonb_find_one(
 ) -> dict[str, Any] | None:
     from sqlalchemy import text
 
-    from src.infrastructure.database.database import get_db_session
+    from src.backend.infrastructure.database.database import get_db_session
 
     async with get_db_session() as session:
         result = await session.execute(

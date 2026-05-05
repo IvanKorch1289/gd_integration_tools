@@ -5,12 +5,12 @@ from typing import Any
 import polars as pl
 from fastapi.responses import HTMLResponse
 
-from src.core.config.settings import settings
-from src.core.di.app_state import app_state_singleton
-from src.core.di.providers import get_healthcheck_session_provider
-from src.services.core.base import BaseService, get_service_for_model
-from src.utilities.converters import convert_numpy_types
-from src.utilities.web import generate_link_page
+from src.backend.core.config.settings import settings
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.providers import get_healthcheck_session_provider
+from src.backend.services.core.base import BaseService, get_service_for_model
+from src.backend.utilities.converters import convert_numpy_types
+from src.backend.utilities.web import generate_link_page
 
 __all__ = ("TechService", "get_tech_service")
 

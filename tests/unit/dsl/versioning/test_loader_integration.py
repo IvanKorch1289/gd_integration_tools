@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import yaml
 
-from src.dsl.versioning import CURRENT_VERSION
-from src.dsl.yaml_loader import load_pipeline_from_yaml
+from src.backend.dsl.versioning import CURRENT_VERSION
+from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
 
 def test_loader_migrates_v0_to_current() -> None:

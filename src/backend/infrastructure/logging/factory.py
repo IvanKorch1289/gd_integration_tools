@@ -5,13 +5,13 @@
 - stdlib logging (fallback) — текущая реализация через LoggerManager
 
 Использование:
-    from src.infrastructure.logging.factory import get_logger
+    from src.backend.infrastructure.logging.factory import get_logger
 
     logger = get_logger("application")
     logger.info("Order created", order_id=123, user_id="abc")
 
 Переключение бэкенда:
-    from src.infrastructure.logging.factory import configure_logging
+    from src.backend.infrastructure.logging.factory import configure_logging
 
     # structlog → Graylog
     configure_logging(backend="structlog")
@@ -22,8 +22,8 @@
 
 from typing import Any
 
-from src.core.config.profile import AppProfileChoices
-from src.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
+from src.backend.core.config.profile import AppProfileChoices
+from src.backend.infrastructure.logging.base import BaseLoggerBackend, LoggerProtocol
 
 __all__ = (
     "configure_logging",
@@ -39,7 +39,7 @@ _backend: BaseLoggerBackend | None = None
 def _create_backend(name: str) -> BaseLoggerBackend:
     if name == "structlog":
         try:
-            from src.infrastructure.logging.structlog_backend import (
+            from src.backend.infrastructure.logging.structlog_backend import (
                 StructlogGraylogBackend,
             )
 
@@ -47,7 +47,7 @@ def _create_backend(name: str) -> BaseLoggerBackend:
         except ImportError:
             pass
 
-    from src.infrastructure.logging.stdlib_backend import StdlibLoggingBackend
+    from src.backend.infrastructure.logging.stdlib_backend import StdlibLoggingBackend
 
     return StdlibLoggingBackend()
 
@@ -127,7 +127,7 @@ def init_log_sinks(profile: AppProfileChoices | None = None, **kwargs: Any) -> N
     (старые при этом НЕ закрываются — это ответственность вызывающего
     кода, обычно ``shutdown_log_sinks``).
     """
-    from src.infrastructure.logging.router import (
+    from src.backend.infrastructure.logging.router import (
         build_sinks_for_profile,
         configure_router,
     )
@@ -145,7 +145,7 @@ async def shutdown_log_sinks() -> None:
 
     Если router ещё не инициализирован — no-op.
     """
-    from src.infrastructure.logging.router import (
+    from src.backend.infrastructure.logging.router import (
         get_router,
         is_router_configured,
         reset_router,

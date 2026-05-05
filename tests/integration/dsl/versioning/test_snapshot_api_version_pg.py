@@ -29,7 +29,7 @@ async def test_dsl_snapshot_round_trip_with_api_version_pg(
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-    from src.infrastructure.database.models.dsl_snapshot import DslSnapshot
+    from src.backend.infrastructure.database.models.dsl_snapshot import DslSnapshot
 
     SessionLocal = async_sessionmaker(
         pg_engine_with_alembic, class_=AsyncSession, expire_on_commit=False

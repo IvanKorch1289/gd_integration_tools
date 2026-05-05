@@ -5,8 +5,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-from src.core.types.data_kind import DataKind
-from src.dsl.adapters.types import ProtocolType
+from src.backend.core.types.data_kind import DataKind
+from src.backend.dsl.adapters.types import ProtocolType
 
 __all__ = ("ExchangeStatus", "Message", "ExchangeMeta", "Exchange")
 

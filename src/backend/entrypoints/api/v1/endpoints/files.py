@@ -4,20 +4,20 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
 
-from src.entrypoints.api.dependencies.auth import require_api_key
-from src.entrypoints.api.generator.actions import (
+from src.backend.entrypoints.api.dependencies.auth import require_api_key
+from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
     CrudSpec,
 )
-from src.schemas.filter_schemas.files import FileFilter
-from src.schemas.route_schemas.files import (
+from src.backend.schemas.filter_schemas.files import FileFilter
+from src.backend.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from src.services.decorators.limiting import route_limiting
-from src.services.io.files import get_file_service
+from src.backend.services.decorators.limiting import route_limiting
+from src.backend.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")
 
@@ -59,14 +59,14 @@ crud_builder.add_crud_resource(
 
 def get_s3_service() -> Any:
     """S3-сервис singleton — через DI provider."""
-    from src.core.di.providers import get_s3_service_provider
+    from src.backend.core.di.providers import get_s3_service_provider
 
     return get_s3_service_provider()
 
 
 def get_av_service() -> Any:
     """Antivirus-сервис singleton — через DI provider."""
-    from src.core.di.providers import get_antivirus_service_provider
+    from src.backend.core.di.providers import get_antivirus_service_provider
 
     return get_antivirus_service_provider()
 

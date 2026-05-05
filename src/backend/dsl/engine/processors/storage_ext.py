@@ -8,9 +8,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = (
     "Neo4jQueryProcessor",
@@ -143,7 +143,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
     async def _write_timescale(self, points: list[dict]) -> None:
         from sqlalchemy import text
 
-        from src.infrastructure.database.database import db_initializer
+        from src.backend.infrastructure.database.database import db_initializer
 
         engine = db_initializer.get_async_engine()
         columns = ["timestamp", *self._tags, self._field]
@@ -233,7 +233,7 @@ class PriorityEnqueueProcessor(BaseProcessor):
         ).decode()
 
         try:
-            from src.infrastructure.clients.storage.redis import redis_client
+            from src.backend.infrastructure.clients.storage.redis import redis_client
 
             raw = getattr(redis_client, "_raw_client", None) or redis_client
 

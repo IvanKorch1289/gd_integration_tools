@@ -4,6 +4,6 @@ DTO перенесены в ``src.core.models.feedback`` (W6.6), здесь
 сохраняется re-export для обратной совместимости импортёров.
 """
 
-from src.core.models.feedback import AIFeedbackDoc, FeedbackLabel
+from src.backend.core.models.feedback import AIFeedbackDoc, FeedbackLabel
 
 __all__ = ("AIFeedbackDoc", "FeedbackLabel")

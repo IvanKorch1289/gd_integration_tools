@@ -66,7 +66,7 @@ class ServiceDSLRegistry:
 
     def register_all_actions(self) -> None:
         """Регистрирует все actions из всех @service_dsl сервисов."""
-        from src.dsl.commands.registry import action_handler_registry
+        from src.backend.dsl.commands.registry import action_handler_registry
 
         for meta in self._services.values():
             if meta.crud:
@@ -206,7 +206,7 @@ def scan_and_register_actions(package_paths: Sequence[str] | None = None) -> int
 
     Returns the number of actions registered.
     """
-    from src.dsl.commands.registry import action_handler_registry
+    from src.backend.dsl.commands.registry import action_handler_registry
 
     if package_paths:
         for pkg_path in package_paths:

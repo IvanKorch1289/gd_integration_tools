@@ -9,13 +9,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.core.interfaces.invocation_reply import ReplyChannelKind
-from src.core.interfaces.invoker import (
+from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
+from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationResponse,
     InvocationStatus,
 )
-from src.infrastructure.messaging.invocation_replies import (
+from src.backend.infrastructure.messaging.invocation_replies import (
     MemoryReplyChannel,
     ReplyChannelRegistry,
     WsReplyChannel,
@@ -73,7 +73,9 @@ class TestMemoryReplyChannel:
 
     async def test_ttl_expiry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """По истечении TTL fetch возвращает None и удаляет запись."""
-        from src.infrastructure.messaging.invocation_replies import memory as mem_mod
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            memory as mem_mod,
+        )
 
         time_ref = [1000.0]
 
@@ -216,12 +218,16 @@ class TestEmailReplyChannel:
     """Push-only email канал (W22 этап B)."""
 
     async def test_kind_is_email(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         assert EmailReplyChannel().kind is ReplyChannelKind.EMAIL
 
     async def test_send_uses_metadata_email(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = EmailReplyChannel(notifier=notifier)
@@ -242,7 +248,9 @@ class TestEmailReplyChannel:
         assert "ok" in call["body"].lower()
 
     async def test_send_skips_without_recipient(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = EmailReplyChannel(notifier=notifier)
@@ -257,7 +265,9 @@ class TestEmailReplyChannel:
         assert notifier.calls == []
 
     async def test_send_uses_default_recipient(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = EmailReplyChannel(notifier=notifier, default_recipient="ops@x.com")
@@ -272,7 +282,9 @@ class TestEmailReplyChannel:
         assert notifier.calls[0]["recipient"] == "ops@x.com"
 
     async def test_swallows_notifier_errors(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         notifier = AsyncMock()
         notifier.send.side_effect = RuntimeError("smtp down")
@@ -289,7 +301,9 @@ class TestEmailReplyChannel:
         )
 
     async def test_fetch_always_returns_none(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import EmailReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            EmailReplyChannel,
+        )
 
         channel = EmailReplyChannel(notifier=_RecordingNotifier())
         assert await channel.fetch("i-1") is None
@@ -299,12 +313,16 @@ class TestExpressReplyChannel:
     """Push-only Express канал."""
 
     async def test_kind_is_express(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import ExpressReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            ExpressReplyChannel,
+        )
 
         assert ExpressReplyChannel().kind is ReplyChannelKind.EXPRESS
 
     async def test_send_uses_metadata_chat_id(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import ExpressReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            ExpressReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = ExpressReplyChannel(notifier=notifier)
@@ -325,7 +343,9 @@ class TestExpressReplyChannel:
         assert call["metadata"]["status"] == "ok"
 
     async def test_send_skips_without_chat_id(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import ExpressReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            ExpressReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = ExpressReplyChannel(notifier=notifier)
@@ -340,7 +360,9 @@ class TestExpressReplyChannel:
         assert notifier.calls == []
 
     async def test_error_status_propagates_to_metadata(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import ExpressReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            ExpressReplyChannel,
+        )
 
         notifier = _RecordingNotifier()
         channel = ExpressReplyChannel(notifier=notifier)
@@ -361,12 +383,16 @@ class TestQueueReplyChannel:
     """Push-only Redis/Rabbit/Kafka канал через произвольный publisher."""
 
     async def test_kind_is_queue(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import QueueReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            QueueReplyChannel,
+        )
 
         assert QueueReplyChannel().kind is ReplyChannelKind.QUEUE
 
     async def test_publishes_to_metadata_topic(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import QueueReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            QueueReplyChannel,
+        )
 
         captured: list[tuple[str, dict[str, Any]]] = []
 
@@ -392,7 +418,9 @@ class TestQueueReplyChannel:
         assert message["result"] == {"x": 1}
 
     async def test_skip_without_topic(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import QueueReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            QueueReplyChannel,
+        )
 
         captured: list[tuple[str, dict[str, Any]]] = []
 
@@ -410,7 +438,9 @@ class TestQueueReplyChannel:
         assert captured == []
 
     async def test_default_topic_used_when_metadata_missing(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import QueueReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            QueueReplyChannel,
+        )
 
         captured: list[tuple[str, dict[str, Any]]] = []
 
@@ -431,7 +461,9 @@ class TestQueueReplyChannel:
         assert captured[0][0] == "invocations.results"
 
     async def test_swallows_publisher_errors(self) -> None:
-        from src.infrastructure.messaging.invocation_replies import QueueReplyChannel
+        from src.backend.infrastructure.messaging.invocation_replies import (
+            QueueReplyChannel,
+        )
 
         async def _broken(topic: str, message: dict[str, Any]) -> None:
             raise RuntimeError("broker down")

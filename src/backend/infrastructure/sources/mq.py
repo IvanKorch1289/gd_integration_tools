@@ -18,7 +18,7 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from src.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 
 if TYPE_CHECKING:
     pass

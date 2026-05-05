@@ -7,8 +7,8 @@ from typing import Any, AsyncGenerator
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
-from src.core.config.settings import MailSettings, settings
-from src.core.utils.circuit_breaker import get_circuit_breaker
+from src.backend.core.config.settings import MailSettings, settings
+from src.backend.core.utils.circuit_breaker import get_circuit_breaker
 
 __all__ = ("BaseSmtpClient", "smtp_client", "SmtpClient", "get_smtp_client")
 
@@ -48,7 +48,7 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
-        from src.infrastructure.external_apis.logging_service import smtp_logger
+        from src.backend.infrastructure.external_apis.logging_service import smtp_logger
 
         if not all([settings.host, settings.port]):
             raise ValueError("Неверная конфигурация SMTP")

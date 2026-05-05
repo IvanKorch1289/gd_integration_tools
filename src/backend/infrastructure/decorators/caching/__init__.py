@@ -15,8 +15,8 @@ import hashlib
 from functools import lru_cache
 from typing import Any, Awaitable, Callable
 
-from src.infrastructure.decorators.caching.decorator import CachingDecorator
-from src.utilities.codecs.json import json_dumps
+from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
+from src.backend.utilities.codecs.json import json_dumps
 
 __all__ = (
     "response_cache",

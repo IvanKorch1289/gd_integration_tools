@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from src.infrastructure.storage.local_fs import LocalFSStorage
+from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 
 
 @pytest.fixture

@@ -229,7 +229,7 @@ class ExpressClient:
 
 
 def _create_express_client() -> ExpressClient:
-    from src.core.config.express import express_settings
+    from src.backend.core.config.express import express_settings
 
     return ExpressClient(
         bot_id=express_settings.bot_id,
@@ -239,7 +239,7 @@ def _create_express_client() -> ExpressClient:
     )
 
 
-from src.core.di import app_state_singleton
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("express_client", _create_express_client)

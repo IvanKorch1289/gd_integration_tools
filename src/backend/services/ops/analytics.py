@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.di.providers import get_clickhouse_client_provider
-from src.core.interfaces.integrations import ClickHouseClientProtocol
+from src.backend.core.di.providers import get_clickhouse_client_provider
+from src.backend.core.interfaces.integrations import ClickHouseClientProtocol
 
 __all__ = ("AnalyticsService", "get_analytics_service")
 

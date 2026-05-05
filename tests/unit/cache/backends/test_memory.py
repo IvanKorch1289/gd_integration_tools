@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.infrastructure.cache.backends.memory import MemoryBackend
+from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
 
 @pytest.fixture

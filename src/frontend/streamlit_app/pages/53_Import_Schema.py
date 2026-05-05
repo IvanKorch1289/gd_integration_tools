@@ -46,8 +46,11 @@ def _kind_value(label: str) -> str:
 
 
 if uploaded and st.button("Импортировать"):
-    from src.core.interfaces.import_gateway import ImportSource, ImportSourceKind
-    from src.services.integrations import get_import_service
+    from src.backend.core.interfaces.import_gateway import (
+        ImportSource,
+        ImportSourceKind,
+    )
+    from src.backend.services.integrations import get_import_service
 
     content = uploaded.getvalue()
     source = ImportSource(

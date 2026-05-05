@@ -5,7 +5,7 @@ PII scrubbing через Presidio перед отправкой в Sentry.
 
 Usage в main.py::
 
-    from src.infrastructure.observability.sentry_init import init_sentry
+    from src.backend.infrastructure.observability.sentry_init import init_sentry
     init_sentry()
 """
 
@@ -80,7 +80,7 @@ def _scrub_pii(event: dict[str, Any], hint: Any) -> dict[str, Any] | None:
     любые PII, распознанные Presidio (emails, phones, cards, etc.).
     """
     try:
-        from src.infrastructure.security.presidio_sanitizer import (
+        from src.backend.infrastructure.security.presidio_sanitizer import (
             get_presidio_sanitizer,
         )
 

@@ -3,9 +3,9 @@ import logging
 import time
 from typing import Any, Callable
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = logging.getLogger("dsl.eip")
 _camel_logger = logging.getLogger("dsl.camel")
@@ -234,7 +234,7 @@ class LoopProcessor(BaseProcessor):
         self._copy = copy_exchange
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.dsl.engine.processors.base import run_sub_processors
+        from src.backend.dsl.engine.processors.base import run_sub_processors
 
         iteration = 0
         results: list[Any] = []

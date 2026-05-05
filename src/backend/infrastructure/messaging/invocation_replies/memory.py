@@ -16,11 +16,11 @@ from collections import OrderedDict
 from time import monotonic
 from typing import NamedTuple
 
-from src.core.interfaces.invocation_reply import (
+from src.backend.core.interfaces.invocation_reply import (
     InvocationReplyChannel,
     ReplyChannelKind,
 )
-from src.core.interfaces.invoker import InvocationResponse
+from src.backend.core.interfaces.invoker import InvocationResponse
 
 __all__ = ("MemoryReplyChannel",)
 

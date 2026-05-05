@@ -24,7 +24,7 @@ from typing import Any
 import httpx
 import pytest
 
-from src.infrastructure.clients.external.telegram_bot import (
+from src.backend.infrastructure.clients.external.telegram_bot import (
     TelegramBotClient,
     TelegramBotConfig,
     TelegramButton,

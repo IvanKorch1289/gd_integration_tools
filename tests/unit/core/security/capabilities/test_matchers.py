@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.security.capabilities import (
+from src.backend.core.security.capabilities import (
     ExactAliasMatcher,
     GlobScopeMatcher,
     SegmentedGlobMatcher,

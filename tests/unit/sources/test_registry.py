@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.interfaces.sink import SinkKind, SinkResult
-from src.core.interfaces.source import EventCallback, SourceKind
-from src.services.sources.registry import SinkRegistry, SourceRegistry
+from src.backend.core.interfaces.sink import SinkKind, SinkResult
+from src.backend.core.interfaces.source import EventCallback, SourceKind
+from src.backend.services.sources.registry import SinkRegistry, SourceRegistry
 
 
 class _Src:

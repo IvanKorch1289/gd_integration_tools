@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.core.interfaces.vector_store import BaseVectorStore
+from src.backend.core.interfaces.vector_store import BaseVectorStore
 
 __all__ = (
     "BaseVectorStore",
@@ -406,7 +406,7 @@ def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorSto
     """Фабрика vector store. Если ``backend`` не указан — берёт значение
     из ``rag_settings.vector_backend`` (default ``qdrant``).
     """
-    from src.core.config.rag import rag_settings
+    from src.backend.core.config.rag import rag_settings
 
     backend_name = (backend or rag_settings.vector_backend).lower()
 

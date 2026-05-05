@@ -25,7 +25,7 @@ NotificationCallable = Callable[[dict[str, Any]], Awaitable[None]]
 
 async def _express_send(payload: dict[str, Any]) -> None:
     """Primary: BotX через ``ExpressBotClient``."""
-    from src.infrastructure.clients.transport.express import get_express_client
+    from src.backend.infrastructure.clients.transport.express import get_express_client
 
     client = get_express_client()
     await client.send_message(chat_id=payload["recipient"], text=payload["message"])
@@ -33,7 +33,9 @@ async def _express_send(payload: dict[str, Any]) -> None:
 
 async def _smtp_send(payload: dict[str, Any]) -> None:
     """Fallback 1: SMTP — переиспользует smtp_chain primary."""
-    from src.infrastructure.resilience.components.smtp_chain import build_smtp_primary
+    from src.backend.infrastructure.resilience.components.smtp_chain import (
+        build_smtp_primary,
+    )
 
     smtp = build_smtp_primary()
     await smtp(

@@ -27,9 +27,9 @@ import threading
 from collections.abc import Iterable
 from typing import Any
 
-from src.core.config.profile import AppProfileChoices, get_active_profile
-from src.core.interfaces.log_sink import LogSink
-from src.infrastructure.logging.backends import (
+from src.backend.core.config.profile import AppProfileChoices, get_active_profile
+from src.backend.core.interfaces.log_sink import LogSink
+from src.backend.infrastructure.logging.backends import (
     ConsoleJsonLogSink,
     DiskRotatingLogSink,
     GraylogGelfLogSink,
@@ -208,7 +208,9 @@ def configure_router(
             use_batching = active in (AppProfileChoices.staging, AppProfileChoices.prod)
 
         if use_batching:
-            from src.infrastructure.logging.batching_router import BatchingSinkRouter
+            from src.backend.infrastructure.logging.batching_router import (
+                BatchingSinkRouter,
+            )
 
             _router = BatchingSinkRouter(
                 base,

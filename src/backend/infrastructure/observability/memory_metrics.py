@@ -11,7 +11,7 @@ from __future__ import annotations
 from threading import Lock
 from typing import Any
 
-from src.core.interfaces.metrics import Labels, MetricsBackend
+from src.backend.core.interfaces.metrics import Labels, MetricsBackend
 
 __all__ = ("MemoryMetricsBackend",)
 

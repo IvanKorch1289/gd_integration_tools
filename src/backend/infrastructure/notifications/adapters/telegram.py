@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
-from src.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("TelegramAdapter",)
 
@@ -83,7 +83,7 @@ class TelegramAdapter:
             RuntimeError: Если Telegram отключён или токен пуст.
             httpx.HTTPStatusError: При HTTP-ошибке Bot API.
         """
-        from src.infrastructure.clients.external.telegram_bot import (
+        from src.backend.infrastructure.clients.external.telegram_bot import (
             TelegramBotClient,
             TelegramButton,
             TelegramMessage,
@@ -129,7 +129,7 @@ class TelegramAdapter:
             except Exception:  # noqa: BLE001
                 return False
         try:
-            from src.core.config.telegram import telegram_bot_settings
+            from src.backend.core.config.telegram import telegram_bot_settings
 
             return bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
         except Exception:  # noqa: BLE001
@@ -137,7 +137,9 @@ class TelegramAdapter:
 
     def _build_config(self) -> Any:
         """Собирает ``TelegramBotConfig`` из callable-провайдера или settings."""
-        from src.infrastructure.clients.external.telegram_bot import TelegramBotConfig
+        from src.backend.infrastructure.clients.external.telegram_bot import (
+            TelegramBotConfig,
+        )
 
         if self._bot_token_provider is not None:
             token = self._bot_token_provider()
@@ -146,7 +148,7 @@ class TelegramAdapter:
             bot_id, _, secret_key = token.partition(":")
             return TelegramBotConfig(bot_id=bot_id, secret_key=secret_key)
 
-        from src.core.config.telegram import telegram_bot_settings
+        from src.backend.core.config.telegram import telegram_bot_settings
 
         if not telegram_bot_settings.enabled:
             raise RuntimeError(

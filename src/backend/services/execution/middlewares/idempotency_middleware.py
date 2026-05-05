@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Protocol
 
-from src.core.interfaces.action_dispatcher import (
+from src.backend.core.interfaces.action_dispatcher import (
     ActionResult,
     DispatchContext,
     MiddlewareNextHandler,

@@ -29,7 +29,7 @@ class HealthAlertSubscriber:
         if self._started:
             return
         try:
-            from src.core.providers_registry import get_provider
+            from src.backend.core.providers_registry import get_provider
 
             bus = get_provider("event_bus", "default")
             broker = getattr(bus, "_broker", None)
@@ -50,7 +50,7 @@ class HealthAlertSubscriber:
         if not _is_degradation(previous, current):
             return
         try:
-            from src.core.providers_registry import get_provider
+            from src.backend.core.providers_registry import get_provider
 
             gateway = get_provider("notifier", "gateway")
             await gateway.send(

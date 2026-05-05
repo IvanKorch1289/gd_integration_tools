@@ -4,7 +4,7 @@
 Идеально для джунов: скопировал, подставил параметры, готово.
 
 Примеры:
-    from src.dsl.templates_library import templates
+    from src.backend.dsl.templates_library import templates
 
     # ETL из PostgreSQL в ClickHouse
     pipeline = templates["etl.postgres_to_clickhouse"](
@@ -24,9 +24,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from src.dsl.builder import RouteBuilder
-from src.dsl.engine.pipeline import Pipeline
-from src.dsl.engine.processors import DispatchActionProcessor, LogProcessor
+from src.backend.dsl.builder import RouteBuilder
+from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.processors import DispatchActionProcessor, LogProcessor
 
 __all__ = ("templates", "list_templates", "TemplateInfo")
 
@@ -142,7 +142,7 @@ def _safe_external_call(
 ) -> Pipeline:
     """Безопасный вызов external API с retry + DLQ."""
     rid = route_id or f"safe.{action}"
-    from src.dsl.macros import safe_action
+    from src.backend.dsl.macros import safe_action
 
     return safe_action(
         route_id=rid,
@@ -156,7 +156,7 @@ def _crud_with_audit(
     entity: str, create_action: str, update_action: str, delete_action: str
 ) -> list[Pipeline]:
     """CRUD + audit + event publishing."""
-    from src.dsl.macros import crud_with_audit
+    from src.backend.dsl.macros import crud_with_audit
 
     return crud_with_audit(
         route_id_prefix=entity,

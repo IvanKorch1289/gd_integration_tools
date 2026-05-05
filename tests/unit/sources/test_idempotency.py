@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.services.sources.idempotency import DedupeStore, MemoryDedupeStore
+from src.backend.services.sources.idempotency import DedupeStore, MemoryDedupeStore
 
 
 def test_protocol_compliance() -> None:

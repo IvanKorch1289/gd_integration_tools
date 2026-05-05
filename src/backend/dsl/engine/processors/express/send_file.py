@@ -17,10 +17,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.dsl.engine.context import ExecutionContext
-from src.dsl.engine.exchange import Exchange
-from src.dsl.engine.processors.base import BaseProcessor
-from src.dsl.engine.processors.express._common import (
+from src.backend.dsl.engine.context import ExecutionContext
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.express._common import (
     get_express_client,
     log_outgoing_message,
     resolve_value,
@@ -82,7 +82,7 @@ class ExpressSendFileProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Загружает файл в BotX и отправляет сообщение со ссылкой."""
-        from src.infrastructure.clients.external.express_bot import BotxMessage
+        from src.backend.infrastructure.clients.external.express_bot import BotxMessage
 
         chat_id = resolve_value(exchange, self._chat_id_from)
         if not chat_id:
@@ -145,7 +145,7 @@ class ExpressSendFileProcessor(BaseProcessor):
         if self._s3_key_from:
             key = resolve_value(exchange, self._s3_key_from)
             if key:
-                from src.infrastructure.clients.storage.s3_pool import s3_client
+                from src.backend.infrastructure.clients.storage.s3_pool import s3_client
 
                 data = await s3_client.get_object_bytes(str(key))
                 if data is not None:

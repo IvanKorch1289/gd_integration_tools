@@ -31,7 +31,7 @@ async def _pg_query(
 ) -> list[dict[str, Any]]:
     from sqlalchemy import text
 
-    from src.infrastructure.database.database import get_db_session
+    from src.backend.infrastructure.database.database import get_db_session
 
     async with get_db_session() as session:
         result = await session.execute(text(sql), params or {})
@@ -84,8 +84,8 @@ def _check_snapshot_freshness() -> None:
     видеть ситуацию — поэтому warning + Prometheus counter.
     """
     try:
-        from src.core.config.settings import settings
-        from src.infrastructure.resilience.snapshot_job import (
+        from src.backend.core.config.settings import settings
+        from src.backend.infrastructure.resilience.snapshot_job import (
             get_snapshot_age_seconds,
             is_snapshot_fresh,
         )

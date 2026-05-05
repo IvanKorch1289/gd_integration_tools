@@ -16,9 +16,9 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from src.core.di import app_state_singleton
-from src.services.ai.feedback.models import AIFeedbackDoc
-from src.services.ai.feedback.repository import (
+from src.backend.core.di import app_state_singleton
+from src.backend.services.ai.feedback.models import AIFeedbackDoc
+from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,
     get_feedback_repository,
 )
@@ -172,7 +172,7 @@ class FeedbackIndexer:
         Returns:
             Singleton ``RAGService`` из ``app.services.ai.rag_service``.
         """
-        from src.services.ai.rag_service import get_rag_service
+        from src.backend.services.ai.rag_service import get_rag_service
 
         return get_rag_service()
 

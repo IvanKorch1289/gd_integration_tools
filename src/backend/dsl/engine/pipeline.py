@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.dsl.adapters.types import ProtocolType, TransportConfig
-from src.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("Pipeline",)
 
@@ -74,7 +74,7 @@ class Pipeline:
             Словарь с ключами apiVersion, route_id, source, description,
             processors.
         """
-        from src.dsl.versioning import CURRENT_VERSION
+        from src.backend.dsl.versioning import CURRENT_VERSION
 
         result: dict[str, Any] = {
             "apiVersion": CURRENT_VERSION,
@@ -119,7 +119,7 @@ class Pipeline:
             Строка Python-кода.
         """
         lines = [
-            "from src.dsl.builder import RouteBuilder",
+            "from src.backend.dsl.builder import RouteBuilder",
             "",
             "pipeline = (",
             f"    RouteBuilder.from_({self.route_id!r}, source={self.source!r}",
