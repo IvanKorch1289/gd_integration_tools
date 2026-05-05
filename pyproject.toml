@@ -118,6 +118,12 @@ rag = [
 embeddings-fastembed-legacy = [
     "fastembed>=0.4.0,<1.0.0",
 ]
+# Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
+# backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
+# внутри TemporalWorkflowBackend.__init__ — dev-light без SDK.
+workflow = [
+    "temporalio>=1.27.0,<2.0.0",
+]
 dev-light = [
     "aiosqlite>=0.20.0,<1.0.0",
 ]
@@ -208,6 +214,12 @@ disable_error_code = [
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# Wave D.2: temporalio — optional extra (uv sync --extra workflow);
+# в чистой dev-light инсталляции SDK нет, lazy-импорт внутри backend.
+module = "temporalio.*"
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "app.entrypoints.grpc.protobuf.*"
