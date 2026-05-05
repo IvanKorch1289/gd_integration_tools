@@ -652,26 +652,8 @@ tag: ## Create and push version tag (legacy)
 
 ##@ Production Readiness
 
-phase-audit: ## Audit phase readiness. Usage: make phase-audit PHASE=A1
-	@if [ -z "$(PHASE)" ]; then \
-		$(ERROR) "PHASE is required. Example: make phase-audit PHASE=A1"; \
-		exit 1; \
-	fi
-	@bash scripts/audit.sh $(PHASE)
-
-progress: ## Show phase progress summary
-	@$(UV_RUN) python3 tools/report_phases.py
-
-phases: ## Show only in-progress phases
-	@$(UV_RUN) python3 tools/report_phases.py --only in-progress
-
-mr-description: ## Render MR description from PROGRESS + STATUS
-	@$(UV_RUN) python3 tools/render_mr_description.py
-
 readiness-check: ## Run all anti-forget guards locally
 	@$(INFO) "Running anti-forget guards..."
-	$(UV_RUN) python3 tools/check_phase_order.py
-	$(UV_RUN) python3 tools/check_deps_matrix.py
 	$(UV_RUN) python3 tools/check_fallback_matrix.py
 	@$(SUCCESS) "All guards passed!"
 

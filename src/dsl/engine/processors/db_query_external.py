@@ -94,6 +94,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет SQL-запрос на внешнем профиле БД и кладёт результат в ``result_property``."""
         from sqlalchemy import text
 
         from src.core.di.providers import get_external_session_manager_provider
@@ -140,6 +141,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
                 return None
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Возвращает round-trip DSL-спецификацию ``{"db_query_external": {...}}``."""
         spec: dict[str, Any] = {"profile": self._profile, "sql": self._sql}
         if self._params_from != "body":
             spec["params_from"] = self._params_from

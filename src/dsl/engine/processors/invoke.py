@@ -113,6 +113,7 @@ class InvokeProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Вызывает action через ``Invoker`` и записывает результат/ошибку в ``exchange``."""
         if self.payload_factory is not None:
             payload = self.payload_factory(exchange)
         else:
@@ -147,6 +148,7 @@ class InvokeProcessor(BaseProcessor):
                 exchange.stop()
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Возвращает round-trip DSL-спецификацию ``{"invoke": {...}}``."""
         spec: dict[str, Any] = {"action": self.action, "mode": self.mode.value}
         if self.reply_channel is not None:
             spec["reply_channel"] = self.reply_channel

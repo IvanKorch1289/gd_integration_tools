@@ -1,35 +1,37 @@
 # Architecture Decision Records (ADR) — индекс
 
-Всего ADR: **51**.
+Всего ADR-файлов: **51**; уникальных слотов: **39**.
+
+⚠️ Collision-слоты (12): ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-010, ADR-011, ADR-014. Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).
 
 | № | Заголовок | Статус | Файл |
 |---|-----------|--------|------|
-| 001 | ADR-001: DSL `RouteBuilder` как центральная абстракция | — | [ADR-001-dsl-central-abstraction.md](ADR-001-dsl-central-abstraction.md) |
-| 001 | ADR-001: Слоистая архитектура приложения | — | [ADR-001-layered-architecture.md](ADR-001-layered-architecture.md) |
-| 002 | ADR-002: Единственный DI-контейнер — svcs | — | [ADR-002-single-di-svcs.md](ADR-002-single-di-svcs.md) |
-| 002 | ADR-002: svcs как единый DI-контейнер | — | [ADR-002-svcs-di-container.md](ADR-002-svcs-di-container.md) |
-| 003 | ADR-003: CORS policy с явным whitelist и запретом `*` в prod | — | [ADR-003-cors-policy.md](ADR-003-cors-policy.md) |
-| 003 | ADR-003: Repository Pattern через RepositoryBuilder | — | [ADR-003-repository-pattern.md](ADR-003-repository-pattern.md) |
-| 004 | ADR-004: Один уровень кэша на сущность | — | [ADR-004-cache-single-layer.md](ADR-004-cache-single-layer.md) |
-| 004 | ADR-004: gRPC TLS + AuthInterceptor + MQTT TLS + IMAP STARTTLS | — | [ADR-004-grpc-tls-auth.md](ADR-004-grpc-tls-auth.md) |
-| 005 | ADR-005: DSL как единственный путь к бизнес-логике | — | [ADR-005-dsl-engine.md](ADR-005-dsl-engine.md) |
-| 005 | ADR-005: tenacity — единственный механизм retry | — | [ADR-005-tenacity-only-retry.md](ADR-005-tenacity-only-retry.md) |
-| 006 | ADR-006: EventBus через FastStream с Reply-Channel | — | [ADR-006-event-bus-faststream.md](ADR-006-event-bus-faststream.md) |
-| 006 | ADR-006: Granian как prod ASGI-сервер | — | [ADR-006-granian-prod-asgi.md](ADR-006-granian-prod-asgi.md) |
-| 007 | ADR-007: Аудит HTTP-запросов в ClickHouse | — | [ADR-007-audit-clickhouse.md](ADR-007-audit-clickhouse.md) |
-| 007 | ADR-007: Python 3.14 Free-Threading readiness | — | [ADR-007-python-3.14-ft-readiness.md](ADR-007-python-3.14-ft-readiness.md) |
-| 008 | ADR-008: NotificationGateway — единый шлюз уведомлений | — | [ADR-008-notification-gateway.md](ADR-008-notification-gateway.md) |
-| 008 | ADR-008: pandas → polars полная миграция | — | [ADR-008-pandas-to-polars.md](ADR-008-pandas-to-polars.md) |
-| 009 | ADR-009: httpx с HTTP/2 заменяет aiohttp | — | [ADR-009-httpx-replaces-aiohttp.md](ADR-009-httpx-replaces-aiohttp.md) |
-| 009 | ADR-009: Self-Healing и автоматическое восстановление | — | [ADR-009-self-healing.md](ADR-009-self-healing.md) |
-| 010 | ADR-010: CloudEvents 1.0 + Schema Registry как стандарт событий | — | [ADR-010-cloudevents-schema-registry.md](ADR-010-cloudevents-schema-registry.md) |
-| 010 | ADR-010: Границы сервисов — Route→Action→Service→Repository | — | [ADR-010-service-boundary.md](ADR-010-service-boundary.md) |
-| 011 | ADR-011: Open-Closed принцип — ядро закрыто, расширение через plugins/ | — | [ADR-011-open-closed-plugins.md](ADR-011-open-closed-plugins.md) |
-| 011 | ADR-011: Transactional Outbox + Inbox для exactly-once | — | [ADR-011-outbox-inbox.md](ADR-011-outbox-inbox.md) |
+| 001 *(collision)* | ADR-001: DSL `RouteBuilder` как центральная абстракция | — | [ADR-001-dsl-central-abstraction.md](ADR-001-dsl-central-abstraction.md) |
+| 001 *(collision)* | ADR-001: Слоистая архитектура приложения | — | [ADR-001-layered-architecture.md](ADR-001-layered-architecture.md) |
+| 002 *(collision)* | ADR-002: Единственный DI-контейнер — svcs | — | [ADR-002-single-di-svcs.md](ADR-002-single-di-svcs.md) |
+| 002 *(collision)* | ADR-002: svcs как единый DI-контейнер | — | [ADR-002-svcs-di-container.md](ADR-002-svcs-di-container.md) |
+| 003 *(collision)* | ADR-003: CORS policy с явным whitelist и запретом `*` в prod | — | [ADR-003-cors-policy.md](ADR-003-cors-policy.md) |
+| 003 *(collision)* | ADR-003: Repository Pattern через RepositoryBuilder | — | [ADR-003-repository-pattern.md](ADR-003-repository-pattern.md) |
+| 004 *(collision)* | ADR-004: Один уровень кэша на сущность | — | [ADR-004-cache-single-layer.md](ADR-004-cache-single-layer.md) |
+| 004 *(collision)* | ADR-004: gRPC TLS + AuthInterceptor + MQTT TLS + IMAP STARTTLS | — | [ADR-004-grpc-tls-auth.md](ADR-004-grpc-tls-auth.md) |
+| 005 *(collision)* | ADR-005: DSL как единственный путь к бизнес-логике | — | [ADR-005-dsl-engine.md](ADR-005-dsl-engine.md) |
+| 005 *(collision)* | ADR-005: tenacity — единственный механизм retry | — | [ADR-005-tenacity-only-retry.md](ADR-005-tenacity-only-retry.md) |
+| 006 *(collision)* | ADR-006: EventBus через FastStream с Reply-Channel | — | [ADR-006-event-bus-faststream.md](ADR-006-event-bus-faststream.md) |
+| 006 *(collision)* | ADR-006: Granian как prod ASGI-сервер | — | [ADR-006-granian-prod-asgi.md](ADR-006-granian-prod-asgi.md) |
+| 007 *(collision)* | ADR-007: Аудит HTTP-запросов в ClickHouse | — | [ADR-007-audit-clickhouse.md](ADR-007-audit-clickhouse.md) |
+| 007 *(collision)* | ADR-007: Python 3.14 Free-Threading readiness | — | [ADR-007-python-3.14-ft-readiness.md](ADR-007-python-3.14-ft-readiness.md) |
+| 008 *(collision)* | ADR-008: NotificationGateway — единый шлюз уведомлений | — | [ADR-008-notification-gateway.md](ADR-008-notification-gateway.md) |
+| 008 *(collision)* | ADR-008: pandas → polars полная миграция | — | [ADR-008-pandas-to-polars.md](ADR-008-pandas-to-polars.md) |
+| 009 *(collision)* | ADR-009: httpx с HTTP/2 заменяет aiohttp | — | [ADR-009-httpx-replaces-aiohttp.md](ADR-009-httpx-replaces-aiohttp.md) |
+| 009 *(collision)* | ADR-009: Self-Healing и автоматическое восстановление | — | [ADR-009-self-healing.md](ADR-009-self-healing.md) |
+| 010 *(collision)* | ADR-010: CloudEvents 1.0 + Schema Registry как стандарт событий | — | [ADR-010-cloudevents-schema-registry.md](ADR-010-cloudevents-schema-registry.md) |
+| 010 *(collision)* | ADR-010: Границы сервисов — Route→Action→Service→Repository | — | [ADR-010-service-boundary.md](ADR-010-service-boundary.md) |
+| 011 *(collision)* | ADR-011: Open-Closed принцип — ядро закрыто, расширение через plugins/ | — | [ADR-011-open-closed-plugins.md](ADR-011-open-closed-plugins.md) |
+| 011 *(collision)* | ADR-011: Transactional Outbox + Inbox для exactly-once | — | [ADR-011-outbox-inbox.md](ADR-011-outbox-inbox.md) |
 | 012 | ADR-012: OPA + Casbin — двухуровневая авторизация | — | [ADR-012-opa-casbin-authorization.md](ADR-012-opa-casbin-authorization.md) |
 | 013 | ADR-013: FastStream как унифицированная абстракция Kafka/RabbitMQ | — | [ADR-013-faststream-unification.md](ADR-013-faststream-unification.md) |
-| 014 | ADR-014 — Proxy pass-through как два DSL-процессора | — | [ADR-014-proxy-pass-through.md](ADR-014-proxy-pass-through.md) |
-| 014 | ADR-014: Qdrant + fastembed как production RAG stack | — | [ADR-014-qdrant-fastembed-rag-stack.md](ADR-014-qdrant-fastembed-rag-stack.md) |
+| 014 *(collision)* | ADR-014 — Proxy pass-through как два DSL-процессора | — | [ADR-014-proxy-pass-through.md](ADR-014-proxy-pass-through.md) |
+| 014 *(collision)* | ADR-014: Qdrant + fastembed как production RAG stack | — | [ADR-014-qdrant-fastembed-rag-stack.md](ADR-014-qdrant-fastembed-rag-stack.md) |
 | 015 | ADR-015: API Management stack (quotas + versioning + developer portal) | — | [ADR-015-api-management-stack.md](ADR-015-api-management-stack.md) |
 | 016 | ADR-016: Data Lake (Iceberg/Delta) + CDC multi-source | — | [ADR-016-data-lake-stack.md](ADR-016-data-lake-stack.md) |
 | 017 | ADR-017: Rust / PyO3 для hot-path в production | — | [ADR-017-rust-pyo3-hotpath.md](ADR-017-rust-pyo3-hotpath.md) |
@@ -54,6 +56,6 @@
 | 042 | ADR-042: `plugin.toml` — манифест плагина V11 (R1.2) | — | [ADR-042-plugin-toml-schema.md](ADR-042-plugin-toml-schema.md) |
 | 043 | ADR-043: `route.toml` — манифест маршрута V11 (R1.2a) | — | [ADR-043-route-toml-schema.md](ADR-043-route-toml-schema.md) |
 | 044 | ADR-044: Capability vocabulary V11 (R1.1) | — | [ADR-044-capability-vocabulary.md](ADR-044-capability-vocabulary.md) |
-| 045 | ADR-045: Temporal как default workflow-backend (Wave C) | — | [ADR-045-temporal-migration-spec.md](ADR-045-temporal-migration-spec.md) |
+| 045 | ADR-045: Temporal как default workflow-backend (Wave C+D) | — | [ADR-045-temporal-migration-spec.md](ADR-045-temporal-migration-spec.md) |
 
 _Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._

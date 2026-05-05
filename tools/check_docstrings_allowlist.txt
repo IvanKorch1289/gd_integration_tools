@@ -8,10 +8,6 @@ src/core/clock.py:22:4 RealClock.monotonic
 src/core/clock.py:25:4 RealClock.time
 src/core/clock.py:43:4 FakeClock.monotonic
 src/core/clock.py:46:4 FakeClock.time
-src/core/config/base.py:220:4 AppBaseSettings.base_url
-src/core/config/base.py:225:4 AppBaseSettings.check_debug_mode
-src/core/config/base.py:232:4 AppBaseSettings.build_base_url
-src/core/config/base.py:315:4 SchedulerSettings.check_jobstores
 src/core/config/config_loader.py:95:4 FilteredSettingsSource.get_field_value
 src/core/config/services/cache.py:132:4 RedisSettings.validate_redis_numbers
 src/core/config/services/cache.py:137:4 RedisSettings.get_stream_name
@@ -190,8 +186,6 @@ src/core/interfaces/search.py:23:4 SearchClient.bulk_index
 src/core/interfaces/search.py:27:4 SearchClient.search
 src/core/interfaces/search.py:36:4 SearchClient.aggregate
 src/core/interfaces/search.py:40:4 SearchClient.delete_document
-src/core/interfaces/search.py:42:4 SearchClient.create_index
-src/core/interfaces/search.py:46:4 SearchClient.ping
 src/core/interfaces/storage.py:19:4 ObjectStorage.upload
 src/core/interfaces/storage.py:24:4 ObjectStorage.download
 src/core/interfaces/storage.py:27:4 ObjectStorage.delete
@@ -425,7 +419,6 @@ src/dsl/engine/processors/integration.py:112:4 AwaitReplyProcessor.process
 src/dsl/engine/processors/integration.py:30:4 EventPublishProcessor.process
 src/dsl/engine/processors/integration.py:57:4 MemoryLoadProcessor.process
 src/dsl/engine/processors/integration.py:75:4 MemorySaveProcessor.process
-src/dsl/engine/processors/invoke.py:114:4 InvokeProcessor.process
 src/dsl/engine/processors/invoke.py:150:4 InvokeProcessor.to_spec
 src/dsl/engine/processors/ml_inference.py:135:4 StreamingLLMProcessor.process
 src/dsl/engine/processors/ml_inference.py:216:4 EmbeddingProcessor.process

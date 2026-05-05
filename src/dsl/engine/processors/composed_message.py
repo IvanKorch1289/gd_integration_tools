@@ -82,6 +82,7 @@ class ComposedMessageProcessor(BaseProcessor):
         self._aggregator = aggregator
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Разбивает входящий ``exchange`` через splitter, прогоняет каждую часть через sub-processors и собирает aggregator'ом."""
         try:
             parts = await _maybe_await(self._splitter(exchange))
         except Exception as exc:  # noqa: BLE001

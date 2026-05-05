@@ -278,11 +278,13 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     @computed_field(description="Базовый URL приложения")
     def base_url(self) -> str:
+        """Полный базовый URL вида ``scheme://host:port``."""
         return f"{self.build_base_url}:{self.port}"
 
     # Валидация бизнес-правил
     @model_validator(mode="after")
     def check_debug_mode(self) -> "AppBaseSettings":
+        """Запрещает debug_mode=True в production-окружении."""
         if self.environment == "production" and self.debug_mode:
             raise ValueError("Режим отладки запрещен в production!")
         return self
@@ -290,6 +292,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
     # Собрать базовый URL (без порта)
     @property
     def build_base_url(self) -> str:
+        """Возвращает ``scheme://host`` без порта (на основе ``use_ssl``)."""
         return f"{'https://' if self.use_ssl else 'http://'}{self.host}"
 
 
@@ -373,6 +376,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
 
     @model_validator(mode="after")
     def check_jobstores(self) -> "SchedulerSettings":
+        """Запрещает совпадение основного и резервного jobstore."""
         if self.default_jobstore_name == self.backup_jobstore_name:
             raise ValueError("Основное и резервное хранилища не могут совпадать!")
         return self

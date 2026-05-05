@@ -422,7 +422,7 @@ ResilienceCoordinator
     W26 — координатор resilient-компонентов.
 
 Roadmap
-    Дорожная карта (`docs/PLAN_V9.md` / `docs/PROGRESS.md`).
+    Дорожная карта (`PLAN.md` в корне репозитория).
 
 Route
     Зарегистрированный pipeline с `route_id`.

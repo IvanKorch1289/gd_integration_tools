@@ -59,17 +59,34 @@ def main() -> int:
         print("FAIL: no ADR files matched", file=sys.stderr)
         return 1
 
+    # Группируем по номеру для явной диагностики collision-слотов.
+    by_num: dict[str, list[tuple[str, str, str, str]]] = {}
+    for r in rows:
+        by_num.setdefault(r[0], []).append(r)
+    collisions = sorted(n for n, vs in by_num.items() if len(vs) > 1)
+    unique_slots = sorted(by_num.keys())
+
     lines: list[str] = [
         "# Architecture Decision Records (ADR) — индекс",
         "",
-        f"Всего ADR: **{len(rows)}**.",
+        f"Всего ADR-файлов: **{len(rows)}**; уникальных слотов: **{len(unique_slots)}**.",
+    ]
+    if collisions:
+        lines += [
+            "",
+            f"⚠️ Collision-слоты ({len(collisions)}): "
+            + ", ".join(f"ADR-{n}" for n in collisions)
+            + ". Каждая пара — два ADR на один номер; ренейм отложен из-за внешних ссылок (см. R3.0).",
+        ]
+    lines += [
         "",
         "| № | Заголовок | Статус | Файл |",
         "|---|-----------|--------|------|",
     ]
     for num, slug, title, status in rows:
         filename = f"ADR-{num}-{slug}.md"
-        lines.append(f"| {num} | {title} | {status} | [{filename}]({filename}) |")
+        marker = " *(collision)*" if num in collisions else ""
+        lines.append(f"| {num}{marker} | {title} | {status} | [{filename}]({filename}) |")
     lines.append("")
     lines.append(
         "_Сгенерировано `tools/build_adr_index.py`. "
@@ -77,7 +94,10 @@ def main() -> int:
     )
 
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"OK adr_index: {len(rows)} entries → {OUT}")
+    print(
+        f"OK adr_index: {len(rows)} files, {len(unique_slots)} unique slots, "
+        f"{len(collisions)} collisions → {OUT}"
+    )
     return 0
 
 

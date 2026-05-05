@@ -287,7 +287,7 @@ CircuitBreaker, ExceptionHandler.
 - CertStore vault backend требует `vault_url` / `vault_token`
 - `psycopg2` отсутствует в venv (используется asyncpg)
 
-Архитектурная правда — в коде, Graphify и `docs/PROGRESS.md`.
+Архитектурная правда — в коде, Graphify и `PLAN.md`.
 Если обзор расходится с кодом — доверять коду и Graphify.
 
 ## Что обновлять при крупных изменениях
