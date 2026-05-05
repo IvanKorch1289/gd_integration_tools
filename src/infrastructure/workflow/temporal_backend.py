@@ -23,7 +23,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from src.core.workflow.backend import WorkflowBackend, WorkflowHandle, WorkflowResult
-from src.utilities.json_codec import canonical_json_bytes
+from src.utilities.codecs.json import canonical_json_bytes
 
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient

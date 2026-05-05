@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.utilities.json_codec import dumps_bytes
+from src.utilities.codecs.json import dumps_bytes
 
 __all__ = ("WebhookSink",)
 

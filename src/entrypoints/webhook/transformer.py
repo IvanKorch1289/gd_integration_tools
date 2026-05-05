@@ -253,7 +253,7 @@ class WebhookRelay:
         return entries
 
     async def _dlq_remove(
-        self, entry_id: str, entry_raw: bytes | str | None = None
+        self, entry_id: str, _entry_raw: bytes | str | None = None
     ) -> None:
         """Удаляет одну запись DLQ по id (находит raw через полный обход)."""
         raw = await _redis_raw()

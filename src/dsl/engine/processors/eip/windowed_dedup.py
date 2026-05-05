@@ -36,8 +36,8 @@ from typing import Any
 from src.dsl.engine.context import ExecutionContext
 from src.dsl.engine.exchange import Exchange
 from src.dsl.engine.processors.base import BaseProcessor
-from src.utilities.json_codec import canonical_json_bytes
-from src.utilities.json_codec import loads as _json_loads
+from src.utilities.codecs.json import canonical_json_bytes
+from src.utilities.codecs.json import loads as _json_loads
 
 __all__ = ("WindowedDedupProcessor", "WindowedCollectProcessor")
 
@@ -57,7 +57,7 @@ def _extract_path(body: Any, path: str) -> Any:
 
 
 def _serialize(body: Any) -> str:
-    """Канонический JSON для in-memory dedup-key (через json_codec helper)."""
+    """Канонический JSON для in-memory dedup-key (через codecs.json helper)."""
     try:
         return canonical_json_bytes(body).decode("utf-8")
     except TypeError, ValueError:

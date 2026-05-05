@@ -75,7 +75,7 @@ class AuditEventLog:
 
             client = get_clickhouse_client()
             rows = []
-            from src.utilities.json_codec import dumps_str
+            from src.utilities.codecs.json import dumps_str
 
             for e in events:
                 rows.append(

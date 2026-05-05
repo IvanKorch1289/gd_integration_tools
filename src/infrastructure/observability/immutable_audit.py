@@ -54,7 +54,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable
 
-from src.utilities.json_codec import canonical_json_bytes, dumps_str
+from src.utilities.codecs.json import canonical_json_bytes, dumps_str
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -141,7 +141,7 @@ class ImmutableAuditStore:
     def _canonical_json(event: dict[str, Any]) -> bytes:
         """Детерминированный JSON для HMAC.
 
-        Делегирует в общий ``canonical_json_bytes`` (json_codec) — единая
+        Делегирует в общий ``canonical_json_bytes`` (codecs.json) — единая
         формула канонизации для HMAC-chain / doc_id / dedup-key. На stdlib
         json для byte-стабильности с ранее записанными в БД хешами.
         """

@@ -355,7 +355,7 @@ class AuthInterceptor:
                 "gRPC unauthenticated request: method=%s", handler_call_details.method
             )
 
-            async def _abort(request_or_iterator, context):
+            async def _abort(_request_or_iterator, context):
                 try:
                     await context.abort(
                         StatusCode.UNAUTHENTICATED, "invalid or missing API key"

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-__all__ = ("AsyncChunkIterator", "safe_get")
+__all__ = ("AsyncChunkIterator",)
 
 
 class AsyncChunkIterator:
@@ -24,15 +22,3 @@ class AsyncChunkIterator:
             raise StopAsyncIteration from exc
         self.index += 1
         return chunk
-
-
-async def safe_get(data: dict[str, Any], keys: str, default: Any = None) -> Any:
-    """Безопасный доступ к вложенным dict-ключам через dot-нотацию."""
-    current: Any = data
-    for key in keys.split("."):
-        if not isinstance(current, dict):
-            return default
-        if key not in current:
-            return default
-        current = current[key]
-    return current if current is not None else default

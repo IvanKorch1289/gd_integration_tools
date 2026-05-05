@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.utilities.json_codec import dumps_str
+from src.utilities.codecs.json import dumps_str
 
 __all__ = ("MqSink",)
 

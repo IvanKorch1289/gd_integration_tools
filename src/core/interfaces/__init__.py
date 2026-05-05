@@ -216,7 +216,7 @@ class CircuitBreaker:
         return self
 
     async def __aexit__(
-        self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any
+        self, exc_type: type | None, exc_val: Exception | None, _exc_tb: Any
     ) -> None:
         if exc_val is None:
             self.record_success()

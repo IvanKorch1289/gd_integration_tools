@@ -33,7 +33,7 @@ from tenacity import (
 from src.core.config.constants import consts
 from src.core.config.settings import settings
 from src.core.utils.circuit_breaker import get_circuit_breaker
-from src.utilities.json_codec import json_dumps
+from src.utilities.codecs.json import json_dumps
 
 __all__ = (
     "BaseHttpClient",

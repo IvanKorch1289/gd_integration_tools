@@ -71,7 +71,7 @@ class SmtpClient(BaseSmtpClient):
         await self.initialize_pool()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type, exc_val, _exc_tb) -> None:
         """
         Выход из асинхронного контекстного менеджера для корректного завершения работы.
         """

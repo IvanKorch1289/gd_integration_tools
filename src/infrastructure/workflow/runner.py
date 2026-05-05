@@ -252,7 +252,9 @@ class DurableWorkflowRunner:
                 finally:
                     await conn.close()
 
-    def _on_notify(self, connection: Any, pid: int, channel: str, payload: str) -> None:
+    def _on_notify(
+        self, connection: Any, _pid: int, channel: str, payload: str
+    ) -> None:
         """asyncpg callback (sync) — только enqueue."""
         if not payload:
             return

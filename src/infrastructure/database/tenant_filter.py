@@ -59,7 +59,7 @@ def apply_tenant_filter(session_factory: Any) -> None:
 
     @event.listens_for(session_factory, "before_flush")
     def _set_tenant_on_new(
-        session: Session, flush_context: Any, instances: Any
+        session: Session, _flush_context: Any, instances: Any
     ) -> None:
         tenant_id = get_tenant_id()
         if not tenant_id:

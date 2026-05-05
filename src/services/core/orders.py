@@ -1,5 +1,6 @@
 from typing import Any
 
+import pydash
 from fastapi import status
 from pydantic import BaseModel
 
@@ -21,7 +22,6 @@ from src.schemas.route_schemas.orders import (
 )
 from src.services.core.base import BaseService
 from src.services.integrations.skb import APISKBService, get_skb_service
-from src.utilities.async_helpers import safe_get
 
 __all__ = ("OrderService", "get_order_service")
 
@@ -228,7 +228,7 @@ class OrderService(
                 order_id=order_id, response_type=ResponseTypeChoices.json
             )
 
-            has_pdf_result = await safe_get(json_result, "response.data.Result", False)
+            has_pdf_result = pydash.get(json_result, "response.data.Result", False)
 
             if has_pdf_result:
                 await self.get_order_result(
@@ -239,7 +239,7 @@ class OrderService(
                 "response_data": json_result.get("response", {}).get("data", {})
             }
 
-            message = await safe_get(json_result, "response.data.Message", "Не готов")
+            message = pydash.get(json_result, "response.data.Message", "Не готов")
 
             if not message:
                 update_data["is_active"] = False

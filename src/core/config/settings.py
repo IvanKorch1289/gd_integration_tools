@@ -21,7 +21,6 @@ from src.core.config.base import (
 from src.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
 from src.core.config.database import DatabaseConnectionSettings, db_connection_settings
 from src.core.config.dsl import DSLSettings, dsl_settings
-from src.core.config.v11 import V11Settings, v11_settings
 from src.core.config.elasticsearch import ElasticsearchSettings, elasticsearch_settings
 from src.core.config.express import ExpressSettings, express_settings
 from src.core.config.external_apis import (
@@ -68,6 +67,7 @@ from src.core.config.services import (
     watermark_settings,
 )
 from src.core.config.telegram import TelegramBotSettings, telegram_bot_settings
+from src.core.config.v11 import V11Settings, v11_settings
 from src.core.config.vault import VaultSettings, vault_settings
 
 __all__ = ("Settings", "settings")

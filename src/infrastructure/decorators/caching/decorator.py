@@ -16,7 +16,7 @@ from src.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.infrastructure.decorators.caching.storage.disk import DiskTTLCache
 from src.infrastructure.external_apis.logging_service import redis_logger
-from src.utilities.json_codec import json_dumps, json_loads
+from src.utilities.codecs.json import json_dumps, json_loads
 
 __all__ = ("CachingDecorator",)
 

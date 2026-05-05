@@ -20,12 +20,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-__all__ = (
-    "WorkflowBackend",
-    "WorkflowHandle",
-    "WorkflowResult",
-    "WorkflowStatus",
-)
+__all__ = ("WorkflowBackend", "WorkflowHandle", "WorkflowResult", "WorkflowStatus")
 
 
 WorkflowStatus = str
@@ -85,11 +80,7 @@ class WorkflowBackend(Protocol):
         ...
 
     async def signal_workflow(
-        self,
-        *,
-        handle: WorkflowHandle,
-        signal_name: str,
-        payload: dict[str, Any],
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
     ) -> None:
         """Отправить сигнал работающему workflow."""
         ...
@@ -109,19 +100,11 @@ class WorkflowBackend(Protocol):
         ...
 
     async def await_completion(
-        self,
-        *,
-        handle: WorkflowHandle,
-        timeout: timedelta | None = None,
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
     ) -> WorkflowResult:
         """Дождаться финального состояния workflow."""
         ...
 
-    async def replay(
-        self,
-        *,
-        workflow_name: str,
-        history: bytes,
-    ) -> None:
+    async def replay(self, *, workflow_name: str, history: bytes) -> None:
         """Прогнать историю через текущий код — для CI versioning gate."""
         ...

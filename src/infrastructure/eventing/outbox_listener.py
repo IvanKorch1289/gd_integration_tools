@@ -143,7 +143,7 @@ class OutboxListener:
     # -- Private handlers ----------------------------------------------
 
     def _on_notify(
-        self, connection: "asyncpg.Connection", pid: int, channel: str, payload: str
+        self, connection: "asyncpg.Connection", _pid: int, channel: str, payload: str
     ) -> None:
         """asyncpg-callback. Вызывается sync, поэтому только enqueue."""
         if payload:

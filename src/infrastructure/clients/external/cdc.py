@@ -243,7 +243,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
 
         queue: asyncio.Queue[str] = asyncio.Queue(maxsize=1000)
 
-        def _notify_handler(conn_: Any, pid: int, chan: str, payload: str) -> None:
+        def _notify_handler(_conn_: Any, _pid: int, _chan: str, payload: str) -> None:
             try:
                 queue.put_nowait(payload)
             except asyncio.QueueFull:

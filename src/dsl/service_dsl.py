@@ -191,7 +191,7 @@ def register_action(
 
 
 def _find_getter_in_module(
-    module: Any, method_owner_cls: type | None
+    module: Any, _method_owner_cls: type | None
 ) -> Callable | None:
     """Auto-detect ``get_<name>_service`` or ``get_<name>`` factory in the module."""
     for name in dir(module):
