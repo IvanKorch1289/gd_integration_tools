@@ -15,13 +15,15 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"]
     },
-    "perplexity": {
+    "duckduckgo-search": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server"]
+    },
+    "context7": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@perplexity-ai/mcp-server"],
-      "env": {
-        "PERPLEXITY_API_KEY": "pplx-YOUR-KEY"
-      }
+      "args": ["-y", "@upstash/context7-mcp"]
     }
   }
 }
