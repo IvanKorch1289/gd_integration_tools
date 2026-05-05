@@ -11,6 +11,8 @@
 
 | Путь/Имя | Заменён на | Введён (фаза/дата) | Плановое удаление | Тип |
 |---|---|---|---|---|
+| `src.infrastructure.workflow.runner.DurableWorkflowRunner` (pg-runner direct use) | `src.core.workflow.WorkflowBackend` (Protocol через DI) + `src.services.workflows.WorkflowFacade` (capability gate) | Wave D / 2026-05-04 | R3 (после полной миграции existing OrderWorkflow на Temporal) | API surface |
+| `src.workflows.orders_dsl` (pg-runner-specific) | Будет переписан под Temporal-determinism (см. `tools/migrate_workflow_v11.py`) | Wave D / 2026-05-04 | R3 / OrderWorkflow domain-плагин | module |
 | `app.core.service_registry` (module) | `app.core.svcs_registry` | A3 / 2026-04-21 | 2026-07-01 (H3 Cleanup) | module |
 | `app.core.service_registry.ServiceRegistry` | `app.core.svcs_registry.register_factory/get_service/list_services` | A3 / 2026-04-21 | 2026-07-01 | class |
 | `app.core.service_registry.service_registry` (singleton) | `app.core.svcs_registry.register_factory/get_service` | A3 / 2026-04-21 | 2026-07-01 | singleton |

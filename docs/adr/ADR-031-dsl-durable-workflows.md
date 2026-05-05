@@ -1,10 +1,18 @@
 # ADR-031 — Durable Workflows через DSL (замена Prefect)
 
-* **Статус:** Accepted
-* **Дата:** 2026-04-22
-* **Фаза:** IL-WF1 (Workflow engine — замена Prefect)
-* **Связанные ADR:** ADR-001 (DSL central abstraction), ADR-011 (Outbox pattern), ADR-022 (ConnectorRegistry).
+* **Статус:** Superseded by [ADR-045](ADR-045-temporal-migration-spec.md)
+* **Дата:** 2026-04-22 (accepted) / 2026-05-04 (superseded после Wave D)
+* **Фаза:** IL-WF1 (Workflow engine — замена Prefect) → R1 Wave D (Temporal migration)
+* **Связанные ADR:** ADR-001 (DSL central abstraction), ADR-011 (Outbox pattern), ADR-022 (ConnectorRegistry), ADR-045 (Temporal как default backend).
 * **Автор:** claude
+
+> **2026-05-04 supersedure note:** Wave D ввёл `WorkflowBackend`
+> Protocol (ADR-045) с двумя impl'ами: Temporal как default + pg-runner
+> как fallback. Решения этого ADR-031 (event-sourcing в PG, LISTEN/NOTIFY,
+> APScheduler) **остаются валидными** в `PgRunnerWorkflowBackend` —
+> используется в dev_light и как graceful degradation. Новые domains
+> ДОЛЖНЫ выбирать Temporal через `WorkflowFacade`; existing OrderWorkflow
+> работает на pg-runner до отдельной миграции (R3).
 
 ## Контекст
 

@@ -1,8 +1,8 @@
-# ADR-045: Temporal как default workflow-backend (Wave C)
+# ADR-045: Temporal как default workflow-backend (Wave C+D)
 
-- **Статус:** proposed
-- **Дата:** 2026-05-04
-- **Фаза:** R1 / V11 — Wave C
+- **Статус:** accepted
+- **Дата:** 2026-05-04 (proposed) / 2026-05-04 (accepted после Wave D)
+- **Фаза:** R1 / V11 — Wave C (scaffold) + Wave D (impl)
 - **Автор:** v11-architect
 
 ## Контекст
