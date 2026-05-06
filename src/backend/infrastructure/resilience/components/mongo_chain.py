@@ -14,10 +14,11 @@ fail при OPEN-breaker'е.
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
+
+import orjson
 
 __all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 
@@ -50,7 +51,7 @@ async def _pg_jsonb_find_one(
                 "SELECT data FROM app_doc_store WHERE collection = :coll "
                 "AND data @> :q ::jsonb LIMIT 1"
             ),
-            {"coll": collection, "q": json.dumps(query)},
+            {"coll": collection, "q": orjson.dumps(query).decode()},
         )
         row = result.first()
         return row[0] if row else None

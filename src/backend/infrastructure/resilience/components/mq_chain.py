@@ -16,10 +16,11 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
+
+import orjson
 
 __all__ = ("MQPublishCallable", "build_mq_fallbacks", "build_mq_primary")
 
@@ -64,7 +65,7 @@ async def _memory_publish(stream: str, message: dict[str, Any]) -> None:
     broker = _get_memory_broker()
     if not broker._connected:  # noqa: SLF001
         await broker.connect()
-    payload = json.dumps(message, default=str).encode()
+    payload = orjson.dumps(message, default=str)
     await broker.publish(topic=stream, message=payload)
 
 

@@ -13,13 +13,13 @@
 
 from __future__ import annotations
 
-import json
 import re
 import uuid
 from pathlib import Path
 from typing import Any
 
 import aiosqlite
+import orjson
 
 from src.backend.core.interfaces.doc_store import DocStoreBackend
 
@@ -44,7 +44,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         if doc_id is None:
             doc_id = str(uuid.uuid4())
-        body = json.dumps(doc, ensure_ascii=False, default=str)
+        body = orjson.dumps(doc, default=str).decode()
         # Имя таблицы валидируется в _ensure_namespace регуляркой,
         # SQL-injection невозможен (S608 — false positive).
         async with aiosqlite.connect(self._path) as db:
@@ -63,7 +63,7 @@ class SqliteDocStore(DocStoreBackend):
                 (doc_id,),
             )
             row = await cursor.fetchone()
-        return json.loads(row[0]) if row else None
+        return orjson.loads(row[0]) if row else None
 
     async def update(self, namespace: str, doc_id: str, patch: dict[str, Any]) -> bool:
         existing = await self.get(namespace, doc_id)
@@ -98,7 +98,7 @@ class SqliteDocStore(DocStoreBackend):
                 (limit if filters is None else 1_000_000, offset),
             )
             rows = await cursor.fetchall()
-        docs = [json.loads(row[0]) for row in rows]
+        docs = [orjson.loads(row[0]) for row in rows]
         if filters:
             docs = [d for d in docs if all(d.get(k) == v for k, v in filters.items())]
             docs = docs[:limit]
