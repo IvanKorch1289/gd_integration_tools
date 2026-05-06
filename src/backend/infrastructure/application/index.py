@@ -1,6 +1,6 @@
 """Стартовая страница приложения.
 
-Рендерит статический HTML из ``src/static/index.html``
+Рендерит статический HTML из ``src/frontend/static/index.html``
 с подстановкой динамических URL сервисов.
 """
 
@@ -13,7 +13,8 @@ from src.backend.utilities.web import ensure_url_protocol
 
 __all__ = ("root_page",)
 
-_STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
+# src/backend/infrastructure/application/index.py -> ../../../../ = src/
+_STATIC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
 
 
 async def root_page() -> HTMLResponse:
