@@ -1,3 +1,6 @@
+# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
+# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
+# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """Mongo-проекция состояний workflow (Wave 9.2.2).
 
 Postgres остаётся source-of-truth (ACID); MongoDB — eventually consistent
