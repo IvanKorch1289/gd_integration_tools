@@ -7,10 +7,10 @@ Commands:
 * profile — профилирование route (time/memory per step).
 * inspect — runtime introspect.
 
-Запускается как ``python -m app.tools.dsl_cli <command>`` или, при
+Запускается как ``python -m src.backend.dsl.cli <command>`` или, при
 наличии entry-point в pyproject, как ``gdi dsl <command>``.
 """
 
-from src.backend.tools.dsl_cli.lint import lint_file
+from src.backend.dsl.cli.lint import lint_file
 
 __all__ = ("lint_file",)
