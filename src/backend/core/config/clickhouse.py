@@ -28,5 +28,36 @@ class ClickHouseSettings(BaseSettingsWithLoader):
     max_batch_size: int = Field(10000, ge=1, description="Макс. размер batch insert.")
     enabled: bool = Field(False, description="Включить ClickHouse интеграцию.")
 
+    # ── Persistent connection pool (httpx.Limits + lifecycle) ──
+    pool_size: int = Field(
+        20,
+        ge=1,
+        description="Макс. одновременных HTTP-соединений в пуле (httpx Limits.max_connections).",
+    )
+    pool_overflow: int = Field(
+        10,
+        ge=0,
+        description="Доп. keep-alive соединения сверх pool_size (Limits.max_keepalive_connections дельта).",
+    )
+    keepalive_expiry: float = Field(
+        30.0,
+        gt=0,
+        description="Сек. жизни keep-alive соединения (Limits.keepalive_expiry).",
+    )
+    recycle_seconds: int = Field(
+        3600,
+        ge=60,
+        description="TTL HTTP-клиента (сек): по истечении соединения пересоздаются.",
+    )
+    pool_pre_ping: bool = Field(
+        True,
+        description="Health-check (/ping) перед использованием соединения после простоя.",
+    )
+    max_connections: int = Field(
+        100,
+        ge=1,
+        description="Жёсткий cap на общее число соединений (sanity-limit).",
+    )
+
 
 clickhouse_settings = ClickHouseSettings()
