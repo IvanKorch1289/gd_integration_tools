@@ -12,7 +12,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-__all__ = ("AuthMethod", "AuthContext")
+from src.backend.core.auth.api_key_backend import APIKeyAuth
+
+__all__ = ("AuthMethod", "AuthContext", "APIKeyAuth")
 
 
 class AuthMethod(str, Enum):

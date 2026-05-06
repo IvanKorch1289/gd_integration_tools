@@ -72,6 +72,26 @@ class RedisSettings(BaseSettingsWithLoader):
     socket_keepalive: bool | None = Field(
         ..., description="Включить TCP keepalive для соединений", example=True
     )
+    # Sprint 0 (Redis cluster + pipelining): расширение pool-параметров.
+    # ``retry_on_error`` — список квалифицированных имён классов исключений
+    # (например ``redis.exceptions.ConnectionError``), при которых redis-py
+    # выполняет встроенный retry поверх собственной политики. Парсится
+    # лениво в клиенте, чтобы избежать import'ов на уровне настроек.
+    retry_on_error: list[str] = Field(
+        default_factory=lambda: [
+            "redis.exceptions.ConnectionError",
+            "redis.exceptions.TimeoutError",
+        ],
+        description=(
+            "Список классов исключений (FQN), на которые redis-py "
+            "автоматически выполняет retry. Применяется и к single-node, "
+            "и к cluster-режиму. Пустой список — отключает встроенный retry."
+        ),
+        example=[
+            "redis.exceptions.ConnectionError",
+            "redis.exceptions.TimeoutError",
+        ],
+    )
 
     # Параметры безопасности
     use_ssl: bool = Field(
@@ -142,6 +162,34 @@ class RedisSettings(BaseSettingsWithLoader):
         ),
         example=["redis-0:6379", "redis-1:6379", "redis-2:6379"],
     )
+
+    def resolve_retry_on_error(self) -> list[type[BaseException]]:
+        """Резолвит ``retry_on_error`` (FQN) в реальные классы исключений.
+
+        Используется при построении ``redis.asyncio.Redis`` /
+        ``RedisCluster`` — ленивый импорт, чтобы не тянуть redis в
+        процессе загрузки настроек. Невалидные FQN молча пропускаются
+        с логгированием на стороне вызова (если требуется).
+
+        Returns:
+            Список classes-исключений; пустой список, если ничего не
+            удалось резолвить.
+        """
+        import importlib  # noqa: PLC0415 — lazy
+
+        result: list[type[BaseException]] = []
+        for fqn in self.retry_on_error:
+            module_name, _, attr = fqn.rpartition(".")
+            if not module_name or not attr:
+                continue
+            try:
+                module = importlib.import_module(module_name)
+                exc_cls = getattr(module, attr, None)
+                if isinstance(exc_cls, type) and issubclass(exc_cls, BaseException):
+                    result.append(exc_cls)
+            except ImportError:
+                continue
+        return result
 
     @field_validator("cluster_nodes")
     @classmethod

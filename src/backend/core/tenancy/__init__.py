@@ -10,7 +10,14 @@ from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass
 
-__all__ = ("TenantContext", "current_tenant", "set_tenant", "tenant_scope")
+__all__ = (
+    "TenantContext",
+    "current_tenant",
+    "set_tenant",
+    "tenant_scope",
+    "QuotaTracker",
+    "QuotaExceeded",
+)
 
 
 @dataclass(slots=True, frozen=True)
@@ -46,3 +53,7 @@ class tenant_scope:
     def __exit__(self, *args) -> None:
         if self._token is not None:
             _current.reset(self._token)
+
+
+# Re-exports после определения symbols (порядок важен для избежания циклов).
+from src.backend.core.tenancy.quotas import QuotaExceeded, QuotaTracker  # noqa: E402

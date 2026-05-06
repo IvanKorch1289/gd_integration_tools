@@ -65,11 +65,25 @@ class RedisClient:
         }
         return mapping[kind]
 
+    def _resolve_retry_on_error(self) -> list[type[BaseException]]:
+        """Резолвит ``retry_on_error`` из настроек в классы исключений.
+
+        Отделено от прямого вызова ``settings.resolve_retry_on_error()``
+        для удобства monkey-patch'инга в тестах и для backward-compat
+        в случае, если поле ``retry_on_error`` отсутствует в legacy
+        настройках (защита через ``getattr``).
+        """
+        resolver = getattr(self.settings, "resolve_retry_on_error", None)
+        if callable(resolver):
+            return resolver()
+        return []
+
     def _build_client(self, kind: RedisKind) -> Redis:
         # Cluster-режим: один общий клиент для всех kinds (cluster
         # использует единую логическую БД, ``db_*`` игнорируются).
         # Лениво импортируем cluster-модуль, чтобы не тянуть его при
         # стандартном single-node варианте.
+        retry_on_error = self._resolve_retry_on_error()
         if self.settings.cluster_mode:
             from redis.asyncio.cluster import (  # noqa: PLC0415 — lazy
                 ClusterNode,
@@ -96,6 +110,7 @@ class RedisClient:
                 max_connections=self.settings.max_connections,
                 decode_responses=False,
                 health_check_interval=self.settings.health_check_interval,
+                retry_on_error=retry_on_error or None,
                 ssl=self.settings.use_ssl,
                 ssl_ca_certs=self.settings.ca_bundle,
             )
@@ -109,6 +124,7 @@ class RedisClient:
             socket_connect_timeout=self.settings.socket_connect_timeout,
             socket_keepalive=self.settings.socket_keepalive,
             retry_on_timeout=self.settings.retry_on_timeout,
+            retry_on_error=retry_on_error or None,
             max_connections=self.settings.max_connections,
             decode_responses=False,
             health_check_interval=self.settings.health_check_interval,
@@ -228,6 +244,58 @@ class RedisClient:
         if not keys:
             return 0
         return int(await self.execute("cache", lambda conn: conn.unlink(*keys)))
+
+    async def bulk_get(self, keys: list[str]) -> list[bytes | None]:
+        """Batch-чтение через non-transactional pipeline (Sprint 0).
+
+        Один RTT на батч вместо ``len(keys)`` отдельных GET'ов. Совместимо
+        с cluster-режимом (pipeline разносит команды по нодам). Для
+        пустого ``keys`` возвращает пустой список без обращения к Redis.
+
+        Args:
+            keys: ключи для чтения.
+
+        Returns:
+            Список значений в исходном порядке; ``None`` для отсутствующих
+            ключей.
+        """
+        if not keys:
+            return []
+
+        async def op(conn: Redis) -> list[bytes | None]:
+            async with conn.pipeline(transaction=False) as pipe:
+                for key in keys:
+                    pipe.get(key)
+                return await pipe.execute()
+
+        return await self.execute("cache", op)
+
+    async def bulk_set(
+        self, items: dict[str, bytes | str], expire: int | None = None
+    ) -> None:
+        """Batch-запись через non-transactional pipeline (Sprint 0).
+
+        Используется ``SET`` (а не ``MSET``), чтобы поддержать опциональный
+        ``expire`` единым вызовом и быть совместимым с cluster-режимом
+        (``MSET`` требует общего hash-tag для всех ключей).
+
+        Args:
+            items: словарь ``{key: value}``.
+            expire: единый TTL в секундах; ``None`` — без TTL.
+        """
+        if not items:
+            return
+
+        async def op(conn: Redis) -> None:
+            async with conn.pipeline(transaction=False) as pipe:
+                for key, value in items.items():
+                    if expire is not None:
+                        pipe.set(key, value, ex=expire)
+                    else:
+                        pipe.set(key, value)
+                await pipe.execute()
+
+        await self.execute("cache", op)
 
     async def cache_delete_pattern(self, pattern: str) -> int:
         async def op(conn: Redis) -> int:
