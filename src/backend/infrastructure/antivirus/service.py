@@ -1,3 +1,16 @@
+"""HTTP-фасад антивирусной проверки (Sprint 0 — antivirus dedup).
+
+Сервисный слой над внешним AV API: проверка байтового потока, файла из
+S3, scan+upload pipeline. Используется как самостоятельный
+:class:`AntivirusService` (через DI) и как backend для
+:class:`infrastructure.antivirus.backends.http.HttpAntivirusBackend`
+внутри :class:`infrastructure.antivirus.factory.ChainedAntivirusBackend`.
+
+Ранее жил в ``infrastructure/external_apis/antivirus.py``; в Sprint 0
+объединён с ``infrastructure/antivirus/{factory, hash_cache, backends}``
+для устранения дублирования.
+"""
+
 import mimetypes
 import uuid
 from collections.abc import AsyncGenerator

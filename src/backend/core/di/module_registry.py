@@ -89,7 +89,7 @@ INFRA_MODULES: Final[dict[str, str]] = {
     # ─── External APIs ──────────────────────────────────────────────
     "external_apis.action_bus": f"{_INFRA}.external_apis.action_bus",
     "external_apis.s3": f"{_INFRA}.external_apis.s3",
-    "external_apis.antivirus": f"{_INFRA}.external_apis.antivirus",
+    "antivirus.service": f"{_INFRA}.antivirus.service",
     "external_apis.logging_service": f"{_INFRA}.external_apis.logging_service",
     # ─── Registry ───────────────────────────────────────────────────
     "registry": f"{_INFRA}.registry",

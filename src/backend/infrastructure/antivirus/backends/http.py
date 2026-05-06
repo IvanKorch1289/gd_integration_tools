@@ -1,8 +1,8 @@
-"""HTTP-бэкенд антивируса (Wave 2.4).
+"""HTTP-бэкенд антивируса (Wave 2.4 + Sprint 0 dedup).
 
-Тонкая обёртка над уже существующим :class:`AntivirusService` (HTTP API)
-из ``infrastructure/external_apis/antivirus.py``. Используется как
-fallback, когда ClamAV-бэкенды недоступны (50–500 ms на скан).
+Тонкая обёртка над :class:`AntivirusService` (HTTP API) из
+``infrastructure/antivirus/service.py``. Используется как fallback,
+когда ClamAV-бэкенды недоступны (50–500 ms на скан).
 """
 
 from __future__ import annotations

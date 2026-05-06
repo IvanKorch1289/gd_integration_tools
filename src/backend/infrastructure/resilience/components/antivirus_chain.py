@@ -66,9 +66,7 @@ def _build_http_av() -> AntivirusCallable:
         from src.backend.infrastructure.antivirus.backends.http import (
             HttpAntivirusBackend,
         )
-        from src.backend.infrastructure.external_apis.antivirus import (
-            get_antivirus_service,
-        )
+        from src.backend.infrastructure.antivirus.service import get_antivirus_service
 
         try:
             service = get_antivirus_service()
