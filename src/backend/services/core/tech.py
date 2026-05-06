@@ -10,7 +10,7 @@ from src.backend.core.di.app_state import app_state_singleton
 from src.backend.core.di.providers import get_healthcheck_session_provider
 from src.backend.services.core.base import BaseService, get_service_for_model
 from src.backend.utilities.converters import convert_numpy_types
-from src.backend.utilities.web import generate_link_page
+from src.backend.core.net.http_utils import generate_link_page
 
 __all__ = ("TechService", "get_tech_service")
 

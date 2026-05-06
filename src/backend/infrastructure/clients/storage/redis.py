@@ -66,6 +66,40 @@ class RedisClient:
         return mapping[kind]
 
     def _build_client(self, kind: RedisKind) -> Redis:
+        # Cluster-режим: один общий клиент для всех kinds (cluster
+        # использует единую логическую БД, ``db_*`` игнорируются).
+        # Лениво импортируем cluster-модуль, чтобы не тянуть его при
+        # стандартном single-node варианте.
+        if self.settings.cluster_mode:
+            from redis.asyncio.cluster import (  # noqa: PLC0415 — lazy
+                ClusterNode,
+                RedisCluster,
+            )
+
+            startup_nodes: list[ClusterNode] = []
+            for raw in self.settings.cluster_nodes:
+                host, _, port = raw.rpartition(":")
+                startup_nodes.append(ClusterNode(host=host, port=int(port)))
+
+            self.logger.info(
+                "Инициализация RedisCluster kind=%s nodes=%s",
+                kind,
+                [f"{n.host}:{n.port}" for n in startup_nodes],
+            )
+            return RedisCluster(  # type: ignore[return-value]
+                startup_nodes=startup_nodes,
+                password=self.settings.password or None,
+                encoding=self.settings.encoding,
+                socket_timeout=self.settings.socket_timeout,
+                socket_connect_timeout=self.settings.socket_connect_timeout,
+                socket_keepalive=bool(self.settings.socket_keepalive),
+                max_connections=self.settings.max_connections,
+                decode_responses=False,
+                health_check_interval=self.settings.health_check_interval,
+                ssl=self.settings.use_ssl,
+                ssl_ca_certs=self.settings.ca_bundle,
+            )
+
         return Redis.from_url(
             self._base_url(),
             db=self._db_for_kind(kind),

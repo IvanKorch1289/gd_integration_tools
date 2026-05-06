@@ -28,5 +28,25 @@ class ClickHouseSettings(BaseSettingsWithLoader):
     max_batch_size: int = Field(10000, ge=1, description="Макс. размер batch insert.")
     enabled: bool = Field(False, description="Включить ClickHouse интеграцию.")
 
+    # R-V15-14: connection pool параметры для httpx.Limits.
+    # pool_size — общий лимит соединений в pool'е;
+    # max_keepalive_connections — сколько idle TCP-соединений держать
+    # для reuse; keepalive_expiry — TTL idle-соединения (сек).
+    pool_size: int = Field(
+        20,
+        ge=1,
+        description="Макс. число соединений в HTTP pool (httpx.Limits.max_connections).",
+    )
+    max_keepalive_connections: int = Field(
+        10,
+        ge=0,
+        description="Idle TCP-соединения для reuse (httpx.Limits.max_keepalive_connections).",
+    )
+    keepalive_expiry: float = Field(
+        30.0,
+        ge=0.0,
+        description="TTL idle-соединения в секундах (httpx.Limits.keepalive_expiry).",
+    )
+
 
 clickhouse_settings = ClickHouseSettings()

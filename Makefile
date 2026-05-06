@@ -671,3 +671,32 @@ wave-memory: ## Generate post-wave memory note skeleton (NAME=<slug> [TYPE=feedb
 		exit 2; \
 	fi
 	$(UV_RUN) python3 tools/wave_memory.py --name "$(NAME)" --type "$(or $(TYPE),feedback)"
+
+# ---------------------------------------------------------------------- #
+# V16 Sprint 0 — codeclone (clone detection through MCP).                #
+# Установка: uv tool install "codeclone[mcp]" (выполнено 2026-05-06).     #
+# ---------------------------------------------------------------------- #
+CODECLONE_THRESHOLD ?= 0.85
+CLONE_REPORT_DIR ?= docs/clone-reports
+CLONE_BASELINE ?= docs/clone-baseline.json
+
+.PHONY: review-clones review-clones-baseline review-clones-diff
+
+review-clones:  ## Найти copy-paste и semantic clones в src/backend (HTML отчёт)
+	@mkdir -p $(CLONE_REPORT_DIR)
+	uv tool run --from "codeclone[mcp]" codeclone \
+		--html $(CLONE_REPORT_DIR)/clones-$(shell date +%Y%m%d-%H%M%S).html \
+		--no-progress src/backend/
+	@echo "Reports: $(CLONE_REPORT_DIR)/"
+
+review-clones-baseline:  ## Снять текущий baseline для будущих сравнений
+	uv tool run --from "codeclone[mcp]" codeclone \
+		--json $(CLONE_BASELINE) \
+		--update-baseline \
+		--no-progress src/backend/
+	@echo "Baseline saved: $(CLONE_BASELINE)"
+
+review-clones-diff:  ## Сравнить с baseline; fail при появлении новых дублей (CI gate)
+	uv tool run --from "codeclone[mcp]" codeclone \
+		--baseline $(CLONE_BASELINE) \
+		--no-progress src/backend/

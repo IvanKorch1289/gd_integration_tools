@@ -3,6 +3,7 @@ from inspect import isawaitable
 from typing import Any, Awaitable, Callable
 
 from src.backend.infrastructure.clients.external.logger import get_graylog_handler
+from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
@@ -122,6 +123,18 @@ def _s3_enabled() -> bool:
     return bool(getattr(fs, "enabled", True)) and fs.provider != "local"
 
 
+def _clickhouse_enabled() -> bool:
+    """Возвращает ``True``, если интеграция с ClickHouse активна.
+
+    Управляется ``settings.clickhouse.enabled`` (default ``False``).
+    Используется как guard startup/shutdown операций — в dev_light
+    профиле ClickHouse выключен и подключение к нему блокировало бы старт.
+    """
+    from src.backend.core.config.settings import settings
+
+    return bool(getattr(settings.clickhouse, "enabled", False))
+
+
 def _taskiq_enabled() -> bool:
     """Возвращает ``True``, если TaskIQ broker должен стартовать.
 
@@ -178,6 +191,11 @@ starting_operations: list[OperationItem] = [
         None,
     ),
     ("s3_client", lambda: get_s3_client().connect(), _s3_enabled),
+    (
+        "clickhouse_client",
+        lambda: get_clickhouse_client().connect(),
+        _clickhouse_enabled,
+    ),
     ("smtp_pool", lambda: get_smtp_client().initialize_pool(), None),
     ("rate_limiter", init_limiter, _redis_enabled),
     (
@@ -195,6 +213,11 @@ ending_operations: list[OperationItem] = [
     ("scheduler", lambda: get_scheduler_manager().stop(), None),
     ("taskiq_broker", _taskiq_shutdown, _taskiq_enabled),
     ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
+    (
+        "clickhouse_client",
+        lambda: get_clickhouse_client().aclose(),
+        _clickhouse_enabled,
+    ),
     ("s3_client", lambda: get_s3_client().close(), _s3_enabled),
     ("db_async_pool_external", lambda: get_external_db_registry().close_all(), None),
     ("db_async_pool_main", lambda: get_db_initializer().close(), None),

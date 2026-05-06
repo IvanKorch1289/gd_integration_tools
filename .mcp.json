@@ -24,6 +24,11 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "codeclone": {
+      "type": "stdio",
+      "command": "codeclone-mcp",
+      "args": ["--transport", "stdio"]
     }
   }
 }

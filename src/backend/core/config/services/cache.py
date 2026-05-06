@@ -120,6 +120,45 @@ class RedisSettings(BaseSettingsWithLoader):
         ],
     )
 
+    # Параметры кластерного режима (Sprint 0 — Redis cluster).
+    # Опциональны: по умолчанию ``cluster_mode=False`` — поведение не
+    # меняется, используется обычный ``redis.asyncio.Redis``. Включение
+    # cluster_mode требует непустого ``cluster_nodes`` (см. валидатор).
+    cluster_mode: bool = Field(
+        default=False,
+        description=(
+            "Включить кластерный режим Redis "
+            "(``redis.asyncio.cluster.RedisCluster``). При ``true`` стартовые "
+            "ноды берутся из ``cluster_nodes``; параметры ``db_*`` "
+            "игнорируются (cluster использует общую логическую БД)."
+        ),
+        example=False,
+    )
+    cluster_nodes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Список стартовых нод кластера в формате ``host:port``. "
+            "Используется только при ``cluster_mode=true``."
+        ),
+        example=["redis-0:6379", "redis-1:6379", "redis-2:6379"],
+    )
+
+    @field_validator("cluster_nodes")
+    @classmethod
+    def _validate_cluster_nodes(cls, v: list[str]) -> list[str]:
+        """Проверяет формат ``host:port`` для каждой кластерной ноды."""
+        for node in v:
+            if ":" not in node:
+                raise ValueError(
+                    f"cluster_nodes: ожидается формат 'host:port', получено {node!r}"
+                )
+            host, _, port = node.rpartition(":")
+            if not host or not port.isdigit():
+                raise ValueError(
+                    f"cluster_nodes: некорректный host:port — {node!r}"
+                )
+        return v
+
     @computed_field(description="Создает URL подключения к Redis")
     def redis_url(self) -> str:
         """Создает URL подключения к Redis."""

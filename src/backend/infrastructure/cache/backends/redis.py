@@ -4,6 +4,11 @@
 ``delete_pattern``. По возможности использует SCAN вместо KEYS для больших
 keyspace'ов. Хранит ``bytes`` (без сериализации) — за сериализацию отвечает
 вышестоящий слой (CachingDecorator).
+
+Sprint 0 (Redis cluster + pipelining): добавлены ``mget_pipelined`` /
+``mset_pipelined`` — тонкие обёртки над ``client.pipeline(transaction=False)``
+для batch-операций. Совместимы и с обычным ``redis.asyncio.Redis``, и с
+``redis.asyncio.cluster.RedisCluster`` (последний поддерживает pipeline()).
 """
 
 from __future__ import annotations
@@ -44,3 +49,51 @@ class RedisBackend(CacheBackend):
 
     async def exists(self, key: str) -> bool:
         return bool(await self._client.exists(key))
+
+    async def mget_pipelined(self, keys: list[str]) -> list[bytes | None]:
+        """Batch-чтение через non-transactional pipeline.
+
+        Эффективнее, чем последовательные ``GET`` (один RTT на батч).
+        В cluster-режиме pipeline разбрасывает команды по нодам —
+        семантика сохраняется.
+
+        Args:
+            keys: ключи для чтения.
+
+        Returns:
+            Список значений (``None`` для отсутствующих ключей) в том же
+            порядке, что и входные ``keys``. Для пустого ``keys``
+            возвращает пустой список без обращения к Redis.
+        """
+        if not keys:
+            return []
+        async with self._client.pipeline(transaction=False) as pipe:
+            for key in keys:
+                pipe.get(key)
+            return await pipe.execute()
+
+    async def mset_pipelined(
+        self,
+        items: dict[str, bytes],
+        ttl: int | None = None,
+    ) -> None:
+        """Batch-запись через non-transactional pipeline.
+
+        Используется ``SET`` (а не ``MSET``), чтобы поддерживать
+        опциональный ``ttl`` единым вызовом и быть совместимым с
+        cluster-режимом (MSET требует одинакового hash-tag).
+
+        Args:
+            items: словарь ``{key: value}``.
+            ttl: единый TTL в секундах для всех элементов; ``None`` —
+                без TTL.
+        """
+        if not items:
+            return
+        async with self._client.pipeline(transaction=False) as pipe:
+            for key, value in items.items():
+                if ttl is not None:
+                    pipe.set(key, value, ex=ttl)
+                else:
+                    pipe.set(key, value)
+            await pipe.execute()
