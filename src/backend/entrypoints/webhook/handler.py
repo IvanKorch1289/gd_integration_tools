@@ -226,7 +226,7 @@ async def send_webhook_event(
         }
 
         if sub.secret:
-            from src.backend.utilities.codecs.json import dumps_bytes
+            from src.backend.dsl.codec.json import dumps_bytes
 
             body_bytes = dumps_bytes(payload)
             sig = hmac.new(sub.secret.encode(), body_bytes, hashlib.sha256).hexdigest()

@@ -1,11 +1,14 @@
-"""Codecs — единый фасад (C9).
+"""Codecs — единый фасад (C9 / Sprint 0 consolidation).
 
-Форматы:
-- текстовые: JSON, CSV, XML, YAML, Excel, PDF.
-- бинарные: Avro, Protobuf, MsgPack, CBOR, Parquet.
-- банковские (opt-in `gdi[banking]`): FIX, MT, MX, EDIFACT, ISO8583, HL7.
+Публичные подмодули:
 
-Публичный API::
+* :mod:`src.backend.dsl.codec.base64` — base64 encode/decode с рекурсией.
+* :mod:`src.backend.dsl.codec.json` — orjson + богатые типы (UUID/datetime/...).
+* :mod:`src.backend.dsl.codec.converters` — numpy/regex/pydantic-схема.
+* :mod:`src.backend.dsl.codec.format_converters` — DSL-процессоры
+  Avro/Protobuf/TOML/Markdown/JSONL.
+
+Универсальный API форматов::
 
     from src.backend.dsl.codec import decode_as, encode_as
     data = decode_as('msgpack', raw_bytes)
@@ -17,7 +20,44 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-__all__ = ("decode_as", "encode_as", "supported_formats")
+from src.backend.dsl.codec.base64 import decode_base64, encode_base64
+from src.backend.dsl.codec.converters import (
+    convert_numpy_types,
+    convert_pattern,
+    transfer_model_to_schema,
+)
+from src.backend.dsl.codec.json import (
+    canonical_json_bytes,
+    dumps_bytes,
+    dumps_str,
+    from_jsonable,
+    json_dumps,
+    json_loads,
+    loads,
+    to_jsonable,
+)
+
+__all__ = (
+    "decode_as",
+    "encode_as",
+    "supported_formats",
+    # base64
+    "decode_base64",
+    "encode_base64",
+    # json
+    "canonical_json_bytes",
+    "dumps_bytes",
+    "dumps_str",
+    "from_jsonable",
+    "json_dumps",
+    "json_loads",
+    "loads",
+    "to_jsonable",
+    # converters
+    "convert_numpy_types",
+    "convert_pattern",
+    "transfer_model_to_schema",
+)
 
 logger = logging.getLogger("dsl.codec")
 
@@ -27,10 +67,12 @@ _BANKING_FORMATS = {"fix", "mt", "mx", "edifact", "iso8583", "hl7"}
 
 
 def supported_formats() -> set[str]:
+    """Возвращает множество поддерживаемых форматов кодеков."""
     return _TEXT_FORMATS | _BINARY_FORMATS | _BANKING_FORMATS
 
 
 def decode_as(fmt: str, raw: bytes | str) -> Any:
+    """Декодирует ``raw`` в Python-структуру по имени формата."""
     fmt = fmt.lower()
     if fmt == "json":
         import orjson
@@ -62,6 +104,7 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
 
 
 def encode_as(fmt: str, data: Any) -> bytes | str:
+    """Кодирует ``data`` в bytes/str по имени формата."""
     fmt = fmt.lower()
     if fmt == "json":
         import orjson

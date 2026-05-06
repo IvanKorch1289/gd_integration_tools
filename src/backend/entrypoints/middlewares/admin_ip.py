@@ -15,7 +15,7 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
         from re import compile
 
-        from src.backend.utilities.converters import convert_pattern
+        from src.backend.dsl.codec.converters import convert_pattern
 
         super().__init__(app)
         self.allowed_ips: set[str] = settings.secure.admin_ips

@@ -27,7 +27,7 @@ from src.backend.core.workflow.backend import (
     WorkflowHandle,
     WorkflowResult,
 )
-from src.backend.utilities.codecs.json import canonical_json_bytes
+from src.backend.dsl.codec.json import canonical_json_bytes
 
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient

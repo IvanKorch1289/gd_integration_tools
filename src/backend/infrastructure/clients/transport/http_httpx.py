@@ -43,7 +43,7 @@ from src.backend.infrastructure.resilience.rate_limiter import (
     ResourceRateLimiter,
 )
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
-from src.backend.utilities.codecs.json import json_dumps
+from src.backend.dsl.codec.json import json_dumps
 
 __all__ = ("HttpxClient", "get_httpx_client")
 
