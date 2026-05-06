@@ -1,3 +1,6 @@
+# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
+# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
+# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """Profile-based factory для `WorkflowBackend` (Wave D.2 / ADR-045).
 
 Settings.workflow_backend = ``temporal | pg_runner | fake | auto``:

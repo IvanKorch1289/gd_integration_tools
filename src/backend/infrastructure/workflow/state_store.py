@@ -1,3 +1,6 @@
+# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
+# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
+# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """Thin CRUD-API для header-таблицы ``workflow_instances``.
 
 :class:`WorkflowInstanceStore` инкапсулирует:

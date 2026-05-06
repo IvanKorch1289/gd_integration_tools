@@ -1,3 +1,6 @@
+# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
+# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
+# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """Append-only event store для durable workflows.
 
 :class:`WorkflowEventStore` предоставляет узкий API для работы с event log'ом:
