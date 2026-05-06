@@ -66,9 +66,7 @@ def create_antivirus_backend() -> AntivirusBackend:
 
     backends: list[AntivirusBackend] = [ClamAVUnixBackend(), ClamAVTcpBackend()]
     try:
-        from src.backend.infrastructure.external_apis.antivirus import (
-            get_antivirus_service,
-        )
+        from src.backend.infrastructure.antivirus.service import get_antivirus_service
 
         backends.append(HttpAntivirusBackend(service=get_antivirus_service()))
     except Exception as exc:  # noqa: BLE001

@@ -174,7 +174,7 @@ _WF_STATE_STORE_MOD = f"{_INFRA}.workflow.state_store"
 _WF_DB_SESSION_MOD = f"{_INFRA}.database.session_manager"
 _WF_INSTANCE_MODEL_MOD = f"{_INFRA}.database.models.workflow_instance"
 _S3_MOD = f"{_INFRA}.external_apis.s3"
-_ANTIVIRUS_MOD = f"{_INFRA}.external_apis.antivirus"
+_ANTIVIRUS_MOD = f"{_INFRA}.antivirus.service"
 _RESILIENCE_COORDINATOR_MOD = f"{_INFRA}.resilience.coordinator"
 _RESILIENCE_HEALTH_MOD = f"{_INFRA}.resilience.health"
 _MODEL_REGISTRY_MOD = f"{_INFRA}.database.model_registry"
@@ -709,7 +709,7 @@ def get_antivirus_service_provider() -> Any:
     """Возвращает singleton ``AntivirusService``."""
     if "antivirus_service" in _overrides:
         return _overrides["antivirus_service"]
-    module = resolve_module("external_apis.antivirus")
+    module = resolve_module("antivirus.service")
     return module.get_antivirus_service_dependency()
 
 
