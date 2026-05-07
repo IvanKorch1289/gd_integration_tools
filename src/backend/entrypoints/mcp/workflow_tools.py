@@ -302,7 +302,7 @@ def _register_catalog_tools(mcp: Any) -> None:
 
         try:
             uid = UUID(instance_id)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return orjson.dumps({"error": f"invalid UUID: {instance_id!r}"}).decode()
 
         WorkflowInstanceStore = get_workflow_state_store_provider()

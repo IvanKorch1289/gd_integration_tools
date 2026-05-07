@@ -253,7 +253,7 @@ class OllamaProvider:
             return response.get("message", {}).get("content", "") or response.get(
                 "response", ""
             )
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             return ""
 
     async def embeddings(

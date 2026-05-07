@@ -119,7 +119,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except ImportError, Exception:
+        except (ImportError, Exception):
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 

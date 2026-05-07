@@ -125,7 +125,7 @@ def _public_methods() -> dict[str, inspect.Signature]:
             continue
         try:
             methods[name] = inspect.signature(attr)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             continue
     return methods
 

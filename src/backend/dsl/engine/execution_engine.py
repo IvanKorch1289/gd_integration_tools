@@ -108,7 +108,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
     async def execute(

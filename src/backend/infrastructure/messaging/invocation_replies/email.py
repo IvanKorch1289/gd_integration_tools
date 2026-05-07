@@ -154,5 +154,5 @@ def _format_body(response: InvocationResponse) -> str:
         head = f"Status: {response.status.value.upper()}\n\n"
     try:
         return head + json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return head + repr(response)

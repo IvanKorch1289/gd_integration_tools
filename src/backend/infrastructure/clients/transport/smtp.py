@@ -240,14 +240,14 @@ class SmtpClient(BaseSmtpClient):
                 if not temporary and self._connection_pool.qsize() < self._pool_size:
                     self._connection_pool.put_nowait(connection)
                     return
-        except SMTPException, OSError:
+        except (SMTPException, OSError):
             self.logger.warning(
                 "Ошибка проверки SMTP-соединения при возврате в пул", exc_info=True
             )
 
         try:
             await connection.quit()
-        except SMTPException, OSError:
+        except (SMTPException, OSError):
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:
