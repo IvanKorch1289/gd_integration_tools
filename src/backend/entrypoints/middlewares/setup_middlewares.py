@@ -34,10 +34,6 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
     from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
-    from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
-    from src.backend.entrypoints.middlewares.idempotency import (
-        IdempotencyHeaderMiddleware,
-    )
     from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
@@ -45,10 +41,14 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.blocked_routes import (
         BlockedRoutesMiddleware,
     )
+    from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
     from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
     from src.backend.entrypoints.middlewares.exception_handler import (
         ExceptionHandlerMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.idempotency import (
+        IdempotencyHeaderMiddleware,
     )
     from src.backend.entrypoints.middlewares.otel_middleware import OtelMiddleware
     from src.backend.entrypoints.middlewares.request_body_cache import (
@@ -61,6 +61,7 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.response_cache import (
         ResponseCacheMiddleware,
     )
+    from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
     from src.backend.entrypoints.middlewares.timeout import TimeoutMiddleware
 
     # Порядок оптимизирован для high-load:
@@ -93,6 +94,10 @@ def setup_middlewares(app: FastAPI) -> None:
         # Sprint 0 #12: correlation-id propagation (X-Correlation-ID header).
         # Тонкая обёртка над asgi-correlation-id; интегрируется со structlog.
         (CorrelationIdMiddleware, {}),
+        # Sprint 1 V16: tenant_id propagation (X-Tenant-ID header → contextvar).
+        # Между CorrelationId и Idempotency, чтобы tenant_id попал в structlog
+        # до построения idempotency-key и в audit-event'ы downstream-цепочки.
+        (TenantMiddleware, {}),
         # Sprint 0 #12 + V5: Idempotency-Key для POST/PATCH endpoints.
         # asgi-idempotency-header кэширует ответы по ключу (Redis backend).
         (IdempotencyHeaderMiddleware, {}),

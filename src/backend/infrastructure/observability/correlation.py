@@ -2,12 +2,18 @@
 
 Хранит correlation_id, request_id, tenant_id — доступны
 из любого async-контекста без передачи через аргументы.
+
+Sprint 1 V16: значения дополнительно зеркалируются в
+``structlog.contextvars.bind_contextvars``, чтобы попасть в каждое
+лог-событие без явного ``logger.bind`` (R-V15-11 audit propagation).
 """
 
 from __future__ import annotations
 
 import uuid
 from contextvars import ContextVar
+
+import structlog
 
 __all__ = (
     "correlation_id_var",
@@ -30,12 +36,18 @@ def set_correlation_context(
     request_id: str | None = None,
     tenant_id: str | None = None,
 ) -> None:
+    bind: dict[str, str] = {}
     if correlation_id:
         correlation_id_var.set(correlation_id)
+        bind["correlation_id"] = correlation_id
     if request_id:
         request_id_var.set(request_id)
+        bind["request_id"] = request_id
     if tenant_id:
         tenant_id_var.set(tenant_id)
+        bind["tenant_id"] = tenant_id
+    if bind:
+        structlog.contextvars.bind_contextvars(**bind)
 
 
 def get_correlation_id() -> str:
