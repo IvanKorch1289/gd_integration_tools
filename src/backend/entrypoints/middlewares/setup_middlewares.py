@@ -34,6 +34,10 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
     from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
+    from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
+    from src.backend.entrypoints.middlewares.idempotency import (
+        IdempotencyHeaderMiddleware,
+    )
     from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
@@ -86,6 +90,12 @@ def setup_middlewares(app: FastAPI) -> None:
         # NOTE: CircuitBreakerMiddleware удалён в A2 (ADR-005) — global-state баг.
         # Circuit breaker применяется per-route на уровне HTTP-клиентов.
         (RequestIDMiddleware, {}),
+        # Sprint 0 #12: correlation-id propagation (X-Correlation-ID header).
+        # Тонкая обёртка над asgi-correlation-id; интегрируется со structlog.
+        (CorrelationIdMiddleware, {}),
+        # Sprint 0 #12 + V5: Idempotency-Key для POST/PATCH endpoints.
+        # asgi-idempotency-header кэширует ответы по ключу (Redis backend).
+        (IdempotencyHeaderMiddleware, {}),
         # W26.5: блокирует POST/PUT/PATCH/DELETE при degraded db_main
         # (sqlite_ro fallback). Стоит ПОСЛЕ RequestID (для трассировки)
         # и ПЕРЕД RequestBodyCache (чтобы не читать body заблокированных

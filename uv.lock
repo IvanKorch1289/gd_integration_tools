@@ -300,6 +300,28 @@ wheels = [
 ]
 
 [[package]]
+name = "asgi-correlation-id"
+version = "4.3.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f4/ff/a6538245ac1eaa7733ec6740774e9d5add019e2c63caa29e758c16c0afdd/asgi_correlation_id-4.3.4.tar.gz", hash = "sha256:ea6bc310380373cb9f731dc2e8b2b6fb978a76afe33f7a2384f697b8d6cd811d", size = 20075, upload-time = "2024-10-17T11:44:30.324Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/ab/6936e2663c47a926e0659437b9333ad87d1ff49b1375d239026e0a268eba/asgi_correlation_id-4.3.4-py3-none-any.whl", hash = "sha256:36ce69b06c7d96b4acb89c7556a4c4f01a972463d3d49c675026cbbd08e9a0a2", size = 15262, upload-time = "2024-10-17T11:44:28.739Z" },
+]
+
+[[package]]
+name = "asgi-idempotency-header"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/74/2c6d0c72c2c49bb90da66e0240e83a0250cd6791fc826c178980ae80e7fd/asgi-idempotency-header-0.2.0.tar.gz", hash = "sha256:604b33ebb9517e45cf5872397b25dceb159ba1d4ce0ec6a3d73fd49a0785311e", size = 10149, upload-time = "2022-08-31T21:59:49.208Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/e1/b2d78307c4c298f3d71d0cb221cca1238346270679126c3f818c7eaac502/asgi_idempotency_header-0.2.0-py3-none-any.whl", hash = "sha256:fa88898ceae2f365c699f43230d6ae5554d3641495fb9aa91e18141ae858a71b", size = 9756, upload-time = "2022-08-31T21:59:50.665Z" },
+]
+
+[[package]]
 name = "asgiref"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1657,6 +1679,8 @@ dependencies = [
     { name = "alembic" },
     { name = "apscheduler" },
     { name = "argon2-cffi" },
+    { name = "asgi-correlation-id" },
+    { name = "asgi-idempotency-header" },
     { name = "asyncpg" },
     { name = "beautifulsoup4" },
     { name = "cachetools" },
@@ -1812,6 +1836,8 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.13.3,<2.0.0" },
     { name = "apscheduler", specifier = ">=3.11.0,<4.0.0" },
     { name = "argon2-cffi", specifier = ">=23.1.0,<24.0.0" },
+    { name = "asgi-correlation-id", specifier = ">=4.3.0,<5.0.0" },
+    { name = "asgi-idempotency-header", specifier = ">=0.2.0,<1.0.0" },
     { name = "asyncpg", specifier = ">=0.31.0,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.3,<5.0.0" },
     { name = "cachetools", specifier = ">=5.3.0,<8.0.0" },
