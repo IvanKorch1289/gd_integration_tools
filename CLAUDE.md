@@ -157,6 +157,7 @@ ResponseValidatorProcessor	dsl/engine/processors/validation/	Pydantic-validation
     Определить цель задачи (привязать к Wave/Sprint из PLAN.md).
     Определить потенциально затронутые модули, импортёры и зависимости (Graphify).
     Если задача требует актуальных внешних данных — выполнить web research.
+    Проверить проект через бибилотеку codeclone.
     Составить точный план (plan-execute skill / planmode + Opus). После составления — отправить на согласование. После одобрения — переключиться на Sonnet.
     Выполнять шаги строго по плану.
     После каждого шага — самопроверка (verify-change skill).
