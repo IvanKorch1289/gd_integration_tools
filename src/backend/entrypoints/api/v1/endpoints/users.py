@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
-from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.users import UserFilter
 from src.backend.schemas.route_schemas.users import (
     UserSchemaIn,

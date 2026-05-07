@@ -14,7 +14,7 @@ from src.backend.entrypoints.api.generator.invocation import (
     build_http_command_meta,
     default_payload_factory,
 )
-from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.orderkinds import OrderKindFilter
 from src.backend.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,

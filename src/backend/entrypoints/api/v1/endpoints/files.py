@@ -10,7 +10,7 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionSpec,
     CrudSpec,
 )
-from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
+from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.files import FileFilter
 from src.backend.schemas.route_schemas.files import (
     FileSchemaIn,

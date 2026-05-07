@@ -1,13 +1,13 @@
-"""Rate-limit зависимость для FastAPI-роутов (Sprint 0 #12 → Sprint 1 cleanup).
+"""Rate-limit зависимость для FastAPI-роутов.
 
 В ``fastapi-limiter==0.2.0`` backend — ``pyrate_limiter.Limiter``,
 ``FastAPILimiter.init`` упразднён. Лимит применяется per-route через
 ``Depends(get_default_rate_limiter())``. Identifier и callback —
 общие из ``core.decorators.limiting_callbacks``.
 
-Файл лежит в ``middlewares/`` исторически (Sprint 0 #12 ASGI-bootstrap),
-после миграции на per-route Depends это уже не middleware; перенос в
-``entrypoints/dependencies/`` запланирован отдельным cleanup.
+Расположение в ``entrypoints/dependencies/`` отражает суть API:
+это ``Depends``-объект, не ASGI-middleware. Sprint 1 V16 cleanup
+перенёс файл из ``entrypoints/middlewares/``.
 """
 
 from __future__ import annotations
