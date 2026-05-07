@@ -1,7 +1,8 @@
 """OpenTelemetry auto-instrumentation.
 
-Автоматически инструментирует FastAPI / HTTPX / SQLAlchemy / Redis / Logging /
-aiokafka / aio-pika / PyMongo (Motor) / gRPC client без ручных spans в коде.
+Автоматически инструментирует FastAPI / HTTPX / SQLAlchemy / asyncpg /
+Redis / Logging / aiokafka / aio-pika / PyMongo (Motor) / gRPC client
+без ручных spans в коде.
 
 Активируется в main.py::
     from src.backend.infrastructure.observability.otel_auto import init_otel
@@ -11,6 +12,9 @@ aiokafka / aio-pika / PyMongo (Motor) / gRPC client без ручных spans в
 
 IL1.3 (ADR-022): добавлены Kafka / RabbitMQ / MongoDB / gRPC-client
 instrumentations — закрывает observability-gap в infra-слое.
+
+Sprint 1 V16: добавлен asyncpg instrumentor (detail-level db spans
+поверх SQLAlchemy spans, raw asyncpg-вызовы вне ORM).
 """
 
 from __future__ import annotations
@@ -31,6 +35,7 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     - FastAPI (HTTP server spans)
     - httpx (HTTP client spans)
     - SQLAlchemy (DB query spans)
+    - asyncpg (raw asyncpg detail-level spans) — Sprint 1 V16
     - Redis (command spans)
     - Logging (trace_id/span_id в log records)
     - aiokafka (Kafka produce/consume spans) — IL1.3
@@ -80,6 +85,8 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     _instrument_aiopika()
     _instrument_pymongo()
     _instrument_grpc_client()
+    # Sprint 1 V16: detail-level spans для raw asyncpg вне SQLAlchemy.
+    _instrument_asyncpg()
 
     logger.info(
         "OpenTelemetry initialized: service=%s, env=%s", service_name, environment
@@ -194,3 +201,21 @@ def _instrument_grpc_client() -> None:
         logger.debug("OTel gRPC async client instrumented")
     except ImportError as exc:
         logger.debug("OTel gRPC client instrumentor skipped: %s", exc)
+
+
+def _instrument_asyncpg() -> None:
+    """asyncpg raw-driver spans.
+
+    SQLAlchemy spans покрывают ORM-уровень; asyncpg instrumentation
+    добавляет detail-level spans с ``db.statement`` атрибутами для
+    raw asyncpg.Connection.execute / fetch / executemany — полезно
+    для diff'ов между low-level и ORM-путями. Требует
+    opentelemetry-instrumentation-asyncpg.
+    """
+    try:
+        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
+
+        AsyncPGInstrumentor().instrument()
+        logger.debug("OTel asyncpg instrumented")
+    except ImportError as exc:
+        logger.debug("OTel asyncpg instrumentor skipped: %s", exc)

@@ -39,6 +39,7 @@ dependencies = [
     "opentelemetry-instrumentation-aio-pika>=0.51b0",
     "opentelemetry-instrumentation-pymongo>=0.51b0",
     "opentelemetry-instrumentation-grpc>=0.51b0",
+    "opentelemetry-instrumentation-asyncpg>=0.51b0",
     "purgatory>=3.0.0,<4.0.0",
     "apscheduler>=3.11.0,<4.0.0",
     "faststream[kafka]>=0.6.7,<1.0.0",
