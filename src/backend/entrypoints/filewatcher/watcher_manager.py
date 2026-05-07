@@ -20,6 +20,7 @@ from uuid import uuid4
 
 from watchfiles import Change, awatch
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("WatcherManager", "WatcherSpec", "watcher_manager")
@@ -83,8 +84,9 @@ class WatcherManager:
         self._watchers[spec.id] = spec
         stop_event = asyncio.Event()
         self._stop_events[spec.id] = stop_event
-        self._tasks[spec.id] = asyncio.create_task(
-            self._watch_loop(spec.id, stop_event)
+        self._tasks[spec.id] = get_task_registry().create_task(
+            self._watch_loop(spec.id, stop_event),
+            name=f"filewatcher:{spec.id}",
         )
 
         logger.info(

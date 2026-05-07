@@ -21,6 +21,7 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("MqttSettings", "MqttHandler", "get_mqtt_handler")
 
@@ -84,7 +85,10 @@ class MqttHandler:
             return
 
         self._running = True
-        self._task = asyncio.create_task(self._listen())
+        self._task = get_task_registry().create_task(
+            self._listen(),
+            name=f"mqtt-handler:{self._settings.broker_host}:{self._settings.broker_port}",
+        )
         logger.info(
             "MQTT handler started: %s:%d, topics=%s",
             self._settings.broker_host,

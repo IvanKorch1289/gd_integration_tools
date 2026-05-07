@@ -22,6 +22,7 @@ import asyncio
 import logging
 from typing import Any
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.logging.router import SinkRouter
 
 __all__ = ("BatchingSinkRouter",)
@@ -79,7 +80,7 @@ class BatchingSinkRouter:
     def _ensure_worker(self) -> None:
         """Запускает worker-task на первом dispatch (lazy)."""
         if self._worker_task is None or self._worker_task.done():
-            self._worker_task = asyncio.create_task(
+            self._worker_task = get_task_registry().create_task(
                 self._run(), name="log-batching-worker"
             )
 

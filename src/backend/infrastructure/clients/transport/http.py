@@ -33,6 +33,7 @@ from tenacity import (
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
 from src.backend.core.utils.circuit_breaker import get_circuit_breaker
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.codec.json import json_dumps
 
 __all__ = (
@@ -145,7 +146,7 @@ class HttpClient(BaseHttpClient):
 
     def _start_purger_if_needed(self) -> None:
         if self.purger_task is None or self.purger_task.done():
-            self.purger_task = asyncio.create_task(
+            self.purger_task = get_task_registry().create_task(
                 self._connection_purger(), name="http-client-connection-purger"
             )
 

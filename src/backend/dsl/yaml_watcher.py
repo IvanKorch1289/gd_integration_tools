@@ -28,6 +28,8 @@ from typing import TYPE_CHECKING, Any
 
 from watchfiles import awatch
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 if TYPE_CHECKING:
     from src.backend.dsl.commands.registry import RouteRegistry
     from src.backend.dsl.engine.pipeline import Pipeline
@@ -91,7 +93,9 @@ class DSLYamlWatcher:
         self._initial_load()
 
         self._stop_event = asyncio.Event()
-        self._task = asyncio.create_task(self._consume_loop(), name="dsl-yaml-watcher")
+        self._task = get_task_registry().create_task(
+            self._consume_loop(), name="dsl-yaml-watcher"
+        )
         logger.info(
             "DSLYamlWatcher started: dir=%s, debounce=%dms, initial_routes=%d",
             self._dir,

@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
@@ -443,8 +444,12 @@ class ParallelProcessor(BaseProcessor):
         errors: dict[str, str] = {}
 
         if self._strategy == "first":
+            registry = get_task_registry()
             done, pending = await asyncio.wait(
-                [asyncio.create_task(t) for t in tasks],
+                [
+                    registry.create_task(t, name=f"branch:first:{idx}")
+                    for idx, t in enumerate(tasks)
+                ],
                 return_when=asyncio.FIRST_COMPLETED,
             )
             for task in pending:

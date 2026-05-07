@@ -46,6 +46,7 @@ from src.backend.core.interfaces.invoker import (
 )
 from src.backend.core.interfaces.invoker import Invoker as InvokerProtocol
 from src.backend.core.types.invocation_command import ActionCommandSchema
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.services.execution.action_dispatcher import get_action_dispatcher
 
 __all__ = ("Invoker", "InvocationMode", "get_invoker")
@@ -192,7 +193,10 @@ class Invoker(InvokerProtocol):
         channel = self._resolve_channel(
             request.reply_channel or ReplyChannelKind.API.value
         )
-        task = asyncio.create_task(self._run_and_publish(request, channel))
+        task = get_task_registry().create_task(
+            self._run_and_publish(request, channel),
+            name=f"invoker:async-api:{request.invocation_id}",
+        )
         self._track(task)
         return InvocationResponse(
             invocation_id=request.invocation_id,
@@ -202,7 +206,10 @@ class Invoker(InvokerProtocol):
 
     def _invoke_background(self, request: InvocationRequest) -> InvocationResponse:
         """Fire-and-forget без сохранения результата."""
-        task = asyncio.create_task(self._run_silent(request))
+        task = get_task_registry().create_task(
+            self._run_silent(request),
+            name=f"invoker:background:{request.invocation_id}",
+        )
         self._track(task)
         return InvocationResponse(
             invocation_id=request.invocation_id,
@@ -224,7 +231,10 @@ class Invoker(InvokerProtocol):
                 ),
                 mode=request.mode,
             )
-        task = asyncio.create_task(self._run_and_stream(request, channel))
+        task = get_task_registry().create_task(
+            self._run_and_stream(request, channel),
+            name=f"invoker:streaming:{request.invocation_id}",
+        )
         self._track(task)
         return InvocationResponse(
             invocation_id=request.invocation_id,

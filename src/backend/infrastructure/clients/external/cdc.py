@@ -26,6 +26,8 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 from uuid import uuid4
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = ("CDCClient", "CDCSubscription", "CDCEvent", "get_cdc_client")
 
 logger = logging.getLogger(__name__)
@@ -437,7 +439,7 @@ class CDCClient:
         self._subscriptions[sub.id] = sub
 
         strategy_impl = self._STRATEGIES[strategy]()
-        task = asyncio.create_task(
+        task = get_task_registry().create_task(
             self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}"
         )
         self._tasks[sub.id] = task

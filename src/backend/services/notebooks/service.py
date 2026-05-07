@@ -117,11 +117,13 @@ def _trigger_rag_index(notebook: Notebook) -> None:
 def _trigger_rag_delete(notebook_id: str) -> None:
     """Best-effort fire-and-forget удаление из RAG."""
     try:
-        import asyncio
-
+        from src.backend.core.utils.task_registry import get_task_registry
         from src.backend.services.notebooks.indexer import get_notebook_indexer
 
-        asyncio.create_task(get_notebook_indexer().delete_one(notebook_id))
+        get_task_registry().create_task(
+            get_notebook_indexer().delete_one(notebook_id),
+            name=f"notebook-indexer:delete:{notebook_id}",
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning("RAG-удаление notebook'а %s не запущено: %s", notebook_id, exc)
 

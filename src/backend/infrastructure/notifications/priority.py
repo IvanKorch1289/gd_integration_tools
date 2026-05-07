@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Final, Literal
 
 from src.backend.core.config.pooling import PoolingProfile
+from src.backend.core.utils.task_registry import get_task_registry
 
 _logger = logging.getLogger(__name__)
 
@@ -85,14 +86,16 @@ class PriorityRouter:
         if self._started:
             return
         for i in range(self.tx_profile.max_size):
-            t = asyncio.create_task(self._worker_loop("tx", self._tx_queue))
-            t.set_name(f"notif-worker-tx-{i}")
+            t = get_task_registry().create_task(
+                self._worker_loop("tx", self._tx_queue),
+                name=f"notif-worker-tx-{i}",
+            )
             self._workers.append(t)
         for i in range(self.marketing_profile.max_size):
-            t = asyncio.create_task(
-                self._worker_loop("marketing", self._marketing_queue)
+            t = get_task_registry().create_task(
+                self._worker_loop("marketing", self._marketing_queue),
+                name=f"notif-worker-mkt-{i}",
             )
-            t.set_name(f"notif-worker-mkt-{i}")
             self._workers.append(t)
         self._started = True
         _logger.info(

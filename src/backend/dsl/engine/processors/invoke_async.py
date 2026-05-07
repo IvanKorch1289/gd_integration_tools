@@ -28,6 +28,7 @@ from src.backend.core.interfaces.action_dispatcher import (
     ActionGatewayDispatcher,
     DispatchContext,
 )
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -80,7 +81,7 @@ class InvokeAsyncProcessor(BaseProcessor):
             source=self._source,
         )
 
-        task = asyncio.create_task(
+        task = get_task_registry().create_task(
             self._dispatch_and_log(payload, ctx), name=f"invoke_async:{self._action}"
         )
         # Уберечь loop от warning'а про unawaited exceptions.

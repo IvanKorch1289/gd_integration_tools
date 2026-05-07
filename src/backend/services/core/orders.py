@@ -97,11 +97,13 @@ class OrderService(
     def _delete_order_index_async(self, value: int) -> None:
         """Wave 9.3.2: удаление документа из ES (fire-and-forget)."""
         try:
-            import asyncio
-
+            from src.backend.core.utils.task_registry import get_task_registry
             from src.backend.services.io.indexers import get_order_indexer
 
-            asyncio.create_task(get_order_indexer().delete_one(value))
+            get_task_registry().create_task(
+                get_order_indexer().delete_one(value),
+                name=f"order-indexer:delete:{value}",
+            )
         except Exception:  # noqa: BLE001
             return
 

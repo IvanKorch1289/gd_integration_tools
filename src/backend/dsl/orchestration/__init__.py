@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, Awaitable, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = ("Sensor", "Backfill", "DryRun", "HumanApproval")
 
 
@@ -54,7 +56,9 @@ class Sensor:
                     )
                 await asyncio.sleep(self.interval_seconds)
 
-        self._task = asyncio.create_task(_loop(), name=f"sensor:{self.name}")
+        self._task = get_task_registry().create_task(
+            _loop(), name=f"sensor:{self.name}"
+        )
 
     async def stop(self) -> None:
         if self._task:

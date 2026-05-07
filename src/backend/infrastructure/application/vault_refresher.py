@@ -20,6 +20,8 @@ from collections import defaultdict
 from os import getenv
 from typing import Any, Awaitable, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = ("VaultSecretRefresher", "get_vault_refresher")
 
 logger = logging.getLogger("vault.refresher")
@@ -79,7 +81,10 @@ class VaultSecretRefresher:
             return
 
         self._running = True
-        self._task = asyncio.create_task(self._refresh_loop())
+        self._task = get_task_registry().create_task(
+            self._refresh_loop(),
+            name="vault-secret-refresher",
+        )
         logger.info("Vault secret refresher started (interval=%ds)", self._interval)
 
     async def stop(self) -> None:

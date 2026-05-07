@@ -331,10 +331,12 @@ class AsyncBatcher:
             logger.debug("AsyncBatcher flush_fn raised; batch dropped", exc_info=True)
 
     async def start(self) -> None:
-        import asyncio
+        from src.backend.core.utils.task_registry import get_task_registry
 
         self._running = True
-        self._task = asyncio.create_task(self._periodic_flush())
+        self._task = get_task_registry().create_task(
+            self._periodic_flush(), name="async-batcher-flush"
+        )
 
     async def stop(self) -> None:
         self._running = False

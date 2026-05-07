@@ -7,11 +7,11 @@ Postgres остаётся source-of-truth; ES — secondary search index для
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
+from src.backend.core.utils.task_registry import get_task_registry
 
 if TYPE_CHECKING:
     from src.backend.services.io.search import SearchService
@@ -77,9 +77,12 @@ class OrderIndexer:
             return 0
 
     def index_one_fire_and_forget(self, order: Any) -> None:
-        """Не блокирует caller — отправляет index_one через ``create_task``."""
+        """Не блокирует caller — отправляет index_one через TaskRegistry."""
         try:
-            asyncio.create_task(self.index_one(order))
+            get_task_registry().create_task(
+                self.index_one(order),
+                name=f"order-indexer:index-one:{getattr(order, 'id', 'unknown')}",
+            )
         except RuntimeError:
             # Нет event loop'а — пропускаем.
             return

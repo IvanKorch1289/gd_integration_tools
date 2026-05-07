@@ -32,6 +32,7 @@ from src.backend.core.clock import RealClock
 from src.backend.core.interfaces.clock import Clock
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 from src.backend.core.types.watermark import LatePolicy, WatermarkState
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.late_event_policy import apply_late_policy
@@ -313,7 +314,9 @@ class TumblingWindowProcessor(_BaseWindow):
         async with self._lock:
             self._buffer.append(exchange.in_message.body)
             if self._flush_task is None or self._flush_task.done():
-                self._flush_task = asyncio.create_task(self._timed_flush())
+                self._flush_task = get_task_registry().create_task(
+                    self._timed_flush(), name=f"tumbling-flush:{self.name}"
+                )
             if len(self._buffer) >= self._size:
                 bucket = list(self._buffer)
                 self._buffer.clear()
@@ -373,7 +376,9 @@ class SlidingWindowProcessor(_BaseWindow):
         async with self._lock:
             self._buffer.append((now, exchange.in_message.body))
             if self._task is None or self._task.done():
-                self._task = asyncio.create_task(self._emit_loop())
+                self._task = get_task_registry().create_task(
+                    self._emit_loop(), name=f"sliding-emit:{self.name}"
+                )
 
     async def _emit_loop(self) -> None:
         # Окно скользит пока есть данные; останавливаемся после пустого шага.
@@ -434,7 +439,9 @@ class SessionWindowProcessor(_BaseWindow):
             self._last_seen = self._clock.monotonic()
             self._buffer.append(exchange.in_message.body)
             if self._task is None or self._task.done():
-                self._task = asyncio.create_task(self._gap_watcher())
+                self._task = get_task_registry().create_task(
+                    self._gap_watcher(), name=f"session-gap:{self.name}"
+                )
 
     async def _gap_watcher(self) -> None:
         while True:
@@ -486,7 +493,10 @@ class GroupByKeyProcessor(_BaseWindow):
         async with self._lock:
             self._groups[key].append(exchange.in_message.body)
             if self._task is None or self._task.done():
-                self._task = asyncio.create_task(self._flush_after_window())
+                self._task = get_task_registry().create_task(
+                    self._flush_after_window(),
+                    name=f"group-by-flush:{self.name}",
+                )
 
     async def _flush_after_window(self) -> None:
         await asyncio.sleep(self._window)

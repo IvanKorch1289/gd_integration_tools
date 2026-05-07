@@ -27,6 +27,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = (
     "WorkerProbesServer",
     "WORKER_ACTIVE_EXECUTIONS",
@@ -98,7 +100,7 @@ class WorkerProbesServer:
             lifespan="off",
         )
         self._server = uvicorn.Server(config)
-        self._serve_task = asyncio.create_task(
+        self._serve_task = get_task_registry().create_task(
             self._server.serve(), name="worker-probes-uvicorn"
         )
         WORKER_UP.labels(worker_id=self._worker_id).set(1)

@@ -19,6 +19,7 @@ from src.backend.core.di.providers import (
     get_redis_pubsub_factory_provider,
     get_redis_set_factory_provider,
 )
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("WSBroadcast", "ws_broadcast")
 
@@ -67,7 +68,9 @@ class WSBroadcast:
             except Exception as exc:
                 logger.error("WS broadcast listener crashed: %s", exc)
 
-        self._listener_task = asyncio.create_task(_loop())
+        self._listener_task = get_task_registry().create_task(
+            _loop(), name="ws-broadcast-listener"
+        )
         logger.info("WS broadcast listener started")
 
     async def stop_listener(self) -> None:

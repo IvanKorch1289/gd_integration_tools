@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = (
     "DegradationMode",
     "DegradationManager",
@@ -269,7 +271,9 @@ class SelfHealer:
         except Exception as exc:  # noqa: BLE001
             logger.debug("APScheduler недоступен, fallback на asyncio: %s", exc)
 
-        self._task = asyncio.create_task(self._heal_loop())
+        self._task = get_task_registry().create_task(
+            self._heal_loop(), name="self-healer-loop"
+        )
         logger.info(
             "SelfHealer started via asyncio loop (interval=%ds)", self._interval
         )

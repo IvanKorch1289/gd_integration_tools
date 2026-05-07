@@ -32,6 +32,8 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Awaitable, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 if TYPE_CHECKING:
     import asyncpg
 
@@ -104,7 +106,7 @@ class OutboxListener:
 
         self._conn = await asyncpg.connect(self._dsn)
         await self._conn.add_listener(self._channel, self._on_notify)
-        self._backup_task = asyncio.create_task(
+        self._backup_task = get_task_registry().create_task(
             self._backup_loop(), name="outbox-backup-poll"
         )
         self._started = True
@@ -151,7 +153,7 @@ class OutboxListener:
             # Агрегируем до `_debounce_s` прежде чем звать drain_handler.
             self._pending_ids.add(payload)
             if self._debounce_task is None or self._debounce_task.done():
-                self._debounce_task = asyncio.create_task(
+                self._debounce_task = get_task_registry().create_task(
                     self._debounce_flush(), name="outbox-debounce-flush"
                 )
 

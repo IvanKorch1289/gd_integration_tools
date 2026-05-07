@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("CDCSource",)
@@ -68,7 +69,10 @@ class CDCSource:
         if self._task is not None and not self._task.done():
             raise RuntimeError(f"CDCSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
-        self._task = asyncio.create_task(self._run(on_event))
+        self._task = get_task_registry().create_task(
+            self._run(on_event),
+            name=f"source-cdc:{self.source_id}",
+        )
         logger.info(
             "CDCSource started: id=%s slot=%s plugin=%s",
             self.source_id,

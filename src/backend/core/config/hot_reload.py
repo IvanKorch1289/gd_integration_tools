@@ -22,6 +22,8 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
+from src.backend.core.utils.task_registry import get_task_registry
+
 __all__ = ("ConfigHotReloader", "get_hot_reloader")
 
 logger = logging.getLogger("config.hot_reload")
@@ -84,7 +86,9 @@ class ConfigHotReloader:
         if self._task and not self._task.done():
             return  # уже запущен
         self._stop_event.clear()
-        self._task = asyncio.create_task(self._watch_loop(), name="config-hot-reload")
+        self._task = get_task_registry().create_task(
+            self._watch_loop(), name="config-hot-reload"
+        )
         logger.info("Config hot-reload started, watching %d paths", len(self._paths))
 
     async def stop(self) -> None:

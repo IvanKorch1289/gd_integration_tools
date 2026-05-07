@@ -47,6 +47,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 from uuid import UUID
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
 from src.backend.infrastructure.workflow.event_store import WorkflowEventStore
@@ -189,15 +190,17 @@ class DurableWorkflowRunner:
         self._running = True
         # 1) LISTEN worker (если asyncpg доступен и DSN задан).
         if self._listener_dsn is not None:
-            self._listen_task = asyncio.create_task(
+            self._listen_task = get_task_registry().create_task(
                 self._listen_loop(), name="wf-listen"
             )
         # 2) backup polling loop.
-        self._backup_task = asyncio.create_task(
+        self._backup_task = get_task_registry().create_task(
             self._backup_loop(), name="wf-backup-poll"
         )
         # 3) dispatcher loop — читает из queue и запускает workers.
-        asyncio.create_task(self._dispatch_loop(), name="wf-dispatch")
+        get_task_registry().create_task(
+            self._dispatch_loop(), name="wf-dispatch"
+        )
         _logger.info(
             "workflow runner started",
             extra={
@@ -306,7 +309,7 @@ class DurableWorkflowRunner:
                     continue
                 self._active_executions.add(workflow_id)
             # Fire-and-forget: semaphore ограничивает concurrency.
-            asyncio.create_task(
+            get_task_registry().create_task(
                 self._execute_one(workflow_id), name=f"wf-exec-{workflow_id}"
             )
 

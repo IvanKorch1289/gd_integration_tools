@@ -9,11 +9,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING
 
 from src.backend.core.di import app_state_singleton
+from src.backend.core.utils.task_registry import get_task_registry
 
 if TYPE_CHECKING:
     from src.backend.services.ai.rag_service import RAGService
@@ -76,9 +76,12 @@ class NotebookIndexer:
         return ok
 
     def index_one_fire_and_forget(self, notebook: Notebook) -> None:
-        """Не блокирует caller — отправляет index_one через ``create_task``."""
+        """Не блокирует caller — отправляет index_one через TaskRegistry."""
         try:
-            asyncio.create_task(self.index_one(notebook))
+            get_task_registry().create_task(
+                self.index_one(notebook),
+                name=f"notebook-indexer:index-one:{notebook.id}",
+            )
         except RuntimeError:
             return
 

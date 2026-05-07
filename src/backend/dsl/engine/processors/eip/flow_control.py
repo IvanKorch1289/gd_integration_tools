@@ -3,6 +3,7 @@ import logging
 import time
 from typing import Any, Callable
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -56,7 +57,7 @@ class WireTapProcessor(BaseProcessor):
                 except Exception as exc:
                     _eip_logger.debug("Wire tap processor error: %s", exc)
 
-        task = asyncio.create_task(_run_tap())
+        task = get_task_registry().create_task(_run_tap(), name="eip-wire-tap")
         task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
 
 

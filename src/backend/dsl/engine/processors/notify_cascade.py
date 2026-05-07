@@ -40,6 +40,7 @@ from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -98,7 +99,7 @@ class NotifyCascadeProcessor(BaseProcessor):
             body=str(body) if body is not None else "",
         )
 
-        task = asyncio.create_task(
+        task = get_task_registry().create_task(
             self._cascade_send(message),
             name=f"notify_cascade:{self._adapters[0].channel}",
         )
