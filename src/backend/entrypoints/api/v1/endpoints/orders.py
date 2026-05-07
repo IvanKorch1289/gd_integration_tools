@@ -14,6 +14,7 @@ from src.backend.entrypoints.api.generator.invocation import (
     build_http_command_meta,
     default_payload_factory,
 )
+from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.orders import OrderFilter
 from src.backend.schemas.route_schemas.orders import (
     OrderIdPathSchema,
@@ -22,7 +23,6 @@ from src.backend.schemas.route_schemas.orders import (
     OrderVersionSchemaOut,
 )
 from src.backend.services.core.orders import get_order_service
-from src.backend.services.decorators.limiting import route_limiting
 
 __all__ = ("router",)
 
@@ -30,8 +30,7 @@ __all__ = ("router",)
 router = APIRouter()
 builder = ActionRouterBuilder(router)
 
-common_dependencies = [Depends(require_api_key)]
-common_decorators = [route_limiting]
+common_dependencies = [Depends(require_api_key), Depends(get_default_rate_limiter())]
 common_tags = ("Orders",)
 
 internal_actions_stream = settings.redis.get_stream_name("actions")
@@ -46,7 +45,6 @@ builder.add_crud_resource(
         version_schema=OrderVersionSchemaOut,
         filter_class=OrderFilter,
         dependencies=common_dependencies,
-        decorators=common_decorators,
         tags=common_tags,
         id_param_name="object_id",
         id_field_name="id",
@@ -71,7 +69,6 @@ builder.add_actions(
             path_model=OrderIdPathSchema,
             status_code=status.HTTP_200_OK,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
             invocation=InvocationSpec(
                 event=EventPublishSpec(
@@ -97,7 +94,6 @@ builder.add_actions(
             path_model=OrderIdPathSchema,
             status_code=status.HTTP_200_OK,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
             invocation=InvocationSpec(
                 event=EventPublishSpec(
@@ -123,7 +119,6 @@ builder.add_actions(
             path_model=OrderIdPathSchema,
             status_code=status.HTTP_200_OK,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
             invocation=InvocationSpec(
                 event=EventPublishSpec(
@@ -145,7 +140,6 @@ builder.add_actions(
             service_method="get_order_file_from_storage",
             path_model=OrderIdPathSchema,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
         ),
         ActionSpec(
@@ -158,7 +152,6 @@ builder.add_actions(
             service_method="get_order_file_from_storage_base64",
             path_model=OrderIdPathSchema,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
         ),
         ActionSpec(
@@ -171,7 +164,6 @@ builder.add_actions(
             service_method="get_order_file_from_storage_link",
             path_model=OrderIdPathSchema,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
         ),
         ActionSpec(
@@ -184,7 +176,6 @@ builder.add_actions(
             service_method="get_order_file_link_and_json_result_for_request",
             path_model=OrderIdPathSchema,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
         ),
         ActionSpec(
@@ -197,7 +188,6 @@ builder.add_actions(
             service_method="get_order_file_base64_and_json_result_for_request",
             path_model=OrderIdPathSchema,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
         ),
     ]

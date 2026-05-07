@@ -12,7 +12,6 @@ from src.backend.infrastructure.database.database import (
     get_external_db_registry,
 )
 from src.backend.infrastructure.decorators.caching import close_caches
-from src.backend.infrastructure.decorators.limiting import init_limiter
 from src.backend.infrastructure.external_apis.logging_service import get_log_manager
 from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
@@ -197,7 +196,6 @@ starting_operations: list[OperationItem] = [
         _clickhouse_enabled,
     ),
     ("smtp_pool", lambda: get_smtp_client().initialize_pool(), None),
-    ("rate_limiter", init_limiter, _redis_enabled),
     (
         "redis_streams",
         lambda: get_redis_client().create_initial_streams(),

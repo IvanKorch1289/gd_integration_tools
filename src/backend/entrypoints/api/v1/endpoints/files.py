@@ -10,13 +10,13 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionSpec,
     CrudSpec,
 )
+from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.files import FileFilter
 from src.backend.schemas.route_schemas.files import (
     FileSchemaIn,
     FileSchemaOut,
     FileVersionSchemaOut,
 )
-from src.backend.services.decorators.limiting import route_limiting
 from src.backend.services.io.files import get_file_service
 
 __all__ = ("router", "storage_router")
@@ -29,8 +29,7 @@ storage_router = APIRouter()
 crud_builder = ActionRouterBuilder(router)
 storage_builder = ActionRouterBuilder(storage_router)
 
-common_dependencies = [Depends(require_api_key)]
-common_decorators = [route_limiting]
+common_dependencies = [Depends(require_api_key), Depends(get_default_rate_limiter())]
 
 
 # --- CRUD для метаданных файлов (router) ---
@@ -43,7 +42,6 @@ crud_builder.add_crud_resource(
         version_schema=FileVersionSchemaOut,
         filter_class=FileFilter,
         dependencies=common_dependencies,
-        decorators=common_decorators,
         tags=("Files",),
         id_param_name="object_id",
         id_field_name="id",
@@ -107,7 +105,7 @@ async def upload_file_handler(
 # проще оставить её как обычный роут FastAPI, а остальные методы вынести в ActionSpec.
 storage_router.add_api_route(
     path="/upload_file",
-    endpoint=route_limiting(upload_file_handler),
+    endpoint=upload_file_handler,
     methods=["POST"],
     status_code=status.HTTP_201_CREATED,
     summary="Проверить прикреплённый файл и сохранить в S3",
@@ -127,7 +125,6 @@ storage_builder.add_actions(
             service_getter=get_s3_service,
             service_method="download_file",
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=("Storage",),
             argument_aliases={"file_uuid": "key"},
         ),
@@ -140,7 +137,6 @@ storage_builder.add_actions(
             service_getter=get_s3_service,
             service_method="delete_file_object",
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=("Storage",),
             # Тут в старом эндпоинте file_uuid приходил из Query (поскольку путь без параметра),
             # так что argument_aliases смапит его в key для S3Service.
@@ -154,7 +150,6 @@ storage_builder.add_actions(
             service_getter=get_s3_service,
             service_method="generate_download_url",
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=("Storage",),
             argument_aliases={"file_uuid": "key"},
         ),
@@ -166,7 +161,6 @@ storage_builder.add_actions(
             service_getter=get_s3_service,
             service_method="get_file_base64",
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=("Storage",),
             argument_aliases={"file_uuid": "key"},
         ),
@@ -178,7 +172,6 @@ storage_builder.add_actions(
             service_getter=get_av_service,
             service_method="scan_s3_file",
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=("Storage",),
             argument_aliases={"file_uuid": "key"},
         ),

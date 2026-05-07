@@ -14,6 +14,7 @@ from src.backend.entrypoints.api.generator.invocation import (
     build_http_command_meta,
     default_payload_factory,
 )
+from src.backend.entrypoints.middlewares.rate_limit import get_default_rate_limiter
 from src.backend.schemas.filter_schemas.orderkinds import OrderKindFilter
 from src.backend.schemas.route_schemas.orderkinds import (
     OrderKindSchemaIn,
@@ -21,7 +22,6 @@ from src.backend.schemas.route_schemas.orderkinds import (
     OrderKindVersionSchemaOut,
 )
 from src.backend.services.core.orderkinds import get_order_kind_service
-from src.backend.services.decorators.limiting import route_limiting
 
 __all__ = ("router",)
 
@@ -29,8 +29,7 @@ __all__ = ("router",)
 router = APIRouter()
 builder = ActionRouterBuilder(router)
 
-common_dependencies = [Depends(require_api_key)]
-common_decorators = [route_limiting]
+common_dependencies = [Depends(require_api_key), Depends(get_default_rate_limiter())]
 common_tags = ("OrderKinds",)
 
 
@@ -43,7 +42,6 @@ builder.add_crud_resource(
         version_schema=OrderKindVersionSchemaOut,
         filter_class=OrderKindFilter,
         dependencies=common_dependencies,
-        decorators=common_decorators,
         tags=common_tags,
         id_param_name="object_id",
         id_field_name="id",
@@ -68,7 +66,6 @@ builder.add_actions(
             service_method="create_or_update_kinds_from_skb",
             status_code=status.HTTP_200_OK,
             dependencies=common_dependencies,
-            decorators=common_decorators,
             tags=common_tags,
             invocation=InvocationSpec(
                 event=EventPublishSpec(

@@ -1,10 +1,4 @@
-"""Callbacks для rate-limit (W6 layer cleanup).
-
-Перенесены в ``core/`` чтобы и ``services/decorators/limiting`` (декоратор),
-и ``infrastructure/decorators/limiting`` (``init_limiter``) могли
-импортировать их без layer-violation: и services, и infrastructure
-имеют право зависеть от ``core``.
-"""
+"""Общие identifier/callback для rate-limit поверх ``fastapi_limiter``."""
 
 from __future__ import annotations
 
