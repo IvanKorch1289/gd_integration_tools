@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.external_apis.logging_service import app_logger
 
 __all__ = ("lifespan",)
@@ -467,11 +468,10 @@ async def _start_v11_hot_reload(app: FastAPI) -> None:
     * изменение ``*.dsl.yaml`` внутри ``routes/<name>/`` — pipeline-reload
       без перепроверки manifest'а.
 
-    Реализован через единственный ``asyncio.Task``; cancel в shutdown.
+    Реализован через единственный ``asyncio.Task`` (через TaskRegistry);
+    cancel выполняется на shutdown через TaskRegistry.shutdown_all.
     Семантика debounce — наследуется из watchfiles.awatch.
     """
-    import asyncio
-
     from src.backend.core.config.settings import settings as app_settings
 
     if not app_settings.v11.hot_reload_enabled:
@@ -508,7 +508,7 @@ async def _start_v11_hot_reload(app: FastAPI) -> None:
             except Exception as exc:  # noqa: BLE001
                 app_logger.warning("V11 hot-reload handler error: %s", exc)
 
-    task = asyncio.create_task(_watch_loop(), name="v11-hot-reload")
+    task = get_task_registry().create_task(_watch_loop(), name="v11-hot-reload")
     app.state.v11_hot_reload_task = task
     app_logger.info(
         "V11 hot-reload started: watching %s (debounce=%dms)", watch_dirs, debounce_ms
@@ -597,6 +597,14 @@ async def lifespan(app: FastAPI):
 
     app_logger.info("Запуск приложения...")
     startup_completed = False
+
+    # Sprint 1 V16 (R-V15-11): инициализация TaskRegistry singleton —
+    # все asyncio.create_task в проекте проходят через него для
+    # graceful shutdown и correlation_id propagation. Выносится ДО
+    # try, чтобы finally-блок мог корректно вызвать shutdown_all даже
+    # при падении в startup.
+    task_registry = get_task_registry()
+    app.state.task_registry = task_registry
 
     try:
         from src.backend.plugins.composition.di import register_app_state
@@ -761,3 +769,39 @@ async def lifespan(app: FastAPI):
             await shutdown_log_sinks()
         except Exception as sink_exc:  # noqa: BLE001
             app_logger.warning("LogSink shutdown error: %s", sink_exc)
+
+        # Sprint 1 V16: pyrate_limiter Leaker shutdown-hook.
+        # TODO V15.1 Sprint 1 Single Entry: вынести в core/resilience/_pyrate_compat.
+        # Singleton Limiter из get_default_limiter() запускает фоновую
+        # `_leaker.aio_leak_task`, которая течёт без явной остановки.
+        try:
+            import asyncio as _asyncio
+
+            from src.backend.entrypoints.dependencies.rate_limit import (
+                get_default_limiter,
+            )
+
+            limiter = get_default_limiter()
+            leak_task = getattr(
+                getattr(limiter, "_leaker", None), "aio_leak_task", None
+            )
+            if leak_task is not None and not leak_task.done():
+                leak_task.cancel()
+                try:
+                    await leak_task
+                except _asyncio.CancelledError:  # noqa: S110
+                    pass
+                except Exception as leak_done_exc:  # noqa: BLE001
+                    app_logger.debug(
+                        "pyrate Leaker join error: %s", leak_done_exc
+                    )
+        except Exception as leaker_exc:  # noqa: BLE001
+            app_logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
+
+        # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
+        # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех
+        # задачи, которые ещё могли логировать остановку, успели завершиться.
+        try:
+            await task_registry.shutdown_all(timeout=10)
+        except Exception as tr_exc:  # noqa: BLE001
+            app_logger.warning("TaskRegistry shutdown error: %s", tr_exc)
