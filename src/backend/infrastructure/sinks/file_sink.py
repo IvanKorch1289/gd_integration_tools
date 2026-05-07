@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.backend.utilities.codecs.json import dumps_str
+from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("FileSink",)
 

@@ -36,8 +36,8 @@ from typing import Any
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.utilities.codecs.json import canonical_json_bytes
-from src.backend.utilities.codecs.json import loads as _json_loads
+from src.backend.dsl.codec.json import canonical_json_bytes
+from src.backend.dsl.codec.json import loads as _json_loads
 
 __all__ = ("WindowedDedupProcessor", "WindowedCollectProcessor")
 

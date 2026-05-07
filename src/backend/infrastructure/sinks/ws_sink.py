@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
-from src.backend.utilities.codecs.json import dumps_str
+from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("WsSink",)
 

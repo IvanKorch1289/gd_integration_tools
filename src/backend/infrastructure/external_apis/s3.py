@@ -8,7 +8,7 @@ from src.backend.infrastructure.decorators.caching import (
     existence_cache,
     metadata_cache,
 )
-from src.backend.utilities.codecs.base64 import decode_base64, encode_base64
+from src.backend.dsl.codec.base64 import decode_base64, encode_base64
 
 __all__ = ("S3Service", "get_s3_service", "get_s3_service_dependency")
 

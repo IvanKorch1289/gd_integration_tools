@@ -1639,19 +1639,19 @@ class RouteBuilder:
     def avro_encode(self, schema: dict[str, Any]) -> "RouteBuilder":
         """Сериализация dict/list-of-dict → Avro bytes через ``fastavro``."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "AvroEncodeProcessor", schema=schema
+            "src.backend.dsl.codec.format_converters", "AvroEncodeProcessor", schema=schema
         )
 
     def avro_decode(self, schema: dict[str, Any] | None = None) -> "RouteBuilder":
         """Десериализация Avro bytes → list[dict] через ``fastavro``."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "AvroDecodeProcessor", schema=schema
+            "src.backend.dsl.codec.format_converters", "AvroDecodeProcessor", schema=schema
         )
 
     def protobuf_encode(self, message_class: str) -> "RouteBuilder":
         """dict → protobuf bytes; ``message_class`` в формате ``module:Class``."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters",
+            "src.backend.dsl.codec.format_converters",
             "ProtobufEncodeProcessor",
             message_class=message_class,
         )
@@ -1659,7 +1659,7 @@ class RouteBuilder:
     def protobuf_decode(self, message_class: str) -> "RouteBuilder":
         """protobuf bytes → dict через runtime-resolve message-класса."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters",
+            "src.backend.dsl.codec.format_converters",
             "ProtobufDecodeProcessor",
             message_class=message_class,
         )
@@ -1667,19 +1667,19 @@ class RouteBuilder:
     def toml_encode(self) -> "RouteBuilder":
         """dict → TOML-строка (минимальный встроенный энкодер)."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "TomlEncodeProcessor"
+            "src.backend.dsl.codec.format_converters", "TomlEncodeProcessor"
         )
 
     def toml_decode(self) -> "RouteBuilder":
         """TOML-строка/bytes → dict через stdlib ``tomllib``."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "TomlDecodeProcessor"
+            "src.backend.dsl.codec.format_converters", "TomlDecodeProcessor"
         )
 
     def markdown_to_html(self, *, preset: str = "commonmark") -> "RouteBuilder":
         """Markdown → HTML через ``markdown-it-py``."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters",
+            "src.backend.dsl.codec.format_converters",
             "MarkdownToHtmlProcessor",
             preset=preset,
         )
@@ -1687,19 +1687,19 @@ class RouteBuilder:
     def html_to_markdown(self) -> "RouteBuilder":
         """HTML → Markdown (markdownify, fallback на эвристику)."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "HtmlToMarkdownProcessor"
+            "src.backend.dsl.codec.format_converters", "HtmlToMarkdownProcessor"
         )
 
     def jsonl_encode(self) -> "RouteBuilder":
         """list[dict] → NDJSON-строка (одна запись на строку)."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters", "JsonLinesEncodeProcessor"
+            "src.backend.dsl.codec.format_converters", "JsonLinesEncodeProcessor"
         )
 
     def jsonl_decode(self, *, ignore_blank_lines: bool = True) -> "RouteBuilder":
         """NDJSON-строка → list[dict]."""
         return self._add_lazy(
-            "src.backend.dsl.transforms.format_converters",
+            "src.backend.dsl.codec.format_converters",
             "JsonLinesDecodeProcessor",
             ignore_blank_lines=ignore_blank_lines,
         )

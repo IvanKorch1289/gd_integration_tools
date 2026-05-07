@@ -16,7 +16,7 @@ import pytest
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.transforms.format_converters import (
+from src.backend.dsl.codec.format_converters import (
     AvroDecodeProcessor,
     AvroEncodeProcessor,
     HtmlToMarkdownProcessor,

@@ -54,7 +54,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable
 
-from src.backend.utilities.codecs.json import canonical_json_bytes, dumps_str
+from src.backend.dsl.codec.json import canonical_json_bytes, dumps_str
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

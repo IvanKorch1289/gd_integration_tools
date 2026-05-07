@@ -27,7 +27,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """
         from re import compile
 
-        from src.backend.utilities.converters import convert_pattern
+        from src.backend.dsl.codec.converters import convert_pattern
 
         super().__init__(app)
         # Компилируем шаблоны исключений из настроек
