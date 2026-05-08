@@ -99,10 +99,20 @@ ai = [
     "langchain-core>=0.3.0",
     "langchain-community>=0.3.0",
     "langgraph>=0.3.0",
-    "langfuse>=2.0.0"
+    "langfuse>=2.0.0",
+    # Wave 1.7 (S1 R-V15-4): изолированный sandbox для AI code-execution.
+    # Lazy-import внутри infrastructure/ai/e2b_sandbox.py; при отсутствии
+    # пакета или E2B_API_KEY используется NoOpSandbox (явный отказ).
+    "e2b-code-interpreter>=1.0.0,<3.0.0",
 ]
 security = [
     "presidio-analyzer>=2.2.0"
+]
+# === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
+# python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
+# чтобы dev_light без libxmlsec1 не падал. Lazy-import в SamlBackend.
+auth-saml = [
+    "python3-saml>=1.16.0,<2.0.0",
 ]
 mcp = [
     "fastmcp>=2.0.0"
@@ -116,6 +126,14 @@ rpa = [
 http3 = [
     "aioquic>=1.1.0,<2.0.0",
 ]
+# Sprint 5 — DSL pilot batch: JsonPath / UnitConversion / IcsCalendar.
+# Все три зависимости pure-Python (без C-extensions) и совместимы с Python 3.14.
+# Lazy-import внутри процессоров — установка extra нужна только при реальном использовании.
+dsl-extras = [
+    "jsonpath-ng>=1.6.0,<2.0.0",
+    "pint>=0.24.0,<1.0.0",
+    "icalendar>=5.0.0,<7.0.0",
+]
 rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
@@ -127,6 +145,17 @@ rag = [
 # (см. services/ai/embedding_providers.py).
 embeddings-fastembed-legacy = [
     "fastembed>=0.4.0,<1.0.0",
+]
+# К4 MVP (Sprint S5): AI Stack 2026.
+# litellm — unified LLM-gateway, pydantic-ai — typed agents,
+# langmem — long-term memory, FlagEmbedding — BGE-M3 + reranker-v2-m3,
+# instructor — structured-output fallback. Default-OFF в settings.
+ai-2026 = [
+    "litellm>=1.55.0,<2.0.0",
+    "pydantic-ai>=0.5.0,<0.6.0",
+    "langmem>=0.0.30,<0.2.0",
+    "FlagEmbedding>=1.3.0,<2.0.0",
+    "instructor>=1.7.0,<2.0.0",
 ]
 # Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
 # backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
@@ -159,6 +188,15 @@ temporal = []
 beam = []
 perf = [
     "locust>=2.43.4,<3.0.0",
+    "pytest-benchmark>=5,<6",
+]
+# К5 (Wave K5/testkit): heavy-зависимости testkit-фикстур (toxiproxy,
+# temporal-env, respx). Без extra fixtures деградируют до pytest.skip,
+# поэтому core-юзеру extra не обязателен.
+testkit = [
+    "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
+    "respx>=0.22,<1",
+    "temporalio>=1.27.0,<2.0.0",
 ]
 
 [dependency-groups]
@@ -185,10 +223,18 @@ dev = [
     "libcst>=1.5.0,<2.0.0",
     "ruamel-yaml>=0.18.0,<1.0.0",
     "questionary>=2.0.0,<3.0.0",
-    "testcontainers[postgres]>=4.7.2,<5.0.0",
+    "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
+    "respx>=0.22,<1",
     # Wave F.6: docstring pre-push gate + dependency audit (Roadmap V10 #12, #15).
     "pre-commit>=4.0,<5.0",
-    "deptry>=0.20,<1.0"
+    "deptry>=0.20,<1.0",
+    # К5 (Wave K5/supply-chain): SBOM/audit gates.
+    "cyclonedx-bom>=4.5,<5",
+    "pip-audit>=2.7,<3",
+    # К5 (Wave K5/docs): Vale-совместимый prose lint.
+    "proselint>=0.14,<1",
+    "sphinx-copybutton>=0.5,<1",
+    "sphinx-tabs>=3.4,<4"
 ]
 
 [build-system]
@@ -199,7 +245,12 @@ build-backend = "setuptools.build_meta"
 # В Docker: COPY src ./src + PYTHONPATH=/app — так же работает `from src.X`.
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "testkit*"]
+
+# К5 (Wave K5/testkit): pytest-plugin entry-point, чтобы фикстуры
+# testkit подхватывались pytest без явного импорта в conftest.py.
+[project.entry-points."pytest11"]
+testkit = "testkit.pytest_plugin"
 
 [tool.uv]
 package = true
@@ -235,6 +286,20 @@ ignore_missing_imports = true
 # Sprint 8: aioquic — optional extra (uv sync --extra http3);
 # в чистой dev-light инсталляции SDK нет, lazy-импорт в entrypoints/http3.
 module = "aioquic.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# К1 (V15 S2): cryptography используется в core/auth/mtls_backend.py
+# для PEM-валидации client cert. dev_light без cryptography продолжает
+# работать — backend переходит в headers-only режим.
+module = "cryptography.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# К1 (V15 S6): python3-saml — optional extra (uv sync --extra auth-saml);
+# в dev_light без xmlsec C-extension SamlBackend остаётся доступен,
+# но :meth:`is_available` возвращает False.
+module = "onelogin.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -304,6 +369,10 @@ ignore = [
 # Streamlit pages: set_page_config() требует быть первым st-вызовом.
 "src/frontend/streamlit_app/app.py" = ["E402"]
 "src/frontend/streamlit_app/pages/*.py" = ["E402"]
+# Тесты используют ``assert`` (pytest convention) — S101 не релевантен.
+"tests/**/*.py" = ["S101", "S105", "S106", "S311"]
+# testkit импортирует heavy-deps lazy внутри функций — допускается S404/S603.
+"testkit/**/*.py" = ["S101"]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
@@ -332,6 +401,9 @@ asyncio_mode = "auto"
 addopts = "-ra --strict-markers"
 markers = [
     "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
+    "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",
+    "slow: slow tests, skipped by default in unit-suite",
+    "requires_toxiproxy: requires toxiproxy container",
 ]
 
 
