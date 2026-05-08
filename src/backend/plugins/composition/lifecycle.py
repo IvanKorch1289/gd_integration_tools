@@ -770,31 +770,19 @@ async def lifespan(app: FastAPI):
         except Exception as sink_exc:  # noqa: BLE001
             app_logger.warning("LogSink shutdown error: %s", sink_exc)
 
-        # Sprint 1 V16: pyrate_limiter Leaker shutdown-hook.
-        # TODO V15.1 Sprint 1 Single Entry: вынести в core/resilience/_pyrate_compat.
+        # Sprint 1 V16 Step 3.4: pyrate_limiter Leaker shutdown-hook.
         # Singleton Limiter из get_default_limiter() запускает фоновую
         # `_leaker.aio_leak_task`, которая течёт без явной остановки.
+        # Canonical helper — core/resilience/_pyrate_compat.py.
         try:
-            import asyncio as _asyncio
-
+            from src.backend.core.resilience._pyrate_compat import (
+                shutdown_pyrate_leaker,
+            )
             from src.backend.entrypoints.dependencies.rate_limit import (
                 get_default_limiter,
             )
 
-            limiter = get_default_limiter()
-            leak_task = getattr(
-                getattr(limiter, "_leaker", None), "aio_leak_task", None
-            )
-            if leak_task is not None and not leak_task.done():
-                leak_task.cancel()
-                try:
-                    await leak_task
-                except _asyncio.CancelledError:  # noqa: S110
-                    pass
-                except Exception as leak_done_exc:  # noqa: BLE001
-                    app_logger.debug(
-                        "pyrate Leaker join error: %s", leak_done_exc
-                    )
+            await shutdown_pyrate_leaker(get_default_limiter())
         except Exception as leaker_exc:  # noqa: BLE001
             app_logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
 
