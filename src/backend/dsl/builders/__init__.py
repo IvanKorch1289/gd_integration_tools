@@ -1,37 +1,22 @@
-"""Builders package — тонкая декомпозиция ``RouteBuilder`` на миксины.
+"""Builders package — декомпозиция ``RouteBuilder`` на миксины (B1 phase-2).
 
-Этап B1 (ADR-001): god-object `src/dsl/builder.py` (1313 LOC, ~170 методов)
-сохраняется как единственный источник реализации, но публичный API теперь
-декомпозирован на 11 «категорий» через миксин-маркеры:
+Stage 2.1 PoC уже перенёс первую партию методов (hash/encrypt/decrypt/
+compress/decompress) в :mod:`dsl.builders.converters.ConvertersMixin`.
+Остальные группы переезжают в Stage 2.2-2.6 по плану
+``/home/user/.claude/plans/replicated-seeking-panda.md``.
 
-* ``CoreRouteBuilder`` — from_/process/log/build.
-* ``EIPMixin`` — Enterprise Integration Patterns.
-* ``TransportMixin`` — HTTP/gRPC/WS/SSE/MQTT shortcuts.
-* ``StreamingMixin`` — windows/correlation/exactly-once.
-* ``AIMixin`` — AI/RAG agents DSL.
-* ``RPAMixin`` — browser/forms/self-healing.
-* ``BankingMixin`` — банковские helpers.
-* ``BankingAIMixin`` — ИИ-обогащение для банковских кейсов.
-* ``StorageMixin`` — S3/Redis/DB shortcuts.
-* ``SecurityMixin`` — OPA/Casbin/rate-limit.
-* ``ObservabilityMixin`` — OTEL/Prometheus hooks.
+**Lazy import**: ``RouteBuilder`` импортируется через ``__getattr__`` чтобы
+избежать circular import с :mod:`dsl.builder`, который теперь сам зависит
+от ``ConvertersMixin`` из этого пакета.
 
-Каждый миксин в B1 экспортирует подмножество методов `RouteBuilder` как
-«view»: это облегчает ревью, автогенерацию документации и статический
-анализ. Полный физический разнос методов в отдельные классы
-(LOC-бюджет ≤300 на файл) запланирован как **B1 phase-2** в
-follow-up-коммите; на текущем этапе мы не двигаем реализацию, чтобы
-избежать регрессий и сохранить все существующие контракты.
+Marker-mixin'ы (CoreMixin/EIPMixin/...) — placeholder для doc/typing
+категоризации; будут заменены реальными миксинами по мере переноса
+групп методов.
 """
 
 from __future__ import annotations
 
-from src.backend.dsl.builder import RouteBuilder as _BuilderImpl
-
-# Phase-2 (B1) будет физически разложен на миксины. Сейчас — re-export
-# единого класса; публичный импорт `from src.backend.dsl.builders import RouteBuilder`
-# уже доступен и даёт одинаковый API.
-RouteBuilder = _BuilderImpl
+from typing import Any
 
 __all__ = (
     "RouteBuilder",
@@ -49,54 +34,34 @@ __all__ = (
 )
 
 
-# ---------------------------------------------------------------------------
-# Миксины-маркеры. Каждый — тонкий subclass `_BuilderImpl`, сохраняющий
-# поведение. Используются для:
-# 1) навигации по публичному API (IDE показывает методы по категориям);
-# 2) typing-аннотаций (Protocol-like Group signatures);
-# 3) генерации категорийной документации в H1.
-# ---------------------------------------------------------------------------
+def __getattr__(name: str) -> Any:
+    """Lazy resolve ``RouteBuilder`` и marker-mixin'ы — обходим circular import.
 
+    Без этой ленивой схемы ``dsl.builder`` (импортирующий миксины из этого
+    пакета) и ``dsl.builders.__init__`` (импортирующий ``RouteBuilder``)
+    давали бы ImportError на стадии частичной инициализации модуля.
+    """
 
-class CoreMixin(_BuilderImpl):
-    """Core: `from_`, `.process()`, `.log()`, `.build()`, control-flow."""
+    if name == "RouteBuilder":
+        from src.backend.dsl.builder import RouteBuilder as _R
 
+        return _R
 
-class EIPMixin(_BuilderImpl):
-    """Enterprise Integration Patterns (Camel/Spring)."""
+    if name in {
+        "CoreMixin",
+        "EIPMixin",
+        "TransportMixin",
+        "StreamingMixin",
+        "AIMixin",
+        "RPAMixin",
+        "BankingMixin",
+        "BankingAIMixin",
+        "StorageMixin",
+        "SecurityMixin",
+        "ObservabilityMixin",
+    }:
+        from src.backend.dsl.builder import RouteBuilder as _R
 
+        return type(name, (_R,), {"__doc__": f"Marker-mixin {name} (B1 phase-1)."})
 
-class TransportMixin(_BuilderImpl):
-    """Сетевые транспорты: HTTP/gRPC/WS/SSE/MQTT/Kafka/Rabbit."""
-
-
-class StreamingMixin(_BuilderImpl):
-    """Stream processing: windows, correlation, exactly-once."""
-
-
-class AIMixin(_BuilderImpl):
-    """AI/RAG/agents."""
-
-
-class RPAMixin(_BuilderImpl):
-    """RPA: browser/forms/self-healing locators."""
-
-
-class BankingMixin(_BuilderImpl):
-    """Банковские helpers: ИНН/КПП/SWIFT/IBAN/КБК/business_day/money/fx."""
-
-
-class BankingAIMixin(_BuilderImpl):
-    """ИИ для банковских сценариев: compliance, risk, document-AI."""
-
-
-class StorageMixin(_BuilderImpl):
-    """Storage shortcuts: S3/Redis/Postgres/Qdrant."""
-
-
-class SecurityMixin(_BuilderImpl):
-    """Security: OPA/Casbin/rate-limit/audit."""
-
-
-class ObservabilityMixin(_BuilderImpl):
-    """Observability: OTEL spans, Prometheus, logging."""
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

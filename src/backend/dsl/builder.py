@@ -4,6 +4,7 @@ from typing import Any, Callable
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
+from src.backend.dsl.builders.converters import ConvertersMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
@@ -67,7 +68,7 @@ __all__ = ("RouteBuilder",)
 
 
 @dataclass(slots=True)
-class RouteBuilder:
+class RouteBuilder(ConvertersMixin):
     """Fluent-builder для DSL-маршрутов.
 
     Пример::
@@ -2387,23 +2388,8 @@ class RouteBuilder:
             template=template,
         )
 
-    def hash(self, *, algorithm: str = "sha256") -> "RouteBuilder":
-        """Hash данных (sha256/md5/sha512)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa", "HashProcessor", algorithm=algorithm
-        )
-
-    def encrypt(self, key: str) -> "RouteBuilder":
-        """AES шифрование (Fernet)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
-        )
-
-    def decrypt(self, key: str) -> "RouteBuilder":
-        """AES расшифровка (Fernet)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
-        )
+    # hash / encrypt / decrypt — перенесены в dsl.builders.converters.ConvertersMixin
+    # (Stage 2.1 PoC). Доступны через MRO у RouteBuilder.
 
     def shell(
         self,
@@ -3198,22 +3184,8 @@ class RouteBuilder:
             output_property=output_property,
         )
 
-    def compress(self, *, algorithm: str = "gzip", level: int = 6) -> "RouteBuilder":
-        """Сжатие body (gzip/brotli/zstd)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.enrichment",
-            "CompressProcessor",
-            algorithm=algorithm,
-            level=level,
-        )
-
-    def decompress(self, *, algorithm: str = "auto") -> "RouteBuilder":
-        """Распаковка body (auto-detect или явный algorithm)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.enrichment",
-            "DecompressProcessor",
-            algorithm=algorithm,
-        )
+    # compress / decompress — перенесены в dsl.builders.converters.ConvertersMixin
+    # (Stage 2.1 PoC). Доступны через MRO у RouteBuilder.
 
     def webhook_sign(
         self,
@@ -3229,6 +3201,103 @@ class RouteBuilder:
             secret=secret,
             header=header,
             algorithm=algorithm,
+        )
+
+    def webhook_verify(
+        self,
+        *,
+        secret: str,
+        header: str = "X-Webhook-Signature",
+        algorithm: str = "sha256",
+        prefix: str | None = None,
+        on_mismatch: str = "fail",
+    ) -> "RouteBuilder":
+        """Верификация HMAC-подписи входящего webhook'а (timing-safe).
+
+        ``on_mismatch="fail"`` (default) — fail pipeline; ``"warn"`` — лог
+        предупреждения и установка ``webhook_signature_valid=False`` без
+        остановки. ``prefix`` — опциональный схема-префикс (``"v1"``,
+        ``"sha256"``), если подпись передаётся как ``v1=<hex>``.
+        """
+        return self._add_lazy(
+            "src.backend.dsl.engine.processors.enrichment",
+            "WebhookSignVerifyProcessor",
+            secret=secret,
+            header=header,
+            algorithm=algorithm,
+            prefix=prefix,
+            on_mismatch=on_mismatch,
+        )
+
+    def jsonpath(
+        self,
+        expression: str,
+        *,
+        mode: str = "extract",
+        value: Any = None,
+        single: bool = False,
+        to_property: str | None = None,
+        stop_on_missing: bool = False,
+    ) -> "RouteBuilder":
+        """JSONPath-выражение над body (jsonpath-ng).
+
+        ``mode="extract"`` — list совпадений (или первое при ``single=True``);
+        ``mode="update"`` — заменяет значения по path на ``value``;
+        ``mode="exists"`` — пишет ``jsonpath_exists`` (bool) в property и при
+        ``stop_on_missing=True`` останавливает pipeline.
+        """
+        return self._add_lazy(
+            "src.backend.dsl.engine.processors.data_query",
+            "JsonPathProcessor",
+            expression=expression,
+            mode=mode,
+            value=value,
+            single=single,
+            to_property=to_property,
+            stop_on_missing=stop_on_missing,
+        )
+
+    def convert_units(
+        self,
+        *,
+        to_unit: str,
+        from_unit: str | None = None,
+        precision: int | None = None,
+        to_property: str | None = None,
+    ) -> "RouteBuilder":
+        """Конвертация числовых величин между единицами через pint.
+
+        Body — число (нужен ``from_unit``), dict ``{value, unit}`` или list
+        чисел (нужен ``from_unit``). Поддерживает все стандартные размерности
+        (длина, масса, объём, температура, время, давление и др.).
+        """
+        return self._add_lazy(
+            "src.backend.dsl.engine.processors.units",
+            "UnitConversionProcessor",
+            to_unit=to_unit,
+            from_unit=from_unit,
+            precision=precision,
+            to_property=to_property,
+        )
+
+    def parse_ics(
+        self,
+        *,
+        mode: str = "parse",
+        only_first: bool = False,
+        prodid: str = "-//gd_integration_tools//RU",
+    ) -> "RouteBuilder":
+        """Парсит/строит iCalendar (RFC 5545) через библиотеку icalendar.
+
+        ``mode="parse"`` — body=str|bytes ICS → list[dict] событий;
+        ``mode="build"`` — body=list[dict]/dict → bytes ICS.
+        """
+        return self._add_lazy(
+            "src.backend.dsl.engine.processors.calendar_ics",
+            "IcsCalendarProcessor",
+            mode=mode,
+            only_first=only_first,
+            prodid=prodid,
         )
 
     def deadline(
