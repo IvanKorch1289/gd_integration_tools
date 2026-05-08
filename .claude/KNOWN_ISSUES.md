@@ -29,4 +29,38 @@
 содержат изменения для `opentelemetry-instrumentation-asyncpg` + функция
 `_instrument_asyncpg`. Коммит ожидается от параллельной команды.
 
+### Sprint 1 Этап 3 — Step 3.3 (миграция callsites + удаление aliases) deferred (2026-05-08)
+
+**Контекст**: Step 3.2 закоммичен `672b40f` — canonical-реализации в
+`core/resilience/{breaker,retry,rate_limiter}.py` готовы;
+`infrastructure/resilience/{breaker,retry,retry_budget}.py` — backward-compat
+shim'ы (re-export). Step 3.4 закоммичен `e07000b` —
+`core/resilience/_pyrate_compat.py` + BoundedInMemoryBucket.
+
+**Что осталось (Step 3.3 Phase 2)**: 12 callsite-файлов всё ещё импортируют
+из `infrastructure/resilience/` (через работающие aliases):
+- `infrastructure/database/session_manager.py`
+- `infrastructure/logging/backends/graylog_gelf.py`
+- `infrastructure/clients/transport/{http_upstream,http_httpx}.py`
+- `infrastructure/clients/external/circuit_breakers.py`
+- `infrastructure/clients/storage/redis.py`
+- `infrastructure/clients/messaging/stream.py`
+- `dsl/engine/processors/eip/resilience.py`
+- `tests/unit/log_sinks/test_log_sinks.py`
+
+**Причина deferral**:
+- Aliases работают — система функционально полна (Phase 1 DoD достигнут).
+- `http_httpx.py` в working tree активной параллельной команды; миграция
+  callsite'а сейчас увеличит merge conflict risk.
+- Удаление aliases требует синхронизации с _всеми_ незакоммиченными
+  параллельными ветками; безопаснее выполнять одной волной после слияния.
+
+**План разрешения**: после слияния параллельных working tree changes
+(`http_httpx.py`, `dsl/builder.py` и др.) — отдельная Wave
+`[wave:s1/single-entry-migration]` с массовой заменой импортов
++ удаление shim'ов.
+
+**Feature-flag `new_resilience_v2`** (в `ResilienceSettings`, default `False`)
+оставлен как переключатель для Step 3.3.
+
 ### Открытый техдолг (после сессии 2026-05-01 PM — pre-Wave 22)
