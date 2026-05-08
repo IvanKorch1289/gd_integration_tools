@@ -8,8 +8,14 @@ def get_v1_routers() -> APIRouter:
         router as actions_inventory_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin import router as admin_router
+    from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
+        router as admin_capabilities_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
+        router as admin_tenants_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
@@ -50,6 +56,12 @@ def get_v1_routers() -> APIRouter:
     )
     from src.backend.entrypoints.api.v1.endpoints.orders import router as orders_router
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
+    from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
+        router as rag_cache_admin_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.rag_ingest import (
+        router as rag_ingest_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.search import router as search_router
     from src.backend.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.backend.entrypoints.api.v1.endpoints.tech import router as tech_router
@@ -100,6 +112,13 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         admin_workflows_router, prefix="/admin", tags=["Admin · Workflows"]
     )
+    # К5 (Wave K5/docs-tenants-caps): admin endpoints for tenants & capabilities.
+    api_router_v1.include_router(
+        admin_tenants_router, prefix="/admin", tags=["Admin · Tenants"]
+    )
+    api_router_v1.include_router(
+        admin_capabilities_router, prefix="/admin", tags=["Admin · Capabilities"]
+    )
     # Wave 3.8: CRUD над YAML-маршрутами через YAMLStore.
     api_router_v1.include_router(
         dsl_routes_router, prefix="/admin", tags=["DSL · Routes Store"]
@@ -122,6 +141,11 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(search_router, prefix="/search", tags=["Search"])
     # Wave 12: Retrieval-Augmented Generation.
     api_router_v1.include_router(rag_router, prefix="/rag", tags=["RAG"])
+    # К4 MVP: 3-tier RAG cache admin + RAG ingest wizard.
+    api_router_v1.include_router(
+        rag_cache_admin_router, prefix="/admin", tags=["RAG Cache"]
+    )
+    api_router_v1.include_router(rag_ingest_router, prefix="/rag", tags=["RAG"])
     # Wave 8.4: Agent Memory REST CRUD (messages / scratchpad / facts).
     api_router_v1.include_router(
         agent_memory_router, prefix="/agent_memory", tags=["AgentMemory"]
