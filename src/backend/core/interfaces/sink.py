@@ -20,6 +20,9 @@ class SinkKind(str, Enum):
     Wave 3 (Roadmap V10): добавлены ``ws`` / ``webhook`` / ``file``
     для покрытия исходящего WebSocket-вещания, webhook-доставки и
     local-FS append (Sink-симметрия с входящими источниками 9 → 9).
+
+    Sprint 3 (V16.1 P1): добавлен ``mqtt`` — публикация в MQTT-брокер
+    как полноценный Sink (закрывает ассиметрию с MQTT-subscribe).
     """
 
     HTTP = "http"
@@ -31,6 +34,7 @@ class SinkKind(str, Enum):
     WS = "ws"
     WEBHOOK = "webhook"
     FILE = "file"
+    MQTT = "mqtt"
 
 
 @dataclass(slots=True)

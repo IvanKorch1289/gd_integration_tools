@@ -156,6 +156,67 @@ class AppBaseSettings(BaseSettingsWithLoader):
         ),
     )
 
+    # Sprint 8 — HTTP/3 + WebTransport opt-in (aioquic).
+    # Сервер запускается отдельно от Granian: ``python manage.py http3-serve``.
+    # Требует extra ``http3`` (uv sync --extra http3) и валидные TLS-сертификаты.
+    http3_enabled: bool = Field(
+        default=False,
+        title="HTTP/3 server включён",
+        description=(
+            "Опциональный HTTP/3 + WebTransport endpoint поверх QUIC (aioquic). "
+            "Запускается параллельно с granian/uvicorn на отдельном UDP-порту. "
+            "Требует TLS-сертификат (ALPN h3, h3-29)."
+        ),
+    )
+
+    http3_port: int = Field(
+        default=8443,
+        title="HTTP/3 UDP port",
+        ge=1,
+        le=65535,
+        description=(
+            "UDP-порт для HTTP/3-сервера. Default 8443 — стандарт для альтернативного "
+            "HTTPS endpoint, не конфликтует с основным TCP 8000."
+        ),
+    )
+
+    http3_certfile: str | None = Field(
+        default=None,
+        title="HTTP/3 TLS certificate (PEM)",
+        description=(
+            "Путь к PEM-файлу сертификата для HTTP/3-сервера. ``None`` запрещает "
+            "запуск (TLS обязателен по спецификации QUIC RFC 9000)."
+        ),
+    )
+
+    http3_keyfile: str | None = Field(
+        default=None,
+        title="HTTP/3 TLS private key (PEM)",
+        description=(
+            "Путь к PEM-файлу приватного ключа для HTTP/3-сервера. "
+            "``None`` запрещает запуск."
+        ),
+    )
+
+    http3_max_datagram_frame_size: int = Field(
+        default=65536,
+        title="HTTP/3 max datagram frame size",
+        ge=1200,
+        le=1048576,
+        description=(
+            "Размер QUIC-датаграмм для WebTransport (RFC 9297). "
+            "65536 — соответствует aioquic-default."
+        ),
+    )
+
+    http3_idle_timeout: float = Field(
+        default=60.0,
+        title="HTTP/3 idle timeout (sec)",
+        gt=0.0,
+        le=600.0,
+        description="QUIC connection idle timeout. После этого таймаута QUIC закрывает соединение.",
+    )
+
     langfuse_url: str = Field(
         default="",
         title="URL LangFuse",

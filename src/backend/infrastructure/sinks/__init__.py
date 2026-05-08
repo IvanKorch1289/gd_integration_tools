@@ -29,6 +29,7 @@ from src.backend.infrastructure.sinks.file_sink import FileSink
 from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
 from src.backend.infrastructure.sinks.http_sink import HttpSink
 from src.backend.infrastructure.sinks.mq_sink import MqSink
+from src.backend.infrastructure.sinks.mqtt_sink import MqttSink
 from src.backend.infrastructure.sinks.soap_sink import SoapSink
 from src.backend.infrastructure.sinks.webhook_sink import WebhookSink
 from src.backend.infrastructure.sinks.ws_sink import WsSink
@@ -39,6 +40,7 @@ __all__ = (
     "GrpcSink",
     "HttpSink",
     "MqSink",
+    "MqttSink",
     "SoapSink",
     "WebhookSink",
     "WsSink",

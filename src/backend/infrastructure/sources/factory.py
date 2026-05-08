@@ -80,5 +80,9 @@ def build_source(spec: SourceSpec) -> Source:
             from src.backend.infrastructure.sources.cdc import CDCSource
 
             return CDCSource(source_id=spec.id, **spec.config)
+        case SourceKind.EMAIL:
+            from src.backend.infrastructure.sources.email import EmailSource
+
+            return EmailSource(source_id=spec.id, **spec.config)
         case _:
             raise ValueError(f"Unknown SourceKind: {spec.kind!r}")

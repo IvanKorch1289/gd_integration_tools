@@ -305,6 +305,28 @@ class APIClient:
             payload["agent_id"] = agent_id
         return self._request("POST", "/api/v1/ai/feedback/index-to-rag", json=payload)
 
+    # ──────────── V11 Plugin Marketplace (Sprint 3) ────────────
+
+    def get_plugins_inventory(self) -> dict[str, Any]:
+        """GET /api/v1/plugins/inventory.
+
+        Returns:
+            ``{"enabled": bool, "plugins": [...], "reason": str | None}``.
+            Если loader выключен через feature-flag — ``enabled=False``
+            и пустой массив.
+        """
+        try:
+            return self._request("GET", "/api/v1/plugins/inventory")
+        except Exception as exc:
+            return {"enabled": False, "plugins": [], "reason": str(exc)}
+
+    def get_routes_inventory(self) -> dict[str, Any]:
+        """GET /api/v1/routes/inventory — V11 routes inventory."""
+        try:
+            return self._request("GET", "/api/v1/routes/inventory")
+        except Exception as exc:
+            return {"enabled": False, "routes": [], "reason": str(exc)}
+
 
 def get_api_client() -> APIClient:
     return APIClient()

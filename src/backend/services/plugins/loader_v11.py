@@ -63,16 +63,37 @@ class LoadedPluginV11:
     reason: str | None = None
     instance: BasePlugin | None = None
     manifest: PluginManifestV11 | None = None
+    pages_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
-        """Сериализация для ``/api/v1/plugins/inventory``."""
-        return {
+        """Сериализация для ``/api/v1/plugins/inventory``.
+
+        Sprint 3: добавлены ``requires_core``, ``tenant_aware``,
+        ``capabilities`` и ``provides`` — нужны marketplace-UI для
+        отображения детализации плагина без отдельных endpoint'ов.
+        """
+        payload: dict[str, Any] = {
             "name": self.name,
             "version": self.version,
             "status": self.status,
             "reason": self.reason,
             "manifest_path": str(self.manifest_path),
+            "pages_count": self.pages_count,
         }
+        if self.manifest is not None:
+            payload["requires_core"] = self.manifest.requires_core
+            payload["tenant_aware"] = self.manifest.tenant_aware
+            payload["description"] = self.manifest.description
+            payload["capabilities"] = [str(c) for c in self.manifest.capabilities]
+            payload["provides"] = {
+                "actions": list(self.manifest.provides.actions),
+                "repositories": list(self.manifest.provides.repositories),
+                "processors": list(self.manifest.provides.processors),
+                "sources": list(self.manifest.provides.sources),
+                "sinks": list(self.manifest.provides.sinks),
+                "schemas": list(self.manifest.provides.schemas),
+            }
+        return payload
 
 
 class PluginLoaderV11:
@@ -99,6 +120,7 @@ class PluginLoaderV11:
         repository_registry: RepositoryRegistryProtocol,
         processor_registry: ProcessorRegistryProtocol,
         core_version: str,
+        streamlit_pages_dir: Path | None = None,
     ) -> None:
         self._extensions_dir = Path(extensions_dir)
         self._gate = capability_gate
@@ -106,6 +128,9 @@ class PluginLoaderV11:
         self._repos = repository_registry
         self._processors = processor_registry
         self._core_version = core_version
+        self._streamlit_pages_dir = (
+            Path(streamlit_pages_dir) if streamlit_pages_dir is not None else None
+        )
         self._loaded: dict[str, LoadedPluginV11] = {}
         # owner-tracking для inventory-коллизий: kind → name → plugin
         self._owners: dict[str, dict[str, str]] = {
@@ -152,6 +177,7 @@ class PluginLoaderV11:
                 await entry.instance.on_shutdown()
             except Exception:
                 _logger.exception("Plugin %s on_shutdown failed", entry.name)
+            self._unmount_frontend_pages(entry.name)
             self._gate.revoke(entry.name)
 
     # ── private ──────────────────────────────────────────────────────
@@ -265,6 +291,8 @@ class PluginLoaderV11:
             return
 
         self._record_owners(manifest)
+        plugin_root = manifest_path.parent
+        pages_count = self._mount_frontend_pages(manifest.name, plugin_root)
         self._loaded[manifest.name] = LoadedPluginV11(
             name=manifest.name,
             version=manifest.version,
@@ -272,12 +300,14 @@ class PluginLoaderV11:
             manifest=manifest,
             status="loaded",
             instance=plugin,
+            pages_count=pages_count,
         )
         _logger.info(
-            "Plugin loaded (V11): %s v%s (%s)",
+            "Plugin loaded (V11): %s v%s (%s) pages=%d",
             manifest.name,
             manifest.version,
             manifest_path,
+            pages_count,
         )
 
     def _check_inventory_collisions(self, manifest: PluginManifestV11) -> None:
@@ -335,3 +365,83 @@ class PluginLoaderV11:
             f"entry_class {manifest.entry_class!r} is neither a BasePlugin "
             f"subclass nor a factory callable"
         )
+
+    # ── Sprint 3: plugin-local Streamlit pages auto-discovery ──────────
+
+    def _plugin_page_prefix(self, plugin_name: str) -> str:
+        """Префикс для смонтированных файлов: ``plugin_<name>_``."""
+        return f"plugin_{plugin_name}_"
+
+    def _mount_frontend_pages(self, plugin_name: str, plugin_root: Path) -> int:
+        """Монтирует ``extensions/<name>/frontend/pages/*.py`` через symlinks.
+
+        Args:
+            plugin_name: Имя плагина (для префикса в pages-каталоге).
+            plugin_root: Путь к каталогу плагина (там где ``plugin.toml``).
+
+        Returns:
+            Количество смонтированных файлов (0 если папка отсутствует
+            или streamlit_pages_dir не сконфигурирован).
+        """
+        if self._streamlit_pages_dir is None:
+            return 0
+        pages_src = plugin_root / "frontend" / "pages"
+        if not pages_src.is_dir():
+            return 0
+        try:
+            self._streamlit_pages_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            _logger.warning(
+                "Plugin %s: cannot create streamlit pages dir %s: %s",
+                plugin_name,
+                self._streamlit_pages_dir,
+                exc,
+            )
+            return 0
+
+        prefix = self._plugin_page_prefix(plugin_name)
+        mounted = 0
+        for src in sorted(pages_src.iterdir()):
+            if not src.is_file() or src.suffix != ".py":
+                continue
+            dst = self._streamlit_pages_dir / f"{prefix}{src.name}"
+            try:
+                if dst.is_symlink() or dst.exists():
+                    if dst.is_symlink() and dst.resolve() == src.resolve():
+                        mounted += 1
+                        continue
+                    dst.unlink()
+                dst.symlink_to(src.resolve())
+            except OSError as exc:
+                _logger.warning(
+                    "Plugin %s: cannot symlink %s → %s: %s",
+                    plugin_name,
+                    src,
+                    dst,
+                    exc,
+                )
+                continue
+            mounted += 1
+        return mounted
+
+    def _unmount_frontend_pages(self, plugin_name: str) -> int:
+        """Удаляет symlinks, смонтированные при load.
+
+        Идемпотентно: при повторном вызове просто 0 удалений.
+        """
+        if self._streamlit_pages_dir is None or not self._streamlit_pages_dir.is_dir():
+            return 0
+        prefix = self._plugin_page_prefix(plugin_name)
+        removed = 0
+        for entry in self._streamlit_pages_dir.iterdir():
+            if not entry.name.startswith(prefix):
+                continue
+            try:
+                if entry.is_symlink() or entry.is_file():
+                    entry.unlink()
+                    removed += 1
+            except OSError as exc:
+                _logger.warning(
+                    "Plugin %s: cannot remove %s: %s", plugin_name, entry, exc
+                )
+        return removed

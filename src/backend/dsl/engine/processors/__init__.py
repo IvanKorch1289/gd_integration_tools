@@ -99,6 +99,7 @@ from src.backend.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
+from src.backend.dsl.engine.processors.email_trigger import EmailTriggerProcessor
 from src.backend.dsl.engine.processors.entity import (
     EntityCreateProcessor,
     EntityDeleteProcessor,
@@ -342,4 +343,5 @@ __all__ = (
     "EntityListProcessor",
     "EntityUpdateProcessor",
     "ScanFileProcessor",
+    "EmailTriggerProcessor",
 )

@@ -110,6 +110,12 @@ mcp = [
 rpa = [
     "playwright>=1.48.0"
 ]
+# Sprint 8 — HTTP/3 + WebTransport opt-in.
+# aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
+# Сервер запускается отдельно от Granian (см. src.backend.entrypoints.http3.server).
+http3 = [
+    "aioquic>=1.1.0,<2.0.0",
+]
 rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
@@ -223,6 +229,12 @@ warn_unused_ignores = true
 # Wave D.2: temporalio — optional extra (uv sync --extra workflow);
 # в чистой dev-light инсталляции SDK нет, lazy-импорт внутри backend.
 module = "temporalio.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Sprint 8: aioquic — optional extra (uv sync --extra http3);
+# в чистой dev-light инсталляции SDK нет, lazy-импорт в entrypoints/http3.
+module = "aioquic.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

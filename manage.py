@@ -63,6 +63,35 @@ def run(
     os.execvp(cmd[0], cmd)  # noqa: S606  # CLI developer tool: cmd сформирован из sys.executable + фиксированных аргументов
 
 
+@app.command("http3-serve")
+def http3_serve(
+    port: int | None = typer.Option(None, help="UDP port (override APP_HTTP3_PORT)"),
+    certfile: str | None = typer.Option(
+        None, help="PEM cert (override APP_HTTP3_CERTFILE)"
+    ),
+    keyfile: str | None = typer.Option(
+        None, help="PEM key (override APP_HTTP3_KEYFILE)"
+    ),
+):
+    """Запуск опционального HTTP/3 + WebTransport сервера (Sprint 8 opt-in).
+
+    Требует extra ``http3`` (``uv sync --extra http3``) и валидные
+    TLS-сертификаты с ALPN h3/h3-29.
+    """
+    if port is not None:
+        os.environ["APP_HTTP3_PORT"] = str(port)
+    if certfile is not None:
+        os.environ["APP_HTTP3_CERTFILE"] = certfile
+    if keyfile is not None:
+        os.environ["APP_HTTP3_KEYFILE"] = keyfile
+    os.environ["APP_HTTP3_ENABLED"] = "true"
+
+    from src.backend.entrypoints.http3.cli import run_from_settings
+
+    typer.echo("Starting HTTP/3 server (aioquic) ...")
+    run_from_settings()
+
+
 @app.command("run-frontend")
 def run_frontend(port: int = typer.Option(8501, help="Streamlit port")):
     """Запуск Streamlit dashboard."""
@@ -321,7 +350,9 @@ def health():
 @app.command()
 def breakers():
     """Состояние circuit breakers."""
-    from src.backend.infrastructure.clients.external.circuit_breakers import breaker_registry
+    from src.backend.infrastructure.clients.external.circuit_breakers import (
+        breaker_registry,
+    )
 
     for info in breaker_registry.get_all_status():
         state = info["state"]
@@ -489,7 +520,10 @@ def _import_schema_via_gateway(
     import asyncio
     from pathlib import Path
 
-    from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
+    from src.backend.core.interfaces.import_gateway import (
+        ImportSource,
+        ImportSourceKind,
+    )
     from src.backend.services.integrations import get_import_service
 
     content = Path(source_path).read_bytes()

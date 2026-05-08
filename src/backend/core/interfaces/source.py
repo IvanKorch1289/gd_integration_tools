@@ -30,6 +30,9 @@ class SourceKind(str, Enum):
 
     Один Gateway покрывает все варианты, конкретный бэкенд выбирается
     по полю ``kind`` в YAML-spec.
+
+    Sprint 3 (V16.1 P1): добавлен ``email`` — IMAP-источник с
+    поддержкой IDLE-режима и фильтров по subject/from.
     """
 
     HTTP = "http"
@@ -41,6 +44,7 @@ class SourceKind(str, Enum):
     CDC = "cdc"
     FILE_WATCHER = "file_watcher"
     POLLING = "polling"
+    EMAIL = "email"
 
 
 @dataclass(slots=True)
