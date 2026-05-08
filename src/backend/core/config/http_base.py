@@ -1,6 +1,7 @@
+from pathlib import Path
 from typing import ClassVar
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -132,6 +133,28 @@ class HttpBaseSettings(BaseSettingsWithLoader):
         title="Проверка SSL",
         description="Проверять сертификаты SSL",
         examples=[True],
+    )
+
+    # mTLS (Wave 1.3 / S2): client cert/key для mutual TLS на исходящих
+    # запросах. Если оба ``*_path`` пустые — поведение прежнее (no-op).
+    client_cert_path: Path | None = Field(
+        default=None,
+        title="Путь к клиентскому сертификату",
+        description="PEM-сертификат клиента для mTLS (опционально).",
+        examples=[None, "/etc/ssl/client.crt"],
+    )
+
+    client_key_path: Path | None = Field(
+        default=None,
+        title="Путь к клиентскому ключу",
+        description="PEM-ключ клиента для mTLS (опционально).",
+        examples=[None, "/etc/ssl/client.key"],
+    )
+
+    client_cert_password: SecretStr | None = Field(
+        default=None,
+        title="Пароль клиентского ключа",
+        description="Опц. пароль для зашифрованного PEM-ключа.",
     )
 
     # Параметры WAF

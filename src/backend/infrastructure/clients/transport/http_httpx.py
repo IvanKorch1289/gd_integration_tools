@@ -31,6 +31,7 @@ from tenacity import (
 )
 
 from src.backend.core.config.settings import settings
+from src.backend.dsl.codec.json import json_dumps
 from src.backend.infrastructure.resilience.breaker import (
     Breaker,
     BreakerSpec,
@@ -43,7 +44,6 @@ from src.backend.infrastructure.resilience.rate_limiter import (
     ResourceRateLimiter,
 )
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
-from src.backend.dsl.codec.json import json_dumps
 
 __all__ = ("HttpxClient", "get_httpx_client")
 
@@ -59,6 +59,7 @@ class HttpxClient:
         self._time_limiter = TimeLimiter(name="httpx-global")
         self._rate_limiter = ResourceRateLimiter()
         self._http_settings = settings.http_base_settings
+        self._cert_subscribed: bool = False
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         async with self._lock:
@@ -74,16 +75,89 @@ class HttpxClient:
                     write=self._http_settings.sock_read_timeout,
                     pool=self._http_settings.total_timeout,
                 )
-                self._client = httpx.AsyncClient(
-                    http2=True,
-                    http1=True,
-                    timeout=timeout,
-                    limits=limits,
-                    verify=bool(self._http_settings.ssl_verify),
-                    trust_env=True,
-                    follow_redirects=True,
-                )
+                cert = self._build_cert_tuple()
+                kwargs: dict[str, Any] = {
+                    "http2": True,
+                    "http1": True,
+                    "timeout": timeout,
+                    "limits": limits,
+                    "verify": bool(self._http_settings.ssl_verify),
+                    "trust_env": True,
+                    "follow_redirects": True,
+                }
+                if cert is not None:
+                    kwargs["cert"] = cert
+                self._client = httpx.AsyncClient(**kwargs)
+                self._maybe_subscribe_rotation()
             return self._client
+
+    def _build_cert_tuple(
+        self,
+    ) -> tuple[str, str] | tuple[str, str, str] | None:
+        """Собирает ``cert`` для ``httpx.AsyncClient`` или ``None`` (no-op)."""
+        cert_path = self._http_settings.client_cert_path
+        key_path = self._http_settings.client_key_path
+        if cert_path is None or key_path is None:
+            return None
+        password = self._http_settings.client_cert_password
+        if password is not None:
+            return (str(cert_path), str(key_path), password.get_secret_value())
+        return (str(cert_path), str(key_path))
+
+    def _maybe_subscribe_rotation(self) -> None:
+        """Подписаться на ``CertStore.on_rotation`` если он зарегистрирован.
+
+        Идемпотентно — повторная подписка пропускается. На событии ротации
+        под локом закрываем старый ``AsyncClient`` и сбрасываем self._client,
+        чтобы следующий ``_ensure_client`` пересоздал его с новым cert.
+        """
+        if self._cert_subscribed:
+            return
+        cert_path = self._http_settings.client_cert_path
+        if cert_path is None:
+            return
+        try:
+            from src.backend.core.svcs_registry import get_service, has_service
+            from src.backend.infrastructure.security.cert_store import CertStore
+        except Exception:  # noqa: BLE001
+            return
+        if not has_service(CertStore):
+            return
+        try:
+            cert_store = get_service(CertStore)
+        except Exception:  # noqa: BLE001
+            return
+        # CertStore API имеет несколько форм (project-зависимо):
+        # — `on_rotation(path, callback)` (план);
+        # — `register_listener(callback)` (текущая реализация);
+        # выбираем по факту наличия.
+        on_rotation = getattr(cert_store, "on_rotation", None)
+        if callable(on_rotation):
+            try:
+                on_rotation(str(cert_path), self._on_cert_rotated)
+                self._cert_subscribed = True
+                return
+            except Exception:  # noqa: BLE001
+                pass
+        register_listener = getattr(cert_store, "register_listener", None)
+        if callable(register_listener):
+            try:
+                register_listener(self._on_cert_rotated)
+                self._cert_subscribed = True
+            except Exception:  # noqa: BLE001
+                return
+
+    def _on_cert_rotated(self, *_args: Any, **_kwargs: Any) -> None:
+        """Callback ротации: закрыть старый client (next _ensure_client пересоздаст)."""
+        client = self._client
+        self._client = None
+        if client is None or client.is_closed:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        loop.create_task(client.aclose())
 
     def _breaker_for(self, host: str) -> Breaker:
         return breaker_registry.get_or_create(
