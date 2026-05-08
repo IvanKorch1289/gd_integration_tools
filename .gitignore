@@ -126,6 +126,10 @@ secrets/
 *.pfx
 !*.pub.pem
 !*.pub.key
+# К1 (V15 S1+S3): SecretBroker — это инфраструктурный код (broker/vault/env
+# backends + rotation), не сами секреты. Реальные секреты живут в Vault.
+!src/backend/infrastructure/secrets/
+!tests/unit/infrastructure/secrets/
 
 # Локальные дампы / бэкапы БД
 *.dump
