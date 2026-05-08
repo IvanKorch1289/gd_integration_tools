@@ -9,6 +9,7 @@
 6. OpenAI — Assistants API / OpenAI-совместимые прокси (vLLM, LiteLLM, Ollama).
 """
 
+from pathlib import Path
 from typing import ClassVar
 
 from pydantic import Field
@@ -24,7 +25,9 @@ __all__ = (
     "NimSettings",
     "OpenAISettings",
     "AIProvidersSettings",
+    "AIWorkspaceSettings",
     "ai_providers_settings",
+    "ai_workspace_settings",
     "openrouter_settings",
     "nim_settings",
     "openai_settings",
@@ -247,7 +250,43 @@ class AIProvidersSettings(BaseSettingsWithLoader):
     )
 
 
+class AIWorkspaceSettings(BaseSettingsWithLoader):
+    """Настройки изолированного AI-workspace (V15 R-V15-4, Wave 1.6).
+
+    AI-плагины пишут только в ``${workspace_root}/<tenant>/<session>/``;
+    cleanup-loop удаляет TTL-expired sessions с указанным интервалом.
+    Per-tenant квота — суммарный размер живых sessions.
+    """
+
+    yaml_group: ClassVar[str] = "ai_workspace"
+    model_config = SettingsConfigDict(env_prefix="AI_WORKSPACE_", extra="ignore")
+
+    workspace_root: Path = Field(
+        default=Path("./var/ai_workspace"),
+        description="Корневой каталог AI-workspace (TTL-expirable sessions).",
+    )
+
+    workspace_ttl_seconds: float = Field(
+        default=7 * 24 * 3600,
+        ge=60.0,
+        description="TTL отдельной session-папки (по умолчанию 7 дней).",
+    )
+
+    workspace_quota_bytes: int = Field(
+        default=500 * 1024 * 1024,
+        ge=1024,
+        description="Per-tenant квота на сумму размеров живых sessions (байты).",
+    )
+
+    workspace_cleanup_interval_s: float = Field(
+        default=6 * 3600,
+        ge=60.0,
+        description="Период cleanup-loop удаления TTL-expired sessions.",
+    )
+
+
 ai_providers_settings = AIProvidersSettings()
+ai_workspace_settings = AIWorkspaceSettings()
 openrouter_settings = OpenRouterSettings()
 nim_settings = NimSettings()
 openai_settings = OpenAISettings()

@@ -178,6 +178,16 @@ async def _register_protocol_providers() -> None:
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("Prompt store registration skipped: %s", exc)
 
+    # К4 MVP (Sprint S5): AI Stack 2026 single-hook регистрация.
+    try:
+        from src.backend.plugins.composition.setup_ai_2026 import (
+            register_ai_2026_providers,
+        )
+
+        await register_ai_2026_providers()
+    except Exception as exc:  # noqa: BLE001
+        app_logger.debug("AI 2026 providers registration skipped: %s", exc)
+
     from src.backend.core.providers_registry import list_providers
 
     app_logger.info("Protocol providers registered: %s", list_providers())
@@ -641,6 +651,23 @@ async def lifespan(app: FastAPI):
         _register_storage_singletons(app)
 
         register_all_services()
+
+        # Wave 1.6 (S1): AI Safety cleanup-loop запускается через
+        # TaskRegistry, чтобы корректно отмениться на shutdown
+        # (R-V15-11 leak prevention).
+        try:
+            from src.backend.plugins.composition.ai_safety_setup import (
+                start_ai_safety,
+            )
+
+            await start_ai_safety(app)
+        except Exception as ai_safety_exc:  # noqa: BLE001
+            app_logger.warning(
+                "AI safety bootstrap skipped: %s "
+                "(приложение продолжит без AI workspace cleanup-loop)",
+                ai_safety_exc,
+            )
+
         register_action_handlers()
         register_dsl_routes()
         _bootstrap_resilience_coordinator(app)
@@ -695,6 +722,18 @@ async def lifespan(app: FastAPI):
             # (например, dev_light без RabbitMQ) — startup продолжается.
             app_logger.warning("Outbox worker registration skipped: %s", exc)
 
+        # К3 (Sprint 4 V16.1): bootstrap workflow runtime — LiteTemporal
+        # для dev_light, реальный Temporal для staging/prod. Не блокирует
+        # startup при отсутствии SDK или ошибке backend'а.
+        try:
+            from src.backend.plugins.composition.workflow_setup import (
+                start_workflow_runtime,
+            )
+
+            await start_workflow_runtime(app)
+        except Exception as wf_exc:  # noqa: BLE001
+            app_logger.warning("Workflow runtime startup skipped: %s", wf_exc)
+
         startup_completed = True
         app.state.infrastructure_ready = True
 
@@ -726,6 +765,17 @@ async def lifespan(app: FastAPI):
         app_logger.info("Завершение работы приложения...")
         app.state.infrastructure_ready = False
 
+        # К3: shutdown workflow runtime до stop_dsl_yaml_watcher,
+        # чтобы worker'ы успели завершить свои workflow до закрытия DSL.
+        try:
+            from src.backend.plugins.composition.workflow_setup import (
+                stop_workflow_runtime,
+            )
+
+            await stop_workflow_runtime(app)
+        except Exception as wf_stop_exc:  # noqa: BLE001
+            app_logger.warning("Workflow runtime shutdown error: %s", wf_stop_exc)
+
         await _stop_dsl_yaml_watcher(app)
 
         try:
@@ -734,6 +784,19 @@ async def lifespan(app: FastAPI):
             await stop_outbox_worker()
         except Exception as worker_exc:  # noqa: BLE001
             app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
+
+        # Wave 1.6 (S1): остановка AI Safety cleanup-loop ДО V11-loaders
+        # (плагины могут писать в workspace через AIFsFacade на shutdown).
+        try:
+            from src.backend.plugins.composition.ai_safety_setup import (
+                stop_ai_safety,
+            )
+
+            await stop_ai_safety(app)
+        except Exception as ai_safety_stop_exc:  # noqa: BLE001
+            app_logger.warning(
+                "AI safety shutdown error: %s", ai_safety_stop_exc
+            )
 
         # R1.fin (V11): shutdown V11-loader'ов в обратном порядке
         # (route → plugin) ДО Wave 4 PluginLoader, чтобы их on_shutdown
