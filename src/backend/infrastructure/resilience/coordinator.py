@@ -42,7 +42,7 @@ from src.backend.core.config.services.resilience import (
     ResilienceSettings,
 )
 from src.backend.core.resilience import DegradationManager, degradation_manager
-from src.backend.infrastructure.resilience.breaker import (
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerRegistry,
     BreakerSpec,
@@ -266,6 +266,78 @@ class ResilienceCoordinator:
     def list_components(self) -> list[str]:
         """Имена всех зарегистрированных компонентов (для health-checks)."""
         return list(self._components.keys())
+
+    # ─────────── Декоративный API (Sprint 1 V16 Single Entry) ───────────
+
+    def apply_policy(
+        self,
+        component: str,
+        name: str,
+        *,
+        breaker: BreakerSpec | None = None,
+        retry: Any | None = None,
+        rate_limiter: Any | None = None,
+    ) -> Callable[[AsyncCallable], AsyncCallable]:
+        """Возвращает декоратор, оборачивающий coroutine в полный resilience-стек.
+
+        Семантика композиции (внешний → внутренний):
+            ``rate_limiter.check`` → ``breaker.guard`` → ``with_retry``.
+
+        Args:
+            component: Имя компонента (используется как scope для breaker'а
+                в ``BreakerRegistry``).
+            name: Уникальное имя callsite (для логов/метрик).
+            breaker: Профиль circuit breaker'а; ``None`` — без breaker'а.
+            retry: ``RetryPolicy`` (или совместимый объект) для tenacity-retry;
+                ``None`` — без retry. Тип ``Any``, чтобы избежать импорта
+                ``core.resilience.retry`` на module level.
+            rate_limiter: Объект с ``check(identifier, policy)`` для
+                pre-check лимита (опционально).
+
+        Returns:
+            Декоратор, оборачивающий async-функцию. Сохраняет signature
+            оригинала через ``functools.wraps``.
+
+        Example::
+
+            coord = get_resilience_coordinator()
+
+            @coord.apply_policy(
+                component="external.skb",
+                name="fetch_quote",
+                breaker=BreakerSpec(failure_threshold=3, recovery_timeout=30),
+                retry=RetryPolicy(max_attempts=3),
+            )
+            async def fetch_quote(req: dict) -> dict:
+                ...
+        """
+        import functools
+
+        breaker_obj: Breaker | None = None
+        if breaker is not None:
+            breaker_obj = self._breakers.get_or_create(component, breaker)
+
+        # Lazy import чтобы избежать circular: core.resilience.retry уже
+        # подключён через core.resilience.__init__.
+        from src.backend.core.resilience.retry import with_retry
+
+        def decorator(func: AsyncCallable) -> AsyncCallable:
+            wrapped = func
+            if retry is not None:
+                wrapped = with_retry(retry)(wrapped)
+
+            @functools.wraps(func)
+            async def policy_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if rate_limiter is not None:
+                    await rate_limiter.check(name, getattr(rate_limiter, "policy", None))
+                if breaker_obj is not None:
+                    async with breaker_obj.guard():
+                        return await wrapped(*args, **kwargs)
+                return await wrapped(*args, **kwargs)
+
+            return policy_wrapper
+
+        return decorator
 
     # ─────────── Внутреннее ───────────
 

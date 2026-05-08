@@ -282,6 +282,7 @@ ignore = [
 "src/backend/infrastructure/database/database.py" = ["F822"]
 "src/backend/infrastructure/database/session_manager.py" = ["F822"]
 "src/backend/infrastructure/external_apis/logging_service.py" = ["F822"]
+"src/backend/core/resilience/breaker.py" = ["F822"]
 "src/backend/infrastructure/resilience/breaker.py" = ["F822"]
 "src/backend/infrastructure/scheduler/scheduler_manager.py" = ["F822"]
 "src/backend/services/decorators/limiting.py" = ["F822"]

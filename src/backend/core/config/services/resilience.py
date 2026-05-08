@@ -131,6 +131,16 @@ class ResilienceSettings(BaseSettingsWithLoader):
             "Полезно для CI/chaos-тестов: RESILIENCE_FALLBACK_MODE_OVERRIDE=forced."
         ),
     )
+    new_resilience_v2: bool = Field(
+        default=False,
+        description=(
+            "Sprint 1 V16 Single-Entry feature-flag. ``True`` включает миграцию "
+            "callsite'ов на canonical-импорты ``core.resilience.{breaker,retry,"
+            "rate_limiter}`` (Step 3.3). Default OFF — backward-compat shim'ы "
+            "из ``infrastructure.resilience`` остаются рабочими. Полностью "
+            "снимется после удаления aliases в Step 3.3 финале."
+        ),
+    )
 
 
 resilience_settings = ResilienceSettings()

@@ -22,8 +22,8 @@ import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncIterator, Final
 
-from src.backend.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
-from src.backend.infrastructure.resilience.breaker import CircuitOpen as CircuitOpen
+from src.backend.core.resilience.breaker import BreakerSpec, breaker_registry
+from src.backend.core.resilience.breaker import CircuitOpen as CircuitOpen
 
 if TYPE_CHECKING:
     from src.backend.core.config.pooling import PoolingProfile
