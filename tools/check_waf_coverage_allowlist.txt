@@ -1,0 +1,50 @@
+# WAF-coverage allowlist (V15 R-V15-5).
+#
+# Файл-пути (относительно корня репозитория) известных :internal
+# callsite'ов прямого httpx.AsyncClient/Client. Каждая запись —
+# легитимное исключение, обоснованное ADR/комментом в коде или
+# baseline-долгом, ожидающим миграции на OutboundHttpClient.
+#
+# Формат:
+#   src/backend/<path>/<file>.py
+#
+# Пустые строки и строки начинающиеся с '#' игнорируются.
+# `--strict` режим (CI/release-gate) игнорирует этот файл.
+
+# === К1 baseline (Sprint 1 V16, 2026-05-08) ===
+# Existing технический долг — 37 callsite'ов прямого httpx.AsyncClient.
+# Миграция на src.backend.core.net.OutboundHttpClient вынесена в задачи
+# К2-К5 (по соответствующим зонам каталогов). Каждый файл при миграции
+# удаляется из этого allowlist'а.
+
+src/backend/core/security/vault_cipher.py
+src/backend/dsl/engine/processors/ml_inference.py
+src/backend/dsl/engine/processors/proxy/forward.py
+src/backend/entrypoints/api/v1/endpoints/imports.py
+src/backend/entrypoints/webhook/handler.py
+src/backend/entrypoints/webhook/transformer.py
+src/backend/infrastructure/clients/external/express_bot.py
+src/backend/infrastructure/clients/external/search_providers.py
+src/backend/infrastructure/clients/external/telegram_bot.py
+src/backend/infrastructure/clients/storage/clickhouse.py
+src/backend/infrastructure/policy/opa.py
+src/backend/infrastructure/resilience/components/express_chain.py
+src/backend/infrastructure/sinks/http_sink.py
+src/backend/infrastructure/sinks/webhook_sink.py
+src/backend/infrastructure/sources/polling.py
+src/backend/services/ai/ai_moderation.py
+src/backend/services/ai/ai_providers.py
+src/backend/services/ops/notification_adapters.py
+src/backend/services/ops/notification_hub.py
+src/backend/services/ops/webhook_scheduler.py
+
+# === Wave 1.5 (S1, 2026-05-08) ===
+# Transport core (legacy aiohttp wrapper) — низкоуровневая обёртка,
+# через которую идут все остальные клиенты.
+# infrastructure/clients/transport/* exempted глобально через
+# _INTERNAL_EXEMPT_PREFIXES в check_waf_coverage.py.
+#
+# infrastructure/application/vault_refresher.py — hvac internals
+# (не httpx; в WAF-сканере не появится, но добавлен для документной
+# трассировки прохождения hvac→Vault мимо OutboundHttpClient).
+src/backend/infrastructure/application/vault_refresher.py

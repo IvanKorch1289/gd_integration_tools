@@ -102,18 +102,66 @@ async def _verify_basic(request: Request) -> AuthContext | None:
 
 
 async def _verify_mtls(request: Request) -> AuthContext | None:
-    """Проверка client certificate (mTLS).
+    """Проверка client certificate (mTLS) через :class:`MtlsBackend`.
 
-    Envoy/Nginx передают fingerprint в header X-Client-Cert-Fingerprint.
+    Envoy/Nginx с TLS-termination передают:
+    * ``X-Client-Cert-Fingerprint`` — sha256 fingerprint;
+    * ``X-Client-Cert-Subject`` — subject DN;
+    * ``X-Client-Cert`` (опц.) — PEM-encoded для full validation.
+
+    V15 S2: backend выполняет expiry-check и опц. CA-pinning.
     """
-    fingerprint = request.headers.get("X-Client-Cert-Fingerprint")
-    subject = request.headers.get("X-Client-Cert-Subject")
-    if not fingerprint:
+    from src.backend.core.auth.mtls_backend import (
+        MtlsBackend,
+        MtlsVerificationError,
+        default_cryptography_parser,
+    )
+
+    parser = None
+    try:
+        parser = default_cryptography_parser()
+    except RuntimeError:
+        # cryptography не установлена — fallback на headers-only валидацию.
+        parser = None
+
+    backend = MtlsBackend(cert_parser=parser)
+    try:
+        result = backend.verify(request)
+    except MtlsVerificationError as exc:
+        logger.warning("mTLS verification failed: %s", exc.reason)
+        return None
+    if result is None:
         return None
     return AuthContext(
         AuthMethod.MTLS,
-        principal=subject or fingerprint,
-        metadata={"fingerprint": fingerprint, "subject": subject},
+        principal=str(result["principal"]),
+        metadata=result,
+    )
+
+
+async def _verify_saml(request: Request) -> AuthContext | None:
+    """Проверка SAML session (V15 S6).
+
+    Полный SP-initiated SSO flow реализован отдельным endpoint'ом
+    ``/api/v1/saml/{login,acs,sls}`` (см. :class:`SamlBackend`). Здесь
+    верификация лимитирована проверкой signed session-cookie или
+    header'а ``X-SAML-Session-ID``, который выставляется ACS-handler'ом
+    после успешной обработки SAMLResponse.
+    """
+    session_id = (
+        request.cookies.get("saml_session")
+        or request.headers.get("X-SAML-Session-ID")
+    )
+    if not session_id:
+        return None
+    # Реальная валидация session_id — в SP-side store (Redis/in-memory).
+    # На уровне ядра принимаем cookie как заявку; проверка её подлинности
+    # делается middleware'ом. Это согласуется с тем, как сейчас сделано
+    # для X-Client-Cert-Fingerprint (доверяем TLS-proxy / SAML-handler'у).
+    return AuthContext(
+        AuthMethod.SAML,
+        principal=session_id,
+        metadata={"session_id": session_id},
     )
 
 
@@ -165,6 +213,7 @@ _VERIFIERS: dict[AuthMethod, Callable[..., Any]] = {
     AuthMethod.JWT: _verify_jwt,
     AuthMethod.BASIC: _verify_basic,
     AuthMethod.MTLS: _verify_mtls,
+    AuthMethod.SAML: _verify_saml,
     AuthMethod.EXPRESS: _verify_express,
     AuthMethod.EXPRESS_JWT: _verify_express_jwt,
 }

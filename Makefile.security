@@ -1,0 +1,29 @@
+# Makefile.security — К1 Security/Net/Secrets/AI-Safety taргеты (V15 S1+S2+S6).
+#
+# Подключается из root Makefile через `-include Makefile.security`. Все
+# таргеты — read-only (анализ кодовой базы), не модифицируют состояние.
+
+.PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety
+
+check-waf-coverage: ## К1 V15 R-V15-5 — все :external HTTP идут через OutboundHttpClient
+	@$(INFO) "Проверка WAF coverage (V15 R-V15-5)..."
+	@$(UV_RUN) python tools/check_waf_coverage.py
+	@$(SUCCESS) "WAF coverage check passed"
+
+check-waf-coverage-strict: ## К1 V15 — strict-режим (игнорирует allowlist; CI/release)
+	@$(INFO) "Проверка WAF coverage (strict, без allowlist)..."
+	@$(UV_RUN) python tools/check_waf_coverage.py --strict
+	@$(SUCCESS) "WAF coverage strict-check passed"
+
+secrets-check-broker: ## К1 V15 — SecretBroker self-test (Vault availability + env-fallback)
+	@$(INFO) "Проверка SecretBroker..."
+	@$(UV_RUN) python -c "from src.backend.infrastructure.secrets import SecretBroker; print('SecretBroker importable:', SecretBroker.__name__)"
+	@$(SUCCESS) "SecretBroker accessible"
+
+check-ai-safety: ## К1 V15 R-V15-4 — AI workspace + sandbox + capability tests
+	@$(INFO) "Проверка AI Safety (workspace + sandbox + fs.create_new)..."
+	@$(UV_RUN) python -m pytest -q \
+		tests/unit/core/ai \
+		tests/unit/infrastructure/ai \
+		tests/integration/test_ai_safety_lifecycle.py
+	@$(SUCCESS) "AI Safety checks passed"

@@ -74,56 +74,80 @@ def init_sentry(
 
 
 def _scrub_pii(event: dict[str, Any], hint: Any) -> dict[str, Any] | None:
-    """Scrub PII через Presidio перед отправкой в Sentry.
+    """Sentry ``before_send`` хук: маскирует PII перед отправкой (V15 S1).
 
-    Удаляет из event.request body / breadcrumbs / exception values
-    любые PII, распознанные Presidio (emails, phones, cards, etc.).
+    Покрывает:
+
+    * ``event['message']`` — основное сообщение;
+    * ``event['exception']['values'][i]['value']`` — текст исключения;
+    * ``event['request']['data']`` — POST/PATCH тело;
+    * ``event['breadcrumbs']['values'][i]['message']`` — log entries;
+    * ``event['extra']`` / ``event['contexts']`` — пользовательские поля.
+
+    Все 5 типов PII из S1 DoD (email/phone/passport/snils/inn) +
+    credit card покрываются :func:`redact_for_observability`.
+    Опциональный fallback на Presidio активируется через env
+    ``PII_PRESIDIO_ENABLED=true`` (для углублённой детекции в проде).
+    """
+    from src.backend.infrastructure.observability.pii_filter import (
+        redact_for_observability,
+    )
+
+    try:
+        if "message" in event:
+            event["message"] = redact_for_observability(event["message"])
+
+        request = event.get("request")
+        if isinstance(request, dict):
+            for key in ("data", "query_string", "cookies", "headers"):
+                if key in request:
+                    request[key] = redact_for_observability(request[key])
+
+        exception = event.get("exception")
+        if isinstance(exception, dict):
+            for val in exception.get("values", []):
+                if isinstance(val, dict) and "value" in val:
+                    val["value"] = redact_for_observability(val["value"])
+
+        breadcrumbs = event.get("breadcrumbs")
+        if isinstance(breadcrumbs, dict):
+            for crumb in breadcrumbs.get("values", []):
+                if isinstance(crumb, dict):
+                    if "message" in crumb:
+                        crumb["message"] = redact_for_observability(crumb["message"])
+                    if "data" in crumb:
+                        crumb["data"] = redact_for_observability(crumb["data"])
+
+        for key in ("extra", "contexts", "tags"):
+            if key in event:
+                event[key] = redact_for_observability(event[key])
+
+        if os.environ.get("PII_PRESIDIO_ENABLED", "").lower() == "true":
+            _scrub_with_presidio(event)
+
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Sentry PII scrub failed: %s", exc)
+
+    return event
+
+
+def _scrub_with_presidio(event: dict[str, Any]) -> None:
+    """Опц. углублённая PII-детекция через Presidio (feature-flag).
+
+    Активируется ``PII_PRESIDIO_ENABLED=true``. При отсутствии Presidio в
+    окружении функция тихо ничего не делает.
     """
     try:
         from src.backend.infrastructure.security.presidio_sanitizer import (
             get_presidio_sanitizer,
         )
 
-        # Probe доступности Presidio. Реальный скраб через PII-detection
-        # пока не реализован (TODO/W21 PII pipeline) — переменная
-        # удерживается только для проверки импорта.
-        _ = get_presidio_sanitizer()
+        sanitizer = get_presidio_sanitizer()
+        message = event.get("message")
+        if isinstance(message, str) and len(message) >= 3:
+            try:
+                event["message"] = sanitizer.sanitize_text(message)
+            except Exception:  # noqa: BLE001, S110
+                pass
     except ImportError:
-        return event
-
-    def _scrub_str(value: Any) -> Any:
-        if not isinstance(value, str) or len(value) < 3:
-            return value
-        try:
-            import asyncio
-
-            loop = (
-                asyncio.get_event_loop()
-                if asyncio.get_event_loop().is_running()
-                else None
-            )
-            if loop is None:
-                return value
-            return value
-        except Exception:
-            return value
-
-    try:
-        # Scrub request body
-        request = event.get("request", {})
-        if isinstance(request, dict):
-            data = request.get("data")
-            if isinstance(data, str):
-                request["data"] = _scrub_str(data)
-
-        # Scrub exception values
-        exception = event.get("exception", {})
-        values = exception.get("values", []) if isinstance(exception, dict) else []
-        for val in values:
-            if isinstance(val, dict) and "value" in val:
-                val["value"] = _scrub_str(val["value"])
-
-    except Exception as exc:
-        logger.debug("Sentry PII scrub failed: %s", exc)
-
-    return event
+        return

@@ -177,6 +177,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # ещё не инициализирован, ``route_to_sinks`` работает как no-op
         # (см. :func:`is_router_configured`).
         from src.backend.infrastructure.logging.router import route_to_sinks
+        from src.backend.infrastructure.observability.pii_filter import mask_pii
 
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,
@@ -187,6 +188,9 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.UnicodeDecoder(),
+            # V15 S1: PII redaction перед роутингом в backends.
+            # Маскирует email/phone/passport/snils/inn/card во всём event_dict.
+            mask_pii,
             route_to_sinks,
         ]
 

@@ -13,8 +13,32 @@ from enum import Enum
 from typing import Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth
+from src.backend.core.auth.mtls_backend import (
+    MtlsBackend,
+    MtlsConfig,
+    MtlsVerificationError,
+    ParsedClientCert,
+)
+from src.backend.core.auth.saml_backend import (
+    SamlAuthResult,
+    SamlBackend,
+    SamlConfig,
+    SamlError,
+)
 
-__all__ = ("AuthMethod", "AuthContext", "APIKeyAuth")
+__all__ = (
+    "APIKeyAuth",
+    "AuthContext",
+    "AuthMethod",
+    "MtlsBackend",
+    "MtlsConfig",
+    "MtlsVerificationError",
+    "ParsedClientCert",
+    "SamlAuthResult",
+    "SamlBackend",
+    "SamlConfig",
+    "SamlError",
+)
 
 
 class AuthMethod(str, Enum):
@@ -23,6 +47,8 @@ class AuthMethod(str, Enum):
     JWT = "jwt"
     BASIC = "basic"
     MTLS = "mtls"
+    SAML = "saml"
+    """V15 S6: SP-initiated SSO + SLO через python3-saml."""
     EXPRESS = "express"
     EXPRESS_JWT = "express_jwt"
 

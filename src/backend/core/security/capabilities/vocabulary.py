@@ -186,6 +186,26 @@ def build_default_vocabulary() -> CapabilityVocabulary:
     )
     vocab.register(
         CapabilityDef(
+            name="fs.create_new",
+            matcher=path_glob,
+            description=(
+                "Создание нового файла в AI workspace через AIFsFacade "
+                "(non-overwriting; запись существующих файлов запрещена, V15 R-V15-4)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="code.execute",
+            matcher=exact,
+            description=(
+                "Запуск пользовательского кода в sandbox (e2b/pyodide) через "
+                "CodeSandbox; прямой subprocess запрещён (V15 R-V15-4)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="mq.publish",
             matcher=dot_glob,
             description="Публикация сообщений через MQFacade (topic-glob).",
