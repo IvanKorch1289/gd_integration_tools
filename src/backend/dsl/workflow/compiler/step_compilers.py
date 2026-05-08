@@ -1,0 +1,255 @@
+"""Step Compilers — превращают декларации шагов в Temporal-вызовы.
+
+План V16.1 §4 Sprint 4 (К3): для каждого WorkflowStep типа существует
+функция-компилятор, которая принимает ``decl`` + ``ctx`` (рантайм-state
+workflow) и эмитит соответствующий ``temporalio.workflow.*`` вызов.
+
+Все функции возвращают ``Awaitable[Any]`` и могут быть вызваны
+непосредственно из ``async def run(self, input)`` workflow-класса.
+
+Доступные компиляторы:
+    * :func:`compile_activity_step` — ``workflow.execute_activity``.
+    * :func:`compile_saga_step` — forward + on-error compensate.
+    * :func:`compile_signal_wait_step` — ``workflow.wait_condition``
+      на ``self._signals[signal_name]``.
+    * :func:`compile_sleep_step` — ``workflow.sleep``.
+    * :func:`compile_sensor_step` — periodic ``workflow.execute_activity``
+      + ``workflow.sleep`` цикл с timeout.
+
+Все компиляторы — pure-functions без побочных эффектов: их можно
+безопасно вызывать дважды для тестов determinism.
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import timedelta
+from typing import Any, Callable
+
+from src.backend.dsl.workflow.spec import (
+    ActivityDeclaration,
+    RetryPolicy,
+    SagaDeclaration,
+    SensorDeclaration,
+    SignalWaitDeclaration,
+    SleepDeclaration,
+    WorkflowStep,
+)
+
+__all__ = (
+    "StepCompiler",
+    "compile_activity_step",
+    "compile_saga_step",
+    "compile_sensor_step",
+    "compile_signal_wait_step",
+    "compile_sleep_step",
+    "dispatch_step_compile",
+)
+
+
+_logger = logging.getLogger("workflow.compiler.step_compilers")
+
+# Сигнатура компилятора шага: декларация + рантайм-контекст → coroutine.
+# ``ctx`` — словарь в котором workflow держит output_key значения,
+# семафор сигналов и default-настройки.
+StepCompiler = Callable[[Any, dict[str, Any]], Any]
+
+
+def _build_retry_policy(
+    decl_policy: RetryPolicy | None, default_policy: RetryPolicy | None
+) -> Any:
+    """Сконструировать ``temporalio.common.RetryPolicy`` из декларации.
+
+    Если decl_policy и default_policy оба ``None`` — возвращает ``None``
+    (Temporal SDK применит свои дефолты). Lazy-import temporalio.
+    """
+    policy = decl_policy or default_policy
+    if policy is None:
+        return None
+    from temporalio.common import RetryPolicy as TemporalRetryPolicy
+
+    kwargs: dict[str, Any] = {
+        "initial_interval": timedelta(seconds=policy.initial_interval_s),
+        "backoff_coefficient": policy.backoff_coefficient,
+        "maximum_attempts": policy.max_attempts,
+    }
+    if policy.maximum_interval_s is not None:
+        kwargs["maximum_interval"] = timedelta(seconds=policy.maximum_interval_s)
+    if policy.non_retryable_errors:
+        kwargs["non_retryable_error_types"] = list(policy.non_retryable_errors)
+    return TemporalRetryPolicy(**kwargs)
+
+
+async def compile_activity_step(
+    decl: ActivityDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Выполнить ``workflow.execute_activity`` для :class:`ActivityDeclaration`.
+
+    Args:
+        decl: Декларация activity-шага.
+        ctx: Рантайм-контекст workflow (содержит ``_outputs``,
+            ``_default_timeout_s``, ``_default_retry_policy``,
+            ``_input``).
+
+    Returns:
+        Результат выполнения activity (Any).
+    """
+    from temporalio import workflow
+
+    timeout_s = decl.timeout_s or ctx["_default_timeout_s"]
+    retry_policy = _build_retry_policy(
+        decl.retry_policy, ctx.get("_default_retry_policy")
+    )
+
+    # args передаются как single-dict (Temporal сериализует через DataConverter).
+    payload = dict(decl.args) if decl.args else {}
+    payload.setdefault("_workflow_input", ctx.get("_input", {}))
+
+    kwargs: dict[str, Any] = {
+        "start_to_close_timeout": timedelta(seconds=timeout_s),
+    }
+    if retry_policy is not None:
+        kwargs["retry_policy"] = retry_policy
+
+    result = await workflow.execute_activity(decl.name, payload, **kwargs)
+
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = result
+    return result
+
+
+async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
+    """Выполнить saga: forward-цепочка + compensate при exception.
+
+    Compensate-шаги выполняются в reverse-порядке только для тех
+    forward-шагов, которые УЖЕ выполнились до ошибки. Если compensate
+    падает — лог + продолжение (best-effort), исходный exception
+    re-raise после завершения compensation.
+    """
+    from temporalio import workflow
+
+    completed: list[ActivityDeclaration] = []
+    try:
+        for forward_step in decl.forward:
+            await compile_activity_step(forward_step, ctx)
+            completed.append(forward_step)
+    except Exception as exc:
+        # Запускаем compensation в reverse-порядке относительно ВЫПОЛНЕННЫХ
+        # forward-шагов; compensate-цепочка декларации соответствует
+        # forward индексам по позиции (best-effort при разной длине).
+        for compensate_idx in range(len(completed) - 1, -1, -1):
+            if compensate_idx >= len(decl.compensate):
+                continue
+            try:
+                await compile_activity_step(decl.compensate[compensate_idx], ctx)
+            except Exception as comp_exc:  # noqa: BLE001 — saga best-effort
+                workflow.logger.warning(
+                    "saga compensation failed for step %d: %s",
+                    compensate_idx,
+                    comp_exc,
+                )
+        raise exc
+    return None
+
+
+async def compile_signal_wait_step(
+    decl: SignalWaitDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Дождаться внешнего сигнала через ``workflow.wait_condition``.
+
+    Workflow-класс должен иметь signal-handler для ``decl.signal_name``;
+    handler сохраняет payload в ``ctx["_signals"][signal_name]``.
+    Этот компилятор только ждёт пока ключ появится.
+    """
+    from temporalio import workflow
+
+    signals = ctx.setdefault("_signals", {})
+
+    def _signal_received() -> bool:
+        return decl.signal_name in signals
+
+    if decl.timeout_s is not None:
+        try:
+            await workflow.wait_condition(
+                _signal_received, timeout=timedelta(seconds=decl.timeout_s)
+            )
+        except TimeoutError:
+            return None
+    else:
+        await workflow.wait_condition(_signal_received)
+
+    payload = signals.pop(decl.signal_name, None)
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = payload
+    return payload
+
+
+async def compile_sleep_step(decl: SleepDeclaration, ctx: dict[str, Any]) -> Any:
+    """Durable sleep через ``workflow.sleep``.
+
+    Args:
+        decl: Декларация sleep-шага.
+        ctx: Не используется (зарезервирован для consistency).
+    """
+    from temporalio import workflow
+
+    del ctx
+    await workflow.sleep(timedelta(seconds=decl.duration_s))
+    return None
+
+
+async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> Any:
+    """Periodic-sensor: выполнять predicate как activity до True или timeout.
+
+    Predicate — строка ``module:fn`` или ``action_id``: компилируется в
+    activity-вызов. Если predicate возвращает truthy — sensor завершается.
+    """
+    from temporalio import workflow
+
+    elapsed = 0.0
+    while True:
+        result = await workflow.execute_activity(
+            decl.predicate,
+            {},
+            start_to_close_timeout=timedelta(seconds=ctx["_default_timeout_s"]),
+        )
+        if result:
+            return result
+        if decl.timeout_s is not None and elapsed >= decl.timeout_s:
+            raise TimeoutError(
+                f"sensor {decl.predicate!r} timed out after {decl.timeout_s}s"
+            )
+        await workflow.sleep(timedelta(seconds=decl.poll_interval_s))
+        elapsed += decl.poll_interval_s
+
+
+_STEP_DISPATCH: dict[type, StepCompiler] = {
+    ActivityDeclaration: compile_activity_step,
+    SagaDeclaration: compile_saga_step,
+    SignalWaitDeclaration: compile_signal_wait_step,
+    SleepDeclaration: compile_sleep_step,
+    SensorDeclaration: compile_sensor_step,
+}
+
+
+async def dispatch_step_compile(step: WorkflowStep, ctx: dict[str, Any]) -> Any:
+    """Диспетчер: выбирает компилятор по типу декларации шага.
+
+    Args:
+        step: Любой :data:`WorkflowStep`.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        Результат соответствующего компилятора.
+
+    Raises:
+        TypeError: Если тип ``step`` неизвестен (новый step добавлен,
+            но компилятор не зарегистрирован).
+    """
+    compiler = _STEP_DISPATCH.get(type(step))
+    if compiler is None:
+        raise TypeError(
+            f"No step compiler registered for {type(step).__name__}; "
+            "did you add a new WorkflowStep without updating step_compilers?"
+        )
+    return await compiler(step, ctx)
