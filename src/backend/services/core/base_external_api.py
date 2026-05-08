@@ -48,16 +48,26 @@ class BaseExternalAPIClient:
 
     _auth_scheme: str = "Bearer"
 
-    def __init__(self, *, settings: Any, name: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        settings: Any,
+        name: str | None = None,
+        outbound_http_client: Any | None = None,
+    ) -> None:
         # Wave 6 finalize: HTTP-клиент резолвится через DI-провайдер
         # (см. ``core.di.providers.get_http_client_provider``) — это
         # снимает прямой импорт ``infrastructure.clients.transport.http``
         # из services-слоя.
+        # Wave 1.5 (S1): при ``WAF_OUTBOUND_VIA_FACADE=True`` ходим через
+        # ``OutboundHttpClient`` (Single Entry V15.1, R-V15-5). Phase-1 —
+        # флаг по умолчанию False, прежнее поведение сохраняется.
         from src.backend.core.di.providers import get_http_client_provider
 
         self.settings = settings
         self._name = name or self.__class__.__name__
         self.client = get_http_client_provider()
+        self._outbound_http_client = outbound_http_client
         self.base_url = (
             getattr(settings, "prod_url", None)
             or getattr(settings, "base_url", None)
@@ -65,6 +75,28 @@ class BaseExternalAPIClient:
         )
         self.endpoints = getattr(settings, "endpoints", {}) or {}
         self._logger = logging.getLogger(f"services.{self._name.lower()}")
+
+    def _resolve_outbound_facade(self) -> Any | None:
+        """Lazy-резолв ``OutboundHttpClient`` из svcs (если включён feature-flag)."""
+        if self._outbound_http_client is not None:
+            return self._outbound_http_client
+        try:
+            from src.backend.core.config.waf import waf_settings
+        except Exception:  # noqa: BLE001
+            return None
+        if not getattr(waf_settings, "outbound_via_facade", False):
+            return None
+        try:
+            from src.backend.core.net.outbound_http import OutboundHttpClient
+            from src.backend.core.svcs_registry import get_service, has_service
+        except Exception:  # noqa: BLE001
+            return None
+        if not has_service(OutboundHttpClient):
+            return None
+        try:
+            return get_service(OutboundHttpClient)
+        except Exception:  # noqa: BLE001
+            return None
 
     def _url(self, endpoint_key: str) -> str:
         """Формирует полный URL из endpoints dict по ключу."""
@@ -145,6 +177,34 @@ class BaseExternalAPIClient:
             kwargs["response_type"] = response_type
         if raise_for_status is not None:
             kwargs["raise_for_status"] = raise_for_status
+
+        facade = self._resolve_outbound_facade()
+        if facade is not None:
+            try:
+                response = await facade.request(
+                    method,
+                    url,
+                    params=params,
+                    json=json,
+                    headers=full_headers,
+                )
+            except Exception as exc:
+                self._logger.error(
+                    "%s outbound facade failed: %s %s — %s",
+                    self._name,
+                    method,
+                    url,
+                    exc,
+                )
+                raise
+            if response_type == "text":
+                return response.text
+            if response_type == "bytes":
+                return response.content
+            try:
+                return response.json()
+            except ValueError:
+                return response.text
 
         try:
             return await self.client.make_request(
