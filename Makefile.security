@@ -3,7 +3,8 @@
 # Подключается из root Makefile через `-include Makefile.security`. Все
 # таргеты — read-only (анализ кодовой базы), не модифицируют состояние.
 
-.PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety
+.PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
+        sbom audit-deps audit-zap bandit-strict security
 
 check-waf-coverage: ## К1 V15 R-V15-5 — все :external HTTP идут через OutboundHttpClient
 	@$(INFO) "Проверка WAF coverage (V15 R-V15-5)..."
@@ -27,3 +28,42 @@ check-ai-safety: ## К1 V15 R-V15-4 — AI workspace + sandbox + capability test
 		tests/unit/infrastructure/ai \
 		tests/integration/test_ai_safety_lifecycle.py
 	@$(SUCCESS) "AI Safety checks passed"
+
+##@ К5 — supply-chain (SBOM / pip-audit / ZAP / bandit-strict)
+
+sbom: ## К5: сгенерировать CycloneDX SBOM в dist/sbom.cdx.json
+	@$(INFO) "Generating CycloneDX SBOM..."
+	@mkdir -p dist
+	@$(UV_RUN) cyclonedx-py environment --of JSON -o dist/sbom.cdx.json
+	@$(SUCCESS) "SBOM written to dist/sbom.cdx.json"
+
+audit-deps: ## К5: pip-audit с allowlist (.security/pip-audit-allowlist.txt)
+	@$(INFO) "Running pip-audit..."
+	@mkdir -p dist
+	@$(UV_RUN) uv pip freeze --exclude-editable > dist/audit-requirements.txt 2>/dev/null || \
+	  $(UV_RUN) uv export --no-dev --format requirements-txt > dist/audit-requirements.txt
+	@ALLOW=""; \
+	if [ -f .security/pip-audit-allowlist.txt ]; then \
+		for v in $$(grep -v '^#' .security/pip-audit-allowlist.txt | grep -v '^$$' || true); do \
+			ALLOW="$$ALLOW --ignore-vuln $$v"; \
+		done; \
+	fi; \
+	$(UV_RUN) pip-audit --strict --format json -r dist/audit-requirements.txt $$ALLOW
+	@$(SUCCESS) "pip-audit clean"
+
+audit-zap: ## К5: OWASP ZAP baseline (требует zap-baseline.py docker)
+	@$(INFO) "Running OWASP ZAP baseline..."
+	@command -v docker >/dev/null 2>&1 || { $(ERROR) "docker not installed"; exit 1; }
+	@docker run --rm --network host -t \
+		-v $(PWD)/.security:/zap/wrk/:rw \
+		ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+		-t $(or $(BASE_URL),http://127.0.0.1:8000) \
+		-c zap-rules.tsv -I || $(INFO) "ZAP completed (alpha: non-blocking)"
+
+bandit-strict: ## К5: bandit -lll strict (только high-severity)
+	@$(INFO) "Running bandit -lll..."
+	@$(UV_RUN) bandit -r src/backend -lll -c pyproject.toml
+	@$(SUCCESS) "bandit-strict clean"
+
+security: sbom audit-deps bandit-strict ## К5: composite supply-chain gate (без ZAP — он требует backend up)
+	@$(SUCCESS) "supply-chain gates OK"

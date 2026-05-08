@@ -13,7 +13,9 @@ IMAGE_NAME ?= gd-integration-tools
 IMAGE_TAG ?= py314
 
 DOCS_DIR := docs
-DOCS_SOURCE := $(DOCS_DIR)/source
+# К5 (Wave K5/docs-tenants-caps): conf.py живёт в docs/ (Diátaxis 4-quadrant).
+# Старый sphinx-apidoc target пишет в docs/source — оставляем для совместимости.
+DOCS_SOURCE := $(DOCS_DIR)
 DOCS_BUILD := $(DOCS_DIR)/build
 APP_DIR := src
 
@@ -47,6 +49,10 @@ SUCCESS := printf '\033[32m%s\033[0m\n'
 WARN := printf '\033[33m%s\033[0m\n'
 ERROR := printf '\033[31m%s\033[0m\n'
 
+# === К1 hooks === include секционных таргетов команды-1 (Security/Net/Secrets/AI-Safety).
+# Подключение опциональное — при отсутствии файла make продолжает без ошибки.
+-include Makefile.security
+
 .PHONY: \
 	help \
 	init install update lock \
@@ -70,7 +76,8 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	layers layers-update config-audit \
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \
-	import-swagger import-postman import-wsdl
+	import-swagger import-postman import-wsdl \
+	testkit-smoke new-plugin perf-smoke perf-full perf-gate chaos chaos-slow docs-vale
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"
@@ -405,6 +412,56 @@ import-wsdl: check-env ## WSDL → actions (URL=<wsdl> CONNECTOR=<name> [WRITE=1
 	@$(UV_RUN) python tools/import_wsdl.py --url "$(URL)" --connector "$(CONNECTOR)" \
 		$(if $(WRITE),--write,) $(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
 
+##@ K5 — testkit / chaos / perf / new-plugin
+
+testkit-smoke: check-env ## К5: запуск unit-тестов testkit (recorder/replay/route_runner/fixtures)
+	@$(INFO) "Running testkit smoke tests..."
+	@$(UV_RUN) pytest tests/unit/testkit_pkg -q
+	@$(SUCCESS) "testkit OK"
+
+new-plugin: check-env ## К5: scaffold extensions/<NAME>/ V11 plugin (FEATURES='ping,echo')
+	@if [ -z "$(NAME)" ]; then \
+		echo "Использование: make new-plugin NAME=<plugin_name> [FEATURES='ping,echo'] [CAPABILITIES='mq.publish'] [WITH_FRONTEND=1]"; \
+		exit 2; \
+	fi
+	@$(UV_RUN) python tools/codegen_plugin.py \
+		--name "$(NAME)" \
+		$(if $(FEATURES),--features "$(FEATURES)",) \
+		$(if $(CAPABILITIES),--capabilities "$(CAPABILITIES)",) \
+		$(if $(WITH_FRONTEND),--with-frontend,) \
+		$(if $(OVERWRITE),--overwrite,)
+
+perf-smoke: check-env ## К5: short k6 baseline (~1 min) против запущенного backend
+	@$(INFO) "Running k6 smoke profile..."
+	@command -v k6 >/dev/null 2>&1 || { $(ERROR) "k6 not installed (https://k6.io/docs/getting-started/installation)"; exit 1; }
+	@k6 run -e BASE_URL=$(or $(BASE_URL),http://127.0.0.1:8000) tests/perf/k6_baseline.js
+
+perf-full: check-env ## К5: full locust run (3 min, 100 VU)
+	@$(INFO) "Running locust full profile..."
+	@$(UV_RUN) --extra perf locust -f tests/perf/locust_full_profile.py \
+		--host=$(or $(BASE_URL),http://127.0.0.1:8000) \
+		--users 100 --spawn-rate 10 --run-time 3m --headless
+
+perf-gate: check-env ## К5: enforced perf-gate (k6 with thresholds; fails if SLO breached)
+	@$(INFO) "Running perf-gate (p95<200ms, RPS>1000, error<1%)..."
+	@command -v k6 >/dev/null 2>&1 || { $(ERROR) "k6 not installed"; exit 1; }
+	@k6 run --summary-export=dist/k6-summary.json \
+		-e BASE_URL=$(or $(BASE_URL),http://127.0.0.1:8000) \
+		tests/perf/k6_action_routes.js
+
+chaos: check-env ## К5: chaos × 33 (toxiproxy required; Docker required)
+	@$(INFO) "Running chaos suite (33 scenarios)..."
+	@$(UV_RUN) pytest tests/chaos -q -m "chaos"
+
+chaos-slow: check-env ## К5: chaos including slow scenarios
+	@$(INFO) "Running chaos + slow suite..."
+	@$(UV_RUN) pytest tests/chaos -q -m "chaos or slow"
+
+docs-vale: check-env ## К5: prose lint Markdown через Vale + proselint
+	@$(INFO) "Running Vale + proselint on docs/..."
+	@command -v vale >/dev/null 2>&1 && vale docs/ || $(INFO) "vale CLI not installed — skip"
+	@$(UV_RUN) python -m proselint docs/ || true
+
 ##@ Profiling
 
 profile-memray: check-env ## Run FastAPI under Memray
@@ -480,10 +537,11 @@ docs-clean:
 	rm -rf $(DOCS_BUILD)/*
 
 docs-apidoc:
-	uv run sphinx-apidoc -f -o $(DOCS_SOURCE) $(APP_DIR)
+	@# autoapi (sphinx-autoapi) делает discovery сам — sphinx-apidoc не нужен.
+	@true
 
 docs-html:
-	uv run sphinx-build -b html $(DOCS_SOURCE) $(DOCS_BUILD)/html
+	uv run sphinx-build -b html -W --keep-going $(DOCS_SOURCE) $(DOCS_BUILD)/html
 
 docs-rebuild: docs-clean docs-apidoc docs-html
 
@@ -562,7 +620,23 @@ check-strict: ## Run strict checks except mypy and vulture
 	@$(MAKE) lint-strict
 	@$(MAKE) deps-check-strict
 	@$(MAKE) secrets-check
+	@$(MAKE) check-waf-coverage-strict
 	@$(SUCCESS) "All strict checks passed!"
+
+ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF strict)
+	@$(MAKE) format-check
+	@$(MAKE) lint-strict
+	@$(MAKE) type-check-strict
+	@$(MAKE) deps-check-strict
+	@$(MAKE) secrets-check
+	@$(MAKE) check-waf-coverage-strict
+	@$(MAKE) check-ai-safety
+	@$(SUCCESS) "CI gate passed"
+
+pr: ## К1 V15 — composite PR gate (ci + docs)
+	@$(MAKE) ci
+	@$(MAKE) docs
+	@$(SUCCESS) "PR gate passed"
 
 check-strict-full: ## Clean caches and run all strict checks including mypy
 	@$(MAKE) clean
