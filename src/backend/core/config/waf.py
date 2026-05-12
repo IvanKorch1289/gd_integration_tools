@@ -50,10 +50,12 @@ class WafSettings(BaseSettingsWithLoader):
     )
 
     outbound_via_facade: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Phase-1 (False): legacy HTTP-клиент остаётся; "
-            "Phase-2 (True): BaseExternalAPIClient идёт через OutboundHttpClient."
+            "Phase-2 (True, default): BaseExternalAPIClient + субклассы "
+            "идут через OutboundHttpClient (auto-routing). "
+            "См. ADR-0053 для миграционной стратегии и follow-up callsites."
         ),
     )
 
