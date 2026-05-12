@@ -1,0 +1,72 @@
+name: type
+
+# Sprint 3 W1 К5 / GAP-10: статическая проверка типов.
+# mypy — блокирующий (через make type-check), pyright — информационный.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          # TODO: при недоступности 3.14 — fallback на '3.14-dev' или '3.13'.
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Run mypy (через Makefile target)
+        # make type-check проверяет src/ полностью; конфигурация в pyproject.toml.
+        run: make type-check
+
+  pyright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # pyright строже mypy — информационный режим, не блокируем PR.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Run pyright (narrow scope — backend core)
+        # Узкий scope как указано в плане Sprint 3 W1.
+        run: uv tool run pyright src/backend/core

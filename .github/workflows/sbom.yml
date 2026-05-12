@@ -1,0 +1,66 @@
+name: sbom
+
+# Sprint 3 W1 К5 / GAP-10: генерация Software Bill of Materials (CycloneDX).
+# cosign attestation — отложено на R3 (supply-chain V4).
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          # TODO: при недоступности 3.14 — fallback на '3.14-dev' или '3.13'.
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Generate CycloneDX SBOM
+        # cyclonedx-bom>=4.5 уже в dev-deps; CLI `cyclonedx-py` появляется
+        # после установки. Пробуем современный subcommand `environment`,
+        # при отказе fallback на legacy `cyclonedx-bom`.
+        run: |
+          if uv run cyclonedx-py --help >/dev/null 2>&1; then
+            echo "Using cyclonedx-py environment"
+            uv run cyclonedx-py environment -o sbom.json
+          else
+            echo "Fallback: cyclonedx-bom"
+            uv run cyclonedx-bom -o sbom.json
+          fi
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.json
+          retention-days: 90
+          if-no-files-found: error
+
+      # TODO (R3 / supply-chain V4): добавить шаги
+      #   - cosign attest --predicate sbom.json --type cyclonedx <artifact>
+      #   - публикация SBOM в registry (OCI artifact).
