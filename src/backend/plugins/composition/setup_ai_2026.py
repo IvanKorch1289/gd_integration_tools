@@ -47,10 +47,32 @@ async def register_ai_2026_providers() -> None:
         from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache
         from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
 
+        l2_qdrant: object | None = None
+        l2_embedder: object | None = None
+        if rag_cache_settings.l2_enabled:
+            try:
+                from src.backend.infrastructure.clients.storage.vector_store import (
+                    get_vector_store,
+                )
+
+                l2_qdrant = get_vector_store()
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("L2 qdrant client injection skipped: %s", exc)
+            try:
+                from src.backend.services.ai.embedding_providers import (
+                    get_embedding_provider,
+                )
+
+                l2_embedder = get_embedding_provider()
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("L2 embedder injection skipped: %s", exc)
+
         bus = RagInvalidationBus(channel=rag_cache_settings.invalidation_channel)
         cache = ThreeTierRagCache(
             l1=L1ExactCache(ttl_seconds=rag_cache_settings.l1_ttl),
             l2=L2SemanticRagCache(
+                qdrant_client=l2_qdrant,
+                embedder=l2_embedder,
                 collection=rag_cache_settings.l2_collection,
                 threshold=rag_cache_settings.l2_threshold,
             ),

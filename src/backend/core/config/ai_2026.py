@@ -27,14 +27,20 @@ from src.backend.core.config.config_loader import BaseSettingsWithLoader
 __all__ = (
     "LiteLLMGatewaySettings",
     "RagCacheSettings",
+    "RagIngestSettings",
     "BGESettings",
     "LangMemSettings",
     "StreamingLLMSettings",
+    "LangFuseSettings",
+    "McpSettings",
     "litellm_gateway_settings",
     "rag_cache_settings",
+    "rag_ingest_settings",
     "bge_settings",
     "langmem_settings",
     "streaming_llm_settings",
+    "langfuse_settings",
+    "mcp_settings",
 )
 
 
@@ -109,6 +115,34 @@ class RagCacheSettings(BaseSettingsWithLoader):
         default="rag:invalidation",
         description="Redis pub/sub-канал для invalidate_by_tag.",
     )
+    warm_on_ingest: bool = Field(
+        default=False,
+        description="Прогревать L1/L2/L3 cache на ingest (×2 cost — default-OFF).",
+    )
+
+
+class RagIngestSettings(BaseSettingsWithLoader):
+    """Параметры RAG ingest-pipeline (D.2 / Track D)."""
+
+    yaml_group: ClassVar[str] = "rag_ingest"
+    model_config = SettingsConfigDict(env_prefix="RAG_INGEST_", extra="ignore")
+
+    deferred: bool = Field(
+        default=False,
+        description="Очередить ingest в TaskIQ-broker вместо inline-исполнения.",
+    )
+    state_backend: str = Field(
+        default="memory",
+        description="Backend для IngestStateStore: 'memory' | 'redis'.",
+    )
+    chunker_fingerprint_version: int = Field(
+        default=1,
+        ge=1,
+        description="Версия chunker-конфигурации для detect re-embed.",
+    )
+    state_ttl_seconds: int = Field(
+        default=86_400, ge=60, description="TTL Redis-ключей со state ingest-задач."
+    )
 
 
 class BGESettings(BaseSettingsWithLoader):
@@ -158,6 +192,85 @@ class LangMemSettings(BaseSettingsWithLoader):
         default="langmem_semantic",
         description="Коллекция Qdrant для semantic-фактов.",
     )
+    consolidation_batch_size: int = Field(
+        default=50,
+        ge=1,
+        description="Размер батча для ConsolidationEngine.run.",
+    )
+    consolidation_schedule_cron: str = Field(
+        default="",
+        description="Cron-выражение для авто-консолидации (пусто = manual only).",
+    )
+    consolidation_min_cluster_size: int = Field(
+        default=3,
+        ge=2,
+        description="Минимум эпизодов в кластере (session_id+tenant) для LLM-summarize.",
+    )
+    consolidation_confidence_threshold: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Минимальная confidence факта для записи в semantic.",
+    )
+    rlm_enabled: bool = Field(
+        default=False,
+        description="Включить RLM (Reinforcement Learning from Memory) re-ranking.",
+    )
+    rlm_boost_factor: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Множитель для feedback-induced boost/penalty (0.0=disable).",
+    )
+    rlm_reindex_threshold: int = Field(
+        default=3,
+        ge=1,
+        description="Сколько 'bad' events на источник для reindex-hint.",
+    )
+
+
+class LangFuseSettings(BaseSettingsWithLoader):
+    """Параметры LangFuse cost-tracking (D.5)."""
+
+    yaml_group: ClassVar[str] = "langfuse"
+    model_config = SettingsConfigDict(env_prefix="LANGFUSE_", extra="ignore")
+
+    enabled: bool = Field(
+        default=False,
+        description="Включить LangFuse-callback и LangFuse-reader.",
+    )
+    host: str = Field(default="", description="LangFuse host URL.")
+    public_key: str = Field(default="", description="LangFuse public key.")
+    secret_key: str = Field(default="", description="LangFuse secret key.")
+    flush_at: int = Field(
+        default=15, ge=1, description="Batch size для async flush callback'а."
+    )
+    deep_link_base: str = Field(
+        default="",
+        description="Базовый URL для построения deep-link в UI LangFuse.",
+    )
+
+
+class McpSettings(BaseSettingsWithLoader):
+    """Параметры FastMCP HTTP transport (D.4)."""
+
+    yaml_group: ClassVar[str] = "mcp"
+    model_config = SettingsConfigDict(env_prefix="MCP_", extra="ignore")
+
+    http_enabled: bool = Field(
+        default=False, description="Монтировать /mcp как ASGI sub-app."
+    )
+    bind_path: str = Field(
+        default="/mcp", description="Path-prefix для FastMCP ASGI app."
+    )
+    auth_methods: list[str] = Field(
+        default_factory=lambda: ["api_key", "jwt"],
+        description="Допустимые методы: api_key, jwt.",
+    )
+    legacy_description_schema: bool = Field(
+        default=False,
+        description="Сохранять JSON-Schema в description (graceful migration).",
+    )
 
 
 class StreamingLLMSettings(BaseSettingsWithLoader):
@@ -183,6 +296,9 @@ class StreamingLLMSettings(BaseSettingsWithLoader):
 
 litellm_gateway_settings = LiteLLMGatewaySettings()
 rag_cache_settings = RagCacheSettings()
+rag_ingest_settings = RagIngestSettings()
 bge_settings = BGESettings()
 langmem_settings = LangMemSettings()
 streaming_llm_settings = StreamingLLMSettings()
+langfuse_settings = LangFuseSettings()
+mcp_settings = McpSettings()

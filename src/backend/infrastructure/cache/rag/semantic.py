@@ -50,11 +50,26 @@ class L2SemanticRagCache:
             self._client = False
         return self._client
 
+    def _ensure_embedder(self) -> Any:
+        if self._embedder is not None:
+            return self._embedder
+        try:
+            from src.backend.services.ai.embedding_providers import (
+                get_embedding_provider,
+            )
+
+            self._embedder = get_embedding_provider()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("L2 embedder lazy-init failed: %s", exc)
+            self._embedder = False
+        return self._embedder
+
     async def _embed(self, text: str) -> list[float]:
-        if self._embedder is None:
+        embedder = self._ensure_embedder()
+        if not embedder:
             return []
         try:
-            result = await self._embedder.embed([text])
+            result = await embedder.embed([text])
         except Exception as exc:  # noqa: BLE001
             logger.debug("L2 embedder failed: %s", exc)
             return []
