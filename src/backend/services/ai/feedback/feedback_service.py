@@ -127,11 +127,32 @@ class AIFeedbackService:
         updated = await self._repo.update(existing)
 
         self._record_metric(agent_id=updated.agent_id, label=label)
+        await self._maybe_apply_rlm(doc_id=doc_id, label=label)
         logger.info(
             "ai_feedback_labeled",
             extra={"doc_id": doc_id, "label": label, "operator_id": operator_id},
         )
         return updated
+
+    @staticmethod
+    async def _maybe_apply_rlm(*, doc_id: str, label: Any) -> None:
+        """Wave D.6: оптинально подаёт feedback в RLMFeedbackProcessor."""
+        try:
+            from src.backend.core.config.ai_2026 import langmem_settings
+        except Exception:  # noqa: BLE001
+            return
+        if not langmem_settings.rlm_enabled:
+            return
+        mapping = {"positive": "good", "negative": "bad", "skip": "unclear"}
+        rlm_label = mapping.get(str(label), "unclear")
+        try:
+            from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
+
+            await RLMFeedbackProcessor().on_feedback_received(
+                doc_id=str(doc_id), label=rlm_label  # type: ignore[arg-type]
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("RLM feedback hook skipped: %s", exc)
 
     @staticmethod
     def _record_metric(*, agent_id: str, label: FeedbackLabel) -> None:

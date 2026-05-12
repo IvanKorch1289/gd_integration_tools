@@ -207,11 +207,53 @@ class LangMemService:
                 ]
             raise ValueError(f"Неизвестный kind: {kind!r} (episodic|procedural)")
 
-    async def consolidate(self) -> int:
-        """Placeholder Sprint 4: периодическая консолидация эпизодов в semantic."""
+    async def consolidate(
+        self,
+        *,
+        since: datetime | None = None,
+        batch_size: int | None = None,
+    ) -> dict[str, Any]:
+        """Wave D.6: episodic → semantic через LLM-summarization.
+
+        Делегирует
+        :class:`services.ai.memory.langmem.consolidation.ConsolidationEngine`.
+        Возвращает :class:`ConsolidationReport.to_dict()`.
+        """
         self._ensure_enabled()
-        logger.info("LangMem.consolidate: placeholder, реализация в Sprint 4")
-        return 0
+        from src.backend.core.config.ai_2026 import langmem_settings
+        from src.backend.services.ai.memory.langmem.consolidation import (
+            ConsolidationEngine,
+        )
+
+        engine = ConsolidationEngine(langmem_service=self)
+        report = await engine.run(
+            since=since,
+            batch_size=batch_size or langmem_settings.consolidation_batch_size,
+        )
+        return report.to_dict()
+
+    async def stats(self) -> dict[str, Any]:
+        """Wave D.6: общая статистика памяти (counts по типам)."""
+        self._ensure_enabled()
+        from src.backend.services.ai.langmem_models import (
+            LangMemEpisodic,
+            LangMemProcedural,
+        )
+
+        factory = self._ensure_session_factory()
+        async with factory() as session:
+            from sqlalchemy import func
+
+            episodic_count = (
+                await session.execute(select(func.count(LangMemEpisodic.id)))
+            ).scalar() or 0
+            procedural_count = (
+                await session.execute(select(func.count(LangMemProcedural.id)))
+            ).scalar() or 0
+        return {
+            "episodic_count": int(episodic_count),
+            "procedural_count": int(procedural_count),
+        }
 
 
 _singleton: LangMemService | None = None

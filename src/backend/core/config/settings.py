@@ -78,6 +78,7 @@ from src.backend.core.config.services import (
 from src.backend.core.config.telegram import TelegramBotSettings, telegram_bot_settings
 from src.backend.core.config.v11 import V11Settings, v11_settings
 from src.backend.core.config.vault import VaultSettings, vault_settings
+from src.backend.core.config.workflow import WorkflowSettings, workflow_settings
 
 __all__ = ("Settings", "settings")
 
@@ -139,6 +140,9 @@ class Settings(BaseSettings):
 
     # V11 R1.fin (ADR-042/043/044): PluginLoaderV11 + RouteLoader feature-flags.
     v11: V11Settings = v11_settings
+
+    # Sprint 4 К3-B: bootstrap saga-деклараций по WORKFLOW_BOOTSTRAP_DEFAULTS_ENABLED.
+    workflow: WorkflowSettings = workflow_settings
 
     # Устойчивая инфраструктура (W26): per-service breaker-профили + fallback-политики
     resilience: ResilienceSettings = resilience_settings
