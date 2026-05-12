@@ -65,23 +65,17 @@ async def _verify_api_key(request: Request) -> AuthContext | None:
 
 
 async def _verify_jwt(request: Request) -> AuthContext | None:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    token = auth[7:]
+    """Верификация локального JWT через :class:`JwtBackend` (joserfc).
+
+    Wave [s2/k1-2-jwt-jwks]: ранее использовался ``python-jose``, который
+    отсутствовал в pyproject.toml → ``ImportError`` на первом Bearer-запросе
+    в prod. Теперь — joserfc через DI-провайдер ``get_jwt_backend_provider``.
+    """
     try:
-        from jose import jwt
+        from src.backend.core.di.providers import get_jwt_backend_provider
 
-        from src.backend.core.config.settings import settings
-
-        secret = (
-            settings.secure.secret_key.get_secret_value()
-            if hasattr(settings.secure.secret_key, "get_secret_value")
-            else str(settings.secure.secret_key)
-        )
-        payload = jwt.decode(token, secret, algorithms=[settings.secure.algorithm])
-        principal = payload.get("sub", "")
-        return AuthContext(AuthMethod.JWT, principal, payload)
+        backend = get_jwt_backend_provider()
+        return await backend.verify(request)
     except Exception as exc:
         logger.warning("JWT verify failed: %s", exc)
         return None
@@ -185,24 +179,30 @@ async def _verify_express_jwt(request: Request) -> AuthContext | None:
         return None
     token = auth[7:]
     try:
-        from jose import jwt
-
+        from src.backend.core.auth.jwt_backend import (
+            JwtBackend,
+            JwtVerificationError,
+        )
         from src.backend.core.config.auth import build_auth_config
 
         cfg = build_auth_config().express_jwt
         if not cfg.enabled or not cfg.secret_key:
             return None
-        options = {"verify_aud": bool(cfg.botx_host)}
-        payload = jwt.decode(
-            token,
-            cfg.secret_key,
+        backend = JwtBackend(
             algorithms=["HS256"],
+            secret=cfg.secret_key,
             audience=cfg.botx_host or None,
             issuer=cfg.bot_id or None,
-            options=options,
         )
-        principal = payload.get("sub") or payload.get("huid") or cfg.bot_id
-        return AuthContext(AuthMethod.EXPRESS_JWT, str(principal), payload)
+        try:
+            claims = await backend.decode(token)
+        except JwtVerificationError as exc:
+            logger.warning("Express JWT verify failed: %s", exc)
+            return None
+        principal = (
+            claims.raw.get("sub") or claims.raw.get("huid") or cfg.bot_id
+        )
+        return AuthContext(AuthMethod.EXPRESS_JWT, str(principal), claims.raw)
     except Exception as exc:
         logger.warning("Express JWT verify failed: %s", exc)
         return None

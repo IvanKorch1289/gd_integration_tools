@@ -169,8 +169,8 @@ _IMPORT_GATEWAY_MOD = f"{_INFRA}.import_gateway"
 _API_KEY_MGR_MOD = f"{_INFRA}.security.api_key_manager"
 _ACTION_BUS_MOD = f"{_INFRA}.external_apis.action_bus"
 _REGISTRY_MOD = f"{_INFRA}.registry"
-_WF_EVENT_STORE_MOD = f"{_INFRA}.workflow.event_store"
-_WF_STATE_STORE_MOD = f"{_INFRA}.workflow.state_store"
+_WF_EVENT_STORE_MOD = f"{_INFRA}.workflow.pg_runner_internals"
+_WF_STATE_STORE_MOD = f"{_INFRA}.workflow.pg_runner_internals"
 _WF_DB_SESSION_MOD = f"{_INFRA}.database.session_manager"
 _WF_INSTANCE_MODEL_MOD = f"{_INFRA}.database.models.workflow_instance"
 _S3_MOD = f"{_INFRA}.external_apis.s3"
@@ -630,11 +630,11 @@ def get_connector_registry_errors_provider() -> Any:
 def get_workflow_event_store_provider() -> Any:
     """Возвращает класс ``WorkflowEventStore`` (без инстанцирования).
 
-    Реализация: ``infrastructure.workflow.event_store.WorkflowEventStore``.
+    Реализация: ``infrastructure.workflow.pg_runner_internals.WorkflowEventStore``.
     """
     if "workflow_event_store" in _overrides:
         return _overrides["workflow_event_store"]
-    module = resolve_module("workflow.event_store")
+    module = resolve_module("workflow.pg_runner_internals")
     return module.WorkflowEventStore
 
 
@@ -646,7 +646,7 @@ def get_workflow_state_store_provider() -> Any:
     """Возвращает класс ``WorkflowInstanceStore`` (без инстанцирования)."""
     if "workflow_state_store" in _overrides:
         return _overrides["workflow_state_store"]
-    module = resolve_module("workflow.state_store")
+    module = resolve_module("workflow.pg_runner_internals")
     return module.WorkflowInstanceStore
 
 
@@ -658,7 +658,7 @@ def get_workflow_state_row_class_provider() -> Any:
     """Возвращает DTO-класс ``WorkflowInstanceRow`` (для ORM→DTO маппинга)."""
     if "workflow_state_row_class" in _overrides:
         return _overrides["workflow_state_row_class"]
-    module = resolve_module("workflow.state_store")
+    module = resolve_module("workflow.pg_runner_internals")
     return module.WorkflowInstanceRow
 
 
@@ -1054,3 +1054,95 @@ def set_action_dispatcher_provider(dispatcher: Any) -> None:
         _overrides.pop("action_dispatcher", None)
     else:
         _overrides["action_dispatcher"] = dispatcher
+
+
+# ─────────────── Wave [s2/k1-2-jwt-jwks]: JWT backend (joserfc) ───────────────
+
+
+def get_jwt_backend_provider() -> Any:
+    """Возвращает singleton :class:`JwtBackend` (joserfc-based).
+
+    Wave [s2/k1-2-jwt-jwks]: заменяет прямое использование ``python-jose``
+    в :func:`_verify_jwt` (auth_selector). Backend строится из
+    :class:`SecureSettings` (для HS-алгоритмов) либо :class:`JwksSettings`
+    (для RS/ES — pull JWKS из IdP). Если в overrides — берётся override.
+    """
+    if "jwt_backend" in _overrides:
+        return _overrides["jwt_backend"]
+    from src.backend.core.auth.jwt_backend import JwtBackend
+    from src.backend.core.config.security import secure_settings
+
+    secret = secure_settings.secret_key
+    secret_value = (
+        secret.get_secret_value()
+        if hasattr(secret, "get_secret_value")
+        else str(secret)
+    )
+    jwks = _build_jwks_cache_or_none()
+    algorithms = [secure_settings.algorithm]
+    if jwks is not None and "RS256" not in algorithms:
+        algorithms = list(set(algorithms + ["RS256"]))
+    blacklist = _build_jwt_blacklist_or_none()
+    backend = JwtBackend(
+        algorithms=algorithms,
+        secret=secret_value if any(a.startswith("HS") for a in algorithms) else None,
+        jwks=jwks,
+        leeway=getattr(secure_settings, "jwt_leeway", 60),
+        blacklist=blacklist,
+    )
+    _overrides["jwt_backend"] = backend
+    return backend
+
+
+def set_jwt_backend_provider(backend: Any) -> None:
+    if backend is None:
+        _overrides.pop("jwt_backend", None)
+    else:
+        _overrides["jwt_backend"] = backend
+
+
+def get_jwks_cache_provider() -> Any:
+    """Возвращает singleton :class:`JwksCache` или ``None``.
+
+    JWKS-кеш активируется только если ``SecureSettings.jwks_url`` задан.
+    """
+    if "jwks_cache" in _overrides:
+        return _overrides["jwks_cache"]
+    cache = _build_jwks_cache_or_none()
+    _overrides["jwks_cache"] = cache
+    return cache
+
+
+def set_jwks_cache_provider(cache: Any) -> None:
+    if cache is None:
+        _overrides.pop("jwks_cache", None)
+    else:
+        _overrides["jwks_cache"] = cache
+
+
+def _build_jwks_cache_or_none() -> Any:
+    """Создаёт :class:`JwksCache` если ``SecureSettings.jwks_url`` задан."""
+    from src.backend.core.config.security import secure_settings
+
+    url = getattr(secure_settings, "jwks_url", None)
+    if not url:
+        return None
+    from src.backend.core.auth.jwks_cache import JwksCache
+
+    ttl = getattr(secure_settings, "jwks_cache_ttl", 300)
+    return JwksCache(url, ttl=ttl)
+
+
+def _build_jwt_blacklist_or_none() -> Any:
+    """Создаёт :class:`RedisJwtBlacklist` если ``blacklist_enabled=True``."""
+    from src.backend.core.config.security import secure_settings
+
+    if not getattr(secure_settings, "jwt_blacklist_enabled", False):
+        return None
+    try:
+        from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
+
+        redis = get_redis_kv_client_provider()
+        return RedisJwtBlacklist(redis)
+    except Exception:  # pragma: no cover — Redis может быть недоступен в test/dev_light
+        return None

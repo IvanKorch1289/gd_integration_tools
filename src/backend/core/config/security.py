@@ -44,6 +44,33 @@ class SecureSettings(BaseSettingsWithLoader):
         ..., description="Алгоритм подписи токенов", examples=["HS256", "RS256"]
     )
 
+    # Wave [s2/k1-2-jwt-jwks]: JWKS-кеш для асимметричных алгоритмов (RS256/ES256).
+    # Если URL не задан — backend работает только с симметричными алгоритмами.
+    jwks_url: str = Field(
+        default="",
+        description=(
+            "URL JWKS endpoint'а IdP для асимметричной верификации JWT. "
+            "Пустая строка отключает JWKS-кеш."
+        ),
+        examples=["https://auth.example.com/.well-known/jwks.json"],
+    )
+    jwks_cache_ttl: int = Field(
+        default=300,
+        ge=30,
+        le=3600,
+        description="TTL JWKS-кеша в секундах (по умолчанию 5 минут).",
+    )
+    jwt_leeway: int = Field(
+        default=60,
+        ge=0,
+        le=600,
+        description="Допустимое отклонение exp/nbf в секундах.",
+    )
+    jwt_blacklist_enabled: bool = Field(
+        default=False,
+        description="Включён ли Redis-blacklist отозванных JWT (по jti).",
+    )
+
     # API-безопасность
     api_key: str = Field(
         ..., description="Основной API-ключ приложения", examples=["your_api_key_123"]
