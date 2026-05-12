@@ -225,7 +225,8 @@ def _register_storage_singletons(app: FastAPI) -> None:
         )
         from src.backend.services.ai.rag_service import RAGService
 
-        app.state.rag_service = RAGService(store=get_vector_store())
+        cache = getattr(app.state, "three_tier_rag_cache", None)
+        app.state.rag_service = RAGService(store=get_vector_store(), cache=cache)
     except Exception as exc:  # noqa: BLE001
         app_logger.debug("RAGService registration skipped: %s", exc)
 

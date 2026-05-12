@@ -37,19 +37,18 @@ __all__ = (
 def __getattr__(name: str) -> Any:
     """Lazy resolve ``RouteBuilder`` и marker-mixin'ы — обходим circular import.
 
-    Без этой ленивой схемы ``dsl.builder`` (импортирующий миксины из этого
-    пакета) и ``dsl.builders.__init__`` (импортирующий ``RouteBuilder``)
-    давали бы ImportError на стадии частичной инициализации модуля.
+    После Stage 2.6 ``RouteBuilder`` живёт в :mod:`dsl.builders.base`,
+    а ``dsl.builder`` — тонкий фасад. Lazy-resolve остаётся для
+    обратной совместимости marker-mixin'ов (B1 phase-1).
     """
 
     if name == "RouteBuilder":
-        from src.backend.dsl.builder import RouteBuilder as _R
+        from src.backend.dsl.builders.base import RouteBuilder as _R
 
         return _R
 
     if name in {
         "CoreMixin",
-        "EIPMixin",
         "TransportMixin",
         "StreamingMixin",
         "AIMixin",
@@ -60,8 +59,13 @@ def __getattr__(name: str) -> Any:
         "SecurityMixin",
         "ObservabilityMixin",
     }:
-        from src.backend.dsl.builder import RouteBuilder as _R
+        from src.backend.dsl.builders.base import RouteBuilder as _R
 
         return type(name, (_R,), {"__doc__": f"Marker-mixin {name} (B1 phase-1)."})
+
+    if name == "EIPMixin":
+        from src.backend.dsl.builders.eip import EIPMixin as _M
+
+        return _M
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
