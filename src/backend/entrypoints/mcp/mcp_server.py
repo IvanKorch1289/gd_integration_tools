@@ -47,6 +47,7 @@ def create_mcp_server() -> Any:
     _register_convert_tools(mcp)
     _register_system_tools(mcp)
     _register_yaml_tools(mcp)
+    _register_document_tools(mcp)
 
     # IL-WF1.5: auto-export durable workflows как MCP tools
     # (CrewAI / LangChain / LangGraph получают каждый workflow
@@ -78,14 +79,46 @@ def register_mcp_tools(mcp: Any) -> None:
     )
 
 
+def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
+    """Извлекает JSON-Schema payload-модели action'а.
+
+    Источник — :class:`ActionMetadata.input_model` (Pydantic). Возвращает
+    ``None`` если модель не зарегистрирована или интроспекция не удалась.
+    Используется для обогащения MCP tool description (Stream E.2) —
+    клиент видит ожидаемую структуру payload.
+    """
+    from src.backend.dsl.commands.registry import action_handler_registry
+
+    metadata = action_handler_registry.get_metadata(action_name)
+    if metadata is None or metadata.input_model is None:
+        return None
+    try:
+        return metadata.input_model.model_json_schema()
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _register_single_tool(mcp: Any, action_name: str) -> None:
-    """Регистрирует один action как MCP tool."""
+    """Регистрирует один action как MCP tool с input_schema из ActionSpec.
+
+    Stream E.2: если у action'а есть ``payload_model`` (Pydantic), его
+    JSON-Schema встраивается в ``description`` MCP-tool'а — AI-клиент
+    видит структуру payload. Валидация payload через ``payload_model``
+    делегируется ``ActionHandlerRegistry.dispatch`` (там это уже
+    реализовано), так что здесь дополнительной валидации не требуется.
+    """
     from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
+    schema = _action_input_schema_json(action_name)
+    description_parts = [f"Выполняет action '{action_name}' через интеграционную шину."]
+    if schema is not None:
+        description_parts.append(
+            "Payload (JSON-Schema): " + orjson.dumps(schema).decode()
+        )
+
     @mcp.tool(
-        name=action_name.replace(".", "_"),
-        description=f"Выполняет action '{action_name}' через интеграционную шину",
+        name=action_name.replace(".", "_"), description=" ".join(description_parts)
     )
     async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
         try:
@@ -506,4 +539,56 @@ def _register_yaml_tools(mcp: Any) -> None:
                 return orjson.dumps({route_id: report.get(route_id, {})}).decode()
             return orjson.dumps(report).decode()
         except Exception as exc:
+            return orjson.dumps({"error": str(exc)}).decode()
+
+
+# ── Document Tools (Sprint S5 — markitdown integration) ──
+
+
+def _register_document_tools(mcp: Any) -> None:
+    """Tools для работы с файловыми документами (Sprint S5 hotfix).
+
+    ``documents_to_markdown`` — конвертирует файл (PDF/DOCX/PPTX/XLSX/
+    HTML/CSV/JSON) в Markdown через markitdown-engine (с legacy
+    fallback). Используется AI-агентами для подачи структурированного
+    контекста в LLM.
+    """
+
+    @mcp.tool(
+        name="documents_to_markdown",
+        description=(
+            "Конвертирует файл в Markdown через markitdown (PDF/DOCX/PPTX/"
+            "XLSX/HTML/CSV/JSON/MD/TXT). Возвращает JSON: "
+            "{markdown, engine, mime, size_bytes, warnings, filename}. "
+            "При недоступности markitdown — fallback на legacy plain-text."
+        ),
+    )
+    async def documents_to_markdown(path: str, mime: str | None = None) -> str:
+        from pathlib import Path as _Path
+
+        from src.backend.core.ai.fs_facade import AIFsFacade
+        from src.backend.core.ai.workspace_manager import AIWorkspaceManager
+        from src.backend.core.config.ai import ai_workspace_settings
+
+        try:
+            target = _Path(path)
+            if not target.exists():
+                return orjson.dumps({"error": f"File not found: {path}"}).decode()
+
+            wm = AIWorkspaceManager(root=ai_workspace_settings.workspace_root)
+            facade = AIFsFacade(
+                workspace_manager=wm, capability_check=None, plugin="mcp"
+            )
+            text, meta = await facade.read_as_markdown(target, mime=mime)
+            return orjson.dumps(
+                {
+                    "markdown": text,
+                    "engine": meta.get("engine"),
+                    "mime": meta.get("mime"),
+                    "size_bytes": meta.get("size_bytes"),
+                    "warnings": list(meta.get("warnings") or []),
+                    "filename": meta.get("filename"),
+                }
+            ).decode()
+        except Exception as exc:  # noqa: BLE001
             return orjson.dumps({"error": str(exc)}).decode()

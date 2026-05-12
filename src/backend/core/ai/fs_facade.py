@@ -69,11 +69,44 @@ class AIFsFacade:
             raise IsADirectoryError(scope)
         return target.read_bytes()
 
+    async def read_as_markdown(
+        self, path: str | Path, mime: str | None = None
+    ) -> tuple[str, dict[str, object]]:
+        """Прочитать файл и сконвертировать в Markdown (V15 R-V15-4 + S5 hotfix).
+
+        Делегирует в ``document_parsers.parse_document`` — markitdown как
+        primary, legacy (pypdf/docx/UTF-8) как fallback. Контролирует две
+        capability: ``fs.read.<path>`` и ``documents.parse.<format>``.
+
+        Args:
+            path: Путь к файлу.
+            mime: Опциональный MIME-override; иначе sniff по расширению.
+
+        Returns:
+            Кортеж ``(text, meta)``: ``text`` — Markdown (или plain-text
+            если использован legacy); ``meta`` совпадает с контрактом
+            :func:`parse_document` (mime/size_bytes/engine/markdown/...).
+
+        Raises:
+            CapabilityDeniedError: caller не задекларировал capabilities.
+            ValueError: MIME не поддерживается.
+        """
+        from src.backend.services.ai.document_parsers import parse_document, sniff_mime
+
+        target = Path(path)
+        content = self.read(target)
+        effective_mime = sniff_mime(target.name, mime)
+        if self._check is not None:
+            scope = (
+                effective_mime.split("/", 1)[-1]
+                if "/" in effective_mime
+                else effective_mime
+            )
+            self._check(self._plugin, "documents.parse", scope)
+        return await parse_document(content, effective_mime, filename=target.name)
+
     def create_new(
-        self,
-        handle: WorkspaceHandle,
-        relative_path: str | Path,
-        content: bytes,
+        self, handle: WorkspaceHandle, relative_path: str | Path, content: bytes
     ) -> Path:
         """Создать НОВЫЙ файл внутри ``handle.path``.
 
@@ -91,8 +124,7 @@ class AIFsFacade:
         rel = Path(relative_path)
         if rel.is_absolute() or ".." in rel.parts:
             raise FsForbiddenWriteError(
-                path=str(rel),
-                reason="absolute path or '..' traversal not allowed",
+                path=str(rel), reason="absolute path or '..' traversal not allowed"
             )
 
         target = (handle.path / rel).resolve()
@@ -101,8 +133,7 @@ class AIFsFacade:
             target.relative_to(handle.path.resolve())
         except ValueError as exc:
             raise FsForbiddenWriteError(
-                path=str(target),
-                reason="resolved path escapes workspace",
+                path=str(target), reason="resolved path escapes workspace"
             ) from exc
 
         if target.exists():
