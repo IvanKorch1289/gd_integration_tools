@@ -87,15 +87,6 @@ async def _register_protocol_providers() -> None:
         app_logger.debug("ai_feedback ensure_indexes skipped: %s", exc)
 
     try:
-        from src.backend.infrastructure.workflow.state_projector import (
-            get_workflow_state_projector,
-        )
-
-        await get_workflow_state_projector().ensure_indexes()
-    except Exception as exc:  # noqa: BLE001
-        app_logger.debug("workflow_state ensure_indexes skipped: %s", exc)
-
-    try:
         from src.backend.infrastructure.repositories.connector_configs_mongo import (
             get_connector_config_store,
         )
@@ -734,6 +725,30 @@ async def lifespan(app: FastAPI):
             await start_workflow_runtime(app)
         except Exception as wf_exc:  # noqa: BLE001
             app_logger.warning("Workflow runtime startup skipped: %s", wf_exc)
+
+        # Wave S1/DSL Foundation (Step 6): заполняем ServiceSchemaRegistry
+        # после загрузки плагинов и маршрутов. Singleton доступен через
+        # GET /api/v1/admin/schemas (admin_schemas router).
+        try:
+            from src.backend.services.schema_registry import (
+                get_schema_registry,
+                populate_from_actions,
+                populate_from_manifests,
+                populate_from_processor_registry,
+                populate_from_routes,
+            )
+
+            schema_registry = get_schema_registry()
+            populate_from_processor_registry(schema_registry)
+            populate_from_routes(registry=schema_registry)
+            populate_from_actions(schema_registry)
+            populate_from_manifests(schema_registry)
+            app.state.schema_registry = schema_registry
+            app_logger.info(
+                "ServiceSchemaRegistry заполнен: %s", schema_registry.summary()
+            )
+        except Exception as sr_exc:  # noqa: BLE001
+            app_logger.warning("ServiceSchemaRegistry bootstrap skipped: %s", sr_exc)
 
         startup_completed = True
         app.state.infrastructure_ready = True

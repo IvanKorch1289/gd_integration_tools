@@ -11,6 +11,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
+        router as admin_schemas_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
@@ -29,6 +32,12 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (
         router as ai_feedback_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.ai_costs import (
+        router as ai_costs_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.ai_stream import (
+        router as ai_stream_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
         router as ai_tools_router,
     )
@@ -44,6 +53,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.health import router as health_router
     from src.backend.entrypoints.api.v1.endpoints.imports import (
         router as imports_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.langmem_admin import (
+        router as langmem_admin_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.invocations import (
         router as invocations_router,
@@ -119,6 +131,12 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         admin_capabilities_router, prefix="/admin", tags=["Admin · Capabilities"]
     )
+    # Wave S1/DSL Foundation (Step 6): unified schema_registry (route /
+    # workflow / service / plugin / processor / action) — JSON-Schema /
+    # OpenAPI / AsyncAPI.
+    api_router_v1.include_router(
+        admin_schemas_router, prefix="/admin", tags=["Admin · Schemas"]
+    )
     # Wave 3.8: CRUD над YAML-маршрутами через YAMLStore.
     api_router_v1.include_router(
         dsl_routes_router, prefix="/admin", tags=["DSL · Routes Store"]
@@ -132,6 +150,16 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(ai_agents_router, prefix="/ai", tags=["AI · Agents"])
     api_router_v1.include_router(
         ai_feedback_router, prefix="/ai/feedback", tags=["AI · Feedback"]
+    )
+    # Wave D.3: SSE token-streaming LLM endpoint.
+    api_router_v1.include_router(ai_stream_router, prefix="/ai", tags=["AI · Stream"])
+    # Wave D.5: AI cost-dashboard (LangFuse primary).
+    api_router_v1.include_router(
+        ai_costs_router, prefix="/admin", tags=["AI · Costs"]
+    )
+    # Wave D.6: LangMem consolidation admin endpoints.
+    api_router_v1.include_router(
+        langmem_admin_router, prefix="/admin", tags=["AI · LangMem"]
     )
     # Wave 9.1: Notebooks — версионируемые заметки.
     api_router_v1.include_router(
