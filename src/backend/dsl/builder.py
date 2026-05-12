@@ -4,11 +4,11 @@ from typing import Any, Callable
 from src.backend.core.di.dependencies import get_watermark_store_optional
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
+from src.backend.dsl.builders.ai_rpa import AIRPAMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
-    AgentGraphProcessor,
     AggregatorProcessor,
     BaseProcessor,
     CallableProcessor,
@@ -27,7 +27,6 @@ from src.backend.dsl.engine.processors import (
     IdempotentConsumerProcessor,
     LoadBalancerProcessor,
     LogProcessor,
-    MCPToolProcessor,
     MulticastProcessor,
     NormalizerProcessor,
     ParallelProcessor,
@@ -68,7 +67,7 @@ __all__ = ("RouteBuilder",)
 
 
 @dataclass(slots=True)
-class RouteBuilder(ConvertersMixin):
+class RouteBuilder(AIRPAMixin, ConvertersMixin):
     """Fluent-builder для DSL-маршрутов.
 
     Пример::
@@ -472,19 +471,8 @@ class RouteBuilder(ConvertersMixin):
 
     # ── Integration processors ──
 
-    def mcp_tool(
-        self, uri: str, tool: str, *, result_property: str = "mcp_result"
-    ) -> "RouteBuilder":
-        """Вызов внешнего MCP tool."""
-        return self._add(
-            MCPToolProcessor(
-                tool_uri=uri, tool_name=tool, result_property=result_property
-            )
-        )
-
-    def agent_graph(self, graph_name: str, tools: list[str]) -> "RouteBuilder":
-        """Запуск LangGraph-агента."""
-        return self._add(AgentGraphProcessor(graph_name=graph_name, tools=tools))
+    # mcp_tool / agent_graph — перенесены в dsl.builders.ai_rpa.AIRPAMixin
+    # (Stage 2.2). Доступны через MRO у RouteBuilder.
 
     def cdc(
         self,
@@ -1674,203 +1662,9 @@ class RouteBuilder(ConvertersMixin):
             result_property=result_property,
         )
 
-    # ── Type Converters ──
-
-    def convert(self, from_format: str, to_format: str) -> "RouteBuilder":
-        """Универсальный конвертер: json↔yaml/xml/csv/msgpack/parquet/bson, html→json."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.converters",
-            "ConvertProcessor",
-            from_format=from_format,
-            to_format=to_format,
-        )
-
-    # ── Wave 7.2: polars-extended (query / join / aggregate / pivot / window) ──
-
-    def polars_query(
-        self,
-        *,
-        select: list[str] | None = None,
-        filter_expr: str | None = None,
-        with_columns: dict[str, str] | None = None,
-        sort_by: list[str] | None = None,
-        descending: bool = False,
-    ) -> "RouteBuilder":
-        """Polars-query: filter / select / with_columns / sort (Wave 7.2)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.polars_extended",
-            "PolarsQueryProcessor",
-            select=select,
-            filter_expr=filter_expr,
-            with_columns=with_columns,
-            sort_by=sort_by,
-            descending=descending,
-        )
-
-    def polars_join(
-        self, *, other_path: str, on: str | list[str], how: str = "inner"
-    ) -> "RouteBuilder":
-        """Polars-join body с таблицей по ``other_path`` (Wave 7.2)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.polars_extended",
-            "PolarsJoinProcessor",
-            other_path=other_path,
-            on=on,
-            how=how,
-        )
-
-    def polars_aggregate(
-        self, *, group_by: str | list[str], aggregations: dict[str, str]
-    ) -> "RouteBuilder":
-        """Polars group_by + agg (Wave 7.2)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.polars_extended",
-            "PolarsAggregateProcessor",
-            group_by=group_by,
-            aggregations=aggregations,
-        )
-
-    def polars_pivot(
-        self,
-        *,
-        index: str | list[str],
-        columns: str,
-        values: str,
-        aggregate_function: str = "sum",
-    ) -> "RouteBuilder":
-        """Polars pivot-таблица (Wave 7.2)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.polars_extended",
-            "PolarsPivotProcessor",
-            index=index,
-            columns=columns,
-            values=values,
-            aggregate_function=aggregate_function,
-        )
-
-    def polars_window(
-        self,
-        *,
-        partition_by: str | list[str],
-        windowed_columns: dict[str, str],
-        order_by: list[str] | None = None,
-    ) -> "RouteBuilder":
-        """Polars window-функции (Wave 7.2)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.polars_extended",
-            "PolarsWindowProcessor",
-            partition_by=partition_by,
-            windowed_columns=windowed_columns,
-            order_by=order_by,
-        )
-
-    # ── Wave 7.1: Dask compute (heavy distributed jobs) ──
-
-    def dask_compute(
-        self,
-        *,
-        graph: list[dict[str, Any]],
-        output_to: str = "body",
-        scheduler_address: str | None = None,
-        n_workers: int = 4,
-    ) -> "RouteBuilder":
-        """Dask compute graph: ``map`` / ``filter`` / ``reduce`` (Wave 7.1)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.dask_compute",
-            "DaskComputeProcessor",
-            graph=graph,
-            output_to=output_to,
-            scheduler_address=scheduler_address,
-            n_workers=n_workers,
-        )
-
-    # ── Wave 7.3: DuckDB analytical SQL ──
-
-    def duckdb_query(
-        self,
-        *,
-        sql: str,
-        sources: dict[str, str] | None = None,
-        persistent_path: str | None = None,
-    ) -> "RouteBuilder":
-        """DuckDB-SQL над ``body`` + lookup-таблиц из headers (Wave 7.3)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.duckdb_query",
-            "DuckDbQueryProcessor",
-            sql=sql,
-            sources=sources,
-            persistent_path=persistent_path,
-        )
-
-    # ── Wave 6.1: Format converters (Avro / Protobuf / TOML / Markdown / JSONL) ──
-
-    def avro_encode(self, schema: dict[str, Any]) -> "RouteBuilder":
-        """Сериализация dict/list-of-dict → Avro bytes через ``fastavro``."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "AvroEncodeProcessor", schema=schema
-        )
-
-    def avro_decode(self, schema: dict[str, Any] | None = None) -> "RouteBuilder":
-        """Десериализация Avro bytes → list[dict] через ``fastavro``."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "AvroDecodeProcessor", schema=schema
-        )
-
-    def protobuf_encode(self, message_class: str) -> "RouteBuilder":
-        """dict → protobuf bytes; ``message_class`` в формате ``module:Class``."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters",
-            "ProtobufEncodeProcessor",
-            message_class=message_class,
-        )
-
-    def protobuf_decode(self, message_class: str) -> "RouteBuilder":
-        """protobuf bytes → dict через runtime-resolve message-класса."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters",
-            "ProtobufDecodeProcessor",
-            message_class=message_class,
-        )
-
-    def toml_encode(self) -> "RouteBuilder":
-        """dict → TOML-строка (минимальный встроенный энкодер)."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "TomlEncodeProcessor"
-        )
-
-    def toml_decode(self) -> "RouteBuilder":
-        """TOML-строка/bytes → dict через stdlib ``tomllib``."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "TomlDecodeProcessor"
-        )
-
-    def markdown_to_html(self, *, preset: str = "commonmark") -> "RouteBuilder":
-        """Markdown → HTML через ``markdown-it-py``."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters",
-            "MarkdownToHtmlProcessor",
-            preset=preset,
-        )
-
-    def html_to_markdown(self) -> "RouteBuilder":
-        """HTML → Markdown (markdownify, fallback на эвристику)."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "HtmlToMarkdownProcessor"
-        )
-
-    def jsonl_encode(self) -> "RouteBuilder":
-        """list[dict] → NDJSON-строка (одна запись на строку)."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters", "JsonLinesEncodeProcessor"
-        )
-
-    def jsonl_decode(self, *, ignore_blank_lines: bool = True) -> "RouteBuilder":
-        """NDJSON-строка → list[dict]."""
-        return self._add_lazy(
-            "src.backend.dsl.codec.format_converters",
-            "JsonLinesDecodeProcessor",
-            ignore_blank_lines=ignore_blank_lines,
-        )
+    # convert / polars_* / dask_compute / duckdb_query / avro_* / protobuf_* /
+    # toml_* / markdown_to_html / html_to_markdown / jsonl_* — перенесены в
+    # dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     # ── Wave 6.2: External DB query (произвольный SQL по profile) ──
 
@@ -1919,248 +1713,24 @@ class RouteBuilder(ConvertersMixin):
 
     # ── Scraping Pipeline ──
 
-    def scrape(
-        self,
-        url: str | None = None,
-        *,
-        selectors: dict[str, str] | None = None,
-        output_property: str = "scraped",
-    ) -> "RouteBuilder":
-        """Извлечение данных с URL через CSS-селекторы (с SSRF-защитой)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.scraping",
-            "ScrapeProcessor",
-            url=url,
-            selectors=selectors,
-            output_property=output_property,
-        )
-
-    def paginate(
-        self,
-        *,
-        next_selector: str = "a.next",
-        item_selector: str | None = None,
-        max_pages: int = 10,
-        start_url: str | None = None,
-    ) -> "RouteBuilder":
-        """Multi-page crawling с защитой от циклов и лимитом страниц."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.scraping",
-            "PaginateProcessor",
-            next_selector=next_selector,
-            item_selector=item_selector,
-            max_pages=max_pages,
-            start_url=start_url,
-        )
-
-    def api_proxy(
-        self,
-        base_url: str,
-        *,
-        method: str = "GET",
-        path: str = "",
-        timeout: float = 30.0,
-    ) -> "RouteBuilder":
-        """Прозрачный API proxy с request/response трансформацией."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.scraping",
-            "ApiProxyProcessor",
-            base_url=base_url,
-            method=method,
-            path=path,
-            timeout=timeout,
-        )
+    # scrape / paginate / api_proxy — перенесены в
+    # dsl.builders.ai_rpa.AIRPAMixin (Stage 2.2).
 
     # ── AI Pipeline ──
 
-    def rag_search(
-        self,
-        query_field: str = "question",
-        top_k: int = 5,
-        namespace: str | None = None,
-    ) -> "RouteBuilder":
-        """RAG vector search: top-K ближайших документов по семантике."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors",
-            "VectorSearchProcessor",
-            query_field=query_field,
-            top_k=top_k,
-            namespace=namespace,
-        )
+    # rag_search / compose_prompt / call_llm / parse_llm_output / token_budget /
+    # sanitize_pii / restore_pii / get_feedback_examples / publish_event /
+    # load_memory / save_memory — перенесены в dsl.builders.ai_rpa.AIRPAMixin
+    # (Stage 2.2). Доступны через MRO у RouteBuilder.
 
-    def compose_prompt(
-        self, template: str, context_property: str = "vector_results"
-    ) -> "RouteBuilder":
-        """Построение промпта из шаблона + контекста из properties."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors",
-            "PromptComposerProcessor",
-            template=template,
-            context_property=context_property,
-        )
+    # ── Web Automation (RPA) ──
 
-    def call_llm(
-        self, provider: str | None = None, model: str | None = None
-    ) -> "RouteBuilder":
-        """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors",
-            "LLMCallProcessor",
-            provider=provider,
-            model=model,
-        )
+    # navigate / click / fill_form / extract / screenshot / run_scenario —
+    # перенесены в dsl.builders.ai_rpa.AIRPAMixin (Stage 2.2).
 
-    def parse_llm_output(self, schema: type | None = None) -> "RouteBuilder":
-        """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema
-        )
+    # dq_check / export — перенесены в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
-    def token_budget(self, max_tokens: int = 4096) -> "RouteBuilder":
-        """Ограничение по токенам (tiktoken) — обрезка текста до лимита."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors", "TokenBudgetProcessor", max_tokens=max_tokens
-        )
-
-    def sanitize_pii(self) -> "RouteBuilder":
-        """Маскирование PII (email/phone/СНИЛС/карт) перед LLM."""
-        return self._add_lazy("src.backend.dsl.engine.processors", "SanitizePIIProcessor")
-
-    def restore_pii(self) -> "RouteBuilder":
-        """Восстановление PII в ответе после LLM."""
-        return self._add_lazy("src.backend.dsl.engine.processors", "RestorePIIProcessor")
-
-    def get_feedback_examples(
-        self,
-        *,
-        query_from: str = "body.query",
-        agent_id: str | None = None,
-        positive_k: int = 3,
-        negative_k: int = 2,
-        min_similarity: float = 0.0,
-        inject_as: str = "feedback_examples",
-    ) -> "RouteBuilder":
-        """Few-shot примеры из AI Feedback RAG.
-
-        Инжектирует ``positive``/``negative`` примеры в properties
-        под ключом ``inject_as``. Используется перед ``call_llm``
-        для промптов с опорой на реальные размеченные ответы.
-        """
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors",
-            "GetFeedbackExamplesProcessor",
-            query_from=query_from,
-            agent_id=agent_id,
-            positive_k=positive_k,
-            negative_k=negative_k,
-            min_similarity=min_similarity,
-            inject_as=inject_as,
-        )
-
-    def publish_event(self, channel: str) -> "RouteBuilder":
-        """Публикация события через EventBus."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors", "EventPublishProcessor", channel=channel
-        )
-
-    def load_memory(self, session_id_header: str = "X-Session-Id") -> "RouteBuilder":
-        """Загрузка conversation/facts из AgentMemory (Redis)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors",
-            "MemoryLoadProcessor",
-            session_id_header=session_id_header,
-        )
-
-    def save_memory(self) -> "RouteBuilder":
-        """Сохранение результата в AgentMemory."""
-        return self._add_lazy("src.backend.dsl.engine.processors", "MemorySaveProcessor")
-
-    # ── Web Automation ──
-
-    def navigate(self, url: str) -> "RouteBuilder":
-        """Открыть URL в браузере (Playwright)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url
-        )
-
-    def click(self, url: str, selector: str) -> "RouteBuilder":
-        """Клик по CSS-селектору."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web",
-            "ClickProcessor",
-            url=url,
-            selector=selector,
-        )
-
-    def fill_form(
-        self, url: str, fields: dict | None = None, submit: str | None = None
-    ) -> "RouteBuilder":
-        """Заполнение формы по полям + опциональный submit."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web",
-            "FillFormProcessor",
-            url=url,
-            fields=fields,
-            submit=submit,
-        )
-
-    def extract(
-        self, selector: str, url: str | None = None, output_property: str = "extracted"
-    ) -> "RouteBuilder":
-        """Извлечение текста по CSS-селектору."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web",
-            "ExtractProcessor",
-            url=url,
-            selector=selector,
-            output_property=output_property,
-        )
-
-    def screenshot(self, url: str | None = None) -> "RouteBuilder":
-        """Скриншот страницы как bytes."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
-        )
-
-    def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
-        """Multi-step web сценарий (navigate/click/fill/extract)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
-        )
-
-    # ── Data Quality ──
-
-    def dq_check(
-        self,
-        rules: list[Any] | None = None,
-        dataset: str = "default",
-        fail_on_violation: bool = False,
-    ) -> "RouteBuilder":
-        """Проверка DQ-правил (not_null/range/regex) на body."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.dq_check",
-            "DQCheckProcessor",
-            rules=rules,
-            dataset=dataset,
-            fail_on_violation=fail_on_violation,
-        )
-
-    # ── Export & Notify ──
-
-    def export(
-        self,
-        format: str = "csv",
-        output_property: str = "export_data",
-        title: str = "Report",
-    ) -> "RouteBuilder":
-        """Экспорт body (list[dict]) в CSV/Excel/PDF → bytes в property."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.export",
-            "ExportProcessor",
-            format=format,
-            output_property=output_property,
-            title=title,
-        )
+    # ── Notify ──
 
     def notify(
         self,
@@ -2203,127 +1773,17 @@ class RouteBuilder(ConvertersMixin):
             )
         )
 
-    # ── Search ──
-
-    def web_search(
-        self,
-        query_field: str = "query",
-        provider: str | None = None,
-        output_property: str = "search_results",
-    ) -> "RouteBuilder":
-        """Web search через Perplexity/Tavily (search_providers)."""
-
-        async def _search(exchange: Exchange[Any], context: Any) -> None:
-            from src.backend.infrastructure.clients.external.search_providers import (
-                get_web_search_service,
-            )
-
-            body = exchange.in_message.body
-            query = body.get(query_field) if isinstance(body, dict) else str(body)
-            svc = get_web_search_service()
-            results = await svc.query(query, provider=provider)
-            exchange.set_property(output_property, results)
-
-        return self._add(CallableProcessor(_search, name=f"web_search:{query_field}"))
+    # web_search — перенесён в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     # ── AI Extended ──
 
-    def call_llm_with_fallback(
-        self, providers: list[str], *, model: str = "default"
-    ) -> "RouteBuilder":
-        """LLM с fallback-цепочкой провайдеров."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.ai",
-            "LLMFallbackProcessor",
-            providers=providers,
-            model=model,
-        )
-
-    def cache(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
-    ) -> "RouteBuilder":
-        """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.ai",
-            "CacheProcessor",
-            key_fn=key_fn,
-            ttl_seconds=ttl,
-        )
-
-    def cache_write(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
-    ) -> "RouteBuilder":
-        """Redis-кеш: записывает результат после обработки."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.ai",
-            "CacheWriteProcessor",
-            key_fn=key_fn,
-            ttl_seconds=ttl,
-        )
-
-    def guardrails(
-        self,
-        *,
-        max_length: int = 10000,
-        blocked_patterns: list[str] | None = None,
-        required_fields: list[str] | None = None,
-    ) -> "RouteBuilder":
-        """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.ai",
-            "GuardrailsProcessor",
-            max_length=max_length,
-            blocked_patterns=blocked_patterns,
-            required_fields=required_fields,
-        )
-
-    def semantic_route(
-        self,
-        intents: dict[str, str],
-        *,
-        default_route: str | None = None,
-        query_field: str = "question",
-        threshold: float = 0.5,
-        namespace: str = "intents",
-    ) -> "RouteBuilder":
-        """Semantic routing — RAG-based intent detection → выбор маршрута."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.ai",
-            "SemanticRouterProcessor",
-            intents=intents,
-            default_route=default_route,
-            query_field=query_field,
-            threshold=threshold,
-            namespace=namespace,
-        )
+    # call_llm_with_fallback / cache / cache_write / guardrails /
+    # semantic_route — перенесены в dsl.builders.ai_rpa.AIRPAMixin (Stage 2.2).
 
     # ── RPA (UiPath-style) ──
 
-    def pdf_read(self, *, extract_tables: bool = False) -> "RouteBuilder":
-        """Извлечь текст и таблицы из PDF."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa",
-            "PdfReadProcessor",
-            extract_tables=extract_tables,
-        )
-
-    def pdf_merge(self) -> "RouteBuilder":
-        """Объединить несколько PDF (body = list[bytes])."""
-        return self._add_lazy("src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor")
-
-    def word_read(self) -> "RouteBuilder":
-        """Извлечь текст из .docx."""
-        return self._add_lazy("src.backend.dsl.engine.processors.rpa", "WordReadProcessor")
-
-    def word_write(self) -> "RouteBuilder":
-        """Сгенерировать .docx из body."""
-        return self._add_lazy("src.backend.dsl.engine.processors.rpa", "WordWriteProcessor")
-
-    def excel_read(self, *, sheet_name: str | None = None) -> "RouteBuilder":
-        """Прочитать Excel → list[dict]."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa", "ExcelReadProcessor", sheet_name=sheet_name
-        )
+    # pdf_read / pdf_merge / word_read / word_write / excel_read — перенесены
+    # в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     def file_move(
         self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
@@ -2337,57 +1797,8 @@ class RouteBuilder(ConvertersMixin):
             mode=mode,
         )
 
-    def archive(self, *, mode: str = "extract", format: str = "zip") -> "RouteBuilder":
-        """ZIP/TAR архивация/распаковка."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa",
-            "ArchiveProcessor",
-            mode=mode,
-            format=format,
-        )
-
-    def ocr(self, *, lang: str = "eng+rus") -> "RouteBuilder":
-        """OCR — текст с изображений (pytesseract)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang
-        )
-
-    def image_resize(
-        self,
-        *,
-        width: int | None = None,
-        height: int | None = None,
-        output_format: str = "PNG",
-    ) -> "RouteBuilder":
-        """Ресайз/конвертация изображений."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa",
-            "ImageResizeProcessor",
-            width=width,
-            height=height,
-            output_format=output_format,
-        )
-
-    def regex(
-        self, pattern: str, *, action: str = "extract", replacement: str = ""
-    ) -> "RouteBuilder":
-        """Regex extract/replace/match."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa",
-            "RegexProcessor",
-            pattern=pattern,
-            action=action,
-            replacement=replacement,
-        )
-
-    def render_template(self, template: str) -> "RouteBuilder":
-        """Jinja2 рендеринг шаблона."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.rpa",
-            "TemplateRenderProcessor",
-            template=template,
-        )
-
+    # archive / ocr / image_resize / regex / render_template — перенесены в
+    # dsl.builders.converters.ConvertersMixin (Stage 2.1).
     # hash / encrypt / decrypt — перенесены в dsl.builders.converters.ConvertersMixin
     # (Stage 2.1 PoC). Доступны через MRO у RouteBuilder.
 
@@ -2435,79 +1846,12 @@ class RouteBuilder(ConvertersMixin):
             default=default,
         )
 
-    def merge(self, properties: list[str], *, mode: str = "append") -> "RouteBuilder":
-        """n8n Merge — объединение properties в body. mode: append/merge/zip."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.patterns",
-            "MergeProcessor",
-            properties=properties,
-            mode=mode,
-        )
-
-    def batch_window(
-        self, *, window_seconds: float = 60.0, max_size: int = 100
-    ) -> "RouteBuilder":
-        """Benthos — time-window batching."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.patterns",
-            "BatchWindowProcessor",
-            window_seconds=window_seconds,
-            max_size=max_size,
-        )
-
-    def deduplicate(
-        self, key_fn: Callable[[Exchange[Any]], str], *, window_seconds: float = 60.0
-    ) -> "RouteBuilder":
-        """Benthos — дедупликация в скользящем окне."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.patterns",
-            "DeduplicateProcessor",
-            key_fn=key_fn,
-            window_seconds=window_seconds,
-        )
-
-    def format_text(
-        self, template: str, *, output_property: str | None = None
-    ) -> "RouteBuilder":
-        """Zapier Formatter — строковое форматирование из properties."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.patterns",
-            "FormatterProcessor",
-            template=template,
-            output_property=output_property,
-        )
-
-    def debounce(
-        self, key_fn: Callable[[Exchange[Any]], str], *, delay_seconds: float = 5.0
-    ) -> "RouteBuilder":
-        """Zapier Debounce — пропускает повторы, только последнее событие."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.patterns",
-            "DebounceProcessor",
-            key_fn=key_fn,
-            delay_seconds=delay_seconds,
-        )
+    # merge / batch_window / deduplicate / format_text / debounce — перенесены
+    # в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     # ── Ergonomics (DSL v2) ──────────────────────────────
 
-    def as_(self, name: str) -> "RouteBuilder":
-        """Называет результат последнего процессора — сохраняет out_message в property.
-
-        Usage::
-
-            .http_call("https://api/x").as_("response")
-            .transform("response.data")
-        """
-
-        async def _capture(exchange: Exchange[Any], context: Any) -> None:
-            body = (
-                exchange.out_message.body
-                if exchange.out_message
-                else exchange.in_message.body
-            )
-            exchange.set_property(name, body)
-
-        return self._add(CallableProcessor(_capture, name=f"as_:{name}"))
+    # as_ — перенесён в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     def on_error(
         self,
@@ -2544,67 +1888,8 @@ class RouteBuilder(ConvertersMixin):
         self._processors.append(wrapped)
         return self
 
-    def filter_dispatch(
-        self, predicate: Callable[[Exchange[Any]], bool], action: str
-    ) -> "RouteBuilder":
-        """Shorthand: filter + dispatch_action в одном вызове."""
-        return self.filter(predicate).dispatch_action(action)
-
-    def pick(self, *fields: str) -> "RouteBuilder":
-        """JMESPath shorthand: оставляет только указанные поля в body."""
-        if not fields:
-            return self
-        expr = "{" + ",".join(f"{f}: {f}" for f in fields) + "}"
-        return self.transform(expr)
-
-    def drop(self, *fields: str) -> "RouteBuilder":
-        """Убирает указанные поля из body (через process_fn).
-
-        JMESPath не поддерживает exclusion, поэтому используется функция.
-        """
-        drop_set = set(fields)
-
-        async def _drop(exchange: Exchange[Any], context: Any) -> None:
-            body = exchange.in_message.body
-            if isinstance(body, dict):
-                new_body = {k: v for k, v in body.items() if k not in drop_set}
-                exchange.set_out(
-                    body=new_body, headers=dict(exchange.in_message.headers)
-                )
-
-        return self._add(CallableProcessor(_drop, name=f"drop:{','.join(fields)}"))
-
-    def batch_by_field(
-        self, field: str, *, batch_size: int = 100, timeout_seconds: float = 30.0
-    ) -> "RouteBuilder":
-        """Composite macro: aggregate по значению поля с окном size+timeout.
-
-        Usage: .batch_by_field("customer_id", batch_size=50)
-        """
-        return self.aggregate(
-            correlation_key=lambda ex: str(
-                ex.in_message.body.get(field)
-                if isinstance(ex.in_message.body, dict)
-                else ex.in_message.body
-            ),
-            batch_size=batch_size,
-            timeout_seconds=timeout_seconds,
-        )
-
-    def poll_and_aggregate(
-        self,
-        source_action: str,
-        *,
-        interval_seconds: float = 60.0,
-        batch_size: int = 100,
-        correlation_field: str = "id",
-    ) -> "RouteBuilder":
-        """Composite macro: timer + poll + aggregate — готовый polling ETL pattern."""
-        return (
-            self.timer(interval_seconds=interval_seconds)
-            .poll(source_action)
-            .batch_by_field(correlation_field, batch_size=batch_size)
-        )
+    # filter_dispatch / pick / drop / batch_by_field / poll_and_aggregate —
+    # перенесены в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     # ── DSL v3: .require_* helpers ────────────────────────
 
@@ -2673,136 +1958,18 @@ class RouteBuilder(ConvertersMixin):
             CallableProcessor(_check, name=f"require_fields:{','.join(required)}")
         )
 
-    def cache_response(self, *, ttl: int = 300, key_field: str = "") -> "RouteBuilder":
-        """DX-2: кеширует результат pipeline в Redis по hash(body).
-
-        Args:
-            ttl: Время жизни кеша в секундах.
-            key_field: Опционально поле из body для вычисления ключа
-                (иначе hash всего body).
-        """
-
-        def _key_fn(ex: Exchange[Any]) -> str:
-            body = ex.in_message.body
-            if key_field and isinstance(body, dict):
-                val = body.get(key_field, "")
-                return f"{ex.meta.route_id}:{val}"
-            import hashlib
-
-            import orjson
-
-            data = orjson.dumps(body, default=str) if body is not None else b""
-            return f"{ex.meta.route_id}:{hashlib.sha256(data).hexdigest()[:16]}"
-
-        self.cache(_key_fn, ttl=ttl)
-        return self.cache_write(_key_fn, ttl=ttl)
+    # cache_response — перенесён в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     # ── RPA terminal/desktop/mobile ──
 
-    def citrix(self, operation: str, session_id: str) -> "RouteBuilder":
-        """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
-        from src.backend.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
-
-        return self._add(
-            CitrixSessionProcessor(operation=operation, session_id=session_id)
-        )
-
-    def terminal_3270(
-        self, host: str, port: int = 23, action: str = "query"
-    ) -> "RouteBuilder":
-        """IBM 3270 терминал-эмулятор (мейнфрейм)."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
-            TerminalEmulator3270Processor,
-        )
-
-        return self._add(
-            TerminalEmulator3270Processor(host=host, port=port, action=action)
-        )
-
-    def appium_mobile(
-        self, platform: str, app_package: str, operation: str
-    ) -> "RouteBuilder":
-        """Appium автоматизация мобильных приложений (android/ios)."""
-        from src.backend.dsl.engine.processors.rpa_banking import AppiumMobileProcessor
-
-        return self._add(
-            AppiumMobileProcessor(
-                platform=platform, app_package=app_package, operation=operation
-            )
-        )
-
-    def email_driven(
-        self,
-        mailbox: str = "INBOX",
-        subject_filter: str | None = None,
-        extract: str = "body_table",
-    ) -> "RouteBuilder":
-        """IMAP → structured data pipeline."""
-        from src.backend.dsl.engine.processors.rpa_banking import EmailDrivenProcessor
-
-        return self._add(
-            EmailDrivenProcessor(
-                mailbox=mailbox, subject_filter=subject_filter, extract=extract
-            )
-        )
-
-    def keystroke_replay(self, script_name: str) -> "RouteBuilder":
-        """Воспроизведение записанного сценария клавиатуры/мыши."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
-            KeystrokeReplayProcessor,
-        )
-
-        return self._add(KeystrokeReplayProcessor(script_name=script_name))
+    # citrix / terminal_3270 / appium_mobile / email_driven / keystroke_replay —
+    # перенесены в dsl.builders.ai_rpa.AIRPAMixin (Stage 2.2).
 
     # ── AI-пайплайны для банка ──
 
-    def kyc_aml_verify(self, jurisdiction: str = "ru") -> "RouteBuilder":
-        """KYC/AML верификация клиента."""
-        from src.backend.dsl.engine.processors.ai_banking import KycAmlVerifyProcessor
-
-        return self._add(KycAmlVerifyProcessor(jurisdiction=jurisdiction))
-
-    def antifraud_score(self, model: str = "default") -> "RouteBuilder":
-        """LLM-скоринг антифрода (поверх детерминистических правил)."""
-        from src.backend.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
-
-        return self._add(AntiFraudScoreProcessor(model=model))
-
-    def credit_scoring_rag(self, product: str = "retail") -> "RouteBuilder":
-        """Кредитный скоринг через RAG."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            CreditScoringRagProcessor,
-        )
-
-        return self._add(CreditScoringRagProcessor(product=product))
-
-    def customer_chatbot(self, channel: str = "web") -> "RouteBuilder":
-        """Клиентский чат-бот (tool-use: balance, statement, faq, escalate)."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            CustomerChatbotProcessor,
-        )
-
-        return self._add(CustomerChatbotProcessor(channel=channel))
-
-    def appeal_ai(self) -> "RouteBuilder":
-        """Автоматическая обработка клиентских обращений."""
-        from src.backend.dsl.engine.processors.ai_banking import AppealProcessorAI
-
-        return self._add(AppealProcessorAI())
-
-    def tx_categorize(self, taxonomy: str = "mcc") -> "RouteBuilder":
-        """Категоризация транзакций (MCC + merchant normalization)."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            TransactionCategorizerProcessor,
-        )
-
-        return self._add(TransactionCategorizerProcessor(taxonomy=taxonomy))
-
-    def findoc_ocr_llm(self, doc_type: str = "invoice") -> "RouteBuilder":
-        """OCR + LLM для финансовых документов."""
-        from src.backend.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
-
-        return self._add(FinDocOcrLlmProcessor(doc_type=doc_type))
+    # kyc_aml_verify / antifraud_score / credit_scoring_rag / customer_chatbot /
+    # appeal_ai / tx_categorize / findoc_ocr_llm — перенесены в
+    # dsl.builders.ai_rpa.AIRPAMixin (Stage 2.2).
 
     # ── Generic (универсальные) ──
 
@@ -3132,21 +2299,7 @@ class RouteBuilder(ConvertersMixin):
 
     # ── Enrichment (W28) ──
 
-    def geoip(
-        self,
-        *,
-        ip_field: str = "client_ip",
-        ip_header: str | None = None,
-        output_property: str = "geo",
-    ) -> "RouteBuilder":
-        """GeoIP enrichment (MaxMind GeoLite2) — country/city/timezone в property."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.enrichment",
-            "GeoIpProcessor",
-            ip_field=ip_field,
-            ip_header=ip_header,
-            output_property=output_property,
-        )
+    # geoip — перенесён в dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     def jwt_sign(
         self,
@@ -3229,76 +2382,8 @@ class RouteBuilder(ConvertersMixin):
             on_mismatch=on_mismatch,
         )
 
-    def jsonpath(
-        self,
-        expression: str,
-        *,
-        mode: str = "extract",
-        value: Any = None,
-        single: bool = False,
-        to_property: str | None = None,
-        stop_on_missing: bool = False,
-    ) -> "RouteBuilder":
-        """JSONPath-выражение над body (jsonpath-ng).
-
-        ``mode="extract"`` — list совпадений (или первое при ``single=True``);
-        ``mode="update"`` — заменяет значения по path на ``value``;
-        ``mode="exists"`` — пишет ``jsonpath_exists`` (bool) в property и при
-        ``stop_on_missing=True`` останавливает pipeline.
-        """
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.data_query",
-            "JsonPathProcessor",
-            expression=expression,
-            mode=mode,
-            value=value,
-            single=single,
-            to_property=to_property,
-            stop_on_missing=stop_on_missing,
-        )
-
-    def convert_units(
-        self,
-        *,
-        to_unit: str,
-        from_unit: str | None = None,
-        precision: int | None = None,
-        to_property: str | None = None,
-    ) -> "RouteBuilder":
-        """Конвертация числовых величин между единицами через pint.
-
-        Body — число (нужен ``from_unit``), dict ``{value, unit}`` или list
-        чисел (нужен ``from_unit``). Поддерживает все стандартные размерности
-        (длина, масса, объём, температура, время, давление и др.).
-        """
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.units",
-            "UnitConversionProcessor",
-            to_unit=to_unit,
-            from_unit=from_unit,
-            precision=precision,
-            to_property=to_property,
-        )
-
-    def parse_ics(
-        self,
-        *,
-        mode: str = "parse",
-        only_first: bool = False,
-        prodid: str = "-//gd_integration_tools//RU",
-    ) -> "RouteBuilder":
-        """Парсит/строит iCalendar (RFC 5545) через библиотеку icalendar.
-
-        ``mode="parse"`` — body=str|bytes ICS → list[dict] событий;
-        ``mode="build"`` — body=list[dict]/dict → bytes ICS.
-        """
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.calendar_ics",
-            "IcsCalendarProcessor",
-            mode=mode,
-            only_first=only_first,
-            prodid=prodid,
-        )
+    # jsonpath / convert_units / parse_ics — перенесены в
+    # dsl.builders.converters.ConvertersMixin (Stage 2.1).
 
     def deadline(
         self, *, timeout_seconds: float = 30.0, fail_on_exceed: bool = True
