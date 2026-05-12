@@ -128,6 +128,7 @@ from src.backend.dsl.engine.processors.integration import (
     MemorySaveProcessor,
 )
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
+from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
 from src.backend.dsl.engine.processors.notify import NotifyProcessor
 from src.backend.dsl.engine.processors.patterns import (
     BatchWindowProcessor,
@@ -201,6 +202,7 @@ __all__ = (
     "SetPropertyProcessor",
     "DispatchActionProcessor",
     "InvokeProcessor",
+    "InvokeWorkflowProcessor",
     "TransformProcessor",
     "FilterProcessor",
     "EnrichProcessor",
