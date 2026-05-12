@@ -162,6 +162,7 @@ from src.backend.dsl.engine.processors.rpa_banking import (
     KeystrokeReplayProcessor,
     TerminalEmulator3270Processor,
 )
+from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
 from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
 from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
@@ -343,5 +344,6 @@ __all__ = (
     "EntityListProcessor",
     "EntityUpdateProcessor",
     "ScanFileProcessor",
+    "IngestFileProcessor",
     "EmailTriggerProcessor",
 )
