@@ -23,6 +23,9 @@ class SinkKind(str, Enum):
 
     Sprint 3 (V16.1 P1): добавлен ``mqtt`` — публикация в MQTT-брокер
     как полноценный Sink (закрывает ассиметрию с MQTT-subscribe).
+
+    Sprint 3 W1 K3 (GAP-03 symmetry): добавлен ``s3`` — выгрузка в
+    S3/MinIO как полноценный Sink (закрывает ассиметрию с S3 source).
     """
 
     HTTP = "http"
@@ -35,6 +38,7 @@ class SinkKind(str, Enum):
     WEBHOOK = "webhook"
     FILE = "file"
     MQTT = "mqtt"
+    S3 = "s3"
 
 
 @dataclass(slots=True)
