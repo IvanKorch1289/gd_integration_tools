@@ -49,6 +49,7 @@ def setup_middlewares(app: FastAPI) -> None:
     )
     from src.backend.entrypoints.middlewares.idempotency import (
         IdempotencyHeaderMiddleware,
+        build_idempotency_backend,
     )
     from src.backend.entrypoints.middlewares.otel_middleware import OtelMiddleware
     from src.backend.entrypoints.middlewares.request_body_cache import (
@@ -100,7 +101,9 @@ def setup_middlewares(app: FastAPI) -> None:
         (TenantMiddleware, {}),
         # Sprint 0 #12 + V5: Idempotency-Key для POST/PATCH endpoints.
         # asgi-idempotency-header кэширует ответы по ключу (Redis backend).
-        (IdempotencyHeaderMiddleware, {}),
+        # V5: backend=RedisNxBackend (prod) или MemoryBackend (test/dev_light)
+        # — гарантирует атомарную блокировку pending-ключа через SET NX EX.
+        (IdempotencyHeaderMiddleware, {"backend": build_idempotency_backend()}),
         # W26.5: блокирует POST/PUT/PATCH/DELETE при degraded db_main
         # (sqlite_ro fallback). Стоит ПОСЛЕ RequestID (для трассировки)
         # и ПЕРЕД RequestBodyCache (чтобы не читать body заблокированных
