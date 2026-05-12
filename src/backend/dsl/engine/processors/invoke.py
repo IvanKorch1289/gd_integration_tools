@@ -27,6 +27,7 @@ from src.backend.core.interfaces.invoker import (
     Invoker,
 )
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -35,6 +36,22 @@ if TYPE_CHECKING:
 __all__ = ("InvokeProcessor",)
 
 
+@processor(
+    "invoke",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "action": {"type": "string"},
+            "mode": {
+                "type": "string",
+                "enum": ["sync", "async-api", "fire-forget", "stream", "batch", "saga"],
+            },
+        },
+        "required": ["action"],
+    },
+    meta={"tier": 1, "category": "invocation"},
+)
 class InvokeProcessor(BaseProcessor):
     """DSL-процессор универсального вызова через :class:`Invoker`."""
 

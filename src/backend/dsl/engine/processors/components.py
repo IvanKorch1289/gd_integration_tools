@@ -12,6 +12,7 @@ import orjson
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 
 __all__ = (
     "HttpCallProcessor",
@@ -27,6 +28,22 @@ __all__ = (
 _comp_logger = logging.getLogger("dsl.components")
 
 
+@processor(
+    "http_call",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "url": {"type": "string"},
+            "method": {"type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]},
+            "headers": {"type": "object"},
+            "timeout": {"type": "number"},
+        },
+        "required": ["url"],
+    },
+    capabilities=("net.outbound.*:external",),
+    meta={"tier": 1, "category": "transport"},
+)
 class HttpCallProcessor(BaseProcessor):
     """Camel HTTP Component — call external APIs from DSL pipeline.
 

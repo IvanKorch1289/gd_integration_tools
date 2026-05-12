@@ -22,6 +22,7 @@ from typing import Any
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
@@ -102,6 +103,19 @@ class _BaseEntityProcessor(BaseProcessor):
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
 
+@processor(
+    "entity_create",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "entity": {"type": "string"},
+            "payload_from": {"type": "string"},
+        },
+        "required": ["entity"],
+    },
+    meta={"tier": 1, "category": "entity"},
+)
 class EntityCreateProcessor(_BaseEntityProcessor):
     """Создаёт сущность через action ``<entity>.create``.
 

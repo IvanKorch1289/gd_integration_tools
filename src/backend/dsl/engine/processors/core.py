@@ -4,6 +4,7 @@ from typing import Any, Callable
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
@@ -56,6 +57,19 @@ class SetPropertyProcessor(BaseProcessor):
         return {"set_property": {"key": self.key, "value": self.value}}
 
 
+@processor(
+    "dispatch_action",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "action": {"type": "string"},
+            "result_property": {"type": "string"},
+        },
+        "required": ["action"],
+    },
+    meta={"tier": 1, "category": "core"},
+)
 class DispatchActionProcessor(BaseProcessor):
     """Camel Service Activator — вызывает зарегистрированный action.
 
@@ -177,6 +191,18 @@ class EnrichProcessor(BaseProcessor):
         return {"enrich": spec}
 
 
+@processor(
+    "log",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]},
+            "message": {"type": "string"},
+        },
+    },
+    meta={"tier": 1, "category": "observability"},
+)
 class LogProcessor(BaseProcessor):
     """Логирует текущее состояние Exchange (тип body, список properties).
 
