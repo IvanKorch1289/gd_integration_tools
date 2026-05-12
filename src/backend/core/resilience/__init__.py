@@ -58,6 +58,11 @@ from src.backend.core.resilience.retry_budget import (
 )
 from src.backend.core.resilience.self_healer import SelfHealer, get_self_healer
 
+# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
+# импортируется ПОСЛЕ всех остальных модулей пакета, чтобы избежать
+# циклической зависимости при загрузке __init__.py.
+from src.backend.core.resilience.decorators import policy
+
 __all__ = (
     "Breaker",
     "BreakerRegistry",
@@ -86,5 +91,6 @@ __all__ = (
     "get_self_healer",
     "invalidate",
     "multi_cached",
+    "policy",
     "with_retry",
 )
