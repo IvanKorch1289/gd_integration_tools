@@ -12,36 +12,11 @@ from src.backend.core.resilience.retry import (
     RetryPolicy,
     with_retry,
 )
-from src.backend.core.resilience.retry_budget import RetryBudget
 
 
 def test_retry_alias() -> None:
     """``Retry`` — каноническое имя, alias на ``RetryPolicy``."""
     assert Retry is RetryPolicy
-
-
-def test_infrastructure_shim_re_exports() -> None:
-    """Backward-compat: импорты из ``infrastructure.resilience.retry`` работают."""
-    from src.backend.infrastructure.resilience.retry import RetryPolicy as InfraPolicy
-    from src.backend.infrastructure.resilience.retry import (
-        with_retry as infra_with_retry,
-    )
-
-    assert InfraPolicy is RetryPolicy
-    assert infra_with_retry is with_retry
-
-
-def test_infrastructure_retry_budget_shim() -> None:
-    """Backward-compat: ``RetryBudget`` доступен из infrastructure-shim."""
-    from src.backend.infrastructure.resilience.retry_budget import (
-        RetryBudget as InfraBudget,
-    )
-    from src.backend.infrastructure.resilience.retry_budget import (
-        RetryBudgetExhausted as InfraExhausted,
-    )
-
-    assert InfraBudget is RetryBudget
-    assert InfraExhausted is RetryBudgetExhausted
 
 
 @pytest.mark.asyncio

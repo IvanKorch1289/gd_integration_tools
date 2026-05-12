@@ -29,38 +29,42 @@
 содержат изменения для `opentelemetry-instrumentation-asyncpg` + функция
 `_instrument_asyncpg`. Коммит ожидается от параллельной команды.
 
-### Sprint 1 Этап 3 — Step 3.3 (миграция callsites + удаление aliases) deferred (2026-05-08)
+### Sprint 1 Этап 3 — Step 3.3 (миграция callsites + удаление aliases) ✅ CLOSED 2026-05-08
 
-**Контекст**: Step 3.2 закоммичен `672b40f` — canonical-реализации в
-`core/resilience/{breaker,retry,rate_limiter}.py` готовы;
-`infrastructure/resilience/{breaker,retry,retry_budget}.py` — backward-compat
-shim'ы (re-export). Step 3.4 закоммичен `e07000b` —
-`core/resilience/_pyrate_compat.py` + BoundedInMemoryBucket.
+**Wave**: `[wave:s1/single-entry-migration]` (PLAN.md V18 §2.5).
 
-**Что осталось (Step 3.3 Phase 2)**: 12 callsite-файлов всё ещё импортируют
-из `infrastructure/resilience/` (через работающие aliases):
-- `infrastructure/database/session_manager.py`
-- `infrastructure/logging/backends/graylog_gelf.py`
-- `infrastructure/clients/transport/{http_upstream,http_httpx}.py`
-- `infrastructure/clients/external/circuit_breakers.py`
-- `infrastructure/clients/storage/redis.py`
-- `infrastructure/clients/messaging/stream.py`
-- `dsl/engine/processors/eip/resilience.py`
-- `tests/unit/log_sinks/test_log_sinks.py`
+**Что сделано**:
+- 7 production callsites мигрированы с `infrastructure/resilience/breaker`
+  на canonical `core/resilience/breaker`:
+  - `infrastructure/clients/external/circuit_breakers.py`
+  - `infrastructure/clients/messaging/stream.py`
+  - `infrastructure/clients/transport/http_httpx.py`
+  - `infrastructure/database/session_manager.py`
+  - `infrastructure/logging/backends/graylog_gelf.py`
+  - `dsl/engine/processors/eip/resilience.py`
+  - `tests/unit/log_sinks/test_log_sinks.py`
+- `infrastructure/resilience/__init__.py` перенаправлён на
+  `core/resilience/retry_budget` для `RetryBudget` re-export.
+- 3 shim-файла удалены:
+  - `infrastructure/resilience/breaker.py`
+  - `infrastructure/resilience/retry.py`
+  - `infrastructure/resilience/retry_budget.py`
+- 2 shim-verification теста удалены из:
+  - `tests/unit/core/resilience/test_unified_breaker.py`
+    (`test_infrastructure_shim_re_exports`, `test_infrastructure_shim_breaker_registry_lazy`)
+  - `tests/unit/core/resilience/test_unified_retry.py`
+    (`test_infrastructure_shim_re_exports`, `test_infrastructure_retry_budget_shim`)
 
-**Причина deferral**:
-- Aliases работают — система функционально полна (Phase 1 DoD достигнут).
-- `http_httpx.py` в working tree активной параллельной команды; миграция
-  callsite'а сейчас увеличит merge conflict risk.
-- Удаление aliases требует синхронизации с _всеми_ незакоммиченными
-  параллельными ветками; безопаснее выполнять одной волной после слияния.
+**Что НЕ затронуто**: `client_breaker.py`, `bulkhead.py`, `rate_limiter.py`,
+`unified_rate_limiter.py`, `time_limiter.py`, `coordinator.py`,
+`registration.py`, `health.py`, `snapshot_job.py`, `reconnection.py`,
+`supervisor.py` — это полноценные реализации, не shim'ы.
 
-**План разрешения**: после слияния параллельных working tree changes
-(`http_httpx.py`, `dsl/builder.py` и др.) — отдельная Wave
-`[wave:s1/single-entry-migration]` с массовой заменой импортов
-+ удаление shim'ов.
+**Verify**: `tests/unit/core/resilience/` 16/16 passed; targeted import smoke
+для всех 7 callsites OK. `http_upstream.py` импортирует только
+`client_breaker.py` (не shim) — не требует миграции.
 
-**Feature-flag `new_resilience_v2`** (в `ResilienceSettings`, default `False`)
-оставлен как переключатель для Step 3.3.
+**Feature-flag `new_resilience_v2`** в `ResilienceSettings`: можно убрать
+в Sprint 2 после общей зачистки.
 
 ### Открытый техдолг (после сессии 2026-05-01 PM — pre-Wave 22)

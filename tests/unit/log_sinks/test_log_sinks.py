@@ -29,6 +29,7 @@ import pytest
 
 from src.backend.core.config.profile import AppProfileChoices
 from src.backend.core.interfaces.log_sink import LogSink
+from src.backend.core.resilience.breaker import BreakerSpec
 from src.backend.infrastructure.logging.backends import (
     ConsoleJsonLogSink,
     DiskRotatingLogSink,
@@ -38,7 +39,6 @@ from src.backend.infrastructure.logging.router import (
     SinkRouter,
     build_sinks_for_profile,
 )
-from src.backend.infrastructure.resilience.breaker import BreakerSpec
 
 
 # ---------------------------------------------------------------------- ConsoleJson

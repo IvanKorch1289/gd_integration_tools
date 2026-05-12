@@ -46,27 +46,6 @@ def test_breaker_initial_state_closed() -> None:
     assert breaker.is_open is False
 
 
-def test_infrastructure_shim_re_exports() -> None:
-    """Backward-compat: импорты из ``infrastructure.resilience.breaker`` работают."""
-    from src.backend.infrastructure.resilience.breaker import Breaker as InfraBreaker
-    from src.backend.infrastructure.resilience.breaker import (
-        BreakerRegistry as InfraRegistry,
-    )
-    from src.backend.infrastructure.resilience.breaker import BreakerSpec as InfraSpec
-
-    assert InfraBreaker is Breaker
-    assert InfraRegistry is BreakerRegistry
-    assert InfraSpec is BreakerSpec
-
-
-def test_infrastructure_shim_breaker_registry_lazy() -> None:
-    """Backward-compat: ``breaker_registry`` доступен через ``__getattr__``."""
-    from src.backend.infrastructure.resilience import breaker as infra_breaker
-
-    instance = infra_breaker.breaker_registry  # триггер __getattr__
-    assert isinstance(instance, BreakerRegistry)
-
-
 @pytest.mark.asyncio
 async def test_breaker_guard_allows_when_closed() -> None:
     """``Breaker.guard()`` пропускает вызов при closed-state."""

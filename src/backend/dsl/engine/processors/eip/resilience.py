@@ -171,12 +171,14 @@ class CircuitBreakerProcessor(BaseProcessor):
         return f"{self._DSL_NAMESPACE}.{route_id}"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        from src.backend.dsl.engine.processors.base import run_sub_processors
-        from src.backend.infrastructure.resilience.breaker import (
+        from src.backend.core.resilience.breaker import (
             BreakerSpec,
             CircuitOpen,
-            breaker_registry,
+            get_breaker_registry,
         )
+        from src.backend.dsl.engine.processors.base import run_sub_processors
+
+        breaker_registry = get_breaker_registry()
 
         breaker_name = self._resolve_breaker_name(exchange)
         breaker = breaker_registry.get_or_create(

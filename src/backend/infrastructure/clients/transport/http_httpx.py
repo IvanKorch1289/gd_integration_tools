@@ -31,19 +31,21 @@ from tenacity import (
 )
 
 from src.backend.core.config.settings import settings
-from src.backend.dsl.codec.json import json_dumps
-from src.backend.infrastructure.resilience.breaker import (
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerSpec,
     CircuitOpen,
-    breaker_registry,
+    get_breaker_registry,
 )
+from src.backend.dsl.codec.json import json_dumps
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
 from src.backend.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,
     ResourceRateLimiter,
 )
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
+
+breaker_registry = get_breaker_registry()
 
 __all__ = ("HttpxClient", "get_httpx_client")
 

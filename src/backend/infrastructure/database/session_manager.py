@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.backend.core.config.settings import settings
 from src.backend.core.errors import DatabaseError, NotFoundError
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.infrastructure.database.database import (
     get_db_initializer,
     get_external_db_registry,
 )
 from src.backend.infrastructure.external_apis.logging_service import db_logger
-from src.backend.infrastructure.resilience.breaker import BreakerSpec, breaker_registry
+
+breaker_registry = get_breaker_registry()
 
 __all__ = (
     "DatabaseSessionManager",

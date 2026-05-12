@@ -61,12 +61,14 @@ from typing import Any, Final, Literal
 import orjson
 
 from src.backend.core.interfaces.log_sink import LogSink
-from src.backend.infrastructure.resilience.breaker import (
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerSpec,
     CircuitOpen,
-    breaker_registry,
+    get_breaker_registry,
 )
+
+breaker_registry = get_breaker_registry()
 
 __all__ = ("GraylogGelfLogSink", "GelfProtocol")
 

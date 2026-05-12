@@ -14,6 +14,7 @@
 См. отдельные модули для деталей.
 """
 
+from src.backend.core.resilience.retry_budget import RetryBudget
 from src.backend.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
 from src.backend.infrastructure.resilience.coordinator import (
     ComponentStatus,
@@ -30,7 +31,6 @@ from src.backend.infrastructure.resilience.rate_limiter import (
     RateLimiterPolicy,
     ResourceRateLimiter,
 )
-from src.backend.infrastructure.resilience.retry_budget import RetryBudget
 from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 
 __all__ = (
