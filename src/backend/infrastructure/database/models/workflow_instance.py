@@ -13,8 +13,8 @@ State-транзиции пишутся append-only в ``workflow_events``. Эт
 См. также:
     * :mod:`app.infrastructure.database.models.workflow_event` — append-only
       event log с триггером pg_notify.
-    * :mod:`app.infrastructure.workflow.state_store` — thin CRUD API.
-    * :mod:`app.infrastructure.workflow.event_store` — append-only event API.
+    * :mod:`app.infrastructure.workflow.pg_runner_internals` — узкий API
+      (``WorkflowEventStore`` + ``WorkflowInstanceStore`` + ``WorkflowState``).
 """
 
 from __future__ import annotations

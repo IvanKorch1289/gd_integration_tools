@@ -66,14 +66,35 @@ class LiteLLMGateway:
         if self._cost_tracking:
             try:
                 callbacks = list(getattr(litellm, "success_callback", []) or [])
-                if self._cost_callback not in callbacks:
-                    callbacks.append(self._cost_callback)
+                callback = self._select_cost_callback()
+                if callback not in callbacks:
+                    callbacks.append(callback)
                     litellm.success_callback = callbacks
             except Exception as exc:  # noqa: BLE001
                 logger.debug("LiteLLM cost-callback registration failed: %s", exc)
 
         self._litellm = litellm
         return litellm
+
+    def _select_cost_callback(self) -> Any:
+        """Wave D.5: LangFuse как primary cost-tracker если включён."""
+        try:
+            from src.backend.core.config.ai_2026 import langfuse_settings
+        except Exception:  # noqa: BLE001
+            return self._cost_callback
+        if not langfuse_settings.enabled:
+            return self._cost_callback
+        try:
+            from src.backend.services.ai.gateway.langfuse_callback import (
+                LangFuseCostCallback,
+            )
+
+            if not hasattr(self, "_langfuse_callback"):
+                self._langfuse_callback: Any = LangFuseCostCallback()
+            return self._langfuse_callback
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("LangFuse callback selection failed: %s", exc)
+            return self._cost_callback
 
     async def acompletion(
         self,

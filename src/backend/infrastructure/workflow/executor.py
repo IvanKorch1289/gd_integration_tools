@@ -1,6 +1,3 @@
-# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
-# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
-# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """DSL-based step executor для DurableWorkflowRunner (IL-WF1.3).
 
 Реализация :class:`StepExecutor` контракта из runner.py. Превращает
@@ -43,13 +40,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable, Literal
 
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
+from src.backend.infrastructure.workflow.pg_runner_internals import (
+    WorkflowInstanceRow,
+    WorkflowState,
+)
 from src.backend.infrastructure.workflow.runner import (
     StepExecutor,
     StepOutcome,
     StepResult,
 )
-from src.backend.infrastructure.workflow.state import WorkflowState
-from src.backend.infrastructure.workflow.state_store import WorkflowInstanceRow
 
 __all__ = (
     "WorkflowStep",

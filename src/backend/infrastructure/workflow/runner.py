@@ -1,6 +1,3 @@
-# DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
-# Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
-# См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
 """Durable workflow runner — background execution driver для IL-WF1.
 
 Архитектура (ADR-031):
@@ -50,11 +47,11 @@ from uuid import UUID
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.database.models.workflow_event import WorkflowEventType
 from src.backend.infrastructure.database.models.workflow_instance import WorkflowStatus
-from src.backend.infrastructure.workflow.event_store import WorkflowEventStore
-from src.backend.infrastructure.workflow.state import WorkflowState
-from src.backend.infrastructure.workflow.state_store import (
+from src.backend.infrastructure.workflow.pg_runner_internals import (
+    WorkflowEventStore,
     WorkflowInstanceRow,
     WorkflowInstanceStore,
+    WorkflowState,
 )
 
 __all__ = ("DurableWorkflowRunner", "StepExecutor", "StepResult", "RunnerConfig")

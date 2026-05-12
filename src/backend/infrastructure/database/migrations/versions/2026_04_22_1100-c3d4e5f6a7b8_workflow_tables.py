@@ -18,7 +18,7 @@ Create Date: 2026-04-22 11:00:00.000000
 См. также:
     * :mod:`app.infrastructure.database.models.workflow_instance`
     * :mod:`app.infrastructure.database.models.workflow_event`
-    * :mod:`app.infrastructure.workflow.event_store`
+    * :mod:`app.infrastructure.workflow.pg_runner_internals`
 """
 
 from typing import Sequence, Union

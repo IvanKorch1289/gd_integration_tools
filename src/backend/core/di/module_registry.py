@@ -94,8 +94,9 @@ INFRA_MODULES: Final[dict[str, str]] = {
     # ─── Registry ───────────────────────────────────────────────────
     "registry": f"{_INFRA}.registry",
     # ─── Workflow ───────────────────────────────────────────────────
-    "workflow.event_store": f"{_INFRA}.workflow.event_store",
-    "workflow.state_store": f"{_INFRA}.workflow.state_store",
+    "workflow.event_store": f"{_INFRA}.workflow.pg_runner_internals",
+    "workflow.state_store": f"{_INFRA}.workflow.pg_runner_internals",
+    "workflow.pg_runner_internals": f"{_INFRA}.workflow.pg_runner_internals",
     # ─── Resilience ─────────────────────────────────────────────────
     "resilience.coordinator": f"{_INFRA}.resilience.coordinator",
     "resilience.health": f"{_INFRA}.resilience.health",
