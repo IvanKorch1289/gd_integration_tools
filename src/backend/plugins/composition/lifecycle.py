@@ -608,6 +608,34 @@ async def lifespan(app: FastAPI):
     task_registry = get_task_registry()
     app.state.task_registry = task_registry
 
+    # Sprint 3 К2 W1: базовый OTel TracerProvider (W3C + B3 composite)
+    # ставится сразу после TaskRegistry, чтобы любые последующие spans
+    # (включая spans внутри register_all_services / Sentry init) шли в
+    # корректный provider. По умолчанию выключено — управление через
+    # env ``OTEL_ENABLED=true``.
+    import os as _os
+
+    if _os.environ.get("OTEL_ENABLED", "false").lower() == "true":
+        try:
+            from src.backend.infrastructure.observability.otel import configure_otel
+
+            otel_exporter = _os.environ.get("OTEL_EXPORTER", "console")
+            otel_endpoint = _os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or None
+            otel_service = _os.environ.get("OTEL_SERVICE_NAME", "gd_integration")
+            otel_env = _os.environ.get("APP_ENVIRONMENT", "development")
+            configure_otel(
+                service_name=otel_service,
+                exporter=otel_exporter,
+                endpoint=otel_endpoint,
+                environment=otel_env,
+            )
+        except Exception as otel_exc:  # noqa: BLE001
+            app_logger.warning(
+                "OTel baseline configure skipped: %s "
+                "(приложение продолжит без базового TracerProvider)",
+                otel_exc,
+            )
+
     try:
         from src.backend.plugins.composition.di import register_app_state
 
