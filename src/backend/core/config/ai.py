@@ -10,7 +10,7 @@
 """
 
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -26,8 +26,10 @@ __all__ = (
     "OpenAISettings",
     "AIProvidersSettings",
     "AIWorkspaceSettings",
+    "MarkitdownSettings",
     "ai_providers_settings",
     "ai_workspace_settings",
+    "markitdown_settings",
     "openrouter_settings",
     "nim_settings",
     "openai_settings",
@@ -285,8 +287,49 @@ class AIWorkspaceSettings(BaseSettingsWithLoader):
     )
 
 
+class MarkitdownSettings(BaseSettingsWithLoader):
+    """Настройки markitdown-engine для document_parsers (Sprint S5 hotfix).
+
+    Markitdown — Microsoft-овская конвертация PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON
+    в Markdown с сохранением структуры (заголовки, таблицы, списки). Включён
+    по умолчанию; при провале/недоступности — fallback на legacy pypdf/docx
+    извлечение plain-text.
+
+    Сетевые fetcher'ы markitdown (resolve URL внутри документа) проходят
+    через WAF (V15 R-V15-5) только при ``network_mode='waf'``. По умолчанию
+    ``network_mode='off'`` — никаких outbound-вызовов.
+    """
+
+    yaml_group: ClassVar[str] = "markitdown"
+    model_config = SettingsConfigDict(env_prefix="MARKITDOWN_", extra="ignore")
+
+    engine_enabled: bool = Field(
+        default=True,
+        description="Использовать markitdown как primary-engine (fallback на legacy).",
+    )
+
+    timeout_s: int = Field(
+        default=30, ge=1, le=600, description="Таймаут одной конвертации (R-V15-13)."
+    )
+
+    max_bytes: int = Field(
+        default=25_000_000,
+        ge=1024,
+        description="Максимальный размер документа для парсинга (байты).",
+    )
+
+    network_mode: Literal["off", "waf"] = Field(
+        default="off",
+        description=(
+            "Режим сетевых fetcher'ов markitdown: 'off' — урезаны (default), "
+            "'waf' — через OutboundHttpClient + capability net.outbound."
+        ),
+    )
+
+
 ai_providers_settings = AIProvidersSettings()
 ai_workspace_settings = AIWorkspaceSettings()
+markitdown_settings = MarkitdownSettings()
 openrouter_settings = OpenRouterSettings()
 nim_settings = NimSettings()
 openai_settings = OpenAISettings()
