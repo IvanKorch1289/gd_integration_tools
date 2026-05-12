@@ -1,73 +1,46 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from src.backend.core.di.dependencies import get_watermark_store_optional
-from src.backend.core.interfaces.watermark_store import WatermarkStore
-from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
+from src.backend.dsl.builders.eip import EIPMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors import (
-    AggregatorProcessor,
     BaseProcessor,
     CallableProcessor,
-    CDCProcessor,
     ChoiceBranch,
     ChoiceProcessor,
     CircuitBreakerProcessor,
-    ClaimCheckProcessor,
     DeadLetterProcessor,
     DelayProcessor,
     DispatchActionProcessor,
-    DynamicRouterProcessor,
-    EnrichProcessor,
     FallbackChainProcessor,
-    FilterProcessor,
     IdempotentConsumerProcessor,
-    LoadBalancerProcessor,
     LogProcessor,
-    MulticastProcessor,
-    NormalizerProcessor,
     ParallelProcessor,
     PipelineRefProcessor,
     ProcessorCallable,
-    RecipientListProcessor,
-    ResequencerProcessor,
     RetryProcessor,
     SagaProcessor,
     SagaStep,
-    ScatterGatherProcessor,
     SetHeaderProcessor,
     SetPropertyProcessor,
-    SplitterProcessor,
     ThrottlerProcessor,
-    TransformProcessor,
     TryCatchProcessor,
     ValidateProcessor,
-    WireTapProcessor,
 )
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 from src.backend.dsl.engine.processors.streaming import (
-    ChannelPurgerProcessor,
     CorrelationIdProcessor,
-    DurableSubscriberProcessor,
-    ExactlyOnceProcessor,
-    GroupByKeyProcessor,
     MessageExpirationProcessor,
-    ReplyToProcessor,
-    SamplingProcessor,
-    SchemaRegistryValidator,
-    SessionWindowProcessor,
-    SlidingWindowProcessor,
-    TumblingWindowProcessor,
 )
 
 __all__ = ("RouteBuilder",)
 
 
 @dataclass(slots=True)
-class RouteBuilder(AIRPAMixin, ConvertersMixin):
+class RouteBuilder(AIRPAMixin, EIPMixin, ConvertersMixin):
     """Fluent-builder для DSL-маршрутов.
 
     Пример::
@@ -415,28 +388,8 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             )
         )
 
-    def transform(self, expression: str) -> "RouteBuilder":
-        """Трансформирует body через JMESPath-выражение."""
-        return self._add(TransformProcessor(expression=expression))
-
-    def filter(self, predicate: Callable[[Exchange[Any]], bool]) -> "RouteBuilder":
-        """Фильтрует Exchange — останавливает, если predicate=False."""
-        return self._add(FilterProcessor(predicate=predicate))
-
-    def enrich(
-        self,
-        action: str,
-        *,
-        payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = None,
-        result_property: str = "enrichment",
-    ) -> "RouteBuilder":
-        return self._add(
-            EnrichProcessor(
-                action=action,
-                payload_factory=payload_factory,
-                result_property=result_property,
-            )
-        )
+    # transform / filter / enrich — перенесены в dsl.builders.eip.EIPMixin
+    # (Stage 2.3). Доступны через MRO у RouteBuilder.
 
     def log(self, level: str = "info") -> "RouteBuilder":
         """Логирование текущего состояния Exchange (для отладки)."""
@@ -474,34 +427,7 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
     # mcp_tool / agent_graph — перенесены в dsl.builders.ai_rpa.AIRPAMixin
     # (Stage 2.2). Доступны через MRO у RouteBuilder.
 
-    def cdc(
-        self,
-        profile: str,
-        tables: list[str],
-        target_action: str,
-        *,
-        strategy: str = "polling",
-        interval: float = 5.0,
-        timestamp_column: str = "updated_at",
-        batch_size: int = 100,
-        channel: str | None = None,
-    ) -> "RouteBuilder":
-        """Change Data Capture — подписка на изменения в БД.
-
-        strategy: polling (любая БД), listen_notify (PostgreSQL), logminer (Oracle).
-        """
-        return self._add(
-            CDCProcessor(
-                profile=profile,
-                tables=tables,
-                target_action=target_action,
-                strategy=strategy,
-                interval=interval,
-                timestamp_column=timestamp_column,
-                batch_size=batch_size,
-                channel=channel,
-            )
-        )
+    # cdc — перенесён в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     # ── Control flow ──
 
@@ -595,37 +521,10 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
         """Fallback-цепочка: последовательно пробует процессоры, останавливается на первом успехе."""
         return self._add(FallbackChainProcessor(processors=processors))
 
-    def wire_tap(self, tap_processors: list[BaseProcessor]) -> "RouteBuilder":
-        """Wire Tap: копия Exchange в побочный канал без влияния на основной поток."""
-        return self._add(WireTapProcessor(tap_processors=tap_processors))
+    # wire_tap / translate / dynamic_route / scatter_gather — перенесены
+    # в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     # ── EIP processors ──
-
-    def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
-        """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
-        return self.convert(from_format=from_format, to_format=to_format)
-
-    def dynamic_route(
-        self, route_expression: Callable[[Exchange[Any]], str]
-    ) -> "RouteBuilder":
-        """Camel Dynamic Router: runtime-вычисление route_id."""
-        return self._add(DynamicRouterProcessor(route_expression=route_expression))
-
-    def scatter_gather(
-        self,
-        route_ids: list[str],
-        *,
-        aggregation: str = "merge",
-        timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
-        """Camel Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
-        return self._add(
-            ScatterGatherProcessor(
-                route_ids=route_ids,
-                aggregation=aggregation,
-                timeout_seconds=timeout_seconds,
-            )
-        )
 
     def throttle(self, rate: float, *, burst: int = 1) -> "RouteBuilder":
         """Camel Throttler: rate-limit N сообщений/сек (token bucket)."""
@@ -642,60 +541,10 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn)
         )
 
-    def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
-        """Camel Splitter: разбиение массива на отдельные Exchange по JMESPath."""
-        return self._add(
-            SplitterProcessor(expression=expression, processors=processors)
-        )
+    # split / aggregate / recipient_list / load_balance — перенесены
+    # в dsl.builders.eip.EIPMixin (Stage 2.3).
 
-    def aggregate(
-        self,
-        correlation_key: Callable[[Exchange[Any]], str],
-        *,
-        batch_size: int = 10,
-        timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
-        """Camel Aggregator: собирает N Exchange по correlation_key в batch."""
-        return self._add(
-            AggregatorProcessor(
-                correlation_key=correlation_key,
-                batch_size=batch_size,
-                timeout_seconds=timeout_seconds,
-            )
-        )
-
-    def recipient_list(
-        self,
-        recipients_expression: Callable[[Exchange[Any]], list[str]],
-        *,
-        parallel: bool = True,
-    ) -> "RouteBuilder":
-        """Camel Recipient List: динамический fan-out на список маршрутов."""
-        return self._add(
-            RecipientListProcessor(
-                recipients_expression=recipients_expression, parallel=parallel
-            )
-        )
-
-    # ── Camel EIP v2 ──
-
-    def load_balance(
-        self,
-        targets: list[str],
-        *,
-        strategy: str = "round_robin",
-        weights: list[float] | None = None,
-        sticky_header: str | None = None,
-    ) -> "RouteBuilder":
-        """Camel Load Balancer: round_robin/random/weighted/sticky распределение."""
-        return self._add(
-            LoadBalancerProcessor(
-                targets=targets,
-                strategy=strategy,
-                weights=weights,
-                sticky_header=sticky_header,
-            )
-        )
+    # ── EIP v2 ──
 
     def circuit_breaker(
         self,
@@ -723,53 +572,8 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             )
         )
 
-    def claim_check_in(
-        self, *, store: str = "redis", ttl_seconds: int = 3600
-    ) -> "RouteBuilder":
-        """Camel Claim Check (store): сохраняет body в Redis, body → {_claim_token: ...}."""
-        return self._add(
-            ClaimCheckProcessor(mode="store", store=store, ttl_seconds=ttl_seconds)
-        )
-
-    def claim_check_out(self) -> "RouteBuilder":
-        """Camel Claim Check (retrieve): восстанавливает body по _claim_token."""
-        return self._add(ClaimCheckProcessor(mode="retrieve"))
-
-    def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
-        """Camel Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
-        return self._add(NormalizerProcessor(target_schema=target_schema))
-
-    def resequence(
-        self,
-        correlation_key: Callable[[Exchange[Any]], str],
-        *,
-        sequence_field: str = "seq",
-        batch_size: int = 10,
-        timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
-        """Camel Resequencer: восстановление порядка сообщений по sequence_field."""
-        return self._add(
-            ResequencerProcessor(
-                correlation_key=correlation_key,
-                sequence_field=sequence_field,
-                batch_size=batch_size,
-                timeout_seconds=timeout_seconds,
-            )
-        )
-
-    def multicast(
-        self,
-        branches: list[list[BaseProcessor]],
-        *,
-        strategy: str = "all",
-        stop_on_error: bool = False,
-    ) -> "RouteBuilder":
-        """Camel Multicast: fan-out на flat list процессор-групп + aggregation."""
-        return self._add(
-            MulticastProcessor(
-                branches=branches, strategy=strategy, stop_on_error=stop_on_error
-            )
-        )
+    # claim_check_in / claim_check_out / normalize / resequence / multicast —
+    # перенесены в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     def loop(
         self,
@@ -789,37 +593,7 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             max_iterations=max_iterations,
         )
 
-    def on_completion(
-        self,
-        processors: list[BaseProcessor],
-        *,
-        on_success_only: bool = False,
-        on_failure_only: bool = False,
-    ) -> "RouteBuilder":
-        """Camel OnCompletion — run callback after pipeline finishes (like finally)."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.eip",
-            "OnCompletionProcessor",
-            processors=processors,
-            on_success_only=on_success_only,
-            on_failure_only=on_failure_only,
-        )
-
-    def sort(
-        self,
-        *,
-        key_fn: Callable[[Any], Any] | None = None,
-        key_field: str | None = None,
-        reverse: bool = False,
-    ) -> "RouteBuilder":
-        """Camel Sort — sort list body by key function or field name."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.eip",
-            "SortProcessor",
-            key_fn=key_fn,
-            key_field=key_field,
-            reverse=reverse,
-        )
+    # on_completion / sort — перенесены в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     def timeout(
         self,
@@ -839,15 +613,7 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
 
     # ── Config ──
 
-    def protocol(self, proto: ProtocolType) -> "RouteBuilder":
-        """Привязывает маршрут к конкретному протоколу (REST/SOAP/gRPC/...)."""
-        self._protocol = proto
-        return self
-
-    def transport(self, config: TransportConfig) -> "RouteBuilder":
-        """Настройки транспорта (endpoint, timeout, retry_count, options)."""
-        self._transport_config = config
-        return self
+    # protocol / transport — перенесены в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     def feature_flag(self, name: str) -> "RouteBuilder":
         """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
@@ -970,427 +736,12 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             )
         )
 
-    def windowed_dedup(
-        self,
-        key_from: str,
-        *,
-        key_prefix: str = "dedup",
-        window_seconds: int = 60,
-        mode: str = "first",
-    ) -> "RouteBuilder":
-        """Дедупликация в скользящем окне с Redis-персистентностью.
+    # windowed_dedup / windowed_collect / multicast_routes — перенесены
+    # в dsl.builders.eip.EIPMixin (Stage 2.3).
 
-        Args:
-            key_from: Точечный путь к ключу (напр. ``body.entity_id``).
-            key_prefix: Пространство имён Redis-ключей.
-            window_seconds: Длительность окна в секундах.
-            mode: Режим — ``first`` | ``last`` | ``unique``.
-        """
-        from src.backend.dsl.engine.processors.eip.windowed_dedup import (
-            WindowedDedupProcessor,
-        )
-
-        return self._add(
-            WindowedDedupProcessor(
-                key_from=key_from,
-                key_prefix=key_prefix,
-                window_seconds=window_seconds,
-                mode=mode,
-            )
-        )
-
-    def windowed_collect(
-        self,
-        key_from: str,
-        dedup_by: str,
-        *,
-        window_seconds: int = 60,
-        dedup_mode: str = "last",
-        inject_as: str = "collected_batch",
-    ) -> "RouteBuilder":
-        """Накопление и батч-дедупликация сообщений в окне.
-
-        Args:
-            key_from: Путь к ключу группировки (напр. ``body.table_name``).
-            dedup_by: Путь к полю дедупликации внутри батча.
-            window_seconds: Длительность окна в секундах.
-            dedup_mode: ``first`` | ``last`` — какое значение сохранять.
-            inject_as: Имя exchange-свойства для инжекции батча.
-        """
-        from src.backend.dsl.engine.processors.eip.windowed_dedup import (
-            WindowedCollectProcessor,
-        )
-
-        return self._add(
-            WindowedCollectProcessor(
-                key_from=key_from,
-                window_seconds=window_seconds,
-                dedup_by=dedup_by,
-                dedup_mode=dedup_mode,
-                inject_as=inject_as,
-            )
-        )
-
-    def multicast_routes(
-        self,
-        route_ids: list[str],
-        *,
-        strategy: str = "all",
-        on_error: str = "continue",
-        timeout: float = 30.0,
-    ) -> "RouteBuilder":
-        """Fan-out на зарегистрированные DSL-маршруты по route_id.
-
-        Args:
-            route_ids: Список route_id из RouteRegistry.
-            strategy: ``all`` — выполнить все; ``first_success`` — остановить после первого.
-            on_error: ``fail`` | ``continue`` — поведение при ошибке.
-            timeout: Таймаут каждого маршрута в секундах.
-        """
-        from src.backend.dsl.engine.processors.eip.routing import (
-            MulticastRoutesProcessor,
-        )
-
-        return self._add(
-            MulticastRoutesProcessor(
-                route_ids=route_ids,
-                strategy=strategy,
-                on_error=on_error,
-                timeout=timeout,
-            )
-        )
-
-    # ── Express BotX (Wave 4.2) ──
-
-    def express_send(
-        self,
-        body: str | None = None,
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.group_chat_id",
-        body_from: str | None = None,
-        bubble: list[list[dict[str, Any]]] | None = None,
-        keyboard: list[list[dict[str, Any]]] | None = None,
-        status: str = "ok",
-        silent_response: bool = False,
-        sync: bool = False,
-        result_property: str = "express_sync_id",
-    ) -> "RouteBuilder":
-        """Отправить сообщение в Express чат через BotX API."""
-        from src.backend.dsl.engine.processors.express import ExpressSendProcessor
-
-        return self._add(
-            ExpressSendProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                bubble=bubble,
-                keyboard=keyboard,
-                status=status,
-                silent_response=silent_response,
-                sync=sync,
-                result_property=result_property,
-            )
-        )
-
-    def express_reply(
-        self,
-        body_from: str | None = None,
-        *,
-        bot: str = "main_bot",
-        source_sync_id_from: str = "header.X-Express-Sync-Id",
-        chat_id_from: str = "body.group_chat_id",
-        body: str | None = None,
-        result_property: str = "express_reply_sync_id",
-    ) -> "RouteBuilder":
-        """Ответить на исходное сообщение Express (reply-thread)."""
-        from src.backend.dsl.engine.processors.express import ExpressReplyProcessor
-
-        return self._add(
-            ExpressReplyProcessor(
-                bot=bot,
-                source_sync_id_from=source_sync_id_from,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                result_property=result_property,
-            )
-        )
-
-    def express_edit(
-        self,
-        sync_id_from: str = "properties.express_sync_id",
-        *,
-        bot: str = "main_bot",
-        body: str | None = None,
-        body_from: str | None = None,
-        bubble: list[list[dict[str, Any]]] | None = None,
-        keyboard: list[list[dict[str, Any]]] | None = None,
-        status: str | None = None,
-    ) -> "RouteBuilder":
-        """Редактировать ранее отправленное Express сообщение."""
-        from src.backend.dsl.engine.processors.express import ExpressEditProcessor
-
-        return self._add(
-            ExpressEditProcessor(
-                bot=bot,
-                sync_id_from=sync_id_from,
-                body=body,
-                body_from=body_from,
-                bubble=bubble,
-                keyboard=keyboard,
-                status=status,
-            )
-        )
-
-    def express_typing(
-        self,
-        action: str = "start",
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.group_chat_id",
-    ) -> "RouteBuilder":
-        """Отправить/остановить индикатор набора в Express чате."""
-        from src.backend.dsl.engine.processors.express import ExpressTypingProcessor
-
-        return self._add(
-            ExpressTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
-        )
-
-    def express_send_file(
-        self,
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.group_chat_id",
-        s3_key_from: str | None = None,
-        file_data_property: str | None = None,
-        file_name: str | None = None,
-        file_name_from: str | None = None,
-        body: str | None = None,
-        body_from: str | None = None,
-        result_property: str = "express_file_sync_id",
-    ) -> "RouteBuilder":
-        """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
-        from src.backend.dsl.engine.processors.express import ExpressSendFileProcessor
-
-        return self._add(
-            ExpressSendFileProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                s3_key_from=s3_key_from,
-                file_data_property=file_data_property,
-                file_name=file_name,
-                file_name_from=file_name_from,
-                body=body,
-                body_from=body_from,
-                result_property=result_property,
-            )
-        )
-
-    def express_mention(
-        self,
-        *,
-        mention_type: str = "user",
-        target_from: str | None = None,
-        mention_id: str | None = None,
-        name_from: str | None = None,
-        property_name: str = "express_mentions",
-    ) -> "RouteBuilder":
-        """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
-        from src.backend.dsl.engine.processors.express import ExpressMentionProcessor
-
-        return self._add(
-            ExpressMentionProcessor(
-                mention_type=mention_type,
-                target_from=target_from,
-                mention_id=mention_id,
-                name_from=name_from,
-                property_name=property_name,
-            )
-        )
-
-    def express_status(
-        self,
-        *,
-        bot: str = "main_bot",
-        sync_id_from: str = "properties.express_sync_id",
-        result_property: str = "express_event_status",
-    ) -> "RouteBuilder":
-        """Запросить статус доставки сообщения по sync_id."""
-        from src.backend.dsl.engine.processors.express import ExpressStatusProcessor
-
-        return self._add(
-            ExpressStatusProcessor(
-                bot=bot, sync_id_from=sync_id_from, result_property=result_property
-            )
-        )
-
-    # ── Telegram Bot API (W15.3) ──
-
-    def telegram_send(
-        self,
-        body: str | None = None,
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.chat_id",
-        body_from: str | None = None,
-        parse_mode: str = "HTML",
-        inline_keyboard: list[list[dict[str, Any]]] | None = None,
-        reply_keyboard: list[list[str]] | None = None,
-        disable_notification: bool = False,
-        disable_web_page_preview: bool = False,
-        result_property: str = "telegram_message_id",
-    ) -> "RouteBuilder":
-        """Отправить сообщение в Telegram чат через Bot API."""
-        from src.backend.dsl.engine.processors.telegram import TelegramSendProcessor
-
-        return self._add(
-            TelegramSendProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                inline_keyboard=inline_keyboard,
-                reply_keyboard=reply_keyboard,
-                disable_notification=disable_notification,
-                disable_web_page_preview=disable_web_page_preview,
-                result_property=result_property,
-            )
-        )
-
-    def telegram_reply(
-        self,
-        body_from: str | None = None,
-        *,
-        bot: str = "main_bot",
-        source_message_id_from: str = "body.message.message_id",
-        chat_id_from: str = "body.chat_id",
-        body: str | None = None,
-        parse_mode: str = "HTML",
-        result_property: str = "telegram_reply_message_id",
-    ) -> "RouteBuilder":
-        """Ответить на сообщение Telegram (reply_to_message_id)."""
-        from src.backend.dsl.engine.processors.telegram import TelegramReplyProcessor
-
-        return self._add(
-            TelegramReplyProcessor(
-                bot=bot,
-                source_message_id_from=source_message_id_from,
-                chat_id_from=chat_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                result_property=result_property,
-            )
-        )
-
-    def telegram_edit(
-        self,
-        message_id_from: str = "properties.telegram_message_id",
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.chat_id",
-        body: str | None = None,
-        body_from: str | None = None,
-        parse_mode: str = "HTML",
-        inline_keyboard: list[list[dict[str, Any]]] | None = None,
-    ) -> "RouteBuilder":
-        """Редактировать ранее отправленное Telegram-сообщение."""
-        from src.backend.dsl.engine.processors.telegram import TelegramEditProcessor
-
-        return self._add(
-            TelegramEditProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                message_id_from=message_id_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                inline_keyboard=inline_keyboard,
-            )
-        )
-
-    def telegram_typing(
-        self,
-        action: str = "typing",
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.chat_id",
-    ) -> "RouteBuilder":
-        """Отправить chat-action (typing / upload_photo / …) в Telegram."""
-        from src.backend.dsl.engine.processors.telegram import TelegramTypingProcessor
-
-        return self._add(
-            TelegramTypingProcessor(bot=bot, chat_id_from=chat_id_from, action=action)
-        )
-
-    def telegram_send_file(
-        self,
-        *,
-        bot: str = "main_bot",
-        chat_id_from: str = "body.chat_id",
-        s3_key_from: str | None = None,
-        file_data_property: str | None = None,
-        file_name: str | None = None,
-        file_name_from: str | None = None,
-        body: str | None = None,
-        body_from: str | None = None,
-        parse_mode: str = "HTML",
-        disable_notification: bool = False,
-        result_property: str = "telegram_file_message_id",
-    ) -> "RouteBuilder":
-        """Отправить файл (документ) в Telegram чат."""
-        from src.backend.dsl.engine.processors.telegram import TelegramSendFileProcessor
-
-        return self._add(
-            TelegramSendFileProcessor(
-                bot=bot,
-                chat_id_from=chat_id_from,
-                s3_key_from=s3_key_from,
-                file_data_property=file_data_property,
-                file_name=file_name,
-                file_name_from=file_name_from,
-                body=body,
-                body_from=body_from,
-                parse_mode=parse_mode,
-                disable_notification=disable_notification,
-                result_property=result_property,
-            )
-        )
-
-    def telegram_mention(
-        self,
-        *,
-        user_id_from: str,
-        display_name_from: str | None = None,
-        parse_mode: str = "MarkdownV2",
-        property_name: str = "telegram_mention",
-        append: bool = False,
-    ) -> "RouteBuilder":
-        """Создать фрагмент-упоминание пользователя для вставки в текст."""
-        from src.backend.dsl.engine.processors.telegram import TelegramMentionProcessor
-
-        return self._add(
-            TelegramMentionProcessor(
-                user_id_from=user_id_from,
-                display_name_from=display_name_from,
-                parse_mode=parse_mode,
-                property_name=property_name,
-                append=append,
-            )
-        )
-
-    def telegram_status(
-        self, *, bot: str = "main_bot", result_property: str = "telegram_bot_profile"
-    ) -> "RouteBuilder":
-        """Запросить профиль бота (getMe) — health-check Telegram."""
-        from src.backend.dsl.engine.processors.telegram import TelegramStatusProcessor
-
-        return self._add(
-            TelegramStatusProcessor(bot=bot, result_property=result_property)
-        )
+    # Express BotX (express_send/reply/edit/typing/send_file/mention/status)
+    # + Telegram Bot API (telegram_send/reply/edit/typing/send_file/mention/
+    # status) — перенесены в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     # ── Entity CRUD (Wave 11) ──
 
@@ -1694,22 +1045,7 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
             commit=commit,
         )
 
-    # ── Wave 6.3: Composed Message Processor (последний EIP, 30/30) ──
-
-    def composed_message(
-        self,
-        splitter: Callable[[Exchange[Any]], Any],
-        processors: list[BaseProcessor],
-        aggregator: Callable[[list[Exchange[Any]]], Any],
-    ) -> "RouteBuilder":
-        """Camel «Composed Message Processor»: split → per-part → aggregate."""
-        return self._add_lazy(
-            "src.backend.dsl.engine.processors.composed_message",
-            "ComposedMessageProcessor",
-            splitter=splitter,
-            processors=processors,
-            aggregator=aggregator,
-        )
+    # composed_message — перенесён в dsl.builders.eip.EIPMixin (Stage 2.3).
 
     # ── Scraping Pipeline ──
 
@@ -2007,19 +1343,8 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
 
         return self._add(LineageTrackerProcessor(tag=tag))
 
-    def sse_source(
-        self, url: str, event_types: list[str] | None = None
-    ) -> "RouteBuilder":
-        """Source-процессор для Server-Sent Events."""
-        from src.backend.dsl.engine.processors.generic import SseSourceProcessor
-
-        return self._add(SseSourceProcessor(url=url, event_types=event_types))
-
-    def schema_validate(self, schema: dict[str, Any]) -> "RouteBuilder":
-        """Валидация body по JSON Schema (Draft 2020-12)."""
-        from src.backend.dsl.engine.processors.generic import SchemaValidateProcessor
-
-        return self._add(SchemaValidateProcessor(schema=schema))
+    # sse_source / schema_validate — перенесены в dsl.builders.eip.EIPMixin
+    # (Stage 2.3).
 
     def ab_test(
         self,
@@ -2151,151 +1476,10 @@ class RouteBuilder(AIRPAMixin, ConvertersMixin):
         """EIP Correlation Identifier: проставляет/пропагирует correlation-id."""
         return self._add(CorrelationIdProcessor(header=header))
 
-    def tumbling_window(
-        self,
-        sink: Callable[[list[Any]], Any],
-        *,
-        size: int = 100,
-        interval_seconds: float = 10.0,
-        watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
-        """Streaming tumbling-окно фиксированного размера.
-
-        Если ``watermark_store`` не задан и в ``app.state`` уже
-        зарегистрирован durable store (W14.5), он подхватывается
-        автоматически вместе с ``route_id`` маршрута. В тестах без
-        composition root окно ведёт себя как in-memory.
-        """
-        store = watermark_store or get_watermark_store_optional()
-        return self._add(
-            TumblingWindowProcessor(
-                sink=sink,
-                size=size,
-                interval_seconds=interval_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,
-            )
-        )
-
-    def sliding_window(
-        self,
-        sink: Callable[[list[Any]], Any],
-        *,
-        window_seconds: float = 10.0,
-        step_seconds: float = 2.0,
-        watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
-        """Streaming sliding-окно с перекрытием.
-
-        ``watermark_store`` подхватывается из ``app.state`` (W14.5),
-        если не передан явно. См. :meth:`tumbling_window`.
-        """
-        store = watermark_store or get_watermark_store_optional()
-        return self._add(
-            SlidingWindowProcessor(
-                sink=sink,
-                window_seconds=window_seconds,
-                step_seconds=step_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,
-            )
-        )
-
-    def session_window(
-        self,
-        sink: Callable[[list[Any]], Any],
-        *,
-        gap_seconds: float = 30.0,
-        watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
-        """Streaming session-окно (закрывается по паузе).
-
-        ``watermark_store`` подхватывается из ``app.state`` (W14.5),
-        если не передан явно. См. :meth:`tumbling_window`.
-        """
-        store = watermark_store or get_watermark_store_optional()
-        return self._add(
-            SessionWindowProcessor(
-                sink=sink,
-                gap_seconds=gap_seconds,
-                watermark_store=store,
-                route_id=self.route_id if store is not None else None,
-            )
-        )
-
-    def group_by_key(
-        self,
-        key_path: str,
-        sink: Callable[[dict[Any, list[Any]]], Any],
-        *,
-        window_seconds: float = 60.0,
-    ) -> "RouteBuilder":
-        """Группировка по ключу (jmespath) в пределах окна."""
-        return self._add(
-            GroupByKeyProcessor(
-                sink=sink, key_path=key_path, window_seconds=window_seconds
-            )
-        )
-
-    def validate_schema(
-        self, subject: str, *, schema_loader: Any = None
-    ) -> "RouteBuilder":
-        """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
-        return self._add(
-            SchemaRegistryValidator(subject=subject, schema_loader=schema_loader)
-        )
-
-    def reply_to(
-        self,
-        broker: Any,
-        *,
-        reply_to_header: str = "reply-to",
-        correlation_header: str = "x-correlation-id",
-    ) -> "RouteBuilder":
-        """EIP Return Address: публикует ответ в очередь из reply-to заголовка."""
-        return self._add(
-            ReplyToProcessor(
-                broker=broker,
-                reply_to_header=reply_to_header,
-                correlation_header=correlation_header,
-            )
-        )
-
-    def exactly_once(
-        self,
-        storage: Any,
-        *,
-        id_header: str = "x-message-id",
-        ttl_seconds: int = 86_400,
-        namespace: str = "exactly-once",
-    ) -> "RouteBuilder":
-        """Exactly-once: dedup через storage по message-id."""
-        return self._add(
-            ExactlyOnceProcessor(
-                storage=storage,
-                id_header=id_header,
-                ttl_seconds=ttl_seconds,
-                namespace=namespace,
-            )
-        )
-
-    def durable_fanout(self, broker: Any, subscribers: list[str]) -> "RouteBuilder":
-        """EIP Durable Subscriber: fan-out к persistent-подписчикам."""
-        return self._add(
-            DurableSubscriberProcessor(broker=broker, subscribers=subscribers)
-        )
-
-    def purge_channel(
-        self, broker: Any, channel: str, *, dry_run: bool = True
-    ) -> "RouteBuilder":
-        """Очистка очереди/стрима (admin-операция)."""
-        return self._add(
-            ChannelPurgerProcessor(broker=broker, channel=channel, dry_run=dry_run)
-        )
-
-    def sample(self, probability: float = 0.1) -> "RouteBuilder":
-        """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
-        return self._add(SamplingProcessor(probability=probability))
+    # tumbling_window / sliding_window / session_window / group_by_key /
+    # validate_schema / reply_to / exactly_once / durable_fanout /
+    # purge_channel / sample — перенесены в dsl.builders.eip.EIPMixin
+    # (Stage 2.3).
 
     # ── Enrichment (W28) ──
 
