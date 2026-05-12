@@ -87,10 +87,29 @@ class AugmentRequest(BaseModel):
     namespace: str | None = Field(default=None)
 
 
+class CitationItem(BaseModel):
+    """Одна цитата из RAG-контекста (Stream E.5).
+
+    Используется для traceability: какие chunks RAG использовал для
+    обогащения промпта. Поля совпадают с :class:`RAGCitation`
+    (``services/ai/rag_service.py``).
+    """
+
+    source_doc: str = Field(..., description="ID исходного документа.")
+    chunk_id: str = Field(..., description="ID chunk'а в vector store.")
+    score: float = Field(..., description="Distance / score (lower = closer).")
+    chunk_idx: int | None = Field(default=None)
+    namespace: str | None = Field(default=None)
+
+
 class AugmentResponse(BaseModel):
-    """Готовый prompt с RAG-контекстом."""
+    """Готовый prompt с RAG-контекстом + citations."""
 
     prompt: str = Field(..., description="Готовый prompt с RAG-контекстом.")
+    citations: list[CitationItem] = Field(
+        default_factory=list,
+        description="Цитаты — какие chunks использовались для обогащения.",
+    )
 
 
 class StatsResponse(BaseModel):
@@ -153,6 +172,13 @@ class UploadResponse(BaseModel):
     chunks: int
     mime: str
     size_bytes: int
+    engine: str = Field(
+        default="legacy", description="Использованный парсер: 'markitdown' | 'legacy'."
+    )
+    markdown: bool = Field(
+        default=False,
+        description="True, если извлечённый текст — Markdown (markitdown-engine).",
+    )
     extraction_warnings: list[str] = Field(default_factory=list)
 
 
@@ -204,10 +230,22 @@ class _RAGFacade:
         namespace: str | None = None,
     ) -> AugmentResponse:
         _check_enabled()
-        prompt = await get_rag_service().augment_prompt(
+        result = await get_rag_service().augment_prompt_with_citations(
             query=query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
-        return AugmentResponse(prompt=prompt)
+        return AugmentResponse(
+            prompt=result.prompt,
+            citations=[
+                CitationItem(
+                    source_doc=c.source_doc,
+                    chunk_id=c.chunk_id,
+                    score=c.score,
+                    chunk_idx=c.chunk_idx,
+                    namespace=c.namespace,
+                )
+                for c in result.citations
+            ],
+        )
 
     async def delete(self, *, doc_id: str) -> DeleteResponse:
         _check_enabled()
@@ -292,6 +330,8 @@ class _RAGFacade:
             chunks=chunks,
             mime=parse_meta["mime"],
             size_bytes=parse_meta["size_bytes"],
+            engine=str(parse_meta.get("engine") or "legacy"),
+            markdown=bool(parse_meta.get("markdown") or False),
             extraction_warnings=list(parse_meta.get("warnings") or []),
         )
 
@@ -400,11 +440,13 @@ builder.add_actions(
 @router.post(
     "/upload",
     response_model=UploadResponse,
-    summary="Загрузить файл (PDF/DOCX/MD/TXT) и проиндексировать",
+    summary="Загрузить файл (PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/MD/TXT) и проиндексировать",
     tags=list(common_tags),
 )
 async def rag_upload(
-    file: Annotated[UploadFile, File(description="PDF/DOCX/MD/TXT.")],
+    file: Annotated[
+        UploadFile, File(description="PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/MD/TXT.")
+    ],
     namespace: Annotated[str, Form()] = "default",
     metadata_json: Annotated[str | None, Form()] = None,
 ) -> UploadResponse:
