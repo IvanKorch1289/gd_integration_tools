@@ -253,4 +253,34 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             description="Вызов LLM-провайдера через LLMFacade (provider/model по '/').",
         )
     )
+    vocab.register(
+        CapabilityDef(
+            name="ai.stream",
+            matcher=path_glob,
+            description=(
+                "Token-level streaming LLM (SSE/WS) через LLMStreamingService "
+                "(scope = 'model:<prefix>', optional)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="mcp.tool.call",
+            matcher=dot_glob,
+            description=(
+                "Вызов MCP-инструмента (FastMCP HTTP transport); "
+                "scope = action-name pattern."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="langmem.admin",
+            matcher=exact,
+            description=(
+                "Администрирование LangMem: consolidate(), stats(), "
+                "RLM reset (D.6)."
+            ),
+        )
+    )
     return vocab

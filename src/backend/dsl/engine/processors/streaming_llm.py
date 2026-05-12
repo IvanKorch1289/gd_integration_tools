@@ -36,6 +36,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         model: str | None = None,
         chunk_size: int = 1,
         gateway: Any | None = None,
+        streaming_service: Any | None = None,
         name: str | None = None,
     ) -> None:
         super().__init__(name)
@@ -49,6 +50,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         self._model = model
         self._chunk_size = chunk_size
         self._gateway = gateway
+        self._streaming_service = streaming_service
 
     def _ensure_gateway(self) -> Any:
         if self._gateway is not None:
@@ -57,6 +59,17 @@ class TokenStreamLLMProcessor(BaseProcessor):
 
         self._gateway = get_litellm_gateway()
         return self._gateway
+
+    def _ensure_streaming_service(self) -> Any:
+        """Wave D.3: lazy-init LLMStreamingService через DI."""
+        if self._streaming_service is not None:
+            return self._streaming_service
+        from src.backend.services.ai.streaming_service import (
+            get_llm_streaming_service,
+        )
+
+        self._streaming_service = get_llm_streaming_service()
+        return self._streaming_service
 
     def _ensure_publisher(self) -> Any:
         if self._publisher is not None:
@@ -103,6 +116,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
     async def _iter_stream(
         self, prompt: str
     ) -> AsyncIterator[Any]:
+        """Legacy-итератор через прямой gateway (для обратной совместимости)."""
         gateway = self._ensure_gateway()
         result = await gateway.acompletion(
             messages=[{"role": "user", "content": prompt}],
@@ -119,11 +133,14 @@ class TokenStreamLLMProcessor(BaseProcessor):
             prompt = body if isinstance(body, str) else str(body)
 
         publisher = self._ensure_publisher()
-        stream = self._iter_stream(prompt)
+        service = self._ensure_streaming_service()
         accumulated: list[str] = []
         try:
-            async for raw_chunk in stream:
-                norm = self._normalize_chunk(raw_chunk)
+            astream = service.astream(
+                [{"role": "user", "content": prompt}], model=self._model
+            )
+            async for chunk in astream:
+                norm = {"delta": chunk.delta, "finish_reason": chunk.finish_reason}
                 if norm["delta"]:
                     accumulated.append(norm["delta"])
                     await publisher.publish_chunk(exchange=exchange, chunk=norm)
@@ -133,7 +150,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
                     )
                     break
         except asyncio.CancelledError:
-            aclose = getattr(stream, "aclose", None)
+            aclose = getattr(astream, "aclose", None)
             if aclose is not None:
                 try:
                     await aclose()

@@ -105,6 +105,19 @@ async def websocket_invocations(websocket: WebSocket) -> None:
                 data.get("payload") if isinstance(data.get("payload"), dict) else {}
             )
 
+            # Wave D.3: специальный канал ``llm.stream`` — обходим Invoker
+            # и стримим токены напрямую через LLMStreamingService.
+            if action == "llm.stream":
+                await websocket.send_json(
+                    {"type": "ack", "invocation_id": invocation_id}
+                )
+                await _stream_llm_to_ws(
+                    websocket=websocket,
+                    invocation_id=invocation_id,
+                    payload=data,
+                )
+                continue
+
             # Привязываем сокет к invocation_id ДО запуска вызова, иначе
             # ранние chunks от STREAMING-task'а потеряются.
             await ws_channel.register(invocation_id, websocket)
@@ -161,3 +174,71 @@ def _response_payload(response: Any) -> dict[str, Any]:
         "result": response.result,
         "error": response.error,
     }
+
+
+async def _stream_llm_to_ws(
+    *,
+    websocket: WebSocket,
+    invocation_id: str,
+    payload: dict[str, Any],
+) -> None:
+    """Wave D.3: token-level LLM streaming через WS channel."""
+    from src.backend.services.ai.streaming_service import (
+        get_llm_streaming_service,
+    )
+
+    messages = payload.get("messages")
+    if not isinstance(messages, list) or not messages:
+        await websocket.send_json(
+            {
+                "type": "error",
+                "invocation_id": invocation_id,
+                "error": "'messages' must be non-empty list",
+            }
+        )
+        return
+
+    model = payload.get("model")
+    kwargs: dict[str, Any] = {}
+    if isinstance(payload.get("temperature"), (int, float)):
+        kwargs["temperature"] = payload["temperature"]
+    if isinstance(payload.get("max_tokens"), int):
+        kwargs["max_tokens"] = payload["max_tokens"]
+
+    service = get_llm_streaming_service()
+    finish_reason: str | None = None
+    usage: dict[str, Any] | None = None
+    try:
+        async for chunk in service.astream(messages, model=model, **kwargs):
+            if chunk.delta:
+                await websocket.send_json(
+                    {
+                        "type": "token",
+                        "invocation_id": invocation_id,
+                        "delta": chunk.delta,
+                    }
+                )
+            if chunk.usage:
+                usage = chunk.usage
+            if chunk.finish_reason:
+                finish_reason = chunk.finish_reason
+                break
+        await websocket.send_json(
+            {
+                "type": "done",
+                "invocation_id": invocation_id,
+                "finish_reason": finish_reason or "stop",
+                "usage": usage or {},
+            }
+        )
+    except WebSocketDisconnect:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("llm.stream over WS failed: %s", exc)
+        await websocket.send_json(
+            {
+                "type": "error",
+                "invocation_id": invocation_id,
+                "error": str(exc),
+            }
+        )
