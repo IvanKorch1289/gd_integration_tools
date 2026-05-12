@@ -101,25 +101,48 @@ def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
 def _register_single_tool(mcp: Any, action_name: str) -> None:
     """Регистрирует один action как MCP tool с input_schema из ActionSpec.
 
-    Stream E.2: если у action'а есть ``payload_model`` (Pydantic), его
-    JSON-Schema встраивается в ``description`` MCP-tool'а — AI-клиент
-    видит структуру payload. Валидация payload через ``payload_model``
-    делегируется ``ActionHandlerRegistry.dispatch`` (там это уже
-    реализовано), так что здесь дополнительной валидации не требуется.
+    Wave D.4 / Track D AI: schema переехала из description в native
+    параметр ``inputSchema`` FastMCP. При ``MCP_LEGACY_DESCRIPTION_SCHEMA=true``
+    схема ДОПОЛНИТЕЛЬНО встраивается в description (graceful migration
+    существующих клиентов). Поддержка native параметра feature-detected
+    через ``inspect.signature``.
     """
+    import inspect
+
     from src.backend.dsl.commands.registry import action_handler_registry
     from src.backend.schemas.invocation import ActionCommandSchema
 
     schema = _action_input_schema_json(action_name)
     description_parts = [f"Выполняет action '{action_name}' через интеграционную шину."]
-    if schema is not None:
+
+    legacy_inline = False
+    try:
+        from src.backend.core.config.ai_2026 import mcp_settings
+
+        legacy_inline = bool(mcp_settings.legacy_description_schema)
+    except Exception:  # noqa: BLE001
+        legacy_inline = False
+
+    if schema is not None and legacy_inline:
         description_parts.append(
             "Payload (JSON-Schema): " + orjson.dumps(schema).decode()
         )
 
-    @mcp.tool(
-        name=action_name.replace(".", "_"), description=" ".join(description_parts)
-    )
+    tool_kwargs: dict[str, Any] = {
+        "name": action_name.replace(".", "_"),
+        "description": " ".join(description_parts),
+    }
+    if schema is not None:
+        try:
+            tool_sig = inspect.signature(mcp.tool)
+            if "input_schema" in tool_sig.parameters:
+                tool_kwargs["input_schema"] = schema
+            elif "inputSchema" in tool_sig.parameters:
+                tool_kwargs["inputSchema"] = schema
+        except (TypeError, ValueError):  # noqa: PERF203
+            pass
+
+    @mcp.tool(**tool_kwargs)
     async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
         try:
             parsed_payload = orjson.loads(payload) if payload else {}

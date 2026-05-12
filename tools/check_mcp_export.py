@@ -23,16 +23,24 @@ def _check(condition: bool, message: str) -> None:
 
 
 class _CountingMCP:
-    """Минимальный stub FastMCP, считающий регистрации tool'ов."""
+    """Минимальный stub FastMCP, считающий регистрации tool'ов.
+
+    Wave D.4: stub воспринимает оба параметра — legacy ``description``
+    и native ``input_schema``/``inputSchema``.
+    """
 
     def __init__(self) -> None:
         self.tools: list[str] = []
+        self.schemas: dict[str, dict] = {}
 
     def tool(self, *_args, **kwargs):
         name = kwargs.get("name", "<anon>")
+        schema = kwargs.get("input_schema") or kwargs.get("inputSchema")
 
         def decorator(fn):
             self.tools.append(name)
+            if isinstance(schema, dict):
+                self.schemas[name] = schema
             return fn
 
         return decorator
@@ -62,7 +70,10 @@ async def main() -> int:
         f"MCP экспортировал {len(mcp.tools)} tools, registry содержит {actions_total}",
     )
 
-    print(f"OK mcp_export: actions={actions_total} mcp_tools={len(mcp.tools)}")
+    print(
+        f"OK mcp_export: actions={actions_total} mcp_tools={len(mcp.tools)} "
+        f"native_schemas={len(mcp.schemas)}"
+    )
     return 0
 
 
