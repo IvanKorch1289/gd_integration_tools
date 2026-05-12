@@ -38,6 +38,9 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
     )
+    from src.backend.entrypoints.middlewares.auth_required import (
+        AuthRequiredMiddleware,
+    )
     from src.backend.entrypoints.middlewares.blocked_routes import (
         BlockedRoutesMiddleware,
     )
@@ -126,6 +129,12 @@ def setup_middlewares(app: FastAPI) -> None:
         (DataMaskingMiddleware, {}),
         # Wave 8.1: маркер успешной аутентификации в response.
         (AuthMethodHeaderMiddleware, {}),
+        # Wave [s2/k1-3-auth-guard] V7: глобальный defense-in-depth.
+        # Гарантирует, что каждый non-public endpoint проходит auth-проверку.
+        # Публичные пути — DEFAULT_PUBLIC_PATH_PREFIXES (/health, /metrics,
+        # /openapi.json и т.д.). Преимущество над per-endpoint require_auth:
+        # нельзя забыть указать guard на новом endpoint'е.
+        (AuthRequiredMiddleware, {}),
         # Слой 4: Логирование и метрики (последними — измеряют всё)
         (AuditLogMiddleware, {}),
         (AuditReplayMiddleware, {"sample_rate": 1.0}),  # ARCH-4: wire audit_replay
