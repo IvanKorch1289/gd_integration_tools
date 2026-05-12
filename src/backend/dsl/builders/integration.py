@@ -384,7 +384,7 @@ class IntegrationMixin:
             )
         )
 
-    # ── CRUD aliases (Stage 2.5 stubs → Step 7) ──
+    # ── CRUD aliases (R-V15-12) ──
 
     def crud_create(
         self,
@@ -394,8 +394,10 @@ class IntegrationMixin:
         result_property: str = "action_result",
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
-        raise NotImplementedError(
-            "crud_create stub (Stage 2.5). Реализация в Step 7 как alias entity_create."
+        return self.entity_create(
+            entity=entity,
+            payload_from=payload_from,
+            result_property=result_property,
         )
 
     def crud_read(
@@ -406,8 +408,8 @@ class IntegrationMixin:
         result_property: str = "action_result",
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_get` (R-V15-12)."""
-        raise NotImplementedError(
-            "crud_read stub (Stage 2.5). Реализация в Step 7 как alias entity_get."
+        return self.entity_get(
+            entity=entity, id_from=id_from, result_property=result_property
         )
 
     def crud_update(
@@ -419,8 +421,11 @@ class IntegrationMixin:
         result_property: str = "action_result",
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_update` (R-V15-12)."""
-        raise NotImplementedError(
-            "crud_update stub (Stage 2.5). Реализация в Step 7 как alias entity_update."
+        return self.entity_update(
+            entity=entity,
+            id_from=id_from,
+            payload_from=payload_from,
+            result_property=result_property,
         )
 
     def crud_delete(
@@ -431,8 +436,8 @@ class IntegrationMixin:
         result_property: str = "action_result",
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_delete` (R-V15-12)."""
-        raise NotImplementedError(
-            "crud_delete stub (Stage 2.5). Реализация в Step 7 как alias entity_delete."
+        return self.entity_delete(
+            entity=entity, id_from=id_from, result_property=result_property
         )
 
     def crud_list(
@@ -445,8 +450,12 @@ class IntegrationMixin:
         result_property: str = "action_result",
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_list` (R-V15-12)."""
-        raise NotImplementedError(
-            "crud_list stub (Stage 2.5). Реализация в Step 7 как alias entity_list."
+        return self.entity_list(
+            entity=entity,
+            filters_from=filters_from,
+            page=page,
+            size=size,
+            result_property=result_property,
         )
 
     # ── Audit + Antivirus ──
@@ -887,7 +896,7 @@ class IntegrationMixin:
             fail_on_exceed=fail_on_exceed,
         )
 
-    # ── NEW: 80/20 YAML — call_function / get_setting / validate_response ──
+    # ── 80/20 YAML — call_function / get_setting / validate_response ──
 
     def call_function(
         self,
@@ -898,14 +907,26 @@ class IntegrationMixin:
     ) -> "RouteBuilder":
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security).
 
-        Stage 2.5: заглушка с ``raise NotImplementedError``. Реальная
-        реализация — Stage 5 (Step 7) через ``CallFunctionProcessor``:
-        module-whitelist через ``plugin.toml::call_function_modules`` +
-        capability ``function.call.<module>`` + audit-log каждого вызова.
+        Безопасность: module-whitelist через
+        ``plugin.toml::call_function_modules`` + capability
+        ``function.call.<module>`` + audit-log каждого вызова.
+        См. :class:`CallFunctionProcessor`.
+
+        Args:
+            ref: ``module.path:fn_name``.
+            payload_from: ``body`` | ``body.<field>`` | ``properties.<name>``.
+            result_property: Имя property для результата.
         """
-        raise NotImplementedError(
-            "call_function stub (Stage 2.5). Implementation in Step 7 — "
-            "engine/processors/integration/function_call.py с whitelist + audit."
+        from src.backend.dsl.engine.processors.function_call import (
+            CallFunctionProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            CallFunctionProcessor(
+                ref=ref,
+                payload_from=payload_from,
+                result_property=result_property,
+            )
         )
 
     def get_setting(
@@ -915,31 +936,46 @@ class IntegrationMixin:
         to: str = "body.setting",
         default: Any = None,
     ) -> "RouteBuilder":
-        """Чтение настройки из конфигурации в Exchange (R-V15-17).
+        """Чтение настройки из application config (R-V15-17).
 
-        Stage 2.5: заглушка с ``raise NotImplementedError``. Реальная
-        реализация — Stage 5 (Step 7) через ``GetSettingProcessor`` с
-        capability ``settings.read.<scope>``.
+        Capability ``settings.read.<scope>``. См. :class:`GetSettingProcessor`.
+
+        Args:
+            path: Точечный путь (``skb.api_url``, ``ai.openai.model``).
+            to: ``body.<field>`` | ``properties.<name>``.
+            default: Значение по умолчанию если путь отсутствует.
         """
-        raise NotImplementedError(
-            "get_setting stub (Stage 2.5). Implementation in Step 7 — "
-            "engine/processors/integration/get_setting.py с capability-check."
+        from src.backend.dsl.engine.processors.get_setting import (
+            GetSettingProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            GetSettingProcessor(path=path, to=to, default=default)
         )
 
     def validate_response(
         self,
         *,
-        schema: type | None = None,
+        schema: type | str | None = None,
         on_error: str = "fail",
+        source: str = "out_body",
     ) -> "RouteBuilder":
         """Pydantic-валидация response_body (R-V15-18).
 
-        Stage 2.5: заглушка с ``raise NotImplementedError``. Реальная
-        реализация — Stage 5 (Step 7) через ``ResponseValidatorProcessor``
-        в ``engine/processors/validation/response.py``. ``on_error``:
-        ``"fail"`` | ``"dlq"`` | ``"warn"``.
+        См. :class:`ResponseValidatorProcessor`.
+
+        Args:
+            schema: Pydantic-модель (тип) или ``module:ClassName`` (str для
+                YAML-loader).
+            on_error: ``fail`` | ``dlq`` | ``warn``.
+            source: ``out_body`` (default) | ``in_body``.
         """
-        raise NotImplementedError(
-            "validate_response stub (Stage 2.5). Implementation in Step 7 — "
-            "engine/processors/validation/response.py с on_error=fail|dlq|warn."
+        from src.backend.dsl.engine.processors.validate_response import (
+            ResponseValidatorProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            ResponseValidatorProcessor(
+                schema=schema, on_error=on_error, source=source
+            )
         )
