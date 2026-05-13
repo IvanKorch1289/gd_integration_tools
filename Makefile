@@ -550,19 +550,19 @@ profile-pyspy: ## Record CPU profile with py-spy
 
 ##@ Docs
 
-docs-clean:
+docs-clean: ## К10 S2 W5: clean Sphinx build artifacts
 	rm -rf $(DOCS_BUILD)/*
 
 docs-apidoc:
 	@# autoapi (sphinx-autoapi) делает discovery сам — sphinx-apidoc не нужен.
 	@true
 
-docs-html:
+docs-html: ## К10 S2 W5: build Sphinx HTML (warnings = errors via -W)
 	uv run sphinx-build -b html -W --keep-going $(DOCS_SOURCE) $(DOCS_BUILD)/html
 
 docs-rebuild: docs-clean docs-apidoc docs-html
 
-docs: docs-rebuild
+docs: docs-rebuild ## К10 S2 W5: build Sphinx documentation (Diátaxis structure)
 
 docs-coverage: ## Wave 10.8 — docstring + HTML coverage gate
 	@$(UV_RUN) python tools/docs_coverage.py --strict

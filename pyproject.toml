@@ -200,6 +200,16 @@ testkit = [
     "respx>=0.22,<1",
     "temporalio>=1.27.0,<2.0.0",
 ]
+# К10 Sprint-2 Wave 5: Sphinx scaffold + Diátaxis structure.
+# sphinx / myst-parser / sphinx-copybutton уже в [dev] dependency-group;
+# этот extra позволяет установить только doc-deps без full dev-стека.
+# pydata-sphinx-theme выбрана вместо furo (уже используется в dev).
+docs = [
+    "sphinx>=9.1.0,<10.0.0",
+    "myst-parser>=5.0.0,<6.0.0",
+    "sphinx-copybutton>=0.5,<1",
+    "pydata-sphinx-theme>=0.16.0,<1.0.0",
+]
 
 [dependency-groups]
 dev = [
