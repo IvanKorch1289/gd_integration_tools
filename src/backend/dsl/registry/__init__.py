@@ -21,6 +21,9 @@ from src.backend.dsl.registry.errors import (
     ProcessorNotFoundError,
     ProcessorRegistryError,
 )
+from src.backend.dsl.registry.json_schema_exporter import (
+    export_processors_schema as export_processors_schema,
+)
 from src.backend.dsl.registry.processor import (
     ProcessorRegistry,
     ProcessorSpec,
@@ -36,6 +39,7 @@ __all__ = (
     "ProcessorRegistryError",
     "ProcessorSpec",
     "RouteRegistry",
+    "export_processors_schema",
     "get_processor_registry",
     "processor",
     "route_registry",

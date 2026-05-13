@@ -51,6 +51,8 @@ from src.backend.dsl.registry.errors import (
 )
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
     from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
@@ -75,6 +77,12 @@ class ProcessorSpec:
         capabilities: Tuple capability-литералов, требуемых процессором.
         replaces: Полное имя ``namespace:name`` процессора, который замещается.
         meta: Произвольные метаданные (теги, deprecated_since, ...).
+        model: Pydantic-модель параметров процессора (используется для reflection
+            JSON-Schema export через :meth:`ProcessorRegistry.export_schemas`).
+            Если ``None`` — схема не генерируется автоматически.
+        version: Semver-версия процессора (draft-07 ``$id`` semver-сегмент).
+            Используется в JSON-Schema ``$id`` согласно ADR-0058.
+        tags: Теги для категоризации (для docs/LSP/AsyncAPI).
     """
 
     name: str
@@ -85,6 +93,9 @@ class ProcessorSpec:
     capabilities: tuple[str, ...] = field(default_factory=tuple)
     replaces: str | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+    model: type[BaseModel] | None = None
+    version: str = "1.0.0"
+    tags: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def fqn(self) -> str:
@@ -182,6 +193,83 @@ class ProcessorRegistry:
         with self._lock:
             return list(self._by_fqn.values())
 
+    def list_all(self) -> list[ProcessorSpec]:
+        """Псевдоним :meth:`list_specs` для совместимости с задачей K5 W3.
+
+        Returns:
+            Копия списка всех зарегистрированных спецификаций.
+        """
+
+        return self.list_specs()
+
+    def export_schemas(self) -> dict[str, dict[str, Any]]:
+        """Генерирует JSON-Schema (draft-07) для всех зарегистрированных процессоров.
+
+        Алгоритм (согласно ADR-0058):
+        * Если ``spec.model`` задан — используется Pydantic reflection
+          (``model.model_json_schema()``), enriched ``$schema`` / ``$id`` / ``title``.
+        * Если ``spec.spec_schema`` задан явно — используется как-есть, enriched
+          ``$id``/``$schema`` при отсутствии.
+        * Если оба ``None`` — возвращается минимальный open-schema.
+
+        Returns:
+            Словарь ``{fqn: schema_dict}``, где ``fqn = namespace:name``.
+        """
+
+        result: dict[str, dict[str, Any]] = {}
+        with self._lock:
+            specs = list(self._by_fqn.values())
+
+        for spec in specs:
+            schema = self._build_schema(spec)
+            result[spec.fqn] = schema
+
+        return result
+
+    def _build_schema(self, spec: ProcessorSpec) -> dict[str, Any]:
+        """Строит JSON-Schema draft-07 для одного ``ProcessorSpec``.
+
+        Args:
+            spec: Спецификация процессора.
+
+        Returns:
+            Словарь JSON-Schema.
+        """
+
+        base_id = (
+            f"https://gd-integration-tools/schemas/processors"
+            f"/{spec.namespace}/{spec.name}/{spec.version}"
+        )
+
+        if spec.model is not None:
+            # Pydantic reflection — основной путь для плагинных процессоров
+            schema: dict[str, Any] = spec.model.model_json_schema()
+            schema.setdefault("$schema", "http://json-schema.org/draft-07/schema#")
+            schema["$id"] = base_id
+            schema.setdefault("title", spec.cls.__name__)
+        elif spec.spec_schema is not None:
+            # Явно заданная схема — взять как есть, enriched $id/$schema
+            schema = dict(spec.spec_schema)
+            schema.setdefault("$schema", "http://json-schema.org/draft-07/schema#")
+            schema["$id"] = base_id
+            schema.setdefault("title", spec.cls.__name__)
+        else:
+            # Нет описания параметров — минимальная open-schema
+            schema = {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "$id": base_id,
+                "title": spec.cls.__name__,
+                "type": "object",
+            }
+
+        # Добавляем метаданные из spec в x-gd-* extension
+        if spec.capabilities:
+            schema["x-gd-capabilities"] = list(spec.capabilities)
+        if spec.tags:
+            schema["x-gd-tags"] = list(spec.tags)
+
+        return schema
+
     def list_by_namespace(self, namespace: str) -> list[ProcessorSpec]:
         """Возвращает все процессоры из конкретного namespace."""
 
@@ -215,17 +303,22 @@ def processor(
     name: str,
     *,
     namespace: str = "core",
+    version: str = "1.0.0",
+    tags: Iterable[str] = (),
     spec_schema: dict[str, Any] | None = None,
     output_schema: dict[str, Any] | None = None,
     capabilities: Iterable[str] = (),
     replaces: str | None = None,
     meta: dict[str, Any] | None = None,
+    model: type | None = None,
 ) -> Any:
     """Декоратор регистрирует ``BaseProcessor``-класс в реестре процессоров.
 
     Args:
         name: Короткое имя процессора (используется в YAML/builder).
         namespace: ``core`` для ядра, имя плагина для extensions.
+        version: Semver-версия процессора (используется в JSON-Schema ``$id``).
+        tags: Теги для категоризации (docs/LSP/AsyncAPI).
         spec_schema: JSON-Schema входной спецификации (опционально).
         output_schema: JSON-Schema выхода (опционально).
         capabilities: Кортеж capability-литералов, требуемых процессором.
@@ -234,6 +327,9 @@ def processor(
             ``processor.override.<name>`` в plugin.toml — проверка
             делается на уровне PluginLoader, не здесь.
         meta: Произвольные метаданные.
+        model: Pydantic-модель параметров процессора. Если задана, используется
+            для автоматической генерации JSON-Schema через reflection
+            (:meth:`ProcessorRegistry.export_schemas`).
 
     Returns:
         Декоратор класса.
@@ -241,9 +337,21 @@ def processor(
     Example:
         >>> @processor("log", spec_schema={"type": "object"})
         ... class LogProcessor(BaseProcessor): ...
+
+        >>> from pydantic import BaseModel
+        ... class LogParams(BaseModel):
+        ...     level: str = "info"
+        ...
+        ... @processor("log", model=LogParams, tags=["core", "observability"])
+        ... class LogProcessor(BaseProcessor): ...
     """
 
     def decorator(cls: type[BaseProcessor]) -> type[BaseProcessor]:
+        # Автоопределение Pydantic-модели через атрибут класса, если model=None
+        resolved_model = model
+        if resolved_model is None:
+            resolved_model = getattr(cls, "model", None)
+
         spec = ProcessorSpec(
             name=name,
             namespace=namespace,
@@ -253,6 +361,9 @@ def processor(
             capabilities=tuple(capabilities),
             replaces=replaces,
             meta=dict(meta) if meta else {},
+            model=resolved_model,
+            version=version,
+            tags=tuple(tags),
         )
         _REGISTRY.register(spec)
         cls.__processor_spec__ = spec  # type: ignore[attr-defined]
