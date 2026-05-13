@@ -214,7 +214,10 @@ async def send_webhook_event(
         Список результатов отправки.
     """
     # A4 (ADR-009): aiohttp → httpx.
+    # S3 К2 W1: httpx.AsyncClient → OutboundHttpClient (WAF coverage).
     import httpx
+
+    from src.backend.core.net import OutboundHttpClient
 
     subscriptions = webhook_registry.get_by_event(event_type)
     results: list[dict[str, Any]] = []
@@ -233,7 +236,9 @@ async def send_webhook_event(
             headers["X-Webhook-Signature"] = sig
 
         try:
-            async with httpx.AsyncClient(http2=True, timeout=10.0) as session:
+            async with OutboundHttpClient(
+                http2=True, timeout=httpx.Timeout(10.0)
+            ) as session:
                 resp = await session.post(sub.target_url, json=payload, headers=headers)
                 results.append(
                     {

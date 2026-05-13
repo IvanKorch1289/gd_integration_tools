@@ -20,6 +20,8 @@ from typing import Any
 
 import httpx
 
+from src.backend.core.net import OutboundHttpClient
+
 __all__ = ("ClaudeProvider", "GeminiProvider", "OllamaProvider", "OpenAIProvider")
 
 logger = logging.getLogger("services.ai_providers")
@@ -101,7 +103,7 @@ class ClaudeProvider:
             "content-type": "application/json",
         }
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             resp = await client.post(
                 f"{self.base_url}/messages", headers=headers, json=payload
             )
@@ -169,7 +171,7 @@ class GeminiProvider:
         params = {"key": self.api_key}
 
         vectors: list[list[float]] = []
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(30.0)) as client:
             for text in texts:
                 payload = {
                     "model": f"models/{embed_model}",
@@ -225,7 +227,7 @@ class GeminiProvider:
         endpoint = "streamGenerateContent" if stream else "generateContent"
         url = f"{self.base_url}/models/{model_name}:{endpoint}?key={self.api_key}"
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()
             return resp.json()
@@ -261,7 +263,7 @@ class OllamaProvider:
     ) -> list[list[float]]:
         """Embeddings через Ollama /api/embeddings (по одному запросу на текст)."""
         out: list[list[float]] = []
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             for text in texts:
                 resp = await client.post(
                     f"{self.base_url}/api/embeddings",
@@ -292,7 +294,7 @@ class OllamaProvider:
         if tools:
             payload["tools"] = tools
 
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(120)) as client:
             resp = await client.post(f"{self.base_url}/api/chat", json=payload)
             resp.raise_for_status()
             return resp.json()
@@ -347,7 +349,7 @@ class OpenAIProvider:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             resp = await client.post(
                 f"{self.base_url}/embeddings", headers=headers, json=payload
             )
@@ -383,7 +385,7 @@ class OpenAIProvider:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
             resp = await client.post(
                 f"{self.base_url}/chat/completions", headers=headers, json=payload
             )

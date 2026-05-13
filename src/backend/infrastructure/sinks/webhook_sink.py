@@ -47,6 +47,8 @@ class WebhookSink(Sink):
         """Подписывает и отправляет ``payload`` на ``url``."""
         try:
             import httpx
+
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
@@ -63,7 +65,9 @@ class WebhookSink(Sink):
             headers["X-Webhook-Signature"] = sig
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with OutboundHttpClient(
+                timeout=httpx.Timeout(self.timeout)
+            ) as client:
                 response = await client.post(
                     self.url, content=body_bytes, headers=headers
                 )
@@ -83,11 +87,15 @@ class WebhookSink(Sink):
         """HEAD-запрос на webhook-URL; ``True`` если адрес отвечает."""
         try:
             import httpx
+
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return False
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.head(self.url)
+            async with OutboundHttpClient(
+                timeout=httpx.Timeout(self.timeout)
+            ) as client:
+                response = await client.request("HEAD", self.url)
         except Exception:  # noqa: BLE001
             return False
         return response.status_code < 500

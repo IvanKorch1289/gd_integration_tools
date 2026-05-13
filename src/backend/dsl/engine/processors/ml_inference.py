@@ -251,11 +251,13 @@ class EmbeddingProcessor(BaseProcessor):
 
         import httpx
 
+        from src.backend.core.net import OutboundHttpClient
+
         api_key = os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(30)) as client:
             resp = await client.post(
                 "https://api.openai.com/v1/embeddings",
                 headers={"Authorization": f"Bearer {api_key}"},
@@ -269,9 +271,11 @@ class EmbeddingProcessor(BaseProcessor):
 
         import httpx
 
+        from src.backend.core.net import OutboundHttpClient
+
         base_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(30)) as client:
             resp = await client.post(
                 f"{base_url}/api/embeddings",
                 json={"model": self._model, "prompt": text},

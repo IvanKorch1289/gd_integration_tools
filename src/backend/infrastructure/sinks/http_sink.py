@@ -39,11 +39,15 @@ class HttpSink(Sink):
         """Отправляет ``payload`` в ``url`` указанным методом."""
         try:
             import httpx
+
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with OutboundHttpClient(
+                timeout=httpx.Timeout(self.timeout)
+            ) as client:
                 response = await client.request(
                     method=self.method,
                     url=self.url,
@@ -70,11 +74,18 @@ class HttpSink(Sink):
         """HEAD-запрос на URL; ``True`` при 2xx/3xx/4xx (адрес отвечает)."""
         try:
             import httpx
+
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return False
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.head(self.url)
+            async with OutboundHttpClient(
+                timeout=httpx.Timeout(self.timeout)
+            ) as client:
+                # ``HEAD`` через ``request`` — ``OutboundHttpClient`` не
+                # имеет shortcut'а ``head``, request совместим со всеми
+                # методами + поддерживает WAF-проверку.
+                response = await client.request("HEAD", self.url)
         except Exception:  # noqa: BLE001
             return False
         # 4xx считаем как «адрес отвечает» (метод не разрешён, и т.п.).

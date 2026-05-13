@@ -18,6 +18,7 @@ from typing import Any
 import httpx
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
+from src.backend.core.net import OutboundHttpClient
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
@@ -90,7 +91,9 @@ class PollingSource:
         return self._task is not None and not self._task.done()
 
     async def _run(self, on_event: EventCallback) -> None:
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
+        async with OutboundHttpClient(
+            timeout=httpx.Timeout(self._timeout)
+        ) as client:
             first = True
             while not self._stop_event.is_set():
                 try:
@@ -120,7 +123,7 @@ class PollingSource:
                 except TimeoutError:
                     pass
 
-    async def _poll(self, client: httpx.AsyncClient) -> tuple[Any, str]:
+    async def _poll(self, client: OutboundHttpClient) -> tuple[Any, str]:
         response = await client.request(self._method, self._url, headers=self._headers)
         response.raise_for_status()
         body = response.content

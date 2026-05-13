@@ -670,6 +670,55 @@ async def lifespan(app: FastAPI):
         register_app_state(app)
         _register_storage_singletons(app)
 
+        # Sprint 3 К2 W1: подключение Redis cluster adapter под env-flag
+        # ``REDIS_CLUSTER_ENABLED=true``. По умолчанию выключено — single-
+        # node Redis из infrastructure/clients/storage/redis.py продолжает
+        # работать как раньше. Узлы конфигурируются через
+        # ``REDIS_CLUSTER_NODES="host1:6379,host2:6379,host3:6379"``.
+        if _os.environ.get("REDIS_CLUSTER_ENABLED", "false").lower() == "true":
+            try:
+                nodes_env = _os.environ.get("REDIS_CLUSTER_NODES", "").strip()
+                if not nodes_env:
+                    app_logger.warning(
+                        "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск"
+                    )
+                else:
+                    from redis.asyncio.cluster import ClusterNode
+
+                    from src.backend.infrastructure.cache.redis_cluster import (
+                        RedisClusterAdapter,
+                    )
+
+                    parsed_nodes: list[ClusterNode] = []
+                    for entry in nodes_env.split(","):
+                        host, _, port = entry.strip().partition(":")
+                        if not host:
+                            continue
+                        parsed_nodes.append(ClusterNode(host=host, port=int(port or 6379)))
+
+                    cluster_password = _os.environ.get("REDIS_CLUSTER_PASSWORD") or None
+                    adapter = RedisClusterAdapter(
+                        startup_nodes=parsed_nodes,
+                        max_connections=int(
+                            _os.environ.get("REDIS_CLUSTER_MAX_CONNECTIONS", "50")
+                        ),
+                        socket_keepalive=True,
+                        health_check_interval=int(
+                            _os.environ.get("REDIS_CLUSTER_HEALTH_CHECK_INTERVAL", "30")
+                        ),
+                        password=cluster_password,
+                    )
+                    app.state.redis_cluster_adapter = adapter
+                    app_logger.info(
+                        "RedisClusterAdapter зарегистрирован: nodes=%d", len(parsed_nodes)
+                    )
+            except Exception as rc_exc:  # noqa: BLE001
+                app_logger.warning(
+                    "RedisClusterAdapter bootstrap skipped: %s "
+                    "(приложение продолжит без cluster-режима)",
+                    rc_exc,
+                )
+
         register_all_services()
 
         # Wave 1.6 (S1): AI Safety cleanup-loop запускается через
@@ -892,6 +941,16 @@ async def lifespan(app: FastAPI):
             await shutdown_pyrate_leaker(get_default_limiter())
         except Exception as leaker_exc:  # noqa: BLE001
             app_logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
+
+        # Sprint 3 К2 W1: graceful close RedisClusterAdapter если регистрировался.
+        cluster_adapter = getattr(app.state, "redis_cluster_adapter", None)
+        if cluster_adapter is not None:
+            try:
+                await cluster_adapter.close()
+            except Exception as rc_close_exc:  # noqa: BLE001
+                app_logger.warning(
+                    "RedisClusterAdapter close error: %s", rc_close_exc
+                )
 
         # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
         # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех

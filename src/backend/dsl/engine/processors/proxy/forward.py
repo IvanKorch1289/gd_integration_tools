@@ -113,9 +113,13 @@ class ForwardToProcessor(BaseProcessor):
     ) -> None:
         import httpx
 
+        from src.backend.core.net import OutboundHttpClient
+
         method = str(exchange.in_message.headers.get("X-Proxy-Method", "POST")).upper()
         target_url = self._rewrite(exchange, context)
-        async with httpx.AsyncClient(timeout=self._spec.timeout_s) as client:
+        async with OutboundHttpClient(
+            timeout=httpx.Timeout(self._spec.timeout_s)
+        ) as client:
             resp = await client.request(
                 method=method,
                 url=target_url,
@@ -147,9 +151,13 @@ class ForwardToProcessor(BaseProcessor):
     ) -> None:
         import httpx
 
+        from src.backend.core.net import OutboundHttpClient
+
         headers.setdefault("Content-Type", "text/xml; charset=utf-8")
         url = f"http://{self._spec.target}"
-        async with httpx.AsyncClient(timeout=self._spec.timeout_s) as client:
+        async with OutboundHttpClient(
+            timeout=httpx.Timeout(self._spec.timeout_s)
+        ) as client:
             resp = await client.post(
                 url,
                 content=body

@@ -20,6 +20,8 @@ from dataclasses import dataclass
 
 import httpx
 
+from src.backend.core.net import OutboundHttpClient
+
 __all__ = (
     "ContentModeration",
     "ModerationResult",
@@ -68,7 +70,7 @@ class ContentModeration:
         return self._check_local(text)
 
     async def _check_openai(self, text: str) -> ModerationResult:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(10)) as client:
             resp = await client.post(
                 "https://api.openai.com/v1/moderations",
                 headers={"Authorization": f"Bearer {self._api_key}"},

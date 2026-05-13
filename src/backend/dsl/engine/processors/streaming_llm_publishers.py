@@ -86,10 +86,13 @@ class WebhookChunkedPublisher(_BasePublisher):
     async def _send(self, url: str, payload: dict[str, Any]) -> None:
         try:
             import httpx
+
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
+            timeout = httpx.Timeout(self._timeout)
+            async with OutboundHttpClient(timeout=timeout) as client:
                 await asyncio.wait_for(
                     client.post(url, content=orjson.dumps(payload)),
                     timeout=self._timeout,

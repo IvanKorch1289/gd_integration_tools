@@ -53,7 +53,9 @@ async def _import_openapi(
         try:
             import httpx
 
-            async with httpx.AsyncClient(timeout=30) as cli:
+            from src.backend.core.net import OutboundHttpClient
+
+            async with OutboundHttpClient(timeout=httpx.Timeout(30)) as cli:
                 resp = await cli.get(spec_url)
                 resp.raise_for_status()
                 content = resp.content
@@ -112,7 +114,9 @@ async def _import_postman(
         try:
             import httpx
 
-            async with httpx.AsyncClient(timeout=15) as cli:
+            from src.backend.core.net import OutboundHttpClient
+
+            async with OutboundHttpClient(timeout=httpx.Timeout(15)) as cli:
                 resp = await cli.get(collection_url)
                 resp.raise_for_status()
                 content = resp.content

@@ -79,17 +79,26 @@ class OutboundHttpClient:
         verify: bool | str = True,
         cert: tuple[str, str] | None = None,
         plugin: str = "core",
+        http2: bool = False,
+        base_url: str = "",
     ) -> None:
         self._policy = policy or WafPolicy()
         self._capability_check = capability_check
         self._audit = audit
         self._plugin = plugin
-        self._client = httpx.AsyncClient(
-            limits=limits,
-            timeout=timeout,
-            verify=verify,
-            cert=cert,
-        )
+        # S3 К2 W1: ``http2``/``base_url`` для миграции легаси-клиентов
+        # (vault_cipher, opa, clickhouse, webhook handler) без потери
+        # текущего поведения. Совместимо с httpx[http2] из pyproject.
+        client_kwargs: dict[str, Any] = {
+            "limits": limits,
+            "timeout": timeout,
+            "verify": verify,
+            "cert": cert,
+            "http2": http2,
+        }
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        self._client = httpx.AsyncClient(**client_kwargs)
 
     async def __aenter__(self) -> OutboundHttpClient:
         return self

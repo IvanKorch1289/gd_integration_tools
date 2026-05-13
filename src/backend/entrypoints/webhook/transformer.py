@@ -180,6 +180,8 @@ class WebhookRelay:
     ) -> dict[str, Any]:
         import httpx
 
+        from src.backend.core.net import OutboundHttpClient
+
         headers = {"Content-Type": "application/json"}
         if rule.secret:
             from src.backend.core.di.providers import get_signature_builder_provider
@@ -190,7 +192,7 @@ class WebhookRelay:
         last_error = ""
         for attempt in range(rule.max_retries):
             try:
-                async with httpx.AsyncClient(timeout=15) as client:
+                async with OutboundHttpClient(timeout=httpx.Timeout(15)) as client:
                     resp = await client.post(
                         rule.target_url, json=payload, headers=headers
                     )
