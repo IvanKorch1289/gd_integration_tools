@@ -208,6 +208,26 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    task_watchdog_deadline: bool = Field(
+        default=False,
+        title="Resilience: TaskWatchdog deadline-эскалация для asyncio-задач",
+        description=(
+            "K3 Wave 2. Owner: K3 Resilience. ETA: S2-W2. "
+            "Активирует TaskWatchdog: регистрация задач с deadline_seconds + "
+            "auto-cancel при превышении. default-OFF до chaos-теста с leak-detection."
+        ),
+    )
+
+    pool_health_monitor: bool = Field(
+        default=False,
+        title="Storage: ConnectionPoolHealthMonitor (idle ping + reuse-on-demand)",
+        description=(
+            "K8 Wave 5. Owner: K8 Storage. ETA: S2-W5. "
+            "Активирует фоновый health-monitor для DB/Redis/HTTP/ClickHouse pools. "
+            "default-OFF до интеграции в 4 reference pools."
+        ),
+    )
+
     # ─── K7 — EventBus ─────────────────────────────────────────────────────
     eventbus_facade: bool = Field(
         default=False,
@@ -216,6 +236,16 @@ class FeatureFlags(BaseSettingsWithLoader):
             "K7 Wave 1. Owner: K7 EventBus. ETA: S2-W1. "
             "Активирует EventBusBackend ABC + 3 backend'а. "
             "default-OFF до прохождения shared protocol-тестов."
+        ),
+    )
+
+    eventbus_file_watcher: bool = Field(
+        default=False,
+        title="EventBus: FileWatcherSource через watchfiles.awatch",
+        description=(
+            "K7 Wave 4. Owner: K7 EventBus. ETA: S2-W4. "
+            "Активирует регистрацию FileWatcherSource в routes-discovery. "
+            "default-OFF до подключения в reference route."
         ),
     )
 
