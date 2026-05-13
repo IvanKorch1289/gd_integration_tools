@@ -72,9 +72,9 @@ async def test_tick_cancels_task_after_deadline() -> None:
     watchdog = TaskWatchdog(cancel_on_deadline=True)
 
     with patch(
-        "src.backend.core.resilience.task_watchdog.feature_flags"
-    ) as mock_flags:
-        mock_flags.task_watchdog_deadline = True
+        "src.backend.core.config.features.feature_flags.task_watchdog_deadline",
+        new=True,
+    ):
         # Регистрируем с очень коротким deadline.
         watchdog.register(task, deadline_seconds=0.001, name="slow-task")
         assert len(watchdog._registrations) == 1
@@ -84,6 +84,12 @@ async def test_tick_cancels_task_after_deadline() -> None:
 
         # Вызываем tick напрямую с feature_flags.patch в scope.
         await watchdog.tick()
+
+    # Даём event-loop'у обработать cancel() → CancelledError доходит до задачи.
+    try:
+        await asyncio.wait_for(task, timeout=0.5)
+    except (asyncio.CancelledError, asyncio.TimeoutError):  # noqa: BLE001
+        pass
 
     # После tick задача должна быть отменена, список registrations — пуст.
     assert task.cancelled() or task.done()
@@ -106,9 +112,9 @@ async def test_tick_keeps_alive_tasks() -> None:
     watchdog = TaskWatchdog(cancel_on_deadline=True)
 
     with patch(
-        "src.backend.core.resilience.task_watchdog.feature_flags"
-    ) as mock_flags:
-        mock_flags.task_watchdog_deadline = True
+        "src.backend.core.config.features.feature_flags.task_watchdog_deadline",
+        new=True,
+    ):
 
         # Первая задача — очень короткий deadline (истечёт).
         watchdog.register(task_expire, deadline_seconds=0.001, name="expire")
@@ -117,6 +123,12 @@ async def test_tick_keeps_alive_tasks() -> None:
 
         await asyncio.sleep(0.05)
         await watchdog.tick()
+
+    # Даём cancel() пройти через event-loop.
+    try:
+        await asyncio.wait_for(task_expire, timeout=0.5)
+    except (asyncio.CancelledError, asyncio.TimeoutError):  # noqa: BLE001
+        pass
 
     # Первая задача была отменена, вторая осталась.
     assert task_expire.cancelled() or task_expire.done()
