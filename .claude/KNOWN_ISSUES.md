@@ -92,6 +92,61 @@ K6 проверяет cloud LLM маршруты, K10 audit'ит `check-waf-cove
 
 ---
 
+### 🟡 BLOCKER #4 — Supply-chain (SBOM + cosign + ZAP)
+
+- **Owner**: K10 DevOps
+- **ETA**: Sprint 3 (отложено из Sprint 2 multi-agent kickoff 2026-05-13)
+- **Risk**: medium (release pipeline только; не блокирует production runtime)
+- **Feature-flag**: нет (CI-level only)
+
+**Описание**: SBOM (cyclonedx) + pip-audit + cosign sign + OWASP ZAP gate
+обязательны в release pipeline согласно V15 правилу supply-chain integrity.
+Изначально запланировано на Sprint 2 (R7 wave), но agent был rejected пользователем —
+работа переносится в Sprint 3 целиком, чтобы избежать частичной реализации.
+
+**DoD checklist**:
+- [ ] `tools/checks/generate_sbom.py` — CycloneDX 1.5 JSON+XML
+- [ ] `tools/checks/run_pip_audit.py` — pip-audit JSON-output обёртка
+- [ ] `make sbom`, `make audit-deps`, `make audit-zap` targets
+- [ ] cosign sign step в `.github/workflows/release.yml`
+- [ ] OWASP ZAP baseline scan в `.github/workflows/security.yml`
+- [ ] `pyproject.toml::[security]` extras: `cyclonedx-bom>=4.0`, `pip-audit>=2.7`
+
+**Coordination**: K10 владелец full pipeline. Использует scaffold из
+existing `tools/perf_gate.py`/`Makefile.security` paradigm.
+
+---
+
+### Sprint 2 (V15.3 MVP) — РЕЗУЛЬТАТЫ kickoff (2026-05-13)
+
+**Закрыто** (14 wave-коммитов, 46 unit-тестов green, 22 feature-flag default-OFF):
+
+| Owner | Wave-tag | Commit | Описание |
+|---|---|---|---|
+| К10 | `s2/k10-backbone` | `371eace` | 10-team ownership + 22 feature-flag + 3 blockers |
+| К10 | `s2/k10-w2-py2-syntax` | `461a6ce` | 20 Python-2 except callsites hotfix |
+| К10 | `s2/k10-w1-testkit` | `8af96c1` | testkit/pytest_plugin.py entry-point |
+| К10 | `s2/k10-features-extend` | `07512b4` | +3 feature-flag (task_watchdog/pool_health/file_watcher) |
+| К1 | `s2/k1-w1-joserfc` | `af0c4f5` | joserfc parallel shim + 14 тестов |
+| К2 (K3) | `s2/k3-w1-otel-tenacity` | `42ed620` | OTel asyncpg + tenacity unification |
+| К2 (K3) | `s2/k3-w2-watchdog-deadline` | `d9beed9` + `5549127` | TaskWatchdog + AIWorkspaceCleaner + fix |
+| К2 (K3) | `s2/k3-w4-perf-gate-ci` | `26aa05a` | perf-gate Makefile + CI workflow + baseline |
+| К2 (K8) | `s2/k8-w5-pool-health` | `2aa4544` | ConnectionPoolHealthMonitor scaffold |
+| К3 (K5) | `s2/k5-w3-processor-registry` | `f2f5b14` | @processor + JSON-Schema export (17 тестов) |
+| К3 (K5) | `s2/k5-w5-routes-v11-refs` | `dc33a03` | 2 reference routes по ADR-0056 (4 тестов) |
+| К3 (K7) | `s2/k7-w4-file-watcher` | `dacd89c` | FileWatcherSource через watchfiles.awatch |
+| К4 (K6) | `s2/k6-w1-langfuse-v3` | `ca5429d` | LangFuse 3.x parallel shim (4 тестов) |
+
+**НЕ закрыто (перенесено в Sprint 3)**:
+- SBOM/cosign/ZAP supply-chain → BLOCKER #4 (выше)
+- WAF Phase-2 38 callsites → BLOCKER #3 (выше)
+- TaskIQ removal → BLOCKER #1 (выше)
+- Workflow legacy purge → BLOCKER #2 (выше)
+
+**Memory**: `~/.claude/projects/.../memory/feedback_s2_multi_agent_kickoff.md`.
+
+---
+
 ## Известные ограничения и quirks
 
 ### Sprint 1 Этап 2 — Step 2.2 deferred на Sprint 4 (2026-05-07)
