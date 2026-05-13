@@ -1,0 +1,22 @@
+[route]
+name = "health_proxy_demo"
+version = "0.1.0"
+description = "Reference route #1 — простой прокси на /health для smoke-теста discovery V11.1a"
+requires_core = ">=15.0,<16.0"
+tenant_aware = false
+
+capabilities = [
+  "net.inbound.http:/api/v1/demo/health",
+  "net.outbound.https://localhost:9000:internal"
+]
+
+[route.schedule]
+# routes могут не иметь schedule — это on-demand
+
+[route.slo]
+p95_ms = 50
+p99_ms = 200
+rps_target = 100
+
+[route.feature_flag]
+name = "routes_v11_1a_discovery"
