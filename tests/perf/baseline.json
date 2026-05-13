@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "created_at": "2026-05-13",
+  "description": "K3 perf-gate baseline. Перегенерируется через make perf-baseline после staging-smoke.",
+  "endpoints": {
+    "GET /health": {"p95_ms": 50.0, "p99_ms": 100.0, "rps_floor": 100.0},
+    "GET /api/v1/admin/users": {"p95_ms": 200.0, "p99_ms": 500.0, "rps_floor": 20.0},
+    "POST /api/v1/credit/check": {"p95_ms": 800.0, "p99_ms": 1500.0, "rps_floor": 10.0}
+  }
+}

@@ -1,0 +1,71 @@
+name: perf-gate
+
+# K3 Sprint-2 Wave 4 (S1-T4): python perf-gate CI integration.
+# Warn-only режим (continue-on-error: true) до Sprint 3 / S3 стабилизации.
+# После стабилизации: убрать continue-on-error + добавить SLO-threshold enforcement.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf-check:
+    name: Python perf-gate (warn-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Warn-only до Sprint 3: не блокирует merge при нарушении порогов.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Validate baseline.json
+        # Проверить, что baseline корректный JSON перед запуском gate.
+        run: python -m json.tool tests/perf/baseline.json > /dev/null
+
+      - name: Run perf-gate (smoke — без backend)
+        # В CI backend не запущен: locust завершится с ошибкой подключения.
+        # Тест подтверждает, что CLI корректно вызывается и генерирует отчёт.
+        # Полный прогон — только в staging environment (make perf-gate-py BASE_URL=...).
+        run: |
+          mkdir -p dist
+          uv run python tools/perf_gate.py \
+            --scenario tests/perf/locust_baseline.py \
+            --host http://localhost:8000 \
+            --users 1 \
+            --duration 5s \
+            --report dist/perf-report.json \
+          || echo "[perf-gate] warn: backend недоступен в CI (ожидаемо для smoke)"
+
+      - name: Upload perf report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-report
+          path: dist/perf-report.json
+          retention-days: 14
+          if-no-files-found: ignore

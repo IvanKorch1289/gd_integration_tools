@@ -77,7 +77,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \
 	import-swagger import-postman import-wsdl \
-	testkit-smoke new-plugin perf-smoke perf-full perf-gate chaos chaos-slow docs-vale
+	testkit-smoke new-plugin perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"
@@ -448,6 +448,23 @@ perf-gate: check-env ## К5: enforced perf-gate (k6 with thresholds; fails if SL
 	@k6 run --summary-export=dist/k6-summary.json \
 		-e BASE_URL=$(or $(BASE_URL),http://127.0.0.1:8000) \
 		tests/perf/k6_action_routes.js
+
+perf-gate-py: ## К3/S2: python perf-gate — проверяет locust-метрики против baseline.json (warn-only до S3)
+	@$(INFO) "Running python perf-gate against baseline tests/perf/baseline.json..."
+	@mkdir -p dist
+	@$(UV_RUN) python tools/perf_gate.py \
+		--scenario tests/perf/locust_baseline.py \
+		--host $(or $(BASE_URL),http://localhost:8000) \
+		--report dist/perf-report.json \
+		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (будет block в S3)"
+
+perf-baseline: ## К3/S2: перегенерировать tests/perf/baseline.json из актуального staging-прогона
+	@$(INFO) "Regenerating perf baseline → tests/perf/baseline.json..."
+	@$(UV_RUN) python tools/perf_gate.py \
+		--scenario tests/perf/locust_baseline.py \
+		--host $(or $(BASE_URL),http://localhost:8000) \
+		--report tests/perf/baseline.json \
+		|| $(WARN) "[perf-baseline] локуст не запустился — baseline не обновлён"
 
 chaos: check-env ## К5: chaos × 33 (toxiproxy required; Docker required)
 	@$(INFO) "Running chaos suite (33 scenarios)..."
