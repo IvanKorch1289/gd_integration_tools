@@ -20,6 +20,7 @@ from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
 from src.backend.infrastructure.sinks.http_sink import HttpSink
 from src.backend.infrastructure.sinks.mq_sink import MqSink
 from src.backend.infrastructure.sinks.mqtt_sink import MqttSink
+from src.backend.infrastructure.sinks.s3_sink import S3Sink
 from src.backend.infrastructure.sinks.soap_sink import SoapSink
 from src.backend.infrastructure.sinks.webhook_sink import WebhookSink
 from src.backend.infrastructure.sinks.ws_sink import WsSink
@@ -73,6 +74,8 @@ def build_sink(spec: Mapping[str, Any]) -> Sink:
             return MqSink(sink_id=sink_id, **common)
         case SinkKind.MQTT:
             return MqttSink(sink_id=sink_id, **common)
+        case SinkKind.S3:
+            return S3Sink(sink_id=sink_id, **common)
         case SinkKind.SMS:
             raise ValueError(
                 f"sink {sink_id!r}: kind=sms — реализация отложена (Wave 9.x)"

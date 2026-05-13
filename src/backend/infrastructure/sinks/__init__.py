@@ -1,6 +1,6 @@
 """Wave 3 — реализации :class:`~src.core.interfaces.sink.Sink` (Roadmap V10).
 
-Симметрия Source (9 типов) ↔ Sink (9 типов):
+Симметрия Source ↔ Sink (Sprint 3 W1 K3 — 10 типов с S3):
 
 * :class:`~src.infrastructure.sinks.http_sink.HttpSink` — REST POST/PUT через httpx.
 * :class:`~src.infrastructure.sinks.grpc_sink.GrpcSink` — unary RPC.
@@ -14,6 +14,9 @@
   опциональным HMAC-подписанием.
 * :class:`~src.infrastructure.sinks.file_sink.FileSink` — append/write на local FS.
 * :class:`~src.infrastructure.sinks.email_sink.EmailSink` — SMTP через aiosmtplib.
+* :class:`~src.infrastructure.sinks.mqtt_sink.MqttSink` — публикация в MQTT-брокер.
+* :class:`~src.infrastructure.sinks.s3_sink.S3Sink` — выгрузка в S3/MinIO
+  (Sprint 3 W1 K3 — GAP-03 symmetry).
 * SMS — заглушка ``SmsSink`` (опционально, по требованию).
 
 Тяжёлые backend-зависимости (``grpcio``, ``zeep``, ``faststream``, ``aiosmtplib``)
@@ -30,6 +33,7 @@ from src.backend.infrastructure.sinks.grpc_sink import GrpcSink
 from src.backend.infrastructure.sinks.http_sink import HttpSink
 from src.backend.infrastructure.sinks.mq_sink import MqSink
 from src.backend.infrastructure.sinks.mqtt_sink import MqttSink
+from src.backend.infrastructure.sinks.s3_sink import S3Sink
 from src.backend.infrastructure.sinks.soap_sink import SoapSink
 from src.backend.infrastructure.sinks.webhook_sink import WebhookSink
 from src.backend.infrastructure.sinks.ws_sink import WsSink
@@ -41,6 +45,7 @@ __all__ = (
     "HttpSink",
     "MqSink",
     "MqttSink",
+    "S3Sink",
     "SoapSink",
     "WebhookSink",
     "WsSink",
