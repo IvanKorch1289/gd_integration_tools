@@ -98,8 +98,9 @@ class LLMCallProcessor(BaseProcessor):
         self._retry_delay = retry_delay
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        import asyncio
         import logging
+
+        from src.backend.infrastructure.resilience.retry import make_async_retry
 
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
@@ -109,7 +110,7 @@ class LLMCallProcessor(BaseProcessor):
                 else str(exchange.in_message.body)
             )
 
-        logger = logging.getLogger("dsl.ai")
+        _log = logging.getLogger("dsl.ai")
 
         try:
             from src.backend.services.ai.ai_agent import get_ai_agent_service
@@ -118,63 +119,68 @@ class LLMCallProcessor(BaseProcessor):
             return
 
         agent = get_ai_agent_service()
-        last_error: Exception | None = None
 
-        for attempt in range(self._max_retries + 1):
+        # K3 W1: замена custom retry-loop на tenacity через make_async_retry.
+        # Rate-limit (RuntimeError с "rate"/"429"/"quota") — non-retryable,
+        # обрабатывается отдельно до вызова retry-обёртки.
+        _retryable = (TimeoutError, ConnectionError)
+
+        @make_async_retry(
+            max_attempts=self._max_retries + 1,
+            initial_backoff=self._retry_delay,
+            multiplier=2.0,
+            on=_retryable,
+        )
+        async def _chat_with_retry() -> Any:
+            """Выполняет один LLM-запрос; tenacity перехватывает transient ошибки."""
             try:
-                result = await agent.chat(
+                return await agent.chat(
                     messages=[{"role": "user", "content": prompt}],
                     provider=self._provider,
                     model=self._model or "default",
                 )
-
-                if isinstance(result, dict):
-                    usage = result.get("usage") or {}
-                    tokens = int(usage.get("total_tokens", 0)) if usage else 0
-                    if tokens:
-                        exchange.set_property("llm.tokens_used", tokens)
-                        exchange.set_property(
-                            "llm.cost_usd", round(tokens * 0.00002, 6)
-                        )
-                    if "model" in result:
-                        exchange.set_property("llm.model", result["model"])
-
-                exchange.set_property("llm.provider", self._provider or "fallback")
-                exchange.set_property("llm.attempts", attempt + 1)
-                exchange.in_message.set_body(result)
-
-                logger.info(
-                    "llm_call_ok",
-                    extra={
-                        "provider": self._provider,
-                        "model": self._model,
-                        "attempts": attempt + 1,
-                        "tokens": exchange.properties.get("llm.tokens_used", 0),
-                    },
-                )
-                return
-
-            except TimeoutError as exc:
-                last_error = exc
-                logger.warning("LLM timeout (attempt %d): %s", attempt + 1, exc)
-            except ConnectionError as exc:
-                last_error = exc
-                logger.warning(
-                    "LLM connection error (attempt %d): %s", attempt + 1, exc
-                )
             except RuntimeError as exc:
                 msg = str(exc).lower()
-                last_error = exc
                 if "rate" in msg or "429" in msg or "quota" in msg:
-                    exchange.fail(f"LLM rate limit: {exc}")
-                    return
-                logger.warning("LLM error (attempt %d): %s", attempt + 1, exc)
+                    # Rate-limit — non-retryable, пробрасываем как есть.
+                    raise
+                # Остальные RuntimeError считаем transient — оборачиваем
+                # в ConnectionError, чтобы tenacity их поймал.
+                raise ConnectionError(str(exc)) from exc
 
-            if attempt < self._max_retries:
-                await asyncio.sleep(self._retry_delay * (2**attempt))
+        try:
+            result = await _chat_with_retry()
+        except RuntimeError as exc:
+            # rate-limit или другие non-retryable RuntimeError
+            exchange.fail(f"LLM rate limit: {exc}")
+            return
+        except (TimeoutError, ConnectionError) as exc:
+            exchange.fail(
+                f"LLM call failed after {self._max_retries + 1} attempts: {exc}"
+            )
+            return
 
-        exchange.fail(
-            f"LLM call failed after {self._max_retries + 1} attempts: {last_error}"
+        if isinstance(result, dict):
+            usage = result.get("usage") or {}
+            tokens = int(usage.get("total_tokens", 0)) if usage else 0
+            if tokens:
+                exchange.set_property("llm.tokens_used", tokens)
+                exchange.set_property(
+                    "llm.cost_usd", round(tokens * 0.00002, 6)
+                )
+            if "model" in result:
+                exchange.set_property("llm.model", result["model"])
+
+        exchange.set_property("llm.provider", self._provider or "fallback")
+        exchange.in_message.set_body(result)
+
+        _log.info(
+            "llm_call_ok",
+            extra={
+                "provider": self._provider,
+                "model": self._model,
+                "tokens": exchange.properties.get("llm.tokens_used", 0),
+            },
         )
 
     def to_spec(self) -> dict[str, Any] | None:

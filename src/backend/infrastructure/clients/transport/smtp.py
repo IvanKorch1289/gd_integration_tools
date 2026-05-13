@@ -1,6 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
-from asyncio import TimeoutError, sleep
+from asyncio import TimeoutError
 from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Any, AsyncGenerator
@@ -201,33 +201,41 @@ class SmtpClient(BaseSmtpClient):
                 )
 
     async def _acquire_connection(self) -> SMTP:
-        """
-        Получает соединение с логикой повторных попыток.
+        """Получает SMTP-соединение из пула с повторными попытками через tenacity.
+
+        K3 W1: замена custom retry-loop (range(3) + sleep) на make_async_retry.
+        Retry выполняется при SMTPException / TimeoutError / ConnectionError / OSError
+        с линейным backoff 1s → 2s → 3s (3 попытки суммарно).
 
         Returns:
             SMTP: Действительное SMTP-соединение.
 
         Raises:
-            ConnectionError: Если соединение не удалось установить.
+            ConnectionError: Если все попытки соединения исчерпаны.
         """
-        for attempt in range(3):
-            try:
-                self.logger.info(
-                    f"Размер пула соединений: {self._connection_pool.qsize()}"
-                )
-                if self._connection_pool:
-                    return self._connection_pool.get_nowait()
-                return await self._create_connection()
-            except (SMTPException, TimeoutError, ConnectionError, OSError):
-                if attempt == 2:
-                    self.logger.error("Попытки соединения исчерпаны")
-                    raise
-                delay = 1 * (attempt + 1)
-                self.logger.warning(
-                    f"Повторная попытка соединения через {delay} сек..."
-                )
-                await sleep(delay)
-        raise ConnectionError("Не удалось получить SMTP-соединение")
+        from src.backend.infrastructure.resilience.retry import make_async_retry
+
+        @make_async_retry(
+            max_attempts=3,
+            initial_backoff=1.0,
+            multiplier=1.0,
+            max_backoff=3.0,
+            on=(SMTPException, TimeoutError, ConnectionError, OSError),
+        )
+        async def _try_get() -> SMTP:
+            """Одна попытка получить соединение из пула или создать новое."""
+            self.logger.info(
+                "Размер пула соединений: %d", self._connection_pool.qsize()
+            )
+            if self._connection_pool:
+                return self._connection_pool.get_nowait()
+            return await self._create_connection()
+
+        try:
+            return await _try_get()
+        except (SMTPException, TimeoutError, ConnectionError, OSError) as exc:
+            self.logger.error("Попытки SMTP-соединения исчерпаны: %s", exc)
+            raise ConnectionError("Не удалось получить SMTP-соединение") from exc
 
     async def _release_connection(
         self, connection: SMTP, temporary: bool = False

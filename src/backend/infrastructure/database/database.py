@@ -90,6 +90,18 @@ class DatabaseInitializer:
             bind=self.async_engine, autoflush=False, expire_on_commit=False
         )
 
+        # K3 W1: OTel asyncpg auto-instrumentation под default-OFF feature-flag.
+        # Однократный вызов — внутренний guard _ASYNCPG_INSTRUMENTED защищает от
+        # повторного instrument() при создании нескольких DatabaseInitializer.
+        try:
+            from src.backend.infrastructure.observability.otel_auto import (
+                instrument_asyncpg_if_enabled,
+            )
+
+            instrument_asyncpg_if_enabled()
+        except Exception as exc:  # noqa: BLE001
+            self.logger.debug("OTel asyncpg hook пропущен: %s", exc)
+
         # Wave F.3: async-first. Sync-engine опционален — если sync-драйвер
         # (psycopg/oracledb/pysqlite) не установлен, не валим старт; вместо
         # этого пишем warning и оставляем None. Потребители (APScheduler

@@ -22,7 +22,6 @@ Actions: webhook.relay, webhook.transform, webhook.dlq_list, webhook.dlq_retry.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from dataclasses import asdict, dataclass, field
@@ -181,6 +180,7 @@ class WebhookRelay:
         import httpx
 
         from src.backend.core.net import OutboundHttpClient
+        from src.backend.infrastructure.resilience.retry import make_async_retry
 
         headers = {"Content-Type": "application/json"}
         if rule.secret:
@@ -189,25 +189,36 @@ class WebhookRelay:
             build_signature_headers = get_signature_builder_provider()
             headers.update(build_signature_headers(payload, rule.secret))
 
-        last_error = ""
-        for attempt in range(rule.max_retries):
-            try:
-                async with OutboundHttpClient(timeout=httpx.Timeout(15)) as client:
-                    resp = await client.post(
-                        rule.target_url, json=payload, headers=headers
-                    )
-                    if resp.is_success:
-                        return {
-                            "rule_id": rule.id,
-                            "status": "sent",
-                            "status_code": resp.status_code,
-                        }
-                    last_error = f"HTTP {resp.status_code}"
-            except Exception as exc:  # noqa: BLE001
-                last_error = str(exc)
+        # K3 W1: замена custom retry-loop на tenacity через make_async_retry.
+        # Non-success HTTP-ответы превращаются в ValueError, чтобы tenacity
+        # мог их поймать и выполнить retry.
+        class _HTTPError(Exception):
+            """Non-success HTTP-ответ — сигнал для retry."""
 
-            if attempt < rule.max_retries - 1:
-                await asyncio.sleep(2**attempt)
+        @make_async_retry(
+            max_attempts=rule.max_retries,
+            initial_backoff=1.0,
+            multiplier=2.0,
+            on=(Exception,),
+        )
+        async def _attempt() -> dict[str, Any]:
+            """Одна попытка отправки вебхука; при неуспешном ответе бросает _HTTPError."""
+            async with OutboundHttpClient(timeout=httpx.Timeout(15)) as client:
+                resp = await client.post(
+                    rule.target_url, json=payload, headers=headers
+                )
+                if resp.is_success:
+                    return {
+                        "rule_id": rule.id,
+                        "status": "sent",
+                        "status_code": resp.status_code,
+                    }
+                raise _HTTPError(f"HTTP {resp.status_code}")
+
+        try:
+            return await _attempt()
+        except Exception as exc:  # noqa: BLE001
+            last_error = str(exc)
 
         entry = DLQEntry(
             rule_id=rule.id,

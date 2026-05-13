@@ -23,9 +23,51 @@ import logging
 import os
 from typing import Any
 
-__all__ = ("init_otel",)
+__all__ = ("init_otel", "instrument_asyncpg_if_enabled")
 
 logger = logging.getLogger("infra.otel")
+
+# Guard — защита от двойного вызова instrument_asyncpg_if_enabled()
+_ASYNCPG_INSTRUMENTED: bool = False
+
+
+def instrument_asyncpg_if_enabled() -> bool:
+    """Инструментирует asyncpg через OTel под управлением feature-flag ``otel_asyncpg``.
+
+    Вызывается однократно при создании asyncpg-engine. Защищён guard-флагом
+    ``_ASYNCPG_INSTRUMENTED`` от повторного вызова. Fail-safe: если пакет
+    ``opentelemetry-instrumentation-asyncpg`` не установлен или feature-flag
+    отключён — возвращает ``False`` без исключений.
+
+    Returns:
+        True если AsyncPGInstrumentor().instrument() был вызван в этом запуске,
+        False если flag OFF или пакет недоступен.
+    """
+    global _ASYNCPG_INSTRUMENTED  # noqa: PLW0603
+    if _ASYNCPG_INSTRUMENTED:
+        logger.debug("OTel asyncpg instrumentor уже активирован, пропуск повторного вызова")
+        return False
+
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        if not feature_flags.otel_asyncpg:
+            logger.debug("feature_flag.otel_asyncpg=False — asyncpg OTel пропущен")
+            return False
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Не удалось прочитать feature_flags: %s", exc)
+        return False
+
+    try:
+        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
+
+        AsyncPGInstrumentor().instrument()
+        _ASYNCPG_INSTRUMENTED = True
+        logger.info("OTel asyncpg instrumented via feature_flag.otel_asyncpg")
+        return True
+    except ImportError as exc:
+        logger.debug("opentelemetry-instrumentation-asyncpg недоступен: %s", exc)
+        return False
 
 
 def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
