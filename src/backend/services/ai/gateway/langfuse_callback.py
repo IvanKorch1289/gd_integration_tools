@@ -6,6 +6,10 @@ LangFuse становится единственным источником ис
 
 Все импорты ``langfuse`` lazy — отсутствие пакета не ломает старт
 (default-OFF).
+
+K6 Wave 1: добавлена фабрика ``get_langfuse_callback`` с переключением
+на :class:`~langfuse_callback_v3.LangFuseCallbackV3` при
+``feature_flags.langfuse_v3 = True``.
 """
 
 from __future__ import annotations
@@ -13,9 +17,20 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+try:
+    from src.backend.core.config.features import feature_flags
+except ImportError:  # features.py появится в merge с master
+
+    class _FallbackFlags:
+        """Заглушка feature-flags при отсутствии модуля features.py."""
+
+        langfuse_v3: bool = False
+
+    feature_flags = _FallbackFlags()  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
-__all__ = ("LangFuseCostCallback",)
+__all__ = ("LangFuseCostCallback", "get_langfuse_callback")
 
 
 class LangFuseCostCallback:
@@ -142,3 +157,31 @@ def _extract_cost(response_obj: Any) -> float:
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)
     return 0.0
+
+
+def get_langfuse_callback() -> Any:
+    """Фабрика LangFuse callback с переключением по feature-flag.
+
+    При ``feature_flags.langfuse_v3 = True`` (FEATURE_LANGFUSE_V3=true)
+    возвращает :class:`~langfuse_callback_v3.LangFuseCallbackV3` (OTEL-native SDK 3.x).
+    В противном случае возвращает :class:`LangFuseCostCallback` (SDK 2.x, default).
+
+    Returns:
+        Экземпляр callback, реализующего LiteLLM success-callback сигнатуру.
+
+    Note:
+        v2 ветка активна по умолчанию (default-OFF для langfuse_v3).
+        Cutover default-ON — отдельный PR после staging smoke-тестов.
+    """
+    if feature_flags.langfuse_v3:
+        try:
+            from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+                LangFuseCallbackV3,
+            )
+
+            return LangFuseCallbackV3()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "LangFuse v3 callback недоступен, fallback на v2: %s", exc
+            )
+    return LangFuseCostCallback()
