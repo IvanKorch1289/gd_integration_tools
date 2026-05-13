@@ -1,0 +1,268 @@
+# team-ownership.toml — карта владения файлами Sprint 2 (V15.3 MVP)
+#
+# Версия: 2026-05-13
+# Источник: 10-team plan (PLAN.md V18.1 Sprint 2 + день 1-2 kickoff)
+#
+# Назначение:
+#   - каждая команда имеет «owned dirs» — единственный owner для PR-review;
+#   - при смежной правке (файл в зоне 2+ команд) — issue + PR review от обоих;
+#   - pre-commit hook tools/checks/check_team_ownership.py валидирует
+#     git diff против списка (опционально, blocking только при flag --strict).
+#
+# Формат:
+#   [team.<id>]
+#   name = "..."
+#   git_branch_prefix = "team/NN-..."
+#   worktree = ".claude/worktrees/team-NN-..."
+#   owned_paths = ["...", ...]    # glob-патерны от корня репозитория
+#   shared_with = ["..."]         # команды-совладельцы (требуют co-review)
+
+[meta]
+version = "2026-05-13"
+sprint = "S2"
+source = "PLAN.md V18.1 10-team MVP nарезка"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K1 — Auth & Identity
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k1]
+name = "Auth & Identity"
+git_branch_prefix = "team/01-auth"
+worktree = ".claude/worktrees/team-01-auth"
+goal = "Auth-стек R1 (JWT/API-key/mTLS) + R2 SAML/AD scaffold; 100% non-public endpoints под auth-guard."
+owned_paths = [
+    "src/backend/core/auth/**",
+    "src/backend/core/security/**",
+    "src/backend/infrastructure/secrets/**",
+    "src/backend/entrypoints/middlewares/auth*",
+    "tools/checks/check_auth_coverage.py",
+]
+shared_with = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K2 — Net & WAF & Outbound
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k2]
+name = "Net & WAF & Outbound"
+git_branch_prefix = "team/02-net-waf"
+worktree = ".claude/worktrees/team-02-net-waf"
+goal = "WAF Phase-2 (38 callsites → OutboundHttpClient), payload-scanner + mTLS channel."
+owned_paths = [
+    "src/backend/core/net/**",
+    "src/backend/infrastructure/clients/external/**",
+    "src/backend/infrastructure/clients/http*",
+    "tools/checks/check_waf_coverage.py",
+]
+shared_with = ["k8"]   # infrastructure/clients/ split по типу клиента
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K3 — Resilience & Performance & Observability
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k3]
+name = "Resilience & Performance & Observability"
+git_branch_prefix = "team/03-resilience-perf"
+worktree = ".claude/worktrees/team-03-resilience-perf"
+goal = "TaskRegistry deadline-эскалация, OTel asyncpg, chaos+perf gates с baseline, Auto-scaler 3 уровня."
+owned_paths = [
+    "src/backend/core/resilience/**",
+    "src/backend/core/scaling/**",
+    "src/backend/infrastructure/resilience/**",
+    "src/backend/infrastructure/observability/**",
+    "src/backend/infrastructure/logging/**",
+    "tests/perf/**",
+    "tests/chaos/**",
+    "tools/perf_gate.py",
+    "testkit/chaos_fixtures.py",
+]
+shared_with = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K4 — Workflow & Temporal & BPMN
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k4]
+name = "Workflow & Temporal & BPMN"
+git_branch_prefix = "team/04-workflow"
+worktree = ".claude/worktrees/team-04-workflow"
+goal = "Workflow DSL V15.3 dual-mode (YAML round-trip, BPMN 2.0 import, saga, Temporal native); удалить legacy 4 файла + 19 импортёров."
+owned_paths = [
+    "src/backend/dsl/workflow/**",
+    "src/backend/infrastructure/workflow/**",
+    "src/backend/infrastructure/temporal/**",
+    "src/backend/services/workflows/**",
+    "src/backend/services/execution/**",
+    "src/backend/core/workflow/**",
+]
+shared_with = ["k6"]   # MCP exposing workflow tools
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K5 — DSL Builder & Processors
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k5]
+name = "DSL Builder & Processors"
+git_branch_prefix = "team/05-dsl-builder"
+worktree = ".claude/worktrees/team-05-dsl-builder"
+goal = "RouteBuilder split 68 методов (builder.py → 4-6 mixin), ProcessorRegistry R1, JSON-Schema export (ADR-0058)."
+owned_paths = [
+    "src/backend/dsl/route/**",
+    "src/backend/dsl/service/**",
+    "src/backend/dsl/builders/**",
+    "src/backend/dsl/registry/**",
+    "src/backend/dsl/contracts/**",
+    "src/backend/dsl/cli/**",
+    "src/backend/dsl/engine/processors/**",  # кроме ai*/notify*/sink_publish*/streaming*
+    "routes/**",
+]
+shared_with = ["k6", "k7"]   # AI processors (K6), sink/source processors (K7)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K6 — AI / RAG / MCP
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k6]
+name = "AI / RAG / MCP"
+git_branch_prefix = "team/06-ai-rag"
+worktree = ".claude/worktrees/team-06-ai-rag"
+goal = "AI Safety workspace TTL + PII, RAG cache 3 уровня, FastMCP Tier1+2, LangFuse 3.x, LangMem без TaskIQ."
+owned_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/ai/**",
+    "src/backend/core/config/ai*.py",
+    "src/backend/core/config/rag.py",
+    "src/backend/infrastructure/cache/rag/**",
+    "src/backend/entrypoints/mcp/**",
+    "src/backend/entrypoints/api/v1/endpoints/ai_*",
+    "src/backend/entrypoints/api/v1/endpoints/rag_*",
+    "src/backend/dsl/engine/processors/ai*",
+    "src/backend/dsl/engine/processors/rag*",
+    "src/backend/dsl/engine/processors/ml*",
+]
+shared_with = ["k5"]   # processors shared со стороны K5
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K7 — EventBus & Sources & Sinks
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k7]
+name = "EventBus & Sources & Sinks"
+git_branch_prefix = "team/07-eventbus"
+worktree = ".claude/worktrees/team-07-eventbus"
+goal = "EventBus facade (Kafka/RabbitMQ/NATS), 8 Sinks production, FileWatcher/CDC source через watchfiles."
+owned_paths = [
+    "src/backend/infrastructure/sources/**",
+    "src/backend/infrastructure/sinks/**",
+    "src/backend/infrastructure/messaging/**",
+    "src/backend/infrastructure/eventbus/**",
+    "src/backend/dsl/engine/processors/notify*",
+    "src/backend/dsl/engine/processors/sink_publish*",
+    "src/backend/dsl/engine/processors/streaming*",
+]
+shared_with = ["k5"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K8 — Storage / DB / Cache
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k8]
+name = "Storage / DB / Cache"
+git_branch_prefix = "team/08-storage-cache"
+worktree = ".claude/worktrees/team-08-storage-cache"
+goal = "AsyncRepository (PG/Oracle/MSSQL/MySQL/DB2), Redis cluster pipelining, ClickHouse audit, connection pools."
+owned_paths = [
+    "src/backend/infrastructure/database/**",
+    "src/backend/infrastructure/cache/**",        # за исключением cache/rag (K6)
+    "src/backend/infrastructure/repositories/**",
+    "src/backend/infrastructure/storage/**",
+    "src/backend/services/audit/**",
+    "migrations/**",
+]
+shared_with = ["k2", "k6"]   # clients/ split (K2), cache/rag/ (K6)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K9 — Frontend & Admin & Extensions Migration
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k9]
+name = "Frontend & Admin & Extensions Migration"
+git_branch_prefix = "team/09-frontend-ext"
+worktree = ".claude/worktrees/team-09-frontend-ext"
+goal = "Streamlit ≥10 pages, Admin sqladmin, extensions/core_entities + extensions/credit_workflow migration."
+owned_paths = [
+    "frontend/**",
+    "extensions/**",
+    "src/backend/entrypoints/api/v1/endpoints/admin_*",
+    "src/backend/services/admin/**",
+    "tools/codegen/codegen_plugin.py",
+]
+shared_with = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K10 — Tools / CI / DocOps & Platform Coordination
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k10]
+name = "Tools / CI / DocOps & Platform Coordination"
+git_branch_prefix = "team/10-devops-tools"
+worktree = ".claude/worktrees/team-10-devops-tools"
+goal = "testkit/pytest_plugin.py, Python-2 except hotfix, SBOM+cosign, OWASP ZAP, Sphinx+Diátaxis, CROSS-TEAM координация блокеров."
+owned_paths = [
+    "tools/**",
+    "Makefile",
+    "manage.py",
+    ".github/**",
+    ".pre-commit-config.yaml",
+    "pyproject.toml",
+    "docs/**",
+    "testkit/**",
+]
+shared_with = []
+coordination_role = true   # K10 ведёт еженедельный sync + audit feature-flags
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cross-team blockers — 3 GitHub issue с DoD checklist + ETA + owner
+# ─────────────────────────────────────────────────────────────────────────────
+
+[blockers.taskiq_removal]
+title = "BLOCKER: TaskIQ removal — 13 callsites Invoker.ASYNC_QUEUE"
+owner_team = "k6"
+status = "open"
+eta = "S2-W3"   # Sprint 2 Wave 3
+risk = "high"
+description = """
+Удалить TaskIQ из стека (R-V15-7). 13 callsites Invoker.ASYNC_QUEUE мигрировать
+на Temporal cron / APScheduler. Migration shim под feature-flag параллель.
+"""
+dod = [
+    "0 импортов `taskiq` в src/",
+    "0 ссылок `Invoker.ASYNC_QUEUE` (или enum переименован)",
+    "13 callsites замигрированы на Temporal/APScheduler",
+    "make wave-memory NAME=taskiq-removal TYPE=feedback",
+]
+
+[blockers.workflow_legacy_purge]
+title = "BLOCKER: Workflow legacy purge — 4 файла + 19 импортёров"
+owner_team = "k4"
+status = "open"
+eta = "S2-W1"
+risk = "high"
+description = """
+Удалить infrastructure/workflow/{state,state_store,event_store,state_projector}.py
+и переписать 19 импортёров на TemporalFacade (см. KNOWN_ISSUES.md Sprint 1 Этап 2).
+"""
+dod = [
+    "0 ссылок на legacy `infrastructure/workflow/state*`",
+    "TemporalFacade покрывает все use-cases",
+    "Adapter-pattern на переходный период (если нужен)",
+    "BPMN sample workflow запускается на новом стеке",
+]
+
+[blockers.waf_phase2]
+title = "BLOCKER: WAF Phase-2 migration — 38 callsites → OutboundHttpClient"
+owner_team = "k2"
+status = "open"
+eta = "S2-W2"
+risk = "medium"
+description = """
+Все :external HTTP-callsites мигрировать на OutboundHttpClient (default-OFF
+feature-flag WAF_OUTBOUND_VIA_FACADE → ON после staging-smoke).
+"""
+dod = [
+    "0 прямых httpx.AsyncClient() в src/ кроме core/net/",
+    "`make check-waf-coverage` blocking в CI",
+    "ADR-0053 переведён в Accepted",
+    "staging-smoke результаты в vault/2026-XX-waf-phase2-rollout.md",
+]

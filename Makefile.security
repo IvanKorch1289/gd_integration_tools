@@ -4,7 +4,9 @@
 # таргеты — read-only (анализ кодовой базы), не модифицируют состояние.
 
 .PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
-        sbom audit-deps audit-zap bandit-strict security
+        sbom audit-deps audit-zap bandit-strict security security-full \
+        check-feature-flags check-team-ownership \
+        team-worktree team-worktree-list team-worktree-remove
 
 check-waf-coverage: ## К1 V15 R-V15-5 — все :external HTTP идут через OutboundHttpClient
 	@$(INFO) "Проверка WAF coverage (V15 R-V15-5)..."
@@ -65,5 +67,33 @@ bandit-strict: ## К5: bandit -lll strict (только high-severity)
 	@$(UV_RUN) bandit -r src/backend -lll -c pyproject.toml
 	@$(SUCCESS) "bandit-strict clean"
 
-security: sbom audit-deps bandit-strict ## К5: composite supply-chain gate (без ZAP — он требует backend up)
-	@$(SUCCESS) "supply-chain gates OK"
+security: secrets-check sbom audit-deps bandit-strict ## К10 S2 V15.3 — composite supply-chain gate (без ZAP — требует backend)
+	@$(SUCCESS) "supply-chain gates OK (secrets + SBOM + pip-audit + bandit)"
+
+security-full: security audit-zap ## К10 S2 V15.3 — security composite + OWASP ZAP (требует running backend на BASE_URL)
+	@$(SUCCESS) "security-full gate OK (incl. ZAP)"
+
+##@ К10 — Sprint 2 platform coordination gates
+
+check-feature-flags: ## К10 S2: audit feature-flag реестра (default-OFF policy)
+	@$(INFO) "Проверка feature-flag реестра..."
+	@.venv/bin/python tools/check_feature_flags.py
+	@$(SUCCESS) "feature-flag audit complete"
+
+check-team-ownership: ## К10 S2: validate .claude/team-ownership.toml syntax
+	@$(INFO) "Проверка team-ownership.toml..."
+	@.venv/bin/python tools/check_team_ownership.py
+	@$(SUCCESS) "team-ownership.toml OK (10 teams, ≥3 blockers)"
+
+##@ К10 — Team worktree management (Sprint 2 on-demand)
+
+team-worktree: ## К10 S2: создать team worktree (TEAM=k1..k10). Пример: make team-worktree TEAM=k4
+	@test -n "$(TEAM)" || { $(ERROR) "Usage: make team-worktree TEAM=k1..k10"; exit 1; }
+	@.venv/bin/python tools/team_worktree.py create $(TEAM)
+
+team-worktree-list: ## К10 S2: показать активные team worktree + status
+	@.venv/bin/python tools/team_worktree.py list
+
+team-worktree-remove: ## К10 S2: удалить team worktree (TEAM=k1..k10) после merge
+	@test -n "$(TEAM)" || { $(ERROR) "Usage: make team-worktree-remove TEAM=k1..k10"; exit 1; }
+	@.venv/bin/python tools/team_worktree.py remove $(TEAM)
