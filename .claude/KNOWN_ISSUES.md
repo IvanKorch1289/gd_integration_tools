@@ -117,6 +117,65 @@ existing `tools/perf_gate.py`/`Makefile.security` paradigm.
 
 ---
 
+### 🟢 PLAN #5 — Search-DSL extension (SearXNG + Exa + cleanup current)
+
+- **Owner**: K6 AI/RAG (lead) + K7 EventBus (provider integration)
+- **ETA**: Sprint 3 / Sprint 4 (M-size, 3-5 дней)
+- **Wave-tag**: `[wave:s3/k6-w4-search-providers]` (lead) + `[wave:s3/k6-w4-search-cleanup]`
+- **Risk**: low (new feature behind feature-flag, parallel к existing)
+
+**Контекст**: Internal audit (2026-05-13) выявил пробелы в текущей search-архитектуре:
+- Tavily без `Settings`-класса — `tavily_api_key` через `getattr` без валидации
+- `PerplexityProvider` дублируется: `infrastructure/clients/external/search_providers.py` + `services/ai/ai_agent.py`
+- DSL actions дублируются: `ai.search_web` (Perplexity-only) vs `web_search.query` (с fallback)
+- DuckDuckGo не реализован (только MCP в Claude Code, не в коде проекта)
+- Нет тестов на `search_providers.py`
+
+External research (2026-05-13) подтвердил:
+- ❌ Brave Search free tier удалён фев-2026 (платный $5/mo)
+- ❌ Bing Web Search API retired авг-2025
+- ❌ Glean / Kagi / Mojeek — enterprise/paid only
+- ✅ **SearXNG** (self-hosted, unlimited, privacy-first) — production-ready для банковской среды
+- ✅ **Exa AI** (1000 req/mo free, neural semantic) — production-ready для RAG grounding
+- 🟡 **OpenAlex** (academic, free key) — spike-worthy для compliance RAG
+- 🟡 **Firecrawl** (1000 pages/mo, Markdown) — spike-worthy для data ingestion
+
+Полный отчёт: `vault/research-2026-05-13-search-engines.md`.
+
+**Scope (DoD checklist)**:
+
+*Cleanup waves (Sprint 3 Wave 1)*:
+- [ ] `TavilySettings` класс в `core/config/ai.py` + Pydantic-валидация api_key
+- [ ] Дедупликация `PerplexityProvider` — единый класс в `search_providers.py`, `ai_agent.py` использует его
+- [ ] DSL action consolidation: `web_search.query` единый, `ai.search_web` deprecated alias
+- [ ] Unit-тесты для `search_providers.py` (4-6 тестов: mock httpx)
+
+*New providers (Sprint 3 Wave 2)*:
+- [ ] `SearXNGProvider` (BaseSearchProvider subclass) — async via httpx + `?format=json`
+- [ ] `SearXNGSettings` (base_url, engines list, default-OFF feature-flag)
+- [ ] `ExaProvider` через `exa-py` — neural mode + content extraction
+- [ ] `ExaSettings` (api_key, mode, default-OFF feature-flag)
+- [ ] WAF capability для Exa: `net.outbound.exa.ai:external`
+- [ ] DSL step extension в `dsl/engine/processors/ai.py`: `search:` с `provider: searxng|exa|perplexity|tavily`
+- [ ] 2 reference routes с новыми providers
+- [ ] 6-8 unit-тестов (mock httpx, mock exa-py)
+
+*Optional spike (Sprint 4)*:
+- [ ] `OpenAlexProvider` (academic RAG)
+- [ ] `FirecrawlProvider` (Markdown extraction)
+
+**Feature-flags** для регистрации:
+- `search_provider_searxng` (default-OFF)
+- `search_provider_exa` (default-OFF)
+- `search_provider_openalex` (default-OFF, Sprint 4)
+- `search_provider_firecrawl` (default-OFF, Sprint 4)
+
+**Coordination**: K6 — provider implementations + DSL step, K7 — capability registration для WAF, K2 — `OutboundHttpClient` для `:external` (Exa, OpenAlex), K10 — feature-flag реестр.
+
+**Сильные стороны**: SearXNG closes air-gap/privacy concern для банка; Exa Neural идеален для RAG; cleanup убирает дублирование Perplexity + закрывает test gap.
+
+---
+
 ### Sprint 2 (V15.3 MVP) — РЕЗУЛЬТАТЫ kickoff (2026-05-13)
 
 **Закрыто** (14 wave-коммитов, 46 unit-тестов green, 22 feature-flag default-OFF):
