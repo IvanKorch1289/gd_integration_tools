@@ -27,6 +27,11 @@ from src.backend.core.security.capabilities.models import (
     DEFAULT_CAPABILITY_CATALOG,
     CapabilityRef,
 )
+from src.backend.core.security.capabilities.policy import (
+    CapabilityPolicy,
+    CapabilityRule,
+    PolicyDecision,
+)
 from src.backend.core.security.capabilities.vocabulary import (
     CapabilityDef,
     CapabilityVocabulary,
@@ -41,12 +46,15 @@ __all__ = (
     "CapabilityError",
     "CapabilityGate",
     "CapabilityNotFoundError",
+    "CapabilityPolicy",
     "CapabilityRef",
+    "CapabilityRule",
     "CapabilitySupersetError",
     "CapabilityVocabulary",
     "DEFAULT_CAPABILITY_CATALOG",
     "ExactAliasMatcher",
     "GlobScopeMatcher",
+    "PolicyDecision",
     "ScopeMatcher",
     "SegmentedGlobMatcher",
     "URISchemeMatcher",
