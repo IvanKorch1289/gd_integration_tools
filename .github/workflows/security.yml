@@ -1,0 +1,182 @@
+name: security
+
+# Sprint 3 W3 К1 / ADR-0054: security CI-gate — bandit + safety + pip-audit
+# + gitleaks + trivy-fs (SARIF upload в Security tab репозитория).
+# Baseline-режим: все jobs continue-on-error: true (Sprint 3 W3 первая итерация).
+# В Sprint 5 R2 ужесточить fail-on-severity=high после очистки baseline.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    # Каждый понедельник 03:00 UTC — еженедельный full scan.
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bandit:
+    name: Bandit (Python SAST)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Run bandit
+        # bandit[toml] уже в pyproject.toml. -r src — рекурсивно.
+        # --severity-level medium — не падать на low.
+        run: uv run bandit -r src -f sarif -o bandit.sarif --severity-level medium || true
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit.sarif
+          category: bandit
+
+  safety:
+    name: Safety (known CVEs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Run safety
+        run: |
+          uv pip install safety || pip install safety
+          uv run safety check --json --output safety.json || true
+
+      - name: Upload safety report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-report
+          path: safety.json
+          retention-days: 30
+
+  pip-audit:
+    name: pip-audit (PyPA advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync
+
+      - name: Run pip-audit
+        # pip-audit уже в pyproject.toml dev-deps.
+        run: uv run pip-audit --format json --output pip-audit.json || true
+
+      - name: Upload pip-audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: pip-audit.json
+          retention-days: 30
+
+  gitleaks:
+    name: gitleaks (secrets scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Полный history нужен для scan всех коммитов.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Не падать в baseline-режиме; см. ADR-0054.
+          # При обнаружении secrets артефакт `gitleaks-report.json` попадает в job output.
+          config-path: .gitleaks.toml
+
+  trivy:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy.sarif
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-fs
