@@ -270,6 +270,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K8 — Audit & ClickHouse ───────────────────────────────────────────
+    audit_clickhouse_enabled: bool = Field(
+        default=False,
+        title="Audit: ClickHouse audit_events trail",
+        description=(
+            "K8 Wave 4. Owner: K8 Audit. ETA: S2-W4. "
+            "Активирует отправку audit-событий в ClickHouse (таблица audit_events). "
+            "При False — ClickHouseAuditService пропускает emit/emit_batch без ошибок. "
+            "default-OFF до запуска ClickHouse instance и smoke-теста в staging."
+        ),
+    )
+
     # ─── K9 — Extensions Migration ─────────────────────────────────────────
     extensions_core_entities: bool = Field(
         default=False,
