@@ -218,7 +218,7 @@ class SmtpClient(BaseSmtpClient):
                 if self._connection_pool:
                     return self._connection_pool.get_nowait()
                 return await self._create_connection()
-            except SMTPException, TimeoutError, ConnectionError, OSError:
+            except (SMTPException, TimeoutError, ConnectionError, OSError):
                 if attempt == 2:
                     self.logger.error("Попытки соединения исчерпаны")
                     raise
