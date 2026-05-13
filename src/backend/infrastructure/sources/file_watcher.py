@@ -1,117 +1,106 @@
-"""W23.3 — :class:`FileWatcherSource` поверх ``watchfiles``.
+"""K7 W4 — :class:`FileWatcherSource` поверх ``watchfiles.awatch``.
 
-Лёгкий wrapper, эмитит ``SourceEvent`` на каждое FS-событие
-(``added`` / ``modified`` / ``deleted``) для файлов, удовлетворяющих
-glob-паттерну. Использует rust-based ``watchfiles`` (уже в deps).
+Лёгкий async-generator wrapper для отслеживания изменений файловой системы.
+Эмитит :class:`FileEvent` на каждое FS-событие (``added`` / ``modified`` /
+``deleted``). Использует rust-based ``watchfiles`` (уже в deps).
+
+Активируется через feature_flag ``eventbus_file_watcher`` (default-OFF).
 """
 
 from __future__ import annotations
 
 import asyncio
-import fnmatch
-import logging
-from datetime import UTC, datetime
+import time
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import AsyncIterator, Callable, Literal
 
-from watchfiles import Change, awatch
-
-from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
-from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.sources._lifecycle import graceful_cancel
-
-if TYPE_CHECKING:
-    pass
-
-__all__ = ("FileWatcherSource",)
-
-logger = logging.getLogger("infrastructure.sources.file_watcher")
+__all__ = ("FileWatcherSource", "FileEvent")
 
 
-_CHANGE_TO_NAME = {
-    Change.added: "added",
-    Change.modified: "modified",
-    Change.deleted: "deleted",
-}
+@dataclass
+class FileEvent:
+    """Событие изменения файла на диске.
+
+    Args:
+        path: Абсолютный путь к изменённому файлу.
+        change_type: Тип изменения: ``added``, ``modified`` или ``deleted``.
+        timestamp: Unix-время момента обнаружения события (float, секунды).
+    """
+
+    path: Path
+    change_type: Literal["added", "modified", "deleted"]
+    timestamp: float = field(default_factory=time.time)
 
 
 class FileWatcherSource:
-    """Source, эмитящий событие на каждое изменение файла.
+    """Источник событий файловой системы на базе ``watchfiles.awatch``.
+
+    Обёртка над rust-based async-генератором ``watchfiles.awatch``.
+    Метод :meth:`stream` возвращает ``AsyncIterator[FileEvent]`` и корректно
+    завершается при отмене (``asyncio.CancelledError`` пробрасывается наружу).
 
     Args:
-        source_id: Уникальный id.
-        directory: Корневая директория (рекурсивно).
-        pattern: Glob-паттерн (default ``*``).
-        recursive: Рекурсивно ли обходить (default ``True``).
-        debounce_ms: Debounce окно для watchfiles (default 200ms).
-    """
+        path: Корневой путь для наблюдения.
+        recursive: Рекурсивно обходить поддиректории (default ``True``).
+        debounce: Debounce-окно в секундах (default ``0.1``). Преобразуется
+            во внутренний формат milliseconds для ``watchfiles``.
+        watch_filter: Опциональный фильтр ``(Change, str) -> bool``.
+            ``None`` означает фильтр по умолчанию из ``watchfiles``.
 
-    kind: SourceKind = SourceKind.FILE_WATCHER
+    Example:
+        .. code-block:: python
+
+            async for event in FileWatcherSource(Path("/data")).stream():
+                print(event.path, event.change_type)
+    """
 
     def __init__(
         self,
-        source_id: str,
+        path: Path,
         *,
-        directory: str,
-        pattern: str = "*",
         recursive: bool = True,
-        debounce_ms: int = 200,
+        debounce: float = 0.1,
+        watch_filter: Callable | None = None,
     ) -> None:
-        self.source_id = source_id
-        self._dir = Path(directory)
-        self._pattern = pattern
+        self._path = path
         self._recursive = recursive
-        self._debounce = debounce_ms
-        self._task: asyncio.Task[None] | None = None
-        self._stop_event = asyncio.Event()
+        # watchfiles принимает debounce в миллисекундах (int)
+        self._debounce_ms: int = max(1, int(debounce * 1000))
+        self._watch_filter = watch_filter
 
-    async def start(self, on_event: EventCallback) -> None:
-        if self._task is not None and not self._task.done():
-            raise RuntimeError(f"FileWatcherSource(id={self.source_id!r}) уже запущен")
-        self._stop_event.clear()
-        self._task = get_task_registry().create_task(
-            self._run(on_event),
-            name=f"source-file-watcher:{self.source_id}",
-        )
-        logger.info(
-            "FileWatcherSource started: id=%s dir=%s pattern=%s",
-            self.source_id,
-            self._dir,
-            self._pattern,
-        )
+    async def stream(self) -> AsyncIterator[FileEvent]:
+        """Асинхронный генератор событий файловой системы.
 
-    async def stop(self) -> None:
-        self._stop_event.set()
-        await graceful_cancel(self._task, source_id=self.source_id)
-        self._task = None
-        logger.info("FileWatcherSource stopped: id=%s", self.source_id)
+        Yields:
+            :class:`FileEvent` для каждого изменённого файла.
 
-    async def health(self) -> bool:
-        return self._task is not None and not self._task.done()
+        Raises:
+            asyncio.CancelledError: При отмене задачи (propagates наружу).
+        """
+        # Ленивый импорт тяжёлой зависимости
+        from watchfiles import Change, awatch  # noqa: PLC0415
 
-    def _match(self, path: str) -> bool:
-        return fnmatch.fnmatch(Path(path).name, self._pattern)
+        _change_map: dict[Change, Literal["added", "modified", "deleted"]] = {
+            Change.added: "added",
+            Change.modified: "modified",
+            Change.deleted: "deleted",
+        }
 
-    async def _run(self, on_event: EventCallback) -> None:
-        async for changes in awatch(
-            self._dir,
-            stop_event=self._stop_event,
-            recursive=self._recursive,
-            debounce=self._debounce,
-        ):
-            for change, path in changes:
-                if not self._match(path):
-                    continue
-                event = SourceEvent(
-                    source_id=self.source_id,
-                    kind=self.kind,
-                    payload={"path": path, "change": _CHANGE_TO_NAME.get(change, "?")},
-                    event_time=datetime.now(UTC),
-                    metadata={"directory": str(self._dir), "pattern": self._pattern},
-                )
-                try:
-                    await on_event(event)
-                except Exception as exc:
-                    logger.error(
-                        "FileWatcherSource on_event failed (%s): %s", path, exc
+        kwargs: dict = {
+            "recursive": self._recursive,
+            "debounce": self._debounce_ms,
+        }
+        if self._watch_filter is not None:
+            kwargs["watch_filter"] = self._watch_filter
+
+        try:
+            async for changes in awatch(self._path, **kwargs):
+                for change, raw_path in changes:
+                    change_type = _change_map.get(change, "modified")
+                    yield FileEvent(
+                        path=Path(raw_path),
+                        change_type=change_type,
                     )
+        except asyncio.CancelledError:
+            raise

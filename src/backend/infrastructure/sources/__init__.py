@@ -10,5 +10,6 @@
 """
 
 from src.backend.infrastructure.sources.factory import build_source
+from src.backend.infrastructure.sources.file_watcher import FileEvent, FileWatcherSource
 
-__all__ = ("build_source",)
+__all__ = ("build_source", "FileWatcherSource", "FileEvent")
