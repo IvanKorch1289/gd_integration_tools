@@ -952,5 +952,104 @@ def workflow_import(
         typer.echo(json.dumps(declaration.model_dump(mode="json"), indent=2, ensure_ascii=False))
 
 
+# ────────────── Plugin runtime (Sprint 7 T5) ──────────────
+
+
+plugin_app = typer.Typer(help="Plugin runtime operations (hot-swap, scaffold).")
+app.add_typer(plugin_app, name="plugin")
+
+
+@plugin_app.command("hot-swap")
+def plugin_hot_swap(
+    name: str = typer.Argument(..., help="Имя плагина (из plugin.toml)"),
+):
+    """Hot-swap (reload без рестарта) одного in-tree плагина.
+
+    Перечитывает ``extensions/<name>/plugin.toml``, перезагружает Python-
+    модуль ``entry_class`` через :func:`importlib.reload`, заново выполняет
+    capability allocation и lifecycle. Audit-event ``plugin.hot_swap``
+    логируется через CapabilityGate.
+
+    Пример::
+
+        python manage.py plugin hot-swap example_plugin
+    """
+    import asyncio
+
+    async def _run() -> int:
+        try:
+            # Lazy-import, чтобы CLI стартовал быстро.
+            from src.backend.core.plugin_runtime.hot_swap import (
+                HotSwapError,
+                hot_swap,
+            )
+        except ImportError as exc:
+            typer.echo(f"ERR: hot_swap unavailable: {exc}", err=True)
+            return 1
+
+        # PluginLoaderV11 живёт в app.state — поднимаем минимальное
+        # bootstrap-окружение, чтобы CLI мог дотянуться до loader.
+        # В Sprint 7 — stub: ищем app.state.plugin_loader_v11, если
+        # приложение уже запущено. Иначе создаём свежий loader для
+        # in-tree скана.
+        loader = None
+        try:
+            from src.backend.main import app as fastapi_app  # noqa: PLC0415
+
+            loader = getattr(fastapi_app.state, "plugin_loader_v11", None)
+        except Exception:  # noqa: BLE001 — best-effort lookup
+            loader = None
+
+        if loader is None:
+            typer.echo(
+                "ERR: PluginLoader не инициализирован (app.state.plugin_loader_v11). "
+                "Запустите приложение с FEATURE_PLUGIN_LOADER_ENABLED=true.",
+                err=True,
+            )
+            return 1
+
+        try:
+            result = await hot_swap(name, loader)
+        except HotSwapError as exc:
+            typer.echo(f"Plugin not found / hot-swap failed: {exc}", err=True)
+            return 1
+
+        typer.echo(
+            f"Plugin {result.plugin_name}: {result.old_version} → "
+            f"{result.new_version} ({result.status})"
+        )
+        if result.reason:
+            typer.echo(f"  reason: {result.reason}")
+        return 0 if result.status == "reloaded" else 1
+
+    raise typer.Exit(asyncio.run(_run()))
+
+
+@plugin_app.command("new")
+def plugin_new(
+    name: str = typer.Argument(..., help="snake_case имя плагина"),
+):
+    """Создать каркас V11 плагина в ``extensions/<name>/``.
+
+    Эквивалент ``make new-plugin NAME=<name>``.
+    """
+    try:
+        from tools.codegen_plugin import scaffold_plugin
+    except ImportError as exc:
+        typer.echo(f"ERR: codegen_plugin недоступен: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    try:
+        plugin_root = scaffold_plugin(name)
+    except (FileExistsError, ValueError) as exc:
+        typer.echo(f"ERR: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    typer.echo(f"Created plugin: {plugin_root}")
+    typer.echo(
+        f"Next: edit {plugin_root}/plugin.toml and {plugin_root}/plugin.py"
+    )
+
+
 if __name__ == "__main__":
     app()
