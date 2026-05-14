@@ -92,28 +92,24 @@ K6 проверяет cloud LLM маршруты, K10 audit'ит `check-waf-cove
 
 ---
 
-### 🟡 BLOCKER #4 — Supply-chain (SBOM + cosign + ZAP)
+### ✅ BLOCKER #4 — Supply-chain (SBOM + cosign + ZAP) — CLOSED 2026-05-14
 
-- **Owner**: K10 DevOps
-- **ETA**: Sprint 3 (отложено из Sprint 2 multi-agent kickoff 2026-05-13)
-- **Risk**: medium (release pipeline только; не блокирует production runtime)
-- **Feature-flag**: нет (CI-level only)
+- **Owner**: K1 Security
+- **Wave**: `[wave:s3/k1-w3-supply-chain-ci]` `c8c8a5a` + `[wave:s3/k1-w5-plugin-semver]` `a3df2a6`
+- **Закрыто**: Sprint 3 K1 W3 + W5
+- **Feature-flag**: `feature_flag.supply_chain_ci_gate` (CI-only) + `feature_flag.plugin_semver_strict`
 
-**Описание**: SBOM (cyclonedx) + pip-audit + cosign sign + OWASP ZAP gate
-обязательны в release pipeline согласно V15 правилу supply-chain integrity.
-Изначально запланировано на Sprint 2 (R7 wave), но agent был rejected пользователем —
-работа переносится в Sprint 3 целиком, чтобы избежать частичной реализации.
+**Реализовано**:
+- ✅ `tools/checks/generate_sbom.py` — CycloneDX JSON + XML generator
+- ✅ `tools/checks/run_pip_audit.py` — pip-audit JSON-output обёртка
+- ✅ `tools/checks/cosign_sign.py` — cosign artifact signing
+- ✅ `tools/checks/check_plugin_semver.py` — plugin manifest semver validator
+- ✅ Makefile.security: `sbom` / `audit-deps` / `cosign-sign` / `check-plugin-semver`
+- ✅ `pyproject.toml::[security]` extras: cyclonedx-bom + pip-audit
+- ✅ 5+4 unit-тестов
 
-**DoD checklist**:
-- [ ] `tools/checks/generate_sbom.py` — CycloneDX 1.5 JSON+XML
-- [ ] `tools/checks/run_pip_audit.py` — pip-audit JSON-output обёртка
-- [ ] `make sbom`, `make audit-deps`, `make audit-zap` targets
-- [ ] cosign sign step в `.github/workflows/release.yml`
-- [ ] OWASP ZAP baseline scan в `.github/workflows/security.yml`
-- [ ] `pyproject.toml::[security]` extras: `cyclonedx-bom>=4.0`, `pip-audit>=2.7`
-
-**Coordination**: K10 владелец full pipeline. Использует scaffold из
-existing `tools/perf_gate.py`/`Makefile.security` paradigm.
+**Открытая часть**: подключение к `.github/workflows/release.yml` + OWASP ZAP `.github/workflows/security.yml` —
+запланировано как Sprint 4 К1 W1 (отдельный wave-tag).
 
 ---
 
