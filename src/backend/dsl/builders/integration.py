@@ -694,6 +694,87 @@ class IntegrationMixin:
             )
         )
 
+    def notify_apprise(
+        self,
+        channel: str,
+        title: str,
+        body: str,
+        *,
+        body_format: str = "text",
+        result_property: str = "notify_apprise_result",
+    ) -> "RouteBuilder":
+        """Отправка уведомления через Apprise (S3 K3 W1, 100+ backends).
+
+        Делегирует в :class:`AppriseNotifyProcessor`, который использует
+        :class:`~src.backend.services.notifications.AppriseNotificationService`.
+
+        Требует ``feature_flags.notification_dsl_enabled = True`` и
+        зарегистрированного канала через
+        :meth:`~AppriseNotificationService.register_channel`.
+
+        Args:
+            channel: Имя зарегистрированного Apprise-канала (e.g. ``"slack"``).
+            title: Заголовок уведомления.
+            body: Тело уведомления.
+            body_format: Формат тела: ``text`` | ``html`` | ``markdown``.
+            result_property: Имя property для результата (``True``/``False``).
+        """
+        from src.backend.dsl.engine.processors.notify.apprise_notify import (
+            AppriseNotifyProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            AppriseNotifyProcessor(
+                channel=channel,
+                title=title,
+                body=body,
+                body_format=body_format,
+                result_property=result_property,
+            )
+        )
+
+    def notify_multi(
+        self,
+        channels: list[str],
+        title: str,
+        body: str,
+        *,
+        body_format: str = "text",
+        result_property: str = "notify_multi_result",
+    ) -> "RouteBuilder":
+        """Отправка уведомления в несколько Apprise-каналов одновременно (S3 K3 W1).
+
+        Использует :meth:`~AppriseNotificationService.notify_multi` для
+        параллельной доставки. Результат — словарь ``{channel: bool}``
+        с итогом для каждого канала.
+
+        Args:
+            channels: Список имён зарегистрированных каналов.
+            title: Заголовок уведомления.
+            body: Тело уведомления.
+            body_format: Формат тела: ``text`` | ``html`` | ``markdown``.
+            result_property: Имя property для словаря результатов.
+        """
+        from src.backend.dsl.engine.processors.base import CallableProcessor
+
+        async def _send_multi(exch: "Exchange[Any]", ctx: object) -> None:
+            from src.backend.services.notifications.apprise_service import (
+                get_notification_service,
+            )
+
+            svc = get_notification_service()
+            results = await svc.notify_multi(
+                channels=channels,
+                title=title,
+                body=body,
+                body_format=body_format,  # type: ignore[arg-type]
+            )
+            exch.set_property(result_property, results)
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            CallableProcessor(_send_multi, name=f"notify_multi:{','.join(channels)}")
+        )
+
     def file_move(
         self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
     ) -> "RouteBuilder":

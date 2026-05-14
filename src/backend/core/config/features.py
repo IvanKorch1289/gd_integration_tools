@@ -177,6 +177,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K3 — Notification DSL ─────────────────────────────────────────────
+    notification_dsl_enabled: bool = Field(
+        default=False,
+        title="K3: Notification DSL через Apprise (.notify / .notify_multi)",
+        description=(
+            "K3 Wave 1. Owner: K3 Notification. ETA: S3-W1. "
+            "Активирует AppriseNotificationService и DSL-процессор notify_apprise. "
+            "100+ backends: Slack/Telegram/Discord/Email/SMS и др. "
+            "default-OFF до установки 'apprise>=1.9.0' в S3 cutover и staging-smoke."
+        ),
+    )
+
     # ─── K3 — Resilience & Scaling ─────────────────────────────────────────
     auto_scaler_process_level: bool = Field(
         default=False,
