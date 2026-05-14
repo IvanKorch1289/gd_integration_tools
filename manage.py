@@ -702,6 +702,34 @@ def dsl_reload(
     )
 
 
+@dsl_app.command("lint")
+def dsl_lint(
+    path: Path = typer.Argument(
+        ..., help="Каталог с route.toml или *.dsl.yaml файл"
+    ),
+    strict: bool = typer.Option(
+        False, "--strict", help="Strict-mode (warnings → errors, для CI)"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Вывод в JSON"),
+):
+    """K3 S6 [wave:s6/k3-dsl-linter-lsp] — расширенный DSL Linter.
+
+    Проверяет route.toml + *.dsl.yaml на:
+    schema / capability declarations / reference checks / plugin-aware
+    discovery (extensions/<name>/plugin.toml).
+
+    Exit-code 1 при errors, 0 при успехе. В strict-mode warnings = errors.
+    """
+    from src.backend.dsl.cli.linter import main as linter_main
+
+    argv: list[str] = [str(path)]
+    if strict:
+        argv.append("--strict")
+    if json_output:
+        argv.append("--json")
+    raise typer.Exit(linter_main(argv))
+
+
 @dsl_app.command("write-yaml")
 def dsl_write_yaml(
     route_id: str = typer.Argument(..., help="route_id для сохранения"),
