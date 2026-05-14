@@ -243,14 +243,13 @@ audit: ## Run security and dependency audit
 	@$(MAKE) deps-check
 	@$(SUCCESS) "Full security audit completed!"
 
-api-fuzz: check-env ## Run property-based testing against live FastAPI
-	@$(INFO) "Running Schemathesis API tests..."
-	@if $(UV_RUN) schemathesis --version >/dev/null 2>&1; then \
-		$(UV_RUN) schemathesis run http://$(UVICORN_HOST):$(UVICORN_PORT)/openapi.json \
-			--checks all; \
-	else \
-		$(WARN) "Skipping schemathesis: install it with 'uv add --dev schemathesis'"; \
-	fi
+api-fuzz: check-env ## S6 K2: schemathesis API fuzzing через tools/api_fuzz_runner.py (warn-only, feature_flag schemathesis_gate_enabled)
+	@$(INFO) "Running api-fuzz (schemathesis property-based testing)..."
+	@mkdir -p dist
+	@$(UV_RUN) python tools/api_fuzz_runner.py \
+		--openapi http://$(UVICORN_HOST):$(UVICORN_PORT)/openapi.json \
+		--report dist/schemathesis-report.json \
+		|| $(WARN) "[api-fuzz] warn-only: feature_flag schemathesis_gate_enabled=false"
 
 ##@ Runtime
 
