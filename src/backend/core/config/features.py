@@ -314,6 +314,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    k8s_hpa_exporter: bool = Field(
+        default=False,
+        title="K2: Prometheus k8s HPA exporter (container-level auto-scaler)",
+        description=(
+            "K2 Wave 4. Owner: K2 Net&WAF. ETA: S3-W4. "
+            "Активирует K8sHPAMetricsExporter — уровень 3 auto-scaler (R-V15-10). "
+            "Экспортирует метрики в Prometheus-text формате через GET /metrics/hpa. "
+            "default-OFF до интеграции с k8s HPA и staging-smoke."
+        ),
+    )
+
     otel_asyncpg: bool = Field(
         default=False,
         title="Resilience: OTel auto-instrumentation для asyncpg",
