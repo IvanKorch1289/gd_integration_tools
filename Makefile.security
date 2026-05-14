@@ -104,6 +104,18 @@ check-service-docs: ## К2 S6: проверка docstring/example у @service_ds
 	@$(UV_RUN) python tools/checks/check_service_docs.py --target src/backend
 	@$(SUCCESS) "service docs gate passed"
 
+##@ К1 S6 — OWASP ZAP + custom-code audit (wave [s6/k1-*])
+
+audit-zap-baseline: ## К1 S6: OWASP ZAP baseline scan (warn-only)
+	@$(INFO) "Running OWASP ZAP baseline scan..."
+	@$(UV_RUN) python tools/checks/check_owasp_zap.py
+	@$(SUCCESS) "ZAP baseline scan complete"
+
+custom-code-audit: ## К1 S6: vulture --min-confidence 80 + allowlist
+	@$(INFO) "Running custom-code audit (vulture min-confidence 80)..."
+	@$(UV_RUN) python tools/checks/check_custom_code.py
+	@$(SUCCESS) "custom-code audit complete"
+
 ##@ К1 — Plugin semver (K1 S3 W5)
 
 check-plugin-semver: ## К1 S3 W5: semver-проверка всех plugin.toml манифестов
