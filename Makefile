@@ -458,6 +458,13 @@ perf-gate-py: ## К3/S2: python perf-gate — проверяет locust-метр
 		--report dist/perf-report.json \
 		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (будет block в S3)"
 
+granian-run: ## S6 K2: запуск Granian с production-tuning (ADR-0059)
+	@$(INFO) "Starting Granian with production tuning (ADR-0059)..."
+	@$(UV_RUN) python tools/granian_runner.py --app src.main:app --host $(or $(GRANIAN_HOST),0.0.0.0) --port $(or $(GRANIAN_PORT),8000)
+
+granian-dry-run: ## S6 K2: вывести Granian CLI-команду без запуска (debug)
+	@$(UV_RUN) python tools/granian_runner.py --app src.main:app --dry-run
+
 perf-baseline: ## К3/S2: перегенерировать tests/perf/baseline.json из актуального staging-прогона
 	@$(INFO) "Regenerating perf baseline → tests/perf/baseline.json..."
 	@$(UV_RUN) python tools/perf_gate.py \
