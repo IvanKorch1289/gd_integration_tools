@@ -97,6 +97,13 @@ supply-chain-strict-fast: ## К1 S6: быстрый supply-chain (SBOM + bandit-
 	@$(UV_RUN) python tools/checks/check_supply_chain.py --skip-pip-audit --skip-cosign
 	@$(SUCCESS) "supply-chain fast gate passed"
 
+##@ К2 S6 — service docstring gate (wave [s6/k2-service-doc-gate])
+
+check-service-docs: ## К2 S6: проверка docstring/example у @service_dsl сервисов
+	@$(INFO) "Проверка docstring у @service_dsl..."
+	@$(UV_RUN) python tools/checks/check_service_docs.py --target src/backend
+	@$(SUCCESS) "service docs gate passed"
+
 ##@ К1 — Plugin semver (K1 S3 W5)
 
 check-plugin-semver: ## К1 S3 W5: semver-проверка всех plugin.toml манифестов
