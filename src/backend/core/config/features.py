@@ -295,6 +295,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K1 — Secrets & Vault ──────────────────────────────────────────────
+    vault_rotation_enabled: bool = Field(
+        default=False,
+        title="Secrets: scheduled Vault secret rotation hook (без рестарта)",
+        description=(
+            "K1 Wave 1. Owner: K1 Auth/Secrets. ETA: S3-W1. "
+            "Активирует VaultSecretRotator — фоновую задачу, периодически "
+            "перечитывающую Vault paths и обновляющую in-memory cache. "
+            "default-OFF до integration-test с реальным Vault в staging."
+        ),
+    )
+
     # ─── K1 — Auth ─────────────────────────────────────────────────────────
     auth_joserfc: bool = Field(
         default=False,
