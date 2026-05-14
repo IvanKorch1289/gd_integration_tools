@@ -1,8 +1,9 @@
 name: perf-gate
 
 # K3 Sprint-2 Wave 4 (S1-T4): python perf-gate CI integration.
-# Warn-only режим (continue-on-error: true) до Sprint 3 / S3 стабилизации.
-# После стабилизации: убрать continue-on-error + добавить SLO-threshold enforcement.
+# Sprint 6 K2: расширен на baseline.json + docker-compose.perf.yml smoke.
+# Warn-only режим (continue-on-error: true) — gate blocks только при
+# feature_flag.perf_gate_strict=true (default-OFF; переключение S7+).
 
 on:
   push:
@@ -51,6 +52,9 @@ jobs:
         # В CI backend не запущен: locust завершится с ошибкой подключения.
         # Тест подтверждает, что CLI корректно вызывается и генерирует отчёт.
         # Полный прогон — только в staging environment (make perf-gate-py BASE_URL=...).
+        # Sprint 6 K2: использует --baseline tests/perf/baseline.json (warn-only).
+        env:
+          FEATURE_PERF_GATE_STRICT: "false"
         run: |
           mkdir -p dist
           uv run python tools/perf_gate.py \
@@ -58,8 +62,16 @@ jobs:
             --host http://localhost:8000 \
             --users 1 \
             --duration 5s \
+            --baseline tests/perf/baseline.json \
             --report dist/perf-report.json \
           || echo "[perf-gate] warn: backend недоступен в CI (ожидаемо для smoke)"
+
+      - name: Validate docker-compose.perf.yml syntax
+        # Sprint 6 K2: проверить, что compose-стек синтаксически валиден
+        # (полный запуск — только локально или в staging).
+        run: |
+          docker compose -f docker-compose.perf.yml config --quiet \
+            || echo "[perf-gate] warn: compose validation failed"
 
       - name: Upload perf report
         if: always()

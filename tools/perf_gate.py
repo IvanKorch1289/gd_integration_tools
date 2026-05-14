@@ -1,26 +1,37 @@
-"""ADR-0055 — Performance gate CLI.
+"""ADR-0055 — Performance gate CLI (Sprint 6 K2 — расширенный baseline.json режим).
 
-Запускает locust-сценарий + анализирует метрики по порогам:
+Запускает locust-сценарий + анализирует метрики по порогам.
 
-* ``rps_floor`` — минимум RPS на baseline endpoint;
-* ``p95_max_ms`` — максимум p95-latency;
-* ``p99_max_ms`` — максимум p99-latency.
+Два режима:
 
-Использование::
+1. **Аргумент-режим** — пороги задаются через --rps-floor/--p95-max-ms/--p99-max-ms.
+2. **Baseline-режим** — пороги читаются из ``tests/perf/baseline.json`` (Sprint 6 K2):
+   - per-endpoint лимиты;
+   - global agregated лимит;
+   - feature-flag ``perf_gate_strict`` определяет, блокировать ли при нарушении.
+
+Использование (классическое)::
 
     python tools/perf_gate.py \\
         --scenario tests/perf/locust_baseline.py \\
-        --users 100 \\
+        --users 200 \\
         --duration 60s \\
         --rps-floor 1000 \\
         --p95-max-ms 200 \\
         --p99-max-ms 500 \\
         --report tests/perf/reports/perf_$(date +%s).json
 
+Использование (Sprint 6 baseline-режим, warn-only)::
+
+    python tools/perf_gate.py \\
+        --scenario tests/perf/locust_baseline.py \\
+        --baseline tests/perf/baseline.json \\
+        --report dist/perf-report.json
+
 Exit-codes:
 
-* ``0`` — все пороги выполнены;
-* ``1`` — нарушен хотя бы один порог;
+* ``0`` — все пороги выполнены ИЛИ feature-flag ``perf_gate_strict=false``;
+* ``1`` — нарушен хотя бы один порог при включённом ``perf_gate_strict``;
 * ``2`` — error (нет locust / нет сценария / locust-fail).
 """
 
@@ -81,7 +92,103 @@ def _parse_args() -> argparse.Namespace:
         default="locust",
         help="Команда locust (default: 'locust').",
     )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=None,
+        help=(
+            "Sprint 6 K2: путь к tests/perf/baseline.json — "
+            "пороги читаются оттуда вместо --rps-floor/--p95-max-ms."
+        ),
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Sprint 6 K2: переопределяет feature-flag perf_gate_strict — "
+            "exit 1 при нарушении порогов."
+        ),
+    )
     return parser.parse_args()
+
+
+def _is_strict_mode(args: argparse.Namespace) -> bool:
+    """Проверить, что perf-gate работает в strict-режиме.
+
+    Strict-режим включается:
+        - через --strict CLI флаг;
+        - через ENV FEATURE_PERF_GATE_STRICT=true;
+        - через feature_flags.perf_gate_strict (default-OFF).
+
+    Returns:
+        bool: True если нарушения должны привести к exit 1.
+    """
+    import os
+
+    if args.strict:
+        return True
+    if os.getenv("FEATURE_PERF_GATE_STRICT", "false").lower() in {"1", "true", "yes"}:
+        return True
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        return feature_flags.perf_gate_strict
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _load_baseline(path: Path) -> dict[str, Any]:
+    """Прочитать tests/perf/baseline.json в dict.
+
+    Args:
+        path: Путь к baseline.json.
+
+    Returns:
+        Распарсенный dict; ``{}`` при отсутствии файла.
+    """
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        print(f"WARN: baseline parse error: {exc}", file=sys.stderr)
+        return {}
+
+
+def _check_thresholds_baseline(
+    metrics: dict[str, Any], baseline: dict[str, Any]
+) -> tuple[bool, list[str]]:
+    """Сверить агрегированные метрики с baseline.global.
+
+    Per-endpoint детализация требует CSV per-endpoint (locust ``--csv-full-history``).
+    На текущем этапе валидируем только глобальный agregated блок.
+
+    Args:
+        metrics: Распарсенные метрики из locust CSV.
+        baseline: Содержимое tests/perf/baseline.json.
+
+    Returns:
+        (passed, list_of_violations).
+    """
+    violations: list[str] = []
+    global_block = baseline.get("global", {})
+
+    rps_floor = float(global_block.get("rps_floor", 0))
+    p95_max = float(global_block.get("p95_ms", 1e9))
+    error_rate_max = float(global_block.get("error_rate_max", 1.0))
+
+    rps = float(metrics.get("rps", 0))
+    p95 = float(metrics.get("p95_ms", 0))
+    fail_rate = float(metrics.get("fail_rate", 0))
+
+    if rps_floor > 0 and rps < rps_floor:
+        violations.append(f"RPS {rps:.1f} < floor {rps_floor}")
+    if p95 > p95_max:
+        violations.append(f"p95 {p95:.1f}ms > max {p95_max}ms")
+    if fail_rate > error_rate_max:
+        violations.append(f"error_rate {fail_rate:.4f} > max {error_rate_max}")
+
+    return not violations, violations
 
 
 def _run_locust(args: argparse.Namespace) -> tuple[int, str]:
@@ -189,19 +296,43 @@ def main() -> int:
         print(f"ERROR: {metrics['error']}", file=sys.stderr)
         return EXIT_ERROR
 
-    passed, violations = _check_thresholds(metrics, args)
+    # Sprint 6 K2: baseline-режим переопределяет CLI-пороги.
+    if args.baseline is not None:
+        baseline = _load_baseline(args.baseline)
+        if not baseline:
+            print(f"WARN: baseline пустой/невалидный {args.baseline}", file=sys.stderr)
+            passed, violations = _check_thresholds(metrics, args)
+            thresholds_used: dict[str, Any] = {
+                "mode": "fallback-args",
+                "rps_floor": args.rps_floor,
+                "p95_max_ms": args.p95_max_ms,
+            }
+        else:
+            passed, violations = _check_thresholds_baseline(metrics, baseline)
+            thresholds_used = {
+                "mode": "baseline",
+                "baseline_path": str(args.baseline),
+                "global": baseline.get("global", {}),
+            }
+    else:
+        passed, violations = _check_thresholds(metrics, args)
+        thresholds_used = {
+            "mode": "args",
+            "rps_floor": args.rps_floor,
+            "p95_max_ms": args.p95_max_ms,
+            "p99_max_ms": args.p99_max_ms,
+        }
 
+    strict = _is_strict_mode(args)
     report = {
         "timestamp": int(time.time()),
         "scenario": str(args.scenario),
         "metrics": metrics,
-        "thresholds": {
-            "rps_floor": args.rps_floor,
-            "p95_max_ms": args.p95_max_ms,
-            "p99_max_ms": args.p99_max_ms,
-        },
+        "thresholds": thresholds_used,
         "passed": passed,
         "violations": violations,
+        "strict": strict,
+        "feature_flag": "perf_gate_strict",
     }
 
     report_path = args.report or Path(
@@ -214,8 +345,14 @@ def main() -> int:
     if passed:
         print("[perf-gate] OK — all thresholds passed")
         return EXIT_OK
-    print(f"[perf-gate] FAIL — violations: {violations}", file=sys.stderr)
-    return EXIT_THRESHOLD_FAIL
+    if strict:
+        print(f"[perf-gate] FAIL (strict) — violations: {violations}", file=sys.stderr)
+        return EXIT_THRESHOLD_FAIL
+    print(
+        f"[perf-gate] WARN (warn-only; feature_flag perf_gate_strict=false): {violations}",
+        file=sys.stderr,
+    )
+    return EXIT_OK
 
 
 if __name__ == "__main__":

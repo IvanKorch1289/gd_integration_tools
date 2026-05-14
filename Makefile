@@ -449,14 +449,29 @@ perf-gate: check-env ## К5: enforced perf-gate (k6 with thresholds; fails if SL
 		-e BASE_URL=$(or $(BASE_URL),http://127.0.0.1:8000) \
 		tests/perf/k6_action_routes.js
 
-perf-gate-py: ## К3/S2: python perf-gate — проверяет locust-метрики против baseline.json (warn-only до S3)
+perf-gate-py: ## К3/S2 + S6 K2: python perf-gate — locust-метрики против baseline.json (warn-only, feature_flag perf_gate_strict)
 	@$(INFO) "Running python perf-gate against baseline tests/perf/baseline.json..."
 	@mkdir -p dist
 	@$(UV_RUN) python tools/perf_gate.py \
 		--scenario tests/perf/locust_baseline.py \
 		--host $(or $(BASE_URL),http://localhost:8000) \
+		--baseline tests/perf/baseline.json \
 		--report dist/perf-report.json \
-		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (будет block в S3)"
+		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (feature_flag perf_gate_strict=false)"
+
+perf-suite-up: ## S6 K2: подъём docker-compose.perf.yml (Granian + PG + Redis + Temporal + k6 + locust)
+	@$(INFO) "Starting perf suite (docker-compose.perf.yml)..."
+	@docker compose -f docker-compose.perf.yml up -d postgres redis temporal backend
+	@$(SUCCESS) "Perf suite up. Запустить k6: docker compose -f docker-compose.perf.yml --profile load run --rm k6"
+
+perf-suite-down: ## S6 K2: остановка docker-compose.perf.yml + volumes purge
+	@$(INFO) "Stopping perf suite..."
+	@docker compose -f docker-compose.perf.yml down -v
+	@$(SUCCESS) "Perf suite stopped."
+
+perf-suite-k6: ## S6 K2: запуск k6 нагрузки против docker-compose.perf.yml (MODE=sustained|spike)
+	@$(INFO) "Running k6 ($(or $(K6_MODE),sustained) mode)..."
+	@K6_MODE=$(or $(K6_MODE),sustained) docker compose -f docker-compose.perf.yml --profile load run --rm k6
 
 perf-baseline: ## К3/S2: перегенерировать tests/perf/baseline.json из актуального staging-прогона
 	@$(INFO) "Regenerating perf baseline → tests/perf/baseline.json..."
