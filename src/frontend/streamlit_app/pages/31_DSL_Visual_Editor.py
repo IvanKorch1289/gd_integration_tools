@@ -28,8 +28,10 @@ _root = Path(__file__).resolve().parents[4]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from src.backend.dsl.engine.pipeline import Pipeline  # noqa: E402
-from src.backend.dsl.yaml_loader import load_pipeline_from_yaml  # noqa: E402
+from src.backend.services.dsl_portal import (  # noqa: E402
+    Pipeline,
+    load_pipeline_from_yaml,
+)
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="DSL Editor", layout="wide")

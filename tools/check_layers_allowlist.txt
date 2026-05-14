@@ -9,16 +9,12 @@
 # должно быть либо немедленно исправлено, либо явно объяснено
 # комментарием рядом с записью.
 #
-# R3.10d (2026-05-05): после back/front split введено правило frontend →
-# узкий фасад backend{core,services,schemas,utilities.codecs}. Ниже —
-# 6 pre-existing нарушений в developer-portal pages (Streamlit), которые
-# тянут DSL engine/registry/tracer/audit_replay напрямую. Будущая задача
-# (track: Wave R3.x DSL portal facade): вынести эти зависимости в
-# service-фасад внутри backend.services.dsl_portal и переписать pages
-# на единый clean-фасад. До тех пор — допустимый baseline.
-src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.engine.pipeline
-src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.yaml_loader
-src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.engine.execution_engine
-src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.engine.tracer
-src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.dsl.registry
-src/frontend/streamlit_app/pages/34_DSL_Debugger.py	frontend	src.backend.entrypoints.middlewares.audit_replay
+# [wave:s6/layer-violations-facade] (2026-05-14): 6 baseline-нарушений
+# frontend→DSL/entrypoints закрыты через ``backend.services.dsl_portal``
+# (см. ``src/backend/services/dsl_portal/builder_facade.py``). Pages 31 и 34
+# переписаны на узкий фасад. Единственное допустимое исключение —
+# сам фасад dsl_portal импортирует ``entrypoints.middlewares.audit_replay``
+# (агрегатор audit-стрима). Это узкое нарушение services → entrypoints
+# фиксируется как acceptable baseline до выделения audit_replay в
+# services/audit/.
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
