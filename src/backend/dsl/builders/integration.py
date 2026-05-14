@@ -1602,3 +1602,115 @@ class IntegrationMixin:
                 result_property=result_property,
             )
         )
+
+    # ── Документы / Отчёты (S5 doc-generation) ──
+
+    def render_docx(
+        self,
+        *,
+        template: str,
+        context_from: str | None = None,
+        output_to: str = "docx_path",
+    ) -> "RouteBuilder":
+        """Рендерит шаблон ``.docx`` со встроенными плейсхолдерами ``{{key}}``.
+
+        Wave: ``[wave:s5/doc-generation-dsl]``. Использует python-docx
+        (уже в зависимостях), без добавления docxtpl.
+
+        Args:
+            template: Путь к шаблону ``.docx``.
+            context_from: dotted-path в ``exchange.body`` к словарю
+                подстановок. ``None`` — весь body.
+            output_to: dotted-path для записи пути созданного файла.
+        """
+        from src.backend.dsl.engine.processors.documents import (
+            RenderDocxParams,
+            RenderDocxProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            RenderDocxProcessor(
+                RenderDocxParams(
+                    template=template,
+                    context_from=context_from,
+                    output_to=output_to,
+                )
+            )
+        )
+
+    def render_xlsx(
+        self,
+        *,
+        template: str | None = None,
+        context_from: str | None = None,
+        output_to: str = "xlsx_path",
+        mode: str = "replace",
+    ) -> "RouteBuilder":
+        """Рендерит ``.xlsx`` (``replace`` placeholders или ``append_table``).
+
+        Wave: ``[wave:s5/doc-generation-dsl]``. Использует openpyxl
+        (уже в зависимостях), без добавления xlsxwriter.
+
+        Args:
+            template: Путь к существующему ``.xlsx`` (``None`` — новая книга).
+            context_from: dotted-path к данным (dict или list[dict]).
+            output_to: dotted-path для пути результата.
+            mode: ``replace`` — подстановка ``{{key}}``; ``append_table`` —
+                добавление list[dict] как таблицы.
+        """
+        from src.backend.dsl.engine.processors.documents import (
+            RenderXlsxParams,
+            RenderXlsxProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            RenderXlsxProcessor(
+                RenderXlsxParams(
+                    template=template,
+                    context_from=context_from,
+                    output_to=output_to,
+                    mode=mode,  # type: ignore[arg-type]
+                )
+            )
+        )
+
+    # ── Rule Engine (S8 scaffold) ──
+
+    def evaluate_rules(
+        self,
+        *,
+        rules: list[Any],
+        context_from: str | None = None,
+        decision_to: str = "decision",
+        default_decision: str = "NO_MATCH",
+    ) -> "RouteBuilder":
+        """First-match-wins rule engine поверх SimpleEval.
+
+        Wave: ``[wave:s8/rule-engine-scaffold]``. Безопасный
+        синхронный evaluator (без import/exec/eval-доступа к dunder'ам).
+
+        Args:
+            rules: Список ``Rule`` или dict с полями ``name``/``expr``/``decision``.
+            context_from: dotted-path к словарю переменных.
+            decision_to: dotted-path для записи решения.
+            default_decision: Значение, если ни одно правило не сработало.
+        """
+        from src.backend.dsl.engine.processors.rule_engine import (
+            EvaluateRulesParams,
+            EvaluateRulesProcessor,
+            Rule,
+        )
+
+        normalized: list[Rule] = [
+            r if isinstance(r, Rule) else Rule(**r) for r in rules
+        ]
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            EvaluateRulesProcessor(
+                EvaluateRulesParams(
+                    rules=normalized,
+                    context_from=context_from,
+                    decision_to=decision_to,
+                    default_decision=default_decision,
+                )
+            )
+        )

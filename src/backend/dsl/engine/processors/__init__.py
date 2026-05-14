@@ -99,6 +99,17 @@ from src.backend.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
+from src.backend.dsl.engine.processors.documents import (
+    RenderDocxParams,
+    RenderDocxProcessor,
+    RenderXlsxParams,
+    RenderXlsxProcessor,
+)
+from src.backend.dsl.engine.processors.rule_engine import (
+    EvaluateRulesParams,
+    EvaluateRulesProcessor,
+    Rule,
+)
 from src.backend.dsl.engine.processors.email_trigger import EmailTriggerProcessor
 from src.backend.dsl.engine.processors.entity import (
     EntityCreateProcessor,
@@ -348,4 +359,11 @@ __all__ = (
     "ScanFileProcessor",
     "IngestFileProcessor",
     "EmailTriggerProcessor",
+    "RenderDocxProcessor",
+    "RenderDocxParams",
+    "RenderXlsxProcessor",
+    "RenderXlsxParams",
+    "EvaluateRulesProcessor",
+    "EvaluateRulesParams",
+    "Rule",
 )
