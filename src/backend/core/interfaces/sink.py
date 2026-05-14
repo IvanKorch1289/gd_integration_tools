@@ -26,6 +26,9 @@ class SinkKind(str, Enum):
 
     Sprint 3 W1 K3 (GAP-03 symmetry): добавлен ``s3`` — выгрузка в
     S3/MinIO как полноценный Sink (закрывает ассиметрию с S3 source).
+
+    Sprint 3 K3 W2 (nats-jetstream-builder): добавлен ``nats_js`` —
+    публикация в NATS JetStream (durable streams, ack-based delivery).
     """
 
     HTTP = "http"
@@ -39,6 +42,7 @@ class SinkKind(str, Enum):
     FILE = "file"
     MQTT = "mqtt"
     S3 = "s3"
+    NATS_JS = "nats_js"
 
 
 @dataclass(slots=True)

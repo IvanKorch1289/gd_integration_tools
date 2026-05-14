@@ -256,6 +256,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K3 — NATS JetStream DSL ───────────────────────────────────────────
+    nats_jetstream_dsl: bool = Field(
+        default=False,
+        title="K3: NATS JetStream DSL (.from_nats_js / .to_nats_js)",
+        description=(
+            "K3 Wave 2. Owner: K3 DSL. ETA: S3-W2. "
+            "Активирует NATSJetStreamSource + NATSJetStreamSink и DSL-методы "
+            ".from_nats_js() / .to_nats_js() в RouteBuilder. "
+            "default-OFF до добавления 'nats-py>=2.7' в S3 Wave 3 cutover и staging-smoke."
+        ),
+    )
+
     # ─── K3 — Notification DSL ─────────────────────────────────────────────
     notification_dsl_enabled: bool = Field(
         default=False,

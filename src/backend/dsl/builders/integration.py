@@ -1430,3 +1430,112 @@ class IntegrationMixin:
                 result_property=result_property,
             )
         )
+
+    # ── NATS JetStream DSL (K3 W2) ──────────────────────────────────────────
+
+    @classmethod
+    def from_nats_js(
+        cls,
+        route_id: str,
+        subject: str,
+        stream: str,
+        durable: str,
+        *,
+        nats_url: str = "nats://localhost:4222",
+        description: str | None = None,
+    ) -> "RouteBuilder":
+        """Точка входа: маршрут из NATS JetStream durable consumer.
+
+        Создаёт :class:`RouteBuilder` с источником NATS JetStream
+        (durable pull consumer). Используется совместно с
+        :class:`~src.backend.infrastructure.sources.nats_jetstream.NATSJetStreamSource`.
+
+        Под feature-flag ``nats_jetstream_dsl`` (default-OFF, K3 W2).
+        nats-py добавляется в pyproject.toml в S3 Wave 3 cutover.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            subject: Subject (тема) NATS JetStream.
+            stream: Имя JetStream stream.
+            durable: Имя durable consumer (обеспечивает возобновляемость).
+            nats_url: URL NATS-сервера.
+            description: Человекочитаемое описание маршрута.
+
+        Returns:
+            :class:`RouteBuilder` для fluent-chain вызовов.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_nats_js(
+                    "orders.jetstream.consumer",
+                    subject="orders.created",
+                    stream="ORDERS",
+                    durable="orders-consumer",
+                )
+                .call_function("extensions.orders.handler:process")
+                .dispatch_action("orders.ack")
+                .build()
+            )
+        """
+        source = (
+            f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
+        )
+        return cls(route_id=route_id, source=source, description=description)  # type: ignore[return-value]
+
+    def to_nats_js(
+        self,
+        subject: str,
+        *,
+        nats_url: str = "nats://localhost:4222",
+        headers: dict[str, str] | None = None,
+        payload_property: str | None = None,
+        result_property: str = "nats_js_publish_result",
+    ) -> "RouteBuilder":
+        """Публикует payload в NATS JetStream (Sink step).
+
+        Добавляет шаг публикации в NATS JetStream subject.
+        Использует :class:`~src.backend.infrastructure.sinks.nats_jetstream.NATSJetStreamSink`
+        через :class:`GenericSinkPublishProcessor`.
+
+        Под feature-flag ``nats_jetstream_dsl`` (default-OFF, K3 W2).
+        nats-py добавляется в pyproject.toml в S3 Wave 3 cutover.
+
+        Args:
+            subject: Целевой subject (тема) JetStream.
+            nats_url: URL NATS-сервера.
+            headers: Заголовки NATS-сообщения (опционально).
+            payload_property: Имя property с payload (None → ``in_message.body``).
+            result_property: Имя property для результата публикации.
+
+        Returns:
+            Тот же :class:`RouteBuilder` для продолжения fluent-chain.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_("orders.transformer", source="http:POST /orders")
+                .call_function("extensions.orders.normalizer:apply")
+                .to_nats_js("orders.created", headers={"X-Source": "api"})
+                .build()
+            )
+        """
+        from src.backend.dsl.engine.processors.sink_publish import (
+            GenericSinkPublishProcessor,
+        )
+
+        config: dict[str, Any] = {
+            "nats_url": nats_url,
+            "subject": subject,
+        }
+        if headers:
+            config["headers"] = dict(headers)
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            GenericSinkPublishProcessor(
+                kind="nats_js",
+                config=config,
+                payload_property=payload_property,
+                result_property=result_property,
+            )
+        )
