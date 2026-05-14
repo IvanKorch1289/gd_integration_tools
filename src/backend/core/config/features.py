@@ -410,6 +410,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    frontend_plugin_marketplace: bool = Field(
+        default=False,
+        title="K5: Plugin Marketplace Streamlit UI (таблица плагинов + toggle)",
+        description=(
+            "K5 Wave 3. Owner: K5 DSL. ETA: S3-W3. "
+            "Активирует страницу 60_Plugin_Marketplace.py — список installed plugins, "
+            "фильтр по status (active/all/disabled), manifest-expander, action-toggle. "
+            "default-OFF до staging-smoke + REST /api/v1/admin/plugins/* endpoints."
+        ),
+    )
+
     # ─── K9 — Extensions Migration ─────────────────────────────────────────
     extensions_core_entities: bool = Field(
         default=False,
