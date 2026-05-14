@@ -14,6 +14,19 @@ from src.backend.services.ai.agents.analytics_agent import (
     AnalyticsAgent,
     get_analytics_agent,
 )
+from src.backend.services.ai.agents.langgraph_postgres_saver import (
+    LangGraphPostgresSaverUnavailable,
+    LangGraphPostgresSaverWrapper,
+    get_langgraph_postgres_saver,
+)
 from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent
 
-__all__ = ("AnalyticsAgent", "SearchAgent", "get_analytics_agent", "get_search_agent")
+__all__ = (
+    "AnalyticsAgent",
+    "LangGraphPostgresSaverUnavailable",
+    "LangGraphPostgresSaverWrapper",
+    "SearchAgent",
+    "get_analytics_agent",
+    "get_langgraph_postgres_saver",
+    "get_search_agent",
+)
