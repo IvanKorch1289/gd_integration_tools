@@ -16,10 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from src.backend.infrastructure.resilience.bulkhead import (
-    Bulkhead,
-    BulkheadRegistry,
-)
+from src.backend.infrastructure.resilience.bulkhead import Bulkhead, BulkheadRegistry
 
 __all__ = ("BulkheadScaler",)
 

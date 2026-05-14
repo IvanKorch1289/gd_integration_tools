@@ -43,10 +43,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
 
-from src.backend.core.security.capabilities import (
-    CapabilityDeniedError,
-    CapabilityGate,
-)
+from src.backend.core.security.capabilities import CapabilityDeniedError, CapabilityGate
 
 __all__ = (
     "CapabilityContext",

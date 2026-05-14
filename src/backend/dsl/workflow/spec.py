@@ -182,6 +182,15 @@ class WorkflowDeclaration(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=1, description="Публичное имя workflow.")
+    version: str = Field(
+        default="1.0",
+        pattern=r"^\d+\.\d+(\.\d+)?$",
+        description=(
+            "Semver-версия декларации workflow в формате MAJOR.MINOR или "
+            "MAJOR.MINOR.PATCH. Используется для diff-сравнения и YAML "
+            "round-trip между ревизиями. Default ``1.0``."
+        ),
+    )
     description: str | None = Field(
         default=None, description="Человекочитаемое описание."
     )

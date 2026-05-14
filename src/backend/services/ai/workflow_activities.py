@@ -199,7 +199,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
         from temporalio import activity as temporal_activity
 
         heartbeat = temporal_activity.heartbeat
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110 — lazy temporalio import; offline fallback
         pass
 
     return await _execute_llm_call(input_, heartbeat=heartbeat)
@@ -210,7 +210,7 @@ try:
     from temporalio import activity as _temporal_activity_mod
 
     llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)  # type: ignore[assignment]
-except Exception:  # noqa: BLE001
+except Exception:  # noqa: BLE001, S110 — temporalio extra может быть отключён
     pass
 
 

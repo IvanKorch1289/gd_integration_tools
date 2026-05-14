@@ -74,7 +74,7 @@ class AutoScaler:
         self._task.cancel()
         try:
             await self._task
-        except (asyncio.CancelledError, Exception):  # noqa: BLE001
+        except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110 — graceful shutdown
             pass
         finally:
             self._task = None
