@@ -245,6 +245,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    prompt_registry_langfuse: bool = Field(
+        default=False,
+        title="AI: LangfusePromptStorage как backend для prompt-registry",
+        description=(
+            "K4 Sprint 3 Wave 3. Owner: K4 AI/Data. ETA: S3-W3. "
+            "Активирует LangfusePromptStorage — хранение и версионирование "
+            "промптов через Langfuse SDK (get/save/list). "
+            "При False — используется in-memory fallback (PromptEntry store). "
+            "default-OFF до staging-smoke с Langfuse instance и smoke-теста "
+            "на 1 prompt round-trip."
+        ),
+    )
+
     taskiq_removed: bool = Field(
         default=False,
         title="AI/Infrastructure: TaskIQ полностью удалён (R-V15-7)",
