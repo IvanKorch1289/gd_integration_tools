@@ -14,15 +14,21 @@ C-extension). Lazy-import гарантирует, что ядро остаётс
   редиректа на IdP;
 * :meth:`process_saml_response` — валидирует SAMLResponse от IdP,
   возвращает principal + attributes;
-* :meth:`build_logout_redirect_url` — SLO redirect.
+* :meth:`build_logout_redirect_url` — SLO redirect;
+* :meth:`parse_idp_metadata` — staticmethod, разбирает IdP-XML metadata
+  (S6 K1 W1).
 
 Защита от replay-атак: каждый ``InResponseTo`` сматчится с in-memory
 session-store (RelayState/RequestID); повтор не принимается.
+
+Feature-flag: ``feature_flags.saml_ad_login_enabled`` (default-OFF до
+staging IdP конфигурации; см. S6 K1 W1).
 """
 
 from __future__ import annotations
 
 import logging
+import re
 import secrets
 import time
 from collections.abc import Callable, Mapping
@@ -30,6 +36,7 @@ from dataclasses import dataclass
 from typing import Any
 
 __all__ = (
+    "IdpMetadata",
     "SamlAuthResult",
     "SamlBackend",
     "SamlConfig",
@@ -85,6 +92,23 @@ class SamlAuthResult:
 
 class SamlError(Exception):
     """Ошибка валидации SAMLResponse / replay-attack / config."""
+
+
+@dataclass(frozen=True, slots=True)
+class IdpMetadata:
+    """Параметры IdP, извлечённые из EntityDescriptor XML.
+
+    Attributes:
+        entity_id: IdP EntityID (атрибут ``entityID`` корневого элемента).
+        sso_url: URL SingleSignOnService с HTTP-Redirect/POST binding.
+        slo_url: URL SingleLogoutService (опц.).
+        x509_cert: PEM-encoded X509 cert IdP (signing-credential).
+    """
+
+    entity_id: str
+    sso_url: str
+    x509_cert: str
+    slo_url: str | None = None
 
 
 class SamlBackend:
