@@ -126,6 +126,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    workflow_gateways_enabled: bool = Field(
+        default=False,
+        title="Workflow: XOR/AND/OR gateways (.gateway_xor/.gateway_and/.gateway_or)",
+        description=(
+            "K3 Wave 4. Owner: K3 Workflow DSL. ETA: S3-W4. "
+            "Активирует gateway-примитивы BPMN-стиля в WorkflowBuilder: "
+            "XOR (exclusive branching), AND (parallel wait_all), OR (inclusive wait_any). "
+            "GatewaySpec + BranchSpec → GatewayCompiler → Temporal-IR dict. "
+            "default-OFF до интеграции GatewayCompiler с emitter.py и staging-smoke."
+        ),
+    )
+
     # ─── K5 — DSL ──────────────────────────────────────────────────────────
     frontend_schema_registry_ui: bool = Field(
         default=False,
