@@ -171,6 +171,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    mcp_tools_input_schema_strict: bool = Field(
+        default=False,
+        title="MCP: строгая валидация input_schema для FastMCP tools",
+        description=(
+            "K6 Wave 2. Owner: K6 AI/RAG. ETA: S3-W2. "
+            "При True — validate_input_schema() поднимает ValidationError "
+            "вместо возврата (False, msg) при несоответствии JSON-Schema. "
+            "default-OFF до полного покрытия Tier 1+2 actions параметрами."
+        ),
+    )
+
     langfuse_v3: bool = Field(
         default=False,
         title="AI: LangFuse 3.x callbacks",
