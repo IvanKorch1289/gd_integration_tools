@@ -126,6 +126,17 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     # ─── K6 — AI ───────────────────────────────────────────────────────────
+    langmem_enabled: bool = Field(
+        default=False,
+        title="AI: LangMem long-term memory (episodic/semantic/procedural)",
+        description=(
+            "K6 Wave 1 (K4 LangMem baseline). Owner: K4 AI/Data. ETA: S3-W1. "
+            "Активирует LangMemService в src/backend/services/ai/memory/. "
+            "При False все вызовы remember_*/recall возвращают пустые результаты "
+            "без записи. default-OFF до staging-smoke с Postgres + Qdrant."
+        ),
+    )
+
     langfuse_v3: bool = Field(
         default=False,
         title="AI: LangFuse 3.x callbacks",
