@@ -601,5 +601,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    credit_pipeline_v2: bool = Field(
+        default=False,
+        title="T3 S7: credit_pipeline plugin (SKB/НБКИ) — V11 layout",
+        description=(
+            "Sprint 7 Team T3. Owner: T3. Активирует "
+            "extensions/credit_pipeline/* как канонический credit-bus "
+            "(SKB-Техно клиент через BaseExternalAPIClient + WAF) + "
+            "Workflow DSL credit_assessment + DSL routes. "
+            "При False — используется legacy services/integrations/skb.py. "
+            "default-OFF до завершения миграции (Sprint 8 flip ON)."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
