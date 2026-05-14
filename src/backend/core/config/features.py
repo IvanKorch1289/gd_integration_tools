@@ -127,6 +127,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    frontend_action_bus_ui: bool = Field(
+        default=False,
+        title="K5: Action Bus Streamlit UI (список actions + invoke с JSON-payload)",
+        description=(
+            "K5 Wave 2. Owner: K5 DSL. ETA: S3-W2. "
+            "Активирует страницу 50_Action_Bus.py с invoke registered actions, "
+            "JSON-payload editor, 3 invoke modes (sync/async-fire-and-forget/async-api). "
+            "default-OFF до staging-smoke action-bus-client."
+        ),
+    )
+
     dsl_processor_registry_strict: bool = Field(
         default=False,
         title="DSL: ProcessorRegistry strict mode (отказ при missing schema)",
