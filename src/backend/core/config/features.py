@@ -1258,5 +1258,31 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 7 — К4 AI+RAG (multi-agent + voice/image) ─────────────────
+    multi_agent_supervisor_enabled: bool = Field(
+        default=False,
+        title="K4 S7: LangGraph multi-agent supervisor (handoff между специализированными агентами)",
+        description=(
+            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
+            "Активирует MultiAgentSupervisor (services/ai/multi_agent/supervisor.py) — "
+            "LangGraph supervisor pattern + handoff_to(agent_name) tool. "
+            "Reference implementation для credit-pipeline "
+            "(supervisor=credit_orchestrator, agents=[scoring_agent, document_parser_agent, decision_agent]). "
+            "default-OFF до staging-smoke с реальным LLM-провайдером."
+        ),
+    )
+
+    voice_image_gen_enabled: bool = Field(
+        default=False,
+        title="K4 S7: Voice (Whisper STT + Coqui TTS) + Image generation wrappers",
+        description=(
+            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
+            "Активирует WhisperSTTService / CoquiTTSService (services/ai/voice/) + "
+            "LiteLLMImageGenerationService (services/ai/image_generation/litellm_image.py). "
+            "Lazy-import openai-whisper / TTS / litellm.image_generation(). "
+            "default-OFF до установки voice extras и staging-smoke."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
