@@ -655,6 +655,50 @@ class IntegrationMixin:
             commit=commit,
         )
 
+    # ── K3 S5 W8: db_call_procedure ──
+
+    def db_call_procedure(
+        self,
+        profile: str,
+        name: str,
+        *,
+        schema: str = "public",
+        params_from: str = "body",
+        result_property: str = "sp_result",
+        dialect: str = "postgres",
+    ) -> "RouteBuilder":
+        """K3 S5 W8 — вызвать stored procedure через ExternalDatabaseRegistry.
+
+        Args:
+            profile: Профиль внешней БД из ``settings.external_databases``.
+            name: Имя процедуры.
+            schema: Schema-префикс (default ``public``).
+            params_from: ``body`` / ``properties`` / ``headers`` / ``none``.
+            result_property: Куда положить result-set.
+            dialect: ``postgres`` / ``mssql`` / ``oracle``.
+
+        Returns:
+            ``RouteBuilder`` для chain-продолжения.
+
+        Example::
+
+            (
+                RouteBuilder.from_("orders.recalc", source="timer:60s")
+                .db_call_procedure("oracle_prod", "recalc_credit_score")
+                .build()
+            )
+        """
+        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+            "src.backend.dsl.engine.processors.db_call_procedure",
+            "DbCallProcedureProcessor",
+            profile=profile,
+            name=name,
+            schema=schema,
+            params_from=params_from,
+            result_property=result_property,
+            dialect=dialect,
+        )
+
     # ── Notify / shell / email / file_move ──
 
     def notify(
