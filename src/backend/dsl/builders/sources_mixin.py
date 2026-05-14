@@ -114,6 +114,62 @@ class SourcesMixin:
         return builder
 
     @classmethod
+    def from_cdc_logical(
+        cls,
+        route_id: str,
+        table: str,
+        *,
+        dsn: str,
+        mode: str = "delta",
+        slot_name: str | None = None,
+        publication: str | None = None,
+        plugin: str = "pgoutput",
+        **kwargs: Any,
+    ) -> "RouteBuilder":
+        """K3 S5 W5 — расширенный CDC через :class:`CdcPostgresLogicalSource`.
+
+        В отличие от :meth:`from_cdc`, поддерживает:
+          * режимы ``full`` (snapshot+tail) и ``delta`` (только tail);
+          * персистентный watermark cursor (``cdc_cursors``);
+          * idempotent setup publication+slot.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            table: Имя таблицы.
+            dsn: PostgreSQL DSN с REPLICATION-ролью.
+            mode: ``full`` или ``delta``.
+            slot_name: Имя slot (default ``cdc_<table>``).
+            publication: Имя publication (default ``pub_<table>``).
+            plugin: ``pgoutput`` (default) / ``wal2json``.
+            **kwargs: Дополнительно (``cursor_store=...``).
+
+        Returns:
+            ``RouteBuilder`` с ``source = cdc-logical:<table>``.
+        """
+        import importlib
+
+        mod = importlib.import_module(
+            "src.backend.infrastructure.sources.cdc_postgres_logical"
+        )
+        SourceCls = mod.CdcPostgresLogicalSource  # noqa: N806
+        source_instance = SourceCls(
+            source_id=route_id,
+            table=table,
+            dsn=dsn,
+            mode=mode,
+            slot_name=slot_name,
+            publication=publication,
+            plugin=plugin,
+            **kwargs,
+        )
+        builder: RouteBuilder = cls(  # type: ignore[call-arg]
+            route_id=route_id,
+            source=f"cdc-logical:{table}",
+        )
+        object.__setattr__(builder, "_source_instance", source_instance)
+        return builder
+
+    @classmethod
     def from_kafka(
         cls,
         route_id: str,
