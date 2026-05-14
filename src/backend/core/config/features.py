@@ -318,6 +318,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K1 — Tracing & Observability ─────────────────────────────────────
+    tracing_baggage_strict: bool = Field(
+        default=False,
+        title="Tracing: strict-режим проверки OTel baggage (все 4 поля обязательны)",
+        description=(
+            "K1 Wave 2. Owner: K1 Auth/Tracing. ETA: S3-W2. "
+            "При True вызов ensure_required_baggage() возбуждает MissingBaggageError, "
+            "если хотя бы одно из 4 полей (route_name/tenant_id/business_op/correlation_id) "
+            "отсутствует в OTel baggage context. "
+            "default-OFF до покрытия всех entrypoints propagation middleware и staging-smoke."
+        ),
+    )
+
     # ─── K1 — Auth ─────────────────────────────────────────────────────────
     auth_joserfc: bool = Field(
         default=False,
