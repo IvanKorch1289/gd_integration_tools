@@ -319,6 +319,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K3 — Email IMAP Source ────────────────────────────────────────────
+    email_imap_source: bool = Field(
+        default=False,
+        title="K3: EmailIMAPSource через aioimaplib (IMAP IDLE, stream())",
+        description=(
+            "K3 Wave 5. Owner: K3 Email/IMAP. ETA: S3-W5. "
+            "Активирует EmailIMAPSource — AsyncIterator[EmailMessage] поверх "
+            "IMAP IDLE (aioimaplib). Используется .from_imap() в RouteBuilder. "
+            "default-OFF до установки 'aioimaplib' в S3 cutover и staging-smoke."
+        ),
+    )
+
     # ─── K3 — Notification DSL ─────────────────────────────────────────────
     notification_dsl_enabled: bool = Field(
         default=False,

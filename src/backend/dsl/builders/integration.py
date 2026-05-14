@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import (
-    BaseProcessor,
     CallableProcessor,
     DispatchActionProcessor,
     PipelineRefProcessor,
@@ -1026,9 +1025,7 @@ class IntegrationMixin:
             to: ``body.<field>`` | ``properties.<name>``.
             default: Значение по умолчанию если путь отсутствует.
         """
-        from src.backend.dsl.engine.processors.get_setting import (
-            GetSettingProcessor,
-        )
+        from src.backend.dsl.engine.processors.get_setting import GetSettingProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             GetSettingProcessor(path=path, to=to, default=default)
@@ -1086,9 +1083,7 @@ class IntegrationMixin:
             payload_property: Имя property с payload (None → ``in_message.body``).
             result_property: Имя property для результата публикации.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
-            GrpcCallProcessor,
-        )
+        from src.backend.dsl.engine.processors.sink_publish import GrpcCallProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             GrpcCallProcessor(
@@ -1117,9 +1112,7 @@ class IntegrationMixin:
         См. :class:`SoapCallProcessor` и
         :class:`~src.backend.infrastructure.sinks.soap_sink.SoapSink`.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
-            SoapCallProcessor,
-        )
+        from src.backend.dsl.engine.processors.sink_publish import SoapCallProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             SoapCallProcessor(
@@ -1154,9 +1147,7 @@ class IntegrationMixin:
             topic: Топик / exchange / stream / subject.
             extra: Доп. параметры publish (routing_key, partition, headers).
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
-            MqPublishProcessor,
-        )
+        from src.backend.dsl.engine.processors.sink_publish import MqPublishProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             MqPublishProcessor(
@@ -1183,9 +1174,7 @@ class IntegrationMixin:
         См. :class:`WsPublishProcessor` и
         :class:`~src.backend.infrastructure.sinks.ws_sink.WsSink`.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
-            WsPublishProcessor,
-        )
+        from src.backend.dsl.engine.processors.sink_publish import WsPublishProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             WsPublishProcessor(
@@ -1215,9 +1204,7 @@ class IntegrationMixin:
         См. :class:`MqttPublishProcessor` и
         :class:`~src.backend.infrastructure.sinks.mqtt_sink.MqttSink`.
         """
-        from src.backend.dsl.engine.processors.sink_publish import (
-            MqttPublishProcessor,
-        )
+        from src.backend.dsl.engine.processors.sink_publish import MqttPublishProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             MqttPublishProcessor(
@@ -1397,6 +1384,82 @@ class IntegrationMixin:
                 result_property=result_property,
             )
         )
+
+    # ── IMAP email source factory (K3 W5) ──
+
+    @classmethod
+    def from_imap(
+        cls,
+        route_id: str,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        *,
+        folder: str = "INBOX",
+        subject_filter: str | None = None,
+        from_filter: str | None = None,
+        **kwargs: Any,
+    ) -> "RouteBuilder":
+        """Фабричный метод: маршрут с источником IMAP IDLE (K3 W5).
+
+        Создаёт :class:`RouteBuilder` с source-описанием IMAP и добавляет
+        :class:`~src.backend.dsl.engine.processors.email_trigger.EmailTriggerProcessor`
+        как первый шаг фильтрации писем.
+
+        Требует ``feature_flags.email_imap_source = True`` и установки
+        ``aioimaplib`` в окружении.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            host: IMAP-хост (e.g. ``"imap.gmail.com"``).
+            port: IMAP-порт (993 — IMAPS).
+            user: Логин пользователя.
+            password: Пароль (dev-only; prod — через Vault).
+            folder: IMAP-папка для мониторинга (default ``"INBOX"``).
+            subject_filter: Substring-фильтр по теме. ``None`` — без фильтра.
+            from_filter: Substring-фильтр по отправителю. ``None`` — без фильтра.
+            **kwargs: Дополнительные параметры (``description``, ``use_ssl``, и т.д.).
+
+        Returns:
+            :class:`RouteBuilder` с предустановленным source и email-фильтром.
+
+        Example::
+
+            route = (
+                RouteBuilder.from_imap(
+                    "invoice_processing",
+                    host="imap.corp.local",
+                    port=993,
+                    user="robot@corp.local",
+                    password="s3cr3t",
+                    folder="INVOICES",
+                    subject_filter="INVOICE",
+                    from_filter="billing@acme.com",
+                )
+                .dispatch_action("invoices.process")
+                .build()
+            )
+        """
+        from src.backend.dsl.engine.processors.email_trigger import (
+            EmailTriggerProcessor,
+        )
+
+        description = kwargs.pop("description", None)
+        source_tag = f"imap:{host}:{port}/{folder}"
+        builder = cls(
+            route_id=route_id,
+            source=source_tag,
+            description=description,
+            **{k: v for k, v in kwargs.items() if k in ("_feature_flag",)},
+        )
+        builder._add(
+            EmailTriggerProcessor(
+                subject_pattern=subject_filter,
+                from_filter=from_filter,
+            )
+        )
+        return builder
 
     def sink_s3(
         self,

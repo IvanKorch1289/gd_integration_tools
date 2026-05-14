@@ -23,11 +23,31 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("EmailTriggerProcessor",)
+__all__ = ("EmailTriggerParams", "EmailTriggerProcessor")
+
+
+class EmailTriggerParams(BaseModel):
+    """Параметры DSL-шага ``email_trigger``.
+
+    Используется как params-модель в YAML-маршрутах и через
+    :meth:`~EmailTriggerProcessor.process` при декларативном вызове.
+
+    Args:
+        folder: IMAP-папка для фильтрации (информационно, не используется
+            процессором напрямую — задаётся на уровне source).
+        subject_filter: Substring-фильтр по теме (case-insensitive).
+        from_filter: Substring-фильтр по отправителю (case-insensitive).
+    """
+
+    folder: str = Field(default="INBOX", description="IMAP-папка источника")
+    subject_filter: str | None = Field(default=None, description="Substring по теме")
+    from_filter: str | None = Field(default=None, description="Substring по From")
 
 
 def _compile_subject_pattern(pattern: str | None) -> re.Pattern[str] | None:
