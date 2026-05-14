@@ -1,14 +1,16 @@
-"""Search providers — Perplexity, Tavily с fallback chain."""
+"""Search providers — Perplexity, Tavily, SearXNG с fallback chain."""
 
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from typing import Any
 
 __all__ = (
     "BaseSearchProvider",
     "PerplexityProvider",
+    "SearXNGProvider",
     "TavilyProvider",
     "WebSearchService",
     "get_web_search_service",
@@ -116,6 +118,64 @@ class TavilyProvider(BaseSearchProvider):
             return response.json()
 
 
+class SearXNGProvider(BaseSearchProvider):
+    """Поиск через self-hosted SearXNG meta-search (free, unlimited).
+
+    Согласно research-отчёту 2026-05-13 (`vault/research-2026-05-13-search-engines.md`),
+    SearXNG — production-ready free кандидат: privacy-first, self-hosted,
+    агрегирует Google/Bing/DuckDuckGo/Wikipedia. Подходит для банковской/air-gap
+    среды без зависимости от cloud-providers.
+
+    Args:
+        base_url: URL self-hosted SearXNG instance (например, http://searxng:8080).
+        engines: список engines (по умолчанию google,bing,duckduckgo).
+        timeout: HTTP timeout в секундах.
+    """
+
+    name = "searxng"
+
+    def __init__(
+        self,
+        base_url: str,
+        engines: list[str] | None = None,
+        timeout: float = 15.0,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._engines = engines or ["google", "bing", "duckduckgo"]
+        self._timeout = timeout
+
+    async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
+        import httpx
+
+        params = {
+            "q": query,
+            "format": "json",
+            "engines": ",".join(self._engines),
+        }
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            response = await client.get(f"{self._base_url}/", params=params)
+            response.raise_for_status()
+            data = response.json()
+            results = data.get("results", [])[:max_results]
+            return [
+                {
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "content": r.get("content", ""),
+                    "engine": r.get("engine", ""),
+                }
+                for r in results
+            ]
+
+    async def deep_research(self, query: str) -> dict[str, Any]:
+        """SearXNG не поддерживает deep-research; возвращает обычный search.
+
+        Метод обеспечивает совместимость с BaseSearchProvider API.
+        """
+        results = await self.search(query, max_results=20)
+        return {"query": query, "results": results, "provider": "searxng"}
+
+
 class WebSearchService:
     """Универсальный сервис поиска с fallback chain."""
 
@@ -184,6 +244,19 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
+    except (ImportError, AttributeError):
+        pass
+
+    # SearXNG registration через env var (без отдельного Settings класса).
+    # Включается только если SEARXNG_BASE_URL задан И feature-flag активен.
+    try:
+        from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+
+        searxng_url = os.getenv("SEARXNG_BASE_URL", "").strip()
+        if searxng_url and getattr(feature_flags, "search_provider_searxng", False):
+            engines_env = os.getenv("SEARXNG_ENGINES", "google,bing,duckduckgo")
+            engines = [e.strip() for e in engines_env.split(",") if e.strip()]
+            _web_search.add_provider(SearXNGProvider(base_url=searxng_url, engines=engines))
     except (ImportError, AttributeError):
         pass
 

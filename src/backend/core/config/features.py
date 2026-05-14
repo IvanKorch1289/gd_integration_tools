@@ -149,6 +149,17 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     # ─── K6 — AI ───────────────────────────────────────────────────────────
+    search_provider_searxng: bool = Field(
+        default=False,
+        title="Search: SearXNGProvider в WebSearchService fallback chain",
+        description=(
+            "K4 Wave 4 (PLAN #5). Owner: K4 AI/Data. ETA: S3-W3. "
+            "Активирует SearXNGProvider в fallback chain WebSearchService — "
+            "self-hosted privacy-first meta-search. Требует SEARXNG_BASE_URL env. "
+            "default-OFF до развёртывания SearXNG instance в staging."
+        ),
+    )
+
     langmem_enabled: bool = Field(
         default=False,
         title="AI: LangMem long-term memory (episodic/semantic/procedural)",
