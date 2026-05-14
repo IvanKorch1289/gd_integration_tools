@@ -270,3 +270,127 @@ External research (2026-05-13) подтвердил:
 в Sprint 2 после общей зачистки.
 
 ### Открытый техдолг (после сессии 2026-05-01 PM — pre-Wave 22)
+
+---
+
+## Deferred реестр Sprint 1–9 (2026-05-14, координатор-2)
+
+> Wave: `[wave:s2-s9/known-issues-deferred-2026-05-14]`. Параллельная
+> команда S4 закрывает Workflow DSL + BPMN + Temporal + WAF Phase-2.
+> Координатор-2 закрыл ТОП-7 техдолга (см. ниже), остальное оформлено
+> здесь как обоснованный deferred с привязкой к будущим Sprint'ам.
+
+### A-фаза 2026-05-14: ЗАКРЫТО
+
+| Wave | Файл / отчёт | Статус |
+|---|---|---|
+| `[wave:s1/k2-1-cache-decorator]` | `core/resilience/cache_decorators.py` (ADR-0051, in-house вместо aiocache) | ✅ pre-existing, проверено 11 тестов |
+| `[wave:s1/k2-2-policy-decorator]` | `core/resilience/decorators.py` (ADR-0052, канонический порядок) | ✅ pre-existing, проверено 7 тестов |
+| `[wave:s5/doc-generation-dsl]` | `dsl/engine/processors/documents.py` + `.render_docx`/`.render_xlsx` через python-docx + openpyxl (уже в deps) | ✅ 4 теста |
+| `[wave:s6/msgspec-benchmark]` | `tests/perf/test_msgspec_benchmark.py` + `vault/benchmark-2026-05-14-msgspec.md` (msgspec в среднем ×5.5 быстрее) | ✅ |
+| `[wave:s6/layer-violations-facade]` | `services/dsl_portal/` фасад; 2 frontend-pages переписаны; 6 baseline-violations закрыты | ✅ |
+| `[wave:s8/rule-engine-scaffold]` | `dsl/engine/processors/rule_engine.py` + `.evaluate_rules()` через SimpleEval | ✅ 3 теста |
+| `[wave:s2-s9/known-issues-deferred-2026-05-14]` | этот реестр | ✅ |
+
+### S1 — deferred
+
+* **`[wave:s1/asyncio-taskgroup]` migration DSL-процессоров** → **Sprint 5**.
+  Зависит от parallel/streaming-split рефакторинга в
+  `dsl/engine/processors/{parallel,streaming}.py` — эта зона активно
+  меняется параллельной командой S4 (LLM-activity, Workflow DSL).
+  Reason: избежать двойного рефакторинга.
+
+* **`[wave:s1/result-monad]` `result>=0.17.0` + `ResultUnwrapProcessor`**
+  → **Sprint 5**. Новый процессор, не критичный для S2-S4 deliverable.
+  How to apply: после стабилизации control_flow processors S4 K3.
+
+### S2 — deferred
+
+* **Plugin codegen `make new-plugin NAME=x`** → **Sprint 7 sidekick (Team T5)**.
+  Why: T5 уже владеет `core/plugin_runtime/`, hot-swap; codegen логично
+  пристёгнуть к этой же миграции.
+  How to apply: `tools/codegen/codegen_plugin.py` (уже scaffold существует)
+  + Make-цель `new-plugin`.
+
+* **Hot-reload DSL <3 сек graceful drain** → **Sprint 7 sidekick (Team T5)**.
+  Why: hot_swap plugin API (Team T5 owns) — естественная база для
+  graceful drain DSL-routes. Связано с feature-flag rollouts.
+
+### S3 — deferred
+
+* **Search-DSL final cleanup (Tavily Settings dedup + Perplexity dedup)**
+  → **Sprint 7 sidekick (Team T4)**. См. PLAN #5 выше.
+
+### S5 — deferred
+
+* **R2 Blueprints (api_normalize, cdc_enrich, ai_pipeline, saga_with_compensation)**
+  → **Sprint 7 (Team T4 захватит api_normalize в reference) + Sprint 8**
+  (остальные). Зависит от R2 Sprint 5 blueprints API.
+  Why: первый blueprint — pilot, остальные — после feedback.
+
+* **CDC PostgreSQL logical replication** → **Sprint 8**. Большой scope,
+  blocking — нет, отложить до RPA-волны.
+
+* **DSL web-search expansion** → **Sprint 7 sidekick (Team T4)**.
+  Cleanup из S3 deferred покрывает первый шаг.
+
+* **Async Queue migration / DLQ unified / Dry-run** → **зависят от S4 Temporal**.
+  Why: TaskIQ removal (BLOCKER #1 Sprint 2) и Temporal facade —
+  предпосылка. Ожидать завершения S4 K1-K5.
+
+### S6 — deferred
+
+* **k6+locust perf-suite + p95<200ms gate** → **Sprint 8**.
+  Why: нужен стабильный staging с auto-scaler K2 (Sprint 4 ✅) и
+  k8s HPA exporter (S3 K2 W4 ✅). Запуск на готовой инфре.
+
+* **COM-sidecar Windows RPA** → **Sprint 8**. Вместе с RPA-волной;
+  Windows-only компонент.
+
+* **Schemathesis CI gate** → **Sprint 8**. После стабилизации OpenAPI
+  схем (S4 закрывает workflow endpoints — ждать).
+
+* **Codeclone gate strict** → **Sprint 8**. Pre-prod check, не блокирует
+  S2-S7 deliverable.
+
+### S8 — deferred
+
+* **patchright RPA (browser + Windows)** → **Sprint 8**. Тяжёлые
+  зависимости (playwright + Windows-specific), отдельная волна.
+
+* **HTTP/3 opt-in** → **Sprint 9**. Сетевая оптимизация —
+  после стабилизации S4-S8 deliverable.
+
+* **mypy ≤ 50 + deptry/vulture green** → **Sprint 9 financial cleanup**.
+
+### S9 — deferred
+
+* **≥9 tutorials + ≥10 runbooks** → **Sprint 9 docs wave**.
+  Why: больше смысла писать после стабилизации features Sprint 7-8.
+
+* **Visual Editor BPMN export** → **Sprint 9**.
+  Why: S4 BPMN import — это первый шаг (`bpmn_importer.py` в WIP).
+  Export — после.
+
+* **Pre-prod-check gate (20 critia)** → **Sprint 9 final wave**.
+
+---
+
+## Sprint 7 запуск (2026-05-14)
+
+5 worktree-команд параллельно по PLAN.md §4 Sprint 7. Каждая команда
+работает в изолированном worktree через Agent с `isolation: "worktree"`.
+
+| Team | Branch | Скоуп |
+|---|---|---|
+| T1 | `team/01-s7-core-entities-uo` | Migrate users + orders → `extensions/core_entities/` |
+| T2 | `team/02-s7-core-entities-of-credit-scaffold` | Migrate orderkinds + files + scaffold `extensions/credit_pipeline/` |
+| T3 | `team/03-s7-credit-1st-client` | 1st credit client + workflow YAML + feature_flag.credit_pipeline_v2 (blockedBy: T2) |
+| T4 | `team/04-s7-admin-frontend` | sqladmin + 3 Streamlit pages + R2 Blueprint api_normalize |
+| T5 | `team/05-s7-plugin-runtime-flags` | plugin hot-swap + blue/green + OpenFeature + make new-plugin |
+
+**S4-охраняемые файлы** (не трогать):
+`dsl/workflow/**`, `infrastructure/workflow/**`, `infrastructure/temporal/**`,
+`services/workflows/**`, `core/workflow/**`, `services/ai/**`, `core/auth/**`,
+`core/net/**`, `dsl/engine/processors/ai*.py`,
+`plugins/composition/lifecycle.py`, `tools/checks/check_waf_coverage.py`.
