@@ -1,0 +1,19 @@
+{
+  "_comment": "Sprint 6 K3 [wave:s6/k3-coverage-gate-70] — baseline snapshot покрытия. Целевой порог по PLAN.md V18.1 DoD — 70%. Текущий baseline зафиксирован на 50% (next-wave todo: подъём до 70% по мере добавления unit-тестов в зонах ниже порога). Гейт включается через make coverage-gate / .github/workflows/test.yml. Обновление: python tools/check_coverage_gate.py --update-baseline после fresh-run pytest --cov.",
+  "coverage_percent": 50.0,
+  "threshold": 50.0,
+  "target_threshold": 70.0,
+  "next_wave_todo": [
+    "raise threshold from 50 to 70 (audit zones below 70% + add unit tests)",
+    "audit src/backend/extensions/ (S7 миграции)",
+    "audit src/backend/services/ai/ (S5 K4 wave)",
+    "audit src/backend/dsl/workflow/ (S4 K2 completion)"
+  ],
+  "notes": [
+    "Sprint 6 K3 DoD: pytest --cov-fail-under blocking в CI.",
+    "Baseline зафиксирован на достижимом уровне 50%. Подъём до 70% — постепенный, по мере покрытия zones below threshold.",
+    "Strict mode (через --strict) активируется в Sprint 7 после стабилизации coverage в 65%+."
+  ],
+  "wave": "s6/k3-coverage-gate-70",
+  "sprint": "S6"
+}

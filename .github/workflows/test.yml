@@ -54,6 +54,17 @@ jobs:
               --cov-report=term \
               --maxfail=20
 
+      - name: Coverage gate ([wave:s6/k3-coverage-gate-70])
+        # Sprint 6 K3 — coverage gate BLOCKING. Threshold читается из
+        # coverage_baseline.json (baseline-aware). Подъём до 70% —
+        # постепенный (next_wave_todo в baseline).
+        # Любое падение coverage > 0.5% от baseline блокирует CI в --strict.
+        run: |
+          uv run python tools/check_coverage_gate.py \
+              --coverage-xml coverage.xml \
+              --baseline coverage_baseline.json \
+              --threshold 50
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
