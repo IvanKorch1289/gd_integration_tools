@@ -108,7 +108,14 @@ ai = [
     "e2b-code-interpreter>=1.0.0,<3.0.0",
 ]
 security = [
-    "presidio-analyzer>=2.2.0"
+    "presidio-analyzer>=2.2.0",
+    # K1 S3 W3: supply-chain CI gate scaffold (BLOCKER #4).
+    # cyclonedx-bom — CycloneDX SBOM генератор (CLI cyclonedx-py).
+    # pip-audit — vulnerability scanner поверх PyPI advisory database.
+    # Инструменты используются через tools/checks/generate_sbom.py и
+    # tools/checks/run_pip_audit.py (make sbom / make audit-deps).
+    "cyclonedx-bom>=4.0",
+    "pip-audit>=2.7",
 ]
 # === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
 # python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,

@@ -398,6 +398,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    supply_chain_ci_gate: bool = Field(
+        default=False,
+        title="K1: Supply-chain CI gate (SBOM + pip-audit + cosign)",
+        description=(
+            "K1 Wave 3. Owner: K1 Auth/Secrets. ETA: S3-W3. "
+            "Активирует обязательные supply-chain проверки в release pipeline: "
+            "CycloneDX SBOM генерация, pip-audit vulnerability scan, "
+            "cosign artifact signing. При False — gates пропускаются (warn-only). "
+            "default-OFF до Sprint 4 release-pipeline интеграции (BLOCKER #4)."
+        ),
+    )
+
     # ─── K8 — Audit & ClickHouse ───────────────────────────────────────────
     audit_clickhouse_enabled: bool = Field(
         default=False,

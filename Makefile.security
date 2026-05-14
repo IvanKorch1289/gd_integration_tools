@@ -5,6 +5,7 @@
 
 .PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
         sbom audit-deps audit-zap bandit-strict security security-full \
+        cosign-sign \
         check-feature-flags check-team-ownership \
         team-worktree team-worktree-list team-worktree-remove
 
@@ -52,6 +53,11 @@ audit-deps: ## К5: pip-audit с allowlist (.security/pip-audit-allowlist.txt)
 	fi; \
 	$(UV_RUN) pip-audit --strict --format json -r dist/audit-requirements.txt $$ALLOW
 	@$(SUCCESS) "pip-audit clean"
+
+cosign-sign: ## K1 S3 W3: cosign artifact signing (требует ARTIFACT= и KEY= env)
+	@test -n "$(ARTIFACT)" || { echo "[ERROR] Usage: make cosign-sign ARTIFACT=<path> KEY=<key>"; exit 1; }
+	@test -n "$(KEY)" || { echo "[ERROR] Usage: make cosign-sign ARTIFACT=<path> KEY=<key>"; exit 1; }
+	@$(UV_RUN) python tools/checks/cosign_sign.py --artifact $(ARTIFACT) --key $(KEY)
 
 audit-zap: ## К5: OWASP ZAP baseline (требует zap-baseline.py docker)
 	@$(INFO) "Running OWASP ZAP baseline..."
