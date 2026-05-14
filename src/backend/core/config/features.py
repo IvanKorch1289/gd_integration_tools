@@ -614,5 +614,413 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 5 — К1 Security ───────────────────────────────────────────
+    dlq_replay_rbac: bool = Field(
+        default=False,
+        title="K1 S5 W4: DLQ replay endpoint @require_role admin + audit-event",
+        description=(
+            "K1 Sprint 5 Wave 4. Owner: K1 Security. ETA: S5-W4. "
+            "Активирует RBAC-проверку для /api/v1/admin/dlq/replay endpoint: "
+            "@require_role('admin') + audit-event + @capability_guarded. "
+            "default-OFF до интеграции с CasbinAuthorizationService и smoke-теста."
+        ),
+    )
+
+    inbox_audit_pii_mask: bool = Field(
+        default=False,
+        title="K1 S5 W5: Inbox dedup audit с PII masking через presidio",
+        description=(
+            "K1 Sprint 5 Wave 5. Owner: K1 Security. ETA: S5-W5. "
+            "Активирует PII-маскировку (presidio) для audit-записей Inbox dedup. "
+            "default-OFF до интеграции с PresidioAnalyzer и audit_events."
+        ),
+    )
+
+    # ─── Sprint 5 — К2 Resilience+Perf ────────────────────────────────────
+    dlq_unified_enabled: bool = Field(
+        default=False,
+        title="K2 S5 W2: DLQ transport-agnostic facade + Postgres dlq_events",
+        description=(
+            "K2 Sprint 5 Wave 2. Owner: K2 Resilience. ETA: S5-W2. "
+            "Активирует UnifiedDeadLetterQueue (core/messaging/dlq.py) + "
+            "Postgres-table dlq_events(transport,action,payload,error,...) + "
+            "REST /api/v1/admin/dlq/replay + DSL .dlq(target,max_attempts). "
+            "default-OFF до миграции существующих transport-specific DLQ."
+        ),
+    )
+
+    inbox_fail_closed: bool = Field(
+        default=False,
+        title="K2 S5 W3: Inbox dedup fail-closed (Redis-error → InboxUnavailable)",
+        description=(
+            "K2 Sprint 5 Wave 3. Owner: K2 Resilience. ETA: S5-W3. "
+            "При True seen_or_mark() поднимает InboxUnavailable при Redis-error "
+            "вместо silently-allowing duplicate. default-OFF до stress-теста."
+        ),
+    )
+
+    tenacity_finalized: bool = Field(
+        default=False,
+        title="K2 S5 W6: Tenacity unification финал (RetryPolicy/Budget → make_async_retry)",
+        description=(
+            "K2 Sprint 5 Wave 6. Owner: K2 Resilience. ETA: S5-W6. "
+            "Активирует строгий режим: legacy RetryPolicy/RetryBudget classes "
+            "поднимают DeprecationWarning. default-OFF до миграции callsites."
+        ),
+    )
+
+    per_tenant_rate_limit: bool = Field(
+        default=False,
+        title="K2 S5 W7: per-tenant namespace в RateLimiter (scope=tenant)",
+        description=(
+            "K2 Sprint 5 Wave 7. Owner: K2 Resilience. ETA: S5-W7. "
+            "Активирует scope=tenant key prefix в RateLimiter ключах. "
+            "default-OFF до интеграции с TenantContext и smoke."
+        ),
+    )
+
+    graylog_chain_enabled: bool = Field(
+        default=False,
+        title="K2 S5 W5: Graylog fallback chain (TCP→HTTPS→disk)",
+        description=(
+            "K2 Sprint 5 Wave 5. Owner: K2 Resilience. ETA: S5-W5. "
+            "Активирует graylog_chain.py — fallback при недоступности Graylog: "
+            "TCP-pool → HTTPS-batch → disk-rotating buffer. "
+            "default-OFF до прохождения chaos-теста."
+        ),
+    )
+
+    genai_chain_enabled: bool = Field(
+        default=False,
+        title="K2 S5 W5: GenAI provider fallback chain (primary→secondary→degraded)",
+        description=(
+            "K2 Sprint 5 Wave 5. Owner: K2 Resilience. ETA: S5-W5. "
+            "Активирует genai_chain.py — fallback при недоступности primary "
+            "LLM-провайдера: openai → anthropic → degraded local model. "
+            "default-OFF до интеграции с LiteLLM gateway."
+        ),
+    )
+
+    # ─── Sprint 5 — К3 DSL+Workflow ───────────────────────────────────────
+    proc_html_template: bool = Field(
+        default=False,
+        title="K3 S5 W1: HtmlTemplateProcessor (Jinja2 HTML rendering)",
+        description=(
+            "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
+            "Активирует регистрацию HtmlTemplateProcessor в ProcessorRegistry."
+        ),
+    )
+
+    proc_jsonpath: bool = Field(
+        default=False,
+        title="K3 S5 W1: JsonPathProcessor (jsonpath-ng query)",
+        description=(
+            "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
+            "Активирует JsonPathProcessor для извлечения поля по JsonPath."
+        ),
+    )
+
+    proc_jq: bool = Field(
+        default=False,
+        title="K3 S5 W1: JqProcessor (pyjq query)",
+        description=(
+            "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
+            "Активирует JqProcessor для трансформации JSON через jq DSL."
+        ),
+    )
+
+    proc_regex_extractor: bool = Field(
+        default=False,
+        title="K3 S5 W1: RegexExtractorProcessor (re.findall)",
+        description=(
+            "K3 Sprint 5 Wave 1. Owner: K3 DSL. ETA: S5-W1. "
+            "Активирует RegexExtractorProcessor (regex named-groups)."
+        ),
+    )
+
+    proc_webhook_signature: bool = Field(
+        default=False,
+        title="K3 S5 W2: WebhookSignatureProcessor (standardwebhooks HMAC verify)",
+        description=(
+            "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
+            "Активирует WebhookSignatureProcessor — HMAC-SHA256 / JWS verify "
+            "входящих webhooks (Stripe-style standardwebhooks)."
+        ),
+    )
+
+    proc_zip_archive: bool = Field(
+        default=False,
+        title="K3 S5 W2: ZipArchiveProcessor (stdlib zipfile pack/unpack)",
+        description=(
+            "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
+            "Активирует ZipArchiveProcessor — pack/unpack ZIP-архивов."
+        ),
+    )
+
+    proc_pdf_template: bool = Field(
+        default=False,
+        title="K3 S5 W2: PdfTemplateProcessor (reportlab PDF rendering)",
+        description=(
+            "K3 Sprint 5 Wave 2. Owner: K3 DSL. ETA: S5-W2. "
+            "Активирует PdfTemplateProcessor — генерация PDF из шаблона."
+        ),
+    )
+
+    proc_ldap_query: bool = Field(
+        default=False,
+        title="K3 S5 W3: LdapQueryProcessor (aioldap3 search)",
+        description=(
+            "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
+            "Активирует LdapQueryProcessor — async LDAP search через aioldap3."
+        ),
+    )
+
+    proc_webdav: bool = Field(
+        default=False,
+        title="K3 S5 W3: WebDavProcessor (webdav4 upload/download)",
+        description=(
+            "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
+            "Активирует WebDavProcessor — file операции через WebDAV."
+        ),
+    )
+
+    proc_ics_calendar: bool = Field(
+        default=False,
+        title="K3 S5 W3: IcsCalendarProcessor (ics.py calendar parse/render)",
+        description=(
+            "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
+            "Активирует IcsCalendarProcessor — iCalendar parsing/rendering."
+        ),
+    )
+
+    proc_unit_conversion: bool = Field(
+        default=False,
+        title="K3 S5 W3: UnitConversionProcessor (pint quantity convert)",
+        description=(
+            "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
+            "Активирует UnitConversionProcessor — pint-based unit conversion."
+        ),
+    )
+
+    proc_geo: bool = Field(
+        default=False,
+        title="K3 S5 W3: GeoProcessor (geopy distance/geocoding)",
+        description=(
+            "K3 Sprint 5 Wave 3. Owner: K3 DSL. ETA: S5-W3. "
+            "Активирует GeoProcessor — distance calc + geocoding (sync via thread)."
+        ),
+    )
+
+    proc_rate_convert: bool = Field(
+        default=False,
+        title="K3 S5 W4: RateConvertProcessor (currency rates через WAF httpx)",
+        description=(
+            "K3 Sprint 5 Wave 4. Owner: K3 DSL. ETA: S5-W4. "
+            "Активирует RateConvertProcessor — currency rates через "
+            "OutboundHttpClient (WAF). default-OFF до интеграции с rate-provider."
+        ),
+    )
+
+    db_call_procedure_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W8: DSL .db_call_procedure(name, params, schema)",
+        description=(
+            "K3 Sprint 5 Wave 8. Owner: K3 DSL. ETA: S5-W8. "
+            "Активирует RouteBuilder .db_call_procedure() builder method + "
+            "DbCallProcedureProcessor (asyncpg execute SP)."
+        ),
+    )
+
+    policy_chainable_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W7: .policy.cache().policy.circuit_breaker() chainable",
+        description=(
+            "K3 Sprint 5 Wave 7. Owner: K3 DSL. ETA: S5-W7. "
+            "Активирует chainable .policy.* API в RouteBuilder — composable "
+            "policies через ResilienceCoordinator."
+        ),
+    )
+
+    web_search_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W9: .web_search(engine, query, max_results) builder",
+        description=(
+            "K3 Sprint 5 Wave 9. Owner: K3 DSL. ETA: S5-W9. "
+            "Активирует RouteBuilder .web_search() поверх Tavily/Perplexity/SearXNG."
+        ),
+    )
+
+    workflow_step_log_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W11: StepAuditMiddleware → ClickHouse workflow_step_log",
+        description=(
+            "K3 Sprint 5 Wave 11. Owner: K3 DSL. ETA: S5-W11. "
+            "Активирует StepAuditMiddleware — запись step-execution в ClickHouse "
+            "workflow_step_log + OTel custom span attributes."
+        ),
+    )
+
+    workflow_dryrun_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W10: manage.py workflow dryrun (record/replay)",
+        description=(
+            "K3 Sprint 5 Wave 10. Owner: K3 DSL. ETA: S5-W10. "
+            "Активирует manage.py workflow dryrun subcommand + JSON-отчёт."
+        ),
+    )
+
+    cdc_postgres_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W5: CDC Postgres logical replication (psycopg3+pgoutput)",
+        description=(
+            "K3 Sprint 5 Wave 5. Owner: K3 DSL. ETA: S5-W5. "
+            "Активирует CdcPostgresLogicalSource + RouteBuilder .from_cdc(). "
+            "default-OFF до создания replication-slot и smoke-теста."
+        ),
+    )
+
+    result_unwrap_processor: bool = Field(
+        default=False,
+        title="K3 S5 W12: ResultUnwrapProcessor (result>=0.17 monad)",
+        description=(
+            "K3 Sprint 5 Wave 12. Owner: K3 DSL. ETA: S5-W12. "
+            "Активирует ResultUnwrapProcessor — Ok/Err handling в pipeline."
+        ),
+    )
+
+    blueprint_cdc_enrich: bool = Field(
+        default=False,
+        title="K3 S5 W6: Blueprint cdc_enrich",
+        description=(
+            "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
+            "Активирует blueprint cdc_enrich (cdc → enrich → publish)."
+        ),
+    )
+
+    blueprint_ai_pipeline: bool = Field(
+        default=False,
+        title="K3 S5 W6: Blueprint ai_pipeline",
+        description=(
+            "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
+            "Активирует blueprint ai_pipeline (input → preprocess → llm → validate → output)."
+        ),
+    )
+
+    blueprint_saga_compensation: bool = Field(
+        default=False,
+        title="K3 S5 W6: Blueprint saga_with_compensation",
+        description=(
+            "K3 Sprint 5 Wave 6. Owner: K3 DSL. ETA: S5-W6. "
+            "Активирует blueprint saga_with_compensation (steps + compensate stages)."
+        ),
+    )
+
+    taskgroup_processors: bool = Field(
+        default=False,
+        title="K3 S5 W13: asyncio.TaskGroup migration в parallel/streaming/batch",
+        description=(
+            "K3 Sprint 5 Wave 13. Owner: K3 DSL. ETA: S5-W13. "
+            "Активирует TaskGroup-based реализацию в processors. "
+            "default-OFF до перформанс-baseline diff."
+        ),
+    )
+
+    invoke_workflow_reply_enabled: bool = Field(
+        default=False,
+        title="K3 S5 W14: .invoke_workflow reply-channels (correlation_id routing)",
+        description=(
+            "K3 Sprint 5 Wave 14. Owner: K3 DSL. ETA: S5-W14. "
+            "Активирует reply-channel routing через correlation_id для "
+            "async-api/signal modes invoke_workflow."
+        ),
+    )
+
+    # ─── Sprint 5 — К4 AI+RAG ─────────────────────────────────────────────
+    rag_cache_l3_retrieval_invalidation: bool = Field(
+        default=False,
+        title="K4 S5 W1: L3 retrieval cache + Redis pub/sub invalidation",
+        description=(
+            "K4 Sprint 5 Wave 1. Owner: K4 AI/RAG. ETA: S5-W1. "
+            "Активирует L3 retrieval-graph cache + cross-instance invalidation "
+            "через Redis pub/sub (расширение существующего L1+L2)."
+        ),
+    )
+
+    multimodal_rag_docling: bool = Field(
+        default=False,
+        title="K4 S5 W3: Multimodal RAG (docling + PaddleOCR/EasyOCR)",
+        description=(
+            "K4 Sprint 5 Wave 3. Owner: K4 AI/RAG. ETA: S5-W3. "
+            "Активирует MultimodalRAGService с docling document parsing и "
+            "PaddleOCR fallback для scan-PDF."
+        ),
+    )
+
+    langgraph_postgres_checkpoint: bool = Field(
+        default=False,
+        title="K4 S5 W2: LangGraph Postgres checkpoints (AsyncPostgresSaver)",
+        description=(
+            "K4 Sprint 5 Wave 2. Owner: K4 AI/RAG. ETA: S5-W2. "
+            "Активирует AsyncPostgresSaver для LangGraph state persistence."
+        ),
+    )
+
+    dsl_expose_mcp: bool = Field(
+        default=False,
+        title="K4 S5 W8: DSL expose_mcp = true в route.toml + MCP auto-registration",
+        description=(
+            "K4 Sprint 5 Wave 8. Owner: K4 AI/RAG. ETA: S5-W8. "
+            "Активирует expose_mcp директиву в route.toml для автоматической "
+            "регистрации route как MCP tool."
+        ),
+    )
+
+    rlm_hierarchical_memory: bool = Field(
+        default=False,
+        title="K4 S5 W4: RLM-toolkit MemGPT-style hierarchical memory",
+        description=(
+            "K4 Sprint 5 Wave 4. Owner: K4 AI/RAG. ETA: S5-W4. "
+            "Активирует RLM hierarchical memory (working/recall/archival tiers)."
+        ),
+    )
+
+    unmask_pii_enabled: bool = Field(
+        default=False,
+        title="K4 S5 W6: .unmask_pii (vault-key restore) processor",
+        description=(
+            "K4 Sprint 5 Wave 6. Owner: K4 AI/RAG. ETA: S5-W6. "
+            "Активирует UnmaskPiiProcessor — обратная операция к mask_pii через vault-key."
+        ),
+    )
+
+    mem0ai_enabled: bool = Field(
+        default=False,
+        title="K4 S5 W5: mem0ai memory backend для DSL .memory_*",
+        description=(
+            "K4 Sprint 5 Wave 5. Owner: K4 AI/RAG. ETA: S5-W5. "
+            "Активирует mem0ai backend для DSL .memory_write/.memory_read."
+        ),
+    )
+
+    langfuse_mcp_prompt: bool = Field(
+        default=False,
+        title="K4 S5 W8: LangFuse prompts → @mcp.prompt auto-registration",
+        description=(
+            "K4 Sprint 5 Wave 8. Owner: K4 AI/RAG. ETA: S5-W8. "
+            "Активирует автоматическую регистрацию LangFuse prompts как MCP prompts."
+        ),
+    )
+
+    # ─── Sprint 5 — К5 Frontend ───────────────────────────────────────────
+    frontend_workflow_logs_page: bool = Field(
+        default=False,
+        title="K5 S5 W1: Streamlit 50_Workflow_Logs.py + APIClient list_step_logs",
+        description=(
+            "K5 Sprint 5 Wave 1. Owner: K5 Frontend. ETA: S5-W1. "
+            "Активирует страницу 50_Workflow_Logs.py — фильтр workflow/tenant/date "
+            "+ st.dataframe events + waterfall chart + drill-down."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

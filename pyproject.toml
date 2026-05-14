@@ -217,6 +217,51 @@ docs = [
     "sphinx-copybutton>=0.5,<1",
     "pydata-sphinx-theme>=0.16.0,<1.0.0",
 ]
+# Sprint 5 — DSL расширения batch 2: webhook signature / pdf / template / archive.
+# Все зависимости pure-Python (либо имеют готовые wheels) и совместимы с Python 3.14.
+# Lazy-import внутри процессоров; extra нужен только при реальном использовании.
+dsl-extras-2 = [
+    "standardwebhooks>=1.0.0,<2.0.0",
+    "reportlab>=4.0.0,<5.0.0",
+    "pyjq>=2.6.0,<3.0.0",
+]
+# Sprint 5 — DSL расширения batch 3: LDAP / WebDAV / geo conversions.
+# aioldap3 и webdav4 — async клиенты, geopy — синхронный (use в thread executor).
+dsl-extras-3 = [
+    "aioldap3>=1.0.0,<2.0.0",
+    "webdav4>=0.10.0,<1.0.0",
+    "geopy>=2.4.0,<3.0.0",
+]
+# Sprint 5 — Workflow Result-monad для безопасного error-handling в processors.
+# rustedpy/result — typed Result[T, E] с методами is_ok/unwrap/map/and_then.
+result-monad = [
+    "result>=0.17.0,<1.0.0",
+]
+# Sprint 5 — Web Search providers: Tavily + Perplexity SDK (optional).
+# httpx-based clients, lazy-import; SearXNG уже доступен через httpx-сырой клиент.
+search-providers = [
+    "tavily-python>=0.5.0,<1.0.0",
+]
+# Sprint 5 — DOCX template engine (Word reports с подстановкой контекста).
+# python-docx уже в основных deps; docxtpl расширяет шаблонизацией Jinja2.
+doc-templates = [
+    "docxtpl>=0.18.0,<1.0.0",
+    "xlsxwriter>=3.2.0,<4.0.0",
+]
+# Sprint 5 — К4 RAG memory layer (optional providers).
+# mem0ai — managed memory layer для AI agents (long-term episodic + semantic).
+# langchain-postgres — PostgresSaver для LangGraph checkpoints.
+ai-memory = [
+    "mem0ai>=0.1.0,<1.0.0",
+    "langchain-postgres>=0.0.10,<1.0.0",
+]
+# Sprint 5 — Multimodal RAG (PDF/image OCR и docling parsing).
+# docling — IBM Research document parser (PDF/DOCX → structured Markdown).
+# paddleocr — fallback OCR для scan-PDF; alternative: easyocr (lazy-выбор).
+multimodal-rag = [
+    "docling>=2.0.0,<3.0.0",
+    "paddleocr>=2.8.0,<4.0.0",
+]
 
 [dependency-groups]
 dev = [
