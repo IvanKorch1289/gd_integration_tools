@@ -71,6 +71,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    connection_reuse_manager: bool = Field(
+        default=False,
+        title="K2: ConnectionReuseManager (idle ping + auto-recycle по lifetime)",
+        description=(
+            "K2 Wave 2. Owner: K2 Resilience. ETA: S3-W2. "
+            "Активирует ConnectionReuseManager: проверку lifetime и idle-ping "
+            "перед возвратом connection из pool. При False acquire() возвращает "
+            "pool-объект без дополнительных проверок (нулевой overhead). "
+            "default-OFF до интеграции в reference pools и staging-smoke."
+        ),
+    )
+
     waf_outbound_via_facade: bool = Field(
         default=False,
         title="WAF: внешние HTTP через OutboundHttpClient",
