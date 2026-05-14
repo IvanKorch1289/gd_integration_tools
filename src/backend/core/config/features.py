@@ -60,6 +60,17 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     # ─── K2 — Net & WAF ────────────────────────────────────────────────────
+    metering_per_host: bool = Field(
+        default=False,
+        title="K2: per-host outbound metering (request_count, error_rate, p50/p95)",
+        description=(
+            "K2 Wave 1. Owner: K2 Net&WAF. ETA: S3-W1. "
+            "Активирует PerHostMeter — rolling-window (1000 obs) метрики "
+            "по каждому host: request_count, error_count, p50/p95 latency_ms. "
+            "default-OFF до staging-smoke и интеграции с OutboundHttpClient."
+        ),
+    )
+
     waf_outbound_via_facade: bool = Field(
         default=False,
         title="WAF: внешние HTTP через OutboundHttpClient",
