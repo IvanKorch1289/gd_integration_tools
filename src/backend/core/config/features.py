@@ -319,6 +319,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K3 — GraphQL Subscription Source ─────────────────────────────────
+    graphql_subscription_source: bool = Field(
+        default=False,
+        title="K3: GraphQL subscription source (@strawberry.subscription via WebSocket)",
+        description=(
+            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
+            "Активирует GraphQLSubscriptionSource — async-генератор событий "
+            "из GraphQL WebSocket-подписок (протокол graphql-ws, библиотека gql). "
+            "default-OFF до установки 'gql[websockets]' и staging-smoke."
+        ),
+    )
+
     # ─── K3 — Email IMAP Source ────────────────────────────────────────────
     email_imap_source: bool = Field(
         default=False,
