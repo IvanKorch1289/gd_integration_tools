@@ -1,0 +1,108 @@
+# R2 Blueprint: api_normalize — CRUD pass-through pattern (Sprint 7 Team T4).
+#
+# Reference YAML-описание универсального паттерна "REST API ingestion →
+# normalize → persist через CRUD → notify webhook". Соответствует Python-
+# blueprint :func:`src.backend.dsl.blueprints.api_normalize_persist_webhook`,
+# но в декларативной форме (правило R-V15-12: универсальная формула роута).
+#
+# Pipeline steps:
+#   1. get_setting — читает source/webhook URLs из конфигурации;
+#   2. proxy/validate_request — забирает данные и валидирует входной формат;
+#   3. transform — нормализует payload к канонической форме;
+#   4. validate_response — Pydantic-проверка нормализованного объекта;
+#   5. crud_create — сохраняет в БД через универсальный CRUD-pass-through;
+#   6. publish_event — публикует "<entity>.created" в Sink;
+#   7. proxy — оповещает webhook-URL о созданной записи;
+#   8. audit — фиксирует операцию в аудит-журнале.
+#
+# Шаблон параметризован через подстановки ${blueprint.*}. Для use-case
+# подключения см. ADR-046 «R2 Blueprints catalogue» (создаётся Sprint 7).
+
+blueprint: api_normalize
+version: "1.0.0"
+description: "CRUD pass-through: внешний API → normalize → DB → webhook."
+tags: [api, normalize, crud, webhook]
+
+# ─── Параметры blueprint ──────────────────────────────────────────────
+params:
+  - name: route_id
+    type: string
+    required: true
+    description: "Уникальный ID маршрута"
+  - name: source_url_setting
+    type: string
+    required: true
+    description: "Путь до URL источника в settings (например, skb.api_url)"
+  - name: webhook_url_setting
+    type: string
+    required: true
+    description: "Путь до URL webhook в settings"
+  - name: entity
+    type: string
+    required: true
+    description: "CRUD-сущность для persist (например, orders)"
+  - name: schema
+    type: string
+    required: false
+    description: "Имя Pydantic-модели для validate_response"
+
+# ─── Route template ───────────────────────────────────────────────────
+from:
+  http:
+    method: POST
+    path: /api/v1/${blueprint.route_id}
+
+steps:
+  # 1. Получить URLs из настроек
+  - get_setting:
+      path: ${blueprint.source_url_setting}
+      to: body.source_url
+  - get_setting:
+      path: ${blueprint.webhook_url_setting}
+      to: body.webhook_url
+
+  # 2. Валидировать входной запрос
+  - validate_request:
+      schema:
+        type: object
+        properties:
+          payload: { type: object }
+        required: [payload]
+
+  # 3. Нормализация payload
+  - transform:
+      set:
+        body.normalized: ${body.payload}
+        body.normalized.source: ${body.source_url}
+
+  # 4. Validate response (опционально — если задан blueprint.schema)
+  - validate_response:
+      schema: ${blueprint.schema}
+      on_error: dlq
+
+  # 5. CRUD-сохранение
+  - crud_create:
+      entity: ${blueprint.entity}
+      body: ${body.normalized}
+
+  # 6. Publish event в Sink (Kafka/Rabbit/Redis Streams — выбор по DI)
+  - publish_event:
+      topic: "${blueprint.entity}.created"
+      payload: ${body.normalized}
+
+  # 7. Webhook notify
+  - proxy:
+      src: /internal/notify
+      dst: ${body.webhook_url}
+      method: POST
+
+  # 8. Audit
+  - audit:
+      event: "blueprint.api_normalize.${blueprint.route_id}.success"
+
+to:
+  response:
+    code: 201
+    body:
+      created_id: ${body.normalized.id}
+      entity: ${blueprint.entity}
