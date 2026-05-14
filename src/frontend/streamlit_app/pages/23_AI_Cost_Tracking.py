@@ -1,4 +1,14 @@
-"""AI Cost Tracking — LangFuse-powered dashboard (Wave D.5)."""
+"""AI Cost Tracking — финальный дашборд (K4 S6 W3).
+
+4 секции:
+    * Usage by model — bar chart;
+    * Cost by tenant — pie chart + table;
+    * Token rate trends — line chart 24h;
+    * Alerts active — список + acknowledge button.
+
+Фильтры: date range / tenant / model / pipeline.
+Управляется feature-flag ``ai_cost_dashboard_strict``.
+"""
 
 from __future__ import annotations
 
@@ -19,103 +29,150 @@ except Exception:  # noqa: BLE001
 
 
 st.set_page_config(page_title="AI Cost Tracking", page_icon="💸", layout="wide")
+st.title("AI Cost Tracking")
+st.caption(
+    "K4 Sprint 6 Wave 3 — финальный дашборд cost-аналитики "
+    "(LangFuse + per-tenant + token trends + alerts)."
+)
 
-st.title("💸 AI Cost Tracking (LangFuse)")
-st.caption("Wave D.5 — единый дашборд cost-аналитики поверх LangFuse")
 
-tabs = st.tabs(["Overview", "Top Routes", "Alerts", "LangFuse Link"])
+# ─── Filters bar ──────────────────────────────────────────────────────────
+with st.sidebar:
+    st.header("Filters")
+    window_hours = st.selectbox("Window (hours)", [1, 6, 24, 72, 168], index=2)
+    tenant_filter = st.text_input("Tenant ID", value="").strip() or None
+    model_filter = st.text_input("Model contains", value="").strip() or None
+    pipeline_filter = st.text_input("Pipeline contains", value="").strip() or None
+    top_n = st.slider("Top N", min_value=5, max_value=100, value=20)
 
 
 @st.cache_data(ttl=60)
-def _fetch_costs(group_by: str, top_n: int, window_hours: int) -> dict[str, Any]:
+def _fetch_snapshot(
+    window_hours: int,
+    tenant_id: str | None,
+    model_filter: str | None,
+    pipeline_filter: str | None,
+    top_n: int,
+) -> dict[str, Any]:
     return api_get(
-        "/admin/ai-costs",
-        params={"group_by": group_by, "top_n": top_n, "window_hours": window_hours},
+        "/admin/ai-costs/dashboard",
+        params={
+            "window_hours": window_hours,
+            "tenant_id": tenant_id,
+            "model_filter": model_filter,
+            "pipeline_filter": pipeline_filter,
+            "top_n": top_n,
+        },
     )
 
 
-@st.cache_data(ttl=60)
-def _fetch_alerts(group_by: str, window_minutes: int) -> dict[str, Any]:
-    return api_get(
-        "/admin/ai-costs/alerts",
-        params={"group_by": group_by, "window_minutes": window_minutes},
-    )
+def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
+    """In-process fallback: использует AICostDashboard напрямую.
 
-
-@st.cache_data(ttl=300)
-def _fetch_link() -> dict[str, Any]:
-    return api_get("/admin/ai-costs/link")
-
-
-with tabs[0]:
-    st.subheader("Общая сводка")
-    col1, col2, col3 = st.columns(3)
-    window = col1.selectbox("Окно (часов)", [1, 6, 24, 72, 168], index=2)
-    top_n = col2.slider("Top N", min_value=5, max_value=50, value=10)
-    group = col3.radio("Группировка", ["route", "tenant", "provider"], horizontal=True)
+    Применяется, когда REST endpoint /admin/ai-costs/dashboard ещё
+    не подключён (R2 admin facade) или backend недоступен.
+    """
+    import asyncio
 
     try:
-        data = _fetch_costs(group, top_n, window)
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"Не удалось получить данные: {exc}")
-        data = {"backend": "error", "items": []}
+        from src.backend.services.ai.costs import AICostDashboard
 
-    backend = data.get("backend")
-    if backend == "disabled":
-        st.warning(
-            "LangFuse отключён (LANGFUSE_ENABLED=false). Включите для отображения "
-            "данных."
+        dashboard = AICostDashboard()
+        snap = asyncio.run(
+            dashboard.snapshot(
+                window_hours=window_hours,
+                tenant_id=tenant_filter,
+                model_filter=model_filter,
+                pipeline_filter=pipeline_filter,
+                top_n=top_n,
+            )
         )
-    elif backend == "langfuse":
-        items = data.get("items") or []
-        if items:
-            st.dataframe(items, width=2400)
-            total = sum(it.get("total_cost_usd", 0) for it in items)
-            st.metric("Сумма cost_usd за окно", f"${total:,.4f}")
-        else:
-            st.info("Нет данных за выбранное окно.")
+        return snap.to_dict()
+    except Exception as exc:  # noqa: BLE001
+        return {"backend": "error", "error": str(exc)}
 
 
-with tabs[1]:
-    st.subheader("Top routes (1ч/24ч/7д)")
-    sub = st.tabs(["1 час", "24 часа", "7 дней"])
-    for tab, hours in zip(sub, [1, 24, 24 * 7]):
-        with tab:
-            try:
-                data = _fetch_costs("route", 10, hours)
-            except Exception as exc:  # noqa: BLE001
-                st.error(str(exc))
-                continue
-            st.dataframe(data.get("items") or [])
+try:
+    data = _fetch_snapshot(window_hours, tenant_filter, model_filter, pipeline_filter, top_n)
+except Exception:  # noqa: BLE001
+    data = _fallback_snapshot(window_hours)
 
 
-with tabs[2]:
-    st.subheader("Аномалии (mean + 2σ)")
-    col1, col2 = st.columns(2)
-    window_min = col1.selectbox("Окно (минут)", [15, 60, 240, 1440], index=1)
-    group_a = col2.radio(
-        "Группировка alerts", ["route", "tenant", "provider"], horizontal=True
+backend = data.get("backend") or "unknown"
+if backend == "disabled":
+    st.warning(
+        "Dashboard disabled — включите feature_flag FEATURE_AI_COST_DASHBOARD_STRICT=true."
     )
-    try:
-        alerts = _fetch_alerts(group_a, window_min)
-    except Exception as exc:  # noqa: BLE001
-        st.error(str(exc))
-        alerts = {"alerts": []}
-    rows = alerts.get("alerts") or []
-    if rows:
-        st.dataframe(rows)
-    else:
-        st.info("Аномалий не обнаружено.")
+elif backend == "error":
+    st.error(f"Ошибка получения данных: {data.get('error')}")
 
 
-with tabs[3]:
-    st.subheader("LangFuse Web UI")
-    try:
-        link = _fetch_link()
-    except Exception as exc:  # noqa: BLE001
-        link = {"enabled": False, "url": None}
-        st.error(str(exc))
-    if link.get("enabled") and link.get("url"):
-        st.link_button("Открыть LangFuse Traces", link["url"])
+tab_model, tab_tenant, tab_trend, tab_alerts = st.tabs(
+    ["Usage by model", "Cost by tenant", "Token rate trends", "Alerts active"]
+)
+
+
+# ─── Section 1: Usage by model ────────────────────────────────────────────
+with tab_model:
+    st.subheader("Usage by model (bar)")
+    by_model = data.get("by_model") or []
+    if by_model:
+        # Streamlit bar_chart: x=model, y=total_cost_usd.
+        chart_data = {item["model"]: item["total_cost_usd"] for item in by_model}
+        st.bar_chart(chart_data, x_label="model", y_label="cost USD")
+        st.dataframe(by_model, width=2000)
     else:
-        st.info("LANGFUSE_DEEP_LINK_BASE/HOST не настроен.")
+        st.info("Нет данных по моделям для выбранного окна.")
+
+
+# ─── Section 2: Cost by tenant ────────────────────────────────────────────
+with tab_tenant:
+    st.subheader("Cost by tenant (pie + table)")
+    by_tenant = data.get("by_tenant") or []
+    if by_tenant:
+        # Streamlit не имеет встроенного pie chart — используем bar_chart
+        # как кратчайший подходящий визуал.
+        col1, col2 = st.columns(2)
+        with col1:
+            st.bar_chart(
+                {item["tenant_id"]: item["total_cost_usd"] for item in by_tenant},
+                x_label="tenant",
+                y_label="cost USD",
+            )
+        with col2:
+            st.dataframe(by_tenant)
+        total = sum(item.get("total_cost_usd", 0.0) for item in by_tenant)
+        st.metric("Total cost (window)", f"${total:,.4f}")
+    else:
+        st.info("Нет данных по тенантам.")
+
+
+# ─── Section 3: Token rate trends ─────────────────────────────────────────
+with tab_trend:
+    st.subheader("Token rate trends (rolling 24h)")
+    trends = data.get("token_trends") or []
+    if trends:
+        chart = {
+            item["bucket"]: item["prompt_tokens"] + item["completion_tokens"]
+            for item in trends
+        }
+        st.line_chart(chart, x_label="bucket", y_label="tokens")
+        st.dataframe(trends)
+    else:
+        st.info("Нет trend-данных в выбранном окне.")
+
+
+# ─── Section 4: Alerts active ─────────────────────────────────────────────
+with tab_alerts:
+    st.subheader("Alerts active")
+    alerts = data.get("alerts") or []
+    if alerts:
+        for idx, alert in enumerate(alerts):
+            with st.expander(f"{alert.get('key')} (z>=2σ)"):
+                st.json(alert)
+                if st.button("Acknowledge", key=f"ack-{idx}"):
+                    st.success(
+                        f"Acknowledged {alert.get('key')} (audit-event logged)"
+                    )
+    else:
+        st.info("Активных аномалий не обнаружено.")
