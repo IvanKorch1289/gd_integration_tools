@@ -450,6 +450,29 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 4 — Workflow DSL + Capability Gate + LLM activity ─────────
+    activity_capability_gate_enabled: bool = Field(
+        default=False,
+        title="Sprint 4 Wave E: capability-проверка для Temporal activities",
+        description=(
+            "K1 Sprint 4 Wave E. Включает CapabilityGate-проверку до вызова "
+            "Temporal-activity (V15 R-V15-1). При False декоратор "
+            "capability_guarded_activity превращается в NoOp. "
+            "default-OFF до интеграции с PluginLoaderV11 runtime-контекстом."
+        ),
+    )
+
+    ai_workflow_activity_enabled: bool = Field(
+        default=False,
+        title="Sprint 4 Wave C: LLM-activity wrapper для Temporal",
+        description=(
+            "K4 Sprint 4 Wave C. Включает регистрацию llm_activity в Temporal "
+            "Worker через register_llm_activity(). При False регистрация — "
+            "NoOp; activity-функция импортируется, но не подключается. "
+            "default-OFF до staging-теста с реальным LiteLLM gateway."
+        ),
+    )
+
     # ─── K1 — Secrets & Vault ──────────────────────────────────────────────
     vault_rotation_enabled: bool = Field(
         default=False,

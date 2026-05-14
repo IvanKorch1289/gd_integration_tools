@@ -25,6 +25,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Awaitable, Callable
 
+from src.backend.core.security.activity_capability_guard import (
+    capability_guarded_activity,
+)
 from src.backend.dsl.commands.action_registry import action_handler_registry
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -40,7 +43,11 @@ __all__ = ("ActivityBridge", "bridge_action_handler", "get_activity_callables")
 _logger = logging.getLogger("workflow.compiler.activity_bridge")
 
 
-def bridge_action_handler(action_id: str) -> Callable[..., Awaitable[Any]]:
+def bridge_action_handler(
+    action_id: str,
+    *,
+    required_capabilities: tuple[str, ...] = (),
+) -> Callable[..., Awaitable[Any]]:
     """Создать activity-функцию-обёртку поверх DSL action handler.
 
     Возвращаемая функция:
@@ -53,6 +60,9 @@ def bridge_action_handler(action_id: str) -> Callable[..., Awaitable[Any]]:
 
     Args:
         action_id: Имя action (например ``orders.create``).
+        required_capabilities: Кортеж имён capability (V15 R-V15-1).
+            При непустом значении функция оборачивается через
+            :func:`capability_guarded_activity` ДО ``@activity.defn``.
 
     Returns:
         Callable, который Temporal worker может зарегистрировать как
@@ -71,6 +81,15 @@ def bridge_action_handler(action_id: str) -> Callable[..., Awaitable[Any]]:
     _activity_impl.__qualname__ = f"activity::{action_id}"
     # Сохраняем оригинальное имя — Temporal активирует activity по строке.
     _activity_impl.__activity_name__ = action_id  # type: ignore[attr-defined]
+
+    if required_capabilities:
+        # Оборачиваем capability-guard'ом ДО @activity.defn — guard
+        # должен сработать до Temporal-machinery (см. V15 R-V15-1).
+        guarded = capability_guarded_activity(required_capabilities)(_activity_impl)
+        # functools.wraps в decorator сохраняет __name__/__qualname__,
+        # но мы явно копируем Temporal-маркер для совместимости.
+        guarded.__activity_name__ = action_id  # type: ignore[attr-defined]
+        return guarded
     return _activity_impl
 
 
@@ -86,11 +105,25 @@ class ActivityBridge:
     def __init__(self) -> None:
         self._cache: dict[str, Callable[..., Awaitable[Any]]] = {}
 
-    def get(self, action_id: str) -> Callable[..., Awaitable[Any]]:
-        """Получить (или создать) activity-обёртку для ``action_id``."""
+    def get(
+        self,
+        action_id: str,
+        *,
+        required_capabilities: tuple[str, ...] = (),
+    ) -> Callable[..., Awaitable[Any]]:
+        """Получить (или создать) activity-обёртку для ``action_id``.
+
+        Args:
+            action_id: Имя action.
+            required_capabilities: Capability'и, требуемые активности.
+                Применяется только при создании новой обёртки —
+                cache-hit возвращает уже зарегистрированную callable.
+        """
         wrapper = self._cache.get(action_id)
         if wrapper is None:
-            wrapper = bridge_action_handler(action_id)
+            wrapper = bridge_action_handler(
+                action_id, required_capabilities=required_capabilities
+            )
             self._cache[action_id] = wrapper
         return wrapper
 
@@ -110,11 +143,13 @@ class ActivityBridge:
         result: list[Callable[..., Awaitable[Any]]] = []
         for decl in declarations:
             for step in decl.steps:
-                for action_id in _iter_activity_names(step):
+                for action_id, capabilities in _iter_activity_specs(step):
                     if action_id in seen:
                         continue
                     seen.add(action_id)
-                    result.append(self.get(action_id))
+                    result.append(
+                        self.get(action_id, required_capabilities=capabilities)
+                    )
         return result
 
     def decorate(self) -> None:
@@ -139,13 +174,36 @@ class ActivityBridge:
 
 
 def _iter_activity_names(step: WorkflowStep) -> list[str]:
-    """Извлечь action_id всех activity-шагов из step (включая saga-вложения)."""
+    """Извлечь action_id всех activity-шагов из step (включая saga-вложения).
+
+    Сохранён для backward-compatibility; внутренний код использует
+    :func:`_iter_activity_specs` для получения capabilities.
+    """
+    return [name for name, _ in _iter_activity_specs(step)]
+
+
+def _iter_activity_specs(
+    step: WorkflowStep,
+) -> list[tuple[str, tuple[str, ...]]]:
+    """Извлечь ``(action_id, required_capabilities)`` всех activity-шагов.
+
+    Args:
+        step: Workflow-step (activity / saga / иной).
+
+    Returns:
+        Список пар ``(action_id, capabilities-tuple)`` в порядке
+        декларации (forward → compensate для saga).
+    """
     if isinstance(step, ActivityDeclaration):
-        return [step.name]
+        return [(step.name, tuple(step.required_capabilities))]
     if isinstance(step, SagaDeclaration):
-        names = [a.name for a in step.forward]
-        names.extend(a.name for a in step.compensate)
-        return names
+        specs: list[tuple[str, tuple[str, ...]]] = [
+            (a.name, tuple(a.required_capabilities)) for a in step.forward
+        ]
+        specs.extend(
+            (a.name, tuple(a.required_capabilities)) for a in step.compensate
+        )
+        return specs
     return []
 
 
