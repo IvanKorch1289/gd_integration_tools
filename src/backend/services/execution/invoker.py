@@ -366,7 +366,14 @@ class Invoker(InvokerProtocol):
     async def _invoke_async_queue(
         self, request: InvocationRequest
     ) -> InvocationResponse:
-        """Публикует invocation в очередь TaskIQ.
+        """Публикует invocation в очередь TaskIQ или Temporal-activity.
+
+        Под flag ``feature_flags.taskiq_removed`` (default-OFF):
+        * **False** (legacy): TaskIQ-цепочка как раньше.
+        * **True** (K2 W1): callsite идёт через
+          :func:`wrap_as_temporal_activity` — direct-async-execution
+          обёрнутого action. Temporal full-blown workflow подключается
+          в Sprint 6 (R-V15-7 / V15 K6-W2).
 
         Требует опциональную установку ``taskiq``. Брокер берётся через
         :func:`src.infrastructure.execution.taskiq_broker.get_broker`.
@@ -374,6 +381,12 @@ class Invoker(InvokerProtocol):
         SYNC (см. :func:`run_taskiq_invocation`), результат публикуется в
         указанный ``reply_channel`` (по умолчанию ``api``).
         """
+        # K2 W1 (TaskIQ removal): при flag ON — Temporal-activity-adapter
+        from src.backend.core.config.features import feature_flags
+
+        if feature_flags.taskiq_removed:
+            return await self._invoke_via_temporal_adapter(request)
+
         try:
             from src.backend.core.di.providers import (
                 get_taskiq_invocation_task_provider,
@@ -409,6 +422,71 @@ class Invoker(InvokerProtocol):
             mode=request.mode,
             metadata=dict(request.metadata),
         )
+
+    async def _invoke_via_temporal_adapter(
+        self, request: InvocationRequest
+    ) -> InvocationResponse:
+        """K2 W1: Temporal-activity-adapter путь для ASYNC_QUEUE.
+
+        Wrap'ит SYNC-invoke в TemporalActivityWrapper и выполняет.
+        Reply-channel публикация остаётся синхронной — full-blown
+        Temporal workflow с durable replay добавится в Sprint 6.
+        """
+        from src.backend.core.orchestration.temporal_activity_adapter import (
+            wrap_as_temporal_activity,
+        )
+
+        channel = self._resolve_channel(
+            request.reply_channel or ReplyChannelKind.API.value
+        )
+
+        async def _execute() -> InvocationResponse:
+            return await self._invoke_sync(request)
+
+        activity = wrap_as_temporal_activity(
+            _execute, name=f"invoker.async_queue:{request.action}"
+        )
+        task = get_task_registry().create_task(
+            self._run_temporal_activity(activity, request, channel),
+            name=f"invoker:temporal-activity:{request.invocation_id}",
+        )
+        self._track(task)
+        return InvocationResponse(
+            invocation_id=request.invocation_id,
+            status=InvocationStatus.ACCEPTED,
+            mode=request.mode,
+            metadata=dict(request.metadata),
+        )
+
+    async def _run_temporal_activity(
+        self,
+        activity: Any,
+        request: InvocationRequest,
+        channel: InvocationReplyChannel | None,
+    ) -> None:
+        """Выполняет Temporal-activity wrapper и публикует результат."""
+        try:
+            response = await activity()
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "Temporal-activity invoke failed (invocation_id=%s)",
+                request.invocation_id,
+            )
+            response = InvocationResponse(
+                invocation_id=request.invocation_id,
+                status=InvocationStatus.ERROR,
+                error=f"Temporal activity failed: {exc}",
+                mode=request.mode,
+                metadata=dict(request.metadata),
+            )
+        if channel is not None:
+            try:
+                await channel.send(response)
+            except Exception:  # noqa: BLE001
+                logger.exception(
+                    "Temporal-activity: ReplyChannel.send failed (id=%s)",
+                    request.invocation_id,
+                )
 
     def _resolve_channel(self, name: str) -> InvocationReplyChannel | None:
         """Получает backend по имени (kind) или возвращает None."""

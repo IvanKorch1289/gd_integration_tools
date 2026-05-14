@@ -2235,6 +2235,8 @@ rpa = [
     { name = "playwright" },
 ]
 security = [
+    { name = "cyclonedx-bom" },
+    { name = "pip-audit" },
     { name = "presidio-analyzer" },
 ]
 sources-cdc = [
@@ -2309,6 +2311,7 @@ requires-dist = [
     { name = "cbor2", specifier = ">=5.6.0,<6.0.0" },
     { name = "chromadb", marker = "extra == 'rag'", specifier = ">=0.5.0,<2.0.0" },
     { name = "cloudevents", specifier = ">=1.10.0,<2.0.0" },
+    { name = "cyclonedx-bom", marker = "extra == 'security'", specifier = ">=4.0" },
     { name = "dask", extras = ["distributed"], specifier = ">=2026.3.0" },
     { name = "diskcache", specifier = ">=5.6.3,<6.0.0" },
     { name = "duckdb", specifier = ">=1.5.2,<2.0.0" },
@@ -2361,6 +2364,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", specifier = ">=1.30.0,<2.0.0" },
     { name = "orjson", specifier = ">=3.11.8,<4.0.0" },
     { name = "pint", marker = "extra == 'dsl-extras'", specifier = ">=0.24.0,<1.0.0" },
+    { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.7" },
     { name = "playwright", marker = "extra == 'rpa'", specifier = ">=1.48.0" },
     { name = "polars", specifier = ">=1.20.0,<2.0.0" },
     { name = "presidio-analyzer", marker = "extra == 'security'", specifier = ">=2.2.0" },

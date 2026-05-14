@@ -17,6 +17,10 @@ from src.backend.core.orchestration.human_approval import (
 from src.backend.core.orchestration.retry import RetryPolicy, RetryWithCompensation
 from src.backend.core.orchestration.saga import SagaPrimitive, SagaResult, SagaStep
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
+from src.backend.core.orchestration.temporal_activity_adapter import (
+    TemporalActivityWrapper,
+    wrap_as_temporal_activity,
+)
 
 __all__ = (
     "ApprovalDecision",
@@ -31,4 +35,6 @@ __all__ = (
     "SagaStep",
     "Sensor",
     "SensorTrigger",
+    "TemporalActivityWrapper",
+    "wrap_as_temporal_activity",
 )
