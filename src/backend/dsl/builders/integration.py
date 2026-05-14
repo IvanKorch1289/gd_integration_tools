@@ -655,6 +655,42 @@ class IntegrationMixin:
             commit=commit,
         )
 
+    # ── K3 S5 W9: web_search ──
+
+    def web_search(
+        self,
+        engine: str = "auto",
+        *,
+        query: str | None = None,
+        query_source: str | None = None,
+        max_results: int = 10,
+        to: str = "body.search_results",
+        deep_research: bool = False,
+    ) -> "RouteBuilder":
+        """K3 S5 W9 — web-поиск через WebSearchService (Tavily/Perplexity/SearXNG).
+
+        Args:
+            engine: ``tavily`` / ``perplexity`` / ``searxng`` / ``auto`` (fallback).
+            query: Прямой query (если задан).
+            query_source: ``body.<field>`` / ``properties.<name>`` для query.
+            max_results: Максимум результатов.
+            to: Куда положить результат.
+            deep_research: Использовать deep_research().
+
+        Returns:
+            ``RouteBuilder`` для chain-продолжения.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
+            "src.backend.dsl.engine.processors.web_search",
+            "WebSearchProcessor",
+            engine=engine,
+            query=query,
+            query_source=query_source,
+            max_results=max_results,
+            to=to,
+            deep_research=deep_research,
+        )
+
     # ── K3 S5 W8: db_call_procedure ──
 
     def db_call_procedure(
