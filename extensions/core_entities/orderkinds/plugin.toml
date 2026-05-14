@@ -1,0 +1,26 @@
+# V11 plugin manifest — extensions/core_entities/orderkinds
+# Sprint 7 (R-V15-16): миграция CRUD-ресурса OrderKind из ядра в extensions/.
+#
+# Формат: ADR-042 (plugin.toml schema), ADR-044 (capability vocabulary).
+
+name = "core_entities_orderkinds"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.core_entities.orderkinds.plugin.OrderKindsPlugin"
+tenant_aware = false
+description = "OrderKind CRUD plugin (migrated from src/backend/services/core/orderkinds.py per R-V15-16)"
+
+# ─── Runtime capabilities (capability-gate) ───────────────────────
+# db.read/db.write — ExactAliasMatcher, scope = имя ресурса (см. ADR-044).
+[[capabilities]]
+name = "db.read"
+scope = "orderkinds"
+
+[[capabilities]]
+name = "db.write"
+scope = "orderkinds"
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+repositories = ["orderkinds"]
+schemas = ["OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut"]
