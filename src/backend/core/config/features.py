@@ -319,6 +319,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    service_toml_loader: bool = Field(
+        default=False,
+        title="K3: service.toml loader + ServiceDSLRegistry",
+        description=(
+            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
+            "Активирует загрузку manifest'ов *.service.toml из extensions/ "
+            "и регистрацию ServiceSpec в ServiceDSLRegistry singleton. "
+            "При False register() — no-op. "
+            "default-OFF до интеграции с auto-registration в plugin-loader."
+        ),
+    )
+
     # ─── K3 — GraphQL Subscription Source ─────────────────────────────────
     graphql_subscription_source: bool = Field(
         default=False,

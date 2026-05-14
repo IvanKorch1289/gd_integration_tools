@@ -32,9 +32,17 @@ from src.backend.dsl.workflow.spec import (
     WorkflowDeclaration,
     WorkflowStep,
 )
+from src.backend.dsl.workflow.yaml_io import (
+    FeatureDisabledError,
+    WorkflowDiff,
+    diff,
+    from_yaml,
+    to_yaml,
+)
 
 __all__ = (
     "ActivityDeclaration",
+    "FeatureDisabledError",
     "RetryPolicy",
     "SagaBuilder",
     "SagaDeclaration",
@@ -43,5 +51,9 @@ __all__ = (
     "SleepDeclaration",
     "WorkflowBuilder",
     "WorkflowDeclaration",
+    "WorkflowDiff",
     "WorkflowStep",
+    "diff",
+    "from_yaml",
+    "to_yaml",
 )
