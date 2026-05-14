@@ -1,0 +1,19 @@
+{
+  "name": "credit_scoring_baseline",
+  "train": [
+    {"income_rub": 80000, "credit_score": 750, "expected": {"decision": "approve", "score": 750}},
+    {"income_rub": 30000, "credit_score": 450, "expected": {"decision": "reject", "score": 450}},
+    {"income_rub": 50000, "credit_score": 620, "expected": {"decision": "approve", "score": 620}},
+    {"income_rub": 70000, "credit_score": 580, "expected": {"decision": "review", "score": 580}},
+    {"income_rub": 40000, "credit_score": 510, "expected": {"decision": "review", "score": 510}},
+    {"income_rub": 90000, "credit_score": 720, "expected": {"decision": "approve", "score": 720}},
+    {"income_rub": 25000, "credit_score": 480, "expected": {"decision": "reject", "score": 480}},
+    {"income_rub": 100000, "credit_score": 800, "expected": {"decision": "approve", "score": 800}}
+  ],
+  "eval": [
+    {"income_rub": 60000, "credit_score": 650, "expected": {"decision": "approve", "score": 650}},
+    {"income_rub": 35000, "credit_score": 490, "expected": {"decision": "reject", "score": 490}},
+    {"income_rub": 75000, "credit_score": 700, "expected": {"decision": "approve", "score": 700}},
+    {"income_rub": 45000, "credit_score": 540, "expected": {"decision": "review", "score": 540}}
+  ]
+}
