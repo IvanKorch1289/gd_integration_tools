@@ -104,6 +104,18 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     # ─── K5 — DSL ──────────────────────────────────────────────────────────
+    frontend_schema_registry_ui: bool = Field(
+        default=False,
+        title="Frontend: Schema Registry UI (6-tab viewer)",
+        description=(
+            "K5 Wave 1. Owner: K5 DSL. ETA: S3-W1. "
+            "Активирует страницу 40_Schema_Registry.py — 6-tab viewer "
+            "(OpenAPI / WSDL / XSD / Protobuf / AsyncAPI / GraphQL SDL) "
+            "с Download / Validate / Diff. "
+            "default-OFF до staging-smoke + интеграции с Schema-registry RAM (R1)."
+        ),
+    )
+
     dsl_processor_registry_strict: bool = Field(
         default=False,
         title="DSL: ProcessorRegistry strict mode (отказ при missing schema)",
