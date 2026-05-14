@@ -952,6 +952,123 @@ def workflow_import(
         typer.echo(json.dumps(declaration.model_dump(mode="json"), indent=2, ensure_ascii=False))
 
 
+@workflow_app.command("dryrun")
+def workflow_dryrun(
+    file: Path = typer.Option(..., "--file", help="Путь до BPMN/YAML файла workflow."),
+    fmt: str = typer.Option(
+        "yaml", "--format", help="Формат входного файла: bpmn | yaml."
+    ),
+    input: str | None = typer.Option(  # noqa: A002
+        None, "--input", help="JSON входные данные для workflow."
+    ),
+    record: bool = typer.Option(
+        False, "--record", help="Записать trace в .dryrun_trace.json."
+    ),
+    replay: Path | None = typer.Option(
+        None, "--replay", help="Путь до .dryrun_trace.json для replay-режима."
+    ),
+    out: Path | None = typer.Option(
+        None, "--out", help="Сохранить JSON-отчёт в файл (default — stdout)."
+    ),
+) -> None:
+    """K3 S5 W10 — workflow dryrun: симуляция выполнения без подключения к Temporal.
+
+    Возвращает JSON-отчёт со списком activities + signals + timer-fires + state
+    transitions. Поддерживает три режима:
+
+    * нормальный: симуляция с input через детерминированный fake-runtime;
+    * ``--record``: записывает trace в ``.dryrun_trace.json`` для regression-тестов;
+    * ``--replay <file>``: повторяет ранее записанный trace (fail-on-mismatch).
+
+    Под feature flag ``feature_flags.workflow_dryrun_enabled`` (default-OFF).
+
+    Args:
+        file: Путь до workflow YAML/BPMN.
+        fmt: Формат (bpmn|yaml).
+        input: JSON-payload входа.
+        record: Записать trace.
+        replay: Replay из существующего trace.
+        out: Куда сохранить отчёт.
+    """
+    import json
+
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        if not feature_flags.workflow_dryrun_enabled:
+            typer.echo(
+                "WARN: feature_flags.workflow_dryrun_enabled = False; "
+                "выполняется в read-only режиме (без записи trace).",
+                err=True,
+            )
+    except Exception:  # noqa: BLE001
+        pass
+
+    if not file.exists():
+        typer.echo(f"ERR: файл не найден: {file}", err=True)
+        raise typer.Exit(code=2)
+
+    content = file.read_text(encoding="utf-8")
+
+    if fmt == "bpmn":
+        from src.backend.dsl.workflow.bpmn_importer import import_bpmn
+
+        declaration = import_bpmn(content, check_feature_flag=False)
+    elif fmt == "yaml":
+        from src.backend.dsl.workflow.yaml_io import from_yaml
+
+        declaration = from_yaml(content)
+    else:
+        typer.echo(f"ERR: неизвестный формат: {fmt!r}", err=True)
+        raise typer.Exit(code=2)
+
+    input_data: dict = {}
+    if input:
+        try:
+            input_data = json.loads(input)
+        except json.JSONDecodeError as exc:
+            typer.echo(f"ERR: --input не валидный JSON: {exc}", err=True)
+            raise typer.Exit(code=2)
+
+    # Запуск симуляции (lazy-import чтобы не подтягивать temporal SDK).
+    from src.backend.dsl.workflow.dryrun import run_workflow_dryrun
+
+    report = run_workflow_dryrun(
+        declaration=declaration,
+        input_data=input_data,
+    )
+
+    if record:
+        trace_path = Path(".dryrun_trace.json")
+        trace_path.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
+        typer.echo(f"Trace записан в {trace_path}")
+
+    if replay is not None:
+        if not replay.exists():
+            typer.echo(f"ERR: replay-файл не найден: {replay}", err=True)
+            raise typer.Exit(code=2)
+        expected = json.loads(replay.read_text(encoding="utf-8"))
+        if expected.get("activities") != report.get("activities"):
+            typer.echo(
+                f"FAIL: replay mismatch! activities differ:\n"
+                f"  expected: {expected.get('activities')}\n"
+                f"  got:      {report.get('activities')}",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        typer.echo("OK: replay matches recorded trace")
+
+    output = json.dumps(report, indent=2, ensure_ascii=False, default=str)
+    if out is not None:
+        out.write_text(output, encoding="utf-8")
+        typer.echo(f"Отчёт сохранён в {out}")
+    else:
+        typer.echo(output)
+
+
 # ────────────── Plugin runtime (Sprint 7 T5) ──────────────
 
 
