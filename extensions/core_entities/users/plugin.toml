@@ -1,0 +1,25 @@
+# V11 plugin manifest — extensions/core_entities/users
+# Sprint 7 (R-V15-16): миграция CRUD-ресурса User из ядра в extensions/.
+#
+# Формат: ADR-042 (plugin.toml schema), ADR-044 (capability vocabulary).
+
+name = "core_entities_users"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+entry_class = "extensions.core_entities.users.plugin.UsersPlugin"
+tenant_aware = false
+description = "User CRUD plugin (migrated from src/backend/services/core/users.py per R-V15-16)"
+
+# ─── Runtime capabilities (capability-gate) ───────────────────────
+[[capabilities]]
+name = "db.read"
+scope = "users"
+
+[[capabilities]]
+name = "db.write"
+scope = "users"
+
+# ─── Декларативный inventory ──────────────────────────────────────
+[provides]
+repositories = ["users"]
+schemas = ["UserSchemaIn", "UserSchemaOut", "UserVersionSchemaOut"]

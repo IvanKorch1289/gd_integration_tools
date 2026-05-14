@@ -1,73 +1,24 @@
-from typing import Any
+"""Backward-compat shim для UserRepository (Sprint 7, R-V15-16).
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+Канонический модуль теперь — ``extensions.core_entities.users.repositories.users``
+(см. R-V15-16: миграция CRUD-ресурсов из ядра в extensions/). Этот shim
+сохраняется на 1 minor-цикл и эмитит DeprecationWarning.
+"""
 
-from src.backend.core.errors import DatabaseError
-from src.backend.infrastructure.database.models.users import User
-from src.backend.infrastructure.database.session_manager import main_session_manager
-from src.backend.infrastructure.repositories.base import SQLAlchemyRepository
+from __future__ import annotations
+
+import warnings
+
+from extensions.core_entities.users.repositories.users import (
+    UserRepository,
+    get_user_repo,
+)
 
 __all__ = ("UserRepository", "get_user_repo")
 
-
-class UserRepository(SQLAlchemyRepository):
-    """
-    Репозиторий для работы с таблицей пользователей (User).
-
-    Атрибуты:
-        model (type[User]): Модель таблицы пользователей.
-        load_joined_models (bool): Флаг для загрузки связанных моделей (по умолчанию False).
-    """
-
-    def __init__(self, model: Any = User, load_joined_models: bool = False) -> None:
-        """
-        Инициализация репозитория.
-
-        Args:
-            model: Модель таблицы пользователей.
-            load_joined_models: Флаг для загрузки связанных моделей.
-        """
-        super().__init__(model=model, load_joined_models=load_joined_models)
-
-    @main_session_manager.connection()
-    async def get_by_username(
-        self, session: AsyncSession, data: dict[str, Any]
-    ) -> User | None:
-        """
-        Получает пользователя по имени (username).
-
-        Args:
-            session: Асинхронная сессия SQLAlchemy.
-            data: Словарь с данными, содержащими имя пользователя.
-
-        Returns:
-            User | None: Объект пользователя или None.
-
-        Raises:
-            DatabaseError: Если произошла ошибка при получении пользователя.
-        """
-        try:
-            unsecret_data = await self.model.get_value_from_secret_str(data)
-
-            query = select(self.model).where(
-                self.model.username == unsecret_data["username"]
-            )
-
-            result = await session.execute(query)
-            return result.scalars().one_or_none()
-        except Exception as exc:
-            raise DatabaseError from exc
-
-
-_user_repo_instance: UserRepository | None = None
-
-
-def get_user_repo() -> UserRepository:
-    """
-    Возвращает экземпляр репозитория для работы с пользователями.
-    """
-    global _user_repo_instance
-    if _user_repo_instance is None:
-        _user_repo_instance = UserRepository(model=User, load_joined_models=False)
-    return _user_repo_instance
+warnings.warn(
+    "src.backend.infrastructure.repositories.users устарел; используйте "
+    "extensions.core_entities.users.repositories.users (R-V15-16).",
+    DeprecationWarning,
+    stacklevel=2,
+)
