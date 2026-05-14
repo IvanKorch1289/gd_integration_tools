@@ -498,6 +498,20 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 7 T5 — External feature-flag provider ─────────────────────
+    openfeature_external: bool = Field(
+        default=False,
+        title="Sprint 7 T5: OpenFeature external provider (Flagsmith)",
+        description=(
+            "Sprint 7 Team T5. Owner: T5 Plugin/Platform. ETA: S7. "
+            "При True FlagsmithProvider начинает резолвить feature-flag из "
+            "external Flagsmith instance (per-tenant scope через "
+            "EvaluationContext). При False — все resolve_* возвращают default, "
+            "приложение использует только локальный feature_flags.<name>. "
+            "default-OFF до развёртывания Flagsmith instance и smoke-теста."
+        ),
+    )
+
     # ─── K1 — Plugin semver ────────────────────────────────────────────────
     plugin_semver_strict: bool = Field(
         default=False,
