@@ -498,6 +498,46 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 7 K1 — per-tenant billing/quotas ──────────────────────────
+    per_tenant_billing_enabled: bool = Field(
+        default=False,
+        title="K1 S7: per-tenant billing/quotas (rpm/rpd/tokens/cost_usd)",
+        description=(
+            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
+            "Активирует QuotasService (src/backend/services/billing/) и "
+            "QuotaCheckMiddleware (src/backend/core/auth/quotas.py) — "
+            "проверку per-tenant rpm/rpd/tokens/cost_usd на HTTP-уровне. "
+            "При False сервис превращается в no-op (allowed=True для всех). "
+            "default-OFF до интеграции с TenantContext + Redis backend и smoke."
+        ),
+    )
+
+    supply_chain_finale_strict: bool = Field(
+        default=False,
+        title="K1 S7: supply-chain finale (cosign sign для SBOM+wheels+image)",
+        description=(
+            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
+            "Активирует strict-режим supply-chain-finale в "
+            "tools/checks/check_supply_chain.py — cosign-sign для всех "
+            "release-артефактов (SBOM, dist/*.whl, container image при "
+            "наличии docker buildx). default-OFF до проверки полного pipeline "
+            "и signing keys readiness."
+        ),
+    )
+
+    openfeature_flagsmith_backend: bool = Field(
+        default=False,
+        title="K1 S7: OpenFeature SDK через FlagsmithProvider (external)",
+        description=(
+            "K1 Sprint 7. Owner: K1 Security. ETA: S7. "
+            "Активирует миграцию feature-flag backend с InMemoryProvider на "
+            "external Flagsmith через core/feature_flags/openfeature_provider.py. "
+            "Управляется ENV FEATURE_FLAG_BACKEND=flagsmith. При False — "
+            "in-memory provider (поведение совпадает с локальным реестром). "
+            "default-OFF до развёртывания Flagsmith instance в staging."
+        ),
+    )
+
     # ─── Sprint 7 T5 — External feature-flag provider ─────────────────────
     openfeature_external: bool = Field(
         default=False,
