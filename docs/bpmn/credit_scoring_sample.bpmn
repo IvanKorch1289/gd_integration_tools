@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_credit_scoring"
+                  targetNamespace="http://gd_integration_tools/sprint4/bpmn">
+  <bpmn:process id="credit_scoring" name="Credit Scoring Workflow" isExecutable="true">
+    <bpmn:startEvent id="start_event_1" name="Start"/>
+
+    <bpmn:serviceTask id="task_validate_input" name="validate_input"/>
+    <bpmn:serviceTask id="task_fetch_credit_bureau" name="fetch_credit_bureau"/>
+
+    <bpmn:exclusiveGateway id="gateway_score_threshold" name="score_threshold"/>
+
+    <bpmn:serviceTask id="task_approve" name="approve_application"/>
+    <bpmn:serviceTask id="task_reject" name="reject_application"/>
+
+    <bpmn:endEvent id="end_event_approved" name="Approved"/>
+    <bpmn:endEvent id="end_event_rejected" name="Rejected"/>
+
+    <bpmn:sequenceFlow id="flow_1" sourceRef="start_event_1" targetRef="task_validate_input"/>
+    <bpmn:sequenceFlow id="flow_2" sourceRef="task_validate_input" targetRef="task_fetch_credit_bureau"/>
+    <bpmn:sequenceFlow id="flow_3" sourceRef="task_fetch_credit_bureau" targetRef="gateway_score_threshold"/>
+    <bpmn:sequenceFlow id="flow_4_high" name="score >= 700" sourceRef="gateway_score_threshold" targetRef="task_approve">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${score} >= 700</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_4_low" name="score &lt; 700" sourceRef="gateway_score_threshold" targetRef="task_reject">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${score} &lt; 700</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_5" sourceRef="task_approve" targetRef="end_event_approved"/>
+    <bpmn:sequenceFlow id="flow_6" sourceRef="task_reject" targetRef="end_event_rejected"/>
+  </bpmn:process>
+</bpmn:definitions>

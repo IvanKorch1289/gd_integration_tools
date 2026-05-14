@@ -895,5 +895,62 @@ def _bootstrap():
         )
 
 
+workflow_app = typer.Typer(help="Workflow DSL management (Sprint 4).")
+app.add_typer(workflow_app, name="workflow")
+
+
+@workflow_app.command("import")
+def workflow_import(
+    file: Path = typer.Option(..., "--file", help="Путь до BPMN/YAML файла."),
+    fmt: str = typer.Option(
+        "bpmn", "--format", help="Формат входного файла: bpmn | yaml."
+    ),
+    name: str | None = typer.Option(None, "--name", help="Имя workflow (override)."),
+    show: bool = typer.Option(
+        False, "--show", help="Вывести JSON-представление workflow в stdout."
+    ),
+) -> None:
+    """Импорт workflow из BPMN 2.0 или YAML в WorkflowCompilerRegistry (Sprint 4 Wave B).
+
+    Поддерживает форматы:
+        * ``bpmn`` — BPMN 2.0 XML через :mod:`dsl.workflow.bpmn_importer`.
+        * ``yaml`` — YAML-декларация через :mod:`dsl.workflow.yaml_io`.
+
+    Args:
+        file: Путь к файлу.
+        fmt: Формат (bpmn | yaml).
+        name: Опц. имя workflow (override default).
+        show: Если True — печатает model_dump в stdout.
+    """
+    if not file.exists():
+        typer.echo(f"ERR: файл не найден: {file}", err=True)
+        raise typer.Exit(code=2)
+
+    content = file.read_text(encoding="utf-8")
+
+    if fmt == "bpmn":
+        from src.backend.dsl.workflow.bpmn_importer import import_bpmn
+
+        declaration = import_bpmn(content, name=name, check_feature_flag=False)
+    elif fmt == "yaml":
+        from src.backend.dsl.workflow.yaml_io import from_yaml
+
+        declaration = from_yaml(content)
+        if name is not None:
+            declaration = declaration.model_copy(update={"name": name})
+    else:
+        typer.echo(f"ERR: неизвестный формат: {fmt!r} (ожидалось bpmn|yaml)", err=True)
+        raise typer.Exit(code=2)
+
+    typer.echo(
+        f"Workflow импортирован: name={declaration.name!r}, "
+        f"steps={len(declaration.steps)}, version={declaration.version}"
+    )
+    if show:
+        import json
+
+        typer.echo(json.dumps(declaration.model_dump(mode="json"), indent=2, ensure_ascii=False))
+
+
 if __name__ == "__main__":
     app()
