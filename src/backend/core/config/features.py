@@ -305,15 +305,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    # ─── K3 — NATS JetStream DSL ───────────────────────────────────────────
-    nats_jetstream_dsl: bool = Field(
+    # ─── K3 — Builder source-сахар ────────────────────────────────────────
+    builder_source_sugar: bool = Field(
         default=False,
-        title="K3: NATS JetStream DSL (.from_nats_js / .to_nats_js)",
+        title="K3: Builder source-сахар (.from_kafka/.from_rabbit/.from_mqtt/...)",
         description=(
-            "K3 Wave 2. Owner: K3 DSL. ETA: S3-W2. "
-            "Активирует NATSJetStreamSource + NATSJetStreamSink и DSL-методы "
-            ".from_nats_js() / .to_nats_js() в RouteBuilder. "
-            "default-OFF до добавления 'nats-py>=2.7' в S3 Wave 3 cutover и staging-smoke."
+            "K3 Wave 5. Owner: K3 DSL. ETA: S3-W5. "
+            "Активирует 8 classmethod'ов-фабрик SourcesMixin: "
+            "from_cdc / from_kafka / from_rabbit / from_mqtt / "
+            "from_redis_streams / from_filewatcher / from_webhook / from_schedule. "
+            "При False методы работают в режиме совместимости (строковый source DSN). "
+            "default-OFF до интеграции с SourceRegistry и staging-smoke."
         ),
     )
 
