@@ -7,7 +7,8 @@
         sbom audit-deps audit-zap bandit-strict security security-full \
         cosign-sign \
         check-feature-flags check-team-ownership \
-        team-worktree team-worktree-list team-worktree-remove
+        team-worktree team-worktree-list team-worktree-remove \
+        check-plugin-semver check-plugin-semver-strict
 
 check-waf-coverage: ## К1 V15 R-V15-5 — все :external HTTP идут через OutboundHttpClient
 	@$(INFO) "Проверка WAF coverage (V15 R-V15-5)..."
@@ -78,6 +79,18 @@ security: secrets-check sbom audit-deps bandit-strict ## К10 S2 V15.3 — compo
 
 security-full: security audit-zap ## К10 S2 V15.3 — security composite + OWASP ZAP (требует running backend на BASE_URL)
 	@$(SUCCESS) "security-full gate OK (incl. ZAP)"
+
+##@ К1 — Plugin semver (K1 S3 W5)
+
+check-plugin-semver: ## К1 S3 W5: semver-проверка всех plugin.toml манифестов
+	@$(INFO) "Проверка semver plugin.toml манифестов (R-V15-1)..."
+	@$(UV_RUN) python tools/checks/check_plugin_semver.py --plugins-dir extensions/
+	@$(SUCCESS) "plugin semver check passed"
+
+check-plugin-semver-strict: ## К1 S3 W5: strict-режим semver-проверки (requires_core верхний bound обязателен)
+	@$(INFO) "Проверка semver plugin.toml манифестов (strict)..."
+	@$(UV_RUN) python tools/checks/check_plugin_semver.py --plugins-dir extensions/ --strict
+	@$(SUCCESS) "plugin semver strict-check passed"
 
 ##@ К10 — Sprint 2 platform coordination gates
 

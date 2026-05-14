@@ -437,6 +437,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K1 — Plugin semver ────────────────────────────────────────────────
+    plugin_semver_strict: bool = Field(
+        default=False,
+        title="K1: Plugin semver strict-режим (requires_core обязан иметь верхний bound)",
+        description=(
+            "K1 Wave 5 (S3-W5). Owner: K1 Plugin/Platform. ETA: S3-W5. "
+            "При True check_plugin_semver() и semver_checker дополнительно проверяют, "
+            "что requires_core содержит явный верхний ограничитель (<X.Y или ~=X.Y). "
+            "default-OFF до завершения аудита всех plugin.toml манифестов."
+        ),
+    )
+
     # ─── K1 — Auth ─────────────────────────────────────────────────────────
     auth_joserfc: bool = Field(
         default=False,
