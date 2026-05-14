@@ -266,3 +266,154 @@ dod = [
     "ADR-0053 переведён в Accepted",
     "staging-smoke результаты в vault/2026-XX-waf-phase2-rollout.md",
 ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sprint 6 ownership (K1-K5 по PLAN.md:613-623, started 2026-05-14)
+# Параллельно с Sprint 5 K1-K10 (S2-S5) и Sprint 7 T1-T5 (worktree migration).
+# ─────────────────────────────────────────────────────────────────────────────
+
+[meta_s6]
+version = "2026-05-14"
+sprint = "S6"
+source = "PLAN.md V18.1 §6 Sprint 6 — Performance+Chaos+Coverage+Security+OLE/COM+Observability"
+plan_file = "~/.claude/plans/effervescent-herding-fairy.md"
+
+[team_s6.k1]
+name = "S6 K1 — Security (SAML/AD/Supply-chain/ZAP/Audits)"
+git_branch_prefix = "team/s6-k1-security"
+worktree_branch = "team/s6-k1-security"
+wave_prefix = "s6/k1-"
+goal = "SAML+AD финал, supply-chain полный CI gate, OWASP ZAP, custom-code-audit, codeclone strict, per-host metering финал."
+owned_paths = [
+    "src/backend/core/auth/saml_backend.py",
+    "src/backend/services/auth/**",
+    "src/backend/core/net/metering.py",
+    "tools/checks/check_owasp_zap.py",
+    "tools/checks/check_codeclone.py",
+    "tools/checks/check_custom_code.py",
+    "tools/checks/check_supply_chain.py",
+    "tools/checks/check_bandit_tls.py",
+    ".github/workflows/security.yml",
+    "Makefile.security",
+    "tests/unit/core/auth/test_saml_*.py",
+    "tests/integration/auth/test_ad_integration.py",
+    "tests/security/**",
+]
+forbidden_paths = [
+    "src/backend/dsl/workflow/**",       # S4
+    "src/backend/infrastructure/temporal/**",  # S4
+    "src/backend/services/ai/**",        # S5 K4 активно
+    "extensions/**",                     # S7 T1-T3
+    "plugins/composition/**",            # S7 T5
+]
+
+[team_s6.k2]
+name = "S6 K2 — Resilience+Performance (perf-gate/Granian/health/backpressure/schemathesis)"
+git_branch_prefix = "team/s6-k2-resilience-perf"
+worktree_branch = "team/s6-k2-resilience-perf"
+wave_prefix = "s6/k2-"
+goal = "k6+locust perf-suite, Granian RSGI ADR, DB pool tuning, structlog batching, processor-specific health, backpressure, schemathesis, service-doc gate."
+owned_paths = [
+    "src/backend/core/resilience/backpressure*.py",
+    "src/backend/core/scaling/granian_tuning.py",
+    "src/backend/infrastructure/observability/structlog_batching.py",
+    "src/backend/infrastructure/logging/backends/**",
+    "src/backend/services/ops/health.py",
+    "src/backend/core/config/database.py",
+    "tests/perf/**",
+    "tests/chaos/test_backpressure*.py",
+    "tools/perf_gate.py",
+    "tools/granian_runner.py",
+    "tools/checks/check_service_docs.py",
+    "tools/api_fuzz_runner.py",
+    "docs/adr/0059-granian-rsgi-production.md",
+    "docker-compose.perf.yml",
+    ".github/workflows/perf-gate.yml",
+    ".github/workflows/api-fuzz.yml",
+]
+forbidden_paths = [
+    "src/backend/dsl/workflow/**",
+    "src/backend/infrastructure/temporal/**",
+    "src/backend/core/auth/**",
+    "extensions/**",
+    "plugins/composition/**",
+    "src/backend/infrastructure/messaging/outbox_dispatcher.py",  # S5 K2 owns
+]
+
+[team_s6.k3]
+name = "S6 K3 — DSL+Workflow (e2e×6/coverage/banking-tests/DSL Linter/COM-sidecar)"
+git_branch_prefix = "team/s6-k3-dsl-workflow"
+worktree_branch = "team/s6-k3-dsl-workflow"
+wave_prefix = "s6/k3-"
+goal = "e2e один action × 6 протоколов, coverage gate ≥70%, banking-processors тесты (12), DSL Linter CLI + LSP, COM Windows sidecar."
+owned_paths = [
+    "src/backend/dsl/cli/linter.py",
+    "src/backend/dsl/cli/lsp_server.py",
+    "src/backend/dsl/engine/processors/com_call.py",
+    "src/backend/services/rpa/com_sidecar_client.py",
+    "windows-sidecar/**",
+    "docker-compose.windows-worker.yml",
+    "tests/e2e/test_action_six_protocols.py",
+    "tests/unit/dsl/cli/**",
+    "tests/unit/dsl/engine/processors/banking/**",
+]
+forbidden_paths = [
+    "src/backend/dsl/workflow/**",
+    "src/backend/infrastructure/temporal/**",
+    "src/backend/services/ai/**",
+    "src/backend/dsl/engine/processors/ai*.py",
+    "src/backend/core/auth/**",
+    "src/backend/core/net/**",
+    "extensions/**",
+    "plugins/composition/**",
+]
+
+[team_s6.k4]
+name = "S6 K4 — AI+Quality (Inspect AI eval/DSPy/AI cost dashboard финал)"
+git_branch_prefix = "team/s6-k4-ai-quality"
+worktree_branch = "team/s6-k4-ai-quality"
+wave_prefix = "s6/k4-"
+goal = "Inspect AI nightly regression, DSPy для critical pipelines, AI cost dashboard финал."
+owned_paths = [
+    "src/backend/services/ai/eval/**",
+    "src/backend/services/ai/dspy/**",
+    "src/backend/services/ai/costs/dashboard.py",
+    "src/frontend/streamlit_app/pages/23_AI_Cost_Tracking.py",
+    "tests/unit/services/ai/eval/**",
+    "tests/unit/services/ai/dspy/**",
+    "tests/integration/ai/test_dspy_pipelines.py",
+    ".github/workflows/ai-eval-nightly.yml",
+]
+forbidden_paths = [
+    "src/backend/services/ai/agents/**",         # S5 K4
+    "src/backend/services/ai/agents_pydantic/**", # S5 K4
+    "src/backend/services/ai/gateway/**",         # S5 K4
+    "src/backend/dsl/engine/processors/ai*.py",
+    "src/backend/core/auth/**",
+    "extensions/**",
+    "plugins/composition/**",
+]
+
+[team_s6.k5]
+name = "S6 K5 — Frontend+Chaos+Observability (33 chaos-tests/DLQ-replay UI/Resilience Dashboard/Grafana)"
+git_branch_prefix = "team/s6-k5-frontend-chaos"
+worktree_branch = "team/s6-k5-frontend-chaos"
+wave_prefix = "s6/k5-"
+goal = "33 chaos-теста (11 chains × 3 сценария), DLQ-replay UI, Resilience Dashboard, Pool Monitor, 5 Grafana dashboards."
+owned_paths = [
+    "tests/chaos/test_*_chain.py",
+    "src/frontend/streamlit_app/pages/13_Resilience_Dashboard.py",
+    "src/frontend/streamlit_app/pages/14_DLQ_Replay.py",
+    "src/frontend/streamlit_app/pages/15_Pool_Monitor.py",
+    "src/backend/infrastructure/observability/grafana/**",
+    "src/backend/core/messaging/outbox.py",    # Protocol+Fake stub для DLQ UI
+    "testkit/chaos_fixtures.py",
+]
+forbidden_paths = [
+    "src/frontend/streamlit_app/pages/80_Admin_Models.py",  # S7 T4
+    "src/frontend/streamlit_app/pages/30_Files_S3.py",      # S7 T4
+    "src/frontend/streamlit_app/pages/50_Workflow_Logs.py", # S7 T4
+    "extensions/**",                                          # S7 T1-T3
+    "plugins/composition/**",                                 # S7 T5
+    "src/backend/infrastructure/messaging/outbox_dispatcher.py",  # S5 K2
+]

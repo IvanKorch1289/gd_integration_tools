@@ -394,3 +394,65 @@ External research (2026-05-13) подтвердил:
 `services/workflows/**`, `core/workflow/**`, `services/ai/**`, `core/auth/**`,
 `core/net/**`, `dsl/engine/processors/ai*.py`,
 `plugins/composition/lifecycle.py`, `tools/checks/check_waf_coverage.py`.
+
+---
+
+## Sprint 6 запуск (2026-05-14, координатор-3)
+
+5 worktree-команд параллельно по PLAN.md §6 (`Sprint 6 — Performance + Chaos +
+Coverage + Security + OLE/COM + Observability`). Запуск **параллельно** с
+текущим Sprint 5 (доделывается параллельной командой) и Sprint 7 (T1-T5
+worktree миграция). Каждая команда работает в изолированном worktree через
+Agent с `isolation: "worktree"`, делает intermediate commits после каждой
+завершённой задачи. Pipeline-mode: координатор делает ff-merge / cherry-pick
+в master без блокирующего подтверждения.
+
+**Полный план**: `~/.claude/plans/effervescent-herding-fairy.md`.
+
+| Team | Branch | Скоуп |
+|---|---|---|
+| K1 | `team/s6-k1-security` | SAML+AD финал, supply-chain полный CI gate, OWASP ZAP, custom-code-audit, codeclone strict, per-host metering финал (6 wave) |
+| K2 | `team/s6-k2-resilience-perf` | k6+locust perf-suite, Granian RSGI ADR, DB pool tuning, structlog batching, processor-specific health, backpressure, schemathesis, service-doc gate (8 wave) |
+| K3 | `team/s6-k3-dsl-workflow` | e2e один action × 6 протоколов, coverage gate ≥70%, banking-processors тесты (12), DSL Linter CLI + LSP, COM Windows sidecar (5 wave) |
+| K4 | `team/s6-k4-ai-quality` | Inspect AI nightly eval, DSPy для critical pipelines, AI cost dashboard финал (3 wave) |
+| K5 | `team/s6-k5-frontend-chaos` | 33 chaos-теста (11 chains × 3 сценария), DLQ-replay UI, Resilience Dashboard, Pool Monitor, 5 Grafana dashboards (5 wave) |
+
+**Backbone-commit** перед запуском агентов (выполнен координатором):
+- `src/backend/core/config/features.py` — 21 новый default-OFF feature-flag (S6 K1-K5)
+- `.claude/team-ownership.toml` — раздел `[team_s6.k1]`..`[team_s6.k5]` с `owned_paths` + `forbidden_paths`
+- `.claude/KNOWN_ISSUES.md` — этот раздел
+- Wave-тег: `[wave:s6/backbone]`
+
+**Уже досрочно закрытые задачи Sprint 6** (A-фаза 2026-05-14):
+- ✅ `[wave:s6/msgspec-benchmark]` (`3743c574`)
+- ✅ `[wave:s6/layer-violations-facade]` (`6b818829`)
+
+**S5→S6 stub-контракты** (Protocol+Fake в `core/`, реальная impl в `infrastructure/` от S5 K2):
+- `OutboxBackend` (`core/messaging/outbox.py`) — для K5 DLQ-replay UI и K2 perf-gate
+- `AsyncQueueBackend` (`core/orchestration/async_queue.py`) — для K2 perf-gate
+- `RetryEngine` (`core/resilience/retry.py`) — для K2 если Tenacity ещё не unified
+
+Каждый stub имеет соответствующий `FakeXxx` для тестов; DI переключает на
+реальную имплементацию через feature-flag когда S5 K2 закоммитит её в master.
+
+**S4-охраняемые файлы + S7-захваченные пути** — см. `forbidden_paths` в
+`.claude/team-ownership.toml::[team_s6.kN]`. Ключевые ограничения:
+- `dsl/workflow/**`, `infrastructure/workflow/**`, `infrastructure/temporal/**` — S4 closed но активная пост-завершительная подчистка K3/K4
+- `services/ai/agents*/`, `services/ai/gateway/` — S5 K4 owns
+- `infrastructure/messaging/outbox_dispatcher.py` — S5 K2 owns
+- `extensions/**`, `plugins/composition/**` — S7 T1-T5 owns
+- `pages/{30_Files_S3,50_Workflow_Logs,80_Admin_Models}.py` — S7 T4 owns
+
+**DoD Sprint 6** (по PLAN.md:623):
+- [ ] p95<200ms / RPS>1000 — baseline зафиксирован, gate warn-only
+- [ ] 33 chaos-теста зелёные (локально blocking, CI warn-only)
+- [ ] coverage ≥70% (BLOCKING)
+- [ ] SAML+AD логин
+- [ ] SBOM в каждом релизе
+- [ ] OWASP ZAP gate зелёный (warn-only)
+- [ ] codeclone gate `--fail-on-new-clones`
+- [ ] COM-sidecar тест на Windows (или mock)
+- [ ] CI docs-gate зелёный
+- [ ] schemathesis в CI (warn-only)
+- [x] msgspec hotpath benchmark задокументирован (`vault/benchmark-2026-05-14-msgspec.md`)
+- [x] layer-violations через `services/dsl_portal/` фасад → 0
