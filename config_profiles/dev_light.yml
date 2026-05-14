@@ -49,10 +49,21 @@ database:
   name: "dev"
   ssl_mode: null
   ca_bundle: null
+  # Sprint 6 K2: dev_light pool tuning — минимум, pool_pre_ping для SQLite
+  # излишен (нет network), но оставляем default-true для единообразия.
+  pool_size: 3
+  max_overflow: 2
+  pool_recycle: 3600
+  pool_timeout: 30
+  pool_pre_ping: false
+  pool_use_lifo: true
 
 
 external_databases:
   connections: []
+  pool_size: 2
+  max_overflow: 2
+  pool_pre_ping: false
 
 
 redis:

@@ -154,10 +154,15 @@ database:
   async_driver: "asyncpg"
   sync_driver: "psycopg2"
   echo: false
+  # Sprint 6 K2 (V15 R-V15-14): per-environment pool tuning матрица.
+  # Базовые defaults подходят для staging; dev_light/dev/prod переопределяют
+  # в своих overlay-файлах. pool_pre_ping=true обязателен под нагрузкой.
   pool_size: 10
   max_overflow: 10
   pool_recycle: 1800
   pool_timeout: 30
+  pool_pre_ping: true
+  pool_use_lifo: true
   connect_timeout: 10
   command_timeout: 30
   max_retries: 0

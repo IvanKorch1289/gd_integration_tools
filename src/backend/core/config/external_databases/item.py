@@ -165,6 +165,17 @@ class ExternalDatabaseItemSettings(BaseModel):
         examples=[30],
     )
 
+    pool_pre_ping: bool | None = Field(
+        default=None,
+        title="Pool pre-ping override",
+        description=(
+            "Sprint 6 K2: переопределение SQLAlchemy ``pool_pre_ping`` для "
+            "конкретного external connection. None — используется defaults "
+            "из registry. True/False — explicit override."
+        ),
+        examples=[True],
+    )
+
     connect_timeout: int | None = Field(
         default=None,
         title="Таймаут подключения",

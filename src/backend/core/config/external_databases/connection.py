@@ -64,6 +64,17 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         ..., description="Таймаут ожидания пула подключений", examples=[30]
     )
 
+    pool_pre_ping: bool = Field(
+        default=True,
+        title="Pool pre-ping",
+        description=(
+            "Sprint 6 K2: SQLAlchemy ``pool_pre_ping`` для resolved-config "
+            "external connection. Перед выдачей connection из pool выполняется "
+            "SELECT 1 для отсева умерших соединений (V15 R-V15-14)."
+        ),
+        examples=[True],
+    )
+
     connect_timeout: int = Field(
         ...,
         title="Таймаут подключения",

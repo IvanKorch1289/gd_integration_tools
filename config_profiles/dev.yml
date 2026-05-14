@@ -44,6 +44,13 @@ database:
   name: "main_db"
   ssl_mode: "prefer"
   ca_bundle: null
+  # Sprint 6 K2: dev pool tuning — минимум для разработки.
+  pool_size: 5
+  max_overflow: 5
+  pool_recycle: 1800
+  pool_timeout: 30
+  pool_pre_ping: true
+  pool_use_lifo: true
 
 
 external_databases:

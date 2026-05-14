@@ -62,6 +62,17 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         ..., description="Таймаут ожидания пула подключений по умолчанию", examples=[30]
     )
 
+    pool_pre_ping: bool = Field(
+        default=True,
+        title="Pool pre-ping (default)",
+        description=(
+            "Sprint 6 K2: SQLAlchemy ``pool_pre_ping`` default для всех "
+            "external_databases connections. Может переопределяться "
+            "per-connection через ExternalDatabaseItemSettings."
+        ),
+        examples=[True],
+    )
+
     connect_timeout: int = Field(
         ...,
         title="Таймаут подключения",
@@ -178,6 +189,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
             "max_overflow",
             "pool_recycle",
             "pool_timeout",
+            "pool_pre_ping",
             "connect_timeout",
             "command_timeout",
             "ssl_mode",

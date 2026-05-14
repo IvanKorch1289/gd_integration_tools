@@ -35,12 +35,22 @@ database:
   name: "main_db"
   ssl_mode: "require"
   ca_bundle: null
+  # Sprint 6 K2: staging pool tuning — половина prod-объёма.
+  pool_size: 15
+  max_overflow: 10
+  pool_recycle: 1800
+  pool_timeout: 15
+  pool_pre_ping: true
+  pool_use_lifo: true
 
 
 external_databases:
   ssl_mode: "require"
   ca_bundle: null
   connections: []
+  pool_size: 8
+  max_overflow: 5
+  pool_pre_ping: true
 
 
 redis:

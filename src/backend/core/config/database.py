@@ -118,6 +118,31 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         ..., description="Таймаут ожидания пула подключений", examples=[30]
     )
 
+    pool_pre_ping: bool = Field(
+        default=True,
+        title="Pool pre-ping",
+        description=(
+            "Sprint 6 K2: SQLAlchemy ``pool_pre_ping`` (V15 R-V15-14). При "
+            "True перед выдачей connection из pool выполняется лёгкий ping "
+            "(SELECT 1) для отсева умерших соединений. Рекомендован для "
+            "production (нагрузочные DB через proxy/load-balancer). На dev_light "
+            "можно отключить для убыстрения startup."
+        ),
+        examples=[True],
+    )
+
+    pool_use_lifo: bool = Field(
+        default=True,
+        title="Pool LIFO order",
+        description=(
+            "Sprint 6 K2: SQLAlchemy ``pool_use_lifo=True`` использует "
+            "недавно освобождённый connection (вместо FIFO). Под нагрузкой "
+            "снижает количество одновременных активных connections и "
+            "уменьшает recycle pressure."
+        ),
+        examples=[True],
+    )
+
     connect_timeout: int = Field(
         ...,
         title="Таймаут подключения",
