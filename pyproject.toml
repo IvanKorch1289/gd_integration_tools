@@ -104,6 +104,13 @@ ai = [
     # Lazy-import внутри infrastructure/ai/e2b_sandbox.py; при отсутствии
     # пакета или E2B_API_KEY используется NoOpSandbox (явный отказ).
     "e2b-code-interpreter>=1.0.0,<3.0.0",
+    # K4 Sprint 6: AI evaluation framework + prompt optimization.
+    # inspect-ai — UK AI Safety Institute eval framework (suites, scorers).
+    # dspy-ai — Stanford DSPy programming model для LLM pipeline optimization.
+    # Lazy-import внутри services/ai/eval/ и services/ai/dspy/;
+    # отсутствие пакетов не ломает CLI (skip-режим).
+    "inspect-ai>=0.3",
+    "dspy-ai>=2.5",
 ]
 security = [
     "presidio-analyzer>=2.2.0",
