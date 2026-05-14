@@ -183,6 +183,17 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    admin_marketplace_endpoints: bool = Field(
+        default=False,
+        title="Admin: Action-Bus + Plugin-Marketplace REST endpoints",
+        description=(
+            "K5 Wave 4. Owner: K5 DSL. ETA: S3-W4. "
+            "Активирует /api/v1/admin/actions/* и /api/v1/admin/plugins/* — "
+            "backend endpoints для Streamlit 50_Action_Bus.py + 60_Plugin_Marketplace.py. "
+            "default-OFF до staging-smoke и интеграции с ActionHandlerRegistry + PluginLoader."
+        ),
+    )
+
     # ─── K6 — AI ───────────────────────────────────────────────────────────
     search_provider_searxng: bool = Field(
         default=False,
