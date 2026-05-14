@@ -270,6 +270,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    multimodal_rag_enabled: bool = Field(
+        default=False,
+        title="AI: MultimodalRAG (text + image + audio embeddings и retrieval)",
+        description=(
+            "K6 Wave 4 (K4 W4 early scaffold). Owner: K4 AI/Data. ETA: S3-W4. "
+            "Активирует MultimodalRAGService: ingestion трёх модальностей "
+            "(text/image/audio) и семантический retrieval с modality filter. "
+            "В scaffold-версии: dummy 384-dim embeddings + in-memory store. "
+            "Production: CLIP (image) + Whisper→text (audio) + BGE-M3 (text). "
+            "default-OFF до ML-deps stabilization и staging-smoke."
+        ),
+    )
+
     taskiq_removed: bool = Field(
         default=False,
         title="AI/Infrastructure: TaskIQ полностью удалён (R-V15-7)",
