@@ -4,8 +4,8 @@
 # таргеты — read-only (анализ кодовой базы), не модифицируют состояние.
 
 .PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
-        sbom audit-deps audit-zap bandit-strict security security-full \
-        cosign-sign \
+        sbom audit-deps audit-zap bandit-strict bandit-tls security security-full \
+        cosign-sign supply-chain-strict supply-chain-strict-fast \
         check-feature-flags check-team-ownership \
         team-worktree team-worktree-list team-worktree-remove \
         check-plugin-semver check-plugin-semver-strict
@@ -79,6 +79,23 @@ security: secrets-check sbom audit-deps bandit-strict ## К10 S2 V15.3 — compo
 
 security-full: security audit-zap ## К10 S2 V15.3 — security composite + OWASP ZAP (требует running backend на BASE_URL)
 	@$(SUCCESS) "security-full gate OK (incl. ZAP)"
+
+##@ К1 S6 — supply-chain полный CI gate (wave [s6/k1-supply-chain-full-gate])
+
+bandit-tls: ## К1 S6: bandit с TLS-specific rules (B501-B507) high-severity only
+	@$(INFO) "Running bandit-TLS (B501-B507 high-severity)..."
+	@$(UV_RUN) python tools/checks/check_bandit_tls.py
+	@$(SUCCESS) "bandit-TLS clean"
+
+supply-chain-strict: ## К1 S6: полный supply-chain gate (SBOM + pip-audit ERROR + bandit-TLS + cosign)
+	@$(INFO) "Running supply-chain strict gate (SBOM + pip-audit + bandit-TLS + cosign)..."
+	@$(UV_RUN) python tools/checks/check_supply_chain.py
+	@$(SUCCESS) "supply-chain strict gate passed"
+
+supply-chain-strict-fast: ## К1 S6: быстрый supply-chain (SBOM + bandit-TLS, без pip-audit и cosign)
+	@$(INFO) "Running supply-chain fast gate (SBOM + bandit-TLS only)..."
+	@$(UV_RUN) python tools/checks/check_supply_chain.py --skip-pip-audit --skip-cosign
+	@$(SUCCESS) "supply-chain fast gate passed"
 
 ##@ К1 — Plugin semver (K1 S3 W5)
 
