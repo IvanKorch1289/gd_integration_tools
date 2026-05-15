@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# gd_integration_tools — server-side pre-receive docstring gate.
+#
+# Wave: [wave:s8/k1-pre-receive-docstring]
+# Назначение: блокировать push коммитов без русскоязычного docstring у
+# новых публичных def/class в защищённых каталогах:
+#   * src/backend/core/**
+#   * src/backend/dsl/engine/**
+#   * src/backend/core/interfaces/**
+#
+# Контекст: дублирует локальный pre-push hook (.pre-commit-config.yaml) на
+# стороне git-сервера (GitHub Enterprise / GitLab Omnibus / Gitea), чтобы
+# исключить обход через `git push --no-verify`.
+#
+# Контракт STDIN (git pre-receive):
+#   <oldrev> <newrev> <refname>\n
+#   ...
+#
+# Зависимости: bash 4+, git, python3, доступ к репозиторию проекта
+# (PROJECT_DIR — env-переменная, задаётся при установке хука).
+#
+# Behaviour:
+#   * exit 0 — все проверки прошли (или нет файлов в scope);
+#   * exit 1 — найдены новые публичные def/class без docstring.
+# ---------------------------------------------------------------------------
+
+set -euo pipefail
+
+# ---- Конфигурация (можно переопределить через env при установке) -----------
+# PROJECT_DIR — абсолютный путь к рабочей копии проекта на git-сервере.
+# Должен содержать tools/check_docstrings.py.
+PROJECT_DIR="${GD_PROJECT_DIR:-${PWD}}"
+PYTHON_BIN="${GD_PYTHON_BIN:-python3}"
+CHECKER_REL="tools/check_docstrings.py"
+
+# Шаблоны защищённых путей (POSIX-совместимый glob через case).
+# Любой *.py файл, чей путь начинается с одного из этих префиксов —
+# попадает в scope.
+SCOPE_PREFIXES=(
+    "src/backend/core/"
+    "src/backend/dsl/engine/"
+    "src/backend/core/interfaces/"
+)
+
+ZERO_REV="0000000000000000000000000000000000000000"
+
+err() {
+    printf '\033[31m[pre-receive] %s\033[0m\n' "$*" >&2
+}
+
+info() {
+    printf '\033[36m[pre-receive] %s\033[0m\n' "$*" >&2
+}
+
+# ---- Sanity-check окружения ------------------------------------------------
+if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+    err "Не найден интерпретатор Python (${PYTHON_BIN})."
+    err "Установите python3 на git-сервере или задайте GD_PYTHON_BIN."
+    exit 1
+fi
+
+if [[ ! -f "${PROJECT_DIR}/${CHECKER_REL}" ]]; then
+    err "Не найден ${CHECKER_REL} в ${PROJECT_DIR}."
+    err "Задайте GD_PROJECT_DIR на корень рабочей копии проекта."
+    exit 1
+fi
+
+# Проверяет, попадает ли путь в scope защищённых каталогов.
+in_scope() {
+    local path="$1"
+    local prefix
+    for prefix in "${SCOPE_PREFIXES[@]}"; do
+        if [[ "${path}" == "${prefix}"* && "${path}" == *.py ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Собирает список изменённых .py-файлов в scope для одного push'а ветки.
+# Аргументы: oldrev newrev refname
+collect_changed_files() {
+    local oldrev="$1"
+    local newrev="$2"
+    local refname="$3"
+    local raw_diff
+    local revs
+
+    if [[ "${newrev}" == "${ZERO_REV}" ]]; then
+        # Удаление ветки — нечего проверять.
+        return 0
+    fi
+
+    if [[ "${oldrev}" == "${ZERO_REV}" ]]; then
+        # Новая ветка: ищем коммиты, ещё не достижимые из других ref'ов.
+        # ``--not --branches --tags --remotes`` исключает все существующие
+        # heads/tags/remotes, кроме самого ``refname`` (если он уже
+        # успел появиться в ``--all`` к моменту запуска hook'а).
+        # Если результат пуст (первый коммит в репо или ref уже учтён),
+        # используем diff против "пустого дерева" — список всех файлов
+        # самого ``newrev``.
+        revs=$(git rev-list "${newrev}" --not \
+            --exclude="${refname}" --branches --tags --remotes 2>/dev/null || true)
+        if [[ -n "${revs}" ]]; then
+            # shellcheck disable=SC2086
+            raw_diff=$(git diff-tree --no-commit-id --name-only -r --diff-filter=AM \
+                ${revs} 2>/dev/null | sort -u || true)
+        else
+            # Empty tree SHA (deterministic in git): diff против пустого
+            # дерева даёт полный список файлов в ``newrev``.
+            local empty_tree
+            empty_tree=$(git hash-object -t tree /dev/null 2>/dev/null \
+                || echo "4b825dc642cb6eb9a060e54bf8d69288fbee4904")
+            raw_diff=$(git diff --name-only --diff-filter=AM \
+                "${empty_tree}" "${newrev}" 2>/dev/null || true)
+        fi
+    else
+        raw_diff=$(git diff --name-only --diff-filter=AM "${oldrev}..${newrev}" \
+            2>/dev/null || true)
+    fi
+
+    local file
+    while IFS= read -r file; do
+        [[ -z "${file}" ]] && continue
+        if in_scope "${file}"; then
+            printf '%s\n' "${file}"
+        fi
+    done <<< "${raw_diff}"
+}
+
+# ---- Основной цикл по push-операциям ---------------------------------------
+declare -a all_files=()
+overall_ok=1
+
+while read -r oldrev newrev refname; do
+    info "Проверка ${refname}: ${oldrev:0:12}..${newrev:0:12}"
+
+    # mapfile нужен для bash 4+; Tip-of-tree git-серверов это поддерживают.
+    mapfile -t scoped < <(collect_changed_files "${oldrev}" "${newrev}" "${refname}")
+
+    if [[ ${#scoped[@]} -eq 0 ]]; then
+        info "  → файлы вне scope, пропускаем."
+        continue
+    fi
+
+    info "  → файлов в scope: ${#scoped[@]}"
+    all_files+=("${scoped[@]}")
+done
+
+if [[ ${#all_files[@]} -eq 0 ]]; then
+    info "Нет защищённых .py-файлов в push'е — gate пропускаем."
+    exit 0
+fi
+
+# ---- Уникализация и запуск чекера ------------------------------------------
+# Дедупликация (на случай совпадений между ветками одного push'а).
+mapfile -t unique_files < <(printf '%s\n' "${all_files[@]}" | sort -u)
+
+info "Запуск check_docstrings.py --strict для ${#unique_files[@]} файлов..."
+
+# Передаём список через stdin (--files -) чтобы избежать ARG_MAX-лимита.
+if printf '%s\n' "${unique_files[@]}" \
+    | (cd "${PROJECT_DIR}" && "${PYTHON_BIN}" "${CHECKER_REL}" --strict --files -); then
+    info "OK: все публичные def/class документированы."
+    exit 0
+else
+    overall_ok=0
+fi
+
+if [[ ${overall_ok} -eq 0 ]]; then
+    err "------------------------------------------------------------"
+    err "Push отклонён: обнаружены публичные def/class без docstring."
+    err "Защищённые каталоги: ${SCOPE_PREFIXES[*]}"
+    err ""
+    err "Что делать:"
+    err "  1. Добавьте русскоязычный Google-style docstring к новой"
+    err "     функции / методу / классу из списка выше."
+    err "  2. При намеренной амнистии — добавьте запись в"
+    err "     tools/check_docstrings_allowlist.txt и закоммитьте."
+    err "  3. Локально проверьте через:"
+    err "       python tools/check_docstrings.py --strict --files <path>"
+    err ""
+    err "Обход через --no-verify на push НЕ работает — этот gate живёт"
+    err "на стороне git-сервера."
+    err "------------------------------------------------------------"
+    exit 1
+fi

@@ -782,6 +782,28 @@ wave-memory: ## Generate post-wave memory note skeleton (NAME=<slug> [TYPE=feedb
 	$(UV_RUN) python3 tools/wave_memory.py --name "$(NAME)" --type "$(or $(TYPE),feedback)"
 
 # ---------------------------------------------------------------------- #
+# Sprint 8 K1 — server-side pre-receive docstring gate.                  #
+# Использование: make install-pre-receive REMOTE=/path/to/repo.git       #
+# Копирует tools/git_hooks/pre-receive в hooks/ указанной remote-копии.   #
+# ---------------------------------------------------------------------- #
+.PHONY: install-pre-receive
+
+install-pre-receive: ## К1 S8 — установить pre-receive docstring gate на git-сервере (REMOTE=path)
+	@if [ -z "$(REMOTE)" ]; then \
+		printf '\033[31mERROR: REMOTE=<path> обязателен.\033[0m\n'; \
+		printf 'Пример: make install-pre-receive REMOTE=/srv/git/gd_integration_tools.git\n'; \
+		exit 2; \
+	fi
+	@if [ ! -d "$(REMOTE)/hooks" ]; then \
+		printf '\033[31mERROR: $(REMOTE)/hooks не существует. Это bare-репозиторий?\033[0m\n'; \
+		exit 2; \
+	fi
+	@$(INFO) "Устанавливаю pre-receive hook в $(REMOTE)/hooks/..."
+	cp tools/git_hooks/pre-receive "$(REMOTE)/hooks/pre-receive"
+	chmod +x "$(REMOTE)/hooks/pre-receive"
+	@$(SUCCESS) "Pre-receive hook установлен. Не забудьте задать GD_PROJECT_DIR на git-сервере."
+
+# ---------------------------------------------------------------------- #
 # V16 Sprint 0 — codeclone (clone detection through MCP).                #
 # Установка: uv tool install "codeclone[mcp]" (выполнено 2026-05-06).     #
 # ---------------------------------------------------------------------- #

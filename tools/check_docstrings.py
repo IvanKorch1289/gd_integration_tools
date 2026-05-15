@@ -12,12 +12,18 @@ docstring'и.
 * ``--update-allowlist`` — пересоздать allowlist из текущих нарушений
   (для амнистии baseline / после миграции модуля).
 * ``--strict`` — игнорировать allowlist, любое нарушение → exit 1.
+* ``--files`` — явный список файлов вместо обхода каталогов.
+  Поддерживает несколько ``--files`` или единичный ``-`` для чтения
+  списка путей со stdin (по строке на путь). Используется server-side
+  pre-receive hook'ом, чтобы проверять только diff пушенных коммитов.
 
 Использование:
 
   python tools/check_docstrings.py src/core src/dsl/engine src/core/interfaces
   python tools/check_docstrings.py src/core --strict
   python tools/check_docstrings.py src/core --update-allowlist
+  python tools/check_docstrings.py --strict --files src/core/foo.py src/core/bar.py
+  git diff --name-only HEAD~1 | python tools/check_docstrings.py --strict --files -
 """
 
 from __future__ import annotations
@@ -66,6 +72,19 @@ def _walk_targets(roots: Iterable[Path]) -> list[Path]:
     return files
 
 
+def _format_path(file: Path) -> str:
+    """Возвращает путь относительно ``PROJECT_ROOT`` либо абсолютный.
+
+    Файлы из временных каталогов (тесты, sandbox) не лежат внутри проекта,
+    поэтому ``relative_to`` падает. Для таких случаев возвращаем
+    абсолютный путь без падения.
+    """
+    try:
+        return str(file.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(file)
+
+
 def _check_node(
     file: Path, node: ast.AST, parent: str = ""
 ) -> list[str]:
@@ -77,7 +96,7 @@ def _check_node(
             if _is_forbidden_docstring(doc):
                 qualified = f"{parent}.{node.name}" if parent else node.name
                 violations.append(
-                    f"{file.relative_to(PROJECT_ROOT)}:{node.lineno}:"
+                    f"{_format_path(file)}:{node.lineno}:"
                     f"{node.col_offset} {qualified}"
                 )
         # Углубляемся в тело класса (методы), но не в функции (вложенные функции
@@ -94,7 +113,7 @@ def check_file(path: Path) -> list[str]:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     except SyntaxError as exc:
-        return [f"{path.relative_to(PROJECT_ROOT)}:syntax error: {exc.msg}"]
+        return [f"{_format_path(path)}:syntax error: {exc.msg}"]
 
     violations: list[str] = []
     # Module-level docstring сейчас не required (есть headers / __all__).
@@ -124,10 +143,66 @@ def _save_allowlist(violations: list[str]) -> None:
     ALLOWLIST_PATH.write_text(header + body + "\n", encoding="utf-8")
 
 
+def _collect_files_from_args(
+    paths: list[Path] | None, files_args: list[str] | None
+) -> list[Path]:
+    """Собирает финальный список файлов из позиционных ``paths`` и ``--files``.
+
+    Логика:
+
+    * ``--files -`` — читает список путей со stdin (по строке на путь);
+    * ``--files <path>`` — каждый аргумент трактуется как путь;
+    * позиционные ``paths`` — каталоги/файлы для рекурсивного обхода.
+
+    Списки объединяются (можно передать оба источника одновременно).
+    Несуществующие или non-``.py`` файлы из ``--files`` молча пропускаются —
+    это нормально для diff-режима, где удалённые файлы тоже могут попасть
+    в список.
+    """
+    collected: list[Path] = []
+    if paths:
+        collected.extend(_walk_targets(paths))
+
+    if files_args:
+        raw_files: list[str] = []
+        for entry in files_args:
+            if entry == "-":
+                raw_files.extend(
+                    line.strip() for line in sys.stdin.read().splitlines() if line.strip()
+                )
+            else:
+                raw_files.append(entry)
+        for raw in raw_files:
+            candidate = Path(raw)
+            if not candidate.is_absolute():
+                candidate = (PROJECT_ROOT / candidate).resolve()
+            else:
+                candidate = candidate.resolve()
+            if candidate.is_file() and candidate.suffix == ".py":
+                collected.append(candidate)
+    # Уникализация с сохранением порядка.
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for f in collected:
+        if f not in seen:
+            seen.add(f)
+            unique.append(f)
+    return unique
+
+
 def main(argv: list[str] | None = None) -> int:
     """Точка входа CLI."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("paths", nargs="+", type=Path)
+    parser.add_argument("paths", nargs="*", type=Path)
+    parser.add_argument(
+        "--files",
+        action="append",
+        default=None,
+        help=(
+            "Явный путь к Python-файлу. Можно повторять. "
+            "Использовать ``-`` чтобы прочитать список путей со stdin."
+        ),
+    )
     parser.add_argument(
         "--update-allowlist", action="store_true", help="Перезаписать allowlist."
     )
@@ -138,7 +213,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    files = _walk_targets(args.paths)
+    if not args.paths and not args.files:
+        parser.error("требуется хотя бы один из: позиционные paths или --files")
+
+    files = _collect_files_from_args(args.paths, args.files)
     if not files:
         print("[check_docstrings] нет .py-файлов в переданных путях", file=sys.stderr)
         return 0
