@@ -58,7 +58,6 @@ from src.backend.core.config.services import (
     RedisSettings,
     ResilienceSettings,
     SnapshotSettings,
-    TaskiqSettings,
     TasksSettings,
     WatermarkSettings,
     cache_settings,
@@ -71,7 +70,6 @@ from src.backend.core.config.services import (
     redis_settings,
     resilience_settings,
     snapshot_settings,
-    taskiq_settings,
     tasks_settings,
     watermark_settings,
 )
@@ -111,9 +109,8 @@ class Settings(BaseSettings):
     tasks: TasksSettings = tasks_settings
     grpc: GRPCSettings = grpc_settings
 
-    # Invoker / TaskIQ (W22 F.2 C1-C3)
+    # Invoker (W22 F.2 C1-C3; TaskIQ удалён в Sprint 8 K2 W1)
     invoker: InvokerSettings = invoker_settings
-    taskiq: TaskiqSettings = taskiq_settings
 
     # Аналитика / поиск
     clickhouse: ClickHouseSettings = clickhouse_settings

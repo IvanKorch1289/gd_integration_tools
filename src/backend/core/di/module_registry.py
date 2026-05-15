@@ -72,7 +72,6 @@ INFRA_MODULES: Final[dict[str, str]] = {
     "observability.correlation": f"{_INFRA}.observability.correlation",
     # ─── Scheduler / execution ──────────────────────────────────────
     "scheduler.scheduler_manager": f"{_INFRA}.scheduler.scheduler_manager",
-    "execution.taskiq_broker": f"{_INFRA}.execution.taskiq_broker",
     # ─── Database ───────────────────────────────────────────────────
     "database.session_manager": f"{_INFRA}.database.session_manager",
     "database.model_registry": f"{_INFRA}.database.model_registry",

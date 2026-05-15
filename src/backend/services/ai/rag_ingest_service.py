@@ -3,8 +3,8 @@
 Поддерживает 2 режима:
 
 * **inline**: ``RAGService.ingest`` вызывается прямо в текущем event-loop
-  (default; нужен когда TaskIQ disabled);
-* **deferred**: enqueue в TaskIQ-broker (Sprint 5).
+  (default);
+* **deferred**: enqueue в Temporal-activity (Sprint 8 K2 W1: TaskIQ удалён).
 
 Wave D.2 / Track D AI: status-tracking вынесен в ``IngestStateStore``
 (memory / redis). ``chunker_fingerprint`` пишется в metadata каждого
@@ -22,8 +22,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.backend.services.ai.rag_ingest_store import (
-    InMemoryIngestStateStore,
     IngestStateStore,
+    InMemoryIngestStateStore,
 )
 
 logger = logging.getLogger(__name__)

@@ -30,7 +30,7 @@ class InvocationRequestSchema(BaseSchema):
     * ``async-api`` — fire-and-forget; результат в polling-канале (GET /{id}).
     * ``background`` — fire-and-forget без сохранения результата.
     * ``streaming`` — push в WS-канал по invocation_id (см. ``/ws/invocations``).
-    * ``async-queue`` / ``deferred`` — пока возвращают ERROR (W22+ TaskIQ/APS).
+    * ``async-queue`` / ``deferred`` — Temporal-activity adapter / APScheduler.
     """
 
     action: str = Field(

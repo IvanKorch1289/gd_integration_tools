@@ -134,50 +134,6 @@ def _clickhouse_enabled() -> bool:
     return bool(getattr(settings.clickhouse, "enabled", False))
 
 
-def _taskiq_enabled() -> bool:
-    """Возвращает ``True``, если TaskIQ broker должен стартовать.
-
-    Управляется env-переменной ``TASKIQ_ENABLED`` (default ``true``).
-    Полезно отключить для unit-тестов / dev_light без TaskIQ.
-    """
-    import os
-
-    return os.getenv("TASKIQ_ENABLED", "true").lower() in ("1", "true", "yes")
-
-
-async def _taskiq_startup() -> None:
-    """Стартует TaskIQ broker.
-
-    * ``InMemoryBroker`` — исполняет задачи inline в этом процессе
-      (worker не нужен).
-    * ``ListQueueBroker(Redis)`` — kiq() пушит в Redis; для исполнения
-      нужен **отдельный процесс** worker'а:
-      ``taskiq worker src.infrastructure.execution.taskiq_broker:broker``
-      (см. ``docs/runbooks/taskiq-worker.md``).
-
-    Также гарантирует регистрацию task ``invoker.run`` (декоратор
-    срабатывает при первом ``get_invocation_task()``).
-    """
-    from src.backend.infrastructure.execution.taskiq_broker import (
-        get_broker,
-        get_invocation_task,
-    )
-
-    broker = get_broker()
-    await broker.startup()
-    # Зарегистрировать taskiq-task до того, как kicker / worker
-    # обратится к ней по имени ``invoker.run``.
-    get_invocation_task()
-
-
-async def _taskiq_shutdown() -> None:
-    """Останавливает TaskIQ broker."""
-    from src.backend.infrastructure.execution.taskiq_broker import get_broker
-
-    broker = get_broker()
-    await broker.shutdown()
-
-
 # Wave 6.1: операции обёрнуты в lambda — singletons резолвятся лениво,
 # при первом исполнении операции, а не на module-level import.
 starting_operations: list[OperationItem] = [
@@ -202,14 +158,12 @@ starting_operations: list[OperationItem] = [
         _redis_enabled,
     ),
     ("scheduler", lambda: get_scheduler_manager().start(), None),
-    ("taskiq_broker", _taskiq_startup, _taskiq_enabled),
     ("health_aggregator", _register_health_checks, None),  # ARCH-3
 ]
 
 ending_operations: list[OperationItem] = [
     ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
     ("scheduler", lambda: get_scheduler_manager().stop(), None),
-    ("taskiq_broker", _taskiq_shutdown, _taskiq_enabled),
     ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
     (
         "clickhouse_client",

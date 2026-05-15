@@ -15,9 +15,8 @@
   APScheduler (``request.metadata['run_at']`` ISO-datetime или
   ``request.metadata['delay_seconds']``). Не durable — после рестарта
   сервиса задача не восстанавливается (memory jobstore).
-* :attr:`InvocationMode.ASYNC_QUEUE` — публикация в очередь TaskIQ
-  (требует ``taskiq`` опционально установленным). При отсутствии TaskIQ
-  возвращает ``ERROR`` с понятной диагностикой.
+* :attr:`InvocationMode.ASYNC_QUEUE` — публикация через Temporal-activity
+  adapter (Sprint 8 K2 W1: TaskIQ полностью удалён).
 """
 
 from __future__ import annotations
@@ -366,62 +365,14 @@ class Invoker(InvokerProtocol):
     async def _invoke_async_queue(
         self, request: InvocationRequest
     ) -> InvocationResponse:
-        """Публикует invocation в очередь TaskIQ или Temporal-activity.
+        """Публикует invocation в очередь через Temporal-activity-adapter.
 
-        Под flag ``feature_flags.taskiq_removed`` (default-OFF):
-        * **False** (legacy): TaskIQ-цепочка как раньше.
-        * **True** (K2 W1): callsite идёт через
-          :func:`wrap_as_temporal_activity` — direct-async-execution
-          обёрнутого action. Temporal full-blown workflow подключается
-          в Sprint 6 (R-V15-7 / V15 K6-W2).
-
-        Требует опциональную установку ``taskiq``. Брокер берётся через
-        :func:`src.infrastructure.execution.taskiq_broker.get_broker`.
-        Worker подхватывает задачу и сам вызывает Invoker.invoke в режиме
-        SYNC (см. :func:`run_taskiq_invocation`), результат публикуется в
-        указанный ``reply_channel`` (по умолчанию ``api``).
+        K2 W1 (Sprint 8): TaskIQ полностью удалён. Все ASYNC_QUEUE-callsite
+        идут через :func:`wrap_as_temporal_activity` — direct-async-execution
+        обёрнутого action. Full-blown Temporal workflow с durable replay
+        подключается в Sprint 6 (R-V15-7).
         """
-        # K2 W1 (TaskIQ removal): при flag ON — Temporal-activity-adapter
-        from src.backend.core.config.features import feature_flags
-
-        if feature_flags.taskiq_removed:
-            return await self._invoke_via_temporal_adapter(request)
-
-        try:
-            from src.backend.core.di.providers import (
-                get_taskiq_invocation_task_provider,
-            )
-
-            get_invocation_task = get_taskiq_invocation_task_provider()
-        except Exception as exc:  # noqa: BLE001
-            return InvocationResponse(
-                invocation_id=request.invocation_id,
-                status=InvocationStatus.ERROR,
-                error=f"TaskIQ unavailable: {exc}",
-                mode=request.mode,
-                metadata=dict(request.metadata),
-            )
-
-        try:
-            task = get_invocation_task()
-            await task.kiq(_serialize_request(request))
-        except Exception as exc:  # noqa: BLE001
-            logger.exception(
-                "ASYNC_QUEUE kiq failed (invocation_id=%s)", request.invocation_id
-            )
-            return InvocationResponse(
-                invocation_id=request.invocation_id,
-                status=InvocationStatus.ERROR,
-                error=f"TaskIQ kiq failed: {exc}",
-                mode=request.mode,
-                metadata=dict(request.metadata),
-            )
-        return InvocationResponse(
-            invocation_id=request.invocation_id,
-            status=InvocationStatus.ACCEPTED,
-            mode=request.mode,
-            metadata=dict(request.metadata),
-        )
+        return await self._invoke_via_temporal_adapter(request)
 
     async def _invoke_via_temporal_adapter(
         self, request: InvocationRequest
@@ -617,9 +568,9 @@ def _is_async_iterator(obj: Any) -> bool:
 def _serialize_request(request: InvocationRequest) -> dict[str, Any]:
     """Сериализует :class:`InvocationRequest` в JSON-friendly dict.
 
-    Используется при публикации в TaskIQ; worker восстанавливает
-    request через :func:`_deserialize_request` и вызывает
-    :class:`Invoker` в режиме SYNC.
+    Используется FastStream-subscribers (RabbitMQ/Redis) для cross-process
+    передачи; consumer восстанавливает request через
+    :func:`_deserialize_request` и вызывает :class:`Invoker`.
     """
     return {
         "action": request.action,

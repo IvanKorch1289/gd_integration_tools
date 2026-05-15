@@ -33,8 +33,8 @@ class InvocationMode(str, Enum):
 
     * ``SYNC`` — блокирующий вызов, ответ сразу.
     * ``ASYNC_API`` — fire-and-forget, ответ через API later (polling).
-    * ``ASYNC_QUEUE`` — отправка в очередь TaskIQ/RabbitMQ, callback на
-      ReplyChannel.
+    * ``ASYNC_QUEUE`` — отправка через Temporal-activity adapter (Sprint 8 K2 W1:
+      TaskIQ удалён), callback на ReplyChannel.
     * ``DEFERRED`` — отложенный запуск через scheduler.
     * ``BACKGROUND`` — фоновый запуск без отслеживания состояния.
     * ``STREAMING`` — потоковый вывод (Server-Sent Events / WebSocket).

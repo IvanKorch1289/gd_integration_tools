@@ -28,7 +28,9 @@ from src.backend.infrastructure.messaging.invocation_replies import (
 from src.backend.services.execution.invoker import Invoker
 
 
-def _make_dispatcher(result: Any = None, raises: BaseException | None = None) -> MagicMock:
+def _make_dispatcher(
+    result: Any = None, raises: BaseException | None = None
+) -> MagicMock:
     dispatcher = MagicMock()
     if raises is not None:
         dispatcher.dispatch = AsyncMock(side_effect=raises)
@@ -93,9 +95,7 @@ class TestInvokerSync:
 
         await invoker.invoke(
             InvocationRequest(
-                action="x.y",
-                mode=InvocationMode.SYNC,
-                correlation_id="corr-XYZ",
+                action="x.y", mode=InvocationMode.SYNC, correlation_id="corr-XYZ"
             )
         )
 
@@ -133,9 +133,7 @@ class TestInvokerAsyncApi:
     async def test_async_api_accepted_then_polling_returns_result(self) -> None:
         dispatcher = _make_dispatcher(result={"computed": 42})
         memory = MemoryReplyChannel()
-        invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(memory)
-        )
+        invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry(memory))
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.ASYNC_API)
         response = await invoker.invoke(request)
@@ -154,9 +152,7 @@ class TestInvokerAsyncApi:
     async def test_async_api_dispatcher_error_published(self) -> None:
         dispatcher = _make_dispatcher(raises=ValueError("invalid"))
         memory = MemoryReplyChannel()
-        invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(memory)
-        )
+        invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry(memory))
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.ASYNC_API)
         await invoker.invoke(request)
@@ -172,9 +168,7 @@ class TestInvokerBackground:
     async def test_background_accepted_no_result_published(self) -> None:
         dispatcher = _make_dispatcher(result="silent")
         memory = MemoryReplyChannel()
-        invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(memory)
-        )
+        invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry(memory))
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.BACKGROUND)
         response = await invoker.invoke(request)
@@ -216,8 +210,7 @@ class TestInvokerStreaming:
         ws = _StubWs()
 
         invoker = Invoker(
-            dispatcher=dispatcher,
-            reply_registry=_make_registry(ws_channel),
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
         )
 
         request = InvocationRequest(action="x.stream", mode=InvocationMode.STREAMING)
@@ -235,8 +228,7 @@ class TestInvokerStreaming:
         ws_channel = WsReplyChannel()
         ws = _StubWs()
         invoker = Invoker(
-            dispatcher=dispatcher,
-            reply_registry=_make_registry(ws_channel),
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
         )
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.STREAMING)
@@ -264,8 +256,7 @@ class TestInvokerStreaming:
         ws_channel = WsReplyChannel()
         ws = _StubWs()
         invoker = Invoker(
-            dispatcher=dispatcher,
-            reply_registry=_make_registry(ws_channel),
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
         )
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.STREAMING)
@@ -310,9 +301,7 @@ class TestInvokerDeferred:
         assert response.status is InvocationStatus.ERROR
 
     @staticmethod
-    def _patch_scheduler(
-        monkeypatch: pytest.MonkeyPatch, stub_manager: Any
-    ) -> None:
+    def _patch_scheduler(monkeypatch: pytest.MonkeyPatch, stub_manager: Any) -> None:
         """Подменяет ``scheduler_manager``-модуль в ``sys.modules``.
 
         Это нужно, потому что :meth:`Invoker._invoke_deferred` делает
@@ -363,9 +352,7 @@ class TestInvokerDeferred:
         assert response.status is InvocationStatus.ACCEPTED
         assert response.mode is InvocationMode.DEFERRED
         assert "scheduled_at" in response.metadata
-        assert response.metadata["scheduler_job_id"].startswith(
-            "deferred_invocation_"
-        )
+        assert response.metadata["scheduler_job_id"].startswith("deferred_invocation_")
         assert response.metadata["deferred_durable"] is False
 
         kw = captured["kwargs"]
@@ -436,71 +423,28 @@ class TestInvokerDeferred:
 
 
 class TestInvokerAsyncQueue:
-    """W22 этап B: ASYNC_QUEUE через TaskIQ kicker (InMemoryBroker)."""
+    """Sprint 8 K2 W1: ASYNC_QUEUE через Temporal-activity adapter."""
 
-    async def test_async_queue_kiq_returns_accepted(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """kiq() в InMemoryBroker → ACCEPTED + invocation_id."""
-        # Сбрасываем module-state, чтобы получить свежий broker.
-        import src.backend.infrastructure.execution.taskiq_broker as broker_module
-
-        monkeypatch.setattr(broker_module, "_broker", None)
-        monkeypatch.setattr(broker_module, "_invocation_task", None)
-        monkeypatch.setenv("TASKIQ_BACKEND", "memory")
-
-        broker = broker_module.get_broker()
-        await broker.startup()
-        try:
-            dispatcher = _make_dispatcher()
-            invoker = Invoker(dispatcher=dispatcher)
-            response = await invoker.invoke(
-                InvocationRequest(
-                    action="x.y",
-                    payload={"k": "v"},
-                    mode=InvocationMode.ASYNC_QUEUE,
-                )
-            )
-
-            assert response.status is InvocationStatus.ACCEPTED
-            assert response.mode is InvocationMode.ASYNC_QUEUE
-            assert response.invocation_id
-        finally:
-            await broker.shutdown()
-            monkeypatch.setattr(broker_module, "_broker", None)
-            monkeypatch.setattr(broker_module, "_invocation_task", None)
-
-    async def test_async_queue_taskiq_unavailable(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Если import taskiq_broker падает — Invoker возвращает ERROR."""
-        # Patches sys.modules чтобы symуляcируe ImportError.
-        import sys
-
-        monkeypatch.setitem(
-            sys.modules,
-            "src.backend.infrastructure.execution.taskiq_broker",
-            None,  # type: ignore[arg-type]
-        )
-
+    async def test_async_queue_via_temporal_adapter_returns_accepted(self) -> None:
+        """Temporal-adapter wrap → ACCEPTED + invocation_id."""
         dispatcher = _make_dispatcher()
         invoker = Invoker(dispatcher=dispatcher)
         response = await invoker.invoke(
-            InvocationRequest(action="x.y", mode=InvocationMode.ASYNC_QUEUE)
+            InvocationRequest(
+                action="x.y", payload={"k": "v"}, mode=InvocationMode.ASYNC_QUEUE
+            )
         )
 
-        assert response.status is InvocationStatus.ERROR
-        assert response.error is not None
-        assert "TaskIQ unavailable" in response.error
+        assert response.status is InvocationStatus.ACCEPTED
+        assert response.mode is InvocationMode.ASYNC_QUEUE
+        assert response.invocation_id
 
 
 class TestInvokerReplyChannelLookup:
     async def test_async_api_uses_explicit_channel(self) -> None:
         dispatcher = _make_dispatcher(result="r")
         memory = MemoryReplyChannel()
-        invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(memory)
-        )
+        invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry(memory))
 
         request = InvocationRequest(
             action="x", mode=InvocationMode.ASYNC_API, reply_channel="api"

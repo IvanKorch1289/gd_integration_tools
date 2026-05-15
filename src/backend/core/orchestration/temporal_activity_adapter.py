@@ -1,9 +1,7 @@
-"""K2 W1 — Temporal Activity Adapter (TaskIQ removal shim).
+"""K2 W1 — Temporal Activity Adapter (post-TaskIQ removal).
 
-Адаптер для миграции ``Invoker.ASYNC_QUEUE``-callsites с TaskIQ на
-Temporal-activity. Под feature-flag ``feature_flags.taskiq_removed``
-параллельно с legacy-TaskIQ: при True все ASYNC_QUEUE-callsites идут
-через ``wrap_as_temporal_activity()``; при False — старая TaskIQ-цепочка.
+Адаптер для ``Invoker.ASYNC_QUEUE``-callsites. Все callsites идут через
+``wrap_as_temporal_activity()`` (Sprint 8 K2 W1: TaskIQ полностью удалён).
 
 Контракт минимальный: callable (sync или async) оборачивается в
 Temporal-совместимую activity-обёртку, возвращает ``Awaitable[Any]``.
@@ -15,7 +13,6 @@ Heavy ``temporalio.activity.defn`` декоратор подключается l
       обёрнутый объект (по id) — позволяет регистрировать activity один раз.
     * Error propagation: исключения forward как ApplicationError (для
       Temporal-side replay) при наличии SDK; иначе пробрасываются как есть.
-    * default-OFF до flip в Sprint 6 (PLAN.md V15 R-V15-7).
 """
 
 from __future__ import annotations
@@ -24,13 +21,10 @@ import asyncio
 import functools
 import inspect
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from typing import Any, TypeVar
 
-__all__ = (
-    "TemporalActivityWrapper",
-    "wrap_as_temporal_activity",
-)
+__all__ = ("TemporalActivityWrapper", "wrap_as_temporal_activity")
 
 logger = logging.getLogger("core.orchestration.temporal_activity_adapter")
 
@@ -85,9 +79,7 @@ class TemporalActivityWrapper:
                 )
             return result
         except Exception as exc:
-            logger.exception(
-                "TemporalActivityWrapper '%s' failed: %s", self._name, exc
-            )
+            logger.exception("TemporalActivityWrapper '%s' failed: %s", self._name, exc)
             raise
 
 
@@ -96,9 +88,7 @@ _wrapper_cache: dict[int, TemporalActivityWrapper] = {}
 
 
 def wrap_as_temporal_activity(
-    fn: Callable[..., Any] | TemporalActivityWrapper,
-    *,
-    name: str | None = None,
+    fn: Callable[..., Any] | TemporalActivityWrapper, *, name: str | None = None
 ) -> TemporalActivityWrapper:
     """Оборачивает callable в Temporal-совместимую activity.
 

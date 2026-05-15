@@ -1,4 +1,4 @@
 """Infrastructure execution layer.
 
-Содержит интеграцию с TaskIQ-брокером для режима ASYNC_QUEUE.
+Sprint 8 K2 W1: TaskIQ удалён. Содержит Dask-backend для тяжёлых вычислений.
 """

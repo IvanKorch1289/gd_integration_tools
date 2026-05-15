@@ -20,8 +20,6 @@ Wave 6.4: создано для устранения layer-violations в
   ``infrastructure.clients.external.express.ExpressClient``
 * :class:`SchedulerManagerProtocol` —
   ``infrastructure.scheduler.scheduler_manager.SchedulerManager``
-* :class:`TaskIQBrokerProtocol` —
-  ``infrastructure.execution.taskiq_broker.get_invocation_task``
 * :class:`ExternalSessionManagerProtocol` —
   ``infrastructure.database.session_manager.DatabaseSessionManager``
 * :class:`SignatureBuilderProtocol` —
@@ -45,7 +43,6 @@ __all__ = (
     "ExpressClientProtocol",
     "RedisKeyValueClientProtocol",
     "SchedulerManagerProtocol",
-    "TaskIQBrokerProtocol",
     "ExternalSessionManagerProtocol",
     "SignatureBuilderProtocol",
     "CachingDecoratorProtocol",
@@ -181,22 +178,6 @@ class SchedulerManagerProtocol(Protocol):
     @property
     def scheduler(self) -> Any:
         """Лежащий в основе APScheduler ``AsyncIOScheduler``."""
-        ...
-
-
-# ─────────────────────── TaskIQ broker ───────────────────────
-
-
-@runtime_checkable
-class TaskIQBrokerProtocol(Protocol):
-    """Контракт фабрики TaskIQ-task для ASYNC_QUEUE-режима Invoker'а.
-
-    Реализация: ``infrastructure.execution.taskiq_broker.get_invocation_task``
-    (callable без аргументов, возвращает ``AsyncTaskiqDecoratedTask``).
-    """
-
-    def __call__(self) -> Any:
-        """Возвращает декорированный TaskIQ-task с методом ``.kiq(...)``."""
         ...
 
 

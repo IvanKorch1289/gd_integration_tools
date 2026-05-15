@@ -45,7 +45,6 @@ __all__ = (
     "get_express_client_provider",
     "get_redis_kv_client_provider",
     "get_scheduler_manager_provider",
-    "get_taskiq_invocation_task_provider",
     "get_external_session_manager_provider",
     "get_signature_builder_provider",
     "get_response_cache_provider",
@@ -58,7 +57,6 @@ __all__ = (
     "set_express_client_provider",
     "set_redis_kv_client_provider",
     "set_scheduler_manager_provider",
-    "set_taskiq_invocation_task_provider",
     "set_external_session_manager_provider",
     "set_signature_builder_provider",
     "set_response_cache_provider",
@@ -157,7 +155,6 @@ _CLICKHOUSE_MOD = f"{_INFRA}.clients.storage.clickhouse"
 _SMTP_MOD = f"{_INFRA}.clients.transport.smtp"
 _EXPRESS_MOD = f"{_INFRA}.clients.external.express"
 _SCHEDULER_MOD = f"{_INFRA}.scheduler.scheduler_manager"
-_TASKIQ_MOD = f"{_INFRA}.execution.taskiq_broker"
 _EXT_DB_SESSION_MOD = f"{_INFRA}.database.session_manager"
 _SIGNATURES_MOD = f"{_INFRA}.security.signatures"
 _RESPONSE_CACHE_MOD = f"{_INFRA}.decorators.caching"
@@ -526,7 +523,7 @@ def set_import_gateway_factory_provider(factory: Any) -> None:
     _overrides["import_gateway_factory"] = factory
 
 
-# ─────────────── Wave 6.4: services/execution/* — APScheduler / TaskIQ ───────────────
+# ─────────────── Wave 6.4: services/execution/* — APScheduler ───────────────
 
 
 def get_scheduler_manager_provider() -> Any:
@@ -539,23 +536,6 @@ def get_scheduler_manager_provider() -> Any:
 
 def set_scheduler_manager_provider(manager: Any) -> None:
     _overrides["scheduler_manager"] = manager
-
-
-def get_taskiq_invocation_task_provider() -> Any:
-    """Возвращает фабрику TaskIQ-task для ASYNC_QUEUE-режима Invoker'а.
-
-    Реализация: ``infrastructure.execution.taskiq_broker.get_invocation_task``.
-    Импорт TaskIQ опциональный — если пакет недоступен, ``importlib`` бросит
-    исключение, которое вызывающий код обязан обработать.
-    """
-    if "taskiq_invocation_task" in _overrides:
-        return _overrides["taskiq_invocation_task"]
-    module = resolve_module("execution.taskiq_broker")
-    return module.get_invocation_task
-
-
-def set_taskiq_invocation_task_provider(factory: Any) -> None:
-    _overrides["taskiq_invocation_task"] = factory
 
 
 # ─────────────── Wave 6.5a: entrypoints/api/dependencies — auth ───────────────

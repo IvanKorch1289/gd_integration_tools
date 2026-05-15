@@ -129,7 +129,7 @@ class RagIngestSettings(BaseSettingsWithLoader):
 
     deferred: bool = Field(
         default=False,
-        description="Очередить ingest в TaskIQ-broker вместо inline-исполнения.",
+        description="Очередить ingest через Temporal-activity вместо inline-исполнения.",
     )
     state_backend: str = Field(
         default="memory",
