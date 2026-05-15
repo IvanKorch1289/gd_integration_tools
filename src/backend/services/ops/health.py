@@ -12,7 +12,8 @@ Endpoint:
 Архитектура:
     * ``ProcessorHealthCheck`` — Protocol для one async-check.
     * ``ProcessorHealthService`` — координатор, агрегирует результаты.
-    * Использует ``asyncio.gather`` для параллельного выполнения.
+    * Использует ``asyncio.TaskGroup`` (Python 3.14, PEP 654 structured
+      concurrency) для параллельного выполнения.
     * Feature-flag: ``processor_health_checks_strict`` (default-OFF). При
       flag-OFF service возвращает только успешные checks (skip exceptions);
       при flag-ON exception в любом checks → возвращается с ok=false.
@@ -77,9 +78,7 @@ class ProcessorHealthService:
     # ------------------------------------------------------------------
 
     def register_check(
-        self,
-        name: str,
-        check: Callable[[], Awaitable[ProcessorHealthResult]],
+        self, name: str, check: Callable[[], Awaitable[ProcessorHealthResult]]
     ) -> None:
         """Зарегистрировать async-check под именем processor'а.
 
@@ -116,8 +115,7 @@ class ProcessorHealthService:
             return []
 
         async def _run_one(
-            name: str,
-            check: Callable[[], Awaitable[ProcessorHealthResult]],
+            name: str, check: Callable[[], Awaitable[ProcessorHealthResult]]
         ) -> ProcessorHealthResult:
             """Выполнить один check с timeout."""
             start = time.monotonic()
@@ -141,8 +139,15 @@ class ProcessorHealthService:
                     latency_ms=(time.monotonic() - start) * 1000,
                 )
 
-        tasks = [_run_one(name, check) for name, check in self._checks.items()]
-        return await asyncio.gather(*tasks)
+        # Sprint 8A K3 W10: TaskGroup вместо asyncio.gather для structured
+        # concurrency. _run_one уже ловит все exceptions внутри, поэтому
+        # TaskGroup тут не auto-cancel'ит siblings.
+        async with asyncio.TaskGroup() as tg:
+            running = [
+                tg.create_task(_run_one(name, check))
+                for name, check in self._checks.items()
+            ]
+        return [t.result() for t in running]
 
     async def get_health_matrix(self) -> dict[str, Any]:
         """Получить агрегированную матрицу health-status.

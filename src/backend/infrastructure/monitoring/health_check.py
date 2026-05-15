@@ -33,16 +33,20 @@ class HealthCheck:
                     "details": детализированные результаты проверок
                 }
         """
-        # Параллельное выполнение проверок
-        results = await asyncio.gather(
-            self.check_database(),
-            self.check_redis(),
-            self.check_s3(),
-            self.check_s3_bucket(),
-            self.check_graylog(),
-            self.check_smtp(),
-            self.check_rabbitmq(),
-        )
+        # Sprint 8A K3 W10: TaskGroup для structured concurrency. Каждый
+        # check_* самостоятельно возвращает bool/None, не raises — TaskGroup
+        # ждёт всех завершения и не cancel'ит siblings.
+        async with asyncio.TaskGroup() as tg:
+            tasks = [
+                tg.create_task(self.check_database()),
+                tg.create_task(self.check_redis()),
+                tg.create_task(self.check_s3()),
+                tg.create_task(self.check_s3_bucket()),
+                tg.create_task(self.check_graylog()),
+                tg.create_task(self.check_smtp()),
+                tg.create_task(self.check_rabbitmq()),
+            ]
+        results = [t.result() for t in tasks]
 
         # Формирование структуры ответа
         response_data = {

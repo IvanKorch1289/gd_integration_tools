@@ -98,7 +98,7 @@ class HealthAggregator:
         """Определить, принимает ли callable kwarg ``mode``."""
         try:
             sig = inspect.signature(fn)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return False
         return "mode" in sig.parameters
 
@@ -175,19 +175,20 @@ class HealthAggregator:
         return out
 
     async def check_all(self, *, mode: HealthMode = "fast") -> dict[str, Any]:
-        """Параллельный опрос всех зарегистрированных компонентов."""
-        legacy_tasks = [
-            self._safe_check(name, fn, mode=mode) for name, fn in self._checks.items()
-        ]
-        legacy_results_coro = (
-            asyncio.gather(*legacy_tasks)
-            if legacy_tasks
-            else asyncio.sleep(0, result=[])
-        )
-        registry_coro = self._collect_registry_components(mode)
-        legacy_results, registry_results = await asyncio.gather(
-            legacy_results_coro, registry_coro
-        )
+        """Параллельный опрос всех зарегистрированных компонентов.
+
+        Sprint 8A K3 W10: TaskGroup вместо asyncio.gather для structured
+        concurrency. ``_safe_check`` и ``_collect_registry_components``
+        самостоятельно ловят exceptions — TaskGroup безопасно их собирает.
+        """
+        async with asyncio.TaskGroup() as tg:
+            legacy_runs = [
+                tg.create_task(self._safe_check(name, fn, mode=mode))
+                for name, fn in self._checks.items()
+            ]
+            registry_task = tg.create_task(self._collect_registry_components(mode))
+        legacy_results = [t.result() for t in legacy_runs]
+        registry_results = registry_task.result()
 
         components: dict[str, dict[str, Any]] = {}
         # Сначала registry-компоненты, потом legacy (legacy может override
