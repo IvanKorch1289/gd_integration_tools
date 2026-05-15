@@ -50,6 +50,15 @@ if _REPO_ROOT is not None:
     env_file = _REPO_ROOT / ".env"
     if env_file.exists():
         load_dotenv(env_file)
+    else:
+        # Worktree без своего .env (типично для git worktree-копий). Идём
+        # вверх по parents и ищем ближайший .env-файл — обычно это .env
+        # основного репозитория.
+        for parent in _REPO_ROOT.parents:
+            candidate = parent / ".env"
+            if candidate.exists():
+                load_dotenv(candidate)
+                break
 
 # (2) Отключаем graylog в LoggerManager до импорта logger-модулей.
 os.environ.setdefault("LOG_HOST", "")

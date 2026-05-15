@@ -1138,6 +1138,38 @@ class IntegrationMixin:
             ResponseValidatorProcessor(schema=schema, on_error=on_error, source=source)
         )
 
+    def mask_pii(
+        self,
+        *,
+        targets: list[str],
+        fields: list[str] | None = None,
+        replacement: str = "***",
+        patterns: list[str] | None = None,
+    ) -> "RouteBuilder":
+        """Маскировка PII в request/response (Sprint 8A K1 W4).
+
+        Применяет PII-маскировку к выбранным частям ``Exchange``: body,
+        headers, query, path. См. :class:`MaskPiiProcessor`.
+
+        Args:
+            targets: Список целей: ``body`` | ``headers`` | ``query`` | ``path``.
+            fields: Опц. whitelist полей (по имени dict-ключа). ``None`` =
+                маскируются все строковые значения.
+            replacement: Строка-заменитель (default ``"***"``).
+            patterns: Опц. список regex-строк. Если задан — заменяет
+                дефолтные patterns. ``None`` = дефолты (8 типов PII).
+        """
+        from src.backend.dsl.engine.processors.mask_pii import MaskPiiProcessor
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            MaskPiiProcessor(
+                targets=targets,
+                fields=fields,
+                replacement=replacement,
+                patterns=patterns,
+            )
+        )
+
     # ── Sink fluent API (Sprint 3 W1 K3 — 10 .sink_*() методов) ──
 
     def sink_grpc(
