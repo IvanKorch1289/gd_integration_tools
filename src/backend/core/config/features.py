@@ -36,10 +36,7 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
-__all__ = (
-    "FeatureFlags",
-    "feature_flags",
-)
+__all__ = ("FeatureFlags", "feature_flags")
 
 
 class FeatureFlags(BaseSettingsWithLoader):
@@ -54,9 +51,7 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "features"
     model_config = SettingsConfigDict(
-        env_prefix="FEATURE_",
-        extra="forbid",
-        validate_default=True,
+        env_prefix="FEATURE_", extra="forbid", validate_default=True
     )
 
     # ─── K2 — Net & WAF ────────────────────────────────────────────────────
@@ -291,17 +286,6 @@ class FeatureFlags(BaseSettingsWithLoader):
             "В scaffold-версии: dummy 384-dim embeddings + in-memory store. "
             "Production: CLIP (image) + Whisper→text (audio) + BGE-M3 (text). "
             "default-OFF до ML-deps stabilization и staging-smoke."
-        ),
-    )
-
-    taskiq_removed: bool = Field(
-        default=False,
-        title="AI/Infrastructure: TaskIQ полностью удалён (R-V15-7)",
-        description=(
-            "K6 Wave 2 (cross-team blocker). Owner: K6 AI/RAG. ETA: S2-W3. "
-            "При True блокирует все импорты taskiq и Invoker.ASYNC_QUEUE. "
-            "13 callsites должны быть мигрированы на Temporal cron/APScheduler. "
-            "default-OFF до завершения migration shim."
         ),
     )
 
@@ -1357,6 +1341,19 @@ class FeatureFlags(BaseSettingsWithLoader):
             "несовместимая мажорная версия → ValueError на register; "
             "интеграция с temporalio.workflow.patched(patch_id) для миграций между "
             "версиями. default-OFF до интеграции с Temporal cluster и staging-smoke."
+        ),
+    )
+
+    # ─── Sprint 8 — Rule Engine persistence ───────────────────────────────
+    rule_engine_hot_reload: bool = Field(
+        default=False,
+        title="K3 S8: hot-reload ruleset из БД через rule-engine registry",
+        description=(
+            "K3 Sprint 8 (wave:s8/k3-rule-engine-finale). Owner: K3 DSL/Workflow. "
+            "Активирует периодическую инвалидацию кэша RuleEngineRegistry "
+            "(intervalом 60 сек) и подгрузку обновлённых ruleset'ов из БД "
+            "(таблица rule_engine_rulesets) без перезапуска. "
+            "default-OFF: при выключенном флаге кэш живёт до явного invalidate()."
         ),
     )
 
