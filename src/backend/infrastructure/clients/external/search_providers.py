@@ -43,9 +43,9 @@ class PerplexityProvider(BaseSearchProvider):
         self._model = model
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with make_http_client(timeout=30, plugin="perplexity") as client:
             response = await client.post(
                 "https://api.perplexity.ai/chat/completions",
                 headers={"Authorization": f"Bearer {self._api_key}"},
@@ -75,9 +75,9 @@ class TavilyProvider(BaseSearchProvider):
         self._api_key = api_key
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with make_http_client(timeout=30, plugin="tavily") as client:
             response = await client.post(
                 "https://api.tavily.com/search",
                 json={
@@ -101,9 +101,9 @@ class TavilyProvider(BaseSearchProvider):
             ]
 
     async def deep_research(self, query: str) -> dict[str, Any]:
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with make_http_client(timeout=60, plugin="tavily") as client:
             response = await client.post(
                 "https://api.tavily.com/search",
                 json={
@@ -135,24 +135,17 @@ class SearXNGProvider(BaseSearchProvider):
     name = "searxng"
 
     def __init__(
-        self,
-        base_url: str,
-        engines: list[str] | None = None,
-        timeout: float = 15.0,
+        self, base_url: str, engines: list[str] | None = None, timeout: float = 15.0
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._engines = engines or ["google", "bing", "duckduckgo"]
         self._timeout = timeout
 
     async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
-        params = {
-            "q": query,
-            "format": "json",
-            "engines": ",".join(self._engines),
-        }
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
+        params = {"q": query, "format": "json", "engines": ",".join(self._engines)}
+        async with make_http_client(timeout=self._timeout, plugin="searxng") as client:
             response = await client.get(f"{self._base_url}/", params=params)
             response.raise_for_status()
             data = response.json()
@@ -244,7 +237,7 @@ def get_web_search_service() -> WebSearchService:
             _web_search.add_provider(PerplexityProvider(api_key=perplexity_key))
         if tavily_key:
             _web_search.add_provider(TavilyProvider(api_key=tavily_key))
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         pass
 
     # SearXNG registration через env var (без отдельного Settings класса).
@@ -256,8 +249,10 @@ def get_web_search_service() -> WebSearchService:
         if searxng_url and getattr(feature_flags, "search_provider_searxng", False):
             engines_env = os.getenv("SEARXNG_ENGINES", "google,bing,duckduckgo")
             engines = [e.strip() for e in engines_env.split(",") if e.strip()]
-            _web_search.add_provider(SearXNGProvider(base_url=searxng_url, engines=engines))
-    except (ImportError, AttributeError):
+            _web_search.add_provider(
+                SearXNGProvider(base_url=searxng_url, engines=engines)
+            )
+    except ImportError, AttributeError:
         pass
 
     return _web_search

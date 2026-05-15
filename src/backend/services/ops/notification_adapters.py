@@ -126,7 +126,6 @@ class TelegramNotificationAdapter:
         if not self._token:
             logger.warning("TELEGRAM_BOT_TOKEN не задан")
             return False
-        import httpx
 
         url = f"https://api.telegram.org/bot{self._token}/sendMessage"
         content_type = message.metadata.get("content_type", "text/plain")
@@ -134,8 +133,12 @@ class TelegramNotificationAdapter:
             content_type
         )
 
+        from src.backend.core.net.migration_helper import make_http_client
+
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with make_http_client(
+                timeout=15, plugin="telegram_adapter"
+            ) as client:
                 for chat_id in message.recipients:
                     payload: dict[str, Any] = {"chat_id": chat_id, "text": message.body}
                     if parse_mode:
@@ -150,10 +153,10 @@ class TelegramNotificationAdapter:
     async def health(self) -> bool:
         if not self._token:
             return False
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
         try:
-            async with httpx.AsyncClient(timeout=5) as client:
+            async with make_http_client(timeout=5, plugin="telegram_adapter") as client:
                 resp = await client.get(
                     f"https://api.telegram.org/bot{self._token}/getMe"
                 )
@@ -174,7 +177,7 @@ class WebhookNotificationAdapter:
         return content_type in {"application/json", "text/plain"}
 
     async def send(self, message: NotificationMessage) -> bool:
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
         payload = {
             "subject": message.subject,
@@ -182,7 +185,7 @@ class WebhookNotificationAdapter:
             "metadata": message.metadata,
         }
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with make_http_client(timeout=15, plugin="webhook_adapter") as client:
                 for url in message.recipients:
                     resp = await client.post(url, json=payload)
                     resp.raise_for_status()

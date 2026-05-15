@@ -108,9 +108,9 @@ class WebhookScheduler:
                 "success": False,
             }
 
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with make_http_client(timeout=30, plugin="webhook_scheduler") as client:
             response = await client.post(
                 task["url"], json=task["payload"], headers=task.get("headers", {})
             )

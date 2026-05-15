@@ -198,7 +198,7 @@ class NotificationHub:
         **extras: Any,
     ) -> dict[str, Any]:
         """Отправка webhook с HMAC подписью (если secret задан)."""
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
         payload = {"subject": subject, "message": message, **extras}
         headers = {"Content-Type": "application/json"}
@@ -209,7 +209,9 @@ class NotificationHub:
             headers.update(get_signature_builder_provider()(payload, secret))
 
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
+            async with make_http_client(
+                timeout=30, plugin="notification_hub"
+            ) as client:
                 response = await client.post(to, json=payload, headers=headers)
                 return {
                     "status": "sent" if response.is_success else "failed",
@@ -224,7 +226,7 @@ class NotificationHub:
         self, to: str, subject: str = "", message: str = "", **extras: Any
     ) -> dict[str, Any]:
         """Отправка в Telegram через Bot API."""
-        import httpx
+        from src.backend.core.net.migration_helper import make_http_client
 
         try:
             from src.backend.core.config.settings import settings
@@ -244,7 +246,9 @@ class NotificationHub:
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with make_http_client(
+                timeout=15, plugin="notification_hub"
+            ) as client:
                 response = await client.post(
                     url, json={"chat_id": to, "text": text, "parse_mode": "Markdown"}
                 )
