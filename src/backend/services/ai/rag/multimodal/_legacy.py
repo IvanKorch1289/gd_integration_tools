@@ -1,19 +1,15 @@
-"""MultimodalRAG — scaffold для text/image/audio embeddings и retrieval.
+"""MultimodalRAG legacy scaffold — dummy-embedding фолбэк.
 
-Назначение:
-    Ранний scaffold (PLAN V18, Sprint 5) для мультимодального RAG.
-    Поддерживает ingestion и retrieval трёх модальностей: text, image, audio.
+Содержит scaffold-версию ``MultimodalRAGService`` (PLAN V18, Sprint 5)
+с dummy 384-dim sha-embeddings и in-memory store. K4 W1 расширил
+функционал через ``service.MultimodalRAGService`` (наследует этот класс
+и добавляет ``ingest_document`` / ``search``).
 
-Ограничения текущей версии:
+Ограничения этого слоя:
     - Embeddings — dummy 384-dim вектора (без ML-зависимостей).
     - Хранилище — in-memory (без persistence).
     - Feature-flag ``multimodal_rag_enabled`` управляет активацией;
       при False все ingest/retrieve не выполняются (empty list / noop).
-
-Планируемое производство (Sprint 5):
-    - Text: sentence-transformers или BGE-M3.
-    - Image: CLIP (openai/clip-vit-base-patch32) через lazy-import.
-    - Audio: Whisper → text → text-embedding через lazy-import.
 """
 
 from __future__ import annotations
@@ -25,15 +21,12 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
-from src.backend.core.di import app_state_singleton
-
 if TYPE_CHECKING:
     pass
 
 __all__ = (
     "MultimodalEntry",
     "MultimodalRAGService",
-    "get_multimodal_rag",
 )
 
 # Размерность placeholder-эмбеддингов (имитирует sentence-transformers 384-dim)
@@ -253,13 +246,3 @@ class MultimodalRAGService:
             reverse=True,
         )
         return scored[:top_k]
-
-
-@app_state_singleton("multimodal_rag", factory=MultimodalRAGService)
-def get_multimodal_rag() -> MultimodalRAGService:
-    """Возвращает singleton MultimodalRAGService через DI.
-
-    Returns:
-        Экземпляр MultimodalRAGService, зарегистрированный в app_state.
-    """
-    ...
