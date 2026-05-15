@@ -1335,5 +1335,30 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 7 — K3 DSL+Workflow ────────────────────────────────────────
+    dsl_blueprints_migrate: bool = Field(
+        default=False,
+        title="K3 S7: deprecation-warning для legacy импортов src.backend.dsl.macros",
+        description=(
+            "K3 Sprint 7 (wave:s7/k3-dsl-blueprints-migrate). Owner: K3 DSL/Workflow. "
+            "ETA: S7. Активирует DeprecationWarning при импорте через shim "
+            "'from src.backend.dsl.macros import X' — реальная реализация теперь "
+            "в src.backend.dsl.blueprints.macros. default-OFF (1-2 sprint grace-period). "
+            "После Sprint 9 shim удаляется."
+        ),
+    )
+
+    workflow_versioning_strict: bool = Field(
+        default=False,
+        title="K3 S7: strict workflow versioning + Temporal patched-API integration",
+        description=(
+            "K3 Sprint 7 (wave:s7/k3-workflow-versioning). Owner: K3 DSL/Workflow. "
+            "ETA: S7. Активирует WorkflowVersionRegistry strict-mode: "
+            "несовместимая мажорная версия → ValueError на register; "
+            "интеграция с temporalio.workflow.patched(patch_id) для миграций между "
+            "версиями. default-OFF до интеграции с Temporal cluster и staging-smoke."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
