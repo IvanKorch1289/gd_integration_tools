@@ -1344,6 +1344,72 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 10 — DSL Blueprint Expansion + DX Wizards ─────────────────
+    compression_brotli: bool = Field(
+        default=False,
+        title="K2 S10 W2: BrotliCompressionMiddleware (Accept-Encoding: br)",
+        description=(
+            "K2 Sprint 10 Wave 2 (wave:s10/k2-w2-brotli-compression). "
+            "Owner: K2 Resilience+Perf. ETA: S10-W2. "
+            "Активирует BrotliCompressionMiddleware (pure ASGI) — Brotli-сжатие "
+            "ответов с Accept-Encoding: br. Ожидаемое улучшение ≥30% reduction для "
+            "JSON ≥1KB. default-OFF до benchmark подтверждения и интеграции в main.py."
+        ),
+    )
+
+    dsl_complexity_check_blocking: bool = Field(
+        default=False,
+        title="K3 S10 W2: dsl-complexity-check blocking gate в CI",
+        description=(
+            "K3 Sprint 10 Wave 2 (wave:s10/k3-w2-dsl-complexity-budget). "
+            "Owner: K3 DSL+Workflow. ETA: S10-W2. "
+            "Активирует blocking-режим для tools/dsl_lint.py check-complexity "
+            "(cyclomatic ≤50 / nesting ≤5 / steps ≤50). "
+            "При False — warn-only в CI. default-OFF до baseline-измерения "
+            "existing routes и калибровки threshold'ов."
+        ),
+    )
+
+    mock_llm_enabled: bool = Field(
+        default=False,
+        title="K4 S10 W1: Mock-LLM provider (deterministic, cost=0)",
+        description=(
+            "K4 Sprint 10 Wave 1 (wave:s10/k4-w1-mock-llm-provider). "
+            "Owner: K4 AI+RAG. ETA: S10-W1. "
+            "Активирует MockLLMProvider — deterministic responses (prompt-hash → "
+            "lookup table), cost=0, latency simulation. LiteLLM-compatible "
+            "(mock://gpt-4 model name). default-OFF в production; default-ON в "
+            "dev_light / CI для воспроизводимости тестов."
+        ),
+    )
+
+    dsl_jinja_macros: bool = Field(
+        default=False,
+        title="K3 S10 W7: Jinja2-over-YAML loader (macros + include)",
+        description=(
+            "K3 Sprint 10 Wave 7 (wave:s10/k3-w7-dsl-jinja-macros). "
+            "Owner: K3 DSL+Workflow. ETA: S10-W7. "
+            "Активирует Jinja2-over-YAML pre-processor в dsl/route/loader.py: "
+            "поддержка {% macro %} и {% include %} через jinja2.sandbox."
+            "SandboxedEnvironment + StrictUndefined для ловли опечаток. "
+            "default-OFF до golden-snapshot тестов на 2 routes с macros + "
+            "2 routes без. Rollback через flag flip."
+        ),
+    )
+
+    dsl_step_trace: bool = Field(
+        default=False,
+        title="K3 S10 W8: StepTrace + OTel span attributes для processors",
+        description=(
+            "K3 Sprint 10 Wave 8 (wave:s10/k3-w8-dsl-step-tracing). "
+            "Owner: K3 DSL+Workflow. ETA: S10-W8. "
+            "Активирует StepTrace в dsl/engine/exchange.py (input_snapshot, "
+            "duration_ms, error_context) + OTel span attributes в BaseProcessor "
+            "(dsl.step.name, dsl.step.input_size, dsl.step.duration_ms). "
+            "default-OFF до verification trace propagation через 5 reference routes."
+        ),
+    )
+
     # ─── Sprint 8 — Rule Engine persistence ───────────────────────────────
     rule_engine_hot_reload: bool = Field(
         default=False,

@@ -417,3 +417,134 @@ forbidden_paths = [
     "plugins/composition/**",                                 # S7 T5
     "src/backend/infrastructure/messaging/outbox_dispatcher.py",  # S5 K2
 ]
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Sprint 10 — DSL Blueprint Expansion + DX Wizards (V19 FINAL §7.10)
+# 5 параллельных команд × worktree isolation; 22 wave; 6 commits в master
+# (1 backbone + 5 team-finale).
+# ═════════════════════════════════════════════════════════════════════════════
+
+[team_s10.k1]
+name = "S10 K1 — Security (cassette-secrets-mask + extension-testkit-template)"
+git_branch_prefix = "team/s10-k1-security"
+worktree_branch = "team/s10-k1-security"
+wave_prefix = "s10/k1-"
+goal = "Маскировка secrets в testkit/recorder.py + pre-wired extension testkit template (conftest + smoke-test + how-to)."
+owned_paths = [
+    "testkit/recorder.py",
+    "extensions/_template/conftest.py",
+    "extensions/_template/test_smoke.py",
+    "docs/how-to/extension-testkit.md",
+    "tests/unit/testkit/test_recorder_redact.py",
+]
+forbidden_paths = [
+    "src/backend/dsl/**",
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "tools/**",
+    "Makefile",
+    "manage.py",
+]
+
+[team_s10.k2]
+name = "S10 K2 — Resilience+Perf (msgspec hotpath + brotli compression + startup-time gate)"
+git_branch_prefix = "team/s10-k2-resilience"
+worktree_branch = "team/s10-k2-resilience"
+wave_prefix = "s10/k2-"
+goal = "msgspec.Struct в Exchange/Audit/Cache; BrotliCompressionMiddleware; startup-time gate <3s в CI."
+owned_paths = [
+    "src/backend/dsl/engine/exchange.py",          # optional msgspec.Struct
+    "src/backend/entrypoints/middlewares/compression_brotli.py",
+    "src/backend/infrastructure/cache/key_builder.py",
+    "tests/perf/msgspec_hotpath.py",
+    "tests/unit/entrypoints/middlewares/test_brotli_middleware.py",
+    "tools/checks/startup_time.py",
+    ".github/workflows/test.yml",                  # additive startup-time job
+    ".github/workflows/startup-time.yml",
+]
+shared_with = ["k3"]                                # exchange.py также трогает k3
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "testkit/**",
+    "extensions/**",
+]
+
+[team_s10.k3]
+name = "S10 K3 — DSL+Workflow (15 blueprints + complexity + a/b test + dry-run UI + semantic search + history + jinja macros + step trace + route render)"
+git_branch_prefix = "team/s10-k3-dsl"
+worktree_branch = "team/s10-k3-dsl"
+wave_prefix = "s10/k3-"
+goal = "20+ blueprints; complexity budget blocking; .ab_test() extended; Dry-run + History + Semantic search + Complexity вкладки; Jinja2-over-YAML; StepTrace + OTel; manage.py dsl render."
+owned_paths = [
+    "src/backend/dsl/blueprints/**",
+    "src/backend/dsl/registry/processor.py",
+    "src/backend/dsl/route/loader.py",
+    "src/backend/dsl/builders/base.py",
+    "src/backend/dsl/engine/processors/base.py",
+    "src/frontend/streamlit_app/pages/11_Routes.py",
+    "src/frontend/streamlit_app/pages/30_DSL_Playground.py",
+    "src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py",
+    "src/frontend/streamlit_app/pages/32_DSL_Builder.py",
+    "tools/dsl_lint.py",
+    "docs/generated/routes/**",
+    "tests/unit/dsl/blueprints/**",
+    "tests/unit/dsl/test_complexity_lint.py",
+    "tests/unit/dsl/test_jinja_macros.py",
+    "tests/unit/dsl/test_step_trace.py",
+]
+shared_with = ["k2", "k5"]                          # exchange.py с k2, Makefile/manage.py с k5
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/auth/**",
+    "src/backend/core/net/**",
+    "testkit/**",
+    "extensions/**",
+]
+
+[team_s10.k4]
+name = "S10 K4 — AI+RAG (mock-LLM provider + .record_feedback step)"
+git_branch_prefix = "team/s10-k4-ai"
+worktree_branch = "team/s10-k4-ai"
+wave_prefix = "s10/k4-"
+goal = "MockLLMProvider (deterministic, LiteLLM-compatible) + RecordFeedbackProcessor + .record_feedback() builder."
+owned_paths = [
+    "src/backend/services/ai/providers/**",
+    "src/backend/dsl/engine/processors/feedback.py",
+    "src/backend/dsl/builders/ai_rpa.py",
+    "tests/unit/services/ai/providers/**",
+    "tests/unit/dsl/engine/processors/test_feedback.py",
+]
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/backend/core/net/**",
+    "src/frontend/streamlit_app/**",
+    "testkit/**",
+    "extensions/**",
+]
+
+[team_s10.k5]
+name = "S10 K5 — Frontend+Ext+Mig (make doctor + scaffold-route + simulate + plugin-dev + onboarding + cassette VCR API)"
+git_branch_prefix = "team/s10-k5-frontend"
+worktree_branch = "team/s10-k5-frontend"
+wave_prefix = "s10/k5-"
+goal = "make doctor/scaffold-route/simulate/plugin-dev; Streamlit 01_Onboarding.py; testkit/cassette.py VCR API."
+owned_paths = [
+    "tools/checks/doctor.py",
+    "tools/simulate.py",
+    "manage.py",
+    "Makefile",
+    "docker-compose.plugin-dev.yml",
+    "src/frontend/streamlit_app/pages/01_Onboarding.py",
+    "testkit/cassette.py",
+    "tests/unit/testkit/test_cassette.py",
+    "tests/unit/tools/test_doctor.py",
+    "tests/unit/tools/test_simulate.py",
+]
+shared_with = ["k3"]                                # Makefile/manage.py shared с k3
+forbidden_paths = [
+    "src/backend/dsl/blueprints/**",
+    "src/backend/services/ai/**",
+    "src/backend/core/auth/**",
+    "extensions/**",
+]
