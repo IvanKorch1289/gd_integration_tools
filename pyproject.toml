@@ -148,6 +148,13 @@ rpa-ocr = [
     "paddleocr>=2.8.0,<4",
     "paddlepaddle>=2.6.0,<3",
 ]
+# K3 Sprint 8 [wave:s8/k3-rpa-windows-desktop]: pywinauto Win32/UIA для
+# desktop UI automation. Windows-only — устанавливается на windows-worker
+# sidecar; на Linux/macOS sidecar возвращает 503.
+rpa-windows = [
+    "pywinauto>=0.6.8,<1.0",
+    "pillow>=10.0,<12.0",
+]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
 # Сервер запускается отдельно от Granian (см. src.backend.entrypoints.http3.server).
