@@ -272,9 +272,15 @@ ai-memory = [
 # Sprint 5 — Multimodal RAG (PDF/image OCR и docling parsing).
 # docling — IBM Research document parser (PDF/DOCX → structured Markdown).
 # paddleocr — fallback OCR для scan-PDF; alternative: easyocr (lazy-выбор).
+# K4 W1 (Sprint 8A): pypdfium2 — fast PDF parser с native wheels для py3.14
+# (используется в PDFIngester c graceful fallback на pypdf).
+# Pillow — обязателен для ImageIngester (EXIF + sniff).
+# sentence-transformers уже в core deps (см. строку выше).
 multimodal-rag = [
     "docling>=2.0.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
+    "pypdfium2>=4.30.0,<5.0.0",
+    "Pillow>=10.0.0,<12.0.0",
 ]
 
 [dependency-groups]
