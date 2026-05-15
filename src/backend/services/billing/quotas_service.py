@@ -31,12 +31,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = (
-    "QuotaCheckResult",
-    "QuotaUsage",
-    "QuotaWindow",
-    "QuotasService",
-)
+__all__ = ("QuotaCheckResult", "QuotaUsage", "QuotaWindow", "QuotasService")
 
 _logger = logging.getLogger("services.billing.quotas")
 
@@ -156,9 +151,7 @@ class QuotasService:
         minute_count = await self._incr_window(
             tenant_id, "rpm", now, _MINUTE_SECONDS, 1
         )
-        day_count = await self._incr_window(
-            tenant_id, "rpd", now, _DAY_SECONDS, 1
-        )
+        day_count = await self._incr_window(tenant_id, "rpd", now, _DAY_SECONDS, 1)
         usage = QuotaUsage(
             tenant_id=tenant_id,
             requests_in_minute=int(minute_count),
@@ -206,9 +199,7 @@ class QuotasService:
             )
         return QuotaCheckResult(allowed=True, reason="", usage=usage)
 
-    async def consume_cost(
-        self, tenant_id: str, cost_usd: float
-    ) -> QuotaCheckResult:
+    async def consume_cost(self, tenant_id: str, cost_usd: float) -> QuotaCheckResult:
         """Регистрирует USD-cost и проверяет суточный бюджет.
 
         Args:
@@ -257,11 +248,16 @@ class QuotasService:
         now = int(time.time())
         return QuotaUsage(
             tenant_id=tenant_id,
-            requests_in_minute=int(await self._read_window(tenant_id, "rpm", now, _MINUTE_SECONDS)),
-            requests_in_day=int(await self._read_window(tenant_id, "rpd", now, _DAY_SECONDS)),
+            requests_in_minute=int(
+                await self._read_window(tenant_id, "rpm", now, _MINUTE_SECONDS)
+            ),
+            requests_in_day=int(
+                await self._read_window(tenant_id, "rpd", now, _DAY_SECONDS)
+            ),
             cost_in_day_usd=(
                 await self._read_window(tenant_id, "cost_usd", now, _DAY_SECONDS)
-            ) / 1_000_000.0,
+            )
+            / 1_000_000.0,
             reset_minute_at=now - (now % _MINUTE_SECONDS) + _MINUTE_SECONDS,
             reset_day_at=now - (now % _DAY_SECONDS) + _DAY_SECONDS,
         )
@@ -282,9 +278,7 @@ class QuotasService:
     def _allow_no_op(tenant_id: str) -> QuotaCheckResult:
         """Результат no-op (feature_flag выключен) — allowed=True."""
         return QuotaCheckResult(
-            allowed=True,
-            reason="",
-            usage=QuotaUsage(tenant_id=tenant_id),
+            allowed=True, reason="", usage=QuotaUsage(tenant_id=tenant_id)
         )
 
     def _window_key(self, tenant_id: str, resource: str, window_start: int) -> str:
@@ -297,6 +291,11 @@ class QuotasService:
         Fail-open: при любой ошибке импорта/инициализации (например, в
         unit-тестах без DB-настроек) возвращает None — сервис работает
         через in-memory fallback.
+
+        Duck-type проверка: возвращаем клиента только если у него есть
+        ``incrby`` / ``expire`` / ``get`` (raw ``redis.asyncio.Redis``).
+        Высокоуровневые обёртки без этих методов трактуются как
+        отсутствие Redis — активирует in-memory fallback.
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (  # noqa: PLC0415
@@ -304,15 +303,15 @@ class QuotasService:
             )
         except Exception:  # noqa: BLE001 — fail-open для unit-тестов / dev_light
             return None
-        return getattr(redis_client, "_raw_client", None) or redis_client
+        candidate = getattr(redis_client, "_raw_client", None) or redis_client
+        if not all(
+            callable(getattr(candidate, m, None)) for m in ("incrby", "expire", "get")
+        ):
+            return None
+        return candidate
 
     async def _incr_window(
-        self,
-        tenant_id: str,
-        resource: str,
-        now: int,
-        period_seconds: int,
-        units: int,
+        self, tenant_id: str, resource: str, now: int, period_seconds: int, units: int
     ) -> float:
         """Инкрементирует счётчик в текущем окне и возвращает новое значение.
 
@@ -334,11 +333,7 @@ class QuotasService:
             return float(units)
 
     async def _read_window(
-        self,
-        tenant_id: str,
-        resource: str,
-        now: int,
-        period_seconds: int,
+        self, tenant_id: str, resource: str, now: int, period_seconds: int
     ) -> float:
         """Читает текущее значение счётчика без инкремента."""
         window_start = now - (now % period_seconds)
