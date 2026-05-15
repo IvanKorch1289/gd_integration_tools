@@ -136,7 +136,17 @@ mcp = [
     "fastmcp>=2.0.0"
 ]
 rpa = [
+    # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection
+    # форк playwright). Используется в RPA Universal Stage 1; подключён
+    # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
+    "patchright>=1.40.0,<2.0",
     "playwright>=1.48.0"
+]
+# K3 Sprint 8: OCR для извлечения текста со скриншотов / PDF.
+# Опционально: тяжёлый paddlepaddle backend; lazy-import в processor.
+rpa-ocr = [
+    "paddleocr>=2.8.0,<4",
+    "paddlepaddle>=2.6.0,<3",
 ]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
@@ -224,6 +234,11 @@ testkit = [
     "testcontainers[postgres,redis,kafka]>=4.7.2,<5.0.0",
     "respx>=0.22,<1",
     "temporalio>=1.27.0,<2.0.0",
+    # Sprint 10 K5 W6 [wave:s10/backbone]: VCR-style cassette recorder.
+    # vcrpy — запись/replay HTTP-трафика; pure-Python, cp314-совместим.
+    # Lazy-import внутри testkit.cassette. Обёртка @cassette() поверх
+    # существующего testkit/recorder.py (HAR-style → VCR API).
+    "vcrpy>=6.0.0,<7.0.0",
 ]
 # К10 Sprint-2 Wave 5: Sphinx scaffold + Diátaxis structure.
 # sphinx / myst-parser / sphinx-copybutton уже в [dev] dependency-group;
@@ -269,6 +284,13 @@ result-monad = [
 # httpx-based clients, lazy-import; SearXNG уже доступен через httpx-сырой клиент.
 search-providers = [
     "tavily-python>=0.5.0,<1.0.0",
+]
+# Sprint 10 K2 W2 [wave:s10/backbone]: Brotli compression middleware.
+# brotli — C-extension с pure-Python fallback; cp314 wheels доступны.
+# Lazy-import внутри BrotliCompressionMiddleware. Activate via
+# feature_flag compression_brotli (default-OFF).
+compression = [
+    "brotli>=1.1.0,<2.0.0",
 ]
 # Sprint 5 — DOCX template engine (Word reports с подстановкой контекста).
 # python-docx уже в основных deps; docxtpl расширяет шаблонизацией Jinja2.
