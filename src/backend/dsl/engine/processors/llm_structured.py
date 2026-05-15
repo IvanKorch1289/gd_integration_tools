@@ -450,7 +450,7 @@ class LLMStructuredProcessor(BaseProcessor):
             exchange.set_property(key, result)
             return
         if target == "body":
-            exchange.in_message.set_body(result)
+            exchange.in_message.body = result
             return
         if target.startswith("body."):
             key = target[len("body.") :]
@@ -458,7 +458,7 @@ class LLMStructuredProcessor(BaseProcessor):
             if not isinstance(body, dict):
                 body = {}
             body[key] = result
-            exchange.in_message.set_body(body)
+            exchange.in_message.body = body
             return
 
         # Fallback: трактуем как property name.
