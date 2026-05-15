@@ -1423,5 +1423,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 8 — HTTP/3 + WebTransport opt-in ──────────────────────────
+    http3_enabled: bool = Field(
+        default=False,
+        title="K3 S8: HTTP/3 + WebTransport entrypoint (aioquic)",
+        description=(
+            "K3 Sprint 8 (wave:s8/k3-http3-opt-in). Owner: K3 DSL/Workflow. "
+            "Запускает дополнительный HTTP/3 endpoint поверх QUIC через "
+            "aioquic (entrypoints/http3/server.py serve_http3). Параллельно "
+            "стандартному HTTP/1.1+HTTP/2 серверу Granian. Требует TLS-сертификат "
+            "(см. config.py: cert_file/key_file). default-OFF до staging-smoke "
+            "и согласования сетевых правил (UDP/443)."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
