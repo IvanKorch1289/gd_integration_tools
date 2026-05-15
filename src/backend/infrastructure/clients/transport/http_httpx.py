@@ -38,6 +38,10 @@ from src.backend.core.resilience.breaker import (
     get_breaker_registry,
 )
 from src.backend.dsl.codec.json import json_dumps
+from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
+    build_cache_transport,
+    is_hishel_available,
+)
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
 from src.backend.infrastructure.resilience.rate_limiter import (
     RateLimitExceeded,
@@ -47,9 +51,81 @@ from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 
 breaker_registry = get_breaker_registry()
 
-__all__ = ("HttpxClient", "get_httpx_client")
+__all__ = (
+    "HttpxClient",
+    "build_unified_transport",
+    "get_httpx_client",
+    "is_httpx_retries_available",
+)
 
 logger = logging.getLogger("transport.httpx")
+
+
+def is_httpx_retries_available() -> bool:
+    """Проверяет доступность пакета ``httpx-retries`` (lazy-import friendly).
+
+    Returns:
+        ``True`` если ``httpx_retries`` импортируется без ошибок.
+    """
+    try:
+        import httpx_retries  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def build_unified_transport(
+    *,
+    max_retries: int = 5,
+    backoff_factor: float = 0.5,
+    retry_status_codes: tuple[int, ...] = (429, 502, 503, 504),
+    enable_cache: bool = True,
+    cache_dir: str | None = None,
+) -> httpx.AsyncBaseTransport:
+    """Собирает unified-transport stack: HTTPTransport → RetryTransport → CacheTransport.
+
+    K2 Sprint 7: единый transport stack для всех external API. При отсутствии
+    опциональных пакетов (``httpx-retries`` / ``hishel``) gracefully fallback
+    на следующий доступный слой.
+
+    Args:
+        max_retries: Максимум попыток retry на сетевые ошибки.
+        backoff_factor: Множитель экспоненциального backoff.
+        retry_status_codes: HTTP-статусы, на которые делается retry.
+        enable_cache: Включить Hishel cache transport (RFC 7234).
+        cache_dir: Путь к директории cache (если ``None`` — system temp).
+
+    Returns:
+        ``httpx.AsyncBaseTransport`` — самый внешний слой stack.
+
+    Note:
+        Lazy-import: оба пакета (``httpx-retries`` + ``hishel``) опциональны.
+        При их отсутствии возвращается чистый ``httpx.AsyncHTTPTransport``.
+    """
+    base: httpx.AsyncBaseTransport = httpx.AsyncHTTPTransport(http2=True)
+
+    if is_httpx_retries_available():
+        try:
+            from httpx_retries import Retry, RetryTransport
+
+            retry_obj = Retry(
+                total=max_retries,
+                backoff_factor=backoff_factor,
+                status_forcelist=list(retry_status_codes),
+            )
+            base = RetryTransport(transport=base, retry=retry_obj)
+            logger.debug("httpx_retries RetryTransport активирован")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("httpx_retries init failed: %s", exc)
+
+    if enable_cache and is_hishel_available():
+        cached = build_cache_transport(base, cache_dir=cache_dir)
+        if cached is not None:
+            base = cached
+            logger.debug("hishel CacheTransport активирован")
+
+    return base
 
 
 class HttpxClient:
@@ -89,9 +165,39 @@ class HttpxClient:
                 }
                 if cert is not None:
                     kwargs["cert"] = cert
+
+                # K2 S7: feature-flagged unified transport (httpx-retries + hishel cache).
+                # Default-OFF до staging-smoke; graceful fallback на встроенный httpx.
+                if self._is_unified_transport_enabled():
+                    try:
+                        kwargs["transport"] = build_unified_transport(
+                            max_retries=self._http_settings.max_retries,
+                            backoff_factor=self._http_settings.retry_backoff_factor,
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "unified transport build failed, fallback: %s", exc
+                        )
+
                 self._client = httpx.AsyncClient(**kwargs)
                 self._maybe_subscribe_rotation()
             return self._client
+
+    @staticmethod
+    def _is_unified_transport_enabled() -> bool:
+        """Проверяет feature-flag ``httpx_unified_transport`` (default-OFF).
+
+        Returns:
+            ``True`` если flag активирован в текущем окружении.
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(
+                getattr(feature_flags, "httpx_unified_transport", False)
+            )
+        except Exception:  # noqa: BLE001
+            return False
 
     def _build_cert_tuple(
         self,

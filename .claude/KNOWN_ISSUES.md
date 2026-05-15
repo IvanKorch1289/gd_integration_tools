@@ -1,5 +1,151 @@
 # KNOWN_ISSUES.md
 
+## Audit findings 2026-05-15 (Sprint 6/7 closure verification)
+
+> Источник: Explore-агент 2026-05-15 + coordinator audit. Сравнение ✅-помеченных
+> задач в `PLAN.md` (Sprint 6 ≈ 95%, Sprint 7 ≈ 92%) с фактической файловой
+> системой. **Подтверждено**: SAML/AD, supply-chain SBOM+cosign+pip-audit, OWASP
+> ZAP, codeclone, k6+locust, schemathesis, banking processors (12 тестов), DSL
+> Linter + LSP, Inspect AI nightly, DSPy critical pipelines, chaos×33, outbox
+> stub, layer-violations facade, msgspec hotpath benchmark, structlog batching
+> (`infrastructure/observability/structlog_batching.py`), plugin hot-swap
+> (`core/plugin_runtime/hot_swap.py` 279 LOC + graceful shutdown + state
+> migration через PluginLoader).
+
+### ❌ AUDIT-1 — Quotas tests fail (Sprint 7 K1)
+
+- **Owner**: K1 Security
+- **ETA**: Sprint 8 K1 W0 (`[wave:s8/k1-w0-quotas-tests-fix]`)
+- **Risk**: low (тесты, не runtime)
+- **Файлы**: `tests/unit/core/auth/test_quotas.py`,
+  `tests/unit/services/billing/test_quotas_service.py`
+
+**Описание**: 5 unit-тестов quotas падают после S7 K1 `4f6e9dab`
+(per-tenant billing/quotas service + ASGI middleware). Регрессия не блокирует
+runtime, но `make ci` warn-out до фикса.
+
+**DoD checklist**:
+- [ ] `pytest tests/unit/core/auth/test_quotas.py tests/unit/services/billing/test_quotas_service.py` → 5/5 passed
+- [ ] Проверить, что баг в test-фикстурах или в impl
+- [ ] Обновить `feature_flags.per_tenant_quotas` если требуется
+
+---
+
+### ⚠️ AUDIT-2 — Plugin hot-swap путь в PLAN.md ≠ реальный
+
+- **Owner**: K3 DSL+Workflow (PluginRuntime owner)
+- **Severity**: docs-drift, не runtime-баг
+- **Действие**: при следующем PLAN.md edit поправить ссылку.
+
+**Описание**: PLAN.md / координационные планы ссылаются на
+`src/backend/services/plugins/hotswap*` (которого нет). Реальная реализация
+живёт в `src/backend/core/plugin_runtime/hot_swap.py` (279 LOC: `hot_swap()`
+async, `HotSwapResult`, `PluginLoaderProtocol`, graceful shutdown через
+`loader.shutdown_all()`). CLI `manage.py plugin hot-swap` использует именно этот
+модуль. **Расхождение только в путях документации**, функционал закрыт.
+
+---
+
+### ⚠️ AUDIT-3 — windows-sidecar layout ≠ PLAN.md V17 `windows_worker/`
+
+- **Owner**: K3 DSL+Workflow
+- **ETA**: Sprint 8 K3 W1 (`[wave:s8/k3-w1-windows-worker-rename]`)
+- **Risk**: low (RPA stage 1 не начат, рефакторинг до scaling-up)
+- **Текущий layout**: `windows-sidecar/{app.py, com_router.py, Dockerfile.windows}`
+- **Целевой layout V17**: `windows_worker/{main.py, handlers/com_handler.py, handlers/desktop_rpa_handler.py, Dockerfile.windows}`
+
+**Описание**:
+- Имя `windows-sidecar` использует kebab-case, PEP 8 и V17 требуют snake_case
+  `windows_worker/`.
+- `app.py` → `main.py` (V17 alignment с остальными top-level Python entry).
+- `com_router.py` (137 LOC) разделить на `handlers/com_handler.py`
+  (текущее содержимое) + scaffold `handlers/desktop_rpa_handler.py` под
+  Sprint 8 K3 W4 pywinauto.
+- `docker-compose.windows-worker.yml` сейчас **untracked** в git — закоммитить
+  вместе с rename.
+
+**Вердикт «правильно вынесено наружу»** — оставить top-level (НЕ переносить в
+`src/`):
+- Отдельный процесс (REST API на Windows-контейнере), не Python import.
+- Windows-only runtime (Granian RSGI не работает на Windows нативно).
+- Windows-only deps (`pywin32`, `comtypes`, `pywinauto`) загрязнили бы основной
+  `src/` `[project.dependencies]` platform markers.
+- PLAN.md V17 строка 732 явно фиксирует top-level.
+
+**DoD checklist**:
+- [ ] `git mv windows-sidecar windows_worker`
+- [ ] `git mv windows_worker/app.py windows_worker/main.py`
+- [ ] split `com_router.py` → `handlers/com_handler.py` + `handlers/desktop_rpa_handler.py`
+- [ ] Обновить `Dockerfile.windows` (CMD/ENTRYPOINT → `main.py`)
+- [ ] `git add docker-compose.windows-worker.yml`
+- [ ] Обновить `pyproject.toml::[project.optional-dependencies] com-windows / rpa-windows` если требуется
+- [ ] `make wave-memory NAME=windows-worker-rename TYPE=feedback`
+
+---
+
+## Sprint 5 carryover (still open) — миграция в Sprint 8A
+
+> Источник: 16 reflog-коммитов Sprint 5 (HEAD `eaad2f6c` до race) +
+> `.claude/CONTEXT.md` секция «Sprint 5 — попытка closure». Все wave НЕ
+> переписываются полуготовыми reflog-коммитами, а **переделываются чисто** в
+> Sprint 8A (см. план S8 К2 W2-W7 + K4 W1-W8 + К1 round 2 + K3 W10-W11).
+
+### К2 (Resilience) — 8 wave перенесены в Sprint 8A K2 W1-W7
+- `[wave:s8/k2-w1-taskiq-removal]` — BLOCKER #1 closure (13 callsites).
+- `[wave:s8/k2-w2-outbox-dispatcher]` — `infrastructure/messaging/outbox_dispatcher.py`
+  поверх Protocol+Fake `core/messaging/outbox.py` (`36ca6757` уже в master).
+- `[wave:s8/k2-w3-dlq-unified]` — DLQ unified для HTTP/SOAP/gRPC/Webhook.
+- `[wave:s8/k2-w4-inbox-fail-closed]` — `seen_or_mark()` raise `InboxUnavailable`.
+- `[wave:s8/k2-w5-alerts-and-fallback-chains]` — 5 alerts + 2 fallback chains.
+- `[wave:s8/k2-w6-bulkhead-defaults]` — Bulkhead defaults в `ResilienceSettings`.
+- `[wave:s8/k2-w7-tenant-rate-limit-namespace]` — per-tenant namespace.
+
+### К1 (Security) — Round 2 перенесён в Sprint 8A K1 W1-W3
+- `[wave:s8/k1-w1-waf-phase2]` — BLOCKER #3 closure (38 callsites + flip).
+- `[wave:s8/k1-w2-dlq-replay-rbac]` — admin-only RBAC + audit-event на replay.
+- `[wave:s8/k1-w3-inbox-audit-pii]` — Inbox dedup audit с PII-mask.
+
+### К3 (DSL/Workflow) — W13-W14 перенесены в Sprint 8A K3 W10-W11
+- `[wave:s8/k3-w10-workflow-taskgroup]` — `asyncio.TaskGroup` migration.
+- `[wave:s8/k3-w11-invoke-workflow-reply]` — sync через Temporal signal.
+
+### К4 (AI/RAG) — 9 wave перенесены в Sprint 8A K4 W1-W8
+- `[wave:s8/k4-w1-multimodal-rag]` — docling + PaddleOCR/EasyOCR + `.rag_ingest(modal=...)`.
+- `[wave:s8/k4-w2-rlm-hierarchical-memory]` — MemGPT-style hierarchical memory toolkit.
+- `[wave:s8/k4-w3-rag-cache-invalidation]` — 3-уровневый cache invalidation через Redis pub/sub.
+- `[wave:s8/k4-w4-bge-m3-reranker]` — BGE-M3 + bge-reranker-v2.5 EmbeddingProvider.
+- `[wave:s8/k4-w5-rag-streamlit-pages-7]` — 7 RAG Streamlit pages (см. Sprint 8B K4 W5).
+- `[wave:s8/k4-w6-mem0-rag-memory-dsl]` — `mem0ai>=0.1.0` + `.rag_*/.memory_*` DSL.
+- `[wave:s8/k4-w7-saga-blueprint]` — `saga_with_compensation` Blueprint R2.
+- `[wave:s8/k4-w8-litellm-final]` — LiteLLM gateway financial (cost-budget + retry + fallback).
+- `[wave:s8/k1-w4-pii-dsl-step]` — `.mask_pii/.unmask_pii` DSL (формально К1 owner, но scope К4).
+
+### Sprint 7 К1 carryover (stash-accident potery) → Sprint 8A K1 W5-W6
+- `[wave:s8/k1-w5-supply-chain-cosign-all]` — multi-artifact cosign (plugin TOML).
+- `[wave:s8/k1-w6-openfeature-flagsmith]` — OpenFeature → Flagsmith default-ON staging.
+
+### Sprint 7 К5 carryover → Sprint 8A K5 W2-W4
+- `[wave:s8/k5-w2-streamlit-tenants]` — `70_Tenants.py`.
+- `[wave:s8/k5-w3-streamlit-capabilities]` — `71_Capabilities.py`.
+- `[wave:s8/k5-w4-streamlit-files-s3]` — `30_Files_S3.py`.
+
+### Sprint 7 К2 carryover → Sprint 8B K2 W8-W9
+- `[wave:s8/k2-w8-httpx-unify]` — `httpx + httpx-retries + httpx-cache (hishel)`
+  (адаптер `httpx_cache_adapter.py` уже в working tree).
+- `[wave:s8/k2-w9-grafana-and-slo-alerts]` — 7 Grafana dashboards финал + 3 SLO-burn alerts.
+
+### Sprint 7 К3 carryover → Sprint 8A K3 W8-W9 + W13
+- `[wave:s8/k3-w8-dsl-blueprints-subdir]` — `dsl/macros.py`/`dsl/blueprints.py` → `dsl/blueprints/` package.
+- `[wave:s8/k3-w9-workflow-versioning]` — Temporal `patched` API + per-workflow semver.
+- `[wave:s8/k3-w13-plugin-hotswap-impl]` — расширение `core/plugin_runtime/hot_swap.py`
+  (если по итогам S8 K3 ревизии потребуется доделать state migration / version-conflict).
+
+### Sprint 5 К4 carryover (MCP)
+- `[wave:s8/k3-w12-mcp-via-fastmcp]` — FastMCP auto-export Tier 1+2 actions
+  (code-зона DSL/MCP — К3 owner, AI-payload — К4).
+
+---
+
 ## Sprint 2 (V15.3 MVP) — 3 БЛОКЕРА (день 1, 2026-05-13)
 
 > Источник: 10-team plan PLAN.md V18.1. Координатор: K10 DevOps.
