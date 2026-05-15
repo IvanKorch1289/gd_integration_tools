@@ -19,6 +19,7 @@ from src.backend.dsl.engine.processors.ai import (
     TokenBudgetProcessor,
     VectorSearchProcessor,
 )
+from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor
 from src.backend.dsl.engine.processors.ai_banking import (
     AntiFraudScoreProcessor,
     AppealProcessorAI,
