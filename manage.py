@@ -1097,6 +1097,58 @@ def workflow_dryrun(
         typer.echo(output)
 
 
+@workflow_app.command("version")
+def workflow_version(
+    name: str = typer.Argument(..., help="Имя workflow (workflow_id)."),
+    show_all: bool = typer.Option(
+        False, "--all", help="Показать все workflow_id в реестре."
+    ),
+) -> None:
+    """Sprint 7 K3 — current + history workflow версий из WorkflowVersionRegistry.
+
+    Выводит default-версию (current) и полную history по semver. Реестр
+    заполняется через декоратор ``@workflow_versioned("X.Y.Z")`` при
+    импорте workflow-модулей. Под feature flag
+    ``feature_flags.workflow_versioning_strict`` (default-OFF).
+
+    Args:
+        name: workflow_id (или любая строка при ``--all``).
+        show_all: Вывести все workflow_id, зарегистрированные в реестре.
+    """
+    from src.backend.dsl.workflow.versioning import get_global_registry
+
+    registry = get_global_registry()
+
+    if show_all:
+        ids = registry.all_workflow_ids()
+        if not ids:
+            typer.echo("Реестр workflow версий пуст.")
+            return
+        typer.echo(f"Registered workflows ({len(ids)}):")
+        for wf_id in ids:
+            current = registry.get_default(wf_id)
+            current_str = f"v{current.semver}" if current else "(no default)"
+            typer.echo(f"  - {wf_id}: current={current_str}")
+        return
+
+    current = registry.get_default(name)
+    history = registry.history(name)
+
+    if not history:
+        typer.echo(f"Workflow {name!r} не найден в реестре.", err=True)
+        raise typer.Exit(code=1)
+
+    if current is not None:
+        typer.echo(f"Current default: {name} v{current.semver}")
+    else:
+        typer.echo(f"Workflow {name}: default-версия не назначена.")
+
+    typer.echo(f"History ({len(history)}):")
+    for v in history:
+        marker = " (default)" if v.default_version else ""
+        typer.echo(f"  - v{v.semver}{marker}")
+
+
 # ────────────── Plugin runtime (Sprint 7 T5) ──────────────
 
 
