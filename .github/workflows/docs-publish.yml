@@ -1,0 +1,73 @@
+# Multi-version docs publish to GitHub Pages.
+# Wave: [wave:s8/k1-sphinx-multiversion]. Owner: K1 Security/Docs.
+#
+# Триггеры: push в master + любой tag v* (release).
+# Build: uv sync --extra docs + sphinx-multiversion → docs/_build/multi/.
+# Deploy: peaceiris/actions-gh-pages@v3 → ветка gh-pages.
+#
+# ⚠ В первом релизе требуется одноразовое включение в GitHub repo settings:
+#   Settings → Pages → Source = "Deploy from branch" → "gh-pages" / "/ (root)".
+
+name: docs-publish
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # для push в gh-pages
+  pages: write
+  id-token: write
+
+concurrency:
+  group: docs-publish
+  cancel-in-progress: false   # релиз-теги не отменяем половиной пути
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout (полная история — для multi-version по тегам)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install docs deps
+        run: uv sync --frozen --extra docs
+
+      - name: Build multi-version Sphinx
+        run: uv run sphinx-multiversion docs docs/_build/multi
+
+      - name: Generate root redirect to latest stable
+        run: |
+          mkdir -p docs/_build/multi
+          cat > docs/_build/multi/index.html <<'HTML'
+          <!DOCTYPE html>
+          <meta charset="utf-8">
+          <title>gd_integration_tools — docs</title>
+          <meta http-equiv="refresh" content="0; url=master/index.html">
+          <p>Перенаправление на <a href="master/index.html">master</a>...</p>
+          HTML
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/multi
+          publish_branch: gh-pages
+          keep_files: false
+          enable_jekyll: false
+          commit_message: "docs: deploy multi-version build (${{ github.sha }})"

@@ -566,6 +566,9 @@ docs-apidoc:
 docs-html: ## К10 S2 W5: build Sphinx HTML (warnings = errors via -W)
 	uv run sphinx-build -b html -W --keep-going $(DOCS_SOURCE) $(DOCS_BUILD)/html
 
+docs-multiversion: ## K1 S8 [wave:s8/k1-sphinx-multiversion]: build всех whitelist-ref'ов в $(DOCS_BUILD)/multi/<ref>
+	uv run sphinx-multiversion $(DOCS_SOURCE) $(DOCS_BUILD)/multi
+
 docs-rebuild: docs-clean docs-apidoc docs-html
 
 docs: docs-rebuild ## К10 S2 W5: build Sphinx documentation (Diátaxis structure)

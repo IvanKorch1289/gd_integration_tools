@@ -67,6 +67,10 @@ dependencies = [
     "grpc-interceptor>=0.15.4,<1.0.0",
     "svcs>=25.1.0",
     "httpx[http2]>=0.28.0,<1.0.0",
+    # K2 S7: unified httpx transport stack (RetryTransport + CacheTransport).
+    # Lazy-import — feature-flagged через httpx_unified_transport (default-OFF).
+    "httpx-retries>=0.4,<1.0",
+    "hishel>=0.0.30,<1.0",
     "msgpack>=1.1.0,<2.0.0",
     "cbor2>=5.6.0,<6.0.0",
     "xmltodict>=0.14.0,<1.0.0",
@@ -230,6 +234,10 @@ docs = [
     "myst-parser>=5.0.0,<6.0.0",
     "sphinx-copybutton>=0.5,<1",
     "pydata-sphinx-theme>=0.16.0,<1.0.0",
+    # K1 Sprint 8: multi-version docs build (master + release/* + v* tags).
+    # sphinx-multiversion — стабильная и проверенная утилита; интегрируется
+    # с любым Sphinx-проектом через расширение + 4 smv_* настройки.
+    "sphinx-multiversion>=0.2.4,<1.0.0",
 ]
 # Sprint 5 — DSL расширения batch 2: webhook signature / pdf / template / archive.
 # Все зависимости pure-Python (либо имеют готовые wheels) и совместимы с Python 3.14.
@@ -275,6 +283,15 @@ ai-memory = [
 multimodal-rag = [
     "docling>=2.0.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
+]
+# Sprint 7 K1 closure — OpenFeature SDK + external Flagsmith provider.
+# openfeature-sdk — официальный CNCF Provider Interface (Python).
+# flagsmith — server-side SDK (lazy-import внутри FlagsmithBackend);
+# REST-fallback реализован напрямую через httpx в flagsmith_client.py
+# и не требует SDK. Default-OFF — extra нужен только для prod-rollout.
+feature_flags = [
+    "openfeature-sdk>=0.7,<1.0",
+    "flagsmith>=3.5,<4.0",
 ]
 
 [dependency-groups]
@@ -526,7 +543,4 @@ ignore_names = [
     "toxicity",
     # DSL templates — параметр используется через kwarg call в default registry
     "target_table",
-    # TaskIQ TYPE_CHECKING re-exports (форвардные строковые аннотации)
-    "AsyncBroker",
-    "AsyncTaskiqDecoratedTask",
 ]

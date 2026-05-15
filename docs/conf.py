@@ -25,6 +25,23 @@ extensions = [
     "myst_parser",
 ]
 
+# K1 Sprint 8 [wave:s8/k1-sphinx-multiversion]: multi-version build.
+# Подключаем sphinx-multiversion опционально: при отсутствии extras
+# обычный single-version build не падает (dev без `pip install -e '.[docs]'`).
+try:  # pragma: no cover — import-time опция
+    import sphinx_multiversion  # noqa: F401
+
+    extensions.append("sphinx_multiversion")
+except ImportError:
+    pass
+
+# Whitelisting: master + долгоживущие release-ветки + tags v0.1+.
+smv_branch_whitelist = r"^(master|release/.*)$"
+smv_tag_whitelist = r"^v\d+\.\d+(\.\d+)?$"
+smv_remote_whitelist = None  # build только из локальных refs (CI checkout-all)
+smv_released_pattern = r"^tags/v.*$"
+smv_outputdir_format = "{ref.name}"
+
 templates_path = ["_templates"]
 # Исключаем build-артефакты и системные файлы
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
