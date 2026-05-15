@@ -36,11 +36,37 @@ class RateLimitExceeded(Exception):
 
 @dataclass(slots=True)
 class RateLimit:
-    """Описание rate limit policy."""
+    """Описание rate limit policy.
+
+    Параметр ``tenant_aware`` (V19 K2 W7): когда True, к Redis-ключу
+    добавляется сегмент ``tenant:<id>``, где ``<id>`` берётся из
+    ``core.tenancy.current_tenant()`` (или ``_default_`` если контекст
+    не установлен). Изолирует счётчики между арендаторами без изменения
+    callsite'ов.
+    """
 
     limit: int
     window_seconds: int
     key_prefix: str = "ratelimit"
+    tenant_aware: bool = False
+
+
+def _resolve_tenant_segment() -> str:
+    """Возвращает ``tenant:<id>`` или ``tenant:_default_``.
+
+    Изолирован в helper'е чтобы избежать import-cycle при инициализации
+    модуля (``core.tenancy`` импортирует структуры из ``core.resilience``
+    в фасадных re-export'ах).
+    """
+    try:
+        from src.backend.core.tenancy import current_tenant
+
+        ctx = current_tenant()
+        if ctx is not None and ctx.tenant_id:
+            return f"tenant:{ctx.tenant_id}"
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Tenant context недоступен (fallback _default_): %s", exc)
+    return "tenant:_default_"
 
 
 class RedisRateLimiter:
@@ -70,7 +96,11 @@ class RedisRateLimiter:
 
         now = int(time.time())
         window_start = now - (now % policy.window_seconds)
-        key = f"{policy.key_prefix}:{identifier}:{window_start}"
+        if policy.tenant_aware:
+            tenant_seg = _resolve_tenant_segment()
+            key = f"{policy.key_prefix}:{tenant_seg}:{identifier}:{window_start}"
+        else:
+            key = f"{policy.key_prefix}:{identifier}:{window_start}"
 
         try:
             raw = getattr(redis_client, "_raw_client", None) or redis_client
