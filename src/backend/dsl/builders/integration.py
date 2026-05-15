@@ -114,19 +114,28 @@ class IntegrationMixin:
         task_queue: str = "default",
         result_property: str = "workflow_result",
         invocation_id_property: str = "invocation_id",
+        reply_timeout_seconds: float = 60.0,
     ) -> "RouteBuilder":
         """Запуск Workflow (Temporal/LiteTemporal/PgRunner) — R-V15-7 / R-V15-9.
 
         Args:
             name: Логическое имя workflow.
-            mode: ``"sync"`` ждёт terminal-статуса, ``"async-api"``
-                возвращает handle сразу (default).
+            mode: Режим вызова:
+
+                * ``"sync"`` — ждёт terminal-статуса (без timeout).
+                * ``"async-api"`` — возвращает handle сразу (default).
+                * ``"async-reply"`` — fire-and-await с
+                  ``reply_timeout_seconds`` timeout (Sprint 8A K3 W11).
+
             args: Базовые аргументы (если ``None`` — берётся
                 ``in_message.body`` если dict).
             namespace: Workflow namespace (Temporal).
             task_queue: Workflow task queue (Temporal).
             result_property: Куда писать результат / handle.
             invocation_id_property: Куда писать workflow_id.
+            reply_timeout_seconds: Таймаут для ``async-reply`` (default 60s).
+                При timeout result_property получает ``{"status": "timeout",
+                "workflow_id": ..., "timeout_seconds": ...}``.
         """
         from src.backend.dsl.engine.processors.invoke_workflow import (
             InvokeWorkflowProcessor,
@@ -141,6 +150,7 @@ class IntegrationMixin:
                 task_queue=task_queue,
                 result_property=result_property,
                 invocation_id_property=invocation_id_property,
+                reply_timeout_seconds=reply_timeout_seconds,
             )
         )
 
@@ -394,9 +404,7 @@ class IntegrationMixin:
     ) -> "RouteBuilder":
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
         return self.entity_create(
-            entity=entity,
-            payload_from=payload_from,
-            result_property=result_property,
+            entity=entity, payload_from=payload_from, result_property=result_property
         )
 
     def crud_read(
@@ -1083,18 +1091,12 @@ class IntegrationMixin:
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             CallFunctionProcessor(
-                ref=ref,
-                payload_from=payload_from,
-                result_property=result_property,
+                ref=ref, payload_from=payload_from, result_property=result_property
             )
         )
 
     def get_setting(
-        self,
-        path: str,
-        *,
-        to: str = "body.setting",
-        default: Any = None,
+        self, path: str, *, to: str = "body.setting", default: Any = None
     ) -> "RouteBuilder":
         """Чтение настройки из application config (R-V15-17).
 
@@ -1133,9 +1135,7 @@ class IntegrationMixin:
         )
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
-            ResponseValidatorProcessor(
-                schema=schema, on_error=on_error, source=source
-            )
+            ResponseValidatorProcessor(schema=schema, on_error=on_error, source=source)
         )
 
     # ── Sink fluent API (Sprint 3 W1 K3 — 10 .sink_*() методов) ──
@@ -1368,11 +1368,7 @@ class IntegrationMixin:
             GenericSinkPublishProcessor,
         )
 
-        config: dict[str, Any] = {
-            "url": url,
-            "event": event,
-            "timeout": timeout,
-        }
+        config: dict[str, Any] = {"url": url, "event": event, "timeout": timeout}
         if secret is not None:
             config["secret"] = secret
         if extra_headers:
@@ -1448,11 +1444,7 @@ class IntegrationMixin:
             GenericSinkPublishProcessor,
         )
 
-        config: dict[str, Any] = {
-            "url": url,
-            "method": method,
-            "timeout": timeout,
-        }
+        config: dict[str, Any] = {"url": url, "method": method, "timeout": timeout}
         if headers:
             config["headers"] = dict(headers)
 
@@ -1535,8 +1527,7 @@ class IntegrationMixin:
         )
         builder._add(
             EmailTriggerProcessor(
-                subject_pattern=subject_filter,
-                from_filter=from_filter,
+                subject_pattern=subject_filter, from_filter=from_filter
             )
         )
         return builder
@@ -1621,9 +1612,7 @@ class IntegrationMixin:
                 .build()
             )
         """
-        source = (
-            f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
-        )
+        source = f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
         return cls(route_id=route_id, source=source, description=description)  # type: ignore[return-value]
 
     def to_nats_js(
@@ -1667,10 +1656,7 @@ class IntegrationMixin:
             GenericSinkPublishProcessor,
         )
 
-        config: dict[str, Any] = {
-            "nats_url": nats_url,
-            "subject": subject,
-        }
+        config: dict[str, Any] = {"nats_url": nats_url, "subject": subject}
         if headers:
             config["headers"] = dict(headers)
 
@@ -1711,9 +1697,7 @@ class IntegrationMixin:
         return self._add(  # type: ignore[attr-defined,no-any-return]
             RenderDocxProcessor(
                 RenderDocxParams(
-                    template=template,
-                    context_from=context_from,
-                    output_to=output_to,
+                    template=template, context_from=context_from, output_to=output_to
                 )
             )
         )

@@ -1,20 +1,25 @@
-"""DSL processor ``invoke_workflow`` (Sprint 4 К3-B §6).
+"""DSL processor ``invoke_workflow`` (Sprint 4 К3-B §6; Sprint 8A K3 W11).
 
 Связывает DSL pipeline с :class:`WorkflowBackend` — запускает workflow
 по имени (название из реестра :data:`workflow_compiler_registry`) и
 возвращает ``workflow_id`` либо результат, в зависимости от режима.
 
-Режимы (контракт V15):
+Режимы (контракт V15 + Sprint 8A K3 W11):
 
 * ``sync`` — ждёт terminal-статуса, кладёт ``result`` в
   ``out_message.body`` и в ``exchange.property[result_property]``.
 * ``async-api`` — стартует workflow и сразу возвращает
   ``invocation_id``/``workflow_id`` в ``property[invocation_id_property]``,
   не дожидаясь завершения.
+* ``async-reply`` — fire-and-await: запускает workflow и ждёт terminal-
+  статуса с настраиваемым timeout. По истечению timeout — пишет
+  ``status: timeout`` в result_property без отмены workflow. Удобен для
+  long-running workflows с SLA-таймаутами в DSL-route.
 """
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -29,7 +34,8 @@ if TYPE_CHECKING:
 __all__ = ("InvokeWorkflowProcessor",)
 
 
-_ALLOWED_MODES = frozenset({"sync", "async-api"})
+_ALLOWED_MODES = frozenset({"sync", "async-api", "async-reply"})
+_DEFAULT_REPLY_TIMEOUT_SECONDS = 60.0
 
 
 @processor(
@@ -45,6 +51,7 @@ _ALLOWED_MODES = frozenset({"sync", "async-api"})
             "task_queue": {"type": "string"},
             "result_property": {"type": "string"},
             "invocation_id_property": {"type": "string"},
+            "reply_timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
         },
         "required": ["name"],
     },
@@ -80,6 +87,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
         task_queue: str = "default",
         result_property: str = "workflow_result",
         invocation_id_property: str = "invocation_id",
+        reply_timeout_seconds: float = _DEFAULT_REPLY_TIMEOUT_SECONDS,
         backend: WorkflowBackend | None = None,
         backend_factory: Callable[[], Any] | None = None,
     ) -> None:
@@ -91,6 +99,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
         self.task_queue = task_queue
         self.result_property = result_property
         self.invocation_id_property = invocation_id_property
+        self.reply_timeout_seconds = reply_timeout_seconds
         self._backend_override = backend
         self._backend_factory = backend_factory
 
@@ -109,9 +118,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             return self._backend_override
         if self._backend_factory is not None:
             return await self._backend_factory()
-        from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         return await create_workflow_backend(kind="auto")
 
@@ -139,23 +146,41 @@ class InvokeWorkflowProcessor(BaseProcessor):
 
         if self.mode == "async-api":
             exchange.set_property(
-                self.result_property,
-                {"accepted": True, "workflow_id": workflow_id},
+                self.result_property, {"accepted": True, "workflow_id": workflow_id}
             )
             return
 
+        if self.mode == "async-reply":
+            # Sprint 8A K3 W11: fire-and-await с настраиваемым timeout.
+            try:
+                result = await asyncio.wait_for(
+                    backend.await_completion(handle=handle),
+                    timeout=self.reply_timeout_seconds,
+                )
+            except asyncio.TimeoutError:
+                exchange.set_property(
+                    self.result_property,
+                    {
+                        "status": "timeout",
+                        "workflow_id": workflow_id,
+                        "timeout_seconds": self.reply_timeout_seconds,
+                    },
+                )
+                return
+            exchange.set_property(self.result_property, result.output)
+            exchange.set_out(
+                body=result.output, headers=dict(exchange.in_message.headers)
+            )
+            return
+
+        # mode == "sync"
         result = await backend.await_completion(handle=handle)
         exchange.set_property(self.result_property, result.output)
-        exchange.set_out(
-            body=result.output, headers=dict(exchange.in_message.headers)
-        )
+        exchange.set_out(body=result.output, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
         """Round-trip DSL-спецификация ``{"invoke_workflow": {...}}``."""
-        spec: dict[str, Any] = {
-            "name": self.workflow_name,
-            "mode": self.mode,
-        }
+        spec: dict[str, Any] = {"name": self.workflow_name, "mode": self.mode}
         if self.args is not None:
             spec["args"] = dict(self.args)
         if self.namespace_name != "default":
@@ -166,4 +191,9 @@ class InvokeWorkflowProcessor(BaseProcessor):
             spec["result_property"] = self.result_property
         if self.invocation_id_property != "invocation_id":
             spec["invocation_id_property"] = self.invocation_id_property
+        if (
+            self.mode == "async-reply"
+            and self.reply_timeout_seconds != _DEFAULT_REPLY_TIMEOUT_SECONDS
+        ):
+            spec["reply_timeout_seconds"] = self.reply_timeout_seconds
         return {"invoke_workflow": spec}
