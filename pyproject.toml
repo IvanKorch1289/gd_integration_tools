@@ -171,6 +171,15 @@ ai-2026 = [
     "FlagEmbedding>=1.3.0,<2.0.0",
     "instructor>=1.7.0,<2.0.0",
 ]
+# K4 Sprint 7: voice STT/TTS extras (Whisper + Coqui TTS).
+# openai-whisper — speech-to-text (multilingual, including ru).
+# TTS (Coqui) — text-to-speech (XTTS v2 multilingual). Опциональный
+# (тяжёлый pin torch + heavy weights). Lazy-import внутри
+# services/ai/voice/. Activate via feature_flag voice_stt_tts_enabled.
+ai-voice = [
+    "openai-whisper>=20240930,<2",
+    "TTS>=0.22,<1",
+]
 # Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
 # backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
 # внутри TemporalWorkflowBackend.__init__ — dev-light без SDK.

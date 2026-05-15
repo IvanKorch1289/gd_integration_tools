@@ -1324,5 +1324,16 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    voice_stt_tts_enabled: bool = Field(
+        default=False,
+        title="K4 S7: Whisper STT + Coqui TTS wrappers (voice pipeline)",
+        description=(
+            "K4 Sprint 7. Owner: K4 AI/RAG. ETA: S7. "
+            "Активирует WhisperSTTService.transcribe() / CoquiTTSService.synthesize() "
+            "поверх openai-whisper и Coqui TTS (extras [ai-voice]). "
+            "Lazy-import тяжёлых SDK; default-OFF до установки extras и staging-smoke."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
