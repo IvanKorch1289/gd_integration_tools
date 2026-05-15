@@ -1,0 +1,110 @@
+# K2 Sprint 7 — multi-window SLO burn-rate alerts (Prometheus AlertManager).
+#
+# Pattern: Google SRE Workbook "Alerting on SLOs", раздел Multi-window/multi-burn-rate.
+# SLO target: 99.9% (3 9's) availability; error budget = 0.1% (43.2 min / 30d).
+#
+# Trio:
+#   - fast   (1h window,  14.4x burn) -> 2% error budget за 1h -> critical pager
+#   - medium (6h window,   6x burn)   -> 5% error budget за 6h -> high pager
+#   - slow   (24h window,  3x burn)   -> 10% error budget за 24h -> ticket
+#
+# Применяется через Prometheus rules + AlertManager routes. Feature-flag
+# ``grafana_dashboards_final`` управляет автоимпортом в Grafana provisioning.
+
+groups:
+  - name: slo_burn_rate
+    interval: 30s
+    rules:
+      - alert: error_budget_burn_fast
+        # Fast burn: 14.4x на окне 1h = 2% бюджета за 1h.
+        # Дополнительная проверка 5m окна для подавления коротких всплесков.
+        expr: |
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[1h]))
+              /
+              clamp_min(sum(rate(http_requests_total[1h])), 1)
+            ) > (14.4 * (1 - 0.999))
+          )
+          and
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+              /
+              clamp_min(sum(rate(http_requests_total[5m])), 1)
+            ) > (14.4 * (1 - 0.999))
+          )
+        for: 2m
+        labels:
+          severity: critical
+          burn_rate: fast
+          slo: availability_999
+        annotations:
+          summary: "Fast SLO burn (14.4x, 1h window)"
+          description: >
+            Error budget сгорит за ~2 часа при текущем темпе. Активна 1h-burn
+            >= 14.4x SLO error budget rate. Требуется немедленное вмешательство
+            on-call инженера (PagerDuty/Telegram critical).
+          runbook_url: "https://docs.internal/runbooks/slo-burn-fast"
+
+      - alert: error_budget_burn_medium
+        # Medium burn: 6x на окне 6h = 5% бюджета за 6h.
+        # Дополнительная проверка 30m окна для подавления коротких всплесков.
+        expr: |
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[6h]))
+              /
+              clamp_min(sum(rate(http_requests_total[6h])), 1)
+            ) > (6.0 * (1 - 0.999))
+          )
+          and
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[30m]))
+              /
+              clamp_min(sum(rate(http_requests_total[30m])), 1)
+            ) > (6.0 * (1 - 0.999))
+          )
+        for: 15m
+        labels:
+          severity: high
+          burn_rate: medium
+          slo: availability_999
+        annotations:
+          summary: "Medium SLO burn (6x, 6h window)"
+          description: >
+            Error budget сгорит за ~5 дней при текущем темпе. Активна 6h-burn
+            >= 6x SLO error budget rate. Требуется реакция on-call в течение часа.
+          runbook_url: "https://docs.internal/runbooks/slo-burn-medium"
+
+      - alert: error_budget_burn_slow
+        # Slow burn: 3x на окне 24h = 10% бюджета за 24h.
+        # Дополнительная проверка 2h окна.
+        expr: |
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[24h]))
+              /
+              clamp_min(sum(rate(http_requests_total[24h])), 1)
+            ) > (3.0 * (1 - 0.999))
+          )
+          and
+          (
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[2h]))
+              /
+              clamp_min(sum(rate(http_requests_total[2h])), 1)
+            ) > (3.0 * (1 - 0.999))
+          )
+        for: 1h
+        labels:
+          severity: warning
+          burn_rate: slow
+          slo: availability_999
+        annotations:
+          summary: "Slow SLO burn (3x, 24h window)"
+          description: >
+            Error budget сгорит за ~10 дней при текущем темпе. Активна 24h-burn
+            >= 3x SLO error budget rate. Создать ticket в backlog в рабочее время.
+          runbook_url: "https://docs.internal/runbooks/slo-burn-slow"

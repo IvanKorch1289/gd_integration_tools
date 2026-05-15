@@ -1,0 +1,81 @@
+{
+  "uid": "gd-db-pool-health",
+  "title": "DB & Cache Pool Health (PG / Redis / HTTP)",
+  "tags": ["gd_integration_tools", "K2-S7", "pools"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "PG pool size",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sqlalchemy_pool_size", "refId": "A"}]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "PG in-use",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sqlalchemy_pool_checked_out", "refId": "A"}]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "PG pool utilization (%)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "100 * sqlalchemy_pool_checked_out / clamp_min(sqlalchemy_pool_size, 1)",
+          "legendFormat": "PG utilization",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percent", "max": 100, "min": 0}}
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Redis active connections",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 6, "h": 4},
+      "targets": [{"expr": "redis_pool_in_use_connections", "refId": "A"}]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Redis idle connections",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 4, "w": 6, "h": 4},
+      "targets": [{"expr": "redis_pool_idle_connections", "refId": "A"}]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "HTTP pool (httpx keepalive)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "httpx_pool_connections{state=\"active\"}", "legendFormat": "active", "refId": "A"},
+        {"expr": "httpx_pool_connections{state=\"keepalive\"}", "legendFormat": "keepalive", "refId": "B"}
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Pool recycle events (per host)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "rate(sqlalchemy_pool_connection_recycled_total[5m])", "legendFormat": "PG-recycle", "refId": "A"},
+        {"expr": "rate(redis_pool_connection_recycled_total[5m])", "legendFormat": "redis-recycle", "refId": "B"}
+      ]
+    }
+  ]
+}

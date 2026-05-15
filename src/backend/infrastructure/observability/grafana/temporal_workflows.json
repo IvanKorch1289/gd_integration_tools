@@ -1,0 +1,105 @@
+{
+  "uid": "gd-temporal-workflows",
+  "title": "Temporal Workflows (running + activity heatmap + saga)",
+  "tags": ["gd_integration_tools", "K2-S7", "temporal"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-3h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(temporal_workflow_started_total, namespace)",
+        "refresh": 2,
+        "multi": false,
+        "current": {"text": "default", "value": "default"}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Running workflows",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(temporal_workflow_running{namespace=\"$namespace\"})",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Completed (1h)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(temporal_workflow_completed_total{namespace=\"$namespace\"}[1h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Failed (1h)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "red", "value": 1}]}}},
+      "targets": [
+        {
+          "expr": "sum(increase(temporal_workflow_failed_total{namespace=\"$namespace\"}[1h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Saga compensations (1h)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(saga_compensation_total{namespace=\"$namespace\"}[1h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "heatmap",
+      "title": "Activity duration heatmap",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 24, "h": 10},
+      "targets": [
+        {
+          "expr": "sum(rate(temporal_activity_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le)",
+          "format": "heatmap",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Workflows by saga state",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 14, "w": 24, "h": 8},
+      "targets": [
+        {"expr": "saga_state_count{state=\"pending\"}", "legendFormat": "pending", "refId": "A"},
+        {"expr": "saga_state_count{state=\"compensating\"}", "legendFormat": "compensating", "refId": "B"},
+        {"expr": "saga_state_count{state=\"completed\"}", "legendFormat": "completed", "refId": "C"},
+        {"expr": "saga_state_count{state=\"failed\"}", "legendFormat": "failed", "refId": "D"}
+      ]
+    }
+  ]
+}
