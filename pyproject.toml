@@ -239,6 +239,12 @@ docs = [
     # с любым Sphinx-проектом через расширение + 4 smv_* настройки.
     "sphinx-multiversion>=0.2.4,<1.0.0",
 ]
+# K5 Sprint 8 [wave:s8/k5-ru-proofreader]: optional ru-language proofreader.
+# language-tool-python тянет ~500MB JVM + словари; в core не нужен,
+# Streamlit Wiki показывает helpful warning при отсутствии.
+docs-ru = [
+    "language-tool-python>=2.8,<3",
+]
 # Sprint 5 — DSL расширения batch 2: webhook signature / pdf / template / archive.
 # Все зависимости pure-Python (либо имеют готовые wheels) и совместимы с Python 3.14.
 # Lazy-import внутри процессоров; extra нужен только при реальном использовании.

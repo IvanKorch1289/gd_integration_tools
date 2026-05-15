@@ -24,8 +24,13 @@ __all__ = ("Hit", "WhooshIndex", "get_wiki_index")
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_DOCS_DIR = Path(__file__).resolve().parents[3] / "docs"
-_DEFAULT_INDEX_DIR = Path(__file__).resolve().parents[3] / ".cache" / "wiki_index"
+# parents[4] = <repo_root> (whoosh_index.py живёт в
+# <root>/src/backend/services/wiki/). Wave 10.2 scaffold ошибочно
+# использовал parents[3] (= ``src/``) → docs_dir не существовал и поиск
+# был пуст; исправлено в [wave:s8/k5-wiki-whoosh-extend].
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+_DEFAULT_DOCS_DIR = _REPO_ROOT / "docs"
+_DEFAULT_INDEX_DIR = _REPO_ROOT / ".cache" / "wiki_index"
 
 
 @dataclass(slots=True)
@@ -53,17 +58,52 @@ class WhooshIndex:
     def _schema(self):
         from whoosh import fields
 
+        # Wave [wave:s8/k5-wiki-whoosh-extend]: добавлен `category`-фильтр
+        # (Diátaxis: tutorial / how-to / reference / explanation / runbook /
+        # dsl / other) для side-bar навигации в Streamlit Wiki.
         return fields.Schema(
             path=fields.ID(stored=True, unique=True),
             title=fields.TEXT(stored=True),
+            category=fields.KEYWORD(stored=True, lowercase=True, scorable=True),
             mtime=fields.NUMERIC(stored=True),
             content=fields.TEXT(stored=True),
         )
 
-    def _iter_md_files(self) -> Iterable[Path]:
+    def _iter_indexable_files(self) -> Iterable[Path]:
+        """Возвращает все ``.md`` и ``.yaml`` в ``docs_dir``.
+
+        ``.yaml`` нужен для DSL-примеров (``docs/dsl/*.yaml``) — Wiki
+        отображает их как "live DSL examples" с подсветкой синтаксиса.
+        """
         if not self._docs_dir.is_dir():
             return ()
-        return self._docs_dir.rglob("*.md")
+        return (
+            list(self._docs_dir.rglob("*.md"))
+            + list(self._docs_dir.rglob("*.yaml"))
+        )
+
+    # Backward-compat алиас (не удалять — использован в тестах прежних wave).
+    def _iter_md_files(self) -> Iterable[Path]:
+        return self._iter_indexable_files()
+
+    @staticmethod
+    def _categorize(rel_path: str) -> str:
+        """Классифицирует файл по Diátaxis-квадранту на основе пути."""
+        path_lower = rel_path.lower()
+        for marker, category in (
+            ("/tutorials/", "tutorial"),
+            ("/how-to/", "how-to"),
+            ("/howto/", "how-to"),
+            ("/reference/", "reference"),
+            ("/explanation/", "explanation"),
+            ("/explanations/", "explanation"),
+            ("/runbooks/", "runbook"),
+            ("/dsl/", "dsl"),
+            ("/adr/", "reference"),
+        ):
+            if marker in path_lower:
+                return category
+        return "other"
 
     def _open_or_create(self):
         from whoosh import index
@@ -118,6 +158,7 @@ class WhooshIndex:
                 writer.update_document(
                     path=rel,
                     title=self._title(md, content),
+                    category=self._categorize(rel),
                     mtime=mtime,
                     content=content,
                 )
@@ -134,8 +175,22 @@ class WhooshIndex:
         logger.info("wiki: indexed %d documents", count)
         return count
 
-    def search(self, query: str, top: int = 20) -> list[Hit]:
-        """Полнотекстовый поиск по ``title`` и ``content``."""
+    def search(
+        self,
+        query: str,
+        top: int = 20,
+        *,
+        category: str | None = None,
+    ) -> list[Hit]:
+        """Полнотекстовый поиск по ``title`` и ``content``.
+
+        Args:
+            query: Произвольный текстовый запрос.
+            top: Лимит результатов.
+            category: Опц. фильтр по Diátaxis-квадранту
+                (``tutorial`` / ``how-to`` / ``reference`` / ``explanation`` /
+                ``runbook`` / ``dsl`` / ``other``). ``None`` — без фильтра.
+        """
         from whoosh import qparser
 
         if self._ix is None:
@@ -144,7 +199,10 @@ class WhooshIndex:
             parser = qparser.MultifieldParser(
                 ["title", "content"], schema=self._ix.schema
             )
-            parsed = parser.parse(query)
+            full_query = (
+                f"({query}) AND category:{category}" if category else query
+            )
+            parsed = parser.parse(full_query)
             results = searcher.search(parsed, limit=top)
             results.fragmenter.charlimit = 1024 * 8
             hits: list[Hit] = []
