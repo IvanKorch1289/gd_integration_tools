@@ -1794,3 +1794,56 @@ class IntegrationMixin:
                 )
             )
         )
+
+    # ── LLM structured output (S8 finale) ──
+
+    def llm_structured(
+        self,
+        *,
+        model: str,
+        output_schema: Any,
+        prompt: str,
+        retry: int = 3,
+        temperature: float = 0.0,
+        cost_budget_usd: float | None = None,
+        to: str = "body.llm_result",
+        name: str | None = None,
+    ) -> "RouteBuilder":
+        """LLM-вызов с гарантированным Pydantic-объектом.
+
+        Wave: ``[wave:s8/k4-llm-structured-finale]``. Обёртка над
+        :class:`LLMStructuredProcessor` (instructor + litellm). Поддержка
+        outer retry на network errors (через ``make_async_retry``) и
+        inner — instructor ``max_retries`` для Pydantic-валидации.
+
+        Args:
+            model: Идентификатор в формате ``<provider>/<model>``
+                (``anthropic/claude-sonnet-4-6``, ``openai/gpt-4o``).
+            output_schema: ``type[BaseModel]`` или ``"module:Class"`` /
+                имя класса в ``ServiceSchemaRegistry``.
+            prompt: Шаблон промпта; ``${body.x}`` / ``${properties.y}``
+                подставляются из exchange.
+            retry: instructor inner ``max_retries`` (Pydantic-валидация).
+            temperature: Sampling-temperature; для structured output
+                0.0 (детерминизм) по умолчанию.
+            cost_budget_usd: Опц. бюджет; превышение → ``exchange.fail``.
+            to: Путь записи результата (``body.<field>`` / ``body`` /
+                ``property:<name>``).
+            name: Имя процессора в трейсах/метриках.
+        """
+        from src.backend.dsl.engine.processors.llm_structured import (
+            LLMStructuredProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            LLMStructuredProcessor(
+                model=model,
+                output_schema=output_schema,
+                prompt=prompt,
+                retry=retry,
+                temperature=temperature,
+                cost_budget_usd=cost_budget_usd,
+                to=to,
+                name=name,
+            )
+        )
