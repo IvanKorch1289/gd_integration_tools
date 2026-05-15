@@ -136,6 +136,36 @@ def run_cosign() -> StageResult:
     )
 
 
+def run_cosign_all_artifacts() -> StageResult:
+    """Стадия 5 (S7 finale) — multi-artifact cosign signing.
+
+    Делегирует :mod:`tools.checks.cosign_sign_all` через subprocess; ключ
+    передаётся через ENV ``KEY`` (общий контракт с :func:`run_cosign`).
+    Stage пропускается, если ``KEY`` не задан или ``cosign`` отсутствует —
+    pipeline идёт дальше с SKIP, не валит весь gate.
+    """
+    script = _TOOLS / "cosign_sign_all.py"
+    if not script.exists():
+        return StageResult("cosign-all", 2, True, f"missing {script}")
+    key = os.environ.get("KEY")
+    if not key:
+        return StageResult(
+            "cosign-all",
+            0,
+            True,
+            "skipped (KEY not set — non-release stage)",
+        )
+    if shutil.which("cosign") is None:
+        return StageResult("cosign-all", 2, True, "cosign not installed in PATH")
+    cmd = [sys.executable, str(script), "--key", key]
+    container_image = os.environ.get("CONTAINER_IMAGE")
+    if container_image:
+        cmd.extend(["--container-image", container_image])
+    else:
+        cmd.append("--skip-image")
+    return _run_stage("cosign-all", cmd)
+
+
 def main() -> int:
     """CLI entry point — оркестрация 4 стадий supply-chain."""
     parser = argparse.ArgumentParser(description="supply-chain полный CI gate")
@@ -149,6 +179,14 @@ def main() -> int:
     parser.add_argument(
         "--skip-bandit", action="store_true", help="Skip bandit-TLS"
     )
+    parser.add_argument(
+        "--all-artifacts",
+        action="store_true",
+        help=(
+            "S7 K1 finale: после base-стадий запустить cosign_sign_all "
+            "(SBOM+wheels+plugin manifests+container image)"
+        ),
+    )
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -159,6 +197,8 @@ def main() -> int:
         results.append(run_bandit_tls())
     if not args.skip_cosign:
         results.append(run_cosign())
+    if args.all_artifacts:
+        results.append(run_cosign_all_artifacts())
 
     print("\n=== supply-chain summary ===")
     blocking_failures = 0

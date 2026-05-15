@@ -5,7 +5,8 @@
 
 .PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
         sbom audit-deps audit-zap bandit-strict bandit-tls security security-full \
-        cosign-sign supply-chain-strict supply-chain-strict-fast \
+        cosign-sign cosign-sign-all supply-chain-strict supply-chain-strict-fast \
+        supply-chain-finale \
         check-feature-flags check-team-ownership \
         team-worktree team-worktree-list team-worktree-remove \
         check-plugin-semver check-plugin-semver-strict
@@ -96,6 +97,17 @@ supply-chain-strict-fast: ## К1 S6: быстрый supply-chain (SBOM + bandit-
 	@$(INFO) "Running supply-chain fast gate (SBOM + bandit-TLS only)..."
 	@$(UV_RUN) python tools/checks/check_supply_chain.py --skip-pip-audit --skip-cosign
 	@$(SUCCESS) "supply-chain fast gate passed"
+
+##@ К1 S7 — supply-chain finale (multi-artifact cosign signing)
+
+cosign-sign-all: ## K1 S7: multi-artifact cosign signing (SBOM + wheels + plugins + image). Требует KEY=
+	@test -n "$(KEY)" || { echo "[ERROR] Usage: make cosign-sign-all KEY=<path> [CONTAINER_IMAGE=...]"; exit 1; }
+	@$(UV_RUN) python tools/checks/cosign_sign_all.py --key $(KEY) $(if $(CONTAINER_IMAGE),--container-image $(CONTAINER_IMAGE),--skip-image)
+
+supply-chain-finale: ## K1 S7: полный release-pipeline (SBOM + pip-audit + bandit-TLS + multi-artifact cosign)
+	@$(INFO) "Running supply-chain FINALE gate (multi-artifact cosign signing)..."
+	@$(UV_RUN) python tools/checks/check_supply_chain.py --all-artifacts
+	@$(SUCCESS) "supply-chain finale passed"
 
 ##@ К2 S6 — service docstring gate (wave [s6/k2-service-doc-gate])
 
