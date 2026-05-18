@@ -23,6 +23,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
+        router as auth_saml_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
@@ -193,6 +196,10 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         v11_routes_router, prefix="/routes", tags=["V11 · Routes"]
+    )
+    # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
+    api_router_v1.include_router(
+        auth_saml_router, prefix="/auth/saml", tags=["Auth · SAML"]
     )
 
     return api_router_v1
