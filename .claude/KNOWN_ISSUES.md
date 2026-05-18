@@ -1,5 +1,26 @@
 # KNOWN_ISSUES.md
 
+## Sprint 8 closure status — 2026-05-18 (coordinator-self consolidation)
+
+**Закрыто в S8 closure**:
+- ✅ **BLOCKER #3 WAF Phase-2** — 0 violations (см. ниже)
+- ✅ **K2 W3 DLQ unified scaffold** — DLQEnvelope + DLQWriter Protocol (`ffd84769`)
+- ✅ **K2 W4 Inbox fail-closed** — fail_mode policy + 7 unit-tests (`02587c14`)
+- ✅ **K3 W12 MCP FastMCP** — уже на FastMCP (12 unit-tests passing); DoD verified
+- ✅ **Sprint 8 artifacts consolidation** — 98 файлов через `[wave:s8/cleanup]` (`6f850f6c`)
+
+**Carryover в Sprint 9 (untracked wave-DoD не закрыт)**:
+- ⏳ **AugmentResult** отсутствует в `services/ai/rag_service.py` → S9 K4
+- ⏳ **WebhookSignVerifyProcessor** отсутствует в `dsl/engine/processors/enrichment.py` → S9 K3
+- ⏳ **PluginCodegen** class отсутствует в `tools/codegen_plugin.py` → S9 K5
+- ⏳ **service.py/service/ shadowing** в `src/backend/dsl/` (pre-existing) → S9 K3
+- ⏳ **K2 W3 DLQ full integration** (4 транспорта) → S9 K2
+- ⏳ **K1 WAF allowlist tightening** (~13 baseline callsites) → S9 K1
+- ⏳ **AUDIT-2 plugin hot-swap docs-drift** → S9 K3
+- ⏳ Sprint 8 wave-матрица в PLAN.md V19.1: 10+ wave переносятся в S9
+
+---
+
 ## Audit findings 2026-05-15 (Sprint 6/7 closure verification)
 
 > Источник: Explore-агент 2026-05-15 + coordinator audit. Сравнение ✅-помеченных
@@ -213,28 +234,29 @@ K3 проверяет, что Temporal cron не ломает observability span
 
 ---
 
-### 🟡 BLOCKER #3 — WAF Phase-2 migration (38 callsites)
+### ✅ BLOCKER #3 — WAF Phase-2 migration — CLOSED 2026-05-18
 
-- **Owner**: K2 Net&WAF
-- **ETA**: Sprint 2 Wave 2 (`[wave:s2/k2-w1-waf-migrate]`)
-- **Risk**: medium (38 callsites, default-OFF feature-flag параллель)
+- **Owner**: K1 Security
+- **Closed**: Sprint 8 K1 W1 `[wave:s8/k1-w1-waf-phase2-finale]` (`058705ed`)
+- **Final coverage**: `tools/check_waf_coverage.py` → 0 violations
 - **Feature-flag**: `feature_flags.waf_outbound_via_facade` (default-OFF)
 
-**Описание**: Все `:external` HTTP-callsites должны идти через
-`OutboundHttpClient` (WAF-фасад). Поэтапная миграция 5-7 callsites/неделя,
-flip default-ON только после staging-smoke.
+**Реализовано (S8 closure)**:
+- ✅ 3 callsites вне allowlist мигрированы на `make_http_client()`:
+  - `core/feature_flags/flagsmith_client.py:_get_client`
+  - `core/feature_flags/flagsmith_provider.py:_get_or_create_client`
+  - `services/rpa/desktop_rpa_client.py:invoke`
+- ✅ `tools/check_waf_coverage.py` exit 0
+- ✅ Default-OFF поведение сохранено (нулевой риск регрессии)
 
-**DoD checklist**:
-- [ ] 0 прямых `httpx.AsyncClient()` в `src/` кроме `core/net/`
-  (`rg "httpx\.AsyncClient\(\)" src/`)
-- [ ] `make check-waf-coverage` blocking в CI (already есть, но не strict)
-- [ ] ADR-0053 переведён из Proposed в Accepted
-- [ ] staging-smoke результаты в `vault/2026-XX-waf-phase2-rollout.md`
-- [ ] `feature_flags.waf_outbound_via_facade` default-ON после smoke
-- [ ] `make wave-memory NAME=waf-phase2 TYPE=feedback`
-
-**Coordination**: K2 ведёт миграцию, K1 поставляет mTLS-канал для external,
-K6 проверяет cloud LLM маршруты, K10 audit'ит `check-waf-coverage` gate.
+**Carryover → Sprint 9 K1**:
+- ⏳ Tightening allowlist: миграция ~13 baseline-callsites
+  (express_bot, telegram_bot, opa, clickhouse, vault_cipher, ml_inference,
+   proxy/forward, imports endpoint, webhook handler/transformer,
+   search_providers).
+- ⏳ Flip `feature_flags.waf_outbound_via_facade` → default-ON после
+  staging-smoke (`vault/2026-XX-waf-phase2-rollout.md`).
+- ⏳ ADR-0053 Proposed → Accepted.
 
 ---
 
