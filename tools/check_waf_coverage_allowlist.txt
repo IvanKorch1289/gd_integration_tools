@@ -1,4 +1,4 @@
-# WAF-coverage allowlist (V15 R-V15-5).
+# WAF-coverage allowlist (V15 R-V15-5; ADR-0050, ADR-0053, ADR-0061).
 #
 # Файл-пути (относительно корня репозитория) известных :internal
 # callsite'ов прямого httpx.AsyncClient/Client. Каждая запись —
@@ -6,45 +6,43 @@
 # baseline-долгом, ожидающим миграции на OutboundHttpClient.
 #
 # Формат:
-#   src/backend/<path>/<file>.py
+#   src/backend/<path>/<file>.py  # owner=<team> | target=<sprint> | reason=<note>
 #
 # Пустые строки и строки начинающиеся с '#' игнорируются.
 # `--strict` режим (CI/release-gate) игнорирует этот файл.
-
-# === К1 baseline (Sprint 1 V16, 2026-05-08) ===
-# Existing технический долг — 37 callsite'ов прямого httpx.AsyncClient.
-# Миграция на src.backend.core.net.OutboundHttpClient вынесена в задачи
-# К2-К5 (по соответствующим зонам каталогов). Каждый файл при миграции
-# удаляется из этого allowlist'а.
-
-src/backend/core/security/vault_cipher.py
-src/backend/dsl/engine/processors/ml_inference.py
-src/backend/dsl/engine/processors/proxy/forward.py
-src/backend/entrypoints/api/v1/endpoints/imports.py
-src/backend/entrypoints/webhook/handler.py
-src/backend/entrypoints/webhook/transformer.py
-src/backend/infrastructure/clients/external/express_bot.py
-src/backend/infrastructure/clients/external/search_providers.py
-src/backend/infrastructure/clients/external/telegram_bot.py
-src/backend/infrastructure/clients/storage/clickhouse.py
-src/backend/infrastructure/policy/opa.py
-src/backend/infrastructure/resilience/components/express_chain.py
-src/backend/infrastructure/sinks/http_sink.py
-src/backend/infrastructure/sinks/webhook_sink.py
-src/backend/infrastructure/sources/polling.py
-src/backend/services/ai/ai_moderation.py
-src/backend/services/ai/ai_providers.py
-src/backend/services/ops/notification_adapters.py
-src/backend/services/ops/notification_hub.py
-src/backend/services/ops/webhook_scheduler.py
-
-# === Wave 1.5 (S1, 2026-05-08) ===
-# Transport core (legacy aiohttp wrapper) — низкоуровневая обёртка,
-# через которую идут все остальные клиенты.
-# infrastructure/clients/transport/* exempted глобально через
-# _INTERNAL_EXEMPT_PREFIXES в check_waf_coverage.py.
 #
-# infrastructure/application/vault_refresher.py — hvac internals
-# (не httpx; в WAF-сканере не появится, но добавлен для документной
-# трассировки прохождения hvac→Vault мимо OutboundHttpClient).
-src/backend/infrastructure/application/vault_refresher.py
+# Sprint 9 K1 W3 (2026-05-18): формализованы owner+target для каждой
+# записи. Sprint 10 закрывает 12 из 21 (см. ADR-0061).
+
+# === К1 ownership (Sprint 10 targets) ===
+src/backend/entrypoints/webhook/handler.py  # owner=K1 | target=s10 | reason=ASGI middleware refactor
+src/backend/entrypoints/webhook/transformer.py  # owner=K1 | target=s10 | reason=ASGI middleware refactor
+src/backend/entrypoints/api/v1/endpoints/imports.py  # owner=K1 | target=s10 | reason=migration to facade trivial
+
+# === К2 ownership (Sprint 10 targets) ===
+src/backend/infrastructure/sinks/http_sink.py  # owner=K2 | target=s10 | reason=Sink base class refactor
+src/backend/infrastructure/sinks/webhook_sink.py  # owner=K2 | target=s10 | reason=Sink base class refactor
+
+# === К3 ownership (Sprint 10 targets) ===
+src/backend/dsl/engine/processors/ml_inference.py  # owner=K3 | target=s10 | reason=ML provider abstraction
+src/backend/dsl/engine/processors/proxy/forward.py  # owner=K3 | target=s10 | reason=proxy auto-routing
+
+# === К4 ownership (Sprint 10 targets) ===
+src/backend/services/ai/ai_moderation.py  # owner=K4 | target=s10 | reason=AI provider abstraction
+src/backend/services/ai/ai_providers.py  # owner=K4 | target=s10 | reason=AI provider abstraction
+
+# === К5 ownership (Sprint 10 targets) ===
+src/backend/services/ops/notification_adapters.py  # owner=K5 | target=s10 | reason=notification adapter refactor
+src/backend/services/ops/notification_hub.py  # owner=K5 | target=s10 | reason=notification hub refactor
+src/backend/services/ops/webhook_scheduler.py  # owner=K5 | target=s10 | reason=webhook scheduler refactor
+
+# === R3 ownership (Sprint 11 targets) ===
+src/backend/core/security/vault_cipher.py  # owner=K1 | target=s11 | reason=Vault namespace capability
+src/backend/infrastructure/application/vault_refresher.py  # owner=K1 | target=s11 | reason=Vault namespace capability
+src/backend/infrastructure/clients/storage/clickhouse.py  # owner=K2 | target=s11 | reason=non-OAS client extension
+src/backend/infrastructure/clients/external/express_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
+src/backend/infrastructure/clients/external/telegram_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
+src/backend/infrastructure/clients/external/search_providers.py  # owner=K4 | target=s11 | reason=provider-specific timeouts
+src/backend/infrastructure/policy/opa.py  # owner=K1 | target=s11 | reason=OPA-sidecar abstraction
+src/backend/infrastructure/resilience/components/express_chain.py  # owner=K1 | target=s11 | reason=resilience-chain extraction
+src/backend/infrastructure/sources/polling.py  # owner=K2 | target=s11 | reason=polling source abstraction
