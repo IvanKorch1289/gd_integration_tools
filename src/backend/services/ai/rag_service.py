@@ -12,11 +12,21 @@ from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
 )
+from src.backend.services.ai.rag_augment import (
+    AugmentResult,
+    FreshnessLabel,
+    build_augment_result,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache
 
-__all__ = ("RAGService", "get_rag_service")
+__all__ = (
+    "AugmentResult",
+    "FreshnessLabel",
+    "RAGService",
+    "get_rag_service",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +216,32 @@ class RAGService:
                 }
             )
         return {"prompt": prompt, "citations": citations}
+
+    async def augment(
+        self,
+        query: str,
+        *,
+        system_prompt: str = "",
+        top_k: int = 5,
+        namespace: str | None = None,
+        max_staleness_hours: float | None = None,
+    ) -> AugmentResult:
+        """Structured augment c freshness-фильтрацией (Sprint 9 K3 W4 + K4 W3).
+
+        Возвращает :class:`AugmentResult` с распределением freshness и
+        worst_freshness для UI-badge.
+        """
+        results = await self.search(query, top_k=top_k, namespace=namespace)
+        prompt = await self.augment_prompt(
+            query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
+        )
+        return build_augment_result(
+            prompt=prompt,
+            raw_results=results,
+            namespace=namespace,
+            top_k=top_k,
+            max_staleness_hours=max_staleness_hours,
+        )
 
     async def delete(self, document_id: str) -> bool:
         """Удаляет документ из индекса (по chunk-id'ам или doc_id)."""
