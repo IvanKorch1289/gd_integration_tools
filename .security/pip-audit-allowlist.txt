@@ -1,0 +1,49 @@
+# pip-audit allowlist — уязвимости, временно проигнорированные.
+#
+# Формат: одна VULN-id (PYSEC-XXXX, GHSA-XXXX или CVE-XXXX) на строку.
+# Каждая строка должна сопровождаться комментарием выше:
+#   * причина игнора;
+#   * планируемая Wave для устранения;
+#   * дата ревью (YYYY-MM-DD).
+#
+# Этот файл — read-only для CI. Любая правка требует ADR.
+
+# === Pre-K5 baseline (зафиксирован 2026-05-08) ===
+# 28 known CVE на момент включения pip-audit gate. Каждая отдельной волной
+# в Sprint 6 (deps-bump) — см. tracking issue #SUPPLY-CHAIN-2026-Q2.
+
+# mistune — обновление до 3.4+ требует совместимости с nbconvert
+CVE-2026-33079
+# diskcache — обновление до 6.x в Sprint 6 (decorator API breaking changes)
+CVE-2025-69872
+# gitpython — semantic-release dependency, разморозим вместе с upstream
+CVE-2026-44244
+# lxml — bump до 6.x требует Python 3.14 wheels
+CVE-2026-41066
+# mako — alembic dependency
+CVE-2026-44307
+# pypdf 5.9 — серия уязвимостей; bump до 6.x в Sprint 6
+CVE-2025-55197
+CVE-2025-62707
+CVE-2025-62708
+CVE-2025-66019
+CVE-2026-22690
+CVE-2026-22691
+CVE-2026-24688
+CVE-2026-27026
+CVE-2026-27024
+CVE-2026-27025
+CVE-2026-27628
+CVE-2026-27888
+CVE-2026-28351
+CVE-2026-28804
+CVE-2026-31826
+CVE-2026-33123
+CVE-2026-33699
+CVE-2026-40260
+CVE-2026-41168
+CVE-2026-41313
+CVE-2026-41312
+CVE-2026-41314
+# python-multipart — fastapi dep, ждём bump до 0.0.27+
+CVE-2026-42561

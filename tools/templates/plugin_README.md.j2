@@ -1,0 +1,50 @@
+# {{ name }}
+
+Auto-generated V11 plugin scaffold ({{ pascal_name }}Plugin).
+
+## Структура
+
+```
+extensions/{{ name }}/
+  plugin.toml         — V11 manifest
+  plugin.py           — entry-point
+  shared/
+    domain/           — модели предметной области
+    migrations/       — миграции БД (если capabilities содержит db.write.*)
+    repositories/     — репозитории (только для shared-сущностей)
+  features/
+{%- for feature in features %}
+    {{ feature }}/
+      route.toml
+      service.py
+      schemas.py
+      test_{{ feature }}.py
+{%- endfor %}
+{% if with_frontend %}
+  frontend/
+    pages/
+      00_{{ name }}.py
+{% endif %}
+```
+
+## Capabilities
+
+{% for cap in capabilities -%}
+- `{{ cap }}` (scope: `{{ name }}.*`)
+{% else -%}
+_(нет deklared capabilities — плагин не имеет доступа к runtime-фасадам)_
+{% endfor %}
+
+## Регистрация
+
+Плагин подхватывается автоматически через
+:class:`src.backend.services.plugins.loader_v11.PluginLoaderV11` при старте
+backend (см. ``Makefile`` target ``dev-light``).
+
+## Дальнейшие шаги
+
+1. Заменить echo-handlers в ``plugin.py`` на реальную логику.
+2. Расширить ``features/<f>/route.toml`` step'ами DSL.
+3. Добавить unit-тесты в ``features/<f>/test_<f>.py``.
+4. Если плагину нужен доступ к БД/Redis/HTTP — задекларировать в
+   ``plugin.toml`` ``[[capabilities]]`` с конкретным scope.
