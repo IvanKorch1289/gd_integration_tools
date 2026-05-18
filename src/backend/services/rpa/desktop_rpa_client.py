@@ -77,7 +77,13 @@ class DesktopRpaClient:
         if self._api_key:
             headers["X-API-Key"] = self._api_key
 
-        async with httpx.AsyncClient(timeout=self._timeout) as http:
+        from src.backend.core.net.migration_helper import (  # noqa: PLC0415
+            make_http_client,
+        )
+
+        async with make_http_client(
+            timeout=self._timeout, plugin="services/rpa/desktop_rpa"
+        ) as http:
             try:
                 response = await http.post(url, json=params, headers=headers)
             except httpx.HTTPError as exc:

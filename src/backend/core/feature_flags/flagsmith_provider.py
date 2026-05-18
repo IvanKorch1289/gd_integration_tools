@@ -244,13 +244,16 @@ class FlagsmithProvider:
             return self._client
 
         try:
-            import httpx  # noqa: PLC0415 — lazy-import, чтобы не платить за httpx в hot-path
-        except ImportError as exc:  # pragma: no cover — httpx уже в стеке
-            raise ProviderError("httpx unavailable") from exc
+            from src.backend.core.net.migration_helper import (  # noqa: PLC0415
+                make_http_client,
+            )
+        except ImportError as exc:  # pragma: no cover
+            raise ProviderError("migration_helper unavailable") from exc
 
-        self._client = httpx.AsyncClient(
+        self._client = make_http_client(  # type: ignore[assignment]
             base_url=self.api_url,
             headers={"X-Environment-Key": self.environment_key},
             timeout=self.request_timeout_seconds,
+            plugin="core/feature_flags/flagsmith_provider",
         )
         return self._client

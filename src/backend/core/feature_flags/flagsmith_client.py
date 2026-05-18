@@ -163,19 +163,26 @@ class FlagsmithClient:
     # ── private ──────────────────────────────────────────────────────────
 
     def _get_client(self) -> httpx.AsyncClient:
-        """Lazy-init httpx.AsyncClient (один раз на FlagsmithClient).
+        """Lazy-init HTTP-клиент (через WAF-facade при flag ON).
+
+        WAF Phase-2 (R-V15-5): использует :func:`make_http_client`,
+        который под флагом ``waf_outbound_via_facade`` возвращает
+        :class:`OutboundHttpClient` с audit + capability check.
 
         Returns:
-            Live ``httpx.AsyncClient`` с заголовком ``X-Environment-Key``.
+            Live HTTP-клиент с заголовком ``X-Environment-Key``.
         """
         if self._client is not None:
             return self._client
-        import httpx  # noqa: PLC0415 — lazy-import
+        from src.backend.core.net.migration_helper import (  # noqa: PLC0415
+            make_http_client,
+        )
 
-        self._client = httpx.AsyncClient(
+        self._client = make_http_client(  # type: ignore[assignment]
             base_url=self.api_url,
             headers={"X-Environment-Key": self.environment_key or ""},
             timeout=self.timeout_seconds,
+            plugin="core/feature_flags/flagsmith",
         )
         return self._client
 
