@@ -24,7 +24,12 @@ import asyncio
 import logging
 from typing import Any, Awaitable, Callable, TypeVar
 
-__all__ = ("run_sync_in_thread", "gather_with_timeout", "async_with_timeout")
+__all__ = (
+    "run_sync_in_thread",
+    "gather_with_timeout",
+    "async_with_timeout",
+    "task_group_tolerant",
+)
 
 logger = logging.getLogger("core.utils.async_utils")
 
@@ -81,3 +86,38 @@ async def async_with_timeout(
         return await asyncio.wait_for(coro, timeout=timeout)
     except asyncio.TimeoutError:
         return default
+
+
+async def task_group_tolerant(
+    coros: list[Awaitable[T]],
+) -> list[T | BaseException]:
+    """asyncio.TaskGroup с tolerant-семантикой (Sprint 9 K3 W8).
+
+    В отличие от ``asyncio.gather(..., return_exceptions=True)`` использует
+    современный ``TaskGroup`` API (Python 3.11+):
+
+    * Каждая coroutine получает свой :class:`asyncio.Task`.
+    * Внутри TaskGroup исключения собираются tolerant-ом, остальные
+      задачи дожидаются.
+    * Возвращает гомогенный список результатов или :class:`BaseException`.
+
+    Args:
+        coros: список awaitable.
+
+    Returns:
+        Список длины ``len(coros)`` — каждая позиция результат либо
+        exception в той же позиции.
+    """
+    results: list[T | BaseException] = [None] * len(coros)  # type: ignore[list-item]
+
+    async def _wrap(idx: int, awaitable: Awaitable[T]) -> None:
+        try:
+            results[idx] = await awaitable
+        except BaseException as exc:  # noqa: BLE001
+            results[idx] = exc
+
+    async with asyncio.TaskGroup() as tg:
+        for i, c in enumerate(coros):
+            tg.create_task(_wrap(i, c))
+
+    return results
