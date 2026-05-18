@@ -26,6 +26,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
         router as auth_saml_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.hitl import (
+        router as hitl_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
@@ -201,5 +204,7 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         auth_saml_router, prefix="/auth/saml", tags=["Auth · SAML"]
     )
+    # Sprint 9 K3 W2: HITL (Human-in-the-Loop) panel API.
+    api_router_v1.include_router(hitl_router, prefix="/hitl", tags=["HITL"])
 
     return api_router_v1
