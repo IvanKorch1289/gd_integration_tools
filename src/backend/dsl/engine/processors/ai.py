@@ -14,6 +14,7 @@ __all__ = (
     "LLMParserProcessor",
     "TokenBudgetProcessor",
     "VectorSearchProcessor",
+    "RagQueryProcessor",
     "SanitizePIIProcessor",
     "RestorePIIProcessor",
     "LLMFallbackProcessor",
@@ -322,6 +323,85 @@ class VectorSearchProcessor(BaseProcessor):
         if self._namespace is not None:
             spec["namespace"] = self._namespace
         return {"rag_search": spec}
+
+
+class RagQueryProcessor(BaseProcessor):
+    """Structured RAG query с freshness-фильтрацией (Sprint 9 K4 W3).
+
+    В отличие от :class:`VectorSearchProcessor` (raw vectors), возвращает
+    :class:`AugmentResult` с метаданными по freshness и worst_freshness
+    для UI-badge или branch-logic.
+
+    Usage::
+
+        .rag_query(
+            query_field="question",
+            top_k=5,
+            namespace="docs",
+            max_staleness_hours=72,
+            output_property="augment_result",
+        )
+
+    Property ``augment_result`` = dict() форма для downstream-process'ов
+    (см. :meth:`AugmentResult.to_dict`).
+    """
+
+    def __init__(
+        self,
+        query_field: str = "question",
+        system_prompt: str = "",
+        top_k: int = 5,
+        namespace: str | None = None,
+        max_staleness_hours: float | None = None,
+        output_property: str = "augment_result",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name)
+        self._query_field = query_field
+        self._system_prompt = system_prompt
+        self._top_k = top_k
+        self._namespace = namespace
+        self._max_staleness = max_staleness_hours
+        self._output_property = output_property
+
+    async def process(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
+        body = exchange.in_message.body
+        if isinstance(body, dict):
+            query = body.get(self._query_field, "")
+        else:
+            query = str(body)
+        if not query:
+            exchange.set_property(self._output_property, None)
+            return
+        from src.backend.services.ai.rag_service import get_rag_service
+
+        rag = get_rag_service()
+        result = await rag.augment(
+            query=query,
+            system_prompt=self._system_prompt,
+            top_k=self._top_k,
+            namespace=self._namespace,
+            max_staleness_hours=self._max_staleness,
+        )
+        exchange.set_property(self._output_property, result.to_dict())
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self._query_field != "question":
+            spec["query_field"] = self._query_field
+        if self._top_k != 5:
+            spec["top_k"] = self._top_k
+        if self._namespace is not None:
+            spec["namespace"] = self._namespace
+        if self._max_staleness is not None:
+            spec["max_staleness_hours"] = self._max_staleness
+        if self._system_prompt:
+            spec["system_prompt"] = self._system_prompt
+        if self._output_property != "augment_result":
+            spec["output_property"] = self._output_property
+        return {"rag_query": spec}
 
 
 class SanitizePIIProcessor(BaseProcessor):

@@ -73,3 +73,46 @@ if st.button("Upload") and uploaded is not None:
         st.json(resp.json())
     except Exception as exc:  # noqa: BLE001
         st.error(f"upload failed: {exc}")
+
+
+st.divider()
+st.subheader("Augment (с freshness badge)")
+augment_query = st.text_input("Augment query", "", key="augment-q")
+augment_top_k = st.slider("top_k (augment)", 1, 20, 5, key="augment-tk")
+augment_ns = st.text_input("Namespace (augment)", "", key="augment-ns")
+max_staleness = st.number_input(
+    "Max staleness (hours, 0=без фильтра)",
+    min_value=0.0,
+    value=72.0,
+    step=24.0,
+)
+if st.button("Augment") and augment_query:
+    body_a: dict[str, object] = {
+        "query": augment_query,
+        "top_k": augment_top_k,
+    }
+    if augment_ns:
+        body_a["namespace"] = augment_ns
+    if max_staleness > 0:
+        body_a["max_staleness_hours"] = max_staleness
+    try:
+        resp = httpx.post(
+            f"{api_base}/api/v1/rag/augment", json=body_a, timeout=15.0
+        )
+        data_a = resp.json()
+        worst = data_a.get("worst_freshness", "fresh")
+        badge = {
+            "fresh": ":green_circle: FRESH",
+            "stale": ":yellow_circle: STALE",
+            "expired": ":red_circle: EXPIRED",
+        }.get(worst, worst)
+        st.metric("Freshness", badge)
+        dist = data_a.get("freshness_distribution", {})
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Fresh chunks", dist.get("fresh", 0))
+        c2.metric("Stale chunks", dist.get("stale", 0))
+        c3.metric("Expired (skipped)", data_a.get("skipped_expired", 0))
+        with st.expander("Augment details"):
+            st.json(data_a)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"augment failed: {exc}")
