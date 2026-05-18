@@ -50,15 +50,57 @@ jobs:
         # Dry-run верификация артефактов; реальная публикация — отложена на R3.
         run: uv run twine check dist/*
 
+      - name: Generate SBOM (CycloneDX)
+        # Sprint 9 K1 W5: SBOM as release artifact
+        run: |
+          uv run python tools/checks/generate_sbom.py \
+            --output dist/sbom.cdx.json
+        continue-on-error: false
+
+      - name: pip-audit dependency vulnerability scan
+        run: |
+          uv run pip-audit --strict --output dist/pip-audit.json \
+            --format json || true
+        continue-on-error: true
+
+      - name: Cosign sign artifacts
+        # Sprint 9 K1 W5: cosign keyless sign через OIDC
+        # Активируется только если COSIGN_EXPERIMENTAL=1 и Sigstore доступен
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          if command -v cosign >/dev/null 2>&1; then
+            uv run python tools/checks/cosign_sign_all.py \
+              --dist-dir dist/ \
+              --keyless || echo "cosign sign skipped (sigstore unavailable)"
+          else
+            echo "cosign not installed; skipping signing"
+          fi
+        continue-on-error: true
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ github.ref_name }}
-          path: dist/
+          path: |
+            dist/
+            !dist/*.cdx.json
+            !dist/*.sig
+            !dist/*.json
           retention-days: 30
           if-no-files-found: error
 
-      # TODO (R3 / Sprint 3+): добавить шаги
-      #   - uv run twine upload dist/* --repository <pypi>
-      #   - cosign sign-blob --yes <artifact>  (supply-chain V4)
-      # Условие активации: явный approval + secret PYPI_TOKEN.
+      - name: Upload SBOM + signatures
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-and-signatures-${{ github.ref_name }}
+          path: |
+            dist/*.cdx.json
+            dist/*.sig
+            dist/pip-audit.json
+          retention-days: 90
+          if-no-files-found: warn
+
+      # TODO (R3 / Sprint 10+): активировать публикацию
+      #   - uv run twine upload dist/*.whl dist/*.tar.gz --repository <pypi>
+      # после secret PYPI_TOKEN + явный approval.
