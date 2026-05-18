@@ -159,3 +159,15 @@ node_modules/
 # Coverage artifacts
 coverage.xml
 *.cover
+
+# Sprint 8B additions (2026-05-18)
+# Sphinx build output — auto-generated (~200MB)
+docs/build/
+# VCR cassettes — testkit recorded fixtures; .gitkeep остаётся tracked
+testkit/cassettes/*.yaml
+testkit/cassettes/*.json
+# Claude Code runtime artifacts
+.claude/scheduled_tasks.lock
+.claude/QUESTIONS.md
+# Sentry native debug symbols (permission-denied dir)
+.sentry-native/
