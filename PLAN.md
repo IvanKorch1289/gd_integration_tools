@@ -1,7 +1,32 @@
 # PLAN.md — gd_integration_tools
 
-> **Версия**: V19 FINAL (V18.2 + Sprint 8 live-matrix + Sprint 9 GAP-closure expansion + Sprint 10-15 from FEATRE-ROADMAP, 2026-05-15).
-> **Дата**: 2026-05-15 (предыдущая V18.2 — 2026-05-14).
+> **Версия**: V19.1 (V19 + Sprint 8 closure + Sprint 9 backbone, 2026-05-18).
+> **Дата**: 2026-05-18 (предыдущая V19 — 2026-05-15).
+>
+> **V19.1 правки (2026-05-18 coordinator-self closure)**:
+> - **Sprint 8 status**: добавлены 9 commits закрытия (см. .claude/CONTEXT.md):
+>   `[wave:s5/k5-w1-workflow-logs-ui]` cherry-pick (`0b626312`),
+>   `[wave:s8/backbone-gitignore]` (`6cde09f8`), `[docs:gap-analysis-v19]` (`82f6cbf8`),
+>   `[wave:s8/cleanup]` 98 файлов carryover (`6f850f6c`),
+>   `[wave:s8/cleanup-fixup]` langmem (`59e3c291`),
+>   `[wave:s8/k1-w1-waf-phase2-finale]` BLOCKER #3 (`058705ed`),
+>   `[wave:s8/k2-w3-dlq-unified]` scaffold (`ffd84769`),
+>   `[wave:s8/k2-w4-inbox-fail-closed]` (`02587c14`),
+>   `[wave:s8/finale-dod-v19]` (`79223758`).
+> - **BLOCKER #3 WAF Phase-2 → CLOSED** (3 callsites мигрированы, 0 violations).
+> - **Sprint 8 carryover в Sprint 9** (см. KNOWN_ISSUES.md):
+>   `AugmentResult`/`WebhookSignVerifyProcessor`/`PluginCodegen` отсутствующие
+>   классы, `dsl/service` shadowing, DLQ full integration (4 транспорта),
+>   WAF allowlist tightening ~13 callsites, AUDIT-2 docs-drift.
+> - **Sprint 9 backbone**: 7 default-OFF feature flags + S9 team-ownership
+>   k1-k5 + memory note `feedback_s8_closure.md`.
+>
+> **Sprint 8 итог**: 8B native scope + 8A wave-commits + S8-closure (9 commits) =
+> ~25% wave-DoD; остальное → S9 carryover (10+ wave) с явными ссылками.
+> **Sprint 9 status**: backbone landed; первые wave (route_loader_hot_reload,
+> streamlit_page_renumber, docs-tutorials) — следующая session с usage probe ≥40%.
+
+> **Версия V19 (архив)**: V18.2 + Sprint 8 live-matrix + Sprint 9 GAP-closure expansion + Sprint 10-15 from FEATRE-ROADMAP, 2026-05-15.
 > **V19 правки** (2026-05-15): (1) **Compression S0-S7** — wave-таблицы (~235 строк) сжаты в summary-блоки с ссылками на коммиты/vault, удалены детальные wave × status × ref таблицы; (2) **Sprint 8 live wave-matrix** — 6/49 закрыто (12.2%), 8A blocker+carryover закрытие + 8B native scope, audit findings AUDIT-1/2/3; (3) **Sprint 9 expansion** — GAP-closure спринт (RouteLoader full-cycle, Streamlit page renumbering, messaging Outbox/Inbox/DLQ finale, HITL panel, token budget per tenant, SAML SP-initiated, lazy processors, pool warm-up, ClickHouse bulk writer); (4) **Sprint 10-15 NEW** — 85 фич из `gap-analysis/FEATRE-ROADMAP.md` распределены по 6 спринтам (DSL blueprint expansion + DX wizards, AI/RAG completion, workflow enhancement, infra perf, plugin ecosystem, DX tooling + innovation); (5) +6 новых ADR R1.11-R1.16; (6) +14 новых `[project.optional-dependencies]`; (7) Финальный DoD V19 с innovation criteria; (8) Метрики: coverage ≥83%, mypy 0, p95 ≤80ms, blueprints 25+, tutorials 15+/runbooks 20+.
 > **Срок**: ~7-8 месяцев (Sprint 8 active → Sprint 15 финал) при **5 параллельных командах**.
 > **Замещает**: V18.2 (Sprint 6 запуск note), V18.1, V18.0.

@@ -1437,5 +1437,84 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 9 — GAP closure feature flags ─────────────────────────────
+    route_loader_hot_reload: bool = Field(
+        default=False,
+        title="K3 S9 W1: RouteLoader hot-reload full-cycle (GAP-DSL-1)",
+        description=(
+            "K3 Sprint 9 Wave 1 (wave:s9/k3-w1-route-loader-hot-reload). "
+            "Owner: K3 DSL+Workflow. ETA: S9 W1. Активирует watchfiles-driven "
+            "перезагрузку routes/<name>/*.dsl.yaml без рестарта процесса. "
+            "DoD: `make verify-hot-reload` < 3000ms для 50 routes. "
+            "default-OFF в prod; включён в dev_light profile. GAP-DSL-1."
+        ),
+    )
+
+    streamlit_page_renumber: bool = Field(
+        default=False,
+        title="K5 S9 W2: Streamlit pages renumbering (GAP-DSL-2)",
+        description=(
+            "K5 Sprint 9 Wave 2 (wave:s9/k5-w2-streamlit-page-renumber). "
+            "Owner: K5 Frontend. Активирует новую схему нумерации Streamlit "
+            "pages: DSL 30-39 / AI 40-49 / Ops 50-59 / Admin 60-69. "
+            "Включается после rollout документации routing-guide. GAP-DSL-2."
+        ),
+    )
+
+    hitl_panel_enabled: bool = Field(
+        default=False,
+        title="K3 S9: HITL (Human-in-the-Loop) panel для workflow (GAP-WF-4.5)",
+        description=(
+            "K3 Sprint 9 (wave:s9/k3-hitl-panel). Owner: K3 DSL+Workflow. "
+            "Активирует Streamlit-страницу для approval/reject ручных шагов "
+            "workflow (Temporal signal-based). Требует AuditLog + RBAC. "
+            "default-OFF до E2E проверки UX-flow. GAP-WF-4.5."
+        ),
+    )
+
+    tenant_token_budget_enabled: bool = Field(
+        default=False,
+        title="K4 S9: Token budget per tenant для AI/LLM (GAP-3.2)",
+        description=(
+            "K4 Sprint 9 (wave:s9/k4-tenant-token-budget). Owner: K4 AI/Data. "
+            "Активирует per-tenant квоты на токены LLM (prompt+completion) "
+            "через TenantContext + BudgetEnforcer middleware. Превышение → "
+            "429 + audit-event. default-OFF до staging-tuning. GAP-3.2."
+        ),
+    )
+
+    saml_sp_initiated_enabled: bool = Field(
+        default=False,
+        title="K1 S9: SAML SP-initiated SSO (GAP-1.5)",
+        description=(
+            "K1 Sprint 9 (wave:s9/k1-saml-sp-initiated). Owner: K1 Security. "
+            "Активирует /saml/login endpoint (SP-initiated flow) дополнительно "
+            "к IdP-initiated. Требует SAMLAuth Settings (sp_entity_id, acs_url, "
+            "idp_metadata_url). default-OFF до AD-coordination. GAP-1.5."
+        ),
+    )
+
+    lazy_processor_loading: bool = Field(
+        default=False,
+        title="K3 S9: Lazy processor loading (GAP-PERF-6.3)",
+        description=(
+            "K3 Sprint 9 (wave:s9/k3-lazy-processor-loading). Owner: K3 DSL. "
+            "Активирует lazy-import процессоров через ProcessorRegistry (только "
+            "при первом invoke). Снижает cold-start dev_light на 200-400 мс. "
+            "default-OFF до perf-benchmark в prod-конфигурации. GAP-PERF-6.3."
+        ),
+    )
+
+    clickhouse_bulk_writer_enabled: bool = Field(
+        default=False,
+        title="K2 S9: ClickHouse bulk writer (GAP-INF-2.3)",
+        description=(
+            "K2 Sprint 9 (wave:s9/k2-clickhouse-bulk-writer). Owner: K2 Infra. "
+            "Активирует batch-аккумулятор для ClickHouse INSERT (5000 rows / "
+            "5 сек). Использует chdb-stream + retry. default-OFF до staging-smoke "
+            "(анализ memory footprint per-batch). GAP-INF-2.3."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

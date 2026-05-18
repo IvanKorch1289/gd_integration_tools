@@ -548,3 +548,117 @@ forbidden_paths = [
     "src/backend/core/auth/**",
     "extensions/**",
 ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sprint 9 — GAP closure (5 команд K1-K5, V19.1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[team_s9.k1]
+name = "S9 K1 — Auth/Security (SAML SP-initiated + WAF allowlist tightening)"
+git_branch_prefix = "team/s9-k1-security"
+worktree_branch = "team/s9-k1-security"
+wave_prefix = "s9/k1-"
+goal = "SAML SP-initiated (GAP-1.5) + WAF allowlist миграция ~13 callsites + ADR-0053 Accepted."
+owned_paths = [
+    "src/backend/core/auth/saml/**",
+    "src/backend/core/net/migration_helper.py",
+    "src/backend/core/security/**",
+    "src/backend/infrastructure/clients/external/express_bot.py",
+    "src/backend/infrastructure/clients/external/telegram_bot.py",
+    "src/backend/infrastructure/policy/opa.py",
+    "src/backend/infrastructure/clients/storage/clickhouse.py",
+    "tools/check_waf_coverage_allowlist.txt",
+    "tests/unit/core/auth/saml/**",
+]
+shared_with = []
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "extensions/**",
+    "testkit/**",
+]
+
+[team_s9.k2]
+name = "S9 K2 — Infra (DLQ unified 4 transports + ClickHouse bulk writer)"
+git_branch_prefix = "team/s9-k2-infra"
+worktree_branch = "team/s9-k2-infra"
+wave_prefix = "s9/k2-"
+goal = "DLQ unified integration с 4 транспортами + Grafana per-transport breakdown + ClickHouse bulk writer (GAP-INF-2.3)."
+owned_paths = [
+    "src/backend/infrastructure/messaging/**",
+    "src/backend/infrastructure/clients/transport/**",
+    "src/backend/infrastructure/clients/storage/clickhouse*",
+    "src/backend/infrastructure/observability/grafana/**",
+    "tests/unit/infrastructure/messaging/**",
+    "tests/integration/messaging/**",
+]
+shared_with = ["k1"]                                # transport security cross
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "extensions/**",
+]
+
+[team_s9.k3]
+name = "S9 K3 — DSL/Workflow (route-loader hot-reload + HITL panel + lazy processors)"
+git_branch_prefix = "team/s9-k3-dsl"
+worktree_branch = "team/s9-k3-dsl"
+wave_prefix = "s9/k3-"
+goal = "RouteLoader hot-reload full-cycle (GAP-DSL-1) + HITL panel (GAP-WF-4.5) + Lazy processor loading (GAP-PERF-6.3) + AUDIT-2 docs fix + carryover fixes (AugmentResult, WebhookSignVerifyProcessor, dsl/service shadowing)."
+owned_paths = [
+    "src/backend/services/routes/**",
+    "src/backend/dsl/engine/processors/**",
+    "src/backend/dsl/registry/**",
+    "src/backend/dsl/service.py",
+    "src/backend/dsl/service/**",
+    "tests/unit/dsl/**",
+    "tests/unit/services/routes/**",
+]
+shared_with = ["k5"]                                # HITL frontend page
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/backend/services/ai/**",
+    "extensions/**",
+]
+
+[team_s9.k4]
+name = "S9 K4 — AI/Data (Token budget per tenant + carryover AugmentResult)"
+git_branch_prefix = "team/s9-k4-ai"
+worktree_branch = "team/s9-k4-ai"
+wave_prefix = "s9/k4-"
+goal = "Per-tenant LLM token budget (GAP-3.2) + AugmentResult в rag_service.py (S8 carryover)."
+owned_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/tenancy/budget_enforcer.py",
+    "tests/unit/services/ai/**",
+]
+shared_with = ["k1"]                                # TenantContext security cross
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/frontend/streamlit_app/**",
+    "extensions/**",
+]
+
+[team_s9.k5]
+name = "S9 K5 — Frontend/Docs (Streamlit page renumber + tutorials + runbooks + PluginCodegen)"
+git_branch_prefix = "team/s9-k5-frontend"
+worktree_branch = "team/s9-k5-frontend"
+wave_prefix = "s9/k5-"
+goal = "Streamlit pages renumber (GAP-DSL-2) + docs/tutorials (≥9) + docs/runbooks (≥10) + PluginCodegen class (S8 carryover)."
+owned_paths = [
+    "src/frontend/streamlit_app/pages/**",
+    "tools/codegen_plugin.py",
+    "tools/templates/**",
+    "docs/tutorials/**",
+    "docs/runbooks/**",
+    "docs/how-to/**",
+    "docs/explanation/**",
+    "tests/unit/tools/test_codegen_plugin.py",
+    "tests/unit/frontend/**",
+]
+shared_with = ["k3"]                                # HITL page cross
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/backend/services/ai/**",
+    "extensions/**",
+]
