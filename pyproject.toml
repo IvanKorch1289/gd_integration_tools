@@ -452,6 +452,105 @@ ignore_missing_imports = true
 module = "app.entrypoints.grpc.protobuf.*"
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+# S10 K2 mypy budget: Streamlit frontend pages — это presentation layer,
+# stub'ы для streamlit отсутствуют. Pages импортируют streamlit + plotly +
+# pandas + altair + специфичные виджеты, которые не нужно тайпить
+# в основном backend-pipeline. Frontend проверяется отдельно (streamlit
+# runtime-type-check) — здесь только ignore-missing-imports.
+module = [
+    "streamlit",
+    "streamlit.*",
+    "altair",
+    "altair.*",
+    "plotly",
+    "plotly.*",
+    "pandas",
+    "pandas.*",
+    "graphviz",
+    "graphviz.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# S10 K2 mypy budget: optional extras без stub'ов. Все эти модули
+# импортируются lazy внутри try/except или if TYPE_CHECKING-блоков
+# и подключаются как `[project.optional-dependencies]`. В чистой
+# dev_light инсталляции их нет — runtime-fallback покрывается тестами.
+# См. pyproject.toml::[project.optional-dependencies] для каждой группы.
+module = [
+    "boto3",
+    "boto3.*",
+    "asyncer",
+    "pygls.*",
+    "lsprotocol",
+    "lsprotocol.*",
+    "tiktoken",
+    "selectolax.*",
+    "jsonpath_ng.*",
+    "geoip2",
+    "geoip2.*",
+    "brotli",
+    "zstandard",
+    "fastmcp",
+    "fastmcp.*",
+    "pdfplumber",
+    "pytesseract",
+    "PIL",
+    "PIL.*",
+    "neo4j",
+    "influxdb_client",
+    "influxdb_client.*",
+    "pint",
+    "glom",
+    "xxhash",
+    "e2b_code_interpreter",
+    "hdrh",
+    "hdrh.*",
+    "aiomcache",
+    "pybotx",
+    "langfuse",
+    "langfuse.*",
+    "mcp",
+    "mcp.*",
+    "chromadb",
+    "faiss",
+    "playwright",
+    "playwright.*",
+    "aioftp",
+    "httpx_retries",
+    "hishel",
+    "asyncssh",
+    "graypy",
+    "opentelemetry.propagators.*",
+    "opentelemetry.exporter.*",
+    "opentelemetry.instrumentation.*",
+    "keyring",
+    "presidio_analyzer",
+    "presidio_analyzer.*",
+    "nats",
+    "nats.*",
+    "gql",
+    "gql.*",
+    "langchain_core.*",
+    "langchain_community.*",
+    "langgraph",
+    "langgraph.*",
+    "datasets",
+    "ragas",
+    "ragas.*",
+    "sentence_transformers",
+    "fastembed",
+    "rank_bm25",
+    "clickhouse_connect",
+    "clickhouse_connect.*",
+    "aioldap3",
+    "apprise",
+    "toxiproxy",
+    "advanced_alchemy.*",
+]
+ignore_missing_imports = true
+
 
 [tool.ruff]
 line-length = 88

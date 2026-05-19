@@ -263,7 +263,7 @@ class ClientMetricsMixin:
     обязывает реализацию).
     """
 
-    name: str  # type: ignore[no-untyped-def]  (поставляется ABC)
+    name: str
 
     def track(
         self, operation: str, *, tenant: str | None = None
@@ -273,7 +273,6 @@ class ClientMetricsMixin:
 
     def report_pool(self, *, active: int, idle: int, waiting: int) -> None:
         """Обновить gauge-метрики pool-а. Обычно вызывается из validate()."""
-        # type: ignore[no-untyped-def]  (self.pooling из ABC)
         max_size = (
             getattr(self, "pooling", None).max_size
             if getattr(self, "pooling", None)

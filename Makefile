@@ -182,9 +182,9 @@ type-check: check-env ## Run non-blocking mypy type check
 		--cache-dir=/dev/null -p src || printf '%s\n' "Mypy found issues or crashed"
 	@$(SUCCESS) "Type check finished!"
 
-type-check-budget: check-env ## Sprint 9 K2 W6: mypy budget gate (max 30 errors, ratcheting)
-	@$(INFO) "Running mypy budget gate (max 30 errors)..."
-	@$(UV_RUN) python tools/checks/mypy_budget.py --max 30
+type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (max 5 errors, ratcheting; S9 был 30)
+	@$(INFO) "Running mypy budget gate (max 5 errors)..."
+	@$(UV_RUN) python tools/checks/mypy_budget.py --max 5
 	@$(SUCCESS) "Mypy budget OK"
 
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
