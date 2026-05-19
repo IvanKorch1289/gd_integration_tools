@@ -47,6 +47,12 @@ from src.backend.core.resilience.degradation import (
     DegradationMode,
     degradation_manager,
 )
+from src.backend.core.resilience.graceful_degradation import (
+    DegradationFeature,
+    FeatureState,
+    GracefulDegradationRegistry,
+    get_graceful_degradation_registry,
+)
 from src.backend.core.resilience.rate_limiter import (
     RateLimit,
     RateLimiter,
@@ -77,8 +83,11 @@ __all__ = (
     "CircuitBreaker",
     "CircuitOpen",
     "ComponentState",
+    "DegradationFeature",
     "DegradationManager",
     "DegradationMode",
+    "FeatureState",
+    "GracefulDegradationRegistry",
     "RateLimit",
     "RateLimitExceeded",
     "RateLimiter",
@@ -92,6 +101,7 @@ __all__ = (
     "degradation_manager",
     "get_breaker_registry",
     "get_bulkhead",
+    "get_graceful_degradation_registry",
     "get_rate_limiter",
     "get_retry_budget",
     "get_self_healer",
