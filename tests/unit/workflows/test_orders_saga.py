@@ -17,7 +17,9 @@ from src.backend.dsl.workflow.spec import (
     SagaDeclaration,
     WorkflowDeclaration,
 )
-from src.backend.workflows.orders_saga import build_orders_saga_workflow
+from extensions.core_entities.orders.workflows.orders_saga import (
+    build_orders_saga_workflow,
+)
 
 
 def test_orders_saga_declaration_is_valid_workflow() -> None:

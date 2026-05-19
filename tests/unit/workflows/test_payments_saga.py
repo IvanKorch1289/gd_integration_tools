@@ -16,7 +16,9 @@ from src.backend.dsl.workflow.spec import (
     SagaDeclaration,
     WorkflowDeclaration,
 )
-from src.backend.workflows.payments_saga import build_payments_saga_workflow
+from extensions.credit_pipeline.workflows.payments_saga import (
+    build_payments_saga_workflow,
+)
 
 
 def test_payments_saga_declaration_is_valid_workflow() -> None:

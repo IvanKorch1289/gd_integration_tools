@@ -27,8 +27,12 @@ from src.backend.dsl.workflow import (
     from_yaml,
     to_yaml,
 )
-from src.backend.workflows.orders_saga import build_orders_saga_workflow
-from src.backend.workflows.payments_saga import build_payments_saga_workflow
+from extensions.core_entities.orders.workflows.orders_saga import (
+    build_orders_saga_workflow,
+)
+from extensions.credit_pipeline.workflows.payments_saga import (
+    build_payments_saga_workflow,
+)
 
 
 def _enable_round_trip() -> "patch[bool]":

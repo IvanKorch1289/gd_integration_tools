@@ -6,7 +6,9 @@
     * :func:`register_workflow_declarations` — публичный API для
       плагинов/тестов, batch-регистрирует декларации в singleton'е;
     * :func:`_bootstrap_default_declarations` — default-OFF подключение
-      saga-деклараций (``orders_saga`` + ``payments_saga``) под
+      saga-деклараций (``orders_saga`` из
+      ``extensions/core_entities/orders/`` + ``payments_saga`` из
+      ``extensions/credit_pipeline/``) под
       ``WORKFLOW_BOOTSTRAP_DEFAULTS_ENABLED``;
     * :func:`start_workflow_runtime` — entrypoint для lifecycle-цепочки.
 
@@ -74,8 +76,12 @@ def _bootstrap_default_declarations() -> list[CompiledWorkflow]:
         )
         return []
 
-    from src.backend.workflows.orders_saga import build_orders_saga_workflow
-    from src.backend.workflows.payments_saga import build_payments_saga_workflow
+    from extensions.core_entities.orders.workflows.orders_saga import (
+        build_orders_saga_workflow,
+    )
+    from extensions.credit_pipeline.workflows.payments_saga import (
+        build_payments_saga_workflow,
+    )
 
     declarations = [
         build_orders_saga_workflow(),
