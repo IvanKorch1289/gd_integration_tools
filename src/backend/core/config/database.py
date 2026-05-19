@@ -190,6 +190,18 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=[0.5],
     )
 
+    replica_dsn: str | None = Field(
+        default=None,
+        title="DSN read-replica",
+        description=(
+            "S11 K2 W2: явный async DSN для read-only replica. Если задан, "
+            ":class:`SmartSessionManager` направляет read-only сессии сюда, "
+            "снижая нагрузку на primary в 2–3x для read-heavy workload. "
+            "Если None, replica-роутинг отключён и все запросы идут на primary."
+        ),
+        examples=["postgresql+asyncpg://user:pwd@replica.db:5432/app"],
+    )
+
     @computed_field(description="URL асинхронного подключения")
     def async_connection_url(self) -> str:
         """Формирует DSN для асинхронного драйвера."""
