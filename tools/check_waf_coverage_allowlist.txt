@@ -8,41 +8,19 @@
 # Формат:
 #   src/backend/<path>/<file>.py  # owner=<team> | target=<sprint> | reason=<note>
 #
-# Пустые строки и строки начинающиеся с '#' игнорируются.
+# Пустые строки и строки начинающиеся с '#' игнорируются. Inline-
+# комментарии после пути обрезаются по первому '#'.
 # `--strict` режим (CI/release-gate) игнорирует этот файл.
 #
-# Sprint 9 K1 W3 (2026-05-18): формализованы owner+target для каждой
-# записи. Sprint 10 закрывает 12 из 21 (см. ADR-0061).
+# Sprint 10 закрытие (2026-05-19): 12 S10 файлов мигрированы на
+# OutboundHttpClient и удалены из allowlist. 3 файла без httpx
+# (search_providers/vault_refresher/polling) тоже удалены — они
+# больше не нарушители. Остались 6 S11 baseline-записей.
 
-# === К1 ownership (Sprint 10 targets) ===
-src/backend/entrypoints/webhook/handler.py  # owner=K1 | target=s10 | reason=ASGI middleware refactor
-src/backend/entrypoints/webhook/transformer.py  # owner=K1 | target=s10 | reason=ASGI middleware refactor
-src/backend/entrypoints/api/v1/endpoints/imports.py  # owner=K1 | target=s10 | reason=migration to facade trivial
-
-# === К2 ownership (Sprint 10 targets) ===
-src/backend/infrastructure/sinks/http_sink.py  # owner=K2 | target=s10 | reason=Sink base class refactor
-src/backend/infrastructure/sinks/webhook_sink.py  # owner=K2 | target=s10 | reason=Sink base class refactor
-
-# === К3 ownership (Sprint 10 targets) ===
-src/backend/dsl/engine/processors/ml_inference.py  # owner=K3 | target=s10 | reason=ML provider abstraction
-src/backend/dsl/engine/processors/proxy/forward.py  # owner=K3 | target=s10 | reason=proxy auto-routing
-
-# === К4 ownership (Sprint 10 targets) ===
-src/backend/services/ai/ai_moderation.py  # owner=K4 | target=s10 | reason=AI provider abstraction
-src/backend/services/ai/ai_providers.py  # owner=K4 | target=s10 | reason=AI provider abstraction
-
-# === К5 ownership (Sprint 10 targets) ===
-src/backend/services/ops/notification_adapters.py  # owner=K5 | target=s10 | reason=notification adapter refactor
-src/backend/services/ops/notification_hub.py  # owner=K5 | target=s10 | reason=notification hub refactor
-src/backend/services/ops/webhook_scheduler.py  # owner=K5 | target=s10 | reason=webhook scheduler refactor
-
-# === R3 ownership (Sprint 11 targets) ===
+# === S11 ownership (baseline, target=s11) ===
 src/backend/core/security/vault_cipher.py  # owner=K1 | target=s11 | reason=Vault namespace capability
-src/backend/infrastructure/application/vault_refresher.py  # owner=K1 | target=s11 | reason=Vault namespace capability
 src/backend/infrastructure/clients/storage/clickhouse.py  # owner=K2 | target=s11 | reason=non-OAS client extension
 src/backend/infrastructure/clients/external/express_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
 src/backend/infrastructure/clients/external/telegram_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
-src/backend/infrastructure/clients/external/search_providers.py  # owner=K4 | target=s11 | reason=provider-specific timeouts
 src/backend/infrastructure/policy/opa.py  # owner=K1 | target=s11 | reason=OPA-sidecar abstraction
 src/backend/infrastructure/resilience/components/express_chain.py  # owner=K1 | target=s11 | reason=resilience-chain extraction
-src/backend/infrastructure/sources/polling.py  # owner=K2 | target=s11 | reason=polling source abstraction

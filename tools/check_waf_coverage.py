@@ -50,7 +50,11 @@ def _iter_python_files(root: Path) -> Iterable[Path]:
 
 
 def _load_allowlist() -> set[str]:
-    """Читает baseline относительных путей."""
+    """Читает baseline относительных путей.
+
+    Поддерживает inline-комменты вида ``path/file.py  # owner=K1 | ...``:
+    обрезает всё начиная с первого ``#`` и берёт путь без хвоста.
+    """
     if not ALLOWLIST_FILE.is_file():
         return set()
     entries: set[str] = set()
@@ -58,7 +62,9 @@ def _load_allowlist() -> set[str]:
         cleaned = line.strip()
         if not cleaned or cleaned.startswith("#"):
             continue
-        entries.add(cleaned)
+        path_only = cleaned.split("#", 1)[0].strip()
+        if path_only:
+            entries.add(path_only)
     return entries
 
 
