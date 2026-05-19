@@ -457,6 +457,16 @@ perf-gate-py: ## К3/S2: python perf-gate — проверяет locust-метр
 		--report dist/perf-report.json \
 		|| $(WARN) "[perf-gate-py] warn-only: thresholds not met (будет block в S3)"
 
+perf-gate-py-strict: check-env ## Sprint 9 K2 W7: blocking perf-gate (p95<200ms, RPS>1000, ratchet baseline)
+	@$(INFO) "Running BLOCKING python perf-gate against baseline tests/perf/baseline.json..."
+	@mkdir -p dist
+	@$(UV_RUN) python tools/perf_gate.py \
+		--scenario tests/perf/locust_baseline.py \
+		--host $(or $(BASE_URL),http://localhost:8000) \
+		--report dist/perf-report.json \
+		--strict
+	@$(INFO) "[perf-gate-py-strict] OK"
+
 granian-run: ## S6 K2: запуск Granian с production-tuning (ADR-0059)
 	@$(INFO) "Starting Granian with production tuning (ADR-0059)..."
 	@$(UV_RUN) python tools/granian_runner.py --app src.main:app --host $(or $(GRANIAN_HOST),0.0.0.0) --port $(or $(GRANIAN_PORT),8000)
