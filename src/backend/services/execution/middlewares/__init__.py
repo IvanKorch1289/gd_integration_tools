@@ -1,5 +1,9 @@
 """Встроенные middleware для :class:`DefaultActionDispatcher` (W14.1.C).
 
+См. ADR-0062 (Sprint 9 K5 W7): этот пакет работает с типизированным
+``DispatchContext`` — не путать с
+:mod:`src.backend.entrypoints.middlewares` (pure ASGI HTTP-layer).
+
 Состав:
 
 * :class:`AuditMiddleware` — логирует факт вызова action (action_id,
