@@ -5,6 +5,10 @@
 запрос/ответ в JSON формата, совместимого с HAR 1.2 (минимальное
 подмножество). Воспроизведение — :func:`testkit.replay.load_cassette`.
 
+С S10 Wave 1 рекордер по умолчанию маскирует секреты в headers и body
+(см. :mod:`testkit.recorder.secrets_mask`). Опциональный параметр
+``mask_secrets=False`` отключает маскирование (только для отладки).
+
 Зависимостей вне stdlib + ``httpx`` нет, чтобы recorder работал в
 любом окружении тестов.
 """
@@ -18,6 +22,11 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+
+from testkit.recorder.secrets_mask import (
+    mask_request_body,
+    mask_response_headers,
+)
 
 __all__ = ("HARCassette", "HAREntry", "HARRecorder", "record_session")
 
@@ -69,17 +78,30 @@ class HARRecorder:
     Используется как контекст-менеджер; внутри отдаёт
     ``httpx.AsyncClient`` с :class:`httpx.AsyncBaseTransport` обёрткой,
     которая сохраняет каждый запрос/ответ.
+
+    Args:
+        base_url: префикс для всех записей (опциональный).
+        mask_secrets: если ``True`` (default), значения секретных
+            headers/body-полей заменяются на ``"<masked>"`` перед
+            сохранением в кассету. Отключать только для локальной
+            отладки — кассеты с секретами не должны попадать в репо.
     """
 
-    def __init__(self, *, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        mask_secrets: bool = True,
+    ) -> None:
         """Инициализирует recorder с пустой кассетой."""
         self.cassette = HARCassette()
         self._base_url = base_url
+        self._mask_secrets = mask_secrets
 
     def _record_response(
         self, request: httpx.Request, response: httpx.Response
     ) -> None:
-        """Сохраняет request/response в кассету."""
+        """Сохраняет request/response в кассету (с маскированием при включённом флаге)."""
         try:
             req_body = request.content.decode("utf-8") if request.content else None
         except UnicodeDecodeError:
@@ -88,13 +110,27 @@ class HARRecorder:
             resp_body = response.text if response.content else None
         except UnicodeDecodeError:
             resp_body = None
+
+        req_headers = dict(request.headers)
+        resp_headers = dict(response.headers)
+
+        if self._mask_secrets:
+            req_headers = mask_response_headers(req_headers)
+            resp_headers = mask_response_headers(resp_headers)
+            req_body = mask_request_body(
+                req_body, content_type=req_headers.get("content-type")
+            )
+            resp_body = mask_request_body(
+                resp_body, content_type=resp_headers.get("content-type")
+            )
+
         self.cassette.entries.append(
             HAREntry(
                 method=request.method,
                 url=str(request.url),
                 status=response.status_code,
-                request_headers=dict(request.headers),
-                response_headers=dict(response.headers),
+                request_headers=req_headers,
+                response_headers=resp_headers,
                 request_body=req_body,
                 response_body=resp_body,
             )
@@ -151,8 +187,13 @@ class HARRecorder:
 
 
 @asynccontextmanager
-async def record_session(*, base_url: str | None = None, **kwargs: Any):
+async def record_session(
+    *,
+    base_url: str | None = None,
+    mask_secrets: bool = True,
+    **kwargs: Any,
+):
     """Удобная shortcut-обёртка: ``async with record_session() as (client, cassette):``."""
-    recorder = HARRecorder(base_url=base_url)
+    recorder = HARRecorder(base_url=base_url, mask_secrets=mask_secrets)
     async with recorder.async_client(**kwargs) as client:
         yield client, recorder.cassette
