@@ -1,49 +1,32 @@
-"""Orders saga (Sprint 4 К3-D §3): создание заказа с резервом и оплатой.
+"""Deprecation facade — orders_saga переехал в extensions/ (Sprint 9 K5 W4).
 
-Декларативный saga-pattern через :class:`WorkflowBuilder` / :class:`SagaBuilder`:
-forward-цепочка реализует happy-path, compensate-цепочка откатывает уже
-совершённые шаги при failure.
+Sprint 9 K5 W4 (GAP-15.4): orders_saga.py перенесён в
+``extensions/core_entities/orders/workflows/orders_saga.py``. Этот shim
+сохраняет backwards-compat для одного спринта; будет удалён в S10.
 
-Forward (3 шага):
-    1. ``orders.create`` — создать запись заказа (output_key=``order_id``).
-    2. ``inventory.reserve`` — зарезервировать товары на складе.
-    3. ``payments.charge`` — списать средства (output_key=``charge_id``).
+Новый правильный импорт:
 
-Compensate (3 шага, обратный порядок применяется compiler'ом):
-    * ``orders.cancel`` — отменить запись заказа.
-    * ``inventory.release`` — снять резерв со склада.
-    * ``payments.refund`` — вернуть средства.
+.. code-block:: python
 
-Action handler-ы для всех 6 activity регистрируются плагином
-``extensions/orders/`` (или эквивалентом). На этапе compile они lazy —
-:func:`compile_workflow` не требует их наличия в registry.
+    from extensions.core_entities.orders.workflows.orders_saga import (
+        build_orders_saga_workflow,
+    )
 """
 
 from __future__ import annotations
 
-from src.backend.dsl.workflow.builder import WorkflowBuilder
-from src.backend.dsl.workflow.spec import WorkflowDeclaration
+import warnings
+
+from extensions.core_entities.orders.workflows.orders_saga import *  # noqa: F401,F403
+from extensions.core_entities.orders.workflows.orders_saga import (
+    build_orders_saga_workflow,
+)
+
+warnings.warn(
+    "src.backend.workflows.orders_saga is deprecated. "
+    "Import from extensions.core_entities.orders.workflows.orders_saga.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = ("build_orders_saga_workflow",)
-
-
-def build_orders_saga_workflow() -> WorkflowDeclaration:
-    """Собрать декларацию workflow ``orders.create_with_payment``.
-
-    Returns:
-        Иммутабельная :class:`WorkflowDeclaration`, готовая к
-        :func:`compile_workflow` или регистрации в Worker'е.
-    """
-    return (
-        WorkflowBuilder("orders.create_with_payment")
-        .description("Создание заказа с резервом склада и оплатой")
-        .saga()
-        .forward("orders.create", output_key="order_id")
-        .forward("inventory.reserve")
-        .forward("payments.charge", output_key="charge_id")
-        .compensate("orders.cancel")
-        .compensate("inventory.release")
-        .compensate("payments.refund")
-        .end_saga()
-        .build()
-    )
