@@ -253,6 +253,93 @@ Reference V11 plugin (Sprint 7 scaffold).
     return plugin_root
 
 
+class PluginCodegen:
+    """OO-обёртка над :func:`scaffold_plugin` (Sprint 9 K5 W3).
+
+    Закрывает A-5 техдолг ("PluginCodegen class missing"). Используется
+    как импортируемый API из ``Makefile.codegen`` и для интеграционных
+    тестов:
+
+    .. code-block:: python
+
+        codegen = PluginCodegen(target_dir=Path("/tmp/extensions"))
+        plugin_dir = codegen.scaffold(
+            name="kyc_verify",
+            capabilities=["net.outbound.compliance:external"],
+            features=["score", "verify"],
+        )
+
+    Args:
+        target_dir: каталог extensions/; если None — берётся ``EXTENSIONS_DIR``.
+        default_with_frontend: scaffold с frontend/pages/ по умолчанию.
+        default_overwrite: разрешить overwrite по умолчанию.
+    """
+
+    def __init__(
+        self,
+        *,
+        target_dir: Path | None = None,
+        default_with_frontend: bool = False,
+        default_overwrite: bool = False,
+    ) -> None:
+        self._target_dir = target_dir
+        self._default_with_frontend = default_with_frontend
+        self._default_overwrite = default_overwrite
+
+    def scaffold(
+        self,
+        name: str,
+        *,
+        features: list[str] | None = None,
+        capabilities: list[str] | None = None,
+        with_frontend: bool | None = None,
+        overwrite: bool | None = None,
+    ) -> Path:
+        """Создаёт каркас плагина.
+
+        Args:
+            name: snake_case имя плагина.
+            features: список action'ов (provides).
+            capabilities: список capability spec'ов.
+            with_frontend: override default_with_frontend.
+            overwrite: override default_overwrite.
+
+        Returns:
+            Путь к созданному каталогу.
+
+        Raises:
+            FileExistsError: если плагин уже есть и overwrite=False.
+            ValueError: невалидное имя.
+        """
+        return scaffold_plugin(
+            name,
+            target_dir=self._target_dir,
+            features=features or [],
+            capabilities=capabilities or [],
+            with_frontend=(
+                with_frontend
+                if with_frontend is not None
+                else self._default_with_frontend
+            ),
+            overwrite=(
+                overwrite if overwrite is not None else self._default_overwrite
+            ),
+        )
+
+    def list_existing(self) -> list[str]:
+        """Список уже scaffolded плагинов в target_dir."""
+        root = self._target_dir or EXTENSIONS_DIR
+        if not root.exists():
+            return []
+        return sorted(
+            entry.name
+            for entry in root.iterdir()
+            if entry.is_dir()
+            and not entry.name.startswith(("_", "."))
+            and (entry / "plugin.toml").exists()
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Точка входа CLI."""
     parser = argparse.ArgumentParser(description="Codegen V11 plugin skeleton.")

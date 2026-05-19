@@ -543,6 +543,7 @@ commit_author = "Korch Ivan <cards25kk.bank>"
 [tool.pytest.ini_options]
 minversion = "9.0"
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = "-ra --strict-markers"
 markers = [
