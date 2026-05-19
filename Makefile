@@ -187,6 +187,11 @@ type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (max 5 errors, ra
 	@$(UV_RUN) python tools/checks/mypy_budget.py --max 5
 	@$(SUCCESS) "Mypy budget OK"
 
+startup-time-gate: check-env ## Sprint 10 K2 W3: startup-time gate (<3s total, fail-on-regression)
+	@$(INFO) "Running startup-time gate..."
+	@$(UV_RUN) python tools/checks/startup_time.py
+	@$(SUCCESS) "Startup-time gate OK"
+
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
