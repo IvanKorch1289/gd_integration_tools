@@ -206,3 +206,46 @@ class WorkflowDeclaration(BaseModel):
         default=None,
         description="Default retry-политика; перекрывается per-activity ``retry_policy``.",
     )
+    sla: "SlaPolicy | None" = Field(
+        default=None,
+        description=(
+            "SLA-политика workflow (Sprint 9 K3 W10). Если execution_seconds "
+            "превышает ``soft_limit_seconds`` — emit метрика + email/slack "
+            "warning. При превышении ``hard_limit_seconds`` workflow "
+            "помечается как breached + breach_action."
+        ),
+    )
+
+
+class SlaPolicy(BaseModel):
+    """SLA-политика workflow (Sprint 9 K3 W10 — GAP-WF-4.4).
+
+    Декларируется в ``workflow.yaml::sla``:
+
+    .. code-block:: yaml
+
+        sla:
+          soft_limit_seconds: 60.0
+          hard_limit_seconds: 300.0
+          escalation_email: "ops@bank.local"
+          escalation_slack: "#wf-alerts"
+          breach_action: alert
+
+    Attributes:
+        soft_limit_seconds: warning threshold (логирование + метрика).
+        hard_limit_seconds: hard threshold (breach_action + incident).
+        escalation_email: куда отправлять email на soft breach.
+        escalation_slack: Slack channel для notification.
+        breach_action: ``alert`` (default), ``cancel``, ``none``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    soft_limit_seconds: float = Field(gt=0.0)
+    hard_limit_seconds: float = Field(gt=0.0)
+    escalation_email: str | None = None
+    escalation_slack: str | None = None
+    breach_action: str = Field(default="alert", pattern=r"^(alert|cancel|none)$")
+
+
+WorkflowDeclaration.model_rebuild()

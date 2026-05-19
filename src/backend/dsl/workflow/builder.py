@@ -59,6 +59,7 @@ class WorkflowBuilder:
         self._steps: list[WorkflowStep] = []
         self._default_timeout_s: float = 300.0
         self._default_retry_policy: RetryPolicy | None = None
+        self._sla: Any | None = None
 
     def description(self, text: str) -> Self:
         """Установить человекочитаемое описание workflow."""
@@ -73,6 +74,35 @@ class WorkflowBuilder:
     def default_retry(self, policy: RetryPolicy) -> Self:
         """Установить default retry-политику workflow."""
         self._default_retry_policy = policy
+        return self
+
+    def sla(
+        self,
+        *,
+        soft_limit_seconds: float,
+        hard_limit_seconds: float,
+        escalation_email: str | None = None,
+        escalation_slack: str | None = None,
+        breach_action: str = "alert",
+    ) -> Self:
+        """Установить SLA-политику workflow (Sprint 9 K3 W10).
+
+        Args:
+            soft_limit_seconds: warning threshold.
+            hard_limit_seconds: hard threshold (breach_action триггер).
+            escalation_email: email для notification на soft breach.
+            escalation_slack: Slack channel для notification.
+            breach_action: ``alert`` (default) | ``cancel`` | ``none``.
+        """
+        from src.backend.dsl.workflow.spec import SlaPolicy
+
+        self._sla = SlaPolicy(
+            soft_limit_seconds=soft_limit_seconds,
+            hard_limit_seconds=hard_limit_seconds,
+            escalation_email=escalation_email,
+            escalation_slack=escalation_slack,
+            breach_action=breach_action,
+        )
         return self
 
     def activity(
@@ -213,6 +243,7 @@ class WorkflowBuilder:
             steps=self._steps,
             default_timeout_s=self._default_timeout_s,
             default_retry_policy=self._default_retry_policy,
+            sla=self._sla,
         )
 
 
