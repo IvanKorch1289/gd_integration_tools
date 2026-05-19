@@ -23,6 +23,10 @@ backward-compat shim'ы (re-export).
 
 from __future__ import annotations
 
+from src.backend.core.resilience.adaptive_timeout import (
+    AdaptiveTimeoutConfig,
+    AdaptiveTimeoutPolicy,
+)
 from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerRegistry,
@@ -64,6 +68,8 @@ from src.backend.core.resilience.self_healer import SelfHealer, get_self_healer
 from src.backend.core.resilience.decorators import policy
 
 __all__ = (
+    "AdaptiveTimeoutConfig",
+    "AdaptiveTimeoutPolicy",
     "Breaker",
     "BreakerRegistry",
     "BreakerSpec",
