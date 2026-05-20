@@ -28,9 +28,54 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ("PoolWarmup", "WarmupResult")
+__all__ = ("PoolReconnectMonitor", "PoolWarmup", "WarmupResult")
 
 logger = logging.getLogger(__name__)
+
+try:  # pragma: no cover - prometheus_client optional
+    from prometheus_client import Counter as _PromCounter
+    from prometheus_client import Histogram as _PromHistogram
+
+    _WARMUP_DURATION = _PromHistogram(
+        "pool_warmup_duration_ms",
+        "Pool warmup duration in milliseconds",
+        ("pool",),
+    )
+    _WARMUP_FAILURES = _PromCounter(
+        "pool_warmup_failures_total",
+        "Pool warmup failures",
+        ("pool",),
+    )
+    _POOL_RECONNECTS = _PromCounter(
+        "pool_reconnects_total",
+        "Pool reconnect events",
+        ("pool",),
+    )
+except Exception:  # noqa: BLE001
+    _WARMUP_DURATION = None  # type: ignore[assignment]
+    _WARMUP_FAILURES = None  # type: ignore[assignment]
+    _POOL_RECONNECTS = None  # type: ignore[assignment]
+
+
+def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
+    if _WARMUP_DURATION is not None:
+        try:
+            _WARMUP_DURATION.labels(pool=pool).observe(duration_ms)
+        except Exception:  # noqa: BLE001
+            pass
+    if not success and _WARMUP_FAILURES is not None:
+        try:
+            _WARMUP_FAILURES.labels(pool=pool).inc()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _record_reconnect(pool: str) -> None:
+    if _POOL_RECONNECTS is not None:
+        try:
+            _POOL_RECONNECTS.labels(pool=pool).inc()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 @dataclass(slots=True)
@@ -166,3 +211,157 @@ class PoolWarmup:
             await self._ch.execute("SELECT 1")
 
         await asyncio.gather(*(_ping() for _ in range(self._min)))
+
+    async def warmup_httpx(
+        self,
+        client: Any,
+        target_url: str,
+        *,
+        min_connections: int = 3,
+        timeout_seconds: float = 5.0,
+    ) -> WarmupResult:
+        """Прогреть HTTPX OutboundHttpClient серией HEAD-запросов (S13 K2 W7).
+
+        Args:
+            client: ``OutboundHttpClient`` или ``httpx.AsyncClient`` с ``head()``.
+            target_url: URL для прогрева (рекомендуется ``/health`` целевого сервиса).
+            min_connections: Целевое число одновременных соединений (default 3).
+            timeout_seconds: Max time на прогрев.
+        """
+        start = time.monotonic()
+        result = WarmupResult()
+
+        async def _ping() -> None:
+            await client.head(target_url, timeout=timeout_seconds)
+
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*(_ping() for _ in range(min_connections))),
+                timeout=timeout_seconds,
+            )
+            result.warmed_pools.append("httpx")
+            _record_warmup("httpx", (time.monotonic() - start) * 1000, success=True)
+        except Exception as exc:  # noqa: BLE001
+            result.failed_pools["httpx"] = type(exc).__name__
+            _record_warmup("httpx", (time.monotonic() - start) * 1000, success=False)
+            logger.warning(
+                "pool_warmup.httpx_failed",
+                extra={"target": target_url, "error_class": type(exc).__name__},
+            )
+
+        result.duration_seconds = time.monotonic() - start
+        return result
+
+    async def warmup_graylog(
+        self,
+        sink: Any,
+        *,
+        ping_count: int = 3,
+        timeout_seconds: float = 3.0,
+    ) -> WarmupResult:
+        """Прогреть Graylog TCP-pool серией keepalive GELF-чанков (S13 K2 W7).
+
+        Args:
+            sink: GraylogSink с методом ``async def emit_keepalive()`` или
+                ``async def emit({"_keepalive": True})``.
+            ping_count: Сколько keepalive-сообщений отправить.
+            timeout_seconds: Max time на прогрев.
+        """
+        start = time.monotonic()
+        result = WarmupResult()
+
+        async def _ping() -> None:
+            if hasattr(sink, "emit_keepalive"):
+                await sink.emit_keepalive()
+            else:
+                await sink.emit({"_keepalive": True, "_warmup": True})
+
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*(_ping() for _ in range(ping_count))),
+                timeout=timeout_seconds,
+            )
+            result.warmed_pools.append("graylog")
+            _record_warmup("graylog", (time.monotonic() - start) * 1000, success=True)
+        except Exception as exc:  # noqa: BLE001
+            result.failed_pools["graylog"] = type(exc).__name__
+            _record_warmup(
+                "graylog", (time.monotonic() - start) * 1000, success=False
+            )
+            logger.warning(
+                "pool_warmup.graylog_failed",
+                extra={"error_class": type(exc).__name__},
+            )
+
+        result.duration_seconds = time.monotonic() - start
+        return result
+
+
+class PoolReconnectMonitor:
+    """Фоновая задача, мониторит health пулов и переинициализирует при reconnect (S13 K2 W7).
+
+    Args:
+        pools: Dict ``{"name": healthcheck_callable}``. Callable должен быть
+            async и возвращать True (healthy) / False (unhealthy).
+        on_reconnect: Async callback, вызывается при disconnect detection.
+        interval_seconds: Период между проверками (default 30s).
+    """
+
+    def __init__(
+        self,
+        pools: dict[str, Any],
+        *,
+        on_reconnect: Any = None,
+        interval_seconds: float = 30.0,
+    ) -> None:
+        self._pools = pools
+        self._on_reconnect = on_reconnect
+        self._interval = interval_seconds
+        self._last_state: dict[str, bool] = {name: True for name in pools}
+        self._task: asyncio.Task[None] | None = None
+        self._stop_event = asyncio.Event()
+
+    async def start(self) -> None:
+        if self._task is not None and not self._task.done():
+            return
+        self._stop_event.clear()
+        self._task = asyncio.create_task(self._loop(), name="pool_reconnect_monitor")
+
+    async def stop(self) -> None:
+        self._stop_event.set()
+        if self._task is not None:
+            self._task.cancel()
+            try:
+                await self._task
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
+            self._task = None
+
+    async def _loop(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                await asyncio.wait_for(
+                    self._stop_event.wait(), timeout=self._interval
+                )
+            except asyncio.TimeoutError:
+                pass
+            if self._stop_event.is_set():
+                return
+            for name, healthcheck in self._pools.items():
+                try:
+                    healthy = await healthcheck()
+                except Exception:  # noqa: BLE001
+                    healthy = False
+                previously_healthy = self._last_state.get(name, True)
+                if not healthy and previously_healthy:
+                    logger.warning("pool_reconnect_monitor.unhealthy", extra={"pool": name})
+                    self._last_state[name] = False
+                elif healthy and not previously_healthy:
+                    logger.info("pool_reconnect_monitor.reconnected", extra={"pool": name})
+                    _record_reconnect(name)
+                    self._last_state[name] = True
+                    if self._on_reconnect is not None:
+                        try:
+                            await self._on_reconnect(name)
+                        except Exception:  # noqa: BLE001
+                            logger.exception("pool_reconnect_monitor.callback_failed")
