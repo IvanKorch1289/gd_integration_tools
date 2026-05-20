@@ -57,10 +57,18 @@ class TemporalClientFactory:
         target_host: str = "localhost:7233",
         tls: dict[str, Any] | None = None,
         recycle_seconds: float = 3600.0,
+        pki_backend: str = "file",
+        pki_role: str = "temporal-worker",
+        pki_common_name: str = "temporal-worker",
+        pki_ttl: str = "24h",
     ) -> None:
         self._target = target_host
         self._tls = tls
         self._recycle = recycle_seconds
+        self._pki_backend = pki_backend
+        self._pki_role = pki_role
+        self._pki_common_name = pki_common_name
+        self._pki_ttl = pki_ttl
         self._cache: dict[str, _ClientCacheEntry] = {}
         self._lock = asyncio.Lock()
 
@@ -93,11 +101,14 @@ class TemporalClientFactory:
         )
 
         tls: bool | TLSConfig = False
-        if self._tls is not None:
+        tls_dict = self._tls
+        if self._pki_backend == "vault":
+            tls_dict = await self._load_certs_from_vault()
+        if tls_dict is not None:
             tls = TLSConfig(
-                server_root_ca_cert=self._tls.get("ca"),
-                client_cert=self._tls.get("cert"),
-                client_private_key=self._tls.get("key"),
+                server_root_ca_cert=self._encode_pem(tls_dict.get("ca")),
+                client_cert=self._encode_pem(tls_dict.get("cert")),
+                client_private_key=self._encode_pem(tls_dict.get("key")),
             )
 
         _logger.info(
@@ -122,6 +133,42 @@ class TemporalClientFactory:
                     except Exception:  # noqa: BLE001
                         pass
             self._cache.clear()
+
+    @staticmethod
+    def _encode_pem(value: Any) -> bytes | None:
+        """PEM-строку либо bytes → bytes; ``None`` остаётся ``None``."""
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value
+        if isinstance(value, str):
+            return value.encode("utf-8")
+        return None
+
+    async def _load_certs_from_vault(self) -> dict[str, str] | None:
+        """Sprint 12 K1 W2 — issue/refresh cert через Vault PKI engine."""
+        try:
+            from src.backend.infrastructure.secrets.vault_pki import (
+                VaultPkiClient,
+            )
+
+            pki = VaultPkiClient()
+            bundle = pki.issue_cert(
+                role=self._pki_role,
+                common_name=self._pki_common_name,
+                ttl=self._pki_ttl,
+            )
+            return {
+                "ca": bundle.ca_chain,
+                "cert": bundle.certificate,
+                "key": bundle.private_key,
+            }
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning(
+                "Vault PKI cert issue failed (%s); fallback to file backend",
+                exc,
+            )
+            return self._tls
 
     def stats(self) -> dict[str, Any]:
         """Текущий снимок кэша (для health endpoint)."""
