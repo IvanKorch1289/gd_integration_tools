@@ -17,4 +17,10 @@ from __future__ import annotations
 pytest_plugins: tuple[str, ...] = (
     "testkit.auth_fixtures",
     "testkit.mtls_fixtures",
+    "testkit.fixtures.db",
+    "testkit.fixtures.redis",
+    "testkit.fixtures.toxiproxy",
+    "testkit.fixtures.temporal",
+    "testkit.fixtures.tenant",
+    "testkit.fixtures.recorder",
 )

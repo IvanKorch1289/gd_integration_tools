@@ -1,20 +1,46 @@
-"""Testkit — переиспользуемые pytest-фикстуры для интеграционных тестов.
+"""Testkit — переиспользуемые pytest-фикстуры и утилиты для тестов.
 
 Назначение пакета:
     Содержит фабрики тестовых сертификатов, контейнеров IdP (Keycloak),
-    стабов внешних API и прочих ресурсов, которые требуются нескольким
-    test-suite одновременно. Импорт фикстур выполняется явно из
-    ``conftest.py`` тестового пакета — pytest11 entry-point на данный
-    момент не используется, чтобы избежать конфликта с существующим
-    конфигом.
+    HAR-рекордер для записи внешних HTTP-вызовов, фасад запуска DSL-route
+    в изоляции, контейнерные фикстуры (Postgres/Redis/Temporal/Toxiproxy)
+    и инструменты построения tenant-контекста.
 
-Модули:
-    auth_fixtures: SAML SSO (Keycloak via testcontainers, IdP/SP metadata).
-    mtls_fixtures: Self-signed CA + server/client cert chain для mTLS.
+Публичный API:
+    HARCassette, HAREntry, HARRecorder, record_session — HAR-рекордер
+    (см. :mod:`testkit.recorder`).
+    build_replay_transport, load_cassette, MissingCassetteEntry —
+    воспроизведение HAR через httpx.MockTransport (см. :mod:`testkit.replay`).
+    RouteRunner, RouteRunResult — изолированный запуск DSL-route
+    (см. :mod:`testkit.route_runner`).
 
-Пакет добавлен в Sprint 3 W1 К1 (Security) как каркас для SAML/mTLS E2E.
+Pytest-фикстуры регистрируются автоматически через entry-point
+``testkit.pytest_plugin`` (см. :mod:`testkit.pytest_plugin`).
 """
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from testkit.recorder import (
+    HARCassette,
+    HAREntry,
+    HARRecorder,
+    record_session,
+)
+from testkit.replay import (
+    MissingCassetteEntry,
+    build_replay_transport,
+    load_cassette,
+)
+from testkit.route_runner import RouteRunner, RouteRunResult
+
+__all__ = (
+    "HARCassette",
+    "HAREntry",
+    "HARRecorder",
+    "MissingCassetteEntry",
+    "RouteRunResult",
+    "RouteRunner",
+    "build_replay_transport",
+    "load_cassette",
+    "record_session",
+)
