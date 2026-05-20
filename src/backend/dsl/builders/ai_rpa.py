@@ -125,6 +125,37 @@ class AIRPAMixin:
             namespace=namespace,
         )
 
+    def rag_query(
+        self,
+        *,
+        query_field: str = "question",
+        top_k: int = 5,
+        namespace: str | None = None,
+        strategy: str = "dense",
+        max_staleness_hours: float | None = None,
+        system_prompt: str = "",
+        output_property: str = "augment_result",
+    ) -> "RouteBuilder":
+        """RAG query с выбором стратегии retrieval (S11 K3 W3).
+
+        ``strategy`` ∈ ``{"dense", "hybrid", "hyde", "multi_query"}`` —
+        прокидывается в exchange.property ``rag_strategy`` и в payload
+        ``augment_result`` для downstream branch-logic. ``dense`` — стандартный
+        k-NN; ``hybrid`` — lexical+semantic union; ``hyde`` — Hypothetical
+        Document Embeddings; ``multi_query`` — n-генераций query.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors",
+            "RagQueryProcessor",
+            query_field=query_field,
+            top_k=top_k,
+            namespace=namespace,
+            strategy=strategy,
+            max_staleness_hours=max_staleness_hours,
+            system_prompt=system_prompt,
+            output_property=output_property,
+        )
+
     def rag_ingest(
         self,
         *,
