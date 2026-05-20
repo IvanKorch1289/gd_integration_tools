@@ -117,3 +117,129 @@ class AutoScaler:
         except asyncio.CancelledError:
             _logger.debug("AutoScaler._run_loop cancelled")
             raise
+
+
+# ──────────────────────── Sprint 12 K2 W2: Temporal Worker Scaler ─────
+
+
+class TemporalWorkerScaler:
+    """Auto-scale Temporal worker pool по queue depth.
+
+    Args:
+        worker_pool: :class:`TemporalWorkerPool` или совместимый объект.
+        task_queue: имя task queue для scaling.
+        min_workers: минимум активных workers (default 2).
+        max_workers: максимум (default 20).
+        target_tasks_per_worker: 10 (см. K8s HPA target).
+        cooldown_seconds: между scale events (default 30s).
+    """
+
+    def __init__(
+        self,
+        *,
+        worker_pool: Any,
+        task_queue: str = "default",
+        min_workers: int = 2,
+        max_workers: int = 20,
+        target_tasks_per_worker: int = 10,
+        cooldown_seconds: float = 30.0,
+    ) -> None:
+        if min_workers < 1:
+            raise ValueError("min_workers >= 1")
+        if max_workers < min_workers:
+            raise ValueError("max_workers >= min_workers")
+        if target_tasks_per_worker < 1:
+            raise ValueError("target_tasks_per_worker >= 1")
+        self._pool = worker_pool
+        self._task_queue = task_queue
+        self._min = min_workers
+        self._max = max_workers
+        self._target = target_tasks_per_worker
+        self._cooldown = cooldown_seconds
+        self._last_scale_at: float = 0.0
+
+    async def tick(self) -> dict[str, Any]:
+        """Один цикл оценки: queue depth → желаемое число workers."""
+        import time
+
+        try:
+            depths: dict[str, int] = await self._pool.get_queue_depth()  # type: ignore[attr-defined]
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning("TemporalWorkerScaler.get_queue_depth failed: %s", exc)
+            return {"action": "skip", "reason": str(exc)}
+
+        depth = int(depths.get(self._task_queue, 0))
+
+        from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
+            set_task_queue_depth,
+        )
+
+        set_task_queue_depth(self._task_queue, depth)
+
+        current = self._pool_current_workers()
+        desired = max(
+            self._min,
+            min(self._max, -(-depth // self._target) if depth else self._min),
+        )
+
+        if desired == current:
+            return {"action": "noop", "depth": depth, "workers": current}
+
+        now = time.monotonic()
+        if now - self._last_scale_at < self._cooldown:
+            return {
+                "action": "cooldown",
+                "depth": depth,
+                "workers": current,
+                "desired": desired,
+            }
+
+        self._last_scale_at = now
+        from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
+            record_scale_event,
+            set_workers_active,
+        )
+
+        if desired > current:
+            for _ in range(desired - current):
+                await self._safe_start_worker()
+            record_scale_event("up")
+        else:
+            for _ in range(current - desired):
+                await self._safe_stop_worker()
+            record_scale_event("down")
+
+        new_count = self._pool_current_workers()
+        set_workers_active(self._task_queue, new_count)
+        return {
+            "action": "up" if desired > current else "down",
+            "depth": depth,
+            "from_workers": current,
+            "to_workers": new_count,
+        }
+
+    def _pool_current_workers(self) -> int:
+        getter = getattr(self._pool, "current_workers", None)
+        if callable(getter):
+            return int(getter())
+        return 0
+
+    async def _safe_start_worker(self) -> None:
+        starter = getattr(self._pool, "start_worker", None)
+        if callable(starter):
+            try:
+                result = starter(task_queue=self._task_queue)
+                if hasattr(result, "__await__"):
+                    await result
+            except Exception:  # noqa: BLE001
+                pass
+
+    async def _safe_stop_worker(self) -> None:
+        stopper = getattr(self._pool, "stop_worker", None)
+        if callable(stopper):
+            try:
+                result = stopper(task_queue=self._task_queue)
+                if hasattr(result, "__await__"):
+                    await result
+            except Exception:  # noqa: BLE001
+                pass
