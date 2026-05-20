@@ -197,6 +197,11 @@ doctor: check-env ## Sprint 10 K5 W1: comprehensive dev environment health check
 	@$(UV_RUN) python tools/checks/doctor.py --quick
 	@$(SUCCESS) "Doctor check finished"
 
+dsl-complexity-check: check-env ## Sprint 10 K3 W2: DSL complexity budget (cyclomatic/nesting/steps)
+	@$(INFO) "Running DSL complexity budget check..."
+	@$(UV_RUN) python tools/checks/dsl_complexity.py routes/ extensions/ --strict
+	@$(SUCCESS) "DSL complexity gate OK"
+
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
@@ -357,6 +362,9 @@ v11-artefacts: check-env ## Wave R1: regenerate plugin/route schemas + capabilit
 
 v11-artefacts-check: check-env ## Wave R1: проверить, что committed schemas/capabilities в синке с кодом
 	@$(UV_RUN) python tools/check_v11_artefacts.py
+
+check-compat: check-env ## Sprint 14 W1: матрица совместимости plugin.toml::[compatibility]
+	@$(UV_RUN) python -m tools.checks.check_compat --plugins-dir extensions/
 
 migrate-plugin-manifest: check-env ## Wave R1.2.b: convert plugins/<name>/plugin.yaml → plugin.toml (PLUGIN_DIR=...)
 	@if [ -z "$(PLUGIN_DIR)" ]; then \
