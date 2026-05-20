@@ -1,0 +1,92 @@
+{
+  "uid": "gd-db-replica-routing",
+  "title": "DB Read Replica Routing & Lag (Sprint 11 K2 W2)",
+  "tags": ["gd_integration_tools", "K2-S11", "replicas"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "SELECT routed to replica (%)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(rate(db_select_replica_total[5m])) / sum(rate(db_select_total[5m])) * 100",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "SELECT routed to primary (%)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(rate(db_select_primary_total[5m])) / sum(rate(db_select_total[5m])) * 100",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Replica lag (ms) per replica",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "db_replica_lag_ms",
+          "refId": "A",
+          "legendFormat": "{{replica_id}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Replicas healthy",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(db_replica_healthy)", "refId": "A"}]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Failover count (last 1h)",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(increase(db_replica_failover_total[1h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "SELECT QPS — primary vs replica",
+      "datasource": "Prometheus",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "rate(db_select_primary_total[1m])",
+          "refId": "A",
+          "legendFormat": "primary"
+        },
+        {
+          "expr": "rate(db_select_replica_total[1m])",
+          "refId": "B",
+          "legendFormat": "replica"
+        }
+      ]
+    }
+  ]
+}
