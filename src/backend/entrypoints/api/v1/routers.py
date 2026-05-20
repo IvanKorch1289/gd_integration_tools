@@ -26,6 +26,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_cost import (
+        router as admin_workflow_cost_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_templates import (
         router as admin_workflow_templates_router,
     )
@@ -150,6 +153,10 @@ def get_v1_routers() -> APIRouter:
     # S12 K3 W5: workflow template library inventory + semantic search.
     api_router_v1.include_router(
         admin_workflow_templates_router, tags=["Admin · Workflow Templates"]
+    )
+    # S12 K3 W3 + K4 W2: workflow cost estimator + AI breakdown.
+    api_router_v1.include_router(
+        admin_workflow_cost_router, tags=["Admin · Workflow Cost"]
     )
     # К5 (Wave K5/docs-tenants-caps): admin endpoints for tenants & capabilities.
     api_router_v1.include_router(
