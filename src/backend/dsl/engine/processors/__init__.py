@@ -141,6 +141,7 @@ from src.backend.dsl.engine.processors.integration import (
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
+from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
 from src.backend.dsl.engine.processors.notify import NotifyProcessor
@@ -217,6 +218,7 @@ __all__ = (
     "DispatchActionProcessor",
     "InvokeProcessor",
     "InvokeWorkflowProcessor",
+    "CancelWorkflowProcessor",
     "TransformProcessor",
     "FilterProcessor",
     "EnrichProcessor",

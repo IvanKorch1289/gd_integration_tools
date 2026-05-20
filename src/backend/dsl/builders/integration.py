@@ -154,6 +154,37 @@ class IntegrationMixin:
             )
         )
 
+    def cancel_workflow(
+        self,
+        workflow_id: str,
+        *,
+        reason: str = "",
+        namespace: str = "default",
+        result_property: str = "cancel_result",
+    ) -> "RouteBuilder":
+        """Отмена workflow по ``workflow_id`` (Sprint 12 K3 W7).
+
+        Args:
+            workflow_id: Литерал или Ref-выражение
+                ``"${body.invocation_id}"``.
+            reason: Опциональная причина (для audit ``payload.reason``).
+            namespace: Workflow namespace (Temporal).
+            result_property: Куда писать результат
+                (``{"cancelled": True, "workflow_id": ..., "reason": ...}``).
+        """
+        from src.backend.dsl.engine.processors.cancel_workflow import (
+            CancelWorkflowProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            CancelWorkflowProcessor(
+                workflow_id,
+                reason=reason,
+                namespace=namespace,
+                result_property=result_property,
+            )
+        )
+
     # ── Auth (Wave 8.1) ──
 
     def auth(
@@ -1598,6 +1629,65 @@ class IntegrationMixin:
         )
 
     # ── NATS JetStream DSL (K3 W2) ──────────────────────────────────────────
+
+    @classmethod
+    def from_webdav(
+        cls,
+        route_id: str,
+        url: str,
+        *,
+        watch_path: str = "/",
+        poll_interval_seconds: int = 60,
+        file_pattern: str = "*",
+        username: str | None = None,
+        password: str | None = None,
+        processed_marker_path: str | None = None,
+        marker_dedup: bool = True,
+        description: str | None = None,
+    ) -> "RouteBuilder":
+        """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8).
+
+        Сканирует папку на WebDAV-сервере (Nextcloud / OwnCloud / любой
+        RFC 4918) каждые ``poll_interval_seconds`` секунд и эмитит
+        ``FileEvent`` для новых файлов. Persistent marker (``_processed.txt``)
+        предотвращает повторную обработку после restart.
+
+        Args:
+            route_id: Уникальный ID маршрута.
+            url: Базовый URL WebDAV-сервера.
+            watch_path: Папка для опроса.
+            poll_interval_seconds: Интервал между PROPFIND.
+            file_pattern: Glob-фильтр имени файла.
+            username/password: HTTP basic auth.
+            processed_marker_path: Путь к persistent marker (опц.).
+            marker_dedup: Использовать persistent marker.
+            description: Описание маршрута.
+
+        Returns:
+            :class:`RouteBuilder` с source ``webdav:<route_id>``.
+        """
+        import importlib
+
+        mod = importlib.import_module("src.backend.infrastructure.sources.webdav")
+        cfg = mod.WebDAVSourceConfig(
+            url=url,
+            watch_path=watch_path,
+            poll_interval_seconds=poll_interval_seconds,
+            file_pattern=file_pattern,
+            username=username,
+            password=password,
+            processed_marker_path=processed_marker_path,
+            marker_dedup=marker_dedup,
+        )
+        # Создаём source instance для smoke-валидации конструктора;
+        # реальный wire-up идёт через source_registry на основе ``source`` URI.
+        mod.WebDAVSource(cfg)
+        builder = cls(  # type: ignore[call-arg]
+            route_id=route_id,
+            source=f"webdav:{route_id}",
+            description=description,
+        )
+        return builder  # type: ignore[return-value]
 
     @classmethod
     def from_nats_js(

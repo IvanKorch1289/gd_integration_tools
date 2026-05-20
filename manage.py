@@ -1149,6 +1149,71 @@ def workflow_version(
         typer.echo(f"  - v{v.semver}{marker}")
 
 
+@workflow_app.command("cancel")
+def workflow_cancel(
+    workflow_id: str = typer.Argument(..., help="Workflow ID (Temporal)."),
+    reason: str = typer.Option("", "--reason", help="Причина отмены."),
+    namespace: str = typer.Option(
+        "default", "--namespace", help="Workflow namespace."
+    ),
+) -> None:
+    """Sprint 12 K3 W7 — отменить running workflow по ID.
+
+    Использует :class:`WorkflowBackend.cancel_workflow` и эмитит
+    audit-event ``workflow.cancel`` через
+    :class:`WorkflowAuditSink` (если зарегистрирован).
+
+    Пример::
+
+        python manage.py workflow cancel wf-abc-123 --reason "user_requested"
+    """
+    import asyncio
+
+    async def _run() -> int:
+        from src.backend.core.workflow.backend import WorkflowHandle
+        from src.backend.infrastructure.workflow.factory import (
+            create_workflow_backend,
+        )
+
+        backend = await create_workflow_backend(kind="auto")
+        handle = WorkflowHandle(
+            workflow_id=workflow_id,
+            run_id=workflow_id,
+            namespace=namespace,
+        )
+        try:
+            await backend.cancel_workflow(handle=handle)
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"ERR: cancel failed: {exc}", err=True)
+            return 1
+
+        try:
+            from src.backend.services.audit.workflow_audit_sink import (
+                get_workflow_audit_sink,
+            )
+
+            sink = get_workflow_audit_sink()
+            if sink is not None:
+                await sink.emit(
+                    event_type="workflow.cancel",
+                    workflow_id=workflow_id,
+                    tenant_id=None,
+                    payload={
+                        "reason": reason,
+                        "caller": "manage.py",
+                        "namespace": namespace,
+                    },
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
+        typer.echo(f"OK: cancelled workflow {workflow_id!r} (reason={reason!r})")
+        return 0
+
+    exit_code = asyncio.run(_run())
+    raise typer.Exit(code=exit_code)
+
+
 # ────────────── Plugin runtime (Sprint 7 T5) ──────────────
 
 
