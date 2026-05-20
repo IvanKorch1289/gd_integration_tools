@@ -88,8 +88,8 @@ async def sse_stream(request: Request) -> StreamingResponse:
     """
     queue = event_bus.subscribe()
 
-    async def event_generator():
-        """Генератор SSE-событий."""
+    async def _raw_generator():
+        """Сырой генератор SSE-событий."""
         try:
             while True:
                 if await request.is_disconnected():
@@ -107,6 +107,27 @@ async def sse_stream(request: Request) -> StreamingResponse:
                     yield ": heartbeat\n\n"
         finally:
             event_bus.unsubscribe(queue)
+
+    async def event_generator():
+        """PII-aware генератор SSE-событий (S13 K1 W1).
+
+        Оборачивает raw stream в ``stream_filter`` — applies sliding-window
+        PII redaction per-tenant policy. На fail PII pipeline — прокидывает
+        chunks без изменений (best-effort).
+        """
+        from src.backend.infrastructure.security.pii_streaming import (
+            PiiStreamPolicy,
+            stream_filter,
+        )
+
+        try:
+            tenant_policy = getattr(request.state, "pii_streaming_policy", None)
+            policy = tenant_policy if tenant_policy else PiiStreamPolicy()
+            async for chunk in stream_filter(_raw_generator(), policy):
+                yield chunk
+        except Exception:  # noqa: BLE001
+            async for chunk in _raw_generator():
+                yield chunk
 
     return StreamingResponse(
         event_generator(),
