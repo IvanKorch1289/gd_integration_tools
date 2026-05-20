@@ -125,6 +125,29 @@ class AIRPAMixin:
             namespace=namespace,
         )
 
+    def rag_ingest(
+        self,
+        *,
+        collection: str = "default",
+        source_property: str | None = None,
+        modal: str = "text",
+        output_property: str = "ingest_doc_id",
+    ) -> "RouteBuilder":
+        """RAG ingest: добавление документа из body/property в vector store (S11 K3 W2).
+
+        ``modal`` хранится в metadata для downstream-консьюмеров
+        мультимодального индекса (``text``/``image``/``audio``/``video``).
+        Возвращённый ``doc_id`` сохраняется в ``output_property``.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors",
+            "RagIngestProcessor",
+            source_property=source_property,
+            modal=modal,
+            collection=collection,
+            output_property=output_property,
+        )
+
     def compose_prompt(
         self, template: str, context_property: str = "vector_results"
     ) -> "RouteBuilder":
