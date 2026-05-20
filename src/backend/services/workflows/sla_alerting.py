@@ -116,8 +116,12 @@ def evaluate_sla(
     soft_limit_seconds: float,
     hard_limit_seconds: float,
     breach_action: str = "alert",
+    tenant_id: str | None = None,
 ) -> SlaBreachRecord:
     """Single-pass evaluation одного workflow.
+
+    Sprint 12 K2 W1: дополнительно инкрементирует Prometheus counter
+    ``workflow_sla_compliance_total{workflow_id,tenant_id,level}``.
 
     Returns:
         :class:`SlaBreachRecord` с ``level=NONE`` если в пределах SLA.
@@ -128,6 +132,7 @@ def evaluate_sla(
         level = SlaBreachLevel.SOFT
     else:
         level = SlaBreachLevel.NONE
+    _emit_sla_metric(workflow_id=workflow_id, tenant_id=tenant_id, level=level)
     return SlaBreachRecord(
         workflow_id=workflow_id,
         level=level,
@@ -136,6 +141,44 @@ def evaluate_sla(
         hard_limit=hard_limit_seconds,
         breach_action=breach_action,
     )
+
+
+_sla_counter: Any | None = None
+
+
+def _emit_sla_metric(
+    *,
+    workflow_id: str,
+    tenant_id: str | None,
+    level: "SlaBreachLevel",
+) -> None:
+    """Increment ``workflow_sla_compliance_total{...,level=...}`` counter.
+
+    Lazy-import prometheus_client; при отсутствии — no-op (тесты не
+    должны зависеть от prometheus_client).
+    """
+    global _sla_counter
+    if _sla_counter is None:
+        try:
+            from prometheus_client import Counter  # type: ignore[import-untyped]
+
+            _sla_counter = Counter(
+                "workflow_sla_compliance_total",
+                "SLA evaluations per workflow (level=none/soft/hard)",
+                labelnames=("workflow_id", "tenant_id", "level"),
+            )
+        except (ImportError, ValueError):
+            _sla_counter = False  # sentinel: do not retry
+
+    if _sla_counter and _sla_counter is not False:
+        try:
+            _sla_counter.labels(
+                workflow_id=workflow_id,
+                tenant_id=tenant_id or "",
+                level=level.value,
+            ).inc()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 @dataclass(slots=True)
