@@ -17,6 +17,12 @@ from testkit.recorder._har import (
     HARRecorder,
     record_session,
 )
+from testkit.recorder.cassette import (
+    CassetteMode,
+    cassette,
+    load_cassette,
+    save_cassette,
+)
 from testkit.recorder.secrets_mask import (
     MASKED_VALUE,
     SECRET_BODY_KEYS,
@@ -26,13 +32,17 @@ from testkit.recorder.secrets_mask import (
 )
 
 __all__ = (
+    "CassetteMode",
     "HARCassette",
     "HAREntry",
     "HARRecorder",
     "MASKED_VALUE",
     "SECRET_BODY_KEYS",
     "SECRET_HEADER_KEYS",
+    "cassette",
+    "load_cassette",
     "mask_request_body",
     "mask_response_headers",
     "record_session",
+    "save_cassette",
 )
