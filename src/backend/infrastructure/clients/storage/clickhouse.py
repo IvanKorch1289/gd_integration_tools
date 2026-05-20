@@ -247,6 +247,26 @@ class ClickHouseClient:
         await self.execute(ddl)
         logger.info("Table created via DDL")
 
+    async def apply_ddl_file(self, path: Any) -> None:
+        """Прогоняет содержимое DDL-файла (.sql) — обычно ``CREATE TABLE IF NOT EXISTS``.
+
+        Args:
+            path: путь до ``.sql`` файла (``str`` или ``pathlib.Path``).
+                Файл может содержать одно или несколько DDL-statement'ов
+                разделённых ``;``.
+        """
+        from pathlib import Path as _Path
+
+        text = _Path(str(path)).read_text(encoding="utf-8")
+        # Разбиваем по `;` чтобы прогнать каждый statement отдельно.
+        # Пустые сегменты пропускаются (хвостовая `;`, комментарии и т. п.).
+        for stmt in text.split(";"):
+            cleaned = stmt.strip()
+            if not cleaned:
+                continue
+            await self.execute(cleaned)
+        logger.info("DDL applied from %s", path)
+
     async def ping(self) -> bool:
         """Проверка доступности ClickHouse."""
         try:

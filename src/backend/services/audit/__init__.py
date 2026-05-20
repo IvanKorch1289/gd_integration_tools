@@ -20,11 +20,19 @@ from src.backend.services.audit.clickhouse_audit_service import (
     ClickHouseAuditService,
     get_audit_service,
 )
-from src.backend.services.audit.workflow_audit_sink import WorkflowAuditSink
+from src.backend.services.audit.workflow_audit_sink import (
+    WorkflowAuditSink,
+    get_workflow_audit_sink,
+    reset_workflow_audit_sink,
+    set_workflow_audit_sink,
+)
 
 __all__ = (
     "AuditEvent",
     "ClickHouseAuditService",
     "WorkflowAuditSink",
     "get_audit_service",
+    "get_workflow_audit_sink",
+    "reset_workflow_audit_sink",
+    "set_workflow_audit_sink",
 )

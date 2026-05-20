@@ -48,11 +48,42 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-__all__ = ("WorkflowAuditSink",)
+__all__ = (
+    "WorkflowAuditSink",
+    "get_workflow_audit_sink",
+    "set_workflow_audit_sink",
+    "reset_workflow_audit_sink",
+)
 
 _logger = logging.getLogger("services.audit.workflow")
 
 _TABLE = "workflow_audit"
+
+# Module-level singleton, инициализируется на startup-фазе через
+# :func:`set_workflow_audit_sink` (см. plugins/composition/setup_infra.py).
+# Возвращает ``None`` если ClickHouse выключен — caller должен no-op'ить.
+_singleton: WorkflowAuditSink | None = None
+
+
+def get_workflow_audit_sink() -> WorkflowAuditSink | None:
+    """Возвращает зарегистрированный singleton sink или ``None``.
+
+    Caller обязан корректно обрабатывать ``None`` — обычно через
+    early-return или no-op (никогда не вызывать ``emit`` на ``None``).
+    """
+    return _singleton
+
+
+def set_workflow_audit_sink(sink: WorkflowAuditSink | None) -> None:
+    """Регистрирует singleton sink (startup-фаза)."""
+    global _singleton
+    _singleton = sink
+
+
+def reset_workflow_audit_sink() -> None:
+    """Сбрасывает singleton — для unit-тестов и shutdown."""
+    global _singleton
+    _singleton = None
 
 
 class WorkflowAuditSink:
