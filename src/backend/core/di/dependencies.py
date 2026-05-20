@@ -19,7 +19,7 @@ FastAPI Depends-функции и singleton-аксессоры, через ко�
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di.app_state import _get_from_app_state, app_state_singleton
 
@@ -110,3 +110,19 @@ def get_watermark_store_optional() -> "WatermarkStore | None":
     не бросает ``RuntimeError`` — окно просто работает без durability.
     """
     return _get_from_app_state("watermark_store")
+
+
+def get_resilience_profile_store() -> Any:
+    """Lazy-аксессор :class:`ResilienceProfileStore` (S13 K2 W5).
+
+    Если store не зарегистрирован — возвращает in-memory fallback
+    (для dev_light и тестов).
+    """
+    store = _get_from_app_state("resilience_profile_store")
+    if store is None:
+        from src.backend.infrastructure.resilience.profile_store_memory import (
+            InMemoryResilienceProfileStore,
+        )
+
+        store = InMemoryResilienceProfileStore()
+    return store
