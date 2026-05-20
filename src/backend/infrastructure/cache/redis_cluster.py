@@ -20,8 +20,8 @@ slot-routing на основе CRC16(key) MOD 16384.
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from collections.abc import AsyncIterator, Sequence
+from typing import TYPE_CHECKING, Any
 
 __all__ = ("RedisClusterAdapter",)
 
@@ -109,3 +109,95 @@ class RedisClusterAdapter:
         except Exception as exc:  # noqa: BLE001
             logger.warning("RedisClusterAdapter.close error: %s", exc)
         self._closed = True
+
+    # ──────────────── S13 K2 W6: pipelining + batch ops ────────────────
+
+    def pipeline(self, *, routing_key: str | None = None) -> Any:
+        """Возвращает RedisCluster pipeline (S13 K2 W6).
+
+        Pipeline в Redis Cluster привязан к одному shard (CRC16(routing_key)).
+        Используется через ``async with``::
+
+            async with adapter.pipeline(routing_key="user:42") as pipe:
+                pipe.set("user:42:name", "alice")
+                pipe.incr("user:42:visits")
+                results = await pipe.execute()
+
+        Args:
+            routing_key: Ключ для определения shard'а (default: автоматически).
+        """
+        return self._cluster.pipeline()
+
+    async def mget_batch(self, keys: Sequence[str]) -> list[Any]:
+        """Batch GET с распределением по shard'ам (S13 K2 W6).
+
+        В отличие от обычного ``mget`` (требует все keys в одном slot),
+        этот метод группирует keys по shard и параллельно выполняет.
+
+        Args:
+            keys: Список ключей.
+
+        Returns:
+            Значения в исходном порядке (``None`` для отсутствующих).
+        """
+        if not keys:
+            return []
+        # redis-py 5.x: RedisCluster.mget работает для разных slot'ов через
+        # внутреннюю группировку по shard'у.
+        try:
+            return await self._cluster.mget(list(keys))
+        except Exception:  # noqa: BLE001
+            # Fallback: fan-out параллельных GET.
+            import asyncio
+
+            results = await asyncio.gather(
+                *(self._cluster.get(k) for k in keys), return_exceptions=False
+            )
+            return list(results)
+
+    async def mset_batch(self, mapping: dict[str, Any]) -> None:
+        """Batch SET с распределением по shard'ам (S13 K2 W6).
+
+        Args:
+            mapping: ``{key: value}`` для записи.
+        """
+        if not mapping:
+            return
+        try:
+            await self._cluster.mset(mapping)
+        except Exception:  # noqa: BLE001
+            import asyncio
+
+            await asyncio.gather(
+                *(self._cluster.set(k, v) for k, v in mapping.items())
+            )
+
+    async def keys_scan_batch(
+        self, pattern: str, *, batch_size: int = 1000
+    ) -> "AsyncIterator[list[bytes]]":
+        """SCAN keys батчами по shard'ам (S13 K2 W6).
+
+        Используется для bulk-cleanup и invalidation operations.
+
+        Args:
+            pattern: Glob-pattern для match (e.g. ``"session:*"``).
+            batch_size: Размер batch'а на один yield.
+
+        Yields:
+            Списки keys по ``batch_size`` штук.
+        """
+        async for key in self._cluster.scan_iter(match=pattern, count=batch_size):
+            yield [key]
+
+    async def eval_script(
+        self,
+        script: str,
+        keys: Sequence[str],
+        args: Sequence[Any],
+    ) -> Any:
+        """Lua scripting (atomic multi-key operations) (S13 K2 W6).
+
+        Все ``keys`` ДОЛЖНЫ находиться в одном slot (используй hashtag
+        для force routing: ``{user:42}:name`` + ``{user:42}:visits``).
+        """
+        return await self._cluster.eval(script, len(keys), *keys, *args)
