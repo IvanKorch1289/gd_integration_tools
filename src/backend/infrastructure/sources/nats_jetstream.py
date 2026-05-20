@@ -191,6 +191,53 @@ class NATSJetStreamSource:
         """Быстрая проверка: соединение с NATS установлено."""
         return self._nc is not None and not self._nc.is_closed
 
+    async def fetch_consumer_info(self) -> dict[str, Any]:
+        """Снимок состояния durable consumer (S13 K3 W5).
+
+        Возвращает словарь:
+        ``{"pending_messages": int, "delivered_consumer_seq": int,
+        "delivered_stream_seq": int, "ack_floor_consumer_seq": int,
+        "ack_floor_stream_seq": int}``.
+
+        Используется в Streamlit-панели для визуализации lag'а.
+        """
+        if self._nc is None or self._nc.is_closed:
+            return {
+                "stream": self._stream,
+                "durable": self._durable,
+                "error": "disconnected",
+                "pending_messages": 0,
+            }
+        try:
+            js = self._nc.jetstream()
+            info = await js.consumer_info(self._stream, self._durable)
+            delivered = getattr(info, "delivered", None)
+            ack_floor = getattr(info, "ack_floor", None)
+            return {
+                "stream": self._stream,
+                "durable": self._durable,
+                "pending_messages": int(getattr(info, "num_pending", 0)),
+                "delivered_consumer_seq": int(
+                    getattr(delivered, "consumer_seq", 0) if delivered else 0
+                ),
+                "delivered_stream_seq": int(
+                    getattr(delivered, "stream_seq", 0) if delivered else 0
+                ),
+                "ack_floor_consumer_seq": int(
+                    getattr(ack_floor, "consumer_seq", 0) if ack_floor else 0
+                ),
+                "ack_floor_stream_seq": int(
+                    getattr(ack_floor, "stream_seq", 0) if ack_floor else 0
+                ),
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "stream": self._stream,
+                "durable": self._durable,
+                "error": str(exc),
+                "pending_messages": 0,
+            }
+
     async def _close(self) -> None:
         """Закрывает NATS-соединение если открыто."""
         async with self._lock:
