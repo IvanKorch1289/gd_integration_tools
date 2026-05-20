@@ -460,6 +460,18 @@ module = "temporalio.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+# S13 K4 W2: vllm — optional extra (uv sync --extra ai-batch); heavy CUDA
+# зависимость, lazy-импорт в VllmBatchClient. Не устанавливается в dev_light.
+module = "vllm.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# S13 K3 W2: webdav4 — optional extra (uv sync --extra sources-webdav);
+# lazy-импорт в WebDAVSource. На dev-light без extras модуля нет.
+module = "webdav4.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # Sprint 8: aioquic — optional extra (uv sync --extra http3);
 # в чистой dev-light инсталляции SDK нет, lazy-импорт в entrypoints/http3.
 module = "aioquic.*"

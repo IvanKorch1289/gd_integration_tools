@@ -44,10 +44,10 @@ try:  # pragma: no cover
         ("stream", "consumer"),
     )
 except Exception:  # noqa: BLE001, S110
-    consumer_pending = None  # type: ignore[assignment]
-    consumer_delivered = None  # type: ignore[assignment]
-    consumer_ack_lag = None  # type: ignore[assignment]
-    consumer_info_errors = None  # type: ignore[assignment]
+    consumer_pending = None  # type: ignore[assignment,unused-ignore]
+    consumer_delivered = None  # type: ignore[assignment,unused-ignore]
+    consumer_ack_lag = None  # type: ignore[assignment,unused-ignore]
+    consumer_info_errors = None  # type: ignore[assignment,unused-ignore]
 
 
 def record_consumer_info(info: dict[str, Any]) -> None:

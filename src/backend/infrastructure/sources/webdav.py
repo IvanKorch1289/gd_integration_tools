@@ -144,7 +144,7 @@ class WebDAVSource:
 
                 for p in new_files:
                     yield FileEvent(
-                        path=p,  # type: ignore[arg-type]
+                        path=p,  # type: ignore[arg-type,unused-ignore]
                         change_type="added",
                         timestamp=time.time(),
                     )

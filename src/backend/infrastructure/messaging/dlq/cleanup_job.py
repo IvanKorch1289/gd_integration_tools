@@ -31,7 +31,7 @@ try:  # pragma: no cover
         ("dlq_class",),
     )
 except Exception:  # noqa: BLE001
-    _CLEANUP_COUNTER = None  # type: ignore[assignment]
+    _CLEANUP_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 
 @dataclass(slots=True)

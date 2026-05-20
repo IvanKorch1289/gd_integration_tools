@@ -120,7 +120,7 @@ try:  # pragma: no cover - prometheus_client опционален в dev_light
         ("reason", "group"),
     )
 except Exception:  # noqa: BLE001
-    _BATCH_FLUSH_COUNTER = None  # type: ignore[assignment]
+    _BATCH_FLUSH_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 
 def _record_batch_flush(reason: str, group: str = "_global") -> None:

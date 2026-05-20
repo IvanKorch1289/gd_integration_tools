@@ -52,9 +52,9 @@ try:  # pragma: no cover - prometheus_client optional
         ("pool",),
     )
 except Exception:  # noqa: BLE001
-    _WARMUP_DURATION = None  # type: ignore[assignment]
-    _WARMUP_FAILURES = None  # type: ignore[assignment]
-    _POOL_RECONNECTS = None  # type: ignore[assignment]
+    _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
+    _WARMUP_FAILURES = None  # type: ignore[assignment,unused-ignore]
+    _POOL_RECONNECTS = None  # type: ignore[assignment,unused-ignore]
 
 
 def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
@@ -181,7 +181,7 @@ class PoolWarmup:
         return result
 
     async def _warmup_pg(self) -> None:
-        from sqlalchemy import text  # type: ignore[import-untyped]
+        from sqlalchemy import text  # type: ignore[import-untyped,unused-ignore]
 
         # min_connections параллельных SELECT 1 — заставляет SQLAlchemy
         # открыть требуемое число соединений в пуле.
@@ -192,7 +192,7 @@ class PoolWarmup:
         await asyncio.gather(*(_ping() for _ in range(self._min)))
 
     async def _warmup_pg_replica(self) -> None:
-        from sqlalchemy import text  # type: ignore[import-untyped]
+        from sqlalchemy import text  # type: ignore[import-untyped,unused-ignore]
 
         async def _ping() -> None:
             async with self._pg_replica.begin() as conn:

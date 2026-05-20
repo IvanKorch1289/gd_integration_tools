@@ -37,8 +37,8 @@ try:  # pragma: no cover
         buckets=(0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0),
     )
 except Exception:  # noqa: BLE001, S110
-    _PREWARM_COUNTER = None  # type: ignore[assignment]
-    _PREWARM_DURATION = None  # type: ignore[assignment]
+    _PREWARM_COUNTER = None  # type: ignore[assignment,unused-ignore]
+    _PREWARM_DURATION = None  # type: ignore[assignment,unused-ignore]
 
 
 class RagCachePrewarmer:
