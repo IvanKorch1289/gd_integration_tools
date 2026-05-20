@@ -202,6 +202,10 @@ dsl-complexity-check: check-env ## Sprint 10 K3 W2: DSL complexity budget (cyclo
 	@$(UV_RUN) python tools/checks/dsl_complexity.py routes/ extensions/ --strict
 	@$(SUCCESS) "DSL complexity gate OK"
 
+simulate: check-env ## Sprint 10 K5 W3: CLI dry-run route (ROUTE=<name|path>)
+	@$(INFO) "DSL simulate $(ROUTE)..."
+	@$(UV_RUN) python tools/dsl_simulate.py $(ROUTE)
+
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
@@ -365,6 +369,29 @@ v11-artefacts-check: check-env ## Wave R1: проверить, что committed 
 
 check-compat: check-env ## Sprint 14 W1: матрица совместимости plugin.toml::[compatibility]
 	@$(UV_RUN) python -m tools.checks.check_compat --plugins-dir extensions/
+
+publish-plugin: check-env ## Sprint 14 W3: bundle + SBOM + cosign + upload плагина (PLUGIN=<name> VERSION=<semver>)
+	@if [ -z "$(PLUGIN)" ] || [ -z "$(VERSION)" ]; then \
+		echo "Использование: make publish-plugin PLUGIN=<name> VERSION=<semver>"; \
+		exit 2; \
+	fi
+	@$(UV_RUN) python -m tools.publish_plugin --plugin "$(PLUGIN)" --version "$(VERSION)" $(PUBLISH_FLAGS)
+
+plugin-migrate-guide: check-env ## Sprint 14 K5 W1: сгенерировать migration guide PLUGIN=<name> FROM=<ref/path> TO=<ref/path>
+	@if [ -z "$(PLUGIN)" ] || [ -z "$(FROM)" ] || [ -z "$(TO)" ]; then \
+		echo "Использование: make plugin-migrate-guide PLUGIN=<name> FROM=<git-ref|path> TO=<git-ref|path>"; \
+		exit 2; \
+	fi
+	@$(UV_RUN) python -m tools.plugin_migration_diff --plugin "$(PLUGIN)" --from-ref "$(FROM)" --to-ref "$(TO)"
+
+perf-plugin-sandbox: check-env ## Sprint 14 K2 W2: pytest-benchmark plugin sandbox overhead
+	@$(UV_RUN) pytest tests/perf/test_plugin_sandbox_overhead.py --benchmark-only --benchmark-json=tests/perf/baselines/plugin_sandbox.benchmark.json
+
+dsl-stubs: check-env ## Sprint 14 K3 W2: regenerate .pyi stubs for RouteBuilder/WorkflowBuilder
+	@$(UV_RUN) python -m tools.gen_dsl_stubs
+
+dsl-stubs-check: check-env ## Sprint 14 K3 W2: CI gate — нет ли drift между .pyi и runtime
+	@$(UV_RUN) python -m tools.gen_dsl_stubs --check
 
 migrate-plugin-manifest: check-env ## Wave R1.2.b: convert plugins/<name>/plugin.yaml → plugin.toml (PLUGIN_DIR=...)
 	@if [ -z "$(PLUGIN_DIR)" ]; then \
