@@ -148,7 +148,9 @@ class S3Client(BaseS3Client):
         # skip без crash (тесты unrelated до S3 продолжают собираться).
         try:
             from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
-            from aiobotocore.session import get_session  # type: ignore[import-not-found]
+            from aiobotocore.session import (
+                get_session,  # type: ignore[import-not-found]
+            )
         except ImportError:
             self._session = None
             self._config = None

@@ -61,12 +61,12 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
     if _WARMUP_DURATION is not None:
         try:
             _WARMUP_DURATION.labels(pool=pool).observe(duration_ms)
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
     if not success and _WARMUP_FAILURES is not None:
         try:
             _WARMUP_FAILURES.labels(pool=pool).inc()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
 
@@ -74,7 +74,7 @@ def _record_reconnect(pool: str) -> None:
     if _POOL_RECONNECTS is not None:
         try:
             _POOL_RECONNECTS.labels(pool=pool).inc()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
 
@@ -333,7 +333,7 @@ class PoolReconnectMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
                 pass
             self._task = None
 

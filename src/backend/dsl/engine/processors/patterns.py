@@ -129,7 +129,7 @@ def _record_batch_flush(reason: str, group: str = "_global") -> None:
         return
     try:
         _BATCH_FLUSH_COUNTER.labels(reason=reason, group=group).inc()
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110
         pass
 
 

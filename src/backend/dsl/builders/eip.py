@@ -537,9 +537,7 @@ class EIPMixin:
         result_property: str = "express_file_sync_id",
     ) -> "RouteBuilder":
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
-        from src.backend.dsl.engine.processors.express import (
-            ExpressSendFileProcessor,
-        )
+        from src.backend.dsl.engine.processors.express import ExpressSendFileProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             ExpressSendFileProcessor(
@@ -709,9 +707,7 @@ class EIPMixin:
         result_property: str = "telegram_file_message_id",
     ) -> "RouteBuilder":
         """Отправить файл (документ) в Telegram чат."""
-        from src.backend.dsl.engine.processors.telegram import (
-            TelegramSendFileProcessor,
-        )
+        from src.backend.dsl.engine.processors.telegram import TelegramSendFileProcessor
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             TelegramSendFileProcessor(
