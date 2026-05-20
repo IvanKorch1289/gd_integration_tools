@@ -140,6 +140,103 @@ class SchedulerManager:
                         f"Ошибка при удалении задачи '{job.id}': {str(exc)}"
                     )
 
+    # ── Sprint 12 K3 W2: cron API для UI / admin REST ──
+
+    def schedule_cron(
+        self,
+        name: str,
+        cron_expr: str,
+        callable_ref: Any,
+        *,
+        timezone: str = "Europe/Moscow",
+        replace_existing: bool = True,
+    ) -> str:
+        """Регистрирует cron-job через APScheduler и возвращает ``job_id``.
+
+        Args:
+            name: Человекочитаемое имя задачи (используется как ``id``).
+            cron_expr: cron-строка (croniter format) — будет распарсена
+                CronTrigger через ``CronTrigger.from_crontab(cron_expr,
+                timezone=tz)``.
+            callable_ref: Функция (sync/async), которая будет вызвана.
+            timezone: IANA timezone name.
+            replace_existing: При ``True`` перезаписывает существующую
+                job с тем же ``id``.
+
+        Returns:
+            ``job_id`` зарегистрированной задачи (равно ``name``).
+        """
+        from apscheduler.triggers.cron import CronTrigger
+
+        trigger = CronTrigger.from_crontab(cron_expr, timezone=timezone)
+        job = self.scheduler.add_job(
+            func=callable_ref,
+            trigger=trigger,
+            id=name,
+            name=name,
+            replace_existing=replace_existing,
+            jobstore=settings.scheduler.default_jobstore_name,
+            executor="async",
+        )
+        self.logger.info(
+            f"Cron job {name!r} зарегистрирован (cron={cron_expr!r}, tz={timezone})."
+        )
+        return str(job.id)
+
+    def list_jobs(self) -> list[dict[str, Any]]:
+        """Список всех scheduled jobs (для admin/cron/dashboard)."""
+        result: list[dict[str, Any]] = []
+        for job in self.scheduler.get_jobs():
+            next_run = getattr(job, "next_run_time", None)
+            trigger_str = str(getattr(job, "trigger", ""))
+            result.append(
+                {
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run_time": next_run.isoformat() if next_run else None,
+                    "trigger": trigger_str,
+                    "paused": next_run is None,
+                }
+            )
+        return result
+
+    def pause_job(self, job_id: str) -> bool:
+        """Приостанавливает scheduled job. Возвращает ``True`` если найден."""
+        try:
+            self.scheduler.pause_job(job_id)
+            self.logger.info(f"Job {job_id!r} приостановлен.")
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning(f"pause_job({job_id!r}) failed: {exc}")
+            return False
+
+    def resume_job(self, job_id: str) -> bool:
+        """Возобновляет scheduled job. Возвращает ``True`` если найден."""
+        try:
+            self.scheduler.resume_job(job_id)
+            self.logger.info(f"Job {job_id!r} возобновлён.")
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning(f"resume_job({job_id!r}) failed: {exc}")
+            return False
+
+    def run_job_now(self, job_id: str) -> bool:
+        """Триггерит немедленное выполнение job (для page 14 ``Run now`` button).
+
+        APScheduler не имеет explicit ``run_now``; используется
+        ``modify_job(next_run_time=datetime.now())``.
+        """
+        from datetime import datetime, timezone as _tz
+
+        try:
+            self.scheduler.modify_job(
+                job_id, next_run_time=datetime.now(_tz.utc)
+            )
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning(f"run_job_now({job_id!r}) failed: {exc}")
+            return False
+
 
 @lru_cache(maxsize=1)
 def get_scheduler_manager() -> SchedulerManager:

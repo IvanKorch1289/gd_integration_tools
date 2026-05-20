@@ -20,6 +20,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
         router as admin_tenants_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_cron import (
+        router as admin_cron_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,
     )
@@ -136,6 +139,10 @@ def get_v1_routers() -> APIRouter:
     # S12 K1 W1: workflow_audit inventory + events query.
     api_router_v1.include_router(
         admin_workflow_audit_router, tags=["Admin · Workflow Audit"]
+    )
+    # S12 K3 W2 + K5 W3: cron management (validate / schedule / dashboard).
+    api_router_v1.include_router(
+        admin_cron_router, tags=["Admin · Scheduler"]
     )
     # К5 (Wave K5/docs-tenants-caps): admin endpoints for tenants & capabilities.
     api_router_v1.include_router(
