@@ -184,6 +184,10 @@ class PluginResourceMonitor:
         Алгоритм: считаем "стек-фреймы" через `sys._current_frames` и
         делим CPU процесса пропорционально количеству фреймов,
         идентифицированных как ``extensions/<plugin>``.
+
+        ``sys._current_frames`` — приватный CPython API (best-effort,
+        graceful fallback на ``{}`` для альтернативных runtime'ов).
+        См. ``.claude/KNOWN_ISSUES.md`` (S14 carryover F-6).
         """
         import sys  # noqa: PLC0415
 

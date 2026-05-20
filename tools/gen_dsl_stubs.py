@@ -58,7 +58,13 @@ class StubMethod:
 
 
 def _resolve_annotation(annotation: Any) -> str:
-    """Безопасный перевод annotation в строку (для шаблона)."""
+    """Безопасный перевод annotation в строку (для шаблона).
+
+    Best-effort fallback на ``str(annotation)`` — не использует
+    ``typing.get_type_hints``/``get_origin``, поэтому качество stub'ов
+    для PEP-695 type-parameters и ``TypeAlias`` ограничено. См.
+    ``.claude/KNOWN_ISSUES.md`` (S14 carryover F-5).
+    """
     if annotation is inspect.Parameter.empty:
         return "Any"
     if annotation is None or annotation is type(None):

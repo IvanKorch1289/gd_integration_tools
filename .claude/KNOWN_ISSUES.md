@@ -1,5 +1,42 @@
 # KNOWN_ISSUES.md
 
+## S14 carryover — 2026-05-20 (cleanup A/B/C/D consolidation)
+
+**Закрыто в S14 cleanup wave**:
+- ✅ **F-1 importlib hack** — `tools/*` теперь в `setuptools.packages.find::include`,
+  versioning.py и admin_plugins.py используют нативный импорт (`cleanup-a`).
+- ✅ **F-3 ручной `to_dict()`** — заменён на `dataclasses.asdict()` в
+  InstalledVersion / RollbackResult / CapabilityAuditEvent (`cleanup-b`).
+- ✅ **F-4 `_MIGRATION_DIFFER_CLS` global** — удалён вместе с
+  `_load_migration_differ()` (`cleanup-a`).
+- ✅ **T-1..T-4 покрытие** — 3 новых файла тестов + расширение
+  `test_admin_plugins_versioning.py` (real dependency-graph + scaffold
+  via patched codegen).
+
+**Переносится в Sprint 15**:
+
+- ⏳ **F-2 Sandbox overhead 137%** (target < 5%, DoD §S14.5).
+  `tests/perf/test_plugin_sandbox_overhead.py` показывает ~187 µs против
+  ~79 µs baseline. Root cause: `_with_resource_limits` снимает 2 psutil
+  snapshots на каждый `PluginSandboxAdapter.run`. Варианты для S15:
+  amortised snapshot раз в N вызовов / fire-and-forget task / переезд
+  enforcement в e2b runtime / снять числовое требование DoD для
+  dev-окружения. Функционально sandbox работает.
+
+- ⏳ **F-5 `gen_dsl_stubs._resolve_annotation` fallback**.
+  Использует `str(annotation)` вместо `typing.get_type_hints` /
+  `get_origin` / `get_args`. Stub-генерация работает (215 .pyi
+  сигнатур), но качество IDE-autocomplete ограничено для PEP-695
+  type-parameters и `TypeAlias`. Точечное улучшение — отдельная задача
+  S15 K3 «pyi fidelity».
+
+- ⏳ **F-6 `sys._current_frames()` приватный API** в
+  `infrastructure/observability/plugin_resource_monitor._collect_cpu_share`.
+  Работает в CPython 3.14, best-effort attribution. На PyPy / Jython
+  возвращает `{}` (graceful fallback). Не блокер.
+
+---
+
 ## Sprint 8 closure status — 2026-05-18 (coordinator-self consolidation)
 
 **Закрыто в S8 closure**:
