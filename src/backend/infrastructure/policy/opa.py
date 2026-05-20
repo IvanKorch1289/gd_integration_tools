@@ -54,17 +54,27 @@ class OPAClient:
         self._client: "httpx.AsyncClient | None" = None
 
     def _ensure_client(self) -> "httpx.AsyncClient":
-        """Lazy-init singleton httpx-клиента."""
+        """Lazy-init singleton клиента через make_http_client (WAF фасад).
+
+        S11 carryover: при ``waf_outbound_via_facade`` запрос идёт через
+        OutboundHttpClient (capability ``net.outbound.opa:internal``).
+        """
         if self._client is None:
             import httpx
+
+            from src.backend.core.net.migration_helper import make_http_client
 
             limits = httpx.Limits(
                 max_connections=self._max_connections,
                 max_keepalive_connections=self._max_keepalive,
                 keepalive_expiry=30.0,
             )
-            self._client = httpx.AsyncClient(
-                base_url=self.base_url, http2=True, timeout=self.timeout, limits=limits
+            self._client = make_http_client(  # type: ignore[assignment]
+                plugin="infrastructure.policy.opa",
+                base_url=self.base_url,
+                http2=True,
+                timeout=self.timeout,
+                limits=limits,
             )
             logger.debug(
                 "OPA client initialized (pool=%d/%d, http2=True)",

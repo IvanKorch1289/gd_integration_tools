@@ -48,15 +48,23 @@ async def _smtp_send(payload: dict[str, Any]) -> None:
 
 
 async def _slack_send(payload: dict[str, Any]) -> None:
-    """Fallback 2: Slack incoming-webhook (last resort)."""
+    """Fallback 2: Slack incoming-webhook (last resort).
+
+    S11 carryover: HTTP-вызов через make_http_client (WAF фасад
+    при ``waf_outbound_via_facade``; capability
+    ``net.outbound.hooks.slack.com:external``).
+    """
     import os
 
-    import httpx
+    from src.backend.core.net.migration_helper import make_http_client
 
     webhook = os.environ.get("SLACK_WEBHOOK_URL")
     if not webhook:
         raise RuntimeError("SLACK_WEBHOOK_URL не задан — Slack-fallback недоступен")
-    async with httpx.AsyncClient(timeout=5.0) as client:
+    async with make_http_client(
+        plugin="infrastructure.resilience.express_chain.slack_fallback",
+        timeout=5.0,
+    ) as client:
         response = await client.post(
             webhook, json={"text": f"[{payload.get('recipient')}] {payload['message']}"}
         )

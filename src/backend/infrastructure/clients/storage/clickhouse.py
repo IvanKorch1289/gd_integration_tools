@@ -87,8 +87,10 @@ class ClickHouseClient:
         return f"{scheme}://{self._host}:{self._http_port}"
 
     def _build_client(self) -> Any:
-        """Создаёт новый ``httpx.AsyncClient`` с pool-настройками."""
+        """Создаёт новый HTTP-клиент с pool-настройками через WAF-фасад."""
         import httpx
+
+        from src.backend.core.net.migration_helper import make_http_client
 
         # max_keepalive_connections не должно превышать max_connections (httpx требование).
         keepalive = min(self._pool_size + self._pool_overflow, self._max_connections)
@@ -103,7 +105,11 @@ class ClickHouseClient:
             write=float(self._send_receive_timeout),
             pool=float(self._connect_timeout),
         )
-        return httpx.AsyncClient(
+        # S11 carryover: WAF-coverage gate. make_http_client при flag-ON
+        # уходит в OutboundHttpClient (capability net.outbound.clickhouse:internal);
+        # при OFF — обычный httpx.AsyncClient с теми же параметрами.
+        return make_http_client(  # type: ignore[return-value]
+            plugin="infrastructure.clickhouse",
             base_url=self.base_url,
             timeout=timeout,
             limits=limits,

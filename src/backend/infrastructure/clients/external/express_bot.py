@@ -230,8 +230,12 @@ class ExpressBotClient:
         self._http: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> ExpressBotClient:
-        self._http = httpx.AsyncClient(
-            base_url=self._config.base_url, timeout=self._config.timeout
+        from src.backend.core.net.migration_helper import make_http_client
+
+        self._http = make_http_client(  # type: ignore[assignment]
+            plugin="extensions.bots.express_bot",
+            base_url=self._config.base_url,
+            timeout=self._config.timeout,
         )
         return self
 
@@ -244,8 +248,12 @@ class ExpressBotClient:
     def http(self) -> httpx.AsyncClient:
         """Возвращает активный HTTP клиент или создаёт временный."""
         if self._http is None:
-            self._http = httpx.AsyncClient(
-                base_url=self._config.base_url, timeout=self._config.timeout
+            from src.backend.core.net.migration_helper import make_http_client
+
+            self._http = make_http_client(  # type: ignore[assignment]
+                plugin="extensions.bots.express_bot",
+                base_url=self._config.base_url,
+                timeout=self._config.timeout,
             )
         return self._http
 

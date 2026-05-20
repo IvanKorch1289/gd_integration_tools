@@ -16,11 +16,8 @@
 # OutboundHttpClient и удалены из allowlist. 3 файла без httpx
 # (search_providers/vault_refresher/polling) тоже удалены — они
 # больше не нарушители. Остались 6 S11 baseline-записей.
-
-# === S11 ownership (baseline, target=s11) ===
-src/backend/core/security/vault_cipher.py  # owner=K1 | target=s11 | reason=Vault namespace capability
-src/backend/infrastructure/clients/storage/clickhouse.py  # owner=K2 | target=s11 | reason=non-OAS client extension
-src/backend/infrastructure/clients/external/express_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
-src/backend/infrastructure/clients/external/telegram_bot.py  # owner=K1 | target=s11 | reason=bot-specific HTTP semantics
-src/backend/infrastructure/policy/opa.py  # owner=K1 | target=s11 | reason=OPA-sidecar abstraction
-src/backend/infrastructure/resilience/components/express_chain.py  # owner=K1 | target=s11 | reason=resilience-chain extraction
+#
+# Sprint 11 закрытие (2026-05-20, [wave:s10-carryover/waf-allowlist-tighten]):
+# все 6 S11 baseline-файлов мигрированы на ``make_http_client`` —
+# прямых httpx.AsyncClient(...) callsite'ов больше нет. Allowlist
+# пуст. Любой новый нарушитель → CI fails immediately.

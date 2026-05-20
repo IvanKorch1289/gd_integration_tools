@@ -211,7 +211,10 @@ class TelegramBotClient:
         self._http: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> TelegramBotClient:
-        self._http = httpx.AsyncClient(
+        from src.backend.core.net.migration_helper import make_http_client
+
+        self._http = make_http_client(  # type: ignore[assignment]
+            plugin="extensions.bots.telegram_bot",
             base_url=f"{self._config.base_url}/bot{self._config.token}",
             timeout=self._config.timeout,
         )
@@ -226,7 +229,10 @@ class TelegramBotClient:
     def http(self) -> httpx.AsyncClient:
         """Возвращает активный HTTP клиент или создаёт временный."""
         if self._http is None:
-            self._http = httpx.AsyncClient(
+            from src.backend.core.net.migration_helper import make_http_client
+
+            self._http = make_http_client(  # type: ignore[assignment]
+                plugin="extensions.bots.telegram_bot",
                 base_url=f"{self._config.base_url}/bot{self._config.token}",
                 timeout=self._config.timeout,
             )
