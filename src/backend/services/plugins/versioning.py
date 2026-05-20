@@ -36,6 +36,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from tools.plugin_migration_diff import MigrationDiffer
+
 if TYPE_CHECKING:
     from src.backend.core.plugin_runtime.hot_swap import (
         HotSwapResult,
@@ -160,13 +162,12 @@ class PluginVersionService:
 
         Версии должны существовать локально (см. :meth:`list_versions`).
         """
-        differ_cls = _load_migration_differ()
         old_path = self._resolve_version_path(plugin, from_version)
         new_path = self._resolve_version_path(plugin, to_version)
         old_toml = _load_toml(old_path / "plugin.toml")
         new_toml = _load_toml(new_path / "plugin.toml")
 
-        diff = differ_cls().diff(plugin, old_toml, new_toml)
+        diff = MigrationDiffer().diff(plugin, old_toml, new_toml)
         return {
             "plugin": diff.plugin,
             "from_version": diff.from_version,
@@ -320,36 +321,3 @@ def _load_toml(path: Path) -> dict[str, Any]:
     """Прочитать TOML-файл (raises FileNotFoundError если нет)."""
     with path.open("rb") as fh:
         return tomllib.load(fh)
-
-
-def _load_migration_differ() -> type:
-    """Lazy-import ``MigrationDiffer`` из ``tools/plugin_migration_diff``.
-
-    ``tools/`` не установлен как пакет — поэтому проходим через
-    ``importlib.util.spec_from_file_location`` напрямую. Cached в
-    модулевой переменной, чтобы не перечитывать на каждый ``.diff()``.
-    """
-    global _MIGRATION_DIFFER_CLS
-    if _MIGRATION_DIFFER_CLS is not None:
-        return _MIGRATION_DIFFER_CLS
-
-    import importlib.util  # noqa: PLC0415
-    import sys  # noqa: PLC0415
-
-    project_root = Path(__file__).resolve().parents[4]
-    module_path = project_root / "tools" / "plugin_migration_diff.py"
-    spec = importlib.util.spec_from_file_location(
-        "_gdit_plugin_migration_diff", module_path
-    )
-    if spec is None or spec.loader is None:
-        raise PluginVersionError(
-            f"plugin_migration_diff module not loadable: {module_path}"
-        )
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["_gdit_plugin_migration_diff"] = module
-    spec.loader.exec_module(module)
-    _MIGRATION_DIFFER_CLS = module.MigrationDiffer
-    return _MIGRATION_DIFFER_CLS
-
-
-_MIGRATION_DIFFER_CLS: type | None = None

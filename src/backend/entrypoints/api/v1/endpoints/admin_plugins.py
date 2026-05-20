@@ -506,19 +506,9 @@ async def scaffold_plugin_endpoint(
             ],
         )
     try:
-        import importlib.util  # noqa: PLC0415
+        from tools.codegen_plugin import scaffold_plugin  # noqa: PLC0415
 
-        codegen_path = (
-            Path(__file__).resolve().parents[5] / "tools" / "codegen_plugin.py"
-        )
-        spec = importlib.util.spec_from_file_location(
-            "_gdit_codegen_plugin", codegen_path
-        )
-        if spec is None or spec.loader is None:
-            raise RuntimeError(f"codegen_plugin.py not loadable: {codegen_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        plugin_root = module.scaffold_plugin(body.name)
+        plugin_root = scaffold_plugin(body.name)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     return PluginScaffoldResponse(

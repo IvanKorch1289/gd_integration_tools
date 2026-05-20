@@ -391,7 +391,7 @@ build-backend = "setuptools.build_meta"
 # В Docker: COPY src ./src + PYTHONPATH=/app — так же работает `from src.X`.
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*", "testkit*"]
+include = ["src*", "testkit*", "tools*"]
 
 # К5 (Wave K5/testkit): pytest-plugin entry-point, чтобы фикстуры
 # testkit подхватывались pytest без явного импорта в conftest.py.
