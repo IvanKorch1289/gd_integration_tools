@@ -335,16 +335,24 @@ ResponseValidatorProcessor (dsl/engine/processors/validation/response.py) — Py
 
 Внешнее исследование
 
-Сначала использовать внутренний контекст: PLAN.md, Graphify, ARCHITECTURE.md, .claude/DECISIONS.md, релевантные исходники. Только если задача требует актуальных внешних данных — MCP web search (DuckDuckGo / Perplexity) + Fetch MCP / WebSearch / WebFetch.
+Сначала использовать внутренний контекст: PLAN.md, Graphify, ARCHITECTURE.md, .claude/DECISIONS.md, релевантные исходники. Только если задача требует актуальных внешних данных — Context7 MCP (для документации библиотек) + DuckDuckGo MCP (для сравнений/статуса/мнений) + Fetch MCP / WebSearch / WebFetch.
+
+Инструменты (порядок предпочтения):
+1. **Context7 MCP** (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`) — ПЕРВИЧНЫЙ для API/конфигурации/синтаксиса/version-specific документации. Использовать ВСЕГДА для библиотечных вопросов, даже популярных (FastAPI, Pydantic, SQLAlchemy, Temporal, httpx, structlog). Цитаты помечать `[ctx7: <library>@<version>]`.
+2. **DuckDuckGo MCP** (`mcp__duckduckgo__search` + `mcp__duckduckgo__fetch_content`) — для сравнений, статуса проектов, GitHub issues, blog-постов, миграционного опыта.
+3. **Fetch MCP** — углублённое чтение 1-2 страниц.
+4. **WebSearch/WebFetch** — fallback при недоступности MCP.
+
 Когда внешний поиск обязателен
 
 Сравнение библиотек/SDK; новая библиотека; совместимость с Python 3.14+; changelog/breaking changes; статус поддержки; best practices; производительность; вопросы вида «что лучше», «совместимо ли», «не устарела ли».
 Правила
 
     2-5 коротких целевых запросов.
-    Официальная документация → GitHub releases/changelog → PyPI → migration guides.
+    Context7 → официальная документация → GitHub releases/changelog → PyPI → migration guides.
     Fetch MCP для углублённого чтения 1-2 страниц.
     Разделять: внешние факты (со ссылкой и датой) vs вывод применительно к проекту.
+    Context7-цитаты помечать `[ctx7: <library>@<version>]`.
     Если web search недоступен — явно сообщить.
 
 Верификация

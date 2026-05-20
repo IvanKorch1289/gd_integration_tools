@@ -28,6 +28,41 @@
       "title": "CapabilityRef",
       "type": "object"
     },
+    "PluginCompatibility": {
+      "additionalProperties": false,
+      "description": "Sprint 14 W1 — декларация совместимости плагина.\n\nРасширяет ``requires_core`` (минимальный диапазон ядра) полем\n``incompatible_with`` для конфликта с конкретными плагинами и\n``requires_plugins`` для обязательных зависимостей. Применяется\nпри load через :mod:`core.plugin_runtime.compat_checker`.\n\nAttributes:\n    incompatible_with: Список имён плагинов, не совместимых ни в\n        какой версии (любая комбинация → conflict).\n    incompatible_plugin_specs: Mapping ``plugin_name → PEP-440 spec``;\n        конфликт возникает, если установлен ``plugin_name`` с\n        версией внутри ``spec``.\n    incompatible_core_versions: Дополнительный PEP-440 SpecifierSet —\n        диапазон версий ядра, заведомо несовместимых даже при\n        прохождении ``requires_core``. Пустая строка — нет\n        дополнительных ограничений.\n    requires_plugins: Mapping ``plugin_name → PEP-440 spec`` —\n        обязательные плагины, без которых текущий не загрузится.",
+      "properties": {
+        "incompatible_core_versions": {
+          "default": "",
+          "title": "Incompatible Core Versions",
+          "type": "string"
+        },
+        "incompatible_plugin_specs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Incompatible Plugin Specs",
+          "type": "object"
+        },
+        "incompatible_with": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Incompatible With",
+          "type": "array"
+        },
+        "requires_plugins": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Requires Plugins",
+          "type": "object"
+        }
+      },
+      "title": "PluginCompatibility",
+      "type": "object"
+    },
     "PluginProvides": {
       "additionalProperties": false,
       "description": "Декларативный inventory плагина.\n\nПеречисляет публичные имена, которые плагин зарегистрирует через\nlifecycle-хуки (:class:`BasePlugin.on_register_*`). Используется\n`PluginLoader` для проверки коллизий **до** активации плагина.",
@@ -83,6 +118,50 @@
       },
       "title": "PluginProvides",
       "type": "object"
+    },
+    "PluginSandbox": {
+      "additionalProperties": false,
+      "description": "Sprint 14 W2 — декларация sandbox-профиля плагина.\n\nАктивирует изолированное исполнение через ``e2b`` backend\n(см. :mod:`infrastructure.ai.e2b_sandbox`). Совместно с\n``capabilities = [{ name = \"code.execute\" }]`` требуется явное\nразрешение Capability Gate.\n\nAttributes:\n    enabled: Включить sandbox-обёртку для плагина (default OFF).\n    mode: ``\"e2b\"`` — делегация в e2b backend; ``\"none\"`` — без\n        sandbox (только декларативно). RestrictedPython не\n        подключаем (нет wheels для Python 3.14).\n    max_memory_mb: Лимит RSS-памяти (psutil enforcement).\n    max_cpu_seconds: Лимит CPU-времени на одно исполнение.\n    allow_imports: Whitelist модулей, импорт которых разрешён в\n        sandbox. Пустой кортеж — стандартный набор e2b.",
+      "properties": {
+        "allow_imports": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allow Imports",
+          "type": "array"
+        },
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "max_cpu_seconds": {
+          "default": 30,
+          "maximum": 600,
+          "minimum": 1,
+          "title": "Max Cpu Seconds",
+          "type": "integer"
+        },
+        "max_memory_mb": {
+          "default": 512,
+          "maximum": 8192,
+          "minimum": 16,
+          "title": "Max Memory Mb",
+          "type": "integer"
+        },
+        "mode": {
+          "default": "e2b",
+          "enum": [
+            "e2b",
+            "none"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "PluginSandbox",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -95,6 +174,9 @@
       },
       "title": "Capabilities",
       "type": "array"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/PluginCompatibility"
     },
     "config": {
       "additionalProperties": true,
@@ -143,6 +225,17 @@
       "minLength": 1,
       "title": "Requires Core",
       "type": "string"
+    },
+    "sandbox": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PluginSandbox"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "tenant_aware": {
       "default": false,

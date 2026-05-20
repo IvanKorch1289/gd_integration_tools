@@ -1,8 +1,109 @@
 # CONTEXT.md
 
+## Sprint 13 closure (2026-05-20)
+
+**Цель**: закрыть 19 wave Sprint 13 "Infrastructure & Performance" без worktree-агентов.
+
+### Wave-таблица (Phase A→B→C→D)
+
+**Phase A** (foundation):
+1. `s13/k1-w2-degradation-rbac` — AdminRole + require_admin + AdminAuditMiddleware (12+5 тестов).
+2. `s13/k3-w1-batch-processor` — RouteBuilder.batch(size, timeout_ms, group_by) + Prometheus metrics (7 тестов).
+3. `s13/k3-w3-eventbus-schema-validation` — SchemaKind.EVENT + publish hook + 4 default schemas (7 тестов).
+4. `s13/k2-w5-unified-retry-store` — ResilienceProfile + InMemoryStore + admin REST CRUD (8 тестов).
+5. `s13/k2-w7-pool-warmup-finale` — HTTPX + Graylog warmup + PoolReconnectMonitor (7 тестов).
+
+**Phase B** (resilience + streaming):
+6. `s13/k2-w1-rsgi-streaming-large-files` — /files/upload-stream + S3 multipart (5 тестов).
+7. `s13/k2-w2-clickhouse-columnar-builder` — ClickHouseQueryBuilder fluent API (16 тестов).
+8. `s13/k2-w4-graceful-degradation-finale` — 5 modes + persistence + middleware (8 тестов).
+9. `s13/k2-w6-redis-cluster-pipelining` — pipeline + mget/mset/Lua + metrics (7 тестов).
+10. `s13/k1-w1-pii-streaming` — stream_filter wired в SSE handler (3 теста).
+11. `s13/k3-w4-dlq-ttl-policies` — DLQPolicy + class-based routing + cleanup job (11 тестов).
+
+**Phase C** (specialized):
+12. `s13/k3-w2-webdav-source` — WebDAVSource + RouteBuilder.from_webdav() (5 тестов).
+13. `s13/k3-w5-nats-consumer-lag-ui` — fetch_consumer_info + metrics + admin REST (5 тестов).
+14. `s13/k2-w3-parallelism-analyzer` — DAG analyzer + LR-PAR rules (9 тестов).
+15. `s13/k4-w1-rag-cache-prewarm` — top-N stats + RagCachePrewarmer (5 тестов).
+16. `s13/k4-w2-ai-batch-inference-prod` — BatchInferenceProtocol + vLLM + TGI (7 тестов).
+
+**Phase D** (frontend):
+17. `s13/k5-w1-degradation-panel` — Streamlit page 78 (3 tabs).
+18. `s13/k5-w2-resilience-profile-editor` — Streamlit page 79 (CB/RL/Retry/Bulkhead form).
+19. `s13/k5-w3-pipeline-parallelism-viewer` — Streamlit page 80 + admin parallelism-report endpoint.
+
+### Метрики
+
+- **127 unit-тестов** Sprint 13 passing.
+- **28+ модулей** S13 успешно импортируются.
+- **3 Streamlit pages** (78/79/80) добавлены.
+- **5-уровневая graceful degradation** (FULL/READ_ONLY/CACHE_ONLY/ESSENTIAL_ONLY/MAINTENANCE).
+- **DegradationMode aliases**: DEGRADED→READ_ONLY, EMERGENCY→ESSENTIAL_ONLY (backward-compat).
+- Зависимости: prometheus_client, jsonschema (опц.), webdav4 (опц.), vllm/huggingface_hub (опц.).
+
+### Carryover в S14+
+
+- PG-store для ResilienceProfile + Alembic migration.
+- Nextcloud testcontainer integration test для WebDAV.
+- vLLM CUDA wheels install в `[ai-batch]` extra.
+- DLQ ClickHouse migration + Grafana dashboard NATS lag.
+- Lifespan wiring: register_default_event_schemas + RagCachePrewarmer.
+- Streamlit AppTest тесты для pages 78/79/80.
+
+---
+
+## Sprint 14 cleanup wave (2026-05-20 11:49)
+
+**HEAD**: `85ae4457 [wave:s14/cleanup-d-known-issues]` (master).
+**Период**: одна сессия, ~1.5 часа.
+**Цель**: формальное закрытие Sprint 14 после аудита тех. долга.
+
+### Сделано — 4 атомарных commit'а
+
+- `9481993c` **cleanup-a-tools-package** — `tools*` в
+  `[tool.setuptools.packages.find].include`; нативный `from tools.…`
+  в `versioning.py` + `admin_plugins.py`; удалены
+  `_load_migration_differ()` + `_MIGRATION_DIFFER_CLS` (F-1, F-4).
+- `f71a59e4` **cleanup-b-stdlib-dataclasses** — `to_dict()` →
+  `dataclasses.asdict()` в `InstalledVersion`, `RollbackResult`,
+  `CapabilityAuditEvent` (F-3).
+- `a7e07f7c` **cleanup-c-test-gaps** — 3 новых тест-файла
+  (`test_compat_checker.py`, `test_admin_capabilities_graph.py`,
+  `test_processors_catalog_search.py`) + 2 кейса в
+  `test_admin_plugins_versioning.py` (T-1..T-4).
+- `85ae4457` **cleanup-d-known-issues** — блок «S14 carryover» в
+  `.claude/KNOWN_ISSUES.md`; one-line note в `gen_dsl_stubs.py` и
+  `plugin_resource_monitor.py` (D-1, ссылки на F-5/F-6).
+
+### Verification (выполнено)
+
+- `pytest` финальный набор S14: **207 passed, 1 skipped (rapidfuzz),
+  1 pre-existing fail** (test_vocabulary discrepancy, не из скоупа).
+- `ruff check` на 8 изменённых файлах → clean.
+- `grep importlib.util.spec_from_file_location src/backend/{services,entrypoints}/ -r`
+  → только `services/ai/tools/registry.py` (обоснованный hack).
+- `grep "S14 carryover" .claude/KNOWN_ISSUES.md` → строка 3.
+
+### Carryover S14 → Sprint 15 (документировано)
+
+1. **F-2 PluginSandboxAdapter overhead 137%** (target < 5%, DoD §S14.5).
+   Root cause: `_with_resource_limits` снимает 2 psutil snapshots на
+   `.run`. Варианты: amortised snapshot / fire-and-forget / e2b
+   enforcement / DoD relaxation для dev_light.
+2. **F-5 `tools/gen_dsl_stubs._resolve_annotation`** — fallback на
+   `str(annotation)`; качество IDE-stubs для PEP-695 ограничено.
+3. **F-6 `sys._current_frames`** — приватный CPython API в
+   `plugin_resource_monitor`; best-effort attribution.
+
+### Session links — S14 cleanup
+
+- vault/session-2026-05-20-1149-s14-cleanup-summary.md
+
+---
+
 ## Sprint 10 + tail-debt closure (2026-05-20)
 
-**HEAD**: `f71a59e4 [wave:s14/cleanup-b-stdlib-dataclasses]` (master).
 **Период**: 2026-05-19 → 2026-05-20 (две сессии: S10 closure +
 параллельная S14 cleanup + tail-debt closure).
 
@@ -72,10 +173,19 @@
   marketplace, AI service decorator, capability graph, processor
   catalog search).
 
-### Phase D (in progress)
-- D.0 pre-prod-check audit — найден pre-existing startup-time
-  регресс (total 1.569s vs regression limit 1.373s).
-- D.1 fix — TBD после audit.
+### Phase D (closed)
+- D.0 pre-prod-check audit — 7 FAIL: uv-resolver (01/04/06/08
+  cascade на ai-voice + ai-model-registry); 25 НОВЫХ layer-violations
+  (03); check_docstrings.py CLI args (11); Streamlit page collision
+  на prefix 45 (20).
+- D.1 fix `c53fb97f` — page rename `45_DSL_Diff_History →
+  44_DSL_Diff_History` (single-file, zero downstream refs); gate 20
+  PASSED → pre-prod-check 7→8/20.
+
+### Carryover в S11
+- uv-resolver two-step refactor (ai-voice + ai-model-registry)
+- 25 layer-violations (core→services, entrypoints→infrastructure)
+- check_docstrings.py CLI args fix (известный carryover из S9)
 
 ### Session links
 - vault/session-2026-05-20-1139-tail-debt-closure-summary.md
@@ -142,9 +252,20 @@ Sprint 10). Push требует явного approval пользователя.
 
 ## Следующий шаг
 
-**Sprint 11 kickoff:** AI/RAG Completion (Multimodal full, Adaptive
-RAG, Model Registry UI, feedback loop DSPy, distributed RL Redis
-Cluster, replica routing).
+**Sprint 15 kickoff (carryover S14)**:
+- F-2 sandbox overhead optimization (выбор стратегии: amortised
+  psutil snapshot vs e2b enforcement vs DoD relaxation для
+  dev_light).
+- F-5 stub fidelity (`typing.get_type_hints` миграция в
+  `gen_dsl_stubs._resolve_annotation`).
+- F-6 не приоритет (best-effort attribution, оставляем как есть).
+
+**Sprint 11 (параллельно)**: AI/RAG Completion (Multimodal full,
+Adaptive RAG, Model Registry UI, feedback loop DSPy, distributed
+RL Redis Cluster, replica routing).
 
 R3 ownership cycle: K1 (Vault×2), K2 (ClickHouse), K1 (bots×2 +
 OPA), K2 (express_chain).
+
+**Push pending**: master ahead `origin/master` на 100+ commits
+(S9 + S10 + S14 cleanup). Push требует явного approval пользователя.

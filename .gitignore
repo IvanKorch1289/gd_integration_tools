@@ -78,6 +78,8 @@ docs/_build/
 .claude/projects/
 .claude/memory/
 .claude/CONTEXT.md
+# MCP server конфигурация — может содержать API-ключи (Context7, Perplexity и т.п.)
+.mcp.json
 vault/
 
 # Мастер-план рефакторинга и ADR-ы плана — локальные артефакты,

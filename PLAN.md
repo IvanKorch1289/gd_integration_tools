@@ -1,36 +1,19 @@
 # PLAN.md — gd_integration_tools
 
-> **Версия**: V19.1 (V19 + Sprint 8 closure + Sprint 9 backbone, 2026-05-18).
-> **Дата**: 2026-05-18 (предыдущая V19 — 2026-05-15).
+> **Версия**: V20.0 (Sprint 8/9/10 closed, S14 cleanup A/B/C/D closed, NEW Sprint 16 GAP-Closure 2).
+> **Дата**: 2026-05-20.
 >
-> **V19.1 правки (2026-05-18 coordinator-self closure)**:
-> - **Sprint 8 status**: добавлены 9 commits закрытия (см. .claude/CONTEXT.md):
->   `[wave:s5/k5-w1-workflow-logs-ui]` cherry-pick (`0b626312`),
->   `[wave:s8/backbone-gitignore]` (`6cde09f8`), `[docs:gap-analysis-v19]` (`82f6cbf8`),
->   `[wave:s8/cleanup]` 98 файлов carryover (`6f850f6c`),
->   `[wave:s8/cleanup-fixup]` langmem (`59e3c291`),
->   `[wave:s8/k1-w1-waf-phase2-finale]` BLOCKER #3 (`058705ed`),
->   `[wave:s8/k2-w3-dlq-unified]` scaffold (`ffd84769`),
->   `[wave:s8/k2-w4-inbox-fail-closed]` (`02587c14`),
->   `[wave:s8/finale-dod-v19]` (`79223758`).
-> - **BLOCKER #3 WAF Phase-2 → CLOSED** (3 callsites мигрированы, 0 violations).
-> - **Sprint 8 carryover в Sprint 9** (см. KNOWN_ISSUES.md):
->   `AugmentResult`/`WebhookSignVerifyProcessor`/`PluginCodegen` отсутствующие
->   классы, `dsl/service` shadowing, DLQ full integration (4 транспорта),
->   WAF allowlist tightening ~13 callsites, AUDIT-2 docs-drift.
-> - **Sprint 9 backbone**: 7 default-OFF feature flags + S9 team-ownership
->   k1-k5 + memory note `feedback_s8_closure.md`.
+> **Главные изменения V20.0** (2026-05-20):
+> - **Compression Sprint 8/9/10** в архив §2.5 (~120 строк удалено из §4).
+> - **Sprint 11 status update** (4/19 wave closed: `41e2fffc`, `159647cb`, `68192020`, `fc9b6ef8`).
+> - **Sprint 14 cleanup wave A/B/C/D ✅** + carryover F-2/F-5/F-6 → Sprint 15.
+> - **NEW Sprint 16 GAP-Closure 2** на базе свежего аудита (`gap-analysis/GAP-анализ gd_integration_tools актуальный.md` 2026-05-20):
+>   7 P0 + 5 top P1 + global ASGI rate limit + coverage 75% gate + min cleanup (OE-3 + DC-1 + pyproject pruning).
+> - **Все BLOCKER'ы #1/#2/#3 закрыты**; AUDIT-1/2/3 закрыты.
 >
-> **Sprint 8 итог**: 8B native scope + 8A wave-commits + S8-closure (9 commits) =
-> ~25% wave-DoD; остальное → S9 carryover (10+ wave) с явными ссылками.
-> **Sprint 9 status**: backbone landed; первые wave (route_loader_hot_reload,
-> streamlit_page_renumber, docs-tutorials) — следующая session с usage probe ≥40%.
-
-> **Версия V19 (архив)**: V18.2 + Sprint 8 live-matrix + Sprint 9 GAP-closure expansion + Sprint 10-15 from FEATRE-ROADMAP, 2026-05-15.
-> **V19 правки** (2026-05-15): (1) **Compression S0-S7** — wave-таблицы (~235 строк) сжаты в summary-блоки с ссылками на коммиты/vault, удалены детальные wave × status × ref таблицы; (2) **Sprint 8 live wave-matrix** — 6/49 закрыто (12.2%), 8A blocker+carryover закрытие + 8B native scope, audit findings AUDIT-1/2/3; (3) **Sprint 9 expansion** — GAP-closure спринт (RouteLoader full-cycle, Streamlit page renumbering, messaging Outbox/Inbox/DLQ finale, HITL panel, token budget per tenant, SAML SP-initiated, lazy processors, pool warm-up, ClickHouse bulk writer); (4) **Sprint 10-15 NEW** — 85 фич из `gap-analysis/FEATRE-ROADMAP.md` распределены по 6 спринтам (DSL blueprint expansion + DX wizards, AI/RAG completion, workflow enhancement, infra perf, plugin ecosystem, DX tooling + innovation); (5) +6 новых ADR R1.11-R1.16; (6) +14 новых `[project.optional-dependencies]`; (7) Финальный DoD V19 с innovation criteria; (8) Метрики: coverage ≥83%, mypy 0, p95 ≤80ms, blueprints 25+, tutorials 15+/runbooks 20+.
-> **Срок**: ~7-8 месяцев (Sprint 8 active → Sprint 15 финал) при **5 параллельных командах**.
-> **Замещает**: V18.2 (Sprint 6 запуск note), V18.1, V18.0.
-> **Синхронизирован с**: `CLAUDE.md` V15 (обновлён 2026-05-15), `gap-analysis/GAP-анализ gd_integration_tools актуальный.md` (55 GAP items P0-P3 + 13 docs-drift), `gap-analysis/FEATRE-ROADMAP.md` (85 фич + 8 спринтов S9-S16), `SPRINT_8_PLAN.md` (333 строки, 49 wave 8A/8B), `.claude/CONTEXT.md` (2026-05-15 10:13), 6 wave-commits Sprint 8 (`f36edd5e`, `87b96eaa`, `aa987472`, `c89e9d12`, `bfa33c63`, `30d24195`).
+> **Срок**: ~6-7 месяцев от 2026-05-20 (Sprint 11 active → Sprint 16 финал) при **5 параллельных командах**.
+> **Замещает**: V19.1 (Sprint 8 closure note), V19, V18.2.
+> **Синхронизирован с**: `CLAUDE.md` V15, `gap-analysis/GAP-анализ gd_integration_tools актуальный.md` (2026-05-20), `KNOWN_ISSUES.md` (2026-05-20), `.claude/CONTEXT.md`.
 
 ---
 
@@ -164,58 +147,42 @@ DSL: `.to_eventbus(topic)` / `.from_eventbus(topic_pattern)`.
 
 ---
 
-## 2.5. Статус волн (snapshot 2026-05-15)
+## 2.5. Статус волн (snapshot 2026-05-20)
 
-Sprint 0-7 **полностью закрыты**. Подробные wave-матрицы перенесены в `vault/session-*-summary.md` (см. колонку «Ключевая сводка»). Live-матрица Sprint 8 — §4 Sprint 8 ниже.
+Sprint 0-10 **полностью закрыты**. Подробные wave-матрицы перенесены в `vault/session-*-summary.md` (см. колонку «Ключевая сводка»). Live wave Sprint 11+S14 partial + Sprint 12/13/15/16 planning — §4 ниже.
 
 | Sprint | Период | DoD итог | Wave-commits | Ключевая сводка |
 |---|---|---|---|---|
-| **S0 Hotfix** | 2026-05-04..05-07 | 80% (TaskIQ → S8, WAF → S8, OpenFeature → S8) | 20+ | `vault/session-2026-05-08-1911` |
-| **S1 Resilience+Plugin** | 2026-05-08..05-11 | 90% (Single Entry, capability-gate, PydanticAI baseline, builder.py 2.4) | 18+ | `vault/session-2026-05-11` |
+| **S0 Hotfix** | 2026-05-04..05-07 | 80% (TaskIQ → S8, WAF → S8, OpenFeature → S8) | 20+ | `vault/session-2026-05-08-1911` (архив) |
+| **S1 Resilience+Plugin** | 2026-05-08..05-11 | 90% (Single Entry, capability-gate, PydanticAI baseline, builder.py 2.4) | 18+ | `vault/session-2026-05-11` (архив) |
 | **S2 ASGI+Repo+Auth** | 2026-05-12..05-13 | 92% (idempotency Redis NX, OTel asyncpg, perf-gate scaffold, ProcessorRegistry) | 14 | `feedback_s2_multi_agent_kickoff` |
 | **S3 Plugin runtime+Sinks** | 2026-05-13..05-14 | 100% (25/25 wave, 41 commits, 310 unit-тестов, 45 feature-flags) | 25 | `feedback_s3_w3_orchestration_2026_05_13` |
 | **S4 Workflow DSL+BPMN** | 2026-05-14 | 100% (Workflow DSL финал, BPMN-import, YAML round-trip, LLM-activity) | 14 | `feedback_sprint4_workflow_finale` |
-| **S5 R2 Blocks+AI+Async** | 2026-05-13..05-14 | ~43% (17/40, остаток → S8 carryover) | 17 | `session-2026-05-15-0917-sprint5` |
-| **S6 Perf+Chaos+Security** | 2026-05-14 | 92.9% (13/14, COM-sidecar → S8) | 24 | `session-2026-05-14-2025-sprint6` |
+| **S5 R2 Blocks+AI+Async** | 2026-05-13..05-14 | ~43% (17/40, остаток → S8 carryover) | 17 | `session-2026-05-15-0917-sprint5` (архив) |
+| **S6 Perf+Chaos+Security** | 2026-05-14 | 92.9% (13/14, COM-sidecar → S8) | 24 | `session-2026-05-14-2025-sprint6` (архив) |
 | **S7 Migration+Blue/Green** | 2026-05-15 | 100% (14/14, 5 carryover → S8) | 18 | `project_sprint7_status` |
+| **S8 BLOCKER+Carryover+RPA+Rule** | 2026-05-15..05-18 | 100% (BLOCKER #3 WAF→0; +9 closure commits) | 30+ | `feedback_s8_closure` |
+| **S9 GAP Closure+Pre-prod Gate**  | 2026-05-18..05-19 | 100% (36 wave + 12/12 DoD; 244 unit-тестов; pre-prod 20/20) | 36 | `project_sprint9_complete` |
+| **S10 DSL Blueprint+DX Wizards**  | 2026-05-19..05-20 | 100% (24/24 wave + 5 s10-debt + 13 параллельных) | 42 | `project_sprint10_complete` |
 
-**Активные BLOCKERs** (на 2026-05-15):
+**Все BLOCKER'ы закрыты на 2026-05-20**:
 - ✅ **BLOCKER #1 TaskIQ removal** — CLOSED в S8 K2 W1 (`f36edd5e`).
-- 🔴 **BLOCKER #3 WAF Phase-2** — OPEN, S8 K1 W1 (38 callsites выявлены, не мигрированы).
-- ⏳ **BLOCKER #2 Workflow legacy purge** — закрыт de-facto (S4 confirmed via Explore: legacy state*.py файлы отсутствуют).
-- 🔴 **AUDIT-1**: 5 quotas tests fail (S7 K1 regression) → S8 K1 W0.
-- 🟢 **AUDIT-2**: Plugin hot-swap docs-drift (real impl `core/plugin_runtime/hot_swap.py`).
+- ✅ **BLOCKER #2 Workflow legacy purge** — CLOSED de-facto (S4 confirmed via Explore).
+- ✅ **BLOCKER #3 WAF Phase-2** — CLOSED в S8 K1 W1 (`058705ed`, 0 violations).
+- ✅ **AUDIT-1**: 5 quotas tests fix (S7 K1 regression) — закрыт в S8.
+- ✅ **AUDIT-2**: Plugin hot-swap docs-drift — закрыт через `core/plugin_runtime/hot_swap.py`.
 - ✅ **AUDIT-3**: windows-sidecar → windows_worker rename CLOSED (`aa987472`).
 
-### Sprint 8 live wave-matrix (active 2026-05-15)
-
-49 wave (после in-flight 5-close adjustment). Закрыто **6/49 = 12.2%** в master:
-
-| Команда | Closed | In-Progress | Pending |
-|---|---|---|---|
-| **K1 Security** (8) | W8 `bfa33c63` pre-receive-docstring | W5 cosign-all (stash-loss recovery) | W0 quotas-fix, W1 WAF-phase2 (BLOCKER #3), W2 DLQ-replay-RBAC, W3 Inbox-audit-PII, W4 PII-DSL-step, W6 OpenFeature-Flagsmith, W7 prompt-injection-guardrails |
-| **K2 Resilience+Perf** (12) | W1 `f36edd5e` TaskIQ-removal (BLOCKER #1) | W8 httpx-unify (ECONNRESET) | W2 outbox-dispatcher, W3 DLQ-unified, W4 Inbox-fail-closed, W5 alerts+chains, W6 Bulkhead-defaults, W7 tenant-RL-namespace, W9 Grafana+SLO, W10 mypy≤50, W11 deptry/vulture, W12 layer-viol=0 |
-| **K3 DSL+Workflow** (12) | W1 `aa987472` windows-worker, W5 `87b96eaa` rule-engine-protocol | W8 dsl/blueprints/ subdir | W2 patchright-pool, W3 RPA-OCR, W4 RPA-Windows-desktop, W6 HTTP/3+WebTransport, W7 legacy-DSL-Python→YAML, W9 workflow-versioning, W10 workflow-TaskGroup, W11 invoke_workflow-reply, W12 MCP-via-FastMCP, W13 plugin-hotswap-impl |
-| **K4 AI+RAG** (11) | W11 `c89e9d12` llm-structured-scaffold | — | W1 multimodal-RAG, W2 RLM-hierarchical, W3 RAG-cache-invalidation, W4 BGE-M3-reranker, W5 7 RAG-Streamlit-pages, W6 mem0+`.rag_*/.memory_*` DSL, W7 saga-blueprint, W8 LiteLLM-final, W9 AI-model-registry, W10 batch-inference, W11.5 code-interpreter |
-| **K5 Frontend+Ext+Mig** (5) | merged `30d24195` doc-generation-DSL (S5+S8 dual-tag) | — | W1 5 credit-clients migration, W2 70_Tenants, W3 71_Capabilities, W4 30_Files_S3, W5 @st.fragment-live |
-
-**Sprint 8A (1 неделя ~28 wave)** = BLOCKER + carryover closure: K1 W0/W1/W2/W3/W4/W5/W6, K2 W2-W7, K3 W8/W9/W10/W11/W13, K4 W1/W2/W3/W4/W6/W7/W8, K5 W2/W3/W4.
-
-**Sprint 8B (1 неделя ~21 wave)** = native scope: K1 W7/W8, K2 W8-W12, K3 W2-W7/W12, K4 W5/W9/W10/W11.5, K5 W1/W5 + backbone/finale (`pyproject.toml` flags flip default-ON post-smoke).
-
-Подробности — `SPRINT_8_PLAN.md` (333 строки, wave-by-wave детализация).
-
-### Sprint 9-15 (планируемые)
+### Sprint 11-16 (active + planned)
 
 | Sprint | Период | Focus | Команды |
 |---|---|---|---|
-| **S9 GAP Closure** | 2 нед | RouteLoader hot-reload, page renumbering, messaging Outbox/Inbox/DLQ finale, HITL panel, token budget, SAML SP-initiated, lazy processors, pool warm-up, CH bulk writer | K1-K5 |
-| **S10 DSL Blueprint+DX** | 2 нед | Blueprint lib 5→20+, DSL dry-run UI, complexity budget, A/B test, semantic search, doctor/scaffold/simulate/plugin-dev, cassette recorder | K1-K5 |
-| **S11 AI/RAG Completion** | 2 нед | Multimodal RAG full, Adaptive RAG strategy, Model Registry UI, AI feedback→DSPy, distributed RL Redis Cluster, DB read replica | K1-K5 |
-| **S12 Workflow Enhancement** | 2 нед | Visual diff, Cron builder UI, cost estimation, reactive workflows, template library, saga compensation viewer, cancel-workflow DSL | K1-K5 |
-| **S13 Infra & Perf** | 2 нед | RSGI streaming 1GB, CH columnar builder, parallelism analyzer, graceful degradation, retry profile store, WebDAV source, batch primitive | K1-K5 |
-| **S14 Plugin Ecosystem** | 2 нед | Compatibility matrix, migration guide gen, marketplace versioning, dependency graph UI, plugin dev-server, sandbox isolation, publish workflow | K1-K5 |
-| **S15 DX Tooling + Innovation** | 2 нед | VSCode extension+LSP, ADR scaffolding, CLI completions, changelog autogen, AI PR review, Interactive Arch Map | K1-K5 |
+| **S11 AI/RAG Completion**     | 2 нед | 4/19 закрыто; 15 wave открыто | K1-K5 |
+| **S12 Workflow Enhancement**  | 2 нед | ⏳ | K1-K5 |
+| **S13 Infra & Perf**          | 2 нед | ⏳ | K1-K5 |
+| **S14 Plugin Ecosystem**      | 2 нед | cleanup A/B/C/D ✅; carryover F-2/F-5/F-6→S15 | K1-K5 |
+| **S15 DX Tooling + Innovation** | 2 нед | ⏳ + carryover S14 | K1-K5 |
+| **S16 GAP-Closure 2 NEW**     | 2 нед | 7 P0 + min cleanup (gap-analysis 2026-05-20) | K1-K5 |
 
 ---
 
@@ -344,147 +311,39 @@ Memory: `session-2026-05-15-0917-sprint5`.
 
 ---
 
-### Sprint 8 — BLOCKER closure + Carryover + RPA stage 1 + HTTP/3 + Rule Engine (active 2026-05-15)
-
-**Текущий прогресс**: 6/49 wave closed (12.2%). Цель — закрыть до 2026-05-22 (2 недели). 8A/8B разбивка по `SPRINT_8_PLAN.md`.
-
-#### Sprint 8A (1 неделя): BLOCKER + Carryover closure (~28 wave)
-
-| Команда | Closed | In-Progress | Pending |
-|---|---|---|---|
-| **K1** (7) | W8 `bfa33c63` pre-receive-docstring | W5 cosign-all (stash-loss recovery) | W0 quotas-fix (AUDIT-1), W1 WAF-phase2 (BLOCKER #3, 38 callsites), W2 DLQ-replay RBAC, W3 Inbox-audit-PII, W4 PII-DSL-step, W6 OpenFeature-Flagsmith |
-| **K2** (7) | W1 `f36edd5e` TaskIQ-removal (BLOCKER #1) | W8 httpx-unify (worktree ECONNRESET) | W2 outbox-dispatcher, W3 DLQ-unified, W4 Inbox-fail-closed, W5 alerts+fallback-chains, W6 Bulkhead-defaults, W7 tenant-RL-namespace |
-| **K3** (5) | W1 `aa987472` windows-worker-rename (AUDIT-3), W5 `87b96eaa` rule-engine-protocol | W8 dsl/blueprints/ subdir | W9 workflow-versioning, W10 workflow-TaskGroup, W11 invoke_workflow-reply, W13 plugin-hotswap-impl |
-| **K4** (7) | W11 `c89e9d12` llm-structured-scaffold | — | W1 multimodal-RAG, W2 RLM-hierarchical, W3 RAG-cache-invalidate, W4 BGE-M3-reranker, W6 mem0+`.rag_*/.memory_*` DSL, W7 saga-blueprint, W8 LiteLLM-final |
-| **K5** (3) | merged `30d24195` doc-generation-DSL | — | W2 70_Tenants finalize, W3 71_Capabilities finalize, W4 30_Files_S3 |
-
-**DoD 8A** (8 критериев): ✅ BLOCKER #1 TaskIQ closed; ⏳ BLOCKER #3 WAF Phase-2 closed; ⏳ 5 quotas-tests green; ⏳ plugin hot-swap enhanced; ⏳ cosign все artifacts; ⏳ Multimodal RAG ingest PDF/image; ⏳ DLQ unified для 4 transport-types; ⏳ RBAC+audit для DLQ-replay.
-
-#### Sprint 8B (1 неделя): Native scope (~21 wave)
-
-| Команда | Pending |
-|---|---|
-| **K1** | W7 prompt-injection-guardrails (Lakera+Rebuff) |
-| **K2** | W8 httpx-unify finale, W9 Grafana+SLO alerts, W10 mypy≤50, W11 deptry/vulture-clean, W12 layer-violations-zero |
-| **K3** | W2 patchright-pool RPA, W3 RPA-OCR (PaddleOCR/EasyOCR), W4 RPA-Windows-desktop (pywinauto), W6 HTTP/3+WebTransport (aioquic), W7 legacy-DSL-Python→YAML, W12 MCP-via-FastMCP |
-| **K4** | W5 7 RAG-Streamlit-pages, W9 AI-model-registry (MLflow+HF), W10 batch-inference (vLLM/TGI), W11.5 code-interpreter (e2b/pyodide) |
-| **K5** | W1 5 credit-clients (DaData/БКИ/СМЭВ/ЦБ/1С) migration, W5 @st.fragment-live, W6 Wiki-Whoosh-Diátaxis-Vale, W7 Sphinx-multiversion |
-| **backbone/finale** | `pyproject.toml` + 54 feature-flag default-OFF; flip critical default-ON post-smoke |
-
-**DoD 8B** (7 критериев): ⏳ 5 credit clients live; ⏳ RPA stage 1 (patchright + pywinauto + OCR); ⏳ `.evaluate_rules()` + `.llm_structured()`; ⏳ HTTP/3 opt-in smoke; ⏳ mypy ≤ 50; ⏳ layer violations = 0; ⏳ Streamlit Wiki Whoosh; ⏳ Multi-version Sphinx published.
-
-**Branch isolation**: 5 team-веток (`team/s8-k1-security`, etc.). Coordinator cherry-pick в master после intermediate commits каждой wave. Worktree cleanup перед стартом 8A через `vault/triage-worktrees-2026-05-15.md`.
-
-**Audit findings 2026-05-15**:
-- AUDIT-1: 5 quotas tests fail → S8 K1 W0 (LOW severity, regress fix).
-- AUDIT-2: Plugin hot-swap path docs-drift only (real impl `core/plugin_runtime/hot_swap.py`).
-- AUDIT-3: windows-sidecar→windows_worker rename ✅ CLOSED (`aa987472`).
+### Sprint 8 — BLOCKER closure + Carryover + RPA stage 1 + HTTP/3 + Rule Engine (закрыт 100%) — см. §2.5 архив + memory `feedback_s8_closure`
 
 ---
 
-### Sprint 9 — GAP Closure + Documentation + Pre-prod Gate (2 нед)
-
-Sprint 9 закрывает **критические GAP-проблемы из аудита 2026-05-15** (`gap-analysis/GAP-анализ актуальный.md`) + готовит pre-production gate. Все P0+P1 пробелы (RouteLoader, Streamlit page dedup, messaging completion, HITL panel, token budget, plugin compatibility) — закрываются здесь.
-
-#### K1 Security (GAP P0-P1)
-- ⏳ **GAP-1.5 SAML/mTLS backend полный** — `infrastructure/security/saml_backend.py` (pysaml2): SP-initiated SSO, атрибуты → TenantContext, assertion cache, metadata auto-refresh. ADR-0054 → Implementation.
-- ⏳ **GAP-3.2 Token budget per tenant** — `services/ai/gateway/token_budget.py`: daily_limit, hourly_burst, Redis counter с TTL 24h, при превышении `raise TenantQuotaExceeded` → 429.
-- ⏳ Disaster recovery runbook + backup verification.
-- ⏳ Feature flags Flagsmith default-ON в staging compose (carryover S8 K1 W6).
-- ⏳ Pre-production gate checklist (`make pre-prod-check` → 20 критериев: coverage ≥75%, chaos green, mypy ≤30, no layer violations, SBOM актуален, ZAP gate, всё на Temporal, все endpoints авторизованы, docstring gate, codeclone clean, и др.).
-
-#### K2 Resilience+Perf (GAP P0-P1)
-- ⏳ **GAP-INF-1/2/3 Messaging carryover finale** — `outbox_dispatcher.py` + `inbox_dedup.py` + `dlq.py` финальная реализация (если осталось из S8 K2 W2-W4).
-- ⏳ **GAP-PERF-6.3 Lazy processor loading** — `LazyProcessorRegistry` через importlib + lru_cache → startup time < 3s; CI-gate на startup time.
-- ⏳ **GAP-INF-2.4 Connection Pool Warm-up** — `PoolWarmup` в lifespan: 3 conn min (PG+Redis+CH) → p95 < 50ms на холодном старте.
-- ⏳ **GAP-INF-2.3 ClickHouse Async Bulk Writer** — `infrastructure/clients/clickhouse_bulk_writer.py`: buffer_size=1000, flush_interval=1s, audit events ≥10x throughput.
-- ⏳ Snapshot/restore профили (БД/cache в SQLite) для dev_light.
-- ⏳ Free-threading PEP 703 benchmark.
-
-#### K3 DSL+Workflow (GAP P0-P1)
-- ⏳ **GAP-DSL-1 RouteLoader full-cycle** — `dsl/route/loader.py`: load_directory + tomllib + watchfiles hot-reload < 3s + feature_flag `hot_reload_routes`. Закрытие S2 carryover.
-- ⏳ **GAP-WF-4.5 HITL Streamlit panel** — `pages/72_HITL_Panel.py`: список приостановленных workflow (Temporal signal-wait), форма approve/reject, real-time через `st.fragment`.
-- ⏳ **GAP-WF-4.4 Workflow SLA Alerting** — `.sla` в workflow.yaml: max_duration + escalation_email/slack + business_hours_only.
-- ⏳ **GAP-DSL-1.5 DSL Dry-run UI** — `30_DSL_Playground.py` вкладка "Dry-run": YAML → sample JSON → execute → waterfall.
-- ⏳ **GAP-WF-4.1 Temporal Client Factory** — `infrastructure/workflow/temporal_client.py`: TemporalClientFactory + WorkerPool + ActivityHeartbeatMonitor.
-- ⏳ Tutorials ≥9 по Diátaxis (getting-started, build-first-action, build-rest-connector, build-grpc-service, write-dsl-route, plugin-development, RAG-setup, RPA-script, multi-tenant-setup).
-- ⏳ ≥10 runbooks (deploy/rollback/scale-out/incident/db-migration/cache-flush/audit-export/key-rotation/plugin-install/cdc-restart).
-- ⏳ Legacy workflow Python → YAML миграция финал.
-
-#### K4 AI+RAG (GAP P1)
-- ⏳ **GAP-AI-3.3 RAG Freshness Indicator** — Qdrant payload (ingested_at + ttl_hours), DSL `.rag_query(max_staleness_hours=72)`, UI freshness badge.
-- ⏳ **GAP-AI-3.2 Prompt Version Control UI** — `48_Prompt_Lab.py`: LangFuse 3.x prompts, A/B versions, metrics (cost/latency/quality), rollback.
-- ⏳ **GAP-AI-3.8 Guardrails Dashboard per-tenant** — `47_AI_Safety.py`: блокированные запросы, false-positive rate, sensitivity tuning per tenant.
-- ⏳ mem0/Zep persistent personalisation для credit_pipeline (opt-in).
-- ⏳ `60_AI_Agent_Monitor.py` (multi-agent trace viewer, OTel GenAI semantics).
-
-#### K5 Frontend+Ext+Mig (GAP P0)
-- ⏳ **GAP-DSL-2 Streamlit page renumbering** — устранить 9 коллизий (`00_/14_/15_/30_/50_/55_/60_/65_/67_`); схема DSL 30-39 / AI 40-49 / Ops 50-59 / Admin 60-69. Удалить 2 дубликата (`55_s3_files.py`, `67_Plugin_Marketplace.py`).
-- ⏳ **GAP-15.1 Execution middleware dedup** — консолидация `entrypoints/middlewares/` vs `services/execution/middlewares/` (Single Entry §1.1).
-- ⏳ **GAP-15.2 DLQ Replay admin REST endpoint** — `entrypoints/api/v1/endpoints/admin_dlq.py` для функционирования `14_DLQ_Replay.py` UI.
-- ⏳ **GAP-15.4 Business logic migration** — `src/backend/workflows/orders_dsl.py/orders_saga.py/payments_saga.py` → `extensions/core_entities/orders/workflows/` + `extensions/credit_pipeline/workflows/`.
-- ⏳ DSL Visual Editor расширение (drag-drop) на стороне Streamlit.
-
-**DoD Sprint 9** (12 критериев): ⏳ RouteLoader hot-reload < 3 сек; ⏳ Streamlit pages renumbered без коллизий; ⏳ messaging Outbox/Inbox/DLQ полная реализация; ⏳ HITL panel functional; ⏳ Token budget per tenant работает; ⏳ SAML SP-initiated SSO; ⏳ Lazy processor loading + startup < 3s; ⏳ Pool warm-up; ⏳ ClickHouse bulk writer ≥10x throughput; ⏳ `make pre-prod-check` → 20/20; ⏳ ≥9 tutorials + ≥10 runbooks; ⏳ coverage ≥75%; ⏳ mypy ≤30.
+### Sprint 9 — GAP Closure + Documentation + Pre-prod Gate (закрыт 100%) — см. §2.5 архив + memory `project_sprint9_complete`
 
 ---
 
-### Sprint 10 — DSL Blueprint Expansion + DX Wizards (2 нед)
-
-Расширение DSL: blueprint library 5 → 20+, dry-run UI, complexity budget, scaffold wizards, plugin dev-server, testkit cassette recorder. Все фичи K3 + K5 по `FEATRE-ROADMAP.md` §1 (DSL) и §8 (DX).
-
-| Команда | Wave | Wave-tag | Scope |
-|---|---|---|---|
-| **K1** | W1 | `[wave:s10/k1-w1-cassette-secrets-mask]` | Маскирование secret-полей в testkit cassettes (recorder hook: redact `*token*`/`*secret*`/`*key*`). |
-| **K1** | W2 | `[wave:s10/k1-w2-extension-testkit-template]` | EXT-5.7: шаблонный `conftest.py` для extensions (pre-wired plugin loader + DB snapshot + S3 mock). |
-| **K2** | W1 | `[wave:s10/k2-w1-msgspec-hotpath-expand]` | PERF-6.5: msgspec hotpath на Exchange + Audit + Cache key + WebSocket serialization. Benchmark до/после. |
-| **K2** | W2 | `[wave:s10/k2-w2-brotli-compression]` | PERF-6.6: `BrotliCompressionMiddleware` (-60% JSON traffic). Feature-flag `compression_brotli`. |
-| **K2** | W3 | `[wave:s10/k2-w3-startup-time-gate]` | CI-gate на startup time dev_light (< 3 сек) — fail-on-regression. |
-| **K3** | W1 | `[wave:s10/k3-w1-blueprint-library-15]` | DSL-1.2: 15 новых blueprints (fan_out_fan_in, request_reply_async, file_to_db_pipeline, cdc_to_search_index, rpa_web_scrape, hitl_approval, credit_scoring, multimodal_ingest, scheduled_report, webhook_to_kafka, saml_user_sync, api_to_api_bridge, dlq_replay, rate_limit_burst, hybrid_rag). |
-| **K3** | W2 | `[wave:s10/k3-w2-dsl-complexity-budget]` | DSL-1.3: `tools/dsl_lint.py check-complexity` (cyclomatic ≤50 / nesting ≤5 / steps ≤50). CI-шаг `make dsl-complexity-check`. Streamlit visualization. |
-| **K3** | W3 | `[wave:s10/k3-w3-ab-test-processor]` | DSL-1.4: `.ab_test(experiment_id, variant_a, variant_b, split=0.7/0.3, track_metric)` step + Streamlit A/B dashboard. |
-| **K3** | W4 | `[wave:s10/k3-w4-dsl-dryrun-ui]` | DSL-1.5: `30_DSL_Playground.py` вкладка "Dry-run" — YAML → sample JSON → execute → waterfall с latency. |
-| **K3** | W5 | `[wave:s10/k3-w5-semantic-processor-search]` | DSL-1.6: vector-поиск по `ProcessorRegistry.describe()` в DSL Builder. embeddings BGE-M3. |
-| **K3** | W6 | `[wave:s10/k3-w6-dsl-diff-streamlit]` | DSL-1.7: `tools/dsl_diff.py` → `31_DSL_Visual_Editor.py` вкладка History (diff между версиями route). |
-| **K3** | W7 | `[wave:s10/k3-w7-dsl-jinja-macros]` | DSL-1.8: Jinja2-over-YAML макросы с параметрами `{% macro %}`/`{% include %}`. |
-| **K3** | W8 | `[wave:s10/k3-w8-dsl-step-tracing]` | DSL-1.9: `StepTrace` в `Exchange` (input_snapshot + duration_ms + error_context). OTel span attributes. |
-| **K3** | W9 | `[wave:s10/k3-w9-route-flow-render]` | DOC-7.3: `manage.py dsl render ROUTE=name --format mermaid|bpmn|svg` → `docs/generated/`. |
-| **K4** | W1 | `[wave:s10/k4-w1-mock-llm-provider]` | Mock-LLM provider для dry-run AI workflow тестов (deterministic responses + cost=0). |
-| **K4** | W2 | `[wave:s10/k4-w2-feedback-step-dsl]` | DSL `.record_feedback(rating, comment, route_run_id)` step (вход в `feedback_service`). |
-| **K5** | W1 | `[wave:s10/k5-w1-make-doctor]` | DX-8.1: `tools/checks/doctor.py` — Python version, services healthcheck (PG/Redis/CH/Temporal/Vault/Kafka ping), env-validation, TaskIQ imports=0, WAF=0, layer-violations=0, mypy ≤ 50. |
-| **K5** | W2 | `[wave:s10/k5-w2-make-scaffold-route]` | DX-8.2: interactive wizard (Typer prompt): source → sink → AI? → retry? → codegen `routes/<name>/route.toml + *.dsl.yaml`. |
-| **K5** | W3 | `[wave:s10/k5-w3-make-simulate]` | DX-8.3: `make simulate ROUTE=name` — CLI dry-run с output waterfall (повтор Streamlit UI в CLI). |
-| **K5** | W4 | `[wave:s10/k5-w4-plugin-dev-mode]` | DX-8.6: `make plugin-dev NAME=x` — infra-only docker-compose subset + hot-reload + mocks + livereload + `pytest --watch`. |
-| **K5** | W5 | `[wave:s10/k5-w5-onboarding-checklist]` | DX-8.5: developer onboarding (7 шагов: clone → doctor → dev → Streamlit → first route → test → first plugin → ~1 час). Streamlit page. |
-| **K5** | W6 | `[wave:s10/k5-w6-cassette-recorder]` | EXT-5.5: VCR.py-style cassette recorder для testkit. `@cassette("tests/cassettes/bki_query.yaml")` decorator. Запись/replay HTTP/SOAP/gRPC. |
-
-**DoD Sprint 10** (10 критериев):
-1. ✅ 20+ blueprints в `dsl/blueprints/` с тестами.
-2. ✅ `make dsl-complexity-check` blocking в CI.
-3. ✅ `.ab_test()` step + Streamlit dashboard.
-4. ✅ Dry-run UI с waterfall.
-5. ✅ Semantic search в DSL Builder (latency < 200ms).
-6. ✅ `manage.py dsl render` для всех routes.
-7. ✅ `make doctor` + `make scaffold-route` + `make simulate` + `make plugin-dev` работают.
-8. ✅ Cassette recorder в testkit с docs.
-9. ✅ Onboarding ≤ 1 час (измерено).
-10. ✅ coverage ≥77%; startup time CI-gate активен.
+### Sprint 10 — DSL Blueprint Expansion + DX Wizards (закрыт 100%) — см. §2.5 архив + memory `project_sprint10_complete`
 
 ---
 
-### Sprint 11 — AI/RAG Completion (2 нед)
+### Sprint 11 — AI/RAG Completion (2 нед, 4/19 закрыто)
 
 Завершение AI/RAG стека: Multimodal полный, Adaptive RAG, AI Model Registry UI, feedback loop с DSPy fine-tuning, batch inference production, distributed rate limiter Redis Cluster.
+
+**S11 status (2026-05-20)**: 4/19 закрыто; 15 wave открыто. Источник: KNOWN_ISSUES.md.
+
+Закрытые wave:
+- ✅ `[wave:s11/k2-w2-db-read-replica-routing]` `41e2fffc` — SmartSessionManager.
+- ✅ `[wave:s11/k3-w1-adaptive-timeout-policy]` `159647cb` — `core/resilience/adaptive_timeout.py`.
+- ✅ `[wave:s11/k3-w2-rag-ingest-step]` `68192020` — RagIngestProcessor + `.rag_ingest()`.
+- ✅ `[wave:s11/k3-w3-rag-multi-query]` `fc9b6ef8` — `RagQueryProcessor.strategy=dense|hybrid|hyde|multi_query`.
 
 | Команда | Wave | Wave-tag | Scope |
 |---|---|---|---|
 | **K1** | W1 | `[wave:s11/k1-w1-rag-pii-redaction]` | PII redaction в RAG retrieval (mask чувствительных полей в chunks перед LLM context). |
 | **K1** | W2 | `[wave:s11/k1-w2-guardrails-per-tenant]` | Lakera/Rebuff config per-tenant (банк vs SaaS разные thresholds). Config в `core/auth/tenant_settings`. |
 | **K2** | W1 | `[wave:s11/k2-w1-distributed-rl-redis-cluster]` | INF-2.9: `redis-cell` CL.THROTTLE или Lua-скрипт для Redis Cluster, token-bucket per-tenant. |
-| **K2** | W2 | `[wave:s11/k2-w2-db-read-replica-routing]` | PERF-6.7: `SmartSessionManager` — SELECT → replica, INSERT/UPDATE → primary. SQLAlchemy + asyncpg. |
-| **K3** | W1 | `[wave:s11/k3-w1-adaptive-timeout-policy]` | INF-2.10: `.policy.adaptive_timeout(percentile=99, safety_factor=1.5)` — p99 за N запросов × safety_factor. |
-| **K3** | W2 | `[wave:s11/k3-w2-rag-ingest-step]` | DSL `.rag_ingest(source, modal="text"|"image"|"audio"|"video", collection)` step. |
-| **K3** | W3 | `[wave:s11/k3-w3-rag-multi-query]` | DSL `.rag_query(strategy="dense"|"hybrid"|"hyde"|"multi_query", max_staleness_hours)` step. |
+| **K2** | W2 ✅ | `[wave:s11/k2-w2-db-read-replica-routing]` `41e2fffc` | PERF-6.7: `SmartSessionManager` — SELECT → replica, INSERT/UPDATE → primary. SQLAlchemy + asyncpg. |
+| **K3** | W1 ✅ | `[wave:s11/k3-w1-adaptive-timeout-policy]` `159647cb` | INF-2.10: `.policy.adaptive_timeout(percentile=99, safety_factor=1.5)` — p99 за N запросов × safety_factor. |
+| **K3** | W2 ✅ | `[wave:s11/k3-w2-rag-ingest-step]` `68192020` | DSL `.rag_ingest(source, modal="text"|"image"|"audio"|"video", collection)` step. |
+| **K3** | W3 ✅ | `[wave:s11/k3-w3-rag-multi-query]` `fc9b6ef8` | DSL `.rag_query(strategy="dense"|"hybrid"|"hyde"|"multi_query", max_staleness_hours)` step. |
 | **K4** | W1 | `[wave:s11/k4-w1-multimodal-rag-full]` | AI-3.1: markitdown (PDF/DOCX/HTML) + CLIP (images) + BLIP2 (image captions) + Whisper (audio). Cross-modal retrieval (text query → image+audio chunks). |
 | **K4** | W2 | `[wave:s11/k4-w2-multimodal-rag-pipeline]` | Pipeline: ingest → chunking → embedding → Qdrant (с modal payload) → retrieval → rerank → LLM context. |
 | **K4** | W3 | `[wave:s11/k4-w3-adaptive-rag-strategy]` | AI-3.9: query classifier (LLM-based) → select strategy (dense/hybrid/hyde/multi_query). Bench accuracy +15%. |
@@ -611,6 +470,17 @@ Compatibility matrix, migration guide generator, marketplace versioning, depende
 | **K5** | W5 | `[wave:s14/k5-w5-capability-graph-ui]` | Capability dependency graph UI в `71_Capabilities.py` (D3.js, requires/provides). |
 | **K5** | W6 | `[wave:s14/k5-w6-plugin-onboarding-pages]` | Streamlit pages для plugin onboarding (create plugin → publish → marketplace). |
 
+**S14 cleanup wave (2026-05-20, 4 commit'а)**:
+- ✅ `9481993c` cleanup-a-tools-package (F-1 importlib hack + F-4 _MIGRATION_DIFFER_CLS).
+- ✅ `f71a59e4` cleanup-b-stdlib-dataclasses (F-3 ручной to_dict → dataclasses.asdict).
+- ✅ `a7e07f7c` cleanup-c-test-gaps (T-1..T-4: 3 новых тест-файла).
+- ✅ `85ae4457` cleanup-d-known-issues (D-1: документация F-5/F-6).
+
+**Carryover S14 → S15**:
+- F-2 PluginSandboxAdapter overhead 137% (target <5%, DoD §S14.5).
+- F-5 `gen_dsl_stubs._resolve_annotation` fallback на `str(annotation)` (качество .pyi для PEP-695).
+- F-6 `sys._current_frames()` приватный CPython API в `plugin_resource_monitor` — best-effort fallback.
+
 **DoD Sprint 14** (10 критериев):
 1. ✅ Compatibility matrix blocks incompatible plugins at install time.
 2. ✅ Migration guide auto-gen для major-bump (sample BKI 1.0 → 2.0).
@@ -650,8 +520,15 @@ VSCode extension, ADR scaffolding, CLI completions, Changelog auto-gen, AI-assis
 | **K5** | W7 | `[wave:s15/k5-w7-dep-map-html]` | DOC-7.7: Интерактивная карта зависимостей (D3.js standalone HTML) — фильтры по слоям, "где используется X". |
 | **K5** | W8 | `[wave:s15/k5-w8-tutorial-progress]` | Tutorial progress tracking в developer portal (галочки выполненных шагов + estimated time). |
 | **K5** | W9 | `[wave:s15/k5-w9-changelog-diff-page]` | Streamlit page «Changelog Diff» между версиями (фильтр по команде/зоне). |
+| **K1** | W3 | `[wave:s15/k1-w3-sandbox-overhead-reduction]` | **F-2 carryover (S14)**: PluginSandboxAdapter overhead 137% → <5%. Варианты: amortised psutil snapshot / fire-and-forget task / e2b enforcement / DoD relaxation для dev_light. |
+| **K3** | W4 | `[wave:s15/k3-w4-pyi-stub-fidelity]` | **F-5 carryover (S14)**: `gen_dsl_stubs._resolve_annotation` через `typing.get_type_hints` + `get_origin/get_args`. Улучшение IDE-autocomplete для PEP-695. |
 
-**DoD Sprint 15** (10 критериев):
+**Carryover S14 в S15**:
+- F-2 PluginSandboxAdapter overhead 137% (target <5%, DoD §S14.5) → S15 K1 W3.
+- F-5 `gen_dsl_stubs._resolve_annotation` fallback на `str(annotation)` (качество .pyi для PEP-695) → S15 K3 W4.
+- F-6 `sys._current_frames()` приватный CPython API в `plugin_resource_monitor` — best-effort fallback (остаётся known-issue, не блокер).
+
+**DoD Sprint 15** (11 критериев):
 1. ✅ VSCode extension published (в private/public marketplace).
 2. ✅ LSP server для DSL с completion + hover docs.
 3. ✅ DSL Visual Editor финал (drag-drop + BPMN export + undo/redo).
@@ -662,8 +539,54 @@ VSCode extension, ADR scaffolding, CLI completions, Changelog auto-gen, AI-assis
 8. ✅ Interactive Arch Map в Streamlit с D3.js.
 9. ✅ mypy errors = 0 (от ≤50 baseline).
 10. ✅ coverage ≥83%; p95 ≤ 80ms; **система готова к production**.
+11. ✅ PluginSandboxAdapter overhead <5% (или explicitly relaxed для dev_light с ADR).
 
-**Итого**: 15 спринтов (закрыты S0-S7, active S8, planned S9-S15). Из них первые 8 — за 2 недели, последние 7 — 2 недели каждый. Срок ~7-8 месяцев от 2026-05-15 до production-ready.
+---
+
+### Sprint 16 — GAP-Closure 2 (P0 + критические P1 + min cleanup, 2 нед)
+
+Закрытие 7 P0 задач из `gap-analysis/GAP-анализ gd_integration_tools актуальный.md` (2026-05-20)
++ минимальный cleanup (pyproject pruning, OE-3, DC-1).
+
+| Команда | Wave | Wave-tag | Scope |
+|---|---|---|---|
+| **K1** | W1 | `[wave:s16/k1-w1-asyncssh-pool]` | **L1-P0-2/3**: SFTP + FTP connection pooling через `asyncssh.SSHClient` (replace `infrastructure/clients/transport/ftp.py`). Session pool + reconnect + known_hosts. |
+| **K2** | W1 | `[wave:s16/k2-w1-asyncio-lock-registry]` | **L1-P0-1 DEADLOCK FIX**: `services/schema_registry/registry.py:66` `threading.RLock` → `asyncio.Lock`; все `with self._lock:` → `async with self._lock:`. |
+| **K2** | W2 | `[wave:s16/k2-w2-outbox-tx-atomic]` | **L2-P0-1**: Transactional Outbox — `infrastructure/messaging/outbox/dispatcher.py` пишет outbox event в **той же** DB-транзакции что и business data (advanced-alchemy unit_of_work). |
+| **K2** | W3 | `[wave:s16/k2-w3-otel-otlp-metrics]` | **L3-P0-1**: подключить `OTLPMetricExporter` в `infrastructure/observability/otel/setup.py` для workflow + REST endpoints. Grafana dashboard проверки. |
+| **K3** | W1 | `[wave:s16/k3-w1-pygls-lsp-server]` | **L4-P0-1**: `tools/dsl_lsp/server.py` через `pygls>=2.0` (расширение текущего `dsl/cli/linter.py` batch-only). Completion + hover docs + diagnostics для route.toml + *.dsl.yaml. |
+| **K4** | W1 | `[wave:s16/k4-w1-adaptive-rag-classifier]` | **L5-P0-1**: `QueryClassifier` (LLM-based) → выбор `RAGStrategy` (dense/hybrid/hyde/multi_query). Расширение S11 K4 W3 — добавить динамику. Bench accuracy +15%. |
+| **K1** | W2 | `[wave:s16/k1-w2-jwt-introspection]` | **L7-P1-1**: endpoint `GET /auth/introspect` (RFC 7662) — token introspection. |
+| **K1** | W3 | `[wave:s16/k1-w3-vault-rotation-impl]` | **L1-P1-4**: реализация ротации Vault secrets через `hvac` (flag `vault_rotation_enabled` уже есть). |
+| **K2** | W4 | `[wave:s16/k2-w4-pybreaker-replace]` | **L1-P1-6**: заменить custom Circuit Breaker на `pybreaker>=1.2.0` (state persistence через Redis backend). |
+| **K2** | W5 | `[wave:s16/k2-w5-redis-graceful-degrade]` | **L1-P1-3**: in-memory `TTLCache` fallback при Redis down (cachetools уже в deps). |
+| **K5** | W1 | `[wave:s16/k5-w1-plugin-topo-sort]` | **L8-P1-1**: `PluginGraphResolver` через `cachetools.OrderedGraph` — topological sort + cycle detection для `plugin.toml::dependencies`. |
+| **K5** | W2 | `[wave:s16/k5-w2-global-ratelimit-mw]` | **L9-P1-1**: ASGI-level `RateLimitMiddleware` (global) — `entrypoints/middlewares/global_rate_limit.py` через `fastapi-limiter`. |
+| **K5** | W3 | `[wave:s16/k5-w3-coverage-gate-75]` | **L11-P1-1**: `[tool.coverage.report]::fail_under = 75` в pyproject.toml + `tools/coverage/breakdown_by_layer.py`. |
+
+**Cleanup wave (cross-team, минимальный scope)**:
+
+| Команда | Wave | Wave-tag | Scope |
+|---|---|---|---|
+| **K2** | W6 | `[wave:s16/k2-w6-litetemporal-simplify]` | **OE-3**: упростить `infrastructure/workflow/lite_temporal_backend.py` до thin wrapper (прямой вызов activity без full Temporal abstraction). |
+| **K3** | W2 | `[wave:s16/k3-w2-routebuilder-clone-cleanup]` | **DC-1**: grep подтверждает 0 вызовов `RouteBuilder.clone()` → удалить метод и тесты. |
+| **K1** | W4 | `[wave:s16/k1-w4-pyproject-prune-empties]` | Удалить 8 пустых extras из pyproject.toml: `iot`, `web3`, `legacy`, `banking`, `enterprise`, `datalake`, `temporal` (если пуст), `beam`. Добавить новые: `lsp = ["pygls>=2.0.0"]`, `circuit-breaker = ["pybreaker>=1.2.0"]`. |
+
+**DoD Sprint 16** (10 критериев):
+1. ✅ L1-P0-1 fixed: `asyncio.Lock` в schema_registry; 0 `threading.RLock` в async-коде (grep verify).
+2. ✅ L1-P0-2/3: SFTP + FTP через asyncssh pool; reconnect автоматический; integration test с testcontainers.
+3. ✅ L2-P0-1: Outbox dropped-message rate = 0 в chaos-test (kill между business-write и outbox-write).
+4. ✅ L3-P0-1: OTel Metrics в Grafana visible; workflow duration + REST p95 экспортируются.
+5. ✅ L4-P0-1: pygls LSP запускается, VSCode extension подключается, completion работает на route.toml.
+6. ✅ L5-P0-1: Adaptive RAG QueryClassifier выбирает strategy динамически; bench accuracy +15% vs static.
+7. ✅ JWT Introspection endpoint `/auth/introspect` отвечает 200/401 по RFC 7662.
+8. ✅ Vault rotation реально ротирует secret раз в N часов (hvac call + audit-event).
+9. ✅ pybreaker заменяет custom CB; state restored after restart.
+10. ✅ Coverage gate 75% активен в CI; per-layer breakdown отчёт генерируется; pyproject pruning применён (0 пустых extras).
+
+---
+
+**Итого**: 16 спринтов (закрыты S0-S10, active S11+S14 partial, planned S12/S13/S15/S16). Из них первые 11 — за 2 недели, остальные — 2 недели каждый. Срок ~6-7 месяцев от 2026-05-20 до production-ready.
 
 ---
 
@@ -792,6 +715,20 @@ compression = ["brotli>=1.1.0"]                                # S10 K2 PERF-6.6
 
 # === ai-2026 (дополнить существующие) ===
 # + "instructor>=1.7.0",  + "mem0ai>=0.1.0",  + "dspy-ai>=2.5.0"
+
+# === V20 NEW (Sprint 16) ===
+lsp = ["pygls>=2.0.0"]                                         # S16 K3 W1 LSP server для DSL
+circuit-breaker = ["pybreaker>=1.2.0"]                         # S16 K2 W4 pybreaker replace (state via Redis backend)
+
+# === REMOVED V20 (empty extras, никогда не реализовано) ===
+# iot = []          # удалено V20
+# web3 = []         # удалено V20
+# legacy = []       # удалено V20
+# banking = []      # удалено V20
+# enterprise = []   # удалено V20
+# datalake = []     # удалено V20
+# temporal = []     # удалено V20 (temporalio в base deps)
+# beam = []         # удалено V20
 ```
 
 ---
@@ -1088,7 +1025,9 @@ manage.py plugin serve --name=demo          # local dev server with mocks (S14)
 | **V18.1** | 2026-05-12 | Закрытие 2 wave (5 параллельных сессий): (1) Sprint 1 К3 `builder.py` split Stage 2.4 control_flow (`300d573`) — 17 методов choice/do_try/retry/parallel/saga/dead_letter/idempotent/fallback/throttle/delay/circuit_breaker/loop/timeout/switch/on_error/expire/correlation_id перенесены в `builders/control_flow.py` (292 LOC); builder.py остаток 1401 LOC / 68 методов; (2) Sprint 2 К1 idempotency wire-up V5 (`b5527ec`) — RedisNxBackend через SET NX EX + _LazyRedisProxy + build_idempotency_backend() factory + MemoryBackend fallback при недоступном DI, 9 unit + 3 integration tests; (3) детализация Sprint 1 К3 split на 6 stage-строк со статусами + коммитами; (4) фиксация план Stage 2.5 integration (~28 методов) + Stage 2.6 operational (~27 методов, новый файл `builders/operational.py`); (5) AuthBackend wave переведён ⏳→🟡 (другая сессия работает над `core/auth/{jwt_backend,jwks_cache,jwt_blacklist}.py`); (6) ProcessorRegistry formal API закрыт (`8e734be` stage-3) | этот файл |
 | **V18.2** | 2026-05-14 | Sprint 6 запуск 5-команд параллельно с S5/S7; backbone-commit `[wave:s6/backbone]` + 21 default-OFF feature-flag + ownership-список `.claude/team-ownership.toml::[team_s6.kN]`; stub/adapter паттерн для S5→S6 зависимостей; досрочные коммиты `3743c574` (msgspec-benchmark) + `6b818829` (layer-violations-facade) | этот файл (V18.1 → V18.2) |
 | **V19** | 2026-05-15 | (1) **Compression S0-S7** — 235 строк wave-таблиц → 50 строк summary с ссылками на vault/коммиты; (2) **Sprint 8 live-matrix** — 6/49 closed (12.2%), 8A blocker+carryover / 8B native scope, audit findings AUDIT-1/2/3; (3) **Sprint 9 expansion** — GAP-closure (RouteLoader full-cycle, Streamlit page renumbering без коллизий, messaging Outbox/Inbox/DLQ finale, HITL panel, token budget per tenant, SAML SP-initiated, lazy processors, pool warm-up, ClickHouse bulk writer ≥10x); (4) **Sprint 10-15 NEW** — 85 фич из `gap-analysis/FEATRE-ROADMAP.md` распределены (DSL blueprint expansion 5→20+, DX wizards make doctor/scaffold/simulate, AI/RAG completion multimodal+Adaptive+Model Registry+DSPy, Workflow enhancement visual diff+cron+reactive+templates, Infra perf RSGI+CH columnar+parallelism+graceful, Plugin ecosystem compatibility+migration+marketplace+sandbox, DX tooling VSCode+LSP+ADR+CLI+Arch Map); (5) +6 новых ADR R1.11-R1.16; (6) +14 новых `[project.optional-dependencies]` (rag-multimodal, rpa-extra, http3, ai-registry/batch/sandbox/structured/memory/dspy, saml, plugin-sandbox, rate-limit-cluster, compression, docling); (7) Финальный DoD V19 с innovation criteria (AI route optimization, Adaptive timeout, Reactive workflows, Interactive Arch Map, AI PR review, VSCode LSP); (8) Метрики: coverage ≥83%, mypy 0, p95 ≤80ms, blueprints 25+, tutorials 15+/runbooks 20+ | `gap-analysis/GAP-анализ актуальный.md` + `gap-analysis/FEATRE-ROADMAP.md` + `.claude/CONTEXT.md` 2026-05-15 |
+| **V19.1** | 2026-05-18 | Sprint 8 closure: 9 commits в master (BLOCKER #3 WAF Phase-2 → CLOSED `058705ed`, DLQ unified scaffold `ffd84769`, Inbox fail-closed `02587c14`, finale `79223758` + 5 carryover commits). Sprint 9 backbone landed: 7 default-OFF feature-flags + team ownership k1-k5 | `feedback_s8_closure` + `.claude/CONTEXT.md` 2026-05-18 |
+| **V20.0** | 2026-05-20 | (1) **Compression Sprint 8/9/10** в архив §2.5 (~120 строк удалено из §4); (2) **Sprint 11 status update** (4/19 wave closed: `41e2fffc` db-read-replica, `159647cb` adaptive-timeout, `68192020` rag-ingest, `fc9b6ef8` rag-multi-query); (3) **Sprint 14 cleanup wave A/B/C/D ✅** (F-1/F-3/F-4 closed, T-1..T-4 closed, D-1 known-issues docs) + carryover F-2/F-5/F-6 → Sprint 15; (4) **NEW Sprint 16 GAP-Closure 2** — 7 P0 (asyncio.Lock deadlock fix, asyncssh SFTP/FTP pool, transactional Outbox, OTel metrics OTLP, pygls LSP server, adaptive RAG classifier) + 5 top P1 (JWT introspection RFC 7662, Vault rotation impl hvac, pybreaker CB replace, Redis graceful degrade TTLCache fallback, plugin topo-sort) + global ASGI rate limit + coverage 75% gate; (5) **min cleanup**: OE-3 LiteTemporalBackend simplify + DC-1 RouteBuilder.clone() removal + pyproject pruning 8 empty extras (iot/web3/legacy/banking/enterprise/datalake/temporal/beam); (6) **+2 NEW optional extras**: `lsp = ["pygls>=2.0.0"]`, `circuit-breaker = ["pybreaker>=1.2.0"]`; (7) Все BLOCKER'ы #1/#2/#3 закрыты; AUDIT-1/2/3 закрыты | `gap-analysis/GAP-анализ gd_integration_tools актуальный.md` 2026-05-20 + KNOWN_ISSUES.md 2026-05-20 + CONTEXT.md |
 
 ---
 
-**Конец PLAN.md V19 FINAL**. Полный GAP-анализ актуальный (55 P0-P3 + 13 docs-drift) — `gap-analysis/GAP-анализ gd_integration_tools актуальный.md`. Feature Roadmap (85 фич × S9-S16) — `gap-analysis/FEATRE-ROADMAP.md`. Live wave-by-wave детализация Sprint 8 — `SPRINT_8_PLAN.md`. История контракта V11→V15 (3382 строки) — `~/.claude/projects/-home-user-dev-gd-integration-tools/memory/project_gap_analysis_v15.md`.
+**Конец PLAN.md V20.0**. Полный GAP-анализ актуальный (обновлён 2026-05-20) — `gap-analysis/GAP-анализ gd_integration_tools актуальный.md`. История контракта V11→V15 (3382 строки) — `~/.claude/projects/-home-user-dev-gd-integration-tools/memory/project_gap_analysis_v15.md`. Архив wave Sprint 0-7 — `vault/session-*-summary.md`. Архив Sprint 8/9/10 — §2.5 + memory `feedback_s8_closure` / `project_sprint9_complete` / `project_sprint10_complete`.
