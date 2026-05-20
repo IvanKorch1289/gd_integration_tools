@@ -1,5 +1,41 @@
 # KNOWN_ISSUES.md
 
+## Sprint 11 scope — 2026-05-20 (kickoff, 15 wave открыто)
+
+Текущий статус Sprint 11 «AI/RAG Completion» (PLAN.md V19 §4):
+
+**Закрыто ранее** (4/19 wave уже в master):
+- ✅ `[wave:s11/k2-w2-db-read-replica-routing]` (`41e2fffc`) — `SmartSessionManager`.
+- ✅ `[wave:s11/k3-w1-adaptive-timeout-policy]` (`159647cb`) — `core/resilience/adaptive_timeout.py` p99 per-endpoint.
+- ✅ `[wave:s11/k3-w2-rag-ingest-step]` (`68192020`) — `RagIngestProcessor` + `.rag_ingest()`.
+- ✅ `[wave:s11/k3-w3-rag-multi-query]` (`fc9b6ef8`) — `RagQueryProcessor.strategy=dense|hybrid|hyde|multi_query`.
+
+**Открыто в текущем закрытии Sprint 11**:
+- ⏳ K1 W1: PII redaction в RAG retrieval (`rag_pii_retrieval_mask`).
+- ⏳ K1 W2: per-tenant guardrails Lakera + Rebuff (`guardrails_per_tenant`).
+- ⏳ K2 W1: distributed RL Redis Cluster (`distributed_rl_redis_cluster`).
+- ⏳ K4 W1: Multimodal RAG full — BLIP2 + Whisper.
+- ⏳ K4 W2: Multimodal RAG pipeline — cross-modal retrieval.
+- ⏳ K4 W3: Adaptive RAG strategy (`adaptive_rag_strategy`).
+- ⏳ K4 W4: LangGraph checkpoint UI (`langgraph_checkpoint_ui`).
+- ⏳ K4 W5: DSPy feedback nightly (`dspy_feedback_loop`).
+- ⏳ K4 W6: Model Registry UI HF+MLflow (`ai_model_registry_ui`).
+- ⏳ K4 W7: AI route optimization (`ai_route_optimization`).
+- ⏳ K4 W8: Embedding A/B migration (`embedding_ab_migration`).
+- ⏳ K5 W1: Adaptive RAG dashboard (Streamlit page 52).
+- ⏳ K5 W2: AI Feedback page (Streamlit page 53).
+- ⏳ K5 W3: DB replica routing Grafana dashboard.
+
+**Carryover из S10/S9 (pre-prod-check 6 FAIL gates)**:
+- ⏳ uv-resolver конфликт `ai-voice` + `ai-model-registry` (двойная resolution path).
+- ⏳ 25 layer-violations (`core` → `services` импорт) → Protocol extraction.
+- ⏳ Docstring CLI args в `pre_prod_check.py` gate 11.
+- ⏳ `cyclonedx-bom` уже в `[security]` extra (S11 проверка).
+- ⏳ 91 test-collection ERRORs (RAGCitation, PluginCodegen, cache namespace).
+- ⏳ WAF allowlist 6 baseline callsites → `make_http_client()`.
+
+---
+
 ## S14 carryover — 2026-05-20 (cleanup A/B/C/D consolidation)
 
 **Закрыто в S14 cleanup wave**:

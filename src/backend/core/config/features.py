@@ -1516,5 +1516,128 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 11 — AI/RAG Completion ─────────────────────────────────────
+    rag_pii_retrieval_mask: bool = Field(
+        default=False,
+        title="K1 S11 W1: PII redaction в RAG retrieval pipeline",
+        description=(
+            "K1 Sprint 11 Wave 1 (wave:s11/k1-w1-rag-pii-redaction). "
+            "Owner: K1 Security. Активирует RagPIIRedactionProcessor — "
+            "маскирует CC/SSN/email/phone в augment_result.documents[*].content. "
+            "Capability: ai.rag.pii_redaction. default-OFF до staging-smoke."
+        ),
+    )
+
+    guardrails_per_tenant: bool = Field(
+        default=False,
+        title="K1 S11 W2: per-tenant guardrails (Lakera + Rebuff)",
+        description=(
+            "K1 Sprint 11 Wave 2 (wave:s11/k1-w2-guardrails-per-tenant). "
+            "Owner: K1 Security. Подключает Lakera Guard / Rebuff клиенты "
+            "с per-tenant thresholds (TenantSettings.guardrails). "
+            "Capabilities: ai.guardrails.lakera:external, ai.guardrails.rebuff:external. "
+            "default-OFF до coordination с tenant-config."
+        ),
+    )
+
+    distributed_rl_redis_cluster: bool = Field(
+        default=False,
+        title="K2 S11 W1: distributed rate-limiter поверх Redis Cluster",
+        description=(
+            "K2 Sprint 11 Wave 1 (wave:s11/k2-w1-distributed-rl-redis-cluster). "
+            "Owner: K2 Resilience. DistributedRedisRateLimiter (Lua CL.THROTTLE "
+            "token-bucket per-tenant) поверх RedisClusterAdapter. Активируется "
+            "вместо in-memory RL. default-OFF до perf-smoke (10K req/s)."
+        ),
+    )
+
+    multimodal_rag_full: bool = Field(
+        default=False,
+        title="K4 S11 W1/W2: Multimodal RAG full pipeline (BLIP2 + Whisper + cross-modal)",
+        description=(
+            "K4 Sprint 11 Wave 1+2 (wave:s11/k4-w1-multimodal-rag-full + "
+            "wave:s11/k4-w2-multimodal-rag-pipeline). Owner: K4 AI/Data. "
+            "Подключает BLIP2 captioning + Whisper STT + cross-modal retrieval. "
+            "Lazy-import тяжёлых deps (transformers, openai-whisper, librosa). "
+            "default-OFF до staging-smoke (heavy model weights ~8GB)."
+        ),
+    )
+
+    adaptive_rag_strategy: bool = Field(
+        default=False,
+        title="K4 S11 W3: adaptive RAG strategy selection (LLM classifier)",
+        description=(
+            "K4 Sprint 11 Wave 3 (wave:s11/k4-w3-adaptive-rag-strategy). "
+            "Owner: K4 AI/Data. Активирует strategy=adaptive в RagQueryProcessor: "
+            "LLM-classifier выбирает dense|hybrid|hyde|multi_query по типу query. "
+            "Overhead < 50ms (DoD #2). default-OFF до bench-validation."
+        ),
+    )
+
+    langgraph_checkpoint_ui: bool = Field(
+        default=False,
+        title="K4 S11 W4: LangGraph checkpoint UI (time-travel restore)",
+        description=(
+            "K4 Sprint 11 Wave 4 (wave:s11/k4-w4-langgraph-checkpoint-ui). "
+            "Owner: K4 AI/Data. Активирует /admin/langgraph/checkpoints REST + "
+            "Streamlit-вкладку для list/inspect/restore. Требует "
+            "LangGraphPostgresSaverWrapper. default-OFF до E2E проверки."
+        ),
+    )
+
+    dspy_feedback_loop: bool = Field(
+        default=False,
+        title="K4 S11 W5: DSPy feedback nightly training loop",
+        description=(
+            "K4 Sprint 11 Wave 5 (wave:s11/k4-w5-ai-feedback-dspy). "
+            "Owner: K4 AI/Data. Cron 0 3 * * * — собирает labeled feedback из "
+            "AIFeedbackService → DSPy BootstrapFewShot → LangfusePromptStorage. "
+            "Capability: ai.feedback.train. default-OFF до staging-tuning."
+        ),
+    )
+
+    ai_model_registry_ui: bool = Field(
+        default=False,
+        title="K4 S11 W6: AI Model Registry UI (HF Hub + MLflow composite)",
+        description=(
+            "K4 Sprint 11 Wave 6 (wave:s11/k4-w6-ai-model-registry-ui). "
+            "Owner: K4 AI/Data. Подключает HuggingFaceBackend параллельно MLflow "
+            "через CompositeModelRegistry, + admin REST + Streamlit page 49. "
+            "Capabilities: ai.model_registry.read/write. default-OFF."
+        ),
+    )
+
+    ai_route_optimization: bool = Field(
+        default=False,
+        title="K4 S11 W7: AI-driven route optimization (PR-suggestion)",
+        description=(
+            "K4 Sprint 11 Wave 7 (wave:s11/k4-w7-ai-route-optimization). "
+            "Owner: K4 AI/Data. Анализирует логи route → metrics → AI "
+            "recommendations + PR markdown. CLI: manage.py ai-route-optimize. "
+            "Capability: ai.route.optimize. default-OFF."
+        ),
+    )
+
+    embedding_ab_migration: bool = Field(
+        default=False,
+        title="K4 S11 W8: embedding A/B progressive migration",
+        description=(
+            "K4 Sprint 11 Wave 8 (wave:s11/k4-w8-embedding-ab-migration). "
+            "Owner: K4 AI/Data. Параллельная индексация двух коллекций "
+            "(docs_bge_m3 + docs_bge_m3_v2), A/B retrieval split по hash(query), "
+            "progressive switch через embedding_v2_traffic. default-OFF."
+        ),
+    )
+
+    embedding_v2_traffic: int = Field(
+        default=0,
+        title="K4 S11 W8: процент трафика на v2 embedding (0..100)",
+        description=(
+            "K4 Sprint 11 Wave 8. Owner: K4 AI/Data. Доля трафика, направляемая "
+            "на новую embedding-коллекцию при включённом embedding_ab_migration. "
+            "0..100, шаг прогрессивного переключения: 0 → 25 → 50 → 100."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

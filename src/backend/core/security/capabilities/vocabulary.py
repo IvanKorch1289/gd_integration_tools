@@ -283,4 +283,75 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
+    # ─── Sprint 11 — AI/RAG Completion capabilities ──────────────────────
+    vocab.register(
+        CapabilityDef(
+            name="ai.rag.pii_redaction",
+            matcher=exact,
+            description=(
+                "Применение PII-маскера к augment_result.documents[*].content "
+                "в RAG retrieval pipeline (S11 K1 W1)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.guardrails.lakera",
+            matcher=dot_glob,
+            description=(
+                "Вызов Lakera Guard prompt-injection / PII detector. "
+                "scope = '*' или конкретный provider-id (S11 K1 W2)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.guardrails.rebuff",
+            matcher=dot_glob,
+            description=(
+                "Вызов Rebuff prompt-injection detector. "
+                "scope = '*' или provider-id (S11 K1 W2)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.model_registry.read",
+            matcher=dot_glob,
+            description=(
+                "Чтение из AI Model Registry (MLflow + HF Hub composite); "
+                "scope = backend-id или '*' (S11 K4 W6)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.model_registry.write",
+            matcher=dot_glob,
+            description=(
+                "Запись/promote в AI Model Registry. "
+                "scope = backend-id или '*' (S11 K4 W6)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.feedback.train",
+            matcher=exact,
+            description=(
+                "Запуск DSPy training-loop по labeled feedback "
+                "+ публикация prompt-version (S11 K4 W5)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.route.optimize",
+            matcher=dot_glob,
+            description=(
+                "AI-анализ route-метрик + генерация PR markdown "
+                "(S11 K4 W7); scope = route-name или '*'."
+            ),
+        )
+    )
     return vocab
