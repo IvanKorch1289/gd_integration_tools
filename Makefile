@@ -341,6 +341,16 @@ streamlit: frontend ## Alias: Streamlit dashboard (R3.10c)
 scaffold: check-env ## Scaffold new component (usage: make scaffold type=service name=invoices)
 	@$(MANAGE_SCRIPT) scaffold $(type) $(name)
 
+scaffold-route: check-env ## Sprint 10 K5 W2: interactive route wizard (NAME=... [SOURCE=http SINK=http AI=1 RETRY=1])
+	@$(INFO) "Scaffolding route $(NAME)..."
+	@$(UV_RUN) python tools/scaffold_route.py \
+		$(if $(NAME),--name $(NAME),) \
+		$(if $(SOURCE),--source $(SOURCE),) \
+		$(if $(SINK),--sink $(SINK),) \
+		$(if $(AI),--ai,) \
+		$(if $(RETRY),--retry,) \
+		$(if $(FORCE),--force,)
+
 routes: check-env ## List DSL routes
 	@APP_PROFILE=dev_light $(MANAGE_LIGHT) routes
 
