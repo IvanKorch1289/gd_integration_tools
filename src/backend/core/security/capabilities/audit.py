@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 __all__ = (
@@ -74,19 +74,7 @@ class CapabilityAuditEvent:
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-сериализация для ClickHouse / SIEM."""
-        return {
-            "kind": self.kind,
-            "plugin": self.plugin,
-            "capability": self.capability,
-            "scope": self.scope,
-            "granted": self.granted,
-            "denial_reason": self.denial_reason,
-            "tenant": self.tenant,
-            "actor": self.actor,
-            "correlation_id": self.correlation_id,
-            "timestamp": self.timestamp,
-            "extra": dict(self.extra),
-        }
+        return {"kind": self.kind, **asdict(self)}
 
 
 def log_capability_event(event: CapabilityAuditEvent) -> None:

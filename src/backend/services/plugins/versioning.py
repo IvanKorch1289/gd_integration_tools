@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 import tomllib
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -68,12 +68,7 @@ class InstalledVersion:
     is_active: bool
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "plugin": self.plugin,
-            "version": self.version,
-            "path": str(self.path),
-            "is_active": self.is_active,
-        }
+        return {**asdict(self), "path": str(self.path)}
 
 
 @dataclass(slots=True, frozen=True)
@@ -87,13 +82,7 @@ class RollbackResult:
     reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "plugin": self.plugin,
-            "from_version": self.from_version,
-            "to_version": self.to_version,
-            "status": self.status,
-            "reason": self.reason,
-        }
+        return asdict(self)
 
 
 class PluginVersionService:
