@@ -1248,6 +1248,65 @@ def plugin_new(
     )
 
 
+@plugin_app.command("serve")
+def plugin_serve(
+    name: str = typer.Option(..., "--name", help="Имя плагина (extensions/<name>)"),
+    port: int = typer.Option(8001, "--port", help="Порт backend dev-сервера"),
+    watch: bool = typer.Option(False, "--watch", help="Hot-reload через watchfiles"),
+) -> None:
+    """Sprint 14 K5 W4: запуск local dev-сервера с одним плагином."""
+    import sys as _sys  # noqa: PLC0415
+    from importlib import util as _util  # noqa: PLC0415
+
+    pds_path = Path(__file__).resolve().parent / "tools" / "plugin_dev_server.py"
+    spec = _util.spec_from_file_location("_gdit_plugin_dev_server", pds_path)
+    if spec is None or spec.loader is None:
+        typer.echo(f"ERR: plugin_dev_server недоступен: {pds_path}", err=True)
+        raise typer.Exit(1)
+    module = _util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    argv = ["--name", name, "--port", str(port)]
+    if watch:
+        argv.append("--watch")
+    raise typer.Exit(module.main(argv))
+
+
+@plugin_app.command("publish")
+def plugin_publish(
+    name: str = typer.Option(..., "--plugin", help="Имя плагина (extensions/<name>)"),
+    version: str = typer.Option(..., "--version", help="SemVer плагина"),
+    cosign_key: Path | None = typer.Option(
+        None, "--cosign-key", help="Путь к приватному ключу cosign"
+    ),
+    marketplace_url: str | None = typer.Option(
+        None, "--marketplace-url", envvar="MARKETPLACE_URL"
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    skip_sbom: bool = typer.Option(False, "--skip-sbom"),
+    skip_cosign: bool = typer.Option(False, "--skip-cosign"),
+    skip_upload: bool = typer.Option(False, "--skip-upload"),
+) -> None:
+    """Sprint 14 W3: bundle + SBOM + cosign + upload плагина."""
+    from tools.publish_plugin import PublishConfig, run as publish_run  # noqa: PLC0415
+
+    plugin_dir = Path("extensions") / name
+    cfg = PublishConfig(
+        plugin=name,
+        version=version,
+        plugin_dir=plugin_dir,
+        cosign_key=cosign_key,
+        marketplace_url=marketplace_url,
+        dry_run=dry_run,
+        skip_sbom=skip_sbom,
+        skip_cosign=skip_cosign,
+        skip_upload=skip_upload,
+    )
+    result = publish_run(cfg)
+    for msg in result.messages:
+        typer.echo(f"[publish-plugin] {msg}")
+    raise typer.Exit(0)
+
+
 # ────────────── AI Eval (K4 Sprint 6 Wave 1) ──────────────
 
 
