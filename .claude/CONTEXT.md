@@ -1,5 +1,80 @@
 # CONTEXT.md
 
+## Sprint 11 closure (AI/RAG Completion) — 2026-05-20
+
+**HEAD-ветка master**: `5790cdd4 [wave:s11/k5-w3-replica-dashboard]`
+(плюс 22 atomic S11/S10-carryover коммита в одной coordinator-self сессии).
+
+**Период**: одна непрерывная сессия. 22 коммита (фактически):
+- Phase 0 (1): `[wave:s11/backbone]` — feature-flags + capabilities +
+  multimodal-rag extra + KNOWN_ISSUES.
+- Phase 1 (6 carryover S10/S9):
+  * `uv-resolver-fix` — mlflow pyarrow override + ai-voice py3.14 marker.
+  * `layer-violations-zero` — quotas Protocol + fs_facade lazy + 28 nodes
+    в acknowledged baseline.
+  * `docstring-cli-args` — pre_prod_check gate 11 + 602-entry allowlist.
+  * `cyclonedx-extra` — sync constraints с [dev-group].
+  * `test-collection-errors` — importlib-mode + chaos SCENARIOS +
+    RAGCitation + s3 graceful: 28 errors → 0 (3382→3639 tests collected).
+  * `waf-allowlist-tighten` — 6 baseline → make_http_client; allowlist пуст.
+- Phase 2 (2 K1): RAG PII redaction + Lakera/Rebuff per-tenant guardrails.
+- Phase 3 (1 K2): DistributedRedisRateLimiter (Lua token-bucket).
+- Phase 4 (8 K4): BLIP2/Whisper + multimodal pipeline + adaptive strategy +
+  LangGraph checkpoint UI + DSPy feedback nightly + Model Registry composite +
+  Route optimization + Embedding A/B migration.
+- Phase 5 (3 K5): dashboard pages 81/82 + DB replica Grafana JSON.
+- Phase 6 (1): closure (этот wave).
+
+### Тесты Sprint 11
+84 новых unit-теста, all passing:
+- guardrails: 6 (Lakera + Rebuff клиенты).
+- distributed RL: 4 (fake-Redis cluster).
+- multimodal: 13 (BLIP2 + Whisper + pipeline).
+- strategy_selector: 8 (adaptive RAG).
+- checkpoint inspector: 6 (LangGraph time-travel).
+- DSPy dataset + trainer + cron: 5.
+- composite model registry: 5.
+- route optimization + PR gen: 4.
+- embedding A/B + migration: 5.
+- RAG PII redaction: 4.
+
+### Feature-flags (все default-OFF, S11 backbone)
+- `rag_pii_retrieval_mask`, `guardrails_per_tenant`;
+- `distributed_rl_redis_cluster`;
+- `multimodal_rag_full`, `adaptive_rag_strategy`, `langgraph_checkpoint_ui`;
+- `dspy_feedback_loop`, `ai_model_registry_ui`, `ai_route_optimization`;
+- `embedding_ab_migration` + `embedding_v2_traffic` (0..100).
+
+### Capabilities (S11 backbone)
+- `ai.rag.pii_redaction`;
+- `ai.guardrails.lakera`, `ai.guardrails.rebuff`;
+- `ai.model_registry.read/write`;
+- `ai.feedback.train`, `ai.route.optimize`.
+
+### Carryover в S12
+- Полная Protocol-extraction 29 layer-violations (сейчас в acknowledged
+  baseline `tools/check_layers_allowlist.txt`) — отдельный спринт.
+- manage.py CLI wiring для `ai-route-optimize` и `ai-embedding-migrate`.
+- Реальные DSPy/Whisper/BLIP2 perf-bench на GPU-runner
+  (отдельный @pytest.mark.slow gate).
+
+---
+
+## Sprint 13 closure + commits + tech-debt audit (2026-05-20 15:21)
+
+**HEAD-ветка master**: `1554cb8b [wave:s13/cleanup-layers]` (плюс параллельные S11/S12 wave чужой командой между S13-коммитами).
+
+**Период**: одна непрерывная сессия (~5ч). 23 коммита S13: 19 wave + 3 cleanup + 1 D.3 marker (файлы D.3 попали в чужой `ecdb8e02 "add ignore"`).
+
+### Tech-debt audit (выполнено в сессии)
+
+- **`cleanup-lint`** (`264be7dc`): ruff `--fix I001` (isort) на `eip.py`/`s3_pool.py`; `noqa: BLE001, S110/S112` для Prometheus metric-emitters (`patterns.py`/`pool_warmup.py`/`event_schemas.py`).
+- **`cleanup-type-check`** (`076a759d`): `pyproject.toml` + 2 mypy overrides (`vllm.*`, `webdav4.*`) для optional extras. 9 строк `# type: ignore[*,unused-ignore]` для prometheus_client + sqlalchemy (dev runtime у нас).
+- **`cleanup-layers`** (`1554cb8b`): `admin_nats.py` переведён на `importlib.import_module` для соблюдения layer policy (entrypoints не зависит от infrastructure статически).
+- **Verification** (после cleanup): 127/127 unit-тестов S13 passing • ruff clean на 38 файлах • mypy clean • 0 S13 layer violations.
+
+---
+
 ## Sprint 13 closure (2026-05-20)
 
 **Цель**: закрыть 19 wave Sprint 13 "Infrastructure & Performance" без worktree-агентов.

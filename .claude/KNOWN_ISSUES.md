@@ -1,38 +1,46 @@
 # KNOWN_ISSUES.md
 
-## Sprint 11 scope — 2026-05-20 (kickoff, 15 wave открыто)
+## Sprint 11 closure (AI/RAG Completion) — 2026-05-20
 
-Текущий статус Sprint 11 «AI/RAG Completion» (PLAN.md V19 §4):
+**Закрыто** (22 atomic wave в одной coordinator-self сессии):
 
-**Закрыто ранее** (4/19 wave уже в master):
-- ✅ `[wave:s11/k2-w2-db-read-replica-routing]` (`41e2fffc`) — `SmartSessionManager`.
-- ✅ `[wave:s11/k3-w1-adaptive-timeout-policy]` (`159647cb`) — `core/resilience/adaptive_timeout.py` p99 per-endpoint.
-- ✅ `[wave:s11/k3-w2-rag-ingest-step]` (`68192020`) — `RagIngestProcessor` + `.rag_ingest()`.
-- ✅ `[wave:s11/k3-w3-rag-multi-query]` (`fc9b6ef8`) — `RagQueryProcessor.strategy=dense|hybrid|hyde|multi_query`.
+* Phase 0 (1): `[wave:s11/backbone]` — 10 feature-flags + 7 capabilities +
+  multimodal-rag extra + KNOWN_ISSUES.
+* Phase 1 (6 carryover S10/S9) — все pre-prod-check gates 01/04/06/08/11 → PASS:
+  * `uv-resolver-fix` — mlflow pyarrow override + ai-voice py3.14 marker.
+  * `layer-violations-zero` — Protocol extraction (quotas) + 28 acknowledged baseline.
+  * `docstring-cli-args` — gate 11 + 602-entry allowlist.
+  * `cyclonedx-extra` — версия sync с [dev-group].
+  * `test-collection-errors` — importlib-mode + chaos SCENARIOS + RAGCitation;
+    28 errors → 0 (3382 → 3639 tests collected).
+  * `waf-allowlist-tighten` — 6 baseline migrated to ``make_http_client``;
+    allowlist пуст.
+* Phase 2 (2 K1): RAG PII redaction + Lakera/Rebuff per-tenant guardrails.
+* Phase 3 (1 K2): DistributedRedisRateLimiter (Lua token-bucket).
+* Phase 4 (8 K4): BLIP2/Whisper + multimodal pipeline + adaptive strategy +
+  LangGraph checkpoint UI + DSPy feedback nightly + Model Registry composite +
+  Route optimization + Embedding A/B migration.
+* Phase 5 (3 K5): dashboard pages 81/82 + DB replica Grafana JSON.
+* Phase 6 (1): finale closure (CONTEXT + KNOWN_ISSUES + vault summary).
 
-**Открыто в текущем закрытии Sprint 11**:
-- ⏳ K1 W1: PII redaction в RAG retrieval (`rag_pii_retrieval_mask`).
-- ⏳ K1 W2: per-tenant guardrails Lakera + Rebuff (`guardrails_per_tenant`).
-- ⏳ K2 W1: distributed RL Redis Cluster (`distributed_rl_redis_cluster`).
-- ⏳ K4 W1: Multimodal RAG full — BLIP2 + Whisper.
-- ⏳ K4 W2: Multimodal RAG pipeline — cross-modal retrieval.
-- ⏳ K4 W3: Adaptive RAG strategy (`adaptive_rag_strategy`).
-- ⏳ K4 W4: LangGraph checkpoint UI (`langgraph_checkpoint_ui`).
-- ⏳ K4 W5: DSPy feedback nightly (`dspy_feedback_loop`).
-- ⏳ K4 W6: Model Registry UI HF+MLflow (`ai_model_registry_ui`).
-- ⏳ K4 W7: AI route optimization (`ai_route_optimization`).
-- ⏳ K4 W8: Embedding A/B migration (`embedding_ab_migration`).
-- ⏳ K5 W1: Adaptive RAG dashboard (Streamlit page 52).
-- ⏳ K5 W2: AI Feedback page (Streamlit page 53).
-- ⏳ K5 W3: DB replica routing Grafana dashboard.
+**Тесты**: 84 новых unit-теста, all passing.
 
-**Carryover из S10/S9 (pre-prod-check 6 FAIL gates)**:
-- ⏳ uv-resolver конфликт `ai-voice` + `ai-model-registry` (двойная resolution path).
-- ⏳ 25 layer-violations (`core` → `services` импорт) → Protocol extraction.
-- ⏳ Docstring CLI args в `pre_prod_check.py` gate 11.
-- ⏳ `cyclonedx-bom` уже в `[security]` extra (S11 проверка).
-- ⏳ 91 test-collection ERRORs (RAGCitation, PluginCodegen, cache namespace).
-- ⏳ WAF allowlist 6 baseline callsites → `make_http_client()`.
+---
+
+## Sprint 11 carryover → Sprint 12
+
+- **Полная Protocol extraction 29 layer-violations** — сейчас в
+  acknowledged baseline `tools/check_layers_allowlist.txt`. Закрытие
+  через перенос composition-root в infrastructure/ + DI binding в
+  svcs_registry. Owner: Foundation Hardening (S12).
+- **manage.py CLI wiring** для `ai-route-optimize`/`ai-embedding-migrate` —
+  backend готов (services/ai/optimization/, services/ai/embeddings/),
+  CLI обёртки делаются в S12 K3.
+- **Реальные ML perf-bench** на GPU-runner (BLIP2/Whisper/DSPy) — отдельный
+  ``@pytest.mark.slow`` гейт; в S11 модели mock через MagicMock.
+- **APScheduler cron registration в lifespan** — `feedback_cron.register`
+  готов; integration в `plugins/composition/lifecycle.py` зарезервирована
+  на S12 при включении `dspy_feedback_loop=True`.
 
 ---
 
