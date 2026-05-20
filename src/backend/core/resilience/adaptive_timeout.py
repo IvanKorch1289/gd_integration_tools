@@ -35,7 +35,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Final
 
-__all__ = ("AdaptiveTimeoutPolicy", "AdaptiveTimeoutConfig")
+__all__ = (
+    "AdaptiveTimeoutConfig",
+    "AdaptiveTimeoutPolicy",
+    "get_adaptive_timeout_policy",
+    "reset_adaptive_timeout_policy",
+)
 
 # Минимальное число замеров до выдачи non-default таймаута.
 _MIN_SAMPLES_FOR_P99: Final[int] = 10
@@ -162,6 +167,26 @@ class AdaptiveTimeoutPolicy:
     def _clamp(self, seconds: float) -> float:
         """Ограничивает значение интервалом ``[min_timeout, max_timeout]``."""
         return max(self._config.min_timeout, min(self._config.max_timeout, seconds))
+
+
+# Module-level singleton policy. Сэмплы накапливаются между запросами,
+# поэтому instance должен быть один на процесс. Сброс — только в unit-тестах
+# через :func:`reset_adaptive_timeout_policy`.
+_singleton: AdaptiveTimeoutPolicy | None = None
+
+
+def get_adaptive_timeout_policy() -> AdaptiveTimeoutPolicy:
+    """Возвращает singleton :class:`AdaptiveTimeoutPolicy` (lazy-init)."""
+    global _singleton
+    if _singleton is None:
+        _singleton = AdaptiveTimeoutPolicy()
+    return _singleton
+
+
+def reset_adaptive_timeout_policy() -> None:
+    """Сбрасывает singleton (для unit-тестов)."""
+    global _singleton
+    _singleton = None
 
 
 def _percentile(samples: Iterable[float], *, percent: float) -> float:

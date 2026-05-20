@@ -17,8 +17,9 @@ Usage::
 """
 
 import logging
+import time
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 __all__ = ("BaseExternalAPIClient",)
 
@@ -142,15 +143,54 @@ class BaseExternalAPIClient:
             headers.update(extra)
         return headers
 
-    def _timeouts(self) -> dict[str, float]:
-        """Возвращает connect/read/total таймауты из settings."""
+    def _timeouts(
+        self, *, host: str | None = None, endpoint: str | None = None
+    ) -> dict[str, float]:
+        """Возвращает connect/read/total таймауты из settings.
+
+        Если задан ``host`` + ``endpoint`` и
+        :class:`AdaptiveTimeoutPolicy` уже накопила достаточно сэмплов
+        (см. ``_MIN_SAMPLES_FOR_P99``) — total_timeout заменяется
+        на рекомендацию policy. Иначе остаётся hardcoded
+        ``connect + read`` (backwards compatible).
+        """
         connect = float(getattr(self.settings, "connect_timeout", 10))
         read = float(getattr(self.settings, "read_timeout", 30))
+        total = connect + read
+        if host and endpoint:
+            try:
+                from src.backend.core.resilience.adaptive_timeout import (
+                    get_adaptive_timeout_policy,
+                )
+
+                total = get_adaptive_timeout_policy().get_timeout(
+                    host, endpoint, default_seconds=total
+                )
+            except Exception:  # noqa: BLE001
+                # Policy lookup не должен ломать HTTP-flow — fallback
+                # на hardcoded таймауты.
+                pass
         return {
             "connect_timeout": connect,
             "read_timeout": read,
-            "total_timeout": connect + read,
+            "total_timeout": total,
         }
+
+    def _record_endpoint_latency(
+        self, host: str, endpoint: str, latency_ms: float
+    ) -> None:
+        """Best-effort вызов :meth:`AdaptiveTimeoutPolicy.record_latency`.
+
+        Исключения подавляются — статистика не должна мешать запросу.
+        """
+        try:
+            from src.backend.core.resilience.adaptive_timeout import (
+                get_adaptive_timeout_policy,
+            )
+
+            get_adaptive_timeout_policy().record_latency(host, endpoint, latency_ms)
+        except Exception:  # noqa: BLE001
+            pass
 
     async def _request(
         self,
@@ -172,51 +212,66 @@ class BaseExternalAPIClient:
         дефолты HttpClient. Доп. kwargs прозрачно передаются дальше.
         """
         full_headers = self._headers(extra=headers, use_waf=use_waf)
-        kwargs: dict[str, Any] = {**self._timeouts(), **extra_kwargs}
+        # AdaptiveTimeoutPolicy: host/endpoint извлекаются из URL и
+        # передаются в _timeouts(); они же используются для записи
+        # latency в finally-блоке ниже.
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        endpoint = parsed.path or ""
+        kwargs: dict[str, Any] = {
+            **self._timeouts(host=host, endpoint=endpoint),
+            **extra_kwargs,
+        }
         if response_type is not None:
             kwargs["response_type"] = response_type
         if raise_for_status is not None:
             kwargs["raise_for_status"] = raise_for_status
 
         facade = self._resolve_outbound_facade()
-        if facade is not None:
+        start_monotonic = time.monotonic()
+        try:
+            if facade is not None:
+                try:
+                    response = await facade.request(
+                        method,
+                        url,
+                        params=params,
+                        json=json,
+                        headers=full_headers,
+                    )
+                except Exception as exc:
+                    self._logger.error(
+                        "%s outbound facade failed: %s %s — %s",
+                        self._name,
+                        method,
+                        url,
+                        exc,
+                    )
+                    raise
+                if response_type == "text":
+                    return response.text
+                if response_type == "bytes":
+                    return response.content
+                try:
+                    return response.json()
+                except ValueError:
+                    return response.text
+
             try:
-                response = await facade.request(
-                    method,
-                    url,
+                return await self.client.make_request(
+                    method=method,
+                    url=url,
                     params=params,
                     json=json,
                     headers=full_headers,
+                    **kwargs,
                 )
             except Exception as exc:
                 self._logger.error(
-                    "%s outbound facade failed: %s %s — %s",
-                    self._name,
-                    method,
-                    url,
-                    exc,
+                    "%s request failed: %s %s — %s", self._name, method, url, exc
                 )
                 raise
-            if response_type == "text":
-                return response.text
-            if response_type == "bytes":
-                return response.content
-            try:
-                return response.json()
-            except ValueError:
-                return response.text
-
-        try:
-            return await self.client.make_request(
-                method=method,
-                url=url,
-                params=params,
-                json=json,
-                headers=full_headers,
-                **kwargs,
-            )
-        except Exception as exc:
-            self._logger.error(
-                "%s request failed: %s %s — %s", self._name, method, url, exc
-            )
-            raise
+        finally:
+            if host and endpoint:
+                latency_ms = (time.monotonic() - start_monotonic) * 1000.0
+                self._record_endpoint_latency(host, endpoint, latency_ms)
