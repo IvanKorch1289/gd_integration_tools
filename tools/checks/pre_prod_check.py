@@ -154,7 +154,11 @@ def define_checks() -> list[tuple[str, Callable[[], CheckResult]]]:
             "codeclone", "requires running codeclone MCP server"
         )),
         ("11 docstring coverage", lambda: _check_python_script(
-            "docstring-coverage", "check_docstrings.py"
+            "docstring-coverage",
+            "check_docstrings.py",
+            "src/backend/core",
+            "src/backend/dsl/engine",
+            "src/backend/core/interfaces",
         )),
         ("12 docs Vale", lambda: _check_optional(
             "docs-vale", "requires vale binary"
