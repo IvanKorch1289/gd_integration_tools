@@ -239,6 +239,55 @@ async def _close_workflow_audit_sink() -> None:
         reset_workflow_audit_sink()
 
 
+async def _warmup_connection_pools() -> None:
+    """Pre-spin connection pools после initialize-фазы (S9 K2 W3, wired S10).
+
+    Запускается после ``db_async_pool_main``/``db_async_pool_external``/
+    ``redis``/``clickhouse_client`` — все пулы уже подключены, но физических
+    соединений ещё нет. :class:`PoolWarmup` параллельно открывает
+    ``min_connections`` соединений для каждого доступного backend, что
+    устраняет cold-start latency первого запроса.
+
+    Никогда не raise: :class:`PoolWarmup` поглощает per-pool exceptions
+    и возвращает их в ``WarmupResult.failed_pools``. Hard-timeout 5s
+    защищает от зависшего backend.
+    """
+    from src.backend.infrastructure.database.pool_warmup import PoolWarmup
+
+    initializer = get_db_initializer()
+    pg_engine = getattr(initializer, "async_engine", None)
+    pg_replica_engine = getattr(initializer, "replica_engine", None)
+
+    redis_cache_client: Any = None
+    if _redis_enabled():
+        try:
+            redis_cache_client = await get_redis_client().get_client("cache")
+        except Exception:  # noqa: BLE001 — warmup best-effort
+            redis_cache_client = None
+
+    clickhouse_client: Any = None
+    if _clickhouse_enabled():
+        clickhouse_client = get_clickhouse_client()
+
+    if (
+        pg_engine is None
+        and pg_replica_engine is None
+        and redis_cache_client is None
+        and clickhouse_client is None
+    ):
+        # dev_light: все backends отключены — warmup нечего делать.
+        return
+
+    await PoolWarmup(
+        pg_engine=pg_engine,
+        pg_replica_engine=pg_replica_engine,
+        redis_client=redis_cache_client,
+        clickhouse_client=clickhouse_client,
+        min_connections=3,
+        timeout_seconds=5.0,
+    ).warmup()
+
+
 # Wave 6.1: операции обёрнуты в lambda — singletons резолвятся лениво,
 # при первом исполнении операции, а не на module-level import.
 starting_operations: list[OperationItem] = [
@@ -261,6 +310,7 @@ starting_operations: list[OperationItem] = [
         _init_workflow_audit_sink,
         _clickhouse_enabled,
     ),
+    ("pool_warmup", _warmup_connection_pools, None),
     ("smtp_pool", lambda: get_smtp_client().initialize_pool(), None),
     (
         "redis_streams",

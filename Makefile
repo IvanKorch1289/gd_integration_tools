@@ -206,6 +206,12 @@ simulate: check-env ## Sprint 10 K5 W3: CLI dry-run route (ROUTE=<name|path>)
 	@$(INFO) "DSL simulate $(ROUTE)..."
 	@$(UV_RUN) python tools/dsl_simulate.py $(ROUTE)
 
+plugin-dev: check-env ## Sprint 10 K5 W4: infra-only docker + hot-reload + tests (NAME=<ext>)
+	@$(INFO) "Plugin-dev mode for $(NAME)..."
+	@$(UV_RUN) python tools/plugin_dev.py --name $(NAME) \
+		$(if $(AUTO_TEST),--auto-test,) \
+		$(if $(NO_COMPOSE),--no-compose-up,)
+
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
