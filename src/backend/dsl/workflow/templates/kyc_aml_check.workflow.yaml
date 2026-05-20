@@ -1,0 +1,30 @@
+name: kyc_aml_check
+version: "1.0"
+description: |
+  KYC/AML Check — 3 parallel checks → consolidate → decide (saga compensation).
+  Template tags: kyc, aml, compliance, parallel, saga.
+steps:
+  - type: saga
+    forward:
+      - name: identity_verification
+        args: {provider: dadata}
+        timeout_s: 60
+      - name: sanctions_screening
+        args: {provider: world_check}
+        timeout_s: 60
+      - name: pep_screening
+        args: {provider: dow_jones}
+        timeout_s: 60
+    compensate:
+      - name: revoke_provisional_status
+        timeout_s: 30
+  - type: activity
+    name: consolidate_results
+    args:
+      threshold: 80
+    timeout_s: 30
+  - type: activity
+    name: decide_outcome
+    args:
+      auto_approve_threshold: 95
+    timeout_s: 30

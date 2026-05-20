@@ -1,0 +1,23 @@
+name: data_migration
+version: "1.0"
+description: |
+  Data Migration — snapshot → transform → upsert → verify → rollback-on-fail.
+  Template tags: migration, snapshot, saga, verification.
+steps:
+  - type: saga
+    forward:
+      - name: snapshot_source
+        args: {target: s3://migration/snapshot}
+        timeout_s: 600
+      - name: transform_records
+        args: {batch_size: 5000}
+        timeout_s: 1800
+      - name: upsert_to_target
+        args: {target: postgres}
+        timeout_s: 1800
+      - name: verify_integrity
+        args: {sample_pct: 10}
+        timeout_s: 300
+    compensate:
+      - name: restore_from_snapshot
+        timeout_s: 600
