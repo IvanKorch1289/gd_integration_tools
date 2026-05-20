@@ -266,6 +266,29 @@ class AppBaseSettings(BaseSettingsWithLoader):
         ..., title="Уровень сжатия GZIP", ge=1, le=9, description="Уровень сжатия GZIP"
     )
 
+    # Параметры Brotli (Sprint 10 K2 W2)
+    compression_brotli: bool = Field(
+        default=False,
+        title="Включить Brotli compression",
+        description=(
+            "Включает BrotliCompressionMiddleware (PERF-6.6, -60% JSON traffic). "
+            "Требует extra `compression`. Действует совместно с GZIP fallback."
+        ),
+    )
+    brotli_minimum_size: int = Field(
+        default=500,
+        ge=0,
+        title="Минимальный размер ответа для Brotli",
+        description="Ниже этого порога ответ не сжимается Brotli.",
+    )
+    brotli_quality: int = Field(
+        default=4,
+        ge=0,
+        le=11,
+        title="Уровень сжатия Brotli (0-11)",
+        description="0=fast/low, 11=slow/high. 4 — баланс CPU/ratio.",
+    )
+
     # Контроль документации
     enable_swagger: bool = Field(
         ...,

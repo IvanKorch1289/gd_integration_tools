@@ -33,6 +33,9 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.core.config.settings import settings
     from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
+    from src.backend.entrypoints.middlewares.brotli_compression import (
+        BrotliCompressionMiddleware,
+    )
     from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
     from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from src.backend.entrypoints.middlewares.auth_method_header import (
@@ -119,6 +122,22 @@ def setup_middlewares(app: FastAPI) -> None:
         (TimeoutMiddleware, {}),
         # Слой 3: Обработка тела (только для прошедших аутентификацию)
         (ResponseCacheMiddleware, {"max_age": 60}),
+        # S10 K2 W2 (PERF-6.6): Brotli compression — действует выше GZIP,
+        # для JSON-ответов и клиентов с `Accept-Encoding: br`. Отключается
+        # через settings.app.compression_brotli (default OFF).
+        *(
+            [
+                (
+                    BrotliCompressionMiddleware,
+                    {
+                        "minimum_size": settings.app.brotli_minimum_size,
+                        "quality": settings.app.brotli_quality,
+                    },
+                )
+            ]
+            if settings.app.compression_brotli
+            else []
+        ),
         (
             GZipMiddleware,
             {
