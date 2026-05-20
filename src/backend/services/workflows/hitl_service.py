@@ -251,4 +251,37 @@ class HitlService:
                     "data": payload or {},
                 },
             )
+
+        try:
+            from src.backend.services.audit.workflow_audit_sink import (
+                get_workflow_audit_sink,
+            )
+
+            sink = get_workflow_audit_sink()
+            if sink is not None:
+                action_map = {
+                    HitlAction.APPROVE: "hitl.approved",
+                    HitlAction.REJECT: "hitl.rejected",
+                    HitlAction.REQUEST_INFO: "hitl.requested_info",
+                }
+                event_type = action_map.get(action, f"hitl.{action}")
+                duration_ms: int | None = None
+                if resolved.resolved_at and resolved.created_at:
+                    delta = resolved.resolved_at - resolved.created_at
+                    duration_ms = int(delta.total_seconds() * 1000)
+                await sink.emit(
+                    event_type=event_type,
+                    workflow_id=resolved.workflow_id,
+                    tenant_id=resolved.tenant_id,
+                    actor=resolved_by,
+                    duration_ms=duration_ms,
+                    payload={
+                        "signal_id": signal_id,
+                        "action": action,
+                        "comment": (payload or {}).get("comment"),
+                    },
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
         return resolved

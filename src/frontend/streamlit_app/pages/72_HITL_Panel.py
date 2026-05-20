@@ -124,3 +124,60 @@ def _resolve(
 
 
 render_pending_table()
+
+
+# ──────────────────────── Sprint 12 K5 W2: History ─────────────
+st.divider()
+st.subheader("📜 HITL History (Sprint 12 K5 W2)")
+st.caption(
+    "Историческая запись HITL decisions из workflow_audit "
+    "(hitl.approved/rejected/requested_info events)."
+)
+
+col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+hist_tenant = col_h1.text_input("Tenant filter", key="hist_tenant")
+hist_action = col_h2.selectbox(
+    "Action filter",
+    options=["", "approve", "reject", "request_info"],
+    key="hist_action",
+)
+hist_operator = col_h3.text_input("Operator filter", key="hist_op")
+hist_limit = col_h4.number_input("Limit", min_value=10, max_value=1000, value=100)
+
+if st.button("Load history", type="primary"):
+    try:
+        params: dict = {"limit": int(hist_limit)}
+        if hist_tenant:
+            params["tenant_id"] = hist_tenant
+        if hist_action:
+            params["action"] = hist_action
+        if hist_operator:
+            params["operator"] = hist_operator
+        resp = client.get("/hitl/history", params=params)
+        resp.raise_for_status()
+        body = resp.json()
+        items = body.get("items", [])
+        if not items:
+            st.info("Нет записей по выбранным фильтрам.")
+        else:
+            st.write(f"Найдено: {len(items)}")
+            st.dataframe(items)
+
+            try:
+                import io
+
+                import pandas as pd
+
+                df = pd.DataFrame(items)
+                csv_buffer = io.StringIO()
+                df.to_csv(csv_buffer, index=False)
+                st.download_button(
+                    "Export CSV",
+                    csv_buffer.getvalue(),
+                    file_name="hitl_history.csv",
+                    mime="text/csv",
+                )
+            except ImportError:
+                pass
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"History load failed: {exc}")

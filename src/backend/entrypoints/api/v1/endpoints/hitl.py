@@ -97,3 +97,44 @@ async def resolve_signal(
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return signal.to_dict()
+
+
+# ──────────────────────── Sprint 12 K5 W2: History ─────────────
+@router.get("/history", summary="HITL decisions history (S12 K5 W2)")
+async def hitl_history(
+    tenant_id: str | None = None,
+    action: str | None = None,
+    operator: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Historical decisions из workflow_audit (hitl.* events).
+
+    Sprint 12 K5 W2 — page 72 "History" tab.
+    """
+    from src.backend.services.workflows.hitl_history import HitlHistoryService
+
+    service = HitlHistoryService()
+    records = await service.get_history(
+        tenant_id=tenant_id,
+        action=action,
+        operator=operator,
+        limit=limit,
+    )
+    return {
+        "items": [
+            {
+                "signal_id": r.signal_id,
+                "workflow_id": r.workflow_id,
+                "tenant_id": r.tenant_id,
+                "action": r.action,
+                "operator": r.operator,
+                "resolved_at": r.resolved_at.isoformat()
+                if r.resolved_at
+                else None,
+                "duration_ms": r.duration_ms,
+                "comment": r.comment,
+            }
+            for r in records
+        ],
+        "count": len(records),
+    }
