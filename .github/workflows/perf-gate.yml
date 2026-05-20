@@ -70,7 +70,7 @@ jobs:
         # Sprint 6 K2: проверить, что compose-стек синтаксически валиден
         # (полный запуск — только локально или в staging).
         run: |
-          docker compose -f docker-compose.perf.yml config --quiet \
+          docker compose -f ops/compose/docker-compose.perf.yml config --quiet \
             || echo "[perf-gate] warn: compose validation failed"
 
       - name: Upload perf report

@@ -6,7 +6,7 @@
 * total cold-import time не выше ``MAX_TOTAL_STARTUP_SECONDS``;
 * total cold-import time не превышает baseline + ``REGRESSION_TOLERANCE``.
 
-Baseline хранится в ``.startup-time-baseline.json``; обновляется
+Baseline хранится в ``.baselines/startup-time.json``; обновляется
 явно через ``--ratchet`` (CI должен это делать при успешном run).
 
 Запуск:
@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE_FILE = ROOT / ".startup-time-baseline.json"
+BASELINE_FILE = ROOT / ".baselines" / "startup-time.json"
 
 MAX_STARTUP_SECONDS_PER_MODULE = 3.0
 MAX_TOTAL_STARTUP_SECONDS = 3.0

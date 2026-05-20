@@ -2,7 +2,7 @@
 
 Запускает mypy, считает уникальные ошибки, fail'ит если их больше
 ``MAX_MYPY_ERRORS`` (ratcheting baseline). При успехе автоматически
-обновляет ``.mypy-baseline.json`` с новым (меньшим) значением.
+обновляет ``.baselines/mypy.json`` с новым (меньшим) значением.
 
 Запуск:
 
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE_FILE = ROOT / ".mypy-baseline.json"
+BASELINE_FILE = ROOT / ".baselines" / "mypy.json"
 
 # Cтрока ошибки mypy: ``path/to/file.py:NN: error: ...``
 ERROR_RE = re.compile(r"^[^:]+:\d+:\s*(?:\d+:\s*)?error:", re.MULTILINE)

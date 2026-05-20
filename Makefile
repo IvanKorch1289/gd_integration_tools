@@ -51,7 +51,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 
 # === К1 hooks === include секционных таргетов команды-1 (Security/Net/Secrets/AI-Safety).
 # Подключение опциональное — при отсутствии файла make продолжает без ошибки.
--include Makefile.security
+-include make/security.mk
 
 .PHONY: \
 	help \
@@ -655,13 +655,13 @@ docs-coverage: ## Wave 10.8 — docstring + HTML coverage gate
 coverage-gate: ## К3 S6 [wave:s6/k3-coverage-gate-70] — pytest coverage gate (blocking, baseline-aware)
 	@$(INFO) "Running pytest with --cov + coverage gate..."
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline coverage_baseline.json --threshold 50
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50
 	@$(SUCCESS) "Coverage gate passed"
 
 coverage-gate-strict: ## К3 S6 — coverage gate strict (drop > 0.5% от baseline → fail)
 	@$(INFO) "Running pytest with --cov + coverage gate (strict)..."
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline coverage_baseline.json --threshold 70 --strict
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 70 --strict
 	@$(SUCCESS) "Coverage gate strict passed"
 
 ##@ Git & Release
@@ -679,8 +679,8 @@ commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
 	git add src/ docs/ scripts/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
 	@# Опциональные корневые файлы — добавляются, только если существуют.
 	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
-	@[ -f Dockerfile ] && git add Dockerfile || true
-	@[ -f docker-compose.yml ] && git add docker-compose.yml || true
+	@[ -f ops/compose/Dockerfile ] && git add ops/compose/Dockerfile || true
+	@[ -f ops/compose/docker-compose.yml ] && git add ops/compose/docker-compose.yml || true
 	@if git diff --cached --quiet; then \
 		$(WARN) "Nothing to commit"; \
 	else \

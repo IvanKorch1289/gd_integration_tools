@@ -31,7 +31,7 @@ set -euo pipefail
 # ── Project root резолвится относительно расположения скрипта ─────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.bluegreen.yml"
+COMPOSE_FILE="${PROJECT_ROOT}/ops/compose/docker-compose.bluegreen.yml"
 STATE_FILE="${PROJECT_ROOT}/.blue_green.state"
 
 # ── Утилиты ───────────────────────────────────────────────────────────

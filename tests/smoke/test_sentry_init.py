@@ -123,7 +123,9 @@ def test_clamav_in_compose() -> None:
     """ClamAV-сервис присутствует в docker-compose.yml (Wave A.5)."""
     from pathlib import Path
 
-    compose_path = Path(__file__).resolve().parents[2] / "docker-compose.yml"
+    compose_path = (
+        Path(__file__).resolve().parents[2] / "ops" / "compose" / "docker-compose.yml"
+    )
     content = compose_path.read_text(encoding="utf-8")
     assert "clamav:" in content, "ожидался clamav-сервис в compose"
     assert "CLAMAV_HOST" in content, "ожидалась env CLAMAV_HOST для app-сервиса"

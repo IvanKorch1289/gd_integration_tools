@@ -1,10 +1,12 @@
 services:
   app:
-    build: .
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ../../.env
     environment:
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
@@ -19,10 +21,12 @@ services:
     restart: unless-stopped
 
   workflow-worker:
-    build: .
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
     command: ["python", "-m", "src.workflows.worker", "run"]
     env_file:
-      - .env
+      - ../../.env
     environment:
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
       SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-30}

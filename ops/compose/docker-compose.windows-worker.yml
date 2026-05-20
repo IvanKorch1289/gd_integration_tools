@@ -17,7 +17,7 @@ services:
   windows-worker:
     image: gd-windows-worker:py314
     build:
-      context: .
+      context: ../..
       dockerfile: windows_worker/Dockerfile.windows
     container_name: gd-windows-worker
     isolation: process

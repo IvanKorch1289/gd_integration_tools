@@ -80,8 +80,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
     environment: *app-env
     depends_on:
       postgres:
@@ -105,8 +105,8 @@ services:
       BASE_URL: http://backend:8000
       MODE: ${K6_MODE:-sustained}
     volumes:
-      - ./tests/perf:/scripts:ro
-      - ./dist:/dist
+      - ../../tests/perf:/scripts:ro
+      - ../../dist:/dist
     command: run -e BASE_URL=http://backend:8000 -e MODE=${K6_MODE:-sustained}
              --summary-export=/dist/k6-summary.json
              /scripts/k6_baseline.js
@@ -121,8 +121,8 @@ services:
     environment:
       LOCUST_HOST: http://backend:8000
     volumes:
-      - ./tests/perf:/mnt/locust:ro
-      - ./dist:/dist
+      - ../../tests/perf:/mnt/locust:ro
+      - ../../dist:/dist
     command: -f /mnt/locust/locust_baseline.py
              --headless --users 200 --spawn-rate 50 --run-time 90s
              --csv=/dist/locust --csv-full-history

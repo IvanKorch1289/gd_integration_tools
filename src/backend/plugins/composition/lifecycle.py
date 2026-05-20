@@ -636,6 +636,46 @@ async def lifespan(app: FastAPI):
                 otel_exc,
             )
 
+    # Sprint 16 K2 W3 (L3-P0-1, 2026-05-20): OTel MeterProvider + OTLP
+    # metrics exporter ставится отдельным блоком, чтобы lifespan мог
+    # независимо включать traces и metrics. Default-OFF через ENV
+    # ``OTLP_METRICS_ENABLED=true``. FastAPI/asyncpg/SQLAlchemy
+    # auto-instrumentation подцепят глобальный MeterProvider после
+    # set_meter_provider — workflow + business-event метрики
+    # регистрируются базовыми meter-ами в _register_base_meters.
+    if _os.environ.get("OTLP_METRICS_ENABLED", "false").lower() == "true":
+        try:
+            from src.backend.infrastructure.observability.otel import setup_otel_metrics
+
+            metrics_endpoint = (
+                _os.environ.get("OTLP_METRICS_ENDPOINT")
+                or _os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+                or None
+            )
+            metrics_interval = int(
+                _os.environ.get("OTLP_METRICS_EXPORT_INTERVAL_SECONDS", "60")
+            )
+            metrics_service = _os.environ.get(
+                "OTEL_SERVICE_NAME", "gd_integration"
+            )
+            metrics_env = _os.environ.get("APP_ENVIRONMENT", "development")
+            metrics_insecure = (
+                _os.environ.get("OTLP_METRICS_INSECURE", "true").lower() == "true"
+            )
+            setup_otel_metrics(
+                service_name=metrics_service,
+                endpoint=metrics_endpoint,
+                export_interval_seconds=metrics_interval,
+                environment=metrics_env,
+                insecure=metrics_insecure,
+            )
+        except Exception as metrics_exc:  # noqa: BLE001
+            app_logger.warning(
+                "OTel metrics configure skipped: %s "
+                "(приложение продолжит без OTLP metrics-канала)",
+                metrics_exc,
+            )
+
     try:
         from src.backend.plugins.composition.di import register_app_state
 
@@ -941,6 +981,21 @@ async def lifespan(app: FastAPI):
             await shutdown_pyrate_leaker(get_default_limiter())
         except Exception as leaker_exc:  # noqa: BLE001
             app_logger.warning("pyrate Leaker shutdown skipped: %s", leaker_exc)
+
+        # Sprint 16 K2 W3 (L3-P0-1): graceful shutdown OTel MeterProvider.
+        # PeriodicExportingMetricReader должен успеть отправить накопленные
+        # метрики в OTLP-коллектор перед остановкой приложения.
+        # No-op, если setup_otel_metrics не вызывался.
+        try:
+            from src.backend.infrastructure.observability.otel import (
+                shutdown_otel_metrics,
+            )
+
+            shutdown_otel_metrics()
+        except Exception as metrics_stop_exc:  # noqa: BLE001
+            app_logger.warning(
+                "OTel metrics shutdown skipped: %s", metrics_stop_exc
+            )
 
         # Sprint 3 К2 W1: graceful close RedisClusterAdapter если регистрировался.
         cluster_adapter = getattr(app.state, "redis_cluster_adapter", None)

@@ -24,7 +24,7 @@ from xml.etree import ElementTree as ET
 import pytest
 
 TOOL_PATH = Path("tools/check_coverage_gate.py")
-BASELINE_PATH = Path("coverage_baseline.json")
+BASELINE_PATH = Path(".baselines/coverage.json")
 
 
 def _write_coverage_xml(path: Path, line_rate: float) -> None:
@@ -55,7 +55,7 @@ def test_tool_exists_and_help() -> None:
 
 
 def test_baseline_json_loadable() -> None:
-    """coverage_baseline.json — валидный JSON с обязательными полями."""
+    """.baselines/coverage.json — валидный JSON с обязательными полями."""
     assert BASELINE_PATH.exists()
     with BASELINE_PATH.open(encoding="utf-8") as fh:
         data = json.load(fh)

@@ -19,7 +19,7 @@ Wave ``[wave:s6/k3-coverage-gate-70]``.
     # 3. Зафиксировать baseline (только при первой настройке):
     python tools/check_coverage_gate.py --update-baseline
 
-Baseline-snapshot хранится в ``coverage_baseline.json`` в корне проекта.
+Baseline-snapshot хранится в ``.baselines/coverage.json``.
 При повторных запусках сравнивает с baseline: если coverage упал
 относительно baseline более чем на 0.5%, гейт падает. Если поднялся —
 гейт пропускает.
@@ -77,7 +77,7 @@ def _parse_coverage_xml(path: Path) -> float:
 
 
 def _load_baseline(path: Path) -> dict[str, Any]:
-    """Читает baseline-snapshot ``coverage_baseline.json``.
+    """Читает baseline-snapshot ``.baselines/coverage.json``.
 
     Если файл отсутствует — возвращает пустой dict (первый запуск).
     """
@@ -87,7 +87,7 @@ def _load_baseline(path: Path) -> dict[str, Any]:
 
 
 def _save_baseline(path: Path, data: dict[str, Any]) -> None:
-    """Сохраняет baseline в ``coverage_baseline.json``."""
+    """Сохраняет baseline в ``.baselines/coverage.json``."""
     path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -110,7 +110,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--baseline",
-        default="coverage_baseline.json",
+        default=".baselines/coverage.json",
         help="Путь к baseline-snapshot.",
     )
     parser.add_argument(
