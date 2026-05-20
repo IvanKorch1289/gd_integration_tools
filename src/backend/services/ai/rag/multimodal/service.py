@@ -108,6 +108,36 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         """Заменяет дефолтный ImageIngester."""
         self._image_ingester = ingester
 
+    async def caption_image(self, image_bytes: bytes) -> str:
+        """Сгенерировать text caption для изображения (Sprint 11 K4 W1).
+
+        Использует BLIP2 captioner (lazy-import transformers). Возвращает
+        plain text — используется при ingest для chunk content.
+        """
+        from src.backend.services.ai.rag.multimodal.blip2_captioner import (
+            BLIP2Captioner,
+        )
+
+        if not hasattr(self, "_captioner") or self._captioner is None:
+            self._captioner = BLIP2Captioner()
+        result = await self._captioner.caption(image_bytes)
+        return result.caption
+
+    async def transcribe_audio(
+        self, audio_bytes: bytes, *, suffix: str = ".wav"
+    ) -> str:
+        """STT для audio (Sprint 11 K4 W1).
+
+        Использует Whisper STT (lazy-import openai-whisper). Возвращает
+        plain transcript — используется при ingest для chunk content.
+        """
+        from src.backend.services.ai.rag.multimodal.whisper_stt import WhisperSTT
+
+        if not hasattr(self, "_whisper") or self._whisper is None:
+            self._whisper = WhisperSTT()
+        result = await self._whisper.transcribe(audio_bytes, suffix=suffix)
+        return result.text
+
     async def ingest_document(
         self,
         path: Path | bytes,
