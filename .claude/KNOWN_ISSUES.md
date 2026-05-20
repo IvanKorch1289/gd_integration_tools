@@ -1,5 +1,29 @@
 # KNOWN_ISSUES.md
 
+## Sprint 15 kickoff — 2026-05-20 (DX Tooling + Innovation, Production-Ready Final)
+
+**Активные задачи** (28 atomic commits — backbone + 25 wave + 6 closure):
+
+* **Backbone**: 5 feature-flags (sandbox_amortised_psutil / arch_map_llm_search_enabled /
+  ai_pr_review_enabled / dsl_visual_editor_drag_drop / changelog_autogen_enabled),
+  team_s15.k1..k5 секции в team-ownership.toml.
+* **Phase A — Production-Gates**:
+  - F-2 sandbox overhead reduction (carryover S14).
+  - mypy=0 (DoD #9).
+  - Final security audit (OWASP ZAP + API top 10).
+  - Perf bench ratchet (p95≤80ms, RPS≥1500).
+  - `manage.py diagnose` aggregator.
+* **Phase B — DSL/LSP**: F-5 .pyi fidelity (carryover S14), LSP server, YAML schema,
+  Visual Editor finale.
+* **Phase C — DX Scaffolding**: VSCode extension+sign, make new-adr, CLI completions,
+  changelog autogen, AI PR review.
+* **Phase D — Documentation**: Arch Map (page 83) + LLM search, ADR-tab, dep-map HTML,
+  tutorial progress, changelog diff (page 85).
+
+**DoD finale**: 11/11 (см. план §8).
+
+---
+
 ## Sprint 12 closure (Workflow Enhancement) — 2026-05-20
 
 **Закрыто** (17 atomic wave + backbone + closure в одной coordinator-self сессии):

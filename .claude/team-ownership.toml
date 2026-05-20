@@ -811,3 +811,109 @@ forbidden_paths = [
     "src/backend/services/ai/**",
     "extensions/**",
 ]
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Sprint 15 — DX Tooling + Innovation (Production-Ready Final, V20)
+# 5 команд × 28 atomic commits (backbone + 25 wave + closure).
+# Coordinator-self исполнение (не worktree-агенты).
+# ═════════════════════════════════════════════════════════════════════════════
+
+[team_s15.k1]
+name = "S15 K1 — Security/Compliance (sandbox <5% + security audit + cosign VSIX)"
+git_branch_prefix = "team/s15-k1-security"
+wave_prefix = "s15/k1-"
+goal = "F-2 sandbox overhead reduction (psutil amortised), OWASP ZAP+API top10 zero-tol, VSCode extension cosign sign."
+owned_paths = [
+    "src/backend/core/plugin_runtime/sandbox.py",
+    ".github/workflows/security.yml",
+    "tools/checks/run_pip_audit.py",
+    "tools/checks/check_owasp_api_top10.py",
+    "tools/vscode-extension/scripts/sign.sh",
+    ".github/workflows/vscode-publish.yml",
+    "tests/perf/test_plugin_sandbox_overhead.py",
+    "docs/adr/0063-sandbox-amortised-psutil.md",
+    "docs/adr/0064-vscode-marketplace-strategy.md",
+]
+shared_with = ["k5"]
+
+[team_s15.k2]
+name = "S15 K2 — Resilience+Perf (mypy=0 + perf-gate ratchet + manage.py diagnose)"
+git_branch_prefix = "team/s15-k2-perf"
+wave_prefix = "s15/k2-"
+goal = "mypy_budget --max 0, perf-gate p95≤80ms / RPS≥1500 ratchet, manage.py diagnose aggregator."
+owned_paths = [
+    "pyproject.toml",
+    ".baselines/mypy.json",
+    ".mypy-baseline.json",
+    "Makefile",
+    "tests/perf/baseline.json",
+    "tests/perf/locust_production.py",
+    "tools/perf_gate.py",
+    "tools/diagnose/aggregator.py",
+    "manage.py",
+]
+shared_with = ["k5"]
+
+[team_s15.k3]
+name = "S15 K3 — DSL/LSP (.pyi fidelity F-5 + LSP server + YAML schema + Visual Editor finale)"
+git_branch_prefix = "team/s15-k3-dsl"
+wave_prefix = "s15/k3-"
+goal = "F-5 .pyi fidelity (typing.get_type_hints), LSP completion+hover, YAML schema bindings, DSL Visual Editor drag-drop+BPMN."
+owned_paths = [
+    "tools/gen_dsl_stubs.py",
+    "src/backend/dsl/builders/base.pyi",
+    "src/backend/dsl/workflow/builder.pyi",
+    "src/backend/dsl/cli/lsp_server.py",
+    "src/backend/dsl/cli/lsp_completion.py",
+    "src/backend/dsl/cli/lsp_hover.py",
+    "docs/reference/schemas/workflow.yaml.schema.json",
+    "docs/reference/schemas/dsl-yaml.schema.json",
+    "tools/dsl_export_schemas.py",
+    "tools/vscode-extension/yaml-schema-bindings.json",
+    "src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py",
+    "src/backend/services/dsl_portal/bpmn_export.py",
+    "tests/unit/tools/test_gen_dsl_stubs.py",
+]
+shared_with = ["k5"]
+
+[team_s15.k4]
+name = "S15 K4 — AI/Innovation (Arch Map LLM search + AI PR review)"
+git_branch_prefix = "team/s15-k4-ai"
+wave_prefix = "s15/k4-"
+goal = "Arch Map semantic search через LiteLLM + AI PR review GitHub Action (default-OFF)."
+owned_paths = [
+    "src/backend/services/arch_map/llm_search.py",
+    ".github/workflows/ai-pr-review.yml",
+    "tools/ai_pr_review/runner.py",
+    "tools/ai_pr_review/prompts.md",
+    "docs/runbooks/ai_pr_review.md",
+]
+shared_with = ["k5"]
+
+[team_s15.k5]
+name = "S15 K5 — DX/Docs/Frontend (VSCode ext + ADR scaffold + CLI completions + changelog + Streamlit pages)"
+git_branch_prefix = "team/s15-k5-dx"
+wave_prefix = "s15/k5-"
+goal = "VSCode extension package, make new-adr + template, Typer CLI completions, changelog autogen из wave-tags, Streamlit pages 83/85, ADR-tab в page 63, dep-map HTML, tutorial progress."
+owned_paths = [
+    "tools/vscode-extension/**",
+    "tools/new_adr.py",
+    "docs/adr/_template.md",
+    "tools/cli_completions.py",
+    "scripts/completions/**",
+    "tools/changelog_autogen.py",
+    "CHANGELOG.md",
+    "src/frontend/streamlit_app/pages/83_Architecture_Map.py",
+    "src/frontend/streamlit_app/pages/85_Changelog_Diff.py",
+    "src/backend/services/arch_map/graph_builder.py",
+    "src/backend/entrypoints/api/v1/endpoints/arch_map.py",
+    "src/frontend/streamlit_app/pages/63_Wiki.py",
+    "src/backend/services/wiki/whoosh_index.py",
+    "tools/dep_map_html.py",
+    "docs/reference/dep-map.html",
+    "src/frontend/streamlit_app/pages/03_Tutorial.py",
+    "src/backend/services/tutorial/progress_store.py",
+    "src/backend/services/changelog/diff.py",
+    "tests/unit/frontend/test_streamlit_page_collisions.py",
+]
+shared_with = ["k3", "k4"]

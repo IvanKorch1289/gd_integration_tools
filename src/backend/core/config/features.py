@@ -1833,5 +1833,68 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 15 — DX Tooling + Innovation ──────────────────────────────
+    sandbox_amortised_psutil: bool = Field(
+        default=False,
+        title="K1 S15 W2: amortised psutil snapshots в PluginSandboxAdapter (F-2)",
+        description=(
+            "K1 Sprint 15 Wave 2 (wave:s15/k1-w3-sandbox-overhead-reduction). "
+            "Owner: K1 Security. Активирует ленивые psutil snapshots в "
+            "_with_resource_limits — пропуск enforcement при max_memory_mb==0, "
+            "кэшируемый psutil.Process(), fire-and-forget cleanup через "
+            "TaskRegistry. Снимает F-2 carryover (overhead 137% → <5%). "
+            "default-OFF до validation perf-bench и ADR-0063 Accepted."
+        ),
+    )
+
+    arch_map_llm_search_enabled: bool = Field(
+        default=False,
+        title="K4 S15 W18: Arch Map semantic search через LiteLLM (page 83)",
+        description=(
+            "K4 Sprint 15 Wave 18 (wave:s15/k4-w2-arch-map-llm-search). "
+            "Owner: K4 AI/Innovation. Активирует ArchMapLLMSearch — semantic "
+            "search по графу архитектуры через LiteLLM gateway + capability "
+            "ai.search.arch_map. При False — fallback на keyword grep. "
+            "default-OFF до staging-smoke с LiteLLM + audit-event coverage."
+        ),
+    )
+
+    ai_pr_review_enabled: bool = Field(
+        default=False,
+        title="K4 S15 W16: AI PR review GitHub Action (Claude API + WAF)",
+        description=(
+            "K4 Sprint 15 Wave 16 (wave:s15/k4-w1-ai-pr-review). "
+            "Owner: K4 AI/Innovation. Активирует .github/workflows/ai-pr-review.yml "
+            "Claude API review через make_http_client (WAF compliance). "
+            "При False — workflow self-skip через if-condition. "
+            "default-OFF до публикации ANTHROPIC_API_KEY secret и smoke."
+        ),
+    )
+
+    dsl_visual_editor_drag_drop: bool = Field(
+        default=False,
+        title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
+        description=(
+            "K3 Sprint 15 Wave 10 (wave:s15/k3-w2-dsl-visual-editor-finale). "
+            "Owner: K3 DSL/LSP. Активирует drag-drop через streamlit-elements "
+            "+ BPMN 2.0 export через lxml + undo/redo stack в session_state. "
+            "При False — page 31 в read-only режиме. "
+            "default-OFF до staging-smoke с reference workflow."
+        ),
+    )
+
+    changelog_autogen_enabled: bool = Field(
+        default=False,
+        title="K5 S15 W15: changelog autogen из wave-tags (make release-notes)",
+        description=(
+            "K5 Sprint 15 Wave 15 (wave:s15/k5-w4-changelog-autogen). "
+            "Owner: K5 DX/Docs. Активирует tools/changelog_autogen.py — "
+            "парсинг [wave:sXX/...] тегов из git log + группировка по "
+            "спринтам/командам + Conventional Commits. При False — "
+            "make release-notes возвращает no-op. "
+            "default-OFF до calibration на S0-S14 истории."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
