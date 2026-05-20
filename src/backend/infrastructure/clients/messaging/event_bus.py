@@ -180,6 +180,34 @@ class EventBus:
             "events.routes", RouteEvent(route_id=route_id, action=action)
         )
 
+    async def subscribe(
+        self,
+        channel: str,
+        handler: Any,
+    ) -> Any:
+        """Sprint 12 K3 W4 — generic subscribe для reactive triggers.
+
+        Args:
+            channel: pattern / точный channel.
+            handler: ``async (event: dict) -> None``.
+
+        Returns:
+            SubscriptionHandle (FastStream subscriber descriptor) или ``None``.
+        """
+        if not self._broker or not self._started:
+            logger.warning(
+                "EventBus.subscribe: broker not started, channel=%s ignored",
+                channel,
+            )
+            return None
+        try:
+            decorator = self._broker.subscriber(channel)
+            decorator(handler)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("EventBus.subscribe failed for %s: %s", channel, exc)
+            return None
+        return handler
+
     async def request(
         self,
         channel: str,
