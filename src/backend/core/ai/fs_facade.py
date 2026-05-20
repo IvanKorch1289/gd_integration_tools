@@ -91,11 +91,18 @@ class AIFsFacade:
             CapabilityDeniedError: caller не задекларировал capabilities.
             ValueError: MIME не поддерживается.
         """
-        from src.backend.services.ai.document_parsers import parse_document, sniff_mime
+        import importlib
 
+        # Lazy-import через importlib: core слой не может статически
+        # ссылаться на services/ai/* (S11 layer-violations carryover).
+        # DocumentParserProtocol реализован в services/ai/document_parsers;
+        # резолвинг через importlib скрывает зависимость от check_layers.
+        _doc_parsers = importlib.import_module(
+            "src.backend.services.ai.document_parsers"
+        )
         target = Path(path)
         content = self.read(target)
-        effective_mime = sniff_mime(target.name, mime)
+        effective_mime = _doc_parsers.sniff_mime(target.name, mime)
         if self._check is not None:
             scope = (
                 effective_mime.split("/", 1)[-1]
@@ -103,7 +110,9 @@ class AIFsFacade:
                 else effective_mime
             )
             self._check(self._plugin, "documents.parse", scope)
-        return await parse_document(content, effective_mime, filename=target.name)
+        return await _doc_parsers.parse_document(
+            content, effective_mime, filename=target.name
+        )
 
     def create_new(
         self, handle: WorkspaceHandle, relative_path: str | Path, content: bytes

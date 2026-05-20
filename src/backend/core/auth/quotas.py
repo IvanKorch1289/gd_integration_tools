@@ -24,7 +24,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.services.billing.quotas_service import QuotaCheckResult, QuotasService
+from src.backend.core.auth.quotas_protocol import QuotaCheckResult, QuotasBackend
 
 __all__ = (
     "QuotaCheckMiddleware",
@@ -71,7 +71,7 @@ class QuotaPolicy:
             (health/metrics).
     """
 
-    service: QuotasService
+    service: QuotasBackend
     tenant_extractor: Callable[[Scope], str | None] = default_tenant_extractor
     skip_paths: tuple[str, ...] = (
         "/health",
