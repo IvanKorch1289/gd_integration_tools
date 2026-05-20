@@ -204,9 +204,14 @@ ai-model-registry = [
 # TTS (Coqui) — text-to-speech (XTTS v2 multilingual). Опциональный
 # (тяжёлый pin torch + heavy weights). Lazy-import внутри
 # services/ai/voice/. Activate via feature_flag voice_stt_tts_enabled.
+#
+# Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]: эти
+# пакеты на момент 2026-05 не имеют wheels для Python 3.14
+# (torch/torchaudio transitive deps). Помечены environment-marker
+# `python_version < "3.14"` — на 3.14 lazy-import возвращает skip-mode.
 ai-voice = [
-    "openai-whisper>=20240930,<2",
-    "TTS>=0.22,<1",
+    "openai-whisper>=20240930,<2; python_version < '3.14'",
+    "TTS>=0.22,<1; python_version < '3.14'",
 ]
 # Wave D.2 (ADR-045): Temporal SDK как opt-in для default workflow
 # backend. cp314 wheels доступны с 1.19.0; ~15-20MB. Lazy-import
@@ -335,10 +340,10 @@ multimodal-rag = [
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.
     "transformers>=4.45,<5",
-    # Sprint 11 K4 W1: Whisper STT для audio модальности.
-    # Lazy-import внутри services/ai/rag/multimodal/whisper_stt.py.
-    "openai-whisper>=20240930",
-    # Sprint 11 K4 W1: audio resample / mel-spectrogram для Whisper.
+    # Sprint 11 K4 W1: audio resample / mel-spectrogram (Whisper STT).
+    # openai-whisper не входит в multimodal-rag из-за отсутствия py3.14
+    # wheels — установка через `pip install --no-build-isolation
+    # openai-whisper` (sdist) при необходимости. См. ai-voice extra.
     "librosa>=0.10,<1",
 ]
 # Sprint 7 K1 closure — OpenFeature SDK + external Flagsmith provider.
@@ -410,6 +415,15 @@ testkit = "testkit.pytest_plugin"
 [tool.uv]
 package = true
 default-groups = ["dev"]
+# Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]:
+# mlflow>=2.18,<3 декларирует pyarrow<20, но pyarrow в core зависит от
+# >=20 (S10 миграция). API mlflow совместим с pyarrow>=20 — override
+# принудительно поднимает constraint для разрешения ai-model-registry +
+# core resolution path. Side-effect для других пакетов отсутствует —
+# pyarrow в проекте уже >=20.
+override-dependencies = [
+    "pyarrow>=20.0.0,<25.0.0",
+]
 
 [tool.mypy]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
