@@ -1,0 +1,100 @@
+# Migration guide: {{ plugin }} {{ from_version }} → {{ to_version }}
+
+> Автоматически сгенерировано `make plugin-migrate-guide` (Sprint 14 K5 W1).
+> Дата: {{ generated_at }}
+
+## Сводка
+
+| Категория | Добавлено | Удалено | Изменено |
+| --- | --- | --- | --- |
+| Capabilities | {{ summary.capabilities_added }} | {{ summary.capabilities_removed }} | {{ summary.capabilities_changed }} |
+| Provides (actions/processors/...) | {{ summary.provides_added }} | {{ summary.provides_removed }} | 0 |
+| Requires plugins | {{ summary.requires_added }} | {{ summary.requires_removed }} | {{ summary.requires_changed }} |
+| Core compatibility | — | — | {{ summary.core_changed }} |
+
+{% if has_breaking %}
+## ⚠️ Breaking changes
+
+{% for change in breaking_changes %}
+- **{{ change.kind }}** — {{ change.detail }}
+{% endfor %}
+{% endif %}
+
+## Изменения capabilities
+
+{% if capabilities.added %}
+### Добавлены
+{% for cap in capabilities.added %}
+- `{{ cap }}`
+{% endfor %}
+{% endif %}
+
+{% if capabilities.removed %}
+### Удалены (breaking — плагины-консьюмеры могут потерять права)
+{% for cap in capabilities.removed %}
+- `{{ cap }}`
+{% endfor %}
+{% endif %}
+
+{% if capabilities.scope_changed %}
+### Изменили scope
+{% for cap in capabilities.scope_changed %}
+- `{{ cap.name }}` — `{{ cap.old_scope or '∅' }}` → `{{ cap.new_scope or '∅' }}`
+{% endfor %}
+{% endif %}
+
+## Изменения provides[]
+
+{% if provides_added %}
+### Добавлены
+{% for kind, names in provides_added.items() %}
+- **{{ kind }}**: {% for n in names %}`{{ n }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endfor %}
+{% endif %}
+
+{% if provides_removed %}
+### Удалены (breaking — публичные имена больше не регистрируются)
+{% for kind, names in provides_removed.items() %}
+- **{{ kind }}**: {% for n in names %}`{{ n }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endfor %}
+{% endif %}
+
+## Изменения requires_core
+
+- было: `{{ core.old }}`
+- стало: `{{ core.new }}`
+{% if core.widening %}
+- _Расширение совместимости_: плагин теперь принимает больше версий ядра.
+{% elif core.narrowing %}
+- _Сужение совместимости_: плагин теперь требует более узкого диапазона ядра.
+{% endif %}
+
+## Изменения requires_plugins
+
+{% if requires_plugins.added %}
+### Добавлены зависимости
+{% for name, spec in requires_plugins.added.items() %}
+- `{{ name }}` → `{{ spec }}`
+{% endfor %}
+{% endif %}
+
+{% if requires_plugins.removed %}
+### Удалены зависимости
+{% for name, spec in requires_plugins.removed.items() %}
+- `{{ name }}` → `{{ spec }}`
+{% endfor %}
+{% endif %}
+
+{% if requires_plugins.changed %}
+### Изменены spec
+{% for name, change in requires_plugins.changed.items() %}
+- `{{ name }}`: `{{ change.old }}` → `{{ change.new }}`
+{% endfor %}
+{% endif %}
+
+## Чек-лист обновления
+
+- [ ] Подтвердить совместимость capability-декларации с политикой `capabilities/policy.py`.
+- [ ] Обновить `requires_core` в зависимых плагинах при сужении диапазона.
+- [ ] Перезапустить `make check-compat` после обновления.
+- [ ] Если есть breaking changes — выпустить major-релиз.
