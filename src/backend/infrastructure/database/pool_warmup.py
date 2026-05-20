@@ -63,12 +63,14 @@ class PoolWarmup:
         self,
         *,
         pg_engine: Any = None,
+        pg_replica_engine: Any = None,
         redis_client: Any = None,
         clickhouse_client: Any = None,
         min_connections: int = 3,
         timeout_seconds: float = 5.0,
     ) -> None:
         self._pg = pg_engine
+        self._pg_replica = pg_replica_engine
         self._redis = redis_client
         self._ch = clickhouse_client
         self._min = min_connections
@@ -87,6 +89,8 @@ class PoolWarmup:
 
         if self._pg is not None:
             tasks["pg"] = asyncio.create_task(self._warmup_pg())
+        if self._pg_replica is not None:
+            tasks["pg_replica"] = asyncio.create_task(self._warmup_pg_replica())
         if self._redis is not None:
             tasks["redis"] = asyncio.create_task(self._warmup_redis())
         if self._ch is not None:
@@ -138,6 +142,15 @@ class PoolWarmup:
         # открыть требуемое число соединений в пуле.
         async def _ping() -> None:
             async with self._pg.begin() as conn:
+                await conn.execute(text("SELECT 1"))
+
+        await asyncio.gather(*(_ping() for _ in range(self._min)))
+
+    async def _warmup_pg_replica(self) -> None:
+        from sqlalchemy import text  # type: ignore[import-untyped]
+
+        async def _ping() -> None:
+            async with self._pg_replica.begin() as conn:
                 await conn.execute(text("SELECT 1"))
 
         await asyncio.gather(*(_ping() for _ in range(self._min)))

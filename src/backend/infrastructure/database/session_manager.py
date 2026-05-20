@@ -20,6 +20,8 @@ __all__ = (
     "main_session_manager",
     "get_external_session_manager",
     "get_main_session_manager",
+    "get_smart_read_session",
+    "get_smart_write_session",
 )
 
 
@@ -174,6 +176,36 @@ def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
     return DatabaseSessionManager(
         session_maker=initializer.async_session_maker, db_name=profile_name
     )
+
+
+async def get_smart_read_session() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI Depends-совместимый генератор read-only сессии (S11 K2 W2).
+
+    Использует :class:`SmartSessionManager`: read-запросы идут на
+    replica при доступности, иначе fallback на primary.
+    """
+    from src.backend.infrastructure.database.database import (
+        get_smart_session_manager,
+    )
+
+    manager = get_smart_session_manager()
+    async with manager.acquire(mode="read") as session:
+        yield session
+
+
+async def get_smart_write_session() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI Depends-совместимый генератор write-сессии (S11 K2 W2).
+
+    Write-сессии всегда идут на primary engine; replica для write
+    никогда не используется.
+    """
+    from src.backend.infrastructure.database.database import (
+        get_smart_session_manager,
+    )
+
+    manager = get_smart_session_manager()
+    async with manager.acquire(mode="write") as session:
+        yield session
 
 
 def __getattr__(name: str) -> Any:

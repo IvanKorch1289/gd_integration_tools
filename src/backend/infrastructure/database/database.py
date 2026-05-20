@@ -30,6 +30,7 @@ __all__ = (
     "external_db_registry",
     "get_db_initializer",
     "get_external_db_registry",
+    "get_smart_session_manager",
 )
 
 
@@ -69,6 +70,11 @@ class DatabaseBundle:
     async_session_maker: async_sessionmaker[AsyncSession]
     sync_engine: Engine | None
     sync_session_maker: sessionmaker | None
+    # S11 K2 W2 wire-up: опц. read-replica engine/sessionmaker. Если
+    # ``settings.replica_dsn`` не задан — поля остаются ``None`` и
+    # ``SmartSessionManager`` работает в single-primary режиме.
+    replica_engine: AsyncEngine | None = None
+    replica_session_maker: async_sessionmaker[AsyncSession] | None = None
 
 
 class DatabaseInitializer:
@@ -89,6 +95,20 @@ class DatabaseInitializer:
         self.async_session_maker = async_sessionmaker(
             bind=self.async_engine, autoflush=False, expire_on_commit=False
         )
+
+        # S11 K2 W2: опциональная read-replica. ``replica_dsn`` определён
+        # в :class:`DatabaseConnectionSettings`; для external БД поля нет
+        # → ``getattr`` отдаёт ``None`` и replica-роутинг выключен.
+        self.replica_engine: AsyncEngine | None = None
+        self.replica_session_maker: async_sessionmaker[AsyncSession] | None = None
+        replica_dsn = getattr(self.settings, "replica_dsn", None)
+        if replica_dsn:
+            self.replica_engine = create_async_engine(
+                url=replica_dsn, **self._engine_kwargs()
+            )
+            self.replica_session_maker = async_sessionmaker(
+                bind=self.replica_engine, autoflush=False, expire_on_commit=False
+            )
 
         # K3 W1: OTel asyncpg auto-instrumentation под default-OFF feature-flag.
         # Однократный вызов — внутренний guard _ASYNCPG_INSTRUMENTED защищает от
@@ -141,6 +161,8 @@ class DatabaseInitializer:
             async_session_maker=self.async_session_maker,
             sync_engine=self.sync_engine,
             sync_session_maker=self.sync_session_maker,
+            replica_engine=self.replica_engine,
+            replica_session_maker=self.replica_session_maker,
         )
 
     def _engine_kwargs(self) -> dict[str, Any]:
@@ -285,6 +307,15 @@ class DatabaseInitializer:
         """
         await self.dispose_sync()
         await self.dispose_async()
+        if self.replica_engine is not None:
+            try:
+                await self.replica_engine.dispose()
+            except (RuntimeError, OSError):
+                self.logger.error(
+                    "Ошибка закрытия replica engine",
+                    extra={"db_name": self.name},
+                    exc_info=True,
+                )
 
     async def check_connection(self) -> bool:
         """
@@ -385,6 +416,25 @@ class ExternalDatabaseRegistry:
 def get_db_initializer() -> "DatabaseInitializer":
     """Lazy singleton ``DatabaseInitializer`` для main-БД (Wave 6.1)."""
     return DatabaseInitializer(settings=settings.database, name="main")
+
+
+@lru_cache(maxsize=1)
+def get_smart_session_manager() -> Any:
+    """Lazy singleton :class:`SmartSessionManager` для main-БД (S11 K2 W2).
+
+    Если ``settings.database.replica_dsn`` не задан — manager создаётся
+    без replica и работает в single-primary режиме, что эквивалентно
+    прежнему поведению ``get_main_session_manager``.
+    """
+    from src.backend.infrastructure.database.smart_session_manager import (
+        SmartSessionManager,
+    )
+
+    bundle = get_db_initializer().as_bundle()
+    return SmartSessionManager(
+        primary_sessionmaker=bundle.async_session_maker,
+        replica_sessionmaker=bundle.replica_session_maker,
+    )
 
 
 @lru_cache(maxsize=1)
