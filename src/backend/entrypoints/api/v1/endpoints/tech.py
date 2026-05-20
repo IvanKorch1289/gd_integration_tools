@@ -197,6 +197,16 @@ builder.add_actions(
             use_dispatcher=True,
         ),
         ActionSpec(
+            name="degradation_snapshot",
+            method="GET",
+            path="/degradation/snapshot",
+            summary="Снимок состояний feature-level graceful degradation",
+            service_getter=get_tech_service,
+            service_method="get_degradation_snapshot",
+            action_id="tech.degradation_snapshot",
+            use_dispatcher=True,
+        ),
+        ActionSpec(
             name="get_all_custom_tables",
             method="GET",
             path="/get-all-custom-tables",

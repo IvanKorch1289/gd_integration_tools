@@ -176,6 +176,53 @@ async def _init_workflow_audit_sink() -> None:
         )
 
 
+def _register_default_degradation_features() -> None:
+    """Backbone-регистрация типовых features в GracefulDegradationRegistry.
+
+    Real-handler'ы — заглушки ``_unsupported_full/_unsupported_degraded``;
+    feature-owner подменяет их явным ``registry.register(...)`` при
+    инициализации соответствующего модуля. Эта функция гарантирует, что
+    admin-снимок ``/tech/degradation/snapshot`` сразу содержит ожидаемые
+    feature-имена и operations dashboard не выглядит пустым.
+    """
+    from src.backend.core.resilience.graceful_degradation import (
+        DegradationFeature,
+        get_graceful_degradation_registry,
+    )
+
+    registry = get_graceful_degradation_registry()
+    app_logger = get_log_manager().application_logger
+
+    async def _unsupported_full(*_: Any, **__: Any) -> None:
+        # Заглушка — owner feature'а обязан явно зарегистрировать
+        # real-handler через registry.register(...).
+        raise NotImplementedError("full_handler не зарегистрирован")
+
+    async def _unsupported_degraded(*_: Any, **__: Any) -> None:
+        raise NotImplementedError("degraded_handler не зарегистрирован")
+
+    default_features = (
+        "ai.llm_call",
+        "rag.retrieval",
+        "external.api_call",
+        "cache.lookup",
+    )
+    for name in default_features:
+        if registry.is_registered(name):
+            continue
+        registry.register(
+            DegradationFeature(
+                name=name,
+                full_handler=_unsupported_full,
+                degraded_handler=_unsupported_degraded,
+            )
+        )
+    app_logger.info(
+        "GracefulDegradationRegistry: %d default features зарегистрированы",
+        len(default_features),
+    )
+
+
 async def _close_workflow_audit_sink() -> None:
     """Graceful shutdown sink: финальный flush + остановка writer'а."""
     from src.backend.services.audit.workflow_audit_sink import (
@@ -222,6 +269,7 @@ starting_operations: list[OperationItem] = [
     ),
     ("scheduler", lambda: get_scheduler_manager().start(), None),
     ("health_aggregator", _register_health_checks, None),  # ARCH-3
+    ("degradation_registry_bootstrap", _register_default_degradation_features, None),
 ]
 
 ending_operations: list[OperationItem] = [

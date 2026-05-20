@@ -75,6 +75,19 @@ class TechService:
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_all_services()
 
+    async def get_degradation_snapshot(self) -> dict[str, Any]:
+        """Снимок зарегистрированных features из GracefulDegradationRegistry.
+
+        S13 K2 W4 wire-up. Возвращает dict ``{feature_name: {state,
+        samples, error_rate}}`` — используется для admin-обзора и
+        Prometheus exporter'ом (TBD R3).
+        """
+        from src.backend.core.resilience.graceful_degradation import (
+            get_graceful_degradation_registry,
+        )
+
+        return get_graceful_degradation_registry().snapshot()
+
     async def get_all_custom_tables(self, model_enum: Enum) -> set[str]:
         return {model.value.__tablename__ for model in model_enum}  # type: ignore
 
