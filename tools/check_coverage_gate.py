@@ -89,8 +89,7 @@ def _load_baseline(path: Path) -> dict[str, Any]:
 def _save_baseline(path: Path, data: dict[str, Any]) -> None:
     """Сохраняет baseline в ``.baselines/coverage.json``."""
     path.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 
@@ -155,8 +154,7 @@ def main() -> int:
         baseline.setdefault("notes", [])
         if current < _DEFAULT_THRESHOLD:
             todo = (
-                f"raise threshold from {args.threshold:.0f} to "
-                f"{_DEFAULT_THRESHOLD:.0f}"
+                f"raise threshold from {args.threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
             )
             if todo not in baseline.get("next_wave_todo", []):
                 baseline.setdefault("next_wave_todo", []).append(todo)

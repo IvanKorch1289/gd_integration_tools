@@ -1,6 +1,24 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-20 15:40, после compact)
+## Текущее состояние (2026-05-20, Sprint 16 kickoff)
+
+**Активный спринт**: **Sprint 16 «GAP-Closure 2»** — Wave 1 (L3-P0-1 OTel OTLP metrics) CLOSED.
+**PLAN.md**: V21.0 (sync с master git log: S11=17/19, S12=16/17, S13=closed, S14=closed).
+
+### Sprint 16 kickoff 2026-05-20: K2 W3 OTel OTLP metrics closed
+
+**Wave 1** = `[wave:s16/k2-w3-otel-otlp-metrics]` (L3-P0-1, gap-analysis 2026-05-20):
+- `setup_otel_metrics()` + `_register_base_meters()` + `shutdown_otel_metrics()` в `infrastructure/observability/otel/setup.py`.
+- 3 базовых meter: `workflow.execution.duration|count`, `workflow.activity.duration`, `business.event.count` + auto-instrumentation HTTP metrics.
+- Lifespan startup-блок под ENV `OTLP_METRICS_ENABLED` + парный shutdown-hook в finally.
+- 6 unit-тестов (`tests/unit/infrastructure/observability/otel/test_setup_metrics.py`) — все passing.
+- Memory: `feedback_s16_w1_otel_metrics.md`.
+
+**Следующий шаг Sprint 16**: Wave 2 = `[wave:s16/k3-w1-pygls-lsp-server]` (L4-P0-1, низкий риск, новые файлы в `tools/dsl_lsp/`).
+
+---
+
+## Предыдущий снимок (2026-05-20 15:40, после compact)
 
 **HEAD**: `27f49eca [docs:plan-v19-s12-closed]`
 **Активный спринт**: Sprint 12 «Workflow Enhancement» — **ЗАКРЫТ** (17 wave + backbone + closure + docs-sync = 20 commits).

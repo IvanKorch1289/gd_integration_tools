@@ -79,10 +79,7 @@ def save_baseline(errors: int) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--max",
-        type=int,
-        default=30,
-        help="абсолютный budget (default 30)",
+        "--max", type=int, default=30, help="абсолютный budget (default 30)"
     )
     parser.add_argument(
         "--ratchet",
@@ -99,10 +96,7 @@ def main() -> int:
     print(f"mypy errors: {errors} (max={args.max}, baseline={baseline})")
 
     if errors > args.max:
-        print(
-            f"FAIL: {errors} errors exceeds budget {args.max}",
-            file=sys.stderr,
-        )
+        print(f"FAIL: {errors} errors exceeds budget {args.max}", file=sys.stderr)
         return 1
 
     if baseline is not None and errors > baseline:

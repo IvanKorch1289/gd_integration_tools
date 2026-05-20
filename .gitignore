@@ -81,6 +81,9 @@ docs/_build/
 # MCP server конфигурация — может содержать API-ключи (Context7, Perplexity и т.п.)
 .mcp.json
 vault/
+gap-analysis/
+gap-analysis
+vault
 
 # Мастер-план рефакторинга и ADR-ы плана — локальные артефакты,
 # не часть долгоживущей документации репозитория.

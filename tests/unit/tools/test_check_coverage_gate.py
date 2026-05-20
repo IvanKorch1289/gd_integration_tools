@@ -72,12 +72,7 @@ def test_gate_passes_when_above_threshold(tmp_path: Path) -> None:
     _write_coverage_xml(cov_xml, 0.75)
 
     result = _run_gate(
-        "--coverage-xml",
-        str(cov_xml),
-        "--baseline",
-        str(baseline),
-        "--threshold",
-        "50",
+        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "50"
     )
     assert result.returncode == 0
     assert "OK" in result.stdout
@@ -90,12 +85,7 @@ def test_gate_fails_when_below_threshold(tmp_path: Path) -> None:
     _write_coverage_xml(cov_xml, 0.45)
 
     result = _run_gate(
-        "--coverage-xml",
-        str(cov_xml),
-        "--baseline",
-        str(baseline),
-        "--threshold",
-        "70",
+        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "70"
     )
     assert result.returncode == 1
     assert "FAIL" in result.stderr
@@ -137,9 +127,7 @@ def test_strict_mode_detects_drop(tmp_path: Path) -> None:
     cov_xml = tmp_path / "coverage.xml"
     baseline = tmp_path / "baseline.json"
     # Baseline = 75%, current = 70% → drop 5% > tolerance 0.5%.
-    baseline.write_text(
-        json.dumps({"coverage_percent": 75.0}), encoding="utf-8"
-    )
+    baseline.write_text(json.dumps({"coverage_percent": 75.0}), encoding="utf-8")
     _write_coverage_xml(cov_xml, 0.70)
 
     result = _run_gate(

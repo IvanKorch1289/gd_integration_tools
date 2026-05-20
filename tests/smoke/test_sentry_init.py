@@ -58,7 +58,11 @@ def test_init_sentry_without_sdk_returns_false(monkeypatch: pytest.MonkeyPatch) 
     """При отсутствии ``sentry_sdk`` init возвращает ``False`` без падения."""
     monkeypatch.setenv("SENTRY_DSN", "https://public@example.test/1")
 
-    real_import = __builtins__["__import__"] if isinstance(__builtins__, dict) else __builtins__.__import__
+    real_import = (
+        __builtins__["__import__"]
+        if isinstance(__builtins__, dict)
+        else __builtins__.__import__
+    )
 
     def _failing_import(name: str, *args, **kwargs):
         if name == "sentry_sdk" or name.startswith("sentry_sdk."):
@@ -87,7 +91,9 @@ def test_lifespan_swallows_sentry_init_failure() -> None:
     )
 
 
-def test_secrets_backend_factory_dispatches_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_secrets_backend_factory_dispatches_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Wave A.3: SECRETS_BACKEND=env даёт EnvSecretsBackend через svcs."""
     monkeypatch.setenv("SECRETS_BACKEND", "env")
 

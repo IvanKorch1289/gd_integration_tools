@@ -60,10 +60,7 @@ def measure_import(module: str) -> float:
         "sys.stdout.write(f'{time.monotonic() - start:.4f}')\n"
     )
     proc = subprocess.run(
-        [sys.executable, "-c", script],
-        capture_output=True,
-        text=True,
-        timeout=30,
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=30
     )
     if proc.returncode != 0:
         sys.stderr.write(f"ERROR importing {module}: {proc.stderr}\n")
@@ -87,8 +84,7 @@ def load_baseline() -> float | None:
 
 def save_baseline(total: float) -> None:
     BASELINE_FILE.write_text(
-        json.dumps({"total": round(total, 4), "tool": "startup_time"}, indent=2)
-        + "\n",
+        json.dumps({"total": round(total, 4), "tool": "startup_time"}, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -154,10 +150,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if total > args.max_total:
-        print(
-            f"FAIL: total {total:.3f}s > limit {args.max_total}s",
-            file=sys.stderr,
-        )
+        print(f"FAIL: total {total:.3f}s > limit {args.max_total}s", file=sys.stderr)
         return 1
 
     if args.ratchet and (baseline is None or total < baseline):
