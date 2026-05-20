@@ -1,9 +1,29 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-20 15:28)
+
+**HEAD**: `c9629383 [wave:s11/finale-closure]`  
+**Активный спринт**: Sprint 11 «AI/RAG Completion» — **ЗАКРЫТ** (22 wave + 84 tests).  
+**Следующий спринт**: Sprint 12 «Foundation Hardening» (Protocol-extraction 29 nodes + CLI wiring + perf-bench).  
+**Сводки**:
+- Подробно: `vault/session-2026-05-20-1528-summary.md` (изменения + verification + риски + next step).
+- Изначальный finale: `vault/session-2026-05-20-1525-sprint11-closure-summary.md` (wave-таблица + DoD checklist).
+
+**Pre-prod-check gates после S11**:
+- 01 (lint), 03 (layers, 0 НОВЫХ), 04 (tests collect: 3639/0 errors), 06 (SBOM), 08 (bandit-tls), 11 (docstring, 602 baseline), 14 (WAF coverage: allowlist пуст) — все PASS.
+
+**Carryover в S12** (приоритет):
+1. Protocol-extraction 29 layer-violations (acknowledged baseline в `tools/check_layers_allowlist.txt`).
+2. `manage.py` CLI wiring (`ai-route-optimize`, `ai-embedding-migrate`).
+3. `feedback_cron.register` в `plugins/composition/lifecycle.py` (под `dspy_feedback_loop`).
+4. Coverage DoD #10 — измерение в prod-like env через `make ci`.
+
+---
+
 ## Sprint 11 closure (AI/RAG Completion) — 2026-05-20
 
-**HEAD-ветка master**: `5790cdd4 [wave:s11/k5-w3-replica-dashboard]`
-(плюс 22 atomic S11/S10-carryover коммита в одной coordinator-self сессии).
+**HEAD-ветка master**: `c9629383 [wave:s11/finale-closure]`
+(22 atomic S11/S10-carryover коммита в одной coordinator-self сессии).
 
 **Период**: одна непрерывная сессия. 22 коммита (фактически):
 - Phase 0 (1): `[wave:s11/backbone]` — feature-flags + capabilities +
