@@ -194,6 +194,66 @@ class _ProcessorsCatalogFacade:
                 return p
         raise HTTPException(status_code=404, detail=f"Processor '{name}' not found")
 
+    async def search(
+        self,
+        *,
+        q: str = "",
+        namespace: str | None = None,
+        limit: int = 25,
+    ) -> dict[str, Any]:
+        """Sprint 14 K3 W1 — fuzzy search через rapidfuzz.
+
+        Latency требование DoD §S14.8: < 200ms (rapidfuzz это даёт
+        на каталоге ≤ 200 процессоров).
+        """
+        processors = _collect_processors()
+        if namespace:
+            processors = [p for p in processors if p["category"] == namespace]
+        if not q:
+            results = [
+                {
+                    "name": p["name"],
+                    "category": p["category"],
+                    "score": 100,
+                    "description": p["description"],
+                }
+                for p in processors[:limit]
+            ]
+            return {"query": q, "namespace": namespace, "total": len(results), "items": results}
+
+        try:
+            from rapidfuzz import fuzz, process  # noqa: PLC0415
+        except ImportError:
+            return {
+                "query": q,
+                "namespace": namespace,
+                "total": 0,
+                "items": [],
+                "error": "rapidfuzz unavailable",
+            }
+
+        candidates: dict[str, dict[str, Any]] = {}
+        for p in processors:
+            text = f"{p['name']} {p['description']}"
+            candidates[text] = p
+        scored = process.extract(
+            q,
+            list(candidates.keys()),
+            scorer=fuzz.WRatio,
+            limit=limit,
+        )
+        items = [
+            {
+                "name": candidates[match]["name"],
+                "category": candidates[match]["category"],
+                "score": int(score),
+                "description": candidates[match]["description"],
+            }
+            for match, score, _idx in scored
+            if score > 30
+        ]
+        return {"query": q, "namespace": namespace, "total": len(items), "items": items}
+
 
 _FACADE = _ProcessorsCatalogFacade()
 
@@ -204,6 +264,14 @@ def _get_facade() -> _ProcessorsCatalogFacade:
 
 router = APIRouter(prefix="/dsl", tags=["DSL Catalog"])
 builder = ActionRouterBuilder(router)
+
+
+class ProcessorSearchQuery(BaseModel):
+    """Query-параметры GET /dsl/processors/search."""
+
+    q: str = Field("", description="Search query (rapidfuzz fuzzy match).")
+    namespace: str | None = Field(None, description="Filter by category/namespace.")
+    limit: int = Field(25, ge=1, le=100, description="Max items to return.")
 
 
 builder.add_actions(
@@ -225,6 +293,16 @@ builder.add_actions(
             service_getter=_get_facade,
             service_method="details",
             path_model=ProcessorNamePath,
+            tags=("DSL Catalog",),
+        ),
+        ActionSpec(
+            name="processor_search",
+            method="GET",
+            path="/processors/search",
+            summary="Sprint 14 K3 W1: fuzzy search в каталоге процессоров",
+            service_getter=_get_facade,
+            service_method="search",
+            query_model=ProcessorSearchQuery,
             tags=("DSL Catalog",),
         ),
     ]
