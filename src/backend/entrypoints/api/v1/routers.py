@@ -20,6 +20,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
         router as admin_tenants_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
+        router as admin_workflow_audit_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
@@ -129,6 +132,10 @@ def get_v1_routers() -> APIRouter:
     # IL-WF1.5: Admin-endpoints для durable workflow instances.
     api_router_v1.include_router(
         admin_workflows_router, prefix="/admin", tags=["Admin · Workflows"]
+    )
+    # S12 K1 W1: workflow_audit inventory + events query.
+    api_router_v1.include_router(
+        admin_workflow_audit_router, tags=["Admin · Workflow Audit"]
     )
     # К5 (Wave K5/docs-tenants-caps): admin endpoints for tenants & capabilities.
     api_router_v1.include_router(

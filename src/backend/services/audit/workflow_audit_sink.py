@@ -113,19 +113,34 @@ class WorkflowAuditSink:
         trace_id: str | None = None,
         event_id: str | None = None,
         created_at: datetime | None = None,
+        actor: str | None = None,
+        duration_ms: int | None = None,
+        parent_workflow_id: str | None = None,
     ) -> None:
         """Отправляет одно событие в бекенд-writer.
 
+        Расширенный event-set (S12 K1 W1):
+
+        * ``workflow.start`` / ``workflow.signal`` / ``workflow.cancel`` /
+          ``workflow.complete`` / ``workflow.fail`` — lifecycle;
+        * ``workflow.compensation_start`` / ``workflow.compensation_complete`` /
+          ``workflow.compensation_fail`` — saga rollback;
+        * ``hitl.approved`` / ``hitl.rejected`` / ``hitl.requested_info`` —
+          Human-in-the-Loop decisions.
+
         Args:
-            event_type: тип события (``workflow.start``, ``workflow.signal``,
-                ``workflow.cancel``, ``workflow.complete``, ``workflow.fail``,
-                ``activity.start`` и т. п.).
+            event_type: тип события.
             workflow_id: уникальный ID workflow execution.
             tenant_id: ID тенанта (или ``None`` для системных событий).
             payload: произвольный словарь деталей; сериализуется в JSON.
             trace_id: ID распределённого трейса (OTEL trace_id или X-Request-Id).
             event_id: явный UUID события (если ``None`` — генерируется UUID4).
             created_at: явная метка времени (если ``None`` — текущее UTC).
+            actor: «кто инициировал» — User-Agent, API-key fingerprint,
+                ``manage.py`` / ``dsl.cancel_workflow`` и т.п. (S12 K1 W1).
+            duration_ms: длительность для terminal events (S12 K2 W1 SLA).
+            parent_workflow_id: child-workflow / saga compensation tree
+                (S12 K3 W6).
         """
         row = {
             "event_id": event_id or str(uuid.uuid4()),
@@ -137,6 +152,9 @@ class WorkflowAuditSink:
             "created_at": (created_at or datetime.now(timezone.utc)).astimezone(
                 timezone.utc
             ),
+            "actor": actor,
+            "duration_ms": duration_ms,
+            "parent_workflow_id": parent_workflow_id,
         }
         await self._writer.add(row)
         _logger.debug(
