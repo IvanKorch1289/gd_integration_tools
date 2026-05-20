@@ -334,6 +334,36 @@ class EIPMixin:
             )
         )
 
+    def batch(
+        self,
+        *,
+        size: int = 100,
+        timeout_ms: int = 500,
+        group_by: str | None = None,
+    ) -> "RouteBuilder":
+        """Накопление сообщений в окно с flush по N ИЛИ по таймауту (S13 K3 W1).
+
+        Args:
+            size: Максимальный размер батча перед flush'ем.
+            timeout_ms: Таймаут окна в миллисекундах.
+            group_by: Опциональный путь группировки (``header.tenant_id`` |
+                ``body.x`` | ``property.k``). Без значения — общий буфер.
+
+        Usage::
+
+            .batch(size=100, timeout_ms=500)
+            .batch(size=50, timeout_ms=1000, group_by="header.tenant_id")
+        """
+        from src.backend.dsl.engine.processors.patterns import BatchWindowProcessor
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            BatchWindowProcessor(
+                window_seconds=timeout_ms / 1000.0,
+                max_size=size,
+                group_by=group_by,
+            )
+        )
+
     def windowed_collect(
         self,
         key_from: str,
