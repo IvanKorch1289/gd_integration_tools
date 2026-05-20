@@ -4,9 +4,11 @@
 
 * ``GET /api/v1/admin/capabilities`` — vocabulary + DEFAULT_CAPABILITY_CATALOG;
 * ``GET /api/v1/admin/capabilities/audit-events`` — recent denied;
+* ``GET /api/v1/admin/capabilities/graph`` — Sprint 14 K5 W5 граф;
 * ``GET /api/v1/plugins/inventory`` — plugin × capability матрица.
 
-Heatmap: plugin × capability с цветом по статусу (granted / denied / not requested).
+Sprint 14 K5 W5 + K1 W4: добавлены вкладки **Capability Graph** (Mermaid)
+и **Audit Log** (grant/deny события).
 """
 
 from __future__ import annotations
@@ -43,46 +45,80 @@ cols[2].metric("Public caps", sum(1 for c in vocab if c.get("public")))
 
 st.divider()
 
-# ────────────── Heatmap ─────────────────────────────────────────────
+tabs = st.tabs(["Matrix", "Capability Graph", "Audit Log", "Vocabulary"])
 
-if vocab and plugins:
-    st.subheader("Plugin × Capability matrix")
+# ────────────── Tab 1: Heatmap ─────────────────────────────────────
 
-    cap_names = [c["name"] for c in vocab]
-    rows = []
-    for plugin in plugins:
-        plug_caps = set(plugin.get("capabilities") or [])
-        row = {"plugin": plugin.get("name", "?")}
-        for cap in cap_names:
-            row[cap] = "✅" if cap in plug_caps else "·"
-        rows.append(row)
-    st.dataframe(rows, use_container_width=True, hide_index=True)
-else:
-    st.info(
-        "Heatmap пуст: нет vocabulary или нет загруженных плагинов "
-        "(ожидает Sprint 3 К1 plugin loader v11)."
+with tabs[0]:
+    if vocab and plugins:
+        st.subheader("Plugin × Capability matrix")
+
+        cap_names = [c["name"] for c in vocab]
+        rows = []
+        for plugin in plugins:
+            plug_caps = set(plugin.get("capabilities") or [])
+            row = {"plugin": plugin.get("name", "?")}
+            for cap in cap_names:
+                row[cap] = "✅" if cap in plug_caps else "·"
+            rows.append(row)
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+    else:
+        st.info(
+            "Heatmap пуст: нет vocabulary или нет загруженных плагинов "
+            "(ожидает Sprint 3 К1 plugin loader v11)."
+        )
+
+# ────────────── Tab 2: Capability Graph (Sprint 14 K5 W5) ──────────
+
+with tabs[1]:
+    st.subheader("Capability Graph (Sprint 14 K5 W5)")
+    st.caption(
+        "plugin → capability → resource (Mermaid). Источник — "
+        "``/api/v1/admin/capabilities/graph``."
     )
+    graph = client.get_capability_graph()
+    if graph.get("error"):
+        st.warning(f"backend unavailable: {graph['error']}")
+    elif not graph.get("nodes"):
+        st.info("Нет данных для графа.")
+    else:
+        diagram = ["graph LR"]
+        for node in graph["nodes"]:
+            shape_open, shape_close = "[", "]"
+            if node["kind"] == "capability":
+                shape_open, shape_close = "((", "))"
+            elif node["kind"] == "resource":
+                shape_open, shape_close = "{{", "}}"
+            diagram.append(
+                f"    {node['id'].replace(':', '_')}{shape_open}\"{node['label']}\"{shape_close}"
+            )
+        for edge in graph["edges"]:
+            label = f"|{edge['label']}|" if edge.get("label") else ""
+            diagram.append(
+                f"    {edge['source'].replace(':', '_')} -->{label} "
+                f"{edge['target'].replace(':', '_')}"
+            )
+        st.code("\n".join(diagram), language="mermaid")
 
-st.divider()
+# ────────────── Tab 3: Audit Log (Sprint 14 K1 W4) ─────────────────
 
-# ────────────── Recent denied events ────────────────────────────────
-
-with st.expander("Recent denied capability events"):
-    audit = client.get_audit_events(event_type="capability_denied", limit=50)
-    events = audit.get("events") or []
+with tabs[2]:
+    st.subheader("Capability Audit Log (Sprint 14 K1 W4)")
+    plugin_filter = st.text_input("Filter by plugin", "")
+    tenant_filter = st.text_input("Filter by tenant", "")
+    events = client.get_audit_events(
+        plugin=plugin_filter or None,
+        tenant=tenant_filter or None,
+        limit=200,
+    )
     if events:
         st.dataframe(events, use_container_width=True, hide_index=True)
     else:
-        st.write(
-            "_(нет denied событий — capability-gate не отклонил ни одной "
-            "проверки за последние 50 записей audit log)_"
-        )
+        st.info("Нет событий по выбранным фильтрам.")
 
-st.divider()
+# ────────────── Tab 4: Vocabulary table ────────────────────────────
 
-# ────────────── Vocabulary table ────────────────────────────────────
-
-with st.expander("Полный vocabulary (ADR-044)"):
+with tabs[3]:
     if vocab:
         st.dataframe(vocab, use_container_width=True, hide_index=True)
     else:

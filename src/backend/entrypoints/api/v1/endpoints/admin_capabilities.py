@@ -84,3 +84,74 @@ async def get_capability_audit_events(limit: int = 100) -> dict[str, Any]:
         rows = []
 
     return {"events": rows, "limit": safe_limit, "stub": not rows}
+
+
+@router.get(
+    "/capabilities/graph",
+    summary="Sprint 14 K5 W5: граф плагин↔capability↔ресурс",
+    description="Mermaid-ready набор узлов/рёбер на основе plugin.toml::capabilities.",
+    tags=["Admin · Capabilities"],
+)
+async def get_capability_graph() -> dict[str, Any]:
+    """Собрать узлы и рёбра для UI-визуализации.
+
+    Узлы трёх типов:
+        * ``plugin``  — имя плагина;
+        * ``capability`` — capability.name;
+        * ``resource``  — производный resource из имени capability
+          (``db.read`` → ``db``, ``net.outbound`` → ``net``).
+    """
+    from pathlib import Path
+
+    nodes: dict[str, dict[str, Any]] = {}
+    edges: list[dict[str, str]] = []
+
+    extensions_dir = Path("extensions")
+    if not extensions_dir.is_dir():
+        return {"nodes": [], "edges": []}
+
+    try:
+        from src.backend.services.plugins.manifest_v11 import (
+            PluginManifestError,
+            load_plugin_manifest,
+        )
+    except ImportError:
+        return {"nodes": [], "edges": []}
+
+    for child in sorted(extensions_dir.iterdir()):
+        toml_path = child / "plugin.toml"
+        if not toml_path.is_file():
+            continue
+        try:
+            manifest = load_plugin_manifest(toml_path)
+        except PluginManifestError:
+            continue
+        plugin_node_id = f"plugin:{manifest.name}"
+        nodes.setdefault(
+            plugin_node_id,
+            {"id": plugin_node_id, "kind": "plugin", "label": manifest.name},
+        )
+        for cap in manifest.capabilities:
+            cap_node_id = f"cap:{cap.name}"
+            nodes.setdefault(
+                cap_node_id,
+                {"id": cap_node_id, "kind": "capability", "label": cap.name},
+            )
+            resource = cap.name.split(".", 1)[0]
+            res_node_id = f"res:{resource}"
+            nodes.setdefault(
+                res_node_id,
+                {"id": res_node_id, "kind": "resource", "label": resource},
+            )
+            edges.append(
+                {
+                    "source": plugin_node_id,
+                    "target": cap_node_id,
+                    "label": cap.scope or "*",
+                }
+            )
+            edges.append(
+                {"source": cap_node_id, "target": res_node_id, "label": ""}
+            )
+
+    return {"nodes": list(nodes.values()), "edges": edges}
