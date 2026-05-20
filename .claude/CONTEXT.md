@@ -1,6 +1,33 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-20, Sprint 16 kickoff)
+## Текущее состояние (2026-05-20 15:49, после compact)
+
+**HEAD**: `e200b53f [chore:ops-reorg]`
+**Последнее действие**: ops-reorg commit (внешний процесс) + Sprint 16 Wave 1 OTel OTLP metrics + compact-3.
+**Сводки**: `vault/session-2026-05-20-1549-summary.md` (compact-3); `vault/session-2026-05-20-1540-summary.md` (S12 closure); `vault/session-2026-05-20-1625-sprint12-summary.md` (S12 wave-таблица).
+
+### Изменения с прошлого compact (15:40 → 15:49)
+- `e200b53f [chore:ops-reorg]` — structural reorg:
+  - `Dockerfile` + 5 `docker-compose.*.yml` → `ops/compose/`.
+  - `Makefile.security` → `make/security.mk`.
+  - `*-baseline.json` → `.baselines/{mypy,startup-time,coverage}.json`.
+  - GitHub workflows + scripts + tools — пути обновлены под новый layout.
+  - `infrastructure/observability/otel/{__init__,setup}.py` — Sprint 16 K2 W3 OTel OTLP metrics + 6 unit-тестов.
+  - `plugins/composition/lifecycle.py` — lifespan для OTLP metrics startup/shutdown.
+
+### Открытые риски (новые после ops-reorg)
+1. **HIGH**: ops-reorg не verified smoke в CI — пути в Makefile/scripts/workflows могут сломаться.
+2. Новые tests `tests/unit/infrastructure/observability/otel/test_setup_metrics.py` не запускались в этой сессии.
+
+### Следующий шаг
+1. Smoke-проверка ops-reorg: `make ci` + `docker compose -f ops/compose/docker-compose.yml config`.
+2. Запустить `python -m pytest tests/unit/infrastructure/observability/otel/`.
+3. Проверка `tools/checks/{mypy_budget,startup_time}.py` + `tools/check_coverage_gate.py` — резолв `.baselines/*.json`.
+4. Sprint 16 Wave 2 = `[wave:s16/k3-w1-pygls-lsp-server]` (см. ниже).
+
+---
+
+## Sprint 16 kickoff (2026-05-20)
 
 **Активный спринт**: **Sprint 16 «GAP-Closure 2»** — Wave 1 (L3-P0-1 OTel OTLP metrics) CLOSED.
 **PLAN.md**: V21.0 (sync с master git log: S11=17/19, S12=16/17, S13=closed, S14=closed).
