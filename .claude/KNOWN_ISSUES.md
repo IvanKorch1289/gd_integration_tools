@@ -1,5 +1,36 @@
 # KNOWN_ISSUES.md
 
+## Sprint 12 closure (Workflow Enhancement) — 2026-05-20
+
+**Закрыто** (17 atomic wave + backbone + closure в одной coordinator-self сессии):
+
+* **Backbone** — 18 feature-flags + 5 team_s12.k1..k5 секций.
+* **K1 Security** (2 wave): workflow_audit_log extended + admin inventory;
+  Temporal mTLS Vault PKI + cert rotation + docker runbook.
+* **K2 Resilience+Perf** (2 wave): SLA Grafana dashboard 99% SLO + Prometheus
+  counter; TemporalWorkerScaler HPA exporter + K8s manifest.
+* **K3 DSL/Workflow** (8 wave): visual diff (Graphviz) + cron builder UI +
+  pre-run cost estimator + reactive event-driven triggers + 10 workflow
+  templates с semantic search + saga compensation viewer + .cancel_workflow()
+  DSL step + versioning UI (pin/rollback).
+* **K4 AI/Data** (2 wave): 3 production AI examples
+  (RAG saga / multi-agent / code-interpreter loop); LLM cost breakdown с
+  Anthropic 4.x/OpenAI pricing.
+* **K5 Frontend+Ext** (3 wave): page 33 templates + Mermaid; page 72 HITL
+  History tab + CSV export; page 14 Cron Dashboard.
+
+### Открытые carryover (S12 → S13/S14)
+
+* AI workflow examples — declarative-only; нужны bound handler'ы
+  в `services.ai.*` (S13+).
+* `feedback_cron.register` lifecycle wiring (S11 carryover остаётся).
+* Protocol-extraction 29 acknowledged baseline (отдельный S14+).
+* Integration smoke для mTLS требует Vault + docker-compose.bluegreen.yml
+  (default-OFF flag).
+* `dspy_feedback_loop` cron registration в lifecycle.py.
+
+---
+
 ## Sprint 11 closure (AI/RAG Completion) — 2026-05-20
 
 **Закрыто** (22 atomic wave в одной coordinator-self сессии):

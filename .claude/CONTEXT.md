@@ -1,22 +1,45 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-20 15:28)
+## Текущее состояние (2026-05-20 16:25)
 
-**HEAD**: `c9629383 [wave:s11/finale-closure]`  
-**Активный спринт**: Sprint 11 «AI/RAG Completion» — **ЗАКРЫТ** (22 wave + 84 tests).  
-**Следующий спринт**: Sprint 12 «Foundation Hardening» (Protocol-extraction 29 nodes + CLI wiring + perf-bench).  
-**Сводки**:
-- Подробно: `vault/session-2026-05-20-1528-summary.md` (изменения + verification + риски + next step).
-- Изначальный finale: `vault/session-2026-05-20-1525-sprint11-closure-summary.md` (wave-таблица + DoD checklist).
+**HEAD**: `07667d89 [wave:s12/k4-w1-ai-workflow-examples-lib]`
+**Активный спринт**: Sprint 12 «Workflow Enhancement» — **ЗАКРЫТ** (17 wave + backbone + closure = 19 commits).
+**Следующий спринт**: Sprint 13 «Infrastructure & Performance» (часть wave уже в master до S12).
+**Сводка**: `vault/session-2026-05-20-1625-sprint12-summary.md`.
 
-**Pre-prod-check gates после S11**:
-- 01 (lint), 03 (layers, 0 НОВЫХ), 04 (tests collect: 3639/0 errors), 06 (SBOM), 08 (bandit-tls), 11 (docstring, 602 baseline), 14 (WAF coverage: allowlist пуст) — все PASS.
+### Sprint 12 wave-список (17/17)
+| Wave | Title | Tests |
+|---|---|---|
+| s12/backbone-features | 18 feature-flags + team_s12.k1..k5 | — |
+| k1-w1-workflow-audit-log | extended event-set + admin inventory | 8 |
+| k1-w2-temporal-mtls-finale | Vault PKI + cert rotation | 4 |
+| k2-w1-workflow-sla-grafana | Grafana SLA + Prometheus counter | 3 |
+| k2-w2-temporal-worker-autoscale | HPA exporter + scaler | 6 |
+| k3-w1-visual-workflow-diff | Graphviz side-by-side + diff structured | 9 |
+| k3-w2-cron-builder-ui | croniter + admin REST + page 13 | 18 |
+| k3-w3-k4-w2-workflow-cost-estimation | cost estimator + LLM pricing + page 15 | 12 |
+| k3-w4-reactive-workflows | EventBus.subscribe + dispatcher + debounce | 8 |
+| k3-w5-workflow-template-library | 10 yaml + registry + admin REST | 10 |
+| k3-w6-saga-compensation-viewer | SagaProcessor emit + saga_history + page 19 | 5 |
+| k3-w7-cancel-workflow-dsl | DSL .cancel_workflow + processor + manage.py | 8 |
+| k3-w8-workflow-versioning-ui | pin/rollback + page 18 + admin REST | 8 |
+| k4-w1-ai-workflow-examples-lib | 3 yaml + README | 6 |
+| k5-w1-workflow-template-streamlit | page 33 toggle + Mermaid | 5 |
+| k5-w2-hitl-history-viewer | HitlHistoryService + page 72 History tab | 6 |
+| k5-w3-cron-dashboard | CronDashboardService + page 14 | 5 |
 
-**Carryover в S12** (приоритет):
-1. Protocol-extraction 29 layer-violations (acknowledged baseline в `tools/check_layers_allowlist.txt`).
-2. `manage.py` CLI wiring (`ai-route-optimize`, `ai-embedding-migrate`).
-3. `feedback_cron.register` в `plugins/composition/lifecycle.py` (под `dspy_feedback_loop`).
-4. Coverage DoD #10 — измерение в prod-like env через `make ci`.
+### S12 metrics
+- **17 wave + 1 backbone + closure** в master.
+- **Новые файлы**: ~36 (Python services + endpoints + 10 yaml templates + 3 ai examples + dashboards + tests).
+- **Новые тесты**: ~121 unit + integration.
+- **Новые pages**: 13/14/15/18/19. Extends: 17/31/33/72.
+- **Новые feature-flags**: 18 (см. core/config/features.py S12 section).
+
+### Carryover S11→S12 (closed)
+- 1. Protocol-extraction → ACK baseline, без перевода в S12 (отдельная задача S14+).
+- 2. `manage.py workflow cancel` добавлен (K3 W7), `ai-route-optimize`/`embedding-migrate` остаются S11 carryover.
+- 3. cron feature loop wiring в lifecycle.py — отдельный S13 wave (S12 K3 W2 даёт API).
+- 4. Coverage DoD — измеряется в prod CI через `make ci`.
 
 ---
 
