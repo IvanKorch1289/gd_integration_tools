@@ -1,11 +1,13 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-20 16:25)
+## Текущее состояние (2026-05-20 15:40, после compact)
 
-**HEAD**: `07667d89 [wave:s12/k4-w1-ai-workflow-examples-lib]`
-**Активный спринт**: Sprint 12 «Workflow Enhancement» — **ЗАКРЫТ** (17 wave + backbone + closure = 19 commits).
-**Следующий спринт**: Sprint 13 «Infrastructure & Performance» (часть wave уже в master до S12).
-**Сводка**: `vault/session-2026-05-20-1625-sprint12-summary.md`.
+**HEAD**: `27f49eca [docs:plan-v19-s12-closed]`
+**Активный спринт**: Sprint 12 «Workflow Enhancement» — **ЗАКРЫТ** (17 wave + backbone + closure + docs-sync = 20 commits).
+**Следующий спринт**: Sprint 13 «Infrastructure & Performance» (часть wave уже в master до S12; остаток — см. ниже).
+**Сводки**:
+- compact: `vault/session-2026-05-20-1540-summary.md` (изменения + verification + риски + next step).
+- closure: `vault/session-2026-05-20-1625-sprint12-summary.md` (детальная wave-таблица).
 
 ### Sprint 12 wave-список (17/17)
 | Wave | Title | Tests |
@@ -29,17 +31,35 @@
 | k5-w3-cron-dashboard | CronDashboardService + page 14 | 5 |
 
 ### S12 metrics
-- **17 wave + 1 backbone + closure** в master.
-- **Новые файлы**: ~36 (Python services + endpoints + 10 yaml templates + 3 ai examples + dashboards + tests).
+- **20 commits** в master (17 wave + backbone + closure + docs-sync).
+- **Новые файлы**: ~50 (Python services + endpoints + 10 yaml templates + 3 ai examples + dashboards + tests + runbook + K8s manifest).
 - **Новые тесты**: ~121 unit + integration.
 - **Новые pages**: 13/14/15/18/19. Extends: 17/31/33/72.
-- **Новые feature-flags**: 18 (см. core/config/features.py S12 section).
+- **Новые admin endpoints**: 20 (5 routers).
+- **Новые services**: 10 (CostEstimator, TemplateRegistry, ReactiveDispatcher, SagaHistory, HitlHistory, CronDashboardService, TemporalWorkerScaler, VaultPkiClient, LLMModelPricing, …).
+- **Новые feature-flags**: 18 (15 default-ON, 3 default-OFF).
+- **Новые ClickHouse events**: 5 (workflow.signal/cancel/compensation_*/hitl.*).
 
-### Carryover S11→S12 (closed)
-- 1. Protocol-extraction → ACK baseline, без перевода в S12 (отдельная задача S14+).
-- 2. `manage.py workflow cancel` добавлен (K3 W7), `ai-route-optimize`/`embedding-migrate` остаются S11 carryover.
-- 3. cron feature loop wiring в lifecycle.py — отдельный S13 wave (S12 K3 W2 даёт API).
-- 4. Coverage DoD — измеряется в prod CI через `make ci`.
+### Verification gate (selective, sessions tests passed)
+Все 18 файлов unit/integration тестов passed (или skipped gracefully без croniter/prometheus_client/rapidfuzz).
+**НЕ выполнено в сессии** (требует CI окружения): `make lint-strict`, `make type-check`, `make pre-prod-check`, `make ci`.
+
+### Открытые риски / carryover S12 → S13/S14
+1. AI workflow examples — declarative-only; нужны bound handler'ы в `services.ai.*` (handlers).
+2. mTLS staging smoke — требует Vault + docker-compose.bluegreen.yml.
+3. `feedback_cron.register` lifecycle wiring (S11 carryover остаётся).
+4. Protocol-extraction 29 acknowledged baseline (отдельный S14+).
+5. `dspy_feedback_loop` cron registration в lifecycle.py.
+6. Reactive workflows chaos-test (event-flood) перед staging-flip default-ON.
+7. `croniter` / `prometheus_client` в текущем venv отсутствуют — `uv sync` в CI выправит.
+
+### Следующий шаг
+1. `make ci` + `make pr` в CI окружении с полным стеком.
+2. Staging-smoke `workflow_mtls_enabled` + `workflow_reactive_triggers_enabled` → flip default-ON.
+3. Реализация handlers для AI workflow examples (services.ai.rag_query, multi_agent_supervisor, e2b_execute).
+4. Lifecycle wiring `feedback_cron.register`.
+5. Chaos-test reactive dispatcher.
+6. Импорт Grafana dashboard `workflow_sla_compliance.json` в staging.
 
 ---
 
