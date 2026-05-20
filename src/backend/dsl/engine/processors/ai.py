@@ -329,7 +329,7 @@ class VectorSearchProcessor(BaseProcessor):
 # Допустимые стратегии retrieval для :class:`RagQueryProcessor`.
 # ``dense`` — стандартный k-NN; остальные обрабатываются downstream
 # retriever'ом (см. RAG plan S11 K3) и активируются по namespace-config.
-_RAG_STRATEGIES: tuple[str, ...] = ("dense", "hybrid", "hyde", "multi_query")
+_RAG_STRATEGIES: tuple[str, ...] = ("dense", "hybrid", "hyde", "multi_query", "adaptive")
 
 
 class RagQueryProcessor(BaseProcessor):
@@ -399,6 +399,24 @@ class RagQueryProcessor(BaseProcessor):
             return
         from src.backend.services.ai.rag_service import get_rag_service
 
+        # S11 K4 W3: adaptive — селектор выбирает реальную стратегию
+        # на основе query-features + feature_flag.
+        effective_strategy = self._strategy
+        if effective_strategy == "adaptive":
+            from src.backend.core.config.features import feature_flags
+
+            if feature_flags.adaptive_rag_strategy:
+                from src.backend.services.ai.rag.strategy_selector import (
+                    AdaptiveStrategySelector,
+                )
+
+                selector = AdaptiveStrategySelector()
+                decision = await selector.select(query)
+                effective_strategy = decision.strategy
+                exchange.set_property("rag_strategy_overhead_ms", decision.elapsed_ms)
+            else:
+                effective_strategy = "dense"
+
         rag = get_rag_service()
         result = await rag.augment(
             query=query,
@@ -411,8 +429,8 @@ class RagQueryProcessor(BaseProcessor):
         # Прокидываем strategy в downstream:
         # — exchange property для branch-logic,
         # — поле augment_result для каждого консьюмера, читающего dict.
-        payload["strategy"] = self._strategy
-        exchange.set_property("rag_strategy", self._strategy)
+        payload["strategy"] = effective_strategy
+        exchange.set_property("rag_strategy", effective_strategy)
         exchange.set_property(self._output_property, payload)
 
     def to_spec(self) -> dict[str, Any] | None:
