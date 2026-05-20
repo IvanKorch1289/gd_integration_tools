@@ -1,0 +1,56 @@
+# R2 Blueprint: hybrid_rag — BM25 + dense + rerank + LLM context.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: hybrid_rag
+version: "1.0.0"
+description: "Hybrid retrieval: BM25 + dense + reciprocal-rank-fusion + rerank."
+tags: [ai, rag, retrieval]
+
+params:
+  - { name: collection, type: string, required: true }
+  - { name: query_field, type: string, required: false }
+  - { name: top_k, type: number, required: false }
+  - { name: reranker_model, type: string, required: false }
+  - { name: llm_model, type: string, required: true }
+
+from:
+  http:
+    method: POST
+    path: /api/v1/rag/hybrid/${blueprint.collection}/query
+
+steps:
+  - rag_query:
+      strategy: hybrid
+      collection: ${blueprint.collection}
+      query: ${body.query}
+      top_k: ${blueprint.top_k}
+      to: body.candidates
+  - rag_rerank:
+      model: ${blueprint.reranker_model}
+      input: body.candidates
+      to: body.context_top
+  - prompt_composer:
+      template: |
+        Контекст:
+        {context}
+
+        Вопрос: {query}
+        Ответ:
+      variables:
+        context: ${body.context_top}
+        query: ${body.query}
+      to: body.prompt
+  - llm_call:
+      model: ${blueprint.llm_model}
+      prompt: ${body.prompt}
+      to: body.answer
+  - audit:
+      action: blueprint.hybrid_rag.answered
+      metadata_from: { collection: blueprint.collection, top_k: body.context_top | length }
+
+to:
+  response:
+    code: 200
+    body:
+      answer: ${body.answer}
+      context: ${body.context_top}

@@ -1,0 +1,52 @@
+# R2 Blueprint: saml_user_sync — SAML attributes → user upsert.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: saml_user_sync
+version: "1.0.0"
+description: "SAML assertion → upsert user + group sync + audit."
+tags: [auth, saml, business]
+
+params:
+  - { name: idp_id, type: string, required: true }
+  - { name: user_entity, type: string, required: false }
+  - { name: group_entity, type: string, required: false }
+
+from:
+  http:
+    method: POST
+    path: /api/v1/auth/saml/${blueprint.idp_id}/sync
+
+steps:
+  - saml_assertion_parse:
+      raw_xml: body.SAMLResponse
+      to: body.assertion
+  - validate_response:
+      schema:
+        type: object
+        required: [nameID, attributes]
+  - crud_upsert:
+      entity: "${blueprint.user_entity}"
+      key_field: nameID
+      body:
+        nameID: "${body.assertion.nameID}"
+        email: "${body.assertion.attributes.mail}"
+        groups: "${body.assertion.attributes.memberOf}"
+      to: body.user
+  - choice:
+      when:
+        - condition: "${blueprint.group_entity} != null"
+          steps:
+            - parallel:
+                branches:
+                  - crud_upsert:
+                      entity: "${blueprint.group_entity}"
+                      key_field: name
+                      body:
+                        name: "${item}"
+                  - assign_group:
+                      user_id: "${body.user.id}"
+                      group: "${item}"
+                for_each: body.assertion.attributes.memberOf
+  - audit:
+      action: blueprint.saml_user_sync.completed
+      actor_from: body.assertion.nameID

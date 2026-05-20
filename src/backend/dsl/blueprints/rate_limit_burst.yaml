@@ -1,0 +1,39 @@
+# R2 Blueprint: rate_limit_burst — token-bucket burst handling.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: rate_limit_burst
+version: "1.0.0"
+description: "Token-bucket rate-limit (burst capacity + sustained rate)."
+tags: [resilience, rate-limit]
+
+params:
+  - { name: route_id, type: string, required: true }
+  - { name: bucket_key, type: string, required: true,
+      description: "тенант / клиент-id — ключ rate-limit bucket" }
+  - { name: burst, type: number, required: true }
+  - { name: sustained_per_sec, type: number, required: true }
+  - { name: on_exceeded, type: string, required: false,
+      description: "fail | dlq | shadow" }
+
+from:
+  http:
+    method: POST
+    path: /api/v1/${blueprint.route_id}
+
+steps:
+  - policy:
+      rate_limit:
+        key: "${blueprint.bucket_key}"
+        burst: "${blueprint.burst}"
+        sustained_per_sec: "${blueprint.sustained_per_sec}"
+        on_exceeded: "${blueprint.on_exceeded}"
+  - call_function:
+      ref: "extensions.${blueprint.route_id}.handler:process"
+      to: body.result
+  - audit:
+      action: blueprint.rate_limit_burst.processed
+
+to:
+  response:
+    code: 200
+    body: "${body.result}"

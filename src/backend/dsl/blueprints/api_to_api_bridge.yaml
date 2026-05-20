@@ -1,0 +1,36 @@
+# R2 Blueprint: api_to_api_bridge — REST inbound → transform → REST outbound.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: api_to_api_bridge
+version: "1.0.0"
+description: "API ↔ API bridge: inbound REST → transform → outbound REST."
+tags: [bridge, eip]
+
+params:
+  - { name: route_id, type: string, required: true }
+  - { name: inbound_path, type: string, required: true }
+  - { name: outbound_url, type: string, required: true }
+  - { name: transformer, type: string, required: false }
+  - { name: outbound_method, type: string, required: false }
+
+from:
+  http:
+    method: POST
+    path: ${blueprint.inbound_path}
+
+steps:
+  - call_function:
+      ref: "${blueprint.transformer}"
+      to: body.transformed
+  - http_call:
+      url: "${blueprint.outbound_url}"
+      method: "${blueprint.outbound_method}"
+      payload: "${body.transformed}"
+      to: body.response
+  - audit:
+      action: blueprint.api_to_api_bridge.relayed
+
+to:
+  response:
+    code: 200
+    body: "${body.response}"

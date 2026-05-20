@@ -1,0 +1,35 @@
+# R2 Blueprint: webhook_to_kafka — HMAC-verified webhook → Kafka.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: webhook_to_kafka
+version: "1.0.0"
+description: "Webhook (HMAC SHA-256) → validate → Kafka topic."
+tags: [webhook, kafka, eip]
+
+params:
+  - { name: route_id, type: string, required: true }
+  - { name: webhook_path, type: string, required: true }
+  - { name: hmac_secret_setting, type: string, required: true }
+  - { name: target_topic, type: string, required: true }
+
+from:
+  webhook:
+    path: ${blueprint.webhook_path}
+    method: POST
+
+steps:
+  - webhook_signature_verify:
+      header: X-Signature
+      secret_setting: ${blueprint.hmac_secret_setting}
+      algorithm: sha256
+      on_invalid: fail
+  - validate_request:
+      schema: { type: object, required: [event_type, payload] }
+  - sink_publish:
+      sink_kind: kafka
+      topic: ${blueprint.target_topic}
+      key: ${body.event_type}
+      payload: ${body}
+  - audit: { action: blueprint.webhook_to_kafka.received }
+
+to: { response: { code: 202, body: { status: queued } } }

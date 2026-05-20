@@ -1,0 +1,37 @@
+# R2 Blueprint: cdc_to_search_index — CDC stream → Elasticsearch/OpenSearch.
+# Wave [wave:s10/k3-w1-blueprint-library-15].
+
+blueprint: cdc_to_search_index
+version: "1.0.0"
+description: "CDC → transform → bulk INDEX в Elasticsearch/OpenSearch."
+tags: [cdc, search, eip]
+
+params:
+  - { name: route_id, type: string, required: true }
+  - { name: source_table, type: string, required: true }
+  - { name: index_name, type: string, required: true }
+  - { name: transformer, type: string, required: false }
+
+from:
+  cdc:
+    table: ${blueprint.source_table}
+    operations: [insert, update, delete]
+
+steps:
+  - choice:
+      when:
+        - condition: "operation == 'delete'"
+          steps:
+            - es_delete:
+                index: ${blueprint.index_name}
+                id: ${body.id}
+        - condition: "operation in ['insert', 'update']"
+          steps:
+            - call_function:
+                ref: ${blueprint.transformer}
+                to: body.doc
+            - es_index:
+                index: ${blueprint.index_name}
+                id: ${body.id}
+                doc: ${body.doc}
+  - audit: { action: blueprint.cdc_to_search.synced }
