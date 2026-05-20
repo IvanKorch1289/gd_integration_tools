@@ -166,7 +166,9 @@ with st.sidebar:
                 st.error("Ошибка удаления")
 
 
-tab_visual, tab_yaml, tab_python = st.tabs(["Visual", "YAML", "Python"])
+tab_visual, tab_yaml, tab_python, tab_diff = st.tabs(
+    ["Visual", "YAML", "Python", "Workflow Diff"]
+)
 
 
 VISUAL_PROCESSORS: dict[str, list[str]] = {
@@ -323,3 +325,88 @@ with tab_python:
             "Round-trip: этот код, выполненный в Python, создаёт идентичный "
             "Pipeline через RouteBuilder."
         )
+
+
+# ──────────────────────── Sprint 12 K3 W1: Workflow Diff ─────────────────
+with tab_diff:
+    st.subheader("Workflow Diff — side-by-side Graphviz")
+    st.caption(
+        "Сравните 2 версии workflow по WorkflowVersionRegistry. "
+        "Color-coded: зелёный=added, красный=removed, оранжевый=modified."
+    )
+    try:
+        from src.backend.dsl.workflow.versioning import get_global_registry
+        from src.backend.dsl.workflow.visualize import (
+            compute_step_diff,
+            to_graphviz,
+        )
+
+        registry = get_global_registry()
+        all_wf_ids = sorted(registry.all_workflow_ids())
+
+        if not all_wf_ids:
+            st.info(
+                "WorkflowVersionRegistry пуст. Зарегистрируйте workflow "
+                "через @workflow_versioned('X.Y.Z')."
+            )
+        else:
+            selected_wf = st.selectbox("Workflow ID", all_wf_ids, key="diff_wf")
+            history = registry.history(selected_wf)
+            versions = [v.semver for v in history]
+
+            if len(versions) < 2:
+                st.warning(
+                    f"Нужно ≥2 версии для diff. Текущее: {len(versions)}."
+                )
+            else:
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    ver_a = st.selectbox(
+                        "Version A (база)", versions, index=0, key="diff_va"
+                    )
+                with col_b:
+                    ver_b = st.selectbox(
+                        "Version B (новая)", versions, index=1, key="diff_vb"
+                    )
+
+                if ver_a and ver_b and ver_a != ver_b:
+                    rec_a = next((v for v in history if v.semver == ver_a), None)
+                    rec_b = next((v for v in history if v.semver == ver_b), None)
+
+                    decl_a = getattr(rec_a, "declaration", None)
+                    decl_b = getattr(rec_b, "declaration", None)
+
+                    if decl_a is None or decl_b is None:
+                        st.error(
+                            "Версия не содержит declaration. Расширьте "
+                            "WorkflowVersion для хранения WorkflowDeclaration."
+                        )
+                    else:
+                        diff_results, color_map_a, color_map_b = (
+                            compute_step_diff(decl_a, decl_b)
+                        )
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown(f"**Version A (v{ver_a})**")
+                            st.graphviz_chart(
+                                to_graphviz(decl_a, color_map=color_map_a)
+                            )
+                        with col2:
+                            st.markdown(f"**Version B (v{ver_b})**")
+                            st.graphviz_chart(
+                                to_graphviz(decl_b, color_map=color_map_b)
+                            )
+
+                        st.markdown("**Step-by-step diff**")
+                        for r in diff_results:
+                            icon = {
+                                "added": "🟢",
+                                "removed": "🔴",
+                                "modified": "🟠",
+                                "unchanged": "⚪",
+                            }.get(r.status, "·")
+                            st.write(f"{icon} `{r.identity}` — {r.status}")
+                else:
+                    st.info("Выберите две разные версии для сравнения.")
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Ошибка инициализации diff-view: {exc}")
