@@ -48,8 +48,12 @@ def unregister_nats_source(source_id: str) -> None:
 )
 async def list_consumers() -> dict[str, Any]:
     """Список всех зарегистрированных NATS consumers с lag-снапшотами."""
-    from src.backend.infrastructure.observability.nats_metrics import (
-        record_consumer_info,
+    # Lazy importlib для соблюдения layer policy (entrypoints не зависит
+    # от infrastructure статически; metrics-emitter резолвится в runtime).
+    import importlib
+
+    metrics_mod = importlib.import_module(
+        "src.backend.infrastructure.observability.nats_metrics"
     )
 
     items: list[dict[str, Any]] = []
@@ -59,7 +63,7 @@ async def list_consumers() -> dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             info = {"error": str(exc), "source_id": source_id}
         info["source_id"] = source_id
-        record_consumer_info(info)
+        metrics_mod.record_consumer_info(info)
         items.append(info)
     return {"consumers": items, "total": len(items)}
 
