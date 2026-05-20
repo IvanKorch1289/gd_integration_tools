@@ -115,6 +115,52 @@ storage_router.add_api_route(
 )
 
 
+async def upload_stream_handler(
+    request: Request,
+    x_api_key: str = Header(...),
+    content_type: str | None = Header(default=None, alias="content-type"),
+    x_filename: str | None = Header(default=None, alias="x-filename"),
+) -> dict[str, Any]:
+    """Streaming-аплоад больших файлов (S13 K2 W1).
+
+    Принимает raw body как ``AsyncIterator[bytes]`` (``request.stream()``)
+    и грузит чанками в S3 через ``put_object_multipart``. RAM-bound:
+    1 chunk × 8MB ≈ 8MB peak вместо ``await file.read()``.
+
+    Заголовки:
+
+    * ``content-type`` — MIME-type объекта;
+    * ``x-filename`` — оригинальное имя файла (опционально);
+    * ``x-api-key`` — auth.
+    """
+    s3_service = get_s3_service()
+    s3_client: Any = getattr(s3_service, "_client", None) or s3_service
+    key = (x_filename or "stream-upload").replace("/", "_")
+    etag = await s3_client.put_object_multipart(
+        key=key,
+        stream=request.stream(),
+        content_type=content_type,
+    )
+    return {
+        "uploaded": True,
+        "key": key,
+        "etag": etag,
+        "content_type": content_type,
+    }
+
+
+storage_router.add_api_route(
+    path="/upload-stream",
+    endpoint=upload_stream_handler,
+    methods=["POST"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Streaming upload больших файлов через S3 multipart (S13 K2 W1)",
+    operation_id="uploadFileStreamS3MultipartUnique",
+    dependencies=common_dependencies,
+    tags=["Storage"],
+)
+
+
 storage_builder.add_actions(
     [
         ActionSpec(
