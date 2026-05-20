@@ -206,6 +206,90 @@ class WorkflowVersionRegistry:
         """Список всех уникальных workflow_id в реестре."""
         return sorted({v.workflow_id for v in self.versions})
 
+    def pin_default(
+        self, workflow_id: str, *, semver: str
+    ) -> WorkflowVersion:
+        """Sprint 12 K3 W8 — назначить указанную версию как default.
+
+        Снимает default-флаг с других версий того же ``workflow_id``,
+        ищет версию с ``semver`` в registry и помечает её default.
+
+        Args:
+            workflow_id: workflow ID.
+            semver: версия (``X.Y.Z`` или ``X.Y``).
+
+        Returns:
+            Обновлённая :class:`WorkflowVersion` с ``default_version=True``.
+
+        Raises:
+            ValueError: если версия не найдена в registry.
+        """
+        history = self.history(workflow_id)
+        target = next((v for v in history if v.semver == semver), None)
+        if target is None:
+            raise ValueError(
+                f"Workflow {workflow_id!r}: версия {semver!r} не найдена. "
+                f"Доступно: {[v.semver for v in history]}"
+            )
+
+        updated_target = WorkflowVersion(
+            workflow_id=target.workflow_id,
+            major=target.major,
+            minor=target.minor,
+            patch=target.patch,
+            default_version=True,
+        )
+
+        new_versions: list[WorkflowVersion] = []
+        for v in self.versions:
+            if v.workflow_id != workflow_id:
+                new_versions.append(v)
+                continue
+            if v.major != target.major:
+                new_versions.append(v)
+                continue
+            if (v.major, v.minor, v.patch) == (
+                target.major,
+                target.minor,
+                target.patch,
+            ):
+                new_versions.append(updated_target)
+            else:
+                new_versions.append(
+                    WorkflowVersion(
+                        workflow_id=v.workflow_id,
+                        major=v.major,
+                        minor=v.minor,
+                        patch=v.patch,
+                        default_version=False,
+                    )
+                )
+
+        self.versions = new_versions
+        return updated_target
+
+    def rollback(self, workflow_id: str) -> WorkflowVersion | None:
+        """Sprint 12 K3 W8 — откатить default на предыдущую версию.
+
+        Ищет текущую default-версию + предыдущую (по semver). Если есть
+        previous — устанавливает её default. Возвращает новую default-версию
+        или ``None`` если предыдущей нет.
+        """
+        current = self.get_default(workflow_id)
+        if current is None:
+            return None
+
+        history = self.history(workflow_id)
+        try:
+            idx = history.index(current)
+        except ValueError:
+            return None
+        if idx == 0:
+            return None
+
+        previous = history[idx - 1]
+        return self.pin_default(workflow_id, semver=previous.semver)
+
 
 # Глобальный реестр процесса.
 _REGISTRY = WorkflowVersionRegistry()
