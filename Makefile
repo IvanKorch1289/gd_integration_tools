@@ -192,6 +192,11 @@ startup-time-gate: check-env ## Sprint 10 K2 W3: startup-time gate (<3s total, f
 	@$(UV_RUN) python tools/checks/startup_time.py
 	@$(SUCCESS) "Startup-time gate OK"
 
+doctor: check-env ## Sprint 10 K5 W1: comprehensive dev environment health check
+	@$(INFO) "Running make doctor..."
+	@$(UV_RUN) python tools/checks/doctor.py --quick
+	@$(SUCCESS) "Doctor check finished"
+
 type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
