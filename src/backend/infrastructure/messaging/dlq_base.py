@@ -99,6 +99,8 @@ class DLQEnvelope(BaseModel):
     last_failed_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+    dlq_class: str = "operational"
+    """S13 K3 W4: класс для policy-based retention (``financial`` / ``analytics`` / ``operational``)."""
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
