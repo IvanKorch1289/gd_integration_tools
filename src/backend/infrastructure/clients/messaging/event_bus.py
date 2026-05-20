@@ -1,4 +1,10 @@
-"""Event Bus через FastStream — async pub/sub поверх Redis."""
+"""Event Bus через FastStream — async pub/sub поверх Redis.
+
+S13 K3 W3: добавлен опциональный schema-validation hook через
+:class:`ServiceSchemaRegistry`. Если зарегистрирована схема для канала —
+publish() валидирует payload через ``jsonschema``; на fail — поднимает
+:class:`EventSchemaValidationError`.
+"""
 
 from __future__ import annotations
 
@@ -7,16 +13,32 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from src.backend.core.errors import BaseError
+
 __all__ = (
     "OrderEvent",
     "PipelineEvent",
     "FlagEvent",
     "RouteEvent",
     "EventBus",
+    "EventSchemaValidationError",
     "get_event_bus",
 )
 
 logger = logging.getLogger(__name__)
+
+
+class EventSchemaValidationError(BaseError):
+    """Payload не соответствует зарегистрированной для канала JSON-Schema (S13 K3 W3)."""
+
+    def __init__(self, channel: str, event_type: str, reason: str) -> None:
+        super().__init__(
+            f"EventBus schema validation failed for channel='{channel}', "
+            f"event_type='{event_type}': {reason}"
+        )
+        self.channel = channel
+        self.event_type = event_type
+        self.reason = reason
 
 
 # ────────────────── Event Models ──────────────────
@@ -58,9 +80,14 @@ class EventBus:
     - events.routes — route.registered, route.removed
     """
 
-    def __init__(self) -> None:
+    def __init__(self, schema_registry: Any | None = None) -> None:
         self._broker: Any = None
         self._started = False
+        self._schema_registry = schema_registry
+
+    def attach_schema_registry(self, registry: Any) -> None:
+        """Прикрепить :class:`ServiceSchemaRegistry` для validation-hook (S13 K3 W3)."""
+        self._schema_registry = registry
 
     async def start(self, redis_url: str = "redis://localhost:6379") -> None:
         """Запускает FastStream Redis broker."""
@@ -78,8 +105,41 @@ class EventBus:
             self._started = False
             logger.info("EventBus stopped")
 
+    def _validate_event(self, channel: str, event: BaseModel) -> None:
+        """Проверяет payload против зарегистрированной схемы (S13 K3 W3).
+
+        No-op если registry отсутствует или схема не зарегистрирована —
+        backward-compatible поведение.
+        """
+        if self._schema_registry is None:
+            return
+        from src.backend.services.schema_registry.registry import SchemaKind
+
+        event_type = event.__class__.__name__
+        subject = f"events.{channel}.{event_type}"
+        entry = self._schema_registry.get(SchemaKind.EVENT, subject)
+        if entry is None or entry.spec_schema is None:
+            return
+        try:
+            import jsonschema
+
+            jsonschema.validate(instance=event.model_dump(), schema=entry.spec_schema)
+        except jsonschema.ValidationError as exc:  # pragma: no cover
+            raise EventSchemaValidationError(
+                channel=channel, event_type=event_type, reason=exc.message
+            ) from exc
+        except ImportError:  # pragma: no cover - jsonschema опциональный
+            logger.debug("jsonschema not installed; skipping EventBus validation")
+
     async def publish(self, channel: str, event: BaseModel) -> None:
-        """Публикует событие в канал."""
+        """Публикует событие в канал.
+
+        S13 K3 W3: перед публикацией вызывает :meth:`_validate_event` —
+        если для канала зарегистрирована JSON-Schema, payload валидируется.
+        На fail — :class:`EventSchemaValidationError`.
+        """
+        self._validate_event(channel, event)
+
         if not self._broker or not self._started:
             logger.warning("EventBus not started, skipping publish to %s", channel)
             return

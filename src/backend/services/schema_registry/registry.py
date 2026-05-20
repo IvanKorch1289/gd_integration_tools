@@ -35,6 +35,8 @@ class SchemaKind(StrEnum):
     PLUGIN = "plugin"
     PROCESSOR = "processor"
     ACTION = "action"
+    EVENT = "event"
+    """S13 K3 W3: схема payload'а для EventBus.publish() — registry-driven validation."""
 
 
 @dataclass(frozen=True, slots=True)
