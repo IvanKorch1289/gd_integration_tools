@@ -1639,5 +1639,199 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ------------------------------------------------------------------ #
+    #  Sprint 12 — Workflow Enhancement (18 feature-flags)               #
+    # ------------------------------------------------------------------ #
+
+    workflow_audit_extended: bool = Field(
+        default=True,
+        title="K1 S12 W1: расширенный workflow_audit event-set",
+        description=(
+            "K1 Sprint 12 Wave 1 (wave:s12/k1-w1-workflow-audit-log). "
+            "Owner: K1 Security. Активирует расширенный event_type allowlist: "
+            "workflow.start/signal/cancel/complete/fail/compensation_* + hitl.*. "
+            "Колонки actor/duration_ms/parent_workflow_id. default-ON для prod."
+        ),
+    )
+
+    workflow_mtls_enabled: bool = Field(
+        default=False,
+        title="K1 S12 W2: Temporal mTLS через Vault PKI engine",
+        description=(
+            "K1 Sprint 12 Wave 2 (wave:s12/k1-w2-temporal-mtls-finale). "
+            "Owner: K1 Security. Production-ready mTLS worker → server через "
+            "Vault PKI; cert rotation TaskRegistry TTL 23h. default-OFF до "
+            "staging-smoke."
+        ),
+    )
+
+    workflow_sla_dashboard_enabled: bool = Field(
+        default=True,
+        title="K2 S12 W1: Workflow SLA Grafana dashboard + 99% SLO",
+        description=(
+            "K2 Sprint 12 Wave 1 (wave:s12/k2-w1-workflow-sla-grafana). "
+            "Owner: K2 Resilience+Perf. SLA compliance rate (last 24h) поверх "
+            "workflow_audit ClickHouse; Prometheus counter "
+            "workflow_sla_compliance_total. default-ON."
+        ),
+    )
+
+    workflow_worker_autoscale_enabled: bool = Field(
+        default=False,
+        title="K2 S12 W2: TemporalWorkerPool dynamic scaling по queue depth",
+        description=(
+            "K2 Sprint 12 Wave 2 (wave:s12/k2-w2-temporal-worker-autoscale). "
+            "Owner: K2 Resilience+Perf. TemporalWorkerScaler min=2 max=20 + "
+            "K8s HPA через PrometheusAdapter. default-OFF dev / ON prod."
+        ),
+    )
+
+    workflow_visual_diff_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W1: Workflow Diff (side-by-side Graphviz) в page 31",
+        description=(
+            "K3 Sprint 12 Wave 1 (wave:s12/k3-w1-visual-workflow-diff). "
+            "Owner: K3 DSL/Workflow. visualize.py:to_graphviz + structured "
+            "step_diff + color-coded changes. default-ON."
+        ),
+    )
+
+    workflow_cron_builder_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W2: Visual cron builder + croniter preview (page 13)",
+        description=(
+            "K3 Sprint 12 Wave 2 (wave:s12/k3-w2-cron-builder-ui). "
+            "Owner: K3 DSL/Workflow. croniter dep + timezone-aware preview + "
+            "dry-run; admin_cron REST. default-ON."
+        ),
+    )
+
+    workflow_cost_estimation_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W3: pre-run cost estimation (page 15)",
+        description=(
+            "K3 Sprint 12 Wave 3 (wave:s12/k3-w3-workflow-cost-estimation). "
+            "Owner: K3 DSL/Workflow. WorkflowCostEstimator (p50/p95 из "
+            "workflow_audit) + admin_workflow_cost REST. default-ON."
+        ),
+    )
+
+    workflow_reactive_triggers_enabled: bool = Field(
+        default=False,
+        title="K3 S12 W4: event-driven reactive workflows (EventBus subscribe)",
+        description=(
+            "K3 Sprint 12 Wave 4 (wave:s12/k3-w4-reactive-workflows). "
+            "Owner: K3 DSL/Workflow. ReactiveWorkflowDispatcher + .reactive_on "
+            "builder + debounce 5s + dedup Redis SET NX EX 60. default-OFF до "
+            "staging-smoke."
+        ),
+    )
+
+    workflow_template_library_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W5: workflow template library (10 templates)",
+        description=(
+            "K3 Sprint 12 Wave 5 (wave:s12/k3-w5-workflow-template-library). "
+            "Owner: K3 DSL/Workflow. 10 yaml в dsl/workflow/templates/ + "
+            "WorkflowTemplateRegistry; admin_workflow_templates REST. default-ON."
+        ),
+    )
+
+    workflow_template_semantic_search: bool = Field(
+        default=False,
+        title="K3 S12 W5: BGE-M3 semantic search для template registry",
+        description=(
+            "K3 Sprint 12 Wave 5 (wave:s12/k3-w5-workflow-template-library). "
+            "Owner: K3 DSL/Workflow. Включает BGE-M3 semantic search; "
+            "auto-ON если sentence_transformers установлен, иначе fallback на "
+            "rapidfuzz. default-OFF."
+        ),
+    )
+
+    workflow_saga_viewer_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W6: Saga Compensation Viewer (pages 17/19)",
+        description=(
+            "K3 Sprint 12 Wave 6 (wave:s12/k3-w6-saga-compensation-viewer). "
+            "Owner: K3 DSL/Workflow. SagaProcessor emit workflow.compensation_* "
+            "events + timeline view в pages 17/19. default-ON."
+        ),
+    )
+
+    workflow_cancel_dsl_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W7: .cancel_workflow() DSL step + audit event",
+        description=(
+            "K3 Sprint 12 Wave 7 (wave:s12/k3-w7-cancel-workflow-dsl). "
+            "Owner: K3 DSL/Workflow. .cancel_workflow(workflow_id, reason) "
+            "builder method + CancelWorkflowProcessor + manage.py workflow "
+            "cancel. default-ON."
+        ),
+    )
+
+    workflow_versioning_ui_enabled: bool = Field(
+        default=True,
+        title="K3 S12 W8: UI для WorkflowVersionRegistry (page 18)",
+        description=(
+            "K3 Sprint 12 Wave 8 (wave:s12/k3-w8-workflow-versioning-ui). "
+            "Owner: K3 DSL/Workflow. Page 18 + admin_workflow_versioning REST: "
+            "pin/rollback/history/running-count. Depends on "
+            "workflow_versioning_strict ON. default-ON."
+        ),
+    )
+
+    ai_workflow_examples_enabled: bool = Field(
+        default=False,
+        title="K4 S12 W1: 3 production AI workflow examples",
+        description=(
+            "K4 Sprint 12 Wave 1 (wave:s12/k4-w1-ai-workflow-examples-lib). "
+            "Owner: K4 AI/Data. rag_augmented_saga + multi_agent_supervisor + "
+            "code_interpreter_loop в extensions/credit_pipeline/workflows/. "
+            "Depends on extensions_credit_workflow ON. default-OFF."
+        ),
+    )
+
+    ai_workflow_cost_estimation_enabled: bool = Field(
+        default=True,
+        title="K4 S12 W2: LLM cost estimation для AI workflow",
+        description=(
+            "K4 Sprint 12 Wave 2 (wave:s12/k4-w2-llm-workflow-cost-est). "
+            "Owner: K4 AI/Data. LLMModelPricing + _estimate_llm_cost + AI "
+            "breakdown tab в page 15. Depends on workflow_cost_estimation_enabled. "
+            "default-ON."
+        ),
+    )
+
+    workflow_template_streamlit_enabled: bool = Field(
+        default=True,
+        title="K5 S12 W1: workflow templates Streamlit (page 33 extension)",
+        description=(
+            "K5 Sprint 12 Wave 1 (wave:s12/k5-w1-workflow-template-streamlit). "
+            "Owner: K5 Frontend+Ext. Page 33 extension: route/workflow templates "
+            "toggle + Mermaid render + visualize.py:to_mermaid. default-ON."
+        ),
+    )
+
+    hitl_history_enabled: bool = Field(
+        default=True,
+        title="K5 S12 W2: HITL history viewer (page 72 tab)",
+        description=(
+            "K5 Sprint 12 Wave 2 (wave:s12/k5-w2-hitl-history-viewer). "
+            "Owner: K5 Frontend+Ext. HitlHistoryService + History tab в page 72 "
+            "+ hitl/history endpoint + emit hitl.* events. Depends on "
+            "hitl_panel_enabled. default-ON."
+        ),
+    )
+
+    workflow_cron_dashboard_enabled: bool = Field(
+        default=True,
+        title="K5 S12 W3: cron schedule dashboard (page 14)",
+        description=(
+            "K5 Sprint 12 Wave 3 (wave:s12/k5-w3-cron-dashboard). "
+            "Owner: K5 Frontend+Ext. Page 14 + CronDashboardService + run-now "
+            "endpoint. Depends on workflow_cron_builder_enabled. default-ON."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

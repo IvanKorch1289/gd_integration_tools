@@ -662,3 +662,152 @@ forbidden_paths = [
     "src/backend/services/ai/**",
     "extensions/**",
 ]
+
+# ----------------------------------------------------------------------- #
+#  Sprint 12 — Workflow Enhancement (5 teams x 17 wave + backbone)        #
+# ----------------------------------------------------------------------- #
+
+[team_s12.k1]
+name = "S12 K1 — Security (workflow_audit extended + Temporal mTLS Vault PKI)"
+git_branch_prefix = "team/s12-k1-security"
+worktree_branch = "team/s12-k1-security"
+wave_prefix = "s12/k1-"
+goal = "Расширенный workflow_audit (event_types + actor + duration_ms) + production-ready Temporal mTLS через Vault PKI engine с cert rotation."
+owned_paths = [
+    "src/backend/services/audit/workflow_audit_sink.py",
+    "src/backend/services/audit/migrations/0011_*",
+    "src/backend/entrypoints/api/v1/endpoints/admin_workflow_audit.py",
+    "src/backend/infrastructure/workflow/temporal_client.py",
+    "src/backend/infrastructure/workflow/temporal_backend.py",
+    "src/backend/infrastructure/secrets/vault_pki.py",
+    "docker-compose.bluegreen.yml",
+    "docs/runbooks/temporal-mtls-rotation.md",
+    "tests/unit/services/audit/test_workflow_audit_extended.py",
+    "tests/integration/workflow/test_temporal_mtls.py",
+]
+shared_with = ["k3", "k5"]
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "extensions/**",
+]
+
+[team_s12.k2]
+name = "S12 K2 — Resilience+Perf (SLA Grafana + Temporal worker autoscale)"
+git_branch_prefix = "team/s12-k2-resilience"
+worktree_branch = "team/s12-k2-resilience"
+wave_prefix = "s12/k2-"
+goal = "Grafana SLA compliance dashboard (99% SLO) поверх workflow_audit + TemporalWorkerScaler по queue depth + K8s HPA exporter."
+owned_paths = [
+    "src/backend/infrastructure/observability/grafana/workflow_sla_compliance.json",
+    "src/backend/infrastructure/observability/grafana/datasource_clickhouse.yaml",
+    "src/backend/infrastructure/observability/prometheus_temporal_exporter.py",
+    "src/backend/services/workflows/sla_alerting.py",
+    "src/backend/core/scaling/auto_scaler.py",
+    "deploy/k8s/temporal-worker-hpa.yaml",
+    "tests/unit/services/workflows/test_sla_prometheus_export.py",
+    "tests/unit/core/scaling/test_temporal_worker_scaler.py",
+]
+shared_with = ["k1"]
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/frontend/streamlit_app/**",
+    "extensions/**",
+]
+
+[team_s12.k3]
+name = "S12 K3 — DSL/Workflow (Visual diff + Cron + Cost + Reactive + Templates + Saga + Cancel + Versioning UI)"
+git_branch_prefix = "team/s12-k3-dsl"
+worktree_branch = "team/s12-k3-dsl"
+wave_prefix = "s12/k3-"
+goal = "8 wave: visual diff (Graphviz) + cron UI + cost estimator + reactive triggers + 10 yaml templates + saga viewer + cancel DSL + versioning UI."
+owned_paths = [
+    "src/backend/dsl/workflow/visualize.py",
+    "src/backend/dsl/workflow/yaml_io.py",
+    "src/backend/dsl/workflow/builder.py",
+    "src/backend/dsl/workflow/spec.py",
+    "src/backend/dsl/workflow/versioning.py",
+    "src/backend/dsl/workflow/templates/**",
+    "src/backend/dsl/builders/integration.py",
+    "src/backend/dsl/engine/processors/control_flow/**",
+    "src/backend/dsl/engine/processors/streaming/reactive_trigger.py",
+    "src/backend/services/workflows/cost_estimator.py",
+    "src/backend/services/workflows/reactive_dispatcher.py",
+    "src/backend/services/workflows/template_registry.py",
+    "src/backend/services/workflows/saga_history.py",
+    "src/backend/entrypoints/api/v1/endpoints/admin_workflow_cost.py",
+    "src/backend/entrypoints/api/v1/endpoints/admin_workflow_templates.py",
+    "src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py",
+    "src/backend/entrypoints/api/v1/endpoints/admin_cron.py",
+    "src/backend/infrastructure/scheduler/cron_validator.py",
+    "src/backend/infrastructure/scheduler/scheduler_manager.py",
+    "src/backend/infrastructure/clients/messaging/event_bus.py",
+    "src/frontend/streamlit_app/pages/13_Cron_Builder.py",
+    "src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py",
+    "src/frontend/streamlit_app/pages/18_Workflow_Versioning.py",
+    "src/frontend/streamlit_app/pages/19_Saga_Compensation_Viewer.py",
+    "src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py",
+    "src/frontend/streamlit_app/pages/17_Workflow_Replay.py",
+    "tests/unit/dsl/workflow/**",
+    "tests/unit/services/workflows/**",
+    "tests/unit/infrastructure/scheduler/**",
+    "tests/unit/dsl/engine/processors/test_cancel_workflow.py",
+    "tests/unit/cli/test_manage_workflow_cancel.py",
+    "tests/unit/entrypoints/test_admin_cron.py",
+    "tests/unit/entrypoints/test_admin_workflow_versioning.py",
+    "manage.py",
+]
+shared_with = ["k5"]
+forbidden_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/auth/**",
+    "extensions/**",
+]
+
+[team_s12.k4]
+name = "S12 K4 — AI/Data (AI workflow examples + LLM cost estimation)"
+git_branch_prefix = "team/s12-k4-ai"
+worktree_branch = "team/s12-k4-ai"
+wave_prefix = "s12/k4-"
+goal = "3 production AI workflow examples + LLM cost estimation breakdown по моделям."
+owned_paths = [
+    "extensions/credit_pipeline/workflows/**",
+    "src/backend/services/ai/costs/llm_model_pricing.py",
+    "src/backend/services/workflows/cost_estimator.py",
+    "tests/integration/extensions/credit_pipeline/test_workflow_examples.py",
+    "tests/unit/services/ai/costs/test_llm_model_pricing.py",
+    "tests/unit/services/workflows/test_cost_estimator_llm.py",
+]
+shared_with = ["k3"]
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/frontend/streamlit_app/**",
+]
+
+[team_s12.k5]
+name = "S12 K5 — Frontend+Ext (Templates Streamlit + HITL history + Cron dashboard)"
+git_branch_prefix = "team/s12-k5-frontend"
+worktree_branch = "team/s12-k5-frontend"
+wave_prefix = "s12/k5-"
+goal = "Page 33 workflow templates extension + page 72 HITL History tab + page 14 Cron Dashboard + Mermaid render."
+owned_paths = [
+    "src/frontend/streamlit_app/pages/14_Cron_Dashboard.py",
+    "src/frontend/streamlit_app/pages/33_DSL_Templates.py",
+    "src/frontend/streamlit_app/pages/72_HITL_Panel.py",
+    "src/backend/services/workflows/hitl_history.py",
+    "src/backend/services/scheduler/cron_dashboard_service.py",
+    "src/backend/services/workflows/hitl_service.py",
+    "src/backend/entrypoints/api/v1/endpoints/hitl.py",
+    "src/backend/entrypoints/api/v1/endpoints/admin_cron.py",
+    "src/backend/dsl/workflow/visualize.py",
+    "tests/unit/services/workflows/test_hitl_history.py",
+    "tests/unit/entrypoints/test_hitl_history_endpoint.py",
+    "tests/unit/services/scheduler/test_cron_dashboard_service.py",
+    "tests/unit/dsl/workflow/test_to_mermaid.py",
+]
+shared_with = ["k3"]
+forbidden_paths = [
+    "src/backend/core/auth/**",
+    "src/backend/services/ai/**",
+    "extensions/**",
+]
