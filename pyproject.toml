@@ -123,8 +123,10 @@ security = [
     # pip-audit — vulnerability scanner поверх PyPI advisory database.
     # Инструменты используются через tools/checks/generate_sbom.py и
     # tools/checks/run_pip_audit.py (make sbom / make audit-deps).
-    "cyclonedx-bom>=4.0",
-    "pip-audit>=2.7",
+    # S11 carryover: версии синхронизированы с [dev-group] выше — `uv sync
+    # --extra security` теперь даёт ту же версию, что `uv sync` (dev).
+    "cyclonedx-bom>=4.5,<5",
+    "pip-audit>=2.7,<3",
 ]
 # === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
 # python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
