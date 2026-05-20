@@ -48,33 +48,108 @@ DEGRADATION_BYPASS_PREFIXES: Final[tuple[str, ...]] = (
 )
 
 
+_ESSENTIAL_PATH_PREFIXES: Final[tuple[str, ...]] = (
+    "/health",
+    "/liveness",
+    "/readiness",
+    "/startup",
+    "/components",
+    "/metrics",
+    "/tech/degradation",
+    "/api/v1/tech/degradation",
+)
+
+_MAINTENANCE_PATH_PREFIXES: Final[tuple[str, ...]] = (
+    "/health/liveness",
+    "/tech/degradation",
+    "/api/v1/tech/degradation",
+)
+
+
 class DegradationMiddleware(BaseHTTPMiddleware):
-    """Блокирует write-методы, когда ``db_main`` работает в fallback-режиме."""
+    """Блокирует операции согласно :class:`DegradationMode` (S13 K2 W4).
+
+    Уровни:
+
+    * ``FULL`` — всё разрешено.
+    * ``DEGRADED``/``READ_ONLY`` — блок POST/PATCH/DELETE на ``/api/v1/*``.
+    * ``CACHE_ONLY`` — то же + force ``cache_first=true`` header в downstream.
+    * ``EMERGENCY``/``ESSENTIAL_ONLY`` — только tech/health/metrics endpoints.
+    * ``MAINTENANCE`` — только liveness + degradation switch.
+    """
 
     def __init__(self, app: ASGIApp, *, retry_after: int = 30) -> None:
         super().__init__(app)
         self._retry_after = retry_after
 
     async def dispatch(self, request: Request, call_next):
-        if request.method in _WRITE_METHODS and not self._is_bypassed(request.url.path):
+        from src.backend.core.resilience.degradation import (
+            DegradationMode,
+            degradation_manager,
+            mode_at_least,
+        )
+
+        path = request.url.path
+        method = request.method
+        mode = degradation_manager.current_mode
+
+        # MAINTENANCE: всё кроме liveness + degradation switch.
+        if mode_at_least(mode, DegradationMode.MAINTENANCE):
+            if not any(path.startswith(p) for p in _MAINTENANCE_PATH_PREFIXES):
+                return self._build_503(
+                    f"system in {mode.value} mode", header="maintenance"
+                )
+
+        # ESSENTIAL_ONLY/EMERGENCY: всё кроме health/tech/metrics.
+        if mode_at_least(mode, DegradationMode.ESSENTIAL_ONLY):
+            if not any(path.startswith(p) for p in _ESSENTIAL_PATH_PREFIXES):
+                return self._build_503(
+                    f"only essential endpoints available ({mode.value})",
+                    header="essential-only",
+                )
+
+        # CACHE_ONLY: writes блокируем, GET force cache_first.
+        if mode_at_least(mode, DegradationMode.CACHE_ONLY):
+            if method in _WRITE_METHODS and not self._is_bypassed(path):
+                return self._build_503(
+                    f"writes blocked: {mode.value}", header="cache-only-no-writes"
+                )
+
+        # READ_ONLY/DEGRADED: блок writes.
+        if mode_at_least(mode, DegradationMode.READ_ONLY):
+            if method in _WRITE_METHODS and not self._is_bypassed(path):
+                return self._build_503(
+                    f"writes blocked: system in {mode.value} mode",
+                    header="read-only",
+                )
+
+        # Legacy: db_main fallback → блок writes.
+        if method in _WRITE_METHODS and not self._is_bypassed(path):
             blocked = self._check_blocked_components()
             if blocked:
-                return JSONResponse(
-                    status_code=503,
-                    content={
-                        "status": "degraded",
-                        "reason": (
-                            "write blocked: components in fallback mode — "
-                            f"{', '.join(blocked)}"
-                        ),
-                        "retry_after_seconds": self._retry_after,
-                    },
-                    headers={
-                        "Retry-After": str(self._retry_after),
-                        "X-Degradation-Mode": "write-blocked",
-                    },
+                return self._build_503(
+                    f"write blocked: components in fallback mode — {', '.join(blocked)}",
+                    header="write-blocked",
                 )
-        return await call_next(request)
+
+        response = await call_next(request)
+        if mode_at_least(mode, DegradationMode.CACHE_ONLY):
+            response.headers["X-Degradation-Mode"] = mode.value
+        return response
+
+    def _build_503(self, reason: str, *, header: str) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "reason": reason,
+                "retry_after_seconds": self._retry_after,
+            },
+            headers={
+                "Retry-After": str(self._retry_after),
+                "X-Degradation-Mode": header,
+            },
+        )
 
     @staticmethod
     def _is_bypassed(path: str) -> bool:

@@ -14,7 +14,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import deque
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Callable
 
@@ -22,18 +24,62 @@ __all__ = (
     "ComponentState",
     "DegradationManager",
     "DegradationMode",
+    "DegradationTransition",
     "degradation_manager",
+    "mode_at_least",
 )
 
 logger = logging.getLogger(__name__)
 
 
 class DegradationMode(Enum):
-    """Режим деградации приложения."""
+    """Режим деградации приложения (S13 K2 W4).
 
-    FULL = "full"  # Всё работает
-    DEGRADED = "degraded"  # Часть функций отключена
-    EMERGENCY = "emergency"  # Только критичные функции
+    5 уровней строгости (от лёгкого к жёсткому):
+
+    * ``FULL`` — всё работает;
+    * ``READ_ONLY`` — блок POST/PATCH/DELETE на ``/api/v1/*``;
+    * ``CACHE_ONLY`` — read-only + force ``cache_first=true`` на GET;
+    * ``ESSENTIAL_ONLY`` — только tech/health-эндпоинты;
+    * ``MAINTENANCE`` — всё, кроме ``/health/liveness`` и ``/tech/degradation/level``.
+
+    Legacy alias'ы ``DEGRADED`` / ``EMERGENCY`` сохранены для backward compat.
+    """
+
+    FULL = "full"
+    DEGRADED = "degraded"  # backward-compat alias для READ_ONLY
+    READ_ONLY = "read_only"
+    CACHE_ONLY = "cache_only"
+    EMERGENCY = "emergency"  # backward-compat alias для ESSENTIAL_ONLY
+    ESSENTIAL_ONLY = "essential_only"
+    MAINTENANCE = "maintenance"
+
+
+_MODE_STRICTNESS: dict[DegradationMode, int] = {
+    DegradationMode.FULL: 0,
+    DegradationMode.DEGRADED: 1,
+    DegradationMode.READ_ONLY: 1,
+    DegradationMode.CACHE_ONLY: 2,
+    DegradationMode.EMERGENCY: 3,
+    DegradationMode.ESSENTIAL_ONLY: 3,
+    DegradationMode.MAINTENANCE: 4,
+}
+
+
+def mode_at_least(current: DegradationMode, threshold: DegradationMode) -> bool:
+    """True, если ``current`` имеет уровень строгости >= ``threshold``."""
+    return _MODE_STRICTNESS[current] >= _MODE_STRICTNESS[threshold]
+
+
+@dataclass(frozen=True, slots=True)
+class DegradationTransition:
+    """Запись о переключении DegradationMode (S13 K2 W4)."""
+
+    timestamp_utc: str
+    from_mode: str
+    to_mode: str
+    actor: str
+    reason: str
 
 
 @dataclass(slots=True)
@@ -48,11 +94,69 @@ class ComponentState:
 
 
 class DegradationManager:
-    """Управляет graceful degradation при недоступности компонентов."""
+    """Управляет graceful degradation при недоступности компонентов.
+
+    S13 K2 W4: добавлен manual switch (set_mode) + история переключений +
+    опциональная persistence через :class:`DegradationStateStore`.
+    """
 
     def __init__(self) -> None:
         self._components: dict[str, ComponentState] = {}
         self._fallbacks: dict[str, Callable[..., Any]] = {}
+        self._manual_mode: DegradationMode | None = None
+        self._history: deque[DegradationTransition] = deque(maxlen=100)
+        self._store: Any = None
+
+    def attach_store(self, store: Any) -> None:
+        """Подключить :class:`DegradationStateStore` для persistence."""
+        self._store = store
+
+    async def set_mode(
+        self,
+        mode: DegradationMode,
+        *,
+        actor: str = "system",
+        reason: str = "",
+    ) -> DegradationTransition:
+        """Ручной switch DegradationMode (S13 K2 W4).
+
+        Persists через ``store`` если подключён + пишет в history.
+        Возвращает запись о transition.
+        """
+        previous = self._manual_mode or self.mode()
+        self._manual_mode = mode
+        transition = DegradationTransition(
+            timestamp_utc=datetime.now(UTC).isoformat(),
+            from_mode=previous.value,
+            to_mode=mode.value,
+            actor=actor,
+            reason=reason,
+        )
+        self._history.append(transition)
+        logger.warning(
+            "degradation.mode_changed",
+            extra={
+                "from": previous.value,
+                "to": mode.value,
+                "actor": actor,
+                "reason": reason,
+            },
+        )
+        if self._store is not None:
+            try:
+                await self._store.persist(mode, transition)
+            except Exception:  # noqa: BLE001
+                logger.exception("degradation.store_persist_failed")
+        return transition
+
+    def history(self, n: int = 20) -> list[DegradationTransition]:
+        """Последние ``n`` transitions."""
+        return list(self._history)[-n:]
+
+    @property
+    def current_mode(self) -> DegradationMode:
+        """Текущий effective mode (manual > auto)."""
+        return self._manual_mode if self._manual_mode is not None else self.mode()
 
     def register(self, name: str, fallback: Callable[..., Any] | None = None) -> None:
         self._components[name] = ComponentState(name=name)
