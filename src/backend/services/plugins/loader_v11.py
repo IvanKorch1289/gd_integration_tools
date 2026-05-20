@@ -26,6 +26,10 @@ from src.backend.core.interfaces.plugin import (
     ProcessorRegistryProtocol,
     RepositoryRegistryProtocol,
 )
+from src.backend.core.plugin_runtime.compat_checker import (
+    CompatViolation,
+    check_compatibility,
+)
 from src.backend.core.security.capabilities import CapabilityError, CapabilityGate
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
@@ -153,7 +157,13 @@ class PluginLoaderV11:
         return tuple(p for p in self._loaded.values() if p.status == "loaded")
 
     async def discover_and_load(self) -> tuple[LoadedPluginV11, ...]:
-        """Сканировать ``extensions/`` и загрузить все ``plugin.toml``."""
+        """Сканировать ``extensions/`` и загрузить все ``plugin.toml``.
+
+        Sprint 14 W1: перед `_load_one` собирает все валидные манифесты
+        и прогоняет через :func:`check_compatibility`. Плагины с
+        нарушениями compatibility-матрицы помечаются ``status="failed"``
+        ещё до import_module.
+        """
         if not self._extensions_dir.is_dir():
             _logger.info(
                 "Extensions dir %s not found — no V11 plugins discovered",
@@ -161,11 +171,42 @@ class PluginLoaderV11:
             )
             return ()
 
+        manifest_paths: list[Path] = []
+        parsed_manifests: list[PluginManifestV11] = []
+        parse_failures: list[tuple[Path, str]] = []
         for child in sorted(self._extensions_dir.iterdir()):
             manifest_path = child / "plugin.toml"
             if not manifest_path.is_file():
                 continue
-            await self._load_one(manifest_path)
+            manifest_paths.append(manifest_path)
+            try:
+                manifest = load_plugin_manifest(manifest_path)
+            except PluginManifestError as exc:
+                parse_failures.append((manifest_path, str(exc)))
+                continue
+            parsed_manifests.append(manifest)
+
+        compat_blocked: set[str] = set()
+        violations: tuple[CompatViolation, ...] = ()
+        if parsed_manifests:
+            violations = check_compatibility(
+                parsed_manifests, core_version=self._core_version
+            )
+            for violation in violations:
+                compat_blocked.add(violation.plugin)
+                _logger.warning(
+                    "Plugin %s blocked by compatibility matrix: %s",
+                    violation.plugin,
+                    violation.reason,
+                )
+
+        for manifest_path in manifest_paths:
+            await self._load_one(
+                manifest_path,
+                compat_violations=violations,
+                blocked=compat_blocked,
+                parse_failures=dict(parse_failures),
+            )
         return self.loaded
 
     async def shutdown_all(self) -> None:
@@ -182,8 +223,40 @@ class PluginLoaderV11:
 
     # ── private ──────────────────────────────────────────────────────
 
-    async def _load_one(self, manifest_path: Path) -> None:
-        """Загрузить один плагин по ``plugin.toml``."""
+    async def _load_one(
+        self,
+        manifest_path: Path,
+        *,
+        compat_violations: tuple[CompatViolation, ...] = (),
+        blocked: set[str] | None = None,
+        parse_failures: dict[Path, str] | None = None,
+    ) -> None:
+        """Загрузить один плагин по ``plugin.toml``.
+
+        Args:
+            manifest_path: Путь к ``plugin.toml``.
+            compat_violations: Заранее посчитанные нарушения compatibility
+                matrix (см. :meth:`discover_and_load`).
+            blocked: Имена плагинов, которые compat-чекер забраковал.
+            parse_failures: Mapping ``manifest_path → ошибка`` парсинга,
+                переданный из discover_and_load.
+        """
+        blocked = blocked or set()
+        parse_failures = parse_failures or {}
+        cached_error = parse_failures.get(manifest_path)
+        if cached_error is not None:
+            _logger.warning(
+                "Plugin manifest invalid (%s): %s", manifest_path, cached_error
+            )
+            self._loaded[manifest_path.parent.name] = LoadedPluginV11(
+                name=manifest_path.parent.name,
+                version="?",
+                manifest_path=manifest_path,
+                status="failed",
+                reason=f"manifest_error: {cached_error}",
+            )
+            return
+
         try:
             manifest = load_plugin_manifest(manifest_path)
         except PluginManifestError as exc:
@@ -194,6 +267,20 @@ class PluginLoaderV11:
                 manifest_path=manifest_path,
                 status="failed",
                 reason=f"manifest_error: {exc}",
+            )
+            return
+
+        if manifest.name in blocked:
+            reasons = "; ".join(
+                v.reason for v in compat_violations if v.plugin == manifest.name
+            )
+            self._loaded[manifest.name] = LoadedPluginV11(
+                name=manifest.name,
+                version=manifest.version,
+                manifest_path=manifest_path,
+                manifest=manifest,
+                status="failed",
+                reason=f"compat_conflict: {reasons}",
             )
             return
 

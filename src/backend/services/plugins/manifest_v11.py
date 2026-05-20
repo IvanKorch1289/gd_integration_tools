@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -24,9 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from src.backend.core.security.capabilities import CapabilityRef
 
 __all__ = (
+    "PluginCompatibility",
     "PluginManifestError",
     "PluginManifestV11",
     "PluginProvides",
+    "PluginSandbox",
     "load_plugin_manifest",
 )
 
@@ -51,6 +53,91 @@ class PluginProvides(BaseModel):
     sources: tuple[str, ...] = ()
     sinks: tuple[str, ...] = ()
     schemas: tuple[str, ...] = ()
+
+
+class PluginCompatibility(BaseModel):
+    """Sprint 14 W1 — декларация совместимости плагина.
+
+    Расширяет ``requires_core`` (минимальный диапазон ядра) полем
+    ``incompatible_with`` для конфликта с конкретными плагинами и
+    ``requires_plugins`` для обязательных зависимостей. Применяется
+    при load через :mod:`core.plugin_runtime.compat_checker`.
+
+    Attributes:
+        incompatible_with: Список имён плагинов, не совместимых ни в
+            какой версии (любая комбинация → conflict).
+        incompatible_plugin_specs: Mapping ``plugin_name → PEP-440 spec``;
+            конфликт возникает, если установлен ``plugin_name`` с
+            версией внутри ``spec``.
+        incompatible_core_versions: Дополнительный PEP-440 SpecifierSet —
+            диапазон версий ядра, заведомо несовместимых даже при
+            прохождении ``requires_core``. Пустая строка — нет
+            дополнительных ограничений.
+        requires_plugins: Mapping ``plugin_name → PEP-440 spec`` —
+            обязательные плагины, без которых текущий не загрузится.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    incompatible_with: tuple[str, ...] = ()
+    incompatible_plugin_specs: dict[str, str] = Field(default_factory=dict)
+    incompatible_core_versions: str = ""
+    requires_plugins: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("incompatible_plugin_specs", "requires_plugins")
+    @classmethod
+    def _validate_specifier_map(cls, value: dict[str, str]) -> dict[str, str]:
+        """Все значения должны быть валидными PEP-440 SpecifierSet."""
+        for plugin_name, spec in value.items():
+            try:
+                SpecifierSet(spec)
+            except InvalidSpecifier as exc:
+                raise ValueError(
+                    f"Invalid PEP-440 specifier for plugin {plugin_name!r}: {spec!r}"
+                ) from exc
+        return dict(value)
+
+    @field_validator("incompatible_core_versions")
+    @classmethod
+    def _validate_core_versions(cls, value: str) -> str:
+        """Пустая строка — отсутствие ограничения; иначе PEP-440 SpecifierSet."""
+        if not value:
+            return value
+        try:
+            SpecifierSet(value)
+        except InvalidSpecifier as exc:
+            raise ValueError(
+                f"Invalid incompatible_core_versions specifier: {value!r}"
+            ) from exc
+        return value
+
+
+class PluginSandbox(BaseModel):
+    """Sprint 14 W2 — декларация sandbox-профиля плагина.
+
+    Активирует изолированное исполнение через ``e2b`` backend
+    (см. :mod:`infrastructure.ai.e2b_sandbox`). Совместно с
+    ``capabilities = [{ name = "code.execute" }]`` требуется явное
+    разрешение Capability Gate.
+
+    Attributes:
+        enabled: Включить sandbox-обёртку для плагина (default OFF).
+        mode: ``"e2b"`` — делегация в e2b backend; ``"none"`` — без
+            sandbox (только декларативно). RestrictedPython не
+            подключаем (нет wheels для Python 3.14).
+        max_memory_mb: Лимит RSS-памяти (psutil enforcement).
+        max_cpu_seconds: Лимит CPU-времени на одно исполнение.
+        allow_imports: Whitelist модулей, импорт которых разрешён в
+            sandbox. Пустой кортеж — стандартный набор e2b.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    enabled: bool = False
+    mode: Literal["e2b", "none"] = "e2b"
+    max_memory_mb: int = Field(default=512, ge=16, le=8192)
+    max_cpu_seconds: int = Field(default=30, ge=1, le=600)
+    allow_imports: tuple[str, ...] = ()
 
 
 class PluginManifestV11(BaseModel):
@@ -88,6 +175,8 @@ class PluginManifestV11(BaseModel):
     capabilities: tuple[CapabilityRef, ...] = ()
     provides: PluginProvides = Field(default_factory=PluginProvides)
     config: dict[str, Any] = Field(default_factory=dict)
+    compatibility: PluginCompatibility = Field(default_factory=PluginCompatibility)
+    sandbox: PluginSandbox | None = None
 
     @field_validator("requires_core")
     @classmethod
