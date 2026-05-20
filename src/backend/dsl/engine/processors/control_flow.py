@@ -10,6 +10,35 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_proces
 
 _cf_logger = logging.getLogger("dsl.control_flow")
 
+
+async def _emit_saga_audit(
+    *,
+    event_type: str,
+    workflow_id: str,
+    payload: dict[str, Any],
+) -> None:
+    """Sprint 12 K3 W6 — best-effort emit saga compensation events.
+
+    Никогда не пробрасывает исключения: пропадание audit-связи не
+    должно ломать основной saga-flow.
+    """
+    try:
+        from src.backend.services.audit.workflow_audit_sink import (
+            get_workflow_audit_sink,
+        )
+
+        sink = get_workflow_audit_sink()
+        if sink is None:
+            return
+        await sink.emit(
+            event_type=event_type,
+            workflow_id=workflow_id,
+            tenant_id=None,
+            payload={"caller": "dsl.saga", **payload},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
 __all__ = (
     "ChoiceBranch",
     "ChoiceProcessor",
@@ -511,6 +540,12 @@ class SagaProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         completed_steps: list[SagaStep] = []
+        saga_workflow_id = (
+            exchange.get_property("saga_workflow_id")
+            or exchange.get_property("workflow_id")
+            or context.route_id
+            or "saga"
+        )
 
         for i, step in enumerate(self._steps):
             try:
@@ -525,6 +560,17 @@ class SagaProcessor(BaseProcessor):
                 exchange.set_property("saga_failed_step", i)
                 exchange.set_property("saga_error", str(exc))
 
+                await _emit_saga_audit(
+                    event_type="workflow.compensation_start",
+                    workflow_id=str(saga_workflow_id),
+                    payload={
+                        "failed_step": i,
+                        "error": str(exc),
+                        "steps_to_compensate": len(completed_steps),
+                    },
+                )
+
+                any_failed = False
                 for comp_step in reversed(completed_steps):
                     if comp_step.compensate is not None:
                         try:
@@ -532,7 +578,29 @@ class SagaProcessor(BaseProcessor):
                             exchange.error = None
                             await comp_step.compensate.process(exchange, context)
                         except Exception as comp_exc:
+                            any_failed = True
                             _cf_logger.error("Saga compensation failed: %s", comp_exc)
+                            await _emit_saga_audit(
+                                event_type="workflow.compensation_fail",
+                                workflow_id=str(saga_workflow_id),
+                                payload={
+                                    "step": comp_step.forward.name,
+                                    "error": str(comp_exc),
+                                },
+                            )
+
+                await _emit_saga_audit(
+                    event_type=(
+                        "workflow.compensation_fail"
+                        if any_failed
+                        else "workflow.compensation_complete"
+                    ),
+                    workflow_id=str(saga_workflow_id),
+                    payload={
+                        "failed_step": i,
+                        "compensated_count": len(completed_steps),
+                    },
+                )
 
                 exchange.fail(f"Saga failed at step {i}: {exc}")
                 return

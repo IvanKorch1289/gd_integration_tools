@@ -161,3 +161,43 @@ def main() -> None:
 
 
 main()
+
+
+# ──────────────────────── Sprint 12 K3 W6: Saga Compensation ─────────────
+st.divider()
+st.subheader("🔄 Saga Compensation")
+st.caption(
+    "Sprint 12 K3 W6 — timeline saga compensation events. Полный анализ "
+    "→ page 19 (Saga Compensation Viewer)."
+)
+
+_wf_id_compens = st.text_input(
+    "Workflow ID для saga timeline", key="saga_wf_id"
+)
+
+if _wf_id_compens:
+    try:
+        import asyncio
+
+        from src.backend.services.workflows.saga_history import get_saga_history
+
+        records = asyncio.run(get_saga_history(_wf_id_compens, limit=50))
+    except Exception as exc:  # noqa: BLE001
+        records = []
+        st.warning(f"Saga history недоступна: {exc}")
+
+    if not records:
+        st.info("Нет saga compensation events.")
+    else:
+        for rec in records:
+            color = {
+                "workflow.compensation_start": "🟦",
+                "workflow.compensation_complete": "🟩",
+                "workflow.compensation_fail": "🟥",
+            }.get(rec.event_type, "·")
+            with st.expander(
+                f"{color} {rec.event_type} @ {rec.created_at.isoformat()}"
+            ):
+                st.json(rec.payload)
+                if rec.duration_ms is not None:
+                    st.caption(f"duration_ms = {rec.duration_ms}")
