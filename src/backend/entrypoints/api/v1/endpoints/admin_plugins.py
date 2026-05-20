@@ -1,4 +1,4 @@
-"""Admin REST API для Plugin-Marketplace (K5 W4).
+"""Admin REST API для Plugin-Marketplace (K5 W4 + Sprint 14 K5 W2/W3/W6).
 
 Эндпоинты предоставляют Streamlit-странице ``60_Plugin_Marketplace.py``
 доступ к реестру плагинов и управление их активностью.
@@ -8,6 +8,11 @@ Endpoints (под /api/v1/admin/plugins):
     * GET  /list              — список зарегистрированных плагинов.
     * GET  /{name}/manifest   — содержимое plugin.toml.
     * POST /{name}/toggle     — включение/отключение плагина.
+    * GET  /{name}/versions   — Sprint 14 K5 W2: установленные версии.
+    * GET  /{name}/diff       — Sprint 14 K5 W2: diff двух версий.
+    * POST /{name}/rollback   — Sprint 14 K5 W2: rollback на версию.
+    * GET  /dependency-graph  — Sprint 14 K5 W3: граф зависимостей.
+    * POST /scaffold          — Sprint 14 K5 W6: scaffold плагина.
 
 Флаг-охрана: ``feature_flags.admin_marketplace_endpoints == False``
 → 503 Service Unavailable для всех эндпоинтов.
@@ -16,6 +21,7 @@ Endpoints (под /api/v1/admin/plugins):
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
@@ -284,3 +290,241 @@ async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleRes
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Плагин '{name}' не найден в реестре",
         )
+
+
+# ─── Sprint 14 K5 W2: versioning + rollback ───────────────────────────────────
+
+
+class PluginVersionsResponse(BaseModel):
+    """Список локально установленных версий плагина."""
+
+    plugin: str
+    versions: list[dict[str, Any]]
+
+
+class PluginDiffResponse(BaseModel):
+    """Diff двух версий плагина (см. MigrationDiffer)."""
+
+    plugin: str
+    from_version: str
+    to_version: str
+    payload: dict[str, Any]
+
+
+class PluginRollbackRequest(BaseModel):
+    """Тело запроса POST /{name}/rollback."""
+
+    to_version: str = Field(..., description="Целевая версия (SemVer).")
+
+
+class PluginRollbackResponse(BaseModel):
+    """Результат rollback-операции."""
+
+    plugin: str
+    from_version: str
+    to_version: str
+    status: str
+    reason: str | None = None
+
+
+def _get_version_service() -> Any | None:
+    """Получить :class:`PluginVersionService` из app.state, если есть.
+
+    Lazy-import чтобы не тянуть infrastructure при сборке schema.
+    """
+    try:
+        from src.backend.main import app as fastapi_app  # noqa: PLC0415
+
+        loader = getattr(fastapi_app.state, "plugin_loader_v11", None)
+        if loader is None:
+            return None
+        from src.backend.services.plugins.versioning import (  # noqa: PLC0415
+            PluginVersionService,
+        )
+
+        return PluginVersionService(
+            loader=loader,
+            extensions_dir=Path("extensions"),
+        )
+    except Exception:  # noqa: BLE001
+        return None
+
+
+@router.get(
+    "/{name}/versions",
+    response_model=PluginVersionsResponse,
+    summary="Sprint 14 K5 W2: установленные версии плагина",
+)
+async def list_plugin_versions(name: str) -> PluginVersionsResponse:
+    """Перечислить все локально установленные версии плагина."""
+    _check_flag_enabled()
+    service = _get_version_service()
+    if service is None:
+        return PluginVersionsResponse(plugin=name, versions=[])
+    versions = service.list_versions(name)
+    return PluginVersionsResponse(
+        plugin=name, versions=[v.to_dict() for v in versions]
+    )
+
+
+@router.get(
+    "/{name}/diff",
+    response_model=PluginDiffResponse,
+    summary="Sprint 14 K5 W2: diff между двумя версиями",
+)
+async def diff_plugin_versions(
+    name: str, from_version: str, to_version: str
+) -> PluginDiffResponse:
+    """Diff manifest'ов между ``from_version`` и ``to_version``."""
+    _check_flag_enabled()
+    service = _get_version_service()
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PluginVersionService недоступен (PluginLoaderV11 не запущен)",
+        )
+    try:
+        result = service.diff(name, from_version=from_version, to_version=to_version)
+    except Exception as exc:  # noqa: BLE001 — PluginVersionError + IO
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    return PluginDiffResponse(**result)
+
+
+@router.post(
+    "/{name}/rollback",
+    response_model=PluginRollbackResponse,
+    summary="Sprint 14 K5 W2: rollback плагина на конкретную версию",
+)
+async def rollback_plugin(
+    name: str, body: PluginRollbackRequest
+) -> PluginRollbackResponse:
+    """Переключить активную версию плагина и выполнить hot-swap."""
+    _check_flag_enabled()
+    service = _get_version_service()
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PluginVersionService недоступен",
+        )
+    result = await service.rollback(name, to_version=body.to_version)
+    return PluginRollbackResponse(**result.to_dict())
+
+
+# ─── Sprint 14 K5 W3: dependency graph ────────────────────────────────────────
+
+
+class PluginDependencyGraph(BaseModel):
+    """Граф зависимостей плагинов (для Streamlit Mermaid визуализации)."""
+
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+    edges: list[dict[str, str]] = Field(default_factory=list)
+
+
+@router.get(
+    "/dependency-graph",
+    response_model=PluginDependencyGraph,
+    summary="Sprint 14 K5 W3: граф requires_plugins зависимостей",
+)
+async def get_dependency_graph() -> PluginDependencyGraph:
+    """Собрать граф из ``plugin.toml::compatibility.requires_plugins``."""
+    _check_flag_enabled()
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, str]] = []
+    extensions_dir = Path("extensions")
+    if not extensions_dir.is_dir():
+        return PluginDependencyGraph()
+
+    from src.backend.services.plugins.manifest_v11 import (  # noqa: PLC0415
+        PluginManifestError,
+        load_plugin_manifest,
+    )
+
+    for child in sorted(extensions_dir.iterdir()):
+        toml_path = child / "plugin.toml"
+        if not toml_path.is_file():
+            continue
+        try:
+            manifest = load_plugin_manifest(toml_path)
+        except PluginManifestError:
+            continue
+        nodes.append(
+            {
+                "id": manifest.name,
+                "version": manifest.version,
+                "tenant_aware": manifest.tenant_aware,
+            }
+        )
+        for required, spec in manifest.compatibility.requires_plugins.items():
+            edges.append(
+                {"source": manifest.name, "target": required, "spec": spec}
+            )
+    return PluginDependencyGraph(nodes=nodes, edges=edges)
+
+
+# ─── Sprint 14 K5 W6: scaffold плагина ────────────────────────────────────────
+
+
+class PluginScaffoldRequest(BaseModel):
+    """Тело POST /plugins/scaffold."""
+
+    name: str = Field(..., description="snake_case имя плагина", min_length=1)
+    description: str | None = None
+    capabilities: list[str] = Field(default_factory=list)
+    features: list[str] = Field(default_factory=list)
+    dry_run: bool = False
+
+
+class PluginScaffoldResponse(BaseModel):
+    """Результат scaffold-операции."""
+
+    name: str
+    created: bool
+    path: str | None = None
+    dry_run: bool = False
+    actions: list[str] = Field(default_factory=list)
+
+
+@router.post(
+    "/scaffold",
+    response_model=PluginScaffoldResponse,
+    summary="Sprint 14 K5 W6: scaffold нового плагина",
+)
+async def scaffold_plugin_endpoint(
+    body: PluginScaffoldRequest,
+) -> PluginScaffoldResponse:
+    """Создать каркас нового плагина (delegates ``tools.codegen_plugin``)."""
+    _check_flag_enabled()
+    if body.dry_run:
+        return PluginScaffoldResponse(
+            name=body.name,
+            created=False,
+            dry_run=True,
+            actions=[
+                f"would create extensions/{body.name}/plugin.toml",
+                f"capabilities: {', '.join(body.capabilities) or '(none)'}",
+                f"features: {', '.join(body.features) or '(none)'}",
+            ],
+        )
+    try:
+        import importlib.util  # noqa: PLC0415
+
+        codegen_path = (
+            Path(__file__).resolve().parents[5] / "tools" / "codegen_plugin.py"
+        )
+        spec = importlib.util.spec_from_file_location(
+            "_gdit_codegen_plugin", codegen_path
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"codegen_plugin.py not loadable: {codegen_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        plugin_root = module.scaffold_plugin(body.name)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return PluginScaffoldResponse(
+        name=body.name,
+        created=True,
+        path=str(plugin_root),
+        dry_run=False,
+        actions=[f"created {plugin_root}"],
+    )

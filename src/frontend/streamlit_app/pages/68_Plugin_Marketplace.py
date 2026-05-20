@@ -9,6 +9,8 @@
 * фильтр по status (loaded / failed / skipped);
 * detail-panel с capabilities, provides, requires_core, причиной отказа;
 * link на исходный ``plugin.toml`` (read-only).
+* **Sprint 14 K5 W3**: вкладка ``Dependency Graph`` с Mermaid-рендером
+  графа зависимостей (``compatibility.requires_plugins``).
 """
 
 from __future__ import annotations
@@ -78,6 +80,11 @@ if not filtered:
     st.stop()
 
 
+# ────────────── Sprint 14 K5 W3: tabs (Inventory / Dependency Graph) ─
+
+tabs = st.tabs(["Inventory", "Dependency Graph"])
+
+
 def _short(items: list[str], limit: int = 3) -> str:
     if not items:
         return "—"
@@ -103,7 +110,30 @@ for plugin in filtered:
         }
     )
 
-st.dataframe(rows, use_container_width=True, hide_index=True)
+with tabs[0]:
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+with tabs[1]:
+    st.markdown("### Граф зависимостей плагинов")
+    st.caption(
+        "Mermaid-визуализация ``compatibility.requires_plugins`` "
+        "(Sprint 14 K5 W3)."
+    )
+    graph = client.get_dependency_graph()
+    if graph.get("error"):
+        st.warning(f"Backend недоступен: {graph['error']}")
+    elif not graph.get("nodes"):
+        st.info("Нет плагинов или связей в графе.")
+    else:
+        diagram = ["graph LR"]
+        for node in graph["nodes"]:
+            label = f"{node['id']}\\n{node.get('version', '?')}"
+            diagram.append(f"    {node['id']}[\"{label}\"]")
+        for edge in graph["edges"]:
+            diagram.append(
+                f"    {edge['source']} -->|{edge.get('spec', '?')}| {edge['target']}"
+            )
+        st.code("\n".join(diagram), language="mermaid")
 
 
 # ────────────── Detail panel ─────────────────────────────────────────
