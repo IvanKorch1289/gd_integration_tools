@@ -4,6 +4,11 @@ Public API подпакета. Использовать как
 ``from src.backend.core.security.capabilities import CapabilityGate, CapabilityRef``.
 """
 
+from src.backend.core.security.capabilities.audit import (
+    CapabilityAuditEvent,
+    CapabilityAuditEventKind,
+    log_capability_event,
+)
 from src.backend.core.security.capabilities.errors import (
     CapabilityDeniedError,
     CapabilityError,
@@ -41,6 +46,8 @@ from src.backend.core.security.capabilities.vocabulary import (
 __all__ = (
     "AuditCallback",
     "CAPABILITY_NAME_PATTERN",
+    "CapabilityAuditEvent",
+    "CapabilityAuditEventKind",
     "CapabilityDef",
     "CapabilityDeniedError",
     "CapabilityError",
@@ -60,4 +67,5 @@ __all__ = (
     "URISchemeMatcher",
     "build_default_vocabulary",
     "check_capabilities_subset",
+    "log_capability_event",
 )
