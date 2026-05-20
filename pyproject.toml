@@ -671,7 +671,13 @@ minversion = "9.0"
 testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
-addopts = "-ra --strict-markers"
+# S11 carryover [wave:s10-carryover/test-collection-errors]:
+# `--import-mode=importlib` избегает namespace-collisions между
+# одноимёнными каталогами (tests/cache vs tests/unit/cache,
+# tests/security vs tests/unit/security, tests/unit/api vs
+# tests/integration/api).
+# См. https://docs.pytest.org/en/stable/explanation/pythonpath.html
+addopts = "-ra --strict-markers --import-mode=importlib"
 markers = [
     "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
     "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",

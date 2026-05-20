@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
@@ -24,9 +25,31 @@ if TYPE_CHECKING:  # pragma: no cover
 __all__ = (
     "AugmentResult",
     "FreshnessLabel",
+    "RAGCitation",
     "RAGService",
     "get_rag_service",
 )
+
+
+@dataclass(slots=True, frozen=True)
+class RAGCitation:
+    """Структурированная ссылка на источник в augment_prompt_with_citations.
+
+    Attributes:
+        source_doc: Логическое имя источника (metadata.source → fallback
+            на metadata.doc_id).
+        chunk_id: Идентификатор чанка из vector store (поле ``id``).
+        chunk_idx: Порядковый индекс чанка внутри документа.
+        score: relevance score в [0.0..1.0] (``1.0 - distance`` если distance
+            присутствует, иначе 0.0 — fallback для метаданных без расстояния).
+        namespace: namespace источника (для multi-tenant retrieval).
+    """
+
+    source_doc: str
+    chunk_id: str
+    chunk_idx: int | None
+    score: float
+    namespace: str | None
 
 logger = logging.getLogger(__name__)
 
@@ -198,24 +221,44 @@ class RAGService:
         system_prompt: str = "",
         top_k: int = 5,
         namespace: str | None = None,
-    ) -> dict[str, Any]:
-        """Возвращает обогащённый prompt + citations (doc_id, chunk_idx)."""
+    ) -> AugmentResult:
+        """Структурированный prompt + типизированные :class:`RAGCitation`.
+
+        Возвращает :class:`AugmentResult`, в котором ``citations`` — список
+        dataclass-объектов ``RAGCitation`` (а не dict). ``score`` нормируется
+        к диапазону [0..1] через ``1 - distance``; при отсутствии distance —
+        ``0.0``. ``source_doc`` берётся из ``metadata.source`` либо fallback
+        на ``metadata.doc_id`` для обратной совместимости со старым ingester.
+        """
         results = await self.search(query, top_k=top_k, namespace=namespace)
         prompt = await self.augment_prompt(
             query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
         )
-        citations: list[dict[str, Any]] = []
+        citations: list[RAGCitation] = []
         for r in results:
             meta = r.get("metadata") or {}
+            distance = r.get("distance")
+            if distance is None:
+                score = float(r.get("score") or 0.0)
+            else:
+                score = float(distance)
+            source_doc = meta.get("source") or meta.get("doc_id") or ""
             citations.append(
-                {
-                    "doc_id": meta.get("doc_id"),
-                    "chunk_idx": meta.get("chunk_idx"),
-                    "namespace": meta.get("namespace") or namespace,
-                    "score": r.get("score"),
-                }
+                RAGCitation(
+                    source_doc=str(source_doc),
+                    chunk_id=str(r.get("id") or ""),
+                    chunk_idx=meta.get("chunk_idx"),
+                    score=score,
+                    namespace=meta.get("namespace") or namespace,
+                )
             )
-        return {"prompt": prompt, "citations": citations}
+        return AugmentResult(
+            prompt=prompt,
+            citations=citations,  # type: ignore[arg-type]
+            used_results=len(citations),
+            namespace=namespace,
+            top_k=top_k,
+        )
 
     async def augment(
         self,

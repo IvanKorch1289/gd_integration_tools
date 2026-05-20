@@ -143,8 +143,16 @@ class S3Client(BaseS3Client):
         ):
             return
 
-        from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
-        from aiobotocore.session import get_session  # type: ignore[import-not-found]
+        # S11 carryover: aiobotocore — optional dependency. На dev-light
+        # без extras `[sources-cdc,...]` модуль отсутствует — graceful
+        # skip без crash (тесты unrelated до S3 продолжают собираться).
+        try:
+            from aiobotocore.config import AioConfig  # type: ignore[import-not-found]
+            from aiobotocore.session import get_session  # type: ignore[import-not-found]
+        except ImportError:
+            self._session = None
+            self._config = None
+            return
 
         self._session = get_session()
         self._config = AioConfig(
@@ -332,6 +340,109 @@ class S3Client(BaseS3Client):
                 if code in {"404", "NoSuchKey", "NotFound"}:
                     return None
                 raise ServiceError(f"Ошибка получения файла {key}") from exc
+
+    @ensure_connected
+    async def put_object_multipart(
+        self,
+        *,
+        key: str,
+        stream: Any,
+        part_size: int = 8 * 1024 * 1024,
+        content_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Загружает объект через multipart upload из async-итератора (S13 K2 W1).
+
+        Чанки накапливаются до ``part_size`` (минимум 5MB по S3 API),
+        затем отправляются как ``upload_part``. При ошибке выполняется
+        ``abort_multipart_upload`` для очистки.
+
+        Args:
+            key: Ключ объекта в bucket.
+            stream: ``AsyncIterator[bytes]`` — обычно ``request.stream()``.
+            part_size: Минимальный размер part'а в байтах (default 8MB).
+            content_type: MIME content-type.
+            metadata: S3-метаданные.
+
+        Returns:
+            ETag загруженного объекта.
+        """
+        # Минимальный part_size S3 — 5MB (кроме последнего part'а).
+        part_size = max(part_size, 5 * 1024 * 1024)
+        bucket = self._settings.bucket
+        upload_id: str | None = None
+        parts: list[dict[str, Any]] = []
+
+        async with self.client_context() as client:
+            try:
+                create_kwargs: dict[str, Any] = {"Bucket": bucket, "Key": key}
+                if content_type:
+                    create_kwargs["ContentType"] = content_type
+                if metadata:
+                    create_kwargs["Metadata"] = metadata
+                response = await client.create_multipart_upload(**create_kwargs)
+                upload_id = response["UploadId"]
+
+                buffer = bytearray()
+                part_number = 1
+                async for chunk in stream:
+                    if not chunk:
+                        continue
+                    buffer.extend(chunk)
+                    while len(buffer) >= part_size:
+                        part_bytes = bytes(buffer[:part_size])
+                        del buffer[:part_size]
+                        part_resp = await client.upload_part(
+                            Bucket=bucket,
+                            Key=key,
+                            UploadId=upload_id,
+                            PartNumber=part_number,
+                            Body=part_bytes,
+                        )
+                        parts.append(
+                            {"PartNumber": part_number, "ETag": part_resp["ETag"]}
+                        )
+                        part_number += 1
+
+                if buffer:
+                    part_resp = await client.upload_part(
+                        Bucket=bucket,
+                        Key=key,
+                        UploadId=upload_id,
+                        PartNumber=part_number,
+                        Body=bytes(buffer),
+                    )
+                    parts.append(
+                        {"PartNumber": part_number, "ETag": part_resp["ETag"]}
+                    )
+
+                if not parts:
+                    # Нет данных — S3 не позволит complete; abort и возвращаем "".
+                    await client.abort_multipart_upload(
+                        Bucket=bucket, Key=key, UploadId=upload_id
+                    )
+                    return ""
+
+                complete_resp = await client.complete_multipart_upload(
+                    Bucket=bucket,
+                    Key=key,
+                    UploadId=upload_id,
+                    MultipartUpload={"Parts": parts},
+                )
+                return str(complete_resp.get("ETag", ""))
+            except Exception:
+                if upload_id is not None:
+                    try:
+                        await client.abort_multipart_upload(
+                            Bucket=bucket, Key=key, UploadId=upload_id
+                        )
+                    except Exception:  # noqa: BLE001
+                        self.logger.exception(
+                            "s3.multipart_abort_failed key=%s upload_id=%s",
+                            key,
+                            upload_id,
+                        )
+                raise
 
     @ensure_connected
     async def copy_object(self, source_key: str, dest_key: str) -> dict[str, Any]:
