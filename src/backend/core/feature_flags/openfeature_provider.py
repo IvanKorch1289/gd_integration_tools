@@ -127,10 +127,27 @@ class InMemoryProvider:
         default: bool,
         evaluation_context: EvaluationContext | None = None,
     ) -> bool:
-        """Boolean: overrides → локальный реестр → default."""
-        _ = evaluation_context  # tenant_id игнорируется для in-memory
+        """Boolean: ctor-overrides → runtime overrides → локальный реестр → default.
+
+        Sprint 16 Wave 9 (CP-15): добавлен слой runtime-overrides — admin
+        endpoint ``POST /admin/feature-flags/{flag}`` пишет в singleton
+        :class:`RuntimeFeatureFlagOverrides`, приоритетнее статического
+        реестра, но менее приоритетен ctor-overrides (нужны для тестов).
+        """
         if flag_key in self._overrides:
             return bool(self._overrides[flag_key])
+
+        from src.backend.core.feature_flags.runtime_overrides import (
+            get_runtime_overrides,
+        )
+
+        tenant_id = (
+            evaluation_context.tenant_id if evaluation_context is not None else None
+        )
+        runtime = get_runtime_overrides()
+        if runtime.has_override(flag_key, tenant_id=tenant_id):
+            return bool(runtime.get(flag_key, default, tenant_id=tenant_id))
+
         return _read_local_flag(flag_key, default)
 
     async def resolve_string_value(

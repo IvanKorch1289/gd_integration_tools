@@ -11,6 +11,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (
+        router as admin_feature_flags_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
@@ -167,6 +170,12 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         admin_capabilities_router, prefix="/admin", tags=["Admin · Capabilities"]
+    )
+    # Sprint 16 Wave 9 (CP-15 / B-6): runtime feature-flag overrides.
+    api_router_v1.include_router(
+        admin_feature_flags_router,
+        prefix="/admin",
+        tags=["Admin · Feature Flags"],
     )
     # Wave S1/DSL Foundation (Step 6): unified schema_registry (route /
     # workflow / service / plugin / processor / action) — JSON-Schema /
