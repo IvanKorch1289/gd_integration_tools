@@ -716,6 +716,10 @@ source = ["src"]
 branch = true
 
 [tool.coverage.report]
+# Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
+# Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
+# + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
