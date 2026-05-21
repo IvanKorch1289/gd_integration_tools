@@ -1,6 +1,40 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-20 15:49, после compact)
+## Текущее состояние (2026-05-21, PLAN.md V22 FINAL)
+
+**HEAD**: `abf60ee1 [wave:s15/backbone]` (последний коммит до V22-transition).
+**Активный спринт**: **Sprint 16 «Closure»** — 1/16 wave CLOSED (K2 W3 OTel OTLP metrics, `e200b53f`).
+**План**: `PLAN.md` **V22 FINAL** (2026-05-21) — 5 спринтов × 2 недели × 5 команд (К1/К2/К3/К4/К5).
+**Архив**: `vault/archive-plan-v21.md` (полный V21.0 backup).
+**GAP-анализ**: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (V3.0 базис для V22).
+
+### V21 → V22 переход (2026-05-21)
+- **PLAN.md полностью переписан с нуля**: оставлены только нереализованные задачи + дополнительные предложения GAP V3.0.
+- **5 спринтов утверждены через AskUserQuestion** (4 раунда уточнений, ≤5% неопределённости):
+  - **S16 Closure** (active, 2026-05-22 → 2026-06-04): 15 wave + 3 cleanup + 4 pre-merge gate.
+  - **S17 Centralization Hardening** (NEW, 2026-06-05 → 2026-06-18): ConfigValidator + MetricsRegistry + TaskRegistry obligatory + AuthorizationGateway + AuditService correlation_id + ResilienceCoordinator class + APScheduler observability + per-tenant FF UI.
+  - **S18 Tech Debt + Acceptance** (2026-06-19 → 2026-07-02): WAF allowlist 23→0 + coverage 50→70% + F-2 sandbox + Core entities cleanup + EventBus DSL + AI workflow handlers + multimodal-rag + F-5 stubs + Layer violations 73→0 + verify routes (integration mode).
+  - **S19 DX & Innovation** (2026-07-03 → 2026-07-16): VSCode extension + LSP финал + DSL Visual Editor + AI PR review + manage.py diagnose + adaptive timeout + adaptive RAG strategy finale + ADR R1.1/R1.5/R1.7/R1.8/R1.9/R1.20.
+  - **S20 Production Signoff** (2026-07-17 → 2026-07-31): security audit + perf bench (p95 ≤80ms, RPS ≥1500) + mypy=0 + coverage 83% + docs finale + pre-prod-check v2 (38/38) + DR runbook + staging-canary 1→10→50→100% + `git tag v1.0.0-production` + push origin master (с явного подтверждения).
+- **НЕ в плане V22**: credit-pipeline 5 интеграционных клиентов (DaData/БКИ/СМЭВ/ЦБ/1С) — отдельная пользовательская работа.
+
+### Следующий шаг (S16 active)
+1. **Pre-merge gate (Wave 0)**:
+   - `[wave:s16/gate-w0-merge-conflict]` — merge-conflict `gap-analysis/...` resolved через `git rm` (файл заменён на DEEP-RESEARCH-2026-05-20.md) — **готов к commit**.
+   - `[wave:s16/gate-w0-ops-reorg-smoke]` — `make ci` + `docker compose -f ops/compose/docker-compose.yml config` + workflow paths.
+   - `[wave:s16/gate-w0-otel-unit-tests]` — `pytest tests/unit/infrastructure/observability/otel/` (6 unit-тестов).
+   - `[wave:s16/gate-w0-f2-sandbox-decision]` — решение по `M src/backend/core/plugin_runtime/sandbox.py` (commit как F-2 carryover или checkout).
+2. **6 P0 wave**: L1-P0-1 asyncio.Lock / L1-P0-2/3 asyncssh pool / L2-P0-1 outbox-tx-atomic / L4-P0-1 pygls LSP / L5-P0-1 Adaptive RAG QueryClassifier / L7-P1-1 JWT introspection.
+3. **6 P1 wave** + 3 cleanup + closure.
+
+### Архив снимков состояния (V21 и старше)
+Все секции до V22-transition сохранены в `vault/archive-plan-v21.md` (часть PLAN.md V21).
+Подробные wave-таблицы S11/S12/S13/S14/S15 — там же.
+Сводки сессий: `vault/session-2026-05-20-*-summary.md` (по дате + теме).
+
+---
+
+## Старое состояние (2026-05-20 15:49, после compact)
 
 **HEAD**: `e200b53f [chore:ops-reorg]`
 **Последнее действие**: ops-reorg commit (внешний процесс) + Sprint 16 Wave 1 OTel OTLP metrics + compact-3.

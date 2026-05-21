@@ -1,7 +1,8 @@
 # CLAUDE.md — gd_integration_tools
 
-> **Версия документа**: V15 (синхронизирована с PLAN.md V19 от 2026-05-15).
+> **Версия документа**: V22 (синхронизирована с PLAN.md V22 FINAL от 2026-05-21).
 > Любая работа выполняется в соответствии с этим документом и `PLAN.md`.
+> Архив V21: `vault/archive-plan-v21.md`. GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
 
 ---
 
