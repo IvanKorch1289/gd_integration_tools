@@ -59,6 +59,9 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.entrypoints.middlewares.request_body_cache import (
         RequestBodyCacheMiddleware,
     )
+    from src.backend.entrypoints.middlewares.request_context import (
+        RequestContextMiddleware,
+    )
     from src.backend.entrypoints.middlewares.request_id import RequestIDMiddleware
     from src.backend.entrypoints.middlewares.request_log import (
         InnerRequestLoggingMiddleware,
@@ -103,6 +106,11 @@ def setup_middlewares(app: FastAPI) -> None:
         # Между CorrelationId и Idempotency, чтобы tenant_id попал в structlog
         # до построения idempotency-key и в audit-event'ы downstream-цепочки.
         (TenantMiddleware, {}),
+        # S17 ADR-NEW-3: unified RequestContext (frozen dataclass +
+        # ContextVar). Собирает correlation_id/request_id/tenant_id/OTel
+        # ids/auth в один snapshot. Регистрируется ПОСЛЕ TenantMiddleware
+        # — Idempotency и downstream MW читают RequestContext.current().
+        (RequestContextMiddleware, {}),
         # Sprint 0 #12 + V5: Idempotency-Key для POST/PATCH endpoints.
         # asgi-idempotency-header кэширует ответы по ключу (Redis backend).
         # V5: backend=RedisNxBackend (prod) или MemoryBackend (test/dev_light)
