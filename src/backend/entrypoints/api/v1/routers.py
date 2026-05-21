@@ -59,6 +59,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
         router as ai_tools_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.auth_introspect import (
+        router as auth_introspect_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
         router as auth_saml_router,
     )
@@ -241,6 +244,10 @@ def get_v1_routers() -> APIRouter:
     # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
     api_router_v1.include_router(
         auth_saml_router, prefix="/auth/saml", tags=["Auth · SAML"]
+    )
+    # Sprint 16 DoD-7: OAuth2 Token Introspection (RFC 7662).
+    api_router_v1.include_router(
+        auth_introspect_router, prefix="/auth", tags=["Auth · Introspect"]
     )
     # Sprint 9 K3 W2: HITL (Human-in-the-Loop) panel API.
     api_router_v1.include_router(hitl_router, prefix="/hitl", tags=["HITL"])
