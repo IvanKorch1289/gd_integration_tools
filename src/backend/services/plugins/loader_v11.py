@@ -30,6 +30,10 @@ from src.backend.core.plugin_runtime.compat_checker import (
     CompatViolation,
     check_compatibility,
 )
+from src.backend.core.plugin_runtime.dependency_resolver import (
+    PluginDependencyCycleError,
+    PluginGraphResolver,
+)
 from src.backend.core.security.capabilities import CapabilityError, CapabilityGate
 from src.backend.services.plugins.manifest_v11 import (
     PluginManifestError,
@@ -163,6 +167,14 @@ class PluginLoaderV11:
         и прогоняет через :func:`check_compatibility`. Плагины с
         нарушениями compatibility-матрицы помечаются ``status="failed"``
         ещё до import_module.
+
+        Sprint 16 K5-W1 (L8-P1-1): после compat-check выполняется
+        topological sort не-blocked плагинов по
+        ``compatibility.requires_plugins`` через
+        :class:`PluginGraphResolver`. Гарантирует bootstrap-порядок
+        «зависимость → зависимый». Циклы детектируются и помечают
+        затронутые плагины ``status="failed"`` с reason
+        ``dependency_cycle``.
         """
         if not self._extensions_dir.is_dir():
             _logger.info(
@@ -200,14 +212,115 @@ class PluginLoaderV11:
                     violation.reason,
                 )
 
-        for manifest_path in manifest_paths:
+        cycle_blocked: set[str] = set()
+        cycle_reason: str | None = None
+        sorted_names = self._topo_sort_non_blocked(
+            parsed_manifests, compat_blocked, cycle_blocked
+        )
+        if cycle_blocked:
+            cycle_reason = (
+                f"dependency_cycle: plugins {sorted(cycle_blocked)!r} form a cycle"
+            )
+
+        ordered_paths = self._reorder_manifest_paths(
+            manifest_paths=manifest_paths,
+            sorted_names=sorted_names,
+        )
+
+        parse_failures_map = dict(parse_failures)
+        for manifest_path in ordered_paths:
             await self._load_one(
                 manifest_path,
                 compat_violations=violations,
                 blocked=compat_blocked,
-                parse_failures=dict(parse_failures),
+                parse_failures=parse_failures_map,
+                cycle_blocked=cycle_blocked,
+                cycle_reason=cycle_reason,
             )
         return self.loaded
+
+    def _topo_sort_non_blocked(
+        self,
+        parsed_manifests: list[PluginManifestV11],
+        compat_blocked: set[str],
+        cycle_blocked: set[str],
+    ) -> tuple[str, ...]:
+        """Применяет :class:`PluginGraphResolver` к не-blocked плагинам.
+
+        Args:
+            parsed_manifests: Все успешно распарсенные манифесты.
+            compat_blocked: Имена, забракованные compat-checker'ом.
+            cycle_blocked: Изменяемое множество — заполняется именами
+                плагинов, образующих цикл (для последующей пометки
+                ``status="failed"``).
+
+        Returns:
+            Кортеж имён в bootstrap-порядке для НЕ заблокированных
+            плагинов. Если граф валит resolver, возвращается пустой
+            кортеж и ``cycle_blocked`` пополняется именами участников
+            цикла (или всеми не-blocked, если SDK не передал детали).
+        """
+        non_blocked = [
+            m for m in parsed_manifests if m.name not in compat_blocked
+        ]
+        if not non_blocked:
+            return ()
+        resolver = PluginGraphResolver()
+        try:
+            ordered = resolver.resolve({m.name: m for m in non_blocked})
+        except PluginDependencyCycleError as exc:
+            cycle_blocked.update(exc.cycle or {m.name for m in non_blocked})
+            _logger.error(
+                "Plugin dependency cycle detected: %s — affected plugins will fail",
+                exc,
+            )
+            return ()
+        except KeyError as exc:
+            cycle_blocked.update(m.name for m in non_blocked)
+            _logger.error(
+                "Plugin dependency resolution failed: %s — affected plugins will fail",
+                exc,
+            )
+            return ()
+        return tuple(m.name for m in ordered)
+
+    def _reorder_manifest_paths(
+        self,
+        *,
+        manifest_paths: list[Path],
+        sorted_names: tuple[str, ...],
+    ) -> list[Path]:
+        """Возвращает ``manifest_paths`` в bootstrap-порядке.
+
+        Args:
+            manifest_paths: Исходный discovery-порядок (сортировка
+                каталогов ``extensions/<name>/``).
+            sorted_names: Результат :meth:`_topo_sort_non_blocked` —
+                имена в bootstrap-порядке.
+
+        Returns:
+            Список Path: сначала пути, не попавшие в ``sorted_names``
+            (parse-failed, blocked, cycle-blocked) в discovery-порядке,
+            затем topo-sorted не-blocked плагины. Если ``sorted_names``
+            пуст — список возвращается без изменений.
+
+        Note:
+            По валидации ADR-042 имя каталога ``extensions/<name>/``
+            совпадает с ``manifest.name``; поэтому ``parent.name``
+            пути — стабильный ключ сопоставления.
+        """
+        if not sorted_names:
+            return list(manifest_paths)
+        path_by_name: dict[str, Path] = {p.parent.name: p for p in manifest_paths}
+        ordered_named: list[Path] = []
+        used: set[Path] = set()
+        for name in sorted_names:
+            path = path_by_name.get(name)
+            if path is not None and path not in used:
+                ordered_named.append(path)
+                used.add(path)
+        remainder = [p for p in manifest_paths if p not in used]
+        return remainder + ordered_named
 
     async def shutdown_all(self) -> None:
         """Graceful shutdown всех загруженных плагинов."""
@@ -230,6 +343,8 @@ class PluginLoaderV11:
         compat_violations: tuple[CompatViolation, ...] = (),
         blocked: set[str] | None = None,
         parse_failures: dict[Path, str] | None = None,
+        cycle_blocked: set[str] | None = None,
+        cycle_reason: str | None = None,
     ) -> None:
         """Загрузить один плагин по ``plugin.toml``.
 
@@ -240,9 +355,14 @@ class PluginLoaderV11:
             blocked: Имена плагинов, которые compat-чекер забраковал.
             parse_failures: Mapping ``manifest_path → ошибка`` парсинга,
                 переданный из discover_and_load.
+            cycle_blocked: Sprint 16 K5-W1 — имена плагинов, попавших в
+                цикл зависимостей; помечаются ``status="failed"`` с
+                ``reason=cycle_reason`` до import_module.
+            cycle_reason: Текст причины для cycle_blocked плагинов.
         """
         blocked = blocked or set()
         parse_failures = parse_failures or {}
+        cycle_blocked = cycle_blocked or set()
         cached_error = parse_failures.get(manifest_path)
         if cached_error is not None:
             _logger.warning(
@@ -281,6 +401,17 @@ class PluginLoaderV11:
                 manifest=manifest,
                 status="failed",
                 reason=f"compat_conflict: {reasons}",
+            )
+            return
+
+        if manifest.name in cycle_blocked:
+            self._loaded[manifest.name] = LoadedPluginV11(
+                name=manifest.name,
+                version=manifest.version,
+                manifest_path=manifest_path,
+                manifest=manifest,
+                status="failed",
+                reason=cycle_reason or "dependency_cycle",
             )
             return
 
