@@ -20,8 +20,7 @@ router = APIRouter()
 
 @router.post("/ingest/start", summary="Загрузить N файлов в RAG-индекс")
 async def start_rag_ingest(
-    files: list[UploadFile] = File(...),
-    collection: str = Form(default="default"),
+    files: list[UploadFile] = File(...), collection: str = Form(default="default")
 ) -> dict[str, Any]:
     """Принимает multipart-uploads и стартует ingest."""
     if not files:

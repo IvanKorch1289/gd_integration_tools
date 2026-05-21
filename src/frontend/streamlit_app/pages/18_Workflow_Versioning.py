@@ -36,10 +36,7 @@ except Exception as exc:  # noqa: BLE001
 
 
 if not all_ids:
-    st.info(
-        "Реестр пуст. Зарегистрируйте workflow через "
-        "@workflow_versioned('X.Y.Z')."
-    )
+    st.info("Реестр пуст. Зарегистрируйте workflow через @workflow_versioned('X.Y.Z').")
 else:
     selected = st.selectbox("Workflow ID", all_ids)
     history = registry.history(selected)
@@ -57,14 +54,10 @@ else:
                     try:
                         import requests
 
-                        from src.frontend.streamlit_app.api_client import (
-                            get_api_client,
-                        )
+                        from src.frontend.streamlit_app.api_client import get_api_client
 
                         client = get_api_client()
-                        base_url = getattr(
-                            client, "base_url", "http://localhost:8000"
-                        )
+                        base_url = getattr(client, "base_url", "http://localhost:8000")
                         resp = requests.post(
                             f"{base_url}/api/v1/admin/workflow-versioning/"
                             f"{selected}/pin",
@@ -88,14 +81,10 @@ else:
                 try:
                     import requests
 
-                    from src.frontend.streamlit_app.api_client import (
-                        get_api_client,
-                    )
+                    from src.frontend.streamlit_app.api_client import get_api_client
 
                     client = get_api_client()
-                    base_url = getattr(
-                        client, "base_url", "http://localhost:8000"
-                    )
+                    base_url = getattr(client, "base_url", "http://localhost:8000")
                     resp = requests.post(
                         f"{base_url}/api/v1/admin/workflow-versioning/"
                         f"{selected}/rollback",
@@ -123,8 +112,7 @@ else:
         client = get_api_client()
         base_url = getattr(client, "base_url", "http://localhost:8000")
         resp = requests.get(
-            f"{base_url}/api/v1/admin/workflow-versioning/"
-            f"{selected}/running-count",
+            f"{base_url}/api/v1/admin/workflow-versioning/{selected}/running-count",
             timeout=5,
         )
         if resp.status_code == 200:

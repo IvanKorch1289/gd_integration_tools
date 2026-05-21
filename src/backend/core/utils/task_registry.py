@@ -31,11 +31,7 @@ from typing import Any, TypeVar
 
 from src.backend.core.utils.watchdog import Watchdog
 
-__all__ = (
-    "TaskRegistry",
-    "get_task_registry",
-    "reset_task_registry",
-)
+__all__ = ("TaskRegistry", "get_task_registry", "reset_task_registry")
 
 _T = TypeVar("_T")
 _logger = logging.getLogger(__name__)
@@ -94,8 +90,7 @@ class TaskRegistry:
 
         loop = asyncio.get_event_loop()
         task: asyncio.Task[_T] = loop.create_task(
-            self._with_context(ctx, wrapped),
-            name=name,
+            self._with_context(ctx, wrapped), name=name
         )
         self._tasks.add(task)
         self._named[name] = task
@@ -104,8 +99,7 @@ class TaskRegistry:
 
     @staticmethod
     async def _with_context(
-        ctx: contextvars.Context,
-        coro: Coroutine[Any, Any, _T] | Awaitable[_T],
+        ctx: contextvars.Context, coro: Coroutine[Any, Any, _T] | Awaitable[_T]
     ) -> _T:
         """Выполняет ``coro`` в копии context'а вызывающего."""
         # ``ctx.run`` — для синхронного кода; для async используем
@@ -114,7 +108,7 @@ class TaskRegistry:
         for var, value in ctx.items():
             try:
                 var.set(value)
-            except (LookupError, RuntimeError, TypeError):  # noqa: S110
+            except LookupError, RuntimeError, TypeError:  # noqa: S110
                 continue
         return await coro
 
@@ -155,8 +149,7 @@ class TaskRegistry:
             return
         try:
             await asyncio.wait_for(
-                asyncio.gather(*live, return_exceptions=True),
-                timeout=timeout,
+                asyncio.gather(*live, return_exceptions=True), timeout=timeout
             )
         except asyncio.TimeoutError:
             _logger.warning(

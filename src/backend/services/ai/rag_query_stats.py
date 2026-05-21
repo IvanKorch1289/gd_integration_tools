@@ -73,7 +73,13 @@ class RagQueryStatsCollector:
                 normalized: list[tuple[str, int]] = []
                 for h_raw, score in items:
                     h = h_raw.decode() if isinstance(h_raw, bytes) else h_raw
-                    raw_q = queries_map.get(h.encode() if isinstance(list(queries_map.keys())[0] if queries_map else b"", bytes) else h)
+                    raw_q = queries_map.get(
+                        h.encode()
+                        if isinstance(
+                            list(queries_map.keys())[0] if queries_map else b"", bytes
+                        )
+                        else h
+                    )
                     if isinstance(raw_q, bytes):
                         raw_q = raw_q.decode()
                     if raw_q:

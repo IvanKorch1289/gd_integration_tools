@@ -74,9 +74,7 @@ class WebhookSignatureMiddleware(BaseHTTPMiddleware):
     def _is_protected(self, path: str) -> bool:
         return any(path.startswith(p) for p in self._prefixes)
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         if not self._is_protected(request.url.path):
             return await call_next(request)
 
@@ -95,15 +93,12 @@ class WebhookSignatureMiddleware(BaseHTTPMiddleware):
         timestamp_raw = request.headers.get(self._ts_header)
         if not signature or not timestamp_raw:
             return JSONResponse(
-                {"detail": "Webhook signature headers missing"},
-                status_code=401,
+                {"detail": "Webhook signature headers missing"}, status_code=401
             )
         try:
             timestamp = int(timestamp_raw)
         except ValueError:
-            return JSONResponse(
-                {"detail": "Invalid timestamp header"}, status_code=401
-            )
+            return JSONResponse({"detail": "Invalid timestamp header"}, status_code=401)
 
         # Body нужен полностью — сохраняем в state, чтобы downstream
         # endpoint мог прочитать через request.body() ещё раз.

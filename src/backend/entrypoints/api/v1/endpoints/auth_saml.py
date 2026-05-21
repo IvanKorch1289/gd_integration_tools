@@ -64,7 +64,9 @@ def _is_safe_return_to(url: str, allowed_host: str | None) -> bool:
 
 
 @router.get("/login", summary="SAML SP-initiated SSO login")
-async def saml_login(request: Request, return_to: str | None = None) -> RedirectResponse:
+async def saml_login(
+    request: Request, return_to: str | None = None
+) -> RedirectResponse:
     """Инициировать SP-initiated SSO.
 
     Шаги:
@@ -83,10 +85,7 @@ async def saml_login(request: Request, return_to: str | None = None) -> Redirect
     result = handler.initiate_login(return_to=safe_target)
     logger.info(
         "saml.login.initiated",
-        extra={
-            "request_id": result.request_id,
-            "relay_state": result.relay_state,
-        },
+        extra={"request_id": result.request_id, "relay_state": result.relay_state},
     )
     return RedirectResponse(url=result.redirect_url, status_code=302)
 
@@ -117,9 +116,7 @@ async def saml_acs(request: Request, response: Response) -> dict:
             detail="SAMLResponse and InResponseTo required",
         )
 
-    validator_factory = getattr(
-        request.app.state, "saml_validator_factory", None
-    )
+    validator_factory = getattr(request.app.state, "saml_validator_factory", None)
     if validator_factory is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -131,8 +128,7 @@ async def saml_acs(request: Request, response: Response) -> dict:
 
     try:
         auth_result = handler.consume_acs(
-            request_id=str(request_id),
-            validator_factory=_validator,
+            request_id=str(request_id), validator_factory=_validator
         )
     except SamlError as exc:
         logger.warning("saml.acs.rejected", extra={"reason": str(exc)})

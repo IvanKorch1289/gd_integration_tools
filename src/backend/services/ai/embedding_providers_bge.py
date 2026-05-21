@@ -47,11 +47,11 @@ class BGEM3EmbeddingProvider:
                 "FlagEmbedding не установлен — добавьте extra '[ai-2026]'."
             ) from exc
         self._model = BGEM3FlagModel(
-            self._model_name,
-            cache_dir=self._cache_dir,
-            use_fp16=self._use_fp16,
+            self._model_name, cache_dir=self._cache_dir, use_fp16=self._use_fp16
         )
-        logger.info("BGEM3FlagModel %r loaded (cache=%s)", self._model_name, self._cache_dir)
+        logger.info(
+            "BGEM3FlagModel %r loaded (cache=%s)", self._model_name, self._cache_dir
+        )
         return self._model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
@@ -96,9 +96,7 @@ class BGERerankerV2M3:
         )
         return self._model
 
-    async def rerank(
-        self, query: str, documents: list[str]
-    ) -> list[tuple[str, float]]:
+    async def rerank(self, query: str, documents: list[str]) -> list[tuple[str, float]]:
         """Возвращает документы с relevance-score, отсортированные DESC."""
         if not documents:
             return []

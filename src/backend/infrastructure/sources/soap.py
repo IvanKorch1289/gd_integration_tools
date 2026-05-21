@@ -65,8 +65,7 @@ class SoapSource:
             raise RuntimeError(f"SoapSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event),
-            name=f"source-soap:{self.source_id}",
+            self._run(on_event), name=f"source-soap:{self.source_id}"
         )
         logger.info(
             "SoapSource started: id=%s wsdl=%s op=%s",

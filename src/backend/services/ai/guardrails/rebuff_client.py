@@ -71,9 +71,7 @@ class RebuffClient:
             timeout=self._timeout,
             headers=headers,
         ) as client:
-            response: httpx.Response = await client.post(
-                "/detect", json=payload
-            )
+            response: httpx.Response = await client.post("/detect", json=payload)
             response.raise_for_status()
             data = response.json()
 

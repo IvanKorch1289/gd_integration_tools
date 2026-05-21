@@ -288,9 +288,7 @@ class BasePydanticAgent(Generic[ResultT]):
             result = await self._retry_call(fallback, user_input, deps_arg)
         return self._coerce_result(result)
 
-    async def _handle_validation_error(
-        self, user_input: str, deps_arg: Any
-    ) -> ResultT:
+    async def _handle_validation_error(self, user_input: str, deps_arg: Any) -> ResultT:
         """Обрабатывает ValidationError по policy ``on_validation_error``."""
         match self._on_validation_error:
             case "fail":

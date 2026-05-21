@@ -169,10 +169,7 @@ class ClickHouseClient:
                 if response.status_code != 200:
                     raise RuntimeError(f"ping returned {response.status_code}")
             except (ConnectionError, TimeoutError, OSError, RuntimeError) as exc:
-                logger.warning(
-                    "ClickHouse pre-ping failed (%s) — recreating pool",
-                    exc,
-                )
+                logger.warning("ClickHouse pre-ping failed (%s) — recreating pool", exc)
                 await self.close()
                 await self.connect()
 
@@ -279,7 +276,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

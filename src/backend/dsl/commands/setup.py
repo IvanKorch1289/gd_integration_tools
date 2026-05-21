@@ -751,5 +751,9 @@ def register_action_handlers() -> None:
 
     service_dsl_registry.register_all_actions()
     scan_and_register_actions(
-        ["src.backend.services", "src.backend.entrypoints.webhook", "src.backend.services.integrations"]
+        [
+            "src.backend.services",
+            "src.backend.entrypoints.webhook",
+            "src.backend.services.integrations",
+        ]
     )

@@ -31,9 +31,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_client import get_api_client
 
 st.set_page_config(
-    page_title="Workflow Replay · gd_integration_tools",
-    page_icon="⏯️",
-    layout="wide",
+    page_title="Workflow Replay · gd_integration_tools", page_icon="⏯️", layout="wide"
 )
 
 client = get_api_client()
@@ -80,9 +78,7 @@ def _render_event_filters(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     cols = st.columns([2, 2, 2])
     with cols[0]:
         selected_types = st.multiselect(
-            "Типы событий",
-            options=event_types,
-            default=event_types,
+            "Типы событий", options=event_types, default=event_types
         )
     with cols[1]:
         from_date = st.date_input("С даты", value=None)
@@ -91,7 +87,8 @@ def _render_event_filters(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     def _matches(event: dict[str, Any]) -> bool:
         if selected_types and (
-            str(event.get("event_type") or event.get("type") or "?") not in selected_types
+            str(event.get("event_type") or event.get("type") or "?")
+            not in selected_types
         ):
             return False
         timestamp_raw = event.get("timestamp") or event.get("ts")
@@ -122,9 +119,7 @@ def main() -> None:
         workflow_ids = _list_workflow_ids()
         manual_id = st.text_input("Workflow ID (или выбор из списка ↓)", value="")
         chosen_from_list = st.selectbox(
-            "Из последних",
-            options=[""] + workflow_ids,
-            index=0,
+            "Из последних", options=[""] + workflow_ids, index=0
         )
         workflow_id = manual_id.strip() or chosen_from_list
 
@@ -171,9 +166,7 @@ st.caption(
     "→ page 19 (Saga Compensation Viewer)."
 )
 
-_wf_id_compens = st.text_input(
-    "Workflow ID для saga timeline", key="saga_wf_id"
-)
+_wf_id_compens = st.text_input("Workflow ID для saga timeline", key="saga_wf_id")
 
 if _wf_id_compens:
     try:

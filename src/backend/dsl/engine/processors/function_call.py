@@ -68,9 +68,7 @@ class CallFunctionProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=f"call_function:{ref}")
         if ":" not in ref:
-            raise ValueError(
-                f"call_function ref must be 'module:fn', got {ref!r}"
-            )
+            raise ValueError(f"call_function ref must be 'module:fn', got {ref!r}")
         module_name, fn_name = ref.split(":", 1)
         if not module_name or not fn_name:
             raise ValueError(

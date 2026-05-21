@@ -28,11 +28,7 @@ from starlette.types import ASGIApp
 
 from src.backend.core.auth import AuthContext, AuthMethod
 
-__all__ = (
-    "AuthRequiredMiddleware",
-    "DEFAULT_PUBLIC_PATH_PREFIXES",
-    "is_path_public",
-)
+__all__ = ("AuthRequiredMiddleware", "DEFAULT_PUBLIC_PATH_PREFIXES", "is_path_public")
 
 
 DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
@@ -98,9 +94,7 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
             )
         )
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         if is_path_public(request.url.path, self.public_prefixes):
             return await call_next(request)
 
@@ -109,19 +103,14 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
 
         ctx = await self._authenticate(request)
         if ctx is None:
-            return JSONResponse(
-                {"detail": "Authentication required"},
-                status_code=401,
-            )
+            return JSONResponse({"detail": "Authentication required"}, status_code=401)
 
         request.state.auth = ctx
         return await call_next(request)
 
     async def _authenticate(self, request: Request) -> AuthContext | None:
         # Lazy-import: auth_selector тащит heavy DI providers.
-        from src.backend.entrypoints.api.dependencies.auth_selector import (
-            _VERIFIERS,
-        )
+        from src.backend.entrypoints.api.dependencies.auth_selector import _VERIFIERS
 
         for method in self._accepted_methods:
             verifier = _VERIFIERS.get(method)

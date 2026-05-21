@@ -23,8 +23,4 @@ from src.backend.entrypoints.asyncapi.exporter import (
     build_asyncapi_yaml,
 )
 
-__all__ = (
-    "build_asyncapi_spec",
-    "build_asyncapi_yaml",
-    "build_asyncapi_json",
-)
+__all__ = ("build_asyncapi_spec", "build_asyncapi_yaml", "build_asyncapi_json")

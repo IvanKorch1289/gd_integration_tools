@@ -10,9 +10,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
 
-st.set_page_config(
-    page_title="Resilience Profile Editor", page_icon="⚙️", layout="wide"
-)
+st.set_page_config(page_title="Resilience Profile Editor", page_icon="⚙️", layout="wide")
 st.title("⚙️ Resilience Profile Editor")
 st.caption("Sprint 13 K5 W2 — per-tenant override CB/RL/Retry/Bulkhead.")
 
@@ -110,9 +108,7 @@ with tab_compare:
     compare_name = st.text_input("Profile name to compare")
     if compare_name:
         try:
-            global_p = client.get(
-                f"/api/v1/admin/resilience-profiles/{compare_name}"
-            )
+            global_p = client.get(f"/api/v1/admin/resilience-profiles/{compare_name}")
             tenant_p = (
                 client.get(
                     f"/api/v1/admin/resilience-profiles/{compare_name}",

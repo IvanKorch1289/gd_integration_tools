@@ -23,10 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-__all__ = (
-    "CertificateBundle",
-    "VaultPkiClient",
-)
+__all__ = ("CertificateBundle", "VaultPkiClient")
 
 _logger = logging.getLogger("infrastructure.secrets.vault_pki")
 
@@ -84,19 +81,13 @@ class VaultPkiClient:
 
             import hvac  # type: ignore[import-untyped]
 
-            addr = self._addr or os.environ.get(
-                "VAULT_ADDR", "http://127.0.0.1:8200"
-            )
+            addr = self._addr or os.environ.get("VAULT_ADDR", "http://127.0.0.1:8200")
             token = self._token or os.environ.get("VAULT_TOKEN")
             self._client = hvac.Client(url=addr, token=token)
             return self._client
 
     def issue_cert(
-        self,
-        *,
-        role: str,
-        common_name: str,
-        ttl: str = "24h",
+        self, *, role: str, common_name: str, ttl: str = "24h"
     ) -> CertificateBundle:
         """Issue TLS cert через PKI engine.
 
@@ -107,22 +98,17 @@ class VaultPkiClient:
         now = datetime.now(timezone.utc)
         cached = self._cache.get(key)
         if cached is not None:
-            time_to_expire = (
-                cached.bundle.not_after - now
-            ).total_seconds()
+            time_to_expire = (cached.bundle.not_after - now).total_seconds()
             if time_to_expire > self._renew_buffer:
                 return cached.bundle
 
         client = self._get_client()
         path = f"{self._mount}/issue/{role}"
         response = client.write_data(
-            path=path,
-            data={"common_name": common_name, "ttl": ttl},
+            path=path, data={"common_name": common_name, "ttl": ttl}
         )
         if not response:
-            raise RuntimeError(
-                f"Vault PKI issue empty response для {path}"
-            )
+            raise RuntimeError(f"Vault PKI issue empty response для {path}")
         data = response.get("data") if isinstance(response, dict) else response
 
         not_after = self._parse_expiration(data, ttl=ttl)
@@ -152,9 +138,7 @@ class VaultPkiClient:
             self._cache.pop((role, common_name), None)
 
     @staticmethod
-    def _parse_expiration(
-        data: dict[str, Any], *, ttl: str
-    ) -> datetime:
+    def _parse_expiration(data: dict[str, Any], *, ttl: str) -> datetime:
         """Парсит ``expiration`` (Unix timestamp) или вычисляет из ttl."""
         exp = data.get("expiration")
         if isinstance(exp, (int, float)):

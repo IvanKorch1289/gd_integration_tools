@@ -28,20 +28,13 @@ staging IdP конфигурации; см. S6 K1 W1).
 from __future__ import annotations
 
 import logging
-import re
 import secrets
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = (
-    "IdpMetadata",
-    "SamlAuthResult",
-    "SamlBackend",
-    "SamlConfig",
-    "SamlError",
-)
+__all__ = ("IdpMetadata", "SamlAuthResult", "SamlBackend", "SamlConfig", "SamlError")
 
 _logger = logging.getLogger(__name__)
 
@@ -176,10 +169,7 @@ class SamlBackend:
         return url, request_id
 
     def process_saml_response(
-        self,
-        *,
-        request_id: str,
-        validator: Callable[[], SamlAuthResult],
+        self, *, request_id: str, validator: Callable[[], SamlAuthResult]
     ) -> SamlAuthResult:
         """Принять SAMLResponse от IdP с replay-protection.
 
@@ -209,16 +199,12 @@ class SamlBackend:
             raise SamlError(f"SAMLResponse validation failed: {exc}") from exc
         return result
 
-    def build_logout_redirect_url(
-        self, *, session_index: str, name_id: str
-    ) -> str:
+    def build_logout_redirect_url(self, *, session_index: str, name_id: str) -> str:
         """Сгенерировать SLO redirect (если IdP support'ит SLO)."""
         if self._config.idp_slo_url is None:
             raise SamlError("IdP SLO URL not configured")
         return (
-            f"{self._config.idp_slo_url}"
-            f"?SessionIndex={session_index}"
-            f"&NameID={name_id}"
+            f"{self._config.idp_slo_url}?SessionIndex={session_index}&NameID={name_id}"
         )
 
     def _purge_expired(self) -> None:

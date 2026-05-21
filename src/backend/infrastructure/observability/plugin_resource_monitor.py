@@ -44,10 +44,7 @@ from dataclasses import dataclass
 
 from prometheus_client import Counter, Gauge
 
-__all__ = (
-    "PluginResourceMetrics",
-    "PluginResourceMonitor",
-)
+__all__ = ("PluginResourceMetrics", "PluginResourceMonitor")
 
 _logger = logging.getLogger("infrastructure.observability.plugin_resource_monitor")
 
@@ -99,10 +96,7 @@ class PluginResourceMonitor:
     """
 
     def __init__(
-        self,
-        plugins: Iterable[str] = (),
-        *,
-        interval_seconds: float = 30.0,
+        self, plugins: Iterable[str] = (), *, interval_seconds: float = 30.0
     ) -> None:
         self._plugins = tuple(plugins)
         self._interval = interval_seconds
@@ -150,9 +144,7 @@ class PluginResourceMonitor:
             except Exception:  # noqa: BLE001
                 _logger.exception("plugin_resource_monitor: snapshot failed")
             try:
-                await asyncio.wait_for(
-                    self._stopped.wait(), timeout=self._interval
-                )
+                await asyncio.wait_for(self._stopped.wait(), timeout=self._interval)
             except asyncio.TimeoutError:
                 continue
 
@@ -212,7 +204,9 @@ class PluginResourceMonitor:
         if total == 0:
             return dict.fromkeys(self._plugins, 0.0)
         process_cpu = self._process_cpu_percent()
-        return {plugin: (counts[plugin] / total) * process_cpu for plugin in self._plugins}
+        return {
+            plugin: (counts[plugin] / total) * process_cpu for plugin in self._plugins
+        }
 
     def _collect_rss_share(self) -> dict[str, int]:
         """Tracemalloc snapshot с фильтром по path extension'а."""

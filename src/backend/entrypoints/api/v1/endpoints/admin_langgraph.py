@@ -65,7 +65,9 @@ async def get_session_state(session_id: str) -> dict[str, Any]:
     inspector = await _inspector()
     snapshot = await inspector.get_state(session_id)
     if snapshot is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="session not found"
+        )
     return {
         "session_id": snapshot.session_id,
         "checkpoint_id": snapshot.checkpoint_id,

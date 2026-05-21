@@ -40,7 +40,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0
             )
-        except (OSError, asyncio.TimeoutError):
+        except OSError, asyncio.TimeoutError:
             return False
         try:
             writer.write(b"zPING\0")

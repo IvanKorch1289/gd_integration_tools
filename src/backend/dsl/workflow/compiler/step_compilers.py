@@ -80,9 +80,7 @@ def _build_retry_policy(
     return TemporalRetryPolicy(**kwargs)
 
 
-async def compile_activity_step(
-    decl: ActivityDeclaration, ctx: dict[str, Any]
-) -> Any:
+async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     """Выполнить ``workflow.execute_activity`` для :class:`ActivityDeclaration`.
 
     Args:
@@ -105,9 +103,7 @@ async def compile_activity_step(
     payload = dict(decl.args) if decl.args else {}
     payload.setdefault("_workflow_input", ctx.get("_input", {}))
 
-    kwargs: dict[str, Any] = {
-        "start_to_close_timeout": timedelta(seconds=timeout_s),
-    }
+    kwargs: dict[str, Any] = {"start_to_close_timeout": timedelta(seconds=timeout_s)}
     if retry_policy is not None:
         kwargs["retry_policy"] = retry_policy
 
@@ -144,9 +140,7 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
             except Exception as comp_exc:  # noqa: BLE001 — saga best-effort
                 workflow.logger.warning(
-                    "saga compensation failed for step %d: %s",
-                    compensate_idx,
-                    comp_exc,
+                    "saga compensation failed for step %d: %s", compensate_idx, comp_exc
                 )
         raise exc
     return None

@@ -35,10 +35,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
     """
 
     def __init__(
-        self,
-        *,
-        token: str | None = None,
-        organization: str | None = None,
+        self, *, token: str | None = None, organization: str | None = None
     ) -> None:
         self._token = token
         self._organization = organization
@@ -48,7 +45,9 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         if self._api is not None:
             return self._api
         try:
-            from huggingface_hub import HfApi  # type: ignore[import-not-found]  # noqa: PLC0415
+            from huggingface_hub import (
+                HfApi,  # type: ignore[import-not-found]  # noqa: PLC0415
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "huggingface_hub не установлен; добавьте extra "
@@ -72,7 +71,9 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         return ModelRecord(
             name=str(getattr(model_info, "modelId", getattr(model_info, "id", ""))),
             version=str(getattr(model_info, "sha", "main") or "main"),
-            stage=stage if stage in {"None", "Staging", "Production", "Archived"} else "None",
+            stage=stage
+            if stage in {"None", "Staging", "Production", "Archived"}
+            else "None",
             artifact_uri=f"hf://{getattr(model_info, 'modelId', getattr(model_info, 'id', ''))}",
             tags=tags,
             description=getattr(model_info, "description", None),
@@ -96,8 +97,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         loop = asyncio.get_running_loop()
         try:
             info = await loop.run_in_executor(
-                None,
-                lambda: api.model_info(repo_id=name, revision=version or "main"),
+                None, lambda: api.model_info(repo_id=name, revision=version or "main")
             )
         except Exception as exc:  # noqa: BLE001
             _logger.info("HF Hub model_info(%s) → not found: %s", name, exc)
@@ -116,19 +116,13 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(
             None,
             lambda: api.create_repo(
-                repo_id=repo_id,
-                repo_type="model",
-                exist_ok=True,
-                private=False,
+                repo_id=repo_id, repo_type="model", exist_ok=True, private=False
             ),
         )
         return await self.get_model(repo_id) or record
 
     async def transition_stage(
-        self,
-        name: str,
-        version: str,
-        new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Эмулирует stage через tag ``stage:<new_stage>`` на model card.
 

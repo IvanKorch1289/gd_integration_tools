@@ -13,9 +13,7 @@ import streamlit as st
 
 from src.frontend.streamlit_app.api_client import get_api_client
 
-st.set_page_config(
-    page_title="Graceful Degradation", page_icon="🛡️", layout="wide"
-)
+st.set_page_config(page_title="Graceful Degradation", page_icon="🛡️", layout="wide")
 st.title("🛡️ Graceful Degradation")
 st.caption("Sprint 13 K5 W1 — 5-уровневая система деградации (FULL → MAINTENANCE).")
 
@@ -72,12 +70,7 @@ with tab_switch:
         "⚠️ Только для OPERATOR/SUPER_ADMIN. Action audited через AdminAuditMiddleware."
     )
 
-    new_mode = st.radio(
-        "Target Mode",
-        options=_MODE_OPTIONS,
-        index=0,
-        horizontal=True,
-    )
+    new_mode = st.radio("Target Mode", options=_MODE_OPTIONS, index=0, horizontal=True)
     reason = st.text_area(
         "Reason for switch (required for compliance)",
         placeholder="например: DB primary failure, switching to READ_ONLY",

@@ -69,12 +69,7 @@ class CapabilityRule:
     priority: int = 0
 
     def matches(
-        self,
-        *,
-        tenant: str,
-        principal: str,
-        capability: str,
-        scope: str | None,
+        self, *, tenant: str, principal: str, capability: str, scope: str | None
     ) -> bool:
         """Возвращает True, если правило применимо к запрошенному контексту."""
         if self.capability != capability:
@@ -118,10 +113,7 @@ class CapabilityPolicy:
         # deny > allow при равных priority: тег '0 if deny else 1'
         # как secondary key, отсортировано asc → deny раньше allow.
         self._rules: tuple[CapabilityRule, ...] = tuple(
-            sorted(
-                rules,
-                key=lambda r: (-r.priority, 0 if r.effect == "deny" else 1),
-            )
+            sorted(rules, key=lambda r: (-r.priority, 0 if r.effect == "deny" else 1))
         )
 
     @property
@@ -130,12 +122,7 @@ class CapabilityPolicy:
         return self._rules
 
     def evaluate(
-        self,
-        *,
-        tenant: str,
-        principal: str,
-        capability: str,
-        scope: str | None,
+        self, *, tenant: str, principal: str, capability: str, scope: str | None
     ) -> PolicyDecision:
         """Найти первое сматчившееся правило.
 
@@ -151,10 +138,7 @@ class CapabilityPolicy:
         """
         for rule in self._rules:
             if rule.matches(
-                tenant=tenant,
-                principal=principal,
-                capability=capability,
-                scope=scope,
+                tenant=tenant, principal=principal, capability=capability, scope=scope
             ):
                 return PolicyDecision(effect=rule.effect, rule=rule)
         return PolicyDecision(effect="no_match", rule=None)

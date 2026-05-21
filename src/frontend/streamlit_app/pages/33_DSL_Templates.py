@@ -73,9 +73,7 @@ def _render_route_blueprints() -> None:
             if st.button("Инстанциировать", key=f"inst_{name}"):
                 try:
                     resp = client._request(  # type: ignore[attr-defined]
-                        "POST",
-                        f"/api/v1/admin/templates/{name}/instantiate",
-                        json={},
+                        "POST", f"/api/v1/admin/templates/{name}/instantiate", json={}
                     )
                     st.success(f"Создан route: {resp}")
                 except Exception as exc:  # noqa: BLE001
@@ -130,9 +128,7 @@ def _render_workflow_templates() -> None:
 
             import yaml as _yaml
 
-            yaml_text = _yaml.safe_dump(
-                tmpl.raw, allow_unicode=True, sort_keys=False
-            )
+            yaml_text = _yaml.safe_dump(tmpl.raw, allow_unicode=True, sort_keys=False)
 
             tab_yaml, tab_graph = st.tabs(["YAML", "Mermaid"])
             with tab_yaml:
@@ -142,9 +138,7 @@ def _render_workflow_templates() -> None:
                     decl = WorkflowDeclaration.model_validate(tmpl.raw)
                     mermaid = to_mermaid(decl)
                     st.code(mermaid, language="mermaid")
-                    st.caption(
-                        "Скопируйте Mermaid-код в mermaid.live для рендера."
-                    )
+                    st.caption("Скопируйте Mermaid-код в mermaid.live для рендера.")
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Mermaid render failed: {exc}")
 
@@ -154,16 +148,12 @@ def _render_workflow_templates() -> None:
                 key=f"target_{tmpl.name}",
             )
             if st.button(
-                "Deploy as new workflow",
-                key=f"deploy_{tmpl.name}",
-                type="primary",
+                "Deploy as new workflow", key=f"deploy_{tmpl.name}", type="primary"
             ):
                 try:
                     import requests
 
-                    base_url = getattr(
-                        client, "base_url", "http://localhost:8000"
-                    )
+                    base_url = getattr(client, "base_url", "http://localhost:8000")
                     resp = requests.post(
                         f"{base_url}/api/v1/admin/workflow-templates/"
                         f"{tmpl.name}/deploy",
@@ -171,10 +161,7 @@ def _render_workflow_templates() -> None:
                         timeout=10,
                     )
                     if resp.status_code == 201:
-                        st.success(
-                            f"Workflow {tmpl.name!r} развёрнут "
-                            f"в {target}"
-                        )
+                        st.success(f"Workflow {tmpl.name!r} развёрнут в {target}")
                     else:
                         st.error(f"HTTP {resp.status_code}: {resp.text}")
                 except Exception as exc:  # noqa: BLE001

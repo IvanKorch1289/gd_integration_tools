@@ -132,10 +132,7 @@ def _is_gate_enabled() -> bool:
         return False
 
 
-def _emit_audit(
-    context: CapabilityContext | None,
-    event: dict[str, object],
-) -> None:
+def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> None:
     """Записать audit-событие через callback контекста."""
     if context is None or context.audit is None:
         return
@@ -145,9 +142,7 @@ def _emit_audit(
         _logger.exception("Audit callback raised; suppressing")
 
 
-def capability_guarded_activity(
-    capabilities: tuple[str, ...],
-) -> Callable[[F], F]:
+def capability_guarded_activity(capabilities: tuple[str, ...]) -> Callable[[F], F]:
     """Декоратор для capability-проверки Temporal-activity функции.
 
     Args:
@@ -191,9 +186,7 @@ def capability_guarded_activity(
 
             for capability in capabilities:
                 try:
-                    context.gate.check(
-                        context.plugin_name, capability, context.scope
-                    )
+                    context.gate.check(context.plugin_name, capability, context.scope)
                 except CapabilityDeniedError:
                     _emit_audit(
                         context,

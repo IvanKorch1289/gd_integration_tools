@@ -37,12 +37,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Final
 
-__all__ = (
-    "HostStats",
-    "PerHostMeter",
-    "get_per_host_meter",
-    "to_prometheus_metrics",
-)
+__all__ = ("HostStats", "PerHostMeter", "get_per_host_meter", "to_prometheus_metrics")
 
 _WINDOW_SIZE: Final[int] = 1000
 """Максимальный размер rolling window на хост (количество observations)."""
@@ -115,7 +110,9 @@ class _HostBucket:
         n = len(sorted_lat)
         p50 = _percentile(sorted_lat, n, 0.50)
         p95 = _percentile(sorted_lat, n, 0.95)
-        error_rate = self.error_count / self.request_count if self.request_count else 0.0
+        error_rate = (
+            self.error_count / self.request_count if self.request_count else 0.0
+        )
         return HostStats(
             request_count=self.request_count,
             error_count=self.error_count,

@@ -39,12 +39,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-__all__ = (
-    "LintIssue",
-    "DSLLinter",
-    "lint_path",
-    "main",
-)
+__all__ = ("LintIssue", "DSLLinter", "lint_path", "main")
 
 
 # Маппинг processor → требуемые capabilities (subset ADR-044).
@@ -167,9 +162,7 @@ class DSLLinter:
 
     # ─────────────────────── internal helpers ───────────────────────
 
-    def _lint_route_toml(
-        self, toml_path: Path
-    ) -> tuple[set[str], list[LintIssue]]:
+    def _lint_route_toml(self, toml_path: Path) -> tuple[set[str], list[LintIssue]]:
         """Проверить route.toml на required fields + capabilities."""
         issues: list[LintIssue] = []
         try:
@@ -225,7 +218,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]
@@ -336,11 +329,7 @@ class DSLLinter:
         return issues
 
     def _lint_step(
-        self,
-        yaml_path: Path,
-        step: Any,
-        index: int,
-        declared_caps: set[str],
+        self, yaml_path: Path, step: Any, index: int, declared_caps: set[str]
     ) -> list[LintIssue]:
         """Проверяет один шаг pipeline."""
         issues: list[LintIssue] = []
@@ -369,8 +358,7 @@ class DSLLinter:
                     code="INVALID_STEP_SPEC",
                     severity="error",
                     message=(
-                        f"step[{index}]: must be str or dict, "
-                        f"got {type(step).__name__}"
+                        f"step[{index}]: must be str or dict, got {type(step).__name__}"
                     ),
                     file=yaml_path,
                 )
@@ -420,18 +408,12 @@ def lint_path(path: Path, *, strict: bool = False) -> list[LintIssue]:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint: ``manage.py dsl lint <path>``."""
-    parser = argparse.ArgumentParser(
-        description="DSL Linter (route.toml + *.dsl.yaml)"
-    )
+    parser = argparse.ArgumentParser(description="DSL Linter (route.toml + *.dsl.yaml)")
     parser.add_argument("path", type=Path, help="Каталог или *.dsl.yaml файл")
     parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Strict-mode: warnings → errors (для CI).",
+        "--strict", action="store_true", help="Strict-mode: warnings → errors (для CI)."
     )
-    parser.add_argument(
-        "--json", action="store_true", help="Вывод в JSON формате."
-    )
+    parser.add_argument("--json", action="store_true", help="Вывод в JSON формате.")
     args = parser.parse_args(argv)
 
     if not args.path.exists():

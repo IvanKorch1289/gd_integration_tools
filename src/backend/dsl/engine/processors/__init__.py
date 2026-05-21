@@ -21,7 +21,6 @@ from src.backend.dsl.engine.processors.ai import (
     TokenBudgetProcessor,
     VectorSearchProcessor,
 )
-from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor
 from src.backend.dsl.engine.processors.ai_banking import (
     AntiFraudScoreProcessor,
     AppealProcessorAI,
@@ -45,6 +44,7 @@ from src.backend.dsl.engine.processors.business import (
     OutboxProcessor,
     TenantScopeProcessor,
 )
+from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
 from src.backend.dsl.engine.processors.components import (
     DatabaseQueryProcessor,
     FileReadProcessor,
@@ -78,6 +78,12 @@ from src.backend.dsl.engine.processors.core import (
     ValidateProcessor,
 )
 from src.backend.dsl.engine.processors.db_query_external import ExternalDbQueryProcessor
+from src.backend.dsl.engine.processors.documents import (
+    RenderDocxParams,
+    RenderDocxProcessor,
+    RenderXlsxParams,
+    RenderXlsxProcessor,
+)
 from src.backend.dsl.engine.processors.eip import (
     AggregatorProcessor,
     CircuitBreakerProcessor,
@@ -102,17 +108,6 @@ from src.backend.dsl.engine.processors.eip import (
     TimeoutProcessor,
     WireTapProcessor,
 )
-from src.backend.dsl.engine.processors.documents import (
-    RenderDocxParams,
-    RenderDocxProcessor,
-    RenderXlsxParams,
-    RenderXlsxProcessor,
-)
-from src.backend.dsl.engine.processors.rule_engine import (
-    EvaluateRulesParams,
-    EvaluateRulesProcessor,
-    Rule,
-)
 from src.backend.dsl.engine.processors.email_trigger import EmailTriggerProcessor
 from src.backend.dsl.engine.processors.entity import (
     EntityCreateProcessor,
@@ -136,14 +131,15 @@ from src.backend.dsl.engine.processors.generic import (
     ShadowModeProcessor,
     SseSourceProcessor,
 )
+from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
 from src.backend.dsl.engine.processors.integration import (
     EventPublishProcessor,
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
-from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
+from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor
 from src.backend.dsl.engine.processors.notify import NotifyProcessor
 from src.backend.dsl.engine.processors.patterns import (
     BatchWindowProcessor,
@@ -178,7 +174,11 @@ from src.backend.dsl.engine.processors.rpa_banking import (
     KeystrokeReplayProcessor,
     TerminalEmulator3270Processor,
 )
-from src.backend.dsl.engine.processors.ingest_file import IngestFileProcessor
+from src.backend.dsl.engine.processors.rule_engine import (
+    EvaluateRulesParams,
+    EvaluateRulesProcessor,
+    Rule,
+)
 from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
 from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,

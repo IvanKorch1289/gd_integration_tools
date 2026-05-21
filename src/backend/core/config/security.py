@@ -67,8 +67,7 @@ class SecureSettings(BaseSettingsWithLoader):
         description="Допустимое отклонение exp/nbf в секундах.",
     )
     jwt_blacklist_enabled: bool = Field(
-        default=False,
-        description="Включён ли Redis-blacklist отозванных JWT (по jti).",
+        default=False, description="Включён ли Redis-blacklist отозванных JWT (по jti)."
     )
 
     # API-безопасность

@@ -655,9 +655,7 @@ async def lifespan(app: FastAPI):
             metrics_interval = int(
                 _os.environ.get("OTLP_METRICS_EXPORT_INTERVAL_SECONDS", "60")
             )
-            metrics_service = _os.environ.get(
-                "OTEL_SERVICE_NAME", "gd_integration"
-            )
+            metrics_service = _os.environ.get("OTEL_SERVICE_NAME", "gd_integration")
             metrics_env = _os.environ.get("APP_ENVIRONMENT", "development")
             metrics_insecure = (
                 _os.environ.get("OTLP_METRICS_INSECURE", "true").lower() == "true"
@@ -777,7 +775,9 @@ async def lifespan(app: FastAPI):
                         host, _, port = entry.strip().partition(":")
                         if not host:
                             continue
-                        parsed_nodes.append(ClusterNode(host=host, port=int(port or 6379)))
+                        parsed_nodes.append(
+                            ClusterNode(host=host, port=int(port or 6379))
+                        )
 
                     cluster_password = _os.environ.get("REDIS_CLUSTER_PASSWORD") or None
                     adapter = RedisClusterAdapter(
@@ -793,7 +793,8 @@ async def lifespan(app: FastAPI):
                     )
                     app.state.redis_cluster_adapter = adapter
                     app_logger.info(
-                        "RedisClusterAdapter зарегистрирован: nodes=%d", len(parsed_nodes)
+                        "RedisClusterAdapter зарегистрирован: nodes=%d",
+                        len(parsed_nodes),
                     )
             except Exception as rc_exc:  # noqa: BLE001
                 app_logger.warning(
@@ -808,9 +809,7 @@ async def lifespan(app: FastAPI):
         # TaskRegistry, чтобы корректно отмениться на shutdown
         # (R-V15-11 leak prevention).
         try:
-            from src.backend.plugins.composition.ai_safety_setup import (
-                start_ai_safety,
-            )
+            from src.backend.plugins.composition.ai_safety_setup import start_ai_safety
 
             await start_ai_safety(app)
         except Exception as ai_safety_exc:  # noqa: BLE001
@@ -964,15 +963,11 @@ async def lifespan(app: FastAPI):
         # Wave 1.6 (S1): остановка AI Safety cleanup-loop ДО V11-loaders
         # (плагины могут писать в workspace через AIFsFacade на shutdown).
         try:
-            from src.backend.plugins.composition.ai_safety_setup import (
-                stop_ai_safety,
-            )
+            from src.backend.plugins.composition.ai_safety_setup import stop_ai_safety
 
             await stop_ai_safety(app)
         except Exception as ai_safety_stop_exc:  # noqa: BLE001
-            app_logger.warning(
-                "AI safety shutdown error: %s", ai_safety_stop_exc
-            )
+            app_logger.warning("AI safety shutdown error: %s", ai_safety_stop_exc)
 
         # R1.fin (V11): shutdown V11-loader'ов в обратном порядке
         # (route → plugin) ДО Wave 4 PluginLoader, чтобы их on_shutdown
@@ -1036,9 +1031,7 @@ async def lifespan(app: FastAPI):
 
             shutdown_otel_metrics()
         except Exception as metrics_stop_exc:  # noqa: BLE001
-            app_logger.warning(
-                "OTel metrics shutdown skipped: %s", metrics_stop_exc
-            )
+            app_logger.warning("OTel metrics shutdown skipped: %s", metrics_stop_exc)
 
         # Sprint 3 К2 W1: graceful close RedisClusterAdapter если регистрировался.
         cluster_adapter = getattr(app.state, "redis_cluster_adapter", None)
@@ -1046,9 +1039,7 @@ async def lifespan(app: FastAPI):
             try:
                 await cluster_adapter.close()
             except Exception as rc_close_exc:  # noqa: BLE001
-                app_logger.warning(
-                    "RedisClusterAdapter close error: %s", rc_close_exc
-                )
+                app_logger.warning("RedisClusterAdapter close error: %s", rc_close_exc)
 
         # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
         # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех

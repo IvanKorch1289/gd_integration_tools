@@ -56,13 +56,9 @@ def _serialize_decimal(value: Decimal) -> str:
 
 
 @router.post("/estimate", response_model=CostEstimateResponse)
-async def estimate_workflow_cost(
-    request: CostEstimateRequest,
-) -> CostEstimateResponse:
+async def estimate_workflow_cost(request: CostEstimateRequest) -> CostEstimateResponse:
     """Sprint 12 K3 W3 — pre-run estimation для workflow."""
-    from src.backend.services.workflows.cost_estimator import (
-        WorkflowCostEstimator,
-    )
+    from src.backend.services.workflows.cost_estimator import WorkflowCostEstimator
 
     estimator = WorkflowCostEstimator()
     estimate = await estimator.estimate(
@@ -99,28 +95,31 @@ async def estimate_workflow_cost(
 
 @router.get("/history/{workflow_id}")
 async def get_workflow_cost_history(
-    workflow_id: str,
-    period_days: int = Query(7, ge=1, le=90),
+    workflow_id: str, period_days: int = Query(7, ge=1, le=90)
 ) -> dict[str, Any]:
     """Историческая стоимость workflow за период (для page 15 trend)."""
     from datetime import datetime, timedelta, timezone
 
     try:
-        from clickhouse_connect import (  # type: ignore[import-untyped]
-            get_async_client,
-        )
+        from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
 
         from src.backend.core.config import settings
 
-        host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-            settings, "clickhouse"
-        ) else "localhost"
-        port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-            settings, "clickhouse"
-        ) else 8123
-        database = getattr(settings.clickhouse, "database", "default") if hasattr(
-            settings, "clickhouse"
-        ) else "default"
+        host = (
+            getattr(settings.clickhouse, "host", "localhost")
+            if hasattr(settings, "clickhouse")
+            else "localhost"
+        )
+        port = (
+            getattr(settings.clickhouse, "port", 8123)
+            if hasattr(settings, "clickhouse")
+            else 8123
+        )
+        database = (
+            getattr(settings.clickhouse, "database", "default")
+            if hasattr(settings, "clickhouse")
+            else "default"
+        )
         client = await get_async_client(host=host, port=port, database=database)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
@@ -150,10 +149,6 @@ async def get_workflow_cost_history(
     series: list[dict[str, Any]] = []
     for row in getattr(result, "result_rows", []):
         series.append(
-            {
-                "day": str(row[0]),
-                "runs": int(row[1]),
-                "p95_ms": float(row[2] or 0.0),
-            }
+            {"day": str(row[0]), "runs": int(row[1]), "p95_ms": float(row[2] or 0.0)}
         )
     return {"workflow_id": workflow_id, "period_days": period_days, "series": series}

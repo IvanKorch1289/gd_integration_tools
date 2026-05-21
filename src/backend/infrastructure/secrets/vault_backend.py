@@ -72,9 +72,7 @@ class VaultBackend:
     не задан — :class:`RuntimeError` при первом запросе.
     """
 
-    def __init__(
-        self, *, config: VaultConfig, client: Any | None = None
-    ) -> None:
+    def __init__(self, *, config: VaultConfig, client: Any | None = None) -> None:
         self._config = config
         self._client = client
 
@@ -90,15 +88,12 @@ class VaultBackend:
                 "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости"
             ) from exc
 
-        client = hvac.Client(
-            url=self._config.url, namespace=self._config.namespace
-        )
+        client = hvac.Client(url=self._config.url, namespace=self._config.namespace)
         if self._config.token:
             client.token = self._config.token
         elif self._config.role_id and self._config.secret_id:
             client.auth.approle.login(
-                role_id=self._config.role_id,
-                secret_id=self._config.secret_id,
+                role_id=self._config.role_id, secret_id=self._config.secret_id
             )
         else:
             raise RuntimeError(
@@ -119,10 +114,7 @@ class VaultBackend:
     def get_versioned(self, name: str, version: int) -> SecretValue:
         """Прочитать конкретную версию KV v2 secret'а (0 → current)."""
         client = self._ensure_client()
-        kwargs: dict[str, Any] = {
-            "path": name,
-            "mount_point": self._config.mount_point,
-        }
+        kwargs: dict[str, Any] = {"path": name, "mount_point": self._config.mount_point}
         if version > 0:
             kwargs["version"] = version
         response = client.secrets.kv.v2.read_secret_version(**kwargs)

@@ -77,9 +77,7 @@ class IcsCalendarProcessor(BaseProcessor):
                     if self._only_first:
                         break
                 result: Any = events[0] if (self._only_first and events) else events
-                exchange.set_out(
-                    body=result, headers=dict(exchange.in_message.headers)
-                )
+                exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
             else:  # build
                 items = body if isinstance(body, list) else [body]
@@ -100,8 +98,7 @@ class IcsCalendarProcessor(BaseProcessor):
                         event.add(key.lower(), value)
                     cal.add_component(event)
                 exchange.set_out(
-                    body=bytes(cal.to_ical()),
-                    headers=dict(exchange.in_message.headers),
+                    body=bytes(cal.to_ical()), headers=dict(exchange.in_message.headers)
                 )
         except Exception as exc:
             exchange.fail(f"parse_ics: {exc}")

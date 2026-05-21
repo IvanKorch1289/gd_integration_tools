@@ -81,9 +81,7 @@ class ZipArchiveProcessor(BaseProcessor):
     ) -> None:
         super().__init__(name=name or f"zip_archive:{mode}")
         if mode not in _ALLOWED_MODES:
-            raise ValueError(
-                f"zip_archive: mode must be 'pack'|'unpack', got {mode!r}"
-            )
+            raise ValueError(f"zip_archive: mode must be 'pack'|'unpack', got {mode!r}")
         self._mode = mode
         self._source = source
         self._target = to

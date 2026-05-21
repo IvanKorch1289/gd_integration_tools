@@ -87,10 +87,7 @@ class RedisSettings(BaseSettingsWithLoader):
             "автоматически выполняет retry. Применяется и к single-node, "
             "и к cluster-режиму. Пустой список — отключает встроенный retry."
         ),
-        example=[
-            "redis.exceptions.ConnectionError",
-            "redis.exceptions.TimeoutError",
-        ],
+        example=["redis.exceptions.ConnectionError", "redis.exceptions.TimeoutError"],
     )
 
     # Параметры безопасности
@@ -202,9 +199,7 @@ class RedisSettings(BaseSettingsWithLoader):
                 )
             host, _, port = node.rpartition(":")
             if not host or not port.isdigit():
-                raise ValueError(
-                    f"cluster_nodes: некорректный host:port — {node!r}"
-                )
+                raise ValueError(f"cluster_nodes: некорректный host:port — {node!r}")
         return v
 
     @computed_field(description="Создает URL подключения к Redis")

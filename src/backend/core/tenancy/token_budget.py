@@ -36,12 +36,7 @@ class BudgetExceeded(Exception):
     """Hard-limit превышен → caller получает 429."""
 
     def __init__(
-        self,
-        *,
-        tenant_id: str,
-        used: int,
-        hard_limit: int,
-        period: str,
+        self, *, tenant_id: str, used: int, hard_limit: int, period: str
     ) -> None:
         super().__init__(
             f"Token budget exceeded for tenant={tenant_id}: "
@@ -60,11 +55,7 @@ class BudgetPeriod:
     DAILY = "daily"
     MONTHLY = "monthly"
 
-    _TTL_SECONDS = {
-        HOURLY: 3600,
-        DAILY: 86400,
-        MONTHLY: 30 * 86400,
-    }
+    _TTL_SECONDS = {HOURLY: 3600, DAILY: 86400, MONTHLY: 30 * 86400}
 
     @classmethod
     def ttl_seconds(cls, period: str) -> int:

@@ -115,11 +115,7 @@ class WebhookSource:
                 ) from exc
             window = int(self._ts_window)
             if not verify_signature(
-                raw_body,
-                signature,
-                timestamp,
-                self._hmac_secret,
-                window_seconds=window,
+                raw_body, signature, timestamp, self._hmac_secret, window_seconds=window
             ):
                 raise WebhookVerificationError("HMAC signature mismatch")
             return

@@ -94,9 +94,7 @@ class ResultUnwrapProcessor(BaseProcessor):
             return exchange.properties.get(field)
         return None
 
-    def _apply_target(
-        self, exchange: "Exchange[Any]", target: str, value: Any
-    ) -> None:
+    def _apply_target(self, exchange: "Exchange[Any]", target: str, value: Any) -> None:
         if target.startswith("body."):
             field = target[len("body.") :]
             body = exchange.in_message.body

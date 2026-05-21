@@ -39,7 +39,9 @@ def main() -> None:
             data = {"runs": [], "count": 0}
         runs = data.get("runs", []) if isinstance(data, dict) else []
         if not runs:
-            st.info("Нет завершённых runs. Cron `ai_feedback_dspy_nightly` запускается в 03:00 при включённом feature-flag.")
+            st.info(
+                "Нет завершённых runs. Cron `ai_feedback_dspy_nightly` запускается в 03:00 при включённом feature-flag."
+            )
         else:
             for r in runs:
                 with st.expander(f"Run {r.get('id')} — {r.get('completed_at')}"):

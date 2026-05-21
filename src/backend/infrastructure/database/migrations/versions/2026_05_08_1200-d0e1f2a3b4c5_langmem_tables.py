@@ -46,9 +46,7 @@ def upgrade() -> None:
         "langmem_episodic",
         ["session_id", "occurred_at"],
     )
-    op.create_index(
-        "ix_langmem_episodic_tenant", "langmem_episodic", ["tenant"]
-    )
+    op.create_index("ix_langmem_episodic_tenant", "langmem_episodic", ["tenant"])
 
     op.create_table(
         "langmem_procedural",
@@ -64,9 +62,7 @@ def upgrade() -> None:
             server_default=sa.func.now(),
         ),
     )
-    op.create_index(
-        "ix_langmem_procedural_tenant", "langmem_procedural", ["tenant"]
-    )
+    op.create_index("ix_langmem_procedural_tenant", "langmem_procedural", ["tenant"])
 
 
 def downgrade() -> None:

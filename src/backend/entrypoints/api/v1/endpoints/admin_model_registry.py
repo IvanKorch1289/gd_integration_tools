@@ -77,7 +77,9 @@ async def get_model(name: str, version: str | None = None) -> dict[str, Any]:
     registry = await _composite()
     model = await registry.get_model(name, version=version)
     if model is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found"
+        )
     return model.model_dump()
 
 
@@ -88,7 +90,9 @@ async def use_in_route(name: str, version: str | None = None) -> dict[str, Any]:
     registry = await _composite()
     model = await registry.get_model(name, version=version)
     if model is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"model {name} not found"
+        )
     provider = model.extra.get("backend", "huggingface")
     model_ref = f"{model.name}@{model.version}"
     snippet = (

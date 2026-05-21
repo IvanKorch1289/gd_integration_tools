@@ -20,8 +20,7 @@ from pydantic import BaseModel, Field
 __all__ = ("router",)
 
 router = APIRouter(
-    prefix="/admin/workflow-templates",
-    tags=["admin", "workflow", "templates"],
+    prefix="/admin/workflow-templates", tags=["admin", "workflow", "templates"]
 )
 
 
@@ -58,9 +57,7 @@ class WorkflowTemplateDeployRequest(BaseModel):
 @router.get("/", response_model=list[WorkflowTemplateSummary])
 async def list_templates() -> list[WorkflowTemplateSummary]:
     """Список всех зарегистрированных workflow templates."""
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     registry = get_template_registry()
     return [
@@ -77,13 +74,10 @@ async def list_templates() -> list[WorkflowTemplateSummary]:
 
 @router.get("/search", response_model=list[WorkflowTemplateSearchResult])
 async def search_templates(
-    q: str,
-    top_k: int = 5,
+    q: str, top_k: int = 5
 ) -> list[WorkflowTemplateSearchResult]:
     """Semantic search (BGE-M3 если доступен) или fuzzy fallback."""
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     registry = get_template_registry()
     top_k = max(1, min(top_k, 20))
@@ -106,9 +100,7 @@ async def search_templates(
 @router.get("/{name}", response_model=WorkflowTemplateDetail)
 async def get_template(name: str) -> WorkflowTemplateDetail:
     """Полные детали одного template."""
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     registry = get_template_registry()
     tmpl = registry.get(name)
@@ -130,17 +122,14 @@ async def get_template(name: str) -> WorkflowTemplateDetail:
 
 @router.post("/{name}/deploy", status_code=status.HTTP_201_CREATED)
 async def deploy_template(
-    name: str,
-    request: WorkflowTemplateDeployRequest,
+    name: str, request: WorkflowTemplateDeployRequest
 ) -> dict[str, Any]:
     """Копирует template в target_dir/<name>.workflow.yaml.
 
     Безопасность: target_dir должен быть существующей директорией внутри
     рабочей копии репозитория (без exotic path-escape).
     """
-    from src.backend.services.workflows.template_registry import (
-        get_template_registry,
-    )
+    from src.backend.services.workflows.template_registry import get_template_registry
 
     registry = get_template_registry()
     tmpl = registry.get(name)
@@ -164,13 +153,7 @@ async def deploy_template(
             detail=f"Файл {out_path} уже существует (overwrite=false).",
         )
 
-    yaml_text = _yaml.safe_dump(
-        tmpl.raw, allow_unicode=True, sort_keys=False
-    )
+    yaml_text = _yaml.safe_dump(tmpl.raw, allow_unicode=True, sort_keys=False)
     out_path.write_text(yaml_text, encoding="utf-8")
 
-    return {
-        "deployed": True,
-        "name": name,
-        "target_path": str(out_path),
-    }
+    return {"deployed": True, "name": name, "target_path": str(out_path)}

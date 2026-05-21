@@ -35,16 +35,10 @@ from pathlib import Path
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
-__all__ = (
-    "SemverCheckResult",
-    "check_plugin_semver",
-    "is_compatible",
-)
+__all__ = ("SemverCheckResult", "check_plugin_semver", "is_compatible")
 
 # SemVer X.Y.Z с опциональным pre-release суффиксом (e.g. 1.2.3-beta.1).
-_SEMVER_RE = re.compile(
-    r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$"
-)
+_SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$")
 
 
 @dataclass(slots=True)
@@ -142,11 +136,7 @@ def check_plugin_semver(plugin_path: Path) -> SemverCheckResult:
             errors.append(f"обязательное поле '{required_field}' отсутствует")
 
     if errors:
-        return SemverCheckResult(
-            valid=False,
-            error=errors[0],
-            all_errors=errors,
-        )
+        return SemverCheckResult(valid=False, error=errors[0], all_errors=errors)
 
     version = str(data["version"])
     requires_core = str(data["requires_core"])
@@ -170,11 +160,7 @@ def check_plugin_semver(plugin_path: Path) -> SemverCheckResult:
     # Проверяем strict-режим через feature-flag (default-OFF).
     _check_strict_mode(version, requires_core, errors)
 
-    return SemverCheckResult(
-        valid=True,
-        version=version,
-        requires_core=requires_core,
-    )
+    return SemverCheckResult(valid=True, version=version, requires_core=requires_core)
 
 
 def _check_strict_mode(
@@ -204,9 +190,7 @@ def _check_strict_mode(
 
     # Strict: requires_core обязан содержать явный верхний bound (<X.Y).
     spec = SpecifierSet(requires_core)
-    has_upper_bound = any(
-        op in ("==", "<", "~=") for op in (s.operator for s in spec)
-    )
+    has_upper_bound = any(op in ("==", "<", "~=") for op in (s.operator for s in spec))
     if not has_upper_bound:
         errors.append(
             f"strict-режим: requires_core '{requires_core}' "
@@ -237,7 +221,7 @@ def is_compatible(plugin_requires: str, core_version: str) -> bool:
     try:
         spec = SpecifierSet(plugin_requires)
         version = Version(core_version)
-    except (InvalidSpecifier, Exception):  # noqa: BLE001
+    except InvalidSpecifier, Exception:  # noqa: BLE001
         return False
 
     return version in spec

@@ -24,9 +24,7 @@ st.caption(f"Шаг {step} / 5")
 if step == 1:
     st.subheader("1. Загрузка файлов")
     uploaded = st.file_uploader(
-        "Документы (txt / md / pdf)",
-        accept_multiple_files=True,
-        type=None,
+        "Документы (txt / md / pdf)", accept_multiple_files=True, type=None
     )
     if uploaded:
         st.session_state["ingest_files"] = uploaded
@@ -39,7 +37,9 @@ elif step == 2:
     files = st.session_state.get("ingest_files", [])
     st.write(f"Файлов к загрузке: **{len(files)}**")
     for f in files:
-        st.write(f"• `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)")
+        st.write(
+            f"• `{getattr(f, 'name', 'unnamed')}` ({getattr(f, 'size', '?')} bytes)"
+        )
     if st.button("Далее →"):
         st.session_state["ingest_step"] = 3
         st.rerun()
@@ -75,7 +75,9 @@ elif step == 5:
     st.subheader("5. Verification")
     task_id = st.session_state.get("ingest_task_id")
     if task_id:
-        status = client.rag_ingest_status(task_id) or st.session_state.get("ingest_result", {})
+        status = client.rag_ingest_status(task_id) or st.session_state.get(
+            "ingest_result", {}
+        )
         st.json(status)
     else:
         st.warning("task_id отсутствует.")

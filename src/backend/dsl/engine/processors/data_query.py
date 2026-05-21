@@ -105,7 +105,9 @@ class JsonPathProcessor(BaseProcessor):
                     exchange.set_property("jsonpath_exists", False)
                     exchange.stop()
                     return
-                result: Any = (values[0] if values else None) if self._single else values
+                result: Any = (
+                    (values[0] if values else None) if self._single else values
+                )
                 self._emit(exchange, result)
             case "update":
                 updated = expr.update(body, self._value)

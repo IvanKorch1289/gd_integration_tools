@@ -24,12 +24,7 @@ class InboxDLQWriter:
         table_name: имя таблицы (default ``"dlq_inbox"``).
     """
 
-    def __init__(
-        self,
-        *,
-        session_factory: Any,
-        table_name: str = "dlq_inbox",
-    ) -> None:
+    def __init__(self, *, session_factory: Any, table_name: str = "dlq_inbox") -> None:
         self._session_factory = session_factory
         self._table = table_name
 
@@ -62,9 +57,6 @@ class InboxDLQWriter:
         except Exception:
             logger.exception(
                 "dlq.inbox.write_failed",
-                extra={
-                    "dlq_id": envelope.dlq_id,
-                    "transport": envelope.transport,
-                },
+                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
             )
             raise

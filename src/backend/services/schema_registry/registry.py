@@ -18,12 +18,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
-__all__ = (
-    "SchemaEntry",
-    "SchemaKind",
-    "ServiceSchemaRegistry",
-    "get_schema_registry",
-)
+__all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
 
 
 class SchemaKind(StrEnum):

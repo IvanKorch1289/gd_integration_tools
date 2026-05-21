@@ -19,12 +19,7 @@ __all__ = ("LiteLLMModel",)
 class LiteLLMModel:
     """Минимальный adapter: forward chat-completion к LiteLLM-шлюзу."""
 
-    def __init__(
-        self,
-        *,
-        gateway: Any,
-        model_name: str | None = None,
-    ) -> None:
+    def __init__(self, *, gateway: Any, model_name: str | None = None) -> None:
         self._gateway = gateway
         self._model_name = model_name
 
@@ -33,11 +28,7 @@ class LiteLLMModel:
         return self._model_name or "litellm-default"
 
     async def request(
-        self,
-        messages: list[dict[str, Any]],
-        *,
-        stream: bool = False,
-        **kwargs: Any,
+        self, messages: list[dict[str, Any]], *, stream: bool = False, **kwargs: Any
     ) -> Any:
         """PydanticAI-совместимый entry-point: делегирует в gateway.acompletion."""
         return await self._gateway.acompletion(

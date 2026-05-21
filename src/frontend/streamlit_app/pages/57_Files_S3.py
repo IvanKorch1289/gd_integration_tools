@@ -25,13 +25,33 @@ st.caption("Sprint 7 K5 — S3/MinIO bucket файлы с preview/upload/downloa
 _MOCK_BUCKETS = ["credit-documents", "reports", "uploads-staging"]
 _MOCK_OBJECTS: dict[str, list[dict[str, object]]] = {
     "credit-documents": [
-        {"key": "skb/contracts/2026-05-01.pdf", "size_bytes": 234_567, "modified": "2026-05-01T10:23:45Z"},
-        {"key": "skb/scoring/2026-05-15.json", "size_bytes": 12_456, "modified": "2026-05-15T08:00:00Z"},
-        {"key": "nbki/reports/q1-2026.csv", "size_bytes": 1_234_567, "modified": "2026-05-12T14:30:00Z"},
+        {
+            "key": "skb/contracts/2026-05-01.pdf",
+            "size_bytes": 234_567,
+            "modified": "2026-05-01T10:23:45Z",
+        },
+        {
+            "key": "skb/scoring/2026-05-15.json",
+            "size_bytes": 12_456,
+            "modified": "2026-05-15T08:00:00Z",
+        },
+        {
+            "key": "nbki/reports/q1-2026.csv",
+            "size_bytes": 1_234_567,
+            "modified": "2026-05-12T14:30:00Z",
+        },
     ],
     "reports": [
-        {"key": "monthly/2026-04.xlsx", "size_bytes": 567_890, "modified": "2026-05-01T00:00:01Z"},
-        {"key": "daily/2026-05-14.parquet", "size_bytes": 8_900_123, "modified": "2026-05-15T00:01:00Z"},
+        {
+            "key": "monthly/2026-04.xlsx",
+            "size_bytes": 567_890,
+            "modified": "2026-05-01T00:00:01Z",
+        },
+        {
+            "key": "daily/2026-05-14.parquet",
+            "size_bytes": 8_900_123,
+            "modified": "2026-05-15T00:01:00Z",
+        },
     ],
     "uploads-staging": [],
 }
@@ -40,14 +60,21 @@ _MOCK_OBJECTS: dict[str, list[dict[str, object]]] = {
 with st.sidebar:
     st.header("Bucket / Path")
     bucket = st.selectbox("Bucket", options=_MOCK_BUCKETS, index=0)
-    prefix = st.text_input("Prefix filter", value="", placeholder="напр. skb/contracts/")
+    prefix = st.text_input(
+        "Prefix filter", value="", placeholder="напр. skb/contracts/"
+    )
     st.markdown("---")
     st.header("Upload new object")
     uploaded = st.file_uploader("Выбрать файл", type=None, accept_multiple_files=False)
     if uploaded is not None:
-        target_key = st.text_input("Target key (path)", value=f"uploads-staging/{uploaded.name}")
+        target_key = st.text_input(
+            "Target key (path)", value=f"uploads-staging/{uploaded.name}"
+        )
         if st.button("Загрузить в S3", type="primary"):
-            st.success(f"✓ Mock-upload: '{uploaded.name}' → '{bucket}/{target_key}' ({uploaded.size} bytes)")
+            st.success(
+                f"✓ Mock-upload: '{uploaded.name}' → '{bucket}/{target_key}' ({uploaded.size} bytes)"
+            )
+
 
 # Main: list objects
 def _filter_objects(bucket: str, prefix: str) -> list[dict[str, object]]:
@@ -89,9 +116,7 @@ st.markdown("---")
 st.subheader("Preview / Download")
 if objects:
     selected_key = st.selectbox(
-        "Объект",
-        options=[str(o["key"]) for o in objects],
-        index=0,
+        "Объект", options=[str(o["key"]) for o in objects], index=0
     )
     col_a, col_b = st.columns([3, 1])
     with col_a:
@@ -112,4 +137,6 @@ if objects:
             mime="application/octet-stream",
         )
 
-st.caption(f"Last refresh: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+st.caption(
+    f"Last refresh: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+)

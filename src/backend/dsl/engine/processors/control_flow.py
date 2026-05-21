@@ -12,10 +12,7 @@ _cf_logger = logging.getLogger("dsl.control_flow")
 
 
 async def _emit_saga_audit(
-    *,
-    event_type: str,
-    workflow_id: str,
-    payload: dict[str, Any],
+    *, event_type: str, workflow_id: str, payload: dict[str, Any]
 ) -> None:
     """Sprint 12 K3 W6 — best-effort emit saga compensation events.
 
@@ -38,6 +35,7 @@ async def _emit_saga_audit(
         )
     except Exception:  # noqa: BLE001
         pass
+
 
 __all__ = (
     "ChoiceBranch",
@@ -348,7 +346,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except (RetryError, _RetryAbort):
+        except RetryError, _RetryAbort:
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )

@@ -118,9 +118,7 @@ class ConfigValidator:
     """
 
     def validate(
-        self,
-        settings: "Settings",
-        waf_settings: "WafSettings",
+        self, settings: "Settings", waf_settings: "WafSettings"
     ) -> tuple[ConfigViolation, ...]:
         """Возвращает кортеж обнаруженных нарушений (может быть пустым)."""
         violations: list[ConfigViolation] = []
@@ -197,9 +195,7 @@ class ConfigValidator:
             )
         ]
 
-    def _check_swagger_in_prod(
-        self, app: "AppBaseSettings"
-    ) -> list[ConfigViolation]:
+    def _check_swagger_in_prod(self, app: "AppBaseSettings") -> list[ConfigViolation]:
         """Swagger UI в production раскрывает структуру API наружу."""
         if not self._is_prod(app):
             return []
@@ -219,9 +215,7 @@ class ConfigValidator:
             )
         ]
 
-    def _check_redoc_in_prod(
-        self, app: "AppBaseSettings"
-    ) -> list[ConfigViolation]:
+    def _check_redoc_in_prod(self, app: "AppBaseSettings") -> list[ConfigViolation]:
         """ReDoc UI в production раскрывает структуру API наружу."""
         if not self._is_prod(app):
             return []
@@ -367,8 +361,10 @@ def validate_startup_config(
         sorted(
             violations,
             key=lambda v: (
-                0 if v.severity == ConfigSeverity.CRITICAL
-                else 1 if v.severity == ConfigSeverity.WARNING
+                0
+                if v.severity == ConfigSeverity.CRITICAL
+                else 1
+                if v.severity == ConfigSeverity.WARNING
                 else 2
             ),
         )

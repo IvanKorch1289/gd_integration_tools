@@ -73,36 +73,22 @@ def render_pending_table() -> None:
                     key=f"op-{signal['signal_id']}",
                 )
                 comment = st.text_area(
-                    "Comment",
-                    value="",
-                    key=f"comment-{signal['signal_id']}",
-                    height=80,
+                    "Comment", value="", key=f"comment-{signal['signal_id']}", height=80
                 )
                 col_a, col_b, col_c = st.columns(3)
                 if col_a.button(
-                    ":white_check_mark: Approve",
-                    key=f"appr-{signal['signal_id']}",
+                    ":white_check_mark: Approve", key=f"appr-{signal['signal_id']}"
                 ):
                     _resolve(signal["signal_id"], "approve", operator, comment)
-                if col_b.button(
-                    ":x: Reject", key=f"rej-{signal['signal_id']}"
-                ):
+                if col_b.button(":x: Reject", key=f"rej-{signal['signal_id']}"):
                     _resolve(signal["signal_id"], "reject", operator, comment)
                 if col_c.button(
-                    ":mag: Request info",
-                    key=f"info-{signal['signal_id']}",
+                    ":mag: Request info", key=f"info-{signal['signal_id']}"
                 ):
-                    _resolve(
-                        signal["signal_id"], "request_info", operator, comment
-                    )
+                    _resolve(signal["signal_id"], "request_info", operator, comment)
 
 
-def _resolve(
-    signal_id: str,
-    action: str,
-    operator: str,
-    comment: str,
-) -> None:
+def _resolve(signal_id: str, action: str, operator: str, comment: str) -> None:
     if not operator.strip():
         st.warning("Заполните Operator (your name)")
         return

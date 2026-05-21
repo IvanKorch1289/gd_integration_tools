@@ -204,9 +204,7 @@ class WebhookRelay:
         async def _attempt() -> dict[str, Any]:
             """Одна попытка отправки вебхука; при неуспешном ответе бросает _HTTPError."""
             async with OutboundHttpClient(timeout=httpx.Timeout(15)) as client:
-                resp = await client.post(
-                    rule.target_url, json=payload, headers=headers
-                )
+                resp = await client.post(rule.target_url, json=payload, headers=headers)
                 if resp.is_success:
                     return {
                         "rule_id": rule.id,

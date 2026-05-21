@@ -30,11 +30,7 @@ class KafkaDLQWriter:
     """
 
     def __init__(
-        self,
-        *,
-        producer: Any,
-        topic_prefix: str = "dlq.",
-        serializer: Any = None,
+        self, *, producer: Any, topic_prefix: str = "dlq.", serializer: Any = None
     ) -> None:
         self._producer = producer
         self._topic_prefix = topic_prefix
@@ -59,9 +55,6 @@ class KafkaDLQWriter:
         except Exception:
             logger.exception(
                 "dlq.kafka.write_failed",
-                extra={
-                    "dlq_id": envelope.dlq_id,
-                    "transport": envelope.transport,
-                },
+                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
             )
             raise

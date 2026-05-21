@@ -344,17 +344,12 @@ class APIClient:
         if namespace:
             params["namespace"] = namespace
         try:
-            return self._request(
-                "GET", "/api/v1/dsl/processors/search", params=params
-            )
+            return self._request("GET", "/api/v1/dsl/processors/search", params=params)
         except Exception as exc:
             return {"query": query, "items": [], "total": 0, "error": str(exc)}
 
     def get_audit_events(
-        self,
-        plugin: str | None = None,
-        tenant: str | None = None,
-        limit: int = 100,
+        self, plugin: str | None = None, tenant: str | None = None, limit: int = 100
     ) -> list[dict[str, Any]]:
         """Sprint 14 K1 W4: GET /api/v1/admin/audit/capability."""
         params: dict[str, Any] = {"limit": limit}
@@ -375,9 +370,7 @@ class APIClient:
     def get_dependency_graph(self) -> dict[str, Any]:
         """Sprint 14 K5 W3: GET /api/v1/admin/plugins/dependency-graph."""
         try:
-            return self._request(
-                "GET", "/api/v1/admin/plugins/dependency-graph"
-            )
+            return self._request("GET", "/api/v1/admin/plugins/dependency-graph")
         except Exception as exc:
             return {"nodes": [], "edges": [], "error": str(exc)}
 
@@ -406,9 +399,7 @@ class APIClient:
             "dry_run": dry_run,
         }
         try:
-            return self._request(
-                "POST", "/api/v1/admin/plugins/scaffold", json=body
-            )
+            return self._request("POST", "/api/v1/admin/plugins/scaffold", json=body)
         except Exception as exc:
             return {"name": name, "created": False, "error": str(exc)}
 

@@ -98,10 +98,7 @@ class ConsolidationEngine:
         return self._gateway
 
     async def run(
-        self,
-        *,
-        since: datetime | None = None,
-        batch_size: int = 50,
+        self, *, since: datetime | None = None, batch_size: int = 50
     ) -> ConsolidationReport:
         """Главный entrypoint. Возвращает :class:`ConsolidationReport`."""
         from src.backend.core.config.ai_2026 import langmem_settings
@@ -124,7 +121,10 @@ class ConsolidationEngine:
             facts = await self._extract_facts(group, gateway=gateway)
             report.facts_extracted += len(facts)
             for fact in facts:
-                if fact.confidence < langmem_settings.consolidation_confidence_threshold:
+                if (
+                    fact.confidence
+                    < langmem_settings.consolidation_confidence_threshold
+                ):
                     continue
                 try:
                     await langmem.add_semantic(
@@ -143,11 +143,7 @@ class ConsolidationEngine:
         return report
 
     async def _fetch_episodes(
-        self,
-        langmem: Any,
-        *,
-        since: datetime | None,
-        limit: int,
+        self, langmem: Any, *, since: datetime | None, limit: int
     ) -> list[dict[str, Any]]:
         recall = getattr(langmem, "recall", None)
         if recall is None:
@@ -160,9 +156,7 @@ class ConsolidationEngine:
         if since is None:
             return list(episodes)
         cutoff = since.isoformat() if isinstance(since, datetime) else str(since)
-        return [
-            ep for ep in episodes if (ep.get("occurred_at") or "") >= cutoff
-        ]
+        return [ep for ep in episodes if (ep.get("occurred_at") or "") >= cutoff]
 
     async def _extract_facts(
         self, episodes: list[dict[str, Any]], *, gateway: Any
@@ -173,7 +167,7 @@ class ConsolidationEngine:
         prompt = self._template.format(dialog=dialog)
         try:
             response = await gateway.acompletion(
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": prompt}]
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("LLM consolidate call failed: %s", exc)
@@ -228,7 +222,7 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         body = entry.get("fact") or entry.get("text") or ""
         try:
             confidence = float(entry.get("confidence", 0.0))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             confidence = 0.0
         if body:
             facts.append(ExtractedFact(text=str(body), confidence=confidence))

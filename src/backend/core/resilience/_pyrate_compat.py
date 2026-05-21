@@ -85,12 +85,7 @@ class BoundedInMemoryBucket(InMemoryBucket):
         max_items: Жёсткий потолок ``len(items)``. Default ``10_000``.
     """
 
-    def __init__(
-        self,
-        rates: list[Rate],
-        *,
-        max_items: int = 10_000,
-    ) -> None:
+    def __init__(self, rates: list[Rate], *, max_items: int = 10_000) -> None:
         super().__init__(rates)
         self.max_items = max_items
 
@@ -113,7 +108,5 @@ class BoundedInMemoryBucket(InMemoryBucket):
         return {
             "items": len(self.items),
             "max_items": self.max_items,
-            "saturation": len(self.items) / self.max_items
-            if self.max_items
-            else 0.0,
+            "saturation": len(self.items) / self.max_items if self.max_items else 0.0,
         }

@@ -56,11 +56,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Final
 
-__all__ = (
-    "DegradationFeature",
-    "FeatureState",
-    "GracefulDegradationRegistry",
-)
+__all__ = ("DegradationFeature", "FeatureState", "GracefulDegradationRegistry")
 
 _logger = logging.getLogger("core.resilience.graceful_degradation")
 
@@ -137,8 +133,7 @@ class GracefulDegradationRegistry:
             feature: декларация :class:`DegradationFeature`.
         """
         self._features[feature.name] = _FeatureRuntime(
-            feature=feature,
-            outcomes=deque(maxlen=feature.window_size),
+            feature=feature, outcomes=deque(maxlen=feature.window_size)
         )
         _logger.debug(
             "graceful_degradation.register",

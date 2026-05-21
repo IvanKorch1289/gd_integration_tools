@@ -56,8 +56,7 @@ class S3Sink(Sink):
             )
         except ImportError as exc:
             return SinkResult(
-                ok=False,
-                details={"error": f"storage_client not available: {exc}"},
+                ok=False, details={"error": f"storage_client not available: {exc}"}
             )
 
         data = _coerce_payload(payload)
@@ -68,8 +67,7 @@ class S3Sink(Sink):
             )
         except Exception as exc:  # noqa: BLE001 — мап в SinkResult.
             return SinkResult(
-                ok=False,
-                details={"error": str(exc) or exc.__class__.__name__},
+                ok=False, details={"error": str(exc) or exc.__class__.__name__}
             )
 
         return SinkResult(

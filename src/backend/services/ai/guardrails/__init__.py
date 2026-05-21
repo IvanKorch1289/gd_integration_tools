@@ -5,14 +5,8 @@ Lakera Guard + Rebuff — внешние провайдеры prompt-injection /
 WAF фасада (capability ``ai.guardrails.lakera``/``ai.guardrails.rebuff``).
 """
 
-from src.backend.services.ai.guardrails.lakera_client import (
-    LakeraClient,
-    LakeraResult,
-)
-from src.backend.services.ai.guardrails.rebuff_client import (
-    RebuffClient,
-    RebuffResult,
-)
+from src.backend.services.ai.guardrails.lakera_client import LakeraClient, LakeraResult
+from src.backend.services.ai.guardrails.rebuff_client import RebuffClient, RebuffResult
 from src.backend.services.ai.guardrails.tenant_config import (
     GuardrailsConfig,
     GuardrailsThresholds,

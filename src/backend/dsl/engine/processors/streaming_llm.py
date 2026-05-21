@@ -64,9 +64,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         """Wave D.3: lazy-init LLMStreamingService через DI."""
         if self._streaming_service is not None:
             return self._streaming_service
-        from src.backend.services.ai.streaming_service import (
-            get_llm_streaming_service,
-        )
+        from src.backend.services.ai.streaming_service import get_llm_streaming_service
 
         self._streaming_service = get_llm_streaming_service()
         return self._streaming_service
@@ -113,9 +111,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
             finish_reason = fr
         return {"delta": delta, "finish_reason": finish_reason}
 
-    async def _iter_stream(
-        self, prompt: str
-    ) -> AsyncIterator[Any]:
+    async def _iter_stream(self, prompt: str) -> AsyncIterator[Any]:
         """Legacy-итератор через прямой gateway (для обратной совместимости)."""
         gateway = self._ensure_gateway()
         result = await gateway.acompletion(

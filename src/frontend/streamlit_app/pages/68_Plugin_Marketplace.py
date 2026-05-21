@@ -116,8 +116,7 @@ with tabs[0]:
 with tabs[1]:
     st.markdown("### Граф зависимостей плагинов")
     st.caption(
-        "Mermaid-визуализация ``compatibility.requires_plugins`` "
-        "(Sprint 14 K5 W3)."
+        "Mermaid-визуализация ``compatibility.requires_plugins`` (Sprint 14 K5 W3)."
     )
     graph = client.get_dependency_graph()
     if graph.get("error"):
@@ -128,7 +127,7 @@ with tabs[1]:
         diagram = ["graph LR"]
         for node in graph["nodes"]:
             label = f"{node['id']}\\n{node.get('version', '?')}"
-            diagram.append(f"    {node['id']}[\"{label}\"]")
+            diagram.append(f'    {node["id"]}["{label}"]')
         for edge in graph["edges"]:
             diagram.append(
                 f"    {edge['source']} -->|{edge.get('spec', '?')}| {edge['target']}"

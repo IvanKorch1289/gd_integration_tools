@@ -144,9 +144,7 @@ class WorkflowBuilder:
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
         self._steps.append(
             SignalWaitDeclaration(
-                signal_name=signal_name,
-                timeout_s=timeout_s,
-                output_key=output_key,
+                signal_name=signal_name, timeout_s=timeout_s, output_key=output_key
             )
         )
         return self

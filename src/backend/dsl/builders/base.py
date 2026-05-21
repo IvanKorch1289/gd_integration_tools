@@ -54,11 +54,7 @@ __all__ = ("RouteBuilder",)
 
 @dataclass(slots=True)
 class RouteBuilder(
-    AIRPAMixin,
-    ControlFlowMixin,
-    EIPMixin,
-    IntegrationMixin,
-    ConvertersMixin,
+    AIRPAMixin, ControlFlowMixin, EIPMixin, IntegrationMixin, ConvertersMixin
 ):
     """Fluent-builder для DSL-маршрутов.
 
@@ -134,9 +130,7 @@ class RouteBuilder(
             )
         """
         return cls(
-            route_id=route_id,
-            source=f"source:{source_id}",
-            description=description,
+            route_id=route_id, source=f"source:{source_id}", description=description
         )
 
     def _add(self, processor: BaseProcessor) -> "RouteBuilder":
@@ -262,10 +256,7 @@ class RouteBuilder(
         return self
 
     def with_headers(
-        self,
-        headers: dict[str, str],
-        *,
-        mode: str = "merge",
+        self, headers: dict[str, str], *, mode: str = "merge"
     ) -> "RouteBuilder":
         """Переопределяет HTTP-заголовки предыдущего step.
 
@@ -320,17 +311,13 @@ class RouteBuilder(
         provided = [v for v in (token, api_key, mtls_cert) if v is not None]
         if len(provided) != 1:
             raise ValueError(
-                "with_auth: должен быть указан ровно один из "
-                "token/api_key/mtls_cert"
+                "with_auth: должен быть указан ровно один из token/api_key/mtls_cert"
             )
         if api_key is not None:
             return self.with_headers({"X-API-Key": api_key}, mode="merge")
         last = self._last_processor_or_raise()
         if token is not None:
-            if (
-                self._set_first_attr(last, ("_auth_token", "auth_token"), token)
-                is None
-            ):
+            if self._set_first_attr(last, ("_auth_token", "auth_token"), token) is None:
                 raise ValueError(
                     f"with_auth(token=...): processor {type(last).__name__} "
                     f"не поддерживает атрибут auth_token"
@@ -441,9 +428,7 @@ class RouteBuilder(
         Не путать с ``feature_flag(name)`` (метаданная маршрута, отключает
         маршрут целиком). Здесь — DSL-step внутри pipeline.
         """
-        from src.backend.dsl.engine.processors.generic import (
-            FeatureFlagGuardProcessor,
-        )
+        from src.backend.dsl.engine.processors.generic import FeatureFlagGuardProcessor
 
         return self._add(
             FeatureFlagGuardProcessor(
@@ -478,9 +463,7 @@ class RouteBuilder(
     def outbox(self, *, topic: str) -> "RouteBuilder":
         """Transactional Outbox: запись события в outbox-таблицу."""
         return self._add_lazy(
-            "src.backend.dsl.engine.processors.business",
-            "OutboxProcessor",
-            topic=topic,
+            "src.backend.dsl.engine.processors.business", "OutboxProcessor", topic=topic
         )
 
     def mask(
@@ -536,7 +519,7 @@ class RouteBuilder(
             from src.backend.dsl.commands.registry import action_handler_registry
 
             available = set(action_handler_registry.list_actions())
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return
 
         if not available:

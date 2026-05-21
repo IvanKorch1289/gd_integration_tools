@@ -178,9 +178,7 @@ class WorkflowFacade:
         self._gate.check(caller, "workflow.signal", handle.workflow_id)
         await self._backend.cancel_workflow(handle=handle)
         await self._emit(
-            event_type="workflow.cancel",
-            workflow_id=handle.workflow_id,
-            caller=caller,
+            event_type="workflow.cancel", workflow_id=handle.workflow_id, caller=caller
         )
 
     async def await_completion(

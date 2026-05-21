@@ -28,11 +28,7 @@ if str(_project_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
-st.set_page_config(
-    page_title="Admin Console",
-    page_icon=":wrench:",
-    layout="wide",
-)
+st.set_page_config(page_title="Admin Console", page_icon=":wrench:", layout="wide")
 st.header(":wrench: Admin Console")
 st.caption(
     "Управление плагинами, пользователями и feature-flags. Все операции "
@@ -78,7 +74,9 @@ with tab_plugins:
                         f"/api/v1/admin/plugins/{name}/toggle",
                         json={"active": not is_active},
                     )
-                    st.toast(f"Плагин `{name}` → {'disabled' if is_active else 'active'}")
+                    st.toast(
+                        f"Плагин `{name}` → {'disabled' if is_active else 'active'}"
+                    )
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Не удалось переключить плагин: {exc}")
@@ -88,10 +86,7 @@ with tab_plugins:
 # ---------------------------------------------------------------------------
 with tab_users:
     st.subheader("Пользователи (read-only)")
-    st.caption(
-        "Полноценное управление пользователями — через "
-        "`/admin` (sqladmin)."
-    )
+    st.caption("Полноценное управление пользователями — через `/admin` (sqladmin).")
 
     try:
         users = client._request("GET", "/api/v1/users/all")  # type: ignore[attr-defined]

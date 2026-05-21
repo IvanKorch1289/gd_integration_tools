@@ -56,12 +56,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
-__all__ = (
-    "ProcessorRegistry",
-    "ProcessorSpec",
-    "get_processor_registry",
-    "processor",
-)
+__all__ = ("ProcessorRegistry", "ProcessorSpec", "get_processor_registry", "processor")
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,7 +160,9 @@ class ProcessorRegistry:
                 raise ProcessorNotFoundError(f"Processor {fqn!r} not registered.")
             return spec
 
-    def get_by_short(self, name: str, *, prefer_namespace: str = "core") -> ProcessorSpec:
+    def get_by_short(
+        self, name: str, *, prefer_namespace: str = "core"
+    ) -> ProcessorSpec:
         """Поиск по короткому имени.
 
         Если процессор зарегистрирован в нескольких namespace'ах, возвращает

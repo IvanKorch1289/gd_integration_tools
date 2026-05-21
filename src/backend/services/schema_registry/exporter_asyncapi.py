@@ -45,23 +45,19 @@ def export_asyncapi(
                 "description": entry.meta.get("description", ""),
                 "messages": {
                     "default": {
-                        "payload": {"$ref": f"#/components/schemas/{schema_id}"},
+                        "payload": {"$ref": f"#/components/schemas/{schema_id}"}
                     }
                 },
             }
             operations[f"{channel_id}.invoke"] = {
                 "action": "send",
                 "channel": {"$ref": f"#/channels/{channel_id}"},
-                "summary": entry.meta.get("description", "")
-                or f"Invoke {entry.name}",
+                "summary": entry.meta.get("description", "") or f"Invoke {entry.name}",
             }
 
     return {
         "asyncapi": "3.0.0",
-        "info": {
-            "title": "gd_integration_tools — async channels",
-            "version": "1.0.0",
-        },
+        "info": {"title": "gd_integration_tools — async channels", "version": "1.0.0"},
         "channels": channels,
         "operations": operations,
         "components": {"schemas": schemas},

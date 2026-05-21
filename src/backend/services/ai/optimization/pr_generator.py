@@ -11,11 +11,7 @@ class PRGenerator:
     """Собирает markdown-отчёт + DSL patch suggestions."""
 
     @staticmethod
-    def render(
-        route_name: str,
-        metrics: list[Any],
-        recommendations: list[Any],
-    ) -> str:
+    def render(route_name: str, metrics: list[Any], recommendations: list[Any]) -> str:
         """Сформировать markdown для PR."""
         lines: list[str] = []
         lines.append(f"# AI Route Optimization: `{route_name}`")
@@ -52,6 +48,8 @@ class PRGenerator:
                 lines.append(r.rationale)
                 lines.append("")
                 if r.estimated_gain_ms:
-                    lines.append(f"_Ожидаемая экономия: ~{r.estimated_gain_ms:.0f}ms p95._")
+                    lines.append(
+                        f"_Ожидаемая экономия: ~{r.estimated_gain_ms:.0f}ms p95._"
+                    )
                     lines.append("")
         return "\n".join(lines).rstrip() + "\n"

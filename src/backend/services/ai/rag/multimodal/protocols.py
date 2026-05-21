@@ -64,7 +64,4 @@ class IngesterProtocol(Protocol):
         ...
 
 
-__all__ = (
-    "EmbedderProtocol",
-    "IngesterProtocol",
-)
+__all__ = ("EmbedderProtocol", "IngesterProtocol")

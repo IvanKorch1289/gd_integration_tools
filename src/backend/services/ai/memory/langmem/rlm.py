@@ -69,10 +69,7 @@ class RLMFeedbackProcessor:
         return self._langmem
 
     async def on_feedback_received(
-        self,
-        *,
-        doc_id: str,
-        label: Literal["good", "bad", "unclear"],
+        self, *, doc_id: str, label: Literal["good", "bad", "unclear"]
     ) -> RLMSignal:
         """Обновляет ``rlm_boost``/``rlm_penalty`` для ``doc_id``.
 
@@ -87,7 +84,13 @@ class RLMFeedbackProcessor:
         client = getattr(langmem, "_client", None)
         if client is None:
             logger.debug("RLM: qdrant client недоступен — feedback не применён")
-            return RLMSignal(doc_id=doc_id, label=label, new_boost=0, new_penalty=0, reindex_hinted=False)
+            return RLMSignal(
+                doc_id=doc_id,
+                label=label,
+                new_boost=0,
+                new_penalty=0,
+                reindex_hinted=False,
+            )
 
         try:
             payload = await _fetch_payload(client, langmem._collection, doc_id)
@@ -159,9 +162,6 @@ async def _set_payload(
         upsert = getattr(client, "upsert", None)
         if upsert is None:
             return
-        await upsert(
-            collection=collection,
-            points=[{"id": doc_id, "payload": payload}],
-        )
+        await upsert(collection=collection, points=[{"id": doc_id, "payload": payload}])
         return
     await set_payload(collection=collection, payload=payload, points=[doc_id])

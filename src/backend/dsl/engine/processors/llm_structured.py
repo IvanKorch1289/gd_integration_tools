@@ -199,7 +199,9 @@ class LLMStructuredProcessor(BaseProcessor):
             module_name, _, class_name = ref.partition(":")
             module = importlib.import_module(module_name)
             cls = getattr(module, class_name, None)
-            if cls is None or not (isinstance(cls, type) and issubclass(cls, BaseModel)):
+            if cls is None or not (
+                isinstance(cls, type) and issubclass(cls, BaseModel)
+            ):
                 raise ValueError(
                     f"llm_structured: {ref!r} не указывает на Pydantic-класс"
                 )
@@ -213,7 +215,7 @@ class LLMStructuredProcessor(BaseProcessor):
             )
 
             entry = get_schema_registry().get(SchemaKind.PROCESSOR, ref)
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             entry = None
 
         if entry is not None:
@@ -223,7 +225,11 @@ class LLMStructuredProcessor(BaseProcessor):
 
                 module = importlib.import_module(module_name)
                 cls = getattr(module, ref, None)
-                if cls is not None and isinstance(cls, type) and issubclass(cls, BaseModel):
+                if (
+                    cls is not None
+                    and isinstance(cls, type)
+                    and issubclass(cls, BaseModel)
+                ):
                     return cls
 
         raise ValueError(
@@ -369,9 +375,7 @@ class LLMStructuredProcessor(BaseProcessor):
         # ── Write result ──
         self._write_result(exchange, result)
 
-    async def _call_with_completion(
-        self, call: Any
-    ) -> tuple[Any, Any]:
+    async def _call_with_completion(self, call: Any) -> tuple[Any, Any]:
         """Вызывает instructor и возвращает ``(parsed_obj, raw_response)``.
 
         ``instructor>=1.7`` поддерживает ``create_with_completion`` для
@@ -409,7 +413,7 @@ class LLMStructuredProcessor(BaseProcessor):
 
             cost = litellm.completion_cost(completion_response=raw_response)
             return float(cost) if cost is not None else None
-        except (ImportError, AttributeError, TypeError, ValueError):
+        except ImportError, AttributeError, TypeError, ValueError:
             return None
 
     @staticmethod
@@ -427,12 +431,10 @@ class LLMStructuredProcessor(BaseProcessor):
             total = usage.get("total_tokens")
         try:
             return int(total) if total is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
 
-    def _write_result(
-        self, exchange: "Exchange[Any]", result: Any
-    ) -> None:
+    def _write_result(self, exchange: "Exchange[Any]", result: Any) -> None:
         """Записывает результат в путь ``self._to``.
 
         Поддерживается:

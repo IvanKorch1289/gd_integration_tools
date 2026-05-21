@@ -37,10 +37,7 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
-__all__ = (
-    "GranianTuning",
-    "granian_tuning",
-)
+__all__ = ("GranianTuning", "granian_tuning")
 
 
 class GranianTuning(BaseSettingsWithLoader):
@@ -55,9 +52,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "granian"
     model_config = SettingsConfigDict(
-        env_prefix="GRANIAN_",
-        extra="ignore",
-        validate_default=True,
+        env_prefix="GRANIAN_", extra="ignore", validate_default=True
     )
 
     workers: int | Literal["auto"] = Field(

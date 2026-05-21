@@ -24,11 +24,7 @@ import logging
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-__all__ = (
-    "CapabilityAuditEvent",
-    "CapabilityAuditEventKind",
-    "log_capability_event",
-)
+__all__ = ("CapabilityAuditEvent", "CapabilityAuditEventKind", "log_capability_event")
 
 _logger = logging.getLogger("core.security.capabilities.audit")
 
@@ -63,7 +59,9 @@ class CapabilityAuditEvent:
     actor: str = "_anonymous"
     correlation_id: str | None = None
     timestamp: str = field(
-        default_factory=lambda: _dt.datetime.now(tz=_dt.UTC).isoformat(timespec="microseconds")
+        default_factory=lambda: _dt.datetime.now(tz=_dt.UTC).isoformat(
+            timespec="microseconds"
+        )
     )
     extra: dict[str, Any] = field(default_factory=dict)
 

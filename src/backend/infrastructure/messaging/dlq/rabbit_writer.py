@@ -26,11 +26,7 @@ class RabbitDLQWriter:
     """
 
     def __init__(
-        self,
-        *,
-        channel: Any,
-        exchange_name: str = "",
-        queue_prefix: str = "dlq.",
+        self, *, channel: Any, exchange_name: str = "", queue_prefix: str = "dlq."
     ) -> None:
         self._channel = channel
         self._exchange_name = exchange_name
@@ -63,9 +59,6 @@ class RabbitDLQWriter:
         except Exception:
             logger.exception(
                 "dlq.rabbit.write_failed",
-                extra={
-                    "dlq_id": envelope.dlq_id,
-                    "transport": envelope.transport,
-                },
+                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
             )
             raise

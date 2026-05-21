@@ -78,9 +78,7 @@ class Inbox:
             was_set = await raw.set(key, "1", ex=self.ttl_seconds, nx=True)
         except Exception as exc:
             if self.fail_mode == "closed":
-                raise InboxUnavailableError(
-                    f"Redis SETNX failed: {exc}"
-                ) from exc
+                raise InboxUnavailableError(f"Redis SETNX failed: {exc}") from exc
             logger.warning("Inbox Redis fail: %s", exc)
             return False
         return was_set is None or was_set is False

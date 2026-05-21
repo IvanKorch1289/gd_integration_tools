@@ -222,10 +222,7 @@ class SoapCallProcessor(BaseProcessor):
     spec_schema={
         "type": "object",
         "properties": {
-            "broker": {
-                "type": "string",
-                "enum": ["kafka", "rabbit", "redis", "nats"],
-            },
+            "broker": {"type": "string", "enum": ["kafka", "rabbit", "redis", "nats"]},
             "url": {"type": "string"},
             "topic": {"type": "string"},
             "extra": {"type": "object"},
@@ -481,10 +478,7 @@ _GENERIC_SINK_KINDS = frozenset({"http", "webhook", "file", "email", "s3"})
     spec_schema={
         "type": "object",
         "properties": {
-            "kind": {
-                "type": "string",
-                "enum": sorted(_GENERIC_SINK_KINDS),
-            },
+            "kind": {"type": "string", "enum": sorted(_GENERIC_SINK_KINDS)},
             "config": {"type": "object"},
             "payload_property": {"type": ["string", "null"]},
             "result_property": {"type": "string"},
@@ -544,9 +538,7 @@ class GenericSinkPublishProcessor(BaseProcessor):
         try:
             sink = build_sink(spec)
         except ValueError as exc:
-            _store_result(
-                exchange, self._out, {"ok": False, "error": str(exc)}
-            )
+            _store_result(exchange, self._out, {"ok": False, "error": str(exc)})
             return
 
         payload = _resolve_payload(exchange, self._payload_property)

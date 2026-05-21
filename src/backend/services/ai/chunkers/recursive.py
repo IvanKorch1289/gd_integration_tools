@@ -41,9 +41,7 @@ class RecursiveChunker:
             return []
         return self._merge(self._split_recursive(text, self._separators))
 
-    def _split_recursive(
-        self, text: str, separators: tuple[str, ...]
-    ) -> list[str]:
+    def _split_recursive(self, text: str, separators: tuple[str, ...]) -> list[str]:
         if not text:
             return []
         if len(text) <= self._size:

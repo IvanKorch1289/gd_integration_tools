@@ -66,10 +66,7 @@ class WhisperSTT:
         self._model = whisper.load_model(self._model_name)
 
     async def transcribe(
-        self,
-        audio_bytes: bytes,
-        *,
-        suffix: str = ".wav",
+        self, audio_bytes: bytes, *, suffix: str = ".wav"
     ) -> TranscriptionResult:
         """Расшифровать аудиозапись в текст.
 
@@ -86,9 +83,7 @@ class WhisperSTT:
         # для совместимости с любыми форматами через ffmpeg fallback.
         tmp_path: str | None = None
         try:
-            with tempfile.NamedTemporaryFile(
-                suffix=suffix, delete=False
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
                 tmp.write(audio_bytes)
                 tmp_path = tmp.name
 

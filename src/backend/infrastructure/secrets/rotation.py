@@ -92,9 +92,7 @@ class RotationScheduler:
         return rotated
 
     async def start(
-        self,
-        *,
-        task_factory: Callable[..., asyncio.Task[None]] | None = None,
+        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None
     ) -> None:
         """Запустить фоновый цикл (TaskRegistry-aware)."""
         if self._task is not None and not self._task.done():
@@ -123,7 +121,7 @@ class RotationScheduler:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
+            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
                 pass
 
     def add_watch(self, name: str, *, current_version: int | None = None) -> None:

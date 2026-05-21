@@ -435,9 +435,7 @@ class WorkflowInstanceStore:
     """CRUD для header-таблицы ``workflow_instances``."""
 
     def __init__(
-        self,
-        session_manager: Any = None,
-        event_store: WorkflowEventStore | None = None,
+        self, session_manager: Any = None, event_store: WorkflowEventStore | None = None
     ) -> None:
         self._sm = session_manager or main_session_manager
         self._events = event_store or WorkflowEventStore(session_manager=self._sm)
@@ -485,9 +483,7 @@ class WorkflowInstanceStore:
     async def get(self, workflow_id: UUID) -> WorkflowInstanceRow | None:
         """Возвращает header-запись инстанса или ``None``."""
         async with self._sm.create_session() as session:
-            stmt = select(WorkflowInstance).where(
-                WorkflowInstance.id == workflow_id
-            )
+            stmt = select(WorkflowInstance).where(WorkflowInstance.id == workflow_id)
             result = await session.execute(stmt)
             obj = result.scalar_one_or_none()
             return WorkflowInstanceRow.from_orm(obj) if obj is not None else None
@@ -549,8 +545,7 @@ class WorkflowInstanceStore:
                     .where(
                         or_(
                             WorkflowInstance.locked_until.is_(None),
-                            WorkflowInstance.locked_until
-                            < datetime.now(timezone.utc),
+                            WorkflowInstance.locked_until < datetime.now(timezone.utc),
                         )
                     )
                     .values(locked_by=worker_id, locked_until=locked_until)

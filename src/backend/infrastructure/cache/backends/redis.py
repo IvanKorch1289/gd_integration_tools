@@ -73,9 +73,7 @@ class RedisBackend(CacheBackend):
             return await pipe.execute()
 
     async def mset_pipelined(
-        self,
-        items: dict[str, bytes],
-        ttl: int | None = None,
+        self, items: dict[str, bytes], ttl: int | None = None
     ) -> None:
         """Batch-запись через non-transactional pipeline.
 

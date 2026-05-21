@@ -13,11 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-__all__ = (
-    "SagaHistoryRecord",
-    "get_saga_history",
-    "aggregate_saga_stats",
-)
+__all__ = ("SagaHistoryRecord", "get_saga_history", "aggregate_saga_stats")
 
 _logger = logging.getLogger("services.workflows.saga_history")
 
@@ -38,29 +34,30 @@ class SagaHistoryRecord:
 async def _get_clickhouse_client(factory: Any | None = None) -> Any:
     if factory is not None:
         return await factory()
-    from clickhouse_connect import (  # type: ignore[import-untyped]
-        get_async_client,
-    )
+    from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
 
     from src.backend.core.config import settings
 
-    host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-        settings, "clickhouse"
-    ) else "localhost"
-    port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-        settings, "clickhouse"
-    ) else 8123
-    database = getattr(settings.clickhouse, "database", "default") if hasattr(
-        settings, "clickhouse"
-    ) else "default"
+    host = (
+        getattr(settings.clickhouse, "host", "localhost")
+        if hasattr(settings, "clickhouse")
+        else "localhost"
+    )
+    port = (
+        getattr(settings.clickhouse, "port", 8123)
+        if hasattr(settings, "clickhouse")
+        else 8123
+    )
+    database = (
+        getattr(settings.clickhouse, "database", "default")
+        if hasattr(settings, "clickhouse")
+        else "default"
+    )
     return await get_async_client(host=host, port=port, database=database)
 
 
 async def get_saga_history(
-    workflow_id: str,
-    *,
-    limit: int = 50,
-    client_factory: Any | None = None,
+    workflow_id: str, *, limit: int = 50, client_factory: Any | None = None
 ) -> list[SagaHistoryRecord]:
     """Возвращает timeline saga events для конкретного workflow_id."""
     import json
@@ -84,8 +81,7 @@ async def get_saga_history(
     )
     try:
         result = await client.query(
-            sql,
-            parameters={"workflow_id": workflow_id, "limit": limit},
+            sql, parameters={"workflow_id": workflow_id, "limit": limit}
         )
     except Exception as exc:  # noqa: BLE001
         _logger.warning("CH query failed: %s", exc)
@@ -95,7 +91,7 @@ async def get_saga_history(
     for row in getattr(result, "result_rows", []):
         try:
             payload = json.loads(row[4]) if row[4] else {}
-        except (TypeError, json.JSONDecodeError):
+        except TypeError, json.JSONDecodeError:
             payload = {}
         records.append(
             SagaHistoryRecord(
@@ -119,7 +115,9 @@ async def aggregate_saga_stats(
     client_factory: Any | None = None,
 ) -> dict[str, Any]:
     """Aggregated stats для page 19 (общая сводка)."""
-    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
+    from datetime import timezone as _tz
 
     to_dt = to_dt or _dt.now(_tz.utc)
     from_dt = from_dt or (to_dt - _td(days=7))
@@ -128,12 +126,7 @@ async def aggregate_saga_stats(
         client = await _get_clickhouse_client(client_factory)
     except Exception as exc:  # noqa: BLE001
         _logger.warning("CH unavailable: %s", exc)
-        return {
-            "total_sagas": 0,
-            "succeeded": 0,
-            "failed": 0,
-            "avg_duration_ms": 0.0,
-        }
+        return {"total_sagas": 0, "succeeded": 0, "failed": 0, "avg_duration_ms": 0.0}
 
     conditions = [
         "created_at >= %(from_dt)s",
@@ -155,22 +148,13 @@ async def aggregate_saga_stats(
 
     try:
         result = await client.query(sql, parameters=params)
-        row = (
-            result.result_rows[0]
-            if getattr(result, "result_rows", None)
-            else None
-        )
+        row = result.result_rows[0] if getattr(result, "result_rows", None) else None
     except Exception as exc:  # noqa: BLE001
         _logger.warning("CH query failed: %s", exc)
         row = None
 
     if row is None:
-        return {
-            "total_sagas": 0,
-            "succeeded": 0,
-            "failed": 0,
-            "avg_duration_ms": 0.0,
-        }
+        return {"total_sagas": 0, "succeeded": 0, "failed": 0, "avg_duration_ms": 0.0}
 
     succeeded = int(row[0] or 0)
     failed = int(row[1] or 0)

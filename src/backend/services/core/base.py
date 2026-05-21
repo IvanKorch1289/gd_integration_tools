@@ -10,8 +10,8 @@ from src.backend.core.di.providers import get_cache_invalidator_provider
 from src.backend.core.errors import NotFoundError, ServiceError
 from src.backend.core.interfaces.db_model import DBModelProtocol
 from src.backend.core.interfaces.repositories import RepositoryProtocol
-from src.backend.schemas.base import BaseSchema, PaginatedResult
 from src.backend.dsl.codec.converters import transfer_model_to_schema
+from src.backend.schemas.base import BaseSchema, PaginatedResult
 
 logger = logging.getLogger(__name__)
 

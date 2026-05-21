@@ -42,9 +42,7 @@ if TYPE_CHECKING:
 __all__ = ("RegexExtractorProcessor",)
 
 
-_ALLOWED_MODES = frozenset(
-    {"all", "first", "first_named", "all_named", "groups"}
-)
+_ALLOWED_MODES = frozenset({"all", "first", "first_named", "all_named", "groups"})
 
 
 @processor(

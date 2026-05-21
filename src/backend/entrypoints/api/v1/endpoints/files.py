@@ -137,16 +137,9 @@ async def upload_stream_handler(
     s3_client: Any = getattr(s3_service, "_client", None) or s3_service
     key = (x_filename or "stream-upload").replace("/", "_")
     etag = await s3_client.put_object_multipart(
-        key=key,
-        stream=request.stream(),
-        content_type=content_type,
+        key=key, stream=request.stream(), content_type=content_type
     )
-    return {
-        "uploaded": True,
-        "key": key,
-        "etag": etag,
-        "content_type": content_type,
-    }
+    return {"uploaded": True, "key": key, "etag": etag, "content_type": content_type}
 
 
 storage_router.add_api_route(

@@ -15,11 +15,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-__all__ = (
-    "QuotaCheckResult",
-    "QuotaUsage",
-    "QuotasBackend",
-)
+__all__ = ("QuotaCheckResult", "QuotaUsage", "QuotasBackend")
 
 
 @runtime_checkable

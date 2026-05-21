@@ -16,10 +16,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from src.backend.services.workflows.hitl_service import (
-    HitlAction,
-    HitlService,
-)
+from src.backend.services.workflows.hitl_service import HitlAction, HitlService
 
 __all__ = ("router",)
 
@@ -49,8 +46,7 @@ def _service(request: Request) -> HitlService:
 
 @router.get("/pending", summary="List pending HITL signals")
 async def list_pending(
-    request: Request,
-    tenant_id: str | None = None,
+    request: Request, tenant_id: str | None = None
 ) -> dict[str, Any]:
     """Список pending HITL signals (опц. фильтр по tenant)."""
     svc = _service(request)
@@ -72,17 +68,13 @@ async def get_signal(signal_id: str, request: Request) -> dict[str, Any]:
 
 @router.post("/{signal_id}/resolve", summary="Resolve HITL signal")
 async def resolve_signal(
-    signal_id: str,
-    body: HitlResolveRequest,
-    request: Request,
+    signal_id: str, body: HitlResolveRequest, request: Request
 ) -> dict[str, Any]:
     """Approve / reject / request_info → signal_workflow + store.mark_resolved."""
     if body.action not in HitlAction.all():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"Invalid action {body.action!r}; allowed: {HitlAction.all()}"
-            ),
+            detail=(f"Invalid action {body.action!r}; allowed: {HitlAction.all()}"),
         )
     svc = _service(request)
     try:
@@ -115,10 +107,7 @@ async def hitl_history(
 
     service = HitlHistoryService()
     records = await service.get_history(
-        tenant_id=tenant_id,
-        action=action,
-        operator=operator,
-        limit=limit,
+        tenant_id=tenant_id, action=action, operator=operator, limit=limit
     )
     return {
         "items": [
@@ -128,9 +117,7 @@ async def hitl_history(
                 "tenant_id": r.tenant_id,
                 "action": r.action,
                 "operator": r.operator,
-                "resolved_at": r.resolved_at.isoformat()
-                if r.resolved_at
-                else None,
+                "resolved_at": r.resolved_at.isoformat() if r.resolved_at else None,
                 "duration_ms": r.duration_ms,
                 "comment": r.comment,
             }

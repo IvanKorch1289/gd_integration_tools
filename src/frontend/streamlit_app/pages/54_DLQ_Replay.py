@@ -34,7 +34,9 @@ if str(_project_root) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
-st.set_page_config(page_title="DLQ Replay", page_icon=":envelope_with_arrow:", layout="wide")
+st.set_page_config(
+    page_title="DLQ Replay", page_icon=":envelope_with_arrow:", layout="wide"
+)
 st.header("DLQ Replay")
 
 # ---------------------------------------------------------------------------
@@ -162,38 +164,20 @@ _ensure_demo_data(_outbox)
 with st.sidebar:
     st.subheader("Фильтры DLQ")
     _transport_filter: str = st.text_input(
-        "Transport",
-        value="",
-        help="http / kafka / grpc / webhook / soap / mqtt / ...",
+        "Transport", value="", help="http / kafka / grpc / webhook / soap / mqtt / ..."
     )
-    _action_filter: str = st.text_input(
-        "Action",
-        value="",
-        help="Имя action или route",
-    )
+    _action_filter: str = st.text_input("Action", value="", help="Имя action или route")
     _error_class_filter: str = st.text_input(
         "Error class",
         value="",
         help="Имя класса исключения (RuntimeError, TimeoutError, ...)",
     )
-    _tenant_filter: str = st.text_input(
-        "Tenant ID",
-        value="",
-        help="Tenant-контекст",
-    )
+    _tenant_filter: str = st.text_input("Tenant ID", value="", help="Tenant-контекст")
     _hours_back: int = st.number_input(
-        "За последние N часов",
-        min_value=1,
-        max_value=24 * 7,
-        value=24,
-        step=1,
+        "За последние N часов", min_value=1, max_value=24 * 7, value=24, step=1
     )
     _limit: int = st.number_input(
-        "Limit",
-        min_value=10,
-        max_value=1000,
-        value=100,
-        step=10,
+        "Limit", min_value=10, max_value=1000, value=100, step=10
     )
 
 # ---------------------------------------------------------------------------
@@ -220,10 +204,7 @@ _events: list[OutboxEvent] = list(
 _col_stats_1, _col_stats_2, _col_stats_3 = st.columns(3)
 _col_stats_1.metric("Событий найдено", len(_events))
 _col_stats_2.metric("С payload", sum(1 for e in _events if e.payload))
-_col_stats_3.metric(
-    "Уникальных transports",
-    len({e.transport for e in _events}),
-)
+_col_stats_3.metric("Уникальных transports", len({e.transport for e in _events}))
 
 # ---------------------------------------------------------------------------
 # Таблица событий
@@ -279,9 +260,7 @@ with _col_bulk_2:
     )
 
 if _bulk_clicked and _selected_ids:
-    _affected = _run_async(
-        _outbox.replay(_selected_ids, dry_run=_dry_run_bulk)
-    )
+    _affected = _run_async(_outbox.replay(_selected_ids, dry_run=_dry_run_bulk))
     if _dry_run_bulk:
         st.info(f"Dry-run: {_affected} событий пройдёт replay.")
     else:
@@ -320,9 +299,7 @@ if _target_event is not None:
         )
     with _col_manual_2:
         _manual_clicked = st.button(
-            "Replay with override",
-            type="primary",
-            use_container_width=True,
+            "Replay with override", type="primary", use_container_width=True
         )
 
     if _manual_clicked:
@@ -361,7 +338,12 @@ with st.expander("Backend info", expanded=False):
         _stats = _run_async(_outbox.stats())
         st.write("Распределение по статусам:")
         st.json(
-            {OutboxEventStatus(k).value if k in {s.value for s in OutboxEventStatus} else k: v for k, v in _stats.items()}
+            {
+                OutboxEventStatus(k).value
+                if k in {s.value for s in OutboxEventStatus}
+                else k: v
+                for k, v in _stats.items()
+            }
         )
     st.caption(
         "Когда S5 К2 закоммитит OutboxDispatcher, DI-контейнер автоматически "

@@ -19,6 +19,7 @@ import streamlit as st
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore
 except Exception:  # noqa: BLE001
+
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         import httpx
 
@@ -93,7 +94,9 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
 
 
 try:
-    data = _fetch_snapshot(window_hours, tenant_filter, model_filter, pipeline_filter, top_n)
+    data = _fetch_snapshot(
+        window_hours, tenant_filter, model_filter, pipeline_filter, top_n
+    )
 except Exception:  # noqa: BLE001
     data = _fallback_snapshot(window_hours)
 
@@ -171,8 +174,6 @@ with tab_alerts:
             with st.expander(f"{alert.get('key')} (z>=2σ)"):
                 st.json(alert)
                 if st.button("Acknowledge", key=f"ack-{idx}"):
-                    st.success(
-                        f"Acknowledged {alert.get('key')} (audit-event logged)"
-                    )
+                    st.success(f"Acknowledged {alert.get('key')} (audit-event logged)")
     else:
         st.info("Активных аномалий не обнаружено.")

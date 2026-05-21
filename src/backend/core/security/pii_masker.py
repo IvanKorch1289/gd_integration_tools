@@ -164,9 +164,7 @@ class PIIMasker:
         return result
 
     def mask_dict(
-        self,
-        data: dict[str, Any],
-        fields: list[str] | None = None,
+        self, data: dict[str, Any], fields: list[str] | None = None
     ) -> dict[str, Any]:
         """Рекурсивно маскирует строковые значения в dict.
 
@@ -200,9 +198,7 @@ class PIIMasker:
             case _:
                 return value
 
-    def _mask_dict_value(
-        self, key: str, value: Any, fields: list[str] | None
-    ) -> Any:
+    def _mask_dict_value(self, key: str, value: Any, fields: list[str] | None) -> Any:
         """Маскирует одно значение в dict с учётом ``fields`` whitelist.
 
         Если ``fields`` не задан — рекурсивный обход с маскировкой всех

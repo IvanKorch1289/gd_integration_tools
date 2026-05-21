@@ -23,8 +23,4 @@ from src.backend.services.billing.quotas_service import (
     QuotaWindow,
 )
 
-__all__ = (
-    "QuotaUsage",
-    "QuotaWindow",
-    "QuotasService",
-)
+__all__ = ("QuotaUsage", "QuotaWindow", "QuotasService")

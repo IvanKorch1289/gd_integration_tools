@@ -33,10 +33,7 @@ class Watchdog:
         self.name = name
         self.deadline_seconds = deadline_seconds
 
-    async def wrap(
-        self,
-        coro: Coroutine[Any, Any, _T] | Awaitable[_T],
-    ) -> _T:
+    async def wrap(self, coro: Coroutine[Any, Any, _T] | Awaitable[_T]) -> _T:
         """Выполняет ``coro`` с deadline-cancel'ом."""
         try:
             return await asyncio.wait_for(coro, timeout=self.deadline_seconds)
@@ -58,8 +55,7 @@ class Watchdog:
             return
         try:
             sentry_sdk.capture_message(
-                f"Watchdog deadline exceeded: {self.name}",
-                level="warning",
+                f"Watchdog deadline exceeded: {self.name}", level="warning"
             )
         except Exception:  # noqa: BLE001
             return

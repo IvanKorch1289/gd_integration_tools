@@ -54,9 +54,7 @@ class ClickHouseSettings(BaseSettingsWithLoader):
         description="Health-check (/ping) перед использованием соединения после простоя.",
     )
     max_connections: int = Field(
-        100,
-        ge=1,
-        description="Жёсткий cap на общее число соединений (sanity-limit).",
+        100, ge=1, description="Жёсткий cap на общее число соединений (sanity-limit)."
     )
 
 

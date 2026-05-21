@@ -26,9 +26,7 @@ if str(_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
-st.set_page_config(
-    page_title="Plugin Onboarding", page_icon="🧪", layout="wide"
-)
+st.set_page_config(page_title="Plugin Onboarding", page_icon="🧪", layout="wide")
 st.title("🧪 Plugin Onboarding Wizard")
 st.caption("Sprint 14 K5 W6 — пошаговый scaffold V11 плагина.")
 
@@ -73,9 +71,7 @@ st.divider()
 if step == 1:
     st.subheader("Базовая информация")
     data["name"] = st.text_input(
-        "Имя плагина (snake_case)",
-        value=data["name"],
-        placeholder="credit_pipeline",
+        "Имя плагина (snake_case)", value=data["name"], placeholder="credit_pipeline"
     )
     data["description"] = st.text_area(
         "Описание",

@@ -61,9 +61,7 @@ def _resolve_repository_cls() -> type[Any]:
     return SQLAlchemyAsyncRepository
 
 
-def get_episodic_repository(
-    session: Any,
-) -> SQLAlchemyAsyncRepository[LangMemEpisodic]:
+def get_episodic_repository(session: Any) -> SQLAlchemyAsyncRepository[LangMemEpisodic]:
     """Возвращает Episodic-репозиторий для :class:`LangMemEpisodic`.
 
     Требует ``advanced_alchemy`` (поднимется через ``uv sync``).

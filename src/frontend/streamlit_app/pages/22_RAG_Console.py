@@ -81,24 +81,16 @@ augment_query = st.text_input("Augment query", "", key="augment-q")
 augment_top_k = st.slider("top_k (augment)", 1, 20, 5, key="augment-tk")
 augment_ns = st.text_input("Namespace (augment)", "", key="augment-ns")
 max_staleness = st.number_input(
-    "Max staleness (hours, 0=без фильтра)",
-    min_value=0.0,
-    value=72.0,
-    step=24.0,
+    "Max staleness (hours, 0=без фильтра)", min_value=0.0, value=72.0, step=24.0
 )
 if st.button("Augment") and augment_query:
-    body_a: dict[str, object] = {
-        "query": augment_query,
-        "top_k": augment_top_k,
-    }
+    body_a: dict[str, object] = {"query": augment_query, "top_k": augment_top_k}
     if augment_ns:
         body_a["namespace"] = augment_ns
     if max_staleness > 0:
         body_a["max_staleness_hours"] = max_staleness
     try:
-        resp = httpx.post(
-            f"{api_base}/api/v1/rag/augment", json=body_a, timeout=15.0
-        )
+        resp = httpx.post(f"{api_base}/api/v1/rag/augment", json=body_a, timeout=15.0)
         data_a = resp.json()
         worst = data_a.get("worst_freshness", "fresh")
         badge = {

@@ -31,11 +31,7 @@ __all__ = ("AdminAuditMiddleware",)
 
 _admin_logger = logging.getLogger("audit_log.admin")
 
-_ADMIN_PATH_PREFIXES: tuple[str, ...] = (
-    "/api/v1/admin/",
-    "/tech/",
-    "/api/v1/tech/",
-)
+_ADMIN_PATH_PREFIXES: tuple[str, ...] = ("/api/v1/admin/", "/tech/", "/api/v1/tech/")
 _AUDITED_METHODS: frozenset[str] = frozenset({"PATCH", "PUT", "POST", "DELETE"})
 
 
@@ -80,7 +76,9 @@ class AdminAuditMiddleware(BaseHTTPMiddleware):
         duration_ms = (_time.monotonic() - start) * 1000
 
         auth_ctx = getattr(request.state, "auth_context", None)
-        principal = getattr(auth_ctx, "principal", "anonymous") if auth_ctx else "anonymous"
+        principal = (
+            getattr(auth_ctx, "principal", "anonymous") if auth_ctx else "anonymous"
+        )
         method_kind = getattr(auth_ctx, "method", None)
         admin_roles = sorted(r.value for r in extract_admin_roles(auth_ctx))
         payload_hash = hashlib.sha256(body_bytes).hexdigest() if body_bytes else ""
@@ -91,7 +89,9 @@ class AdminAuditMiddleware(BaseHTTPMiddleware):
             extra={
                 "audit_admin": True,
                 "actor_principal": principal,
-                "actor_auth_method": getattr(method_kind, "value", str(method_kind) if method_kind else "none"),
+                "actor_auth_method": getattr(
+                    method_kind, "value", str(method_kind) if method_kind else "none"
+                ),
                 "actor_admin_roles": admin_roles,
                 "endpoint": path,
                 "method": method,

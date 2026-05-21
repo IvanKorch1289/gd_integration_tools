@@ -26,11 +26,7 @@ from typing import Any
 
 from src.backend.core.auth.quotas_protocol import QuotaCheckResult, QuotasBackend
 
-__all__ = (
-    "QuotaCheckMiddleware",
-    "QuotaPolicy",
-    "default_tenant_extractor",
-)
+__all__ = ("QuotaCheckMiddleware", "QuotaPolicy", "default_tenant_extractor")
 
 # ASGI-типы (без импорта тяжёлых stub'ов).
 Scope = dict[str, Any]
@@ -73,11 +69,7 @@ class QuotaPolicy:
 
     service: QuotasBackend
     tenant_extractor: Callable[[Scope], str | None] = default_tenant_extractor
-    skip_paths: tuple[str, ...] = (
-        "/health",
-        "/metrics",
-        "/api/v1/health",
-    )
+    skip_paths: tuple[str, ...] = ("/health", "/metrics", "/api/v1/health")
 
     def should_skip(self, scope: Scope) -> bool:
         """True, если path попадает в skip_paths.

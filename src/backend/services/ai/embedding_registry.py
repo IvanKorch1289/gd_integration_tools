@@ -25,9 +25,7 @@ class EmbeddingProviderRegistry:
         self._factories: dict[str, Callable[[], EmbeddingProvider]] = {}
         self._instances: dict[str, EmbeddingProvider] = {}
 
-    def register(
-        self, name: str, factory: Callable[[], EmbeddingProvider]
-    ) -> None:
+    def register(self, name: str, factory: Callable[[], EmbeddingProvider]) -> None:
         """Регистрирует фабрику провайдера. Повторная регистрация — overwrite."""
         self._factories[name] = factory
         self._instances.pop(name, None)

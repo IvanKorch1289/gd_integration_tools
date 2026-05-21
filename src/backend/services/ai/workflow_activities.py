@@ -52,7 +52,9 @@ class LLMActivityInput(BaseModel):
         default=0.7, ge=0.0, le=2.0, description="Sampling temperature."
     )
     max_tokens: int | None = Field(
-        default=None, gt=0, description="Лимит выходных токенов; None — модельный default."
+        default=None,
+        gt=0,
+        description="Лимит выходных токенов; None — модельный default.",
     )
     structured_output_schema: str | None = Field(
         default=None,
@@ -78,8 +80,7 @@ class LLMActivityOutput(BaseModel):
     cost_usd: float = Field(ge=0.0, description="Стоимость вызова в USD.")
     model_used: str = Field(description="Имя фактически использованной модели.")
     structured: dict[str, Any] | None = Field(
-        default=None,
-        description="Структурированный output (если запрашивался schema).",
+        default=None, description="Структурированный output (если запрашивался schema)."
     )
 
 
@@ -104,9 +105,7 @@ def _resolve_gateway() -> Any:
 
 
 async def _execute_llm_call(
-    input_: LLMActivityInput,
-    *,
-    heartbeat: Any = None,
+    input_: LLMActivityInput, *, heartbeat: Any = None
 ) -> LLMActivityOutput:
     """Внутренний исполнитель LLM-вызова (без temporalio dependencies).
 
@@ -146,9 +145,7 @@ async def _execute_llm_call(
     choices = getattr(response, "choices", None) or response.get("choices", [])
     first_choice = choices[0] if choices else {}
     message = getattr(first_choice, "message", None) or first_choice.get("message", {})
-    content_str = (
-        getattr(message, "content", None) or message.get("content", "") or ""
-    )
+    content_str = getattr(message, "content", None) or message.get("content", "") or ""
 
     cost_usd = 0.0
     try:
@@ -169,7 +166,9 @@ async def _execute_llm_call(
 
     return LLMActivityOutput(
         content=content_str,
-        prompt_tokens=int(getattr(usage, "prompt_tokens", None) or usage.get("prompt_tokens", 0)),
+        prompt_tokens=int(
+            getattr(usage, "prompt_tokens", None) or usage.get("prompt_tokens", 0)
+        ),
         completion_tokens=int(
             getattr(usage, "completion_tokens", None)
             or usage.get("completion_tokens", 0)
@@ -250,9 +249,7 @@ def register_llm_activity(worker: Any) -> bool:
             _logger.warning("worker.activities не mutable; регистрация пропущена")
             return False
     else:
-        _logger.warning(
-            "Worker не поддерживает register_activity/activities; пропуск"
-        )
+        _logger.warning("Worker не поддерживает register_activity/activities; пропуск")
         return False
 
     return True

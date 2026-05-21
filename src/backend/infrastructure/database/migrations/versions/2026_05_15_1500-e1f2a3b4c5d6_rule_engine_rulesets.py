@@ -31,19 +31,9 @@ def upgrade() -> None:
         "rule_engine_rulesets",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("name", sa.String(length=128), nullable=False),
-        sa.Column(
-            "version",
-            sa.String(length=64),
-            nullable=False,
-            server_default="1",
-        ),
+        sa.Column("version", sa.String(length=64), nullable=False, server_default="1"),
         sa.Column("yaml_body", sa.Text(), nullable=False),
-        sa.Column(
-            "enabled",
-            sa.Boolean(),
-            nullable=False,
-            server_default=sa.true(),
-        ),
+        sa.Column("enabled", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("tenant_id", sa.String(length=128), nullable=True),
         sa.Column(
             "created_at",
@@ -71,19 +61,13 @@ def upgrade() -> None:
         ["name", "enabled"],
     )
     op.create_index(
-        "ix_rule_engine_rulesets_tenant",
-        "rule_engine_rulesets",
-        ["tenant_id"],
+        "ix_rule_engine_rulesets_tenant", "rule_engine_rulesets", ["tenant_id"]
     )
 
 
 def downgrade() -> None:
+    op.drop_index("ix_rule_engine_rulesets_tenant", table_name="rule_engine_rulesets")
     op.drop_index(
-        "ix_rule_engine_rulesets_tenant",
-        table_name="rule_engine_rulesets",
-    )
-    op.drop_index(
-        "ix_rule_engine_rulesets_name_enabled",
-        table_name="rule_engine_rulesets",
+        "ix_rule_engine_rulesets_name_enabled", table_name="rule_engine_rulesets"
     )
     op.drop_table("rule_engine_rulesets")

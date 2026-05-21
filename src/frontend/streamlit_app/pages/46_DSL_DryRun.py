@@ -15,9 +15,7 @@ if str(_root) not in sys.path:
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 
-st.set_page_config(
-    page_title="DSL Dry-Run", page_icon=":fast_forward:", layout="wide"
-)
+st.set_page_config(page_title="DSL Dry-Run", page_icon=":fast_forward:", layout="wide")
 st.header("DSL Dry-Run")
 st.caption(
     "Sprint 10 K3 W4: вставь YAML маршрута, sample JSON-payload и нажми "
@@ -77,8 +75,7 @@ if run:
     result = dry_run_route(route, sample_payload=payload, seed=int(seed))
 
     st.success(
-        f"Dry-run завершён за {result.total_ms:.2f}ms "
-        f"({len(result.steps)} steps)"
+        f"Dry-run завершён за {result.total_ms:.2f}ms ({len(result.steps)} steps)"
     )
 
     # Waterfall (ASCII).

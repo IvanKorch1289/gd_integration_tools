@@ -48,12 +48,8 @@ def _sse_event(event: str, data: dict[str, Any]) -> bytes:
     return f"event: {event}\ndata: {payload}\n\n".encode("utf-8")
 
 
-async def _generate(
-    request: Request, payload: StreamRequest
-) -> AsyncIterator[bytes]:
-    from src.backend.services.ai.streaming_service import (
-        get_llm_streaming_service,
-    )
+async def _generate(request: Request, payload: StreamRequest) -> AsyncIterator[bytes]:
+    from src.backend.services.ai.streaming_service import get_llm_streaming_service
 
     service = get_llm_streaming_service()
     yield _sse_event("start", {"model": payload.model})
@@ -75,7 +71,8 @@ async def _generate(
                 break
             if chunk.delta:
                 yield _sse_event(
-                    "token", {"delta": chunk.delta, "finish_reason": chunk.finish_reason}
+                    "token",
+                    {"delta": chunk.delta, "finish_reason": chunk.finish_reason},
                 )
             if chunk.usage:
                 usage = chunk.usage
@@ -83,8 +80,7 @@ async def _generate(
                 finish_reason = chunk.finish_reason
                 break
         yield _sse_event(
-            "done",
-            {"finish_reason": finish_reason or "stop", "usage": usage or {}},
+            "done", {"finish_reason": finish_reason or "stop", "usage": usage or {}}
         )
     except asyncio.CancelledError:
         yield _sse_event("error", {"error": "cancelled"})
@@ -118,7 +114,5 @@ async def llm_stream(request: Request, payload: StreamRequest) -> StreamingRespo
         "X-Accel-Buffering": "no",
     }
     return StreamingResponse(
-        _generate(request, payload),
-        media_type="text/event-stream",
-        headers=headers,
+        _generate(request, payload), media_type="text/event-stream", headers=headers
     )

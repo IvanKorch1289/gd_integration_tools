@@ -160,13 +160,7 @@ class FillProcessor(BaseProcessor):
 
     name = "rpa_fill"
 
-    def __init__(
-        self,
-        *,
-        selector: str,
-        value: str,
-        name: str | None = None,
-    ) -> None:
+    def __init__(self, *, selector: str, value: str, name: str | None = None) -> None:
         super().__init__(name=name or self.name)
         self._selector = selector
         self._value = value
@@ -325,9 +319,11 @@ class ScreenshotProcessor(BaseProcessor):
                 exchange.set_property(target[len("property:") :], data)
             elif target.startswith("body."):
                 key = target[len("body.") :]
-                body = exchange.in_message.body if isinstance(
-                    exchange.in_message.body, dict
-                ) else {}
+                body = (
+                    exchange.in_message.body
+                    if isinstance(exchange.in_message.body, dict)
+                    else {}
+                )
                 body[key] = data
                 exchange.in_message.body = body
         except Exception as exc:  # noqa: BLE001

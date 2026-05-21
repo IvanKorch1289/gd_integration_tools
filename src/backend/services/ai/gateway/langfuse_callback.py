@@ -84,8 +84,7 @@ class LangFuseCostCallback:
 
             trace_name = f"llm.{_provider_from_model(model)}"
             trace = client.trace(
-                name=trace_name,
-                metadata={"tenant": tenant, "route": route},
+                name=trace_name, metadata={"tenant": tenant, "route": route}
             )
             generation = getattr(trace, "generation", None)
             if generation is None:
@@ -152,7 +151,7 @@ def _extract_cost(response_obj: Any) -> float:
         if value:
             try:
                 return float(value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return 0.0
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)
@@ -181,7 +180,5 @@ def get_langfuse_callback() -> Any:
 
             return LangFuseCallbackV3()
         except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "LangFuse v3 callback недоступен, fallback на v2: %s", exc
-            )
+            logger.warning("LangFuse v3 callback недоступен, fallback на v2: %s", exc)
     return LangFuseCostCallback()

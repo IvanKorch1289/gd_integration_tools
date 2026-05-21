@@ -23,10 +23,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.backend.services.ai.decorators import AIServiceSpec
 
-__all__ = (
-    "AIPluginRegistry",
-    "get_ai_plugin_registry",
-)
+__all__ = ("AIPluginRegistry", "get_ai_plugin_registry")
 
 _logger = logging.getLogger("services.ai.registry")
 

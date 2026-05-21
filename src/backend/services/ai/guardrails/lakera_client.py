@@ -74,10 +74,7 @@ class LakeraClient:
 
         from src.backend.core.net.migration_helper import make_http_client
 
-        payload: dict[str, Any] = {
-            "input": text,
-            "breakdown": bool(breakdown),
-        }
+        payload: dict[str, Any] = {"input": text, "breakdown": bool(breakdown)}
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
@@ -88,9 +85,7 @@ class LakeraClient:
             timeout=self._timeout,
             headers=headers,
         ) as client:
-            response: httpx.Response = await client.post(
-                "/guard", json=payload
-            )
+            response: httpx.Response = await client.post("/guard", json=payload)
             response.raise_for_status()
             data = response.json()
 

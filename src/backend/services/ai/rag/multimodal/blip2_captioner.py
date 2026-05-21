@@ -43,9 +43,7 @@ class BLIP2Captioner:
     """
 
     def __init__(
-        self,
-        model_name: str = "Salesforce/blip2-opt-2.7b",
-        device: str = "cpu",
+        self, model_name: str = "Salesforce/blip2-opt-2.7b", device: str = "cpu"
     ) -> None:
         self._model_name = model_name
         self._device = device
@@ -67,13 +65,17 @@ class BLIP2Captioner:
                 f" (transformers): {exc}"
             ) from exc
 
-        logger.info("BLIP2Captioner loading model=%s device=%s", self._model_name, self._device)
+        logger.info(
+            "BLIP2Captioner loading model=%s device=%s", self._model_name, self._device
+        )
         self._processor = AutoProcessor.from_pretrained(self._model_name)
         self._model = Blip2ForConditionalGeneration.from_pretrained(self._model_name)
         if hasattr(self._model, "to"):
             self._model = self._model.to(self._device)
 
-    async def caption(self, image_bytes: bytes, *, max_new_tokens: int = 50) -> CaptionResult:
+    async def caption(
+        self, image_bytes: bytes, *, max_new_tokens: int = 50
+    ) -> CaptionResult:
         """Сгенерировать caption для изображения.
 
         Args:
@@ -104,5 +106,9 @@ class BLIP2Captioner:
         if self._device != "cpu":
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
         generated = self._model.generate(**inputs, max_new_tokens=max_new_tokens)
-        caption = self._processor.batch_decode(generated, skip_special_tokens=True)[0].strip()
-        return CaptionResult(caption=caption, model=self._model_name, device=self._device)
+        caption = self._processor.batch_decode(generated, skip_special_tokens=True)[
+            0
+        ].strip()
+        return CaptionResult(
+            caption=caption, model=self._model_name, device=self._device
+        )

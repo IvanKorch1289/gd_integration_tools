@@ -109,7 +109,9 @@ def build_http_scope(
         "raw_path": raw_path,
         "query_string": parsed.query.encode("ascii"),
         "root_path": root_path,
-        "headers": [(name, value) for name, value in headers if not name.startswith(b":")],
+        "headers": [
+            (name, value) for name, value in headers if not name.startswith(b":")
+        ],
         "client": client,
         "server": server,
         "extensions": {"http.response.push": {}, "http.response.trailers": {}},

@@ -304,9 +304,7 @@ class EmailSource:
                     await client.logout()
                 except Exception:
                     logger.debug(
-                        "EmailSource(%s): logout failed",
-                        self.source_id,
-                        exc_info=True,
+                        "EmailSource(%s): logout failed", self.source_id, exc_info=True
                     )
 
     async def _poll_loop(self, on_event: EventCallback) -> None:
@@ -343,9 +341,7 @@ class EmailSource:
         try:
             response = await client.search("UNSEEN")
         except Exception as exc:
-            logger.warning(
-                "EmailSource(%s) search failed: %s", self.source_id, exc
-            )
+            logger.warning("EmailSource(%s) search failed: %s", self.source_id, exc)
             return
 
         lines = response.lines or []
@@ -362,10 +358,7 @@ class EmailSource:
                 fetch_resp = await client.fetch(msg_id, "(RFC822)")
             except Exception as exc:
                 logger.warning(
-                    "EmailSource(%s): fetch %s failed: %s",
-                    self.source_id,
-                    msg_id,
-                    exc,
+                    "EmailSource(%s): fetch %s failed: %s", self.source_id, msg_id, exc
                 )
                 continue
 

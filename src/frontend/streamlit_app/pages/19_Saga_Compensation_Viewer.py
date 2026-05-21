@@ -41,11 +41,7 @@ def _fetch_stats(tenant: str, days: int) -> dict:
     to_dt = datetime.now(timezone.utc)
     from_dt = to_dt - timedelta(days=days)
     return asyncio.run(
-        aggregate_saga_stats(
-            tenant_id=tenant or None,
-            from_dt=from_dt,
-            to_dt=to_dt,
-        )
+        aggregate_saga_stats(tenant_id=tenant or None, from_dt=from_dt, to_dt=to_dt)
     )
 
 
@@ -93,9 +89,7 @@ if workflow_id:
                     "workflow.compensation_complete": "🟩",
                     "workflow.compensation_fail": "🟥",
                 }.get(ev["event_type"], "·")
-                with st.expander(
-                    f"{color} {ev['event_type']} @ {ev['created_at']}"
-                ):
+                with st.expander(f"{color} {ev['event_type']} @ {ev['created_at']}"):
                     st.json(ev["payload"])
                     if ev.get("duration_ms"):
                         st.caption(f"duration_ms = {ev['duration_ms']}")

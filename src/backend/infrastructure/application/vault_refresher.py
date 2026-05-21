@@ -82,8 +82,7 @@ class VaultSecretRefresher:
 
         self._running = True
         self._task = get_task_registry().create_task(
-            self._refresh_loop(),
-            name="vault-secret-refresher",
+            self._refresh_loop(), name="vault-secret-refresher"
         )
         logger.info("Vault secret refresher started (interval=%ds)", self._interval)
 

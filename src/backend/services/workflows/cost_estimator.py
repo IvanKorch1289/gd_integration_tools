@@ -23,11 +23,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
-__all__ = (
-    "CostEstimate",
-    "LLMCostBreakdown",
-    "WorkflowCostEstimator",
-)
+__all__ = ("CostEstimate", "LLMCostBreakdown", "WorkflowCostEstimator")
 
 _logger = logging.getLogger("services.workflows.cost_estimator")
 
@@ -75,21 +71,25 @@ class WorkflowCostEstimator:
     async def _get_client(self) -> Any:
         if self._client_factory is not None:
             return await self._client_factory()
-        from clickhouse_connect import (  # type: ignore[import-untyped]
-            get_async_client,
-        )
+        from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
 
         from src.backend.core.config import settings
 
-        host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-            settings, "clickhouse"
-        ) else "localhost"
-        port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-            settings, "clickhouse"
-        ) else 8123
-        database = getattr(settings.clickhouse, "database", "default") if hasattr(
-            settings, "clickhouse"
-        ) else "default"
+        host = (
+            getattr(settings.clickhouse, "host", "localhost")
+            if hasattr(settings, "clickhouse")
+            else "localhost"
+        )
+        port = (
+            getattr(settings.clickhouse, "port", 8123)
+            if hasattr(settings, "clickhouse")
+            else 8123
+        )
+        database = (
+            getattr(settings.clickhouse, "database", "default")
+            if hasattr(settings, "clickhouse")
+            else "default"
+        )
         return await get_async_client(host=host, port=port, database=database)
 
     async def estimate(
@@ -111,8 +111,7 @@ class WorkflowCostEstimator:
             client = await self._get_client()
         except Exception as exc:  # noqa: BLE001
             _logger.warning(
-                "WorkflowCostEstimator: CH unavailable (%s), returning defaults",
-                exc,
+                "WorkflowCostEstimator: CH unavailable (%s), returning defaults", exc
             )
             return CostEstimate(
                 workflow_id=workflow_id,
@@ -134,16 +133,11 @@ class WorkflowCostEstimator:
             "  AND created_at >= %(cutoff)s "
             "  AND duration_ms IS NOT NULL"
         )
-        params: dict[str, Any] = {
-            "workflow_id": workflow_id,
-            "cutoff": cutoff,
-        }
+        params: dict[str, Any] = {"workflow_id": workflow_id, "cutoff": cutoff}
         try:
             result = await client.query(sql, parameters=params)
             row = (
-                result.result_rows[0]
-                if getattr(result, "result_rows", None)
-                else None
+                result.result_rows[0] if getattr(result, "result_rows", None) else None
             )
         except Exception as exc:  # noqa: BLE001
             _logger.warning("CH query failed: %s", exc)
@@ -179,12 +173,8 @@ class WorkflowCostEstimator:
         except Exception:  # noqa: BLE001
             llm_breakdown = None
 
-        estimated_cost_usd = (
-            llm_breakdown.total_usd if llm_breakdown else Decimal("0")
-        )
-        estimated_tokens = (
-            llm_breakdown.total_tokens if llm_breakdown else 0
-        )
+        estimated_cost_usd = llm_breakdown.total_usd if llm_breakdown else Decimal("0")
+        estimated_tokens = llm_breakdown.total_tokens if llm_breakdown else 0
 
         return CostEstimate(
             workflow_id=workflow_id,
@@ -200,11 +190,7 @@ class WorkflowCostEstimator:
         )
 
     @staticmethod
-    def _estimate_llm_cost(
-        decl: Any,
-        *,
-        sample_size: int,
-    ) -> LLMCostBreakdown | None:
+    def _estimate_llm_cost(decl: Any, *, sample_size: int) -> LLMCostBreakdown | None:
         """Sprint 12 K4 W2 — оценка LLM-стоимости на основе activity-types.
 
         Сканирует ``decl.steps`` на activity с ``args.model_id`` (или
@@ -212,9 +198,7 @@ class WorkflowCostEstimator:
         historical avg tokens × model price.
         """
         try:
-            from src.backend.services.ai.costs.llm_model_pricing import (
-                LLMModelPricing,
-            )
+            from src.backend.services.ai.costs.llm_model_pricing import LLMModelPricing
         except ImportError:
             return None
 
@@ -230,9 +214,7 @@ class WorkflowCostEstimator:
             model_id = args.get("model_id")
             tokens = int(args.get("estimated_tokens", 0))
 
-            if not model_id and not args.get("function", "").startswith(
-                "services.ai."
-            ):
+            if not model_id and not args.get("function", "").startswith("services.ai."):
                 continue
 
             model_name = model_id or "default-llm"
@@ -248,7 +230,5 @@ class WorkflowCostEstimator:
 
         total_usd = sum(per_model.values(), Decimal("0"))
         return LLMCostBreakdown(
-            per_model=per_model,
-            total_usd=total_usd,
-            total_tokens=total_tokens,
+            per_model=per_model, total_usd=total_usd, total_tokens=total_tokens
         )

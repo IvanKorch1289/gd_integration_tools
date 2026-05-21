@@ -87,10 +87,7 @@ class FileWatcherSource:
             Change.deleted: "deleted",
         }
 
-        kwargs: dict = {
-            "recursive": self._recursive,
-            "debounce": self._debounce_ms,
-        }
+        kwargs: dict = {"recursive": self._recursive, "debounce": self._debounce_ms}
         if self._watch_filter is not None:
             kwargs["watch_filter"] = self._watch_filter
 
@@ -98,9 +95,6 @@ class FileWatcherSource:
             async for changes in awatch(self._path, **kwargs):
                 for change, raw_path in changes:
                     change_type = _change_map.get(change, "modified")
-                    yield FileEvent(
-                        path=Path(raw_path),
-                        change_type=change_type,
-                    )
+                    yield FileEvent(path=Path(raw_path), change_type=change_type)
         except asyncio.CancelledError:
             raise

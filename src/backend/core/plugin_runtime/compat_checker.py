@@ -46,11 +46,7 @@ if TYPE_CHECKING:
 
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
-__all__ = (
-    "CompatViolation",
-    "PluginConflictError",
-    "check_compatibility",
-)
+__all__ = ("CompatViolation", "PluginConflictError", "check_compatibility")
 
 
 ConflictKind = Literal[
@@ -111,8 +107,7 @@ def _try_parse_spec(value: str) -> SpecifierSet | None:
 
 
 def _check_pair(
-    manifest: PluginManifestV11,
-    other: PluginManifestV11,
+    manifest: PluginManifestV11, other: PluginManifestV11
 ) -> list[CompatViolation]:
     """Проверяет одну пару (manifest, other) на pair-wise конфликты."""
     violations: list[CompatViolation] = []
@@ -151,8 +146,7 @@ def _check_pair(
 
 
 def _check_core(
-    manifest: PluginManifestV11,
-    core_version: str | None,
+    manifest: PluginManifestV11, core_version: str | None
 ) -> CompatViolation | None:
     """Проверяет дополнительный `incompatible_core_versions` ограничитель."""
     if not core_version:
@@ -175,8 +169,7 @@ def _check_core(
 
 
 def _check_required(
-    manifest: PluginManifestV11,
-    by_name: dict[str, PluginManifestV11],
+    manifest: PluginManifestV11, by_name: dict[str, PluginManifestV11]
 ) -> list[CompatViolation]:
     """Проверяет обязательные ``requires_plugins`` ссылки."""
     violations: list[CompatViolation] = []

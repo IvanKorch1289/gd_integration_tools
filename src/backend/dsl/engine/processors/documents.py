@@ -160,9 +160,7 @@ class RenderDocxProcessor(BaseProcessor):
         super().__init__(name=self.name)
         self.params = params
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from docx import Document  # lazy-import тяжёлой зависимости
 
         ctx_dict = _resolve_path(exchange.in_message.body, self.params.context_from)
@@ -178,21 +176,15 @@ class RenderDocxProcessor(BaseProcessor):
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
                         for run in paragraph.runs:
-                            run.text = _substitute_placeholders(
-                                run.text, ctx_dict
-                            )
+                            run.text = _substitute_placeholders(run.text, ctx_dict)
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".docx", delete=False
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
             output_path = Path(tmp.name)
         doc.save(str(output_path))
 
         if exchange.in_message.body is None:
             exchange.in_message.body = {}
-        _set_path(
-            exchange.in_message.body, self.params.output_to, str(output_path)
-        )
+        _set_path(exchange.in_message.body, self.params.output_to, str(output_path))
 
     def to_spec(self) -> dict[str, Any]:
         return {
@@ -219,9 +211,7 @@ class RenderXlsxProcessor(BaseProcessor):
         super().__init__(name=self.name)
         self.params = params
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from openpyxl import Workbook, load_workbook  # lazy-import
 
         data = _resolve_path(exchange.in_message.body, self.params.context_from)
@@ -234,9 +224,7 @@ class RenderXlsxProcessor(BaseProcessor):
         if self.params.mode == "append_table" and isinstance(data, list) and data:
             ws = wb.active
             if not isinstance(data[0], dict):
-                raise ValueError(
-                    "render_xlsx append_table требует list[dict] на входе"
-                )
+                raise ValueError("render_xlsx append_table требует list[dict] на входе")
             headers = list(data[0].keys())
             ws.append(headers)
             for row in data:
@@ -246,21 +234,15 @@ class RenderXlsxProcessor(BaseProcessor):
                 for row in ws.iter_rows():
                     for cell in row:
                         if isinstance(cell.value, str):
-                            cell.value = _substitute_placeholders(
-                                cell.value, data
-                            )
+                            cell.value = _substitute_placeholders(cell.value, data)
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".xlsx", delete=False
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
             output_path = Path(tmp.name)
         wb.save(str(output_path))
 
         if exchange.in_message.body is None:
             exchange.in_message.body = {}
-        _set_path(
-            exchange.in_message.body, self.params.output_to, str(output_path)
-        )
+        _set_path(exchange.in_message.body, self.params.output_to, str(output_path))
 
     def to_spec(self) -> dict[str, Any]:
         return {

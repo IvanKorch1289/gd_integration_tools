@@ -24,10 +24,7 @@ from uuid import uuid4
 if TYPE_CHECKING:
     pass
 
-__all__ = (
-    "MultimodalEntry",
-    "MultimodalRAGService",
-)
+__all__ = ("MultimodalEntry", "MultimodalRAGService")
 
 # Размерность placeholder-эмбеддингов (имитирует sentence-transformers 384-dim)
 _EMBEDDING_DIM = 384
@@ -128,9 +125,7 @@ class MultimodalRAGService:
         return feature_flags.multimodal_rag_enabled
 
     async def ingest_text(
-        self,
-        content: str,
-        metadata: dict[str, Any] | None = None,
+        self, content: str, metadata: dict[str, Any] | None = None
     ) -> MultimodalEntry:
         """Добавляет текстовый документ в multimodal store.
 
@@ -155,9 +150,7 @@ class MultimodalRAGService:
         return entry
 
     async def ingest_image(
-        self,
-        content: bytes,
-        metadata: dict[str, Any] | None = None,
+        self, content: bytes, metadata: dict[str, Any] | None = None
     ) -> MultimodalEntry:
         """Добавляет изображение в multimodal store.
 
@@ -183,9 +176,7 @@ class MultimodalRAGService:
         return entry
 
     async def ingest_audio(
-        self,
-        content: bytes,
-        metadata: dict[str, Any] | None = None,
+        self, content: bytes, metadata: dict[str, Any] | None = None
     ) -> MultimodalEntry:
         """Добавляет аудиофайл в multimodal store.
 

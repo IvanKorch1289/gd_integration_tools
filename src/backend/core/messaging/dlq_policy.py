@@ -21,11 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
-__all__ = (
-    "DLQPolicy",
-    "DLQPolicyRegistry",
-    "default_policy_registry",
-)
+__all__ = ("DLQPolicy", "DLQPolicyRegistry", "default_policy_registry")
 
 
 @dataclass(frozen=True, slots=True)

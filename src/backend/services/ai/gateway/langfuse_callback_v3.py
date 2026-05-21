@@ -112,10 +112,7 @@ class LangFuseCallbackV3:
             trace_name = f"llm.{_provider_from_model(model)}"
 
             # LangFuse 3.x: используем start_as_current_span для OTEL-совместимости.
-            with client.start_as_current_span(
-                name=trace_name,
-                input=messages,
-            ) as span:
+            with client.start_as_current_span(name=trace_name, input=messages) as span:
                 span.update(
                     model=model,
                     output=_extract_output(response_obj),
@@ -233,7 +230,7 @@ def _extract_cost(response_obj: Any) -> float:
         if value:
             try:
                 return float(value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return 0.0
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)

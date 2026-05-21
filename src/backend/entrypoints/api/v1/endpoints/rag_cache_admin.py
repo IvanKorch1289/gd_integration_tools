@@ -26,12 +26,7 @@ _EVENTS_RING: deque[dict[str, Any]] = deque(maxlen=200)
 
 def record_invalidation_event(event: dict[str, Any]) -> None:
     """Записывает invalidate-событие в кольцевой буфер (для admin UI)."""
-    _EVENTS_RING.append(
-        {
-            "ts": datetime.now(timezone.utc).isoformat(),
-            **event,
-        }
-    )
+    _EVENTS_RING.append({"ts": datetime.now(timezone.utc).isoformat(), **event})
 
 
 def _get_three_tier_cache() -> Any:
@@ -72,8 +67,7 @@ async def flush_rag_cache_tier(
     cache = _get_three_tier_cache()
     if cache is None:
         raise HTTPException(
-            status_code=503,
-            detail="ThreeTierRagCache не зарегистрирован в app.state",
+            status_code=503, detail="ThreeTierRagCache не зарегистрирован в app.state"
         )
     return {"flushed": await cache.flush(tier=tier)}
 

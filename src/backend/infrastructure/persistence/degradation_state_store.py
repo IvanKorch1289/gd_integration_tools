@@ -32,14 +32,11 @@ class DegradationStateStore(Protocol):
 
     async def persist(
         self, mode: "DegradationMode", transition: "DegradationTransition"
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    async def load_current(self) -> "DegradationMode | None":
-        ...
+    async def load_current(self) -> "DegradationMode | None": ...
 
-    async def load_history(self, n: int = 20) -> list["DegradationTransition"]:
-        ...
+    async def load_history(self, n: int = 20) -> list["DegradationTransition"]: ...
 
 
 class InMemoryDegradationStateStore:
@@ -113,6 +110,6 @@ class RedisDegradationStateStore:
             try:
                 data = json.loads(raw)
                 result.append(DegradationTransition(**data))
-            except (json.JSONDecodeError, TypeError):
+            except json.JSONDecodeError, TypeError:
                 continue
         return result

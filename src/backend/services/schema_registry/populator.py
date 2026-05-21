@@ -74,9 +74,7 @@ def populate_from_routes(
     """
     reg = registry or get_schema_registry()
     if route_registry is None:
-        from src.backend.dsl.commands.registry import (
-            route_registry as default_registry,
-        )
+        from src.backend.dsl.commands.registry import route_registry as default_registry
 
         route_registry = default_registry
 
@@ -112,14 +110,12 @@ def populate_from_routes(
     return count
 
 
-def populate_from_actions(
-    registry: ServiceSchemaRegistry | None = None,
-) -> int:
+def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     """Импортирует action handlers в schema_registry."""
     reg = registry or get_schema_registry()
     try:
         from src.backend.dsl.commands.registry import action_handler_registry
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         return 0
 
     count = 0
@@ -155,9 +151,7 @@ def populate_from_actions(
     return count
 
 
-def populate_from_manifests(
-    registry: ServiceSchemaRegistry | None = None,
-) -> int:
+def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> int:
     """Импортирует plugin-manifest'ы в schema_registry.
 
     Использует :class:`PluginRegistry` если он доступен. Если plugin runtime
@@ -195,10 +189,7 @@ def populate_from_manifests(
                         "name": {"type": "string", "const": name},
                         "version": {"type": "string"},
                         "requires_core": {"type": ["string", "null"]},
-                        "capabilities": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                        },
+                        "capabilities": {"type": "array", "items": {"type": "string"}},
                     },
                 },
                 meta={

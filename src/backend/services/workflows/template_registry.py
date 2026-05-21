@@ -31,17 +31,11 @@ from typing import Any, Sequence
 
 import yaml as _yaml
 
-__all__ = (
-    "WorkflowTemplate",
-    "WorkflowTemplateRegistry",
-    "get_template_registry",
-)
+__all__ = ("WorkflowTemplate", "WorkflowTemplateRegistry", "get_template_registry")
 
 _logger = logging.getLogger("services.workflows.template_registry")
 
-_TEMPLATES_DIR = (
-    Path(__file__).resolve().parents[2] / "dsl" / "workflow" / "templates"
-)
+_TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "dsl" / "workflow" / "templates"
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,8 +79,7 @@ class WorkflowTemplateRegistry:
         results: list[WorkflowTemplate] = []
         if not self._dir.exists():
             _logger.warning(
-                "WorkflowTemplateRegistry: templates dir does not exist: %s",
-                self._dir,
+                "WorkflowTemplateRegistry: templates dir does not exist: %s", self._dir
             )
             self._loaded = results
             return results
@@ -96,9 +89,7 @@ class WorkflowTemplateRegistry:
                 raw = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
             except _yaml.YAMLError as exc:
                 _logger.error(
-                    "WorkflowTemplateRegistry: invalid YAML %s: %s",
-                    yaml_path,
-                    exc,
+                    "WorkflowTemplateRegistry: invalid YAML %s: %s", yaml_path, exc
                 )
                 continue
 
@@ -125,10 +116,7 @@ class WorkflowTemplateRegistry:
         return None
 
     def search_semantic(
-        self,
-        query: str,
-        *,
-        top_k: int = 5,
+        self, query: str, *, top_k: int = 5
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через BGE-M3 (если включён) или rapidfuzz fallback.
 
@@ -147,19 +135,13 @@ class WorkflowTemplateRegistry:
                 if scored:
                     return sorted(scored, key=lambda x: -x[1])[:top_k]
             except ImportError as exc:
-                _logger.warning(
-                    "BGE-M3 unavailable (%s) — fallback to rapidfuzz",
-                    exc,
-                )
+                _logger.warning("BGE-M3 unavailable (%s) — fallback to rapidfuzz", exc)
 
         return self._score_rapidfuzz(query, templates, top_k=top_k)
 
     @staticmethod
     def _score_rapidfuzz(
-        query: str,
-        templates: Sequence[WorkflowTemplate],
-        *,
-        top_k: int,
+        query: str, templates: Sequence[WorkflowTemplate], *, top_k: int
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Fallback fuzzy search через rapidfuzz или word-overlap."""
         try:
@@ -187,8 +169,7 @@ class WorkflowTemplateRegistry:
 
     @staticmethod
     def _score_bge_m3(
-        query: str,
-        templates: Sequence[WorkflowTemplate],
+        query: str, templates: Sequence[WorkflowTemplate]
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через sentence-transformers BGE-M3."""
         from sentence_transformers import (  # type: ignore[import-untyped]
@@ -198,9 +179,7 @@ class WorkflowTemplateRegistry:
 
         model = SentenceTransformer("BAAI/bge-m3")
         q_emb = model.encode([query], convert_to_tensor=True)
-        texts = [
-            f"{t.name} {t.description} {' '.join(t.tags)}" for t in templates
-        ]
+        texts = [f"{t.name} {t.description} {' '.join(t.tags)}" for t in templates]
         t_embs = model.encode(texts, convert_to_tensor=True)
         sims = util.cos_sim(q_emb, t_embs)[0]
         return [(t, float(sims[i])) for i, t in enumerate(templates)]

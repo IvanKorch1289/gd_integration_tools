@@ -27,11 +27,7 @@ from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "LangMemDisabled",
-    "LangMemService",
-    "get_langmem_service",
-)
+__all__ = ("LangMemDisabled", "LangMemService", "get_langmem_service")
 
 
 class LangMemDisabled(RuntimeError):
@@ -69,8 +65,8 @@ class LangMemService:
         if self._session_factory is not None:
             return self._session_factory
         from src.backend.infrastructure.database.session import (
-            async_session_maker,
-        )  # type: ignore[import-not-found]
+            async_session_maker,  # type: ignore[import-not-found]
+        )
 
         self._session_factory = async_session_maker
         return self._session_factory
@@ -117,10 +113,7 @@ class LangMemService:
         factory = self._ensure_session_factory()
         async with factory() as session:
             row = LangMemProcedural(
-                name=name,
-                description=description,
-                steps=steps,
-                tenant=tenant,
+                name=name, description=description, steps=steps, tenant=tenant
             )
             session.add(row)
             await session.commit()
@@ -154,11 +147,7 @@ class LangMemService:
         return point_id
 
     async def recall(
-        self,
-        *,
-        kind: str = "episodic",
-        session_id: str | None = None,
-        limit: int = 20,
+        self, *, kind: str = "episodic", session_id: str | None = None, limit: int = 20
     ) -> list[dict[str, Any]]:
         """Возвращает последние записи по kind (episodic|procedural)."""
         self._ensure_enabled()
@@ -170,9 +159,11 @@ class LangMemService:
         factory = self._ensure_session_factory()
         async with factory() as session:
             if kind == "episodic":
-                stmt = select(LangMemEpisodic).order_by(
-                    LangMemEpisodic.occurred_at.desc()
-                ).limit(limit)
+                stmt = (
+                    select(LangMemEpisodic)
+                    .order_by(LangMemEpisodic.occurred_at.desc())
+                    .limit(limit)
+                )
                 if session_id is not None:
                     stmt = stmt.where(LangMemEpisodic.session_id == session_id)
                 rows = (await session.execute(stmt)).scalars().all()
@@ -208,10 +199,7 @@ class LangMemService:
             raise ValueError(f"Неизвестный kind: {kind!r} (episodic|procedural)")
 
     async def consolidate(
-        self,
-        *,
-        since: datetime | None = None,
-        batch_size: int | None = None,
+        self, *, since: datetime | None = None, batch_size: int | None = None
     ) -> dict[str, Any]:
         """Wave D.6: episodic → semantic через LLM-summarization.
 

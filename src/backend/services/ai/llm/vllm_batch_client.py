@@ -23,8 +23,8 @@ class VllmBatchClient:
         self, *, engine: Any | None = None, model_name: str | None = None
     ) -> None:
         """Args:
-            engine: Готовый ``vllm.AsyncEngine`` (для тестов/DI).
-            model_name: Если engine не передан — лениво создать с этой моделью.
+        engine: Готовый ``vllm.AsyncEngine`` (для тестов/DI).
+        model_name: Если engine не передан — лениво создать с этой моделью.
         """
         self._engine = engine
         self._model_name = model_name

@@ -59,7 +59,7 @@ class LocalProcessScaler:
             return None
         try:
             return int(self.master_pid_file.read_text().strip())
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return None
 
     def scale_up(self, by: int = 1) -> bool:
@@ -122,7 +122,10 @@ class LocalProcessScaler:
                 p
                 for p in psutil.process_iter(["name", "cmdline"])
                 if "granian" in (p.info.get("name") or "").lower()
-                or any("granian" in (s or "").lower() for s in (p.info.get("cmdline") or []))
+                or any(
+                    "granian" in (s or "").lower()
+                    for s in (p.info.get("cmdline") or [])
+                )
             ]
             return max(len(workers) - 1, self.min_workers)  # -1 для master
         except Exception:  # noqa: BLE001 — psutil может быть недоступен

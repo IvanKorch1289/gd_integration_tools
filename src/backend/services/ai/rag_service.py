@@ -51,6 +51,7 @@ class RAGCitation:
     score: float
     namespace: str | None
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,11 +76,7 @@ class RAGService:
 
     @staticmethod
     def _cache_key(
-        *,
-        system_prompt: str,
-        query: str,
-        top_k: int,
-        namespace: str | None,
+        *, system_prompt: str, query: str, top_k: int, namespace: str | None
     ) -> str:
         """Стабильный SHA-256 ключ для L1/L2 lookup на уровне augment."""
         material = f"{system_prompt}\0{query}\0{int(top_k)}\0{namespace or ''}"
@@ -152,7 +149,9 @@ class RAGService:
         if self._cache is not None:
             chunks, tier = await self._cache.lookup_chunks(query, namespace=namespace)
             if chunks is not None:
-                logger.debug("RAG retrieval hit on tier %s (namespace=%s)", tier, namespace)
+                logger.debug(
+                    "RAG retrieval hit on tier %s (namespace=%s)", tier, namespace
+                )
                 return chunks
 
         embedding = (await self._embed([query]))[0]
@@ -161,9 +160,7 @@ class RAGService:
         if namespace:
             where = {"namespace": namespace}
 
-        results = await self._store.query(
-            embedding=embedding, top_k=top_k, where=where
-        )
+        results = await self._store.query(embedding=embedding, top_k=top_k, where=where)
 
         if self._cache is not None and results:
             try:
@@ -181,10 +178,7 @@ class RAGService:
     ) -> str:
         """Inject RAG-контекста в промпт с поддержкой L1/L2 cache."""
         tenant_key = self._cache_key(
-            system_prompt=system_prompt,
-            query=query,
-            top_k=top_k,
-            namespace=namespace,
+            system_prompt=system_prompt, query=query, top_k=top_k, namespace=namespace
         )
         if self._cache is not None:
             cached, tier = await self._cache.lookup_answer(tenant_key, tenant=namespace)
@@ -197,9 +191,7 @@ class RAGService:
         results = await self.search(query, top_k=top_k, namespace=namespace)
 
         if not results:
-            answer = (
-                f"{system_prompt}\n\nВопрос: {query}" if system_prompt else query
-            )
+            answer = f"{system_prompt}\n\nВопрос: {query}" if system_prompt else query
         else:
             context_parts = [r["document"] for r in results if r.get("document")]
             context = "\n---\n".join(context_parts)

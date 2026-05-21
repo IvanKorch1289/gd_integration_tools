@@ -144,14 +144,10 @@ class VaultSecretsBackend(SecretsBackend):
                         second_exc,
                     )
                     return None
-            _logger.error(
-                "Vault read failed: %s/%s: %s", self._mount, path, exc
-            )
+            _logger.error("Vault read failed: %s/%s: %s", self._mount, path, exc)
             return None
 
-    def _do_read(
-        self, client: hvac.Client, path: str, field: str | None
-    ) -> str | None:
+    def _do_read(self, client: hvac.Client, path: str, field: str | None) -> str | None:
         response = client.secrets.kv.v2.read_secret_version(
             path=path, mount_point=self._mount
         )
@@ -187,9 +183,7 @@ class VaultSecretsBackend(SecretsBackend):
         field_name = field or "value"
 
         async with self._lock:
-            await asyncio.to_thread(
-                self._write_kv_v2, path, {field_name: value}
-            )
+            await asyncio.to_thread(self._write_kv_v2, path, {field_name: value})
             self._cache.pop(key, None)
 
     def _write_kv_v2(self, path: str, secret: dict[str, str]) -> None:

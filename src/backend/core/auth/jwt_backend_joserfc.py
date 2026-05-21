@@ -30,13 +30,7 @@ from joserfc.jwk import ECKey, OctKey, RSAKey
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
 
-__all__ = (
-    "JwtBackend",
-    "JwtVerificationError",
-    "JwtClaims",
-    "encode",
-    "decode",
-)
+__all__ = ("JwtBackend", "JwtVerificationError", "JwtClaims", "encode", "decode")
 
 _logger = logging.getLogger(__name__)
 
@@ -197,9 +191,7 @@ class JwtBackend:
                 "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш"
             )
         if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
-            raise ValueError(
-                "JwtBackend: для симметричных алгоритмов требуется secret"
-            )
+            raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
 
     async def _resolve_key(self, header: dict[str, Any]) -> Any:
         """Резолвит ключ по алгоритму и kid из header.

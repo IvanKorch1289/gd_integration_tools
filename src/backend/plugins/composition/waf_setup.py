@@ -19,11 +19,7 @@ from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.core.net.waf import WafPolicy
 from src.backend.core.svcs_registry import has_service, register_factory
 
-__all__ = (
-    "register_outbound_http_client",
-    "register_waf_policy",
-    "waf_audit_callback",
-)
+__all__ = ("register_outbound_http_client", "register_waf_policy", "waf_audit_callback")
 
 _logger = logging.getLogger("waf.audit")
 

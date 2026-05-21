@@ -18,7 +18,9 @@ _DOB_RE = re.compile(r"\b\d{2}[./]\d{2}[./]\d{4}\b")
 @dataclass(frozen=True, slots=True)
 class _DocumentParserPipeline:
     name: str = "document_parser"
-    description: str = "Извлечение fields из банковских документов (passport/dob/fullname)"
+    description: str = (
+        "Извлечение fields из банковских документов (passport/dob/fullname)"
+    )
 
     def forward(self, example: dict[str, Any]) -> str:
         text = str(example.get("input") or example.get("context") or "")
@@ -64,7 +66,10 @@ class _DocumentParserPipeline:
         for key in ("passport", "dob", "full_name"):
             if expected.get(key):
                 total += 1
-                if str(parsed.get(key, "")).strip() == str(expected.get(key, "")).strip():
+                if (
+                    str(parsed.get(key, "")).strip()
+                    == str(expected.get(key, "")).strip()
+                ):
                     hit += 1
         if total == 0:
             return 1.0

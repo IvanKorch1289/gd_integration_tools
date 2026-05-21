@@ -30,11 +30,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = (
-    "ResolvedToolSchema",
-    "resolve_input_schema",
-    "validate_input_schema",
-)
+__all__ = ("ResolvedToolSchema", "resolve_input_schema", "validate_input_schema")
 
 logger = logging.getLogger(__name__)
 
@@ -72,17 +68,13 @@ def _extract_json_schema(model: type[Any] | None) -> dict[str, Any]:
     schema_fn = getattr(model, "model_json_schema", None)
     if not callable(schema_fn):
         # Не Pydantic-модель — возвращаем пустую схему
-        logger.debug(
-            "Модель %r не имеет .model_json_schema(), schema пропущена", model
-        )
+        logger.debug("Модель %r не имеет .model_json_schema(), schema пропущена", model)
         return {}
     try:
         return schema_fn()  # type: ignore[no-any-return]
     except Exception:  # noqa: BLE001
         logger.warning(
-            "Не удалось сгенерировать JSON-Schema для %r",
-            model,
-            exc_info=True,
+            "Не удалось сгенерировать JSON-Schema для %r", model, exc_info=True
         )
         return {}
 
@@ -146,10 +138,7 @@ def resolve_input_schema(action_spec: Any) -> ResolvedToolSchema:
 
 
 def validate_input_schema(
-    schema: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    strict: bool | None = None,
+    schema: dict[str, Any], payload: dict[str, Any], *, strict: bool | None = None
 ) -> tuple[bool, str | None]:
     """Валидировать payload против JSON-Schema.
 
@@ -194,8 +183,7 @@ def validate_input_schema(
         from jsonschema import ValidationError as JsonSchemaValidationError
     except ImportError as exc:
         logger.error(
-            "jsonschema не установлен — валидация MCP input_schema недоступна: %s",
-            exc,
+            "jsonschema не установлен — валидация MCP input_schema недоступна: %s", exc
         )
         raise
 
@@ -206,7 +194,5 @@ def validate_input_schema(
         error_msg = exc.message
         if strict:
             raise
-        logger.debug(
-            "MCP input_schema валидация не прошла (non-strict): %s", error_msg
-        )
+        logger.debug("MCP input_schema валидация не прошла (non-strict): %s", error_msg)
         return False, error_msg

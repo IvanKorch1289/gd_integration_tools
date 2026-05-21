@@ -60,17 +60,13 @@ class DSPyDatasetBuilder:
         Returns:
             List of :class:`DSPyExampleRecord`.
         """
-        labeled = await self._service.list_labeled(
-            tenant_id=tenant_id, limit=limit
-        )
+        labeled = await self._service.list_labeled(tenant_id=tenant_id, limit=limit)
         out: list[DSPyExampleRecord] = []
         for item in labeled:
             label = str(getattr(item, "label", "") or item.get("label", ""))
             if only_positive and label != "positive":
                 continue
-            prompt = str(
-                getattr(item, "prompt", None) or item.get("prompt", "") or ""
-            )
+            prompt = str(getattr(item, "prompt", None) or item.get("prompt", "") or "")
             completion = str(
                 getattr(item, "expected_answer", None)
                 or item.get("expected_answer", "")
@@ -87,9 +83,7 @@ class DSPyDatasetBuilder:
                         "tenant_id": getattr(
                             item, "tenant_id", item.get("tenant_id", "")
                         ),
-                        "feedback_id": str(
-                            getattr(item, "id", item.get("id", ""))
-                        ),
+                        "feedback_id": str(getattr(item, "id", item.get("id", ""))),
                     },
                 )
             )

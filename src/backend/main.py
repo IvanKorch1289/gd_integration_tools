@@ -35,9 +35,7 @@ def _mount_mcp_http() -> None:
     except Exception as exc:  # noqa: BLE001
         import logging
 
-        logging.getLogger(__name__).warning(
-            "MCP HTTP transport mount skipped: %s", exc
-        )
+        logging.getLogger(__name__).warning("MCP HTTP transport mount skipped: %s", exc)
 
 
 _mount_mcp_http()

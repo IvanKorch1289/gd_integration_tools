@@ -73,9 +73,7 @@ class BulkheadScaler:
         max_capacity: int = 256,
     ) -> None:
         if not (0.0 < low_watermark_pct < high_watermark_pct <= 1.0):
-            raise ValueError(
-                "0 < low_watermark < high_watermark ≤ 1.0 обязательно"
-            )
+            raise ValueError("0 < low_watermark < high_watermark ≤ 1.0 обязательно")
         if adjust_step < 1:
             raise ValueError("adjust_step должен быть >= 1")
         self._registry = registry

@@ -23,12 +23,7 @@ class NATSDLQWriter:
         subject_prefix: префикс (default ``"dlq."``).
     """
 
-    def __init__(
-        self,
-        *,
-        jetstream: Any,
-        subject_prefix: str = "dlq.",
-    ) -> None:
+    def __init__(self, *, jetstream: Any, subject_prefix: str = "dlq.") -> None:
         self._js = jetstream
         self._subject_prefix = subject_prefix
 
@@ -49,9 +44,6 @@ class NATSDLQWriter:
         except Exception:
             logger.exception(
                 "dlq.nats.write_failed",
-                extra={
-                    "dlq_id": envelope.dlq_id,
-                    "transport": envelope.transport,
-                },
+                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
             )
             raise

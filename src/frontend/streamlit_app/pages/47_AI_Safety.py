@@ -23,9 +23,7 @@ if str(_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client
 
-st.set_page_config(
-    page_title="AI Safety", page_icon=":shield:", layout="wide"
-)
+st.set_page_config(page_title="AI Safety", page_icon=":shield:", layout="wide")
 st.header(":shield: AI Safety / Guardrails")
 
 client = get_api_client()
@@ -83,18 +81,14 @@ else:
                 key=f"fp-{metric['tenant_id']}",
             )
             if fp_count > 0 and st.button(
-                "Submit FP review",
-                key=f"submit-fp-{metric['tenant_id']}",
+                "Submit FP review", key=f"submit-fp-{metric['tenant_id']}"
             ):
                 try:
                     client.post(
                         f"/admin/guardrails-metrics/{metric['tenant_id']}/false-positive",
                         json={"count": int(fp_count)},
                     ).raise_for_status()
-                    st.success(
-                        f"Recorded {fp_count} FPs for "
-                        f"{metric['tenant_id']}"
-                    )
+                    st.success(f"Recorded {fp_count} FPs for {metric['tenant_id']}")
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Submit failed: {exc}")

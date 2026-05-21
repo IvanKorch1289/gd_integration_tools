@@ -20,9 +20,7 @@ if str(_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client
 
-st.set_page_config(
-    page_title="Prompt Lab", page_icon=":test_tube:", layout="wide"
-)
+st.set_page_config(page_title="Prompt Lab", page_icon=":test_tube:", layout="wide")
 st.header(":test_tube: Prompt Lab — A/B versioning")
 
 client = get_api_client()
@@ -41,16 +39,10 @@ with tab_list:
         st.error(f"Failed to fetch prompt names: {exc}")
         names = []
 
-    selected_name = st.selectbox(
-        "Prompt name",
-        options=[""] + names,
-        key="prompt-name",
-    )
+    selected_name = st.selectbox("Prompt name", options=[""] + names, key="prompt-name")
     if selected_name:
         try:
-            versions_resp = client.get(
-                f"/admin/prompt-versions/{selected_name}"
-            )
+            versions_resp = client.get(f"/admin/prompt-versions/{selected_name}")
             versions_resp.raise_for_status()
             versions = versions_resp.json().get("items", [])
         except Exception as exc:  # noqa: BLE001
@@ -69,21 +61,13 @@ with tab_list:
                     st.code(ver["body"], language="text")
                 with col_b:
                     st.json(ver["parameters"], expanded=False)
+                    st.metric("Accuracy", ver["metrics"].get("accuracy", "—"))
                     st.metric(
-                        "Accuracy",
-                        ver["metrics"].get("accuracy", "—"),
+                        "p95 latency, ms", ver["metrics"].get("p95_latency_ms", "—")
                     )
-                    st.metric(
-                        "p95 latency, ms",
-                        ver["metrics"].get("p95_latency_ms", "—"),
-                    )
-                    st.metric(
-                        "Cost USD/1k",
-                        ver["metrics"].get("cost_usd_per_1k", "—"),
-                    )
+                    st.metric("Cost USD/1k", ver["metrics"].get("cost_usd_per_1k", "—"))
                     if not ver["is_active"] and st.button(
-                        f"Activate v{ver['version']}",
-                        key=f"act-{ver['version']}",
+                        f"Activate v{ver['version']}", key=f"act-{ver['version']}"
                     ):
                         try:
                             client.post(
@@ -127,9 +111,7 @@ with tab_create:
     new_body = st.text_area("Prompt body", height=200, key="new-body")
     new_model = st.text_input("Model", value="gpt-4o-mini", key="new-model")
     new_params_raw = st.text_area(
-        "Parameters JSON",
-        value='{"temperature": 0.0, "top_p": 1.0}',
-        height=80,
+        "Parameters JSON", value='{"temperature": 0.0, "top_p": 1.0}', height=80
     )
     new_author = st.text_input("Author (your name)", key="new-author")
     if st.button("Create"):
@@ -152,9 +134,7 @@ with tab_create:
                 )
                 resp.raise_for_status()
                 created = resp.json()
-                st.success(
-                    f"Created {created['name']}:v{created['version']}"
-                )
+                st.success(f"Created {created['name']}:v{created['version']}")
                 st.json(created)
             except Exception as exc:  # noqa: BLE001
                 st.error(f"Create failed: {exc}")

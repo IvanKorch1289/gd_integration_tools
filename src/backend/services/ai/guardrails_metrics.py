@@ -13,7 +13,6 @@ Prometheus exporter (``guardrails_metrics``).
 from __future__ import annotations
 
 import asyncio
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -130,15 +129,11 @@ class GuardrailsMetricsService:
 
     async def snapshot(self, tenant_id: str) -> GuardrailMetrics:
         async with self._lock:
-            return self._by_tenant.get(
-                tenant_id, GuardrailMetrics(tenant_id=tenant_id)
-            )
+            return self._by_tenant.get(tenant_id, GuardrailMetrics(tenant_id=tenant_id))
 
     async def list_all(self) -> list[GuardrailMetrics]:
         async with self._lock:
-            return sorted(
-                self._by_tenant.values(), key=lambda m: m.tenant_id
-            )
+            return sorted(self._by_tenant.values(), key=lambda m: m.tenant_id)
 
     async def reset(self, tenant_id: str | None = None) -> None:
         """Admin-action: сбросить (per-tenant или всё)."""

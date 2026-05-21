@@ -76,14 +76,15 @@ def _profile_from_payload(name: str, payload: ResilienceProfileIn) -> Resilience
             else None
         ),
         bulkhead=(
-            BulkheadPolicy(**payload.bulkhead.model_dump()) if payload.bulkhead else None
+            BulkheadPolicy(**payload.bulkhead.model_dump())
+            if payload.bulkhead
+            else None
         ),
     )
 
 
 @router.get(
-    "",
-    dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))],
+    "", dependencies=[Depends(require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY)))]
 )
 async def list_profiles(
     tenant_id: str | None = None,
@@ -111,10 +112,7 @@ async def get_profile(
     return profile.to_dict()
 
 
-@router.put(
-    "/{name}",
-    dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))],
-)
+@router.put("/{name}", dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))])
 async def upsert_profile(
     name: str,
     payload: ResilienceProfileIn,
@@ -126,10 +124,7 @@ async def upsert_profile(
     return saved.to_dict()
 
 
-@router.delete(
-    "/{name}",
-    dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))],
-)
+@router.delete("/{name}", dependencies=[Depends(require_admin((AdminRole.OPERATOR,)))])
 async def delete_profile(
     name: str,
     tenant_id: str | None = None,

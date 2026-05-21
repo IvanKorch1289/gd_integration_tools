@@ -28,9 +28,4 @@ from src.backend.services.ai.eval.inspect_runner import (
 )
 from src.backend.services.ai.eval.suites import REFERENCE_SUITES
 
-__all__ = (
-    "InspectRunner",
-    "SuiteResult",
-    "SuiteSummary",
-    "REFERENCE_SUITES",
-)
+__all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "REFERENCE_SUITES")

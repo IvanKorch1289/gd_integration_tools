@@ -233,11 +233,7 @@ class BaseExternalAPIClient:
             if facade is not None:
                 try:
                     response = await facade.request(
-                        method,
-                        url,
-                        params=params,
-                        json=json,
-                        headers=full_headers,
+                        method, url, params=params, json=json, headers=full_headers
                     )
                 except Exception as exc:
                     self._logger.error(

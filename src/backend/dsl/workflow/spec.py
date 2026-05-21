@@ -44,8 +44,7 @@ class RetryPolicy(BaseModel):
         description="Верхняя граница интервала retry; None — без ограничения.",
     )
     non_retryable_errors: tuple[str, ...] = Field(
-        default=(),
-        description="Имена ошибок, при которых retry НЕ выполняется.",
+        default=(), description="Имена ошибок, при которых retry НЕ выполняется."
     )
 
 
@@ -62,8 +61,7 @@ class ActivityDeclaration(BaseModel):
     type: Literal["activity"] = "activity"
     name: str = Field(min_length=1, description="Имя activity-функции в registry.")
     args: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Аргументы для передачи в activity (kwargs).",
+        default_factory=dict, description="Аргументы для передачи в activity (kwargs)."
     )
     timeout_s: float | None = Field(
         default=None, gt=0.0, description="Per-activity timeout."
@@ -73,12 +71,10 @@ class ActivityDeclaration(BaseModel):
         description="Retry-политика; None — наследуется из workflow-defaults.",
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения результата activity.",
+        default=None, description="Имя property для сохранения результата activity."
     )
     required_capabilities: tuple[str, ...] = Field(
-        default=(),
-        description="Capability'и, требуемые для активности (V15 R-V15-1).",
+        default=(), description="Capability'и, требуемые для активности (V15 R-V15-1)."
     )
 
 
@@ -115,13 +111,10 @@ class SignalWaitDeclaration(BaseModel):
     type: Literal["wait_signal"] = "wait_signal"
     signal_name: str = Field(min_length=1, description="Имя сигнала Temporal.")
     timeout_s: float | None = Field(
-        default=None,
-        gt=0.0,
-        description="Timeout ожидания; None — бесконечно.",
+        default=None, gt=0.0, description="Timeout ожидания; None — бесконечно."
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения payload сигнала.",
+        default=None, description="Имя property для сохранения payload сигнала."
     )
 
 

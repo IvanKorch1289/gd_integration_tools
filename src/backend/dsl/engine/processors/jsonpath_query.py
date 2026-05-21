@@ -110,10 +110,14 @@ class JsonPathProcessor(BaseProcessor):
             pass
 
         try:
-            from jsonpath_ng.ext import parse as _parse  # type: ignore[import-not-found]
+            from jsonpath_ng.ext import (
+                parse as _parse,  # type: ignore[import-not-found]
+            )
         except ImportError:
             try:
-                from jsonpath_ng import parse as _parse  # type: ignore[import-not-found,no-redef]
+                from jsonpath_ng import (
+                    parse as _parse,  # type: ignore[import-not-found,no-redef]
+                )
             except ImportError as exc:
                 exchange.fail(f"jsonpath: jsonpath-ng not available: {exc}")
                 return

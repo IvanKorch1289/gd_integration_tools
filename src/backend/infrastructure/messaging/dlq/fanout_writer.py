@@ -32,12 +32,7 @@ class FanoutDLQWriter:
             если ``False`` (default) — успешно если хотя бы один записал.
     """
 
-    def __init__(
-        self,
-        *,
-        writers: list[Any],
-        require_all: bool = False,
-    ) -> None:
+    def __init__(self, *, writers: list[Any], require_all: bool = False) -> None:
         if not writers:
             raise ValueError("FanoutDLQWriter requires at least one writer")
         self._writers = writers
@@ -45,7 +40,9 @@ class FanoutDLQWriter:
 
     async def write(self, envelope: DLQEnvelope) -> None:
         async with asyncio.TaskGroup() as tg:
-            results = [tg.create_task(self._safe_write(w, envelope)) for w in self._writers]
+            results = [
+                tg.create_task(self._safe_write(w, envelope)) for w in self._writers
+            ]
 
         outcomes = [r.result() for r in results]
         successes = [o for o in outcomes if o[0]]

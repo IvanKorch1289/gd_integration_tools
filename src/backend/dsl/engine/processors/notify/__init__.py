@@ -19,10 +19,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.dsl.engine.context import ExecutionContext
 
-__all__ = (
-    "NotifyProcessor",
-    "AppriseNotifyProcessor",
-)
+__all__ = ("NotifyProcessor", "AppriseNotifyProcessor")
 
 logger = logging.getLogger(__name__)
 

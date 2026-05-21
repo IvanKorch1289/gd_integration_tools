@@ -139,7 +139,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except (TypeError, ValueError):  # noqa: PERF203
+        except TypeError, ValueError:  # noqa: PERF203
             pass
 
     @mcp.tool(**tool_kwargs)

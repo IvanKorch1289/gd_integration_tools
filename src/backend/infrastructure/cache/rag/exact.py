@@ -63,22 +63,16 @@ class L1ExactCache:
             logger.debug("L1 cache decode failed: %s", exc)
             return None
 
-    async def set(
-        self, query: str, value: Any, *, tenant: str | None = None
-    ) -> None:
+    async def set(self, query: str, value: Any, *, tenant: str | None = None) -> None:
         client = self._ensure_client()
         try:
             await client.cache_set(
-                self._key(query, tenant=tenant),
-                orjson.dumps(value),
-                self._ttl,
+                self._key(query, tenant=tenant), orjson.dumps(value), self._ttl
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("L1 cache set failed: %s", exc)
 
-    async def invalidate(
-        self, query: str, *, tenant: str | None = None
-    ) -> None:
+    async def invalidate(self, query: str, *, tenant: str | None = None) -> None:
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, tenant=tenant))

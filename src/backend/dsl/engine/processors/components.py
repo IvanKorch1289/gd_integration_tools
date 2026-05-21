@@ -35,7 +35,10 @@ _comp_logger = logging.getLogger("dsl.components")
         "type": "object",
         "properties": {
             "url": {"type": "string"},
-            "method": {"type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]},
+            "method": {
+                "type": "string",
+                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+            },
             "headers": {"type": "object"},
             "timeout": {"type": "number"},
         },
@@ -86,7 +89,7 @@ class HttpCallProcessor(BaseProcessor):
         if "{" in url and isinstance(exchange.in_message.body, dict):
             try:
                 url = url.format(**exchange.in_message.body)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 pass
 
         try:

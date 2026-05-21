@@ -278,8 +278,7 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             name="langmem.admin",
             matcher=exact,
             description=(
-                "Администрирование LangMem: consolidate(), stats(), "
-                "RLM reset (D.6)."
+                "Администрирование LangMem: consolidate(), stats(), RLM reset (D.6)."
             ),
         )
     )

@@ -36,12 +36,7 @@ class RedisJwtBlacklist:
         key_prefix: Префикс ключей (по умолчанию ``blacklist:jwt:``).
     """
 
-    def __init__(
-        self,
-        redis: Any,
-        *,
-        key_prefix: str = "blacklist:jwt:",
-    ) -> None:
+    def __init__(self, redis: Any, *, key_prefix: str = "blacklist:jwt:") -> None:
         self._redis = redis
         self._prefix = key_prefix
 

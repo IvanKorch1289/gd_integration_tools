@@ -95,9 +95,7 @@ async def list_cron_jobs() -> list[CronJobSummary]:
 
 
 @router.post(
-    "/schedule",
-    response_model=CronJobSummary,
-    status_code=status.HTTP_201_CREATED,
+    "/schedule", response_model=CronJobSummary, status_code=status.HTTP_201_CREATED
 )
 async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
     """Регистрирует новый cron-job. ``callable_ref`` резолвится importlib."""
@@ -123,8 +121,7 @@ async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ошибка регистрации: {exc}",
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ошибка регистрации: {exc}"
         ) from exc
 
     jobs = manager.list_jobs()
@@ -164,8 +161,7 @@ async def pause_cron_job(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().pause_job(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "paused": True}
 
@@ -180,8 +176,7 @@ async def resume_cron_job(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().resume_job(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "paused": False}
 
@@ -196,16 +191,13 @@ async def run_cron_job_now(job_id: str) -> dict[str, Any]:
     ok = get_scheduler_manager().run_job_now(job_id)
     if not ok:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id!r} not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found"
         )
     return {"id": job_id, "scheduled": "now"}
 
 
 @router.post("/validate", response_model=CronValidationResponse)
-async def validate_cron(
-    request: CronValidationRequest,
-) -> CronValidationResponse:
+async def validate_cron(request: CronValidationRequest) -> CronValidationResponse:
     """Dry-run preview — валидация выражения + Next N executions."""
     from src.backend.infrastructure.scheduler.cron_validator import (
         validate_cron_expression,
@@ -235,8 +227,4 @@ async def cron_dashboard() -> CronDashboardSummary:
     jobs_raw = get_scheduler_manager().list_jobs()
     jobs = [CronJobSummary(**j) for j in jobs_raw]
     paused = sum(1 for j in jobs if j.paused)
-    return CronDashboardSummary(
-        total_jobs=len(jobs),
-        paused_jobs=paused,
-        jobs=jobs,
-    )
+    return CronDashboardSummary(total_jobs=len(jobs), paused_jobs=paused, jobs=jobs)

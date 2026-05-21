@@ -73,9 +73,4 @@ class SearchResult:
     score: float
 
 
-__all__ = (
-    "ChunkDoc",
-    "ChunkKind",
-    "IngestResult",
-    "SearchResult",
-)
+__all__ = ("ChunkDoc", "ChunkKind", "IngestResult", "SearchResult")

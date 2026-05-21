@@ -157,10 +157,7 @@ async def _init_workflow_audit_sink() -> None:
     try:
         client = get_clickhouse_client()
         migrations_dir = (
-            Path(__file__).resolve().parents[2]
-            / "services"
-            / "audit"
-            / "migrations"
+            Path(__file__).resolve().parents[2] / "services" / "audit" / "migrations"
         )
         ddl_path = migrations_dir / "0010_workflow_audit.sql"
         if ddl_path.exists():
@@ -171,9 +168,7 @@ async def _init_workflow_audit_sink() -> None:
         set_workflow_audit_sink(sink)
         app_logger.info("WorkflowAuditSink инициализирован")
     except Exception as exc:  # noqa: BLE001 — best-effort startup
-        app_logger.warning(
-            "WorkflowAuditSink init skipped: %s", str(exc)[:200]
-        )
+        app_logger.warning("WorkflowAuditSink init skipped: %s", str(exc)[:200])
 
 
 def _register_default_degradation_features() -> None:
@@ -305,11 +300,7 @@ starting_operations: list[OperationItem] = [
         lambda: get_clickhouse_client().connect(),
         _clickhouse_enabled,
     ),
-    (
-        "workflow_audit_sink",
-        _init_workflow_audit_sink,
-        _clickhouse_enabled,
-    ),
+    ("workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
     ("pool_warmup", _warmup_connection_pools, None),
     ("smtp_pool", lambda: get_smtp_client().initialize_pool(), None),
     (
@@ -326,11 +317,7 @@ ending_operations: list[OperationItem] = [
     ("file_watchers", lambda: _get_watcher_manager().stop_all(), None),
     ("scheduler", lambda: get_scheduler_manager().stop(), None),
     ("smtp_pool", lambda: get_smtp_client().close_pool(), None),
-    (
-        "workflow_audit_sink",
-        _close_workflow_audit_sink,
-        _clickhouse_enabled,
-    ),
+    ("workflow_audit_sink", _close_workflow_audit_sink, _clickhouse_enabled),
     (
         "clickhouse_client",
         lambda: get_clickhouse_client().aclose(),

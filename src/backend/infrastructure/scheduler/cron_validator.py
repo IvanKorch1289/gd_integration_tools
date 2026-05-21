@@ -19,11 +19,7 @@ from datetime import datetime
 from typing import Sequence
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-__all__ = (
-    "CronValidationError",
-    "CronValidationResult",
-    "validate_cron_expression",
-)
+__all__ = ("CronValidationError", "CronValidationResult", "validate_cron_expression")
 
 
 class CronValidationError(ValueError):

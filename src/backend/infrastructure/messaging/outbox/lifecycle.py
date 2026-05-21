@@ -34,10 +34,7 @@ if TYPE_CHECKING:
 
     from src.backend.core.messaging.outbox import OutboxBackend, OutboxEvent
 
-__all__ = (
-    "start_outbox_dispatcher",
-    "stop_outbox_dispatcher",
-)
+__all__ = ("start_outbox_dispatcher", "stop_outbox_dispatcher")
 
 _logger = logging.getLogger("infrastructure.messaging.outbox.lifecycle")
 
@@ -93,8 +90,7 @@ async def start_outbox_dispatcher(
     ]
     if missing:
         _logger.warning(
-            "outbox.lifecycle.missing_dependencies",
-            extra={"missing": missing},
+            "outbox.lifecycle.missing_dependencies", extra={"missing": missing}
         )
         return
     assert backend is not None  # noqa: S101 — narrow для mypy после проверки выше

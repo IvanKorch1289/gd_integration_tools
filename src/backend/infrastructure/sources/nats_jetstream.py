@@ -113,9 +113,7 @@ class NATSJetStreamSource:
         try:
             js = self._nc.jetstream()
             psub = await js.pull_subscribe(
-                self._subject,
-                durable=self._durable,
-                stream=self._stream,
+                self._subject, durable=self._durable, stream=self._stream
             )
 
             while self._running:
@@ -146,7 +144,9 @@ class NATSJetStreamSource:
                     await msg.ack()
 
         except GeneratorExit:
-            logger.debug("NATSJetStreamSource: iterator закрыт (stream=%s)", self._stream)
+            logger.debug(
+                "NATSJetStreamSource: iterator закрыт (stream=%s)", self._stream
+            )
         finally:
             await self._close()
 

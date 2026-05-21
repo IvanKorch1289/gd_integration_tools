@@ -30,11 +30,7 @@ from typing import Any
 
 from src.backend.core.config.features import feature_flags
 
-__all__ = (
-    "LangfusePromptStorage",
-    "PromptEntry",
-    "get_prompt_storage",
-)
+__all__ = ("LangfusePromptStorage", "PromptEntry", "get_prompt_storage")
 
 logger = logging.getLogger("services.ai.prompts.langfuse_storage")
 
@@ -107,18 +103,13 @@ class LangfusePromptStorage:
             self._langfuse_available = True
             logger.info("LangfusePromptStorage: Langfuse SDK инициализирован")
         except ImportError:
-            logger.debug(
-                "Langfuse SDK не установлен — используется in-memory fallback"
-            )
+            logger.debug("Langfuse SDK не установлен — используется in-memory fallback")
         except Exception as exc:
             logger.warning(
-                "Langfuse инициализация провалилась: %s — fallback на in-memory",
-                exc,
+                "Langfuse инициализация провалилась: %s — fallback на in-memory", exc
             )
 
-    async def get_prompt(
-        self, name: str, version: str | None = None
-    ) -> dict[str, Any]:
+    async def get_prompt(self, name: str, version: str | None = None) -> dict[str, Any]:
         """Получает промпт по имени и опциональной версии.
 
         Порядок поиска:
@@ -139,9 +130,7 @@ class LangfusePromptStorage:
             try:
                 lf_prompt = self._langfuse.get_prompt(name, version=version)
                 content = (
-                    lf_prompt.prompt
-                    if hasattr(lf_prompt, "prompt")
-                    else str(lf_prompt)
+                    lf_prompt.prompt if hasattr(lf_prompt, "prompt") else str(lf_prompt)
                 )
                 resolved_version = str(
                     getattr(lf_prompt, "version", version or "latest")
@@ -189,9 +178,7 @@ class LangfusePromptStorage:
 
         if version is not None:
             if version not in versions:
-                raise KeyError(
-                    f"Промпт '{name}' версия '{version}' не найдена"
-                )
+                raise KeyError(f"Промпт '{name}' версия '{version}' не найдена")
             entry = versions[version]
         else:
             # Последняя добавленная версия
@@ -220,18 +207,13 @@ class LangfusePromptStorage:
         """
         version = str(metadata.get("version", "1"))
         entry = PromptEntry(
-            name=name,
-            version=version,
-            content=content,
-            metadata=metadata,
+            name=name, version=version, content=content, metadata=metadata
         )
 
         if self._langfuse_available and self._langfuse is not None:
             try:
                 self._langfuse.create_prompt(
-                    name=name,
-                    prompt=content,
-                    labels=metadata.get("labels", []),
+                    name=name, prompt=content, labels=metadata.get("labels", [])
                 )
                 logger.debug("Langfuse: промпт '%s' сохранён", name)
             except Exception as exc:

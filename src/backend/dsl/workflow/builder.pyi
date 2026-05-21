@@ -9,10 +9,15 @@ from __future__ import annotations
 
 from typing import Any
 
-
 class WorkflowBuilder:
-
-    def activity(self, name: str, args: dict[str, Any] | None = ..., timeout_s: float | None = ..., retry_policy: RetryPolicy | None = ..., output_key: str | None = ...) -> Self:
+    def activity(
+        self,
+        name: str,
+        args: dict[str, Any] | None = ...,
+        timeout_s: float | None = ...,
+        retry_policy: RetryPolicy | None = ...,
+        output_key: str | None = ...,
+    ) -> Self:
         """Добавить atomic activity-шаг в цепочку."""
         ...
 
@@ -32,15 +37,15 @@ class WorkflowBuilder:
         """Установить человекочитаемое описание workflow."""
         ...
 
-    def gateway_and(self, *branches: 'BranchSpec') -> Self:
+    def gateway_and(self, *branches: "BranchSpec") -> Self:
         """Добавить AND (parallel) gateway — параллельный fan-out, ждёт всех."""
         ...
 
-    def gateway_or(self, *branches: 'BranchSpec') -> Self:
+    def gateway_or(self, *branches: "BranchSpec") -> Self:
         """Добавить OR (inclusive) gateway — ждёт первую активную ветку."""
         ...
 
-    def gateway_xor(self, *branches: 'BranchSpec') -> Self:
+    def gateway_xor(self, *branches: "BranchSpec") -> Self:
         """Добавить XOR (exclusive) gateway — выбирает первую активную ветку."""
         ...
 
@@ -48,11 +53,23 @@ class WorkflowBuilder:
         """Открыть саб-builder для saga-шага."""
         ...
 
-    def sensor(self, predicate: str, poll_interval_s: float = ..., timeout_s: float | None = ...) -> Self:
+    def sensor(
+        self,
+        predicate: str,
+        poll_interval_s: float = ...,
+        timeout_s: float | None = ...,
+    ) -> Self:
         """Добавить periodic-sensor (Airflow-style poll-предикат)."""
         ...
 
-    def sla(self, soft_limit_seconds: float, hard_limit_seconds: float, escalation_email: str | None = ..., escalation_slack: str | None = ..., breach_action: str = ...) -> Self:
+    def sla(
+        self,
+        soft_limit_seconds: float,
+        hard_limit_seconds: float,
+        escalation_email: str | None = ...,
+        escalation_slack: str | None = ...,
+        breach_action: str = ...,
+    ) -> Self:
         """Установить SLA-политику workflow (Sprint 9 K3 W10)."""
         ...
 
@@ -60,7 +77,11 @@ class WorkflowBuilder:
         """Добавить durable-sleep (Temporal-friendly)."""
         ...
 
-    def wait_for_signal(self, signal_name: str, timeout_s: float | None = ..., output_key: str | None = ...) -> Self:
+    def wait_for_signal(
+        self,
+        signal_name: str,
+        timeout_s: float | None = ...,
+        output_key: str | None = ...,
+    ) -> Self:
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
         ...
-

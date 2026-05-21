@@ -166,10 +166,7 @@ class WorkflowAuditSink:
             },
         )
 
-    async def emit_batch(
-        self,
-        events: list[dict[str, Any]],
-    ) -> None:
+    async def emit_batch(self, events: list[dict[str, Any]]) -> None:
         """Отправляет пакет событий (для bulk-загрузок).
 
         Каждый элемент должен содержать минимум ``event_type`` и
@@ -189,9 +186,7 @@ class WorkflowAuditSink:
                     "event_type": raw["event_type"],
                     "workflow_id": raw["workflow_id"],
                     "tenant_id": raw.get("tenant_id"),
-                    "payload": json.dumps(
-                        raw.get("payload") or {}, ensure_ascii=False
-                    ),
+                    "payload": json.dumps(raw.get("payload") or {}, ensure_ascii=False),
                     "trace_id": raw.get("trace_id"),
                     "created_at": (raw.get("created_at") or now).astimezone(
                         timezone.utc

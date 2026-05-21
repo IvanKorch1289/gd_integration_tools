@@ -89,9 +89,7 @@ else:
             cols[0].caption(f"**ID**: `{item['id']}`")
             cols[1].caption(f"**Next**: {item['next_run_at'] or '—'}")
             cols[2].caption(f"**Last**: {item['last_run_at'] or '—'}")
-            cols[3].caption(
-                f"**Success rate (7d)**: {item['success_rate_7d']:.1f}%"
-            )
+            cols[3].caption(f"**Success rate (7d)**: {item['success_rate_7d']:.1f}%")
 
             actions = st.columns(4)
             try:
@@ -100,15 +98,12 @@ else:
                 from src.frontend.streamlit_app.api_client import get_api_client
 
                 client = get_api_client()
-                base_url = getattr(
-                    client, "base_url", "http://localhost:8000"
-                )
+                base_url = getattr(client, "base_url", "http://localhost:8000")
 
                 if item["status"] == "paused":
                     if actions[0].button("Resume", key=f"resume_{item['id']}"):
                         resp = requests.post(
-                            f"{base_url}/api/v1/admin/cron/"
-                            f"{item['id']}/resume",
+                            f"{base_url}/api/v1/admin/cron/{item['id']}/resume",
                             timeout=5,
                         )
                         if resp.status_code == 200:
@@ -117,8 +112,7 @@ else:
                 else:
                     if actions[0].button("Pause", key=f"pause_{item['id']}"):
                         resp = requests.post(
-                            f"{base_url}/api/v1/admin/cron/"
-                            f"{item['id']}/pause",
+                            f"{base_url}/api/v1/admin/cron/{item['id']}/pause",
                             timeout=5,
                         )
                         if resp.status_code == 200:
@@ -127,9 +121,7 @@ else:
 
                 if actions[1].button("Run now", key=f"run_{item['id']}"):
                     resp = requests.post(
-                        f"{base_url}/api/v1/admin/cron/"
-                        f"{item['id']}/run-now",
-                        timeout=5,
+                        f"{base_url}/api/v1/admin/cron/{item['id']}/run-now", timeout=5
                     )
                     if resp.status_code == 200:
                         st.success("Scheduled for immediate execution")
@@ -138,8 +130,7 @@ else:
                     "Delete", key=f"del_{item['id']}", type="secondary"
                 ):
                     resp = requests.delete(
-                        f"{base_url}/api/v1/admin/cron/{item['id']}",
-                        timeout=5,
+                        f"{base_url}/api/v1/admin/cron/{item['id']}", timeout=5
                     )
                     if resp.status_code == 204:
                         st.success("Deleted")

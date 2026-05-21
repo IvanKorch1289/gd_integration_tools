@@ -53,11 +53,7 @@ class GetSettingProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        path: str,
-        *,
-        to: str = "body.setting",
-        default: Any = None,
+        self, path: str, *, to: str = "body.setting", default: Any = None
     ) -> None:
         super().__init__(name=f"get_setting:{path}")
         if not path:

@@ -94,9 +94,7 @@ class JwtBackend:
                 "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш"
             )
         if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
-            raise ValueError(
-                "JwtBackend: для симметричных алгоритмов требуется secret"
-            )
+            raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
 
     async def _resolve_key(self, header: dict[str, Any]) -> Any:
         alg = header.get("alg")

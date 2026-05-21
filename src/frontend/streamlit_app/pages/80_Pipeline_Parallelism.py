@@ -31,34 +31,29 @@ with tab_route:
     except Exception:  # noqa: BLE001
         names = []
 
-    selected = st.selectbox("Select route", options=names) if names else st.text_input(
-        "Route name"
+    selected = (
+        st.selectbox("Select route", options=names)
+        if names
+        else st.text_input("Route name")
     )
 
     if selected and st.button("Run analysis", type="primary"):
         try:
-            report = client.get(
-                f"/api/v1/admin/routes/{selected}/parallelism-report"
-            )
+            report = client.get(f"/api/v1/admin/routes/{selected}/parallelism-report")
             col1, col2 = st.columns([2, 1])
             with col1:
                 st.markdown("### DAG groups")
                 for level_idx, group in enumerate(report.get("parallel_groups", [])):
                     box = "🔵" if len(group) > 1 else "⚪"
-                    st.markdown(
-                        f"**Level {level_idx}** {box} — {', '.join(group)}"
-                    )
+                    st.markdown(f"**Level {level_idx}** {box} — {', '.join(group)}")
                 st.markdown("### Dependencies")
                 for d in report.get("dependencies", []):
-                    st.text(
-                        f"  {d['from']} ───[{d['via']}]──→ {d['to']}"
-                    )
+                    st.text(f"  {d['from']} ───[{d['via']}]──→ {d['to']}")
 
             with col2:
                 st.metric("Total steps", report.get("total_steps", 0))
                 st.metric(
-                    "Estimated speedup",
-                    f"{report.get('estimated_speedup', 1.0):.2f}x",
+                    "Estimated speedup", f"{report.get('estimated_speedup', 1.0):.2f}x"
                 )
                 hints = report.get("suggested_optimizations", [])
                 if hints:
@@ -82,11 +77,9 @@ with tab_topn:
             routes = client.get("/api/v1/routes")
             names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
             results = []
-            for rid in names[:n * 3]:  # Анализируем больше чем top-N
+            for rid in names[: n * 3]:  # Анализируем больше чем top-N
                 try:
-                    rep = client.get(
-                        f"/api/v1/admin/routes/{rid}/parallelism-report"
-                    )
+                    rep = client.get(f"/api/v1/admin/routes/{rid}/parallelism-report")
                     results.append((rid, rep.get("estimated_speedup", 1.0)))
                 except Exception:  # noqa: BLE001
                     continue

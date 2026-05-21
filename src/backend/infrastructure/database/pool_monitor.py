@@ -33,8 +33,7 @@ class PoolMonitor:
     async def start(self) -> None:
         self._running = True
         self._task = get_task_registry().create_task(
-            self._monitor_loop(),
-            name="db-pool-monitor",
+            self._monitor_loop(), name="db-pool-monitor"
         )
         logger.info("DB pool monitor started (interval=%ds)", self._interval)
 
@@ -95,7 +94,7 @@ class PoolMonitor:
                 "total_connections": total,
                 "utilization_pct": round(utilization, 1),
             }
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return None
 
     def get_current_stats(self) -> dict[str, Any]:

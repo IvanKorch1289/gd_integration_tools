@@ -80,10 +80,7 @@ class GraphQLSubscriptionSource:
     """
 
     def __init__(
-        self,
-        endpoint_url: str,
-        subscription_query: str,
-        headers: dict | None = None,
+        self, endpoint_url: str, subscription_query: str, headers: dict | None = None
     ) -> None:
         self._endpoint_url = endpoint_url
         self._subscription_query = subscription_query
@@ -113,15 +110,9 @@ class GraphQLSubscriptionSource:
                 "gql не установлен; добавь 'gql[websockets]' в pyproject.toml."
             ) from exc
 
-        transport = WebsocketsTransport(
-            url=self._endpoint_url,
-            headers=self._headers,
-        )
+        transport = WebsocketsTransport(url=self._endpoint_url, headers=self._headers)
         async with gql.Client(transport=transport) as session:
             query = gql.gql(self._subscription_query)
             async for result in session.subscribe(query):
                 data: dict = result if isinstance(result, dict) else dict(result)
-                yield GraphQLEvent(
-                    data=data,
-                    subscription_id=self._subscription_id,
-                )
+                yield GraphQLEvent(data=data, subscription_id=self._subscription_id)

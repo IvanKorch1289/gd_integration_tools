@@ -59,12 +59,19 @@ _MOCK_SPECS: dict[str, dict[str, Any]] = {
         "description": "Проверка состояния системы",
         "namespace": "system",
         "tier": 1,
-        "params_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+        "params_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False,
+        },
         "result_schema": {
             "type": "object",
-            "properties": {"status": {"type": "string"}, "components": {"type": "object"}},
+            "properties": {
+                "status": {"type": "string"},
+                "components": {"type": "object"},
+            },
         },
-    },
+    }
 }
 
 
@@ -128,18 +135,13 @@ def invoke(name: str, payload: dict[str, Any], mode: str) -> dict[str, Any]:
         Словарь с результатом вызова. При ошибке бэкенда содержит
         ключи ``error`` и ``detail``.
     """
-    body: dict[str, Any] = {
-        "action": name,
-        "payload": payload,
-        "mode": mode,
-    }
+    body: dict[str, Any] = {"action": name, "payload": payload, "mode": mode}
     try:
         import httpx  # noqa: PLC0415
 
         with httpx.Client(timeout=30.0) as client:
             response = client.post(
-                f"{_BASE_URL}/api/v1/admin/actions/invoke",
-                json=body,
+                f"{_BASE_URL}/api/v1/admin/actions/invoke", json=body
             )
             if response.status_code >= 400:  # noqa: PLR2004
                 try:

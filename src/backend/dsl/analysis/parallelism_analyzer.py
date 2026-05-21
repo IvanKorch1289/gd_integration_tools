@@ -18,14 +18,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = (
-    "Hint",
-    "ParallelismAnalyzer",
-    "ParallelismReport",
-    "StepDependency",
-)
+__all__ = ("Hint", "ParallelismAnalyzer", "ParallelismReport", "StepDependency")
 
-_REF_PATTERN = re.compile(r"\$\{(body|header|property)\.([^}]+)\}|\b(body|header|property)\.([a-zA-Z0-9_.]+)")
+_REF_PATTERN = re.compile(
+    r"\$\{(body|header|property)\.([^}]+)\}|\b(body|header|property)\.([a-zA-Z0-9_.]+)"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,9 +149,7 @@ class ParallelismAnalyzer:
             for ref in consumes[sid]:
                 if ref in produces and produces[ref] != sid:
                     deps.append(
-                        StepDependency(
-                            from_step=produces[ref], to_step=sid, via=ref
-                        )
+                        StepDependency(from_step=produces[ref], to_step=sid, via=ref)
                     )
         return deps
 
@@ -189,9 +184,7 @@ class ParallelismAnalyzer:
             in_degree[d.to_step] += 1
         return [sid for sid in step_ids if in_degree[sid] > 0] or list(step_ids)
 
-    def _estimate_speedup(
-        self, step_ids: list[str], groups: list[list[str]]
-    ) -> float:
+    def _estimate_speedup(self, step_ids: list[str], groups: list[list[str]]) -> float:
         """Amdahl's law approximation: speedup = N / max_group_size."""
         if not step_ids or not groups:
             return 1.0
@@ -202,9 +195,7 @@ class ParallelismAnalyzer:
             return 1.0
         return round(total / sequential, 2)
 
-    def _build_hints(
-        self, groups: list[list[str]], step_ids: list[str]
-    ) -> list[Hint]:
+    def _build_hints(self, groups: list[list[str]], step_ids: list[str]) -> list[Hint]:
         hints: list[Hint] = []
         # LR-PAR-001: если есть group размером >1 — можно использовать .parallel.
         for level_idx, group in enumerate(groups):

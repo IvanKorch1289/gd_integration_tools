@@ -52,7 +52,10 @@ _ALLOWED_PAGE_SIZES = frozenset({"A4", "LETTER", "A3", "A5"})
             "to": {"type": "string"},
             "page_size": {"type": "string", "enum": sorted(_ALLOWED_PAGE_SIZES)},
             "font_size": {"type": "integer"},
-            "context_from": {"type": "string", "enum": ["body", "properties", "merged"]},
+            "context_from": {
+                "type": "string",
+                "enum": ["body", "properties", "merged"],
+            },
         },
         "required": ["template"],
     },
@@ -89,9 +92,7 @@ class PdfTemplateProcessor(BaseProcessor):
                 f"got {page_size!r}"
             )
         if context_from not in {"body", "properties", "merged"}:
-            raise ValueError(
-                f"pdf_template: context_from invalid: {context_from!r}"
-            )
+            raise ValueError(f"pdf_template: context_from invalid: {context_from!r}")
         self._template_source = template
         self._target = to
         self._page_size = page_size

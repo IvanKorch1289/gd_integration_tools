@@ -76,7 +76,9 @@ class ClickHouseQueryBuilder:
     _distinct: bool = False
     _from: str | None = None
     _from_alias: str | None = None
-    _ctes: list[tuple[str, "ClickHouseQueryBuilder | str"]] = field(default_factory=list)
+    _ctes: list[tuple[str, "ClickHouseQueryBuilder | str"]] = field(
+        default_factory=list
+    )
     _wheres: list[Condition] = field(default_factory=list)
     _group_by: list[str] = field(default_factory=list)
     _havings: list[Condition] = field(default_factory=list)
@@ -113,17 +115,11 @@ class ClickHouseQueryBuilder:
             self._wheres.append(Condition("1=0", ()))
             return self
         placeholders = ", ".join("%s" for _ in values)
-        self._wheres.append(
-            Condition(f"{col} IN ({placeholders})", tuple(values))
-        )
+        self._wheres.append(Condition(f"{col} IN ({placeholders})", tuple(values)))
         return self
 
-    def where_between(
-        self, col: str, start: Any, end: Any
-    ) -> "ClickHouseQueryBuilder":
-        self._wheres.append(
-            Condition(f"{col} BETWEEN %s AND %s", (start, end))
-        )
+    def where_between(self, col: str, start: Any, end: Any) -> "ClickHouseQueryBuilder":
+        self._wheres.append(Condition(f"{col} BETWEEN %s AND %s", (start, end)))
         return self
 
     def group_by(self, *cols: str) -> "ClickHouseQueryBuilder":
@@ -148,9 +144,7 @@ class ClickHouseQueryBuilder:
         self._offset = offset
         return self
 
-    def final(
-        self, materialize_views: bool = True
-    ) -> "ClickHouseQueryBuilder":
+    def final(self, materialize_views: bool = True) -> "ClickHouseQueryBuilder":
         """ClickHouse-специфичный FINAL модификатор."""
         self._final = materialize_views
         return self

@@ -30,10 +30,7 @@ import structlog
 
 from src.backend.core.config.features import feature_flags
 
-__all__ = (
-    "VaultSecretRotator",
-    "get_vault_rotator",
-)
+__all__ = ("VaultSecretRotator", "get_vault_rotator")
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
@@ -103,8 +100,7 @@ class VaultSecretRotator:
 
         self._running = True
         self._task = asyncio.create_task(
-            self._rotation_loop(interval_seconds),
-            name="vault_secret_rotator",
+            self._rotation_loop(interval_seconds), name="vault_secret_rotator"
         )
         logger.info("vault_rotator.started", interval_seconds=interval_seconds)
 
@@ -164,16 +160,10 @@ class VaultSecretRotator:
                     callback(secret_data)
                 else:
                     logger.debug(
-                        "vault_rotator.secret_unchanged",
-                        path=path,
-                        version=new_version,
+                        "vault_rotator.secret_unchanged", path=path, version=new_version
                     )
             except Exception as exc:  # noqa: BLE001 — намеренный broad catch для изоляции path
-                logger.error(
-                    "vault_rotator.tick_error",
-                    path=path,
-                    error=str(exc),
-                )
+                logger.error("vault_rotator.tick_error", path=path, error=str(exc))
             seen_paths.add(path)
 
     # ──────────────────────────────────────────────────────────────────────

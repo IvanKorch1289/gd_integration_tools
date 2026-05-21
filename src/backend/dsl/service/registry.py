@@ -17,10 +17,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.backend.dsl.service.toml_loader import ServiceSpec
 
-__all__ = (
-    "ServiceDSLRegistry",
-    "get_service_registry",
-)
+__all__ = ("ServiceDSLRegistry", "get_service_registry")
 
 
 class ServiceDSLRegistry:
@@ -39,7 +36,7 @@ class ServiceDSLRegistry:
 
             if not getattr(feature_flags, "service_toml_loader", False):
                 return
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             return
 
         self._services[spec.name] = spec

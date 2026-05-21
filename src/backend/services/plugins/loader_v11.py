@@ -501,11 +501,7 @@ class PluginLoaderV11:
                 dst.symlink_to(src.resolve())
             except OSError as exc:
                 _logger.warning(
-                    "Plugin %s: cannot symlink %s → %s: %s",
-                    plugin_name,
-                    src,
-                    dst,
-                    exc,
+                    "Plugin %s: cannot symlink %s → %s: %s", plugin_name, src, dst, exc
                 )
                 continue
             mounted += 1

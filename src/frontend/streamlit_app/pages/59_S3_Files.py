@@ -32,11 +32,7 @@ if str(_project_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
-st.set_page_config(
-    page_title="Storage Files",
-    page_icon=":file_folder:",
-    layout="wide",
-)
+st.set_page_config(page_title="Storage Files", page_icon=":file_folder:", layout="wide")
 st.header(":file_folder: Unified Storage Files")
 st.caption(
     "Единый UI для S3 / MinIO / LocalFS. Provider выбирается на backend "
@@ -56,9 +52,7 @@ with st.sidebar:
         help="Опционально — имя бакета (S3/MinIO) или поддиректория (LocalFS).",
     )
     prefix = st.text_input(
-        "Префикс ключа",
-        value="",
-        help="Подстрока, с которой должен начинаться ключ.",
+        "Префикс ключа", value="", help="Подстрока, с которой должен начинаться ключ."
     )
     limit = st.number_input("Лимит", min_value=10, max_value=1000, value=200, step=50)
 
@@ -99,7 +93,9 @@ else:
                     params={"key": key, **({"bucket": bucket} if bucket else {})},
                 )
                 preview = (
-                    content[:10_000] if isinstance(content, str) else str(content)[:10_000]
+                    content[:10_000]
+                    if isinstance(content, str)
+                    else str(content)[:10_000]
                 )
                 st.code(preview)
             except Exception as exc:  # noqa: BLE001

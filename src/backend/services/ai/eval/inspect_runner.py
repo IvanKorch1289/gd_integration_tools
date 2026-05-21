@@ -22,12 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
-__all__ = (
-    "InspectRunner",
-    "SuiteResult",
-    "SuiteSummary",
-    "EvalSuite",
-)
+__all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "EvalSuite")
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +103,9 @@ class SuiteSummary:
         lines.append("| Suite | Samples | Key metric | Value | Status |")
         lines.append("|---|---|---|---|---|")
         for suite in self.suites:
-            status = "FAIL" if suite.error else ("SKIP" if suite.sample_count == 0 else "OK")
+            status = (
+                "FAIL" if suite.error else ("SKIP" if suite.sample_count == 0 else "OK")
+            )
             if suite.metrics:
                 key_metric = next(iter(suite.metrics.keys()))
                 key_value = f"{suite.metrics[key_metric]:.3f}"

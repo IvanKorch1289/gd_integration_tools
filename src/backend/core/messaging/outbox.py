@@ -32,12 +32,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-__all__ = (
-    "FakeOutbox",
-    "OutboxBackend",
-    "OutboxEvent",
-    "OutboxEventStatus",
-)
+__all__ = ("FakeOutbox", "OutboxBackend", "OutboxEvent", "OutboxEventStatus")
 
 
 class OutboxEventStatus(StrEnum):

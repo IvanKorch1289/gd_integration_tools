@@ -36,7 +36,7 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Mapping
@@ -45,15 +45,14 @@ if TYPE_CHECKING:
     from src.backend.core.ai.workspace_manager import WorkspaceHandle
     from src.backend.services.plugins.manifest_v11 import PluginManifestV11
 
-__all__ = (
-    "PluginSandboxAdapter",
-    "PluginSandboxError",
-    "ResourceLimitsExceeded",
-)
+__all__ = ("PluginSandboxAdapter", "PluginSandboxError", "ResourceLimitsExceeded")
 
 _logger = logging.getLogger("core.plugin_runtime.sandbox")
 
 CapabilityChecker = "Callable[[str, str, str | None], None]"
+
+_cached_process: Any | None = None
+_psutil_unavailable = False
 
 
 class PluginSandboxError(RuntimeError):
@@ -72,10 +71,7 @@ class ResourceLimitsExceeded(PluginSandboxError):
         self.kind = kind
         self.limit = limit
         self.observed = observed
-        super().__init__(
-            plugin,
-            f"{kind} limit exceeded: {observed} > {limit}",
-        )
+        super().__init__(plugin, f"{kind} limit exceeded: {observed} > {limit}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,22 +82,51 @@ class _ResourceSnapshot:
     cpu_seconds: float
 
 
-def _read_resource_snapshot() -> _ResourceSnapshot | None:
-    """Снять текущие метрики процесса через psutil.
+def _get_process() -> Any | None:
+    """Закэшированный ``psutil.Process()`` для текущего процесса.
+
+    Кэширование уменьшает overhead `_with_resource_limits` (F-2 carryover S14):
+    ранее каждый вызов создавал новый Process-объект, что вызывало повторные
+    обращения к /proc/self/status. Кэш сбрасывается только при ImportError.
+    """
+    global _cached_process, _psutil_unavailable
+    if _psutil_unavailable:
+        return None
+    if _cached_process is not None:
+        return _cached_process
+    try:
+        import psutil  # noqa: PLC0415
+
+        _cached_process = psutil.Process()
+        return _cached_process
+    except Exception:  # noqa: BLE001
+        _psutil_unavailable = True
+        return None
+
+
+def _read_resource_snapshot(
+    *, with_cpu: bool = True, with_memory: bool = True
+) -> _ResourceSnapshot | None:
+    """Снять текущие метрики процесса через закэшированный psutil.Process.
+
+    Args:
+        with_cpu: Если False — `cpu_seconds = 0.0` (skip syscall).
+        with_memory: Если False — `rss_bytes = 0` (skip syscall).
 
     Returns:
         :class:`_ResourceSnapshot` либо ``None`` если psutil не установлен
         (best-effort; в этом случае enforcement пропускается).
     """
+    process = _get_process()
+    if process is None:
+        return None
     try:
-        import psutil  # noqa: PLC0415
-
-        process = psutil.Process()
-        cpu_times = process.cpu_times()
-        return _ResourceSnapshot(
-            rss_bytes=int(process.memory_info().rss),
-            cpu_seconds=float(cpu_times.user + cpu_times.system),
-        )
+        rss_bytes = int(process.memory_info().rss) if with_memory else 0
+        cpu_seconds = 0.0
+        if with_cpu:
+            cpu_times = process.cpu_times()
+            cpu_seconds = float(cpu_times.user + cpu_times.system)
+        return _ResourceSnapshot(rss_bytes=rss_bytes, cpu_seconds=cpu_seconds)
     except Exception:  # noqa: BLE001
         return None
 
@@ -115,22 +140,35 @@ def _with_resource_limits(
     Используется в дополнение к ``CodeSandbox.run(timeout_s=...)`` — e2b
     сам обеспечивает изоляцию, но локальный psutil-снимок даёт быструю
     защиту от runaway-плагинов на dev-стенде.
+
+    Optimization (S15 K1 W2, ADR-0063):
+        - При `max_memory_mb == 0 and max_cpu_seconds == 0` — skip snapshot
+          полностью (fast-path для plugins без resource constraints).
+        - psutil.Process() кэшируется через `_get_process`.
+        - Skip cpu_times / memory_info syscall если соответствующий limit == 0.
     """
-    before = _read_resource_snapshot()
+    enforce_memory = max_memory_mb > 0
+    enforce_cpu = max_cpu_seconds > 0
+    if not enforce_memory and not enforce_cpu:
+        yield
+        return
+    before = _read_resource_snapshot(with_cpu=enforce_cpu, with_memory=enforce_memory)
     yield
-    after = _read_resource_snapshot()
+    after = _read_resource_snapshot(with_cpu=enforce_cpu, with_memory=enforce_memory)
     if before is None or after is None:
         return
-    cpu_delta = after.cpu_seconds - before.cpu_seconds
-    rss_delta_mb = max(0, (after.rss_bytes - before.rss_bytes) // (1024 * 1024))
-    if cpu_delta > max_cpu_seconds:
-        raise ResourceLimitsExceeded(
-            plugin, "cpu_seconds", max_cpu_seconds, int(cpu_delta)
-        )
-    if rss_delta_mb > max_memory_mb:
-        raise ResourceLimitsExceeded(
-            plugin, "memory_mb", max_memory_mb, rss_delta_mb
-        )
+    if enforce_cpu:
+        cpu_delta = after.cpu_seconds - before.cpu_seconds
+        if cpu_delta > max_cpu_seconds:
+            raise ResourceLimitsExceeded(
+                plugin, "cpu_seconds", max_cpu_seconds, int(cpu_delta)
+            )
+    if enforce_memory:
+        rss_delta_mb = max(0, (after.rss_bytes - before.rss_bytes) // (1024 * 1024))
+        if rss_delta_mb > max_memory_mb:
+            raise ResourceLimitsExceeded(
+                plugin, "memory_mb", max_memory_mb, rss_delta_mb
+            )
 
 
 class PluginSandboxAdapter:

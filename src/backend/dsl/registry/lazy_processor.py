@@ -70,9 +70,7 @@ def load_processor_class(module_path: str) -> type:
     """
     module_name, _, attr = module_path.partition(":")
     if not module_name or not attr:
-        raise ImportError(
-            f"module_path must be 'module:attr', got {module_path!r}"
-        )
+        raise ImportError(f"module_path must be 'module:attr', got {module_path!r}")
     module = importlib.import_module(module_name)
     cls = getattr(module, attr)
     return cls
@@ -119,9 +117,7 @@ class LazyProcessorRegistry:
         """Lazy-refs, которые ещё не были загружены."""
         with self._lock:
             return [
-                ref
-                for fqn, ref in self._lazy_refs.items()
-                if fqn not in self._resolved
+                ref for fqn, ref in self._lazy_refs.items() if fqn not in self._resolved
             ]
 
     def capabilities_for(self, fqn: str) -> tuple[str, ...]:
@@ -161,9 +157,7 @@ class LazyProcessorRegistry:
         with self._lock:
             ref = self._lazy_refs.get(fqn)
         if ref is None:
-            raise ProcessorNotFoundError(
-                f"Lazy ref for {fqn!r} not registered"
-            )
+            raise ProcessorNotFoundError(f"Lazy ref for {fqn!r} not registered")
 
         # Import → класс уже должен быть decorated @processor,
         # т.е. __init_subclass__ / module-import side-effect зарегистрирует

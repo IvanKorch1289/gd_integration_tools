@@ -65,21 +65,12 @@ ALLOWED_TARGETS: frozenset[str] = frozenset({"body", "headers", "query", "path"}
         "properties": {
             "targets": {
                 "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": sorted(ALLOWED_TARGETS),
-                },
+                "items": {"type": "string", "enum": sorted(ALLOWED_TARGETS)},
                 "minItems": 1,
             },
-            "fields": {
-                "type": ["array", "null"],
-                "items": {"type": "string"},
-            },
+            "fields": {"type": ["array", "null"], "items": {"type": "string"}},
             "replacement": {"type": "string"},
-            "patterns": {
-                "type": ["array", "null"],
-                "items": {"type": "string"},
-            },
+            "patterns": {"type": ["array", "null"], "items": {"type": "string"}},
         },
         "required": ["targets"],
     },
@@ -120,8 +111,7 @@ class MaskPiiProcessor(BaseProcessor):
         if unknown:
             allowed = ", ".join(sorted(ALLOWED_TARGETS))
             raise ValueError(
-                f"mask_pii: unknown targets {sorted(unknown)!r}, "
-                f"allowed: {allowed}"
+                f"mask_pii: unknown targets {sorted(unknown)!r}, allowed: {allowed}"
             )
         self._targets = tuple(targets)
         self._fields = list(fields) if fields else None
@@ -210,7 +200,7 @@ class MaskPiiProcessor(BaseProcessor):
             # пишем в properties для downstream-консумеров.
             try:
                 setattr(request, attr, masked)
-            except (AttributeError, TypeError):
+            except AttributeError, TypeError:
                 exchange.set_property(f"masked_{attr}", masked)
 
     # ── Serialization ──

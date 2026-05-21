@@ -21,12 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 
-__all__ = (
-    "list_schemas",
-    "read_schema",
-    "validate_openapi",
-    "diff_schemas",
-)
+__all__ = ("list_schemas", "read_schema", "validate_openapi", "diff_schemas")
 
 # Корень проекта относительно расположения этого файла:
 # services/ → streamlit_app/ → frontend/ → src/ → <root>
@@ -153,11 +148,7 @@ def diff_schemas(a: str, b: str) -> str:
     lines_b = b.splitlines(keepends=True)
     diff = list(
         difflib.unified_diff(
-            lines_a,
-            lines_b,
-            fromfile="schema_a",
-            tofile="schema_b",
-            lineterm="",
+            lines_a, lines_b, fromfile="schema_a", tofile="schema_b", lineterm=""
         )
     )
     return "".join(diff)

@@ -9,10 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Response
 
-from src.backend.entrypoints.asyncapi import (
-    build_asyncapi_json,
-    build_asyncapi_yaml,
-)
+from src.backend.entrypoints.asyncapi import build_asyncapi_json, build_asyncapi_yaml
 
 __all__ = ("router",)
 
@@ -29,10 +26,7 @@ router = APIRouter()
     ),
     response_class=Response,
     responses={
-        200: {
-            "content": {"application/yaml": {}},
-            "description": "AsyncAPI 3.0 YAML",
-        }
+        200: {"content": {"application/yaml": {}}, "description": "AsyncAPI 3.0 YAML"}
     },
 )
 async def get_asyncapi_yaml() -> Response:
@@ -47,10 +41,7 @@ async def get_asyncapi_yaml() -> Response:
     description="JSON-вариант AsyncAPI 3.0 спецификации.",
     response_class=Response,
     responses={
-        200: {
-            "content": {"application/json": {}},
-            "description": "AsyncAPI 3.0 JSON",
-        }
+        200: {"content": {"application/json": {}}, "description": "AsyncAPI 3.0 JSON"}
     },
 )
 async def get_asyncapi_json() -> Response:

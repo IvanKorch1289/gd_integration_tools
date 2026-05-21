@@ -91,8 +91,7 @@ class WorkflowVersion:
         m = _SEMVER_RE.match(version)
         if m is None:
             raise ValueError(
-                f"некорректная semver-строка {version!r}; "
-                f"ожидается MAJOR.MINOR.PATCH"
+                f"некорректная semver-строка {version!r}; ожидается MAJOR.MINOR.PATCH"
             )
         return cls(
             workflow_id=workflow_id,
@@ -142,7 +141,9 @@ class WorkflowVersionRegistry:
             try:
                 from src.backend.core.config.features import feature_flags
 
-                strict = bool(getattr(feature_flags, "workflow_versioning_strict", False))
+                strict = bool(
+                    getattr(feature_flags, "workflow_versioning_strict", False)
+                )
             except Exception:  # noqa: BLE001
                 strict = False
 
@@ -206,9 +207,7 @@ class WorkflowVersionRegistry:
         """Список всех уникальных workflow_id в реестре."""
         return sorted({v.workflow_id for v in self.versions})
 
-    def pin_default(
-        self, workflow_id: str, *, semver: str
-    ) -> WorkflowVersion:
+    def pin_default(self, workflow_id: str, *, semver: str) -> WorkflowVersion:
         """Sprint 12 K3 W8 — назначить указанную версию как default.
 
         Снимает default-флаг с других версий того же ``workflow_id``,
@@ -300,7 +299,9 @@ def get_global_registry() -> WorkflowVersionRegistry:
     return _REGISTRY
 
 
-def workflow_versioned(version: str, *, default_version: bool = True) -> Callable[[F], F]:
+def workflow_versioned(
+    version: str, *, default_version: bool = True
+) -> Callable[[F], F]:
     """Декоратор для пометки workflow-функции semver-версией.
 
     Регистрирует версию в глобальном :class:`WorkflowVersionRegistry`

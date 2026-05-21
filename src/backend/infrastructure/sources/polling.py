@@ -71,8 +71,7 @@ class PollingSource:
             raise RuntimeError(f"PollingSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event),
-            name=f"source-polling:{self.source_id}",
+            self._run(on_event), name=f"source-polling:{self.source_id}"
         )
         logger.info(
             "PollingSource started: id=%s url=%s interval=%.1fs",
@@ -91,9 +90,7 @@ class PollingSource:
         return self._task is not None and not self._task.done()
 
     async def _run(self, on_event: EventCallback) -> None:
-        async with OutboundHttpClient(
-            timeout=httpx.Timeout(self._timeout)
-        ) as client:
+        async with OutboundHttpClient(timeout=httpx.Timeout(self._timeout)) as client:
             first = True
             while not self._stop_event.is_set():
                 try:

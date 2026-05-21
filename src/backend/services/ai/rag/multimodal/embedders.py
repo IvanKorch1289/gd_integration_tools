@@ -19,11 +19,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "CLIPEmbedder",
-    "ColpaliEmbedder",
-    "LazyImportError",
-)
+__all__ = ("CLIPEmbedder", "ColpaliEmbedder", "LazyImportError")
 
 
 class LazyImportError(ImportError):
@@ -50,10 +46,7 @@ class CLIPEmbedder:
     embedding_kind = "clip"
 
     def __init__(
-        self,
-        *,
-        model_name: str = "clip-ViT-B-32",
-        device: str = "cpu",
+        self, *, model_name: str = "clip-ViT-B-32", device: str = "cpu"
     ) -> None:
         """Инициализирует CLIPEmbedder (без загрузки модели).
 

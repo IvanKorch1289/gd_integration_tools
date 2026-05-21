@@ -53,10 +53,7 @@ class ImageIngester:
     """
 
     def __init__(
-        self,
-        *,
-        extract_exif: bool = True,
-        caption_provider: Any | None = None,
+        self, *, extract_exif: bool = True, caption_provider: Any | None = None
     ) -> None:
         """Инициализирует ImageIngester.
 

@@ -15,18 +15,13 @@ AI-плагины получают:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
-
 import os
+from typing import TYPE_CHECKING
 
 from src.backend.core.ai.fs_facade import AIFsFacade
 from src.backend.core.ai.sandbox import CodeSandbox, NoOpSandbox
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager
-from src.backend.core.svcs_registry import (
-    get_service,
-    has_service,
-    register_factory,
-)
+from src.backend.core.svcs_registry import get_service, has_service, register_factory
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -113,9 +108,7 @@ def register_e2b_sandbox() -> None:
 
         capability_check = None
         try:
-            from src.backend.core.security.capabilities.gate import (
-                CapabilityGate,
-            )
+            from src.backend.core.security.capabilities.gate import CapabilityGate
 
             if has_service(CapabilityGate):
                 gate = get_service(CapabilityGate)
@@ -123,13 +116,9 @@ def register_e2b_sandbox() -> None:
         except Exception:  # noqa: BLE001
             capability_check = None
 
-        fs_facade = (
-            get_service(AIFsFacade) if has_service(AIFsFacade) else None
-        )
+        fs_facade = get_service(AIFsFacade) if has_service(AIFsFacade) else None
         return E2BSandbox(
-            api_key=api_key,
-            capability_check=capability_check,
-            fs_facade=fs_facade,
+            api_key=api_key, capability_check=capability_check, fs_facade=fs_facade
         )
 
     register_factory(CodeSandbox, _factory)

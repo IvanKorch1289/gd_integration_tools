@@ -56,12 +56,7 @@ class LangGraphPostgresSaverWrapper:
         _enabled: Snapshot feature_flag на момент создания.
     """
 
-    def __init__(
-        self,
-        *,
-        dsn: str | None = None,
-        enabled: bool | None = None,
-    ) -> None:
+    def __init__(self, *, dsn: str | None = None, enabled: bool | None = None) -> None:
         """Инициализирует wrapper без попытки импорта (lazy).
 
         Args:
@@ -82,9 +77,7 @@ class LangGraphPostgresSaverWrapper:
         try:
             from src.backend.core.config.features import feature_flags
 
-            return bool(
-                getattr(feature_flags, "langgraph_postgres_checkpoint", False)
-            )
+            return bool(getattr(feature_flags, "langgraph_postgres_checkpoint", False))
         except Exception:  # noqa: BLE001
             return False
 
@@ -123,7 +116,9 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is not None:
             return self._saver
         try:
-            from langchain_postgres import AsyncPostgresSaver  # type: ignore[import-not-found]
+            from langchain_postgres import (
+                AsyncPostgresSaver,  # type: ignore[import-not-found]
+            )
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(
                 "Пакет langchain_postgres не установлен — добавьте extra ai-memory"

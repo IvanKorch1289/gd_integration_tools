@@ -26,23 +26,17 @@ def _load_diff_module():
 
 _diff_mod = _load_diff_module()
 
-st.set_page_config(
-    page_title="DSL Diff History", page_icon=":scroll:", layout="wide"
-)
+st.set_page_config(page_title="DSL Diff History", page_icon=":scroll:", layout="wide")
 st.header("DSL Diff History")
 st.caption("Sprint 10 K3 W6: side-by-side diff двух версий route.")
 
 col1, col2 = st.columns(2)
 with col1:
     st.subheader("Before")
-    before_text = st.text_area(
-        "YAML 'before'", height=400, key="before_yaml"
-    )
+    before_text = st.text_area("YAML 'before'", height=400, key="before_yaml")
 with col2:
     st.subheader("After")
-    after_text = st.text_area(
-        "YAML 'after'", height=400, key="after_yaml"
-    )
+    after_text = st.text_area("YAML 'after'", height=400, key="after_yaml")
 
 if st.button("Сравнить", type="primary"):
     if not before_text or not after_text:
@@ -56,9 +50,7 @@ if st.button("Сравнить", type="primary"):
             st.stop()
 
         diff = _diff_mod._diff_pipelines(before, after)
-        identical = not (
-            diff["added"] or diff["removed"] or diff["changed"]
-        )
+        identical = not (diff["added"] or diff["removed"] or diff["changed"])
 
         if identical:
             st.success("Pipeline идентичен.")
@@ -70,17 +62,11 @@ if st.button("Сравнить", type="primary"):
             if diff["added"]:
                 st.markdown(":green[**Добавлено:**]")
                 for item in diff["added"]:
-                    st.code(
-                        f"+ [{item['index']}] {item['step']}",
-                        language="yaml",
-                    )
+                    st.code(f"+ [{item['index']}] {item['step']}", language="yaml")
             if diff["removed"]:
                 st.markdown(":red[**Удалено:**]")
                 for item in diff["removed"]:
-                    st.code(
-                        f"- [{item['index']}] {item['step']}",
-                        language="yaml",
-                    )
+                    st.code(f"- [{item['index']}] {item['step']}", language="yaml")
             if diff["changed"]:
                 st.markdown(":orange[**Изменено:**]")
                 for item in diff["changed"]:

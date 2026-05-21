@@ -76,8 +76,7 @@ class MqttSink(Sink):
         ctx.verify_mode = ssl.CERT_REQUIRED
         if self.client_cert_path and self.client_key_path:
             ctx.load_cert_chain(
-                certfile=self.client_cert_path,
-                keyfile=self.client_key_path,
+                certfile=self.client_cert_path, keyfile=self.client_key_path
             )
         return ctx
 

@@ -34,12 +34,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-__all__ = (
-    "StepTrace",
-    "record_trace",
-    "traced_step",
-    "MAX_SNAPSHOT_SIZE",
-)
+__all__ = ("StepTrace", "record_trace", "traced_step", "MAX_SNAPSHOT_SIZE")
 
 MAX_SNAPSHOT_SIZE = 1024  # символов; больше — обрезаем
 
@@ -86,12 +81,7 @@ def record_trace(exchange: Any, trace: StepTrace) -> None:
 
 
 @contextlib.asynccontextmanager
-async def traced_step(
-    exchange: Any,
-    *,
-    processor_name: str,
-    input_value: Any = None,
-):
+async def traced_step(exchange: Any, *, processor_name: str, input_value: Any = None):
     """Async context, измеряющий длительность шага и записывающий StepTrace.
 
     Usage::

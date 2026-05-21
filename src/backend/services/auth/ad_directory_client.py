@@ -50,12 +50,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = (
-    "AdAuthError",
-    "AdDirectoryClient",
-    "AdSearchEntry",
-    "AdServerConfig",
-)
+__all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")
 
 _logger = logging.getLogger(__name__)
 
@@ -133,10 +128,7 @@ class AdDirectoryClient:
     """
 
     def __init__(
-        self,
-        *,
-        config: AdServerConfig,
-        connection_factory: Any | None = None,
+        self, *, config: AdServerConfig, connection_factory: Any | None = None
     ) -> None:
         """Инициализация client с config и опциональной mock-factory."""
         self._config = config
@@ -161,9 +153,7 @@ class AdDirectoryClient:
         except ImportError:
             return False
 
-    async def validate_credentials(
-        self, *, user_dn: str, password: str
-    ) -> bool:
+    async def validate_credentials(self, *, user_dn: str, password: str) -> bool:
         """Валидировать credentials пользователя через bind.
 
         Args:
@@ -248,11 +238,7 @@ class AdDirectoryClient:
         ]
         search_filter = f"({self._config.user_id_attribute}={login})"
         try:
-            return await asyncio.to_thread(
-                self._search_sync,
-                search_filter,
-                attrs,
-            )
+            return await asyncio.to_thread(self._search_sync, search_filter, attrs)
         except AdAuthError:
             raise
         except Exception as exc:  # noqa: BLE001 — ldap3 broad
@@ -264,8 +250,7 @@ class AdDirectoryClient:
         """Sync search через ldap3 (для use через ``asyncio.to_thread``)."""
         if self._connection_factory is not None:
             conn = self._connection_factory(
-                user_dn=self._config.bind_dn,
-                password=self._config.bind_password,
+                user_dn=self._config.bind_dn, password=self._config.bind_password
             )
         else:
             from ldap3 import (  # type: ignore[import-not-found]  # noqa: PLC0415

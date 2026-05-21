@@ -105,10 +105,7 @@ def encode_audit_event(
     Подходит для DLQ writer и Kafka audit sink — не парсит
     Pydantic-модель, а сразу формирует JSON payload.
     """
-    payload: dict[str, Any] = {
-        "action": action,
-        "actor": actor,
-    }
+    payload: dict[str, Any] = {"action": action, "actor": actor}
     if resource is not None:
         payload["resource"] = resource
     if tenant_id is not None:

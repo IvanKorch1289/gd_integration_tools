@@ -67,9 +67,7 @@ if st.button("Estimate", type="primary", disabled=not workflow_id):
         if version:
             payload["version"] = version
         resp = requests.post(
-            f"{base_url}/api/v1/admin/workflow-cost/estimate",
-            json=payload,
-            timeout=10,
+            f"{base_url}/api/v1/admin/workflow-cost/estimate", json=payload, timeout=10
         )
         if resp.status_code != 200:
             st.error(f"HTTP {resp.status_code}: {resp.text}")
@@ -84,8 +82,7 @@ if st.button("Estimate", type="primary", disabled=not workflow_id):
                 col3.metric("Sample size", body["sample_size"])
                 col4, col5 = st.columns(2)
                 col4.metric(
-                    "Compute (seconds)",
-                    f"{body['estimated_compute_seconds']:.2f}",
+                    "Compute (seconds)", f"{body['estimated_compute_seconds']:.2f}"
                 )
                 col5.metric("Storage (bytes)", body["estimated_storage_bytes"])
 
@@ -97,14 +94,8 @@ if st.button("Estimate", type="primary", disabled=not workflow_id):
                         "знает declaration."
                     )
                 else:
-                    st.metric(
-                        "Total tokens",
-                        breakdown["total_tokens"],
-                    )
-                    st.metric(
-                        "Total cost (USD)",
-                        f"${breakdown['total_usd']}",
-                    )
+                    st.metric("Total tokens", breakdown["total_tokens"])
+                    st.metric("Total cost (USD)", f"${breakdown['total_usd']}")
                     st.subheader("Per model")
                     for model, cost in breakdown["per_model"].items():
                         st.write(f"**{model}**: ${cost}")

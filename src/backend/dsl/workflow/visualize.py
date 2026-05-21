@@ -145,11 +145,7 @@ def _escape_dot(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def to_graphviz(
-    decl: WorkflowDeclaration,
-    *,
-    color_map: ColorMap | None = None,
-) -> str:
+def to_graphviz(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None) -> str:
     """Сериализовать workflow в Graphviz DOT-source.
 
     Args:
@@ -177,8 +173,7 @@ def to_graphviz(
         shape = _graphviz_shape(step.type)
         color = color_map.get(identity, "black")
         lines.append(
-            f'  {node_id} [label="{_escape_dot(label)}", '
-            f'shape={shape}, color={color}];'
+            f'  {node_id} [label="{_escape_dot(label)}", shape={shape}, color={color}];'
         )
 
     for prev, nxt in zip(node_ids, node_ids[1:]):
@@ -230,8 +225,7 @@ def to_mermaid(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None) 
 
 
 def compute_step_diff(
-    decl_a: WorkflowDeclaration,
-    decl_b: WorkflowDeclaration,
+    decl_a: WorkflowDeclaration, decl_b: WorkflowDeclaration
 ) -> tuple[list[StepDiffResult], ColorMap, ColorMap]:
     """Структурный diff с готовыми color-map для A и B графов.
 

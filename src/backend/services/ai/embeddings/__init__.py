@@ -6,8 +6,4 @@ from src.backend.services.ai.embeddings.ab_migration import (
 )
 from src.backend.services.ai.embeddings.migration_runner import EmbeddingMigrationRunner
 
-__all__ = (
-    "EmbeddingABRouter",
-    "EmbeddingMigrationRunner",
-    "EmbeddingMigrationStatus",
-)
+__all__ = ("EmbeddingABRouter", "EmbeddingMigrationRunner", "EmbeddingMigrationStatus")

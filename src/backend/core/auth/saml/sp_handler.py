@@ -14,11 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.backend.core.auth.saml_backend import (
-    SamlAuthResult,
-    SamlBackend,
-    SamlError,
-)
+from src.backend.core.auth.saml_backend import SamlAuthResult, SamlBackend
 
 __all__ = ("SamlSpHandler", "SpInitiatedLoginResult")
 
@@ -53,19 +49,12 @@ class SamlSpHandler:
     """
 
     def __init__(
-        self,
-        *,
-        backend: SamlBackend,
-        default_post_login_url: str = "/",
+        self, *, backend: SamlBackend, default_post_login_url: str = "/"
     ) -> None:
         self._backend = backend
         self._default_post_login = default_post_login_url
 
-    def initiate_login(
-        self,
-        *,
-        return_to: str | None = None,
-    ) -> SpInitiatedLoginResult:
+    def initiate_login(self, *, return_to: str | None = None) -> SpInitiatedLoginResult:
         """Сгенерировать SSO-redirect URL.
 
         Args:
@@ -80,17 +69,10 @@ class SamlSpHandler:
             relay_state=relay_state
         )
         return SpInitiatedLoginResult(
-            redirect_url=url,
-            request_id=request_id,
-            relay_state=relay_state,
+            redirect_url=url, request_id=request_id, relay_state=relay_state
         )
 
-    def consume_acs(
-        self,
-        *,
-        request_id: str,
-        validator_factory,
-    ) -> SamlAuthResult:
+    def consume_acs(self, *, request_id: str, validator_factory) -> SamlAuthResult:
         """Обработать SAMLResponse в ACS-endpoint.
 
         Args:
@@ -105,8 +87,7 @@ class SamlSpHandler:
                 подписи.
         """
         return self._backend.process_saml_response(
-            request_id=request_id,
-            validator=validator_factory,
+            request_id=request_id, validator=validator_factory
         )
 
     def is_available(self) -> bool:

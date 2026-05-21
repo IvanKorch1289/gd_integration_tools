@@ -92,7 +92,11 @@ class UnitConversionProcessor(BaseProcessor):
             return exchange.in_message.body
         body = exchange.in_message.body
         if self._from_value_source.startswith("body."):
-            return body.get(self._from_value_source[len("body.") :]) if isinstance(body, dict) else None
+            return (
+                body.get(self._from_value_source[len("body.") :])
+                if isinstance(body, dict)
+                else None
+            )
         if self._from_value_source.startswith("properties."):
             return exchange.properties.get(
                 self._from_value_source[len("properties.") :]
@@ -145,10 +149,7 @@ class UnitConversionProcessor(BaseProcessor):
         self._apply_target(exchange, float(converted.magnitude))
 
     def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {
-            "from_unit": self._from_unit,
-            "to_unit": self._to_unit,
-        }
+        spec: dict[str, Any] = {"from_unit": self._from_unit, "to_unit": self._to_unit}
         if self._value is not None:
             spec["value"] = self._value
         if self._from_value_source:

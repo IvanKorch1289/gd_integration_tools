@@ -84,10 +84,7 @@ class RedisNxBackend(Backend):
         return JSONResponse(orjson.loads(payload), status_code=status_code)
 
     async def store_response_data(
-        self,
-        idempotency_key: str,
-        payload: dict,
-        status_code: int,
+        self, idempotency_key: str, payload: dict, status_code: int
     ) -> None:
         body_key, status_key = self._response_keys(idempotency_key)
         body_bytes = orjson.dumps(payload)
@@ -102,10 +99,7 @@ class RedisNxBackend(Backend):
             ``False`` если успешно зарезервирован для текущего запроса.
         """
         reserved = await self._redis.set(
-            self._pending_key(idempotency_key),
-            b"1",
-            nx=True,
-            ex=self._pending_ttl,
+            self._pending_key(idempotency_key), b"1", nx=True, ex=self._pending_ttl
         )
         return not bool(reserved)
 
@@ -151,12 +145,7 @@ class _LazyRedisProxy:
         return await self._client().get(key)
 
     async def set(
-        self,
-        key: str,
-        value: bytes | str,
-        *,
-        ex: int | None = None,
-        nx: bool = False,
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
         return await self._client().set(key, value, ex=ex, nx=nx)
 

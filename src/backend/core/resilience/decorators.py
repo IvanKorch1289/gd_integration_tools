@@ -26,15 +26,10 @@ from typing import Any, Awaitable, Callable, Mapping
 from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerSpec,
-    CircuitOpen,
     get_breaker_registry,
 )
 from src.backend.core.resilience.cache_decorators import cached
-from src.backend.core.resilience.rate_limiter import (
-    RateLimit,
-    RateLimiter,
-    RateLimitExceeded,
-)
+from src.backend.core.resilience.rate_limiter import RateLimit, RateLimiter
 from src.backend.core.resilience.retry import RetryPolicy, with_retry
 
 __all__ = ("policy",)
@@ -63,9 +58,7 @@ def policy(
     """
     breaker = _resolve_breaker(circuit_breaker)
 
-    def decorator(
-        func: Callable[..., Awaitable[Any]],
-    ) -> Callable[..., Awaitable[Any]]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         wrapped: Callable[..., Awaitable[Any]] = func
         if retry is not None:
             wrapped = _wrap_retry(wrapped, retry)
@@ -85,9 +78,7 @@ def policy(
     return decorator
 
 
-def _resolve_breaker(
-    spec: str | BreakerSpec | Breaker | None,
-) -> Breaker | None:
+def _resolve_breaker(spec: str | BreakerSpec | Breaker | None) -> Breaker | None:
     if spec is None:
         return None
     if isinstance(spec, Breaker):
@@ -100,9 +91,7 @@ def _resolve_breaker(
         return existing
     if isinstance(spec, BreakerSpec):
         return registry.get_or_create(spec.name, spec)
-    raise TypeError(
-        f"Unsupported circuit_breaker spec: {type(spec).__name__}"
-    )
+    raise TypeError(f"Unsupported circuit_breaker spec: {type(spec).__name__}")
 
 
 def _wrap_retry(
@@ -160,8 +149,7 @@ def _get_limiter() -> RateLimiter:
 
 
 def _preserve_signature(
-    original: Callable[..., Awaitable[Any]],
-    wrapped: Callable[..., Awaitable[Any]],
+    original: Callable[..., Awaitable[Any]], wrapped: Callable[..., Awaitable[Any]]
 ) -> Callable[..., Awaitable[Any]]:
     @wraps(original)
     async def adapter(*args: Any, **kwargs: Any) -> Any:

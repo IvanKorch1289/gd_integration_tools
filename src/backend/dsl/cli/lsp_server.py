@@ -28,10 +28,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-__all__ = (
-    "create_server",
-    "main",
-)
+__all__ = ("create_server", "main")
 
 _logger = logging.getLogger(__name__)
 
@@ -78,9 +75,7 @@ def create_server() -> Any:
         await _publish_diagnostics(ls, params.text_document.uri)
 
     @server.feature(lsp_types.TEXT_DOCUMENT_DID_SAVE)
-    async def did_save(
-        ls: LanguageServer, params: lsp_types.DidSaveTextDocumentParams
-    ):
+    async def did_save(ls: LanguageServer, params: lsp_types.DidSaveTextDocumentParams):
         """Re-lint при save (на случай внешних правок route.toml)."""
         await _publish_diagnostics(ls, params.text_document.uri)
 

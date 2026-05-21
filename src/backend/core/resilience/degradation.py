@@ -112,11 +112,7 @@ class DegradationManager:
         self._store = store
 
     async def set_mode(
-        self,
-        mode: DegradationMode,
-        *,
-        actor: str = "system",
-        reason: str = "",
+        self, mode: DegradationMode, *, actor: str = "system", reason: str = ""
     ) -> DegradationTransition:
         """Ручной switch DegradationMode (S13 K2 W4).
 

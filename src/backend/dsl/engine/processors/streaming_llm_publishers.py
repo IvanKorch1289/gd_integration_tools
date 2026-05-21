@@ -16,14 +16,10 @@ __all__ = ("SSEPublisher", "WSPublisher", "WebhookChunkedPublisher")
 class _BasePublisher:
     """Общий интерфейс publisher'а."""
 
-    async def publish_chunk(
-        self, *, exchange: Any, chunk: dict[str, Any]
-    ) -> None:
+    async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
         raise NotImplementedError
 
-    async def publish_done(
-        self, *, exchange: Any, finish_reason: str
-    ) -> None:
+    async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
         raise NotImplementedError
 
 
@@ -32,18 +28,14 @@ class SSEPublisher(_BasePublisher):
 
     PROPERTY = "sse_events"
 
-    async def publish_chunk(
-        self, *, exchange: Any, chunk: dict[str, Any]
-    ) -> None:
+    async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
         events = exchange.properties.get(self.PROPERTY)
         if events is None:
             events = []
             exchange.set_property(self.PROPERTY, events)
         events.append({"event": "delta", "data": chunk["delta"]})
 
-    async def publish_done(
-        self, *, exchange: Any, finish_reason: str
-    ) -> None:
+    async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
         events = exchange.properties.get(self.PROPERTY) or []
         events.append({"event": "done", "data": finish_reason})
         exchange.set_property(self.PROPERTY, events)
@@ -54,17 +46,13 @@ class WSPublisher(_BasePublisher):
 
     SEND_PROPERTY = "ws_send"
 
-    async def publish_chunk(
-        self, *, exchange: Any, chunk: dict[str, Any]
-    ) -> None:
+    async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
         send = exchange.properties.get(self.SEND_PROPERTY)
         if send is None:
             return
         await send({"type": "delta", "delta": chunk["delta"]})
 
-    async def publish_done(
-        self, *, exchange: Any, finish_reason: str
-    ) -> None:
+    async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
         send = exchange.properties.get(self.SEND_PROPERTY)
         if send is None:
             return
@@ -75,10 +63,7 @@ class WebhookChunkedPublisher(_BasePublisher):
     """Шлёт чанки в webhook URL через httpx с timeout."""
 
     def __init__(
-        self,
-        *,
-        url_property: str = "webhook_url",
-        timeout: float = 5.0,
+        self, *, url_property: str = "webhook_url", timeout: float = 5.0
     ) -> None:
         self._url_property = url_property
         self._timeout = timeout
@@ -100,17 +85,13 @@ class WebhookChunkedPublisher(_BasePublisher):
         except Exception as exc:  # noqa: BLE001
             logger.debug("WebhookChunkedPublisher: send failed: %s", exc)
 
-    async def publish_chunk(
-        self, *, exchange: Any, chunk: dict[str, Any]
-    ) -> None:
+    async def publish_chunk(self, *, exchange: Any, chunk: dict[str, Any]) -> None:
         url = exchange.properties.get(self._url_property)
         if not url:
             return
         await self._send(url, {"type": "delta", "delta": chunk["delta"]})
 
-    async def publish_done(
-        self, *, exchange: Any, finish_reason: str
-    ) -> None:
+    async def publish_done(self, *, exchange: Any, finish_reason: str) -> None:
         url = exchange.properties.get(self._url_property)
         if not url:
             return

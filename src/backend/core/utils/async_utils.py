@@ -88,9 +88,7 @@ async def async_with_timeout(
         return default
 
 
-async def task_group_tolerant(
-    coros: list[Awaitable[T]],
-) -> list[T | BaseException]:
+async def task_group_tolerant(coros: list[Awaitable[T]]) -> list[T | BaseException]:
     """asyncio.TaskGroup с tolerant-семантикой (Sprint 9 K3 W8).
 
     В отличие от ``asyncio.gather(..., return_exceptions=True)`` использует

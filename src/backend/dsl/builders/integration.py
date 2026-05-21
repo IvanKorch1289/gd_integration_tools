@@ -1683,9 +1683,7 @@ class IntegrationMixin:
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
         builder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"webdav:{route_id}",
-            description=description,
+            route_id=route_id, source=f"webdav:{route_id}", description=description
         )
         return builder  # type: ignore[return-value]
 

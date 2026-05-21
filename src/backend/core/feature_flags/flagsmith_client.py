@@ -28,11 +28,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     import httpx
 
-__all__ = (
-    "FlagsmithClient",
-    "FlagsmithFlag",
-    "FlagsmithUnavailableError",
-)
+__all__ = ("FlagsmithClient", "FlagsmithFlag", "FlagsmithUnavailableError")
 
 _logger = logging.getLogger("core.feature_flags.flagsmith_client")
 _DEFAULT_API_URL = "https://edge.api.flagsmith.com/api/v1/"

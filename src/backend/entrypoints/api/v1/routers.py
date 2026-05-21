@@ -11,17 +11,17 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
-        router as admin_schemas_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
-        router as admin_tenants_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.admin_cron import (
         router as admin_cron_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
+        router as admin_schemas_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_tenants import (
+        router as admin_tenants_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_workflow_audit import (
         router as admin_workflow_audit_router,
@@ -38,29 +38,26 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
-        router as auth_saml_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.hitl import (
-        router as hitl_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.ai_agents import (
         router as ai_agents_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (
-        router as ai_feedback_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.ai_costs import (
         router as ai_costs_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.ai_feedback import (
+        router as ai_feedback_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.ai_stream import (
         router as ai_stream_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
         router as ai_tools_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.auth_saml import (
+        router as auth_saml_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.dadata import router as dadata_router
     from src.backend.entrypoints.api.v1.endpoints.dsl_console import (
@@ -72,14 +69,15 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.files import router as files_router
     from src.backend.entrypoints.api.v1.endpoints.files import storage_router
     from src.backend.entrypoints.api.v1.endpoints.health import router as health_router
+    from src.backend.entrypoints.api.v1.endpoints.hitl import router as hitl_router
     from src.backend.entrypoints.api.v1.endpoints.imports import (
         router as imports_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.langmem_admin import (
-        router as langmem_admin_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.invocations import (
         router as invocations_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.langmem_admin import (
+        router as langmem_admin_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.notebooks import (
         router as notebooks_router,
@@ -150,9 +148,7 @@ def get_v1_routers() -> APIRouter:
         admin_workflow_audit_router, tags=["Admin · Workflow Audit"]
     )
     # S12 K3 W2 + K5 W3: cron management (validate / schedule / dashboard).
-    api_router_v1.include_router(
-        admin_cron_router, tags=["Admin · Scheduler"]
-    )
+    api_router_v1.include_router(admin_cron_router, tags=["Admin · Scheduler"])
     # S12 K3 W5: workflow template library inventory + semantic search.
     api_router_v1.include_router(
         admin_workflow_templates_router, tags=["Admin · Workflow Templates"]
@@ -195,9 +191,7 @@ def get_v1_routers() -> APIRouter:
     # Wave D.3: SSE token-streaming LLM endpoint.
     api_router_v1.include_router(ai_stream_router, prefix="/ai", tags=["AI · Stream"])
     # Wave D.5: AI cost-dashboard (LangFuse primary).
-    api_router_v1.include_router(
-        ai_costs_router, prefix="/admin", tags=["AI · Costs"]
-    )
+    api_router_v1.include_router(ai_costs_router, prefix="/admin", tags=["AI · Costs"])
     # Wave D.6: LangMem consolidation admin endpoints.
     api_router_v1.include_router(
         langmem_admin_router, prefix="/admin", tags=["AI · LangMem"]

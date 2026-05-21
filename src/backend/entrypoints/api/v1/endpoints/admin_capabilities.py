@@ -140,8 +140,7 @@ async def get_capability_graph() -> dict[str, Any]:
             resource = cap.name.split(".", 1)[0]
             res_node_id = f"res:{resource}"
             nodes.setdefault(
-                res_node_id,
-                {"id": res_node_id, "kind": "resource", "label": resource},
+                res_node_id, {"id": res_node_id, "kind": "resource", "label": resource}
             )
             edges.append(
                 {
@@ -150,8 +149,6 @@ async def get_capability_graph() -> dict[str, Any]:
                     "label": cap.scope or "*",
                 }
             )
-            edges.append(
-                {"source": cap_node_id, "target": res_node_id, "label": ""}
-            )
+            edges.append({"source": cap_node_id, "target": res_node_id, "label": ""})
 
     return {"nodes": list(nodes.values()), "edges": edges}

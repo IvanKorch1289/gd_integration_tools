@@ -156,9 +156,7 @@ class EIPMixin:
             )
         )
 
-    def split(
-        self, expression: str, processors: list[BaseProcessor]
-    ) -> "RouteBuilder":
+    def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         return self._add(  # type: ignore[attr-defined,no-any-return]
             SplitterProcessor(expression=expression, processors=processors)
@@ -335,11 +333,7 @@ class EIPMixin:
         )
 
     def batch(
-        self,
-        *,
-        size: int = 100,
-        timeout_ms: int = 500,
-        group_by: str | None = None,
+        self, *, size: int = 100, timeout_ms: int = 500, group_by: str | None = None
     ) -> "RouteBuilder":
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту (S13 K3 W1).
 
@@ -358,9 +352,7 @@ class EIPMixin:
 
         return self._add(  # type: ignore[attr-defined,no-any-return]
             BatchWindowProcessor(
-                window_seconds=timeout_ms / 1000.0,
-                max_size=size,
-                group_by=group_by,
+                window_seconds=timeout_ms / 1000.0, max_size=size, group_by=group_by
             )
         )
 
@@ -906,9 +898,7 @@ class EIPMixin:
             )
         )
 
-    def durable_fanout(
-        self, broker: Any, subscribers: list[str]
-    ) -> "RouteBuilder":
+    def durable_fanout(self, broker: Any, subscribers: list[str]) -> "RouteBuilder":
         """Durable Subscriber: fan-out к persistent-подписчикам."""
         return self._add(  # type: ignore[attr-defined,no-any-return]
             DurableSubscriberProcessor(broker=broker, subscribers=subscribers)

@@ -166,9 +166,7 @@ class CdcPostgresLogicalSource:
         except Exception as exc:  # noqa: BLE001
             _logger.debug("publication create skipped: %s", exc)
         try:
-            await conn_executor(
-                PG_CDC_SLOT_CREATE_TPL.format(slot=self.slot_name)
-            )
+            await conn_executor(PG_CDC_SLOT_CREATE_TPL.format(slot=self.slot_name))
         except Exception as exc:  # noqa: BLE001
             _logger.debug("slot create skipped: %s", exc)
         if self.cursor_store is not None:

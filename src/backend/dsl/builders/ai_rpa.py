@@ -18,10 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
-    AgentGraphProcessor,
-    MCPToolProcessor,
-)
+from src.backend.dsl.engine.processors import AgentGraphProcessor, MCPToolProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
@@ -204,9 +201,7 @@ class AIRPAMixin:
     def parse_llm_output(self, schema: type | None = None) -> "RouteBuilder":
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors",
-            "LLMParserProcessor",
-            schema=schema,
+            "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema
         )
 
     def token_budget(self, max_tokens: int = 4096) -> "RouteBuilder":
@@ -328,9 +323,7 @@ class AIRPAMixin:
     def run_scenario(self, steps: list[dict] | None = None) -> "RouteBuilder":
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web",
-            "RunScenarioProcessor",
-            steps=steps,
+            "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
         )
 
     # ── AI Extended ──
@@ -408,9 +401,7 @@ class AIRPAMixin:
 
     def citrix(self, operation: str, session_id: str) -> "RouteBuilder":
         """Citrix/RDP-сессия (launch/click/type/screenshot/close)."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
-            CitrixSessionProcessor,
-        )
+        from src.backend.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
 
         return self._add(  # type: ignore[attr-defined]
             CitrixSessionProcessor(operation=operation, session_id=session_id)
@@ -432,9 +423,7 @@ class AIRPAMixin:
         self, platform: str, app_package: str, operation: str
     ) -> "RouteBuilder":
         """Appium автоматизация мобильных приложений (android/ios)."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
-            AppiumMobileProcessor,
-        )
+        from src.backend.dsl.engine.processors.rpa_banking import AppiumMobileProcessor
 
         return self._add(  # type: ignore[attr-defined]
             AppiumMobileProcessor(
@@ -449,9 +438,7 @@ class AIRPAMixin:
         extract: str = "body_table",
     ) -> "RouteBuilder":
         """IMAP → structured data pipeline."""
-        from src.backend.dsl.engine.processors.rpa_banking import (
-            EmailDrivenProcessor,
-        )
+        from src.backend.dsl.engine.processors.rpa_banking import EmailDrivenProcessor
 
         return self._add(  # type: ignore[attr-defined]
             EmailDrivenProcessor(
@@ -473,9 +460,7 @@ class AIRPAMixin:
 
     def kyc_aml_verify(self, jurisdiction: str = "ru") -> "RouteBuilder":
         """KYC/AML верификация клиента."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            KycAmlVerifyProcessor,
-        )
+        from src.backend.dsl.engine.processors.ai_banking import KycAmlVerifyProcessor
 
         return self._add(  # type: ignore[attr-defined]
             KycAmlVerifyProcessor(jurisdiction=jurisdiction)
@@ -483,9 +468,7 @@ class AIRPAMixin:
 
     def antifraud_score(self, model: str = "default") -> "RouteBuilder":
         """LLM-скоринг антифрода (поверх детерминистических правил)."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            AntiFraudScoreProcessor,
-        )
+        from src.backend.dsl.engine.processors.ai_banking import AntiFraudScoreProcessor
 
         return self._add(  # type: ignore[attr-defined]
             AntiFraudScoreProcessor(model=model)
@@ -529,9 +512,7 @@ class AIRPAMixin:
 
     def findoc_ocr_llm(self, doc_type: str = "invoice") -> "RouteBuilder":
         """OCR + LLM для финансовых документов."""
-        from src.backend.dsl.engine.processors.ai_banking import (
-            FinDocOcrLlmProcessor,
-        )
+        from src.backend.dsl.engine.processors.ai_banking import FinDocOcrLlmProcessor
 
         return self._add(  # type: ignore[attr-defined]
             FinDocOcrLlmProcessor(doc_type=doc_type)

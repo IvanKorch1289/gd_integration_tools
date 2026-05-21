@@ -66,9 +66,7 @@ class RuleEngineRepository(Protocol):
         """
         ...
 
-    async def list_active(
-        self, *, tenant_id: str | None = None
-    ) -> list[RulesetDoc]:
+    async def list_active(self, *, tenant_id: str | None = None) -> list[RulesetDoc]:
         """Список всех ``enabled=True`` записей; опц. фильтр по tenant'у."""
         ...
 

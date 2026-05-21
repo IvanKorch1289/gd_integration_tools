@@ -180,11 +180,7 @@ class EventBus:
             "events.routes", RouteEvent(route_id=route_id, action=action)
         )
 
-    async def subscribe(
-        self,
-        channel: str,
-        handler: Any,
-    ) -> Any:
+    async def subscribe(self, channel: str, handler: Any) -> Any:
         """Sprint 12 K3 W4 — generic subscribe для reactive triggers.
 
         Args:
@@ -196,8 +192,7 @@ class EventBus:
         """
         if not self._broker or not self._started:
             logger.warning(
-                "EventBus.subscribe: broker not started, channel=%s ignored",
-                channel,
+                "EventBus.subscribe: broker not started, channel=%s ignored", channel
             )
             return None
         try:

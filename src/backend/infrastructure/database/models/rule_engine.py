@@ -50,20 +50,12 @@ class RuleEngineRulesetORM(RuleEngineBase):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(length=128), nullable=False)
-    version: Mapped[str] = mapped_column(
-        String(length=64), nullable=False, default="1"
-    )
+    version: Mapped[str] = mapped_column(String(length=64), nullable=False, default="1")
     yaml_body: Mapped[str] = mapped_column(Text, nullable=False)
-    enabled: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True
-    )
-    tenant_id: Mapped[str | None] = mapped_column(
-        String(length=128), nullable=True
-    )
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(length=128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

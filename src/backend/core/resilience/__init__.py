@@ -35,12 +35,17 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     get_breaker_registry,
 )
+from src.backend.core.resilience.bulkhead import Bulkhead, get_bulkhead
 from src.backend.core.resilience.cache_decorators import (
     cached,
     invalidate,
     multi_cached,
 )
-from src.backend.core.resilience.bulkhead import Bulkhead, get_bulkhead
+
+# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
+# импортируется ПОСЛЕ всех остальных модулей пакета, чтобы избежать
+# циклической зависимости при загрузке __init__.py.
+from src.backend.core.resilience.decorators import policy
 from src.backend.core.resilience.degradation import (
     ComponentState,
     DegradationManager,
@@ -67,11 +72,6 @@ from src.backend.core.resilience.retry_budget import (
     get_retry_budget,
 )
 from src.backend.core.resilience.self_healer import SelfHealer, get_self_healer
-
-# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
-# импортируется ПОСЛЕ всех остальных модулей пакета, чтобы избежать
-# циклической зависимости при загрузке __init__.py.
-from src.backend.core.resilience.decorators import policy
 
 __all__ = (
     "AdaptiveTimeoutConfig",

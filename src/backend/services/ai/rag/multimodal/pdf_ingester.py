@@ -116,10 +116,7 @@ class PDFIngester:
             warnings.append(f"pdf parse failed: {exc}")
             logger.warning("PDFIngester: парсинг PDF упал: %s", exc)
             return IngestResult(
-                document_id=document_id,
-                chunks=chunks,
-                metadata=meta,
-                warnings=warnings,
+                document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings
             )
 
         # Текстовые чанки (per-page → sliding window)
@@ -160,10 +157,7 @@ class PDFIngester:
                 )
 
         return IngestResult(
-            document_id=document_id,
-            chunks=chunks,
-            metadata=meta,
-            warnings=warnings,
+            document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings
         )
 
     def _parse_pdf(
@@ -187,7 +181,9 @@ class PDFIngester:
         try:
             return self._parse_pypdfium2(content)
         except ImportError as exc:
-            logger.info("PDFIngester: pypdfium2 недоступен (%s) — fallback на pypdf", exc)
+            logger.info(
+                "PDFIngester: pypdfium2 недоступен (%s) — fallback на pypdf", exc
+            )
             return self._parse_pypdf(content)
 
     @staticmethod
@@ -211,7 +207,9 @@ class PDFIngester:
                     textpage.close()
 
                 # Извлечение изображений (через page objects)
-                for obj_idx, obj in enumerate(page.get_objects(filter=(3,))):  # type=3=image
+                for obj_idx, obj in enumerate(
+                    page.get_objects(filter=(3,))
+                ):  # type=3=image
                     try:
                         bitmap = obj.get_bitmap(render=False)
                         pil_img = bitmap.to_pil()
@@ -234,10 +232,7 @@ class PDFIngester:
                         )
                 page.close()
 
-            meta_obj: dict[str, Any] = {
-                "page_count": len(pdf),
-                "engine": "pypdfium2",
-            }
+            meta_obj: dict[str, Any] = {"page_count": len(pdf), "engine": "pypdfium2"}
             # Метаданные документа (опционально)
             try:
                 doc_meta = pdf.get_metadata_dict()
@@ -262,10 +257,7 @@ class PDFIngester:
         reader = PdfReader(io.BytesIO(content))
         text_pages = [page.extract_text() or "" for page in reader.pages]
 
-        meta_obj: dict[str, Any] = {
-            "page_count": len(reader.pages),
-            "engine": "pypdf",
-        }
+        meta_obj: dict[str, Any] = {"page_count": len(reader.pages), "engine": "pypdf"}
         if reader.metadata is not None:
             if title := reader.metadata.title:
                 meta_obj["title"] = title

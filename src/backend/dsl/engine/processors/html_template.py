@@ -44,7 +44,10 @@ __all__ = ("HtmlTemplateProcessor",)
         "properties": {
             "template": {"type": "string"},
             "to": {"type": "string"},
-            "context_from": {"type": "string", "enum": ["body", "properties", "merged"]},
+            "context_from": {
+                "type": "string",
+                "enum": ["body", "properties", "merged"],
+            },
             "autoescape": {"type": "boolean"},
         },
         "required": ["template"],

@@ -26,14 +26,10 @@ def _ensure() -> None:
         from prometheus_client import Counter
 
         _hits = Counter(
-            "rag_cache_hits_total",
-            "RAG cache hits per tier",
-            labelnames=("tier",),
+            "rag_cache_hits_total", "RAG cache hits per tier", labelnames=("tier",)
         )
         _misses = Counter(
-            "rag_cache_misses_total",
-            "RAG cache misses per tier",
-            labelnames=("tier",),
+            "rag_cache_misses_total", "RAG cache misses per tier", labelnames=("tier",)
         )
     except ImportError:
         logger.debug("prometheus_client недоступен — RAG cache metrics в no-op.")

@@ -90,25 +90,19 @@ class PromptComparison:
 class PromptVersionStore(Protocol):
     """Backend для хранения prompt versions."""
 
-    async def create(self, version: PromptVersion) -> PromptVersion:
-        ...
+    async def create(self, version: PromptVersion) -> PromptVersion: ...
 
-    async def get(self, name: str, version: int) -> PromptVersion | None:
-        ...
+    async def get(self, name: str, version: int) -> PromptVersion | None: ...
 
-    async def list_versions(self, name: str) -> list[PromptVersion]:
-        ...
+    async def list_versions(self, name: str) -> list[PromptVersion]: ...
 
-    async def list_names(self) -> list[str]:
-        ...
+    async def list_names(self) -> list[str]: ...
 
-    async def set_active(self, name: str, version: int) -> PromptVersion:
-        ...
+    async def set_active(self, name: str, version: int) -> PromptVersion: ...
 
     async def update_metrics(
         self, name: str, version: int, metrics: dict[str, float]
-    ) -> PromptVersion:
-        ...
+    ) -> PromptVersion: ...
 
 
 class InMemoryPromptVersionStore:
@@ -134,9 +128,7 @@ class InMemoryPromptVersionStore:
 
     async def list_versions(self, name: str) -> list[PromptVersion]:
         async with self._lock:
-            items = [
-                v for (n, _), v in self._store.items() if n == name
-            ]
+            items = [v for (n, _), v in self._store.items() if n == name]
         return sorted(items, key=lambda v: v.version)
 
     async def list_names(self) -> list[str]:
@@ -232,13 +224,9 @@ class PromptVersionService:
         a = await self._store.get(name, version_a)
         b = await self._store.get(name, version_b)
         if a is None or b is None:
-            raise KeyError(
-                f"Prompt {name}:v{version_a} or v{version_b} not found"
-            )
+            raise KeyError(f"Prompt {name}:v{version_a} or v{version_b} not found")
         keys = set(a.metrics.keys()) | set(b.metrics.keys())
-        diffs = {
-            k: b.metrics.get(k, 0.0) - a.metrics.get(k, 0.0) for k in keys
-        }
+        diffs = {k: b.metrics.get(k, 0.0) - a.metrics.get(k, 0.0) for k in keys}
         return PromptComparison(name=name, a=a, b=b, metric_diffs=diffs)
 
     async def update_metrics(

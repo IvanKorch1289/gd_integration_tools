@@ -12,15 +12,10 @@ Sprint 11 K4 W7.
 
 from __future__ import annotations
 
-import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
-__all__ = (
-    "OptimizationRecommendation",
-    "RouteAnalyzer",
-    "RouteMetrics",
-)
+__all__ = ("OptimizationRecommendation", "RouteAnalyzer", "RouteMetrics")
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,9 +100,7 @@ class RouteAnalyzer:
                     p50_latency_ms=self._percentile(latencies, 0.50),
                     p95_latency_ms=self._percentile(latencies, 0.95),
                     p99_latency_ms=self._percentile(latencies, 0.99),
-                    avg_retry_count=(
-                        sum(retries) / len(retries) if retries else 0.0
-                    ),
+                    avg_retry_count=(sum(retries) / len(retries) if retries else 0.0),
                 )
             )
         out.sort(key=lambda m: m.p95_latency_ms, reverse=True)
@@ -129,7 +122,9 @@ class RouteAnalyzer:
                             f"порог {self._slow_p95:.0f}ms — рассмотреть "
                             ".parallel() / .async_to() для этого шага."
                         ),
-                        priority="P1" if m.p95_latency_ms < 2 * self._slow_p95 else "P0",
+                        priority="P1"
+                        if m.p95_latency_ms < 2 * self._slow_p95
+                        else "P0",
                         estimated_gain_ms=m.p95_latency_ms * 0.4,
                     )
                 )

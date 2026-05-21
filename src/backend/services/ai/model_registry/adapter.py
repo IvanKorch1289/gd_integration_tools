@@ -35,9 +35,7 @@ class ModelRecord(BaseModel):
 
     name: str
     version: str = Field(default="1")
-    stage: Literal["None", "Staging", "Production", "Archived"] = Field(
-        default="None"
-    )
+    stage: Literal["None", "Staging", "Production", "Archived"] = Field(default="None")
     artifact_uri: str | None = None
     tags: dict[str, str] = Field(default_factory=dict)
     description: str | None = None
@@ -74,10 +72,7 @@ class ModelRegistryAdapter(Protocol):
         ...
 
     async def transition_stage(
-        self,
-        name: str,
-        version: str,
-        new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         """Переводит версию в новый stage (``Staging`` → ``Production``)."""
         ...

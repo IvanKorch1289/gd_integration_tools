@@ -10,7 +10,4 @@ from src.backend.services.notifications.apprise_service import (
     get_notification_service,
 )
 
-__all__ = (
-    "AppriseNotificationService",
-    "get_notification_service",
-)
+__all__ = ("AppriseNotificationService", "get_notification_service")

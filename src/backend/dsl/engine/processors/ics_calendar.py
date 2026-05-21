@@ -90,7 +90,11 @@ class IcsCalendarProcessor(BaseProcessor):
         if self._source == "body":
             return body
         if self._source.startswith("body."):
-            return body.get(self._source[len("body.") :]) if isinstance(body, dict) else None
+            return (
+                body.get(self._source[len("body.") :])
+                if isinstance(body, dict)
+                else None
+            )
         if self._source.startswith("properties."):
             return exchange.properties.get(self._source[len("properties.") :])
         return None

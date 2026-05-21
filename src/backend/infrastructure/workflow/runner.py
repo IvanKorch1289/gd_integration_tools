@@ -195,9 +195,7 @@ class DurableWorkflowRunner:
             self._backup_loop(), name="wf-backup-poll"
         )
         # 3) dispatcher loop — читает из queue и запускает workers.
-        get_task_registry().create_task(
-            self._dispatch_loop(), name="wf-dispatch"
-        )
+        get_task_registry().create_task(self._dispatch_loop(), name="wf-dispatch")
         _logger.info(
             "workflow runner started",
             extra={
@@ -214,7 +212,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                except asyncio.CancelledError, Exception:  # noqa: BLE001
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )

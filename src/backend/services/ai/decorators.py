@@ -39,10 +39,7 @@ from typing import Any, ParamSpec, TypeVar
 
 from src.backend.services.ai.registry import AIPluginRegistry, get_ai_plugin_registry
 
-__all__ = (
-    "AIServiceSpec",
-    "ai_service",
-)
+__all__ = ("AIServiceSpec", "ai_service")
 
 _logger = logging.getLogger("services.ai.decorators")
 
@@ -101,9 +98,7 @@ def ai_service(
 
     caps_tuple = tuple(capabilities)
 
-    def decorator(
-        func: Callable[_P, Awaitable[_R]],
-    ) -> Callable[_P, Awaitable[_R]]:
+    def decorator(func: Callable[_P, Awaitable[_R]]) -> Callable[_P, Awaitable[_R]]:
         if not inspect.iscoroutinefunction(func):
             raise ValueError(
                 f"@ai_service expects async function, got {func.__name__!r}"

@@ -184,9 +184,7 @@ async def get_smart_read_session() -> AsyncGenerator[AsyncSession, None]:
     Использует :class:`SmartSessionManager`: read-запросы идут на
     replica при доступности, иначе fallback на primary.
     """
-    from src.backend.infrastructure.database.database import (
-        get_smart_session_manager,
-    )
+    from src.backend.infrastructure.database.database import get_smart_session_manager
 
     manager = get_smart_session_manager()
     async with manager.acquire(mode="read") as session:
@@ -199,9 +197,7 @@ async def get_smart_write_session() -> AsyncGenerator[AsyncSession, None]:
     Write-сессии всегда идут на primary engine; replica для write
     никогда не используется.
     """
-    from src.backend.infrastructure.database.database import (
-        get_smart_session_manager,
-    )
+    from src.backend.infrastructure.database.database import get_smart_session_manager
 
     manager = get_smart_session_manager()
     async with manager.acquire(mode="write") as session:

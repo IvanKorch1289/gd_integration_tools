@@ -11,8 +11,4 @@ from src.backend.services.ai.prompts.langfuse_storage import (
     get_prompt_storage,
 )
 
-__all__ = (
-    "LangfusePromptStorage",
-    "PromptEntry",
-    "get_prompt_storage",
-)
+__all__ = ("LangfusePromptStorage", "PromptEntry", "get_prompt_storage")

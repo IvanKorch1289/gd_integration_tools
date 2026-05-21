@@ -342,7 +342,7 @@ class ApiProxyProcessor(BaseProcessor):
         if "{" in path and isinstance(exchange.in_message.body, dict):
             try:
                 path = path.format(**exchange.in_message.body)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 pass
 
         url = f"{self._base_url}{path}"

@@ -57,11 +57,7 @@ class MultimodalPipeline:
     """
 
     def __init__(
-        self,
-        service: Any,
-        *,
-        captioner: Any | None = None,
-        whisper: Any | None = None,
+        self, service: Any, *, captioner: Any | None = None, whisper: Any | None = None
     ) -> None:
         self._service = service
         self._captioner = captioner
@@ -85,7 +81,11 @@ class MultimodalPipeline:
 
         match modal:
             case "text":
-                text = payload.decode("utf-8") if isinstance(payload, bytes) else str(payload)
+                text = (
+                    payload.decode("utf-8")
+                    if isinstance(payload, bytes)
+                    else str(payload)
+                )
                 chunk_id = await self._ingest_text(text, collection, meta)
             case "image":
                 if not isinstance(payload, bytes):
@@ -114,12 +114,11 @@ class MultimodalPipeline:
         chunk_id = uuid4().hex
         store = getattr(self._service, "_collections", None)
         if store is None:
-            raise RuntimeError("Pipeline requires MultimodalRAGService с in-memory store")
+            raise RuntimeError(
+                "Pipeline requires MultimodalRAGService с in-memory store"
+            )
         store.setdefault(collection, {})
-        store[collection][chunk_id] = {
-            "content": text,
-            "metadata": metadata,
-        }
+        store[collection][chunk_id] = {"content": text, "metadata": metadata}
         return chunk_id
 
     async def query(

@@ -108,12 +108,7 @@ class DistributedRedisRateLimiter:
         self._script_sha = sha if isinstance(sha, str) else sha.decode("ascii")
         return self._script_sha
 
-    async def acquire(
-        self,
-        tenant_id: str,
-        *,
-        tokens: int = 1,
-    ) -> TokenBucketResult:
+    async def acquire(self, tenant_id: str, *, tokens: int = 1) -> TokenBucketResult:
         """Попытаться взять ``tokens`` из бакета tenant'а.
 
         Returns:
@@ -127,13 +122,7 @@ class DistributedRedisRateLimiter:
             sha = await self._ensure_script()
             client = getattr(self._adapter, "client", self._adapter)
             raw = await client.evalsha(
-                sha,
-                1,
-                key,
-                self._capacity,
-                self._refill,
-                tokens,
-                now_ms,
+                sha, 1, key, self._capacity, self._refill, tokens, now_ms
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning(

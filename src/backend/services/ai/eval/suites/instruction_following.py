@@ -76,10 +76,7 @@ class _InstructionFollowing:
             hit = sum(1 for f in required if f in parsed)
             coverage = hit / len(required)
 
-        return {
-            "is_json": is_json,
-            "field_coverage": float(coverage),
-        }
+        return {"is_json": is_json, "field_coverage": float(coverage)}
 
 
 instruction_following_suite = _InstructionFollowing()

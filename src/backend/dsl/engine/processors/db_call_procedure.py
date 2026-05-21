@@ -54,10 +54,7 @@ _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
             "profile": {"type": "string"},
             "name": {"type": "string"},
             "schema": {"type": "string"},
-            "params_from": {
-                "type": "string",
-                "enum": sorted(_ALLOWED_PARAM_SOURCES),
-            },
+            "params_from": {"type": "string", "enum": sorted(_ALLOWED_PARAM_SOURCES)},
             "result_property": {"type": "string"},
             "dialect": {"type": "string", "enum": ["postgres", "mssql", "oracle"]},
         },
@@ -104,7 +101,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             )
         if dialect not in {"postgres", "mssql", "oracle"}:
             raise ValueError(
-                f"db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'"
+                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'"
             )
         self._profile = profile
         self._sp_name = name
@@ -156,9 +153,7 @@ class DbCallProcedureProcessor(BaseProcessor):
 
         from sqlalchemy import text
 
-        from src.backend.core.di.providers import (
-            get_external_session_manager_provider,
-        )
+        from src.backend.core.di.providers import get_external_session_manager_provider
 
         params = self._collect_params(exchange)
         sql = self._build_call_sql(params)
@@ -177,10 +172,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         exchange.set_out(body=payload, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {
-            "profile": self._profile,
-            "name": self._sp_name,
-        }
+        spec: dict[str, Any] = {"profile": self._profile, "name": self._sp_name}
         if self._schema != "public":
             spec["schema"] = self._schema
         if self._params_from != "body":

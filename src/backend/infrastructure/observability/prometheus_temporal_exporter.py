@@ -51,7 +51,7 @@ def _ensure_metrics() -> dict[str, Any]:
                 labelnames=("action",),
             ),
         }
-    except (ImportError, ValueError):
+    except ImportError, ValueError:
         _metrics = {"_disabled": True}
     return _metrics
 

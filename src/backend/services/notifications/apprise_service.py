@@ -23,10 +23,7 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-__all__ = (
-    "AppriseNotificationService",
-    "get_notification_service",
-)
+__all__ = ("AppriseNotificationService", "get_notification_service")
 
 _log = logging.getLogger(__name__)
 
@@ -90,7 +87,9 @@ class AppriseNotificationService:
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.notification_dsl_enabled:
-            _log.debug("notification_dsl_enabled=False, пропускаем notify '%s'", channel)
+            _log.debug(
+                "notification_dsl_enabled=False, пропускаем notify '%s'", channel
+            )
             return False
 
         try:
@@ -103,7 +102,9 @@ class AppriseNotificationService:
 
         url = self._channel_urls.get(channel)
         if not url:
-            _log.warning("Канал '%s' не зарегистрирован в AppriseNotificationService.", channel)
+            _log.warning(
+                "Канал '%s' не зарегистрирован в AppriseNotificationService.", channel
+            )
             return False
 
         apobj = apprise.Apprise()
@@ -117,12 +118,13 @@ class AppriseNotificationService:
         notify_format = _format_map.get(body_format, apprise.NotifyFormat.TEXT)
 
         result: bool = await apobj.async_notify(
-            title=title,
-            body=body,
-            body_format=notify_format,
+            title=title, body=body, body_format=notify_format
         )
         if not result:
-            _log.warning("Уведомление в канал '%s' не доставлено (Apprise вернул False).", channel)
+            _log.warning(
+                "Уведомление в канал '%s' не доставлено (Apprise вернул False).",
+                channel,
+            )
         return result
 
     async def notify_multi(

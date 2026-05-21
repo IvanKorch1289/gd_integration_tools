@@ -439,13 +439,11 @@ class WebhookSignVerifyProcessor(BaseProcessor):
 
         received = exchange.in_message.get_header(self._header)
         if not received:
-            self._handle_invalid(
-                exchange, f"Missing signature header {self._header!r}"
-            )
+            self._handle_invalid(exchange, f"Missing signature header {self._header!r}")
             return
 
         if self._prefix and received.startswith(self._prefix):
-            received = received[len(self._prefix):]
+            received = received[len(self._prefix) :]
 
         body = exchange.in_message.body
         if isinstance(body, str):

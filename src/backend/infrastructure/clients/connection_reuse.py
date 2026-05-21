@@ -209,14 +209,10 @@ class ConnectionReuseManager:
         # Инициализация метаданных при первом acquire
         if registration.metadata is None:
             registration.metadata = ConnectionMetadata(
-                name=name,
-                created_at=now,
-                last_used=now,
+                name=name, created_at=now, last_used=now
             )
             registration.last_connection = registration.pool
-            logger.debug(
-                "ConnectionReuseManager: первый acquire '%s'", name
-            )
+            logger.debug("ConnectionReuseManager: первый acquire '%s'", name)
 
         meta = registration.metadata
 
@@ -231,9 +227,7 @@ class ConnectionReuseManager:
                 registration.max_lifetime_seconds,
             )
             registration.metadata = ConnectionMetadata(
-                name=name,
-                created_at=now,
-                last_used=now,
+                name=name, created_at=now, last_used=now
             )
             meta = registration.metadata
             registration.last_connection = registration.pool
@@ -266,9 +260,7 @@ class ConnectionReuseManager:
         """
         registration = self._pools.get(name)
         if registration is None:
-            logger.warning(
-                "ConnectionReuseManager.release: pool '%s' не найден", name
-            )
+            logger.warning("ConnectionReuseManager.release: pool '%s' не найден", name)
             return
 
         self.mark_used(name)
@@ -315,9 +307,7 @@ class ConnectionReuseManager:
             await registration.ping_callable(registration.pool)
             if registration.metadata is not None:
                 registration.metadata.last_used = now
-            logger.debug(
-                "ConnectionReuseManager: ping OK для '%s'", registration.name
-            )
+            logger.debug("ConnectionReuseManager: ping OK для '%s'", registration.name)
         except Exception as exc:
             logger.warning(
                 "ConnectionReuseManager: ping FAIL для '%s' — %s",

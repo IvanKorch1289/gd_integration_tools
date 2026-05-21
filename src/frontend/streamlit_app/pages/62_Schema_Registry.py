@@ -53,9 +53,7 @@ from src.frontend.streamlit_app.services.schema_registry_client import (  # noqa
 # ─── Конфигурация страницы ────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Schema Registry",
-    page_icon=":card_index_dividers:",
-    layout="wide",
+    page_title="Schema Registry", page_icon=":card_index_dividers:", layout="wide"
 )
 
 # ─── Sidebar: feature-flag toggle ─────────────────────────────────────────
@@ -91,10 +89,7 @@ if not flag_override:
 
 
 def _render_schema_tab(
-    kind: str,
-    lang: str,
-    label: str,
-    validate_fn: bool = False,
+    kind: str, lang: str, label: str, validate_fn: bool = False
 ) -> None:
     """Отрисовать содержимое одного tab для конкретного типа схемы.
 
@@ -192,14 +187,7 @@ def _render_schema_tab(
 # ─── Tabs ─────────────────────────────────────────────────────────────────
 
 tab_openapi, tab_wsdl, tab_xsd, tab_proto, tab_async, tab_graphql = st.tabs(
-    [
-        "OpenAPI",
-        "WSDL",
-        "XSD",
-        "Protobuf",
-        "AsyncAPI",
-        "GraphQL SDL",
-    ]
+    ["OpenAPI", "WSDL", "XSD", "Protobuf", "AsyncAPI", "GraphQL SDL"]
 )
 
 with tab_openapi:

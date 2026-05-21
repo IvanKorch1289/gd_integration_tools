@@ -17,13 +17,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, select
 
-from src.backend.core.interfaces.rule_engine import (
-    RuleEngineRepository,
-    RulesetDoc,
-)
-from src.backend.infrastructure.database.models.rule_engine import (
-    RuleEngineRulesetORM,
-)
+from src.backend.core.interfaces.rule_engine import RuleEngineRepository, RulesetDoc
+from src.backend.infrastructure.database.models.rule_engine import RuleEngineRulesetORM
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,23 +59,15 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         )
 
     async def get(
-        self,
-        name: str,
-        *,
-        version: str | None = None,
-        tenant_id: str | None = None,
+        self, name: str, *, version: str | None = None, tenant_id: str | None = None
     ) -> RulesetDoc | None:
         """Вернуть включённый ruleset по имени.
 
         Если ``version`` не задана — берётся запись с максимальной
         ``version`` (лексикографическая сортировка по убыванию).
         """
-        stmt = (
-            select(RuleEngineRulesetORM)
-            .where(
-                RuleEngineRulesetORM.name == name,
-                RuleEngineRulesetORM.enabled.is_(True),
-            )
+        stmt = select(RuleEngineRulesetORM).where(
+            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.enabled.is_(True)
         )
         if tenant_id is None:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id.is_(None))
@@ -96,9 +83,7 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         orm = result.scalar_one_or_none()
         return self._to_doc(orm) if orm is not None else None
 
-    async def list_active(
-        self, *, tenant_id: str | None = None
-    ) -> list[RulesetDoc]:
+    async def list_active(self, *, tenant_id: str | None = None) -> list[RulesetDoc]:
         """Список всех включённых ruleset'ов; опц. фильтр по tenant'у."""
         stmt = select(RuleEngineRulesetORM).where(
             RuleEngineRulesetORM.enabled.is_(True)
@@ -143,16 +128,11 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         return self._to_doc(orm)
 
     async def delete(
-        self,
-        name: str,
-        version: str,
-        *,
-        tenant_id: str | None = None,
+        self, name: str, version: str, *, tenant_id: str | None = None
     ) -> bool:
         """Удалить запись по составному ключу."""
         stmt = delete(RuleEngineRulesetORM).where(
-            RuleEngineRulesetORM.name == name,
-            RuleEngineRulesetORM.version == version,
+            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.version == version
         )
         if tenant_id is None:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id.is_(None))

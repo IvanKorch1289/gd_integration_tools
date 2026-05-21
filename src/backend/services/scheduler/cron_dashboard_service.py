@@ -15,10 +15,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = (
-    "ScheduledWorkflowSummary",
-    "CronDashboardService",
-)
+__all__ = ("ScheduledWorkflowSummary", "CronDashboardService")
 
 _logger = logging.getLogger("services.scheduler.dashboard")
 
@@ -53,15 +50,21 @@ class CronDashboardService:
 
             from src.backend.core.config import settings
 
-            host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-                settings, "clickhouse"
-            ) else "localhost"
-            port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-                settings, "clickhouse"
-            ) else 8123
-            database = getattr(settings.clickhouse, "database", "default") if hasattr(
-                settings, "clickhouse"
-            ) else "default"
+            host = (
+                getattr(settings.clickhouse, "host", "localhost")
+                if hasattr(settings, "clickhouse")
+                else "localhost"
+            )
+            port = (
+                getattr(settings.clickhouse, "port", 8123)
+                if hasattr(settings, "clickhouse")
+                else 8123
+            )
+            database = (
+                getattr(settings.clickhouse, "database", "default")
+                if hasattr(settings, "clickhouse")
+                else "default"
+            )
             return await get_async_client(host=host, port=port, database=database)
         except Exception:  # noqa: BLE001
             return None
@@ -103,9 +106,7 @@ class CronDashboardService:
             )
         return results
 
-    async def get_success_rate(
-        self, job_id: str, *, period_days: int = 7
-    ) -> float:
+    async def get_success_rate(self, job_id: str, *, period_days: int = 7) -> float:
         """Возвращает success rate (%) за период из workflow_audit."""
         from datetime import datetime, timedelta, timezone
 
@@ -124,9 +125,7 @@ class CronDashboardService:
                 parameters={"job_id": job_id, "cutoff": cutoff},
             )
             row = (
-                result.result_rows[0]
-                if getattr(result, "result_rows", None)
-                else None
+                result.result_rows[0] if getattr(result, "result_rows", None) else None
             )
         except Exception as exc:  # noqa: BLE001
             _logger.warning("CH success_rate failed: %s", exc)

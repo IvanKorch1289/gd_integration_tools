@@ -115,7 +115,7 @@ class CancelWorkflowProcessor(BaseProcessor):
             cursor = dict(exchange.in_message.headers)
         else:
             return value
-        for part in (tail.split(".") if tail else []):
+        for part in tail.split(".") if tail else []:
             if isinstance(cursor, dict):
                 cursor = cursor.get(part)
             else:
@@ -129,9 +129,7 @@ class CancelWorkflowProcessor(BaseProcessor):
             return self._backend_override
         if self._backend_factory is not None:
             return await self._backend_factory()
-        from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         return await create_workflow_backend(kind="auto")
 
@@ -142,15 +140,12 @@ class CancelWorkflowProcessor(BaseProcessor):
         wf_id = self._resolve_ref(self.workflow_id_spec, exchange)
         if not wf_id:
             raise ValueError(
-                f"cancel_workflow: пустой workflow_id "
-                f"(spec={self.workflow_id_spec!r})"
+                f"cancel_workflow: пустой workflow_id (spec={self.workflow_id_spec!r})"
             )
 
         backend = await self._resolve_backend()
         handle = WorkflowHandle(
-            workflow_id=wf_id,
-            run_id=wf_id,
-            namespace=self.namespace_name,
+            workflow_id=wf_id, run_id=wf_id, namespace=self.namespace_name
         )
         await backend.cancel_workflow(handle=handle)
 
@@ -176,11 +171,7 @@ class CancelWorkflowProcessor(BaseProcessor):
 
         exchange.set_property(
             self.result_property,
-            {
-                "cancelled": True,
-                "workflow_id": wf_id,
-                "reason": self.reason,
-            },
+            {"cancelled": True, "workflow_id": wf_id, "reason": self.reason},
         )
 
     def to_spec(self) -> dict[str, Any] | None:

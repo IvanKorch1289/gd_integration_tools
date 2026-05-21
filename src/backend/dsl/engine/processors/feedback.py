@@ -72,9 +72,7 @@ class FeedbackProcessor(BaseProcessor):
         """Сохраняет параметры step."""
         super().__init__(name=name or "record_feedback")
         if rating is None and rating_from is None:
-            raise ValueError(
-                "FeedbackProcessor: укажите rating или rating_from"
-            )
+            raise ValueError("FeedbackProcessor: укажите rating или rating_from")
         self._rating = rating
         self._rating_from = rating_from
         self._comment = comment
@@ -84,9 +82,7 @@ class FeedbackProcessor(BaseProcessor):
         self._agent_id = agent_id
         self._result_property = result_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Сохраняет ответ + label в FeedbackService."""
         rating: Any = (
             _resolve(exchange, self._rating_from)
@@ -126,9 +122,7 @@ class FeedbackProcessor(BaseProcessor):
             # Если rating — known label, сразу применим feedback.
             if isinstance(rating, str) and rating.lower() in _VALID_LABELS:
                 await service.set_feedback(
-                    doc_id=doc_id,
-                    label=rating.lower(),
-                    comment=comment,
+                    doc_id=doc_id, label=rating.lower(), comment=comment
                 )
             exchange.set_property(self._result_property, doc_id)
             _logger.info(
@@ -150,7 +144,7 @@ class FeedbackProcessor(BaseProcessor):
         if isinstance(body, (bytes, bytearray)):
             try:
                 return body.decode("utf-8", errors="replace")
-            except (UnicodeDecodeError, AttributeError):
+            except UnicodeDecodeError, AttributeError:
                 return repr(body)
         return "" if body is None else str(body)
 

@@ -13,16 +13,13 @@ SamlBackend`` работает наравне с историческим ``saml
 
 from __future__ import annotations
 
+from src.backend.core.auth.saml.sp_handler import SamlSpHandler, SpInitiatedLoginResult
 from src.backend.core.auth.saml_backend import (
     IdpMetadata,
     SamlAuthResult,
     SamlBackend,
     SamlConfig,
     SamlError,
-)
-from src.backend.core.auth.saml.sp_handler import (
-    SamlSpHandler,
-    SpInitiatedLoginResult,
 )
 
 __all__ = (

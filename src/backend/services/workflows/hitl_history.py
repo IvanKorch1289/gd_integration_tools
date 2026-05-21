@@ -12,17 +12,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-__all__ = (
-    "HitlHistoryRecord",
-    "HitlHistoryService",
-)
+__all__ = ("HitlHistoryRecord", "HitlHistoryService")
 
 _logger = logging.getLogger("services.workflows.hitl_history")
 
 
-_HITL_EVENT_TYPES = frozenset(
-    {"hitl.approved", "hitl.rejected", "hitl.requested_info"}
-)
+_HITL_EVENT_TYPES = frozenset({"hitl.approved", "hitl.rejected", "hitl.requested_info"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,21 +44,25 @@ class HitlHistoryService:
     async def _get_client(self) -> Any:
         if self._factory is not None:
             return await self._factory()
-        from clickhouse_connect import (  # type: ignore[import-untyped]
-            get_async_client,
-        )
+        from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
 
         from src.backend.core.config import settings
 
-        host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-            settings, "clickhouse"
-        ) else "localhost"
-        port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-            settings, "clickhouse"
-        ) else 8123
-        database = getattr(settings.clickhouse, "database", "default") if hasattr(
-            settings, "clickhouse"
-        ) else "default"
+        host = (
+            getattr(settings.clickhouse, "host", "localhost")
+            if hasattr(settings, "clickhouse")
+            else "localhost"
+        )
+        port = (
+            getattr(settings.clickhouse, "port", 8123)
+            if hasattr(settings, "clickhouse")
+            else 8123
+        )
+        database = (
+            getattr(settings.clickhouse, "database", "default")
+            if hasattr(settings, "clickhouse")
+            else "default"
+        )
         return await get_async_client(host=host, port=port, database=database)
 
     async def get_history(
@@ -78,7 +77,9 @@ class HitlHistoryService:
     ) -> list[HitlHistoryRecord]:
         """Возвращает HITL history с применением фильтров."""
         import json
-        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timedelta as _td
+        from datetime import timezone as _tz
 
         limit = max(1, min(limit, 1000))
         to_dt = to_dt or _dt.now(_tz.utc)
@@ -95,11 +96,7 @@ class HitlHistoryService:
             "created_at <= %(to_dt)s",
             "event_type IN ('hitl.approved', 'hitl.rejected', 'hitl.requested_info')",
         ]
-        params: dict[str, Any] = {
-            "from_dt": from_dt,
-            "to_dt": to_dt,
-            "limit": limit,
-        }
+        params: dict[str, Any] = {"from_dt": from_dt, "to_dt": to_dt, "limit": limit}
         if tenant_id:
             conditions.append("tenant_id = %(tenant_id)s")
             params["tenant_id"] = tenant_id
@@ -132,7 +129,7 @@ class HitlHistoryService:
         for row in getattr(result, "result_rows", []):
             try:
                 payload = json.loads(row[4]) if row[4] else {}
-            except (TypeError, json.JSONDecodeError):
+            except TypeError, json.JSONDecodeError:
                 payload = {}
             event_type = row[2]
             action_str = event_type.removeprefix("hitl.")

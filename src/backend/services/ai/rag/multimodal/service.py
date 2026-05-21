@@ -35,10 +35,7 @@ from src.backend.services.ai.rag.multimodal.types import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "MultimodalRAGService",
-    "get_multimodal_rag",
-)
+__all__ = ("MultimodalRAGService", "get_multimodal_rag")
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -173,7 +170,10 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
                 result = IngestResult(
                     document_id=chunk.metadata.get("sha256") or uuid4().hex,
                     chunks=[chunk],
-                    metadata={"mime": m, "source_path": chunk.metadata.get("source_path")},
+                    metadata={
+                        "mime": m,
+                        "source_path": chunk.metadata.get("source_path"),
+                    },
                 )
             case other:
                 raise ValueError(
@@ -199,10 +199,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         return result
 
     async def search(
-        self,
-        query: str | bytes,
-        collection: str = "default",
-        top_k: int = 10,
+        self, query: str | bytes, collection: str = "default", top_k: int = 10
     ) -> list[SearchResult]:
         """Semantic search по embeddings (cosine similarity).
 
@@ -260,8 +257,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             return await self._embedder.embed(content)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "MultimodalRAGService: embedder упал (%s) — fallback на dummy",
-                exc,
+                "MultimodalRAGService: embedder упал (%s) — fallback на dummy", exc
             )
             return _dummy_embedding(content)
 

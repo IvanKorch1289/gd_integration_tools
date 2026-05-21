@@ -64,10 +64,7 @@ class _ToolUse:
         else:
             hit = sum(1 for a in required if a in args)
             coverage = hit / len(required)
-        return {
-            "tool_name_correct": name_ok,
-            "args_coverage": float(coverage),
-        }
+        return {"tool_name_correct": name_ok, "args_coverage": float(coverage)}
 
 
 tool_use_suite = _ToolUse()

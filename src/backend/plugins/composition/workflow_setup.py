@@ -24,10 +24,7 @@ from typing import Any, Iterable
 
 from src.backend.core.config.settings import settings
 from src.backend.dsl.workflow.builder import WorkflowDeclaration
-from src.backend.dsl.workflow.compiler import (
-    CompiledWorkflow,
-    WorkflowCompilerRegistry,
-)
+from src.backend.dsl.workflow.compiler import CompiledWorkflow, WorkflowCompilerRegistry
 
 __all__ = (
     "register_workflow_declarations",
@@ -83,10 +80,7 @@ def _bootstrap_default_declarations() -> list[CompiledWorkflow]:
         build_payments_saga_workflow,
     )
 
-    declarations = [
-        build_orders_saga_workflow(),
-        build_payments_saga_workflow(),
-    ]
+    declarations = [build_orders_saga_workflow(), build_payments_saga_workflow()]
     compiled = register_workflow_declarations(declarations)
     _logger.info(
         "Workflow bootstrap defaults registered: %s",

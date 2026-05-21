@@ -14,7 +14,9 @@ from src.backend.core.net.http_utils import ensure_url_protocol
 __all__ = ("root_page",)
 
 # src/backend/infrastructure/application/index.py -> ../../../../ = src/
-_STATIC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
+_STATIC_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
+)
 
 
 async def root_page() -> HTMLResponse:

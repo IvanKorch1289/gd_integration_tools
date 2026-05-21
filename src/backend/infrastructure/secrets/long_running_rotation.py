@@ -42,11 +42,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
 
-__all__ = (
-    "HeartbeatCallback",
-    "LongRunningSecretRotator",
-    "SecretBackendLike",
-)
+__all__ = ("HeartbeatCallback", "LongRunningSecretRotator", "SecretBackendLike")
 
 _logger = logging.getLogger("infrastructure.secrets.long_running_rotation")
 

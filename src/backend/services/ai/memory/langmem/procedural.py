@@ -35,10 +35,7 @@ class ProceduralMemory:
 
         async with self._session_factory() as session:
             row = LangMemProcedural(
-                name=name,
-                description=description,
-                steps=steps,
-                tenant=tenant,
+                name=name, description=description, steps=steps, tenant=tenant
             )
             session.add(row)
             await session.commit()

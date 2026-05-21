@@ -95,8 +95,7 @@ class SourcesMixin:
         )
         source_instance = mod.WebDAVSource(cfg)
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"webdav:{route_id}",
+            route_id=route_id, source=f"webdav:{route_id}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
@@ -143,9 +142,7 @@ class SourcesMixin:
         """
         import importlib
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.cdc"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.cdc")
         CDCSource = mod.CDCSource  # noqa: N806
         effective_slot = slot_name or table
         source_instance = CDCSource(
@@ -157,8 +154,7 @@ class SourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"cdc:{table}",
+            route_id=route_id, source=f"cdc:{table}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
@@ -213,8 +209,7 @@ class SourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"cdc-logical:{table}",
+            route_id=route_id, source=f"cdc-logical:{table}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
@@ -258,9 +253,7 @@ class SourcesMixin:
         """
         import importlib
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.mq"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.mq")
         MQSource = mod.MQSource  # noqa: N806
         source_instance = MQSource(
             source_id=route_id,
@@ -271,19 +264,14 @@ class SourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"kafka:{topic}",
+            route_id=route_id, source=f"kafka:{topic}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
     @classmethod
     def from_rabbit(
-        cls,
-        route_id: str,
-        queue: str,
-        url: str,
-        **kwargs: Any,
+        cls, route_id: str, queue: str, url: str, **kwargs: Any
     ) -> "RouteBuilder":
         """Создаёт маршрут с источником RabbitMQ.
 
@@ -313,9 +301,7 @@ class SourcesMixin:
         """
         import importlib
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.mq"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.mq")
         MQSource = mod.MQSource  # noqa: N806
         source_instance = MQSource(
             source_id=route_id,
@@ -325,19 +311,14 @@ class SourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"rabbitmq:{queue}",
+            route_id=route_id, source=f"rabbitmq:{queue}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
     @classmethod
     def from_mqtt(
-        cls,
-        route_id: str,
-        topic: str,
-        broker_url: str,
-        **kwargs: Any,
+        cls, route_id: str, topic: str, broker_url: str, **kwargs: Any
     ) -> "RouteBuilder":
         """Создаёт маршрут с источником MQTT.
 
@@ -368,8 +349,7 @@ class SourcesMixin:
         # MQTT Source-класса пока нет в infrastructure/sources/
         # — используем строковый DSN; source_instance = None (будущее расширение)
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"mqtt:{topic}",
+            route_id=route_id, source=f"mqtt:{topic}"
         )
         # Сохраняем параметры для будущей регистрации MQTTSource
         object.__setattr__(
@@ -381,11 +361,7 @@ class SourcesMixin:
 
     @classmethod
     def from_redis_streams(
-        cls,
-        route_id: str,
-        stream: str,
-        consumer_group: str,
-        **kwargs: Any,
+        cls, route_id: str, stream: str, consumer_group: str, **kwargs: Any
     ) -> "RouteBuilder":
         """Создаёт маршрут с источником Redis Streams.
 
@@ -417,9 +393,7 @@ class SourcesMixin:
         """
         import importlib
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.mq"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.mq")
         MQSource = mod.MQSource  # noqa: N806
         source_instance = MQSource(
             source_id=route_id,
@@ -429,20 +403,14 @@ class SourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"redis_streams:{stream}",
+            route_id=route_id, source=f"redis_streams:{stream}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
     @classmethod
     def from_filewatcher(
-        cls,
-        route_id: str,
-        path: str,
-        *,
-        recursive: bool = True,
-        **kwargs: Any,
+        cls, route_id: str, path: str, *, recursive: bool = True, **kwargs: Any
     ) -> "RouteBuilder":
         """Создаёт маршрут с источником FileWatcher (watchfiles.awatch).
 
@@ -475,29 +443,19 @@ class SourcesMixin:
         import importlib
         from pathlib import Path
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.file_watcher"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.file_watcher")
         FileWatcherSource = mod.FileWatcherSource  # noqa: N806
         source_instance = FileWatcherSource(
-            path=Path(path),
-            recursive=recursive,
-            **kwargs,
+            path=Path(path), recursive=recursive, **kwargs
         )
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"filewatcher:{path}",
+            route_id=route_id, source=f"filewatcher:{path}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
     @classmethod
-    def from_webhook(
-        cls,
-        route_id: str,
-        path: str,
-        **kwargs: Any,
-    ) -> "RouteBuilder":
+    def from_webhook(cls, route_id: str, path: str, **kwargs: Any) -> "RouteBuilder":
         """Создаёт маршрут с источником inbound webhook.
 
         Лениво импортирует :class:`WebhookSource` из
@@ -528,28 +486,18 @@ class SourcesMixin:
         """
         import importlib
 
-        mod = importlib.import_module(
-            "src.backend.infrastructure.sources.webhook"
-        )
+        mod = importlib.import_module("src.backend.infrastructure.sources.webhook")
         WebhookSource = mod.WebhookSource  # noqa: N806
-        source_instance = WebhookSource(
-            source_id=route_id,
-            path=path,
-            **kwargs,
-        )
+        source_instance = WebhookSource(source_id=route_id, path=path, **kwargs)
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"webhook:{path}",
+            route_id=route_id, source=f"webhook:{path}"
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder
 
     @classmethod
     def from_schedule(
-        cls,
-        route_id: str,
-        cron_expr: str,
-        **kwargs: Any,
+        cls, route_id: str, cron_expr: str, **kwargs: Any
     ) -> "RouteBuilder":
         """Создаёт маршрут с источником cron-расписания.
 
@@ -579,8 +527,7 @@ class SourcesMixin:
             )
         """
         builder: RouteBuilder = cls(  # type: ignore[call-arg]
-            route_id=route_id,
-            source=f"schedule:{cron_expr}",
+            route_id=route_id, source=f"schedule:{cron_expr}"
         )
         # Сохраняем cron и kwargs для последующей регистрации в APScheduler
         object.__setattr__(

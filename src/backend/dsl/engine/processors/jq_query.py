@@ -70,9 +70,7 @@ class JqProcessor(BaseProcessor):
         if not expr:
             raise ValueError("jq: expr must be non-empty")
         if mode not in {"all", "first", "scalar"}:
-            raise ValueError(
-                f"jq: mode must be 'all'|'first'|'scalar', got {mode!r}"
-            )
+            raise ValueError(f"jq: mode must be 'all'|'first'|'scalar', got {mode!r}")
         self._expr = expr
         self._target = to
         self._mode = mode

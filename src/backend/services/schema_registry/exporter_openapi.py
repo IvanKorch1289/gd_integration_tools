@@ -52,9 +52,6 @@ def export_openapi(
 
     return {
         "openapi": "3.1.0",
-        "info": {
-            "title": "gd_integration_tools — schema_registry",
-            "version": "1.0.0",
-        },
+        "info": {"title": "gd_integration_tools — schema_registry", "version": "1.0.0"},
         "components": {"schemas": schemas},
     }

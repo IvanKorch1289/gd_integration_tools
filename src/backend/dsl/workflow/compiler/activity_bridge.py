@@ -44,9 +44,7 @@ _logger = logging.getLogger("workflow.compiler.activity_bridge")
 
 
 def bridge_action_handler(
-    action_id: str,
-    *,
-    required_capabilities: tuple[str, ...] = (),
+    action_id: str, *, required_capabilities: tuple[str, ...] = ()
 ) -> Callable[..., Awaitable[Any]]:
     """Создать activity-функцию-обёртку поверх DSL action handler.
 
@@ -106,10 +104,7 @@ class ActivityBridge:
         self._cache: dict[str, Callable[..., Awaitable[Any]]] = {}
 
     def get(
-        self,
-        action_id: str,
-        *,
-        required_capabilities: tuple[str, ...] = (),
+        self, action_id: str, *, required_capabilities: tuple[str, ...] = ()
     ) -> Callable[..., Awaitable[Any]]:
         """Получить (или создать) activity-обёртку для ``action_id``.
 
@@ -162,8 +157,7 @@ class ActivityBridge:
             from temporalio import activity
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
-                "temporalio SDK not installed. "
-                "Install via `uv sync --extra workflow`."
+                "temporalio SDK not installed. Install via `uv sync --extra workflow`."
             ) from exc
 
         for action_id, fn in list(self._cache.items()):
@@ -182,9 +176,7 @@ def _iter_activity_names(step: WorkflowStep) -> list[str]:
     return [name for name, _ in _iter_activity_specs(step)]
 
 
-def _iter_activity_specs(
-    step: WorkflowStep,
-) -> list[tuple[str, tuple[str, ...]]]:
+def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]]:
     """Извлечь ``(action_id, required_capabilities)`` всех activity-шагов.
 
     Args:
@@ -200,17 +192,13 @@ def _iter_activity_specs(
         specs: list[tuple[str, tuple[str, ...]]] = [
             (a.name, tuple(a.required_capabilities)) for a in step.forward
         ]
-        specs.extend(
-            (a.name, tuple(a.required_capabilities)) for a in step.compensate
-        )
+        specs.extend((a.name, tuple(a.required_capabilities)) for a in step.compensate)
         return specs
     return []
 
 
 def get_activity_callables(
-    declarations: list[WorkflowDeclaration],
-    *,
-    bridge: ActivityBridge | None = None,
+    declarations: list[WorkflowDeclaration], *, bridge: ActivityBridge | None = None
 ) -> list[Callable[..., Awaitable[Any]]]:
     """Удобная функция: собрать activity-callable для Worker регистрации.
 

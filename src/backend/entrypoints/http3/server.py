@@ -27,7 +27,11 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 ASGIApp = Callable[
-    [dict[str, Any], Callable[[], Awaitable[dict[str, Any]]], Callable[[dict[str, Any]], Awaitable[None]]],
+    [
+        dict[str, Any],
+        Callable[[], Awaitable[dict[str, Any]]],
+        Callable[[dict[str, Any]], Awaitable[None]],
+    ],
     Awaitable[None],
 ]
 
@@ -53,10 +57,7 @@ def build_quic_configuration(config: Http3ServerConfig) -> Any:
 
 
 async def serve_http3(
-    app: ASGIApp,
-    config: Http3ServerConfig,
-    *,
-    stop_event: asyncio.Event | None = None,
+    app: ASGIApp, config: Http3ServerConfig, *, stop_event: asyncio.Event | None = None
 ) -> None:
     """Запустить HTTP/3 ASGI-сервер.
 
@@ -75,7 +76,9 @@ async def serve_http3(
             AsgiHttp3Protocol,
         )
 
-        return AsgiHttp3Protocol(*proto_args, asgi_app=app, server_config=config, **proto_kwargs)
+        return AsgiHttp3Protocol(
+            *proto_args, asgi_app=app, server_config=config, **proto_kwargs
+        )
 
     server = await serve(
         host=config.host,

@@ -336,10 +336,7 @@ with tab_diff:
     )
     try:
         from src.backend.dsl.workflow.versioning import get_global_registry
-        from src.backend.dsl.workflow.visualize import (
-            compute_step_diff,
-            to_graphviz,
-        )
+        from src.backend.dsl.workflow.visualize import compute_step_diff, to_graphviz
 
         registry = get_global_registry()
         all_wf_ids = sorted(registry.all_workflow_ids())
@@ -355,9 +352,7 @@ with tab_diff:
             versions = [v.semver for v in history]
 
             if len(versions) < 2:
-                st.warning(
-                    f"Нужно ≥2 версии для diff. Текущее: {len(versions)}."
-                )
+                st.warning(f"Нужно ≥2 версии для diff. Текущее: {len(versions)}.")
             else:
                 col_a, col_b = st.columns(2)
                 with col_a:
@@ -382,8 +377,8 @@ with tab_diff:
                             "WorkflowVersion для хранения WorkflowDeclaration."
                         )
                     else:
-                        diff_results, color_map_a, color_map_b = (
-                            compute_step_diff(decl_a, decl_b)
+                        diff_results, color_map_a, color_map_b = compute_step_diff(
+                            decl_a, decl_b
                         )
                         col1, col2 = st.columns(2)
                         with col1:

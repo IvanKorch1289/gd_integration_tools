@@ -27,16 +27,9 @@ __all__ = ("cached", "invalidate", "multi_cached")
 Backend = Literal["redis", "memory", "disk", "multi"]
 
 
-def _build_underlying(
-    *,
-    ttl: int,
-    key_prefix: str,
-    backend: Backend,
-) -> Any:
+def _build_underlying(*, ttl: int, key_prefix: str, backend: Backend) -> Any:
     """Lazy-конструктор :class:`CachingDecorator` с фиксированным backend-режимом."""
-    from src.backend.infrastructure.decorators.caching.decorator import (
-        CachingDecorator,
-    )
+    from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
 
     if backend == "redis":
         use_memory = False
@@ -67,16 +60,11 @@ def _format_key(template: str, args: tuple, kwargs: dict) -> str:
     try:
         return template.format(*args, args=args, kwargs=kwargs, **kwargs)
     except (IndexError, KeyError) as exc:
-        raise ValueError(
-            f"Не удалось отрендерить ключ {template!r}: {exc}"
-        ) from exc
+        raise ValueError(f"Не удалось отрендерить ключ {template!r}: {exc}") from exc
 
 
 def cached(
-    *,
-    ttl: int,
-    key: str | Callable[..., str],
-    backend: Backend = "multi",
+    *, ttl: int, key: str | Callable[..., str], backend: Backend = "multi"
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Декоратор: кеширует результат async-функции на ``ttl`` секунд.
 
@@ -89,9 +77,7 @@ def cached(
         Декоратор для async-функции.
     """
 
-    def decorator(
-        func: Callable[..., Awaitable[Any]],
-    ) -> Callable[..., Awaitable[Any]]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("@cached поддерживает только async-функции")
 
@@ -142,9 +128,7 @@ def invalidate(
         Декоратор для async-функции.
     """
 
-    def decorator(
-        func: Callable[..., Awaitable[Any]],
-    ) -> Callable[..., Awaitable[Any]]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("@invalidate поддерживает только async-функции")
 
@@ -171,8 +155,7 @@ def invalidate(
 
 
 def multi_cached(
-    *,
-    ttls: Mapping[str, int],
+    *, ttls: Mapping[str, int]
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Декоратор: несколько slots кеша с разными TTL.
 
@@ -192,9 +175,7 @@ def multi_cached(
         raise ValueError("@multi_cached требует непустого ttls")
     min_ttl = min(ttls.values())
 
-    def decorator(
-        func: Callable[..., Awaitable[Any]],
-    ) -> Callable[..., Awaitable[Any]]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         slots = ",".join(sorted(ttls))
         key_template = f"multi:{slots}:{{kwargs}}"
         return cached(ttl=min_ttl, key=key_template, backend="multi")(func)

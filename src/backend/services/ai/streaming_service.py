@@ -70,10 +70,7 @@ class LLMStreamingService:
     """Высокоуровневый адаптер над LiteLLMGateway.astream_completion."""
 
     def __init__(
-        self,
-        gateway: Any | None = None,
-        *,
-        chunk_size: int | None = None,
+        self, gateway: Any | None = None, *, chunk_size: int | None = None
     ) -> None:
         self._gateway = gateway
         from src.backend.core.config.ai_2026 import streaming_llm_settings
@@ -91,11 +88,7 @@ class LLMStreamingService:
         return self._gateway
 
     async def astream(
-        self,
-        messages: list[dict[str, Any]],
-        *,
-        model: str | None = None,
-        **kwargs: Any,
+        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any
     ) -> AsyncIterator[StreamChunk]:
         """Возвращает асинхронный поток ``StreamChunk``.
 
@@ -146,11 +139,7 @@ class LLMStreamingService:
             raise
 
     async def _fallback_nonstream(
-        self,
-        messages: list[dict[str, Any]],
-        *,
-        model: str | None,
-        **kwargs: Any,
+        self, messages: list[dict[str, Any]], *, model: str | None, **kwargs: Any
     ) -> AsyncIterator[StreamChunk]:
         gateway = self._ensure_gateway()
         kwargs.pop("stream", None)

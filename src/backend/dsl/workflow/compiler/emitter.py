@@ -104,10 +104,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
         for step in decl.steps:
             await dispatch_step_compile(step, ctx)
 
-        return {
-            "outputs": dict(ctx["_outputs"]),
-            "input": dict(ctx["_input"]),
-        }
+        return {"outputs": dict(ctx["_outputs"]), "input": dict(ctx["_input"])}
 
     # Temporal `@workflow.run` запрещает ``<locals>`` в qualname (требует
     # глобально-доступный класс). Перезаписываем qualname так, словно
@@ -191,9 +188,7 @@ def _signal_attr_name(signal_name: str) -> str:
 
 def _safe_class_name(workflow_name: str) -> str:
     """Преобразовать workflow_name в валидное имя Python-класса."""
-    parts = [
-        p.capitalize() or "X" for p in workflow_name.replace(".", "_").split("_")
-    ]
+    parts = [p.capitalize() or "X" for p in workflow_name.replace(".", "_").split("_")]
     candidate = "".join(parts) + "Workflow"
     if not candidate.isidentifier():
         candidate = "DynamicWorkflow"

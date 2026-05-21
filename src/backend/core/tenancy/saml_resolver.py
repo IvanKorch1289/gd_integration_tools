@@ -49,16 +49,12 @@ class SamlTenantHandoff:
     def __init__(self, *, budget: TokenBudget | None = None) -> None:
         self._budget = budget
 
-    async def resolve(
-        self, auth_result: SamlAuthResult
-    ) -> SamlTenantResolveResult:
+    async def resolve(self, auth_result: SamlAuthResult) -> SamlTenantResolveResult:
         """Построить TenantContext + (опц.) snapshot бюджета."""
         tenant = tenant_from_saml_attributes(attributes=auth_result.attributes)
         if self._budget is None:
             return SamlTenantResolveResult(
-                tenant=tenant,
-                budget_snapshot=None,
-                already_breached_soft=False,
+                tenant=tenant, budget_snapshot=None, already_breached_soft=False
             )
         snapshot = await self._budget.snapshot(tenant_id=tenant.tenant_id)
         return SamlTenantResolveResult(

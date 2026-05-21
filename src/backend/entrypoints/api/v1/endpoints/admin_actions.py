@@ -44,8 +44,12 @@ class ActionInvokeRequest(BaseModel):
     """Тело запроса POST /invoke."""
 
     name: str = Field(..., description="Имя action из реестра")
-    payload: dict[str, Any] = Field(default_factory=dict, description="Параметры вызова")
-    mode: str = Field(default="sync", description="Режим вызова: sync / async / background")
+    payload: dict[str, Any] = Field(
+        default_factory=dict, description="Параметры вызова"
+    )
+    mode: str = Field(
+        default="sync", description="Режим вызова: sync / async / background"
+    )
 
 
 class ActionInvokeResponse(BaseModel):
@@ -204,9 +208,7 @@ async def invoke_action(body: ActionInvokeRequest) -> ActionInvokeResponse:
 
     try:
         result = await registry.invoke(
-            name=body.name,
-            payload=body.payload,
-            mode=body.mode,
+            name=body.name, payload=body.payload, mode=body.mode
         )
         return ActionInvokeResponse(
             name=body.name,

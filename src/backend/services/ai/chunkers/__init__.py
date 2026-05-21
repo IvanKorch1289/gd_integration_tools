@@ -71,11 +71,8 @@ def get_chunker(
         case "recursive":
             from src.backend.services.ai.chunkers.recursive import RecursiveChunker
 
-            return RecursiveChunker(
-                chunk_size=chunk_size, chunk_overlap=chunk_overlap
-            )
+            return RecursiveChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         case _:
             raise ValueError(
-                f"Unknown chunk strategy: {strategy!r}. "
-                f"Valid: 'token', 'recursive'"
+                f"Unknown chunk strategy: {strategy!r}. Valid: 'token', 'recursive'"
             )

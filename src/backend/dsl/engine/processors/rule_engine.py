@@ -54,11 +54,7 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 
-__all__ = (
-    "Rule",
-    "EvaluateRulesParams",
-    "EvaluateRulesProcessor",
-)
+__all__ = ("Rule", "EvaluateRulesParams", "EvaluateRulesProcessor")
 
 
 class Rule(BaseModel):
@@ -110,9 +106,7 @@ class EvaluateRulesProcessor(BaseProcessor):
         super().__init__(name=self.name)
         self.params = params
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from simpleeval import SimpleEval  # lazy-import
 
         ctx_dict = _resolve_path(exchange.in_message.body, self.params.context_from)

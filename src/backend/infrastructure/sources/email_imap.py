@@ -255,9 +255,7 @@ class EmailIMAPSource:
             try:
                 fetch_resp = await client.fetch(msg_id, "(RFC822)")
             except Exception as exc:
-                logger.warning(
-                    "EmailIMAPSource: fetch %s failed: %s", msg_id, exc
-                )
+                logger.warning("EmailIMAPSource: fetch %s failed: %s", msg_id, exc)
                 continue
 
             raw_bytes = b""

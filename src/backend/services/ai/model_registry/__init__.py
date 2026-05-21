@@ -18,9 +18,7 @@ from src.backend.services.ai.model_registry.adapter import (
 from src.backend.services.ai.model_registry.hf_hub_backend import (
     HuggingFaceModelRegistry,
 )
-from src.backend.services.ai.model_registry.mlflow_backend import (
-    MlflowModelRegistry,
-)
+from src.backend.services.ai.model_registry.mlflow_backend import MlflowModelRegistry
 
 __all__ = (
     "ModelRecord",

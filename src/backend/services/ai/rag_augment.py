@@ -15,11 +15,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
 
-__all__ = (
-    "AugmentResult",
-    "FreshnessLabel",
-    "compute_freshness",
-)
+__all__ = ("AugmentResult", "FreshnessLabel", "compute_freshness")
 
 
 class FreshnessLabel(StrEnum):
@@ -153,14 +149,14 @@ def build_augment_result(
         ttl_hours = float(meta.get("ttl_hours") or 168.0)
 
         label = compute_freshness(
-            ingested_at=ingested_dt,
-            soft_hours=72.0,
-            hard_hours=ttl_hours,
+            ingested_at=ingested_dt, soft_hours=72.0, hard_hours=ttl_hours
         )
         distribution[label.value] += 1
 
         if max_staleness_hours is not None and ingested_dt is not None:
-            age_hours = (datetime.now(timezone.utc) - ingested_dt).total_seconds() / 3600.0
+            age_hours = (
+                datetime.now(timezone.utc) - ingested_dt
+            ).total_seconds() / 3600.0
             if age_hours > max_staleness_hours:
                 skipped += 1
                 continue

@@ -121,14 +121,15 @@ class LdapQueryProcessor(BaseProcessor):
 
     def _search_sync(self) -> list[dict[str, Any]]:
         """Sync ldap3 search в worker thread (для use через ``asyncio.to_thread``)."""
-        from ldap3 import ALL_ATTRIBUTES, Connection, Server  # type: ignore[import-not-found]
+        from ldap3 import (  # type: ignore[import-not-found]
+            ALL_ATTRIBUTES,
+            Connection,
+            Server,
+        )
 
         srv = Server(self._server, use_ssl=self._use_ssl)
         conn = Connection(
-            srv,
-            user=self._bind_dn,
-            password=self._password,
-            auto_bind=True,
+            srv, user=self._bind_dn, password=self._password, auto_bind=True
         )
         try:
             attrs = self._attributes or ALL_ATTRIBUTES
@@ -145,7 +146,9 @@ class LdapQueryProcessor(BaseProcessor):
                 ):
                     val = getattr(e, attr, None)
                     if val is not None:
-                        entry[attr] = list(val.values) if hasattr(val, "values") else val
+                        entry[attr] = (
+                            list(val.values) if hasattr(val, "values") else val
+                        )
                 entries.append(entry)
             return entries
         finally:
@@ -171,9 +174,7 @@ class LdapQueryProcessor(BaseProcessor):
             await client.bind(self._bind_dn, self._password)
             try:
                 entries_raw = await client.search(
-                    self._search_base,
-                    self._search_filter,
-                    attributes=self._attributes,
+                    self._search_base, self._search_filter, attributes=self._attributes
                 )
                 entries = [dict(e) for e in entries_raw]
             finally:

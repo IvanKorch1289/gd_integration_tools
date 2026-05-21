@@ -55,18 +55,11 @@ class PolicyChain:
         self._builder = builder
 
     def cache(
-        self,
-        *,
-        ttl_seconds: int = 60,
-        key: str | None = None,
-        backend: str = "redis",
+        self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
     ) -> "RouteBuilder":
         """Add cache policy (через CacheProcessor / Redis backend)."""
         return self._add_policy_processor(
-            "cache",
-            ttl_seconds=ttl_seconds,
-            key=key,
-            backend=backend,
+            "cache", ttl_seconds=ttl_seconds, key=key, backend=backend
         )
 
     def circuit_breaker(
@@ -85,46 +78,27 @@ class PolicyChain:
         )
 
     def rate_limit(
-        self,
-        *,
-        rate: int = 100,
-        per_seconds: int = 1,
-        scope: str = "global",
+        self, *, rate: int = 100, per_seconds: int = 1, scope: str = "global"
     ) -> "RouteBuilder":
         """Add rate-limit policy (через ThrottlerProcessor / RateLimiter)."""
         return self._add_policy_processor(
-            "rate_limit",
-            rate=rate,
-            per_seconds=per_seconds,
-            scope=scope,
+            "rate_limit", rate=rate, per_seconds=per_seconds, scope=scope
         )
 
-    def timeout(
-        self,
-        *,
-        seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    def timeout(self, *, seconds: float = 30.0) -> "RouteBuilder":
         """Add timeout policy (через TimeoutProcessor)."""
         return self._add_policy_processor("timeout", seconds=seconds)
 
     def retry(
-        self,
-        *,
-        max_attempts: int = 3,
-        backoff_seconds: float = 1.0,
+        self, *, max_attempts: int = 3, backoff_seconds: float = 1.0
     ) -> "RouteBuilder":
         """Add retry policy (через RetryProcessor / tenacity)."""
         return self._add_policy_processor(
-            "retry",
-            max_attempts=max_attempts,
-            backoff_seconds=backoff_seconds,
+            "retry", max_attempts=max_attempts, backoff_seconds=backoff_seconds
         )
 
     def bulkhead(
-        self,
-        *,
-        max_concurrent: int = 10,
-        wait_timeout_seconds: float = 5.0,
+        self, *, max_concurrent: int = 10, wait_timeout_seconds: float = 5.0
     ) -> "RouteBuilder":
         """Add bulkhead policy (через BulkheadProcessor / asyncio.Semaphore)."""
         return self._add_policy_processor(
@@ -134,16 +108,11 @@ class PolicyChain:
         )
 
     def idempotency(
-        self,
-        *,
-        key: str = "header.X-Idempotency-Key",
-        ttl_seconds: int = 3600,
+        self, *, key: str = "header.X-Idempotency-Key", ttl_seconds: int = 3600
     ) -> "RouteBuilder":
         """Add idempotency policy (через IdempotentConsumerProcessor)."""
         return self._add_policy_processor(
-            "idempotency",
-            key=key,
-            ttl_seconds=ttl_seconds,
+            "idempotency", key=key, ttl_seconds=ttl_seconds
         )
 
     def _add_policy_processor(self, name: str, **kwargs: Any) -> "RouteBuilder":
@@ -165,9 +134,7 @@ class PolicyChain:
         except Exception:  # noqa: BLE001
             pass
 
-        marker = PolicyMarkerProcessor(
-            policy_name=name, params=kwargs, enabled=True
-        )
+        marker = PolicyMarkerProcessor(policy_name=name, params=kwargs, enabled=True)
         self._builder._processors.append(marker)
         return self._builder
 
@@ -226,12 +193,7 @@ class PolicyMarkerProcessor:
             pass
 
     def to_spec(self) -> dict[str, Any] | None:
-        return {
-            "policy": {
-                "name": self.policy_name,
-                "params": self.params,
-            }
-        }
+        return {"policy": {"name": self.policy_name, "params": self.params}}
 
 
 class PolicyMixin:

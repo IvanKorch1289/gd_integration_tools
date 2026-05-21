@@ -66,9 +66,7 @@ class E2BSandbox(CodeSandbox):
             self._capability_check(self._plugin, "code.execute", scope)
 
         try:
-            from e2b_code_interpreter import (  # noqa: PLC0415
-                Sandbox as _E2BSandbox,
-            )
+            from e2b_code_interpreter import Sandbox as _E2BSandbox  # noqa: PLC0415
         except ImportError as exc:  # noqa: BLE001
             raise RuntimeError(
                 "e2b-code-interpreter не установлен; добавьте "
@@ -97,10 +95,7 @@ class E2BSandbox(CodeSandbox):
                         )
 
             return SandboxResult(
-                stdout=stdout,
-                stderr=stderr,
-                exit_code=exit_code,
-                artifacts=artifacts,
+                stdout=stdout, stderr=stderr, exit_code=exit_code, artifacts=artifacts
             )
         finally:
             try:

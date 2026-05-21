@@ -106,7 +106,7 @@ def _collect_processors() -> list[dict[str, Any]]:
                     for p in init_sig.parameters.values()
                     if p.name not in ("self", "name")
                 ]
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 params = []
 
             doc = (inspect.getdoc(obj) or "").strip()
@@ -158,7 +158,7 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
                 for p in sig.parameters.values()
                 if p.name != "self"
             ]
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             params = []
 
         doc = (inspect.getdoc(method) or "").strip()
@@ -195,11 +195,7 @@ class _ProcessorsCatalogFacade:
         raise HTTPException(status_code=404, detail=f"Processor '{name}' not found")
 
     async def search(
-        self,
-        *,
-        q: str = "",
-        namespace: str | None = None,
-        limit: int = 25,
+        self, *, q: str = "", namespace: str | None = None, limit: int = 25
     ) -> dict[str, Any]:
         """Sprint 14 K3 W1 — fuzzy search через rapidfuzz.
 
@@ -219,7 +215,12 @@ class _ProcessorsCatalogFacade:
                 }
                 for p in processors[:limit]
             ]
-            return {"query": q, "namespace": namespace, "total": len(results), "items": results}
+            return {
+                "query": q,
+                "namespace": namespace,
+                "total": len(results),
+                "items": results,
+            }
 
         try:
             from rapidfuzz import fuzz, process  # noqa: PLC0415
@@ -237,10 +238,7 @@ class _ProcessorsCatalogFacade:
             text = f"{p['name']} {p['description']}"
             candidates[text] = p
         scored = process.extract(
-            q,
-            list(candidates.keys()),
-            scorer=fuzz.WRatio,
-            limit=limit,
+            q, list(candidates.keys()), scorer=fuzz.WRatio, limit=limit
         )
         items = [
             {

@@ -30,9 +30,4 @@ from src.backend.services.auth.ad_directory_client import (
     AdServerConfig,
 )
 
-__all__ = (
-    "AdAuthError",
-    "AdDirectoryClient",
-    "AdSearchEntry",
-    "AdServerConfig",
-)
+__all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")

@@ -28,11 +28,7 @@ if str(_project_root) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
-st.set_page_config(
-    page_title="Workflow Live Logs",
-    page_icon=":memo:",
-    layout="wide",
-)
+st.set_page_config(page_title="Workflow Live Logs", page_icon=":memo:", layout="wide")
 st.header(":memo: Workflow Live Logs (read-only)")
 st.caption(
     "Стрим audit-событий из ClickHouse (`audit_events` table). Обновление "
@@ -50,9 +46,7 @@ with st.sidebar:
         help="Фильтр по имени workflow или route. Пусто — все события.",
     )
     severity_filter = st.selectbox(
-        "Severity",
-        options=["all", "info", "warning", "error"],
-        index=0,
+        "Severity", options=["all", "info", "warning", "error"], index=0
     )
     tail_size = st.number_input(
         "Tail size",
@@ -80,9 +74,7 @@ def _fetch_audit_tail() -> list[dict]:
         params["severity"] = severity_filter
     try:
         records = client._request(  # type: ignore[attr-defined]
-            "GET",
-            "/api/v1/admin/audit/tail",
-            params=params,
+            "GET", "/api/v1/admin/audit/tail", params=params
         )
         if isinstance(records, list):
             return records
@@ -90,9 +82,7 @@ def _fetch_audit_tail() -> list[dict]:
         # Fallback на legacy-endpoint /api/v1/admin/audit (Sprint 2)
         try:
             records = client._request(  # type: ignore[attr-defined]
-                "GET",
-                "/api/v1/admin/audit",
-                params=params,
+                "GET", "/api/v1/admin/audit", params=params
             )
             if isinstance(records, list):
                 return records

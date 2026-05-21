@@ -226,12 +226,11 @@ class SchedulerManager:
         APScheduler не имеет explicit ``run_now``; используется
         ``modify_job(next_run_time=datetime.now())``.
         """
-        from datetime import datetime, timezone as _tz
+        from datetime import datetime
+        from datetime import timezone as _tz
 
         try:
-            self.scheduler.modify_job(
-                job_id, next_run_time=datetime.now(_tz.utc)
-            )
+            self.scheduler.modify_job(job_id, next_run_time=datetime.now(_tz.utc))
             return True
         except Exception as exc:  # noqa: BLE001
             self.logger.warning(f"run_job_now({job_id!r}) failed: {exc}")

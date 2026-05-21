@@ -167,9 +167,7 @@ class LLMCallProcessor(BaseProcessor):
             tokens = int(usage.get("total_tokens", 0)) if usage else 0
             if tokens:
                 exchange.set_property("llm.tokens_used", tokens)
-                exchange.set_property(
-                    "llm.cost_usd", round(tokens * 0.00002, 6)
-                )
+                exchange.set_property("llm.cost_usd", round(tokens * 0.00002, 6))
             if "model" in result:
                 exchange.set_property("llm.model", result["model"])
 
@@ -329,7 +327,13 @@ class VectorSearchProcessor(BaseProcessor):
 # Допустимые стратегии retrieval для :class:`RagQueryProcessor`.
 # ``dense`` — стандартный k-NN; остальные обрабатываются downstream
 # retriever'ом (см. RAG plan S11 K3) и активируются по namespace-config.
-_RAG_STRATEGIES: tuple[str, ...] = ("dense", "hybrid", "hyde", "multi_query", "adaptive")
+_RAG_STRATEGIES: tuple[str, ...] = (
+    "dense",
+    "hybrid",
+    "hyde",
+    "multi_query",
+    "adaptive",
+)
 
 
 class RagQueryProcessor(BaseProcessor):
@@ -375,8 +379,7 @@ class RagQueryProcessor(BaseProcessor):
         super().__init__(name)
         if strategy not in _RAG_STRATEGIES:
             raise ValueError(
-                f"unknown rag strategy '{strategy}'; "
-                f"expected one of {_RAG_STRATEGIES}"
+                f"unknown rag strategy '{strategy}'; expected one of {_RAG_STRATEGIES}"
             )
         self._query_field = query_field
         self._system_prompt = system_prompt
@@ -386,9 +389,7 @@ class RagQueryProcessor(BaseProcessor):
         self._max_staleness = max_staleness_hours
         self._output_property = output_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         body = exchange.in_message.body
         if isinstance(body, dict):
             query = body.get(self._query_field, "")
@@ -483,9 +484,7 @@ class RagPIIRedactionProcessor(BaseProcessor):
         self._input_property = input_property
         self._output_property = output_property or input_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.rag_pii_retrieval_mask:
@@ -493,9 +492,7 @@ class RagPIIRedactionProcessor(BaseProcessor):
         payload = exchange.properties.get(self._input_property)
         if not isinstance(payload, dict):
             return
-        from src.backend.services.ai.pii.retrieval_masker import (
-            mask_augment_result,
-        )
+        from src.backend.services.ai.pii.retrieval_masker import mask_augment_result
 
         masked = mask_augment_result(payload)
         exchange.set_property(self._output_property, masked)
@@ -542,9 +539,7 @@ class RagIngestProcessor(BaseProcessor):
         self._collection = collection
         self._output_property = output_property
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         if self._source_property:
             content = exchange.get_property(self._source_property)
         else:
@@ -707,7 +702,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
         exchange.set_property("cached", False)
@@ -753,7 +748,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             pass
 
 

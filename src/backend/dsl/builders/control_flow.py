@@ -285,8 +285,6 @@ class ControlFlowMixin:
             )
         )
 
-    def correlation_id(
-        self, *, header: str = "x-correlation-id"
-    ) -> "RouteBuilder":
+    def correlation_id(self, *, header: str = "x-correlation-id") -> "RouteBuilder":
         """Correlation Identifier: проставляет/пропагирует correlation-id."""
         return self._add(CorrelationIdProcessor(header=header))  # type: ignore[attr-defined,no-any-return]

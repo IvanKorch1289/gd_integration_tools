@@ -33,11 +33,7 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "MemoryEntry",
-    "LangMemService",
-    "get_langmem_service",
-)
+__all__ = ("MemoryEntry", "LangMemService", "get_langmem_service")
 
 # Тип вида памяти
 MemoryKind = Literal["episodic", "semantic", "procedural"]
@@ -236,10 +232,7 @@ class LangMemService:
             self._inmemory_save(entry)
 
     async def remember_episode(
-        self,
-        agent_id: str,
-        content: str,
-        metadata: dict[str, Any],
+        self, agent_id: str, content: str, metadata: dict[str, Any]
     ) -> MemoryEntry:
         """Сохраняет эпизодическое событие с временной меткой.
 
@@ -258,25 +251,16 @@ class LangMemService:
         """
         if not self._enabled:
             return _new_entry(
-                kind="episodic",
-                agent_id=agent_id,
-                content="",
-                metadata={},
+                kind="episodic", agent_id=agent_id, content="", metadata={}
             )
         entry = _new_entry(
-            kind="episodic",
-            agent_id=agent_id,
-            content=content,
-            metadata=metadata,
+            kind="episodic", agent_id=agent_id, content=content, metadata=metadata
         )
         await self._pg_save(entry)
         return entry
 
     async def remember_fact(
-        self,
-        agent_id: str,
-        content: str,
-        embedding: list[float],
+        self, agent_id: str, content: str, embedding: list[float]
     ) -> MemoryEntry:
         """Сохраняет семантический факт с вектором эмбеддинга.
 
@@ -324,8 +308,7 @@ class LangMemService:
                 )
             except Exception as exc:
                 logger.warning(
-                    "LangMemService: ошибка upsert в Qdrant (%s), только inMemory.",
-                    exc,
+                    "LangMemService: ошибка upsert в Qdrant (%s), только inMemory.", exc
                 )
                 self._inmemory_save(entry)
                 return entry
@@ -337,10 +320,7 @@ class LangMemService:
         return entry
 
     async def remember_procedure(
-        self,
-        agent_id: str,
-        name: str,
-        steps: list[str],
+        self, agent_id: str, name: str, steps: list[str]
     ) -> MemoryEntry:
         """Сохраняет процедурный навык как последовательность шагов.
 
@@ -359,10 +339,7 @@ class LangMemService:
         """
         if not self._enabled:
             return _new_entry(
-                kind="procedural",
-                agent_id=agent_id,
-                content="",
-                metadata={},
+                kind="procedural", agent_id=agent_id, content="", metadata={}
             )
         entry = _new_entry(
             kind="procedural",
@@ -374,11 +351,7 @@ class LangMemService:
         return entry
 
     async def recall(
-        self,
-        agent_id: str,
-        kind: MemoryKind,
-        query: str | None = None,
-        top_k: int = 10,
+        self, agent_id: str, kind: MemoryKind, query: str | None = None, top_k: int = 10
     ) -> list[MemoryEntry]:
         """Извлекает записи из памяти по агенту и типу.
 
@@ -423,8 +396,12 @@ class LangMemService:
                     kind=row[1],
                     agent_id=row[2],
                     content=row[3],
-                    metadata=orjson.loads(row[4]) if isinstance(row[4], (str, bytes)) else (row[4] or {}),
-                    timestamp=row[5] if isinstance(row[5], datetime) else datetime.fromisoformat(str(row[5])),
+                    metadata=orjson.loads(row[4])
+                    if isinstance(row[4], (str, bytes))
+                    else (row[4] or {}),
+                    timestamp=row[5]
+                    if isinstance(row[5], datetime)
+                    else datetime.fromisoformat(str(row[5])),
                     embedding=None,
                 )
                 for row in rows

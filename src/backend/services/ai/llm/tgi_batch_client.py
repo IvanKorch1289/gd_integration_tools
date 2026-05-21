@@ -33,11 +33,7 @@ class TgiBatchClient:
         self._timeout = timeout_seconds
 
     async def _single_completion(
-        self,
-        prompt: str,
-        *,
-        max_tokens: int,
-        temperature: float,
+        self, prompt: str, *, max_tokens: int, temperature: float
     ) -> str:
         async with self._semaphore:
             payload = {
@@ -69,9 +65,7 @@ class TgiBatchClient:
         if not prompts:
             return []
         tasks = [
-            self._single_completion(
-                p, max_tokens=max_tokens, temperature=temperature
-            )
+            self._single_completion(p, max_tokens=max_tokens, temperature=temperature)
             for p in prompts
         ]
         return await asyncio.gather(*tasks)

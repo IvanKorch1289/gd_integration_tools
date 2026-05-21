@@ -46,12 +46,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     from pathlib import Path
 
-__all__ = (
-    "HotSwapError",
-    "HotSwapResult",
-    "PluginLoaderProtocol",
-    "hot_swap",
-)
+__all__ = ("HotSwapError", "HotSwapResult", "PluginLoaderProtocol", "hot_swap")
 
 _logger = logging.getLogger("core.plugin_runtime.hot_swap")
 
@@ -59,7 +54,9 @@ _logger = logging.getLogger("core.plugin_runtime.hot_swap")
 class HotSwapError(RuntimeError):
     """Hot-swap не удался — причина в ``reason`` и ``cause``."""
 
-    def __init__(self, plugin_name: str, reason: str, *, cause: Exception | None = None) -> None:
+    def __init__(
+        self, plugin_name: str, reason: str, *, cause: Exception | None = None
+    ) -> None:
         self.plugin_name = plugin_name
         self.reason = reason
         self.cause = cause
@@ -195,10 +192,7 @@ async def hot_swap(
     """
     entry = _find_loaded_entry(loader, plugin_name)
     if entry is None:
-        raise HotSwapError(
-            plugin_name,
-            "plugin not registered in loader",
-        )
+        raise HotSwapError(plugin_name, "plugin not registered in loader")
 
     old_version = getattr(entry, "version", "?")
 
@@ -219,9 +213,7 @@ async def hot_swap(
         await loader.shutdown_all()
     except Exception as exc:  # noqa: BLE001
         _logger.exception("shutdown_all() during hot_swap raised")
-        raise HotSwapError(
-            plugin_name, "shutdown_all_failed", cause=exc
-        ) from exc
+        raise HotSwapError(plugin_name, "shutdown_all_failed", cause=exc) from exc
 
     # Reload Python-модуля, чтобы захватить изменения исходников.
     if module_name:
@@ -245,9 +237,7 @@ async def hot_swap(
         await loader.discover_and_load()
     except Exception as exc:  # noqa: BLE001
         _logger.exception("discover_and_load() during hot_swap raised")
-        raise HotSwapError(
-            plugin_name, "discover_and_load_failed", cause=exc
-        ) from exc
+        raise HotSwapError(plugin_name, "discover_and_load_failed", cause=exc) from exc
 
     new_entry = _find_loaded_entry(loader, plugin_name)
     if new_entry is None:

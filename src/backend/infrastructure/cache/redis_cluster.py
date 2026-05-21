@@ -168,9 +168,7 @@ class RedisClusterAdapter:
         except Exception:  # noqa: BLE001
             import asyncio
 
-            await asyncio.gather(
-                *(self._cluster.set(k, v) for k, v in mapping.items())
-            )
+            await asyncio.gather(*(self._cluster.set(k, v) for k, v in mapping.items()))
 
     async def keys_scan_batch(
         self, pattern: str, *, batch_size: int = 1000
@@ -190,10 +188,7 @@ class RedisClusterAdapter:
             yield [key]
 
     async def eval_script(
-        self,
-        script: str,
-        keys: Sequence[str],
-        args: Sequence[Any],
+        self, script: str, keys: Sequence[str], args: Sequence[Any]
     ) -> Any:
         """Lua scripting (atomic multi-key operations) (S13 K2 W6).
 

@@ -42,8 +42,12 @@ class LiteLLMGateway:
         self._default_model = default_model or cfg.default_model
         self._fallbacks = list(fallback_models or cfg.fallback_models)
         self._num_retries = num_retries if num_retries is not None else cfg.num_retries
-        self._timeout = request_timeout if request_timeout is not None else cfg.request_timeout
-        self._cost_tracking = cost_tracking if cost_tracking is not None else cfg.cost_tracking
+        self._timeout = (
+            request_timeout if request_timeout is not None else cfg.request_timeout
+        )
+        self._cost_tracking = (
+            cost_tracking if cost_tracking is not None else cfg.cost_tracking
+        )
         self._enabled = cfg.enabled
         self._litellm: Any = None
         self._cost_callback = CostTrackingCallback()
@@ -53,9 +57,7 @@ class LiteLLMGateway:
         if self._litellm is not None:
             return self._litellm
         if not self._enabled:
-            raise GatewayUnavailable(
-                "LiteLLMGateway отключён (LITELLM_ENABLED=false)."
-            )
+            raise GatewayUnavailable("LiteLLMGateway отключён (LITELLM_ENABLED=false).")
         try:
             import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
@@ -123,25 +125,15 @@ class LiteLLMGateway:
             self._raise_normalized(exc)
 
     async def astream_completion(
-        self,
-        messages: list[dict[str, Any]],
-        *,
-        model: str | None = None,
-        **kwargs: Any,
+        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any
     ) -> AsyncIterator[Any]:
         """Удобный wrapper над :meth:`acompletion` с ``stream=True``."""
-        result = await self.acompletion(
-            messages, model=model, stream=True, **kwargs
-        )
+        result = await self.acompletion(messages, model=model, stream=True, **kwargs)
         async for chunk in result:
             yield chunk
 
     async def aembedding(
-        self,
-        input_: list[str],
-        *,
-        model: str = "text-embedding-3-small",
-        **kwargs: Any,
+        self, input_: list[str], *, model: str = "text-embedding-3-small", **kwargs: Any
     ) -> list[list[float]]:
         """Эмбеддинги для RAG-pipeline. Возвращает list[list[float]]."""
         litellm = self._ensure_litellm()

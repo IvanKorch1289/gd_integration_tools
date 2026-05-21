@@ -27,10 +27,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("transport.httpx.cache")
 
-__all__ = (
-    "build_cache_transport",
-    "is_hishel_available",
-)
+__all__ = ("build_cache_transport", "is_hishel_available")
 
 
 def is_hishel_available() -> bool:
@@ -93,7 +90,5 @@ def build_cache_transport(
     )
 
     return hishel.AsyncCacheTransport(
-        transport=inner_transport,
-        storage=storage,
-        controller=controller,
+        transport=inner_transport, storage=storage, controller=controller
     )

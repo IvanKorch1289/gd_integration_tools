@@ -164,9 +164,7 @@ class MtlsBackend:
             self._config.allowed_fingerprints
             and fingerprint not in self._config.allowed_fingerprints
         ):
-            raise MtlsVerificationError(
-                reason="fingerprint not in pinned allow-list"
-            )
+            raise MtlsVerificationError(reason="fingerprint not in pinned allow-list")
 
         principal = subject or fingerprint
         if not principal:

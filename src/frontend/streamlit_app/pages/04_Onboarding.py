@@ -13,11 +13,7 @@ if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
 
-st.set_page_config(
-    page_title="Onboarding",
-    page_icon=":sparkles:",
-    layout="wide",
-)
+st.set_page_config(page_title="Onboarding", page_icon=":sparkles:", layout="wide")
 st.header("Onboarding Checklist")
 st.caption(
     "Sprint 10 K5 W5 — путь от чистого clone до первого route и плагина "

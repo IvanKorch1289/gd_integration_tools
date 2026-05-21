@@ -54,8 +54,7 @@ class WebSocketSource:
             raise RuntimeError(f"WebSocketSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event),
-            name=f"source-websocket:{self.source_id}",
+            self._run(on_event), name=f"source-websocket:{self.source_id}"
         )
         logger.info("WebSocketSource started: id=%s url=%s", self.source_id, self._url)
 

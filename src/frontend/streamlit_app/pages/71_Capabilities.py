@@ -90,7 +90,7 @@ with tabs[1]:
             elif node["kind"] == "resource":
                 shape_open, shape_close = "{{", "}}"
             diagram.append(
-                f"    {node['id'].replace(':', '_')}{shape_open}\"{node['label']}\"{shape_close}"
+                f'    {node["id"].replace(":", "_")}{shape_open}"{node["label"]}"{shape_close}'
             )
         for edge in graph["edges"]:
             label = f"|{edge['label']}|" if edge.get("label") else ""
@@ -107,9 +107,7 @@ with tabs[2]:
     plugin_filter = st.text_input("Filter by plugin", "")
     tenant_filter = st.text_input("Filter by tenant", "")
     events = client.get_audit_events(
-        plugin=plugin_filter or None,
-        tenant=tenant_filter or None,
-        limit=200,
+        plugin=plugin_filter or None, tenant=tenant_filter or None, limit=200
     )
     if events:
         st.dataframe(events, use_container_width=True, hide_index=True)

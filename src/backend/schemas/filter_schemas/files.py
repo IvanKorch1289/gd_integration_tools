@@ -8,7 +8,9 @@ from fastapi_filter.contrib.sqlalchemy import Filter
 # AST-линтер слоёв (`tools/check_layers.py`) не считает динамический
 # импорт layer-violation. Это адекватный компромисс для архитектурной
 # особенности fastapi_filter (filter ↔ ORM-связь).
-File = importlib.import_module("src." + "backend.infrastructure.database.models.files").File
+File = importlib.import_module(
+    "src." + "backend.infrastructure.database.models.files"
+).File
 
 __all__ = ("FileFilter",)
 

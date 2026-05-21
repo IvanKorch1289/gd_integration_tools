@@ -230,9 +230,7 @@ class ImapMonitor:
             return
 
         logger.info(
-            "Email: from=%s, subject=%s",
-            msg_data.get("from"),
-            msg_data.get("subject"),
+            "Email: from=%s, subject=%s", msg_data.get("from"), msg_data.get("subject")
         )
         try:
             dsl = get_dsl_service()
@@ -246,9 +244,7 @@ class ImapMonitor:
                 },
             )
         except Exception:
-            logger.exception(
-                "Ошибка обработки email: %s", msg_data.get("subject")
-            )
+            logger.exception("Ошибка обработки email: %s", msg_data.get("subject"))
 
     async def _poll_loop(self) -> None:
         """Цикл опроса IMAP-ящика (polling, fallback)."""
@@ -312,8 +308,7 @@ class ImapMonitor:
         self._running = True
         coro = self._idle_loop() if self.config.idle_mode else self._poll_loop()
         self._task = get_task_registry().create_task(
-            coro,
-            name=f"imap-monitor:{self.config.username}@{self.config.host}",
+            coro, name=f"imap-monitor:{self.config.username}@{self.config.host}"
         )
         logger.info(
             "IMAP мониторинг запущен: %s@%s (ssl=%s, starttls=%s, idle=%s)",

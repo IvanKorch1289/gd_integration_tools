@@ -57,7 +57,9 @@ class PluginManifest(BaseModel):
     capabilities: list[str] = Field(default_factory=list)
     tenant_aware: bool = False
     provides: list[str] = Field(default_factory=list)
-    raw: dict[str, Any] = Field(default_factory=dict, description="Сырое содержимое TOML")
+    raw: dict[str, Any] = Field(
+        default_factory=dict, description="Сырое содержимое TOML"
+    )
 
 
 class PluginToggleRequest(BaseModel):
@@ -342,10 +344,7 @@ def _get_version_service() -> Any | None:
             PluginVersionService,
         )
 
-        return PluginVersionService(
-            loader=loader,
-            extensions_dir=Path("extensions"),
-        )
+        return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
     except Exception:  # noqa: BLE001
         return None
 
@@ -362,9 +361,7 @@ async def list_plugin_versions(name: str) -> PluginVersionsResponse:
     if service is None:
         return PluginVersionsResponse(plugin=name, versions=[])
     versions = service.list_versions(name)
-    return PluginVersionsResponse(
-        plugin=name, versions=[v.to_dict() for v in versions]
-    )
+    return PluginVersionsResponse(plugin=name, versions=[v.to_dict() for v in versions])
 
 
 @router.get(
@@ -455,9 +452,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
             }
         )
         for required, spec in manifest.compatibility.requires_plugins.items():
-            edges.append(
-                {"source": manifest.name, "target": required, "spec": spec}
-            )
+            edges.append({"source": manifest.name, "target": required, "spec": spec})
     return PluginDependencyGraph(nodes=nodes, edges=edges)
 
 

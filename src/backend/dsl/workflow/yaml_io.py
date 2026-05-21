@@ -32,13 +32,7 @@ from ruamel.yaml import YAML
 
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
-__all__ = (
-    "FeatureDisabledError",
-    "WorkflowDiff",
-    "diff",
-    "from_yaml",
-    "to_yaml",
-)
+__all__ = ("FeatureDisabledError", "WorkflowDiff", "diff", "from_yaml", "to_yaml")
 
 
 class FeatureDisabledError(RuntimeError):

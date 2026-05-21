@@ -119,8 +119,7 @@ class DegradationMiddleware(BaseHTTPMiddleware):
         if mode_at_least(mode, DegradationMode.READ_ONLY):
             if method in _WRITE_METHODS and not self._is_bypassed(path):
                 return self._build_503(
-                    f"writes blocked: system in {mode.value} mode",
-                    header="read-only",
+                    f"writes blocked: system in {mode.value} mode", header="read-only"
                 )
 
         # Legacy: db_main fallback → блок writes.

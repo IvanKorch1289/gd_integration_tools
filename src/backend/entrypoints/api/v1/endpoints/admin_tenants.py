@@ -51,9 +51,7 @@ async def _query_audit_safe(
 
     try:
         log = get_audit_log()
-        rows = await log.query(
-            who=who, entity_type=entity_type, limit=limit
-        )
+        rows = await log.query(who=who, entity_type=entity_type, limit=limit)
     except Exception as exc:  # noqa: BLE001 — ClickHouse offline / network
         logger.warning("audit-log query failed: %s", exc)
         return None
@@ -77,8 +75,7 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for tid, items in by_tenant.items():
         actions = Counter(str(r.get("action", "")) for r in items if r.get("action"))
         last_seen = max(
-            (str(r.get("when", "")) for r in items if r.get("when")),
-            default=None,
+            (str(r.get("when", "")) for r in items if r.get("when")), default=None
         )
         aggregated.append(
             {
@@ -86,8 +83,7 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "event_count": len(items),
                 "unique_actions": len(actions),
                 "top_actions": [
-                    {"action": a, "count": c}
-                    for a, c in actions.most_common(5)
+                    {"action": a, "count": c} for a, c in actions.most_common(5)
                 ],
                 "last_seen": last_seen,
             }

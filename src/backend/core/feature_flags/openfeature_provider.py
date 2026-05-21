@@ -342,9 +342,7 @@ class FlagsmithBackend:
         self._provider = None
 
 
-def _coerce_ctx(
-    ctx: EvaluationContext | None, provider_cls: type[Any]
-) -> Any:
+def _coerce_ctx(ctx: EvaluationContext | None, provider_cls: type[Any]) -> Any:
     """Преобразует наш EvaluationContext в provider-specific EvaluationContext.
 
     Args:

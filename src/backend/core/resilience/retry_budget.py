@@ -80,10 +80,7 @@ class RetryBudget:
             self._trim()
             total = len(self._total)
             retries = len(self._retries)
-            allowed = max(
-                self._min_retries_per_sec * self._window,
-                total * self._ratio,
-            )
+            allowed = max(self._min_retries_per_sec * self._window, total * self._ratio)
             if retries >= allowed:
                 logger.warning(
                     "RetryBudget '%s' exhausted: %d/%g retries in %gs",

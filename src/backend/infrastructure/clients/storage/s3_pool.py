@@ -248,7 +248,7 @@ class S3Client(BaseS3Client):
                     operation_name="checking connection",
                 )
             return True
-        except (BotoClientError, OSError, TimeoutError):
+        except BotoClientError, OSError, TimeoutError:
             return False
 
     async def check_bucket_exists(self) -> bool:
@@ -414,9 +414,7 @@ class S3Client(BaseS3Client):
                         PartNumber=part_number,
                         Body=bytes(buffer),
                     )
-                    parts.append(
-                        {"PartNumber": part_number, "ETag": part_resp["ETag"]}
-                    )
+                    parts.append({"PartNumber": part_number, "ETag": part_resp["ETag"]})
 
                 if not parts:
                     # Нет данных — S3 не позволит complete; abort и возвращаем "".

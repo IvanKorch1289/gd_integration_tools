@@ -117,10 +117,7 @@ with col_invoke:
     )
 
     _payload_raw: str = st.text_area(
-        "JSON-payload",
-        value="{}",
-        height=150,
-        help="Тело запроса в формате JSON",
+        "JSON-payload", value="{}", height=150, help="Тело запроса в формате JSON"
     )
 
     _mode: str = st.selectbox(

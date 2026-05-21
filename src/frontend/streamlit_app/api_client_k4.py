@@ -36,9 +36,7 @@ class K4APIClient(APIClient):
     def flush_rag_cache_tier(self, tier: str | None = None) -> dict[str, Any]:
         params: dict[str, Any] = {"tier": tier} if tier else {}
         try:
-            return self._request(
-                "POST", "/api/v1/admin/rag-cache/flush", params=params
-            )
+            return self._request("POST", "/api/v1/admin/rag-cache/flush", params=params)
         except Exception as exc:  # noqa: BLE001
             logger.debug("flush_rag_cache_tier failed: %s", exc)
             return {}
@@ -46,9 +44,7 @@ class K4APIClient(APIClient):
     def get_rag_invalidation_events(self, limit: int = 50) -> list[dict[str, Any]]:
         try:
             return self._request(
-                "GET",
-                "/api/v1/admin/rag-cache/events",
-                params={"limit": limit},
+                "GET", "/api/v1/admin/rag-cache/events", params={"limit": limit}
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("get_rag_invalidation_events failed: %s", exc)
@@ -63,9 +59,7 @@ class K4APIClient(APIClient):
 
     def list_embedding_providers(self) -> list[str]:
         try:
-            payload = self._request(
-                "GET", "/api/v1/admin/embedding-providers"
-            )
+            payload = self._request("GET", "/api/v1/admin/embedding-providers")
             if isinstance(payload, list):
                 return [str(x) for x in payload]
             if isinstance(payload, dict):
@@ -79,7 +73,9 @@ class K4APIClient(APIClient):
         self, *, files: list[Any], collection: str = "default"
     ) -> dict[str, Any]:
         try:
-            file_payload = [("files", (getattr(f, "name", "file"), f.read())) for f in files]
+            file_payload = [
+                ("files", (getattr(f, "name", "file"), f.read())) for f in files
+            ]
             return self._request(
                 "POST",
                 "/api/v1/rag/ingest/start",
@@ -92,21 +88,15 @@ class K4APIClient(APIClient):
 
     def rag_ingest_status(self, task_id: str) -> dict[str, Any]:
         try:
-            return self._request(
-                "GET", f"/api/v1/rag/ingest/status/{task_id}"
-            )
+            return self._request("GET", f"/api/v1/rag/ingest/status/{task_id}")
         except Exception as exc:  # noqa: BLE001
             logger.debug("rag_ingest_status failed: %s", exc)
             return {}
 
-    def rag_search_preview(
-        self, query: str, top_k: int = 5
-    ) -> list[dict[str, Any]]:
+    def rag_search_preview(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         try:
             return self._request(
-                "GET",
-                "/api/v1/rag/search",
-                params={"query": query, "top_k": top_k},
+                "GET", "/api/v1/rag/search", params={"query": query, "top_k": top_k}
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("rag_search_preview failed: %s", exc)

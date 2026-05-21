@@ -187,19 +187,11 @@ class RateConvertProcessor(BaseProcessor):
         converted = amount * rate
         self._apply_target(
             exchange,
-            {
-                "amount": converted,
-                "from": self._from,
-                "to": self._to,
-                "rate": rate,
-            },
+            {"amount": converted, "from": self._from, "to": self._to, "rate": rate},
         )
 
     def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {
-            "from_currency": self._from,
-            "to_currency": self._to,
-        }
+        spec: dict[str, Any] = {"from_currency": self._from, "to_currency": self._to}
         if self._amount is not None:
             spec["amount"] = self._amount
         if self._amount_source:

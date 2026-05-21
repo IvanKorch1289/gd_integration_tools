@@ -67,20 +67,16 @@ class AuditClickhouseParams(BaseModel):
         description="Дополнительные данные события (сериализуются в JSON).",
     )
     severity: Literal["info", "warning", "error"] = Field(
-        default="info",
-        description="Уровень важности события.",
+        default="info", description="Уровень важности события."
     )
     tenant_id_from: str | None = Field(
-        default=None,
-        description="Имя exchange-property для tenant_id.",
+        default=None, description="Имя exchange-property для tenant_id."
     )
     user_id_from: str | None = Field(
-        default=None,
-        description="Имя exchange-property для user_id.",
+        default=None, description="Имя exchange-property для user_id."
     )
     route_name_from: str | None = Field(
-        default=None,
-        description="Имя exchange-property для route_name.",
+        default=None, description="Имя exchange-property для route_name."
     )
 
 
@@ -152,7 +148,9 @@ class AuditClickhouseProcessor(BaseProcessor):
         self._user_id_from = user_id_from
         self._route_name_from = route_name_from
 
-    async def process(self, exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+    async def process(
+        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+    ) -> None:
         """Формирует и отправляет AuditEvent в ClickHouse.
 
         Извлекает tenant_id, user_id, route_name из exchange-properties

@@ -9,10 +9,7 @@ from __future__ import annotations
 
 import warnings
 
-from extensions.core_entities.users.services.users import (
-    UserService,
-    get_user_service,
-)
+from extensions.core_entities.users.services.users import UserService, get_user_service
 
 __all__ = ("UserService", "get_user_service")
 

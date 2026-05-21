@@ -13,13 +13,9 @@ from __future__ import annotations
 import hashlib
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-__all__ = (
-    "AdaptiveStrategySelector",
-    "StrategyDecision",
-    "STRATEGIES",
-)
+__all__ = ("AdaptiveStrategySelector", "StrategyDecision", "STRATEGIES")
 
 logger = logging.getLogger("services.ai.rag.strategy_selector")
 
@@ -83,9 +79,7 @@ class AdaptiveStrategySelector:
     """
 
     def __init__(
-        self,
-        cache_size: int = 512,
-        llm_classify: object | None = None,
+        self, cache_size: int = 512, llm_classify: object | None = None
     ) -> None:
         self._cache_size = cache_size
         self._cache: dict[str, tuple[str, float]] = {}

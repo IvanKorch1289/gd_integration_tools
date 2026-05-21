@@ -94,12 +94,7 @@ class PluginVersionService:
     обычный каталог (deploy через wheel).
     """
 
-    def __init__(
-        self,
-        *,
-        loader: "PluginLoaderProtocol",
-        extensions_dir: Path,
-    ) -> None:
+    def __init__(self, *, loader: "PluginLoaderProtocol", extensions_dir: Path) -> None:
         self._loader = loader
         self._extensions_dir = extensions_dir
 
@@ -130,23 +125,15 @@ class PluginVersionService:
         for child in sorted(self._extensions_dir.iterdir()):
             if not child.is_dir() or not child.name.startswith(prefix):
                 continue
-            version = child.name[len(prefix):]
+            version = child.name[len(prefix) :]
             installed.append(
                 InstalledVersion(
-                    plugin=plugin,
-                    version=version,
-                    path=child,
-                    is_active=False,
+                    plugin=plugin, version=version, path=child, is_active=False
                 )
             )
         return installed
 
-    def diff(
-        self,
-        plugin: str,
-        from_version: str,
-        to_version: str,
-    ) -> dict[str, Any]:
+    def diff(self, plugin: str, from_version: str, to_version: str) -> dict[str, Any]:
         """Структурированный diff двух версий (использует MigrationDiffer).
 
         Версии должны существовать локально (см. :meth:`list_versions`).
@@ -164,12 +151,7 @@ class PluginVersionService:
             "payload": diff.payload,
         }
 
-    async def rollback(
-        self,
-        plugin: str,
-        *,
-        to_version: str,
-    ) -> RollbackResult:
+    async def rollback(self, plugin: str, *, to_version: str) -> RollbackResult:
         """Atomic-rollback: переключить symlink + hot-swap reload.
 
         Шаги:
@@ -187,9 +169,7 @@ class PluginVersionService:
         active_path = self._extensions_dir / plugin
         target_path = self._extensions_dir / f"{plugin}.{to_version}"
         if not target_path.is_dir():
-            raise PluginVersionError(
-                f"version snapshot not found: {target_path}"
-            )
+            raise PluginVersionError(f"version snapshot not found: {target_path}")
 
         current_version = self._read_version(active_path) or "?"
         if current_version == to_version:
@@ -300,9 +280,7 @@ class PluginVersionService:
                 # Каталог не должен оставаться — но мы его уже архивировали
                 # в _archive_current; если по какой-то причине остался —
                 # ничего не делаем, fallback на ошибку.
-                raise OSError(
-                    f"cannot remove non-symlink active dir: {active_path}"
-                )
+                raise OSError(f"cannot remove non-symlink active dir: {active_path}")
         active_path.symlink_to(target_path.resolve(), target_is_directory=True)
 
 

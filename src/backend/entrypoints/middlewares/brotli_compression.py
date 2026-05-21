@@ -37,13 +37,7 @@ class BrotliCompressionMiddleware:
         quality: уровень сжатия brotli (0-11).
     """
 
-    def __init__(
-        self,
-        app: Any,
-        *,
-        minimum_size: int = 500,
-        quality: int = 4,
-    ) -> None:
+    def __init__(self, app: Any, *, minimum_size: int = 500, quality: int = 4) -> None:
         """Сохраняет downstream ASGI app + конфигурацию."""
         self.app = app
         self.minimum_size = minimum_size
@@ -117,13 +111,10 @@ class BrotliCompressionMiddleware:
                     return
                 # final chunk — решаем, сжимать или нет
                 full_body = b"".join(buffer)
-                if (
-                    len(full_body) >= self.minimum_size
-                    and self._is_json(captured_headers[0])
+                if len(full_body) >= self.minimum_size and self._is_json(
+                    captured_headers[0]
                 ):
-                    compressed = self._brotli.compress(
-                        full_body, quality=self.quality
-                    )
+                    compressed = self._brotli.compress(full_body, quality=self.quality)
                     headers = [
                         (n, v)
                         for n, v in captured_headers[0]

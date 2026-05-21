@@ -39,9 +39,7 @@ def run_from_settings() -> None:
 
     app_settings = settings.app
     if not app_settings.http3_enabled:
-        raise RuntimeError(
-            "HTTP/3 не активирован: установите APP_HTTP3_ENABLED=true."
-        )
+        raise RuntimeError("HTTP/3 не активирован: установите APP_HTTP3_ENABLED=true.")
     if not app_settings.http3_certfile or not app_settings.http3_keyfile:
         raise RuntimeError(
             "HTTP/3 требует валидные APP_HTTP3_CERTFILE и APP_HTTP3_KEYFILE."

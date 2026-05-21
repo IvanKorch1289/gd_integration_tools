@@ -34,12 +34,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             tracking).
     """
 
-    def __init__(
-        self,
-        tracking_uri: str,
-        *,
-        registry_uri: str | None = None,
-    ) -> None:
+    def __init__(self, tracking_uri: str, *, registry_uri: str | None = None) -> None:
         self._tracking_uri = tracking_uri
         self._registry_uri = registry_uri
         self._client: Any = None
@@ -48,24 +43,27 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         if self._client is not None:
             return self._client
         try:
-            from mlflow.tracking import MlflowClient  # type: ignore[import-not-found]  # noqa: PLC0415
+            from mlflow.tracking import (
+                MlflowClient,  # type: ignore[import-not-found]  # noqa: PLC0415
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "mlflow не установлен; добавьте extra ai-model-registry "
                 "(uv sync --extra ai-model-registry)"
             ) from exc
         self._client = MlflowClient(
-            tracking_uri=self._tracking_uri,
-            registry_uri=self._registry_uri,
+            tracking_uri=self._tracking_uri, registry_uri=self._registry_uri
         )
         return self._client
 
     @staticmethod
     def _mlflow_to_record(mv: Any) -> ModelRecord:
         """MLflow ModelVersion → ModelRecord."""
-        tags = {t.key: t.value for t in getattr(mv, "tags", [])} if hasattr(
-            mv, "tags"
-        ) else {}
+        tags = (
+            {t.key: t.value for t in getattr(mv, "tags", [])}
+            if hasattr(mv, "tags")
+            else {}
+        )
         return ModelRecord(
             name=str(getattr(mv, "name", "")),
             version=str(getattr(mv, "version", "1")),
@@ -103,8 +101,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         # latest-by-stage (default "Production").
         stage_filter = stage or "Production"
         versions = await loop.run_in_executor(
-            None,
-            lambda: client.get_latest_versions(name, stages=[stage_filter]),
+            None, lambda: client.get_latest_versions(name, stages=[stage_filter])
         )
         return self._mlflow_to_record(versions[0]) if versions else None
 
@@ -124,9 +121,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         mv = await loop.run_in_executor(
             None,
             lambda: client.create_model_version(
-                name=record.name,
-                source=artifact_uri,
-                description=record.description,
+                name=record.name, source=artifact_uri, description=record.description
             ),
         )
         # Применяем tags пакетно.
@@ -140,10 +135,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return self._mlflow_to_record(mv)
 
     async def transition_stage(
-        self,
-        name: str,
-        version: str,
-        new_stage: str,
+        self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
         client = self._ensure_client()
         loop = asyncio.get_running_loop()

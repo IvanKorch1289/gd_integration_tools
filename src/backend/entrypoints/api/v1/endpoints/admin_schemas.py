@@ -79,7 +79,9 @@ async def list_schemas_summary() -> dict:
 )
 async def list_schemas_by_kind(
     kind: str,
-    format: Annotated[FormatLiteral, Query(description="Формат экспорта")] = "jsonschema",
+    format: Annotated[
+        FormatLiteral, Query(description="Формат экспорта")
+    ] = "jsonschema",
 ) -> dict:
     """Возвращает все схемы указанного kind в выбранном формате."""
     schema_kind = _resolve_kind(kind)
@@ -104,16 +106,16 @@ async def list_schemas_by_kind(
 async def get_schema(
     kind: str,
     name: str,
-    format: Annotated[FormatLiteral, Query(description="Формат экспорта")] = "jsonschema",
+    format: Annotated[
+        FormatLiteral, Query(description="Формат экспорта")
+    ] = "jsonschema",
 ) -> dict:
     """Возвращает одну запись каталога в выбранном формате."""
     schema_kind = _resolve_kind(kind)
     registry = get_schema_registry()
     entry = registry.get(schema_kind, name)
     if entry is None:
-        raise HTTPException(
-            status_code=404, detail=f"Schema {kind}:{name!r} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Schema {kind}:{name!r} not found")
     if format == "jsonschema":
         return _serialize_entry(entry)
     # Для openapi / asyncapi возвращаем минимальный фрагмент только с одной записью.

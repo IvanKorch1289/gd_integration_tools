@@ -44,13 +44,11 @@ def _supported_timezones() -> list[str]:
 
 
 tz_choices = _supported_timezones()
-default_tz_idx = tz_choices.index("Europe/Moscow") if "Europe/Moscow" in tz_choices else 0
-
-mode = st.radio(
-    "Режим ввода",
-    options=["Visual", "Expression"],
-    horizontal=True,
+default_tz_idx = (
+    tz_choices.index("Europe/Moscow") if "Europe/Moscow" in tz_choices else 0
 )
+
+mode = st.radio("Режим ввода", options=["Visual", "Expression"], horizontal=True)
 
 if mode == "Visual":
     cols = st.columns(5)
@@ -62,8 +60,7 @@ if mode == "Visual":
     expression = f"{minute} {hour} {day} {month} {weekday}"
 else:
     expression = st.text_input(
-        "Cron expression (5-field или 6-field с секундами)",
-        value="0 9 * * 1-5",
+        "Cron expression (5-field или 6-field с секундами)", value="0 9 * * 1-5"
     )
 
 timezone = st.selectbox("Timezone", tz_choices, index=default_tz_idx)
@@ -113,7 +110,7 @@ if st.button("Preview Next executions", type="primary"):
                     dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
                     weekday_name = dt.strftime("%A")
                     st.write(f"{idx}. **{dt.isoformat()}** ({weekday_name})")
-                except (ValueError, AttributeError):
+                except ValueError, AttributeError:
                     st.write(f"{idx}. {dt_str}")
         else:
             st.error(f"Невалидное выражение: {body.get('error', 'unknown')}")
@@ -154,6 +151,4 @@ with st.expander("Dry-run (manage.py workflow dryrun)"):
         "python manage.py workflow dryrun --schedule '" + expression + "'",
         language="bash",
     )
-    st.caption(
-        "Скопируйте команду и выполните в shell — proceeds без регистрации job."
-    )
+    st.caption("Скопируйте команду и выполните в shell — proceeds без регистрации job.")

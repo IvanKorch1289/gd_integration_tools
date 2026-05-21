@@ -26,10 +26,7 @@ class RagAnsweringAgent(BasePydanticAgent[RagAnswer]):
     result_type = RagAnswer
 
     def __init__(
-        self,
-        rag_service: Any | None = None,
-        top_k: int = 5,
-        **kwargs: object,
+        self, rag_service: Any | None = None, top_k: int = 5, **kwargs: object
     ) -> None:
         super().__init__(
             system_prompt=(
@@ -49,9 +46,7 @@ class RagAnsweringAgent(BasePydanticAgent[RagAnswer]):
         app = get_app_ref()
         rag = getattr(app.state, "rag_service", None) if app is not None else None
         if rag is None:
-            raise RuntimeError(
-                "RagAnsweringAgent: app.state.rag_service отсутствует."
-            )
+            raise RuntimeError("RagAnsweringAgent: app.state.rag_service отсутствует.")
         self._rag_service = rag
         return rag
 

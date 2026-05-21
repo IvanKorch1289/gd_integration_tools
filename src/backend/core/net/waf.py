@@ -23,12 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
-__all__ = (
-    "WafBypassError",
-    "WafDecision",
-    "WafPolicy",
-    "build_default_policy",
-)
+__all__ = ("WafBypassError", "WafDecision", "WafPolicy", "build_default_policy")
 
 
 @dataclass(frozen=True, slots=True)

@@ -109,7 +109,11 @@ class WebDavProcessor(BaseProcessor):
         if self._source == "body":
             return body
         if self._source.startswith("body."):
-            return body.get(self._source[len("body.") :]) if isinstance(body, dict) else None
+            return (
+                body.get(self._source[len("body.") :])
+                if isinstance(body, dict)
+                else None
+            )
         if self._source.startswith("properties."):
             return exchange.properties.get(self._source[len("properties.") :])
         return None
@@ -143,7 +147,9 @@ class WebDavProcessor(BaseProcessor):
             case "upload":
                 if isinstance(src_value, str):
                     src_value = src_value.encode("utf-8")
-                buf = io.BytesIO(src_value if isinstance(src_value, bytes) else bytes(src_value))
+                buf = io.BytesIO(
+                    src_value if isinstance(src_value, bytes) else bytes(src_value)
+                )
                 client.upload_fileobj(buf, self._remote_path)
                 return {"path": self._remote_path, "bytes": len(buf.getvalue())}
             case "download":

@@ -32,7 +32,11 @@ class _ContextRecall:
             {
                 "id": "rec-3",
                 "question": "Ипотека на новостройку",
-                "ground_truth": ["doc-mortg-new-1", "doc-mortg-new-2", "doc-mortg-policy-1"],
+                "ground_truth": [
+                    "doc-mortg-new-1",
+                    "doc-mortg-new-2",
+                    "doc-mortg-policy-1",
+                ],
                 "expected": "doc-mortg-policy-1 doc-mortg-new-1 doc-mortg-new-2",
             },
             {

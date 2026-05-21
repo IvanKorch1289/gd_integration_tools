@@ -50,7 +50,10 @@ _MOCK_PLUGINS: list[dict[str, Any]] = [
         "name": "notification_hub",
         "version": "0.3.0",
         "status": "disabled",
-        "capabilities": ["net.outbound.smtp:internal", "net.outbound.telegram:external"],
+        "capabilities": [
+            "net.outbound.smtp:internal",
+            "net.outbound.telegram:external",
+        ],
         "routes_count": 1,
         "actions_count": 3,
         "tenant_aware": False,
@@ -124,7 +127,9 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
             response.raise_for_status()
             data = response.json()
             plugins: list[dict[str, Any]] = (
-                data if isinstance(data, list) else data.get("plugins", data.get("items", []))
+                data
+                if isinstance(data, list)
+                else data.get("plugins", data.get("items", []))
             )
     except Exception:  # noqa: BLE001
         plugins = list(_MOCK_PLUGINS)
@@ -181,8 +186,7 @@ def toggle_plugin(name: str, active: bool) -> bool:  # noqa: FBT001
 
         with httpx.Client(timeout=10.0) as client:
             response = client.post(
-                f"{_BASE_URL}/api/v1/admin/plugins/{name}/toggle",
-                json=body,
+                f"{_BASE_URL}/api/v1/admin/plugins/{name}/toggle", json=body
             )
             return response.status_code < 400  # noqa: PLR2004
     except Exception:  # noqa: BLE001

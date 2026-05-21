@@ -45,7 +45,9 @@ def instrument_asyncpg_if_enabled() -> bool:
     """
     global _ASYNCPG_INSTRUMENTED  # noqa: PLW0603
     if _ASYNCPG_INSTRUMENTED:
-        logger.debug("OTel asyncpg instrumentor уже активирован, пропуск повторного вызова")
+        logger.debug(
+            "OTel asyncpg instrumentor уже активирован, пропуск повторного вызова"
+        )
         return False
 
     try:

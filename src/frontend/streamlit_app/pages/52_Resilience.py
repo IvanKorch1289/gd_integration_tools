@@ -37,9 +37,7 @@ if str(_project_root) not in sys.path:
 import streamlit as st  # noqa: E402
 
 st.set_page_config(
-    page_title="Resilience Dashboard",
-    page_icon=":shield:",
-    layout="wide",
+    page_title="Resilience Dashboard", page_icon=":shield:", layout="wide"
 )
 st.header("Resilience Dashboard")
 
@@ -127,11 +125,7 @@ def _mock_snapshot() -> dict[str, Any]:
         ],
         "degradation_chains": [
             {"chain": "credit_score_primary", "active_fallback": None, "tier": 0},
-            {
-                "chain": "rag_retrieval",
-                "active_fallback": "cache_l2",
-                "tier": 2,
-            },
+            {"chain": "rag_retrieval", "active_fallback": "cache_l2", "tier": 2},
         ],
     }
 

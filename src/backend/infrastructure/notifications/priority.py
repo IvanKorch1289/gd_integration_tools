@@ -87,8 +87,7 @@ class PriorityRouter:
             return
         for i in range(self.tx_profile.max_size):
             t = get_task_registry().create_task(
-                self._worker_loop("tx", self._tx_queue),
-                name=f"notif-worker-tx-{i}",
+                self._worker_loop("tx", self._tx_queue), name=f"notif-worker-tx-{i}"
             )
             self._workers.append(t)
         for i in range(self.marketing_profile.max_size):

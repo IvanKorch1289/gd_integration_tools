@@ -75,9 +75,7 @@ class SecretBroker(Protocol):
         """Конкретная версия секрета."""
         ...
 
-    def subscribe_rotation(
-        self, name: str, callback: SubscriberCallback
-    ) -> None:
+    def subscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
         """Подписка на ротацию секрета.
 
         Callback вызывается при обнаружении новой версии. Вызов
@@ -85,9 +83,7 @@ class SecretBroker(Protocol):
         """
         ...
 
-    def unsubscribe_rotation(
-        self, name: str, callback: SubscriberCallback
-    ) -> None:
+    def unsubscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
         """Снять подписку."""
         ...
 
@@ -125,14 +121,10 @@ class SecretBrokerImpl:
             self._check(self._plugin, "secrets.read", name)
         return self._backend.get_versioned(name, version)
 
-    def subscribe_rotation(
-        self, name: str, callback: SubscriberCallback
-    ) -> None:
+    def subscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
         self._subscribers.setdefault(name, []).append(callback)
 
-    def unsubscribe_rotation(
-        self, name: str, callback: SubscriberCallback
-    ) -> None:
+    def unsubscribe_rotation(self, name: str, callback: SubscriberCallback) -> None:
         if name in self._subscribers:
             try:
                 self._subscribers[name].remove(callback)
@@ -155,7 +147,5 @@ class SecretBrokerImpl:
                 callback(snapshot)
             except Exception as exc:  # noqa: BLE001
                 _logger.warning(
-                    "secret_broker.subscriber_failed name=%s err=%s",
-                    snapshot.name,
-                    exc,
+                    "secret_broker.subscriber_failed name=%s err=%s", snapshot.name, exc
                 )

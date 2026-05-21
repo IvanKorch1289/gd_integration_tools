@@ -109,17 +109,12 @@ class AdaptiveTimeoutPolicy:
         key = (host, endpoint)
         bucket = self._buckets.get(key)
         if bucket is None:
-            bucket = _Bucket(
-                samples=deque(maxlen=self._config.window_size),
-            )
+            bucket = _Bucket(samples=deque(maxlen=self._config.window_size))
             self._buckets[key] = bucket
         bucket.samples.append(float(latency_ms))
 
     def get_timeout(
-        self,
-        host: str,
-        endpoint: str,
-        default_seconds: float = 10.0,
+        self, host: str, endpoint: str, default_seconds: float = 10.0
     ) -> float:
         """Возвращает рекомендуемый таймаут в секундах.
 

@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-import json
-
 import streamlit as st
 
 try:
@@ -53,7 +51,10 @@ def main() -> None:
     col_list, col_detail = st.columns([1, 1])
     with col_list:
         st.subheader(f"Найдено моделей: {len(models)}")
-        choices = {f"{m['name']}@{m['version']} ({m['extra'].get('backend','')})": m for m in models}
+        choices = {
+            f"{m['name']}@{m['version']} ({m['extra'].get('backend', '')})": m
+            for m in models
+        }
         choice_key = st.selectbox("Выберите модель", list(choices.keys()))
         chosen = choices[choice_key]
 

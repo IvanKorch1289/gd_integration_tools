@@ -66,25 +66,17 @@ class L3RetrievalCache:
             return None
 
     async def set(
-        self,
-        query: str,
-        chunks: list[dict[str, Any]],
-        *,
-        namespace: str | None = None,
+        self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
     ) -> None:
         client = self._ensure_client()
         try:
             await client.cache_set(
-                self._key(query, namespace=namespace),
-                orjson.dumps(chunks),
-                self._ttl,
+                self._key(query, namespace=namespace), orjson.dumps(chunks), self._ttl
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("L3 cache set failed: %s", exc)
 
-    async def invalidate(
-        self, query: str, *, namespace: str | None = None
-    ) -> None:
+    async def invalidate(self, query: str, *, namespace: str | None = None) -> None:
         client = self._ensure_client()
         try:
             await client.cache_delete(self._key(query, namespace=namespace))

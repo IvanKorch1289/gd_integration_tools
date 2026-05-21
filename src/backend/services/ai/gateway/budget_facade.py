@@ -18,10 +18,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.core.tenancy.budget_enforcer import (
-    enforce_post_call,
-    enforce_pre_call,
-)
+from src.backend.core.tenancy.budget_enforcer import enforce_post_call, enforce_pre_call
 from src.backend.core.tenancy.token_budget import BudgetExceeded, TokenBudget
 from src.backend.services.ai.usage_meter import (
     UsageStats,
@@ -56,11 +53,7 @@ class LiteLLMBudgetFacade:
     """
 
     def __init__(
-        self,
-        *,
-        gateway: Any,
-        budget: TokenBudget,
-        enabled: bool = True,
+        self, *, gateway: Any, budget: TokenBudget, enabled: bool = True
     ) -> None:
         self._gateway = gateway
         self._budget = budget
@@ -71,11 +64,7 @@ class LiteLLMBudgetFacade:
         return self._enabled
 
     async def acompletion(
-        self,
-        *,
-        tenant_id: str,
-        messages: list[dict[str, Any]],
-        **kwargs: Any,
+        self, *, tenant_id: str, messages: list[dict[str, Any]], **kwargs: Any
     ) -> tuple[Any, UsageStats]:
         """Chat-completion с token-budget enforcement.
 
@@ -95,9 +84,7 @@ class LiteLLMBudgetFacade:
         estimated = estimate_tokens(messages)
         try:
             await enforce_pre_call(
-                budget=self._budget,
-                tenant_id=tenant_id,
-                estimated_tokens=estimated,
+                budget=self._budget, tenant_id=tenant_id, estimated_tokens=estimated
             )
         except BudgetExceeded as exc:
             logger.warning(

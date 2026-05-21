@@ -37,10 +37,7 @@ from src.backend.core.messaging.outbox import (
 )
 from src.backend.core.utils.task_registry import TaskRegistry, get_task_registry
 
-__all__ = (
-    "DLQHandler",
-    "OutboxDispatcher",
-)
+__all__ = ("DLQHandler", "OutboxDispatcher")
 
 _logger = logging.getLogger("infrastructure.messaging.outbox")
 
@@ -187,8 +184,7 @@ class OutboxDispatcher:
         """
         if not self._enabled:
             _logger.info(
-                "outbox.dispatcher.disabled",
-                extra={"reason": "feature_flag_off"},
+                "outbox.dispatcher.disabled", extra={"reason": "feature_flag_off"}
             )
             return
         if self.is_running:
@@ -196,8 +192,7 @@ class OutboxDispatcher:
         self._stopping.clear()
         self._running = True
         self._task = self._task_registry.create_task(
-            self._run(),
-            name="outbox-dispatcher-poll",
+            self._run(), name="outbox-dispatcher-poll"
         )
         _logger.info(
             "outbox.dispatcher.started",
@@ -227,8 +222,7 @@ class OutboxDispatcher:
             await asyncio.wait_for(task, timeout=timeout)
         except asyncio.TimeoutError:
             _logger.warning(
-                "outbox.dispatcher.stop_timeout",
-                extra={"timeout": timeout},
+                "outbox.dispatcher.stop_timeout", extra={"timeout": timeout}
             )
             task.cancel()
         except asyncio.CancelledError:
@@ -244,8 +238,7 @@ class OutboxDispatcher:
                 raise
             except Exception as exc:  # noqa: BLE001
                 _logger.error(
-                    "outbox.dispatcher.iteration_failed",
-                    extra={"error": repr(exc)},
+                    "outbox.dispatcher.iteration_failed", extra={"error": repr(exc)}
                 )
             # Пауза с возможностью пробуждения через ``stop``.
             try:
@@ -303,9 +296,7 @@ class OutboxDispatcher:
                 # Exponential backoff: 2.0 * 2^(attempt-1) — 2, 4, 8, ...
                 sleep_for = self._retry_backoff_seconds * (2 ** (attempt - 1))
                 try:
-                    await asyncio.wait_for(
-                        self._stopping.wait(), timeout=sleep_for
-                    )
+                    await asyncio.wait_for(self._stopping.wait(), timeout=sleep_for)
                     # Пробудились по stop — выходим без повторной попытки.
                     return
                 except asyncio.TimeoutError:

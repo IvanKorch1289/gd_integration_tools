@@ -70,28 +70,31 @@ class WorkflowAuditInventoryResponse(BaseModel):
     window_hours: int
     total_events: int
     breakdown: dict[str, int] = Field(
-        default_factory=dict,
-        description="event_type → count",
+        default_factory=dict, description="event_type → count"
     )
 
 
 async def _get_clickhouse_client() -> Any:
     """Создаёт async ClickHouse-клиент через ``clickhouse_connect``."""
-    from clickhouse_connect import (  # type: ignore[import-untyped]
-        get_async_client,
-    )
+    from clickhouse_connect import get_async_client  # type: ignore[import-untyped]
 
     from src.backend.core.config import settings
 
-    host = getattr(settings.clickhouse, "host", "localhost") if hasattr(
-        settings, "clickhouse"
-    ) else "localhost"
-    port = getattr(settings.clickhouse, "port", 8123) if hasattr(
-        settings, "clickhouse"
-    ) else 8123
-    database = getattr(settings.clickhouse, "database", "default") if hasattr(
-        settings, "clickhouse"
-    ) else "default"
+    host = (
+        getattr(settings.clickhouse, "host", "localhost")
+        if hasattr(settings, "clickhouse")
+        else "localhost"
+    )
+    port = (
+        getattr(settings.clickhouse, "port", 8123)
+        if hasattr(settings, "clickhouse")
+        else 8123
+    )
+    database = (
+        getattr(settings.clickhouse, "database", "default")
+        if hasattr(settings, "clickhouse")
+        else "default"
+    )
     return await get_async_client(host=host, port=port, database=database)
 
 
@@ -138,9 +141,7 @@ async def get_audit_inventory(
         total += cnt
 
     return WorkflowAuditInventoryResponse(
-        window_hours=window_hours,
-        total_events=total,
-        breakdown=breakdown,
+        window_hours=window_hours, total_events=total, breakdown=breakdown
     )
 
 
@@ -152,9 +153,7 @@ async def get_audit_inventory(
 async def get_audit_events(
     workflow_id: str | None = Query(None),
     tenant_id: str | None = Query(None),
-    event_type: str | None = Query(
-        None, description="Один из allowed event_types."
-    ),
+    event_type: str | None = Query(None, description="Один из allowed event_types."),
     from_: datetime | None = Query(None, alias="from"),
     to: datetime | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),

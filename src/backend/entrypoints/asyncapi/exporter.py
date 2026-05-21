@@ -21,11 +21,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from faststream.specification import Specification
 
-__all__ = (
-    "build_asyncapi_spec",
-    "build_asyncapi_yaml",
-    "build_asyncapi_json",
-)
+__all__ = ("build_asyncapi_spec", "build_asyncapi_yaml", "build_asyncapi_json")
 
 
 _DEFAULT_TITLE = "gd_integration_tools"
@@ -84,11 +80,7 @@ def _empty_spec_dict(title: str, version: str, description: str) -> dict[str, An
     """
     return {
         "asyncapi": "3.0.0",
-        "info": {
-            "title": title,
-            "version": version,
-            "description": description,
-        },
+        "info": {"title": title, "version": version, "description": description},
         "servers": {},
         "channels": {},
         "operations": {},

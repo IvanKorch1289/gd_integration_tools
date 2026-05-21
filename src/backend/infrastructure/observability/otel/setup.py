@@ -30,11 +30,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-__all__ = (
-    "configure_otel",
-    "setup_otel_metrics",
-    "shutdown_otel_metrics",
-)
+__all__ = ("configure_otel", "setup_otel_metrics", "shutdown_otel_metrics")
 
 logger = logging.getLogger("infra.otel.setup")
 
@@ -86,10 +82,7 @@ def configure_otel(
         return current
 
     resource = Resource.create(
-        {
-            "service.name": service_name,
-            "deployment.environment": environment,
-        }
+        {"service.name": service_name, "deployment.environment": environment}
     )
     provider = TracerProvider(resource=resource)
 
@@ -201,8 +194,7 @@ def setup_otel_metrics(
         from opentelemetry.sdk.resources import Resource
     except ImportError as exc:
         logger.warning(
-            "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s",
-            exc,
+            "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s", exc
         )
         return None
 
@@ -212,10 +204,7 @@ def setup_otel_metrics(
         return current
 
     resource = Resource.create(
-        {
-            "service.name": service_name,
-            "deployment.environment": environment,
-        }
+        {"service.name": service_name, "deployment.environment": environment}
     )
 
     metric_exporter: MetricExporter
@@ -225,10 +214,7 @@ def setup_otel_metrics(
                 OTLPMetricExporter,
             )
 
-            metric_exporter = OTLPMetricExporter(
-                endpoint=endpoint,
-                insecure=insecure,
-            )
+            metric_exporter = OTLPMetricExporter(endpoint=endpoint, insecure=insecure)
         except ImportError as otlp_exc:
             logger.warning(
                 "opentelemetry-exporter-otlp-proto-grpc отсутствует, "
@@ -243,8 +229,7 @@ def setup_otel_metrics(
         metric_exporter = ConsoleMetricExporter()
 
     reader = PeriodicExportingMetricReader(
-        metric_exporter,
-        export_interval_millis=export_interval_seconds * 1000,
+        metric_exporter, export_interval_millis=export_interval_seconds * 1000
     )
     meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
     metrics.set_meter_provider(meter_provider)
@@ -333,9 +318,6 @@ def shutdown_otel_metrics(timeout_millis: int = 30000) -> None:
         _meter_provider_ref.shutdown(timeout_millis=timeout_millis)
         logger.info("OTel MeterProvider остановлен корректно")
     except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "Ошибка shutdown OTel MeterProvider (ignored): %s",
-            exc,
-        )
+        logger.warning("Ошибка shutdown OTel MeterProvider (ignored): %s", exc)
     finally:
         _meter_provider_ref = None

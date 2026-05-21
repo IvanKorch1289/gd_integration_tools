@@ -72,11 +72,7 @@ class ThreeTierRagCache:
             await self._l2.set(query, value, tenant=tenant)
 
     async def store_chunks(
-        self,
-        query: str,
-        chunks: list[dict[str, Any]],
-        *,
-        namespace: str | None = None,
+        self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
     ) -> None:
         if self._l3_enabled:
             await self._l3.set(query, chunks, namespace=namespace)

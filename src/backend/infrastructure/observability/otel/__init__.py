@@ -25,8 +25,4 @@ from src.backend.infrastructure.observability.otel.setup import (
     shutdown_otel_metrics,
 )
 
-__all__ = (
-    "configure_otel",
-    "setup_otel_metrics",
-    "shutdown_otel_metrics",
-)
+__all__ = ("configure_otel", "setup_otel_metrics", "shutdown_otel_metrics")

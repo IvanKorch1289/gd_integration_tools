@@ -77,10 +77,7 @@ class WhooshIndex:
         """
         if not self._docs_dir.is_dir():
             return ()
-        return (
-            list(self._docs_dir.rglob("*.md"))
-            + list(self._docs_dir.rglob("*.yaml"))
-        )
+        return list(self._docs_dir.rglob("*.md")) + list(self._docs_dir.rglob("*.yaml"))
 
     # Backward-compat алиас (не удалять — использован в тестах прежних wave).
     def _iter_md_files(self) -> Iterable[Path]:
@@ -176,11 +173,7 @@ class WhooshIndex:
         return count
 
     def search(
-        self,
-        query: str,
-        top: int = 20,
-        *,
-        category: str | None = None,
+        self, query: str, top: int = 20, *, category: str | None = None
     ) -> list[Hit]:
         """Полнотекстовый поиск по ``title`` и ``content``.
 
@@ -199,9 +192,7 @@ class WhooshIndex:
             parser = qparser.MultifieldParser(
                 ["title", "content"], schema=self._ix.schema
             )
-            full_query = (
-                f"({query}) AND category:{category}" if category else query
-            )
+            full_query = f"({query}) AND category:{category}" if category else query
             parsed = parser.parse(full_query)
             results = searcher.search(parsed, limit=top)
             results.fragmenter.charlimit = 1024 * 8

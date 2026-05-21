@@ -120,10 +120,7 @@ class K8sHPAMetricsExporter:
         effective_labels: dict[str, str] = labels or {}
         effective_ts = timestamp if timestamp is not None else time.time()
         sample = HPAMetricSample(
-            name=name,
-            value=value,
-            labels=effective_labels,
-            timestamp=effective_ts,
+            name=name, value=value, labels=effective_labels, timestamp=effective_ts
         )
         key = _make_key(name, effective_labels)
         with self._lock:
@@ -266,6 +263,7 @@ def reset_hpa_exporter() -> None:
 
 # ── Внутренние утилиты ────────────────────────────────────────────────────────
 
+
 def _make_key(name: str, labels: dict[str, str]) -> str:
     """Строит уникальный ключ для записи в реестре.
 
@@ -293,9 +291,7 @@ def _format_sample(sample: HPAMetricSample) -> str:
     timestamp_ms = int(sample.timestamp * 1000)
 
     if sample.labels:
-        label_str = ",".join(
-            f'{k}="{v}"' for k, v in sorted(sample.labels.items())
-        )
+        label_str = ",".join(f'{k}="{v}"' for k, v in sorted(sample.labels.items()))
         return f"{sample.name}{{{label_str}}} {sample.value} {timestamp_ms}"
 
     return f"{sample.name} {sample.value} {timestamp_ms}"

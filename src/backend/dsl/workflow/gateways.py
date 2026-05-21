@@ -39,12 +39,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-__all__ = (
-    "BranchSpec",
-    "GatewayCompiler",
-    "GatewaySpec",
-    "process_gateway",
-)
+__all__ = ("BranchSpec", "GatewayCompiler", "GatewaySpec", "process_gateway")
 
 
 @dataclass(slots=True, frozen=True)
@@ -87,7 +82,9 @@ class GatewayCompiler:
     """
 
     @staticmethod
-    def compile_xor(spec: GatewaySpec, ctx: dict[str, Any] | None = None) -> dict[str, Any]:
+    def compile_xor(
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Скомпилировать XOR (exclusive) gateway.
 
         Семантика: из списка веток выбирается первая, чьё ``condition``
@@ -116,7 +113,9 @@ class GatewayCompiler:
         }
 
     @staticmethod
-    def compile_and(spec: GatewaySpec, ctx: dict[str, Any] | None = None) -> dict[str, Any]:
+    def compile_and(
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Скомпилировать AND (parallel) gateway.
 
         Семантика: все ветки запускаются параллельно через
@@ -146,7 +145,9 @@ class GatewayCompiler:
         }
 
     @staticmethod
-    def compile_or(spec: GatewaySpec, ctx: dict[str, Any] | None = None) -> dict[str, Any]:
+    def compile_or(
+        spec: GatewaySpec, ctx: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Скомпилировать OR (inclusive) gateway.
 
         Семантика: из всех веток активируются те, чьё ``condition`` истинно;
@@ -176,7 +177,9 @@ class GatewayCompiler:
         }
 
 
-def process_gateway(spec: GatewaySpec, ctx: dict[str, Any] | None = None) -> dict[str, Any]:
+def process_gateway(
+    spec: GatewaySpec, ctx: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Диспетчер компиляции gateway по типу (``kind``).
 
     Делегирует вызов к соответствующему методу :class:`GatewayCompiler`

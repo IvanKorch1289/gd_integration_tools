@@ -45,8 +45,12 @@ class AppriseNotifyParams(BaseModel):
     channel: str = Field(..., description="Имя канала Apprise (зарегистрированного)")
     title: str = Field(..., description="Заголовок уведомления")
     body: str = Field(..., description="Тело уведомления")
-    body_format: str = Field(default="text", description="Формат тела: text|html|markdown")
-    result_property: str = Field(default="notify_apprise_result", description="Имя property для результата")
+    body_format: str = Field(
+        default="text", description="Формат тела: text|html|markdown"
+    )
+    result_property: str = Field(
+        default="notify_apprise_result", description="Имя property для результата"
+    )
 
 
 class AppriseNotifyProcessor(BaseProcessor):
@@ -124,7 +128,8 @@ class AppriseNotifyProcessor(BaseProcessor):
         exchange.set_property(self.result_property, result)
         if not result:
             _log.warning(
-                "AppriseNotifyProcessor: уведомление в '%s' не доставлено.", self.channel
+                "AppriseNotifyProcessor: уведомление в '%s' не доставлено.",
+                self.channel,
             )
 
     def to_spec(self) -> dict[str, Any]:

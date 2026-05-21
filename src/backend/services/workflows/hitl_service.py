@@ -86,9 +86,7 @@ class HitlPendingSignal:
             "title": self.title,
             "payload": self.payload,
             "created_at": self.created_at.isoformat(),
-            "resolved_at": (
-                self.resolved_at.isoformat() if self.resolved_at else None
-            ),
+            "resolved_at": (self.resolved_at.isoformat() if self.resolved_at else None),
             "resolved_action": self.resolved_action,
             "resolved_by": self.resolved_by,
             "is_resolved": self.is_resolved,
@@ -99,25 +97,17 @@ class HitlPendingSignal:
 class HitlSignalStore(Protocol):
     """Backend-агностичное хранилище pending signals."""
 
-    async def put(self, signal: HitlPendingSignal) -> None:
-        ...
+    async def put(self, signal: HitlPendingSignal) -> None: ...
 
-    async def get(self, signal_id: str) -> HitlPendingSignal | None:
-        ...
+    async def get(self, signal_id: str) -> HitlPendingSignal | None: ...
 
     async def list_pending(
         self, *, tenant_id: str | None = None
-    ) -> list[HitlPendingSignal]:
-        ...
+    ) -> list[HitlPendingSignal]: ...
 
     async def mark_resolved(
-        self,
-        signal_id: str,
-        *,
-        action: str,
-        resolved_by: str,
-    ) -> HitlPendingSignal:
-        ...
+        self, signal_id: str, *, action: str, resolved_by: str
+    ) -> HitlPendingSignal: ...
 
 
 class InMemoryHitlSignalStore:
@@ -145,11 +135,7 @@ class InMemoryHitlSignalStore:
         return sorted(items, key=lambda s: s.created_at)
 
     async def mark_resolved(
-        self,
-        signal_id: str,
-        *,
-        action: str,
-        resolved_by: str,
+        self, signal_id: str, *, action: str, resolved_by: str
     ) -> HitlPendingSignal:
         async with self._lock:
             signal = self._store.get(signal_id)
@@ -227,9 +213,7 @@ class HitlService:
             KeyError: signal_id не найден.
         """
         if action not in HitlAction.all():
-            raise ValueError(
-                f"Invalid action {action!r}; allowed: {HitlAction.all()}"
-            )
+            raise ValueError(f"Invalid action {action!r}; allowed: {HitlAction.all()}")
         resolved = await self._store.mark_resolved(
             signal_id, action=action, resolved_by=resolved_by
         )

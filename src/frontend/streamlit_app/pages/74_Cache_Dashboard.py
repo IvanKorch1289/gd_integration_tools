@@ -19,7 +19,9 @@ stats = client.get_rag_cache_stats()
 counters = stats.get("counters", {"hits": {}, "misses": {}})
 enabled = stats.get("enabled", {})
 
-tab_l1, tab_l2, tab_l3, tab_inv = st.tabs(["L1 Exact", "L2 Semantic", "L3 Retrieval", "Invalidation"])
+tab_l1, tab_l2, tab_l3, tab_inv = st.tabs(
+    ["L1 Exact", "L2 Semantic", "L3 Retrieval", "Invalidation"]
+)
 
 
 def _render_tier(tier_name: str, tier_key: str) -> None:

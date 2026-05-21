@@ -20,8 +20,7 @@ from pydantic import BaseModel
 __all__ = ("router",)
 
 router = APIRouter(
-    prefix="/admin/workflow-versioning",
-    tags=["admin", "workflow", "versioning"],
+    prefix="/admin/workflow-versioning", tags=["admin", "workflow", "versioning"]
 )
 
 
@@ -64,9 +63,7 @@ def _to_response(v: Any) -> WorkflowVersionResponse:
     )
 
 
-@router.get(
-    "/{workflow_id}/history", response_model=list[WorkflowVersionResponse]
-)
+@router.get("/{workflow_id}/history", response_model=list[WorkflowVersionResponse])
 async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse]:
     """Возвращает все зарегистрированные версии workflow."""
     from src.backend.dsl.workflow.versioning import get_global_registry
@@ -75,12 +72,9 @@ async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse
     return [_to_response(v) for v in history]
 
 
-@router.post(
-    "/{workflow_id}/pin", response_model=WorkflowVersionResponse
-)
+@router.post("/{workflow_id}/pin", response_model=WorkflowVersionResponse)
 async def pin_workflow_version(
-    workflow_id: str,
-    semver: str = Query(..., min_length=3, max_length=20),
+    workflow_id: str, semver: str = Query(..., min_length=3, max_length=20)
 ) -> WorkflowVersionResponse:
     """Pin указанную версию как default для workflow."""
     if not _SEMVER_RE.match(semver):
@@ -92,20 +86,15 @@ async def pin_workflow_version(
     from src.backend.dsl.workflow.versioning import get_global_registry
 
     try:
-        updated = get_global_registry().pin_default(
-            workflow_id, semver=semver
-        )
+        updated = get_global_registry().pin_default(workflow_id, semver=semver)
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
         ) from exc
     return _to_response(updated)
 
 
-@router.post(
-    "/{workflow_id}/rollback", response_model=RollbackResponse
-)
+@router.post("/{workflow_id}/rollback", response_model=RollbackResponse)
 async def rollback_workflow_version(workflow_id: str) -> RollbackResponse:
     """Откатить default на предыдущую версию."""
     from src.backend.dsl.workflow.versioning import get_global_registry
@@ -119,14 +108,10 @@ async def rollback_workflow_version(workflow_id: str) -> RollbackResponse:
                 f"для {workflow_id!r}."
             ),
         )
-    return RollbackResponse(
-        rolled_back=True, new_default=_to_response(new_default)
-    )
+    return RollbackResponse(rolled_back=True, new_default=_to_response(new_default))
 
 
-@router.get(
-    "/{workflow_id}/running-count", response_model=RunningCountResponse
-)
+@router.get("/{workflow_id}/running-count", response_model=RunningCountResponse)
 async def get_running_count(workflow_id: str) -> RunningCountResponse:
     """Sprint 12 K3 W8 — count running executions per version.
 
@@ -135,9 +120,7 @@ async def get_running_count(workflow_id: str) -> RunningCountResponse:
     """
     counts: dict[str, int] = {}
     try:
-        from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         backend = await create_workflow_backend(kind="auto")
         if hasattr(backend, "count_running_per_version"):

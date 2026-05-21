@@ -41,19 +41,13 @@ class DesktopRpaClient:
     """
 
     def __init__(
-        self,
-        base_url: str,
-        *,
-        api_key: str | None = None,
-        timeout: float = 30.0,
+        self, base_url: str, *, api_key: str | None = None, timeout: float = 30.0
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._timeout = timeout
 
-    async def execute(
-        self, action: str, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, action: str, params: dict[str, Any]) -> dict[str, Any]:
         """Выполняет ``action`` (click/type/screenshot) на windows-worker.
 
         Args:
@@ -87,9 +81,7 @@ class DesktopRpaClient:
             try:
                 response = await http.post(url, json=params, headers=headers)
             except httpx.HTTPError as exc:
-                raise DesktopRpaError(
-                    f"transport error к {url}: {exc}"
-                ) from exc
+                raise DesktopRpaError(f"transport error к {url}: {exc}") from exc
 
         if response.status_code == 503:
             raise DesktopRpaError(
@@ -98,7 +90,6 @@ class DesktopRpaClient:
             )
         if response.status_code >= 400:
             raise DesktopRpaError(
-                f"{action} failed ({response.status_code}): "
-                f"{response.text[:200]}"
+                f"{action} failed ({response.status_code}): {response.text[:200]}"
             )
         return response.json()

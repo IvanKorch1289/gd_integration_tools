@@ -27,8 +27,7 @@ DryRunReport = dict[str, Any]
 
 
 def run_workflow_dryrun(
-    declaration: WorkflowDeclaration,
-    input_data: dict[str, Any],
+    declaration: WorkflowDeclaration, input_data: dict[str, Any]
 ) -> DryRunReport:
     """Симулировать выполнение workflow без Temporal.
 
@@ -121,9 +120,7 @@ def run_workflow_dryrun(
                 )
 
         completed_state = f"STEP_{idx}_COMPLETED"
-        transitions.append(
-            {"from": state, "to": completed_state, "step": step_name}
-        )
+        transitions.append({"from": state, "to": completed_state, "step": step_name})
         state = completed_state
 
     transitions.append({"from": state, "to": "FINISHED", "step": None})

@@ -43,7 +43,10 @@ class _RagRerankerPipeline:
         if not predicted or not expected_ranking:
             return 0.0
 
-        gains = {doc_id: 1.0 / math.log2(rank + 2) for rank, doc_id in enumerate(expected_ranking)}
+        gains = {
+            doc_id: 1.0 / math.log2(rank + 2)
+            for rank, doc_id in enumerate(expected_ranking)
+        }
         dcg = sum(
             gains.get(doc_id, 0.0) / math.log2(rank + 2)
             for rank, doc_id in enumerate(predicted)

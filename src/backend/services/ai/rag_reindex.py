@@ -88,9 +88,7 @@ class RagReindexService:
             return report
 
         try:
-            rows = await store.scroll_where(
-                {"namespace": namespace}, limit=limit
-            )
+            rows = await store.scroll_where({"namespace": namespace}, limit=limit)
         except Exception as exc:  # noqa: BLE001
             logger.warning("scroll_where(%s) failed: %s", namespace, exc)
             return report

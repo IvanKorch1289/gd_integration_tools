@@ -14,9 +14,4 @@ from src.backend.core.messaging.outbox import (
     OutboxEventStatus,
 )
 
-__all__ = (
-    "FakeOutbox",
-    "OutboxBackend",
-    "OutboxEvent",
-    "OutboxEventStatus",
-)
+__all__ = ("FakeOutbox", "OutboxBackend", "OutboxEvent", "OutboxEventStatus")

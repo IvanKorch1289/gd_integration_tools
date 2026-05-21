@@ -144,8 +144,7 @@ def import_bpmn(
     steps = _build_steps(ordered_node_ids, elements, flows)
     if not steps:
         raise BpmnImportError(
-            "BPMN-процесс не содержит ни одного executable-step "
-            "(serviceTask/gateway)."
+            "BPMN-процесс не содержит ни одного executable-step (serviceTask/gateway)."
         )
 
     _logger.debug(
@@ -156,9 +155,7 @@ def import_bpmn(
     )
 
     return WorkflowDeclaration(
-        name=workflow_name,
-        description=workflow_description,
-        steps=steps,
+        name=workflow_name, description=workflow_description, steps=steps
     )
 
 
@@ -225,9 +222,7 @@ def _collect_elements(process: ET.Element) -> dict[str, ET.Element]:
     return elements
 
 
-def _collect_sequence_flows(
-    process: ET.Element,
-) -> dict[str, list[dict[str, str]]]:
+def _collect_sequence_flows(process: ET.Element) -> dict[str, list[dict[str, str]]]:
     """Собрать sequence-flows как adjacency list ``{source_id: [{...}]}``.
 
     Каждая запись: ``{"target": ..., "name": ..., "condition": ...}``.
@@ -241,7 +236,9 @@ def _collect_sequence_flows(
             continue
 
         condition_el = flow.find(f"{_NS_PREFIX}conditionExpression")
-        condition = (condition_el.text or "").strip() if condition_el is not None else ""
+        condition = (
+            (condition_el.text or "").strip() if condition_el is not None else ""
+        )
 
         adjacency.setdefault(source, []).append(
             {
@@ -254,8 +251,7 @@ def _collect_sequence_flows(
 
 
 def _topological_order(
-    elements: dict[str, ET.Element],
-    flows: dict[str, list[dict[str, str]]],
+    elements: dict[str, ET.Element], flows: dict[str, list[dict[str, str]]]
 ) -> list[str]:
     """Простой DFS-обход от startEvent до endEvent.
 
@@ -267,9 +263,7 @@ def _topological_order(
     поддерживается ровно один startEvent — иначе :class:`BpmnImportError`.
     """
     starts = [
-        node_id
-        for node_id, el in elements.items()
-        if _strip_ns(el.tag) == "startEvent"
+        node_id for node_id, el in elements.items() if _strip_ns(el.tag) == "startEvent"
     ]
     if not starts:
         raise BpmnImportError(
@@ -340,11 +334,7 @@ def _build_steps(
             )
             continue
 
-        if local_name in {
-            "exclusiveGateway",
-            "parallelGateway",
-            "inclusiveGateway",
-        }:
+        if local_name in {"exclusiveGateway", "parallelGateway", "inclusiveGateway"}:
             gateway_spec = _build_gateway_spec(node_id, local_name, flows, elements)
             steps.append(
                 ActivityDeclaration(

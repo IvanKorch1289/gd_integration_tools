@@ -23,12 +23,7 @@ from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "DSPyOptimizer",
-    "BaselineDataset",
-    "CompileReport",
-    "DSPyPipeline",
-)
+__all__ = ("DSPyOptimizer", "BaselineDataset", "CompileReport", "DSPyPipeline")
 
 
 class DSPyPipeline(Protocol):
@@ -126,8 +121,7 @@ class DSPyOptimizer:
         *,
         baseline: BaselineDataset,
         bootstrap_strategy: Callable[
-            [DSPyPipeline, Sequence[dict[str, Any]]],
-            Callable[[dict[str, Any]], str],
+            [DSPyPipeline, Sequence[dict[str, Any]]], Callable[[dict[str, Any]], str]
         ]
         | None = None,
     ) -> None:

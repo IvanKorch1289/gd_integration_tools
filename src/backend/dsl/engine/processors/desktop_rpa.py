@@ -84,9 +84,7 @@ class DesktopRpaProcessor(BaseProcessor):
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
         """Выполняет action через DesktopRpaClient из ExecutionContext."""
-        client: DesktopRpaClient | None = getattr(
-            context, "desktop_rpa_client", None
-        )
+        client: DesktopRpaClient | None = getattr(context, "desktop_rpa_client", None)
         if client is None:
             app_state = getattr(context, "app_state", None)
             if app_state is not None:
@@ -103,9 +101,7 @@ class DesktopRpaProcessor(BaseProcessor):
             payload["app"] = self._app
             result = await client.execute(self._action, payload)
         except Exception as exc:  # noqa: BLE001 — DSL-граница
-            exchange.fail(
-                f"desktop_rpa({self._action!r}) failed: {exc}"
-            )
+            exchange.fail(f"desktop_rpa({self._action!r}) failed: {exc}")
             return
 
         self._write(exchange, result)

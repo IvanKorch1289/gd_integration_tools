@@ -70,8 +70,7 @@ class CDCSource:
             raise RuntimeError(f"CDCSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event),
-            name=f"source-cdc:{self.source_id}",
+            self._run(on_event), name=f"source-cdc:{self.source_id}"
         )
         logger.info(
             "CDCSource started: id=%s slot=%s plugin=%s",

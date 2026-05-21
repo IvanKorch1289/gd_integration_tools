@@ -329,7 +329,9 @@ class ResilienceCoordinator:
             @functools.wraps(func)
             async def policy_wrapper(*args: Any, **kwargs: Any) -> Any:
                 if rate_limiter is not None:
-                    await rate_limiter.check(name, getattr(rate_limiter, "policy", None))
+                    await rate_limiter.check(
+                        name, getattr(rate_limiter, "policy", None)
+                    )
                 if breaker_obj is not None:
                     async with breaker_obj.guard():
                         return await wrapped(*args, **kwargs)

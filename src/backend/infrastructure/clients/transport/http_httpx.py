@@ -193,15 +193,11 @@ class HttpxClient:
         try:
             from src.backend.core.config.features import feature_flags
 
-            return bool(
-                getattr(feature_flags, "httpx_unified_transport", False)
-            )
+            return bool(getattr(feature_flags, "httpx_unified_transport", False))
         except Exception:  # noqa: BLE001
             return False
 
-    def _build_cert_tuple(
-        self,
-    ) -> tuple[str, str] | tuple[str, str, str] | None:
+    def _build_cert_tuple(self) -> tuple[str, str] | tuple[str, str, str] | None:
         """Собирает ``cert`` для ``httpx.AsyncClient`` или ``None`` (no-op)."""
         cert_path = self._http_settings.client_cert_path
         key_path = self._http_settings.client_key_path
@@ -354,7 +350,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except (RetryError, CircuitOpen, httpx.HTTPError):
+        except RetryError, CircuitOpen, httpx.HTTPError:
             raise
 
 

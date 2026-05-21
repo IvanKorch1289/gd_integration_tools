@@ -83,9 +83,7 @@ class LangFuseReader:
             return []
         try:
             traces = client.fetch_traces(
-                from_timestamp=(
-                    datetime.now(timezone.utc) - window
-                ).isoformat()
+                from_timestamp=(datetime.now(timezone.utc) - window).isoformat()
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("LangFuse fetch_traces failed: %s", exc)

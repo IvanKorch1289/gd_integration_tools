@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     # toxiproxy-python типы; runtime-импорт через lazy-load,
     # чтобы chaos-тесты могли skip-аться без установки SDK.
-    from toxiproxy import Proxy, Toxiproxy
+    pass
 
 __all__ = (
     "TOXIPROXY_URL",
@@ -91,9 +91,7 @@ def with_timeout(proxy: Any, ms: int) -> Iterator[None]:
         ms: Время до обрыва в миллисекундах.
     """
     toxic = proxy.add_toxic(
-        name=f"timeout_{ms}",
-        type="timeout",
-        attributes={"timeout": ms},
+        name=f"timeout_{ms}", type="timeout", attributes={"timeout": ms}
     )
     try:
         yield
@@ -111,9 +109,7 @@ def with_bandwidth(proxy: Any, kbps: int) -> Iterator[None]:
         kbps: Лимит в килобитах в секунду.
     """
     toxic = proxy.add_toxic(
-        name=f"bandwidth_{kbps}",
-        type="bandwidth",
-        attributes={"rate": kbps},
+        name=f"bandwidth_{kbps}", type="bandwidth", attributes={"rate": kbps}
     )
     try:
         yield
@@ -131,9 +127,7 @@ def with_slow_close(proxy: Any, delay_ms: int) -> Iterator[None]:
         delay_ms: Задержка перед закрытием в миллисекундах.
     """
     toxic = proxy.add_toxic(
-        name=f"slow_close_{delay_ms}",
-        type="slow_close",
-        attributes={"delay": delay_ms},
+        name=f"slow_close_{delay_ms}", type="slow_close", attributes={"delay": delay_ms}
     )
     try:
         yield

@@ -33,19 +33,17 @@ def setup_middlewares(app: FastAPI) -> None:
     from src.backend.core.config.settings import settings
     from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
-    from src.backend.entrypoints.middlewares.brotli_compression import (
-        BrotliCompressionMiddleware,
-    )
     from src.backend.entrypoints.middlewares.audit_log import AuditLogMiddleware
     from src.backend.entrypoints.middlewares.audit_replay import AuditReplayMiddleware
     from src.backend.entrypoints.middlewares.auth_method_header import (
         AuthMethodHeaderMiddleware,
     )
-    from src.backend.entrypoints.middlewares.auth_required import (
-        AuthRequiredMiddleware,
-    )
+    from src.backend.entrypoints.middlewares.auth_required import AuthRequiredMiddleware
     from src.backend.entrypoints.middlewares.blocked_routes import (
         BlockedRoutesMiddleware,
+    )
+    from src.backend.entrypoints.middlewares.brotli_compression import (
+        BrotliCompressionMiddleware,
     )
     from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
     from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware

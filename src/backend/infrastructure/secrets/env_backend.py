@@ -35,9 +35,7 @@ class EnvBackend:
         env_name = self._env_name(name)
         value = os.environ.get(env_name)
         if value is None:
-            raise KeyError(
-                f"Secret {name!r} not found in env (lookup={env_name!r})"
-            )
+            raise KeyError(f"Secret {name!r} not found in env (lookup={env_name!r})")
         return SecretValue(name=name, value=value, version=0)
 
     def get_versioned(self, name: str, version: int) -> SecretValue:

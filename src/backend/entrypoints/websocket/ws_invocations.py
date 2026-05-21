@@ -112,9 +112,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
                     {"type": "ack", "invocation_id": invocation_id}
                 )
                 await _stream_llm_to_ws(
-                    websocket=websocket,
-                    invocation_id=invocation_id,
-                    payload=data,
+                    websocket=websocket, invocation_id=invocation_id, payload=data
                 )
                 continue
 
@@ -177,15 +175,10 @@ def _response_payload(response: Any) -> dict[str, Any]:
 
 
 async def _stream_llm_to_ws(
-    *,
-    websocket: WebSocket,
-    invocation_id: str,
-    payload: dict[str, Any],
+    *, websocket: WebSocket, invocation_id: str, payload: dict[str, Any]
 ) -> None:
     """Wave D.3: token-level LLM streaming через WS channel."""
-    from src.backend.services.ai.streaming_service import (
-        get_llm_streaming_service,
-    )
+    from src.backend.services.ai.streaming_service import get_llm_streaming_service
 
     messages = payload.get("messages")
     if not isinstance(messages, list) or not messages:
@@ -236,9 +229,5 @@ async def _stream_llm_to_ws(
     except Exception as exc:  # noqa: BLE001
         logger.warning("llm.stream over WS failed: %s", exc)
         await websocket.send_json(
-            {
-                "type": "error",
-                "invocation_id": invocation_id,
-                "error": str(exc),
-            }
+            {"type": "error", "invocation_id": invocation_id, "error": str(exc)}
         )

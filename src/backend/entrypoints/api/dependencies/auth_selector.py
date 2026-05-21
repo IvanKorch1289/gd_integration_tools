@@ -127,9 +127,7 @@ async def _verify_mtls(request: Request) -> AuthContext | None:
     if result is None:
         return None
     return AuthContext(
-        AuthMethod.MTLS,
-        principal=str(result["principal"]),
-        metadata=result,
+        AuthMethod.MTLS, principal=str(result["principal"]), metadata=result
     )
 
 
@@ -142,9 +140,8 @@ async def _verify_saml(request: Request) -> AuthContext | None:
     header'а ``X-SAML-Session-ID``, который выставляется ACS-handler'ом
     после успешной обработки SAMLResponse.
     """
-    session_id = (
-        request.cookies.get("saml_session")
-        or request.headers.get("X-SAML-Session-ID")
+    session_id = request.cookies.get("saml_session") or request.headers.get(
+        "X-SAML-Session-ID"
     )
     if not session_id:
         return None
@@ -153,9 +150,7 @@ async def _verify_saml(request: Request) -> AuthContext | None:
     # делается middleware'ом. Это согласуется с тем, как сейчас сделано
     # для X-Client-Cert-Fingerprint (доверяем TLS-proxy / SAML-handler'у).
     return AuthContext(
-        AuthMethod.SAML,
-        principal=session_id,
-        metadata={"session_id": session_id},
+        AuthMethod.SAML, principal=session_id, metadata={"session_id": session_id}
     )
 
 
@@ -179,10 +174,7 @@ async def _verify_express_jwt(request: Request) -> AuthContext | None:
         return None
     token = auth[7:]
     try:
-        from src.backend.core.auth.jwt_backend import (
-            JwtBackend,
-            JwtVerificationError,
-        )
+        from src.backend.core.auth.jwt_backend import JwtBackend, JwtVerificationError
         from src.backend.core.config.auth import build_auth_config
 
         cfg = build_auth_config().express_jwt
@@ -199,9 +191,7 @@ async def _verify_express_jwt(request: Request) -> AuthContext | None:
         except JwtVerificationError as exc:
             logger.warning("Express JWT verify failed: %s", exc)
             return None
-        principal = (
-            claims.raw.get("sub") or claims.raw.get("huid") or cfg.bot_id
-        )
+        principal = claims.raw.get("sub") or claims.raw.get("huid") or cfg.bot_id
         return AuthContext(AuthMethod.EXPRESS_JWT, str(principal), claims.raw)
     except Exception as exc:
         logger.warning("Express JWT verify failed: %s", exc)

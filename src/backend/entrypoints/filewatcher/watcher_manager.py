@@ -85,8 +85,7 @@ class WatcherManager:
         stop_event = asyncio.Event()
         self._stop_events[spec.id] = stop_event
         self._tasks[spec.id] = get_task_registry().create_task(
-            self._watch_loop(spec.id, stop_event),
-            name=f"filewatcher:{spec.id}",
+            self._watch_loop(spec.id, stop_event), name=f"filewatcher:{spec.id}"
         )
 
         logger.info(

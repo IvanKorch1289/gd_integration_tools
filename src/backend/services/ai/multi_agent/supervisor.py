@@ -166,9 +166,7 @@ class MultiAgentSupervisor:
         try:
             from src.backend.core.config.features import feature_flags
 
-            return bool(
-                getattr(feature_flags, "multi_agent_supervisor_enabled", False)
-            )
+            return bool(getattr(feature_flags, "multi_agent_supervisor_enabled", False))
         except Exception:  # noqa: BLE001
             return False
 
@@ -181,7 +179,9 @@ class MultiAgentSupervisor:
         except ImportError:
             return False
 
-    async def run(self, *, prompt: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def run(
+        self, *, prompt: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Запускает supervisor-цикл с заданным prompt'ом.
 
         При выключенном feature_flag или отсутствии LangGraph SDK
@@ -209,7 +209,9 @@ class MultiAgentSupervisor:
                 "MultiAgentSupervisor[%s]: LangGraph недоступен, fallback router",
                 self._name,
             )
-            return (await self._run_fallback(prompt=prompt, payload=payload or {})).to_dict()
+            return (
+                await self._run_fallback(prompt=prompt, payload=payload or {})
+            ).to_dict()
 
         try:
             return (
@@ -226,10 +228,7 @@ class MultiAgentSupervisor:
             return fallback.to_dict()
 
     async def _run_fallback(
-        self,
-        *,
-        prompt: str,
-        payload: dict[str, Any],
+        self, *, prompt: str, payload: dict[str, Any]
     ) -> SupervisorResult:
         """Детерминированный роутер: каждый агент вызывается один раз.
 
@@ -257,10 +256,7 @@ class MultiAgentSupervisor:
         return result
 
     async def _run_langgraph(
-        self,
-        *,
-        prompt: str,
-        payload: dict[str, Any],
+        self, *, prompt: str, payload: dict[str, Any]
     ) -> SupervisorResult:
         """LangGraph-based supervisor с handoff-tools.
 
@@ -268,7 +264,9 @@ class MultiAgentSupervisor:
         вызвать через handoff_to_<name> tool. Если LLM не настроен
         (нет API-key), поднимает :class:`MultiAgentSupervisorUnavailable`.
         """
-        result = SupervisorResult(supervisor=self._name, prompt=prompt, used_langgraph=True)
+        result = SupervisorResult(
+            supervisor=self._name, prompt=prompt, used_langgraph=True
+        )
         try:
             graph = self._compile_graph()
         except Exception as exc:  # noqa: BLE001
@@ -293,7 +291,9 @@ class MultiAgentSupervisor:
         result.outputs = list(response.get("outputs") or [])
         messages = response.get("messages") or []
         result.final_response = (
-            getattr(messages[-1], "content", "") if messages else self._summarize(result.outputs)
+            getattr(messages[-1], "content", "")
+            if messages
+            else self._summarize(result.outputs)
         )
         return result
 
@@ -309,7 +309,11 @@ class MultiAgentSupervisor:
         if self._compiled is not None:
             return self._compiled
         try:
-            from langgraph.graph import END, START, StateGraph  # type: ignore[import-not-found]
+            from langgraph.graph import (  # type: ignore[import-not-found]
+                END,
+                START,
+                StateGraph,
+            )
         except ImportError as exc:
             raise MultiAgentSupervisorUnavailable(
                 "langgraph не установлен — добавьте extra 'ai'"
@@ -338,15 +342,15 @@ class MultiAgentSupervisor:
             return str(nxt)
 
         graph.add_conditional_edges(
-            "supervisor",
-            _route,
-            {**{name: name for name in self._agents}, END: END},
+            "supervisor", _route, {**{name: name for name in self._agents}, END: END}
         )
 
         self._compiled = graph.compile()
         return self._compiled
 
-    def _make_agent_node(self, spec: AgentSpec) -> Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]:
+    def _make_agent_node(
+        self, spec: AgentSpec
+    ) -> Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]:
         """Создаёт async-node для агента."""
 
         async def _node(state: dict[str, Any]) -> dict[str, Any]:
@@ -394,11 +398,7 @@ def _build_credit_pipeline_agents() -> list[AgentSpec]:
         }
 
     async def _document_parser(payload: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "agent": "document_parser_agent",
-            "documents_parsed": 0,
-            "stub": True,
-        }
+        return {"agent": "document_parser_agent", "documents_parsed": 0, "stub": True}
 
     async def _decision(payload: dict[str, Any]) -> dict[str, Any]:
         score = (payload.get("scoring_agent") or {}).get("credit_score", 0)
@@ -429,7 +429,9 @@ def _build_credit_pipeline_agents() -> list[AgentSpec]:
     ]
 
 
-def get_credit_pipeline_supervisor(*, enabled: bool | None = None) -> MultiAgentSupervisor:
+def get_credit_pipeline_supervisor(
+    *, enabled: bool | None = None
+) -> MultiAgentSupervisor:
     """Reference supervisor для credit-pipeline.
 
     Включает три stub-агента: scoring → document_parser → decision.

@@ -33,10 +33,7 @@ from src.backend.core.tenancy import current_tenant
 if TYPE_CHECKING:
     from src.backend.core.feature_flags.flagsmith_provider import EvaluationContext
 
-__all__ = (
-    "FeatureFlagProvider",
-    "TenantFeatureFlagResolver",
-)
+__all__ = ("FeatureFlagProvider", "TenantFeatureFlagResolver")
 
 _logger = logging.getLogger("core.tenancy.feature_flag_scope")
 
@@ -119,20 +116,15 @@ class TenantFeatureFlagResolver:
         if self.provider is not None and self._external_enabled():
             try:
                 ctx = self._build_eval_context()
-                return await self.provider.resolve_boolean_value(
-                    flag_key, default, ctx
-                )
+                return await self.provider.resolve_boolean_value(flag_key, default, ctx)
             except Exception:  # noqa: BLE001 — fallback на local при любых ошибках
                 _logger.exception(
-                    "External provider failed для %s, fallback на local",
-                    flag_key,
+                    "External provider failed для %s, fallback на local", flag_key
                 )
         # Local fallback.
         return self._local_lookup(flag_key, default)
 
-    async def get_string(
-        self, flag_key: str, *, default: str = ""
-    ) -> str:
+    async def get_string(self, flag_key: str, *, default: str = "") -> str:
         """Аналогично :meth:`is_enabled`, но для string flag.
 
         Args:
@@ -145,9 +137,7 @@ class TenantFeatureFlagResolver:
         if self.provider is not None and self._external_enabled():
             try:
                 ctx = self._build_eval_context()
-                return await self.provider.resolve_string_value(
-                    flag_key, default, ctx
-                )
+                return await self.provider.resolve_string_value(flag_key, default, ctx)
             except Exception:  # noqa: BLE001
                 _logger.exception(
                     "External provider failed для %s, fallback default", flag_key
@@ -183,11 +173,7 @@ class TenantFeatureFlagResolver:
         if ctx is None:
             return EvaluationContext()
         return EvaluationContext(
-            tenant_id=ctx.tenant_id,
-            traits={
-                "plan": ctx.plan,
-                "region": ctx.region,
-            },
+            tenant_id=ctx.tenant_id, traits={"plan": ctx.plan, "region": ctx.region}
         )
 
     def _local_lookup(self, flag_key: str, default: bool) -> bool:

@@ -87,9 +87,7 @@ def make_async_retry(
             retrying = AsyncRetrying(
                 stop=stop_after_attempt(max_attempts),
                 wait=wait_exponential(
-                    multiplier=initial_backoff,
-                    exp_base=multiplier,
-                    max=max_backoff,
+                    multiplier=initial_backoff, exp_base=multiplier, max=max_backoff
                 ),
                 retry=retry_if_exception_type(on),
                 reraise=True,
@@ -100,7 +98,9 @@ def make_async_retry(
                     return await fn(*args, **kwargs)
             # Tenacity с reraise=True бросит исключение до этой строки;
             # ветка недостижима, нужна только для mypy.
-            raise RuntimeError(f"make_async_retry: {fn.__name__} exited without result")  # pragma: no cover
+            raise RuntimeError(
+                f"make_async_retry: {fn.__name__} exited without result"
+            )  # pragma: no cover
 
         return wrapper
 

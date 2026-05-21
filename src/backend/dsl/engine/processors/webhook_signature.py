@@ -104,11 +104,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         return orjson.dumps(body)
 
     def _verify_manual(
-        self,
-        body_bytes: bytes,
-        signature_header: str,
-        msg_id: str,
-        timestamp: str,
+        self, body_bytes: bytes, signature_header: str, msg_id: str, timestamp: str
     ) -> bool:
         """Ручная HMAC-SHA256 проверка (fallback без standardwebhooks)."""
         # standardwebhooks-формат: v1,<base64>
@@ -123,9 +119,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         else:
             secret_bytes_raw = secret_bytes.encode()
         signed_payload = f"{msg_id}.{timestamp}.".encode() + body_bytes
-        expected = hmac.new(
-            secret_bytes_raw, signed_payload, hashlib.sha256
-        ).digest()
+        expected = hmac.new(secret_bytes_raw, signed_payload, hashlib.sha256).digest()
         expected_b64 = base64.b64encode(expected).decode()
         # Проверка любого из переданных vN,sig пар
         for part in signature_header.split(" "):

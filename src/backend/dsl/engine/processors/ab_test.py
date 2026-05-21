@@ -49,11 +49,7 @@ __all__ = ("ABTestProcessor", "select_variant")
 _logger = logging.getLogger("dsl.ab_test")
 
 
-def select_variant(
-    *,
-    correlation_id: str | None,
-    split: tuple[float, float],
-) -> str:
+def select_variant(*, correlation_id: str | None, split: tuple[float, float]) -> str:
     """Возвращает ``"A"`` или ``"B"`` на основе hash(correlation_id) и split.
 
     Args:
@@ -113,22 +109,16 @@ class ABTestProcessor(BaseProcessor):
         self._experiment_id = experiment_id
         self._split = split
         self._track_metric = track_metric
-        self._result_property = (
-            result_property or f"ab_test:{experiment_id}"
-        )
+        self._result_property = result_property or f"ab_test:{experiment_id}"
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выбирает A/B на основе correlation_id."""
         cid = getattr(exchange, "correlation_id", None) or exchange.get_property(
             "correlation_id"
         )
         variant = select_variant(correlation_id=cid, split=self._split)
         exchange.set_property(self._result_property, variant)
-        exchange.set_property(
-            f"{self._result_property}:metric", self._track_metric
-        )
+        exchange.set_property(f"{self._result_property}:metric", self._track_metric)
         _logger.debug(
             "ab_test selected variant=%s experiment=%s cid=%s",
             variant,

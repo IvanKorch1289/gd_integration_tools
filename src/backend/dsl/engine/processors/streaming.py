@@ -97,7 +97,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return
 
         if age <= self._ttl:
@@ -245,7 +245,7 @@ class _BaseWindow(BaseProcessor):
         event_time_raw = exchange.in_message.headers.get("x-event-time")
         try:
             event_time = float(event_time_raw) if event_time_raw is not None else None
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             event_time = None
         if event_time is None:
             return False
@@ -494,8 +494,7 @@ class GroupByKeyProcessor(_BaseWindow):
             self._groups[key].append(exchange.in_message.body)
             if self._task is None or self._task.done():
                 self._task = get_task_registry().create_task(
-                    self._flush_after_window(),
-                    name=f"group-by-flush:{self.name}",
+                    self._flush_after_window(), name=f"group-by-flush:{self.name}"
                 )
 
     async def _flush_after_window(self) -> None:

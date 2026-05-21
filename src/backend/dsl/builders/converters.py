@@ -43,17 +43,13 @@ class ConvertersMixin:
     def encrypt(self, key: str) -> RouteBuilder:
         """AES шифрование (Fernet)."""
         return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
-            "src.backend.dsl.engine.processors.rpa",
-            "EncryptProcessor",
-            key=key,
+            "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
         )
 
     def decrypt(self, key: str) -> RouteBuilder:
         """AES расшифровка (Fernet)."""
         return self._add_lazy(  # type: ignore[attr-defined,no-any-return]
-            "src.backend.dsl.engine.processors.rpa",
-            "DecryptProcessor",
-            key=key,
+            "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
         )
 
     def compress(self, *, algorithm: str = "gzip", level: int = 6) -> RouteBuilder:

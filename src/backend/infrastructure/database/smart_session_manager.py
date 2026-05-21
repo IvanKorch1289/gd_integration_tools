@@ -132,9 +132,7 @@ class SmartSessionManager:
         if self._replica is None:
             return self._primary, False
         if self.replica_breaker_open:
-            _logger.debug(
-                "smart_session.replica_breaker_open: fallback to primary",
-            )
+            _logger.debug("smart_session.replica_breaker_open: fallback to primary")
             return self._primary, False
         return self._replica, True
 
