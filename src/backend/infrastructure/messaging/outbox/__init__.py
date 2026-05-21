@@ -22,5 +22,14 @@ from src.backend.infrastructure.messaging.outbox.dispatcher import (
     DLQHandler,
     OutboxDispatcher,
 )
+from src.backend.infrastructure.messaging.outbox.repository import (
+    OutboxRepository,
+    TransactionalOutboxEnqueuer,
+)
 
-__all__ = ("DLQHandler", "OutboxDispatcher")
+__all__ = (
+    "DLQHandler",
+    "OutboxDispatcher",
+    "OutboxRepository",
+    "TransactionalOutboxEnqueuer",
+)
