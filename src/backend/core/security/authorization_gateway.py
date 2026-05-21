@@ -1,0 +1,305 @@
+"""ADR-NEW-1 (Sprint 17): единый фасад авторизации :class:`AuthorizationGateway`.
+
+Контекст:
+    V22 centralization (K-ARCH-1 + K-ARCH-2): до S17 авторизация была
+    разбросана между ``CapabilityGate`` (V11.1), Casbin RBAC (планируется),
+    OPA policy (планируется) и ad-hoc auth-guard middleware. Это
+    приводило к:
+
+    * отсутствию единого ``correlation_id`` на всю chain;
+    * дубликации audit-event на разных уровнях;
+    * сложности добавления новой policy без изменения 30+ callsites.
+
+Решение:
+    :class:`AuthorizationGateway` — асинхронный фасад с операцией
+    ``authorize(principal, resource, action, context)``. Композирует
+    цепочку policy-движков и возвращает :class:`AuthorizationDecision`
+    с цепочкой ``reasons`` (allow / deny + источник).
+
+Цепочка по умолчанию (Sprint 17 scaffold):
+    1. :class:`CapabilityGatewayProtocol` (обязателен) — declare/check.
+    2. ``CapabilityPolicy`` (опционально, R2) — scope-aware.
+    3. ``CasbinAdapter`` (опционально, S18) — RBAC.
+    4. ``OPAAdapter`` (опционально, S19) — fine-grained ABAC.
+
+Audit:
+    На каждое решение эмитится ``authorization.decision`` event со
+    всеми полями ``AuthorizationDecision``. ``correlation_id`` берётся
+    из context (если задан) или генерируется через ``uuid4``.
+
+Feature-flag:
+    Активация — ``feature_flags.authz_gateway_enabled`` (default-OFF).
+    При False ``authorize()`` возвращает ``allow`` без проверок (для
+    плавной миграции callsites).
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from collections.abc import Awaitable, Callable, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
+
+__all__ = (
+    "AuthorizationDecision",
+    "AuthorizationGateway",
+    "AuthorizationReason",
+    "PolicyDecider",
+)
+
+_logger = logging.getLogger("core.security.authorization_gateway")
+
+
+@dataclass(frozen=True, slots=True)
+class AuthorizationReason:
+    """Одно звено в reason-chain ``AuthorizationDecision``."""
+
+    source: str
+    outcome: str
+    detail: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AuthorizationDecision:
+    """Результат ``authorize()``: allow/deny + reason-chain.
+
+    Attributes:
+        allowed: True если все policies в цепочке вернули allow.
+        correlation_id: Сквозной идентификатор для трассировки.
+        reasons: Цепочка policy-решений по порядку проверки.
+        principal: Кто запрашивает (plugin id / user / service).
+        resource: Имя ресурса (capability / endpoint / table).
+        action: Запрашиваемое действие (read / write / call).
+    """
+
+    allowed: bool
+    correlation_id: str
+    reasons: tuple[AuthorizationReason, ...]
+    principal: str
+    resource: str
+    action: str
+
+
+AuditCallback = Callable[[dict[str, Any]], None]
+PolicyDecider = Callable[
+    [str, str, str, dict[str, Any]],
+    Awaitable[AuthorizationReason],
+]
+
+
+class AuthorizationGateway:
+    """Единый фасад авторизации (ADR-NEW-1 / S17 K-ARCH-1+2).
+
+    Args:
+        capability_gateway: Обязательная реализация
+            :class:`CapabilityGatewayProtocol` (обычно CapabilityGate).
+        policies: Доп. async-policy в порядке проверки. Каждая —
+            ``async def policy(principal, resource, action, context)``
+            возвращает :class:`AuthorizationReason`. Остановка на
+            первой ``outcome != "allow"``.
+        audit_callback: Опц. callback для эмиссии
+            ``authorization.decision`` event (см. dict-schema в коде).
+        enabled: Включение фасада. По умолчанию читается из
+            ``feature_flags.authz_gateway_enabled``. При False
+            ``authorize`` возвращает allow без проверок.
+
+    Example:
+        >>> from src.backend.core.security.capabilities.gate import CapabilityGate
+        >>> gateway = AuthorizationGateway(capability_gateway=CapabilityGate())
+        >>> decision = await gateway.authorize(
+        ...     principal="example_plugin",
+        ...     resource="db.read",
+        ...     action="check",
+        ...     context={"scope": "users"},
+        ... )
+        >>> decision.allowed
+        True
+    """
+
+    def __init__(
+        self,
+        *,
+        capability_gateway: CapabilityGatewayProtocol,
+        policies: Sequence[PolicyDecider] = (),
+        audit_callback: AuditCallback | None = None,
+        enabled: bool | None = None,
+    ) -> None:
+        self._capability_gateway = capability_gateway
+        self._policies: tuple[PolicyDecider, ...] = tuple(policies)
+        self._audit = audit_callback
+        self._enabled = enabled  # None → читать feature-flag в authorize()
+
+    async def authorize(
+        self,
+        *,
+        principal: str,
+        resource: str,
+        action: str,
+        context: dict[str, Any] | None = None,
+    ) -> AuthorizationDecision:
+        """Принять решение по chain (capability → policies).
+
+        Args:
+            principal: Идентификатор запрашивающего (plugin / user).
+            resource: Имя ресурса (``capability_name`` / endpoint path).
+            action: Действие (``check`` / ``read`` / ``write``).
+            context: Произвольный bag (``correlation_id``, ``scope``,
+                ``tenant_id``, ``trace_id``).
+
+        Returns:
+            AuthorizationDecision с reason-chain.
+        """
+        ctx = dict(context or {})
+        correlation_id = str(ctx.get("correlation_id") or uuid.uuid4())
+        ctx["correlation_id"] = correlation_id
+
+        if not self._is_enabled():
+            reason = AuthorizationReason(
+                source="feature_flag",
+                outcome="allow",
+                detail="authz_gateway_enabled=False",
+            )
+            return self._build_decision(
+                allowed=True,
+                correlation_id=correlation_id,
+                reasons=(reason,),
+                principal=principal,
+                resource=resource,
+                action=action,
+            )
+
+        reasons: list[AuthorizationReason] = []
+
+        # 1. Capability gateway: единственная обязательная policy.
+        try:
+            self._capability_gateway.check(
+                principal, resource, ctx.get("scope")
+            )
+            reasons.append(
+                AuthorizationReason(
+                    source="capability_gateway", outcome="allow"
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 — собираем reason
+            reason = AuthorizationReason(
+                source="capability_gateway",
+                outcome="deny",
+                detail=f"{type(exc).__name__}: {exc}",
+            )
+            return self._finalize_deny(
+                principal=principal,
+                resource=resource,
+                action=action,
+                correlation_id=correlation_id,
+                reasons=tuple([*reasons, reason]),
+            )
+
+        # 2. Доп. policies (Casbin / OPA / custom) — short-circuit на deny.
+        for policy in self._policies:
+            try:
+                reason = await policy(principal, resource, action, ctx)
+            except Exception as exc:  # noqa: BLE001 — policy error → deny
+                reason = AuthorizationReason(
+                    source=getattr(policy, "__name__", "policy"),
+                    outcome="deny",
+                    detail=f"{type(exc).__name__}: {exc}",
+                )
+            reasons.append(reason)
+            if reason.outcome != "allow":
+                return self._finalize_deny(
+                    principal=principal,
+                    resource=resource,
+                    action=action,
+                    correlation_id=correlation_id,
+                    reasons=tuple(reasons),
+                )
+
+        decision = self._build_decision(
+            allowed=True,
+            correlation_id=correlation_id,
+            reasons=tuple(reasons),
+            principal=principal,
+            resource=resource,
+            action=action,
+        )
+        self._emit_audit(decision)
+        return decision
+
+    def _finalize_deny(
+        self,
+        *,
+        principal: str,
+        resource: str,
+        action: str,
+        correlation_id: str,
+        reasons: tuple[AuthorizationReason, ...],
+    ) -> AuthorizationDecision:
+        decision = self._build_decision(
+            allowed=False,
+            correlation_id=correlation_id,
+            reasons=reasons,
+            principal=principal,
+            resource=resource,
+            action=action,
+        )
+        self._emit_audit(decision)
+        return decision
+
+    def _build_decision(
+        self,
+        *,
+        allowed: bool,
+        correlation_id: str,
+        reasons: tuple[AuthorizationReason, ...],
+        principal: str,
+        resource: str,
+        action: str,
+    ) -> AuthorizationDecision:
+        return AuthorizationDecision(
+            allowed=allowed,
+            correlation_id=correlation_id,
+            reasons=reasons,
+            principal=principal,
+            resource=resource,
+            action=action,
+        )
+
+    def _is_enabled(self) -> bool:
+        """Источник: явный конструктор или ``feature_flags``."""
+        if self._enabled is not None:
+            return self._enabled
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(feature_flags.authz_gateway_enabled)
+        except Exception:  # noqa: BLE001 — best-effort
+            return False
+
+    def _emit_audit(self, decision: AuthorizationDecision) -> None:
+        """Эмиссия ``authorization.decision`` event (best-effort)."""
+        if self._audit is None:
+            return
+        try:
+            self._audit(
+                {
+                    "event": "authorization.decision",
+                    "correlation_id": decision.correlation_id,
+                    "principal": decision.principal,
+                    "resource": decision.resource,
+                    "action": decision.action,
+                    "outcome": "allow" if decision.allowed else "deny",
+                    "reasons": [
+                        {
+                            "source": r.source,
+                            "outcome": r.outcome,
+                            "detail": r.detail,
+                        }
+                        for r in decision.reasons
+                    ],
+                }
+            )
+        except Exception:  # noqa: BLE001 — audit best-effort
+            _logger.exception("AuthorizationGateway audit_callback failed")

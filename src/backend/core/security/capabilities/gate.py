@@ -170,6 +170,14 @@ class CapabilityGate:
         """Возвращает текущий набор capabilities для плагина."""
         return tuple(self._declarations.get(plugin, {}).values())
 
+    def list_allocated(self, plugin: str) -> tuple[str, ...]:
+        """ADR-NEW-4 (S17): имена задекларированных capabilities плагина.
+
+        Алиас для :meth:`declarations`, возвращающий только имена.
+        Часть :class:`CapabilityGatewayProtocol` (``core.interfaces``).
+        """
+        return tuple(self._declarations.get(plugin, {}).keys())
+
     # ── private ──────────────────────────────────────────────────────
 
     def _cache_granted(self, key: tuple[str, str, str | None]) -> None:
