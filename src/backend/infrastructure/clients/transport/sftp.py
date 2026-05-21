@@ -2,15 +2,56 @@
 
 Асинхронная обёртка для операций upload/download/list
 через SFTP (asyncssh) и FTP (aioftp).
+
+Sprint 17 W1 (b2 partial closure): SFTP-вызовы используют
+:func:`_resolve_known_hosts` — strict-mode для production (требуется путь
+до ``known_hosts``), skip только в ``dev_light`` (V1 security constraint).
 """
+
+from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-__all__ = ("BaseSftpClient", "SftpClient", "get_sftp_client")
+from src.backend.core.config.profile import AppProfileChoices, get_active_profile
+
+__all__ = ("BaseSftpClient", "SftpClient", "_resolve_known_hosts", "get_sftp_client")
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_known_hosts() -> tuple[()] | str:
+    """Возвращает значение ``known_hosts`` для ``asyncssh.connect``.
+
+    Логика:
+        * Если ``settings.transport.sftp_known_hosts_path`` задан —
+          возвращает строку пути (asyncssh подгружает файл сам).
+        * Если путь не задан И активный профиль ``dev_light`` —
+          возвращает ``()`` (skip-валидация, безопасно для лок-разработки).
+        * Если путь не задан в production-профиле — поднимает
+          ``ValueError`` (V1 запрещает отключение проверок без явной
+          декларации).
+
+    Returns:
+        Путь до ``known_hosts``-файла либо пустой tuple для skip-режима.
+
+    Raises:
+        ValueError: путь не задан в non-dev_light-профиле.
+    """
+    # Локальный импорт settings — избегает циклов на старте модуля.
+    from src.backend.core.config.settings import settings
+
+    path = settings.transport.sftp_known_hosts_path
+    if path:
+        return path
+    if get_active_profile() == AppProfileChoices.dev_light:
+        return ()
+    raise ValueError(
+        "TRANSPORT_SFTP_KNOWN_HOSTS_PATH обязателен в профиле "
+        f"'{get_active_profile().value}' (V1: запрещено отключать проверку "
+        "серверного ключа SFTP без явной декларации)."
+    )
 
 
 class BaseSftpClient(ABC):
@@ -61,7 +102,7 @@ class SftpClient(BaseSftpClient):
             port=self.port,
             username=self.username,
             password=self.password,
-            known_hosts=None,
+            known_hosts=_resolve_known_hosts(),
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 await sftp.put(local_path, remote_path)
@@ -83,7 +124,7 @@ class SftpClient(BaseSftpClient):
             port=self.port,
             username=self.username,
             password=self.password,
-            known_hosts=None,
+            known_hosts=_resolve_known_hosts(),
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 await sftp.get(remote_path, local_path)
@@ -107,7 +148,7 @@ class SftpClient(BaseSftpClient):
             port=self.port,
             username=self.username,
             password=self.password,
-            known_hosts=None,
+            known_hosts=_resolve_known_hosts(),
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 entries = await sftp.readdir(remote_path)
@@ -139,7 +180,7 @@ class SftpClient(BaseSftpClient):
             port=self.port,
             username=self.username,
             password=self.password,
-            known_hosts=None,
+            known_hosts=_resolve_known_hosts(),
         ) as conn:
             async with conn.start_sftp_client() as sftp:
                 async with sftp.open(remote_path, "rb") as f:

@@ -74,6 +74,7 @@ from src.backend.core.config.services import (
     watermark_settings,
 )
 from src.backend.core.config.telegram import TelegramBotSettings, telegram_bot_settings
+from src.backend.core.config.transport import TransportSettings, transport_settings
 from src.backend.core.config.v11 import V11Settings, v11_settings
 from src.backend.core.config.vault import VaultSettings, vault_settings
 from src.backend.core.config.workflow import WorkflowSettings, workflow_settings
@@ -146,6 +147,9 @@ class Settings(BaseSettings):
 
     # PG → SQLite snapshot job (W26.8): incremental sync для resilience-fallback
     snapshot: SnapshotSettings = snapshot_settings
+
+    # Транспортные клиенты (SFTP/FTP) — Sprint 17 W1 b2 partial closure
+    transport: TransportSettings = transport_settings
 
 
 @lru_cache()
