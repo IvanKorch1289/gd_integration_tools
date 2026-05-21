@@ -1,0 +1,92 @@
+# K-OPS-4 (Sprint 17): alembic migration Job для Kubernetes deploy
+#
+# Запуск:
+#   kubectl apply -f deploy/k8s/jobs/migration.yaml
+#   kubectl wait --for=condition=complete --timeout=600s job/gd-migration
+#
+# Зависит от: Secret `gd-app-secrets` (DB_DSN), ConfigMap `gd-app-config`
+# (APP_ENV / LOG_LEVEL). Контейнер использует тот же image что и app.
+#
+# Стратегия деплоя:
+#   1. CI/CD pre-deploy step: applies этот Job, ждёт complete;
+#   2. Helm pre-install/pre-upgrade hook (S18) использует тот же manifest;
+#   3. После успеха — rollout app/workflow-worker Deployment.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gd-migration
+  labels:
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: db-migration
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    # Helm hooks (для S18 chart):
+    #   helm.sh/hook: pre-install,pre-upgrade
+    #   helm.sh/hook-weight: "-5"
+    #   helm.sh/hook-delete-policy: before-hook-creation
+    gd.integration/wave: "s17/k5-w3-db-migration-init-container"
+spec:
+  # Не пытаться restart-нуть после успеха.
+  backoffLimit: 2
+  # Удалить Job через 1ч после complete (для CI cleanup).
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gd-integration-tools
+        app.kubernetes.io/component: db-migration
+    spec:
+      restartPolicy: OnFailure
+      # Init: подождать пока postgres станет ready.
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: gd-app-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: gd-app-config
+                  key: DB_PORT
+                  optional: true
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gd-app-secrets
+                  key: DB_USER
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USER"; do
+                echo "Waiting for postgres at $DB_HOST:${DB_PORT:-5432}..."
+                sleep 2
+              done
+              echo "Postgres ready"
+      containers:
+        - name: migration-runner
+          # Реальный image тег устанавливается CI/CD (Helm values.yaml).
+          image: ${GD_IMAGE:-gd-integration-tools:latest}
+          imagePullPolicy: IfNotPresent
+          command:
+            - alembic
+            - "-c"
+            - alembic.ini
+            - upgrade
+            - head
+          envFrom:
+            - configMapRef:
+                name: gd-app-config
+            - secretRef:
+                name: gd-app-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

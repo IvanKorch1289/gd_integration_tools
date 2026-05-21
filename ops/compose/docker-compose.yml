@@ -1,4 +1,23 @@
 services:
+  # ─── K-OPS-4 (S17): init-container `alembic upgrade head` ──────────
+  # Запускается раз, до старта app/workflow-worker; читает alembic.ini
+  # из корня репозитория, использует тот же образ что и app.
+  # Использование: `docker compose up` поднимает migration-runner и
+  # ждёт его успешного завершения через depends_on::
+  # service_completed_successfully для app и workflow-worker.
+  migration-runner:
+    build:
+      context: ../..
+      dockerfile: ops/compose/Dockerfile
+    command: ["alembic", "-c", "alembic.ini", "upgrade", "head"]
+    env_file:
+      - ../../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # «no» — запуск только один раз, без авто-перезапуска.
+    restart: "no"
+
   app:
     build:
       context: ../..
@@ -18,6 +37,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # K-OPS-4: дождаться завершения миграций
+      migration-runner:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   workflow-worker:
@@ -35,6 +57,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # K-OPS-4: дождаться завершения миграций
+      migration-runner:
+        condition: service_completed_successfully
     restart: unless-stopped
     deploy:
       replicas: ${WORKER_COUNT:-4}
