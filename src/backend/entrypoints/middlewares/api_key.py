@@ -51,6 +51,14 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         Исключения:
             HTTPException: 401 если API-ключ отсутствует или неверен
         """
+        # M-1 (Sprint 16 Wave 5, deduplication): если AuthRequiredMiddleware
+        # уже аутентифицировал запрос — пропускаем повторную валидацию.
+        # AuthRequiredMiddleware (V7 defense-in-depth) пробует все 7 методов
+        # включая API_KEY, поэтому при установленном request.state.auth
+        # вторая проверка избыточна (см. ADR-стек авторизации).
+        if getattr(request.state, "auth", None) is not None:
+            return await call_next(request)
+
         # Пропускаем проверку для исключенных маршрутов
         if self._is_excluded_route(request.url.path):
             return await call_next(request)

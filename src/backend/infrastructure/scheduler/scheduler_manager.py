@@ -62,12 +62,35 @@ class SchedulerManager:
             executors=settings.scheduler.executors,
         )
         self._event_handlers = {}  # Словарь для хранения обработчиков событий
+        self._default_jobstore_is_memory: bool = isinstance(
+            default_jobstore, MemoryJobStore
+        )
 
     async def start(self):
         """
         Запускает планировщик при старте приложения.
+
+        Sprint 16 Wave 5 (M-9/CP-22): подключает Prometheus-listeners для
+        ``scheduler_job_executions_total`` + регистрирует тип jobstore
+        (CRITICAL alert при ``MemoryJobStore`` в production).
         """
         self.scheduler.start()
+
+        try:
+            from src.backend.infrastructure.scheduler.observability import (
+                attach_scheduler_metrics,
+                report_jobstore_type,
+            )
+
+            attach_scheduler_metrics(self.scheduler)
+            report_jobstore_type(
+                is_memory=self._default_jobstore_is_memory,
+                is_production=settings.app.environment == "production",
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning(
+                "Scheduler observability bootstrap skipped: %s", exc
+            )
 
     async def stop(self):
         """
