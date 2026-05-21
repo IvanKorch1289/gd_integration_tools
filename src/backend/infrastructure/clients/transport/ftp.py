@@ -50,8 +50,6 @@ class FTPClient:
         ssl_context = None
         if self._use_tls:
             ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
 
         self._client = aioftp.Client.context(
             self._host,
@@ -81,8 +79,6 @@ class FTPClient:
         ssl_context = None
         if self._use_tls:
             ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
 
         return aioftp.Client.context(
             self._host,

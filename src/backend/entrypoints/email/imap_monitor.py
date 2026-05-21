@@ -131,8 +131,11 @@ class ImapMonitor:
             return None
         ctx = ssl.create_default_context()
         if not self.config.verify_cert:
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
+            logger.warning(
+                "IMAP monitor: verify_cert=False игнорируется (V1 policy: "
+                "ssl.CERT_NONE / check_hostname=False запрещены). "
+                "Используйте кастомный CA через secrets capability."
+            )
         return ctx
 
     async def _connect(self) -> Any:

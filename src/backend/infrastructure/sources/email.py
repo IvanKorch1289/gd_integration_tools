@@ -216,8 +216,12 @@ class EmailSource:
             return None
         ctx = ssl.create_default_context()
         if not self._cfg.verify_cert:
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
+            logger.warning(
+                "EmailSource(%s): verify_cert=False игнорируется (V1 policy: "
+                "ssl.CERT_NONE / check_hostname=False запрещены). "
+                "Используйте кастомный CA через secrets capability.",
+                self.source_id,
+            )
         return ctx
 
     # ──────────────── main loops ───────────────────────────────────────
