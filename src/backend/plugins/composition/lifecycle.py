@@ -679,6 +679,49 @@ async def lifespan(app: FastAPI):
     try:
         from src.backend.plugins.composition.di import register_app_state
 
+        # Sprint 16 Wave 3 (CP-24, B-2, B-9): cross-settings ConfigValidator
+        # как fail-fast startup gate. В production-окружении хотя бы одно
+        # CRITICAL нарушение (например, WAF_STRICT=false) валит старт ДО
+        # инициализации Sentry/Logging/DI — оператор обязан исправить
+        # конфигурацию. В non-production нарушения логируются как WARNING
+        # без блокировки.
+        try:
+            from src.backend.core.config.settings import settings as _cv_settings
+            from src.backend.core.config.validator import (
+                ConfigSeverity,
+                ProductionConfigError,
+                validate_startup_config,
+            )
+            from src.backend.core.config.waf import waf_settings as _cv_waf_settings
+
+            _cv_violations = validate_startup_config(_cv_settings, _cv_waf_settings)
+            for _cv_v in _cv_violations:
+                _payload = (
+                    "[%s] %s field=%s recommendation=%s context=%s",
+                    _cv_v.code,
+                    _cv_v.message,
+                    _cv_v.field,
+                    _cv_v.recommendation,
+                    _cv_v.context,
+                )
+                if _cv_v.severity == ConfigSeverity.CRITICAL:
+                    app_logger.critical(*_payload)
+                elif _cv_v.severity == ConfigSeverity.WARNING:
+                    app_logger.warning(*_payload)
+                else:
+                    app_logger.info(*_payload)
+        except ProductionConfigError as cfg_exc:
+            app_logger.critical(
+                "Конфигурация production не прошла валидацию: %s", cfg_exc
+            )
+            raise
+        except Exception as cfg_exc:  # noqa: BLE001
+            app_logger.warning(
+                "ConfigValidator skipped: %s "
+                "(приложение продолжит без cross-settings проверки)",
+                cfg_exc,
+            )
+
         # Wave A: Sentry init выполняется в самом начале lifespan, чтобы
         # последующие падения регистрации сервисов попадали в error tracking.
         # Без SENTRY_DSN init возвращает False и не блокирует старт.
