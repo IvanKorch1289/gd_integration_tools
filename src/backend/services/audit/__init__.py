@@ -15,6 +15,10 @@
 
 from __future__ import annotations
 
+from src.backend.services.audit.audit_service import (
+    AuditService,
+    get_unified_audit_service,
+)
 from src.backend.services.audit.clickhouse_audit_service import (
     AuditEvent,
     ClickHouseAuditService,
@@ -29,9 +33,11 @@ from src.backend.services.audit.workflow_audit_sink import (
 
 __all__ = (
     "AuditEvent",
+    "AuditService",
     "ClickHouseAuditService",
     "WorkflowAuditSink",
     "get_audit_service",
+    "get_unified_audit_service",
     "get_workflow_audit_sink",
     "reset_workflow_audit_sink",
     "set_workflow_audit_sink",
