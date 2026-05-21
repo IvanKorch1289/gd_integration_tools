@@ -147,9 +147,13 @@ rpa = [
 ]
 # K3 Sprint 8: OCR для извлечения текста со скриншотов / PDF.
 # Опционально: тяжёлый paddlepaddle backend; lazy-import в processor.
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): paddlepaddle 2.6.2 не имеет
+# wheels для cp314 (только cp38-cp312); 3.0 — major bump. paddleocr тоже
+# требует paddlepaddle. Extras временно пуст до миграции на paddlepaddle 3.x
+# или замены на pytesseract — pin'ы вернутся когда появятся 3.14-wheels.
 rpa-ocr = [
-    "paddleocr>=2.8.0,<4",
-    "paddlepaddle>=2.6.0,<3",
+    # "paddleocr>=2.8.0,<4",
+    # "paddlepaddle>=2.6.0,<3",
 ]
 # K3 Sprint 8 [wave:s8/k3-rpa-windows-desktop]: pywinauto Win32/UIA для
 # desktop UI automation. Windows-only — устанавливается на windows-worker
@@ -297,8 +301,9 @@ dsl-extras-2 = [
 ]
 # Sprint 5 — DSL расширения batch 3: LDAP / WebDAV / geo conversions.
 # aioldap3 и webdav4 — async клиенты, geopy — синхронный (use в thread executor).
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): aioldap3 удалён из PyPI; ad_directory_client.py
+# имеет lazy-import + fallback на ldap3 → soft-dep не блокирует runtime.
 dsl-extras-3 = [
-    "aioldap3>=1.0.0,<2.0.0",
     "webdav4>=0.10.0,<1.0.0",
     "geopy>=2.4.0,<3.0.0",
 ]
@@ -402,7 +407,8 @@ dev = [
     "sphinx-tabs>=3.4,<4",
     # K3 S6 [wave:s6/k3-dsl-linter-lsp]: LSP-сервер для DSL route.toml + *.dsl.yaml.
     # pygls — pure-Python LSP, совместим с 3.14; зависимость lsprotocol тянется автоматом.
-    "pygls>=1.3.0,<2.0.0",
+    # S16 K1 W4 (gate-w0-ops-reorg-smoke): унификация с [lsp]-extra pygls>=2.0.0.
+    "pygls>=2.0.0",
 ]
 
 [build-system]
@@ -423,6 +429,15 @@ testkit = "testkit.pytest_plugin"
 [tool.uv]
 package = true
 default-groups = ["dev"]
+# S16 gate-w0-ops-reorg-smoke (2026-05-21): ограничить resolver окружениями
+# linux + macOS — backend проект не таргетит Windows, и win32-резолюшен
+# регулярно падает на пакетах без win32-wheels под Python 3.14
+# (paddlepaddle/aioldap3/pygls split). См. UV hint "limit the environments
+# with tool.uv.environments".
+environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]
 # Sprint 11 S10-carryover [wave:s10-carryover/uv-resolver-fix]:
 # mlflow>=2.18,<3 декларирует pyarrow<20, но pyarrow в core зависит от
 # >=20 (S10 миграция). API mlflow совместим с pyarrow>=20 — override
