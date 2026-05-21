@@ -41,14 +41,23 @@ def waf_audit_callback(event: dict[str, Any]) -> None:
 
 
 def _build_waf_policy_from_settings() -> WafPolicy:
-    """Сконструировать ``WafPolicy`` из ``waf_settings`` (lazy import)."""
+    """Сконструировать ``WafPolicy`` из ``waf_settings`` (lazy import).
+
+    Sprint 16 Wave 7 (B-3 finale wiring): подключает ClamAV scanner через
+    :func:`build_clamav_scanner_if_enabled` если активирован feature-flag
+    ``WAF_CLAMAV_ENABLED``. См. модуль ``infrastructure.antivirus.setup``.
+    """
     from src.backend.core.config.waf import waf_settings
+    from src.backend.infrastructure.antivirus.setup import (
+        build_clamav_scanner_if_enabled,
+    )
 
     return WafPolicy(
         allow_hosts=frozenset(waf_settings.allow_hosts),
         deny_hosts=frozenset(waf_settings.deny_hosts),
         max_payload_bytes=waf_settings.max_payload_bytes or None,
         strict=waf_settings.strict,
+        async_payload_scanner=build_clamav_scanner_if_enabled(),
     )
 
 

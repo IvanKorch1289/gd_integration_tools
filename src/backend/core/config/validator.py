@@ -128,6 +128,7 @@ class ConfigValidator:
 
         violations.extend(self._check_waf_strict_prod(app, waf_settings))
         violations.extend(self._check_waf_strict_allow_empty(app, waf_settings))
+        violations.extend(self._check_clamav_fail_open_in_prod(app, waf_settings))
         violations.extend(self._check_swagger_in_prod(app))
         violations.extend(self._check_redoc_in_prod(app))
         violations.extend(self._check_admin_without_ips(app, secure))
@@ -192,6 +193,41 @@ class ConfigValidator:
                     "(host1.example.com,host2.example.com,...)."
                 ),
                 context={"strict": waf.strict, "allow_hosts": list(waf.allow_hosts)},
+            )
+        ]
+
+    def _check_clamav_fail_open_in_prod(
+        self, app: "AppBaseSettings", waf: "WafSettings"
+    ) -> list[ConfigViolation]:
+        """Sprint 16 Wave 7 (B-3 finale): ClamAV enabled+fail_open в prod = WARNING.
+
+        В production-strict при недоступности clamd безопаснее блокировать
+        запрос (``fail_open=False``), чем пропускать без сканирования.
+        Это рекомендация, не критическое нарушение (fail-open остаётся
+        валидным выбором при ограниченной availability clamd).
+        """
+        if not self._is_prod(app):
+            return []
+        # Поле может отсутствовать в старых WafSettings — getattr с default.
+        if not getattr(waf, "clamav_enabled", False):
+            return []
+        if not getattr(waf, "clamav_fail_open", True):
+            return []
+        return [
+            ConfigViolation(
+                severity=ConfigSeverity.WARNING,
+                code="waf.clamav_fail_open_in_prod",
+                message=(
+                    "ClamAV scanner включён в production с fail_open=true: "
+                    "при недоступности clamd запросы пройдут без сканирования. "
+                    "В strict-prod рекомендуется fail_open=false."
+                ),
+                field="waf.clamav_fail_open",
+                recommendation="WAF_CLAMAV_FAIL_OPEN=false для production-strict.",
+                context={
+                    "clamav_enabled": True,
+                    "clamav_fail_open": True,
+                },
             )
         ]
 

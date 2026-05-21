@@ -57,6 +57,46 @@ class WafSettings(BaseSettingsWithLoader):
         ),
     )
 
+    # Sprint 16 Wave 7 (B-3 finale wiring): подключение ClamAV
+    # PayloadScanner к WafPolicy.async_payload_scanner. Default-OFF —
+    # активируется явно через ``WAF_CLAMAV_ENABLED=true`` в окружении,
+    # где clamd доступен по TCP. См. infrastructure.antivirus.payload_scanner.
+    clamav_enabled: bool = Field(
+        default=False,
+        description=(
+            "Включить ClamAVPayloadScanner как async_payload_scanner для "
+            "WafPolicy. Требует доступного clamd по TCP (см. clamav_host/port)."
+        ),
+    )
+
+    clamav_host: str = Field(
+        default="127.0.0.1",
+        description="Хост clamd (TCP INSTREAM). По умолчанию localhost.",
+    )
+
+    clamav_port: int = Field(
+        default=3310,
+        ge=1,
+        le=65535,
+        description="TCP-порт clamd (стандартный — 3310).",
+    )
+
+    clamav_timeout: float = Field(
+        default=30.0,
+        gt=0.0,
+        le=300.0,
+        description="Таймаут сканирования (сек) — упирается в clamd INSTREAM.",
+    )
+
+    clamav_fail_open: bool = Field(
+        default=True,
+        description=(
+            "При True (default) недоступный clamd трактуется как clean — "
+            "запрос проходит. В production-strict устанавливать False: "
+            "недоступный clamd = блокировка запроса (reason='clamav unavailable')."
+        ),
+    )
+
 
 waf_settings = WafSettings()
 """Глобальный экземпляр WafSettings."""

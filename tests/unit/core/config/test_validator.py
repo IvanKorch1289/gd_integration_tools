@@ -88,9 +88,16 @@ def _make_waf(
     *,
     strict: bool = False,
     allow_hosts: tuple[str, ...] = (),
+    clamav_enabled: bool = False,
+    clamav_fail_open: bool = True,
 ) -> SimpleNamespace:
     """Фабрика SimpleNamespace, имитирующего WafSettings."""
-    return SimpleNamespace(strict=strict, allow_hosts=allow_hosts)
+    return SimpleNamespace(
+        strict=strict,
+        allow_hosts=allow_hosts,
+        clamav_enabled=clamav_enabled,
+        clamav_fail_open=clamav_fail_open,
+    )
 
 
 def _codes(violations: tuple[ConfigViolation, ...]) -> set[str]:
@@ -253,6 +260,47 @@ class TestCorsCredentialsWildcard:
         waf = _make_waf()
         violations = ConfigValidator().validate(settings, waf)
         assert "security.cors_wildcard_with_credentials" not in _codes(violations)
+
+
+class TestClamAVFailOpenInProd:
+    """Sprint 16 Wave 7 (B-3 finale): ClamAV fail_open в prod = WARNING."""
+
+    def test_clamav_enabled_fail_open_in_prod_is_warning(self) -> None:
+        settings = _make_settings(app=_make_app(environment="production"))
+        waf = _make_waf(
+            strict=True,
+            allow_hosts=("a",),
+            clamav_enabled=True,
+            clamav_fail_open=True,
+        )
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "waf.clamav_fail_open_in_prod")
+        assert v.severity == ConfigSeverity.WARNING
+
+    def test_clamav_enabled_fail_closed_in_prod_is_clean(self) -> None:
+        settings = _make_settings(app=_make_app(environment="production"))
+        waf = _make_waf(
+            strict=True,
+            allow_hosts=("a",),
+            clamav_enabled=True,
+            clamav_fail_open=False,
+        )
+        violations = ConfigValidator().validate(settings, waf)
+        assert "waf.clamav_fail_open_in_prod" not in _codes(violations)
+
+    def test_clamav_disabled_no_warning(self) -> None:
+        settings = _make_settings(app=_make_app(environment="production"))
+        waf = _make_waf(
+            strict=True, allow_hosts=("a",), clamav_enabled=False
+        )
+        violations = ConfigValidator().validate(settings, waf)
+        assert "waf.clamav_fail_open_in_prod" not in _codes(violations)
+
+    def test_clamav_fail_open_in_dev_no_warning(self) -> None:
+        settings = _make_settings(app=_make_app(environment="development"))
+        waf = _make_waf(clamav_enabled=True, clamav_fail_open=True)
+        violations = ConfigValidator().validate(settings, waf)
+        assert "waf.clamav_fail_open_in_prod" not in _codes(violations)
 
 
 class TestCleanConfig:
