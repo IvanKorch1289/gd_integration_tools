@@ -1,36 +1,80 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-21, PLAN.md V22 FINAL)
+## Текущее состояние (2026-05-21 13:00, после Wave 0 pre-merge gate closure)
 
-**HEAD**: `abf60ee1 [wave:s15/backbone]` (последний коммит до V22-transition).
-**Активный спринт**: **Sprint 16 «Closure»** — 1/16 wave CLOSED (K2 W3 OTel OTLP metrics, `e200b53f`).
-**План**: `PLAN.md` **V22 FINAL** (2026-05-21) — 5 спринтов × 2 недели × 5 команд (К1/К2/К3/К4/К5).
-**Архив**: `vault/archive-plan-v21.md` (полный V21.0 backup).
-**GAP-анализ**: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (V3.0 базис для V22).
+**HEAD**: `6a1c3cb9 [wave:s16/cleanup-format-debt]` (последний из 3 commits Wave 0 cycle).
+**Активный спринт**: **Sprint 16 «Closure»** — 1/16 wave CLOSED (OTel) + **4/4 pre-merge gate CLOSED**.
+**План**: `PLAN.md` **V22 FINAL** (555 строк) — 5 спринтов × 2 недели × 5 команд.
 
-### V21 → V22 переход (2026-05-21)
-- **PLAN.md полностью переписан с нуля**: оставлены только нереализованные задачи + дополнительные предложения GAP V3.0.
-- **5 спринтов утверждены через AskUserQuestion** (4 раунда уточнений, ≤5% неопределённости):
-  - **S16 Closure** (active, 2026-05-22 → 2026-06-04): 15 wave + 3 cleanup + 4 pre-merge gate.
-  - **S17 Centralization Hardening** (NEW, 2026-06-05 → 2026-06-18): ConfigValidator + MetricsRegistry + TaskRegistry obligatory + AuthorizationGateway + AuditService correlation_id + ResilienceCoordinator class + APScheduler observability + per-tenant FF UI.
-  - **S18 Tech Debt + Acceptance** (2026-06-19 → 2026-07-02): WAF allowlist 23→0 + coverage 50→70% + F-2 sandbox + Core entities cleanup + EventBus DSL + AI workflow handlers + multimodal-rag + F-5 stubs + Layer violations 73→0 + verify routes (integration mode).
-  - **S19 DX & Innovation** (2026-07-03 → 2026-07-16): VSCode extension + LSP финал + DSL Visual Editor + AI PR review + manage.py diagnose + adaptive timeout + adaptive RAG strategy finale + ADR R1.1/R1.5/R1.7/R1.8/R1.9/R1.20.
-  - **S20 Production Signoff** (2026-07-17 → 2026-07-31): security audit + perf bench (p95 ≤80ms, RPS ≥1500) + mypy=0 + coverage 83% + docs finale + pre-prod-check v2 (38/38) + DR runbook + staging-canary 1→10→50→100% + `git tag v1.0.0-production` + push origin master (с явного подтверждения).
-- **НЕ в плане V22**: credit-pipeline 5 интеграционных клиентов (DaData/БКИ/СМЭВ/ЦБ/1С) — отдельная пользовательская работа.
+### Wave 0 pre-merge gate — все 4 CLOSED ✅
+| Gate | Commit | Статус |
+|---|---|---|
+| `gate-w0-merge-conflict` | `cf418681` | ✅ resolved UU gap-analysis legacy file |
+| `gate-w0-otel-unit-tests` | tests passing in-place | ✅ 6/6 unit-tests pass (`tests/unit/infrastructure/observability/otel/`) |
+| `gate-w0-ops-reorg-smoke` | `9762c75f` + `6a1c3cb9` | ✅ UV resolver unblocked (pygls/aioldap3/paddlepaddle/win32-environments) + 441 ruff-format auto-changes |
+| `gate-w0-f2-sandbox-decision` | `6a1c3cb9` (включён в format-debt commit pathspec) | ✅ F-2 carryover optimization (psutil.Process кэширование + skip-syscall fast-path) commited |
 
-### Следующий шаг (S16 active)
-1. **Pre-merge gate (Wave 0)**:
-   - `[wave:s16/gate-w0-merge-conflict]` — merge-conflict `gap-analysis/...` resolved через `git rm` (файл заменён на DEEP-RESEARCH-2026-05-20.md) — **готов к commit**.
-   - `[wave:s16/gate-w0-ops-reorg-smoke]` — `make ci` + `docker compose -f ops/compose/docker-compose.yml config` + workflow paths.
-   - `[wave:s16/gate-w0-otel-unit-tests]` — `pytest tests/unit/infrastructure/observability/otel/` (6 unit-тестов).
-   - `[wave:s16/gate-w0-f2-sandbox-decision]` — решение по `M src/backend/core/plugin_runtime/sandbox.py` (commit как F-2 carryover или checkout).
-2. **6 P0 wave**: L1-P0-1 asyncio.Lock / L1-P0-2/3 asyncssh pool / L2-P0-1 outbox-tx-atomic / L4-P0-1 pygls LSP / L5-P0-1 Adaptive RAG QueryClassifier / L7-P1-1 JWT introspection.
-3. **6 P1 wave** + 3 cleanup + closure.
+### Параллельная wave извне сессии
+- `f0b0a7b9 [wave:s16/w4-task-registry-coverage]` — TaskRegistry CP-21 full coverage; **зашла между моими commit'ами**; не моя работа (внешняя сессия). Без конфликтов.
+
+### Известные блокеры (carryover, не gate-w0 ответственность)
+- **lint-strict 164 ruff check errors** (S112 try-except-continue, BLE001 broad-except и пр.) — `make ci` после `format-check` всё ещё fails на `lint-strict`. Это **carryover lint-debt**, не специфичен для ops-reorg. План: **отдельная wave `[wave:s16/cleanup-lint-debt]`** в S16 cleanup-section (не было в исходном V22 — дополнительная wave по результатам Wave 0 закрытия).
+
+### Стек коммитов этой сессии (4 wave + 3 cycle)
+| Commit | Wave |
+|---|---|
+| `9762c75f` | `[wave:s16/gate-w0-ops-reorg-deps]` (UV resolver) |
+| `6a1c3cb9` | `[wave:s16/cleanup-format-debt]` (442 files, включая F-2 sandbox) |
+| `4ade9001` (prev session) | `[chore:plan-v22-final]` |
+| `cf418681` (prev session) | `[wave:s16/gate-w0-merge-conflict]` |
+
+### Следующий шаг (S16 active, осталось 12 wave + closure)
+1. **Опционально**: `[wave:s16/cleanup-lint-debt]` — 164 ruff check errors (если решено блокирующее).
+2. **6 P0 wave** Sprint 16: L1-P0-1 asyncio.Lock / L1-P0-2/3 asyncssh pool / L2-P0-1 outbox-tx-atomic / L4-P0-1 pygls LSP / L5-P0-1 Adaptive RAG / L7-P1-1 JWT introspection.
+3. **6 P1 wave + 2 cleanup + closure** → Sprint 17.
+
+### Архив V21 + GAP-анализ
+- `vault/archive-plan-v21.md` (локально, vault/ gitignored).
+- `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
+- Сводки сессий: `vault/session-2026-05-2[01]-*-summary.md`.
+
+### Изменения в этой сессии (V21 → V22)
+- **PLAN.md полностью переписан** (977 → 555 строк, -43.2%): только нереализованное + дополнительное.
+- **CLAUDE.md** заголовок: V15/V19 → V22 + ссылки на архив + GAP.
+- **CONTEXT.md** новая транзишн-секция.
+- **Memory note**: `feedback_plan_v22_final.md` (project) + ссылка в MEMORY.md.
+- **graphify update .** выполнен (2292/2292 AST файлов; topology unchanged).
+- **2 atomic коммита** в master (см. HEAD).
+
+### 5 спринтов V22 (2026-05-22 → 2026-07-31)
+| Sprint | Период | Scope | Приоритет |
+|---|---|---|---|
+| **S16 Closure** (active) | 05-22 → 06-04 | 15 wave + 3 cleanup + 4 pre-merge gate | P0 |
+| **S17 Centralization** (NEW) | 06-05 → 06-18 | ConfigValidator + MetricsRegistry + TaskRegistry obligatory + AuthorizationGateway + ResilienceCoordinator + correlation_id end-to-end + APScheduler observability + per-tenant FF UI | P1 |
+| **S18 Tech Debt + Acceptance** | 06-19 → 07-02 | WAF 23→0 + coverage 50→70 + F-2 sandbox + core_entities cleanup + EventBus DSL + AI handlers + multimodal-rag + F-5 stubs + Layer 73→0 + verify routes (integration) | P1 |
+| **S19 DX & Innovation** | 07-03 → 07-16 | VSCode + LSP финал + DSL Visual Editor + AI PR review + manage.py diagnose + adaptive timeout/RAG + ADR R1.1/R1.5/R1.7/R1.8/R1.9/R1.20 | P2 |
+| **S20 Production Signoff** | 07-17 → 07-31 | security audit + perf (p95 ≤80ms, RPS ≥1500) + mypy=0 + coverage 83% + docs + pre-prod-check 38/38 + DR runbook + canary 1→10→50→100% + git tag v1.0.0-production + push origin master | P0 |
+
+**НЕ в плане V22**: credit-pipeline 5 клиентов (DaData/БКИ/СМЭВ/ЦБ/1С) — отдельная пользовательская работа.
+
+### Открытые риски
+1. **`M src/backend/core/plugin_runtime/sandbox.py`** не закоммичен — pre-merge gate `[wave:s16/gate-w0-f2-sandbox-decision]` ожидает S18/S19 strategy выбор (commit как F-2 carryover W5 / `git checkout` / отдельная wave).
+2. **`vault/archive-plan-v21.md`** только локально (vault/ gitignored) — если ссылка из PLAN.md/CLAUDE.md важна для других машин, нужен force-add либо перемещение в `docs/archive/`.
+3. **OTel unit-тесты S16 Wave 1** не перезапускались в этой сессии (carryover из 2026-05-20) — pre-merge gate `[wave:s16/gate-w0-otel-unit-tests]` ожидает.
+4. **`make ci` / ops-reorg smoke** не запускался в сессии — pre-merge gate `[wave:s16/gate-w0-ops-reorg-smoke]` ожидает.
+
+### Следующий шаг (S16 active, осталось 3 pre-merge gate + 15 wave + closure)
+1. **Закрыть Wave 0 (осталось 3 gate)**:
+   - `[wave:s16/gate-w0-ops-reorg-smoke]` — `make ci` + `docker compose -f ops/compose/docker-compose.yml config`.
+   - `[wave:s16/gate-w0-otel-unit-tests]` — `pytest tests/unit/infrastructure/observability/otel/`.
+   - `[wave:s16/gate-w0-f2-sandbox-decision]` — решение по `M sandbox.py`.
+2. **6 P0 wave** Sprint 16: L1-P0-1 asyncio.Lock / L1-P0-2/3 asyncssh pool / L2-P0-1 outbox-tx-atomic / L4-P0-1 pygls LSP / L5-P0-1 Adaptive RAG / L7-P1-1 JWT introspection.
+3. **6 P1 wave + 3 cleanup + closure** → Sprint 17.
 
 ### Архив снимков состояния (V21 и старше)
-Все секции до V22-transition сохранены в `vault/archive-plan-v21.md` (часть PLAN.md V21).
+Все секции до V22-transition — в `vault/archive-plan-v21.md` (полный PLAN.md V21).
 Подробные wave-таблицы S11/S12/S13/S14/S15 — там же.
-Сводки сессий: `vault/session-2026-05-20-*-summary.md` (по дате + теме).
+Сводки сессий: `vault/session-2026-05-2[0-1]-*-summary.md`.
 
 ---
 
