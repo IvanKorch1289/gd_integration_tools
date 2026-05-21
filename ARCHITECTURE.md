@@ -300,3 +300,107 @@ CircuitBreaker, ExceptionHandler.
 - изменился основной способ DSL-расширения;
 - изменилась карта инфраструктурных зависимостей;
 - появились новые точки расширения (Protocol/ABC/Factory).
+
+---
+
+## Слои L1–L10 (GAP-аудит 2026-05-21)
+
+Платформа аудируется по 10 архитектурным слоям × 4 вектора (читаемость / надёжность / расширяемость / функциональность). Полные findings — `.claude/KNOWN_ISSUES.md` секция «GAP-аудит 2026-05-21».
+
+### Карта слоёв и Gateway-централизация
+
+```text
+                              ┌─────────────────────────────────────────────┐
+                              │   L9 DevOps & Deploy                        │
+                              │   Docker / Compose / K8s HPA / Granian     │
+                              │   Blue-Green / Health probes / make pre-prod│
+                              └────────────────────┬────────────────────────┘
+                                                   │
+┌──────────────────────────────────────────────────▼──────────────────────────────┐
+│  L1 Gateway / Middleware  (26 ASGI middleware, централизация ~80%)              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │ AuthN/Z │ Idempot │ WAF │ RL │ Audit │ Tenant │ Correlation │ Timeout │  │   │
+│  │ JWT/API │ Redis NX│Out │P0  │CH+DLQ │ ctxvar │ asgi-corrid │ global  │  │   │
+│  │ mTLS/SAML│        │HTTP│   │       │        │   +OTel?P1  │   P0    │  │   │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
+│                              ↓ dispatch_action(ActionCommandSchema)             │
+└──────────────────────────────────────────────────┬──────────────────────────────┘
+                                                   │
+┌──────────────────────────────────────────────────▼──────────────────────────────┐
+│  L2 Core Kernel                                                                 │
+│  ┌──────────────┐  ┌────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
+│  │ svcs DI      │  │ ActionDispatch │  │ Errors+Explainer│  │ Plugin Runtime │  │
+│  │ Protocols(8) │  │ Gateway+Legacy │  │ BaseError multi │  │ V11 + sandbox  │  │
+│  └──────────────┘  └────────────────┘  └─────────────────┘  └────────────────┘  │
+│              ↓ Exchange(in/out/properties) → Pipeline(processor-chain)          │
+└──────────────────────────────────────────────────┬──────────────────────────────┘
+                                                   │
+                  ┌────────────────────────────────┼──────────────────────────────┐
+                  │                                │                              │
+        ┌─────────▼──────────┐    ┌────────────────▼─────────────┐    ┌───────────▼──────────┐
+        │ L3 Routes / Plugin │    │  L4 AI Pipelines             │    │  L5 RPA Pipelines    │
+        │ V11 manifest TOML  │    │  PydanticAI/LiteLLM/RAG-3T   │    │  Browser/Desktop/COM │
+        │ RouteBuilder(150+) │    │  AIWorkspaceManager + FsFac. │    │  Playwright pool     │
+        │ Hot-Swap + Cap-gate│    │  FastMCP auto-export         │    │  Win-worker sidecar  │
+        │ routes/ + extens/  │    │  LangMem + RLM-toolkit       │    │  pywinauto / win32com│
+        └─────────┬──────────┘    └────────────────┬─────────────┘    └───────────┬──────────┘
+                  │                                │                              │
+                  └────────────────────────────────┼──────────────────────────────┘
+                                                   │
+┌──────────────────────────────────────────────────▼──────────────────────────────┐
+│  L6 Data & State                                                                │
+│  ┌──────────────┐  ┌────────────────┐  ┌────────────────┐  ┌─────────────────┐  │
+│  │ PG/Oracle/MS │  │ Redis/KeyDB    │  │ S3/MinIO/Local │  │ Vault Secrets   │  │
+│  │ async-alchemy│  │ pool monitoring│  │ FS abstraction │  │ broker+rotation │  │
+│  │ Outbox + DLQ │  │ ConnReuseManager│ │ multipart S3   │  │ env/vault disp. │  │
+│  └──────────────┘  └────────────────┘  └────────────────┘  └─────────────────┘  │
+└─────────────────┬───────────────────────────────────────────────────────────────┘
+                  │
+                  │ side-channel: telemetry + audit
+                  ▼
+┌────────────────────────────────────────┐    ┌─────────────────────────────────────┐
+│  L7 Observability                       │    │  L8 Security                        │
+│  OTel SDK (traces+metrics+logs)         │◀──▶│  CapabilityGate + WAF strict       │
+│  9 auto-instr. (FastAPI/httpx/pg/...)   │    │  AI Safety workspace isolation     │
+│  structlog batching + 3 sinks           │    │  AuthorizationGateway (S17 NEW)    │
+│  ClickHouse audit + Graylog GELF        │    │  Casbin + OPA + capabilities       │
+│  TaskRegistry + Watchdog                │    │  PII masker (6 patterns)           │
+│  11 Grafana dashboards                  │    │  Vault rotation + mTLS + SAML      │
+└────────────────────────────────────────┘    └─────────────────────────────────────┘
+                                                                  ▲
+                                                                  │
+                                                ┌─────────────────┴─────────────────┐
+                                                │  L10 Test Coverage                 │
+                                                │  unit / integration / e2e / chaos │
+                                                │  perf / security / smoke          │
+                                                │  3639 tests; 50% → 83% (S20)      │
+                                                └────────────────────────────────────┘
+```
+
+### Описание слоёв
+
+| ID | Слой | Модули | Оценка | Главные точки расширения |
+|----|------|--------|--------|--------------------------|
+| **L1** | Gateway / Middleware | `entrypoints/middlewares/` (26 ASGI MW), `core/auth/`, `core/net/` | **6.0** | `AuthRequiredMiddleware`, `IdempotencyHeaderMiddleware`, `OutboundHttpClient` (WAF), Plugin-registry MW (Sprint 17 NEW) |
+| **L2** | Core Kernel | `core/{actions,di,plugin_runtime,interfaces}/`, `main.py`, `dsl/engine/` | **6.5** | 8 Protocol-ов в `core/protocols.py`; `ActionGatewayDispatcher`; Exchange/Pipeline (Camel-style); ErrorExplainer registry |
+| **L3** | Routes Architecture | `routes/`, `extensions/`, `core/plugin_runtime/`, `dsl/route/builder/` | **6.5** | RouteBuilder (150+ методов) + миксины; V11 `plugin.toml`; Hot-Swap; `@processor` декоратор |
+| **L4** | AI Pipelines | `services/ai/`, `core/ai/`, `entrypoints/mcp/`, `infrastructure/cache/rag/` | **6.5** | `AIWorkspaceManager` + `AIFsFacade`; FastMCP auto-export; RAG 3-tier cache; LangMem; PydanticAI agents |
+| **L5** | RPA Pipelines | `services/rpa/`, `windows_worker/`, `dsl/engine/processors/{rpa,rpa_banking}.py` | **5.0** | `PlaywrightBrowserPool`; Win-worker FastAPI sidecar (COM + desktop); 8 browser-процессоров |
+| **L6** | Data & State | `infrastructure/{database,cache,storage,secrets,clients}/`, `schemas/`, `dsl/contracts/` | **3.0** ⚠️ | `SmartSessionManager` (read replica); `ConnectionReuseManager`; `SecretBroker` (env/vault dispatch); Outbox pattern; multi-backend (PG/Oracle/MSSQL/MySQL/DB2) |
+| **L7** | Observability | `infrastructure/observability/`, `infrastructure/audit/`, `infrastructure/logging/` | **5.0** | OTel SDK + 9 auto-instr.; structlog batching; LogSink ABC (console/disk/Graylog); ClickHouse audit; `TaskRegistry` + Watchdog; 11 Grafana dashboards |
+| **L8** | Security | `core/{security,auth,ai,net}/`, `infrastructure/{secrets,security,policy}/` | **7.0** ✅ | CapabilityGate (LRU + subset); WAF strict + `OutboundHttpClient`; AI Safety workspace; webhook HMAC; immutable audit-log; Casbin/OPA (S17 wiring) |
+| **L9** | DevOps & Deploy | `ops/compose/`, `Makefile`, `manage.py`, `.github/workflows/`, `deploy/` | **5.0** | Multi-stage Dockerfile (nonroot+tini); Blue/Green pattern; health endpoints; Granian RSGI; K8s HPA (Temporal worker); Helm chart (Sprint 18 NEW) |
+| **L10** | Test Coverage | `tests/{unit,integration,e2e,chaos,perf,security,smoke}/`, `testkit/` | **5.9** | pytest + factory_boy; 26 chaos сценариев; Schemathesis api-fuzz; coverage gate baseline; testkit/ public API (Sprint 19 NEW) |
+
+### Аудит Gateway-централизации (15/22 функций централизованы — 68%)
+
+| ✅ Централизовано (15) | ⚠️ Требует доработки (7) |
+|------------------------|---------------------------|
+| Auth (6 методов), Logging, Request-ID, Error normalization, Content-neg, CORS, Compression (gz/br), Response cache, Webhook HMAC, Tenant context, Idempotency (Redis NX), WAF outbound, Audit log, Data masking, Encrypted body | **P0**: Rate-limit global MW; Timeout per-route. **P1**: Correlation→OTel trace_id binding; Response validation MW; Circuit-breaker enforcement в DSL; Metrics cardinality (`tenant_id` label); Audit retry+DLQ для ClickHouse; PII auto-mask response MW |
+
+### Связь с PLAN.md V22 (S17–S20 replace, GAP-driven)
+
+- **Sprint 17** «Centralization Hardening» — ADR-NEW-1..4 backbone + 17 P0 блокеров (syntax sweep / TLS hotfix / AuthorizationGateway / CapabilityGateway Protocol / Routes capability-gate / Tenant routes / call_function whitelist / Saga state / K8s manifests / pre-prod-check v2 scaffold / БД migration init / Backup/DR scaffold).
+- **Sprint 18** «Operational+Security» — S-L1/S-L7/S-L8 пробелы + K8s Helm + multi-tenant rate-limit + WAF allowlist tightening + БД migration init-container.
+- **Sprint 19** «DSL+AI расширения + DX» — workflow versioning, route composition, route authz, multipart RAG, reranking, RPA sessions + VSCode extension + Adaptive RAG strategy.
+- **Sprint 20** «Production Signoff» — pre-prod-check v2 38/38, coverage 83%, mypy 0, p95 ≤80ms, RPS ≥1500, DR & Backup verified, canary 1→10→50→100%.

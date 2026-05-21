@@ -1,6 +1,6 @@
-# PLAN.md — gd_integration_tools V22 FINAL
+# PLAN.md — gd_integration_tools V22 FINAL (S17–S19 GAP-adapted 2026-05-21)
 
-> **Версия**: V22.0 FINAL (production-ready roadmap, ≤ 10 недель).
+> **Версия**: V22.1 FINAL (production-ready roadmap, ≤ 10 недель). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` секция «GAP-аудит 2026-05-21» + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате.
 > **Дата**: 2026-05-21.
 > **Замещает**: V21.0 (архив → `vault/archive-plan-v21.md`).
 > **Срок**: 2026-05-22 → 2026-07-31 (5 спринтов × 2 недели × 5 команд).
@@ -194,123 +194,201 @@ FeatureFlagService (V22 EXTENDED) ← per-tenant + runtime UI + Redis pub/sub
 
 ---
 
-### Sprint 17 — Centralization Hardening (NEW, 2 недели: 2026-06-05 → 2026-06-18)
+### Sprint 17 — GAP P0 Closure + Centralization Hardening (REPLACED 2026-05-21, 2 недели: 2026-06-05 → 2026-06-18)
 
-**Owner**: К1 (D10/D14) + К2 (D11/D13a/D13b/ResilienceCoordinator) + К3 (correlation_id) + К5 (D9 UI).
-**Приоритет**: **P1** (производственная архитектура, разблокирует Sprint 20 final security audit и production-rollout).
-**Источник**: GAP V3.0 D9–D14 + memory `feedback_wave_integration_pattern`.
+**Owner**: К1 (security/auth/syntax/TLS) + К2 (centralization/observability) + К3 (routes capability+tenant+correlation_id) + К4 (AI Safety) + К5 (admin UI + K8s scaffold).
+**Приоритет**: **P0** (production blocker; объединяет centralization V22 backbone и 17 КРИТИЧЕСКИХ блокеров GAP-аудита 2026-05-21).
+**Источник**: GAP-аудит 2026-05-21 (10 слоёв × 4 вектора, среднее 5.7/10) + GAP V3.0 D9–D14 + memory `feedback_wave_integration_pattern`.
+**Backbone-ADR**: ADR-NEW-1 AuthorizationGateway / ADR-NEW-2 Declarative MW chain / ADR-NEW-3 Unified RequestContext / ADR-NEW-4 CapabilityGateway Protocol (см. `.claude/DECISIONS.md`).
 
 #### Wave 0 — Backbone (обязательный pre-commit, по правилу `feedback_s2_multi_agent_kickoff`)
-- `[wave:s17/backbone]` — 8 default-OFF feature-flags (`config_validator_enabled` / `metrics_registry_strict` / `task_registry_strict` / `apscheduler_metrics` / `authz_gateway_enabled` / `audit_correlation_required` / `tenant_feature_flag_ui` / `resilience_coordinator_enabled`) + team_s17.k1..k5 в `.claude/team-ownership.toml` + KNOWN_ISSUES.md секция.
+- `[wave:s17/backbone]` — 12 default-OFF feature-flags (`config_validator_enabled` / `metrics_registry_strict` / `task_registry_strict` / `apscheduler_metrics` / `authz_gateway_enabled` / `audit_correlation_required` / `tenant_feature_flag_ui` / `resilience_coordinator_enabled` / `routes_capability_gate_strict` / `routes_tenant_aware_strict` / `call_function_whitelist_strict` / `saga_state_persistence_enabled`) + team_s17.k1..k5 в `.claude/team-ownership.toml` + KNOWN_ISSUES.md ссылка на GAP-аудит.
 
-#### Wave 1–8 (8 GAP V3.0 пунктов)
-- `[wave:s17/k1-w1-config-validator]` — **D14**: `core/config/validator.py::ConfigValidator` — cross-settings validator при startup. ≥5 production-safety rules: DEBUG+PROD fail / CORS="*" fail / JWT_SECRET length ≥32 / Vault unreachable fail / feature-flag dependency check.
-- `[wave:s17/k1-w2-authorization-gateway]` — **D10**: `core/auth/gateway.py::AuthorizationGateway.authorize(principal, resource, action)` — фасад поверх Casbin → OPA → CapabilityGate с единым `correlation_id`. Миграция всех endpoint-guard'ов на gateway. Единый audit-event на каждое решение.
-- `[wave:s17/k2-w1-metrics-registry]` — **D11 backbone**: `infrastructure/observability/metrics_registry.py::MetricsRegistry.counter/histogram/gauge(name, label_set, ...)` с обязательным `{tenant_id, route_id, component, env}`. Idempotent registration (для hot-reload плагинов). Registry-singleton + initial 5 reference metrics.
-- `[wave:s17/k2-w2-metrics-migrate]` — **D11 sweep**: миграция 52 inline `= Counter(...) / = Histogram(...) / = Gauge(...)` callsites на `MetricsRegistry.get_*()`. CI-gate `tools/checks/check_metrics_registry.py`.
-- `[wave:s17/k2-w3-task-registry-coverage]` — **D13a**: миграция 34 orphan `asyncio.create_task(...)` callsites на `task_registry.create_task(name, deadline, lifecycle)`. CI-gate `tools/checks/check_task_registry.py --fail-on-orphans`. `copy_context()` propagation для structlog в background tasks (correlation_id в task-логах).
-- `[wave:s17/k2-w4-apscheduler-observability]` — **D13b**: Prometheus metrics `scheduler_job_executions_total{status="success|missed|error"}` + `scheduler_job_duration_seconds` + `scheduler_jobstore_type{type="memory|sqlalchemy"}`. Grafana alert при `status="missed" > 0` и при `type="memory"` в prod.
-- `[wave:s17/k3-w1-correlation-id-end-to-end]` — **D12**: contextvars propagation через middleware → audit → outbound_http → DSL processors. AuditService обязательно содержит `correlation_id` из contextvars. End-to-end test: HTTP request → workflow → outbound HTTP → ClickHouse audit_events; единый запрос `SELECT * FROM audit WHERE correlation_id = X` возвращает события от ≥3 источников.
-- `[wave:s17/k5-w1-tenant-runtime-feature-toggle]` — **D9**: REST endpoint `POST /admin/feature-flags/<flag>/tenant/<id>` + Redis pub/sub broadcast (<100ms propagation) + audit trail (event `feature.toggled` с actor/value/old_value/correlation_id). Streamlit page `61_Feature_Flags.py` (или эквивалент с учётом текущего page-numbering).
-- `[wave:s17/k2-w5-resilience-coordinator-class]` — `core/resilience/coordinator.py::ResilienceCoordinator` class. 12 fallback chains (antivirus / audit / cache / db / express / mongo / mq / object_storage / search / secrets / smtp / graylog / genai) wired через registry. Init в lifespan startup. Метрики через `MetricsRegistry`.
+#### Wave 1–6 (P0 Группа SYNTAX + TLS — hotfix CI blockers)
+- `[wave:s17/k1-w0-python3-except-clause-sweep]` — **K-SYN-1..5** (Python 2 syntax fix): codemod `tools/codemods/fix_except_clause.py` (libcst) для **70+ файлов** (точный grep `-l` = 71) в `infrastructure/{observability,database,clients,storage,logging,secrets}/`, `core/ai/workspace_manager.py:248`, `entrypoints/mcp/mcp_server.py:142`, `dsl/engine/processors/rpa.py:816`, `infrastructure/observability/tracing.py:60,87`, а также `dsl/`, `services/`, `entrypoints/` (помимо L6/L7). CI-gate `tools/checks/check_python3_syntax.py`. Тесты: import-smoke 70+ файлов + observability/tracing.py integration.
+- `[wave:s17/k1-w1-tls-cert-required]` — **K-TLS-1..3** (V1 hotfix): `infrastructure/clients/transport/ftp.py:52-54,83-85`, `infrastructure/sources/email.py`, `entrypoints/email/imap_monitor.py` — заменить `ssl.CERT_NONE` на `ssl.create_default_context()` + `verify_mode=CERT_REQUIRED`. Optional `ca_cert_path` параметр. CI-gate `make secrets-check` + unit-test `assert ctx.verify_mode == CERT_REQUIRED`.
+
+#### Wave 7–10 (P0 Группа ARCHITECTURE — ADR-NEW-1..4 backbone)
+- `[wave:s17/k1-w2-authorization-gateway]` — **ADR-NEW-1 + ADR-NEW-4** (K-ARCH-1, K-ARCH-2): `core/security/authorization_gateway.py::AuthorizationGateway` + `core/interfaces/capability_gateway.py::CapabilityGatewayProtocol`. Фасад: CapabilityGate → CapabilityPolicy → Casbin → OPA с единым `correlation_id`. Миграция всех non-public endpoint-guard'ов. Audit-event `authorization.decision` на каждое решение. Reason-chain в response.
+- `[wave:s17/k3-w0-routes-capability-gate]` — **K-ARCH-3**: `services/routes/loader.py:70` добавить `capability_gate.declare(route.capabilities)` ДО `pipeline_registrar` callback. Audit-event `route.capabilities.allocated`. CI-gate `tools/checks/check_routes_capability_gate.py`.
+- `[wave:s17/k3-w0-routes-tenant-aware]` — **K-ARCH-4**: `RouteManifestV11.tenant_aware` обязательно пробрасывать в `TenantContext.current_tenant()` через RouteLoader. DSL шаги `crud_*` / `proxy` / `dispatch_action` получают tenant-фильтр. End-to-end test: tenant A не видит данные tenant B.
+- `[wave:s17/k1-w3-call-function-whitelist-strict]` — **K-ARCH-5**: `dsl/engine/processors/function_call.py:118-119` убрать dev fallback в production; `if os.getenv("ENVIRONMENT") == "production" and not whitelist: raise PermissionError(...)`. CapabilityGate.check(`function.call.<module>`) обязательно. Обновить `extensions/example_plugin/plugin.toml` с `call_function_modules = [...]`.
+
+#### Wave 11–18 (V22 Centralization — D9–D14 + GAP carryover)
+- `[wave:s17/k3-w1-unified-request-context]` — **ADR-NEW-3**: `core/request_context.py::RequestContext` dataclass (frozen). `RequestContextMiddleware` собирает один раз. structlog `bind_contextvars` для `correlation_id+trace_id+tenant_id`. Скрипт `tools/migrate_request_context.py` для миграции 30+ callsites. Backward-compat alias `request.state.correlation_id` (deprecated).
+- `[wave:s17/k3-w2-middleware-registry]` — **ADR-NEW-2** (S-L1-1): `entrypoints/middlewares/registry.py::MiddlewareRegistry`. `plugin.toml::[[middleware]]` секция. Entry-points-группа `gd_integration_tools.middleware_hooks`. Per-route override через `route.toml::[middleware]`. Команда `make middleware-tree`.
+- `[wave:s17/k1-w4-config-validator]` — **D14**: `core/config/validator.py::ConfigValidator` ≥5 production-safety rules (DEBUG+PROD fail / CORS="*" fail / JWT_SECRET ≥32 / Vault unreachable fail / feature-flag dependency).
+- `[wave:s17/k2-w1-metrics-registry]` — **D11 backbone**: `infrastructure/observability/metrics_registry.py::MetricsRegistry.counter/histogram/gauge` с обязательными labels `{tenant_id, route_id, component, env}`. Idempotent registration.
+- `[wave:s17/k2-w2-metrics-migrate]` — **D11 sweep**: миграция 52 inline `= Counter(...) / = Histogram(...) / = Gauge(...)` callsites. CI-gate.
+- `[wave:s17/k2-w3-task-registry-coverage]` — **D13a + S17 V22 obligatory**: миграция 34 orphan `asyncio.create_task` callsites. `copy_context()` propagation. CI-gate `tools/checks/check_task_registry.py --fail-on-orphans`.
+- `[wave:s17/k2-w4-apscheduler-observability]` — **D13b**: Prometheus metrics + Grafana alert.
+- `[wave:s17/k3-w3-correlation-id-end-to-end]` — **D12**: contextvars propagation через MW → audit → outbound_http → DSL processors. End-to-end test: 3+ источников в `SELECT * FROM audit WHERE correlation_id = X`.
+- `[wave:s17/k7-w1-observability-fixes]` — **S-L7-1..3** (carryover из L7): ClickHouse audit retry + DLQ (tenacity loop, Redis stream fallback); structlog inject OTel `trace_id`/`span_id`; Graylog GELF socket.close() в aclose() + global fallback-sink при `is_healthy=False`.
+- `[wave:s17/k5-w1-tenant-feature-toggle-ui]` — **D9**: REST endpoint `POST /admin/feature-flags/<flag>/tenant/<id>` + Redis pub/sub broadcast (<100ms) + audit + Streamlit page.
+
+#### Wave 19–24 (P0 OPERATIONAL — K8s + DR + pre-prod scaffold)
+- `[wave:s17/k2-w5-resilience-coordinator-class]` — `core/resilience/coordinator.py::ResilienceCoordinator` class. 12 fallback chains в lifespan.
+- `[wave:s17/k3-w4-saga-state-store]` — **K-OPS-1**: `infrastructure/workflow/saga_state.py::SagaStateModel` (PostgreSQL table) — checkpoints / compensations / rollback-events. CRUD repository + integration с Temporal Workflow signal_event.
+- `[wave:s17/k5-w2-k8s-manifests]` — **K-OPS-2**: `deploy/k8s/` (NEW): Deployment + Service + Ingress + NetworkPolicy + PDB + HPA + Resource requests/limits для main app + workflow-worker. Helm chart scaffold (полный финал — S18).
+- `[wave:s17/k9-w1-pre-prod-check-v2-scaffold]` — **K-OPS-3**: `make pre-prod-check` v2 расширение текущих 20 → 30 gates (+10 новых: ConfigValidator startup / TaskRegistry orphans / OTel route coverage / APScheduler obs / AuthorizationGateway audit / MetricsRegistry coverage / FF default-OFF audit / Sphinx docs ≥95% / Numeric perf p95 / DR backup freshness). Финал (+8 grep V22 = 38/38) — S20.
+- `[wave:s17/k5-w3-db-migration-init-container]` — **K-OPS-4**: `ops/compose/docker-compose.yml` init-container `migration-runner` (alembic upgrade head) перед `app` через `depends_on::service_completed_successfully`. `deploy/k8s/jobs/migration.yaml` для K8s. Smoke-test `manage.py db verify`.
+- `[wave:s17/k1-w5-backup-dr-scaffold]` — **K-OPS-5**: `ops/backup/` scripts (pg_dump + redis-persist + clamav-update + S3-backup ClickHouse). Runbook `vault/runbooks/disaster_recovery.md`. (Полный verified drill — S20.)
 
 #### Closure
-- `[wave:s17/closure]` — DoD grep verify + memory `feedback_sprint17_centralization` + CONTEXT.md update.
+- `[wave:s17/closure]` — DoD grep verify + memory `feedback_sprint17_gap_closure_centralization` + CONTEXT.md update + ARCHITECTURE.md обновление слоёв L1–L10 готовности.
 
-**DoD Sprint 17 (10 критериев)**:
-1. ✅ `[wave:s17/backbone]` landed: 8 default-OFF flags + team_s17.k1..k5.
-2. ✅ ConfigValidator валидирует ≥5 rules при startup; `APP_PROFILE=prod DEBUG=true uv run python -m src.backend.main` fail-fast с CRITICAL.
-3. ✅ AuthorizationGateway покрывает 100% non-public endpoints; `grep "if request.user.is_admin"` ad-hoc auth = 0.
-4. ✅ MetricsRegistry содержит ≥50 регистрированных метрик; `grep -rn "= Counter(\|= Histogram(" src/backend/` (вне registry) → **0**.
-5. ✅ `tools/checks/check_task_registry.py` зелёный; `grep -rn "asyncio.create_task" src/ | grep -v task_registry` → **0**.
-6. ✅ APScheduler exporter: `scheduler_job_executions_total` visible в Prometheus; alert правила в `ops/grafana/alerts/scheduler.yml`.
-7. ✅ correlation_id присутствует во всех audit events (ClickHouse query verify); `tools/checks/check_correlation_id.py` зелёный.
-8. ✅ Per-tenant feature toggle через UI; audit-event записан; Redis pub/sub broadcast подтверждён в integration test (<100ms).
-9. ✅ ResilienceCoordinator класс инициализируется в lifespan; 12 fallback chains зарегистрированы; smoke-test для каждого backend.
-10. ✅ coverage ≥77% (от 75% gate); mypy 0 сохранён; layer violations 0 сохранён; memory note `feedback_sprint17_centralization`.
+**DoD Sprint 17 (15 критериев, ВСЕ обязательны)**:
+1. ✅ `[wave:s17/backbone]` landed: 12 default-OFF flags + team_s17.k1..k5.
+2. ✅ **K-SYN-1..5**: `grep -rEn "except [A-Za-z][A-Za-z0-9_]*, [A-Za-z][A-Za-z0-9_]*:" src/backend/` = **0**; `pytest tests/smoke/test_import_all.py` зелёный. **F-A-4 gate (обязательно ДО merge wave)**: codemod скрипт `tools/codemods/fix_except_clause.py` pre-tested на **5+ репрезентативных callsites** (минимум по одному из L5/L6/L7 + 2 из `dsl/`/`services/`/`entrypoints/`); diff каждого ручной review; `pytest <соответствующие тесты>` зелёный после ручного применения; только после этого batch-применение к остальным 70+ файлам. Это gate для предотвращения rollback (libcst-codemod может сломать редкие edge-cases — multi-line except, nested try, type-narrowing).
+3. ✅ **K-TLS-1..3**: `grep -rn "ssl\.CERT_NONE\|check_hostname=False" src/backend/` = **0**; integration test FTPS / IMAP / IMAP-monitor verify cert-required.
+4. ✅ **K-ARCH-1+2 (ADR-NEW-1+4)**: AuthorizationGateway покрывает 100% non-public endpoints; `grep "if request.user.is_admin" src/backend/` = 0; `CapabilityGatewayProtocol` в `core/interfaces/`.
+5. ✅ **K-ARCH-3**: `tools/checks/check_routes_capability_gate.py` зелёный; routes/echo_demo + health_proxy_demo проходят capability-gate.
+6. ✅ **K-ARCH-4**: integration test tenant-isolation между echo_demo и credit_pipeline зелёный.
+7. ✅ **K-ARCH-5**: `call_function_modules` whitelist обязателен в production; all `plugin.toml` декларируют список.
+8. ✅ **ADR-NEW-2 (S-L1-1)**: `MiddlewareRegistry` собирает 26 встроенных + 1+ из `plugin.toml::[[middleware]]`; `make middleware-tree` визуализирует цепочку.
+9. ✅ **ADR-NEW-3**: `RequestContext` доступен через `RequestContext.current()`; structlog logs содержат `trace_id` (L7 corr-fix).
+10. ✅ **D11 + D13a + D14**: ConfigValidator ≥5 rules; MetricsRegistry ≥50 метрик; `grep "asyncio.create_task" src/ | grep -v task_registry` = **0**.
+11. ✅ **D12 D13b D9**: correlation_id в 100% audit events; APScheduler exporter visible в Prometheus; per-tenant FF toggle UI работает.
+12. ✅ **K-OPS-1 K-OPS-2**: Saga state model + persistence; K8s manifests (Deployment/Service/PDB/HPA/Ingress) применяются `kubectl apply --dry-run=server`.
+13. ✅ **K-OPS-3**: `make pre-prod-check v2` 30/30 (текущие 20 + 10 новых) gates зелёные.
+14. ✅ **K-OPS-4 K-OPS-5**: БД migration init-container в docker-compose; backup scripts работают (`pg_dump | gzip | aws s3 cp` smoke).
+15. ✅ **S-L7-1..3**: ClickHouse audit retry+DLQ; structlog `trace_id`; Graylog FD-leak fix; coverage ≥77%; mypy 0 сохранён; memory note `feedback_sprint17_gap_closure_centralization`.
 
 ---
 
-### Sprint 18 — Tech Debt + Acceptance (2 недели: 2026-06-19 → 2026-07-02)
+### Sprint 18 — Operational + Security GAP Carryover (REPLACED 2026-05-21, 2 недели: 2026-06-19 → 2026-07-02)
 
-**Owner**: К1 (WAF + supply-chain) / К2 (Coverage + failing tests + F-2 sandbox) / К3 (Core entities + EventBus DSL) / К4 (AI handlers + LangFuse + multimodal-rag) / К5 (F-5 stubs + Layer violations Protocol-extraction).
-**Приоритет**: **P1** (techdebt cleanup + acceptance carryover; разблокирует Sprint 20 strict gates).
-**ВАЖНО (clarification 2026-05-21)**: credit-pipeline 5 интеграционных клиентов (DaData/БКИ/СМЭВ/ЦБ/1С) — **НЕ В ЭТОМ ПЛАНЕ**. Пользователь делает отдельно.
+**Owner**: К1 (WAF allowlist + supply-chain + Casbin/OPA wiring + JWT blacklist) / К2 (coverage + F-2 sandbox + failing tests + observability cardinality) / К3 (Core entities + EventBus DSL + per-route timeout) / К4 (AI handlers + LangFuse + Guardrails enforcer + LangMem consolidation) / К5 (F-5 stubs + Layer violations + K8s Helm chart финал + multi-environment configs).
+**Приоритет**: **P1** (techdebt + Operational GAP carryover + Security серьёзные пробелы).
+**Источник**: GAP-аудит 2026-05-21 → S-L1/S-L7/S-L8 пробелы + 4 функциональных предложения operational-фокус (БД migration init / K8s Helm / multi-tenant rate-limit / pre-prod-check v2).
+**ВАЖНО**: credit-pipeline 5 интеграционных клиентов (DaData/БКИ/СМЭВ/ЦБ/1С) — **НЕ В ЭТОМ ПЛАНЕ**.
 
 #### Wave 0 — Backbone
-- `[wave:s18/backbone]` — 6 default-OFF feature-flags (`waf_strict_zero_allowlist` / `failing_tests_quarantined_off` / `sandbox_amortised_final` / `core_entities_legacy_off` / `eventbus_dsl_enabled` / `langfuse_production_wired`) + team_s18.k1..k5.
+- `[wave:s18/backbone]` — 8 default-OFF feature-flags (`waf_strict_zero_allowlist` / `failing_tests_quarantined_off` / `sandbox_amortised_final` / `core_entities_legacy_off` / `eventbus_dsl_enabled` / `langfuse_production_wired` / `opa_runtime_query_enabled` / `multi_tenant_rate_limit_enabled`) + team_s18.k1..k5.
 
-#### Wave 1–12 (4 техдолг + 4 carryover + 3 routes verify + 1 closure)
-- `[wave:s18/k1-w1-waf-allowlist-tightening]` — миграция оставшихся 23 callsites в `tools/check_waf_coverage_allowlist.txt` на `make_http_client()`. Список: express_bot / telegram_bot / opa / clickhouse / vault_cipher / ml_inference / proxy/forward / imports endpoint / webhook handler/transformer / search_providers / Vault×2 / bots×2.
-- `[wave:s18/k1-w2-supply-chain-finale]` — SBOM CycloneDX + cosign sign + pip-audit zero HIGH/CRITICAL; secrets-check zero-tolerance; `make security` exit 0.
-- `[wave:s18/k2-w1-coverage-ramp-70]` — ratchet coverage 50→70%; coverage breakdown by layer; команды добавляют тесты в свои зоны (К1 security 75%+, К2 resilience 80%+, К3 dsl 75%+, К4 ai 65%+, К5 frontend 60%+).
-- `[wave:s18/k2-w2-failing-tests-triage]` — разобрать ~91 pre-existing failing tests (S9 audit); либо fix, либо `xfail` с явным ADR / skip с feature-flag.
-- `[wave:s18/k2-w3-sandbox-f2-final]` — **F-2 carryover**: PluginSandboxAdapter overhead 137% → <5%. Strategy decision per ADR R1.20: amortised psutil snapshot (раз в N вызовов) / fire-and-forget task / e2b enforcement / DoD relaxation для dev_light.
-- `[wave:s18/k3-w1-core-entities-final-cleanup]` — удалить `src/backend/services/core/{users.py,orders.py,orderkinds.py}` legacy остатки. Все импортёры переключаются на `extensions/core_entities/`. `grep "from gd_integration_tools.services.core.(users\|orders\|orderkinds)"` → 0.
-- `[wave:s18/k3-w2-eventbus-dsl-methods]` — `RouteBuilder.to_eventbus(topic, payload_ref)` + `.from_eventbus(topic_pattern, ack_mode)` + 2 new step-type в `dsl/engine/processors/eventbus.py`. `make routes` показывает 2 новых step-type.
-- `[wave:s18/k4-w1-ai-workflow-handlers]` — bound handlers в `services/ai/workflows/{rag_query,multi_agent_supervisor,e2b_execute}.py` для 3 yaml templates (`extensions/credit_pipeline/workflows/` существующих). LangFuse production wiring через `LangfusePromptStorage` + prompt versioning + cost tracking dashboard.
-- `[wave:s18/k4-w2-multimodal-rag-pipeline]` — **S11 K4 W2 carryover**: full pipeline ingest → chunking → embedding → Qdrant (modal payload) → retrieval → rerank → LLM context. Очистка untracked WIP + commit с regression-tests.
-- `[wave:s18/k5-w1-pyi-stub-fidelity]` — **F-5 carryover**: `tools/gen_dsl_stubs._resolve_annotation` через `typing.get_type_hints` + `get_origin/get_args`. PEP-695 fidelity для `.pyi` (`TypeAlias`, type-parameters).
-- `[wave:s18/k5-w2-layer-violations-protocol-extraction]` — Layer violations 73 → 0. Protocol-extraction: composition-root из `core/` в `infrastructure/` + DI binding в svcs_registry. Allowlist пуст. `make layers` (strict, без `--use-allowlist`) zero-error.
-- `[wave:s18/verify-routes-integration]` — Integration verification трёх existing routes (`routes/health_proxy_demo/`, `routes/echo_demo/`, и CRUD routes из `extensions/core_entities/`) с новым функционалом ConfigValidator + MetricsRegistry + EventBus DSL + TaskRegistry. Testcontainers (PG/Redis/MinIO/Temporal) + mock backend (DaData/СКБ-Техно если есть) + 5+ assertion checkpoint на каждый route (auth / config-validation / metrics-emission / correlation-id propagation / fallback-chain).
+#### Wave 1–4 (S-L8 Security pробелы)
+- `[wave:s18/k1-w1-waf-allowlist-tightening]` — миграция 23 callsites в `tools/check_waf_coverage_allowlist.txt` на `make_http_client()`. Список: express_bot / telegram_bot / opa / clickhouse / vault_cipher / ml_inference / proxy/forward / imports endpoint / webhook handler/transformer / search_providers / Vault×2 / bots×2.
+- `[wave:s18/k1-w2-supply-chain-finale]` — SBOM CycloneDX + cosign sign + pip-audit zero HIGH/CRITICAL; secrets-check zero-tolerance; OWASP ZAP gate blocking (S-L8-6: `make audit-zap` exit 1 при HIGH); `make security` exit 0.
+- `[wave:s18/k1-w3-casbin-opa-runtime-query]` — **S-L8-1, S-L8-2**: интегрировать `CapabilityPolicy` с Casbin tenant-scoped enforcer; OPA-client runtime-query через `AuthorizationGateway.opa_step()`; политики в `infrastructure/policy/opa/policies/` (rego). Smoke-test allow/deny decision.
+- `[wave:s18/k1-w4-jwt-blacklist-batch-revoke]` — **S-L8-5**: `core/auth/jwt_blacklist.JwtBlacklist.revoke_before_time(time)` для batch-revocation при JWKS rotation; `JwtBackend.verify(token)` проверяет jti против blacklist; Redis backend; integration test rotation scenario.
+
+#### Wave 5–9 (S-L1 + S-L7 + multi-environment)
+- `[wave:s18/k3-w1-pii-response-middleware]` — **S-L8-4**: `entrypoints/middlewares/pii_masking_response.py::PIIMaskingResponseMiddleware` — global response wrapper применяет `pii_masker` к JSON body на configurable path patterns. Default-OFF feature-flag.
+- `[wave:s18/k3-w2-per-route-timeout]` — **P0 Gateway-centralization gap**: per-route timeout через `route.toml::[timeout]` (connect/read/write/total) + DSL `.policy.timeout(connect=..., read=..., total=...)`. `TimeoutMiddleware` читает per-route metadata; fallback на global default.
+- `[wave:s18/k5-w1-rate-limit-global-mw]` — **P0 Gateway-centralization gap**: `entrypoints/middlewares/global_rate_limit.py::RateLimitMiddleware` (на базе fastapi-limiter) — global default + per-route override + per-tenant via Casbin/OPA. **Поддерживает функциональное предложение "multi-tenant rate-limiting"**.
+- `[wave:s18/k7-w1-observability-cardinality-tenant]` — **S-L7-5, S-L7-6**: `tenant_id` label во все Prometheus metrics через `MetricsRegistry`; W3C TraceContext propagation в Kafka/RabbitMQ headers через textmap propagator; cardinality enum-нормализация.
+- `[wave:s18/k9-w1-multi-environment-configs]` — **S-L9-3**: `config_profiles/{dev,staging,prod}.yml` + docker-compose env-file selection; `manage.py validate-profile <env>` ConfigValidator integration.
+
+#### Wave 10–14 (techdebt + carryover S16)
+- `[wave:s18/k2-w1-coverage-ramp-70]` — ratchet 50→70%; per-layer breakdown; команды добавляют тесты (К1 security ≥75% / К2 resilience ≥80% / К3 dsl ≥75% / К4 ai ≥65% / К5 frontend ≥60%).
+- `[wave:s18/k2-w2-failing-tests-triage]` — разобрать ~91 pre-existing failing tests; fix / xfail-с-ADR / skip-feature-flag.
+- `[wave:s18/k1-w5-plugin-trust-2tier]` — **ADR-NEW-6 / B-4** (замещает `[wave:s18/k2-w3-sandbox-f2-final]`): `plugin.toml::trust_tier = "A" | "B"`. Tier-A (signed by org-CA cosign) — runtime sandbox **disabled**; isolation через capability-gate + code-review CI + supply-chain. Tier-B (untrusted/external) — strict e2b/pyodide. Existing 3 plugins (`example_plugin`, `credit_pipeline`, `core_entities`) → Tier-A по умолчанию. Cosign-signing pipeline extends supply-chain (`make security`). DoD S18 #11 переформулируется: F-2 closure через model change, не sandbox-tuning.
+- `[wave:s18/k1-w6-multi-tenancy-mb-reduce]` — **ADR-NEW-9 / B-6** (NEW): scope reduction до M-B (Multi-BU одного банка). `TenantContext` остаётся (BU-разграничение + audit `tenant_id`). Per-tenant SLO/quota → **per-BU rate-limit + budget** (Casbin/OPA policies + fastapi-limiter tenant-aware namespace). `infrastructure/security/tenant_encryption.py` удаляется (~200 LOC) + `post-v22-backlog/m-c-encryption.md` создаётся для будущего M-C use case. IDS-per-tenant удаляется (общий SIEM через Graylog). Migration note в KNOWN_ISSUES.md.
+- `[wave:s18/k5-w5-multi-backend-tiers]` — **ADR-NEW-11 / B-2** (NEW): Tier-A (PG+Oracle, RabbitMQ+Kafka, S3+MinIO) — full CI integration + perf-gate + chaos. Tier-B (MSSQL/MySQL/DB2, Redis Streams/NATS, LocalFS) — minimal smoke test only. `pyproject.toml` extras restructure: `db-tier-a` / `db-tier-b` / `mq-tier-a` / `mq-tier-b` / `storage-tier-a` / `storage-tier-b`. README + `docs/backends.md` явная декларация tiers. CI matrix pruning: 12 backends → 5 actively-tested.
+- `[wave:s18/k3-w3-core-entities-final-cleanup]` — удалить `src/backend/services/core/{users.py,orders.py,orderkinds.py}` legacy; импортёры на `extensions/core_entities/`.
+- `[wave:s18/k3-w4-eventbus-dsl-methods]` — `RouteBuilder.to_eventbus(topic, payload_ref)` + `.from_eventbus(topic_pattern, ack_mode)` + 2 step-type.
+- `[wave:s18/k4-w1-ai-workflow-handlers]` — handlers `services/ai/workflows/{rag_query,multi_agent_supervisor,e2b_execute}.py`; LangFuse production wiring + cost dashboard.
+- `[wave:s18/k4-w2-multimodal-rag-pipeline]` — **S11 K4 W2 carryover**: ingest → chunking → embedding → Qdrant → retrieval → rerank → LLM.
+
+#### Wave 15–18 (operational — K8s Helm + БД migration finalize)
+- `[wave:s18/k5-w2-pyi-stub-fidelity]` — **F-5 carryover**: `tools/gen_dsl_stubs._resolve_annotation` через `typing.get_type_hints` + PEP-695.
+- `[wave:s18/k5-w3-layer-violations-protocol-extraction]` — Layer violations 73 → 0; composition-root из `core/` в `infrastructure/`.
+- `[wave:s18/k5-w4-k8s-helm-chart-finale]` — **Func-rec #9**: `deploy/helm/` — Helm chart полный (Chart.yaml + values.yaml + templates/{deployment,service,ingress,hpa,pdb,configmap-secret}.yaml). Values: dev/staging/prod profiles. `helm template . | kubectl apply --dry-run=server` зелёный. `helm test` smoke job.
+- `[wave:s18/k4-w3-guardrails-enforcer]` — **S-L4-2**: `GuardrailsEnforcerProcessor` в `dsl/engine/processors/ai.py` перед `LLMCallProcessor`; интеграция Lakera/Rebuff клиентов; default-ON в `[ai]` extra; PromptInjection / ToxicContent / PII-leakage detection.
+- `[wave:s18/verify-routes-integration]` — Integration test 3 routes (`routes/health_proxy_demo/` + `routes/echo_demo/` + `extensions/core_entities/`) с ConfigValidator+MetricsRegistry+EventBus+TaskRegistry+per-route-timeout+rate-limit; testcontainers; 5+ assertion checkpoints.
 
 #### Closure
-- `[wave:s18/closure]` — DoD verify + memory `feedback_sprint18_techdebt`.
+- `[wave:s18/closure]` — DoD verify + memory `feedback_sprint18_operational_security`.
 
-**DoD Sprint 18 (12 критериев)**:
+**DoD Sprint 18 (18 критериев, расширено ADR-NEW-6/-9/-11)**:
 1. ✅ `[wave:s18/backbone]` landed.
-2. ✅ WAF allowlist пуст: `tools/check_waf_coverage_allowlist.txt` = 0 lines (production paths); `python tools/check_waf_coverage.py --strict` zero violations.
-3. ✅ Supply-chain: `make security` exit 0 (SBOM + cosign verify + pip-audit zero HIGH).
-4. ✅ Coverage ≥70%; per-layer breakdown отчёт; pre-existing failing tests = 0 (fix или quarantined с ADR).
-5. ✅ F-2 sandbox: overhead <5% (или ADR R1.20 relaxation для dev_light); `tests/perf/test_plugin_sandbox_overhead.py` зелёный.
-6. ✅ 0 файлов `users.py/orders.py/orderkinds.py` в `src/backend/services/core/`; `make layers` зелёный.
-7. ✅ `RouteBuilder.to_eventbus()` + `.from_eventbus()` доступны; `make routes` показывает 2 новых step-type.
-8. ✅ 3 AI workflow handlers in production: `services/ai/workflows/{rag_query,multi_agent_supervisor,e2b_execute}.py`; LangFuse cost tracking dashboard работает; prompt v1 visible.
-9. ✅ Multimodal RAG pipeline проходит regression-test (PDF+image+audio ingest → cross-modal retrieval).
-10. ✅ F-5 `.pyi` stubs covers 100% public DSL API; PEP-695 type-parameters resolved корректно.
-11. ✅ Layer violations 0 (`make layers` strict, без allowlist); Protocol-extraction wave документирован.
-12. ✅ Verification routes: 3 existing routes (СКБ-Техно если есть / DaData / CRUD) проходят integration smoke с новым функционалом; assertion checkpoints зелёные.
+2. ✅ WAF allowlist пуст: `tools/check_waf_coverage_allowlist.txt` = 0 lines.
+3. ✅ Supply-chain: `make security` exit 0; OWASP ZAP gate **blocking** для HIGH.
+4. ✅ **S-L8-1, S-L8-2**: Casbin/OPA runtime-query через AuthorizationGateway; интеграционный test allow/deny.
+5. ✅ **S-L8-5**: JWT batch-revoke при JWKS rotation работает.
+6. ✅ **S-L8-4**: PII response middleware применяется на configurable paths; integration test PII не утекает.
+7. ✅ **Gateway P0**: per-route timeout (route.toml + DSL) работает; global rate-limit MW с per-tenant активирован.
+8. ✅ **S-L7-5, S-L7-6**: `tenant_id` label в metrics; W3C TraceContext в MQ headers; cardinality OK.
+9. ✅ **S-L9-3**: multi-environment configs (`config_profiles/{dev,staging,prod}.yml`); `manage.py validate-profile prod` зелёный.
+10. ✅ Coverage ≥70%; per-layer breakdown; pre-existing failing tests = 0.
+11. ✅ **ADR-NEW-6 / B-4 (замещает F-2 numeric DoD)**: `plugin.toml::trust_tier = "A" | "B"` enforced; 3 existing plugins → Tier-A signed by org-CA cosign; runtime sandbox disabled for Tier-A; Tier-B e2b sandbox numerically <5% overhead.
+12. ✅ Core entities legacy удалены; `RouteBuilder.to_eventbus()/.from_eventbus()` доступны.
+13. ✅ 3 AI workflow handlers + LangFuse + Multimodal RAG pipeline regression-test зелёный.
+14. ✅ **Func-rec #9**: K8s Helm chart `helm template . | kubectl apply --dry-run=server` зелёный.
+15. ✅ **S-L4-2**: Guardrails enforcer применяется перед LLMCallProcessor; integration test prompt-injection заблокирован; layer violations 0; F-5 stubs 100%; routes integration зелёный; memory note.
+16. ✅ **ADR-NEW-9 / B-6**: Multi-tenancy scope reduced до M-B (Multi-BU одного банка); `infrastructure/security/tenant_encryption.py` removed; `TenantContext` + ACL + audit per BU работают; `post-v22-backlog/m-c-encryption.md` создан как revert-path для M-C use case.
+17. ✅ **ADR-NEW-11 / B-2**: Tier-A (PG+Oracle, RabbitMQ+Kafka, S3+MinIO) — CI integration + perf-gate + chaos зелёные; Tier-B (MSSQL/MySQL/DB2, Redis Streams/NATS, LocalFS) — smoke test only; `pyproject.toml` extras разделены (db-tier-a/b, mq-tier-a/b, storage-tier-a/b); `docs/backends.md` опубликован.
+18. ✅ **F-A-4 codemod pre-test gate** (S17 carryover): `tools/codemods/fix_except_clause.py` pre-tested на 5+ репрезентативных callsites ДО batch-применения (если carryover из S17 не закрыт в S17).
 
 ---
 
-### Sprint 19 — DX & Innovation (2 недели: 2026-07-03 → 2026-07-16)
+### Sprint 19 — DSL+AI расширения + DX (REPLACED 2026-05-21, 2 недели: 2026-07-03 → 2026-07-16)
 
-**Owner**: К3 (LSP финал + Visual Editor) / К4 (AI PR review + Adaptive RAG strategy finale) / К5 (VSCode extension + Quick wins + Arch Map) / К2 (Adaptive timeout + Coverage ratchet) / К1 (F-6 sys._current_frames).
-**Приоритет**: **P2** (innovation + DX; не блокирует production, но даёт финальный signoff + developer experience baseline для onboarding ≤ 1 час).
+**Owner**: К1 (F-6 sys._current_frames + secrets-finale) / К2 (Adaptive timeout + Coverage ratchet + multi-replica failover) / К3 (LSP финал + Visual Editor + route composition + workflow versioning + route authz) / К4 (Adaptive RAG strategy + Multipart RAG ingest + Reranking + LangMem consolidation + Banking AI processors) / К5 (VSCode extension + Quick wins + Testkit API + RPA browser session persistence).
+**Приоритет**: **P1** (functional expansion из GAP-аудита Phase 3 + DX baseline для onboarding ≤ 1 час).
+**Источник**: 10 функциональных предложений Phase 3 (все приняты) + S-L4 carryover (Banking AI / LangMem / Reranking / Multipart) + S-L5 carryover (RPA session persistence) + S-L10 carryover (Public testkit API) + S-L6 carryover (replica failover).
 
 #### Wave 0 — Backbone
-- `[wave:s19/backbone]` — 5 default-OFF feature-flags (`vscode_extension_published` / `lsp_server_strict` / `dsl_visual_editor_drag_drop` / `ai_pr_review_enabled` / `adaptive_timeout_enabled`) + team_s19.k1..k5.
+- `[wave:s19/backbone]` — 10 default-OFF feature-flags (`vscode_extension_published` / `lsp_server_strict` / `dsl_visual_editor_drag_drop` / `ai_pr_review_enabled` / `adaptive_timeout_enabled` / `workflow_versioning_routes` / `route_composition_include` / `route_authz_requires_permission` / `rag_multipart_ingest` / `rpa_session_persistence`) + team_s19.k1..k5.
 
-#### Wave 1–12 (4 DX + 4 carryover + 4 ADR-закрытие + closure)
-- `[wave:s19/k5-w1-vscode-extension]` — `tools/vscode-extension/` `.vsix` пакет: syntax highlighting + hover docs + "Run step" CodeLens + LSP client (подключается к S16 K3 W1 server). Private marketplace publish (ADR R1.14 → private).
-- `[wave:s19/k3-w1-lsp-server-finale]` — расширение `tools/dsl_lsp/server.py` (S16 baseline): YAML schema completion через JSON Schema export для route.toml + workflow.yaml + service.toml; diagnostics через DSL Linter integration.
-- `[wave:s19/k3-w2-dsl-visual-editor-finale]` — `frontend/streamlit_app/pages/31_DSL_Visual_Editor.py` финал: drag-drop + YAML/BPMN export + undo/redo + step palette с capability descriptions. Закрывает S9 carryover.
-- `[wave:s19/k4-w1-ai-pr-review-action]` — `.github/workflows/ai-pr-review.yml` через Claude API: layer-policy + security + perf-regression + coverage delta. Prompt caching ≥80% hit rate; latency ≤3 минут per PR; cost ≤$0.10 per PR.
-- `[wave:s19/k5-w2-quick-wins-pack]` — пакет 4 quick wins за 1 wave: `make new-adr TITLE="..."` (ADR scaffolding + auto-number) + `manage.py completions install` (zsh+bash auto-gen Typer) + `make release-notes` (Conventional Commits parser, changelog между tags) + `frontend/streamlit_app/pages/05_Architecture_Map.py` (D3.js, нажать модуль → docstring + deps + tests + impact analysis).
-- `[wave:s19/k2-w1-manage-py-diagnose]` — `manage.py diagnose` aggregator (dep graph + cycles + layer-viol + dead code + unused features). JSON output для CI integration. Single-command pre-prod-check.
-- `[wave:s19/k1-w1-current-frames-fallback]` — **F-6 carryover**: `infrastructure/observability/plugin_resource_monitor._collect_cpu_share` через `sys._current_frames()` с graceful PyPy/Jython fallback (return `{}`). Best-effort attribution.
-- `[wave:s19/k2-w2-adaptive-timeout-policy]` — `.policy.adaptive_timeout(percentile=99, safety_factor=1.5)` builder API + per-host p99 tracking + Prometheus metric + 5 reference routes.
-- `[wave:s19/k4-w2-adaptive-rag-strategy-finale]` — расширение S16 K4 W1 (QueryClassifier) до production: динамический выбор strategy (dense/hybrid/hyde/multi_query) через LLM-classifier + accuracy +15% bench + latency overhead < 50ms.
-- `[wave:s19/k2-w3-coverage-ratchet-75]` — ratchet 70→75% checkpoint; per-layer enforcement.
-- `[wave:s19/adr-w1-r1-1-r1-5-r1-7]` — финализация **ADR R1.1** (plugin.toml capability synthax) + **R1.5** (SLO формат) + **R1.7** (Single Entry policy naming).
-- `[wave:s19/adr-w2-r1-8-r1-9-r1-20]` — финализация **ADR R1.8** (EventBus production backend: NATS vs Kafka vs RabbitMQ) + **R1.9** (Granian RSGI vs Uvicorn benchmark + decision) + **R1.20** (F-2 PluginSandboxAdapter final strategy).
+#### Wave 1–6 (DSL расширения из Func-rec #1, #2, #3)
+- `[wave:s19/k3-w1-workflow-versioning-routes]` — **Func-rec #1**: `route.toml` добавить секцию `[requires_workflows] = { "wf_name" = ">=1.0,<2.0" }`. `RouteLoader.load()` проверяет совместимость версий workflow при загрузке; `RouteBuilder.invoke_workflow(name, version=...)` принимает SemVer-range. Audit-event `workflow.version.mismatch`.
+- `[wave:s19/k3-w2-route-composition-include]` — **Func-rec #2**: `*.dsl.yaml` поддерживает `include: ["./common-steps.yaml"]` (один уровень) + `extends: ./base-route.yaml`. YAML-loader разрешает дерево включений с cycle detection. JSON-Schema каталог обновляется.
+- `[wave:s19/k3-w3-route-authz-requires-permission]` — **Func-rec #3**: `route.toml::[security] requires_permission = ["role:admin", "scope:credit.read"]`. `AuthorizationGateway` (S17 ADR-NEW-1) проверяет перед dispatch на route. Capability-gate в `RouteLoader.load()` валидирует синтаксис permission-string.
+- `[wave:s19/k4-w1-multipart-rag-ingest]` — **Func-rec #4**: `POST /api/v1/ai/rag/bulk-ingest` multipart endpoint для bulk document upload. Streamlit page bulk-ingest UI. Capability `rag.ingest.<collection>` обязательна.
+- `[wave:s19/k4-w2-reranking-pipeline]` — **Func-rec #5**: `RerankerProcessor` в `dsl/engine/processors/ai.py`; интегрировать в `RagQueryProcessor` (default-OFF). Поддержка cross-encoder моделей (BAAI/bge-reranker, cohere-rerank API). Latency budget tracking.
+- `[wave:s19/k5-w1-rpa-browser-session-persistence]` — **Func-rec #6 (S-L5-2)**: Redis-backed session-store (`key = tenant_id:session_id`) с cookies/auth/local-storage; lazy-restore в `BrowserLaunchProcessor`; TTL configurable. RPA-route `routes/banking_legacy_session_demo/` как reference.
+
+#### Wave 7–10 (Banking AI + LangMem + AI carryover)
+- `[wave:s19/k4-w3-banking-ai-processors-impl]` — **S-L4-1**: реализовать логику в `dsl/engine/processors/ai_banking.py` (KycAmlVerifyProcessor / AntiFraudScoreProcessor / CreditScoringRagProcessor / DocumentClassifierProcessor / FrancotypingProcessor): LLM call + structured output Pydantic + capability-gate `ai.banking.*` + audit-event + cost budget tracking.
+- `[wave:s19/k4-w4-langmem-consolidation-impl]` — **S-L4-3**: реализовать `LangMemService.consolidate()`: episodic → semantic compaction через LLM-summarisation; интеграция с langmem package; запуск через APScheduler eachly + admin-trigger; metrics consolidation count + token usage.
+- `[wave:s19/k2-w1-multi-replica-failover]` — **S-L6-4**: `SmartSessionManager` поддержка multi-replica failover; replication-lag monitoring через `pg_stat_replication`; auto-routing по lag-budget; chaos test (kill replica).
+- `[wave:s19/k1-w1-vault-zero-downtime-rotation]` — **S-L6-6**: zero-downtime Vault rotation: graceful reconnect + сохранение старого secret N минут drift-toleration + validation новых credentials ДО активации.
+
+#### Wave 11–16 (DX + LSP/Visual Editor + Testkit)
+- `[wave:s19/k5-w2-vscode-extension]` — `tools/vscode-extension/` `.vsix`: syntax highlighting + hover docs + "Run step" CodeLens + LSP client. Private marketplace publish (ADR R1.14).
+- `[wave:s19/k3-w4-lsp-server-finale]` — расширение `tools/dsl_lsp/server.py` (S16 baseline): YAML schema completion + diagnostics через DSL Linter; integration test pygls test-client.
+- `[wave:s19/k3-w5-dsl-visual-editor-finale]` — `frontend/streamlit_app/pages/31_DSL_Visual_Editor.py`: drag-drop + YAML/BPMN export + undo/redo + step palette с capability descriptions.
+- `[wave:s19/k4-w5-ai-pr-review-action]` — `.github/workflows/ai-pr-review.yml`: layer-policy + security + perf-regression + coverage delta; prompt caching ≥80% hit; cost ≤$0.10/PR.
+- `[wave:s19/k5-w3-testkit-public-api]` — **S-L10-1**: `src/testkit/` (NEW) — public API для extensions/plugin authors. Components: `RouteRunner`, `WorkflowRunner`, `MockCapabilityGateway`, `FakeWorkflowBackend`, `recorder/replay` fixtures, `assert_audit_event`, `assert_metric_recorded`. Документация в `docs/testkit/`.
+- `[wave:s19/k5-w4-quick-wins-pack]` — `make new-adr TITLE="..."` + `manage.py completions install` + `make release-notes` + `frontend/streamlit_app/pages/05_Architecture_Map.py` (D3.js).
+
+#### Wave 17–24 (carryover + diagnose + ADR finalize + Phase B critical incorporation)
+- `[wave:s19/k2-w2-manage-py-diagnose]` — `manage.py diagnose` aggregator JSON output для CI.
+- `[wave:s19/k1-w2-current-frames-fallback]` — **F-6 carryover**: `sys._current_frames()` graceful fallback для PyPy/Jython.
+- `[wave:s19/k2-w3-adaptive-timeout-policy]` — `.policy.adaptive_timeout(percentile=99, safety_factor=1.5)` builder API.
+- `[wave:s19/k4-w6-adaptive-rag-strategy-finale]` — расширение S16 K4 W1: dense/hybrid/hyde/multi_query через LLM-classifier; accuracy +15% bench; latency <50ms.
+- `[wave:s19/k2-w4-coverage-ratchet-75]` — ratchet 70→75%; per-layer enforcement.
+- `[wave:s19/adr-w1-r1-1-r1-5-r1-7]` — ADR R1.1 / R1.5 / R1.7 finalize.
+- `[wave:s19/adr-w2-r1-8-r1-9-r1-20]` — ADR R1.8 / R1.9 / R1.20 finalize.
+- `[wave:s19/k1-w5-ai-safety-capability-unify]` — **ADR-NEW-5 / B-3** (NEW): единая capability `fs.write.<scope>`; AI-плагины декларируют `fs.write.workspace.*`; запрет `fs.write.repo.*`. Legacy `fs.create_new.<workspace>` → deprecated alias через `CapabilityRegistry.resolve()` + audit-event `capability.deprecated_alias`. 3 existing AI-plugins (если есть) migrate на новую capability. Docstring update в `core/ai/workspace_manager.py`.
+- `[wave:s19/k1-w6-prod-hot-reload-disable]` — **ADR-NEW-7 / B-5** (NEW): при `APP_PROFILE=prod` все hot-reload пути disabled (DSLYamlWatcher, PluginLoader.hot_swap → `OperationNotPermittedInProductionError`, RouteLoader.hot_reload). `PluginInventorySnapshot.hash()` (SHA-256 of sorted plugin@version × route@version × middleware@version) на startup → bind в structlog `bind_contextvars(plugin_inventory_hash=...)` + persist в ClickHouse audit column. Apt-style atomic upgrade (`ops/deploy/atomic-rollout.sh` scaffold). DoD V22 «Hot Reload < 3 сек» переформулируется на dev_light only.
+- `[wave:s19/k3-w6-dsl-usage-audit]` — **ADR-NEW-10 / B-1** (NEW): `tools/audit/dsl_usage_audit.py` собирает callsites методов `RouteBuilder` + blueprints + processors из `routes/`, `extensions/`, `tests/`. Methods с <5 callsites → `@warnings.deprecated` + LSP completion warning. JSON report `audit-out/dsl_usage_report.json` + Streamlit page `frontend/streamlit_app/pages/86_DSL_Usage_Audit.py`. Deprecation в S19, removal — post-V22 (V23 backlog). Целевая метрика 150 → 70-90 cohesive methods к V23.
+- `[wave:s19/k5-w5-admin-react-mvp]` — **ADR-NEW-8 / B-7** (NEW): двухпортальная архитектура. `frontend/streamlit_app/` остаётся developer portal (dev_light + staging). `frontend/admin-react/` (NEW) — React + Vite + FastAPI admin endpoints; MVP 5-7 страниц: audit log viewer / feature flags admin / plugin inventory / user management / capability grants / audit replay. RBAC через `AuthorizationGateway.authorize()` (ADR-NEW-1). Audit-trail каждого UI-клика через middleware → `audit.admin_action` с trace. SSO через SAML+AD (S18 К1).
 
 #### Closure
-- `[wave:s19/closure]` — DoD verify + memory `feedback_sprint19_dx`.
+- `[wave:s19/closure]` — DoD verify + memory `feedback_sprint19_dsl_ai_dx`.
 
-**DoD Sprint 19 (12 критериев)**:
-1. ✅ VSCode extension `.vsix` published; completion + hover + Run step CodeLens работают; private marketplace доступен команде.
-2. ✅ LSP server финал: YAML schema completion + diagnostics; integration test через pygls test-client.
-3. ✅ DSL Visual Editor финал: drag-drop + BPMN export + undo/redo passes Playwright e2e.
-4. ✅ AI PR review активен; runs on every PR; cache hit ≥80%; cost ≤$0.10/PR; finding-report attached.
-5. ✅ Quick wins: `make new-adr` создаёт ADR-NNNN; `manage.py completions install` работает zsh+bash; `make release-notes` собирает changelog; Arch Map D3.js renders.
-6. ✅ `manage.py diagnose` aggregator: JSON output; CI-integration; 0 findings на чистом master.
-7. ✅ F-6 `sys._current_frames` graceful fallback; PyPy smoke-test return `{}`.
-8. ✅ `.policy.adaptive_timeout()` доступен; 5 reference routes использует; per-host p99 metric visible.
-9. ✅ Adaptive RAG strategy: динамика работает; bench accuracy +15% vs static; latency <50ms.
-10. ✅ Coverage ≥75% ratchet checkpoint passed.
-11. ✅ ADR R1.1 / R1.5 / R1.7 / R1.8 / R1.9 / R1.20 — Status: Accepted в `docs/adr/`.
-12. ✅ Memory note `feedback_sprint19_dx`.
+**DoD Sprint 19 (19 критериев, расширено ADR-NEW-5/-7/-8/-10)**:
+1. ✅ `[wave:s19/backbone]` landed.
+2. ✅ **Func-rec #1**: workflow versioning в route.toml работает; SemVer-range validation.
+3. ✅ **Func-rec #2**: route composition `include:` / `extends:` работает; cycle detection.
+4. ✅ **Func-rec #3**: route-level `requires_permission` enforced через AuthorizationGateway.
+5. ✅ **Func-rec #4**: multipart RAG bulk-ingest endpoint + UI.
+6. ✅ **Func-rec #5**: RerankerProcessor + integration test в RagQueryProcessor.
+7. ✅ **Func-rec #6 (S-L5-2)**: RPA browser session persistence + `routes/banking_legacy_session_demo/` reference.
+8. ✅ **S-L4-1**: Banking AI processors functional (KYC/AML/CreditScoring/DocumentClassifier/Francotyping) с capability+audit+cost.
+9. ✅ **S-L4-3**: LangMem `consolidate()` реализован; metrics visible.
+10. ✅ **S-L6-4, S-L6-6**: multi-replica failover + chaos test; Vault zero-downtime rotation.
+11. ✅ VSCode extension `.vsix`; LSP server финал; DSL Visual Editor финал; AI PR review активен.
+12. ✅ **S-L10-1**: `src/testkit/` public API доступен; 5+ example extensions tests используют.
+13. ✅ Quick wins (`make new-adr`, `manage.py completions install`, `make release-notes`, Arch Map) работают.
+14. ✅ `manage.py diagnose` JSON output; F-6 graceful fallback; adaptive_timeout + adaptive RAG strategy.
+15. ✅ Coverage ≥75%; ADR R1.1 / R1.5 / R1.7 / R1.8 / R1.9 / R1.20 — Status: Accepted; memory note.
+16. ✅ **ADR-NEW-5 / B-3**: единая capability `fs.write.<scope>` enforced; AI-плагины используют `fs.write.workspace.*`; запрет `fs.write.repo.*`; legacy `fs.create_new.<workspace>` deprecated alias работает через `CapabilityRegistry.resolve()` + audit-event.
+17. ✅ **ADR-NEW-7 / B-5**: `APP_PROFILE=prod` ⇒ hot-reload disabled (3 пути); `PluginInventorySnapshot.hash()` SHA-256 в каждом audit-event; ClickHouse audit column `plugin_inventory_hash` присутствует; `ops/deploy/atomic-rollout.sh` scaffold.
+18. ✅ **ADR-NEW-10 / B-1**: `make dsl-usage-audit` зелёный; `audit-out/dsl_usage_report.json` сгенерирован; <5-callsite методы `@warnings.deprecated`; Streamlit page 86 работает; metric `dsl_methods_count` в Prometheus.
+19. ✅ **ADR-NEW-8 / B-7**: `frontend/admin-react/` MVP — 5-7 страниц работают (audit log / feature flags / plugin inventory / user mgmt / capability grants / audit replay); RBAC через AuthorizationGateway; audit-trail UI-clicks в ClickHouse; SAML+AD SSO интегрирован.
 
 ---
 

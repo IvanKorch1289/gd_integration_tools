@@ -1,5 +1,148 @@
 # KNOWN_ISSUES.md
 
+## GAP-аудит 2026-05-21 — 10-слойный pre-production аудит (L1–L10)
+
+**Контекст**. Сквозной аудит платформы перед production-rollout по 10 архитектурным слоям × 4 вектора (читаемость / надёжность / расширяемость / функциональность). Среднее по слоям — **5.7/10**. Слабые слои — **L6 Data&State (3.0)** и **L7 Observability (5.0)**, оба заблокированы Python 2-стилем except-clauses в **70+ файлах** (точный grep `-l` = 71; первоначальная оценка «47» переоценивала локализацию L6/L7 — реальный охват шире, включает `dsl/`, `services/`, `entrypoints/`). Сильный слой — **L8 Security (7.0)** с defence-in-depth (CapabilityGate + WAF + AI Safety).
+
+**Источник findings**: 10 параллельных Explore-агентов, протокол `ОТЧЁТ:[ID]:[СЛОЙ]`. Полный синтез — coordinator session 2026-05-21.
+
+### 🔴 КРИТИЧЕСКИЕ блокеры (P0 → Sprint 17, объём — все 17)
+
+**Группа SYNTAX (Python 2-style `except E1, E2:`) — CI gate провалится при импорте**
+- `K-SYN-1` `infrastructure/observability/tracing.py:60,87` → DSL tracing разрушается на import
+- `K-SYN-2` `core/ai/workspace_manager.py:248` → AI Safety lifespan не запускается
+- `K-SYN-3` `entrypoints/mcp/mcp_server.py:142` → FastMCP server падает на init
+- `K-SYN-4` `dsl/engine/processors/rpa.py:816` → RPA processors неимпортируемы
+- `K-SYN-5` `infrastructure/database/database.py:246,281`, `pool_monitor.py:97` + 10+ файлов в `clients/storage/logging/secrets/` (всего **70+ файлов** repo-wide; точный grep `-l` = 71; помимо L6/L7 затронуты `dsl/`, `services/`, `entrypoints/`)
+- **Исправление**: `tools/codemods/fix_except_clause.py` (libcst) + единый wave-коммит `[wave:s17/k1-w0-python3-except-clause-sweep]`.
+
+**Группа TLS-VIOLATION (V1 hotfix)**
+- `K-TLS-1` `infrastructure/clients/transport/ftp.py:52-54,83-85` → FTPS с `ssl.CERT_NONE` (V1 violation)
+- `K-TLS-2` `infrastructure/sources/email.py` → IMAP CERT_NONE (V1 legacy)
+- `K-TLS-3` `entrypoints/email/imap_monitor.py` → фоновый мониторинг почты без TLS-verification
+- **Исправление**: заменить на `ssl.create_default_context()` + `verify_mode=CERT_REQUIRED`; unit-test `assert ctx.verify_mode == CERT_REQUIRED`.
+
+**Группа ARCHITECTURE (V22 centralization)**
+- `K-ARCH-1` AuthorizationGateway отсутствует (R-V15-6) — см. [ADR-NEW-1](DECISIONS.md#adr-new-1)
+- `K-ARCH-2` CapabilityGateway Protocol в `core/interfaces/` отсутствует — см. [ADR-NEW-4](DECISIONS.md#adr-new-4)
+- `K-ARCH-3` Routes (`routes/<name>/`) не проходят capability-gate — `services/routes/loader.py:70` нет `gate.declare()` вызова перед pipeline_registrar
+- `K-ARCH-4` Tenant-aware routes не работают — `RouteManifestV11.tenant_aware` читается, но `RouteLoader` не пробрасывает `TenantContext.current_tenant()` в DSL-шаги (data leak между тенантами)
+- `K-ARCH-5` `call_function_modules` dev fallback — `dsl/engine/processors/function_call.py:118-119` пропускает проверку при пустом whitelist (RCE в production)
+
+**Группа OPERATIONAL (pre-prod-check + DR)**
+- `K-OPS-1` Saga state store отсутствует — нет модели для compensations / rollback-events
+- `K-OPS-2` K8s manifests неполные — есть только HPA для temporal-worker, нет Deployment/Service/PDB/Ingress/HPA для main app
+- `K-OPS-3` `make pre-prod-check v2 (38/38)` не реализован — V22 DoD блокируется
+- `K-OPS-4` БД migrations не интегрированы в deploy-flow — нет init-container в docker-compose/k8s
+- `K-OPS-5` Backup/DR procedures отсутствуют — нет `ops/backup/` scripts, нет runbook'ов для pg_dump/redis-persist/clamav-update/restore
+- `K-OPS-6` CI/CD deployment pipeline отсутствует — `.github/workflows/release.yml` только dry-run
+
+### 🟡 СЕРЬЁЗНЫЕ пробелы (P1 → Sprint 18–S19)
+
+**L1 Gateway**
+- `S-L1-1` Plugin-registry для middleware отсутствует (см. [ADR-NEW-2](DECISIONS.md#adr-new-2))
+- `S-L1-2` Per-route middleware override невозможен — TimeoutMiddleware один global
+- `S-L1-3` Unified RequestContext отсутствует (см. [ADR-NEW-3](DECISIONS.md#adr-new-3))
+- `S-L1-4` IdempotencyHeaderMiddleware крашится при Redis-miss — нет graceful fallback на MemoryBackend
+- `S-L1-5` DataMaskingMiddleware placement выше AuthRequiredMiddleware — masking фейлит до auth → нечитаемая 500-я
+
+**L2 Core**
+- ~~`S-L2-1`~~ **REVISED 2026-05-21**: `Exchange.stopped` НЕ баг — реализован как property через `properties["_stopped"]` (`exchange.py:92-160`). Pipeline корректно вызывает `set_stopped()` / `is_stopped()`. Phase A verification (code-grep) подтвердила: AttributeError не воспроизводится. Перенесено в НЕЗНАЧИТЕЛЬНЫЕ ниже как readability nuance.
+- `S-L2-2` Lifecycle не идемпотентна — `register_provider()` перезаписывает без check (двойной startup при hot-reload)
+- `S-L2-3` ActionMetadata не содержит retry-policy поля → W14.1 Gateway не достроен
+- `S-L2-4` `providers.py` (149 функций) все возвращают `Any` — mypy не видит контракты
+
+**L2 НЕЗНАЧИТЕЛЬНЫЕ (readability/maintainability, не блокеры)**
+- `S-L2-1nano` (бывший S-L2-1): `Exchange.stopped` — design choice через `properties` dict вместо first-class dataclass field. Корректно работает, но снижает self-documentation Exchange API. Опционально: вынести в `__slots__` или dataclass field — задача S+2 после стабилизации DSL. Не блокирует production.
+
+**L4 AI Pipelines**
+- `S-L4-1` `KycAmlVerifyProcessor` / `AntiFraudScoreProcessor` / `CreditScoringRagProcessor` — empty shells (только `exchange.set_property(...)`); banking domain non-functional
+- `S-L4-2` Guardrails pre-LLM enforcement отсутствует — `rebuff_client/lakera_client` есть, но не подключены в LLMCallProcessor
+- `S-L4-3` LangMem `consolidate()` — stub-placeholder
+- `S-L4-4` Multipart bulk-ingest endpoint для RAG отсутствует (только Python API через `rag_bulk_ingest.py`)
+- `S-L4-5` MCP tool_handler не имеет видимой auth-check перед `_action_bridge`
+
+**L5 RPA**
+- `S-L5-1` Browser context leak при exception — `rpa_browser.py:104-111` не release контекст обратно в pool
+- `S-L5-2` Browser RPA нет session persistence (каждый запрос = новый login)
+- `S-L5-3` RPA browser requests не идут через WAF (V15 R-V15-5 violation)
+- `S-L5-4` Desktop RPA selector не валидируется (selector injection)
+
+**L6 Data&State**
+- `S-L6-1` ConnectionReuseManager отключён по умолчанию (`feature-flag=False`)
+- `S-L6-2` DLQ TTL/vacuum отсутствует — записи копятся бесконечно
+- `S-L6-3` ClickHouse audit retention без TTL партиций
+- `S-L6-4` Read-replica failover полунеполный — только одна replica, нет multi-replica failover, нет replication-lag monitoring
+- `S-L6-5` Outbox worker stuck-detection отсутствует
+- `S-L6-6` Vault rotation не zero-downtime (прямая смена secret без graceful reconnect)
+
+**L7 Observability**
+- `S-L7-1` ClickHouse audit без retry/DLQ → `_flush_to_clickhouse()` только логирует ошибку, batch теряется
+- `S-L7-2` OTel `trace_id` не пробрасывается в structlog event_dict (logs/traces разъединены)
+- `S-L7-3` Graylog GELF socket не закрывается → FD leak под нагрузкой (≥10K RPS)
+- `S-L7-4` Нет global fallback-sink при сбое всех logging sinks
+- `S-L7-5` Кросс-сервисная trace_id propagation в Kafka/RabbitMQ headers отсутствует
+- `S-L7-6` Prometheus labels без `tenant_id` (per-tenant billing нет)
+
+**L8 Security**
+- `S-L8-1` Casbin tenant-scoped реализован, но `CapabilityPolicy` интеграция отсутствует
+- `S-L8-2` OPA-client есть, но нет runtime-query в DSL/auth-guard
+- `S-L8-3` ServiceDSLRegistry не валидирует capability-subset при `@service_dsl` регистрации
+- `S-L8-4` PII masker нет global response-middleware (только per-DSL шаг)
+- `S-L8-5` JWT jti-blacklist неполная (не batch-revoke при ключе rotation)
+- `S-L8-6` OWASP ZAP gate в CI non-blocking (`make audit-zap` warns only)
+
+**L9 DevOps**
+- `S-L9-1` Granian RSGI graceful_timeout не сконфигурирован
+- `S-L9-2` docker-compose без `mem_limit/cpus` (runaway memory)
+- `S-L9-3` Multi-environment configs (dev/staging/prod.yml) отсутствуют
+- `S-L9-4` Blue/Green script — stub-реализация (nginx config-generator отсутствует)
+- `S-L9-5` Observability stack (Prometheus/Grafana/Graylog) не в docker-compose
+
+**L10 Test Coverage**
+- `S-L10-1` Public testkit/ API для extensions отсутствует
+- `S-L10-2` Property-based testing (hypothesis) 0% использования
+- `S-L10-3` Mutation testing (mutmut) отсутствует
+- `S-L10-4` E2E тестов только 1 файл (нужно 5+ smoke-маршрутов)
+- `S-L10-5` Plugin/extension coverage <10% (62 из 662 файлов)
+
+### 🟢 СИЛЬНЫЕ СТОРОНЫ (production-grade, цитировать в docs)
+
+- **L8 Security (7/10)** — CapabilityGate (LRU-кэш + subset-проверка) + WAF strict (`OutboundHttpClient` + `check_waf_coverage` CI gate) + AI Safety workspace (TTL + per-tenant quota) + webhook HMAC + immutable audit-log (HMAC-chain)
+- **L1 Auth (централизована)** — `AuthRequiredMiddleware` 6 методов (JWT + API-key + mTLS + SAML + joserfc + jwks-cache); маршруты auth-агностичны
+- **L1 Идемпотентность** — `IdempotencyHeaderMiddleware` + Redis NX (атомарная блокировка pending-ключа)
+- **L1 WAF + payload scanner** — async `ClamAVPayloadScanner` через TCP (Sprint 16 B-3 finale)
+- **L2 Protocol-oriented design** — 8 `@runtime_checkable` Protocol-ов в `core/protocols.py` (LLMProvider, MemoryBackend, BrowserAutomation и др.)
+- **L2 Camel-style Exchange/Pipeline** — `Exchange(meta/in_message/out_message/properties/status/error)` + `Pipeline` с processor-chain
+- **L3 V11 Plugin Manifest** — полная TOML-декларация (name/version/requires_core/capabilities[]/provides{}) с capability-gate ДО import
+- **L3 RouteBuilder API 95%** — 150+ методов в миксинах; `.crud_*` / `.get_setting()` / `.validate_response()` / `.invoke_workflow()` / `.call_function()`
+- **L3 Hot-Swap runtime** — graceful shutdown → module reload → capability re-allocation
+- **L4 AI Safety workspace isolation** — `AIFsFacade` с path-traversal trap + `fs.read.<path>` / `fs.create_new.<workspace>` capability-gates
+- **L4 PII masking reversible** — 6 паттернов (email/phone/INN/SNILS/passport/card) с восстановлением через `replacements` dict
+- **L7 OTel auto-instrumentation** — 9 компонентов (FastAPI/httpx/SQLAlchemy/asyncpg/Redis/Kafka/RabbitMQ/MongoDB/gRPC); fail-graceful
+- **L7 Structured logging** — structlog JSON + 3 backend routing (console/disk/Graylog) + batching wrapper + circuit-breaker
+- **L7 11 Grafana dashboards** — AI cost / latency / DB pool / DLQ / resilience / Temporal / workflow SLA
+- **L9 Multi-stage Docker** — slim-bookworm + nonroot (UID 10001) + tini init + 750 permissions + SUID removal
+- **L9 Graceful shutdown** — `TaskRegistry.shutdown_all()` + DSLYamlWatcher → WorkflowRuntime → PluginLoader cascade
+- **L9 Health endpoints** — `/liveness` / `/readiness` / `/startup` / `/components` (K8s probes-семантика)
+- **L9 Blue/Green pattern** — `docker-compose.bluegreen.yml` + state file + nginx router stub
+- **L10 Test breakdown** — 3639 collected; 662 файлов; 178 fixtures; 26 chaos сценариев; 11 backend'ов покрыты (Redis/Postgres/Kafka/RabbitMQ/MongoDB/ES/S3/Temporal/Vault/Graylog/ClickHouse/NATS)
+
+### Аудит Gateway-централизации (15/22 функций централизованы, 68%)
+
+Полная таблица см. в Phase 2 синтезе coordinator-session 2026-05-21. P0/P1 функции, требующие доработки:
+- **P0**: rate-limit global middleware (нет в `setup_middlewares.py`); timeout per-route (`TimeoutMiddleware` глобален)
+- **P1**: correlation→OTel trace_id binding в structlog; response-validation middleware; circuit-breaker enforcement в DSL; metrics cardinality (tenant_id label); audit retry+DLQ для ClickHouse; PII auto-mask response middleware
+
+### Связь с PLAN.md
+
+- **Sprint 17 (replace V22 GAP-driven)** — все 17 KРИТИЧЕСКИХ блокеров + ADR-NEW-1..4 architectural backbone
+- **Sprint 18** — Operational/Security (S-L1, S-L7, S-L8) + 10 функциональных предложений из Phase 3 диалога
+- **Sprint 19** — DSL/AI расширения (S-L4) + 6 функциональных предложений (workflow versioning, route composition, route authz, multipart RAG, reranking, RPA sessions)
+- **Sprint 20** — Coverage finale + pre-prod-check v2 38/38 + DR & Backup verified
+
+---
+
 ## Sprint 15 kickoff — 2026-05-20 (DX Tooling + Innovation, Production-Ready Final)
 
 **Активные задачи** (28 atomic commits — backbone + 25 wave + 6 closure):
