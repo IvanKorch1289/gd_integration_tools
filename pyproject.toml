@@ -235,17 +235,9 @@ sources-cdc = [
 sources-mq-nats = [
     "faststream[nats]>=0.6.7,<1.0.0",
 ]
-# PLAN V20 (Sprint 16 K1 W4): пустые scaffolding-extras удалены — они не были
-# наполнены за 5 спринтов и упоминания в docs/ переведены на отдельные ADR.
-# Если возникнет необходимость, вернуть через явный wave-tag с реальным scope.
-# iot = []          # удалено V20 (Sprint 16 K1 W4)
-# web3 = []         # удалено V20
-# legacy = []       # удалено V20
-# banking = []      # удалено V20
-# enterprise = []   # удалено V20
-# datalake = []     # удалено V20
-# temporal = []     # удалено V20 (temporalio уже в base deps)
-# beam = []         # удалено V20
+# PLAN V20 (Sprint 16 K1 W4 closure): scaffolding-extras удалены — iot/web3/
+# legacy/banking/enterprise/datalake/temporal/beam не наполнены за 5 спринтов;
+# temporalio уже в base deps. Возврат — через явный wave-tag с реальным scope.
 
 # Sprint 16 NEW extras (V20):
 lsp = [
