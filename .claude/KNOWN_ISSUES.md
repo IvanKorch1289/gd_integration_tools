@@ -143,6 +143,59 @@
 
 ---
 
+## Sprint 17 — GAP P0 Closure + Centralization Hardening (открыто 2026-05-21)
+
+**Источник:** GAP-аудит 2026-05-21 (10 слоёв × 4 вектора, среднее 5.7/10), ADR-NEW-1..4, PLAN.md V22 §S17 (197–256).
+**Срок:** 2026-06-05 → 2026-06-18 (2 недели, 5 команд).
+**Backbone:** [wave:s17/backbone] — 12 default-OFF feature-flags + `[team.k1..k10]` (новый team-ownership.toml) + эта секция KNOWN_ISSUES.
+
+### Wave в работе текущей сессии (2026-05-21)
+
+Запланировано 7 коммитов (опционально +1):
+
+1. `[wave:s17/backbone]` — 12 flags + ownership + KNOWN_ISSUES (этот раздел).
+2. `[wave:s17/k3-w0-routes-capability-gate]` — K-ARCH-3 закрытие.
+3. `[wave:s17/k1-w3-call-function-whitelist-strict]` — K-ARCH-5 закрытие.
+4. `[wave:s17/k5-w3-db-migration-init-container]` — K-OPS-4 закрытие.
+5. `[wave:s17/k1-w2-authorization-gateway]` — ADR-NEW-1+4 scaffold (Protocol + Gateway).
+6. `[wave:s17/k3-w1-unified-request-context]` — ADR-NEW-3 scaffold (frozen dataclass + MW).
+7. `[wave:s17/k2-w1-metrics-registry]` — D11 backbone (idempotent counter/histogram/gauge).
+8. Optional: `[wave:s17/k2-w3-task-registry-coverage]` — миграция orphan asyncio.create_task.
+
+### Wave-карриовер S17 → следующие сессии
+
+- `[wave:s17/k1-w0-python3-except-clause-sweep]` — codemod 70+ файлов (отдельная wave, F-A-4 pre-test gate на 5+ callsites).
+- `[wave:s17/k1-w1-tls-cert-required]` — требует S16 DoD-3 closure.
+- `[wave:s17/k3-w0-routes-tenant-aware]` — K-ARCH-4 (после backbone готова).
+- `[wave:s17/k3-w2-middleware-registry]` — ADR-NEW-2.
+- `[wave:s17/k1-w4-config-validator]` — D14.
+- `[wave:s17/k2-w2-metrics-migrate]` — sweep 52 inline callsites (после k2-w1).
+- `[wave:s17/k2-w4-apscheduler-observability]` — D13b.
+- `[wave:s17/k3-w3-correlation-id-end-to-end]` — D12 (после RequestContext landed).
+- `[wave:s17/k7-w1-observability-fixes]` — S-L7-1..3.
+- `[wave:s17/k5-w1-tenant-feature-toggle-ui]` — D9.
+- `[wave:s17/k2-w5-resilience-coordinator-class]` — требует fix circular import `core/resilience/__init__.py`.
+- `[wave:s17/k3-w4-saga-state-store]` — K-OPS-1.
+- `[wave:s17/k5-w2-k8s-manifests]` — K-OPS-2.
+- `[wave:s17/k9-w1-pre-prod-check-v2-scaffold]` — K-OPS-3 (после backbone готов).
+- `[wave:s17/k1-w5-backup-dr-scaffold]` — K-OPS-5.
+- `[wave:s17/closure]` — финал Sprint 17 (DoD verify + memory + CONTEXT/ARCHITECTURE update).
+
+### Active blockers (см. `.claude/team-ownership.toml::[blockers]`)
+
+- **b1_circular_import_degradation** (owner: k2) — `core/resilience/__init__.py → DegradationManager` блокирует resilience-test sweep. ETA: S17 W1.
+- **b2_s16_dod3_tls_cert_none** (owner: k1) — 6 callsites CERT_NONE в FTP/IMAP/POP3. ETA: S17 W1.
+- **b3_s16_dod9_pybreaker_finalize** (owner: k2) — pybreaker adapter integration в ResilienceCoordinator. ETA: S17 W1.
+- **b4_gap_audit_p0_remediation** (owner: k1) — K-SYN/K-TLS/K-ARCH/K-OPS общая координация (70+ файлов техдолга). ETA: S17.
+
+### Closure DoD (см. PLAN.md V22 §S17 строки 240–256)
+
+- 15 DoD-критериев (K-SYN/K-TLS/K-ARCH/K-OPS/D9..D14/coverage 77%/mypy=0).
+- Memory: `feedback_sprint17_gap_closure_centralization`.
+- CONTEXT.md / ARCHITECTURE.md обновлены слои L1–L10.
+
+---
+
 ## Sprint 15 kickoff — 2026-05-20 (DX Tooling + Innovation, Production-Ready Final)
 
 **Активные задачи** (28 atomic commits — backbone + 25 wave + 6 closure):

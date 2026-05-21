@@ -1,0 +1,278 @@
+# team-ownership.toml — карта владения файлами Sprint 17 (V22 FINAL)
+#
+# Версия: 2026-05-21
+# Источник: PLAN.md V22 §S17 (197–256), ADR-NEW-1..4, GAP-аудит 2026-05-21
+#
+# Назначение:
+#   - каждая команда имеет owned_paths — единственный owner для PR-review;
+#   - при смежной правке (файл в зоне 2+ команд) — issue + PR review от обоих;
+#   - pre-commit hook tools/check_team_ownership.py валидирует структуру.
+#
+# Формат:
+#   [meta]
+#   [team.<id>] — обязательны: name / goal / owned_paths / worktree
+#                 опционально: shared_with / waves
+#   [blockers.<id>] — обязательны: title / owner_team / eta / dod / risk
+
+[meta]
+version = "2026-05-21"
+sprint = "S17"
+source = "PLAN.md V22 §S17 + ADR-NEW-1..4 + GAP-аудит 2026-05-21"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K1 — Security / Auth / Syntax / TLS
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k1]
+name = "Security/Auth/Syntax/TLS"
+goal = "S17: Python3 except sweep (K-SYN), TLS CERT_REQUIRED (K-TLS), AuthorizationGateway (ADR-NEW-1+4), call_function whitelist (K-ARCH-5), ConfigValidator (D14), backup/DR scaffold (K-OPS-5)."
+git_branch_prefix = "team/01-security"
+worktree = ".claude/worktrees/team-01-security"
+owned_paths = [
+    "src/backend/core/security/**",
+    "src/backend/core/auth/**",
+    "src/backend/core/interfaces/capability_gateway.py",
+    "src/backend/core/config/validator.py",
+    "src/backend/infrastructure/secrets/**",
+    "src/backend/infrastructure/clients/transport/ftp.py",
+    "src/backend/infrastructure/sources/email*.py",
+    "src/backend/entrypoints/email/imap_monitor.py",
+    "src/backend/core/ai/workspace_manager.py",
+    "src/backend/dsl/engine/processors/function_call.py",
+    "src/backend/dsl/engine/processors/rpa.py",
+    "src/backend/infrastructure/observability/tracing.py",
+    "tools/codemods/fix_except_clause.py",
+    "tools/checks/check_python3_syntax.py",
+    "ops/backup/**",
+    "vault/runbooks/disaster_recovery.md",
+]
+waves = [
+    "s17/k1-w0-python3-except-clause-sweep",
+    "s17/k1-w1-tls-cert-required",
+    "s17/k1-w2-authorization-gateway",
+    "s17/k1-w3-call-function-whitelist-strict",
+    "s17/k1-w4-config-validator",
+    "s17/k1-w5-backup-dr-scaffold",
+]
+shared_with = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K2 — Centralization / Observability / Resilience
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k2]
+name = "Centralization/Observability/Resilience"
+goal = "S17: MetricsRegistry (D11), TaskRegistry coverage (D13a), APScheduler observability (D13b), ResilienceCoordinator (W5)."
+git_branch_prefix = "team/02-observability"
+worktree = ".claude/worktrees/team-02-observability"
+owned_paths = [
+    "src/backend/infrastructure/observability/**",
+    "src/backend/core/resilience/**",
+    "src/backend/core/orchestration/**",
+    "src/backend/infrastructure/resilience/**",
+    "src/backend/infrastructure/logging/**",
+    "tools/checks/check_task_registry.py",
+    "tools/checks/check_metrics_registry.py",
+]
+waves = [
+    "s17/k2-w1-metrics-registry",
+    "s17/k2-w2-metrics-migrate",
+    "s17/k2-w3-task-registry-coverage",
+    "s17/k2-w4-apscheduler-observability",
+    "s17/k2-w5-resilience-coordinator-class",
+]
+shared_with = ["k7"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K3 — Routes / RequestContext / Tenant / Correlation
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k3]
+name = "Routes/RequestContext/Tenant/Correlation"
+goal = "S17: routes capability-gate (K-ARCH-3), tenant_aware strict (K-ARCH-4), RequestContext (ADR-NEW-3), middleware registry (ADR-NEW-2), correlation_id end-to-end (D12), Saga state store (K-OPS-1)."
+git_branch_prefix = "team/03-routes"
+worktree = ".claude/worktrees/team-03-routes"
+owned_paths = [
+    "src/backend/services/routes/**",
+    "src/backend/dsl/route/**",
+    "src/backend/core/request_context.py",
+    "src/backend/entrypoints/middlewares/request_context.py",
+    "src/backend/entrypoints/middlewares/registry.py",
+    "src/backend/entrypoints/middlewares/setup_middlewares.py",
+    "src/backend/infrastructure/workflow/saga_state.py",
+    "src/backend/infrastructure/audit/**",
+    "tools/checks/check_routes_capability_gate.py",
+    "tools/migrate_request_context.py",
+]
+waves = [
+    "s17/k3-w0-routes-capability-gate",
+    "s17/k3-w0-routes-tenant-aware",
+    "s17/k3-w1-unified-request-context",
+    "s17/k3-w2-middleware-registry",
+    "s17/k3-w3-correlation-id-end-to-end",
+    "s17/k3-w4-saga-state-store",
+]
+shared_with = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K4 — AI / RAG / LLM (dormant в S17, активна в S18+)
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k4]
+name = "AI/RAG/LLM"
+goal = "S17 dormant: poll-only поддержка ai_pr_review, arch_map_llm_search. Активные роли — S18 GenAI strict capabilities + Multimodal RAG."
+git_branch_prefix = "team/04-ai"
+worktree = ".claude/worktrees/team-04-ai"
+owned_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/ai/**",
+]
+waves = []
+shared_with = ["k7"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K5 — Admin UI / K8s scaffold / DB migration init
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k5]
+name = "Admin UI / K8s / DB-migration"
+goal = "S17: tenant feature-flag toggle UI (D9), K8s manifests scaffold (K-OPS-2), DB migration init-container (K-OPS-4), pre-prod-check v2 scaffold (K-OPS-3)."
+git_branch_prefix = "team/05-frontend-ops"
+worktree = ".claude/worktrees/team-05-frontend-ops"
+owned_paths = [
+    "frontend/streamlit_app/pages/**",
+    "deploy/k8s/**",
+    "ops/compose/docker-compose.yml",
+    "ops/k8s/jobs/migration.yaml",
+    "src/backend/services/admin/feature_flags_service.py",
+    "tools/manage.py",
+]
+waves = [
+    "s17/k5-w1-tenant-feature-toggle-ui",
+    "s17/k5-w2-k8s-manifests",
+    "s17/k5-w3-db-migration-init-container",
+    "s17/k9-w1-pre-prod-check-v2-scaffold",
+]
+shared_with = ["k9"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K6 — Workflow / Temporal (dormant в S17, активна в S18+)
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k6]
+name = "Workflow/Temporal"
+goal = "S17 dormant: support-only TemporalFacade и LiteTemporalBackend. Активные роли — S19 cron builder finale + 11 саго ритейлинг."
+git_branch_prefix = "team/06-workflow"
+worktree = ".claude/worktrees/team-06-workflow"
+owned_paths = [
+    "src/backend/infrastructure/workflow/temporal/**",
+    "src/backend/dsl/workflow/**",
+]
+waves = []
+shared_with = ["k3"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K7 — Observability carryover (S-L7-1..3)
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k7]
+name = "Observability carryover"
+goal = "S17: ClickHouse audit retry + DLQ (S-L7-1), structlog inject OTel trace_id/span_id (S-L7-2), Graylog GELF socket.close() + fallback-sink (S-L7-3)."
+git_branch_prefix = "team/07-obs-carryover"
+worktree = ".claude/worktrees/team-07-obs-carryover"
+owned_paths = [
+    "src/backend/infrastructure/audit/clickhouse_audit_service.py",
+    "src/backend/infrastructure/logging/graylog_sink.py",
+    "src/backend/infrastructure/observability/structlog_*.py",
+]
+waves = [
+    "s17/k7-w1-observability-fixes",
+]
+shared_with = ["k2", "k4"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K8 — Clients / Infrastructure (dormant в S17)
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k8]
+name = "Clients/Infrastructure"
+goal = "S17 dormant: support-only existing connection pools и BaseExternalAPIClient. Активные роли — S18 Multi-Backend Tier-A/B (ADR-NEW-11)."
+git_branch_prefix = "team/08-clients"
+worktree = ".claude/worktrees/team-08-clients"
+owned_paths = [
+    "src/backend/infrastructure/clients/**",
+]
+waves = []
+shared_with = ["k1"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K9 — Pre-prod-check v2 / Quality gates
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k9]
+name = "Pre-prod-check v2/Quality"
+goal = "S17: pre-prod-check v2 scaffold (K-OPS-3) — расширение 20→30 gates: ConfigValidator startup / TaskRegistry orphans / OTel route cov / APScheduler obs / AuthZ audit / MetricsRegistry cov / FF default-OFF / Sphinx ≥95% / Numeric perf p95 / DR backup freshness."
+git_branch_prefix = "team/09-pre-prod-check"
+worktree = ".claude/worktrees/team-09-pre-prod-check"
+owned_paths = [
+    "tools/pre_prod_check.py",
+    "tools/checks/check_*.py",
+    "Makefile",
+]
+waves = [
+    "s17/k9-w1-pre-prod-check-v2-scaffold",
+]
+shared_with = ["k5"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K10 — Coordination / QA / Documentation
+# ─────────────────────────────────────────────────────────────────────────────
+[team.k10]
+name = "Coordination/QA/Documentation"
+goal = "S17: координация 24 wave + closure (DoD verify + memory + CONTEXT.md + ARCHITECTURE.md update); QA cross-team review; Sphinx ≥95% coverage."
+git_branch_prefix = "team/10-coordination"
+worktree = ".claude/worktrees/team-10-coordination"
+owned_paths = [
+    ".claude/team-ownership.toml",
+    ".claude/KNOWN_ISSUES.md",
+    ".claude/CONTEXT.md",
+    "ARCHITECTURE.md",
+    "PLAN.md",
+    "vault/session-*.md",
+    "docs/**",
+]
+waves = [
+    "s17/closure",
+]
+shared_with = []
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Blockers — открытые препятствия Sprint 17 (≥3 обязательно)
+# ═════════════════════════════════════════════════════════════════════════════
+
+[blockers.b1_circular_import_degradation]
+title = "Circular import core/resilience/__init__.py → DegradationManager"
+owner_team = "k2"
+eta = "S17-W1"
+dod = "pytest tests/unit/core/resilience/ собирается без ImportError; pre-existing collection-error устранён; mypy core/resilience зелёный."
+risk = "high"
+feature_flag = "resilience_coordinator_enabled"
+description = "Карриовер S16: tests/unit/core/resilience/ блокирует sweep тесты resilience+observability. Перенесён на K2 W1 как pre-requisite для D11/D13a."
+
+[blockers.b2_s16_dod3_tls_cert_none]
+title = "S16 DoD-3 carryover: 6 callsites ssl.CERT_NONE в FTP/IMAP/POP3"
+owner_team = "k1"
+eta = "S17-W1"
+dod = "0 callsites ssl.CERT_NONE в src/backend/infrastructure/{clients/transport/ftp.py,sources/email*.py} и entrypoints/email/imap_monitor.py; assert ctx.verify_mode == CERT_REQUIRED в unit-tests; make secrets-check зелёный."
+risk = "high"
+feature_flag = "call_function_whitelist_strict"
+description = "S16 DoD-3 не закрыт. Файлы: clients/transport/ftp.py:52-54,83-85; sources/email.py; entrypoints/email/imap_monitor.py. Wave: [wave:s17/k1-w1-tls-cert-required]."
+
+[blockers.b3_s16_dod9_pybreaker_finalize]
+title = "S16 DoD-9 carryover: pybreaker scaffold finalize (PybreakerAdapter integration)"
+owner_team = "k2"
+eta = "S17-W1"
+dod = "PybreakerAdapter интегрирован в ResilienceCoordinator как реализация BreakerProtocol; state-persistence через Redis tested; 0 регрессий в существующих breaker callsites."
+risk = "medium"
+feature_flag = "resilience_coordinator_enabled"
+description = "S16 [wave:s16/k2-w4-pybreaker-scaffold] добавил adapter+state storage, но не интегрировал в callsites. Финал — в S17 K2 W5 ResilienceCoordinator."
+
+[blockers.b4_gap_audit_p0_remediation]
+title = "GAP-аудит 2026-05-21 P0 (K-SYN/K-TLS/K-ARCH/K-OPS) — 70+ файлов техдолга"
+owner_team = "k1"
+eta = "S17"
+dod = "K-SYN: 0 файлов Python2 except-syntax в src/backend/; K-TLS: 0 CERT_NONE; K-ARCH: 5 ADR покрыты scaffold-фазой; K-OPS: 6 пунктов в backbone+implementation."
+risk = "high"
+feature_flag = "authz_gateway_enabled"
+description = "GAP-аудит 2026-05-21 (10 слоёв × 4 вектора, среднее 5.7/10). Источник: vault/session-2026-05-21-1640-coordinator-self-summary.md. Распределение wave: K1×6 / K2×5 / K3×6 / K5×4 / K7×1 / K9×1."

@@ -1896,5 +1896,152 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 17 — GAP P0 Closure + Centralization Hardening ────────────
+    config_validator_enabled: bool = Field(
+        default=False,
+        title="K1 S17 W4: ConfigValidator startup-fail при production-unsafe конфиге",
+        description=(
+            "K1 Sprint 17 Wave W4 (D14). Owner: K1 Security. ETA: S17. "
+            "Активирует core/config/validator.py::ConfigValidator в lifespan: "
+            "проверки DEBUG+PROD / CORS='*' / JWT_SECRET ≥32 / Vault unreachable / "
+            "feature-flag dependency. При нарушении — startup-fail с reason-chain. "
+            "default-OFF до калибровки правил и staging-smoke."
+        ),
+    )
+
+    metrics_registry_strict: bool = Field(
+        default=False,
+        title="K2 S17 W1: MetricsRegistry strict (отказ при inline Counter/Histogram/Gauge)",
+        description=(
+            "K2 Sprint 17 Wave W1+W2 (D11). Owner: K2 Observability. ETA: S17. "
+            "Активирует strict-режим infrastructure/observability/metrics_registry.py — "
+            "Counter/Histogram/Gauge регистрируются ТОЛЬКО через MetricsRegistry "
+            "с обязательными labels {tenant_id, route_id, component, env}. "
+            "default-OFF до миграции 52 inline callsites."
+        ),
+    )
+
+    task_registry_strict: bool = Field(
+        default=False,
+        title="K2 S17 W3: TaskRegistry obligatory (CI gate fail-on-orphans)",
+        description=(
+            "K2 Sprint 17 Wave W3 (D13a). Owner: K2 Observability. ETA: S17. "
+            "Активирует strict-режим TaskRegistry: все asyncio.create_task через "
+            "registry + copy_context() propagation. CI gate "
+            "tools/checks/check_task_registry.py --fail-on-orphans. "
+            "default-OFF до миграции 34 orphan callsites."
+        ),
+    )
+
+    apscheduler_metrics: bool = Field(
+        default=False,
+        title="K2 S17 W4: APScheduler Prometheus exporter + Grafana alert",
+        description=(
+            "K2 Sprint 17 Wave W4 (D13b). Owner: K2 Observability. ETA: S17. "
+            "Активирует APSchedulerMetricsExporter — job_executions_total / "
+            "job_misfires_total / job_duration_seconds. Grafana alert на "
+            "missing-jobs > 0 в окне 5m. default-OFF до развёртывания Grafana dashboard."
+        ),
+    )
+
+    authz_gateway_enabled: bool = Field(
+        default=False,
+        title="K1 S17 W2: AuthorizationGateway единый фасад (Casbin+OPA+CapabilityGate)",
+        description=(
+            "K1 Sprint 17 Wave W2 (ADR-NEW-1+ADR-NEW-4, K-ARCH-1+K-ARCH-2). "
+            "Owner: K1 Security. ETA: S17. "
+            "Активирует core/security/authorization_gateway.py::AuthorizationGateway "
+            "+ core/interfaces/capability_gateway.py::CapabilityGatewayProtocol. "
+            "Цепочка: CapabilityGate → CapabilityPolicy → Casbin → OPA с единым "
+            "correlation_id. Audit-event authorization.decision на каждое решение. "
+            "default-OFF до миграции всех non-public endpoint-guard'ов."
+        ),
+    )
+
+    audit_correlation_required: bool = Field(
+        default=False,
+        title="K3 S17 W3: correlation_id обязателен в 100% audit events (D12)",
+        description=(
+            "K3 Sprint 17 Wave W3 (D12). Owner: K3 Routes. ETA: S17. "
+            "Активирует strict-валидацию: audit emit БЕЗ correlation_id поднимает "
+            "AuditCorrelationError. Propagation через contextvars в MW → "
+            "audit → outbound_http → DSL processors. End-to-end test: "
+            "3+ источников в SELECT * FROM audit WHERE correlation_id = X. "
+            "default-OFF до миграции всех audit callsites."
+        ),
+    )
+
+    tenant_feature_flag_ui: bool = Field(
+        default=False,
+        title="K5 S17 W1: per-tenant feature-flag toggle REST + Streamlit UI (D9)",
+        description=(
+            "K5 Sprint 17 Wave W1 (D9). Owner: K5 Frontend. ETA: S17. "
+            "Активирует endpoint POST /admin/feature-flags/<flag>/tenant/<id> + "
+            "Redis pub/sub broadcast (<100ms) + audit + Streamlit page. "
+            "default-OFF до интеграции с TenantFeatureFlagService и smoke."
+        ),
+    )
+
+    resilience_coordinator_enabled: bool = Field(
+        default=False,
+        title="K2 S17 W5: ResilienceCoordinator class (12 fallback chains в lifespan)",
+        description=(
+            "K2 Sprint 17 Wave W5. Owner: K2 Resilience. ETA: S17. "
+            "Активирует core/resilience/coordinator.py::ResilienceCoordinator — "
+            "регистрация 12 fallback chains (Graylog/GenAI/Redis/ClickHouse/...) "
+            "в lifespan startup. default-OFF до chaos-теста coordinator-isolation."
+        ),
+    )
+
+    routes_capability_gate_strict: bool = Field(
+        default=False,
+        title="K3 S17 W0: routes capability-gate strict (K-ARCH-3)",
+        description=(
+            "K3 Sprint 17 Wave W0 (K-ARCH-3). Owner: K3 Routes. ETA: S17. "
+            "Активирует strict-режим в services/routes/loader.py:70 — "
+            "capability_gate.declare(route.capabilities) ДО pipeline_registrar. "
+            "Route без declared capabilities → RouteRegistrationError. "
+            "Audit-event route.capabilities.allocated. "
+            "default-OFF до миграции existing routes на declared-capabilities."
+        ),
+    )
+
+    routes_tenant_aware_strict: bool = Field(
+        default=False,
+        title="K3 S17 W0: RouteManifestV11.tenant_aware строгий (K-ARCH-4)",
+        description=(
+            "K3 Sprint 17 Wave W0 (K-ARCH-4). Owner: K3 Routes. ETA: S17. "
+            "Активирует пробрасывание RouteManifestV11.tenant_aware в "
+            "TenantContext.current_tenant() через RouteLoader. DSL шаги "
+            "crud_* / proxy / dispatch_action получают tenant-фильтр. "
+            "End-to-end test: tenant A не видит данные tenant B. "
+            "default-OFF до миграции existing routes на tenant_aware=true."
+        ),
+    )
+
+    call_function_whitelist_strict: bool = Field(
+        default=False,
+        title="K1 S17 W3: call_function whitelist обязателен в production (K-ARCH-5)",
+        description=(
+            "K1 Sprint 17 Wave W3 (K-ARCH-5). Owner: K1 Security. ETA: S17. "
+            "При True dsl/engine/processors/function_call.py убирает dev fallback: "
+            "if ENVIRONMENT == 'production' and not whitelist → PermissionError. "
+            "CapabilityGate.check(`function.call.<module>`) обязательно. "
+            "default-OFF до аудита всех plugin.toml::call_function_modules."
+        ),
+    )
+
+    saga_state_persistence_enabled: bool = Field(
+        default=False,
+        title="K3 S17 W4: Saga state persistence в PostgreSQL (K-OPS-1)",
+        description=(
+            "K3 Sprint 17 Wave W4 (K-OPS-1). Owner: K3 Routes. ETA: S17. "
+            "Активирует infrastructure/workflow/saga_state.py::SagaStateModel "
+            "(PostgreSQL table) — checkpoints / compensations / rollback-events. "
+            "CRUD repository + интеграция с Temporal Workflow signal_event. "
+            "default-OFF до alembic migration + integration test compensation."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
