@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -81,10 +82,29 @@ class CallFunctionProcessor(BaseProcessor):
         self.result_property = result_property
 
     @staticmethod
+    def _is_strict_whitelist() -> bool:
+        """K-ARCH-5 (S17): strict-режим whitelist.
+
+        Источники (любой True → strict):
+            * ENV ``ENVIRONMENT == "production"`` (без feature-flag);
+            * ``feature_flags.call_function_whitelist_strict == True``.
+
+        В strict-режиме пустой whitelist → PermissionError.
+        """
+        if os.environ.get("ENVIRONMENT", "").strip().lower() == "production":
+            return True
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(feature_flags.call_function_whitelist_strict)
+        except Exception:  # noqa: BLE001 — feature-flag доступ best-effort
+            return False
+
+    @staticmethod
     def _validate_module_whitelist(
         module_name: str, context: "ExecutionContext"
     ) -> None:
-        """V21: проверяет module в whitelist.
+        """V21 + K-ARCH-5 (S17): проверяет module в whitelist.
 
         Whitelist:
             * ``context.properties.call_function_modules`` (список или set),
@@ -92,8 +112,9 @@ class CallFunctionProcessor(BaseProcessor):
             * либо global default из ``settings.call_function_modules``
               (если задан) — для core/admin процессоров.
 
-        Если whitelist пуст — fallback на ``True`` (dev-режим). Production
-        должен явно задать список в plugin.toml::call_function_modules.
+        Если whitelist пуст:
+            * production / strict-mode → PermissionError (K-ARCH-5);
+            * dev (default-OFF) → fallback на ``True``.
         """
         whitelist: set[str] = set()
         candidates = getattr(context, "properties", None)
@@ -112,11 +133,17 @@ class CallFunctionProcessor(BaseProcessor):
                 )
                 if global_wl:
                     whitelist |= set(global_wl)
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S110 — settings best-effort
                 pass
 
         if not whitelist:
-            return  # dev fallback
+            if CallFunctionProcessor._is_strict_whitelist():
+                raise PermissionError(
+                    "call_function: empty whitelist in production / strict mode "
+                    f"(module {module_name!r}); declare plugin.toml::"
+                    "call_function_modules или settings.call_function_modules"
+                )
+            return  # dev fallback (K-ARCH-5: только при NOT strict)
 
         if module_name in whitelist:
             return
@@ -130,6 +157,31 @@ class CallFunctionProcessor(BaseProcessor):
             f"call_function: module {module_name!r} not in whitelist "
             f"(call_function_modules)"
         )
+
+    @staticmethod
+    def _check_capability(module_name: str, context: "ExecutionContext") -> None:
+        """K-ARCH-5 (S17): CapabilityGate.check(``function.call.<module>``).
+
+        Если gate доступен через ``context.capability_gate`` (или
+        ``context.properties['capability_gate']``) — выполнить check.
+        plugin_name берётся из ``context.properties['plugin']`` (default 'core').
+        Лучшее усилие: при отсутствии gate — no-op (dev-mode).
+        """
+        gate = getattr(context, "capability_gate", None)
+        if gate is None:
+            props = getattr(context, "properties", None)
+            if isinstance(props, dict):
+                gate = props.get("capability_gate")
+        if gate is None:
+            return
+        plugin = "core"
+        props = getattr(context, "properties", None)
+        if isinstance(props, dict):
+            plugin = str(props.get("plugin", plugin))
+        try:
+            gate.check(plugin, f"function.call.{module_name}", None)
+        except AttributeError:
+            return
 
     def _resolve_payload(self, exchange: "Exchange[Any]") -> Any:
         """Извлекает payload из exchange по ``payload_from``."""
@@ -149,6 +201,7 @@ class CallFunctionProcessor(BaseProcessor):
     ) -> None:
         """Импортирует ``module``, вызывает ``fn(payload)``, пишет результат."""
         self._validate_module_whitelist(self.module_name, context)
+        self._check_capability(self.module_name, context)
 
         try:
             module = importlib.import_module(self.module_name)

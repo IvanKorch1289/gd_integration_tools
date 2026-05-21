@@ -14,6 +14,15 @@ description = "Reference V11 plugin (Wave R1.fin demo)"
 name = "mq.publish"
 scope = "example.events.*"
 
+# ─── DSL call_function whitelist (K-ARCH-5, S17) ──────────────────
+# В strict-режиме (ENVIRONMENT=production или feature_flags.
+# call_function_whitelist_strict=True) plugin.toml::call_function_modules
+# обязателен — иначе call_function поднимает PermissionError.
+call_function_modules = [
+    "extensions.example_plugin.functions",
+    "extensions.example_plugin.functions.*",
+]
+
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]
 actions = ["example.echo"]
