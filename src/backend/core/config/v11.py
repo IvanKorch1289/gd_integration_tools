@@ -84,6 +84,19 @@ class V11Settings(BaseSettingsWithLoader):
         default=500, ge=0, le=10_000, title="Окно дебаунса (ms)"
     )
 
+    # Sprint 16 K2 W4 (DoD-9 carryover) — feature-gate для pybreaker-adapter.
+    # При False фабрика ``make_pybreaker_adapter`` возвращает
+    # ``InMemoryPybreakerAdapter`` (текущий S16 scaffold). Активация в S17 W1
+    # переключит фабрику на pybreaker SDK + RedisBreakerStateStorage.
+    pybreaker_enabled: bool = Field(
+        default=False,
+        title="Включить pybreaker-adapter pipeline",
+        description=(
+            "S16 carryover: при False используется InMemoryPybreakerAdapter "
+            "(scaffold). При True — pybreaker SDK с Redis-state (S17 W1)."
+        ),
+    )
+
 
 v11_settings: V11Settings = V11Settings()
 """Глобальный экземпляр V11-настроек."""

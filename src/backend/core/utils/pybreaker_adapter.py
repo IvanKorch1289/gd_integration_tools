@@ -26,11 +26,12 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 __all__ = (
-    "PybreakerAdapter",
     "BreakerState",
     "BreakerStateStorage",
     "FakeBreakerStateStorage",
     "InMemoryPybreakerAdapter",
+    "PybreakerAdapter",
+    "make_pybreaker_adapter",
 )
 
 _logger = logging.getLogger("core.utils.pybreaker_adapter")
@@ -253,3 +254,33 @@ class InMemoryPybreakerAdapter:
             self._state,
             self._fail_counter,
         )
+
+
+def make_pybreaker_adapter(
+    *,
+    name: str,
+    fail_max: int = 5,
+    reset_timeout: float = 60.0,
+    storage: BreakerStateStorage | None = None,
+) -> PybreakerAdapter:
+    """Фабрика [PybreakerAdapter] для использования из application-кода.
+
+    Возвращает [InMemoryPybreakerAdapter] — S16 scaffold. После включения
+    feature-flag ``v11.pybreaker_enabled`` в Sprint 17 W1 фабрика начнёт
+    возвращать реализацию поверх ``pybreaker`` SDK с RedisBreakerStateStorage.
+
+    Args:
+        name: Уникальное имя breaker'а (используется как ключ persistence).
+        fail_max: Порог отказов до перехода в state=open.
+        reset_timeout: Через сколько секунд возможно восстановление.
+        storage: Опциональный backend для persistence (default — in-memory).
+
+    Returns:
+        Объект, удовлетворяющий [PybreakerAdapter]-протоколу.
+    """
+    return InMemoryPybreakerAdapter(
+        name=name,
+        fail_max=fail_max,
+        reset_timeout=reset_timeout,
+        storage=storage,
+    )

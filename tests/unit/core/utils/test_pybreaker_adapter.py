@@ -18,6 +18,7 @@ from src.backend.core.utils.pybreaker_adapter import (
     FakeBreakerStateStorage,
     InMemoryPybreakerAdapter,
     PybreakerAdapter,
+    make_pybreaker_adapter,
 )
 
 
@@ -138,3 +139,57 @@ async def test_adapter_implements_protocol() -> None:
     """InMemoryPybreakerAdapter структурно соответствует [PybreakerAdapter]."""
     adapter = InMemoryPybreakerAdapter(name="p")
     assert isinstance(adapter, PybreakerAdapter)
+
+
+@pytest.mark.asyncio
+async def test_dod9_restart_scenario_fail_max_5() -> None:
+    """DoD-9 acceptance: open-state восстанавливается из storage после рестарта.
+
+    Sprint 16 K2 W4: имитируется breaker, поднявший fail_max=5 и упавший
+    в state=open ДО рестарта. Новый adapter с тем же storage и тем же
+    именем после ``restore()`` должен начать работу сразу в open
+    (а не в closed) — иначе persistence не достигнута.
+    """
+    storage = FakeBreakerStateStorage()
+    await storage.save(
+        BreakerState(
+            name="t",
+            state="open",
+            fail_counter=5,
+            last_failure_at_iso="2026-05-21T12:00:00+00:00",
+        )
+    )
+    adapter = InMemoryPybreakerAdapter(name="t", fail_max=5, storage=storage)
+    assert adapter.state == "closed"  # до restore — defaults
+
+    await adapter.restore()
+
+    assert adapter.state == "open"
+    assert adapter.failure_count == 5
+    # Дополнительный вызов отвергается — circuit действительно открыт.
+    async def upstream() -> str:
+        return "should_not_run"
+
+    with pytest.raises(RuntimeError, match="circuit_open"):
+        await adapter.call(upstream)
+
+
+@pytest.mark.asyncio
+async def test_make_pybreaker_adapter_returns_protocol() -> None:
+    """Factory ``make_pybreaker_adapter`` возвращает совместимый Protocol."""
+    storage = FakeBreakerStateStorage()
+    adapter = make_pybreaker_adapter(
+        name="factory", fail_max=3, reset_timeout=15.0, storage=storage
+    )
+
+    assert isinstance(adapter, PybreakerAdapter)
+    assert adapter.state == "closed"
+    assert adapter.failure_count == 0
+
+
+def test_v11_pybreaker_enabled_default_off() -> None:
+    """Feature-flag ``v11.pybreaker_enabled`` по умолчанию False (Sprint 16 K2 W4)."""
+    from src.backend.core.config.v11 import V11Settings
+
+    flags = V11Settings()
+    assert flags.pybreaker_enabled is False
