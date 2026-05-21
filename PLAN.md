@@ -1,9 +1,10 @@
-# PLAN.md — gd_integration_tools V22 FINAL (S17–S19 GAP-adapted 2026-05-21)
+# PLAN.md — gd_integration_tools V22.2 FINAL (S17–S19 GAP-adapted + S21–S23 post-production backlog)
 
-> **Версия**: V22.1 FINAL (production-ready roadmap, ≤ 10 недель). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` секция «GAP-аудит 2026-05-21» + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате.
+> **Версия**: V22.2 FINAL (S21-S23 GAP-backlog 2026-05-21 добавлены; production-ready roadmap S16-S20 ≤ 10 недель + post-production backlog без дат). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` секция «GAP-аудит 2026-05-21» + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате. **Sprint 21-23 post-production GAP-backlog** добавлены 2026-05-21 на основе `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (10 CRITICAL B-01..B-10 + 16 P0 STRONGLY RECOMMENDED + 15 функциональных F-01..F-15 + 7 архитектурных рекомендаций A-01..A-07).
 > **Дата**: 2026-05-21.
-> **Замещает**: V21.0 (архив → `vault/archive-plan-v21.md`).
-> **Срок**: 2026-05-22 → 2026-07-31 (5 спринтов × 2 недели × 5 команд).
+> **Замещает**: V22.1 FINAL (предыдущая ревизия) и V21.0 (архив → `vault/archive-plan-v21.md`).
+> **Срок**: 2026-05-22 → 2026-07-31 (S16–S20: 5 спринтов × 2 недели × 5 команд).
+> **Post-production backlog (S21-S23)**: без дат, выполняется параллельно release stabilization, не блокирует release v1.0.0-production.
 >
 > **Главные принципы V22**:
 > - Только нереализованное и дополнительное. Архив S0–S15 — отдельный документ.
@@ -438,6 +439,162 @@ FeatureFlagService (V22 EXTENDED) ← per-tenant + runtime UI + Redis pub/sub
 
 ---
 
+> **Sprint 21–23** — post-production GAP-backlog, основанный на
+> `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (10 CRITICAL
+> B-01..B-10 + 16 P0 STRONGLY RECOMMENDED G-01..G-16 + 15 функциональных
+> предложений F-01..F-15 + 7 архитектурных рекомендаций A-01..A-07). **БЕЗ
+> конкретных дат**, выполняется ПОСЛЕ Sprint 20 (`v1.0.0-production`)
+> параллельно release stabilization. Не блокируют release v1.0.0. Часть GAP уже
+> покрыта в S17–S20 (B-01, G-01, G-11, G-12, F-13, ADR-NEW-9, B-04); 28 пунктов
+> переносятся в S21–S23 + 5 follow-up к частично покрытым (B-06, G-04, G-05,
+> F-08, F-15). 4 новых ADR (ADR-NEW-12..15) — см. §6.
+
+### Sprint 21 — Resilience & Multi-tenancy Hardening (post-production gap-backlog)
+
+**Owner**: К1 / К2 / К3 (К4/К5 — backbone only).
+**Приоритет**: **P0** (CRITICAL блокеры B-02/B-03/B-05/B-09).
+**Источник**: DEEP-RESEARCH 2026-05-20 A-03/A-04/A-05 + B-02/B-03/B-05/B-09 + G-06/G-07/G-08/G-09.
+
+#### Wave 0 — Backbone
+- `[wave:s21/backbone]` — 8 default-OFF feature-flags: `RLS_POSTGRES_ENFORCE`, `TENANT_CACHE_PREFIX_ENABLED`, `RPA_RESILIENCE_WRAPPER_ENABLED`, `SCHEDULER_DLQ_ENABLED`, `WEBHOOK_RESILIENCE_POLICY_ENABLED`, `DESKTOP_RPA_SESSION_POOL_ENABLED`, `BROWSER_COOKIES_REDIS_PERSIST`, `WORKFLOW_STATE_SQLITE_PERSIST`. Добавить в `core/config/feature_flags.py`, инвентарь admin `/admin/feature-flags`.
+
+#### Wave 1-2 (К1 Security/Multi-tenancy)
+- `[wave:s21/k1-w1-rls-postgres]` — **ADR-NEW-12 RLS Strategy** (A-03, G-08): миграция Alembic `CREATE POLICY ... USING (tenant_id = current_setting('app.tenant_id'))` для multi-tenant таблиц (`orders`, `users`, `files`, `audit_log`, `routes_state`). FF `RLS_POSTGRES_ENFORCE=true` включает policy enforcement. SET LOCAL per-request через `TenantContextMiddleware`. Tests: `tests/security/test_rls_isolation.py` (5 сценариев leakage).
+- `[wave:s21/k1-w2-tenant-cache-wrapper]` — **A-03 TenantCacheBackend** (B-03): wrapper в `infrastructure/cache/tenant_wrapper.py` поверх RedisCache / S3Cache / MemoryCache. Все cache ops через `TenantCacheBackend.get/set(key, value, tenant_id)`. Auto-prefix `tenant:{id}:`. FF `TENANT_CACHE_PREFIX_ENABLED`. Tests: `tests/cache/test_tenant_isolation.py`.
+
+#### Wave 3-5 (К2 Resilience)
+- `[wave:s21/k2-w1-rpa-resilience-wrapper]` — **ADR-NEW-13 RPACallPolicy** (A-05, B-02): `core/resilience/rpa_policy.py` — единый wrapper над `browser_pool`/`cdc`/`filewatcher`/`webhook_scheduler`/`desktop_rpa`. Композирует `@with_retry` + `breaker.guard()` + DLQ через `outbox`. FF `RPA_RESILIENCE_WRAPPER_ENABLED`. Tests: `tests/resilience/test_rpa_policy.py` (5 toxiproxy сценариев).
+- `[wave:s21/k2-w2-scheduler-dlq]` — **G-09 Scheduler DLQ**: APScheduler job failures → DLQ в `outbox.dead_letter_queue` с `kind=scheduler_job`. Admin `/admin/scheduler/dlq` для retry/replay. FF `SCHEDULER_DLQ_ENABLED`. Tests: `tests/scheduler/test_dlq.py`.
+- `[wave:s21/k2-w3-webhook-resilience]` — **G-07 Webhook resilience**: `entrypoints/webhook/scheduler.py` обёрнут в `RPACallPolicy` + декларативная retry policy (см. S23 W4 follow-up). FF `WEBHOOK_RESILIENCE_POLICY_ENABLED`. Tests: `tests/webhook/test_resilience.py`.
+
+#### Wave 6-8 (К3 RPA/Workflow)
+- `[wave:s21/k3-w1-desktop-rpa-pool]` — **F-12 + B-09 DesktopRPASessionPool**: `services/rpa/desktop_session_pool.py` — пул persistent pywinauto `Application()` instances. Session affinity по `app_name`. Auto-reconnect на stale handles. TTL 30 мин. FF `DESKTOP_RPA_SESSION_POOL_ENABLED`. Tests: `tests/rpa/test_desktop_pool.py`.
+- `[wave:s21/k3-w2-browser-cookies-redis]` — **G-06 Browser cookies persistence**: `services/rpa/browser_pool.py` сохраняет cookies/localStorage в Redis hash `browser:session:{user_id}:{domain}` с TTL 24h. Restore при следующем launch. FF `BROWSER_COOKIES_REDIS_PERSIST`. Tests: `tests/rpa/test_browser_cookies.py`.
+- `[wave:s21/k3-w3-workflow-state-persist]` — **ADR-NEW-14 Workflow State Persistence** (A-04, B-05): `infrastructure/workflow/lite_temporal_backend.py` — добавить SQLite persistence (`aiosqlite`) для in-flight workflow state. Production Temporal `WorkflowState` class для saga compensating state. FF `WORKFLOW_STATE_SQLITE_PERSIST`. Tests: `tests/workflow/test_state_persistence.py` (4 crash-recover сценария).
+
+#### Wave 9 (К5 Frontend)
+- `[wave:s21/k5-w1-streamlit-tenant-admin]` — Streamlit page `pages/81_tenant_inspection.py`: tenant cache hit-rates, RLS-policy status, RPA session pool stats, scheduler DLQ size. Read-only.
+
+#### Closure
+- `[wave:s21/closure]` — DoD grep verify + memory note `feedback_sprint21_resilience_multitenancy.md` + CONTEXT.md update.
+
+**DoD Sprint 21 (12 критериев)**:
+1. ✅ `[wave:s21/backbone]` landed: 8 feature-flags default-OFF в `feature_flags.py`.
+2. ✅ **B-03/G-08**: `grep -rn "redis.set\|redis.get" src/backend/ | grep -v tenant_wrapper` = **0** (все cache ops через TenantCacheBackend).
+3. ✅ **B-03**: миграция Alembic с `CREATE POLICY` применена для 5+ таблиц; `tests/security/test_rls_isolation.py` зелёный (5 сценариев leakage).
+4. ✅ **ADR-NEW-12 RLS Strategy** принят в `.claude/DECISIONS.md`.
+5. ✅ **B-02**: `grep -rn "browser_pool.acquire\|cdc.run\|filewatcher.watch\|webhook.send" src/backend/ | grep -v rpa_policy` = **0**; `tests/resilience/test_rpa_policy.py` 5/5 toxiproxy зелёные.
+6. ✅ **ADR-NEW-13 RPACallPolicy** принят.
+7. ✅ **G-09**: scheduler job failure → DLQ event verified; admin `/admin/scheduler/dlq` UI работает.
+8. ✅ **G-07**: webhook scheduler retry budget исчерпывается → DLQ; CB state visible через `/admin/circuit-breakers` (S22).
+9. ✅ **B-09/F-12**: DesktopRPASessionPool warm на 5 sessions; `tests/rpa/test_desktop_pool.py` зелёный; reconnect на stale verified.
+10. ✅ **G-06**: browser cookies survive worker restart; verified в `tests/rpa/test_browser_cookies.py`.
+11. ✅ **B-05/A-04**: workflow crash → resume from SQLite state; `tests/workflow/test_state_persistence.py` 4/4; **ADR-NEW-14** принят.
+12. ✅ Memory note + CONTEXT.md updated; Streamlit page `81_tenant_inspection.py` доступна.
+
+---
+
+### Sprint 22 — Observability & Testing Maturity (post-production gap-backlog)
+
+**Owner**: К1 / К2 / К3 / К4 / К5.
+**Приоритет**: **P0** (CRITICAL B-07/B-08 + STRONGLY RECOMMENDED G-02/G-10/G-15/G-16).
+**Источник**: DEEP-RESEARCH 2026-05-20 A-06/A-07 + B-06/B-07/B-08 + G-02/G-10/G-15/G-16 + F-02/F-09/F-10/F-11/F-14.
+
+#### Wave 0 — Backbone
+- `[wave:s22/backbone]` — 6 default-OFF feature-flags: `SECURITY_HEADERS_ASGI_NATIVE`, `PII_MASKER_UNIFIED`, `PROCESSOR_DI_ENABLED`, `SMOKE_TESTS_CI_GATE`, `PROPERTY_BASED_TESTING_NIGHTLY`, `ALERTMANAGER_RULES_ENABLED`.
+
+#### Wave 1-2 (К1 Security)
+- `[wave:s22/k1-w1-security-headers-asgi]` — **A-06 SecurityHeadersMiddleware ASGI rewrite** (B-07): переписать `entrypoints/middlewares/security_headers.py` с `BaseHTTPMiddleware` на Starlette-native ASGI (принимает `app`, обрабатывает `scope`/`receive`/`send`). FF `SECURITY_HEADERS_ASGI_NATIVE`. Tests: `tests/middleware/test_security_headers_asgi.py` (race condition + concurrent requests).
+- `[wave:s22/k1-w2-pii-masker-unify]` — **A-07 PII Masker Unification** (B-06, follow-up S18 W1): `entrypoints/middlewares/data_masking.py` вызывает `core/security/pii_masker.default_masker().mask_all(payload)`. Унифицировать использование во всех слоях: middleware + RAG ingestion + logging + audit. FF `PII_MASKER_UNIFIED`. Tests: `tests/security/test_pii_unification.py` (8 PII-categories).
+
+#### Wave 3-7 (К2 Testing/Observability)
+- `[wave:s22/k2-w1-smoke-tests]` — **B-08 Smoke test suite**: `tests/smoke/` — 12+ endpoint-level smoke tests (health, routes, /api/v1/credit/score [extension], FastMCP tools list, GraphQL schema fetch, WS handshake). CI gate `make smoke`. FF `SMOKE_TESTS_CI_GATE`.
+- `[wave:s22/k2-w2-middleware-integration-tests]` — **G-15 Middleware integration tests**: `tests/integration/middlewares/test_chain_compose.py` — full request → middleware chain → response. Verify ordering, auth-agnostic per-route, error propagation. 15+ сценариев.
+- `[wave:s22/k2-w3-hypothesis-suite]` — **G-16 Property-based testing**: добавить `hypothesis` 6.x в dev-extras. `tests/property/` — суиты для DSL processors (idempotency, commutativity), audit event schema, ResilienceCoordinator state machine. FF `PROPERTY_BASED_TESTING_NIGHTLY` для CI nightly job.
+- `[wave:s22/k2-w4-observability-test-suite]` — **F-10 Observability tests**: `tests/observability/` — tracing context propagation across async boundaries, metric cardinality limits (`tenant_id` × `route_id` ≤ 10k), alert firing rules (mock Prometheus), log format compliance (structlog → JSON schema validation).
+- `[wave:s22/k2-w5-alertmanager-rules]` — **G-10 AlertManager + PrometheusRules**: `ops/prometheus/rules/` — 10+ rules (p95-breach, error-rate-spike, breaker-open-stuck, queue-depth, cache-miss-rate, db-pool-exhaustion, workflow-stuck, ai-cost-budget, secret-rotation-overdue, scheduler-dlq-grew). `ops/alertmanager/routes.yml` — routing на Slack/PagerDuty placeholder. FF `ALERTMANAGER_RULES_ENABLED`.
+
+#### Wave 8 (К3 DSL)
+- `[wave:s22/k3-w1-processor-di]` — **G-02 ProcessorFactory DI**: `dsl/registry/processor_factory.py` — фабрика с DI container; замена прямого `cls(**kwargs)` в `dsl/engine/processors/` (~15 файлов). Поддерживает constructor injection для DB sessions, external clients. FF `PROCESSOR_DI_ENABLED`. Tests: `tests/dsl/test_processor_di.py` (mock-substitute сценарии).
+
+#### Wave 9 (К4 AI)
+- `[wave:s22/k4-w1-semantic-cache-heatmap]` — **F-11 Semantic cache heatmap**: `services/ai/rag/semantic_cache.py` экспортирует Prometheus `semantic_cache_hits_total`, `_misses_total`, `_latency_seconds` (labels: tenant_id, route_id). Grafana dashboard `dashboards/ai-semantic-cache.json` с heatmap по `tenant × route`.
+
+#### Wave 10-12 (К5 Dashboards)
+- `[wave:s22/k5-w1-cb-dashboard]` — **F-02 Circuit Breaker Dashboard**: admin endpoint `/admin/circuit-breakers` (auth-required) возвращает `[{name, state, failure_count, last_failure, half_open_test_after}]`. Grafana dashboard `dashboards/circuit-breakers.json` с per-resource breakdown.
+- `[wave:s22/k5-w2-ratelimit-dashboard]` — **F-09 Rate Limit Dashboard**: admin `/admin/rate-limits` (текущие счётчики, TTL, quota per tenant). Grafana dashboard с per-tenant rate-limit heatmap. Используется существующий `RateLimitMiddleware`.
+- `[wave:s22/k5-w3-sla-dashboard]` — **F-14 SLA Dashboard per Route**: `route.toml::[slo]` (p95_latency, rps, error_rate) уже есть, добавить collector `services/observability/sla_collector.py` + Grafana `dashboards/route-sla.json` с breach alerts (интеграция с S22 W5 AlertManager rules).
+
+#### Closure
+- `[wave:s22/closure]` — DoD grep verify + memory note `feedback_sprint22_observability_testing.md` + CONTEXT.md update.
+
+**DoD Sprint 22 (14 критериев)**:
+1. ✅ `[wave:s22/backbone]` landed: 6 feature-flags default-OFF.
+2. ✅ **B-07/A-06**: `grep -rn "BaseHTTPMiddleware" src/backend/entrypoints/middlewares/security_headers.py` = **0**; `tests/middleware/test_security_headers_asgi.py` 5/5 race condition зелёные.
+3. ✅ **B-06/A-07**: `grep -rn "mask_pii\|redact_pii" src/backend/ | grep -v default_masker` = **0** (все вызовы через PII masker core).
+4. ✅ **B-08**: `make smoke` зелёный (12+ tests); CI gate активен.
+5. ✅ **G-15**: `tests/integration/middlewares/` 15+ зелёных тестов; chain composition verified.
+6. ✅ **G-16**: `hypothesis` в `pyproject.toml::[dev]`; `tests/property/` 5+ suites зелёные; CI nightly job настроен.
+7. ✅ **F-10**: `tests/observability/` 8+ зелёных; metric cardinality gate (≤ 10k) активен.
+8. ✅ **G-10**: 10+ PrometheusRules в `ops/prometheus/rules/`; `promtool check rules` зелёный; AlertManager config syntax-valid.
+9. ✅ **G-02**: `grep -rn "= cls(\*\*kwargs)" src/backend/dsl/engine/processors/` = **0**; `tests/dsl/test_processor_di.py` зелёный.
+10. ✅ **F-11**: Prometheus exporter `semantic_cache_*` метрики видны; Grafana dashboard импортирован.
+11. ✅ **F-02**: `/admin/circuit-breakers` возвращает 200 + JSON; Grafana dashboard работает.
+12. ✅ **F-09**: `/admin/rate-limits` возвращает 200 + JSON; per-tenant heatmap визуализируется.
+13. ✅ **F-14**: `route.toml::[slo]` validated; SLA dashboard breach-alerts связаны с AlertManager.
+14. ✅ Memory note + CONTEXT.md updated; ничего из S22 не блокирует release.
+
+---
+
+### Sprint 23 — AI / DSL / DX Extensions (post-production gap-backlog)
+
+**Owner**: К1 / К3 / К4 / К5 (К2 — backbone only).
+**Приоритет**: **P0** (CRITICAL B-10) + **P1** (G-03/G-13/G-14 + F-01..F-08).
+**Источник**: DEEP-RESEARCH 2026-05-20 A-02 + B-10 + G-03/G-13/G-14 + F-01/F-03/F-04/F-05/F-06/F-07 + F-15 follow-up.
+
+#### Wave 0 — Backbone
+- `[wave:s23/backbone]` — 11 default-OFF feature-flags: `DOCKER_REGISTRY_PUSH_CI`, `WORKFLOW_HOT_RELOAD`, `SCHEMA_REGISTRY_REST_API`, `ROUTE_BLUEPRINTS_MARKETPLACE`, `WEBHOOK_RETRY_DECLARATIVE`, `MULTIAGENT_SUPERVISOR_LLM`, `AI_GUARDRAILS_FRAMEWORK`, `PLUGIN_SANDBOX_E2B`, `BACKEND_HPA_AUTOSCALE`, `MULTI_REGION_ROUTING_ENABLED`, `CHAOS_CI_PR_GATE`.
+
+#### Wave 1 (К1 Ops/CI)
+- `[wave:s23/k1-w1-docker-registry-push]` — **G-14 Docker registry push CI**: GitHub Actions `.github/workflows/docker-push.yml` — на push в main собирает multi-stage Docker image, cosign-sign, push в registry (placeholder env `${DOCKER_REGISTRY_URL}`). FF `DOCKER_REGISTRY_PUSH_CI`. SBOM attached.
+
+#### Wave 2-5 (К3 DSL/Workflow)
+- `[wave:s23/k3-w1-workflow-hot-reload]` — **G-03 Workflow hot reload**: расширить `dsl/route/hot_reload.py` → также watch `extensions/*/workflows/*.workflow.yaml` через watchfiles. Перезапуск Temporal worker registry без полного process restart. FF `WORKFLOW_HOT_RELOAD`. Tests: `tests/workflow/test_hot_reload.py`.
+- `[wave:s23/k3-w2-schema-registry-rest]` — **F-01 Schema Registry Service**: `services/schema_registry/registry.py` (scaffold уже есть) → REST API `/api/v1/schemas/{name}/{version}` + breaking-change detection (через `jsonschema-spec` diff). `route.toml::input_schema`/`output_schema` валидируется на gateway. FF `SCHEMA_REGISTRY_REST_API`. Tests: `tests/schema_registry/test_breaking_change.py`.
+- `[wave:s23/k3-w3-blueprints-marketplace]` — **F-03 Route Blueprints Marketplace**: `dsl/blueprints/` (19 blueprints в S10 уже есть) → расширить до 25+ + админ UI `pages/82_blueprints_browser.py`. Маршрут импортируется через `route: blueprint:rest-to-grpc-proxy`. FF `ROUTE_BLUEPRINTS_MARKETPLACE`. Tests: `tests/blueprints/test_import_round_trip.py`.
+- `[wave:s23/k3-w4-webhook-retry-policy]` — **F-05 Webhook Retry declarative**: `entrypoints/webhook/retry_policy.py` — `@dataclass WebhookRetryPolicy(max_attempts, backoff_multiplier, max_delay, retry_on)`. YAML декларация `webhook: { retry: { max_attempts: 5, backoff: exponential } }`. Интеграция с S21 W3 webhook resilience. FF `WEBHOOK_RETRY_DECLARATIVE`. Tests: `tests/webhook/test_declarative_retry.py`.
+
+#### Wave 6-8 (К4 AI)
+- `[wave:s23/k4-w1-multiagent-supervisor-llm]` — **B-10 Multi-agent supervisor LLM integration**: `services/ai/agents/multi_agent.py` (stub) → реальный LangGraph supervisor pattern. Supervisor agent через LiteLLM (default GPT-4o-mini), worker agents (RAG, Code, Search). FF `MULTIAGENT_SUPERVISOR_LLM`. Tests: `tests/ai/test_multiagent_supervisor.py` (3 scenario: routing/fallback/cost-budget).
+- `[wave:s23/k4-w2-ai-guardrails-framework]` — **F-04 AI Guardrails Framework** (follow-up S18 W18 G-04): `services/ai/guardrails/enforcement.py` — `GuardrailEnforcementProcessor` для DSL pipeline: input sanitization (PII + prompt-injection через Rebuff/Lakera) → LLM → output filtering (PII redaction + jailbreak detection). API keys из Vault. FF `AI_GUARDRAILS_FRAMEWORK`. Tests: `tests/ai/guardrails/test_enforcement.py`.
+- `[wave:s23/k4-w3-plugin-sandbox-e2b]` — **F-06 Plugin Sandbox e2b finalize** (follow-up S18 R1.20 ADR-NEW-6 Tier-B): `core/ai/ai_workspace_manager.py` интегрирует e2b SDK. Code execution в AI workspace через `e2b.Sandbox.create(template='python', timeout=30)`. Cost/quota tracking. FF `PLUGIN_SANDBOX_E2B`. Tests: `tests/ai/test_e2b_sandbox.py` (cost-budget + timeout-kill).
+
+#### Wave 9-11 (К5 Ops)
+- `[wave:s23/k5-w1-backend-hpa]` — **G-13 Backend HPA**: `k8s/manifests/backend-hpa.yaml` — HorizontalPodAutoscaler по CPU (70%) + custom Prometheus метрике `app_request_queue_depth`. minReplicas=2, maxReplicas=20. FF `BACKEND_HPA_AUTOSCALE` (k8s annotation-based). Tests: `tests/k8s/test_hpa_manifest.py` (kubectl-dry-run validation).
+- `[wave:s23/k5-w2-multi-region-scaffold]` — **F-07 Multi-region Traffic Routing scaffold**: `core/routing/region_router.py` — `RegionRouter` (Protocol + InMemory impl). YAML config `routing.yaml::regions: [us-east, eu-west, ap-south]`. Health-based routing, latency-based scoring. **Scaffold only** — production rollout = §9 backlog. FF `MULTI_REGION_ROUTING_ENABLED`. Tests: `tests/routing/test_region_routing.py`.
+- `[wave:s23/k5-w3-chaos-ci-pr-gate]` — **F-15 Chaos CI PR-gate** (follow-up S20 W6): `.github/workflows/chaos-gate.yml` — chaos suite (33 tests, Toxiproxy) запускается на PR с label `needs-chaos`. Results блокируют merge. **ADR-NEW-15 Chaos PR-gate policy**. FF `CHAOS_CI_PR_GATE`. Tests: `.github/workflows/chaos-gate.yml` syntax-validated.
+
+#### Closure
+- `[wave:s23/closure]` — DoD grep verify + memory note `feedback_sprint23_ai_dsl_dx.md` + CONTEXT.md update + `vault/session-summary-s21-s23.md`.
+
+**DoD Sprint 23 (14 критериев)**:
+1. ✅ `[wave:s23/backbone]` landed: 11 feature-flags default-OFF.
+2. ✅ **G-14**: `.github/workflows/docker-push.yml` syntax-valid; `cosign verify` запускается; SBOM прикреплён в release.
+3. ✅ **G-03**: workflow YAML edit → Temporal worker реестр перезагружен <3s; `tests/workflow/test_hot_reload.py` зелёный.
+4. ✅ **F-01**: `/api/v1/schemas/{name}/{version}` возвращает 200; breaking-change detection работает; `tests/schema_registry/` зелёный.
+5. ✅ **F-03**: `dsl/blueprints/` ≥25 шаблонов; `route: blueprint:NAME` import работает; admin page `82_blueprints_browser` доступна.
+6. ✅ **F-05**: `webhook: { retry: { ... } }` декларация работает; интеграция с S21 W3 verified.
+7. ✅ **B-10**: `tests/ai/test_multiagent_supervisor.py` 3/3 (routing/fallback/cost); supervisor использует LLM (не stub).
+8. ✅ **F-04/G-04**: GuardrailEnforcementProcessor в DSL; Rebuff API key через Vault; prompt-injection blocked в тестах.
+9. ✅ **F-06/G-05**: e2b sandbox создаётся в тестах; cost-budget enforced; timeout-kill verified; ADR-NEW-6 Tier-B (S18) closed.
+10. ✅ **G-13**: `backend-hpa.yaml` применим в k8s (kubectl dry-run); minReplicas=2 enforced.
+11. ✅ **F-07**: `RegionRouter` Protocol + InMemory impl; `tests/routing/test_region_routing.py` зелёный; production rollout в §9.
+12. ✅ **F-15**: `chaos-gate.yml` triggered на PR с label; ADR-NEW-15 Chaos PR-gate принят.
+13. ✅ **ADR-NEW-15** записан в `.claude/DECISIONS.md`.
+14. ✅ Memory note + CONTEXT.md + `vault/session-summary-s21-s23.md`; Streamlit pages ≥82.
+
+---
+
 ## 5. Финальный DoD V22 (production-ready)
 
 ### Протоколы и интеграции (5)
@@ -538,6 +695,10 @@ curl ":8000/api/v1/audit?correlation_id=<id>"                               # с
 | **R1.18** (NEW V22) | MetricsRegistry namespacing для plugin metrics | S17 W3 | К2 |
 | **R1.19** (NEW V22) | AuthorizationGateway evaluation order (Casbin → OPA → CapabilityGate vs параллельно) | S17 W2 | К1 |
 | **R1.20** (NEW V22) | F-2 PluginSandboxAdapter final strategy | S18 W5 (impl) + S19 W12 (formal accept) | К1/К2 |
+| **ADR-NEW-12** (NEW post-S20) | RLS Strategy для multi-tenant tables | S21 W1 | К1 |
+| **ADR-NEW-13** (NEW post-S20) | RPACallPolicy единый wrapper resilience | S21 W3 | К2 |
+| **ADR-NEW-14** (NEW post-S20) | Workflow State Persistence (SQLite/Temporal) | S21 W8 | К3 |
+| **ADR-NEW-15** (NEW post-S20) | Chaos PR-gate (on-PR triggered tests) | S23 W11 | К5 |
 
 **Закрытые в V21 → V22 (целевые)**: R1.6 hybrid layout (Wave R3.10), R1.11 Streamlit page numbering (S9), R1.12 plugin sandbox (S19 W12 финал через R1.20), R1.13 Adaptive RAG dispatching (S16 K4 W1), R1.14 VSCode marketplace private (S19 K5 W1), R1.15 path aliases (S9), R1.16 bulk audit writer (S9).
 
@@ -606,28 +767,44 @@ pytest tests/integration/routes/test_crud_routes.py
 | **Startup time dev_light** | 1.06s | **≤1.5s** | S20 W1 |
 | **Plugin sandbox overhead** | 137% | **<5%** | S18 W5 (F-2 carryover) |
 | **Blueprints** | 19 | 25+ | S18-S19 (расширение через extensions/) |
-| **Streamlit pages** | 71 | 80+ | S17 +1 / S18 +5 / S19 +3 |
+| **Streamlit pages** | 71 | 80+ (S20) → **82+** (S21+S23) | S17 +1 / S18 +5 / S19 +3 / **S21 +1 (pages/81_tenant_inspection)** / **S23 +1 (pages/82_blueprints_browser)** |
 | **DSL processors** | 108 | 115+ | S16–S18 |
 | **Tutorials** | 9 | **15+** | S20 W5 docs-finale |
 | **Runbooks** | 10 | **20+** | S20 W5 |
-| **Chaos tests** | 33 | **33+** | S20 W6 (S6 baseline сохранён) |
-| **Feature-flags default-OFF** | 159 | **flip ~20 → default-ON** перед release | S20 W6 flip-plan |
+| **Chaos tests** | 33 | **33+** | S20 W6 (S6 baseline сохранён); **S23 W11** chaos PR-gate trigger |
+| **Feature-flags default-OFF** | 159 | **flip ~20 → default-ON** перед release (S20) → **+25 в S21-S23 (post-prod)** = 159+25=184 total | S20 W6 flip-plan + **S21 +8 / S22 +6 / S23 +11** |
 | **Pre-prod-check gates** | 20 | **38** (20+10+8 grep) | S20 W6 |
+| **Tenant cache isolation** (V22.2 NEW) | n/a | **0 cross-tenant leakage** (B-03 closed) | S21 W2 TenantCacheBackend + RLS migration |
+| **Smoke tests** (V22.2 NEW) | 1 | **12+** | S22 W3 (B-08) |
+| **Property-based test suites** (V22.2 NEW) | 0 | **5+ suites** (hypothesis 6.x) | S22 W5 (G-16) |
+| **Grafana dashboards** (V22.2 NEW) | 5+ | **8+** | S22 W10-12 (F-02 CB / F-09 RateLimit / F-14 SLA / F-11 Semantic Cache) |
+| **Multi-region routing** (V22.2 NEW) | n/a | **scaffold only** (production rollout = §9) | S23 W10 (F-07) |
 
 ---
 
-## 9. Post-release backlog (отрезано из V22, для S21+)
+## 9. Post-release backlog (отрезано из V22 production-ready, для §9 и далее)
+
+### Покрыто в S21-S23 (post-production gap-backlog)
+
+См. §4 Sprint 21-23 секции выше — 28 GAP-пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` закрываются без дат после release v1.0.0-production. Не блокируют release.
+
+### Остаётся в backlog (после S23)
 
 - DI container migration (`core/di/providers.py` → `dependency-injector`) — ADR R1.10 defer.
 - mem0/Zep persistent personalisation (innovation).
 - Free-threading PEP 703 benchmark (research).
 - VSCode extension public marketplace publish (private достаточно для V22).
 - Адаптивный RAG strategy ML-классификатор (replaces LLM-classifier в S19).
-- Multi-tenant cache invalidation через Redis pub/sub (расширение D9).
 - Sphinx multi-version (для каждой минорной версии — defer).
 - Vale prose linter custom rules per-language (defer).
 - Interactive Architecture Map LLM search.
+- **Schema Registry V2** — production hardening после S23 W3 scaffold (versioning, multi-tenant policies).
+- **Multi-region production rollout** (Consul + DNS-based discovery) — после S23 W10 scaffold.
+- **e2b cost optimization + AWS Firecracker fallback** — после S23 W8.
+- **DSPy LLM optimization pipeline** (cost-aware prompt compression).
+- **Distributed tracing для AI inference pipeline** (LangFuse + Phoenix Arize).
+- **Per-tenant cryptographic isolation (M-C use case)** — revert path ADR-NEW-9, активируется при появлении M-C stakeholder.
 
 ---
 
-**Конец PLAN.md V22 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`. Архив V0–V21: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready`.
+**Конец PLAN.md V22.2 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`. Архив V0–V22.1: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension`.

@@ -1,22 +1,50 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-21 14:00, после Sprint 16 Waves 3-7 GAP closure)
+## Текущее состояние (2026-05-21 17:48, после Sprint 17 kickoff coordinator-self)
 
-**HEAD**: `ecaa198e [wave:s16/w7-clamav-production-wire]` — B-3 finale full closure (interface + production wire).
-**Активный спринт**: **Sprint 16 «Closure»** — Waves 0/3/4/5/6/7 CLOSED; параллельная активность кросс-сессий не блокирует.
-**План**: `PLAN.md` V22 FINAL (5 спринтов × 2 недели × 5 команд).
-**GAP-анализ executive план**: gap-analysis/GAP-report 2026-05-21 (внешний senior architect аудит).
+**HEAD**: `67d37f82 [wave:s17/k2-w1-metrics-registry]` — D11 backbone MetricsRegistry (idempotent counter/histogram/gauge + strict feature-flag + 12 тестов).
+**Активный спринт**: **Sprint 17 — GAP P0 Closure + Centralization Hardening** (kickoff закрыт 7 wave в одной сессии coordinator-self) + carryover Sprint 16 «Closure».
+**План**: `PLAN.md` **V22.2 FINAL** (S16-S20: 5 спринтов × 2 недели × 5 команд **+ S21-S23 post-production GAP-backlog без дат**).
+**Параллельность**: вторая сессия добавила `6a35c75d [wave:s17/k9-tooling-grep-violations-gate]` (V22 §5 AST gate) + модифицировала CONTEXT/DECISIONS/KNOWN_ISSUES/PLAN.md (S21-S23 post-production gap-backlog ADR-NEW-12..15) — её работа не коммичена в working tree, не трогалась моей сессией.
+**Post-production backlog**: **S21-S23 GAP-backlog активен без дат** (28 пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + 4 новых ADR-NEW-12..15). Запускается после Sprint 20 (`v1.0.0-production`) параллельно release stabilization. См. `PLAN.md` §4 секции Sprint 21/22/23 + `.claude/DECISIONS.md::## ADR из DEEP-RESEARCH Sprint 21-23` + `.claude/KNOWN_ISSUES.md::## Sprint 21-23 GAP-backlog`.
 
-### Sprint 16 — Wave-таблица текущей сессии
+### Sprint 17 kickoff — 7 wave landed (текущая сессия 17:48)
 
 | Wave | Commit | Закрыто |
 |---|---|---|
-| `w3-config-validator` | `06142dda` | **B-2** WAF strict-in-prod + **B-9** ConfigValidator startup gate |
-| `w4-task-registry-coverage` | `f0b0a7b9` | **B-8** TaskRegistry 22/24 callsites (2 secrets carryover) |
-| `w5-mw-dedup-scheduler-metrics` | `cd5dcbf3` | **M-1** APIKey/AuthRequired dedup + **M-9/CP-22** APScheduler observability |
-| `fix-clamav-tcp-syntax` | `b101de85` | Critical Python 2 SyntaxError в `clamav_tcp.py:43` |
-| `w6-async-payload-scanner` | `4c9f6eaa` | **B-3 finale interface**: AsyncPayloadScanner + WafPolicy.evaluate_async + ClamAVPayloadScanner |
-| `w7-clamav-production-wire` | `ecaa198e` | **B-3 finale production wire**: feature-flag + wire + ConfigValidator rule |
+| `s17/backbone` | `b08c974d` | 12 default-OFF feature-flags + 10-команд team-ownership + KNOWN_ISSUES S17 |
+| `s17/k3-w0-routes-capability-gate` | `970b655b` | **K-ARCH-3** audit-event `route.capabilities.allocated` + strict-mode |
+| `s17/k1-w3-call-function-whitelist-strict` | `83ebf9f5` | **K-ARCH-5** RCE prevention: prod strict + `CapabilityGate.check(function.call.<module>)` |
+| `s17/k5-w3-db-migration-init-container` | `c603b895` | **K-OPS-4** alembic init: compose `service_completed_successfully` + k8s Job |
+| `s17/k1-w2-authorization-gateway` | `bd49a53c` | **ADR-NEW-1+4** AuthorizationGateway фасад + CapabilityGatewayProtocol scaffold |
+| `s17/k3-w1-unified-request-context` | `7a335d52` | **ADR-NEW-3** RequestContext frozen dataclass + ContextVar + ASGI MW |
+| `s17/k2-w1-metrics-registry` | `67d37f82` | **D11 backbone** idempotent MetricsRegistry с default_labels (tenant/route/component/env) |
+| `s17/k9-tooling-grep-violations-gate` | `6a35c75d` | **V22 §5 gate** (параллельная сессия) |
+
+### Sprint 16 — Wave-таблица последних сессий (post 2026-05-21 12:00)
+
+| Wave | Commit | Закрыто |
+|---|---|---|
+| `w3-config-validator` | `06142dda` | B-2 WAF strict + B-9 ConfigValidator |
+| `w4-task-registry-coverage` | `f0b0a7b9` | B-8 TaskRegistry coverage |
+| `w5-mw-dedup-scheduler-metrics` | `cd5dcbf3` | M-1 APIKey dedup + M-9/CP-22 APScheduler obs |
+| `w6-async-payload-scanner` | `4c9f6eaa` | B-3 finale interface |
+| `w7-clamav-production-wire` | `ecaa198e` | B-3 finale production wire |
+| `w8-audit-service-unified` | `c1f89e97` | CP-20 partial (AuditService facade) |
+| `w9-feature-flag-runtime-overrides` | `ef9e41f6` | CP-15 partial |
+| `k2-w1-asyncio-lock-registry` | `ea4bea22` | **DoD-2** drop threading.RLock |
+| `closure-docs-phase-c-gap` | `8ee05775` | Phase C финал + **ADR-NEW-5..11** + S18+3 / S19+4 wave |
+| `k1-w1-v1-hotfix-cert-none` | `0ce57673` | **DoD-3 partial** ssl.CERT_NONE drop |
+| `k1-w4-pyproject-prune-empties` | `f31be5e3` | **DoD-11** cleanup 8 V20 commented extras |
+| `k2-w2-outbox-tx-atomic` | `b4b16739` | **DoD-4** transactional outbox |
+| `k3-w1-pygls-lsp-completion-hover` | `bfe5415d` | **DoD-5** LSP completion+hover |
+| `k2-w6-litetemporal-simplify` | `aa9beca9` | **OE-3** LiteTemporalBackend 120→76 LOC |
+| `k1-w2-jwt-introspection` | `012c6500` | **DoD-7** RFC 7662 introspection + 7 unit-тестов |
+| `k4-w1-adaptive-rag-classifier` | `b27ed2cd` | **DoD-6** QueryClassifier + benchmark |
+| `k5-w3-coverage-gate-75` | `352de31c` | **DoD-10** fail_under=75 + tools/coverage/breakdown_by_layer.py |
+| `k1-w3-vault-rotation-protocol` | `fb24f4b9` | **DoD-8** SecretRotator + audit hooks (параллельная сессия) |
+| `k5-w1-plugin-topo-sort` | `ad21354e` | **L8-P1-1** PluginGraphResolver + topo-sort + cycle detection |
+| `s17/k9-tooling-grep-violations-gate` | `6a35c75d` | **V22 §5 gate** AST-aware checker 8 правил + 5 false-positive фильтров (stdlib-only) |
 
 ### Готовность по слоям (актуальная)
 
@@ -54,35 +82,94 @@
 
 ### Открытые риски
 
-1. **B-8 carryover**: 2 callsites `asyncio.create_task` в `infrastructure/secrets/` под path-policy.
-2. **6 baseline failures** в `tests/unit/core/net/test_outbound_http.py` — env SOCKS proxy, не из изменений.
-3. **lint-strict 164 errors** carryover (S112/BLE001).
-4. **OTel Wave 1 unit-тесты** pre-merge gate carryover.
-5. **`M src/backend/core/plugin_runtime/sandbox.py`** — pre-merge gate ожидает S18/S19 strategy.
-6. **Push pending 100+ commits** — commit-policy запрещает без явного запроса.
+1. **Circular import `DegradationManager`** в `src/backend/core/resilience/__init__.py` (carryover из `b4b16739`) — блокирует collection workflow-тестов; нужен fix до next wave.
+2. **DoD-3 FTP carryover** — `ssl.CERT_NONE` ещё в 6 файлах (email_imap/email/ftp×2/imap_monitor); asyncssh pool migration в S17.
+3. **Coverage 75% не verified empirically** — `fail_under` декларирован, baseline `pytest --cov` ещё не прогнан; первый запуск может упасть → ramp-down при необходимости.
+4. **Параллельная сессия активна** — untracked `services/ai/rag/classifier.py` в working tree; `git pull` обязателен в next session.
+5. **B-8 carryover**: 2 `asyncio.create_task` в `infrastructure/secrets/` под path-policy.
+6. **lint-strict 164 errors carryover** (S112/BLE001).
+7. **OTel Wave 1 unit-тесты** pre-merge gate carryover.
+8. **`M src/backend/core/plugin_runtime/sandbox.py`** — pre-merge gate ожидает S18/S19 strategy.
+9. **Push pending ~100 commits** — commit-policy запрещает без явного запроса; разрешён в S20.
+10. **76 LOC LiteTemporalBackend > 70 target** — 6 LOC overshoot, не критично (дальнейшее сжатие удалит русские docstrings).
+11. **NEW: 220 violations baseline от `check-grep-violations`** — gate выйдет с exit 1 на любом проходе по `src/backend`. Распределение: ~150 `except-pass` (новое для оценки — план не учёл) + ~20 `threading-lock-in-async` (DoD-2 carryover S17 K2-W1) + ~20 `inline-metric` (CP-18 carryover S17 K1) + ~5–10 `orphan-create-task` (B-8 carryover) + остатки `ssl-insecure`/`yaml-load-unsafe`/`pickle-loads`/`eval-exec`. Target standalone, НЕ включён в `check-strict-full`/`ci` (по плану). Нужно: a) baseline-allowlist по аналогии с `check_docstrings_allowlist.txt`, ИЛИ b) wave «except-pass cleanup» для крупнейшего кластера.
 
-### Выполненные команды проверки за сессию
+### Выполненные команды проверки за сессию (17:48)
 
-- 67 unit-тестов добавлены, все PASS (22 ConfigValidator + 5 scheduler-obs + 2 api_key-dedup + 9 waf-async + 3 outbound-async + 8 payload-scanner + 4 waf-setup-clamav).
-- ruff + mypy на ВСЕХ новых файлах clean (baseline issues подтверждены через `git stash` сравнение).
-- Smoke import validator/lifecycle/observability/clamav backends — OK.
+- `python tools/check_team_ownership.py` — ✅ 10 команд (k1..k10) + 4 блокеров OK
+- `python tools/checks/check_routes_capability_gate.py --strict` — ✅ declare() ДО registrar() + audit-event
+- Smoke imports 6 новых модулей (capability_gateway / authorization_gateway / request_context / request_context MW / metrics_registry / FeatureFlags S17 flags) — ✅
+- `pytest tests/unit/core/security/test_authorization_gateway.py` — ✅ 10/10
+- `pytest tests/unit/entrypoints/middlewares/test_request_context.py` — ✅ 11/11
+- `pytest tests/unit/infrastructure/observability/test_metrics_registry.py` — ✅ 12/12
+- `pytest tests/unit/services/routes/test_loader.py` — ✅ 28/28 (25 baseline + 3 новых для K-ARCH-3)
+- `pytest tests/unit/dsl/engine/processors/test_function_call.py` — ✅ 10/10 NEW (K-ARCH-5)
+- `pytest tests/unit/dsl/round_trip/test_new_fluent_methods.py` — ✅ 15/15 regression
+- `ruff check` все 6 новых файлов + 3 modified — ✅ All checks passed (после auto-fix I001 + noqa S110 на pre-existing блок)
+- `yaml.safe_load` для docker-compose.yml + k8s migration.yaml — ✅ синтаксис OK
+
+### Выполненные команды проверки за параллельную сессию (17:17)
+
+- `python tools/checks/check_grep_violations.py --root src/backend` — **220 violation(s) found** (новая baseline-карта реального техдолга)
+- `python tools/checks/check_grep_violations.py --root src/backend --json | python -m json.tool` — ✅ JSON valid
+- `make -n check-grep-violations` — ✅ корректно собирается `uv run python tools/checks/check_grep_violations.py --root src/backend`
+- Synthetic violation `asyncio.create_task` → ✅ exit 1
+- Docstring пример `yaml.load(data)` → ✅ exit 0 (AST автоматически не парсит string-содержимое)
+- ruamel.yaml `YAML().load()` → ✅ exit 0 (через анализ импортов)
+- selftest + `if __name__ == "__main__":` → ✅ exit 0
+- noqa allowlist (`# noqa: violation-check`) → ✅ 1/2 detected, помеченная пропущена
+- `uv run ruff check tools/checks/check_grep_violations.py` — ✅ All checks passed (после `# noqa: S105` × 2 на идентификаторах правил)
+- `uv run mypy tools/checks/check_grep_violations.py` — ✅ Success: no issues found
+
+### Выполненные команды проверки за предыдущую сессию (16:20)
+
+- `uv run pytest tests/unit/core/plugin_runtime/test_dependency_resolver.py -x -v` — ✅ **5/5 passed in 0.29s**
+- `uv run pytest tests/unit/core/plugin_runtime/` — ✅ **21/21 passed in 0.33s**
+- `uv run pytest tests/unit/services/plugins/test_loader_v11.py test_loader_v11_frontend_pages.py` — ✅ **21/21 passed in 0.35s** (regress-free)
+- `uv run ruff check <4 modified files>` — ✅ All checks passed
+- `uv run mypy src/backend/core/plugin_runtime/dependency_resolver.py` — ✅ Success
+- `uv run mypy src/backend/services/plugins/loader_v11.py` — ✅ Success
+- `uv run python -c "from src.backend.core.plugin_runtime import PluginGraphResolver, PluginDependencyCycleError"` — ✅ OK
+
+### Командные проверки предыдущей сессии (16:15, для истории)
+
+- `uv lock --check` — ✅ 657 packages resolved
+- `pytest tests/unit/entrypoints/api/v1/test_auth_introspect.py -x -q` — ✅ **7/7 passed in 0.44s**
+- ⚠️ `pytest tests/unit/infrastructure/workflow/test_lite_temporal_backend.py` — collection error (DegradationManager circular import carryover)
 
 ### Следующий шаг
 
-**Sprint 17 «Centralization» (наиболее логичный кандидат)**:
+**На обсуждение (plan mode, 2026-05-21 17:17)** — кандидаты на следующую итерацию:
 
-1. **CP-15 FeatureFlagService finale** (B-6, 2-3 дня) — Redis pub/sub + admin endpoint + audit hook. Зависит от CP-20.
-2. **CP-20 AuditService.emit() unified** (B-7, 3-5 дней) — единый emit, рефакторинг 4 callsites, ClickHouse outbox.
-3. **CP-17 AuthorizationGateway** (M-5, 3-5 дней) — фасад над Casbin/OPA/CapabilityGate/AdminRoles.
-4. **CP-18 MetricsRegistry** (M-8, 4-6 дней) — idempotent registry, миграция 30 Counter + 6 Histogram.
+- **A. Baseline-allowlist + интеграция в CI** — `tools/checks/violation_check_allowlist.txt` со списком 220 текущих позиций; включить gate в `check-strict-full` (ratcheting как mypy-budget).
+- **B. except-pass cleanup wave** — выделенная S17 wave «replace `except: pass` with `except: logger.exception()`» — закроет крупнейший кластер ~150 нарушений за один проход.
+- **C. S17 carryover** — DoD-3 finale FTP, DoD-9 pybreaker, CP-15 FeatureFlagService, CP-20 AuditService.
+- **D. Расширение grep-gate новыми правилами V22** — pre-import check, banned-imports по слоям AST.
+- **E. Push pending ~100 commits** — заблокировано commit-policy до S20.
 
-**Альтернатива** — Sprint 18 «Security Final»: B-1 SAML + B-4 ZAP + B-5 EntryGateway contract-test.
+**S16 closure (оставшиеся wave для 12/12 DoD)**:
 
-**Перед любым следующим wave** обязательно: `make ci` + `docker compose -f ops/compose/docker-compose.yml config` (M-10 carryover smoke verify).
+1. **DoD-3 finale** `[wave:s16/k1-w1-asyncssh-pool]` — FTP migration на asyncssh + testcontainers.
+2. **DoD-9** `[wave:s16/k2-w4-pybreaker-replace]` — custom CB → pybreaker, Redis state backend.
+3. **DoD-12** `[wave:s16/closure]` — финал DoD audit + memory note + `make pre-prod-check`.
+4. ~~**DoD-8** Vault rotation~~ — закрыто `fb24f4b9` (параллельная сессия)
+5. ~~**L8-P1-1** PluginGraphResolver topo-sort~~ — закрыто `ad21354e` (текущая сессия)
+
+**Sprint 17 «Centralization» (после S16 closure)**:
+1. **CP-15 FeatureFlagService finale** (B-6) — Redis pub/sub + admin endpoint.
+2. **CP-20 AuditService.emit() unified** (B-7) — единый emit, 4 callsites рефактор.
+3. **CP-17 AuthorizationGateway** (M-5) — фасад Casbin/OPA/CapabilityGate.
+4. **CP-18 MetricsRegistry** (M-8) — idempotent registry, миграция 30 Counter + 6 Histogram.
+
+**Перед next wave** обязательно: разрешить `DegradationManager` circular import → `pytest --co -q` зелёный → empirical coverage baseline через `python tools/coverage/breakdown_by_layer.py coverage.xml`.
 
 ### Архив + сессии
 
-- `vault/session-2026-05-21-1400-summary.md` — детальная сводка этой сессии (Waves 3-7).
+- `vault/session-2026-05-21-1748-summary.md` — **детальная сводка текущей сессии** (S17 kickoff coordinator-self, 7 wave, ~1100 LOC, 46 новых тестов, ADR-NEW-1/3/4 scaffold + K-ARCH-3/5 + K-OPS-4 + D11 backbone).
+- `vault/session-2026-05-21-1717-summary.md` — детальная сводка параллельной сессии (S17 K9 AST-aware grep-gate, 2 файла, +271 LOC, 220 violations baseline).
+- `vault/session-2026-05-21-1620-summary.md` — K5-W1 PluginGraphResolver (4 файла, +363).
+- `vault/session-2026-05-21-1615-summary.md` — Phase C + Actions 0-5.
+- `vault/session-2026-05-21-1400-summary.md` — Waves 3-7 GAP closure.
 - `vault/session-2026-05-2[01]-*-summary.md` — предыдущие сессии.
 - `vault/archive-plan-v21.md` — архив PLAN.md V21.
 - `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` — внутренний V3.0 (38 GAP по 14 доменам).

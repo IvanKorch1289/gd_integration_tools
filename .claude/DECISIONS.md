@@ -319,3 +319,139 @@ README + `docs/backends.md` явная декларация: «Tier-A — produc
 - **Public Testkit API** для extensions — отнесено в S19 DX backlog (под VSCode extension).
 - **Multi-Region Active-Active** — post-V22 (V23+ для M-C use case если активируется).
 - **Per-tenant cryptographic isolation** — post-V22 (см. ADR-NEW-9 revert path).
+
+---
+
+## ADR из DEEP-RESEARCH Sprint 21-23 (post-production gap-backlog)
+
+Источник: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (Hermes Agent ultrathink, 10 L1–L10 субагентов). После Sprint 20 (`v1.0.0-production`) запускается post-production backlog S21-S23 (PLAN.md V22.2 FINAL §4) для закрытия 28 нерешённых GAP-пунктов. 4 новых ADR (ADR-NEW-12..15) — backbone S21/S23.
+
+### ADR-NEW-12: Row-Level Security (RLS) Strategy для multi-tenant PostgreSQL таблиц
+
+**Контекст**. После M-B scope reduction (ADR-NEW-9) `tenant_encryption.py` удалён, но logical separation между BU остаётся необходимой. Текущая защита: `TenantContextMiddleware` + ACL в коде + audit `tenant_id`. Уязвимости:
+- Cache poisoning: один BU подсовывает другому свой `tenant_id` через cache-key prefix injection (B-03 в DEEP-RESEARCH).
+- Application-bug: разработчик забывает фильтр `WHERE tenant_id = :tid` в новом query → cross-BU data leak.
+- Audit-trail неполная: SELECT без `tenant_id` в WHERE не отлавливается.
+
+**Решение**. PostgreSQL Row-Level Security (RLS) на уровне БД:
+1. Alembic-миграция для multi-tenant таблиц (`orders`, `users`, `files`, `audit_log`, `routes_state`):
+   ```sql
+   ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY tenant_isolation ON orders
+     USING (tenant_id = current_setting('app.tenant_id')::uuid);
+   ```
+2. `TenantContextMiddleware` (S17 ADR-NEW-3 RequestContext) per-request `SET LOCAL app.tenant_id = '...'` в начале транзакции.
+3. Feature-flag `RLS_POSTGRES_ENFORCE` (default-OFF в S21 backbone; flip default-ON в S22 после testing).
+4. Tests: `tests/security/test_rls_isolation.py` — 5 сценариев leakage (cache poisoning attempt / cross-BU SELECT / WHERE filter bypass / TRIGGER bypass / SUPERUSER override-attempt).
+
+**Обоснование**. Defence-in-depth: даже при application-bug RLS блокирует cross-BU SELECT/UPDATE/DELETE. PostgreSQL feature, не требует custom infrastructure. Стандарт banking compliance (SOX section 404 audit-trail).
+
+**Последствия**. (+) Database-enforced isolation в дополнение к application-layer. (+) Audit-trail полная (PG logs RLS violations). (+) M-B → M-C migration path remains (см. ADR-NEW-9 revert path). (−) Alembic migration требует downtime на ALTER TABLE (mitigated CONCURRENTLY где возможно). (−) Performance overhead ~3-5% на point-lookup (acceptable).
+
+**Wave**: `[wave:s21/k1-w1-rls-postgres]`.
+
+---
+
+### ADR-NEW-13: RPACallPolicy — единый wrapper resilience для RPA/CDC/FileWatcher/Webhook/DesktopRPA
+
+**Контекст**. DEEP-RESEARCH 2026-05-20 (B-02): пять разных RPA-подобных компонентов имеют разрозненную resilience-стратегию:
+- `services/rpa/browser_pool.py` — own retry-loop (5 attempts, fixed backoff);
+- `infrastructure/sources/cdc.py` — tenacity retry без breaker;
+- `infrastructure/sources/filewatcher.py` — no retry, no DLQ;
+- `entrypoints/webhook/scheduler.py` — own retry-policy (3 attempts);
+- `services/rpa/desktop_rpa.py` — no retry-policy.
+
+Это нарушает Single Entry V22 (`ResilienceCoordinator` class). Невозможно централизованно задать budget / breaker-state / DLQ-routing. Operations team не имеет единого dashboard для RPA resilience.
+
+**Решение**. Создать `core/resilience/rpa_policy.py::RPACallPolicy` — единый wrapper:
+```python
+class RPACallPolicy:
+    def __init__(self, name: str, max_attempts: int, backoff: BackoffStrategy,
+                 breaker: CircuitBreaker, dlq_writer: DLQWriter): ...
+    async def call(self, fn: Callable[..., Awaitable[T]], *args, **kwargs) -> T: ...
+```
+Композирует:
+- `tenacity` retry (S2 unification);
+- `pybreaker` breaker (S16 W10 carryover);
+- DLQ через `core/messaging/outbox.py` (S2 K2 W3) с `kind=rpa_failure`;
+- Audit-event `rpa.call.{attempt|success|failure|breaker_open}`.
+
+Все 5 компонентов миграция на `RPACallPolicy.call(...)`. Feature-flag `RPA_RESILIENCE_WRAPPER_ENABLED` (default-OFF в S21 backbone).
+
+**Обоснование**. Единый Single Entry для RPA resilience. Operations dashboard — один `/admin/circuit-breakers` (S22 F-02) covers все RPA. Bench: 5 toxiproxy сценариев в `tests/resilience/test_rpa_policy.py` (network partition / slow response / connection refused / TLS handshake fail / HTTP 5xx burst).
+
+**Последствия**. (+) Centralization V22 для RPA. (+) Operations visibility единая. (+) DLQ routing для всех RPA-failures. (−) Миграция 5 компонентов (~3-4 дня). (−) ABI breaking — если extensions/* напрямую импортируют `browser_pool.acquire`, нужна wrapper-обёртка с deprecated warning.
+
+**Wave**: `[wave:s21/k2-w1-rpa-resilience-wrapper]`.
+
+---
+
+### ADR-NEW-14: Workflow State Persistence — SQLite (LiteTemporal) + Temporal Cloud (production)
+
+**Контекст**. DEEP-RESEARCH 2026-05-20 (B-05, A-04): `infrastructure/workflow/lite_temporal_backend.py` (S16 W14 OE-3 simplified до 76 LOC) хранит in-flight workflow state **только в памяти**. Под dev_light это нормально, но:
+- Worker crash → потеря state всех in-flight workflows (rerun из начала).
+- Saga compensating state теряется → orphan compensations.
+- В production Temporal Cloud хранит state в своей БД, но нет explicit `WorkflowState` модели для compensating actions (rollback events не персистированы как first-class entities).
+
+**Решение**. Два пути:
+1. **LiteTemporalBackend (dev_light)**: `aiosqlite` persistence для in-flight workflow state.
+   ```python
+   class LiteSQLitePersistence:
+       async def save_state(self, wf_id: str, state: dict) -> None: ...
+       async def load_state(self, wf_id: str) -> dict | None: ...
+       async def delete_state(self, wf_id: str) -> None: ...
+   ```
+2. **Production Temporal Cloud**: `infrastructure/workflow/saga_state.py::WorkflowState` SQLAlchemy model (PostgreSQL table) для saga compensating state:
+   ```python
+   class WorkflowState(Base):
+       workflow_id: Mapped[str]
+       run_id: Mapped[str]
+       step_index: Mapped[int]
+       compensating_actions: Mapped[list[dict]]  # JSON
+       state: Mapped[Literal['running', 'completed', 'compensating', 'rolled_back']]
+   ```
+   Persisted через Temporal `signal_event` activity (saga state checkpoint).
+
+Feature-flag `WORKFLOW_STATE_SQLITE_PERSIST` (default-OFF в S21 backbone). Tests: `tests/workflow/test_state_persistence.py` — 4 crash-recover сценария.
+
+**Обоснование**. Saga durability — обязательное требование banking compliance (no orphan compensations). LiteTemporalBackend persistence нужна для local dev experience (`ctrl+C` не теряет work-in-progress). SQLite — лёгкий, file-based, async через aiosqlite — не добавляет heavy dependency в dev-стек.
+
+**Последствия**. (+) Crash-resilience для dev_light. (+) Saga compensating actions auditable через PG table. (+) Foundation для future "workflow replay" UI. (−) Дополнительная alembic-миграция для `workflow_state` table. (−) Performance overhead на save_state per-step (~5ms p99, acceptable).
+
+**Wave**: `[wave:s21/k3-w3-workflow-state-persist]`.
+
+---
+
+### ADR-NEW-15: Chaos PR-gate (on-PR triggered chaos tests with label)
+
+**Контекст**. DEEP-RESEARCH 2026-05-20 (F-15 follow-up S20 W6): chaos test suite (33 tests, Toxiproxy) запускается только nightly. PR может пройти CI зелёным, но сломать chaos-resilience (например, removing breaker.guard() обёртку). Bug обнаруживается на следующий день в nightly — слишком поздно для PR review.
+
+С другой стороны: chaos suite длится 8-12 минут. Если запускать на каждый PR — CI becomes slow и draining для contributor. Нужен compromise.
+
+**Решение**. PR-gate на label. `.github/workflows/chaos-gate.yml`:
+```yaml
+on:
+  pull_request:
+    types: [labeled, synchronize]
+jobs:
+  chaos:
+    if: contains(github.event.pull_request.labels.*.name, 'needs-chaos')
+    steps:
+      - run: make chaos
+```
+Триггеры:
+- Reviewer добавляет label `needs-chaos` если PR трогает: `core/resilience/`, `infrastructure/sources/`, `infrastructure/sinks/`, `entrypoints/webhook/`, `services/rpa/`.
+- `synchronize` event перезапускает на push в PR с этим label.
+- Без label — chaos не запускается (default нагрузка на CI остаётся низкой).
+
+PR-checks становятся required: chaos-gate (когда label present) → блокирует merge при fail.
+
+CI gate label: при отсутствии label в PR на critical paths (above list) — comment-bot пишет "Consider adding `needs-chaos` label for resilience-critical changes."
+
+Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON после первой недели observation).
+
+**Обоснование**. Compromise между скоростью CI и chaos-resilience guarantees. Required только для PR, которые fact трогают resilience код. Bot-comment educates reviewer'а на правильное использование label.
+
+**Последствия**. (+) Resilience regressions detect at PR-time, не nightly. (+) Не slow-downим CI для not-critical PRs. (+) Comment-bot scaffolds правильную практику. (−) Bypass: reviewer может забыть label → relies on comment-bot reminders. (−) Дополнительный workflow YAML maintenance.
+
+**Wave**: `[wave:s23/k5-w3-chaos-ci-pr-gate]`.

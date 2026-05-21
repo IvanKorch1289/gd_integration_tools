@@ -140,6 +140,78 @@
 - **Sprint 18** — Operational/Security (S-L1, S-L7, S-L8) + 10 функциональных предложений из Phase 3 диалога
 - **Sprint 19** — DSL/AI расширения (S-L4) + 6 функциональных предложений (workflow versioning, route composition, route authz, multipart RAG, reranking, RPA sessions)
 - **Sprint 20** — Coverage finale + pre-prod-check v2 38/38 + DR & Backup verified
+- **Sprint 21-23 (NEW V22.2 FINAL, post-production)** — 28 пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + 5 follow-up. См. секцию «Sprint 21-23 GAP-backlog» ниже.
+
+---
+
+## Sprint 21-23 GAP-backlog (DEEP-RESEARCH 2026-05-20) — post-production без дат
+
+**Контекст**. После Sprint 20 (`v1.0.0-production`) начинается post-production backlog S21-S23 (PLAN.md V22.2 FINAL §4) для закрытия 28 нерешённых GAP-пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (668 LOC, Hermes Agent ultrathink, 10 L1–L10 субагентов).
+
+**Финальная оценка готовности** до S21-S23: **6.3/10** → после S21-S23: **≥ 8.5/10** (production-grade).
+
+**Решения пользователя 2026-05-21**:
+1. 3 спринта S21-S23 (Resilience+Multi-tenancy / Observability+Testing / AI/DSL/DX).
+2. Новый scope + follow-up к частично покрытым в S17-S20.
+3. БЕЗ дат — не блокирует release v1.0.0.
+
+### Покрыто в S17-S20 (НЕ дублируется в S21-S23)
+
+| GAP | Локация в PLAN.md V22.2 |
+|-----|--------------------------|
+| B-01 Middleware auth-agnostic | S17 ADR-NEW-2 |
+| G-01 RequestContext | S17 ADR-NEW-3 |
+| G-11 WAF strict default | S18 W1 WAF-allowlist tightening |
+| G-12 28 CVEs | S18 W1 supply-chain-finale |
+| F-13 Secret rotation | S16 W7 vault-rotation |
+| ADR-NEW-9 Multi-tenancy reduce | S18 W6 |
+| B-04 Hot-Reload disable | S19 W6 ADR-NEW-7 (disable вариант) |
+
+### Частично покрыто — follow-up в S21-S23
+
+| GAP | Текущее покрытие | Follow-up |
+|-----|-------------------|-----------|
+| B-06 PII masker | S18 W1 PII response MW | S22 К1 W2 (unification всех слоёв) |
+| G-04 Guardrail enforcement | S18 W18 enforcer | S23 К4 W2 (framework F-04) |
+| G-05 AI Sandbox NoOp | S18 R1.20 sandbox strategy | S23 К4 W3 (e2b finalize) |
+| F-08 Workflow versioning | S19 K3 workflow-versioning-routes | S23 К3 W3 (migration runtime) |
+| F-15 Chaos CI | S20 W6 chaos-finale | S23 К5 W3 (PR-gate) |
+
+### НЕ покрыто (28 пунктов) → wave-ids в S21-S23
+
+| Sprint | Команда | GAP-пункты | Wave-ids |
+|--------|---------|------------|----------|
+| **S21** | К1 | B-03 Tenant cache (A-03), G-08 RLS | `s21/k1-w1-rls-postgres`, `s21/k1-w2-tenant-cache-wrapper` |
+| **S21** | К2 | B-02 RPA resilience (A-05), G-07 Webhook resilience, G-09 Scheduler DLQ | `s21/k2-w1-rpa-resilience-wrapper`, `s21/k2-w2-scheduler-dlq`, `s21/k2-w3-webhook-resilience` |
+| **S21** | К3 | B-05 Workflow state (A-04), B-09 Desktop RPA pool, G-06 Browser cookies | `s21/k3-w1-desktop-rpa-pool`, `s21/k3-w2-browser-cookies-redis`, `s21/k3-w3-workflow-state-persist` |
+| **S21** | К5 | Streamlit page 81 | `s21/k5-w1-streamlit-tenant-admin` |
+| **S22** | К1 | B-06 PII unify (A-07), B-07 SecurityHeaders ASGI (A-06) | `s22/k1-w1-security-headers-asgi`, `s22/k1-w2-pii-masker-unify` |
+| **S22** | К2 | B-08 Smoke tests, G-15 MW integration tests, G-16 Property-based tests, F-10 Obs tests, G-10 AlertManager | `s22/k2-w1-smoke-tests`, `s22/k2-w2-middleware-integration-tests`, `s22/k2-w3-hypothesis-suite`, `s22/k2-w4-observability-test-suite`, `s22/k2-w5-alertmanager-rules` |
+| **S22** | К3 | G-02 Processor DI | `s22/k3-w1-processor-di` |
+| **S22** | К4 | F-11 Semantic cache heatmap | `s22/k4-w1-semantic-cache-heatmap` |
+| **S22** | К5 | F-02 CB Dashboard, F-09 Rate-limit Dashboard, F-14 SLA Dashboard | `s22/k5-w1-cb-dashboard`, `s22/k5-w2-ratelimit-dashboard`, `s22/k5-w3-sla-dashboard` |
+| **S23** | К1 | G-14 Docker registry push | `s23/k1-w1-docker-registry-push` |
+| **S23** | К3 | G-03 Workflow hot reload, F-01 Schema Registry, F-03 Route Marketplace, F-05 Webhook retry declarative | `s23/k3-w1-workflow-hot-reload`, `s23/k3-w2-schema-registry-rest`, `s23/k3-w3-blueprints-marketplace`, `s23/k3-w4-webhook-retry-policy` |
+| **S23** | К4 | B-10 Multi-agent supervisor, F-04 AI Guardrails framework, F-06 Plugin Sandbox e2b | `s23/k4-w1-multiagent-supervisor-llm`, `s23/k4-w2-ai-guardrails-framework`, `s23/k4-w3-plugin-sandbox-e2b` |
+| **S23** | К5 | G-13 Backend HPA, F-07 Multi-region scaffold, F-15 Chaos CI PR-gate | `s23/k5-w1-backend-hpa`, `s23/k5-w2-multi-region-scaffold`, `s23/k5-w3-chaos-ci-pr-gate` |
+
+### 4 новых ADR (ADR-NEW-12..15)
+
+См. `.claude/DECISIONS.md::## ADR из DEEP-RESEARCH Sprint 21-23 (post-production gap-backlog)`:
+- **ADR-NEW-12** — RLS Strategy (PostgreSQL Row-Level Security + SET LOCAL) — S21 W1.
+- **ADR-NEW-13** — RPACallPolicy (единый resilience wrapper для RPA/CDC/FileWatcher/Webhook/DesktopRPA) — S21 W3.
+- **ADR-NEW-14** — Workflow State Persistence (SQLite LiteTemporal + Temporal Cloud) — S21 W8.
+- **ADR-NEW-15** — Chaos PR-gate (on-PR triggered chaos tests with label `needs-chaos`) — S23 W11.
+
+### Backlog после S23 (если потребуется V23+)
+
+См. PLAN.md §9:
+- Schema Registry V2 — production hardening после S23 W3.
+- Multi-region production rollout (Consul + DNS-based discovery) — после S23 W10 scaffold.
+- e2b cost optimization + AWS Firecracker fallback — после S23 W8.
+- DSPy LLM optimization pipeline (cost-aware prompt compression).
+- Distributed tracing для AI inference pipeline (LangFuse + Phoenix Arize).
+- Per-tenant cryptographic isolation (M-C use case) — revert ADR-NEW-9.
 
 ---
 
