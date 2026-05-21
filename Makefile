@@ -910,3 +910,12 @@ review-clones-diff:  ## Сравнить с baseline; fail при появлен
 	uv tool run --from "codeclone[mcp]" codeclone \
 		--baseline $(CLONE_BASELINE) \
 		--no-progress src/backend/
+
+# ---------------------------------------------------------------------- #
+# Sprint 17 K9 — AST-aware grep-gate для запрещённых паттернов V22 §5.   #
+# Скрипт фильтрует docstring-блоки, CLI selftest и ruamel.yaml.          #
+# ---------------------------------------------------------------------- #
+.PHONY: check-grep-violations
+
+check-grep-violations: check-env ## V22 §5: AST-aware fail-on запрещённые паттерны (8 правил)
+	$(UV_RUN) python tools/checks/check_grep_violations.py --root src/backend
