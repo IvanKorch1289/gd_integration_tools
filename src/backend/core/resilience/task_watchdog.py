@@ -29,10 +29,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 
-__all__ = (
-    "TaskWatchdog",
-    "get_task_watchdog",
-)
+__all__ = ("TaskWatchdog", "get_task_watchdog")
 
 _logger = logging.getLogger(__name__)
 
@@ -93,11 +90,7 @@ class TaskWatchdog:
 
         task_name = name or task.get_name() or "<unnamed>"
         self._registrations.append(
-            _Registration(
-                task=task,
-                deadline_seconds=deadline_seconds,
-                name=task_name,
-            )
+            _Registration(task=task, deadline_seconds=deadline_seconds, name=task_name)
         )
 
     async def start(self) -> None:
@@ -113,7 +106,11 @@ class TaskWatchdog:
         if self._monitor_task is not None and not self._monitor_task.done():
             return
         self._stopped = False
-        self._monitor_task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._monitor_task = get_task_registry().create_task(
             self._monitor_loop(), name="task-watchdog-monitor"
         )
 
@@ -128,7 +125,7 @@ class TaskWatchdog:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
+            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
                 pass
 
     async def tick(self) -> None:
@@ -178,8 +175,7 @@ class TaskWatchdog:
                     await self.tick()
                 except Exception as exc:  # noqa: BLE001
                     _logger.warning(
-                        "task_watchdog.tick_error",
-                        extra={"error": repr(exc)},
+                        "task_watchdog.tick_error", extra={"error": repr(exc)}
                     )
         except asyncio.CancelledError:
             raise

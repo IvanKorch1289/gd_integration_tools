@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 __all__ = (
@@ -148,9 +148,7 @@ class TemporalClientFactory:
     async def _load_certs_from_vault(self) -> dict[str, str] | None:
         """Sprint 12 K1 W2 — issue/refresh cert через Vault PKI engine."""
         try:
-            from src.backend.infrastructure.secrets.vault_pki import (
-                VaultPkiClient,
-            )
+            from src.backend.infrastructure.secrets.vault_pki import VaultPkiClient
 
             pki = VaultPkiClient()
             bundle = pki.issue_cert(
@@ -165,8 +163,7 @@ class TemporalClientFactory:
             }
         except Exception as exc:  # noqa: BLE001
             _logger.warning(
-                "Vault PKI cert issue failed (%s); fallback to file backend",
-                exc,
+                "Vault PKI cert issue failed (%s); fallback to file backend", exc
             )
             return self._tls
 
@@ -196,12 +193,7 @@ class TemporalWorkerPool:
         namespace: namespace, в котором живут все workers пула.
     """
 
-    def __init__(
-        self,
-        *,
-        factory: TemporalClientFactory,
-        namespace: str,
-    ) -> None:
+    def __init__(self, *, factory: TemporalClientFactory, namespace: str) -> None:
         self._factory = factory
         self._namespace = namespace
         self._workers: dict[str, Any] = {}  # task_queue → worker
@@ -209,11 +201,7 @@ class TemporalWorkerPool:
         self._lock = asyncio.Lock()
 
     async def register_worker(
-        self,
-        *,
-        task_queue: str,
-        workflows: list[Any],
-        activities: list[Any],
+        self, *, task_queue: str, workflows: list[Any], activities: list[Any]
     ) -> None:
         """Создать и запустить worker для конкретного task_queue."""
         from temporalio.worker import Worker
@@ -233,7 +221,11 @@ class TemporalWorkerPool:
                 activities=activities,
             )
             self._workers[task_queue] = worker
-            self._tasks[task_queue] = asyncio.create_task(
+            from src.backend.core.utils.task_registry import (
+                get_task_registry,  # noqa: PLC0415
+            )
+
+            self._tasks[task_queue] = get_task_registry().create_task(
                 worker.run(), name=f"temporal-worker-{task_queue}"
             )
 
@@ -245,8 +237,7 @@ class TemporalWorkerPool:
                     await worker.shutdown()
                 except Exception:  # noqa: BLE001
                     _logger.exception(
-                        "temporal.worker.shutdown_failed",
-                        extra={"task_queue": tq},
+                        "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )
             self._workers.clear()
             for task in self._tasks.values():
@@ -316,7 +307,11 @@ class ActivityHeartbeatMonitor:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        self._task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(
             self._run(), name="temporal-heartbeat-monitor"
         )
 
@@ -327,16 +322,14 @@ class ActivityHeartbeatMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._task = None
 
     async def _run(self) -> None:
         while not self._stop.is_set():
             try:
-                await asyncio.wait_for(
-                    self._stop.wait(), timeout=self._check_interval
-                )
+                await asyncio.wait_for(self._stop.wait(), timeout=self._check_interval)
             except asyncio.TimeoutError:
                 pass  # timer-triggered
             await self._check_once()

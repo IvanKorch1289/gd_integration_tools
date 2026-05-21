@@ -19,9 +19,7 @@ class RagInvalidationBus:
     """Тонкий wrapper над Redis pub/sub для invalidate_by_tag-событий."""
 
     def __init__(
-        self,
-        channel: str = "rag:invalidation",
-        redis_client: Any | None = None,
+        self, channel: str = "rag:invalidation", redis_client: Any | None = None
     ) -> None:
         self._channel = channel
         self._client = redis_client
@@ -84,13 +82,13 @@ class RagInvalidationBus:
             except Exception as exc:  # noqa: BLE001
                 logger.debug("RagInvalidationBus listener stopped: %s", exc)
 
-        try:
-            from src.backend.core.utils.task_registry import get_task_registry
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
 
-            registry = get_task_registry()
-            self._task = registry.create_task(_listen(), name="rag-invalidation-listen")
-        except Exception:  # noqa: BLE001
-            self._task = asyncio.create_task(_listen(), name="rag-invalidation-listen")
+        self._task = get_task_registry().create_task(
+            _listen(), name="rag-invalidation-listen"
+        )
 
     async def stop(self) -> None:
         """Останавливает listener."""

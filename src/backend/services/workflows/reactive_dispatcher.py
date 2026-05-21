@@ -19,13 +19,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-__all__ = (
-    "ReactiveTrigger",
-    "ReactiveWorkflowDispatcher",
-)
+__all__ = ("ReactiveTrigger", "ReactiveWorkflowDispatcher")
 
 _logger = logging.getLogger("services.workflows.reactive_dispatcher")
 
@@ -74,13 +71,9 @@ class ReactiveWorkflowDispatcher:
         self._sem = asyncio.Semaphore(max_concurrent_starts)
         self._started = False
 
-    def register_trigger(
-        self, workflow_id: str, trigger: ReactiveTrigger
-    ) -> None:
+    def register_trigger(self, workflow_id: str, trigger: ReactiveTrigger) -> None:
         """Регистрирует trigger для workflow."""
-        self._triggers.setdefault(trigger.channel, []).append(
-            (workflow_id, trigger)
-        )
+        self._triggers.setdefault(trigger.channel, []).append((workflow_id, trigger))
 
     async def start(self) -> None:
         """Subscribe ко всем каналам через EventBus."""
@@ -100,8 +93,7 @@ class ReactiveWorkflowDispatcher:
             if not pending.task.done():
                 pending.task.cancel()
         await asyncio.gather(
-            *[p.task for p in self._pending.values()],
-            return_exceptions=True,
+            *[p.task for p in self._pending.values()], return_exceptions=True
         )
         self._pending.clear()
         self._started = False
@@ -112,8 +104,7 @@ class ReactiveWorkflowDispatcher:
             await self._bus.subscribe(channel, self._make_handler(channel))
         else:
             _logger.warning(
-                "EventBus.subscribe unavailable — trigger %s skipped",
-                channel,
+                "EventBus.subscribe unavailable — trigger %s skipped", channel
             )
 
     def _make_handler(
@@ -136,8 +127,7 @@ class ReactiveWorkflowDispatcher:
             dedup_key = trigger.dedup_key
             if dedup_key:
                 resolved_key = (
-                    f"reactive:dedup:{workflow_id}:"
-                    f"{event.get(dedup_key, dedup_key)}"
+                    f"reactive:dedup:{workflow_id}:{event.get(dedup_key, dedup_key)}"
                 )
                 if not await self._check_dedup(resolved_key):
                     _logger.debug("Dedup hit for %s", resolved_key)
@@ -149,10 +139,7 @@ class ReactiveWorkflowDispatcher:
                 await self._start_workflow(workflow_id, trigger, event)
 
     def _schedule_debounce(
-        self,
-        workflow_id: str,
-        trigger: ReactiveTrigger,
-        event: dict[str, Any],
+        self, workflow_id: str, trigger: ReactiveTrigger, event: dict[str, Any]
     ) -> None:
         """Запускает debounce timer; при повторном event перезапускает."""
         debounce_key = f"{workflow_id}:{trigger.channel}"
@@ -165,23 +152,22 @@ class ReactiveWorkflowDispatcher:
                 await asyncio.sleep(trigger.debounce_seconds)
                 last = self._pending.get(debounce_key)
                 if last is not None:
-                    await self._start_workflow(
-                        workflow_id, trigger, last.last_event
-                    )
+                    await self._start_workflow(workflow_id, trigger, last.last_event)
                 self._pending.pop(debounce_key, None)
             except asyncio.CancelledError:
                 pass
 
-        task = asyncio.create_task(_delayed_start())
-        self._pending[debounce_key] = _PendingDebounce(
-            task=task, last_event=event
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
         )
 
+        task = get_task_registry().create_task(
+            _delayed_start(), name=f"reactive-debounce-{workflow_id}"
+        )
+        self._pending[debounce_key] = _PendingDebounce(task=task, last_event=event)
+
     async def _start_workflow(
-        self,
-        workflow_id: str,
-        trigger: ReactiveTrigger,
-        event: dict[str, Any],
+        self, workflow_id: str, trigger: ReactiveTrigger, event: dict[str, Any]
     ) -> None:
         """Старт workflow через capability gated facade."""
         async with self._sem:
@@ -196,9 +182,7 @@ class ReactiveWorkflowDispatcher:
                 )
             except Exception as exc:  # noqa: BLE001
                 _logger.error(
-                    "Failed to start reactive workflow %s: %s",
-                    workflow_id,
-                    exc,
+                    "Failed to start reactive workflow %s: %s", workflow_id, exc
                 )
 
     @staticmethod

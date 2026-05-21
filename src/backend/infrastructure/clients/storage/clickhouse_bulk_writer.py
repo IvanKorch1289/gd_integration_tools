@@ -84,7 +84,9 @@ class ClickHouseBulkWriter:
         self._table = table
         self._max_buffer_size = max_buffer_size
         self._flush_interval = flush_interval_seconds
-        self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=queue_max_size)
+        self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
+            maxsize=queue_max_size
+        )
         self._stop = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
         self._on_failure = on_failure
@@ -95,7 +97,13 @@ class ClickHouseBulkWriter:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        self._task = asyncio.create_task(self._run(), name=f"chbulk-{self._table}")
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(
+            self._run(), name=f"chbulk-{self._table}"
+        )
 
     async def add(self, row: dict[str, Any]) -> None:
         """Поставить строку в очередь. Блокирует если queue full."""

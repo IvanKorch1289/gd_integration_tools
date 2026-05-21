@@ -21,6 +21,7 @@ from typing import Any
 
 from src.backend.core.scaling.bulkhead_scaler import BulkheadScaler
 from src.backend.core.scaling.local_process_scaler import LocalProcessScaler
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = ("AutoScaler",)
 
@@ -60,7 +61,9 @@ class AutoScaler:
             _logger.warning("AutoScaler.start: уже запущен; пропуск")
             return
         self._stop_event.clear()
-        self._task = asyncio.create_task(self._run_loop(), name="auto_scaler.loop")
+        self._task = get_task_registry().create_task(
+            self._run_loop(), name="auto_scaler.loop"
+        )
         _logger.info("AutoScaler started (interval=%.1fs)", self._tick_interval_s)
 
     async def stop(self) -> None:
@@ -74,7 +77,7 @@ class AutoScaler:
         self._task.cancel()
         try:
             await self._task
-        except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110 — graceful shutdown
+        except asyncio.CancelledError, Exception:  # noqa: BLE001, S110 — graceful shutdown
             pass
         finally:
             self._task = None
@@ -87,7 +90,11 @@ class AutoScaler:
             Сводный dict ``{"bulkhead": {...}, "process_workers": int|None,
             "hpa_exported": bool}``.
         """
-        result: dict[str, Any] = {"bulkhead": {}, "process_workers": None, "hpa_exported": False}
+        result: dict[str, Any] = {
+            "bulkhead": {},
+            "process_workers": None,
+            "hpa_exported": False,
+        }
         if self._bulkhead_scaler is not None:
             result["bulkhead"] = await self._bulkhead_scaler.tick()
         if self._process_scaler is not None:
@@ -178,8 +185,7 @@ class TemporalWorkerScaler:
 
         current = self._pool_current_workers()
         desired = max(
-            self._min,
-            min(self._max, -(-depth // self._target) if depth else self._min),
+            self._min, min(self._max, -(-depth // self._target) if depth else self._min)
         )
 
         if desired == current:

@@ -57,9 +57,7 @@ class SlaBreachRecord:
     soft_limit: float
     hard_limit: float
     breach_action: str = "alert"
-    detected_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,13 +76,8 @@ class SlaAlertDispatcher(Protocol):
     """Channel для отправки SLA-нотификаций."""
 
     async def dispatch(
-        self,
-        *,
-        breach: SlaBreachRecord,
-        email: str | None,
-        slack: str | None,
-    ) -> None:
-        ...
+        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
+    ) -> None: ...
 
 
 class InMemorySlaAlertDispatcher:
@@ -94,19 +87,9 @@ class InMemorySlaAlertDispatcher:
         self.sent: list[dict[str, Any]] = []
 
     async def dispatch(
-        self,
-        *,
-        breach: SlaBreachRecord,
-        email: str | None,
-        slack: str | None,
+        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
     ) -> None:
-        self.sent.append(
-            {
-                "breach": breach.to_dict(),
-                "email": email,
-                "slack": slack,
-            }
-        )
+        self.sent.append({"breach": breach.to_dict(), "email": email, "slack": slack})
 
 
 def evaluate_sla(
@@ -147,10 +130,7 @@ _sla_counter: Any | None = None
 
 
 def _emit_sla_metric(
-    *,
-    workflow_id: str,
-    tenant_id: str | None,
-    level: "SlaBreachLevel",
+    *, workflow_id: str, tenant_id: str | None, level: "SlaBreachLevel"
 ) -> None:
     """Increment ``workflow_sla_compliance_total{...,level=...}`` counter.
 
@@ -167,15 +147,13 @@ def _emit_sla_metric(
                 "SLA evaluations per workflow (level=none/soft/hard)",
                 labelnames=("workflow_id", "tenant_id", "level"),
             )
-        except (ImportError, ValueError):
+        except ImportError, ValueError:
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:
         try:
             _sla_counter.labels(
-                workflow_id=workflow_id,
-                tenant_id=tenant_id or "",
-                level=level.value,
+                workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
             ).inc()
         except Exception:  # noqa: BLE001
             pass
@@ -219,12 +197,7 @@ class SlaTracker:
         self._task: asyncio.Task[None] | None = None
         self._stop = asyncio.Event()
 
-    async def track(
-        self,
-        *,
-        workflow_id: str,
-        sla: Any,
-    ) -> None:
+    async def track(self, *, workflow_id: str, sla: Any) -> None:
         """Поставить workflow на tracking. ``sla`` — :class:`SlaPolicy`."""
         import time
 
@@ -248,7 +221,11 @@ class SlaTracker:
         if self._task is not None and not self._task.done():
             return
         self._stop.clear()
-        self._task = asyncio.create_task(self._run(), name="sla-tracker")
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(self._run(), name="sla-tracker")
 
     async def stop(self) -> None:
         self._stop.set()
@@ -256,16 +233,14 @@ class SlaTracker:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError, Exception:  # noqa: BLE001
                 pass
             self._task = None
 
     async def _run(self) -> None:
         while not self._stop.is_set():
             try:
-                await asyncio.wait_for(
-                    self._stop.wait(), timeout=self._check_interval
-                )
+                await asyncio.wait_for(self._stop.wait(), timeout=self._check_interval)
             except asyncio.TimeoutError:
                 pass
             await self._check_once()

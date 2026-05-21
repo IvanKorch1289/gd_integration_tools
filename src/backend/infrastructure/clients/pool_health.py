@@ -37,11 +37,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = (
-    "PoolEntry",
-    "PoolHealthMonitor",
-    "get_pool_monitor",
-)
+__all__ = ("PoolEntry", "PoolHealthMonitor", "get_pool_monitor")
 
 logger = logging.getLogger("infrastructure.clients.pool_health")
 
@@ -140,10 +136,7 @@ class PoolHealthMonitor:
             idle_timeout: Порог idle-времени (сек) перед очередным пингом.
         """
         self._pools[name] = PoolEntry(
-            name=name,
-            pool=pool,
-            ping_callable=ping_callable,
-            idle_timeout=idle_timeout,
+            name=name, pool=pool, ping_callable=ping_callable, idle_timeout=idle_timeout
         )
         logger.debug("Pool зарегистрирован в PoolHealthMonitor: %s", name)
 
@@ -166,19 +159,13 @@ class PoolHealthMonitor:
             return
 
         self._running = True
-        try:
-            from src.backend.core.utils.task_registry import get_task_registry
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
 
-            self._task = get_task_registry().create_task(
-                self._monitor_loop(),
-                name="pool-health-monitor",
-            )
-        except Exception as exc:  # noqa: BLE001
-            # TaskRegistry недоступен (тесты без DI) — создаём напрямую
-            logger.debug("TaskRegistry недоступен, create_task напрямую: %s", exc)
-            self._task = asyncio.create_task(
-                self._monitor_loop(), name="pool-health-monitor"
-            )
+        self._task = get_task_registry().create_task(
+            self._monitor_loop(), name="pool-health-monitor"
+        )
         logger.info(
             "PoolHealthMonitor запущен (tick_interval=%.1fs, pools=%d)",
             self.tick_interval,
@@ -249,7 +236,11 @@ class PoolHealthMonitor:
         try:
             await entry.ping_callable()
             entry.last_ping_at = now
-            logger.debug("Pool ping OK: %s (elapsed=%.1fs)", entry.name, now - entry.last_ping_at + (now - entry.last_ping_at))
+            logger.debug(
+                "Pool ping OK: %s (elapsed=%.1fs)",
+                entry.name,
+                now - entry.last_ping_at + (now - entry.last_ping_at),
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "Pool ping FAIL: %s — %s (пул помечен, idle-timeout сброшен)",

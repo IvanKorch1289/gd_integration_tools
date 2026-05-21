@@ -257,12 +257,7 @@ class L3RetrievalGraphCache:
         await cache.store(query, namespace=ns, result=result)
     """
 
-    def __init__(
-        self,
-        *,
-        max_entries: int = 4096,
-        ttl_seconds: int = 600,
-    ) -> None:
+    def __init__(self, *, max_entries: int = 4096, ttl_seconds: int = 600) -> None:
         """Инициализирует in-process L3 store.
 
         Args:
@@ -284,11 +279,7 @@ class L3RetrievalGraphCache:
             from src.backend.core.config.features import feature_flags
 
             return bool(
-                getattr(
-                    feature_flags,
-                    "rag_cache_l3_retrieval_invalidation",
-                    False,
-                )
+                getattr(feature_flags, "rag_cache_l3_retrieval_invalidation", False)
             )
         except Exception:  # noqa: BLE001
             return False
@@ -327,11 +318,7 @@ class L3RetrievalGraphCache:
         return list(record["result"])
 
     async def store(
-        self,
-        query: str,
-        *,
-        namespace: str | None,
-        result: list[dict[str, Any]],
+        self, query: str, *, namespace: str | None, result: list[dict[str, Any]]
     ) -> None:
         """Сохраняет retrieval-result для (query, namespace).
 
@@ -375,10 +362,7 @@ class L3RetrievalGraphCache:
         return len(keys)
 
     async def publish_invalidate(
-        self,
-        namespace: str,
-        *,
-        doc_id: str | None = None,
+        self, namespace: str, *, doc_id: str | None = None
     ) -> bool:
         """Публикует invalidation-сообщение в Redis pub/sub.
 
@@ -394,9 +378,7 @@ class L3RetrievalGraphCache:
         try:
             import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except Exception:  # noqa: BLE001
@@ -420,7 +402,11 @@ class L3RetrievalGraphCache:
             return
         if not self._is_enabled():
             return
-        self._invalidation_task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._invalidation_task = get_task_registry().create_task(
             self._listen_loop(), name="l3-rag-cache-invalidate"
         )
 
@@ -438,9 +424,7 @@ class L3RetrievalGraphCache:
         try:
             import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_pubsub_factory_provider,
-            )
+            from src.backend.core.di.providers import get_redis_pubsub_factory_provider
 
             factory = get_redis_pubsub_factory_provider()
             if factory is None:

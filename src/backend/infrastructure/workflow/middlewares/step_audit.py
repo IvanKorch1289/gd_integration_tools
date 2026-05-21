@@ -152,9 +152,7 @@ class StepAuditMiddleware:
             from src.backend.core.config.features import feature_flags
 
             if not feature_flags.workflow_step_log_enabled:
-                _logger.info(
-                    "StepAuditMiddleware: feature-flag OFF, no-op mode"
-                )
+                _logger.info("StepAuditMiddleware: feature-flag OFF, no-op mode")
                 return
         except Exception:  # noqa: BLE001
             pass
@@ -162,7 +160,11 @@ class StepAuditMiddleware:
         if self._flusher_task is not None:
             return
         self._stop_event.clear()
-        self._flusher_task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._flusher_task = get_task_registry().create_task(
             self._flusher_loop(), name="step-audit-flusher"
         )
 
@@ -230,15 +232,19 @@ class StepAuditMiddleware:
                 output_schema_hash=ctx.output_schema_hash,
             )
             self._set_otel_attrs(
-                step_name=step_name,
-                duration_ms=duration_ms,
-                status=status,
+                step_name=step_name, duration_ms=duration_ms, status=status
             )
             async with self._lock:
                 self._buffer.append(event)
                 if len(self._buffer) >= self._batch_size:
                     # Trigger immediate flush in background
-                    asyncio.create_task(self.flush())
+                    from src.backend.core.utils.task_registry import (  # noqa: PLC0415
+                        get_task_registry,
+                    )
+
+                    get_task_registry().create_task(
+                        self.flush(), name="step-audit-immediate-flush"
+                    )
 
     def _set_otel_attrs(
         self,

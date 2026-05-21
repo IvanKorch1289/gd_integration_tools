@@ -106,7 +106,11 @@ class AIWorkspaceCleaner:
         if self._task is not None and not self._task.done():
             return
         self._stopped = False
-        self._task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(
             self._cleanup_loop(), name="ai-workspace-cleaner"
         )
 
@@ -121,14 +125,10 @@ class AIWorkspaceCleaner:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
+            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
                 pass
 
-    def cleanup_expired(
-        self,
-        now: datetime,
-        ttl_days: int | None = None,
-    ) -> int:
+    def cleanup_expired(self, now: datetime, ttl_days: int | None = None) -> int:
         """Удалить session-каталоги старше TTL.
 
         Обходит ``<workspace_root>/<tenant>/<session>/`` и удаляет
@@ -171,18 +171,11 @@ class AIWorkspaceCleaner:
                     except OSError as exc:
                         _logger.warning(
                             "ai_workspace_cleaner.remove_failed",
-                            extra={
-                                "path": str(session_dir),
-                                "error": repr(exc),
-                            },
+                            extra={"path": str(session_dir), "error": repr(exc)},
                         )
         return removed
 
-    def enforce_size_quota(
-        self,
-        workspace: Path,
-        max_bytes: int | None = None,
-    ) -> int:
+    def enforce_size_quota(self, workspace: Path, max_bytes: int | None = None) -> int:
         """Проверить и при необходимости урезать размер tenant-каталога.
 
         Удаляет самые старые session-директории по mtime, пока суммарный
@@ -206,8 +199,7 @@ class AIWorkspaceCleaner:
 
         # Собрать session-каталоги и отсортировать по mtime (старые первыми).
         sessions = sorted(
-            (d for d in workspace.iterdir() if d.is_dir()),
-            key=_dir_mtime,
+            (d for d in workspace.iterdir() if d.is_dir()), key=_dir_mtime
         )
 
         removed = 0
@@ -231,10 +223,7 @@ class AIWorkspaceCleaner:
             except OSError as exc:
                 _logger.warning(
                     "ai_workspace_cleaner.evict_failed",
-                    extra={
-                        "path": str(session_dir),
-                        "error": repr(exc),
-                    },
+                    extra={"path": str(session_dir), "error": repr(exc)},
                 )
         return removed
 
@@ -252,8 +241,7 @@ class AIWorkspaceCleaner:
                                 self.enforce_size_quota(tenant_dir)
                 except Exception as exc:  # noqa: BLE001
                     _logger.warning(
-                        "ai_workspace_cleaner.loop_error",
-                        extra={"error": repr(exc)},
+                        "ai_workspace_cleaner.loop_error", extra={"error": repr(exc)}
                     )
         except asyncio.CancelledError:
             raise

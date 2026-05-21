@@ -29,9 +29,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 __all__ = (
     "BackpressureState",
@@ -124,9 +123,7 @@ class StreamingBackpressureController:
     ) -> None:
         """Создать контроллер с эмпирическими дефолтами."""
         if not (0.0 < low_watermark < high_watermark <= 1.0):
-            raise ValueError(
-                "Требуется 0 < low_watermark < high_watermark <= 1.0"
-            )
+            raise ValueError("Требуется 0 < low_watermark < high_watermark <= 1.0")
         self._high = high_watermark
         self._low = low_watermark
         self._check_interval_s = check_interval_s
@@ -150,7 +147,9 @@ class StreamingBackpressureController:
         self._consumers[name] = consumer
         logger.debug("StreamingBackpressureController: consumer '%s' added", name)
 
-    def update_queue_size(self, queue_size: int, queue_limit: int | None = None) -> None:
+    def update_queue_size(
+        self, queue_size: int, queue_limit: int | None = None
+    ) -> None:
         """Обновить размер in-flight очереди.
 
         Вызывается из middleware / DSL pipeline после каждого acquire/release.
@@ -198,7 +197,11 @@ class StreamingBackpressureController:
             logger.warning("StreamingBackpressureController: уже запущен")
             return
         self._stop_event = asyncio.Event()
-        self._task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(
             self._loop(), name="streaming-backpressure-loop"
         )
 
@@ -289,9 +292,7 @@ class AdaptiveStreamReader:
         if min_count < 1 or max_count < min_count:
             raise ValueError("min_count >= 1 и max_count >= min_count обязательны")
         if not (0.0 < adjust_low_threshold < adjust_high_threshold < 1.0):
-            raise ValueError(
-                "Требуется 0 < adjust_low < adjust_high < 1.0"
-            )
+            raise ValueError("Требуется 0 < adjust_low < adjust_high < 1.0")
         self._current_count = initial_count
         self._min_count = min_count
         self._max_count = max_count

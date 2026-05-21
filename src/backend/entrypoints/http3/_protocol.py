@@ -36,7 +36,11 @@ from src.backend.entrypoints.http3.config import Http3ServerConfig
 logger = logging.getLogger(__name__)
 
 ASGIApp = Callable[
-    [dict[str, Any], Callable[[], Awaitable[dict[str, Any]]], Callable[[dict[str, Any]], Awaitable[None]]],
+    [
+        dict[str, Any],
+        Callable[[], Awaitable[dict[str, Any]]],
+        Callable[[dict[str, Any]], Awaitable[None]],
+    ],
     Awaitable[None],
 ]
 
@@ -83,10 +87,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
                 logger.debug("Unhandled H3 event: %s", type(event).__name__)
 
     def _on_headers(
-        self,
-        stream_id: int,
-        headers: list[tuple[bytes, bytes]],
-        stream_ended: bool,
+        self, stream_id: int, headers: list[tuple[bytes, bytes]], stream_ended: bool
     ) -> None:
         method = b""
         path = b"/"
@@ -106,6 +107,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
             client=None,
             server=(self._server_config.host, self._server_config.port),
         )
+
         def _send_headers(
             status: int, hdrs: list[tuple[bytes, bytes]], sid: int = stream_id
         ) -> None:
@@ -124,7 +126,11 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         if stream_ended:
             asyncio.ensure_future(handler.push_request(b"", more_body=False))
 
-        task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        task = get_task_registry().create_task(
             self._asgi_app(scope, handler.receive, handler.send),
             name=f"http3-asgi-stream-{stream_id}",
         )
@@ -139,9 +145,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         if stream_ended:
             asyncio.ensure_future(handler.push_disconnect())
 
-    def _send_headers(
-        self, stream_id: int, headers: list[tuple[bytes, bytes]]
-    ) -> None:
+    def _send_headers(self, stream_id: int, headers: list[tuple[bytes, bytes]]) -> None:
         if self._http is None:
             return
         self._http.send_headers(stream_id=stream_id, headers=headers, end_stream=False)

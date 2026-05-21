@@ -42,15 +42,10 @@ import asyncio
 import logging
 import time
 from collections import deque
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = (
-    "BatchedLogEvent",
-    "BatchingStructlogWrapper",
-    "get_batching_wrapper",
-)
+__all__ = ("BatchedLogEvent", "BatchingStructlogWrapper", "get_batching_wrapper")
 
 _INTERNAL_LOG = logging.getLogger("infrastructure.observability.structlog_batching")
 
@@ -220,7 +215,11 @@ class BatchingStructlogWrapper:
             _INTERNAL_LOG.warning("structlog_batching: уже запущен")
             return
         self._stop_event = asyncio.Event()
-        self._task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        self._task = get_task_registry().create_task(
             self._flush_loop(), name="structlog-batching-flush"
         )
 

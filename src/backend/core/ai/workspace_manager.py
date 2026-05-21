@@ -122,9 +122,7 @@ class AIWorkspaceManager:
             usage = self._usage.setdefault(tenant, _TenantUsage())
             if usage.bytes_used > self._quota:
                 raise WorkspaceQuotaExceededError(
-                    tenant=tenant,
-                    used_bytes=usage.bytes_used,
-                    quota_bytes=self._quota,
+                    tenant=tenant, used_bytes=usage.bytes_used, quota_bytes=self._quota
                 )
 
             session_id = uuid.uuid4().hex
@@ -160,9 +158,7 @@ class AIWorkspaceManager:
         age = time.time() - handle.created_at
         if age > self._ttl:
             raise WorkspaceTTLExpiredError(
-                session_id=handle.session_id,
-                age_seconds=age,
-                ttl_seconds=self._ttl,
+                session_id=handle.session_id, age_seconds=age, ttl_seconds=self._ttl
             )
 
     def add_used_bytes(self, tenant: str, delta: int) -> None:
@@ -191,9 +187,7 @@ class AIWorkspaceManager:
                         shutil.rmtree(handle.path, ignore_errors=True)
                     except OSError as exc:
                         _logger.warning(
-                            "ai_workspace.cleanup_failed: %s (%s)",
-                            handle.path,
-                            exc,
+                            "ai_workspace.cleanup_failed: %s (%s)", handle.path, exc
                         )
                         continue
                     usage.sessions.pop(session_id, None)
@@ -210,17 +204,15 @@ class AIWorkspaceManager:
         return removed
 
     async def start_cleanup_loop(
-        self,
-        *,
-        task_factory: Callable[..., asyncio.Task[None]] | None = None,
+        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None
     ) -> None:
         """Запустить периодический cleanup через TaskRegistry.
 
         Args:
-            task_factory: Опц. фабрика task'ов (обычно
-                ``TaskRegistry.create_task``); если ``None`` —
-                используется raw ``asyncio.create_task``. Параметр
-                сигнатуры: ``task_factory(coro, *, name)``.
+            task_factory: Опц. фабрика task'ов с сигнатурой
+                ``task_factory(coro, *, name)``. При ``None`` (default)
+                используется singleton :class:`TaskRegistry`
+                (R-V15-11 leak prevention).
         """
         if self._cleanup_task is not None and not self._cleanup_task.done():
             return
@@ -237,7 +229,9 @@ class AIWorkspaceManager:
                 raise
 
         if task_factory is None:
-            self._cleanup_task = asyncio.create_task(
+            from src.backend.core.utils.task_registry import get_task_registry
+
+            self._cleanup_task = get_task_registry().create_task(
                 _loop(), name="ai-workspace-cleanup"
             )
         else:
@@ -251,7 +245,7 @@ class AIWorkspaceManager:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
+            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
                 pass
 
     def _emit_audit(self, event: dict[str, object]) -> None:
