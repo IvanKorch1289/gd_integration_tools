@@ -37,6 +37,7 @@ from src.backend.services.routes.manifest_v11 import (
 )
 
 __all__ = (
+    "AuditCallback",
     "FeatureFlagResolver",
     "InstalledPlugin",
     "LoadedRoute",
@@ -44,6 +45,9 @@ __all__ = (
     "RouteLoader",
     "default_env_feature_flag_resolver",
 )
+
+AuditCallback = Callable[[dict[str, Any]], None]
+"""Подпись audit-callback'а RouteLoader: принимает event dict."""
 
 _logger = logging.getLogger("services.routes.loader")
 
@@ -118,6 +122,8 @@ class RouteLoader:
         installed_plugins: dict[str, InstalledPlugin],
         pipeline_registrar: PipelineRegistrar,
         feature_flag_resolver: FeatureFlagResolver = default_env_feature_flag_resolver,
+        audit_callback: AuditCallback | None = None,
+        strict_capabilities: bool | None = None,
     ) -> None:
         self._routes_dir = Path(routes_dir)
         self._gate = capability_gate
@@ -126,6 +132,11 @@ class RouteLoader:
         self._installed = installed_plugins
         self._registrar = pipeline_registrar
         self._resolve_flag = feature_flag_resolver
+        self._audit = audit_callback
+        # ── strict-режим: route без declared capabilities → failed.
+        #    Источник по умолчанию — feature_flags.routes_capability_gate_strict
+        #    (K-ARCH-3, S17). None → попытаться прочитать из feature_flags.
+        self._strict_capabilities = strict_capabilities
         self._loaded: dict[str, LoadedRoute] = {}
 
     @property
@@ -253,7 +264,24 @@ class RouteLoader:
             )
             return
 
-        # ── Декларация capabilities в gate'е (route — equal-rights peer плагина)
+        # ── strict-режим (K-ARCH-3, S17): route без declared capabilities → fail
+        if self._is_strict() and not manifest.capabilities:
+            reason = (
+                "routes_capability_gate_strict: route has no declared "
+                "capabilities (manifest.capabilities is empty)"
+            )
+            self._loaded[manifest.name] = LoadedRoute(
+                name=manifest.name,
+                version=manifest.version,
+                manifest_path=manifest_path,
+                manifest=manifest,
+                status="failed",
+                reason=reason,
+            )
+            return
+
+        # ── Декларация capabilities в gate'е ДО pipeline_registrar
+        #    (route — equal-rights peer плагина). K-ARCH-3 (S17).
         try:
             self._gate.declare(manifest.name, manifest.capabilities)
         except (CapabilityError, ValueError) as exc:
@@ -266,6 +294,19 @@ class RouteLoader:
                 reason=f"capability_error: {exc}",
             )
             return
+
+        # ── Audit: capability-аллокация (route.capabilities.allocated)
+        self._emit_audit(
+            {
+                "event": "route.capabilities.allocated",
+                "route": manifest.name,
+                "version": manifest.version,
+                "capabilities": [
+                    {"name": ref.name, "scope": ref.scope}
+                    for ref in manifest.capabilities
+                ],
+            }
+        )
 
         # ── Регистрация pipelines через registrar
         registered: list[Path] = []
@@ -317,3 +358,28 @@ class RouteLoader:
         if isinstance(flag, bool):
             return flag
         return self._resolve_flag(flag)
+
+    def _is_strict(self) -> bool:
+        """K-ARCH-3 (S17): strict-режим routes-capability-gate.
+
+        Источник:
+            1. Явный конструктор ``strict_capabilities=True/False``;
+            2. ``feature_flags.routes_capability_gate_strict``.
+        """
+        if self._strict_capabilities is not None:
+            return self._strict_capabilities
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            return bool(feature_flags.routes_capability_gate_strict)
+        except Exception:  # noqa: BLE001 — feature-flag доступ best-effort
+            return False
+
+    def _emit_audit(self, event: dict[str, Any]) -> None:
+        """Эмиссия audit-event через ``audit_callback`` (best-effort)."""
+        if self._audit is None:
+            return
+        try:
+            self._audit(event)
+        except Exception:  # noqa: BLE001 — audit best-effort, не ломает loader
+            _logger.exception("RouteLoader audit_callback failed: %s", event.get("event"))

@@ -282,6 +282,79 @@ class TestDefaultEnvFlagResolver:
         assert default_env_feature_flag_resolver("UNSET_FLAG") is False
 
 
+class TestCapabilityGateAuditAndStrict:
+    """K-ARCH-3 (S17): route.capabilities.allocated audit + strict-режим."""
+
+    async def test_audit_event_emitted_on_enabled_route(self, tmp_path: Path) -> None:
+        """``route.capabilities.allocated`` эмитится при enabled route."""
+        _write_route(
+            tmp_path,
+            name="r_audit",
+            requires_plugins={"plug_a": ">=1.0,<2.0"},
+            capabilities=[("db.read", "users")],
+        )
+        installed = {
+            "plug_a": InstalledPlugin(
+                name="plug_a",
+                version="1.5.0",
+                capabilities=(CapabilityRef(name="db.read", scope="users"),),
+            )
+        }
+        events: list[dict[str, object]] = []
+        loader = RouteLoader(
+            routes_dir=tmp_path,
+            capability_gate=CapabilityGate(),
+            vocabulary=build_default_vocabulary(),
+            core_version="0.2.0",
+            installed_plugins=installed,
+            pipeline_registrar=lambda *_: None,
+            audit_callback=events.append,
+        )
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
+        allocated = [e for e in events if e.get("event") == "route.capabilities.allocated"]
+        assert len(allocated) == 1
+        assert allocated[0]["route"] == "r_audit"
+        caps = allocated[0]["capabilities"]
+        assert isinstance(caps, list) and len(caps) == 1
+        assert caps[0]["name"] == "db.read"
+
+    async def test_strict_mode_fails_route_without_capabilities(
+        self, tmp_path: Path
+    ) -> None:
+        """strict_capabilities=True: route без capabilities → status=failed."""
+        _write_route(tmp_path, name="r_no_caps", capabilities=[])
+        loader = RouteLoader(
+            routes_dir=tmp_path,
+            capability_gate=CapabilityGate(),
+            vocabulary=build_default_vocabulary(),
+            core_version="0.2.0",
+            installed_plugins={},
+            pipeline_registrar=lambda *_: None,
+            strict_capabilities=True,
+        )
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "failed"
+        assert "routes_capability_gate_strict" in (loaded[0].reason or "")
+
+    async def test_default_off_passes_route_without_capabilities(
+        self, tmp_path: Path
+    ) -> None:
+        """strict_capabilities=False (default): empty-caps route проходит."""
+        _write_route(tmp_path, name="r_no_caps", capabilities=[])
+        loader = RouteLoader(
+            routes_dir=tmp_path,
+            capability_gate=CapabilityGate(),
+            vocabulary=build_default_vocabulary(),
+            core_version="0.2.0",
+            installed_plugins={},
+            pipeline_registrar=lambda *_: None,
+            strict_capabilities=False,
+        )
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
+
+
 # Текстовый docstring тест — гарантирует, что нет regression при mass-edit
 def _smoke_textwrap_used() -> str:
     """Использует textwrap, чтобы избежать unused-import."""
