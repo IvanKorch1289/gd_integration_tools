@@ -123,7 +123,14 @@ class OutboundHttpClient:
             CapabilityDeniedError: Caller не имеет capability
                 ``net.outbound:<host>`` (если ``capability_check`` задан).
         """
-        decision = self._policy.evaluate(url, payload=content)
+        # Sprint 16 Wave 6 (B-3 finale): если в policy задан
+        # async_payload_scanner — используем evaluate_async для не-блокирующей
+        # ClamAV/HTTP-AV проверки. Без async scanner поведение идентично
+        # legacy sync-пути.
+        if self._policy.async_payload_scanner is not None:
+            decision = await self._policy.evaluate_async(url, payload=content)
+        else:
+            decision = self._policy.evaluate(url, payload=content)
         self._emit_audit(decision, method, url)
         if not decision.allowed:
             raise WafBypassError(decision)

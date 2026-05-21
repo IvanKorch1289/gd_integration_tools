@@ -19,11 +19,18 @@ audit-event'а.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
-__all__ = ("WafBypassError", "WafDecision", "WafPolicy", "build_default_policy")
+__all__ = (
+    "AsyncPayloadScanner",
+    "PayloadScanner",
+    "WafBypassError",
+    "WafDecision",
+    "WafPolicy",
+    "build_default_policy",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +63,20 @@ class WafBypassError(RuntimeError):
 
 
 PayloadScanner = Callable[[bytes | None], str | None]
-"""Сигнатура опц. payload-scanner'а.
+"""Сигнатура опц. **синхронного** payload-scanner'а.
 
 Возвращает ``None`` если payload чист, либо строку-причину блокировки.
+Используется ``WafPolicy.evaluate(...)`` (sync). Для I/O-bound сканеров
+(ClamAV/HTTP-AV) предпочтительнее :data:`AsyncPayloadScanner` +
+``WafPolicy.evaluate_async(...)``.
+"""
+
+AsyncPayloadScanner = Callable[[bytes | None], Awaitable[str | None]]
+"""Async-сигнатура payload-scanner'а (Sprint 16 Wave 6, B-3 finale).
+
+Используется ``WafPolicy.evaluate_async(...)`` — не блокирует event-loop
+при общении с ClamAV/HTTP-AV. Возвращает ``None`` если payload чист, либо
+строку-причину блокировки (например, имя сигнатуры).
 """
 
 
@@ -84,6 +102,11 @@ class WafPolicy:
     deny_hosts: frozenset[str] = field(default_factory=frozenset)
     max_payload_bytes: int | None = None
     payload_scanner: PayloadScanner | None = None
+    async_payload_scanner: AsyncPayloadScanner | None = None
+    """Sprint 16 Wave 6 (B-3): async payload-scanner для I/O-bound
+    проверок (ClamAV INSTREAM/HTTP-AV). Используется только в
+    :meth:`evaluate_async`; не вызывается из sync :meth:`evaluate`."""
+
     strict: bool = False
     """Если ``True`` — пустой allow_hosts трактуется как deny-all."""
 
@@ -96,7 +119,63 @@ class WafPolicy:
         2. Deny-list — приоритетный.
         3. Strict-режим + allow_hosts mismatch.
         4. Размер payload.
-        5. Payload-scanner.
+        5. Sync payload-scanner.
+
+        Async payload-scanner НЕ вызывается из sync-пути — используйте
+        :meth:`evaluate_async` для I/O-bound сканеров (ClamAV/HTTP-AV).
+        """
+        pre = self._evaluate_pre_payload(url, payload)
+        if pre is not None and not pre.allowed:
+            return pre
+        # pre is None в edge-case'е (нет хоста); обработали выше
+        assert pre is not None
+        host = pre.host
+
+        if self.payload_scanner is not None and payload is not None:
+            scanner_reason = self.payload_scanner(payload)
+            if scanner_reason is not None:
+                return WafDecision(False, scanner_reason, host=host)
+
+        return WafDecision(True, "allowed", host=host)
+
+    async def evaluate_async(
+        self, url: str, payload: bytes | None = None
+    ) -> WafDecision:
+        """Async-версия :meth:`evaluate` с поддержкой async payload-scanner.
+
+        Порядок проверок идентичен sync-пути, но дополнительно после
+        sync-scanner'а вызывается ``async_payload_scanner(payload)``
+        через ``await``. Это критично для I/O-bound сканеров (ClamAV
+        INSTREAM/HTTP-AV): event-loop не блокируется на время
+        сканирования. Sprint 16 Wave 6 (B-3 finale).
+        """
+        pre = self._evaluate_pre_payload(url, payload)
+        if pre is not None and not pre.allowed:
+            return pre
+        assert pre is not None
+        host = pre.host
+
+        if self.payload_scanner is not None and payload is not None:
+            scanner_reason = self.payload_scanner(payload)
+            if scanner_reason is not None:
+                return WafDecision(False, scanner_reason, host=host)
+
+        if self.async_payload_scanner is not None and payload is not None:
+            async_reason = await self.async_payload_scanner(payload)
+            if async_reason is not None:
+                return WafDecision(False, async_reason, host=host)
+
+        return WafDecision(True, "allowed", host=host)
+
+    def _evaluate_pre_payload(
+        self, url: str, payload: bytes | None
+    ) -> WafDecision | None:
+        """Общая часть sync/async-проверок до payload-scanner'а.
+
+        Возвращает финальный :class:`WafDecision` если запрос отвергнут
+        (host invalid / deny-list / strict-mismatch / size-limit), либо
+        :class:`WafDecision` с ``allowed=True`` для передачи host'а
+        в payload-scanner step. None никогда не возвращается.
         """
         host = self._extract_host(url)
         if host is None:
@@ -119,12 +198,7 @@ class WafPolicy:
                 host=host,
             )
 
-        if self.payload_scanner is not None and payload is not None:
-            scanner_reason = self.payload_scanner(payload)
-            if scanner_reason is not None:
-                return WafDecision(False, scanner_reason, host=host)
-
-        return WafDecision(True, "allowed", host=host)
+        return WafDecision(True, "ok", host=host)
 
     @staticmethod
     def _extract_host(url: str) -> str | None:
