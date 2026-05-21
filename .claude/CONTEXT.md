@@ -2,8 +2,8 @@
 
 ## Текущее состояние (2026-05-21 17:48, после Sprint 17 kickoff coordinator-self)
 
-**HEAD**: `67d37f82 [wave:s17/k2-w1-metrics-registry]` — D11 backbone MetricsRegistry (idempotent counter/histogram/gauge + strict feature-flag + 12 тестов).
-**Активный спринт**: **Sprint 17 — GAP P0 Closure + Centralization Hardening** (kickoff закрыт 7 wave в одной сессии coordinator-self) + carryover Sprint 16 «Closure».
+**HEAD**: `20fff6ac [plan:v22.2/s21-s23-post-prod-backlog]` — PLAN.md V22.2 FINAL + 3 спринта (S21-S23) + 4 ADR-NEW-12..15 (предыдущий: `67d37f82 [wave:s17/k2-w1-metrics-registry]` MetricsRegistry D11 backbone).
+**Активный спринт**: **Sprint 17 — GAP P0 Closure + Centralization Hardening** (kickoff закрыт 7 wave в одной сессии coordinator-self) + carryover Sprint 16 «Closure» + post-prod **S21-S23 GAP-backlog**.
 **План**: `PLAN.md` **V22.2 FINAL** (S16-S20: 5 спринтов × 2 недели × 5 команд **+ S21-S23 post-production GAP-backlog без дат**).
 **Параллельность**: вторая сессия добавила `6a35c75d [wave:s17/k9-tooling-grep-violations-gate]` (V22 §5 AST gate) + модифицировала CONTEXT/DECISIONS/KNOWN_ISSUES/PLAN.md (S21-S23 post-production gap-backlog ADR-NEW-12..15) — её работа не коммичена в working tree, не трогалась моей сессией.
 **Post-production backlog**: **S21-S23 GAP-backlog активен без дат** (28 пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + 4 новых ADR-NEW-12..15). Запускается после Sprint 20 (`v1.0.0-production`) параллельно release stabilization. См. `PLAN.md` §4 секции Sprint 21/22/23 + `.claude/DECISIONS.md::## ADR из DEEP-RESEARCH Sprint 21-23` + `.claude/KNOWN_ISSUES.md::## Sprint 21-23 GAP-backlog`.
@@ -20,6 +20,7 @@
 | `s17/k3-w1-unified-request-context` | `7a335d52` | **ADR-NEW-3** RequestContext frozen dataclass + ContextVar + ASGI MW |
 | `s17/k2-w1-metrics-registry` | `67d37f82` | **D11 backbone** idempotent MetricsRegistry с default_labels (tenant/route/component/env) |
 | `s17/k9-tooling-grep-violations-gate` | `6a35c75d` | **V22 §5 gate** (параллельная сессия) |
+| `plan:v22.2/s21-s23-post-prod-backlog` | `20fff6ac` | **PLAN.md V22.2** + 3 спринта S21/S22/S23 (40 wave, 40 DoD) + 4 ADR-NEW-12..15 (RLS / RPACallPolicy / Workflow State Persist / Chaos PR-gate); +514/-42 LOC в 4 файлах |
 
 ### Sprint 16 — Wave-таблица последних сессий (post 2026-05-21 12:00)
 
@@ -161,12 +162,32 @@
 3. **CP-17 AuthorizationGateway** (M-5) — фасад Casbin/OPA/CapabilityGate.
 4. **CP-18 MetricsRegistry** (M-8) — idempotent registry, миграция 30 Counter + 6 Histogram.
 
-**Перед next wave** обязательно: разрешить `DegradationManager` circular import → `pytest --co -q` зелёный → empirical coverage baseline через `python tools/coverage/breakdown_by_layer.py coverage.xml`.
+**Перед next wave** обязательно: разрешить `DegradationManager` circular import → `pytest --co -q` зелёный → empirical coverage baseline через `python tools/coverage/breakdown_by_layer.py coverage.xml` → **`git pull`** (HEAD после `20fff6ac` мог обновиться параллельной сессией).
+
+### Сессия 2026-05-21 18:04 — PLAN.md V22.2 + S21-S23 post-prod GAP-backlog (commit `20fff6ac`)
+
+**Что сделано** (только документация): PLAN.md V22.1 → V22.2 FINAL, +197 LOC; добавлены 3 спринта Sprint 21 Resilience+Multi-tenancy (12 DoD) / Sprint 22 Observability+Testing (14 DoD) / Sprint 23 AI/DSL/DX (14 DoD); 41 wave-tag; 4 ADR-NEW-12..15 (RLS Strategy / RPACallPolicy / Workflow State Persistence / Chaos PR-gate); .claude/DECISIONS.md +138 LOC; .claude/KNOWN_ISSUES.md +72 LOC; CONTEXT.md +36 LOC (мои); memory note `feedback_plan_v22_2_extension.md`. Покрыто 28 нерешённых GAP-пунктов DEEP-RESEARCH 2026-05-20 + 5 follow-up к частично покрытым.
+
+**Изменённые файлы** (4): PLAN.md (633→810), .claude/DECISIONS.md (320→456), .claude/KNOWN_ISSUES.md (958→1030), .claude/CONTEXT.md (244→273+, частично pre-existing). Commit `20fff6ac` через `git commit -- <pathspec>`.
+
+**Verify**: `wc -l PLAN.md = 810`; sprint count = 8 (S16-S23); wave-tags S21-S23 = 41; ADR-NEW-12..15 = 4; все 28 GAP-кодов присутствуют.
+
+**Открытые риски этой сессии**:
+1. **Параллельная активность** — фоновая сессия закоммитила 8 wave Sprint 17 kickoff пока я работал; их CONTEXT.md update приземлён до моего commit и попал в мой `20fff6ac` через staged tracked-modified (см. `feedback_git_commit_pathspec`).
+2. **S21-S23 без дат** — runtime startup только после S20 closure (`v1.0.0-production`).
+3. **ADR-table в §6 PLAN.md = 14 строк** (R1.x×10 + ADR-NEW-12..15×4), план рассчитывал ≥15 — отклонение не критично.
+
+**Следующий шаг**:
+1. Sprint 17 carryover: K-ARCH-4 tenant-aware routes / K-OPS-1 Saga state / K-OPS-2 K8s manifests / K-OPS-3 pre-prod-check v2 scaffold / CP-15 FFs / CP-20 AuditService unified.
+2. 220 grep-violations baseline strategy (carryover S17 K9).
+3. DoD-3 finale FTP (`asyncssh` pool) + DoD-9 pybreaker (S16 closure).
+4. S21-S23 — НЕ открывать до S20 finale.
 
 ### Архив + сессии
 
-- `vault/session-2026-05-21-1748-summary.md` — **детальная сводка текущей сессии** (S17 kickoff coordinator-self, 7 wave, ~1100 LOC, 46 новых тестов, ADR-NEW-1/3/4 scaffold + K-ARCH-3/5 + K-OPS-4 + D11 backbone).
-- `vault/session-2026-05-21-1717-summary.md` — детальная сводка параллельной сессии (S17 K9 AST-aware grep-gate, 2 файла, +271 LOC, 220 violations baseline).
+- `vault/session-2026-05-21-1804-summary.md` — **детальная сводка текущей сессии** (PLAN.md V22.2 + S21-S23 post-prod GAP-backlog, 4 файла, +514 LOC, 4 ADR-NEW, 0 кода).
+- `vault/session-2026-05-21-1748-summary.md` — S17 kickoff coordinator-self (7 wave, ~1100 LOC, 46 новых тестов, ADR-NEW-1/3/4 scaffold + K-ARCH-3/5 + K-OPS-4 + D11 backbone).
+- `vault/session-2026-05-21-1717-summary.md` — параллельная сессия (S17 K9 AST-aware grep-gate, 2 файла, +271 LOC, 220 violations baseline).
 - `vault/session-2026-05-21-1620-summary.md` — K5-W1 PluginGraphResolver (4 файла, +363).
 - `vault/session-2026-05-21-1615-summary.md` — Phase C + Actions 0-5.
 - `vault/session-2026-05-21-1400-summary.md` — Waves 3-7 GAP closure.
