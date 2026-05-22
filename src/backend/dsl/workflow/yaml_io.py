@@ -59,6 +59,22 @@ def _make_yaml() -> YAML:
     return yaml
 
 
+def _make_safe_yaml() -> YAML:
+    """Сконструировать safe-only ``YAML``-инстанс для парсинга untrusted источников.
+
+    В отличие от :func:`_make_yaml` (``typ="rt"``), safe-режим явно отказывает
+    в десериализации произвольных Python-объектов через ``!!python/object``,
+    ``!!python/object/apply``, ``!!python/object/new`` и подобные unsafe-теги.
+    Используется во :func:`from_yaml` для защиты от YAML-injection в файлах
+    workflow-деклараций, прилетающих из плагинов или внешних источников.
+
+    Returns:
+        ``ruamel.yaml.YAML`` (``typ="safe"``), отвергающий unsafe-теги
+        с :class:`ruamel.yaml.constructor.ConstructorError`.
+    """
+    return YAML(typ="safe")
+
+
 def to_yaml(decl: WorkflowDeclaration) -> str:
     """Сериализовать :class:`WorkflowDeclaration` в YAML-строку.
 
@@ -106,8 +122,8 @@ def from_yaml(yaml_text: str) -> WorkflowDeclaration:
             "Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации."
         )
 
-    yaml = _make_yaml()
-    data: Any = yaml.load(yaml_text)
+    loader = _make_safe_yaml()
+    data: Any = loader.load(yaml_text)
     return WorkflowDeclaration.model_validate(data)
 
 
