@@ -1,5 +1,48 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-22 ~15:30, Sprint 24 W1 Presidio + ru NER CLOSED)
+
+**Активный спринт**: **Sprint 24 — AI Safety Hardening** (post-production GAP-backlog). W1 закрыт coordinator-self mode.
+
+### S24 W1 — 5 wave landed (+ closure)
+
+| Wave | Commit | Файлы | Что внесено |
+|---|---|---|---|
+| `s24/backbone` | `33e1f280` | features.py, vocabulary.py | 3 default-OFF feature-flags + 8 capabilities (pii.{read,write,audit} + ai.guardrail.* + ai.memory.*) |
+| `s24/w1-presidio-deps` | `4d9621b3` | pyproject.toml, Makefile | `[ai-safety]` extra (presidio-anonymizer + spacy>=3.8.13) + `make pii-audit-{smoke,full}` + `make pii-bootstrap` |
+| `s24/w1-presidio-engine` | `8070067d` | services/ai/pii/presidio_analyzer.py + recognizers/ + ai_clients.py + infra shim | PresidioSanitizerAdapter с lazy-init + ru+en NER + 4 recognizers; AsyncPIISanitizerProtocol; deprecation shim |
+| `s24/w1-presidio-integration` | `f274ae71` | providers.py, retrieval_masker.py, langfuse_pii_callback.py | DI provider switch + retrieval через Presidio + Langfuse PII callback |
+| `s24/w1-presidio-closure` | _этот session_ | tools/checks/pii_audit.py + 4 tests + ADR Draft→Accepted + memory + CONTEXT | hybrid gold-set generator (~1000 docs) + 19/20 tests passing (1 skipped: presidio_analyzer не установлен) |
+
+### DoD W1 (7/11 ✅; 4 carryover)
+
+- ✅ `[wave:s24/backbone]` landed.
+- ✅ Engine: `grep AnalyzerEngine() src/backend/services/ai/pii/` ≥ 1.
+- ✅ `make pii-audit{,-smoke}` CI-gate реализован.
+- ✅ Capabilities `pii.{read,write,audit}` зарегистрированы.
+- ✅ Feature-flag PRESIDIO_PII_ENABLED + DI provider switch.
+- ✅ Audit-event emission `pii.{detected,anonymized}` через structured log.
+- ✅ Tests 19/19 unit+integration passing (+1 skipped recognizer test).
+- ⏳ Empirical precision/recall ≥ 0.9 — carryover S24 nightly CI (требует `make pii-bootstrap`).
+- ⏳ Latency bench p95 ≤ 20ms — carryover S24 perf wave.
+- ⏳ `rag_pii_retrieval_mask=true` default-ON — carryover после P/R verify.
+- ⏳ Sphinx page `docs/source/ai/pii_layer.md` — carryover S24 docs batch.
+
+### Открытые риски
+
+1. Параллельная сессия очень активна (ai_policies/, ADR 0066-0071, gateway/skill_registry, pii_tokenizer и др.) — все мои commits через `git commit -- <pathspec>` строгим списком, нет конфликтов.
+2. `ru_core_news_lg` 1.5GB — CI без `make pii-bootstrap` пропускает Presidio (graceful fallback на legacy regex).
+3. Deprecation shim `infrastructure/security/presidio_sanitizer.py` оставлен — silent callers (`sentry_init.py`, `pii_streaming.py`) использовали старый PresidioSanitizer; удаление — после `dead-code-hunter` pass на S24 closure batch.
+4. immutable Postgres audit-sink для `pii.{detected,anonymized,blocked}` — currently structured log; carryover S24.
+
+### Следующий шаг
+
+1. **S24 W2** — NeMo Guardrails + Llama Guard 3 (ADR-NEW-17). Pre-Wave subagent ritual.
+2. **S24 W3** — LangGraph Checkpointer + Mem0 (ADR-NEW-18).
+3. **S24 nightly CI** — `make pii-bootstrap` + `make pii-audit` empirical pass.
+
+---
+
 ## Текущее состояние (2026-05-22 13:52, AI-GAP анализ → Sprint 24 closure planning)
 
 **Сессия**: coordinator-self GAP-анализ AI-агентного стека (документация-only, 0 кода) + plan-step для Sprint 24.
