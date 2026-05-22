@@ -19,6 +19,10 @@ from src.backend.infrastructure.cache.invalidator import (
     get_cache_invalidator,
     set_cache_invalidator,
 )
+from src.backend.infrastructure.cache.tenant_wrapper import (
+    DEFAULT_UNSCOPED_PREFIX,
+    TenantCacheBackend,
+)
 from src.backend.infrastructure.cache.validator import (
     CacheConfigEntry,
     CacheConfigRegistry,
@@ -34,10 +38,12 @@ __all__ = (
     "CacheDuplicationError",
     "CacheInvalidator",
     "CacheLayerValidator",
+    "DEFAULT_UNSCOPED_PREFIX",
     "InMemoryCacheBackend",
     "MemoryBackend",
     "RedisBackend",
     "KeyDBBackend",
+    "TenantCacheBackend",
     "create_cache_backend",
     "get_cache_invalidator",
     "set_cache_invalidator",
