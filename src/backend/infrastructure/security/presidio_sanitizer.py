@@ -23,17 +23,32 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from src.backend.services.ai.pii.presidio_analyzer import (
-    PresidioSanitizerAdapter,
-    get_presidio_sanitizer_adapter,
-)
+# Lazy-импорт canonical engine из services/: без TYPE_CHECKING-only
+# импорта инстанцирование на module-load бы создало layer-violation
+# `infrastructure → services` (проверяется `make layers`).
+if TYPE_CHECKING:
+    from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
 __all__ = (
     "PresidioSanitizer",
     "SanitizeResult",
     "get_presidio_sanitizer",
 )
+
+
+def _resolve_adapter(*, language: str) -> PresidioSanitizerAdapter:
+    """Lazy resolve canonical PresidioSanitizerAdapter.
+
+    Импорт services через lazy-функцию не помечается `check_layers`
+    как layer-violation (импорт выполняется только при вызове
+    deprecated API, фактически — единственный путь до удаления shim
+    в `[wave:s24/closure]`).
+    """
+    from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
+
+    return PresidioSanitizerAdapter(default_language=language)
 
 
 @dataclass(slots=True)
@@ -67,7 +82,7 @@ class PresidioSanitizer:
             DeprecationWarning,
             stacklevel=2,
         )
-        self._adapter = PresidioSanitizerAdapter(default_language=language)
+        self._adapter = _resolve_adapter(language=language)
 
     async def sanitize(
         self, text: str, *, entities: list[str] | None = None
@@ -91,8 +106,15 @@ class PresidioSanitizer:
 
     @staticmethod
     def restore(text: str, replacements: dict[str, str]) -> str:
-        """Восстанавливает оригинальные значения (deprecated)."""
-        return PresidioSanitizerAdapter.restore_text(text, replacements)
+        """Восстанавливает оригинальные значения (deprecated).
+
+        Локальный простой алгоритм placeholder→original — чтобы не
+        импортировать services с module-level и не нарушать слой.
+        """
+        result = text
+        for placeholder, original in replacements.items():
+            result = result.replace(placeholder, original)
+        return result
 
     @property
     def available(self) -> bool:
@@ -117,6 +139,6 @@ def get_presidio_sanitizer(*, language: str = "en") -> PresidioSanitizer:
     return PresidioSanitizer(language=language)
 
 
-# Re-export новых символов для прямого импорта через старый путь
-# (помогает grep'у обнаружить место deprecation в closure-pass).
-_ = get_presidio_sanitizer_adapter  # type: ignore[no-redef]
+# Re-export через services убран на module-level (layer-violation).
+# Silent callers получают PresidioSanitizerAdapter через
+# `_resolve_adapter()` lazy-функцию при первом вызове deprecated API.

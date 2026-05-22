@@ -16,12 +16,16 @@
 
 import logging
 import re
-from dataclasses import dataclass, field
 from typing import Any
+
+from src.backend.core.interfaces.sanitization import MaskingEvent, SanitizationResult
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("AIDataSanitizer", "SanitizationResult", "MaskingEvent")
+# Re-export `MaskingEvent` / `SanitizationResult` для backward-compat:
+# S11+ callers ожидают этот модуль источником DTO. Canonical source
+# теперь `core.interfaces.sanitization` (S24 W1, ADR-NEW-16).
+__all__ = ("AIDataSanitizer", "MaskingEvent", "SanitizationResult")
 
 # Регулярные выражения для PII
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
@@ -62,39 +66,6 @@ _DEFAULT_FIELD_MASKING_RULES: dict[str, str] = {
     "secret_key": "[KEY]",
     "credentials": "[CREDENTIALS]",
 }
-
-
-@dataclass(slots=True)
-class MaskingEvent:
-    """Событие маскировки для audit trail."""
-
-    type: str
-    count: int
-    timestamp: float = 0.0
-
-
-@dataclass(slots=True)
-class SanitizationResult:
-    """Результат маскировки с возможностью восстановления."""
-
-    sanitized_text: str
-    replacements: dict[str, str] = field(default_factory=dict)
-    audit_events: list[MaskingEvent] = field(default_factory=list)
-
-    @property
-    def sanitized(self) -> str:
-        return self.sanitized_text
-
-    @property
-    def _mapping(self) -> dict[str, str]:
-        return self.replacements
-
-    def restore(self, text: str) -> str:
-        """Восстанавливает оригинальные значения в тексте."""
-        result = text
-        for placeholder, original in self.replacements.items():
-            result = result.replace(placeholder, original)
-        return result
 
 
 class AIDataSanitizer:

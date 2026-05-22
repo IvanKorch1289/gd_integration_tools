@@ -28,13 +28,9 @@ Lazy-init pattern:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.security.ai_sanitizer import (
-    AIDataSanitizer,
-    SanitizationResult,
-    get_ai_sanitizer,
-)
+from src.backend.core.interfaces.sanitization import SanitizationResult
 
 if TYPE_CHECKING:
     from presidio_analyzer import AnalyzerEngine, EntityRecognizer
@@ -46,6 +42,19 @@ __all__ = (
 )
 
 logger = logging.getLogger("services.ai.pii.presidio")
+
+
+def _resolve_legacy_sanitizer() -> Any:
+    """Lazy resolve legacy AIDataSanitizer через core/di/providers.
+
+    Импорт infrastructure через composition root (`core.di.providers`)
+    устраняет прямой layer violation `services → infrastructure`.
+    Возвращает реализацию `AISanitizerProtocol` (legacy regex-стек).
+    """
+    from src.backend.core.di.providers import resolve_module
+
+    module = resolve_module("security.ai_sanitizer")
+    return module.get_ai_sanitizer()
 
 
 class PresidioSanitizerAdapter:
@@ -61,13 +70,22 @@ class PresidioSanitizerAdapter:
         self,
         *,
         default_language: str = "ru",
-        legacy_fallback: AIDataSanitizer | None = None,
+        legacy_fallback: Any | None = None,
     ) -> None:
         self._default_language = default_language
-        self._legacy_fallback = legacy_fallback or get_ai_sanitizer()
+        # Lazy fallback: legacy AIDataSanitizer резолвится при первом
+        # использовании через DI-composition-root, не на init.
+        self._legacy_fallback: Any | None = legacy_fallback
         self._analyzer: AnalyzerEngine | None = None
         self._anonymizer: AnonymizerEngine | None = None
         self._available: bool | None = None  # tri-state: None=unknown
+
+    @property
+    def _legacy(self) -> Any:
+        """Возвращает legacy sanitizer, резолвя его lazily через DI."""
+        if self._legacy_fallback is None:
+            self._legacy_fallback = _resolve_legacy_sanitizer()
+        return self._legacy_fallback
 
     # ─── lazy-init ────────────────────────────────────────────────────────
 
@@ -153,7 +171,7 @@ class PresidioSanitizerAdapter:
         ошибкой при недоступности).
         """
         if not self._ensure_initialized():
-            return self._legacy_fallback.sanitize_text(text)
+            return self._legacy.sanitize_text(text)
         return self._presidio_sanitize_sync(text, language=self._default_language)
 
     def sanitize_messages(
@@ -161,7 +179,7 @@ class PresidioSanitizerAdapter:
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Маскирует list[{role, content}] и возвращает кумулятивный mapping."""
         if not self._ensure_initialized():
-            return self._legacy_fallback.sanitize_messages(messages)
+            return self._legacy.sanitize_messages(messages)
 
         full_mapping: dict[str, str] = {}
         sanitized: list[dict[str, str]] = []
@@ -238,14 +256,14 @@ class PresidioSanitizerAdapter:
         if analyzer is None:
             # Защита от рассинхронизации lazy-init и _available; должна быть
             # недостижима после успешного _ensure_initialized().
-            return self._legacy_fallback.sanitize_text(text)
+            return self._legacy.sanitize_text(text)
         try:
             analyzer_results = analyzer.analyze(text=text, language=language)
         except Exception as exc:  # noqa: BLE001 — fallback на legacy
             logger.warning(
                 "Presidio analyze failed (%s), fallback на legacy regex", exc
             )
-            return self._legacy_fallback.sanitize_text(text)
+            return self._legacy.sanitize_text(text)
 
         replacements: dict[str, str] = {}
         sanitized = text

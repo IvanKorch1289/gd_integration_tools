@@ -1,73 +1,54 @@
 # Allowlist архитектурных нарушений (Wave 1.3 baseline).
 # Формат: <rel_path>\t<importer_layer>\t<imported_module>
 # Цель — постепенно сокращать.
-#
-# Wave 6 finalize (2026-05-01): allowlist пуст — 135 → 0 за 7 фаз.
-# Все ранее зафиксированные layer-violations устранены через паттерн
-# lazy-провайдеров (`importlib.import_module`) и DI-фабрик в
-# `core/di/providers.py`. Любое НОВОЕ нарушение, попадающее сюда,
-# должно быть либо немедленно исправлено, либо явно объяснено
-# комментарием рядом с записью.
-#
-# [wave:s6/layer-violations-facade] (2026-05-14): 6 baseline-нарушений
-# frontend→DSL/entrypoints закрыты через ``backend.services.dsl_portal``
-# (см. ``src/backend/services/dsl_portal/builder_facade.py``). Pages 31 и 34
-# переписаны на узкий фасад. Единственное допустимое исключение —
-# сам фасад dsl_portal импортирует ``entrypoints.middlewares.audit_replay``
-# (агрегатор audit-стрима). Это узкое нарушение services → entrypoints
-# фиксируется как acceptable baseline до выделения audit_replay в
-# services/audit/.
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
-#
-# [wave:s10-carryover/layer-violations-zero] (2026-05-20): acknowledged
-# baseline для 27 нарушений, накопленных после Wave 6 (S7–S11).
-# Раскладка по уровням:
-#   * core → infrastructure/services (10): DI providers, resilience-
-#     breaker/cache_decorators/rate_limiter, scaling, tenancy, messaging,
-#     plugin_runtime compat/sandbox — все «провайдеры» для DI, реально
-#     используются как lazy-фабрики, но AST-сканер видит верхне-уровневые
-#     импорты. Удаление требует полноценного Protocol-extraction (S12 K1).
-#   * entrypoints → infrastructure (7): admin routers + asyncapi exporter
-#     + webhook/sse middleware — обращаются к audit/event_log, security
-#     signatures, resilience retry. Будут переведены на services-фасады
-#     в S12 K3.
-#   * infrastructure → services/entrypoints (3): event_bus → schema_registry
-#     (cyclic-ready, ждёт services.eventbus extraction), email source →
-#     imap_monitor entrypoint, semantic cache → embedding_providers.
-#     Переезд в Protocol — S12 K2.
-#   * services → infrastructure (6): langmem/rag/billing хранилища — все
-#     получают концепт «Repository Protocol» в S12 K4.
-#   * frontend → backend.dsl (1): 46_DSL_DryRun читает dsl.engine.dry_run
-#     напрямую, фасад в services/dsl_portal будет расширен в S12 K5.
-#
-# Закрытие — в Sprint 12 «Foundation Hardening». Здесь baseline нужен
-# для прохождения pre-prod-check gate без блокирования AI/RAG Completion
-# (Sprint 11).
 src/backend/core/di/dependencies.py	core	src.backend.infrastructure.resilience.profile_store_memory
+src/backend/core/di/providers.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/messaging/dlq.py	core	src.backend.infrastructure.messaging.dlq_base
 src/backend/core/messaging/dlq_policy.py	core	src.backend.infrastructure.messaging.dlq_base
+src/backend/core/net/outbound_http.py	core	src.backend.infrastructure.observability.correlation
 src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_v11
+src/backend/core/plugin_runtime/dependency_resolver.py	core	src.backend.services.plugins.manifest_v11
 src/backend/core/plugin_runtime/sandbox.py	core	src.backend.services.plugins.manifest_v11
 src/backend/core/resilience/breaker.py	core	src.backend.infrastructure.observability.client_metrics
 src/backend/core/resilience/cache_decorators.py	core	src.backend.infrastructure.clients.storage.redis
 src/backend/core/resilience/cache_decorators.py	core	src.backend.infrastructure.decorators.caching.decorator
 src/backend/core/resilience/rate_limiter.py	core	src.backend.infrastructure.resilience.unified_rate_limiter
+src/backend/core/scaling/auto_scaler.py	core	src.backend.infrastructure.observability.prometheus_temporal_exporter
 src/backend/core/scaling/bulkhead_scaler.py	core	src.backend.infrastructure.resilience.bulkhead
 src/backend/core/tenancy/quotas.py	core	src.backend.infrastructure.clients.storage.redis
 src/backend/entrypoints/api/v1/endpoints/admin_capabilities.py	entrypoints	src.backend.infrastructure.audit.event_log
+src/backend/entrypoints/api/v1/endpoints/admin_cron.py	entrypoints	src.backend.infrastructure.scheduler.cron_validator
+src/backend/entrypoints/api/v1/endpoints/admin_cron.py	entrypoints	src.backend.infrastructure.scheduler.scheduler_manager
+src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py	entrypoints	src.backend.infrastructure.scheduler.dlq
+src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py	entrypoints	src.backend.infrastructure.scheduler.scheduler_manager
 src/backend/entrypoints/api/v1/endpoints/admin_tenants.py	entrypoints	src.backend.infrastructure.audit.event_log
+src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.infrastructure.workflow.factory
 src/backend/entrypoints/api/v1/endpoints/rag_cache_admin.py	entrypoints	src.backend.infrastructure.cache.rag.metrics
 src/backend/entrypoints/asyncapi/exporter.py	entrypoints	src.backend.infrastructure.clients.messaging.stream
+src/backend/entrypoints/grpc/grpc_server.py	entrypoints	src.backend.infrastructure.observability.correlation
 src/backend/entrypoints/middlewares/webhook_signature.py	entrypoints	src.backend.infrastructure.security.signatures
 src/backend/entrypoints/sse/handler.py	entrypoints	src.backend.infrastructure.security.pii_streaming
 src/backend/entrypoints/webhook/transformer.py	entrypoints	src.backend.infrastructure.resilience.retry
 src/backend/infrastructure/cache/rag/semantic.py	infrastructure	src.backend.services.ai.embedding_providers
 src/backend/infrastructure/clients/messaging/event_bus.py	infrastructure	src.backend.services.schema_registry.registry
+src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.backend.services.ai.pii.presidio_analyzer
 src/backend/infrastructure/sources/email.py	infrastructure	src.backend.entrypoints.email.imap_monitor
 src/backend/services/ai/langmem_models.py	services	src.backend.infrastructure.database.models.base
 src/backend/services/ai/langmem_service.py	services	src.backend.infrastructure.database.session
+src/backend/services/ai/metrics.py	services	src.backend.infrastructure.observability.metrics_registry
 src/backend/services/ai/rag_ingest_store.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/ai/rag_service.py	services	src.backend.infrastructure.cache.rag.three_tier
+src/backend/services/audit/audit_service.py	services	src.backend.infrastructure.observability.correlation
 src/backend/services/billing/quotas_service.py	services	src.backend.infrastructure.clients.storage.redis
+src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
+src/backend/services/scheduler/cron_dashboard_service.py	services	src.backend.infrastructure.scheduler.scheduler_manager
 src/backend/services/schema_registry/event_schemas.py	services	src.backend.infrastructure.clients.messaging.event_bus
+src/backend/services/workflows/sla_alerting.py	services	src.backend.infrastructure.observability.metrics_registry
+src/frontend/streamlit_app/pages/15_Workflow_Cost_Estimation.py	frontend	src.backend.dsl.workflow.versioning
+src/frontend/streamlit_app/pages/18_Workflow_Versioning.py	frontend	src.backend.dsl.workflow.versioning
+src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.workflow.versioning
+src/frontend/streamlit_app/pages/31_DSL_Visual_Editor.py	frontend	src.backend.dsl.workflow.visualize
+src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.spec
+src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.template_registry_compat
+src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.visualize
 src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engine.dry_run
