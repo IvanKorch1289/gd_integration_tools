@@ -56,9 +56,36 @@
 
 ---
 
-## Текущее состояние (2026-05-22, Sprint 21 ✅ CLOSED 10/10)
+## Текущее состояние (2026-05-22 14:37, Sprint 21 ✅ CLOSED 10/10 — compact session)
+
+**Compact**: `vault/session-2026-05-22-1437-summary.md` — детальная сводка (untracked, vault gitignored).
+**Memory**: `~/.claude/.../memory/feedback_sprint21_resilience_multitenancy.md` + MEMORY.md +1.
 
 **Sprint 21 — Resilience & Multi-tenancy Hardening** закрыт coordinator-self mode за одну сессию: backbone + 9 wave + closure = 11 commits, 55/55 unit-тестов passing (+5 skipped: RLS требует Postgres DSN).
+
+### Изменённые файлы — 27 новых + 6 modified (см. compact-summary)
+
+### Выполненные команды проверки
+
+- `pytest tests/cache/ tests/resilience/ tests/scheduler/ tests/webhook/ tests/rpa/ tests/workflow/test_state_persistence.py tests/security/test_rls_isolation.py` → **55 passed, 5 skipped**.
+- Smoke-imports: rls_listener, RPACallPolicy, admin_scheduler_dlq router (4 routes), Streamlit page 83 ast.parse.
+- `git log --oneline --grep="wave:s21"` → 11 commits.
+
+### Открытые риски (7)
+
+1. RLS PG-tests skipped — testcontainers fixture carryover S22.
+2. RPACallPolicy интеграция неполна — 4 callsites carryover S22.
+3. Lifespan wire-up отсутствует — singletons остаются None.
+4. Router include `admin_scheduler_dlq.py` не подключён.
+5. RLS W1 ограничен 1 таблицей (`orders/users/files` carryover S22).
+6. Streamlit page 83 — placeholders для метрик (API endpoints carryover).
+7. Параллельная сессия активна — `git pull` обязателен в next session.
+
+### Следующий шаг
+
+1. **`/compact` или `/clear`** — этой сессии всё durable записано.
+2. Sprint 22 kickoff (PLAN.md V22.2 §5).
+3. Pre-S22 carryover: lifespan wire-up + router include + add-tenant-id-columns migration.
 
 **Источник**: PLAN.md V22.2 FINAL §4 + `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
 
