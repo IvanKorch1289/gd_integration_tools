@@ -89,7 +89,10 @@ class TaskRegistry:
             wrapped = _runner()
 
         loop = asyncio.get_event_loop()
-        task: asyncio.Task[_T] = loop.create_task(
+        # Сам TaskRegistry — это и есть санкционированная точка
+        # обёртки raw create_task; CI-gate orphan-create-task здесь не
+        # применим (мы уже регистрируем task в self._tasks ниже).
+        task: asyncio.Task[_T] = loop.create_task(  # noqa: orphan-create-task
             self._with_context(ctx, wrapped), name=name
         )
         self._tasks.add(task)

@@ -763,6 +763,7 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) check-waf-coverage-strict
 	@$(MAKE) check-ai-safety
 	@$(MAKE) check-python3-syntax
+	@$(MAKE) check-task-registry
 	@$(SUCCESS) "CI gate passed"
 
 pr: ## К1 V15 — composite PR gate (ci + docs)
@@ -933,13 +934,16 @@ review-clones-diff:  ## Сравнить с baseline; fail при появлен
 # Sprint 17 K9 — AST-aware grep-gate для запрещённых паттернов V22 §5.   #
 # Скрипт фильтрует docstring-блоки, CLI selftest и ruamel.yaml.          #
 # ---------------------------------------------------------------------- #
-.PHONY: check-grep-violations check-python3-syntax middleware-tree
+.PHONY: check-grep-violations check-python3-syntax check-task-registry middleware-tree
 
 check-grep-violations: check-env ## V22 §5: AST-aware fail-on запрещённые паттерны (8 правил)
 	$(UV_RUN) python tools/checks/check_grep_violations.py --root src/backend
 
 check-python3-syntax: check-env ## V22 §S17 DoD #2: запрет except A, B: без скобок (Python-2 стиль)
 	$(UV_RUN) python tools/checks/check_python3_syntax.py --root src/backend
+
+check-task-registry: check-env ## S17 K2 W3 (R-V15-11): orphan asyncio.create_task / ensure_future
+	$(UV_RUN) python tools/checks/check_task_registry.py --root src/backend
 
 middleware-tree: check-env ## S17 ADR-NEW-2: показать дерево зарегистрированных middleware по слоям
 	$(UV_RUN) python tools/middleware_tree.py

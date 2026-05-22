@@ -123,14 +123,21 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
             send_data=_send_data,
         )
         self._handlers[stream_id] = handler
-        if stream_ended:
-            asyncio.ensure_future(handler.push_request(b"", more_body=False))
 
         from src.backend.core.utils.task_registry import (
             get_task_registry,  # noqa: PLC0415
         )
 
-        task = get_task_registry().create_task(
+        registry = get_task_registry()
+        if stream_ended:
+            push_task = registry.create_task(
+                handler.push_request(b"", more_body=False),
+                name=f"http3-push-empty-{stream_id}",
+            )
+            self._tasks.add(push_task)
+            push_task.add_done_callback(self._tasks.discard)
+
+        task = registry.create_task(
             self._asgi_app(scope, handler.receive, handler.send),
             name=f"http3-asgi-stream-{stream_id}",
         )
@@ -141,9 +148,24 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         handler = self._handlers.get(stream_id)
         if handler is None:
             return
-        asyncio.ensure_future(handler.push_request(data, more_body=not stream_ended))
+        from src.backend.core.utils.task_registry import (
+            get_task_registry,  # noqa: PLC0415
+        )
+
+        registry = get_task_registry()
+        push_task = registry.create_task(
+            handler.push_request(data, more_body=not stream_ended),
+            name=f"http3-push-data-{stream_id}",
+        )
+        self._tasks.add(push_task)
+        push_task.add_done_callback(self._tasks.discard)
         if stream_ended:
-            asyncio.ensure_future(handler.push_disconnect())
+            disc_task = registry.create_task(
+                handler.push_disconnect(),
+                name=f"http3-push-disconnect-{stream_id}",
+            )
+            self._tasks.add(disc_task)
+            disc_task.add_done_callback(self._tasks.discard)
 
     def _send_headers(self, stream_id: int, headers: list[tuple[bytes, bytes]]) -> None:
         if self._http is None:
