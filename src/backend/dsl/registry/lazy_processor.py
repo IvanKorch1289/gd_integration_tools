@@ -87,7 +87,7 @@ class LazyProcessorRegistry:
         self._base = base
         self._lazy_refs: dict[str, LazyProcessorRef] = {}
         self._resolved: set[str] = set()
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
 
     def register_lazy(
         self,

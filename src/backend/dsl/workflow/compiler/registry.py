@@ -38,7 +38,7 @@ class WorkflowCompilerRegistry:
     """
 
     def __init__(self) -> None:
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
         self._cache: dict[str, CompiledWorkflow] = {}
 
     def get(self, name: str) -> CompiledWorkflow | None:

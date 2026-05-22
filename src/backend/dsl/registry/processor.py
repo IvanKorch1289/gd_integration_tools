@@ -115,7 +115,7 @@ class ProcessorRegistry:
 
     def __init__(self) -> None:
         self._by_fqn: dict[str, ProcessorSpec] = {}
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
 
     def register(self, spec: ProcessorSpec) -> ProcessorSpec:
         """Регистрирует процессор.

@@ -52,7 +52,7 @@ registry: svcs.Registry = svcs.Registry()
 # без накладных расходов.
 _singletons: dict[Hashable, Any] = {}
 _known_keys: set[Hashable] = set()
-_lock = threading.RLock()
+_lock = threading.Lock()
 
 
 def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:
@@ -110,9 +110,14 @@ def get_service(key: Hashable | type[T]) -> T | Any:
         if key in _singletons:
             return _singletons[key]
         if key not in _known_keys:
+            # Inline-формирование списка чтобы избежать рекурсивного захвата _lock
+            # (list_services() тоже пытается with _lock).
+            available = ", ".join(
+                str(k) if not isinstance(k, type) else k.__name__
+                for k in sorted(_known_keys, key=lambda x: str(x))
+            )
             raise KeyError(
-                f"Сервис '{key}' не зарегистрирован. "
-                f"Доступные: {', '.join(list_services())}"
+                f"Сервис '{key}' не зарегистрирован. Доступные: {available}"
             )
         # Пытаемся svcs Container (type-keys); fallback — прямой вызов factory.
         instance: Any

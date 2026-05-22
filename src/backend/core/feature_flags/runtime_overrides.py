@@ -81,7 +81,7 @@ class RuntimeFeatureFlagOverrides:
     def __init__(self) -> None:
         self._global: dict[str, Any] = {}
         self._per_tenant: dict[str, dict[str, Any]] = {}
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
 
     def get(
         self,
@@ -225,7 +225,7 @@ class RuntimeFeatureFlagOverrides:
 
 
 _singleton: RuntimeFeatureFlagOverrides | None = None
-_singleton_lock = threading.RLock()
+_singleton_lock = threading.Lock()
 
 
 def get_runtime_overrides() -> RuntimeFeatureFlagOverrides:
