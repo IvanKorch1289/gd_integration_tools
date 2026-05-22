@@ -66,9 +66,11 @@ def _ensure_stale_metric() -> None:
     if _stale_warning_counter is not None:
         return
     try:
-        from prometheus_client import Counter
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
 
-        _stale_warning_counter = Counter(
+        _stale_warning_counter = metrics_registry.counter(
             "db_fallback_used_with_stale_snapshot_total",
             "Times db_main fallback returned data from a stale snapshot",
         )

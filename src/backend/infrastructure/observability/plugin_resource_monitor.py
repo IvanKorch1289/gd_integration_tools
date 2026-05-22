@@ -42,30 +42,30 @@ from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass
 
-from prometheus_client import Counter, Gauge
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 __all__ = ("PluginResourceMetrics", "PluginResourceMonitor")
 
 _logger = logging.getLogger("infrastructure.observability.plugin_resource_monitor")
 
-# ── Prometheus метрики (создаются ленниво) ───────────────────────────
+# ── Prometheus метрики (через MetricsRegistry, idempotent) ──────────
 
-_CPU_GAUGE = Gauge(
+_CPU_GAUGE = metrics_registry.gauge(
     "gd_plugin_cpu_percent",
     "Per-plugin CPU usage estimate (process-wide CPU% scaled by plugin frame count).",
-    labelnames=("plugin",),
+    labels=("plugin",),
 )
 
-_RSS_GAUGE = Gauge(
+_RSS_GAUGE = metrics_registry.gauge(
     "gd_plugin_rss_bytes",
     "Per-plugin RSS bytes estimate (tracemalloc allocations filtered by extensions/<plugin>).",
-    labelnames=("plugin",),
+    labels=("plugin",),
 )
 
-_RPS_COUNTER = Counter(
+_RPS_COUNTER = metrics_registry.counter(
     "gd_plugin_rps",
     "Per-plugin requests counter — incremented by ActionHandlerRegistry/RouteEngine.",
-    labelnames=("plugin",),
+    labels=("plugin",),
 )
 
 

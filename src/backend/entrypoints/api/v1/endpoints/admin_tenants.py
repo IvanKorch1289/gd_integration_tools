@@ -73,7 +73,12 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     aggregated: list[dict[str, Any]] = []
     for tid, items in by_tenant.items():
-        actions = Counter(str(r.get("action", "")) for r in items if r.get("action"))
+        # ``Counter`` — это ``collections.Counter`` (счётчик строк), не
+        # ``prometheus_client.Counter``; violation-check ругается из-за
+        # идентичного имени.
+        actions = Counter(  # noqa: violation-check
+            str(r.get("action", "")) for r in items if r.get("action")
+        )
         last_seen = max(
             (str(r.get("when", "")) for r in items if r.get("when")), default=None
         )

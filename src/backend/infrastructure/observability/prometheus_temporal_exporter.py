@@ -32,23 +32,25 @@ def _ensure_metrics() -> dict[str, Any]:
     if _metrics:
         return _metrics
     try:
-        from prometheus_client import Counter, Gauge  # type: ignore[import-untyped]
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
 
         _metrics = {
-            "task_queue_depth": Gauge(
+            "task_queue_depth": metrics_registry.gauge(
                 "temporal_task_queue_depth",
                 "Pending tasks per Temporal task queue (S12 K2 W2)",
-                labelnames=("task_queue",),
+                labels=("task_queue",),
             ),
-            "workers_active": Gauge(
+            "workers_active": metrics_registry.gauge(
                 "temporal_workers_active",
                 "Active Temporal workers per task queue (S12 K2 W2)",
-                labelnames=("task_queue",),
+                labels=("task_queue",),
             ),
-            "scale_events": Counter(
+            "scale_events": metrics_registry.counter(
                 "temporal_worker_scale_events_total",
                 "Scale up/down events for Temporal worker pool",
-                labelnames=("action",),
+                labels=("action",),
             ),
         }
     except (ImportError, ValueError):

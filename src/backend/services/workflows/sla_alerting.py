@@ -140,12 +140,14 @@ def _emit_sla_metric(
     global _sla_counter
     if _sla_counter is None:
         try:
-            from prometheus_client import Counter  # type: ignore[import-untyped]
+            from src.backend.infrastructure.observability.metrics_registry import (
+                metrics_registry,
+            )
 
-            _sla_counter = Counter(
+            _sla_counter = metrics_registry.counter(
                 "workflow_sla_compliance_total",
                 "SLA evaluations per workflow (level=none/soft/hard)",
-                labelnames=("workflow_id", "tenant_id", "level"),
+                labels=("workflow_id", "tenant_id", "level"),
             )
         except (ImportError, ValueError):
             _sla_counter = False  # sentinel: do not retry

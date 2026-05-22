@@ -40,28 +40,27 @@ def _ensure_metrics() -> None:
     if _metrics_initialized:
         return
     try:
-        from prometheus_client import Counter
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
 
-        _metric_hits = Counter(
+        _metric_hits = metrics_registry.counter(
             "lru_cache_hits_total",
             "Кол-во cache-hit в L1 LruMemoryCache",
-            labelnames=("scope",),
+            labels=("scope",),
         )
-        _metric_misses = Counter(
+        _metric_misses = metrics_registry.counter(
             "lru_cache_misses_total",
             "Кол-во cache-miss в L1 LruMemoryCache",
-            labelnames=("scope",),
+            labels=("scope",),
         )
-        _metric_sets = Counter(
+        _metric_sets = metrics_registry.counter(
             "lru_cache_sets_total",
             "Кол-во set-операций в L1 LruMemoryCache",
-            labelnames=("scope",),
+            labels=("scope",),
         )
     except ImportError:
-        logger.debug("prometheus_client недоступен — LruMemoryCache в no-op metrics")
-    except ValueError:
-        # Counter уже зарегистрирован (двойной импорт в тестах) — игнорируем.
-        logger.debug("LruMemoryCache: метрики уже зарегистрированы")
+        logger.debug("MetricsRegistry недоступен — LruMemoryCache в no-op metrics")
     finally:
         _metrics_initialized = True
 

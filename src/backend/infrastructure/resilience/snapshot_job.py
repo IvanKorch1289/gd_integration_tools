@@ -78,27 +78,29 @@ def _ensure_metrics() -> None:
     if _metrics_initialized:
         return
     try:
-        from prometheus_client import Counter, Gauge
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
 
-        _age_gauge = Gauge(
+        _age_gauge = metrics_registry.gauge(
             "snapshot_age_seconds",
             "Seconds since last successful PG → SQLite snapshot sync",
         )
-        _rows_gauge = Gauge(
+        _rows_gauge = metrics_registry.gauge(
             "snapshot_rows_total",
             "Rows replicated to SQLite snapshot per table",
-            labelnames=["table"],
+            labels=("table",),
         )
-        _duration_gauge = Gauge(
+        _duration_gauge = metrics_registry.gauge(
             "snapshot_sync_duration_seconds",
             "Duration of last PG → SQLite snapshot sync",
         )
-        _errors_counter = Counter(
+        _errors_counter = metrics_registry.counter(
             "snapshot_sync_errors_total", "Total failed PG → SQLite snapshot syncs"
         )
         _metrics_initialized = True
     except ImportError:
-        # prometheus_client не установлен — пропускаем без шума.
+        # MetricsRegistry/prometheus_client не установлены — пропускаем без шума.
         _metrics_initialized = True
 
 

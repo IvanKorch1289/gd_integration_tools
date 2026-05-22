@@ -75,38 +75,40 @@ class AgentMetricsService:
         if self._initialized:
             return
         try:
-            from prometheus_client import Counter, Histogram
+            from src.backend.infrastructure.observability.metrics_registry import (
+                metrics_registry,
+            )
 
-            self._histogram = Histogram(
+            self._histogram = metrics_registry.histogram(
                 "agent_execution_seconds",
                 "Длительность выполнения AI-агента, сек",
-                labelnames=("agent_id", "provider", "status"),
+                labels=("agent_id", "provider", "status"),
                 buckets=self._BUCKETS,
             )
-            self._tokens = Counter(
+            self._tokens = metrics_registry.counter(
                 "agent_tokens_total",
                 "Токены LLM по направлениям",
-                labelnames=("provider", "model", "direction"),
+                labels=("provider", "model", "direction"),
             )
-            self._calls = Counter(
+            self._calls = metrics_registry.counter(
                 "agent_calls_total",
                 "Вызовы AI-агентов по статусу",
-                labelnames=("agent_id", "provider", "status"),
+                labels=("agent_id", "provider", "status"),
             )
-            self._tool = Counter(
+            self._tool = metrics_registry.counter(
                 "agent_tool_calls_total",
                 "Вызовы инструментов AI-агентами",
-                labelnames=("agent_id", "tool"),
+                labels=("agent_id", "tool"),
             )
-            self._cost = Counter(
+            self._cost = metrics_registry.counter(
                 "agent_cost_usd_total",
                 "Накопленная стоимость вызовов AI, USD",
-                labelnames=("provider", "model"),
+                labels=("provider", "model"),
             )
-            self._feedback = Counter(
+            self._feedback = metrics_registry.counter(
                 "agent_feedback_total",
                 "Разметка feedback оператором",
-                labelnames=("agent_id", "label"),
+                labels=("agent_id", "label"),
             )
         except ImportError:
             logger.info(_NO_PROMETHEUS)

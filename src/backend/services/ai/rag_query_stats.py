@@ -57,8 +57,10 @@ class RagQueryStatsCollector:
                 return
             except Exception:  # noqa: BLE001, S110
                 logger.debug("RagQueryStatsCollector: Redis fail, in-memory fallback")
-        # Fallback.
-        self._memory.setdefault(tenant_id, Counter())[h] += 1
+        # Fallback. ``Counter`` здесь — ``collections.Counter`` (счётчик
+        # ключей), не ``prometheus_client.Counter`` — violation-check
+        # ругается из-за идентичного имени.
+        self._memory.setdefault(tenant_id, Counter())[h] += 1  # noqa: violation-check
 
     async def top_queries(self, tenant_id: str, n: int = 100) -> list[tuple[str, int]]:
         """Top-N запросов для tenant'а (по убыванию counter'а)."""
@@ -88,8 +90,8 @@ class RagQueryStatsCollector:
                     return normalized
             except Exception:  # noqa: BLE001, S110
                 pass
-        # Fallback in-memory.
-        tenant_counter = self._memory.get(tenant_id, Counter())
+        # Fallback in-memory. ``Counter`` здесь — ``collections.Counter``.
+        tenant_counter = self._memory.get(tenant_id, Counter())  # noqa: violation-check
         tenant_originals = self._original.get(tenant_id, {})
         result: list[tuple[str, int]] = []
         for h, count in tenant_counter.most_common(n):

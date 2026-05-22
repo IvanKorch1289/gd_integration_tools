@@ -36,7 +36,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Final, TypeVar
 
-from prometheus_client import Counter
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 _logger = logging.getLogger(__name__)
 
@@ -45,10 +45,10 @@ T = TypeVar("T")
 ReconnectOutcome = Any  # Literal["success", "failure", "giveup"] — см. ниже.
 
 
-reconnect_attempts_total: Final = Counter(
+reconnect_attempts_total: Final = metrics_registry.counter(
     "infra_client_reconnect_attempts_total",
     "Total reconnection attempts per client (IL2.3).",
-    labelnames=("client", "outcome"),
+    labels=("client", "outcome"),
 )
 
 

@@ -42,7 +42,7 @@ from prometheus_client import Counter, Gauge, Histogram
 if TYPE_CHECKING:
     from prometheus_client.registry import CollectorRegistry
 
-__all__ = ("DEFAULT_LABELS", "MetricsRegistry")
+__all__ = ("DEFAULT_LABELS", "MetricsRegistry", "metrics_registry")
 
 DEFAULT_LABELS: Final[tuple[str, ...]] = (
     "tenant_id",
@@ -206,3 +206,12 @@ class MetricsRegistry:
             return bool(feature_flags.metrics_registry_strict)
         except Exception:  # noqa: BLE001 — best-effort
             return False
+
+
+# Глобальный singleton для миграции inline-callsites из 16 файлов
+# (S17 K2 W2 D11 sweep). ``default_labels=()`` сохраняет совместимость
+# с существующими callsites, которые не подготовлены к добавлению
+# tenant_id/route_id/component/env в ``.labels(...)``. Сервисы, которым
+# нужны default-labels из ``DEFAULT_LABELS``, могут создавать локальный
+# ``MetricsRegistry(default_labels=DEFAULT_LABELS)``.
+metrics_registry: MetricsRegistry = MetricsRegistry(default_labels=())

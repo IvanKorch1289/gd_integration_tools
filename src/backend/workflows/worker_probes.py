@@ -21,13 +21,14 @@ import logging
 from typing import Any, Awaitable, Callable
 
 import uvicorn
-from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, Gauge, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 __all__ = (
     "WorkerProbesServer",
@@ -39,22 +40,22 @@ __all__ = (
 _logger = logging.getLogger("workflow.worker.probes")
 
 
-WORKER_ACTIVE_EXECUTIONS = Gauge(
+WORKER_ACTIVE_EXECUTIONS = metrics_registry.gauge(
     "workflow_worker_active_executions",
     "Количество инстансов, исполняемых прямо сейчас в этом worker-е.",
-    labelnames=("worker_id",),
+    labels=("worker_id",),
 )
 
-WORKER_QUEUE_DEPTH = Gauge(
+WORKER_QUEUE_DEPTH = metrics_registry.gauge(
     "workflow_worker_queue_depth",
     "Длина in-memory очереди pending workflow_id в worker-е.",
-    labelnames=("worker_id",),
+    labels=("worker_id",),
 )
 
-WORKER_UP = Gauge(
+WORKER_UP = metrics_registry.gauge(
     "workflow_worker_up",
     "1 — worker процесс жив и runner запущен; 0 — shutdown / not ready.",
-    labelnames=("worker_id",),
+    labels=("worker_id",),
 )
 
 

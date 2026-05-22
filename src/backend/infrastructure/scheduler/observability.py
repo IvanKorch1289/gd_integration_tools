@@ -52,62 +52,40 @@ def _ensure_metrics() -> tuple[Any | None, Any | None]:
         return _JOB_EXECUTIONS, _JOBSTORE_TYPE
 
     try:
-        from prometheus_client import Counter, Gauge, Histogram
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
     except ImportError:
-        _logger.debug("prometheus_client недоступен — scheduler metrics no-op")
+        _logger.debug("MetricsRegistry недоступен — scheduler metrics no-op")
         return None, None
 
     if _JOB_EXECUTIONS is None:
-        try:
-            _JOB_EXECUTIONS = Counter(
-                "scheduler_job_executions_total",
-                "Кол-во выполнений APScheduler-job по статусу.",
-                labelnames=("job_id", "status"),
-            )
-        except ValueError:
-            from prometheus_client import REGISTRY
-
-            collectors = getattr(REGISTRY, "_names_to_collectors", {})
-            _JOB_EXECUTIONS = collectors.get("scheduler_job_executions_total")
+        _JOB_EXECUTIONS = metrics_registry.counter(
+            "scheduler_job_executions_total",
+            "Кол-во выполнений APScheduler-job по статусу.",
+            labels=("job_id", "status"),
+        )
 
     if _JOB_STARTED is None:
-        try:
-            _JOB_STARTED = Counter(
-                "scheduler_jobs_started_total",
-                "Кол-во submit'ов APScheduler-job (S17 K2 W4).",
-                labelnames=("job_id",),
-            )
-        except ValueError:
-            from prometheus_client import REGISTRY
-
-            collectors = getattr(REGISTRY, "_names_to_collectors", {})
-            _JOB_STARTED = collectors.get("scheduler_jobs_started_total")
+        _JOB_STARTED = metrics_registry.counter(
+            "scheduler_jobs_started_total",
+            "Кол-во submit'ов APScheduler-job (S17 K2 W4).",
+            labels=("job_id",),
+        )
 
     if _JOB_DURATION is None:
-        try:
-            _JOB_DURATION = Histogram(
-                "scheduler_jobs_duration_seconds",
-                "Длительность APScheduler-job от submit до executed/error.",
-                labelnames=("job_id", "status"),
-            )
-        except ValueError:
-            from prometheus_client import REGISTRY
-
-            collectors = getattr(REGISTRY, "_names_to_collectors", {})
-            _JOB_DURATION = collectors.get("scheduler_jobs_duration_seconds")
+        _JOB_DURATION = metrics_registry.histogram(
+            "scheduler_jobs_duration_seconds",
+            "Длительность APScheduler-job от submit до executed/error.",
+            labels=("job_id", "status"),
+        )
 
     if _JOBSTORE_TYPE is None:
-        try:
-            _JOBSTORE_TYPE = Gauge(
-                "scheduler_jobstore_type",
-                "Тип default-jobstore APScheduler (1 — текущий backend).",
-                labelnames=("type",),
-            )
-        except ValueError:
-            from prometheus_client import REGISTRY
-
-            collectors = getattr(REGISTRY, "_names_to_collectors", {})
-            _JOBSTORE_TYPE = collectors.get("scheduler_jobstore_type")
+        _JOBSTORE_TYPE = metrics_registry.gauge(
+            "scheduler_jobstore_type",
+            "Тип default-jobstore APScheduler (1 — текущий backend).",
+            labels=("type",),
+        )
 
     return _JOB_EXECUTIONS, _JOBSTORE_TYPE
 

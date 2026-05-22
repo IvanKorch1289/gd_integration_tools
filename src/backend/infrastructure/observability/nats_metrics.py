@@ -20,28 +20,30 @@ __all__ = (
 )
 
 try:  # pragma: no cover
-    from prometheus_client import Counter, Gauge, Histogram
+    from src.backend.infrastructure.observability.metrics_registry import (
+        metrics_registry,
+    )
 
-    consumer_pending = Gauge(
+    consumer_pending = metrics_registry.gauge(
         "nats_consumer_pending",
         "Pending messages in NATS consumer",
-        ("stream", "consumer"),
+        labels=("stream", "consumer"),
     )
-    consumer_delivered = Counter(
+    consumer_delivered = metrics_registry.counter(
         "nats_consumer_delivered_total",
         "Total delivered messages from NATS consumer",
-        ("stream", "consumer"),
+        labels=("stream", "consumer"),
     )
-    consumer_ack_lag = Histogram(
+    consumer_ack_lag = metrics_registry.histogram(
         "nats_consumer_ack_lag_seconds",
         "Ack lag of NATS consumer (delivered - ack_floor) in seconds",
-        ("stream", "consumer"),
+        labels=("stream", "consumer"),
         buckets=(0.01, 0.1, 0.5, 1.0, 5.0, 30.0, 60.0, 300.0),
     )
-    consumer_info_errors = Counter(
+    consumer_info_errors = metrics_registry.counter(
         "nats_consumer_info_errors_total",
         "Total errors fetching NATS consumer_info",
-        ("stream", "consumer"),
+        labels=("stream", "consumer"),
     )
 except Exception:  # noqa: BLE001, S110
     consumer_pending = None  # type: ignore[assignment,unused-ignore]

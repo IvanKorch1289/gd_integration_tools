@@ -23,16 +23,18 @@ def _ensure() -> None:
     if _initialized:
         return
     try:
-        from prometheus_client import Counter
-
-        _hits = Counter(
-            "rag_cache_hits_total", "RAG cache hits per tier", labelnames=("tier",)
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
         )
-        _misses = Counter(
-            "rag_cache_misses_total", "RAG cache misses per tier", labelnames=("tier",)
+
+        _hits = metrics_registry.counter(
+            "rag_cache_hits_total", "RAG cache hits per tier", labels=("tier",)
+        )
+        _misses = metrics_registry.counter(
+            "rag_cache_misses_total", "RAG cache misses per tier", labels=("tier",)
         )
     except ImportError:
-        logger.debug("prometheus_client недоступен — RAG cache metrics в no-op.")
+        logger.debug("MetricsRegistry недоступен — RAG cache metrics в no-op.")
     finally:
         _initialized = True
 

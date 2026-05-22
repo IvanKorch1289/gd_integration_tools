@@ -51,17 +51,17 @@ def _ensure_tier_metrics() -> None:
     if _tier_initialized:
         return
     try:
-        from prometheus_client import Counter
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
 
-        _tier_counter = Counter(
+        _tier_counter = metrics_registry.counter(
             "ai_tier_router_ops_total",
             "Операции TierRouter с labels (tier, op)",
-            labelnames=("tier", "op"),
+            labels=("tier", "op"),
         )
     except ImportError:
-        logger.debug("prometheus_client недоступен — TierRouter в no-op metrics")
-    except ValueError:
-        logger.debug("TierRouter: метрики уже зарегистрированы")
+        logger.debug("MetricsRegistry недоступен — TierRouter в no-op metrics")
     finally:
         _tier_initialized = True
 

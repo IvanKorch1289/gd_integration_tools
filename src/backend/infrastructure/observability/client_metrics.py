@@ -27,7 +27,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, AsyncIterator, Final, Literal
 
-from prometheus_client import Counter, Gauge, Histogram
+from src.backend.infrastructure.observability.metrics_registry import metrics_registry
 
 if TYPE_CHECKING:
     pass
@@ -55,39 +55,39 @@ _DEGRADATION_LABELS: Final = ("component",)
 
 # --- Ядро метрик -----------------------------------------------------
 
-requests_total: Final = Counter(
+requests_total: Final = metrics_registry.counter(
     "infra_client_requests_total",
     "Total number of infra-client operations (RED: Rate).",
-    labelnames=_LABELS,
+    labels=_LABELS,
 )
 
-request_duration_seconds: Final = Histogram(
+request_duration_seconds: Final = metrics_registry.histogram(
     "infra_client_request_duration_seconds",
     "Duration of infra-client operations in seconds (RED: Duration).",
-    labelnames=_LABELS,
+    labels=_LABELS,
     buckets=_LATENCY_BUCKETS,
 )
 
-pool_size: Final = Gauge(
+pool_size: Final = metrics_registry.gauge(
     "infra_client_pool_size",
     "Current size of infra-client connection pool by state.",
-    labelnames=_POOL_LABELS,
+    labels=_POOL_LABELS,
 )
 
-circuit_state: Final = Gauge(
+circuit_state: Final = metrics_registry.gauge(
     "infra_client_circuit_state",
     "Circuit breaker state: 0=closed, 1=open, 2=half_open.",
-    labelnames=_CIRCUIT_LABELS,
+    labels=_CIRCUIT_LABELS,
 )
 
-degradation_mode: Final = Gauge(
+degradation_mode: Final = metrics_registry.gauge(
     "app_degradation_mode",
     (
         "Component-level degradation indicator (W26 ResilienceCoordinator): "
         "0=normal, 1=degraded (fallback active), 2=down (all backends "
         "exhausted)."
     ),
-    labelnames=_DEGRADATION_LABELS,
+    labels=_DEGRADATION_LABELS,
 )
 
 
