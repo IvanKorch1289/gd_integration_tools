@@ -26,6 +26,7 @@ from typing import Any, Protocol, runtime_checkable
 __all__ = (
     "HttpClientProtocol",
     "AISanitizerProtocol",
+    "AsyncPIISanitizerProtocol",
     "MongoClientProtocol",
     "RedisStreamClientProtocol",
     "LLMJudgeMetricsProtocol",
@@ -58,7 +59,13 @@ class HttpClientProtocol(Protocol):
 class AISanitizerProtocol(Protocol):
     """Контракт маскировщика PII перед отправкой в LLM.
 
-    Реализация: ``infrastructure.security.ai_sanitizer.AIDataSanitizer``.
+    Реализации:
+        * regex-based legacy: ``infrastructure.security.ai_sanitizer.AIDataSanitizer``;
+        * NER-based S24 W1 (ADR-NEW-16): ``services.ai.pii.presidio_analyzer.PresidioSanitizerAdapter``.
+
+    Sync API (`sanitize_text`, `sanitize_messages`, `restore_text`) обязателен
+    для всех реализаций и сохранён без breaking-change ради backward-compat
+    с существующими callers (AIAgentService, retrieval_masker, gateway).
     """
 
     def sanitize_text(self, text: str) -> Any:
@@ -74,6 +81,30 @@ class AISanitizerProtocol(Protocol):
     @staticmethod
     def restore_text(text: str, mapping: dict[str, str]) -> str:
         """Восстанавливает оригинальные значения по mapping."""
+        ...
+
+
+@runtime_checkable
+class AsyncPIISanitizerProtocol(Protocol):
+    """Опциональный async-API маскировщика PII (S24 W1, ADR-NEW-16).
+
+    Расширяет :class:`AISanitizerProtocol` async-методом для callers, которые
+    выполняют PII-маскирование в async-контексте (RAG retrieval, Langfuse
+    PII callback, DLQ payload sanitize).
+
+    Sync-API сохраняется обязательным для legacy-вызовов; async-метод
+    реализуется только Presidio-адаптером (services.ai.pii.presidio_analyzer).
+    Реализации без NER (regex-only AIDataSanitizer) async-метод не предоставляют.
+    """
+
+    async def sanitize_async(self, text: str) -> Any:
+        """Async-версия sanitize_text для интеграции в async-pipeline."""
+        ...
+
+    async def sanitize_messages_async(
+        self, messages: list[dict[str, str]]
+    ) -> tuple[list[dict[str, str]], dict[str, str]]:
+        """Async-версия sanitize_messages для chat-payload в async-контексте."""
         ...
 
 

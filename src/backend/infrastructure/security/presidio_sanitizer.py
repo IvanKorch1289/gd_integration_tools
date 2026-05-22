@@ -1,31 +1,50 @@
-"""Presidio-based PII sanitizer — замена кастомного regex.
+"""Deprecation re-export shim для PresidioSanitizer (S24 W1).
 
-Использует Microsoft Presidio для распознавания 15+ entity types:
-PERSON, PHONE_NUMBER, EMAIL_ADDRESS, CREDIT_CARD, IBAN, IP_ADDRESS,
-NRP, LOCATION, DATE_TIME, URL, US_SSN, UK_NHS, ru-specific (INN, SNILS).
+С S24 W1 (ADR-NEW-16) канонический Presidio engine переехал в
+:mod:`src.backend.services.ai.pii.presidio_analyzer`. Этот модуль остаётся
+до закрытия Sprint 24 как deprecation shim для silent callers — будет
+удалён в `[wave:s24/closure]` после dead-code-hunter pass.
 
-Graceful fallback: если presidio не установлен, использует существующий
-AIDataSanitizer (regex-based).
+Старый API
+    * ``PresidioSanitizer`` — legacy adapter (English-only, без ru NER).
+    * ``SanitizeResult`` — старая dataclass.
+    * ``get_presidio_sanitizer()`` — singleton фабрика.
 
-Multi-instance safety:
-- Mapping per-request (не shared state)
-- Sanitize → reverse через in-memory dict (передаётся через exchange.properties)
+Новый API (рекомендуется):
+    * :class:`src.backend.services.ai.pii.presidio_analyzer.PresidioSanitizerAdapter`
+      — реализует `AISanitizerProtocol` (sync) и `AsyncPIISanitizerProtocol`
+      (async); поддерживает ru + en через `NlpEngineProvider`; 4 custom
+      recognizers (INN, СНИЛС, паспорт, кредитное дело).
+    * :func:`src.backend.services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter`
+      — singleton-фабрика.
 """
 
 from __future__ import annotations
 
-import logging
+import warnings
 from dataclasses import dataclass, field
-from typing import Any
 
-__all__ = ("PresidioSanitizer", "SanitizeResult", "get_presidio_sanitizer")
+from src.backend.services.ai.pii.presidio_analyzer import (
+    PresidioSanitizerAdapter,
+    get_presidio_sanitizer_adapter,
+)
 
-logger = logging.getLogger("security.presidio")
+__all__ = (
+    "PresidioSanitizer",
+    "SanitizeResult",
+    "get_presidio_sanitizer",
+)
 
 
 @dataclass(slots=True)
 class SanitizeResult:
-    """Результат санитайзинга: маскированный текст + mapping для restore."""
+    """Legacy-форма результата (deprecated, использовать SanitizationResult).
+
+    Сохраняется для обратной совместимости с прежним API
+    `PresidioSanitizer.sanitize()`. Новый код должен использовать
+    `services.ai.pii.presidio_analyzer.PresidioSanitizerAdapter` который
+    возвращает `infrastructure.security.ai_sanitizer.SanitizationResult`.
+    """
 
     sanitized_text: str
     replacements: dict[str, str] = field(default_factory=dict)
@@ -33,108 +52,71 @@ class SanitizeResult:
 
 
 class PresidioSanitizer:
-    """PII sanitizer через Microsoft Presidio.
+    """Deprecated alias для PresidioSanitizerAdapter (S24 W1, ADR-NEW-16).
 
-    При отсутствии presidio — проваливается в AIDataSanitizer (regex fallback).
+    Сохраняется только для silent callers; будет удалён в `[wave:s24/closure]`.
+    Новый код должен использовать
+    :class:`services.ai.pii.presidio_analyzer.PresidioSanitizerAdapter`.
     """
 
     def __init__(self, *, language: str = "en") -> None:
-        self._language = language
-        self._analyzer: Any = None
-        self._available = self._try_init()
-
-    def _try_init(self) -> bool:
-        try:
-            from presidio_analyzer import AnalyzerEngine
-
-            self._analyzer = AnalyzerEngine()
-            logger.info("Presidio analyzer initialized")
-            return True
-        except ImportError:
-            logger.debug("Presidio not installed, falling back to regex")
-            return False
-        except Exception as exc:
-            logger.warning("Presidio init failed: %s", exc)
-            return False
+        warnings.warn(
+            "infrastructure.security.presidio_sanitizer.PresidioSanitizer "
+            "deprecated с S24 W1 (ADR-NEW-16). Используйте "
+            "services.ai.pii.presidio_analyzer.PresidioSanitizerAdapter.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._adapter = PresidioSanitizerAdapter(default_language=language)
 
     async def sanitize(
         self, text: str, *, entities: list[str] | None = None
     ) -> SanitizeResult:
-        """Маскирует PII в тексте, возвращает result с mapping."""
-        if not text or not isinstance(text, str):
-            return SanitizeResult(sanitized_text=text)
-
-        if self._available:
-            return self._sanitize_presidio(text, entities)
-
-        return await self._sanitize_fallback(text)
-
-    def _sanitize_presidio(
-        self, text: str, entities: list[str] | None
-    ) -> SanitizeResult:
-        """Presidio-based sanitization."""
-        try:
-            results = self._analyzer.analyze(
-                text=text, entities=entities, language=self._language
+        """Legacy async-маскирование (delegates to PresidioSanitizerAdapter)."""
+        if not self._adapter.available:
+            # graceful path: при отсутствии Presidio возвращаем результат
+            # legacy regex через sync API адаптера.
+            sync_result = self._adapter.sanitize_text(text)
+            return SanitizeResult(
+                sanitized_text=sync_result.sanitized_text,
+                replacements=sync_result.replacements,
+                entities_found=list(sync_result.replacements.keys()),
             )
-        except Exception as exc:
-            logger.warning("Presidio analyze failed: %s", exc)
-            return SanitizeResult(sanitized_text=text)
-
-        sanitized = text
-        replacements: dict[str, str] = {}
-        entities_found: list[str] = []
-
-        for idx, r in enumerate(sorted(results, key=lambda x: -x.start)):
-            placeholder = f"<{r.entity_type}_{idx}>"
-            original = text[r.start : r.end]
-            sanitized = sanitized[: r.start] + placeholder + sanitized[r.end :]
-            replacements[placeholder] = original
-            entities_found.append(r.entity_type)
-
+        async_result = await self._adapter.sanitize_async(text)
         return SanitizeResult(
-            sanitized_text=sanitized,
-            replacements=replacements,
-            entities_found=entities_found,
+            sanitized_text=async_result.sanitized_text,
+            replacements=async_result.replacements,
+            entities_found=list(async_result.replacements.keys()),
         )
 
-    async def _sanitize_fallback(self, text: str) -> SanitizeResult:
-        """Regex fallback через существующий AIDataSanitizer."""
-        try:
-            from src.backend.infrastructure.security.ai_sanitizer import (
-                get_ai_sanitizer,
-            )
-
-            legacy = get_ai_sanitizer()
-            result = await legacy.sanitize(text)
-            return SanitizeResult(
-                sanitized_text=result.sanitized_text,
-                replacements=result.replacements,
-                entities_found=list(result.replacements.keys()),
-            )
-        except Exception as exc:
-            logger.error("Fallback sanitizer failed: %s", exc)
-            return SanitizeResult(sanitized_text=text)
-
-    def restore(self, text: str, replacements: dict[str, str]) -> str:
-        """Восстанавливает оригинальные значения из mapping."""
-        if not replacements:
-            return text
-        for placeholder, original in replacements.items():
-            text = text.replace(placeholder, original)
-        return text
+    @staticmethod
+    def restore(text: str, replacements: dict[str, str]) -> str:
+        """Восстанавливает оригинальные значения (deprecated)."""
+        return PresidioSanitizerAdapter.restore_text(text, replacements)
 
     @property
     def available(self) -> bool:
-        """True если Presidio загружен, иначе fallback режим."""
-        return self._available
-
-
-_instance: PresidioSanitizer | None = None
+        """True если Presidio engine инициализирован успешно."""
+        return self._adapter.available
 
 
 def get_presidio_sanitizer(*, language: str = "en") -> PresidioSanitizer:
-    global _instance
-    if _instance is None:
-        _instance = PresidioSanitizer(language=language)
-    return _instance
+    """Deprecated singleton-фабрика (S24 W1, ADR-NEW-16).
+
+    Использует общий адаптер через
+    :func:`services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter`.
+    """
+    warnings.warn(
+        "infrastructure.security.presidio_sanitizer.get_presidio_sanitizer "
+        "deprecated с S24 W1 (ADR-NEW-16). Используйте "
+        "services.ai.pii.presidio_analyzer.get_presidio_sanitizer_adapter.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    # Возвращаем legacy-обёртку для совместимости с silent callers
+    return PresidioSanitizer(language=language)
+
+
+# Re-export новых символов для прямого импорта через старый путь
+# (помогает grep'у обнаружить место deprecation в closure-pass).
+_ = get_presidio_sanitizer_adapter  # type: ignore[no-redef]
