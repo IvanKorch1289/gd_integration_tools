@@ -595,6 +595,41 @@ FeatureFlagService (V22 EXTENDED) ← per-tenant + runtime UI + Redis pub/sub
 
 ---
 
+### Sprint 24 — AI Safety Hardening (post-production gap-backlog)
+
+**Owner**: К4 (AI/Data primary) + К1 (Security review).
+**Приоритет**: **P0** (CRITICAL для compliance 152-ФЗ + banking jailbreak resistance).
+**Источник**: gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md (10 зон, 3 × P0).
+**Зависимости**: S17 ADR-NEW-3 RequestContext (для PII context propagation), S21 ADR-NEW-12 RLS (для tenant-aware memory).
+
+#### Wave 0 — Backbone
+- `[wave:s24/backbone]` — 3 default-OFF feature-flags: `PRESIDIO_PII_ENABLED`, `NEMO_GUARDRAILS_ENABLED`, `LANGGRAPH_CHECKPOINTER_ENABLED`. Capability schema extension: `pii.read.<tenant>`, `ai.guardrail.evaluate.<tenant>`, `ai.memory.{read,write,delete}.<tenant>`.
+
+#### Wave 1 (К4 W1 PII)
+- `[wave:s24/w1-presidio-ru-ner]` — **ADR-NEW-16 Presidio + ru NER**: `presidio-analyzer` + `presidio-anonymizer` + spaCy `ru_core_news_lg` + 4 custom recognizers (INN, СНИЛС, паспорт, номер кредитного дела). Применение: input LLM + output LLM + RAG retrieval (default-ON) + Langfuse traces callback + DLQ payload. CI-gate `make pii-audit` (1000 ru-документов, precision/recall ≥ 0.9). Tests: `tests/ai/test_presidio_ru.py`.
+
+#### Wave 2 (К4 W2 Guardrails)
+- `[wave:s24/w2-nemo-llamaguard]` — **ADR-NEW-17 NeMo Guardrails + Llama Guard 3**: defense-in-depth pipeline (WAF → NeMo input rails → LLM → Llama Guard output → Presidio PII → audit). NeMo Colang flows: jailbreak detection (perplexity-thresholds), topic filter (banking-specific). Llama Guard 3 self-hosted на vLLM/TGI. Per-tenant policy через `tenant_config.py` расширение. Tests: `tests/ai/test_guardrails_defense_in_depth.py` (100 jailbreak-prompts gold-set, block rate ≥ 95%; latency p95 ≤ 80ms combined).
+
+#### Wave 3 (К4 W3 Memory)
+- `[wave:s24/w3-memory-persistence]` — **ADR-NEW-18 LangGraph Checkpointer + Mem0**: `langgraph-checkpoint-postgres` для durable graph state (multi-agent supervisor.py). `mem0ai` на pgvector как unified long-term memory (поверх legacy LangMem). `MemoryProtocol` в `core/interfaces/ai_memory.py`. LangMemService consolidate() реализован через Mem0. Chaos-test: kill worker mid-conversation → resume successful. Tests: `tests/ai/test_memory_persistence.py`.
+
+#### Closure
+- `[wave:s24/closure]` — DoD grep verify + memory note `feedback_sprint24_ai_safety_hardening.md` + CONTEXT.md update.
+
+**DoD Sprint 24 (9 критериев)**:
+1. ✅ `[wave:s24/backbone]` landed: 3 feature-flags + capability schema extension.
+2. ✅ **ADR-NEW-16 Presidio + ru NER** принят в `.claude/DECISIONS.md`. `make pii-audit` precision/recall ≥ 0.9 на ru-gold-set.
+3. ✅ `grep -rn "AnalyzerEngine\(\)" src/backend/services/ai/pii/` ≥ 1 (Presidio active). `rag_pii_retrieval_mask=true` default.
+4. ✅ **ADR-NEW-17 NeMo Guardrails + Llama Guard 3** принят. `tests/ai/test_guardrails_defense_in_depth.py` 100/100 jailbreak (block rate ≥ 95%, p95 ≤ 80ms).
+5. ✅ NeMo + Llama Guard self-hosted в vLLM/TGI compose; per-tenant policy enable/disable.
+6. ✅ **ADR-NEW-18 LangGraph Checkpointer + Mem0** принят. `tests/ai/test_memory_persistence.py` 4/4 chaos-recover.
+7. ✅ `MemoryProtocol` в `core/interfaces/ai_memory.py`; LangMemService consolidate() реализован.
+8. ✅ Langfuse traces содержат PII только в anonymized виде (integration test `tests/ai/test_langfuse_pii_callback.py`).
+9. ✅ Memory note + CONTEXT.md updated.
+
+---
+
 ## 5. Финальный DoD V22 (production-ready)
 
 ### Протоколы и интеграции (5)
@@ -699,6 +734,9 @@ curl ":8000/api/v1/audit?correlation_id=<id>"                               # с
 | **ADR-NEW-13** (NEW post-S20) | RPACallPolicy единый wrapper resilience | S21 W3 | К2 |
 | **ADR-NEW-14** (NEW post-S20) | Workflow State Persistence (SQLite/Temporal) | S21 W8 | К3 |
 | **ADR-NEW-15** (NEW post-S20) | Chaos PR-gate (on-PR triggered tests) | S23 W11 | К5 |
+| **ADR-NEW-16** (NEW post-S20) | Presidio + ru NER PII layer | S24 W1 | К4 |
+| **ADR-NEW-17** (NEW post-S20) | NeMo Guardrails + Llama Guard 3 defense-in-depth | S24 W2 | К4 |
+| **ADR-NEW-18** (NEW post-S20) | LangGraph Checkpointer + Mem0 unified memory | S24 W3 | К4 |
 
 **Закрытые в V21 → V22 (целевые)**: R1.6 hybrid layout (Wave R3.10), R1.11 Streamlit page numbering (S9), R1.12 plugin sandbox (S19 W12 финал через R1.20), R1.13 Adaptive RAG dispatching (S16 K4 W1), R1.14 VSCode marketplace private (S19 K5 W1), R1.15 path aliases (S9), R1.16 bulk audit writer (S9).
 

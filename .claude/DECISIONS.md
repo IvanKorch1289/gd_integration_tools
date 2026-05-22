@@ -458,6 +458,61 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 ---
 
+### ADR-NEW-16: Presidio + ru NER как обязательный AI Safety layer (PII)
+
+**Контекст**. См. полную версию в `docs/adr/0063-presidio-ru-ner-pii.md`. Краткий summary:
+- Только 8 regex-паттернов в `core/security/pii_masker`.
+- Presidio extra `[security]` подключён, но `AnalyzerEngine` не инстанцируется.
+- Нет `ru_core_news_lg` — критично для русскоязычного банка.
+- 152-ФЗ compliance gap.
+
+**Решение**. Обязательный production layer: Presidio analyzer + anonymizer + spaCy `ru_core_news_lg` + 4 custom recognizers (INN, СНИЛС, паспорт, номер договора). Применение: input LLM + output LLM + RAG retrieval (default-ON) + Langfuse traces callback + DLQ payload. CI-gate `make pii-audit` (1000 ru-документов, precision/recall ≥ 0.9). Per-tenant capability `pii.read.<tenant>` + `pii.audit.<tenant>`.
+
+**Обоснование**. Regex-only не покрывает русские ФИО/адреса/организации; SaaS-альтернативы (AWS Macie/Azure Purview) требуют WAF egress + cost; GLiNER без Presidio не имеет community recognizers + anonymize-фреймворка.
+
+**Последствия**. (+) Compliance 152-ФЗ. (+) Defense-in-depth с NeMo/LlamaGuard (ADR-NEW-17). (−) Latency overhead ~20ms p95 на 4kb текста. (−) `ru_core_news_lg` weights 1.5GB (CI cache).
+
+**Wave**: `[wave:s24/w1-presidio-ru-ner]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-1 Зона 7.
+
+---
+
+### ADR-NEW-17: NeMo Guardrails + Llama Guard 3 defense-in-depth
+
+**Контекст**. См. полную версию в `docs/adr/0064-nemo-guardrails-llama-guard.md`. Краткий summary:
+- Только Rebuff/Lakera SaaS (require API-key + WAF egress).
+- Нет self-hosted jailbreak detection (Colang DSL).
+- Нет self-hosted output safety classifier (Llama Guard).
+- Banking jailbreak/prompt-injection compliance gap.
+
+**Решение**. Self-hosted defense-in-depth pipeline: `WAF → NeMo input rails (Colang, perplexity-thresholds, topic filter banking) → LLM → Llama Guard 3 output (vLLM/TGI) → Presidio PII (ADR-NEW-16) → audit`. Per-tenant policy через `tenant_config.py`. Rebuff/Lakera сохраняются как opt-in для tenant-ов с API-keys. Capability `ai.guardrail.evaluate.<tenant>` + `ai.guardrail.policy_read.<tenant>`.
+
+**Обоснование**. SaaS-only: WAF egress + cost + latency; только Llama Guard: нет Colang DSL для conversational flows; regex: не масштабируется на jailbreak.
+
+**Последствия**. (+) Jailbreak detection at input + LLM output classification. (+) Banking-specific topic filter. (−) Latency p95 ≤ 80ms combined overhead (target). (−) GPU pool требуется для Llama Guard 3. (−) Streaming compatibility требует особого handling.
+
+**Wave**: `[wave:s24/w2-nemo-llamaguard]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-2 Зона 8.
+
+---
+
+### ADR-NEW-18: LangGraph PostgresCheckpointer + Mem0 unified memory layer
+
+**Контекст**. См. полную версию в `docs/adr/0065-langgraph-checkpointer-mem0.md`. Краткий summary:
+- `LangMemService` default-OFF + `consolidate()` placeholder.
+- Нет LangGraph PostgresCheckpointer → graph state теряется при рестарте worker.
+- Mem0 заявлен в extra `[ai-memory]`, не интегрирован (`grep Memory.from_config` пуст).
+- 3 хранилища (Mongo + Postgres + Qdrant) без координирующего слоя.
+- Resume-after-crash для multi-turn агента невозможен (R-V15-11 leak prevention violation).
+
+**Решение**. Триада: LangGraph PostgresCheckpointer (durable graph state для `MultiAgentSupervisor`) + Mem0 OSS на pgvector (unified long-term memory, поверх legacy LangMem) + `MemoryProtocol` в `core/interfaces/ai_memory.py`. Migration: LangMemService → wrapper над Mem0; AgentMemoryService → остаётся для scratchpad (short-term Mongo); LangGraph Checkpointer — новый компонент. Per-tenant namespace `<tenant_id>:<scope>`. Capability `ai.memory.{read,write,delete}.<tenant>`.
+
+**Обоснование**. Redis Checkpointer: не подходит для compliance audit-trail; in-memory: не durable; чисто LangMem: `consolidate()` требует ~3 wave; Mongo primary: pgvector лучше для semantic search + ACID.
+
+**Последствия**. (+) Resume-after-crash multi-turn агента. (+) Unified MemoryProtocol для AI-агентов. (+) ACID + pgvector hybrid (BM25 + dense). (−) Каждый node-step = Postgres write (latency ≤ 5ms p95 target). (−) Mem0 — молодая библиотека (API меняется, commit pinning).
+
+**Wave**: `[wave:s24/w3-memory-persistence]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-3 Зона 2.
+
+---
+
 ## Архитектурные рекомендации V2 GAP-анализа (A-01 → A-07)
 
 Источник: GAP-анализ V2 (`gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`).
