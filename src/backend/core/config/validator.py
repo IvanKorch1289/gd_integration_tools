@@ -18,17 +18,23 @@ production-окружении приложение не стартует.
 * **B-2** — WAF policy default permissive (``strict=False``).
 * **B-9** — отсутствие cross-settings startup gate.
 
-Не пересекается с pydantic-валидацией
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Defense-in-depth с pydantic-валидацией
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Дублирующие pydantic-проверки (``min_length=32`` для ``secret_key``,
-``check_debug_mode`` в :class:`AppBaseSettings`) умышленно не
-включены — они срабатывают раньше, на момент конструирования
-Settings, и до :class:`ConfigValidator` исполнение просто не доходит.
+Некоторые правила (``app.debug_mode_in_prod``, ``security.jwt_secret_too_short``)
+формально дублируют pydantic-валидации (``check_debug_mode`` в
+:class:`AppBaseSettings`, ``min_length=32`` для ``secret_key``). При штатном
+конструировании Settings pydantic срабатывает раньше и до
+:class:`ConfigValidator` исполнение не доходит. Однако ConfigValidator
+вызывается также в lifespan-хуке как **second line of defense** для путей,
+обходящих pydantic: ``model_construct(...)``, прямые мутации
+``object.__setattr__``, yaml-overlays, профильные оверрайды и тестовые
+stub'ы Settings (SimpleNamespace). Дублирование умышленное.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from enum import StrEnum
@@ -36,7 +42,9 @@ from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from src.backend.core.config.base import AppBaseSettings
+    from src.backend.core.config.database import DatabaseConnectionSettings
     from src.backend.core.config.security import SecureSettings
+    from src.backend.core.config.services.cache import RedisSettings
     from src.backend.core.config.settings import Settings
     from src.backend.core.config.vault import VaultSettings
     from src.backend.core.config.waf import WafSettings
@@ -51,6 +59,19 @@ __all__ = (
 
 
 PRODUCTION_ENV: Final[str] = "production"
+
+# Минимальная длина JWT/secret-ключа для production (рекомендация OWASP A02).
+# Совпадает с pydantic ``min_length=32`` для AppBaseSettings.secret_key —
+# дублирование намеренное (defense-in-depth, см. docstring модуля).
+JWT_SECRET_MIN_LENGTH: Final[int] = 32
+
+# Зависимости feature-flag'ов: ключ — зависимый flag, значение — кортеж
+# имён flag'ов, которые должны быть включены, чтобы зависимый имел смысл.
+# Сейчас пустой: реальные пары strict↔enabled в features.py отсутствуют
+# (например, ``metrics_registry_strict`` существует без ``_enabled``-пары).
+# Словарь сохранён как точка расширения для будущих зависимостей; правило
+# ``feature_flag.dependency_unmet`` итерируется по нему.
+_FEATURE_FLAG_DEPENDENCIES: Final[Mapping[str, tuple[str, ...]]] = {}
 
 
 class ConfigSeverity(StrEnum):
@@ -120,11 +141,18 @@ class ConfigValidator:
     def validate(
         self, settings: "Settings", waf_settings: "WafSettings"
     ) -> tuple[ConfigViolation, ...]:
-        """Возвращает кортеж обнаруженных нарушений (может быть пустым)."""
+        """Возвращает кортеж обнаруженных нарушений (может быть пустым).
+
+        FeatureFlags для правила ``feature_flag.dependency_unmet`` берутся
+        из ``settings.features``, а при отсутствии атрибута — лениво из
+        глобального singleton ``core.config.features.feature_flags``.
+        """
         violations: list[ConfigViolation] = []
         app = settings.app
         secure = settings.secure
         vault = settings.vault
+        database = getattr(settings, "database", None)
+        redis = getattr(settings, "redis", None)
 
         violations.extend(self._check_waf_strict_prod(app, waf_settings))
         violations.extend(self._check_waf_strict_allow_empty(app, waf_settings))
@@ -134,6 +162,13 @@ class ConfigValidator:
         violations.extend(self._check_admin_without_ips(app, secure))
         violations.extend(self._check_vault_disabled_in_prod(app, vault))
         violations.extend(self._check_cors_credentials_with_wildcard(secure))
+        violations.extend(self._check_debug_mode_in_prod(app))
+        violations.extend(self._check_jwt_secret_too_short(app, secure))
+        if database is not None:
+            violations.extend(self._check_database_host_in_prod(app, database))
+        if redis is not None:
+            violations.extend(self._check_redis_host_in_prod(app, redis))
+        violations.extend(self._check_feature_flag_dependency_unmet(settings))
 
         return tuple(violations)
 
@@ -359,6 +394,227 @@ class ConfigValidator:
                 },
             )
         ]
+
+
+    def _check_debug_mode_in_prod(
+        self, app: "AppBaseSettings"
+    ) -> list[ConfigViolation]:
+        """D14: ``debug_mode=True`` в production-окружении.
+
+        Defense-in-depth backstop: pydantic ``check_debug_mode`` ловит
+        случай при штатном конструировании ``AppBaseSettings``. Это правило
+        срабатывает, если ``debug_mode`` был выставлен после init
+        (mutation, ``model_construct``, тестовые stub'ы).
+        """
+        if not self._is_prod(app):
+            return []
+        if not getattr(app, "debug_mode", False):
+            return []
+        return [
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="app.debug_mode_in_prod",
+                message=(
+                    "debug_mode=true в production-окружении: расширенное "
+                    "логирование, traceback'и в HTTP-ответах и отключённые "
+                    "production-проверки повышают attack surface."
+                ),
+                field="app.debug_mode",
+                recommendation=(
+                    "APP_DEBUG_MODE=false для production. Если pydantic-валидация "
+                    "была обойдена через model_construct/мутацию — устранить "
+                    "обходной путь."
+                ),
+                context={
+                    "debug_mode": True,
+                    "environment": app.environment,
+                },
+            )
+        ]
+
+    def _check_jwt_secret_too_short(
+        self, app: "AppBaseSettings", secure: "SecureSettings"
+    ) -> list[ConfigViolation]:
+        """D14: ``secret_key`` короче ``JWT_SECRET_MIN_LENGTH`` символов.
+
+        Defense-in-depth backstop для pydantic ``min_length=32`` в
+        ``AppBaseSettings.secret_key`` и/или ``SecureSettings.jwt_secret``.
+        Срабатывает на stub'ах Settings, обходящих pydantic, и на
+        runtime-мутациях. Проверяет ``secret_key`` обоих контейнеров.
+        """
+        offenders: list[tuple[str, str]] = []
+        for owner_name, owner in (("app", app), ("secure", secure)):
+            for attr in ("secret_key", "jwt_secret", "jwt_secret_key"):
+                raw = getattr(owner, attr, None)
+                if raw is None:
+                    continue
+                value = (
+                    raw.get_secret_value() if hasattr(raw, "get_secret_value") else raw
+                )
+                if not isinstance(value, str):
+                    continue
+                if len(value) < JWT_SECRET_MIN_LENGTH:
+                    offenders.append((f"{owner_name}.{attr}", value))
+        if not offenders:
+            return []
+        field, value = offenders[0]
+        return [
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="security.jwt_secret_too_short",
+                message=(
+                    f"JWT/secret-ключ {field} длиной {len(value)} < "
+                    f"{JWT_SECRET_MIN_LENGTH} символов: подвержен brute-force "
+                    "и rainbow-table атакам."
+                ),
+                field=field,
+                recommendation=(
+                    f"Сгенерировать секрет ≥{JWT_SECRET_MIN_LENGTH} символов "
+                    "через secrets.token_urlsafe(32) и ротировать через Vault."
+                ),
+                context={
+                    "length": len(value),
+                    "minimum": JWT_SECRET_MIN_LENGTH,
+                    "fields_offended": [name for name, _ in offenders],
+                },
+            )
+        ]
+
+    def _check_database_host_in_prod(
+        self, app: "AppBaseSettings", database: "DatabaseConnectionSettings"
+    ) -> list[ConfigViolation]:
+        """R-CFG-1: ``database.host`` пустой в production для non-sqlite.
+
+        sqlite допускается без host (использует ``path``). Все остальные
+        бэкенды (PostgreSQL/Oracle/MSSQL/MySQL/DB2) обязаны иметь явно
+        указанный host в production.
+        """
+        if not self._is_prod(app):
+            return []
+        db_type = str(getattr(database, "type", "")).lower()
+        if "sqlite" in db_type:
+            return []
+        if database.host:
+            return []
+        return [
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="database.host_required_in_prod",
+                message=(
+                    "database.host пустой в production: подключение к "
+                    f"СУБД '{db_type or 'unknown'}' без хоста невозможно."
+                ),
+                field="database.host",
+                recommendation=(
+                    "Указать DB_HOST=<host> (например, 'pg.example.com'). "
+                    "Для sqlite — переключить DB_TYPE=sqlite."
+                ),
+                context={
+                    "db_type": db_type,
+                    "host": database.host,
+                    "environment": app.environment,
+                },
+            )
+        ]
+
+    def _check_redis_host_in_prod(
+        self, app: "AppBaseSettings", redis: "RedisSettings"
+    ) -> list[ConfigViolation]:
+        """R-CFG-2: ``redis.host`` пустой/localhost в production с Redis enabled.
+
+        Redis в проде должен указывать на shared instance (не localhost),
+        иначе под несколькими репликами каждый pod пишет в свой локальный
+        Redis, разрушая распределённый кеш/rate-limit/idempotency.
+        """
+        if not self._is_prod(app):
+            return []
+        if not getattr(redis, "enabled", True):
+            return []
+        host = (redis.host or "").strip().lower()
+        if not host:
+            return [
+                ConfigViolation(
+                    severity=ConfigSeverity.CRITICAL,
+                    code="redis.host_required_in_prod",
+                    message=(
+                        "redis.host пустой в production при redis.enabled=true: "
+                        "распределённый кеш недоступен."
+                    ),
+                    field="redis.host",
+                    recommendation=(
+                        "Указать REDIS_HOST=<shared-instance> "
+                        "или выключить REDIS_ENABLED=false."
+                    ),
+                    context={"environment": app.environment, "enabled": True},
+                )
+            ]
+        if host in {"localhost", "127.0.0.1", "::1", "0.0.0.0"}:
+            return [
+                ConfigViolation(
+                    severity=ConfigSeverity.CRITICAL,
+                    code="redis.host_localhost_in_prod",
+                    message=(
+                        f"redis.host='{redis.host}' в production: каждая реплика "
+                        "указывает на собственный локальный Redis, распределённый "
+                        "кеш/rate-limit/idempotency работают некорректно."
+                    ),
+                    field="redis.host",
+                    recommendation=(
+                        "Указать REDIS_HOST=<shared-instance> (например, "
+                        "'redis.internal' или service-DNS k8s)."
+                    ),
+                    context={"environment": app.environment, "host": redis.host},
+                )
+            ]
+        return []
+
+    def _check_feature_flag_dependency_unmet(
+        self, settings: "Settings"
+    ) -> list[ConfigViolation]:
+        """D14: зависимый feature-flag включён, а требуемый — нет.
+
+        Источник flag'ов: ``settings.features`` (если задан в Settings) либо
+        глобальный singleton ``feature_flags``. Зависимости перечислены в
+        ``_FEATURE_FLAG_DEPENDENCIES`` — словарь пуст по умолчанию, пары
+        дописываются по мере появления связанных flag'ов в features.py.
+        Severity: WARNING (не блокирует prod-стартап).
+        """
+        if not _FEATURE_FLAG_DEPENDENCIES:
+            return []
+        flags = getattr(settings, "features", None)
+        if flags is None:
+            try:
+                from src.backend.core.config.features import feature_flags as _flags
+            except ImportError:
+                return []
+            flags = _flags
+        violations: list[ConfigViolation] = []
+        for dependent, requirements in _FEATURE_FLAG_DEPENDENCIES.items():
+            if not getattr(flags, dependent, False):
+                continue
+            unmet = tuple(req for req in requirements if not getattr(flags, req, False))
+            if not unmet:
+                continue
+            violations.append(
+                ConfigViolation(
+                    severity=ConfigSeverity.WARNING,
+                    code="feature_flag.dependency_unmet",
+                    message=(
+                        f"feature-flag '{dependent}' включён, но требует "
+                        f"{', '.join(unmet)} = true."
+                    ),
+                    field=f"features.{dependent}",
+                    recommendation=(
+                        f"Включить зависимости {', '.join(unmet)} либо выключить "
+                        f"'{dependent}'."
+                    ),
+                    context={
+                        "dependent": dependent,
+                        "unmet_requirements": list(unmet),
+                    },
+                )
+            )
+        return violations
 
 
 def validate_startup_config(

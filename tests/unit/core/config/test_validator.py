@@ -40,6 +40,7 @@ def _make_app(
     enable_swagger: bool = True,
     enable_redoc: bool = False,
     admin_enabled: bool = False,
+    secret_key: str = "x" * 64,
 ) -> SimpleNamespace:
     """Фабрика SimpleNamespace, имитирующего AppBaseSettings."""
     return SimpleNamespace(
@@ -48,6 +49,7 @@ def _make_app(
         enable_swagger=enable_swagger,
         enable_redoc=enable_redoc,
         admin_enabled=admin_enabled,
+        secret_key=secret_key,
     )
 
 
@@ -56,12 +58,14 @@ def _make_secure(
     cors_origins: list[str] | None = None,
     cors_allow_credentials: bool = True,
     admin_ips: set[str] | None = None,
+    secret_key: str = "y" * 64,
 ) -> SimpleNamespace:
     """Фабрика SimpleNamespace, имитирующего SecureSettings."""
     return SimpleNamespace(
         cors_origins=cors_origins or [],
         cors_allow_credentials=cors_allow_credentials,
         admin_ips=admin_ips or set(),
+        secret_key=secret_key,
     )
 
 
@@ -75,13 +79,30 @@ def _make_settings(
     app: SimpleNamespace | None = None,
     secure: SimpleNamespace | None = None,
     vault: SimpleNamespace | None = None,
+    database: SimpleNamespace | None = None,
+    redis: SimpleNamespace | None = None,
 ) -> SimpleNamespace:
     """Корневой Settings-mock."""
-    return SimpleNamespace(
+    ns = SimpleNamespace(
         app=app or _make_app(),
         secure=secure or _make_secure(),
         vault=vault or _make_vault(),
     )
+    if database is not None:
+        ns.database = database
+    if redis is not None:
+        ns.redis = redis
+    return ns
+
+
+def _make_database(*, host: str = "db.example.com", db_type: str = "postgresql") -> SimpleNamespace:
+    """Фабрика SimpleNamespace, имитирующего DatabaseConnectionSettings."""
+    return SimpleNamespace(host=host, type=db_type)
+
+
+def _make_redis(*, host: str = "redis.internal", enabled: bool = True) -> SimpleNamespace:
+    """Фабрика SimpleNamespace, имитирующего RedisSettings."""
+    return SimpleNamespace(host=host, enabled=enabled)
 
 
 def _make_waf(
@@ -301,6 +322,185 @@ class TestClamAVFailOpenInProd:
         waf = _make_waf(clamav_enabled=True, clamav_fail_open=True)
         violations = ConfigValidator().validate(settings, waf)
         assert "waf.clamav_fail_open_in_prod" not in _codes(violations)
+
+
+class TestDebugModeInProd:
+    """D14: ``debug_mode=True`` в production — defense-in-depth backstop."""
+
+    def test_debug_true_in_prod_is_critical(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production", debug_mode=True)
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "app.debug_mode_in_prod")
+        assert v.severity == ConfigSeverity.CRITICAL
+
+    def test_debug_true_in_dev_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="development", debug_mode=True)
+        )
+        waf = _make_waf(strict=False)
+        violations = ConfigValidator().validate(settings, waf)
+        assert "app.debug_mode_in_prod" not in _codes(violations)
+
+
+class TestJwtSecretTooShort:
+    """D14: ``secret_key`` < 32 символов — defense-in-depth backstop."""
+
+    def test_short_secret_is_critical_regardless_of_env(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="development", secret_key="short"),
+        )
+        waf = _make_waf(strict=False)
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "security.jwt_secret_too_short")
+        assert v.severity == ConfigSeverity.CRITICAL
+        assert v.context["length"] == 5
+        assert v.context["minimum"] == 32
+
+    def test_long_secret_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production", secret_key="A" * 64),
+            secure=_make_secure(secret_key="B" * 64),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "security.jwt_secret_too_short" not in _codes(violations)
+
+
+class TestFeatureFlagDependencyUnmet:
+    """D14: зависимый feature-flag включён без требуемой зависимости."""
+
+    def test_no_dependencies_returns_no_violation(self) -> None:
+        """Пустой ``_FEATURE_FLAG_DEPENDENCIES`` → нет нарушений."""
+        settings = _make_settings(app=_make_app(environment="production"))
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "feature_flag.dependency_unmet" not in _codes(violations)
+
+    def test_unmet_dependency_yields_warning(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """С временно добавленной зависимостью правило отрабатывает."""
+        from src.backend.core.config import validator as validator_module
+
+        monkeypatch.setattr(
+            validator_module,
+            "_FEATURE_FLAG_DEPENDENCIES",
+            {"foo_strict": ("foo_enabled",)},
+        )
+        fake_flags = SimpleNamespace(foo_strict=True, foo_enabled=False)
+        settings = _make_settings(app=_make_app(environment="production"))
+        settings.features = fake_flags
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "feature_flag.dependency_unmet")
+        assert v.severity == ConfigSeverity.WARNING
+        assert v.context["dependent"] == "foo_strict"
+        assert v.context["unmet_requirements"] == ["foo_enabled"]
+
+
+class TestDatabaseHostInProd:
+    """R-CFG-1: ``database.host`` пустой в production для non-sqlite — CRITICAL."""
+
+    def test_empty_host_postgres_in_prod_is_critical(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            database=_make_database(host="", db_type="postgresql"),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "database.host_required_in_prod")
+        assert v.severity == ConfigSeverity.CRITICAL
+
+    def test_empty_host_sqlite_in_prod_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            database=_make_database(host="", db_type="sqlite"),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "database.host_required_in_prod" not in _codes(violations)
+
+    def test_host_set_in_prod_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            database=_make_database(host="pg.example.com", db_type="postgresql"),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "database.host_required_in_prod" not in _codes(violations)
+
+    def test_empty_host_in_dev_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="development"),
+            database=_make_database(host="", db_type="postgresql"),
+        )
+        waf = _make_waf(strict=False)
+        violations = ConfigValidator().validate(settings, waf)
+        assert "database.host_required_in_prod" not in _codes(violations)
+
+
+class TestRedisHostInProd:
+    """R-CFG-2: ``redis.host`` пустой/localhost в prod с enabled — CRITICAL."""
+
+    def test_empty_host_enabled_in_prod_is_critical(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            redis=_make_redis(host="", enabled=True),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "redis.host_required_in_prod")
+        assert v.severity == ConfigSeverity.CRITICAL
+
+    def test_localhost_enabled_in_prod_is_critical(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            redis=_make_redis(host="localhost", enabled=True),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "redis.host_localhost_in_prod")
+        assert v.severity == ConfigSeverity.CRITICAL
+
+    def test_127_0_0_1_enabled_in_prod_is_critical(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            redis=_make_redis(host="127.0.0.1", enabled=True),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "redis.host_localhost_in_prod" in _codes(violations)
+
+    def test_shared_host_enabled_in_prod_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            redis=_make_redis(host="redis.internal", enabled=True),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "redis.host_required_in_prod" not in _codes(violations)
+        assert "redis.host_localhost_in_prod" not in _codes(violations)
+
+    def test_localhost_disabled_in_prod_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="production"),
+            redis=_make_redis(host="localhost", enabled=False),
+        )
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        assert "redis.host_localhost_in_prod" not in _codes(violations)
+
+    def test_localhost_in_dev_is_clean(self) -> None:
+        settings = _make_settings(
+            app=_make_app(environment="development"),
+            redis=_make_redis(host="localhost", enabled=True),
+        )
+        waf = _make_waf(strict=False)
+        violations = ConfigValidator().validate(settings, waf)
+        assert "redis.host_localhost_in_prod" not in _codes(violations)
 
 
 class TestCleanConfig:
