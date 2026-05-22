@@ -144,6 +144,95 @@
 
 ---
 
+## GAP-анализ V2 (2026-05-21) — уточнения после цикла самокритики
+
+**Контекст**. После первого анализа (V1, 668 LOC, 10 суб-агентов) запущен цикл
+итеративной самокритики: Critic + Devil's Advocate + Integration Bus Expert.
+Принято 14 замечаний из 17. QUALITY_SCORE: 51 → 74/100 (Δ ~41%).
+Полный отчёт: `gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`.
+
+### Ключевые уточнения V2 vs V1
+
+| ID | Изменение | Источник |
+|----|-----------|---------|
+| B-01 | Снижен до G-01 (auth chain — defense-in-depth, не блокер) | Адвокат D1 |
+| B-03 | TenantNamespacedCache УЖЕ СУЩЕСТВУЕТ (`core/tenancy/cache.py`) — проблема в интеграции | Критик NK-03 |
+| DLQ | "Отсутствует" → "infrastructure ЕСТЬ, не подключена к CDC/webhook/filewatcher" | Критик NA-05 |
+| L2 | 8/10 → 7/10 (активный B-04 блокер) | Критик CD-02 |
+| B-02 | Усилена формулировка: CDC `_dispatch_change` ТЕРЯЕТ события без DLQ | Шина-эксперт |
+| B-11 | Добавлен: Idempotency только middleware-level, processor-level отсутствует | Шина-эксперт |
+| G-17 | Добавлен: BrowserPool ad-hoc context leak при contention | Шина-эксперт |
+| P0 | Убран TenantMiddleware из P0 (SPOF-риск) | Адвокат D2 |
+
+### Финальные блокеры V2 (11 штук)
+
+#### 🔴 B-02 [L5] Resilience-примитивы не применяются к RPA/CDC
+**Файлы:** `src/backend/services/rpa/browser_pool.py`, `src/backend/entrypoints/cdc/cdc.py:497`,
+`src/backend/services/ops/file_watcher.py`, `src/backend/services/ops/webhook_scheduler.py`
+**Проблема:** CDC `_dispatch_change` ловит `except Exception` и просто ЛОГИРУЕТ →
+событие ТЕРЯЕТСЯ. Resilience infrastructure ЕСТЬ, но не применяется.
+**Статус:** Открыта | В работе: `s21/k2-w1-rpa-resilience-wrapper`
+
+#### 🔴 B-03 [L6] Tenant cache isolation — TenantNamespacedCache не интегрирован
+**Файлы:** `src/backend/infrastructure/cache/redis_cluster.py` (а НЕ `redis_cluster_adapter.py`),
+`src/backend/infrastructure/storage/s3_cache.py` (а НЕ `s3_cache_adapter.py`)
+**Инфраструктура:** `src/backend/core/tenancy/cache.py::TenantNamespacedCache` (96 строк) — УЖЕ СУЩЕСТВУЕТ.
+**Проблема:** Кеш-адаптеры НЕ используют TenantNamespacedCache. Redis keys без tenant prefix.
+**Статус:** Открыта | В работе: `s21/k1-w2-tenant-cache-wrapper`
+
+#### 🔴 B-04 [L2] Hot-swap одного плагина делает shutdown_all()
+**Файл:** `src/backend/core/plugin_runtime/hot_swap.py:213`
+**Проблема:** `loader.shutdown_all()` убивает ВСЕ плагины, не только целевой.
+**Статус:** Открыта | Планируется: `s19/k3-w6-plugin-hot-swap-v2`
+
+#### 🔴 B-05 [L6] Workflow state не персистится
+**Файл:** `src/backend/core/orchestration/temporal_backend.py`
+**Проблема:** LiteTemporalBackend — only for development. In-flight workflows теряются.
+**Статус:** Открыта | В работе: `s21/k3-w3-workflow-state-persist`
+
+#### 🔴 B-06 [L8] DataMaskingMiddleware не использует core PII masker
+**Файл:** `src/backend/entrypoints/middlewares/data_masking.py`
+**Проблема:** Partial redaction, но `core/security/pii_masker.py::default_masker()` (8 типов PII) не используется.
+**Статус:** Открыта | В работе: `s22/k1-w2-pii-masker-unify`
+
+#### 🔴 B-07 [L8] SecurityHeadersMiddleware race condition
+**Файл:** `src/backend/entrypoints/middlewares/security_headers.py`
+**Проблема:** BaseHTTPMiddleware применяет заголовки после ASGI-цепочки.
+**Статус:** Открыта | В работе: `s22/k1-w1-security-headers-asgi`
+
+#### 🔴 B-08 [L10] Smoke-тестов критически мало (2 файла)
+**Файлы:** `tests/smoke/test_sentry_init.py`, `tests/smoke/test_yaml_hot_reload.py`
+**Проблема:** 2 smoke-теста вместо 15. CI/CD не верифицирует что приложение поднимается.
+**Масштаб:** ~1 спринт, не архитектурная проблема.
+**Статус:** Открыта | В работе: `s22/k2-w1-smoke-tests`
+
+#### 🟡 B-09 [L5] Desktop RPA создаёт новый Application() каждый запрос
+**Файл:** `windows_worker/handlers/desktop_rpa_handler.py`
+**Статус:** Открыта | В работе: `s21/k3-w1-desktop-rpa-pool`
+
+#### 🟡 B-10 [L4] Multi-agent supervisor — stub
+**Файл:** `src/backend/services/ai/agents/multi_agent.py:_compile_graph`
+**Статус:** Открыта | В работе: `s23/k4-w1-multiagent-supervisor-llm`
+
+#### 🟡 B-11 [L3] Idempotency только middleware-level — processor-level отсутствует
+**Файл:** `src/backend/dsl/engine/processors/eip/idempotency.py`
+**Проблема:** EIP IdempotencyProcessor не связан с IdempotencyMiddleware.
+**Статус:** Открыта | Планируется
+
+### Новые улучшения V2 (добавлены)
+
+#### 🟡 G-01 [L1] Auth chain централизована, но не декларативно переопределяема
+**Файл:** `src/backend/entrypoints/middlewares/setup_middlewares.py`
+**Примечание:** Defense-in-depth архитектурный выбор, не баг. Перенесено из B-01.
+**Статус:** Открыта | Планируется: `s17 ADR-NEW-2`
+
+#### 🟡 G-17 [L5] BrowserPool ad-hoc context leak при contention
+**Файл:** `src/backend/services/rpa/browser_pool.py:164-170`
+**Проблема:** При acquire() когда все в use — создаётся unmanaged context, НЕ в пуле.
+**Статус:** Открыта
+
+---
+
 ## Sprint 21-23 GAP-backlog (DEEP-RESEARCH 2026-05-20) — post-production без дат
 
 **Контекст**. После Sprint 20 (`v1.0.0-production`) начинается post-production backlog S21-S23 (PLAN.md V22.2 FINAL §4) для закрытия 28 нерешённых GAP-пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (668 LOC, Hermes Agent ultrathink, 10 L1–L10 субагентов).
@@ -255,10 +344,10 @@
 
 ### Active blockers (см. `.claude/team-ownership.toml::[blockers]`)
 
-- **b1_circular_import_degradation** (owner: k2) — `core/resilience/__init__.py → DegradationManager` блокирует resilience-test sweep. ETA: S17 W1.
-- **b2_s16_dod3_tls_cert_none** (owner: k1) — 6 callsites CERT_NONE в FTP/IMAP/POP3. ETA: S17 W1.
-- **b3_s16_dod9_pybreaker_finalize** (owner: k2) — pybreaker adapter integration в ResilienceCoordinator. ETA: S17 W1.
-- **b4_gap_audit_p0_remediation** (owner: k1) — K-SYN/K-TLS/K-ARCH/K-OPS общая координация (70+ файлов техдолга). ETA: S17.
+- ~~**b1_circular_import_degradation**~~ — **RESOLVED 2026-05-21** в `b1f68b97 [wave:s17/k2-w0-fix-circular-degradation]`. Reorder в `core/resilience/__init__.py` (degradation ПЕРЕД decorators); `pytest --co tests/unit/infrastructure/workflow/test_lite_temporal_backend.py` 7 collected, 95/95 resilience-тестов passing.
+- **b2_s16_dod3_tls_cert_none** (owner: k1) — **PARTIAL CLOSURE 2026-05-21** в `a6a9a098 [wave:s17/k1-w1-sftp-known-hosts-strict]`: SFTP-вектор закрыт через `_resolve_known_hosts()` + `TRANSPORT_SFTP_KNOWN_HOSTS_PATH`. Carryover: 6 callsites CERT_NONE в FTP/IMAP/POP3 → `[wave:s17/k1-w1-tls-cert-required]` (требует asyncssh pool migration + testcontainers FTP/IMAP).
+- **b3_s16_dod9_pybreaker_finalize** (owner: k2) — **PARTIAL CLOSURE 2026-05-21** в `69a19197 [wave:s17/k2-w4-pybreaker-restore]`: `make_pybreaker_adapter` factory + `v11.pybreaker_enabled=False` feature-flag + DoD-9 restart acceptance test (state=open после restore, fail_counter=5) на InMemory-векторе. Carryover: pybreaker SDK dependency + RedisBreakerStateStorage + integration в `ResilienceCoordinator` → `[wave:s17/k2-w4-pybreaker-replace]` (S17 W1).
+- **b4_gap_audit_p0_remediation** (owner: k1) — K-SYN/K-TLS/K-ARCH/K-OPS общая координация (70+ файлов техдолга; `ftp.py:170` snapped в b2 partial). ETA: S17.
 
 ### Closure DoD (см. PLAN.md V22 §S17 строки 240–256)
 

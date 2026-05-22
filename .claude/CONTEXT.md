@@ -1,8 +1,22 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-21 17:48, после Sprint 17 kickoff coordinator-self)
+## Текущее состояние (2026-05-21 20:45, Sprint 16 12/12 DoD closed)
 
-**HEAD**: `20fff6ac [plan:v22.2/s21-s23-post-prod-backlog]` — PLAN.md V22.2 FINAL + 3 спринта (S21-S23) + 4 ADR-NEW-12..15 (предыдущий: `67d37f82 [wave:s17/k2-w1-metrics-registry]` MetricsRegistry D11 backbone).
+**HEAD**: `69a19197 [wave:s17/k2-w4-pybreaker-restore]` — Sprint 16 closure сессия закрыла **3 active blocker (b1/b2/b3 partial)** + S16 12/12 DoD.
+**Активный спринт**: S16 **CLOSED 12/12** ➜ полностью переходим в **S17 GAP P0 Closure + Centralization Hardening**.
+**План**: `PLAN.md` V22.2 + GAP V2 update (S21-S23 backlog).
+**GAP-анализ**: `gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md` (V2, 74/100).
+
+### Sprint 16 closure сессия (2026-05-21 20:00–20:45) — 4 wave landed
+
+| Wave | Commit | Закрыто |
+|---|---|---|
+| `s17/k2-w0-fix-circular-degradation` | `b1f68b97` | **b1 RESOLVED** — `DegradationManager` импорт в `core/resilience/__init__.py` ПЕРЕД `decorators.policy`; `pytest --co tests/unit/infrastructure/workflow/test_lite_temporal_backend.py` 7 collected (было ImportError). |
+| `s17/k1-w1-sftp-known-hosts-strict` | `a6a9a098` | **b2 PARTIAL** — `_resolve_known_hosts()` helper + dev_light skip + prod ValueError; 4 × `known_hosts=None` в SFTP заменены; `ftp.py:170` Python-2 except clause → tuple form. FTP/IMAP CERT_NONE carryover. |
+| `s17/k2-w4-pybreaker-restore` | `69a19197` | **b3 PARTIAL** — `make_pybreaker_adapter` factory + `v11.pybreaker_enabled=False` feature-flag + DoD-9 restart acceptance (state=open после restore, fail_counter=5). pybreaker SDK + RedisBreakerStateStorage carryover. |
+| `s16/closure` | _этот_ | **S16 12/12 DoD** declarativly closed; CONTEXT/KNOWN_ISSUES обновлены; memory note + vault summary. |
+
+**HEAD до сессии**: `20fff6ac [plan:v22.2/s21-s23-post-prod-backlog]` — PLAN.md V22.2 FINAL + 3 спринта (S21-S23) + 4 ADR-NEW-12..15 (предыдущий: `67d37f82 [wave:s17/k2-w1-metrics-registry]` MetricsRegistry D11 backbone).
 **Активный спринт**: **Sprint 17 — GAP P0 Closure + Centralization Hardening** (kickoff закрыт 7 wave в одной сессии coordinator-self) + carryover Sprint 16 «Closure» + post-prod **S21-S23 GAP-backlog**.
 **План**: `PLAN.md` **V22.2 FINAL** (S16-S20: 5 спринтов × 2 недели × 5 команд **+ S21-S23 post-production GAP-backlog без дат**).
 **Параллельность**: вторая сессия добавила `6a35c75d [wave:s17/k9-tooling-grep-violations-gate]` (V22 §5 AST gate) + модифицировала CONTEXT/DECISIONS/KNOWN_ISSUES/PLAN.md (S21-S23 post-production gap-backlog ADR-NEW-12..15) — её работа не коммичена в working tree, не трогалась моей сессией.
@@ -83,8 +97,8 @@
 
 ### Открытые риски
 
-1. **Circular import `DegradationManager`** в `src/backend/core/resilience/__init__.py` (carryover из `b4b16739`) — блокирует collection workflow-тестов; нужен fix до next wave.
-2. **DoD-3 FTP carryover** — `ssl.CERT_NONE` ещё в 6 файлах (email_imap/email/ftp×2/imap_monitor); asyncssh pool migration в S17.
+1. ~~Circular import `DegradationManager`~~ — **RESOLVED** `b1f68b97 [wave:s17/k2-w0-fix-circular-degradation]` (Sprint 16 closure сессия 2026-05-21 20:00).
+2. **DoD-3 FTP/IMAP carryover** — `ssl.CERT_NONE` остаётся в 6 файлах (email_imap/email/ftp×2/imap_monitor); SFTP-вектор закрыт `a6a9a098`, asyncssh pool migration FTP/IMAP в S17.
 3. **Coverage 75% не verified empirically** — `fail_under` декларирован, baseline `pytest --cov` ещё не прогнан; первый запуск может упасть → ramp-down при необходимости.
 4. **Параллельная сессия активна** — untracked `services/ai/rag/classifier.py` в working tree; `git pull` обязателен в next session.
 5. **B-8 carryover**: 2 `asyncio.create_task` в `infrastructure/secrets/` под path-policy.
