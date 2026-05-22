@@ -1,22 +1,90 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-22, Sprint 21 active — Resilience & Multi-tenancy)
+## Текущее состояние (2026-05-22 13:52, AI-GAP анализ → Sprint 24 closure planning)
 
-**Активный спринт**: **Sprint 21 — Resilience & Multi-tenancy Hardening** (post-production GAP-backlog, без дат).
-**HEAD**: `69a19197` (S17 closure) → S21 wave-серия 11 commits в работе.
-**План**: PLAN.md V22.2 FINAL §4 + `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
-**Режим**: coordinator-self mode (без worktree-агентов, urok S6/S8 5/5 ECONNRESET).
+**Сессия**: coordinator-self GAP-анализ AI-агентного стека (документация-only, 0 кода) + plan-step для Sprint 24.
+**HEAD на момент сессии**: `d0ffdc39 [wave:s21/k1-w2-tenant-cache-wrapper]` → `3f3aeec3 [wave:s17/k1-w6-yaml-safeload]` (параллельная сессия S21 multi-tenancy + S17 carryover активна).
+**Связь**: PLAN.md V22.2 → V22.3 (новый §S24 AI Safety Hardening), 3 новых ADR-NEW-16/17/18.
 
-### Sprint 21 цели
+### Что сделано (7 artifact-файлов)
 
-1. **Defence-in-depth multi-tenancy**: PG RLS + `TenantCacheBackend` wrapper закрывают B-03 cache poisoning + cross-BU SELECT bypass.
-2. **Single Entry для RPA resilience**: `RPACallPolicy` объединяет browser_pool / cdc / file_watcher / webhook_scheduler / desktop_rpa_client (B-02 closure, ADR-NEW-13).
-3. **Workflow durability**: `WorkflowState` SQLAlchemy + saga compensating persistence (B-05 closure, ADR-NEW-14, carryover S17 K-OPS-1).
-4. **Operations visibility**: Scheduler DLQ + Desktop pool + Browser cookies + Streamlit page 81.
+1. **GAP-документ** `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md` — 10 зон AI-стека (orchestration / memory / RAG / low-context / MCP / tools / PII / guardrails / structured output / observability), Top-10 таблица P0/P1/P2, verification-матрица.
+2. **3 ADR scaffold-документа в `docs/adr/`** (статус Draft, Sprint 24 candidate):
+   - `0063-presidio-ru-ner-pii.md` (ADR-NEW-16, P0-1, S24 W1) — Presidio + spacy[ru]+ru_core_news_lg + 4 custom recognizers + `make pii-audit` gate.
+   - `0064-nemo-guardrails-llama-guard.md` (ADR-NEW-17, P0-2, S24 W2) — defense-in-depth pipeline.
+   - `0065-langgraph-checkpointer-mem0.md` (ADR-NEW-18, P0-3, S24 W3) — `MemoryProtocol` триада.
+3. **Memory note** `~/.claude/.../memory/feedback_gap_analysis_ai_2026_05_22.md` + MEMORY.md +1 указатель.
+4. **2 session summary** в vault: `1300-gap-analysis-ai-summary.md` (детальный) + `1352-summary.md` (compact).
 
-### Wave-расписание S21 (см. KNOWN_ISSUES.md секцию Sprint 21)
+### Изменённые файлы
 
-W0 backbone → W1 RLS PG → W2 TenantCacheBackend → W3 RPACallPolicy → {W4 Scheduler DLQ, W5 Webhook resilience, W7 Browser cookies} → W6 Desktop pool → W8 Workflow state → W9 Streamlit page 81 → W10 closure.
+- ✅ 7 новых файлов (см. выше).
+- ❌ Не трогались: `src/backend/`, `pyproject.toml`, `PLAN.md`, `.claude/DECISIONS.md`, `.claude/KNOWN_ISSUES.md`, `requirements.txt`.
+
+### Выполненные команды проверки
+
+- `git status --short` — 30+ M-файлов **параллельной сессии S21 multi-tenancy**, 7 моих untracked.
+- `git log --oneline -1` — HEAD `d0ffdc39`.
+- `ls docs/adr/` → последний 0062 → мои новые 0063/0064/0065.
+- **НЕ запускались**: lint, type-check, `make docs`, тесты — нет code-изменений, scaffold-документация gate-нейтральна.
+
+### Открытые риски
+
+1. **Параллельная сессия активна** на S21 K1 W1/W2 (multi-tenancy / TenantCacheBackend / RLS) + S17 K1 W6 yaml-safeload. Зона работ не пересекается с AI-GAP. Коммит требует `git commit -- <pathspec>` с явным списком только моих 4 трекаемых файлов ([[feedback_git_commit_pathspec]]).
+2. **3 ADR в статусе Draft** — не зарегистрированы в Sphinx index/toctree; добавление — после Sprint 24 W1-W3 closure → Accepted.
+3. **ADR-NEW-12/13/14 уже заняты** в DECISIONS.md (RLS Strategy / RPACallPolicy / Workflow State Persistence) — поэтому новые AI Safety ADR получили номера **ADR-NEW-16/17/18** (после ADR-NEW-15 Chaos PR-gate).
+4. **vault/gap-analysis в .gitignore** — local-only артефакты; в commit пойдут только 4 трекаемых файла (3 ADR + .claude/CONTEXT.md).
+5. **Параллельная сессия не знает про AI-GAP** — её CONTEXT.md update приземлится поверх моего; phase commit моих файлов до её следующего CONTEXT.md write желателен.
+
+### Решения AskUserQuestion (зафиксированы)
+
+| Вопрос | Ответ |
+|---|---|
+| Как распределить три P0 GAP | **Новый Sprint 24 — AI Safety Hardening** (W1 PII / W2 Guardrails / W3 Memory), не S22 K4 / не §S21A |
+| Какие номера ADR-NEW использовать? | **ADR-NEW-16/17/18** (12/13/14 уже заняты RLS/RPA/Workflow) |
+| Commit стратегия? | **1 commit + PLAN.md update separately** (2 коммита) |
+| feature-coordinator timing? | **В этой сессии после ExitPlanMode** |
+
+### Следующий шаг
+
+**Рекомендация A → C → D → B** (в этой сессии):
+
+1. **A. Commit 1 — doc-артефакты** (4 трекаемых файла): 3 ADR + .claude/CONTEXT.md через `git commit -- <pathspec>`. **НЕ stage** файлов параллельной сессии.
+2. **D. Commit 2 — PLAN.md V22.3 §S24 + DECISIONS.md ADR-NEW-16/17/18** (новый Sprint 24 — AI Safety Hardening, 3 wave + 9 DoD + 3 ADR).
+3. **B. feature-coordinator S24 W1** (Presidio + ru NER) — в этой же сессии после Commit 2, с Pre-Wave subagent ритуалом (4 субагента: СД/АН/ДО/ТЕС).
+4. **C. После S24 closure** — S25 candidate (P1 GAP: Low-context / Observability PII / Agent orchestration consolidation / RAG quality CI-gate).
+
+---
+
+## Текущее состояние (2026-05-22, Sprint 21 ✅ CLOSED 10/10)
+
+**Sprint 21 — Resilience & Multi-tenancy Hardening** закрыт coordinator-self mode за одну сессию: backbone + 9 wave + closure = 11 commits, 55/55 unit-тестов passing (+5 skipped: RLS требует Postgres DSN).
+
+**Источник**: PLAN.md V22.2 FINAL §4 + `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
+
+### Sprint 21 closure-таблица (11 commits)
+
+| Wave | Commit | Закрытые блокеры |
+|---|---|---|
+| `s21/backbone` | `e19bd247` | 8 feature-flags + team.s21 + KNOWN_ISSUES |
+| `s21/k1-w1-rls-postgres` | `5bd787c3` | ADR-NEW-12 + G-08 |
+| `s21/k1-w2-tenant-cache-wrapper` | `d0ffdc39` | B-03 |
+| `s21/k2-w1-rpa-resilience-wrapper` | `5cf7cce3` | ADR-NEW-13 + B-02 |
+| `s21/k2-w2-scheduler-dlq` | `ce6b1c33` | G-09 |
+| `s21/k2-w3-webhook-resilience` | `8333c75a` | G-07 |
+| `s21/k3-w1-desktop-rpa-pool` | `26daceae` | F-12 + B-09 |
+| `s21/k3-w2-browser-cookies-redis` | `55e1531d` | G-06 |
+| `s21/k3-w3-workflow-state-persist` | `f6702f60` | ADR-NEW-14 + B-05 + S17 K-OPS-1 |
+| `s21/k5-w1-streamlit-tenant-admin` | `9cc58a68` | W9 page 83 |
+| `s21/closure` | _этот_ | DoD verify + memory + vault summary |
+
+### Параллельная активность
+
+В master параллельная сессия продолжала S17 wave (`8cacb47b k1-w1-tls-cert-required`, `dcc97799 k2-w3-task-registry-coverage`, `b49526dc k1-w0-polish`, `2eeef6aa k2-w1b-rlock-sweep`, `3f3aeec3 k1-w6-yaml-safeload`) и `5cab6a58 plan:v22.2/adr-a-01..07` — наша работа не пересеклась (изоляция через `git commit -- <pathspec>`).
+
+### Открытые carryover S22
+
+См. `.claude/KNOWN_ISSUES.md` секцию «Sprint 21 GAP-backlog status» → «Open carryover в S22» (6 пунктов).
 
 ---
 

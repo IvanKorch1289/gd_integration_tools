@@ -1,34 +1,76 @@
 # KNOWN_ISSUES.md
 
-## Sprint 21 GAP-backlog status — 2026-05-22 (active)
+## Sprint 21 GAP-backlog status — 2026-05-22 ✅ CLOSED 10/10
 
-**Активный спринт** (coordinator-self mode, без worktree-агентов): Sprint 21 Resilience & Multi-tenancy Hardening.
+**Sprint 21 — Resilience & Multi-tenancy Hardening** — закрыт coordinator-self mode за одну сессию (11 коммитов: backbone + 9 wave + closure). 55/55 unit-тестов passing (+5 skipped: RLS требует Postgres).
 
 **Источник**: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + PLAN.md V22.2 FINAL §4.
 
-**Wave-расписание** (11 коммитов):
-1. `[wave:s21/backbone]` — 8 default-OFF feature-flags + team.s21 + KNOWN_ISSUES.
-2. `[wave:s21/k1-w1-rls-postgres]` — Alembic RLS policy для workflow_instance + SET LOCAL listener.
-3. `[wave:s21/k1-w2-tenant-cache-wrapper]` — `TenantCacheBackend(CacheBackend)`.
-4. `[wave:s21/k2-w1-rpa-resilience-wrapper]` — `RPACallPolicy` Single Entry для 5 callsites.
-5. `[wave:s21/k2-w2-scheduler-dlq]` — APScheduler EVENT_JOB_ERROR → DLQ + admin endpoint.
-6. `[wave:s21/k2-w3-webhook-resilience]` — WebhookSink + webhook_scheduler через RPACallPolicy.
-7. `[wave:s21/k3-w1-desktop-rpa-pool]` — `DesktopRPASessionPool` с persistent httpx + session affinity.
-8. `[wave:s21/k3-w2-browser-cookies-redis]` — `save_cookies/restore_cookies` через Redis hash.
-9. `[wave:s21/k3-w3-workflow-state-persist]` — `WorkflowState` model + alembic + pg_runner integration.
-10. `[wave:s21/k5-w1-streamlit-tenant-admin]` — Streamlit page 81 tenant inspection.
-11. `[wave:s21/closure]` — finale + DoD verify + memory note.
+### Wave-таблица (10 wave landed)
 
-### Sprint 21 carryover (включён в W8)
+| Wave | Commit | Закрыто |
+|---|---|---|
+| `s21/backbone` | `e19bd247` | 8 default-OFF feature-flags + team.s21 + KNOWN_ISSUES |
+| `s21/k1-w1-rls-postgres` | `5bd787c3` | **ADR-NEW-12** + G-08 RLS Postgres + SET LOCAL listener |
+| `s21/k1-w2-tenant-cache-wrapper` | `d0ffdc39` | **B-03** TenantCacheBackend auto-prefix wrapper |
+| `s21/k2-w1-rpa-resilience-wrapper` | `5cf7cce3` | **ADR-NEW-13** + B-02 RPACallPolicy Single Entry |
+| `s21/k2-w2-scheduler-dlq` | `ce6b1c33` | **G-09** Scheduler DLQ + admin endpoint |
+| `s21/k2-w3-webhook-resilience` | `8333c75a` | **G-07** Webhook resilience через RPACallPolicy |
+| `s21/k3-w1-desktop-rpa-pool` | `26daceae` | **F-12 + B-09** DesktopRPASessionPool persistent httpx |
+| `s21/k3-w2-browser-cookies-redis` | `55e1531d` | **G-06** Browser cookies Redis persistence |
+| `s21/k3-w3-workflow-state-persist` | `f6702f60` | **ADR-NEW-14** + B-05 + S17 K-OPS-1 closure WorkflowState |
+| `s21/k5-w1-streamlit-tenant-admin` | `9cc58a68` | W9 Streamlit page 83 read-only |
+| `s21/closure` | _этот_ | DoD verify + memory note + vault summary |
 
-- **S17 K-OPS-1 saga_state_store** — реализация перенесена в `[wave:s21/k3-w3-workflow-state-persist]` под тем же feature-flag `saga_state_persistence_enabled` + новый `workflow_state_sqlite_persist`. После W8 carryover ⇒ `[Resolved: S21 W8 carryover]`.
+### Закрытые блокеры
 
-### Открытые риски Sprint 21
+- ✅ **B-02** RPA resilience scattered — RPACallPolicy Single Entry (W3) + WebhookSink wrap (W5).
+- ✅ **B-03** Cache poisoning — TenantCacheBackend wrapper (W2) + PG RLS (W1) defence-in-depth.
+- ✅ **B-05** Workflow state loss — WorkflowState SQLAlchemy + alembic + repository (W8).
+- ✅ **B-09** Desktop RPA bottleneck — DesktopRPASessionPool (W6).
+- ✅ **G-06** Browser cookies — BrowserCookieStore Redis hash (W7).
+- ✅ **G-07** Webhook resilience — wrap через RPACallPolicy + DLQ envelope (W5).
+- ✅ **G-08** RLS отсутствует — Alembic policies + SET LOCAL listener (W1).
+- ✅ **G-09** Scheduler DLQ missing — listener + admin endpoint (W4).
+- ✅ **F-12** Desktop RPA pool — DesktopRPASessionPool (W6).
+- ✅ **S17 K-OPS-1 carryover** — saga_state_store реализован как `workflow_state` SQLAlchemy model (W8).
 
-1. **W1 ограничен 1 таблицей** (`workflow_instance`) — `orders/users/files` НЕ имеют колонки `tenant_id`. Полный RLS откладывается в S22 (требует preceding migration на добавление колонок).
-2. **Alembic offline-режим** — applied миграции valid через `alembic upgrade head --sql`; фактическая RLS verifiable только в integration test с реальным Postgres.
-3. **LiteTemporalBackend** уже использует builtin SQLite через `WorkflowEnvironment.start_local()` — explicit aiosqlite wrapper НЕ создаётся; W8 фокус на saga compensating model.
-4. **Параллельная сессия** может изменять carryover-файлы (`saga_state.py`) — `git commit -- <pathspec>` обязателен.
+### Тесты (55/55 + 5 PG-skipped)
+
+| Файл | Тесты | Статус |
+|---|---|---|
+| `tests/security/test_rls_isolation.py` | 5 | 5 skipped (требует Postgres DSN) |
+| `tests/cache/test_tenant_isolation.py` | 8 | ✅ 8/8 |
+| `tests/resilience/test_rpa_policy.py` | 8 | ✅ 8/8 |
+| `tests/scheduler/test_dlq.py` | 8 | ✅ 8/8 |
+| `tests/webhook/test_resilience.py` | 4 | ✅ 4/4 |
+| `tests/rpa/test_desktop_pool.py` | 10 | ✅ 10/10 |
+| `tests/rpa/test_browser_cookies.py` | 9 | ✅ 9/9 |
+| `tests/workflow/test_state_persistence.py` | 8 | ✅ 8/8 |
+
+### Open carryover в S22
+
+1. **W1 RLS — 3 таблицы** (`orders/users/files`) требуют preceding add-tenant-id migration → `[wave:s22/k1-w0-add-tenant-id-columns]`.
+2. **Полная интеграция RPACallPolicy** в browser_pool/cdc/file_watcher/desktop_rpa callsites — `[wave:s22/k2-rpa-callsites-integration]`.
+3. **Lifespan wire-up** для default Breaker + DesktopRPASessionPool + BrowserCookieStore Redis client + Scheduler DLQ Postgres writer — `[wave:s22/k5-lifespan-wire-up]`.
+4. **Router include** для `admin_scheduler_dlq.py` в FastAPI main router.
+5. **PG-integration RLS tests** — testkit fixture + testcontainers Postgres для `tests/security/test_rls_isolation.py` (4 scenarios + 1 xfail SUPERUSER).
+6. **W9 Streamlit page 83** дозалить полные API endpoints (`get_metrics()` / pool stats).
+
+### Sprint 21 — Verify
+
+```bash
+# Все S21 unit-тесты
+pytest tests/cache/test_tenant_isolation.py tests/resilience/test_rpa_policy.py \
+  tests/scheduler/test_dlq.py tests/webhook/test_resilience.py \
+  tests/rpa/test_desktop_pool.py tests/rpa/test_browser_cookies.py \
+  tests/workflow/test_state_persistence.py
+# Expected: 55 passed
+
+# RLS — требует Postgres:
+S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolation.py
+# Expected: 4 passed + 1 xfail
+```
 
 ---
 
