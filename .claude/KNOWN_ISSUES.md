@@ -399,22 +399,29 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 
 ### Wave-карриовер S17 → следующие сессии
 
+**Закрыто 2026-05-22 (carryover session):**
+- ✅ `[wave:s17/k3-w0-routes-tenant-aware]` — K-ARCH-4 (DoD #6): `Pipeline.tenant_aware` + `TenantContextRequiredError` + ExecutionEngine runtime-gate + 8 тестов (6 engine + 2 loader).
+- ✅ `[wave:s17/k1-w5-backup-dr-scaffold]` — K-OPS-5 (DoD #14): 4 backup-скрипта (pg/redis/clickhouse/restore_pg) + DR runbook (4 сценария, RPO≤1h/RTO≤30мин).
+- ✅ `[wave:s17/k9-w1-pre-prod-check-v2-scaffold]` — K-OPS-3 (DoD #13): расширение `pre_prod_check.py` до 30 gates + `--dry-run` + warn-only режим для scaffold-чеков #21–#30 (полное enforcement в S20).
+- ✅ `[wave:s17/k3-w2-rlock-cleanup]` — micro-fix: `MiddlewareRegistry._lock` `RLock → Lock` (V22 §5, sync-only регистрация без re-entrancy).
+
+**Закрыто ранее в S17 (главная сессия 2026-05-21):**
+- ✅ `[wave:s17/k3-w2-middleware-registry]` — ADR-NEW-2 (`e3fbe3b6`).
+- ✅ `[wave:s17/k2-w4-apscheduler-observability]` — DoD-13b (`4b4f20eb`).
+- ✅ `[wave:s17/k2-w3-task-registry-coverage]` — leak-prevention (`1105ae23`).
+- ✅ `[wave:s17/k7-w1-observability-fixes]` — частичная закрытие S-L7-1..3 (`cc3a9c7c`, параллельная сессия).
+
+**Открытые carryover S17 → S18 / следующие сессии:**
 - `[wave:s17/k1-w0-python3-except-clause-sweep]` — codemod 70+ файлов (отдельная wave, F-A-4 pre-test gate на 5+ callsites).
-- `[wave:s17/k1-w1-tls-cert-required]` — требует S16 DoD-3 closure.
-- `[wave:s17/k3-w0-routes-tenant-aware]` — K-ARCH-4 (после backbone готова).
-- `[wave:s17/k3-w2-middleware-registry]` — ADR-NEW-2.
-- `[wave:s17/k1-w4-config-validator]` — D14.
-- `[wave:s17/k2-w2-metrics-migrate]` — sweep 52 inline callsites (после k2-w1).
-- `[wave:s17/k2-w4-apscheduler-observability]` — D13b.
+- `[wave:s17/k1-w1-tls-cert-required]` — требует S16 DoD-3 closure (FTP/IMAP/POP3 CERT_NONE → CERT_REQUIRED, 6 callsites).
+- `[wave:s17/k1-w4-config-validator]` — D14 расширение.
+- `[wave:s17/k2-w2-metrics-migrate]` — sweep 52 inline callsites (после k2-w1; D11 в работе параллельной сессией).
 - `[wave:s17/k3-w3-correlation-id-end-to-end]` — D12 (после RequestContext landed).
-- `[wave:s17/k7-w1-observability-fixes]` — S-L7-1..3.
 - `[wave:s17/k5-w1-tenant-feature-toggle-ui]` — D9.
-- `[wave:s17/k2-w5-resilience-coordinator-class]` — требует fix circular import `core/resilience/__init__.py`.
-- `[wave:s17/k3-w4-saga-state-store]` — K-OPS-1.
+- `[wave:s17/k2-w5-resilience-coordinator-class]` — Single Entry V22 (требует fix circular import `core/resilience/__init__.py`).
+- `[wave:s17/k3-w4-saga-state-store]` — K-OPS-1 (закрыт через S21 W8 WorkflowState).
 - `[wave:s17/k5-w2-k8s-manifests]` — K-OPS-2.
-- `[wave:s17/k9-w1-pre-prod-check-v2-scaffold]` — K-OPS-3 (после backbone готов).
-- `[wave:s17/k1-w5-backup-dr-scaffold]` — K-OPS-5.
-- `[wave:s17/closure]` — финал Sprint 17 (DoD verify + memory + CONTEXT/ARCHITECTURE update).
+- `[wave:s17/closure]` — финал Sprint 17 (empirical coverage ≥77%, DoD verify, memory + CONTEXT/ARCHITECTURE update).
 
 ### Active blockers (см. `.claude/team-ownership.toml::[blockers]`)
 

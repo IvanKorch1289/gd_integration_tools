@@ -37,7 +37,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from importlib import import_module
-from threading import RLock
+from threading import Lock
 from typing import Any
 
 __all__ = (
@@ -84,15 +84,17 @@ class MiddlewareSpec:
 class MiddlewareRegistry:
     """Реестр middleware с тремя источниками регистрации.
 
-    Регистрация thread-safe (RLock), потому что entry-points и
-    plugin.toml могут грузиться из разных startup-веток (lifespan +
-    plugin loader). Сам ``apply_to_app`` вызывается один раз
-    в setup_middlewares и не блокируется.
+    Регистрация thread-safe (``threading.Lock``), потому что entry-points
+    и plugin.toml могут грузиться из разных startup-веток (lifespan +
+    plugin loader). Re-entrancy не используется — каждый публичный метод
+    делает один lock-acquire без вложенных вызовов другого, поэтому
+    обычный :class:`Lock` достаточен (V22 §5: избегаем RLock в sync-only
+    регистрациях).
     """
 
     def __init__(self) -> None:
         self._specs: dict[str, MiddlewareSpec] = {}
-        self._lock = RLock()
+        self._lock = Lock()
 
     # --- Регистрация ------------------------------------------------- #
     def register_builtin(
