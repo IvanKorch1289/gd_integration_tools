@@ -23,6 +23,30 @@ def _safe_repr_message(payload: Any, limit: int = 500) -> str:
     return text[:limit] + ("..." if len(text) > limit else "")
 
 
+def _inject_correlation_id_headers(
+    headers: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Дополнить FastStream-headers ``correlation_id`` из ContextVar.
+
+    Sprint 17 K3 W3 (D12). Caller-override (явный ключ ``correlation_id``)
+    сохраняется. При пустом ContextVar header не добавляется.
+    Идентичная семантика с ``OutboxRepository._merge_context_headers``.
+    """
+    result: dict[str, Any] = dict(headers or {})
+    if "correlation_id" in result:
+        return result
+    try:
+        from src.backend.infrastructure.observability.correlation import (
+            get_correlation_id,
+        )
+    except ImportError:
+        return result
+    cid = get_correlation_id()
+    if cid:
+        result["correlation_id"] = cid
+    return result
+
+
 class MessageLoggingMiddleware(BaseMiddleware):
     """Осторожное логирование сообщений без избыточного payload leakage."""
 
@@ -264,19 +288,32 @@ class StreamClient:
     async def _publish_rabbit_immediately(
         self, queue: str, message: dict[str, Any]
     ) -> None:
-        # Wave 6.2: rabbit publish защищён CB через единый фасад.
-        # Дефолты из BreakerSpec (consts.DEFAULT_CB_*).
+        """Synchronous publish в RabbitMQ через FastStream router.
+
+        S17 K3 W3 (D12): correlation_id из ContextVar инжектируется в
+        AMQP headers. CB-фасад обеспечивает resilience (Wave 6.2).
+        """
+        cid_headers = _inject_correlation_id_headers(None)
         breaker = breaker_registry.get_or_create("rabbit:publish", BreakerSpec())
         async with breaker.guard():
             await self.rabbit_router.broker.publish(  # type: ignore
-                message=message, queue=queue, mandatory=True
+                message=message,
+                queue=queue,
+                mandatory=True,
+                headers=cid_headers or None,
             )
 
     async def _publish_redis_immediately(
         self, stream: str, message: dict[str, Any], headers: dict[str, Any]
     ) -> None:
+        """Publish в Redis Streams через FastStream router.
+
+        S17 K3 W3 (D12): correlation_id из ContextVar добавляется в headers,
+        если caller не передал явное значение.
+        """
+        merged_headers = _inject_correlation_id_headers(headers)
         await self.redis_router.broker.publish(  # type: ignore
-            message=message, stream=stream, headers=headers
+            message=message, stream=stream, headers=merged_headers
         )
 
     async def _execute_redis_publish(
@@ -335,10 +372,16 @@ class StreamClient:
         key: str | None,
         headers: dict[str, Any],
     ) -> None:
+        """Publish в Kafka через FastStream router.
+
+        S17 K3 W3 (D12): correlation_id из ContextVar добавляется в headers
+        перед публикацией.
+        """
         if self.kafka_router is None:
             raise RuntimeError("Kafka router не инициализирован")
+        merged_headers = _inject_correlation_id_headers(headers)
         await self.kafka_router.broker.publish(
-            message=message, topic=topic, key=key, headers=headers
+            message=message, topic=topic, key=key, headers=merged_headers
         )
 
     async def _execute_kafka_publish(

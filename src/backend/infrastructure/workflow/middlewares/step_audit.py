@@ -208,7 +208,28 @@ class StepAuditMiddleware:
         correlation_id: str = "",
         tenant_id: str = "",
     ) -> AsyncIterator[_StepContext]:
-        """Контекстный менеджер для отслеживания одного шага."""
+        """Контекстный менеджер для отслеживания одного шага.
+
+        S17 K3 W3 (D12): если ``correlation_id`` / ``tenant_id`` не переданы,
+        они подбираются из ContextVar'ов ``correlation_id_var`` /
+        ``tenant_id_var``. Это обеспечивает propagation через workflow-
+        runner без явного протаскивания id через каждый шаг.
+        """
+        effective_correlation_id = correlation_id
+        effective_tenant_id = tenant_id
+        if not effective_correlation_id or not effective_tenant_id:
+            try:
+                from src.backend.infrastructure.observability.correlation import (
+                    get_correlation_id,
+                    get_tenant_id,
+                )
+
+                if not effective_correlation_id:
+                    effective_correlation_id = get_correlation_id()
+                if not effective_tenant_id:
+                    effective_tenant_id = get_tenant_id()
+            except ImportError:
+                pass
         ctx = _StepContext()
         started = time.perf_counter()
         status = "ok"
@@ -226,8 +247,8 @@ class StepAuditMiddleware:
                 step_name=step_name,
                 duration_ms=duration_ms,
                 status=status,
-                correlation_id=correlation_id,
-                tenant_id=tenant_id,
+                correlation_id=effective_correlation_id,
+                tenant_id=effective_tenant_id,
                 input_schema_hash=ctx.input_schema_hash,
                 output_schema_hash=ctx.output_schema_hash,
             )

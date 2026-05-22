@@ -24,7 +24,12 @@ import httpx
 
 from src.backend.core.net.waf import WafBypassError, WafDecision, WafPolicy
 
-__all__ = ("AuditCallback", "OutboundHttpClient")
+__all__ = ("AuditCallback", "CORRELATION_ID_HEADER", "OutboundHttpClient")
+
+# Sprint 17 K3 W3 (D12) — стандартный header для cross-service correlation.
+# Значение берётся из ``correlation_id_var`` ContextVar; явный header
+# в kwargs caller'а имеет приоритет.
+CORRELATION_ID_HEADER = "X-Correlation-ID"
 
 AuditCallback = Callable[[dict[str, Any]], None]
 """Сигнатура audit-callback'а: принимает event dict, ничего не возвращает."""
@@ -138,11 +143,15 @@ class OutboundHttpClient:
         if self._capability_check is not None:
             self._capability_check(self._plugin, "net.outbound", decision.host)
 
+        # S17 K3 W3 (D12): inject X-Correlation-ID из ContextVar в outgoing
+        # headers. Caller-override (явный header) имеет приоритет.
+        effective_headers = self._inject_correlation_id(headers)
+
         request_kwargs: dict[str, Any] = {"method": method, "url": url}
         if content is not None:
             request_kwargs["content"] = content
-        if headers is not None:
-            request_kwargs["headers"] = headers
+        if effective_headers is not None:
+            request_kwargs["headers"] = effective_headers
         if json is not None:
             request_kwargs["json"] = json
         if params is not None:
@@ -150,6 +159,32 @@ class OutboundHttpClient:
         if timeout is not None:
             request_kwargs["timeout"] = timeout
         return await self._client.request(**request_kwargs)
+
+    @staticmethod
+    def _inject_correlation_id(
+        headers: Mapping[str, str] | None,
+    ) -> Mapping[str, str] | None:
+        """Дополнить headers ``X-Correlation-ID`` из текущего ContextVar.
+
+        S17 K3 W3 (D12). Если caller передал явный ``X-Correlation-ID``
+        (или одну из его case-вариаций), значение не перетирается. Если
+        ContextVar пуст — header не добавляется (избегаем пустых строк).
+        """
+        try:
+            from src.backend.infrastructure.observability.correlation import (
+                get_correlation_id,
+            )
+        except ImportError:
+            return headers
+        cid = get_correlation_id()
+        if not cid:
+            return headers
+        existing = dict(headers or {})
+        for key in existing:
+            if key.lower() == CORRELATION_ID_HEADER.lower():
+                return existing
+        existing[CORRELATION_ID_HEADER] = cid
+        return existing
 
     async def get(self, url: str, **kwargs: Any) -> httpx.Response:
         """Удобная обёртка над ``request("GET", ...)``."""

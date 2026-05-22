@@ -16,6 +16,9 @@ from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_grpc_logger_provider
 from src.backend.core.errors import BaseError
 from src.backend.entrypoints.base import dispatch_action
+from src.backend.entrypoints.grpc.correlation import (
+    extract_correlation_id_from_grpc_context,
+)
 from src.backend.entrypoints.grpc.protobuf.invoker_pb2 import (  # type: ignore
     InvokeResponse as InvokerInvokeResponse,
 )
@@ -36,6 +39,10 @@ from src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc import (
 )
 
 grpc_logger = get_grpc_logger_provider()
+
+# S17 K3 W3 (D12): helper для извлечения correlation_id вынесен в
+# ``grpc/correlation.py`` (имп. наверху), чтобы тесты могли импортировать
+# без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
 
 
 def _safe_error(exc: Exception, correlation_id: str) -> str:
@@ -67,12 +74,32 @@ class BaseGRPCServicer:
         action: str,
         payload: dict[str, Any] | None = None,
         correlation_id: str | None = None,
+        context: Any | None = None,
     ) -> Any:
         """Диспетчеризует action через общий `dispatch_action()`.
 
         IL-CRIT1.5: был дубликат ActionCommandSchema-сборки, теперь — через
         unified `app.entrypoints.base.dispatch_action` с `source="grpc"`.
+
+        S17 K3 W3 (D12): если ``correlation_id`` не передан и доступен
+        gRPC ``context`` — пытаемся извлечь ``x-correlation-id`` из incoming
+        metadata; перед dispatch значение прокидывается в ContextVar через
+        ``set_correlation_context``, чтобы downstream-цепочка
+        (audit / outbox / outbound HTTP) увидела id.
         """
+        if not correlation_id and context is not None:
+            extracted = extract_correlation_id_from_grpc_context(context)
+            if extracted:
+                correlation_id = extracted
+        if correlation_id:
+            try:
+                from src.backend.infrastructure.observability.correlation import (
+                    set_correlation_context,
+                )
+
+                set_correlation_context(correlation_id=correlation_id)
+            except ImportError:
+                pass
         return await dispatch_action(
             action=action, payload=payload, source="grpc", correlation_id=correlation_id
         )
