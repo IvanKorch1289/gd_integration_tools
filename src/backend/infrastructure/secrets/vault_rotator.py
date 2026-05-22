@@ -99,8 +99,12 @@ class VaultSecretRotator:
             return
 
         self._running = True
-        self._task = asyncio.create_task(
-            self._rotation_loop(interval_seconds), name="vault_secret_rotator"
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        self._task = get_task_registry().create_task(
+            self._rotation_loop(interval_seconds),
+            name="vault-secret-rotation",
+            deadline_seconds=None,
         )
         logger.info("vault_rotator.started", interval_seconds=interval_seconds)
 

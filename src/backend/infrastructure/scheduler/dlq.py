@@ -232,15 +232,24 @@ def attach_scheduler_dlq(
                 )
                 # Schedule async write — listener вызывается sync;
                 # writer.write() — coroutine, поэтому fire-and-forget через
-                # asyncio.create_task (если есть running loop).
+                # TaskRegistry (если есть running loop) для leak-prevention.
                 import asyncio
 
                 try:
-                    loop = asyncio.get_running_loop()
-                    loop.create_task(writer.write(envelope))
+                    asyncio.get_running_loop()
                 except RuntimeError:
                     _logger.warning(
                         "DLQWriter.write skipped — no running loop in listener"
+                    )
+                else:
+                    from src.backend.core.utils.task_registry import (
+                        get_task_registry,
+                    )
+
+                    get_task_registry().create_task(
+                        writer.write(envelope),
+                        name="scheduler-dlq-write",
+                        deadline_seconds=10.0,
                     )
         except Exception:  # noqa: BLE001
             _logger.exception("scheduler DLQ listener failed")

@@ -258,10 +258,16 @@ class HttpxClient:
         if client is None or client.is_closed:
             return
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             return
-        loop.create_task(client.aclose())
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        get_task_registry().create_task(
+            client.aclose(),
+            name="httpx-rotate-close",
+            deadline_seconds=30.0,
+        )
 
     def _breaker_for(self, host: str) -> Breaker:
         return breaker_registry.get_or_create(

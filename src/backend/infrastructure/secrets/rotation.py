@@ -109,7 +109,13 @@ class RotationScheduler:
                 await asyncio.sleep(self._interval)
 
         if task_factory is None:
-            self._task = asyncio.create_task(_loop(), name="secret-rotation")
+            from src.backend.core.utils.task_registry import get_task_registry
+
+            self._task = get_task_registry().create_task(
+                _loop(),
+                name="secret-rotation",
+                deadline_seconds=None,
+            )
         else:
             self._task = task_factory(_loop(), name="secret-rotation")
 

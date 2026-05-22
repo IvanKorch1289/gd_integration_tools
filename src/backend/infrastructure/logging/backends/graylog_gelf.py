@@ -234,8 +234,12 @@ class GraylogGelfLogSink(LogSink):
             loop = asyncio.get_running_loop()
         except RuntimeError:
             return
-        self._worker_task = loop.create_task(
-            self._drain_loop(), name=f"graylog-drain[{self.name}]"
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        self._worker_task = get_task_registry().create_task(
+            self._drain_loop(),
+            name=f"graylog-drain[{self.name}]",
+            deadline_seconds=None,
         )
 
     async def _drain_loop(self) -> None:

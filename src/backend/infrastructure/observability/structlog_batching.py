@@ -180,15 +180,22 @@ class BatchingStructlogWrapper:
 
         # Sync-trigger при достижении batch_size — для гарантии latency
         if len(self._buffer) >= self._batch_size:
-            # Не блокируем вызывающий код — schedule task через
-            # asyncio.create_task для немедленного flush.
+            # Не блокируем вызывающий код — schedule task через TaskRegistry
+            # для немедленного flush + graceful shutdown.
             try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(self._flush_batch())
+                asyncio.get_running_loop()
             except RuntimeError:
                 # Нет running loop (sync-контекст) — игнорируем,
                 # flush произойдёт в следующем flush_loop tick'е.
                 pass
+            else:
+                from src.backend.core.utils.task_registry import get_task_registry
+
+                get_task_registry().create_task(
+                    self._flush_batch(),
+                    name="structlog-flush",
+                    deadline_seconds=5.0,
+                )
 
     def _emit_direct(self, level: str, event: str, kwargs: dict[str, Any]) -> None:
         """Прямой вызов inner-логгера без буферизации."""
