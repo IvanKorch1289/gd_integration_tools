@@ -102,11 +102,17 @@ class OutboxRepository:
         headers: dict[str, Any] | None = None,
         next_attempt_at: datetime | None = None,
     ) -> OutboxMessage:
-        """Atomic enqueue — см. [TransactionalOutboxEnqueuer.enqueue]."""
+        """Atomic enqueue — см. [TransactionalOutboxEnqueuer.enqueue].
+
+        Дополнительно: если ``headers`` не содержит ``correlation_id`` /
+        ``tenant_id``, значения подтягиваются из ``RequestContext`` для
+        e2e-propagation в downstream consumers (S17 K3 W3).
+        """
+        merged_headers = self._merge_context_headers(headers)
         message = OutboxMessage(
             topic=topic,
             payload=payload,
-            headers=headers or {},
+            headers=merged_headers,
             status="pending",
             retry_count=0,
             next_attempt_at=next_attempt_at or datetime.now(timezone.utc),
@@ -116,3 +122,27 @@ class OutboxRepository:
         # ссылаться на message.id в дальнейших вставках (например, в audit).
         await self._session.flush([message])
         return message
+
+    @staticmethod
+    def _merge_context_headers(
+        headers: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Дополнить headers значениями из RequestContext (correlation/tenant).
+
+        Если caller передал явный header — он имеет приоритет. Если ни
+        header, ни RequestContext не дают значения — поле опускается
+        (не пишется пустая строка).
+        """
+        result: dict[str, Any] = dict(headers or {})
+        if "correlation_id" not in result:
+            try:
+                from src.backend.infrastructure.observability.correlation import (
+                    get_correlation_id,
+                )
+
+                cid = get_correlation_id()
+                if cid:
+                    result["correlation_id"] = cid
+            except ImportError:
+                pass
+        return result
