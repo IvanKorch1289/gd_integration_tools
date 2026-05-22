@@ -157,8 +157,11 @@ def _emit_sla_metric(
             _sla_counter.labels(
                 workflow_id=workflow_id, tenant_id=tenant_id or "", level=level.value
             ).inc()
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+            _logger.debug(
+                "sla.counter_inc_failed: %s", exc,
+                extra={"workflow_id": workflow_id, "level": level.value},
+            )
 
 
 @dataclass(slots=True)
@@ -230,13 +233,22 @@ class SlaTracker:
         self._task = get_task_registry().create_task(self._run(), name="sla-tracker")
 
     async def stop(self) -> None:
+        """Graceful stop SLA-трекера.
+
+        Ожидает завершения фоновой таски с подавлением CancelledError
+        (ожидаемое исключение при cancel) и DEBUG-логом любых других
+        падений (не должны валить shutdown lifespan).
+        """
         self._stop.set()
         if self._task is not None:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            except asyncio.CancelledError:
+                # Ожидаемое исключение после cancel() — логировать не нужно.
                 pass
+            except Exception as exc:  # noqa: BLE001 — shutdown best-effort
+                _logger.debug("sla.tracker_stop_error: %s", exc)
             self._task = None
 
     async def _run(self) -> None:

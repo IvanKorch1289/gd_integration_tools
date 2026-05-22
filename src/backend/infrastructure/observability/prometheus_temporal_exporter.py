@@ -64,31 +64,53 @@ def get_temporal_metrics() -> dict[str, Any]:
 
 
 def set_task_queue_depth(task_queue: str, depth: int) -> None:
+    """Установить gauge ``temporal_task_queue_depth`` для ``task_queue``.
+
+    Best-effort: при ошибке Prometheus-клиента (например, label
+    cardinality) — DEBUG-лог без подъёма исключения, чтобы exporter
+    не валил основной сценарий.
+    """
     metrics = _ensure_metrics()
     gauge = metrics.get("task_queue_depth")
     if gauge is not None and not isinstance(gauge, bool):
         try:
             gauge.labels(task_queue=task_queue).set(depth)
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+            _logger.debug(
+                "temporal_exporter.task_queue_depth_set_failed: %s", exc,
+                extra={"task_queue": task_queue},
+            )
 
 
 def set_workers_active(task_queue: str, count: int) -> None:
+    """Установить gauge ``temporal_workers_active`` для ``task_queue``.
+
+    Best-effort: при ошибке Prometheus-клиента — DEBUG-лог без подъёма.
+    """
     metrics = _ensure_metrics()
     gauge = metrics.get("workers_active")
     if gauge is not None and not isinstance(gauge, bool):
         try:
             gauge.labels(task_queue=task_queue).set(count)
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+            _logger.debug(
+                "temporal_exporter.workers_active_set_failed: %s", exc,
+                extra={"task_queue": task_queue},
+            )
 
 
 def record_scale_event(action: str) -> None:
-    """``up`` / ``down`` / ``noop``."""
+    """``up`` / ``down`` / ``noop`` — инкрементирует scale-event counter.
+
+    Best-effort: при ошибке Prometheus-клиента — DEBUG-лог без подъёма.
+    """
     metrics = _ensure_metrics()
     counter = metrics.get("scale_events")
     if counter is not None and not isinstance(counter, bool):
         try:
             counter.labels(action=action).inc()
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
+            _logger.debug(
+                "temporal_exporter.scale_event_inc_failed: %s", exc,
+                extra={"action": action},
+            )
