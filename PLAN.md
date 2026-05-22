@@ -1,8 +1,8 @@
-# PLAN.md — gd_integration_tools V22.2 FINAL (S17–S19 GAP-adapted + S21–S23 post-production backlog)
+# PLAN.md — gd_integration_tools V22.4 FINAL (S17–S19 GAP-adapted + S21–S24 + S25–S27 AI Platform Layer)
 
-> **Версия**: V22.2 FINAL (S21-S23 GAP-backlog 2026-05-21 добавлены; production-ready roadmap S16-S20 ≤ 10 недель + post-production backlog без дат). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` секция «GAP-аудит 2026-05-21» + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате. **Sprint 21-23 post-production GAP-backlog** добавлены 2026-05-21 на основе `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (10 CRITICAL B-01..B-10 + 16 P0 STRONGLY RECOMMENDED + 15 функциональных F-01..F-15 + 7 архитектурных рекомендаций A-01..A-07).
-> **Дата**: 2026-05-21.
-> **Замещает**: V22.1 FINAL (предыдущая ревизия) и V21.0 (архив → `vault/archive-plan-v21.md`).
+> **Версия**: V22.4 FINAL (Sprint 25-27 AI Platform Layer добавлены 2026-05-22; production-ready roadmap S16-S20 ≤ 10 недель + post-production backlog без дат). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате. **Sprint 21-24 post-production GAP-backlog** (DEEP-RESEARCH 2026-05-20 + AI-GAP 2026-05-22). **Sprint 25-27 AI Platform Layer** добавлены 2026-05-22 на основе нового платформенного плана: AIGateway фасад (ADR-NEW-19), AIPolicySpec (ADR-NEW-20), PIITokenizer reversible (ADR-NEW-21), SkillRegistry V11.2 (ADR-NEW-22), MCP Gateway namespaces (ADR-NEW-23), AI Audit Unified Schema (ADR-NEW-24).
+> **Дата**: 2026-05-22.
+> **Замещает**: V22.3 FINAL (предыдущая ревизия с S24 AI Safety) и V21.0 (архив → `vault/archive-plan-v21.md`).
 > **Срок**: 2026-05-22 → 2026-07-31 (S16–S20: 5 спринтов × 2 недели × 5 команд).
 > **Post-production backlog (S21-S23)**: без дат, выполняется параллельно release stabilization, не блокирует release v1.0.0-production.
 >
@@ -630,6 +630,131 @@ FeatureFlagService (V22 EXTENDED) ← per-tenant + runtime UI + Redis pub/sub
 
 ---
 
+### Sprint 25 — AI Gateway + Policy DSL (post-production gap-backlog)
+
+**Owner**: К4 (AI/Data primary) + К1 (Security review) + К2 (DSL review).
+**Приоритет**: **P0** (защитный слой невозможен без единой точки входа).
+**Источник**: gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md Зона 1 (orchestration consolidation) + новый платформенный план V22.4 §3 Зоны N1/N2/N6.
+**Зависимости**: S24 W1 Presidio backend (для PIITokenizer), S17 ADR-NEW-3 RequestContext (для correlation_id), ADR-NEW-1 AuthorizationGateway (pattern reuse).
+
+#### Wave 0 — Backbone
+- `[wave:s25/backbone]` — 3 default-OFF feature-flags: `AI_GATEWAY_ENFORCE`, `AI_POLICY_ENFORCE`, `AI_PII_TOKENIZER_ENABLED`. Capability schema extension: `ai.invoke.<workflow>`, `ai.memory.{read,write}.<namespace>`, `pii.tokenize.reversible.<scope>`. Scaffold-файлы `core/ai/gateway.py` + `core/ai/policy/{spec,resolver,enforcer}.py` (pass-through pipeline). `ai_policies/.gitkeep` + `ai_policies/credit_check_strict.policy.yaml` PoC.
+
+#### Wave 1 (К4 W1 Gateway facade)
+- `[wave:s25/w1-ai-gateway]` — **ADR-NEW-19 AIGateway facade**: 9-step pipeline (policy_resolve → input_sanitizers → input_guards → prompt_render → invoke_llm → output_guards → output_sanitizers → audit_emit → cost_track). `AIRequest`/`AIResponse` dataclass с `workflow_id`, `tenant_id`, `correlation_id`, `prompt_ref`. Tests: `tests/unit/core/ai/test_gateway_pipeline.py`. CI-gate `make ai-gateway-coverage` (AST-checker, warn-only first month).
+
+#### Wave 2 (К2 W2 Policy DSL)
+- `[wave:s25/w2-policy-resolver]` — **ADR-NEW-20 AIPolicySpec + PolicyResolver**: Pydantic v2 `AIPolicySpec(name, model_router, input_sanitizers, input_guards, output_guards, output_sanitizers, memory, budget, audit)`. `ai_policies/*.policy.yaml` JSON-Schema (`make ai-policy-schema`). Per-tenant override через `extensions/*/ai_policies/`. `PolicyResolver.resolve(workflow_id, tenant_id) → AIPolicySpec`. Tests: `tests/unit/core/ai/policy/test_resolver_yaml.py`.
+
+#### Wave 3 (К4 W3 Adapter wrap)
+- `[wave:s25/w3-adapter-wrap]` — 3 кодопути LLM (`services/ai/ai_agent.py`, `services/ai/ai_graph.py`, `services/ai/agents_pydantic/base.py`) обёрнуты в `AIGateway.invoke()`. Интерфейсы сохранены (backward-compat). Feature-flag `AI_GATEWAY_ENFORCE` default-OFF → ON в S27 closure. Tests: regression `tests/ai/test_3_codepaths_regress.py` (golden-snapshot).
+
+#### Wave 4 (К1 W4 PII Tokenizer reversible)
+- `[wave:s25/w4-pii-tokenizer]` — **ADR-NEW-21 PIITokenizer reversible**: `core/security/pii_tokenizer.py::mask_reversible(text, policy) → (masked, token_map)` + `unmask(masked, token_map)` через UUIDv7-токенизацию + Presidio (из S24 W1). `TokenRegistry` Redis-backed (TTL = policy.ttl_s, AES-GCM ключ через `infrastructure/secrets/`). Capability `pii.tokenize.reversible.<scope>`. Audit-event `ai.pii.tokenize.{mask,unmask}`. Tests: `tests/security/test_pii_tokenizer_roundtrip.py` (500 примеров mask→unmask exact-match).
+
+#### Wave 5 (К4 W5 Langfuse v3 + PII callback)
+- `[wave:s25/w5-langfuse-v3]` — upgrade `services/ai/gateway/langfuse_callback.py` v2 → v3 (OTel-native, GenAI semantic conventions). PII-mask callback через `PIITokenizer.mask_irreversible` ДО отправки в Langfuse SaaS. OTel attrs (`gen_ai.{system,request.model,usage.{prompt_tokens,completion_tokens}}`) на 100% LLM-spans. Dual-write 1 спринт → cut-over в S26 closure. Tests: `tests/ai/test_langfuse_v3_pii_callback.py` (trace с ФИО → anonymized в Langfuse API).
+
+#### Closure
+- `[wave:s25/closure]` — DoD grep verify + memory note `feedback_sprint25_ai_gateway.md` + CONTEXT.md update + `vault/session-summary-s25.md`.
+
+**DoD Sprint 25 (8 критериев)**:
+1. ✅ `[wave:s25/backbone]` landed: 3 feature-flags + capability schema extension + scaffold pass-through.
+2. ✅ **ADR-NEW-19 AIGateway facade** принят в `.claude/DECISIONS.md`. `AIGateway.invoke()` единственная точка входа в LLM (после S27 closure).
+3. ✅ **ADR-NEW-20 AIPolicySpec** принят. `make ai-policy-schema` валидирует 100% `*.policy.yaml`; PoC `credit_check_strict` запускается.
+4. ✅ 3 кодопути обёрнуты, regress-free (golden-snapshot).
+5. ✅ **ADR-NEW-21 PIITokenizer reversible** принят. `tests/security/test_pii_tokenizer_roundtrip.py` 500/500 exact-match.
+6. ✅ Langfuse v3 PII-mask callback подтверждён: trace с реальным ФИО → anonymized.
+7. ✅ OTel GenAI atts на 100% LLM-spans (`gen_ai.{system,request.model,usage.*}`).
+8. ✅ CI-gate `make ai-gateway-coverage` warn-only включён (strict-mode в S27 closure).
+
+---
+
+### Sprint 26 — Prompts Pipeline + Skills Registry (post-production gap-backlog)
+
+**Owner**: К4 (AI/Data primary) + К2 (DSL) + К3 (CI/RAGAS).
+**Приоритет**: **P0** (полный цикл tuning + R-V15-6 для AI-tools).
+**Источник**: AI-GAP-2026-05-22 Зоны N3/N4 + 80% YAML / 20% Python принцип (R-V15-6).
+**Зависимости**: S25 W1 AIGateway (для prompt_render integration), S25 W2 AIPolicySpec (для skill policy_ref).
+
+#### Wave 0 — Backbone
+- `[wave:s26/backbone]` — 3 default-OFF feature-flags: `AI_PROMPT_SWEEP_STRICT`, `AI_PROMPT_EVAL_BLOCKING` (RAGAS gate), `AI_SKILL_TOML_ENABLED`. Capability `skill.invoke.<id>` schema extension.
+
+#### Wave 1 (К4 W1 Prompts sweep)
+- `[wave:s26/w1-prompts-sweep]` — **AST-checker `tools/checks/check_hardcoded_prompts.py`**: ищет литералы вида `system_prompt=`, `system_message=`, `system="..."` длиннее 50 символов в `src/backend/`. Миграция 20+ строк через `manage.py ai prompts migrate <module>:<var>`. Langfuse PromptRegistry source-of-truth. CI-gate `make check-hardcoded-prompts` (warn → strict в S27).
+
+#### Wave 2 (К2 W2 prompt_render DSL)
+- `[wave:s26/w2-prompt-render]` — DSL processor `dsl/engine/processors/ai/prompt_render.py`: `{ref, inputs, output_var, budget.max_tokens}` через `tiktoken` trim. Builder `.prompt_render(ref=..., inputs=..., output=...)`. Integration с `AIPolicySpec.budget`. Tests: `tests/dsl/processors/test_prompt_render_budget.py`.
+
+#### Wave 3 (К4 W3 DSPy ↔ PromptRegistry loop)
+- `[wave:s26/w3-dspy-loop]` — `services/ai/dspy/optimizer_loop.py`: `manage.py ai prompts optimize <ref> --gold-set <path> --metric ragas.faithfulness`. Output: новая версия в Langfuse + canary trigger (5% → 25% → 100%) через `ai_cost_dashboard`. Weekly cron `make ai-prompt-optimize` non-blocking. Tests: `tests/ai/test_dspy_optimizer_loop.py`.
+
+#### Wave 4 (К3+К4 W4 RAGAS gate)
+- `[wave:s26/w4-ragas-gate]` — `make ai-prompt-eval` блокирует PR при `faithfulness < 0.8` или `answer_relevancy < 0.75` на 500 gold. Feature-flag `AI_PROMPT_EVAL_BLOCKING` default-OFF первый месяц → ON в S27 closure. Tests: nightly cron + smoke-test регрессии.
+
+#### Wave 5 (К2 W5 Skill Registry V11.2 TOML)
+- `[wave:s26/w5-skill-registry]` — **ADR-NEW-22 SkillRegistry V11.2**: расширение `plugin.toml [[skill]]` секцией (`id`, `version`, `handler`, `input_schema`, `output_schema`, `capabilities`, `policy_ref`, `protocols=[mcp,langgraph,openai_tools]`, `timeout_s`). `core/ai/skill_registry.py::from_toml_manifest()` (sov с existing `services/ai/tools/registry.py`). `make skill-schema` JSON-Schema. Hot-reload через существующий `watchfiles.awatch`. Auto-export в MCP + LangGraph + OpenAI tools. Tests: `tests/unit/core/ai/test_skill_registry_toml.py`.
+
+#### Closure
+- `[wave:s26/closure]` — DoD grep verify + memory note `feedback_sprint26_prompts_skills.md` + CONTEXT.md update.
+
+**DoD Sprint 26 (8 критериев)**:
+1. ✅ `[wave:s26/backbone]` landed: 3 feature-flags + capability schema extension.
+2. ✅ `tools/checks/check_hardcoded_prompts.py` AST-checker зелёный (`make check-hardcoded-prompts` = 0 violations в src/backend/, кроме allowlist).
+3. ✅ 20+ промптов в Langfuse PromptRegistry с version history; `prompt_registry.get("credit_check.production").version >= 2`.
+4. ✅ DSL `prompt_render` использует `tiktoken` для trim к `policy.budget.max_tokens` (regression test).
+5. ✅ DSPy `optimizer_loop` runable: `manage.py ai prompts optimize credit_check` → новая версия Langfuse + canary trigger `5%`.
+6. ✅ `make ai-prompt-eval` fail при `faithfulness < 0.8` (на 500 gold); warn-only первый месяц → blocking в S27 closure.
+7. ✅ **ADR-NEW-22 SkillRegistry V11.2** принят. `plugin.toml [[skill]]` JSON-Schema валидирует 100% extension манифестов; hot-reload ≤2s.
+8. ✅ SkillRegistry auto-export в MCP + LangGraph + OpenAI tools (100% skills доступны во всех 3 формах).
+
+---
+
+### Sprint 27 — Agent DSL + MCP Gateway + Audit Unified (post-production gap-backlog)
+
+**Owner**: К2 (DSL primary) + К3 (MCP/Ops) + К4 (AI integration) + К1 (Security review).
+**Приоритет**: **P0** (декларативная агентика + единая audit-схема + MCP namespaces).
+**Источник**: AI-GAP-2026-05-22 Зоны N5/N7/N8 + R-V15-9 «AI-функции через Workflow DSL».
+**Зависимости**: S24 W2 NeMo + Llama Guard backends (для guardrails_apply), S24 W3 LangGraph Checkpointer (для memory_recall/store), S25 backbone (AIGateway+Policy), S26 (PromptRegistry+SkillRegistry).
+
+#### Wave 0 — Backbone
+- `[wave:s27/backbone]` — 4 default-OFF feature-flags: `AI_AGENT_DSL_ENABLED`, `MCP_GATEWAY_NAMESPACES_ENABLED`, `AI_AUDIT_UNIFIED_ENABLED`, `WORKFLOW_INVOKE_AGENT_ENABLED`. Capability schema extension: `mcp.gateway.invoke.<namespace>`.
+
+#### Wave 1 (К2 W1 agent DSL primary)
+- `[wave:s27/w1-agent-dsl-primary]` — DSL processors `dsl/engine/processors/ai/{agent_run,agent_branch,agent_loop,agent_parallel}.py`. Builder `.agent_run()`, `.ai_invoke()`, `.agent_branch()`, `.agent_loop()`, `.agent_parallel()`. Integration с AIPolicySpec через policy_ref. Tests: `tests/dsl/processors/ai/test_agent_dsl.py` (≥90% coverage).
+
+#### Wave 2 (К2+К1 W2 guardrails+pii DSL)
+- `[wave:s27/w2-guardrails-pii-dsl]` — DSL processors `guardrails_apply.py` (stage=input|output, on_block=dlq|fail|warn) + `pii_mask.py`/`pii_unmask.py` (capability `pii.tokenize.reversible.<scope>`, integration с PIITokenizer из S25 W4). Builder `.guardrails_apply()`, `.pii_mask()`, `.pii_unmask()`. Tests: `tests/dsl/processors/ai/test_guardrails_pii.py`.
+
+#### Wave 3 (К2 W3 skill_invoke + memory DSL)
+- `[wave:s27/w3-skill-memory-dsl]` — DSL processors `skill_invoke.py` (capability-gate через SkillRegistry V11.2) + `memory_recall.py`/`memory_store.py` (через MemoryProtocol из S24 W3). Builder `.skill_invoke()`, `.ai_memory_recall()`, `.ai_memory_store()`. Tests: `tests/dsl/processors/ai/test_skill_memory.py`. PoC route `routes/credit_check_demo/` использует все 9 новых processors.
+
+#### Wave 4 (К3+К1 W4 MCP Gateway)
+- `[wave:s27/w4-mcp-gateway]` — **ADR-NEW-23 MCP Gateway namespaces**: split монолита `entrypoints/mcp/mcp_server.py` на 3 namespace (`credit-mcp`, `analytics-mcp`, `system-mcp`) через aggregator (backward-compat). `entrypoints/mcp/gateway.py` — `MCPNamespace` + composite root. `MCPClientRegistry` в `infrastructure/clients/external/mcp_registry.py` — trusted external MCP через `OutboundHttpClient` + WAF capability `net.outbound.<host>:external`. FastMCP `>=3.2.4` upgrade с `JWTAuthProvider` (SSO integration из S18/B-1). Tests: `tests/mcp/test_namespaces_aggregator.py` (`mcp.tools.count() == pre_split_count`).
+
+#### Wave 5 (К3+К1 W5 Audit unified)
+- `[wave:s27/w5-audit-unified]` — **ADR-NEW-24 AI Audit Unified Schema**: 9 событий `ai.invocation.{requested|policy_resolved|sanitized|guarded|completed|denied|failed|pii.mask|pii.unmask}` через `AuditService.emit()` (расширение S17/K3). Langfuse v3 OTel-exporter в ClickHouse. Удаление legacy `audit_clickhouse.py` (миграция в S26 dual-write window). PII в audit маскируется через `PIITokenizer.mask_irreversible`. Tests: `tests/audit/test_ai_invocation_events.py`.
+
+#### Wave 6 (К2+К4 W6 Workflow ↔ Agent)
+- `[wave:s27/w6-workflow-invoke-agent]` — `WorkflowBuilder.invoke_agent("credit_advisor", durable=True)` — LangGraph multi-agent supervisor обёрнут в Temporal activity (R-V15-9 «AI-функции через Workflow DSL»). LangGraph Checkpointer integration (из S24 W3). Tests: chaos-test `tests/workflow/test_agent_activity_chaos.py` (kill worker mid-conversation → resume successful).
+
+#### Closure
+- `[wave:s27/closure]` — DoD grep verify + AIGateway feature-flag `AI_GATEWAY_ENFORCE` → ON в production config (без legacy fallback). `make pre-prod-check 38+8` extension (8 AI-gates: gateway-coverage, policy-schema, prompt-sweep, skill-schema, agent-dsl, mcp-gateway, audit-unified, memory-recall round-trip). Memory note `feedback_sprint27_ai_platform_closure.md` + CONTEXT.md + `vault/session-summary-s25-s27.md`.
+
+**DoD Sprint 27 (10 критериев)**:
+1. ✅ `[wave:s27/backbone]` landed: 4 feature-flags + capability schema extension.
+2. ✅ 9 новых DSL processors (`agent_run`, `agent_branch`, `agent_loop`, `agent_parallel`, `guardrails_apply`, `pii_mask`, `pii_unmask`, `skill_invoke`, `memory_recall`/`memory_store`) с unit-тестами ≥ 90% coverage.
+3. ✅ Builder fluent API расширен; `make routes-strict` зелёный; PoC `routes/credit_check_demo/` использует все 9 processors end-to-end.
+4. ✅ **ADR-NEW-23 MCP Gateway namespaces** принят. 3 domain MCP servers; backward-compat aggregator (`mcp.tools.count() == pre_split_count`).
+5. ✅ `MCPClientRegistry` — 100% external MCP через `OutboundHttpClient` + WAF capability `net.outbound.<host>:external`. FastMCP `>=3.2.4` + `JWTAuthProvider` SSO.
+6. ✅ **ADR-NEW-24 AI Audit Unified Schema** принят. 9 типов событий `ai.invocation.*`; 100% покрытие путей AIGateway. ClickHouse query `SELECT count() FROM audit_events WHERE event_type LIKE 'ai.invocation.%'` ≥ 1.
+7. ✅ Legacy `audit_clickhouse.py` удалён; миграция в Langfuse v3 OTel-exporter завершена.
+8. ✅ `WorkflowBuilder.invoke_agent()` — LangGraph через Temporal activity; chaos-test (kill worker) восстанавливает state ≥ 2 turn.
+9. ✅ `AI_GATEWAY_ENFORCE=true` в production config; `make ai-gateway-coverage` strict (0 прямых `litellm.completion` / `agent.run()` в обход AIGateway).
+10. ✅ `make pre-prod-check` extended 38 → 46 (8 новых AI-gates); memory note + CONTEXT.md + vault summary.
+
+---
+
 ## 5. Финальный DoD V22 (production-ready)
 
 ### Протоколы и интеграции (5)
@@ -737,6 +862,12 @@ curl ":8000/api/v1/audit?correlation_id=<id>"                               # с
 | **ADR-NEW-16** (NEW post-S20) | Presidio + ru NER PII layer | S24 W1 | К4 |
 | **ADR-NEW-17** (NEW post-S20) | NeMo Guardrails + Llama Guard 3 defense-in-depth | S24 W2 | К4 |
 | **ADR-NEW-18** (NEW post-S20) | LangGraph Checkpointer + Mem0 unified memory | S24 W3 | К4 |
+| **ADR-NEW-19** (NEW V22.4) | AIGateway facade (единая точка входа в AI) | S25 W1 | К4/К1 |
+| **ADR-NEW-20** (NEW V22.4) | AIPolicySpec — декларативная политика AI per-workflow | S25 W2 | К2/К4 |
+| **ADR-NEW-21** (NEW V22.4) | PIITokenizer reversible (Presidio + AES-GCM TokenRegistry) | S25 W4 | К1 |
+| **ADR-NEW-22** (NEW V22.4) | SkillRegistry V11.2 TOML-manifest для AI-tools | S26 W5 | К2 |
+| **ADR-NEW-23** (NEW V22.4) | MCP Gateway domain namespaces + trusted external registry | S27 W4 | К3/К1 |
+| **ADR-NEW-24** (NEW V22.4) | AI Audit Unified Schema (`ai.invocation.*`) | S27 W5 | К3/К1 |
 
 **Закрытые в V21 → V22 (целевые)**: R1.6 hybrid layout (Wave R3.10), R1.11 Streamlit page numbering (S9), R1.12 plugin sandbox (S19 W12 финал через R1.20), R1.13 Adaptive RAG dispatching (S16 K4 W1), R1.14 VSCode marketplace private (S19 K5 W1), R1.15 path aliases (S9), R1.16 bulk audit writer (S9).
 
@@ -845,4 +976,4 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
-**Конец PLAN.md V22.2 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`. Архив V0–V22.1: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension`.
+**Конец PLAN.md V22.4 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`. Архив V0–V22.3: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension` / `feedback_plan_v22_4_ai_platform`.

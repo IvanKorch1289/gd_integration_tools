@@ -439,4 +439,50 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
+    # ─── Sprint 25-27 — AI Platform Layer (ADR-NEW-19..24) ───────────────
+    vocab.register(
+        CapabilityDef(
+            name="ai.invoke",
+            matcher=dot_glob,
+            description=(
+                "Вызов LLM через единую точку входа AIGateway (ADR-NEW-19). "
+                "Проверяется на каждый AIGateway.invoke(request.workflow_id); "
+                "scope = workflow_id pattern или '*' (S25 W1)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.policy.read",
+            matcher=dot_glob,
+            description=(
+                "Чтение AIPolicySpec из ai_policies/*.policy.yaml через "
+                "PolicyResolver (ADR-NEW-20); scope = policy-name pattern "
+                "или '*' (S25 W2)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="pii.tokenize.reversible",
+            matcher=dot_glob,
+            description=(
+                "Reversible PII-токенизация через PIITokenizer (Presidio + "
+                "AES-GCM TokenRegistry); обязательна для unmask round-trip "
+                "(ADR-NEW-21). scope = domain-id (banking, hr, medical) или '*' "
+                "(S25 W4)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="mcp.gateway.invoke",
+            matcher=dot_glob,
+            description=(
+                "Вызов tool через MCPGateway namespace (credit/analytics/"
+                "system) с auth + WAF (ADR-NEW-23); scope = namespace-name "
+                "или '*' (S27 W4)."
+            ),
+        )
+    )
     return vocab
