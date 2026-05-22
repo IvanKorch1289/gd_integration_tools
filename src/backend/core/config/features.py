@@ -1903,8 +1903,9 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "K1 Sprint 17 Wave W4 (D14). Owner: K1 Security. ETA: S17. "
             "Активирует core/config/validator.py::ConfigValidator в lifespan: "
-            "проверки DEBUG+PROD / CORS='*' / JWT_SECRET ≥32 / Vault unreachable / "
-            "feature-flag dependency. При нарушении — startup-fail с reason-chain. "
+            "11 правил cross-settings (WAF strict/allow_hosts/clamav, swagger/redoc, "
+            "admin IPs, vault, CORS, DEBUG+PROD, JWT_SECRET ≥32, feature-flag deps). "
+            "При CRITICAL в production — startup-fail с reason-chain. "
             "default-OFF до калибровки правил и staging-smoke."
         ),
     )
