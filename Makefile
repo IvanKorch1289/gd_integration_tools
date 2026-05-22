@@ -273,6 +273,23 @@ audit: ## Run security and dependency audit
 	@$(MAKE) deps-check
 	@$(SUCCESS) "Full security audit completed!"
 
+pii-audit-smoke: check-env ## S24 W1: PII detector smoke audit (10-doc mini gold-set; precision/recall)
+	@$(INFO) "Running pii-audit-smoke (10-doc mini gold-set)..."
+	@$(UV_RUN) python tools/checks/pii_audit.py --mode smoke --threshold 0.85 \
+		|| $(WARN) "[pii-audit-smoke] precision/recall below threshold (smoke target 0.85)"
+
+pii-audit: check-env ## S24 W1: PII detector full CI-gate (1000-doc hybrid ru-gold-set; DoD-2 precision/recall >= 0.9)
+	@$(INFO) "Running pii-audit (1000-doc hybrid ru-gold-set; ADR-NEW-16 DoD-2)..."
+	@mkdir -p dist
+	@$(UV_RUN) python tools/checks/pii_audit.py --mode full --threshold 0.9 \
+		--report dist/pii-audit-report.json \
+		&& $(SUCCESS) "[pii-audit] precision/recall >= 0.9 на hybrid gold-set"
+
+pii-bootstrap: check-env ## S24 W1: Download spaCy ru_core_news_lg weights (~1.5GB)
+	@$(INFO) "Downloading spaCy ru_core_news_lg..."
+	@$(UV_RUN) python -m spacy download ru_core_news_lg
+	@$(SUCCESS) "spaCy ru_core_news_lg installed"
+
 api-fuzz: check-env ## S6 K2: schemathesis API fuzzing через tools/api_fuzz_runner.py (warn-only, feature_flag schemathesis_gate_enabled)
 	@$(INFO) "Running api-fuzz (schemathesis property-based testing)..."
 	@mkdir -p dist
