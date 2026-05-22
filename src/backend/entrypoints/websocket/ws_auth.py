@@ -87,7 +87,7 @@ class WSAuthenticator:
             return {
                 m.decode() if isinstance(m, bytes) else str(m) for m in (members or [])
             }
-        except ImportError, AttributeError, ConnectionError:
+        except (ImportError, AttributeError, ConnectionError):
             return set()
 
     def can_access_group(self, session: WSSession, group: str) -> bool:

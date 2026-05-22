@@ -245,7 +245,7 @@ class AIWorkspaceManager:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
                 pass
 
     def _emit_audit(self, event: dict[str, object]) -> None:

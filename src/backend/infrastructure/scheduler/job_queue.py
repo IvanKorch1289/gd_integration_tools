@@ -129,7 +129,7 @@ class JobQueue:
             scheduler.remove_job(job_id)
             logger.info("Задача %s отменена", job_id)
             return True
-        except KeyError, ValueError:
+        except (KeyError, ValueError):
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:

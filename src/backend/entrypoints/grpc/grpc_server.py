@@ -288,7 +288,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
         if response.result is not None:
             try:
                 result_json = orjson.dumps(response.result, default=str).decode()
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 result_json = str(response.result)
 
         return InvokerInvokeResponse(

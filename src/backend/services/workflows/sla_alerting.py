@@ -147,7 +147,7 @@ def _emit_sla_metric(
                 "SLA evaluations per workflow (level=none/soft/hard)",
                 labelnames=("workflow_id", "tenant_id", "level"),
             )
-        except ImportError, ValueError:
+        except (ImportError, ValueError):
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:
@@ -233,7 +233,7 @@ class SlaTracker:
             self._task.cancel()
             try:
                 await self._task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
                 pass
             self._task = None
 

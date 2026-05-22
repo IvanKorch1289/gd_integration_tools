@@ -214,7 +214,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except orjson.JSONDecodeError, ValueError:
+            except (orjson.JSONDecodeError, ValueError):
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:
@@ -702,7 +702,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             pass
 
         exchange.set_property("cached", False)
@@ -748,7 +748,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.set_if_not_exists(key=key, value=data, ttl=self._ttl)
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             pass
 
 

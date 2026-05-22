@@ -139,14 +139,14 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except TypeError, ValueError:  # noqa: PERF203
+        except (TypeError, ValueError):  # noqa: PERF203
             pass
 
     @mcp.tool(**tool_kwargs)
     async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
@@ -208,7 +208,7 @@ def _register_route_tools(mcp: Any) -> None:
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()
@@ -291,7 +291,7 @@ def _register_template_tools(mcp: Any) -> None:
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps({"error": "Invalid JSON params"}).decode()
 
         try:
@@ -377,7 +377,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except orjson.JSONDecodeError, TypeError:
+                except (orjson.JSONDecodeError, TypeError):
                     pass
 
             result = strategy.convert(input_data)

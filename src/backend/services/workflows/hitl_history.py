@@ -129,7 +129,7 @@ class HitlHistoryService:
         for row in getattr(result, "result_rows", []):
             try:
                 payload = json.loads(row[4]) if row[4] else {}
-            except TypeError, json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 payload = {}
             event_type = row[2]
             action_str = event_type.removeprefix("hitl.")
