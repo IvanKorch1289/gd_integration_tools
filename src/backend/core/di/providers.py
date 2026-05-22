@@ -294,9 +294,24 @@ def set_http_client_provider(client: Any) -> None:
 
 
 def get_ai_sanitizer_provider() -> Any:
-    """Возвращает фабрику ``AIDataSanitizer`` (см. ``AISanitizerProtocol``)."""
+    """Возвращает реализацию ``AISanitizerProtocol``.
+
+    Feature-flag ``PRESIDIO_PII_ENABLED`` (S24 W1, ADR-NEW-16) переключает
+    реализацию: при True используется ``PresidioSanitizerAdapter``
+    (Presidio + ru NER + 4 custom recognizers); при False — legacy
+    ``AIDataSanitizer`` (regex-based). Override через
+    :func:`set_ai_sanitizer_provider` имеет приоритет над feature-flag.
+    """
     if "ai_sanitizer" in _overrides:
         return _overrides["ai_sanitizer"]
+    from src.backend.core.config.features import feature_flags
+
+    if feature_flags.presidio_pii_enabled:
+        from src.backend.services.ai.pii.presidio_analyzer import (
+            get_presidio_sanitizer_adapter,
+        )
+
+        return get_presidio_sanitizer_adapter()
     module = resolve_module("security.ai_sanitizer")
     return module.get_ai_sanitizer()
 
