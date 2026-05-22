@@ -61,8 +61,12 @@ _SKIP_DIRS: frozenset[str] = frozenset(
 
 # После ``except`` (с возможными whitespace и backslash-переносами)
 # первый non-space символ должен быть ``(``. Любой другой → нарушение,
-# если AST-тип — ``Tuple``.
+# если AST-тип — ``Tuple``. Multi-line edge-case через backslash
+# (``except \\\n    (...)``) маловероятен, но возможен — поэтому
+# исходный сегмент сначала собирается по диапазону строк handler.lineno
+# .. handler.type.lineno и нормализуется (склейка backslash-переносов).
 _EXCEPT_PAREN_RE = re.compile(r"except\s*\(")
+_BACKSLASH_NEWLINE_RE = re.compile(r"\\\s*\n")
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,14 +92,22 @@ def _is_python_2_style(source_lines: list[str], handler: ast.ExceptHandler) -> b
     Возвращает ``True``, если ``handler.type`` — это tuple **без**
     круглых скобок. Используется regex по исходной строке вместо
     проверки AST (``ast`` не различает обёрнутый и не-обёрнутый tuple).
+
+    Если ``except`` и сам tuple разнесены по строкам через backslash-
+    перенос (``except \\<NL> (A, B):``), исходный сегмент собирается
+    по диапазону строк ``handler.lineno .. handler.type.lineno`` и
+    backslash-переносы нормализуются в пробел перед regex-проверкой.
     """
     if not isinstance(handler.type, ast.Tuple):
         return False
     lineno = handler.lineno
     if lineno < 1 or lineno > len(source_lines):
         return False
-    line = source_lines[lineno - 1]
-    return _EXCEPT_PAREN_RE.search(line) is None
+    type_lineno = getattr(handler.type, "lineno", lineno)
+    upper = max(type_lineno, lineno)
+    segment = "\n".join(source_lines[lineno - 1 : upper])
+    normalized = _BACKSLASH_NEWLINE_RE.sub(" ", segment)
+    return _EXCEPT_PAREN_RE.search(normalized) is None
 
 
 def check_file(path: Path) -> list[Violation]:
