@@ -418,6 +418,13 @@ include = ["src*", "testkit*", "tools*"]
 [project.entry-points."pytest11"]
 testkit = "testkit.pytest_plugin"
 
+# S17 ADR-NEW-2: hook-точка для middleware из внешних дистрибутивов.
+# Расширения регистрируют ASGI middleware-классы; MiddlewareRegistry
+# подбирает их через register_from_entry_points(). См.
+# src/backend/entrypoints/middlewares/registry.py.
+[project.entry-points."gd_integration_tools.middleware_hooks"]
+# (пусто — extensions добавят сами через свои dist-метаданные)
+
 [tool.uv]
 package = true
 default-groups = ["dev"]
