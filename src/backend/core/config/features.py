@@ -2043,5 +2043,108 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 21 — Resilience & Multi-tenancy ───────────────────────────
+    rls_postgres_enforce: bool = Field(
+        default=False,
+        title="K1 S21 W1: PostgreSQL Row-Level Security + SET LOCAL tenant_id",
+        description=(
+            "K1 Sprint 21 Wave 1 (B-03/G-08, ADR-NEW-12). Owner: K1 Security. "
+            "Активирует Alembic-policy ENABLE ROW LEVEL SECURITY на tenant-aware "
+            "таблицах (начало: workflow_instance) + SQLAlchemy event listener "
+            "SET LOCAL app.tenant_id из current_tenant() ContextVar на каждом "
+            "begin-tx. При False — RLS-политики не накладываются (legacy WHERE filter). "
+            "default-OFF до полного аудита tenant_id колонок и staging-smoke. "
+            "Источник: gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md."
+        ),
+    )
+
+    tenant_cache_prefix_enabled: bool = Field(
+        default=False,
+        title="K1 S21 W2: TenantCacheBackend wrapper с auto-prefix tenant:{id}:",
+        description=(
+            "K1 Sprint 21 Wave 2 (B-03 closure). Owner: K1 Security. "
+            "Активирует infrastructure/cache/tenant_wrapper.py::TenantCacheBackend — "
+            "auto-prefix всех cache-keys через tenant ContextVar. "
+            "При False — wrapping no-op (прямая делегация в underlying backend). "
+            "default-OFF до миграции callsites get/set на wrapped backend и smoke."
+        ),
+    )
+
+    rpa_resilience_wrapper_enabled: bool = Field(
+        default=False,
+        title="K2 S21 W3: RPACallPolicy единый resilience-фасад для RPA/CDC/FileWatcher",
+        description=(
+            "K2 Sprint 21 Wave 3 (B-02 closure, ADR-NEW-13). Owner: K2 Resilience. "
+            "Активирует core/resilience/rpa_policy.py::RPACallPolicy — композиция "
+            "tenacity retry + pybreaker + DLQ для browser_pool/cdc/file_watcher/"
+            "webhook_scheduler/desktop_rpa_client. При False — call-сайты используют "
+            "legacy ad-hoc try/except (события теряются без DLQ). "
+            "default-OFF до миграции 5 callsites и toxiproxy-теста."
+        ),
+    )
+
+    scheduler_dlq_enabled: bool = Field(
+        default=False,
+        title="K2 S21 W4: APScheduler EVENT_JOB_ERROR → DLQ writer (G-09)",
+        description=(
+            "K2 Sprint 21 Wave 4 (G-09 closure). Owner: K2 Resilience. "
+            "Активирует infrastructure/scheduler/dlq.py — listener для "
+            "EVENT_JOB_ERROR пишет failed job в DLQWriter с kind='scheduler_job'. "
+            "Admin endpoint /admin/scheduler/dlq (list/retry/delete) — RBAC OPERATOR/SUPER_ADMIN. "
+            "default-OFF до интеграции с UnifiedDLQ Postgres backend и audit."
+        ),
+    )
+
+    webhook_resilience_policy_enabled: bool = Field(
+        default=False,
+        title="K2 S21 W5: WebhookSink + webhook_scheduler через RPACallPolicy (G-07)",
+        description=(
+            "K2 Sprint 21 Wave 5 (G-07 closure). Owner: K2 Resilience. "
+            "Активирует обёртку send()/execute_webhook() через RPACallPolicy — "
+            "tenacity retry + pybreaker per-host + DLQ при исчерпании budget. "
+            "При False — webhook вызовы используют legacy try/except (события теряются). "
+            "default-OFF до интеграции с RPACallPolicy (W3) и chaos-теста 5xx burst."
+        ),
+    )
+
+    desktop_rpa_session_pool_enabled: bool = Field(
+        default=False,
+        title="K3 S21 W6: DesktopRPASessionPool persistent httpx-AsyncClient (F-12/B-09)",
+        description=(
+            "K3 Sprint 21 Wave 6 (F-12 + B-09 closure). Owner: K3 RPA. "
+            "Активирует services/rpa/desktop_session_pool.py — pool persistent "
+            "httpx-clients с session affinity по app_name, auto-reconnect на stale "
+            "handle, TTL 30 min через TaskRegistry. При False — DesktopRpaClient "
+            "создаёт новый httpx-instance на каждый вызов (B-09). "
+            "default-OFF до warm 5 sessions smoke + reconnect-теста."
+        ),
+    )
+
+    browser_cookies_redis_persist: bool = Field(
+        default=False,
+        title="K3 S21 W7: Browser session cookies persistence через Redis hash (G-06)",
+        description=(
+            "K3 Sprint 21 Wave 7 (G-06 closure). Owner: K3 RPA. "
+            "Активирует services/rpa/browser_pool.py::save_cookies/restore_cookies "
+            "через Redis hash 'browser:session:{tenant}:{user}:{domain}' c TTL 24h. "
+            "При False — каждый acquire() = новый login (S-L5-2). "
+            "default-OFF до integration-теста на browser restart preservation."
+        ),
+    )
+
+    workflow_state_sqlite_persist: bool = Field(
+        default=False,
+        title="K3 S21 W8: WorkflowState SQLAlchemy + saga compensating persistence (ADR-NEW-14)",
+        description=(
+            "K3 Sprint 21 Wave 8 (B-05 closure, ADR-NEW-14, carryover S17 K-OPS-1). "
+            "Owner: K3 Workflow. "
+            "Активирует infrastructure/workflow/saga_state.py::WorkflowState SQLAlchemy "
+            "model + WorkflowStateRepository (save/load/list_compensating) + alembic "
+            "migration. PGRunnerBackend checkpoint после step + restore compensating "
+            "actions при retry. При False — checkpoints в памяти (теряются на restart, B-05). "
+            "default-OFF до integration test 4 crash-recover сценариев."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

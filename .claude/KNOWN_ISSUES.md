@@ -1,5 +1,37 @@
 # KNOWN_ISSUES.md
 
+## Sprint 21 GAP-backlog status — 2026-05-22 (active)
+
+**Активный спринт** (coordinator-self mode, без worktree-агентов): Sprint 21 Resilience & Multi-tenancy Hardening.
+
+**Источник**: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + PLAN.md V22.2 FINAL §4.
+
+**Wave-расписание** (11 коммитов):
+1. `[wave:s21/backbone]` — 8 default-OFF feature-flags + team.s21 + KNOWN_ISSUES.
+2. `[wave:s21/k1-w1-rls-postgres]` — Alembic RLS policy для workflow_instance + SET LOCAL listener.
+3. `[wave:s21/k1-w2-tenant-cache-wrapper]` — `TenantCacheBackend(CacheBackend)`.
+4. `[wave:s21/k2-w1-rpa-resilience-wrapper]` — `RPACallPolicy` Single Entry для 5 callsites.
+5. `[wave:s21/k2-w2-scheduler-dlq]` — APScheduler EVENT_JOB_ERROR → DLQ + admin endpoint.
+6. `[wave:s21/k2-w3-webhook-resilience]` — WebhookSink + webhook_scheduler через RPACallPolicy.
+7. `[wave:s21/k3-w1-desktop-rpa-pool]` — `DesktopRPASessionPool` с persistent httpx + session affinity.
+8. `[wave:s21/k3-w2-browser-cookies-redis]` — `save_cookies/restore_cookies` через Redis hash.
+9. `[wave:s21/k3-w3-workflow-state-persist]` — `WorkflowState` model + alembic + pg_runner integration.
+10. `[wave:s21/k5-w1-streamlit-tenant-admin]` — Streamlit page 81 tenant inspection.
+11. `[wave:s21/closure]` — finale + DoD verify + memory note.
+
+### Sprint 21 carryover (включён в W8)
+
+- **S17 K-OPS-1 saga_state_store** — реализация перенесена в `[wave:s21/k3-w3-workflow-state-persist]` под тем же feature-flag `saga_state_persistence_enabled` + новый `workflow_state_sqlite_persist`. После W8 carryover ⇒ `[Resolved: S21 W8 carryover]`.
+
+### Открытые риски Sprint 21
+
+1. **W1 ограничен 1 таблицей** (`workflow_instance`) — `orders/users/files` НЕ имеют колонки `tenant_id`. Полный RLS откладывается в S22 (требует preceding migration на добавление колонок).
+2. **Alembic offline-режим** — applied миграции valid через `alembic upgrade head --sql`; фактическая RLS verifiable только в integration test с реальным Postgres.
+3. **LiteTemporalBackend** уже использует builtin SQLite через `WorkflowEnvironment.start_local()` — explicit aiosqlite wrapper НЕ создаётся; W8 фокус на saga compensating model.
+4. **Параллельная сессия** может изменять carryover-файлы (`saga_state.py`) — `git commit -- <pathspec>` обязателен.
+
+---
+
 ## GAP-аудит 2026-05-21 — 10-слойный pre-production аудит (L1–L10)
 
 **Контекст**. Сквозной аудит платформы перед production-rollout по 10 архитектурным слоям × 4 вектора (читаемость / надёжность / расширяемость / функциональность). Среднее по слоям — **5.7/10**. Слабые слои — **L6 Data&State (3.0)** и **L7 Observability (5.0)**, оба заблокированы Python 2-стилем except-clauses в **70+ файлах** (точный grep `-l` = 71; первоначальная оценка «47» переоценивала локализацию L6/L7 — реальный охват шире, включает `dsl/`, `services/`, `entrypoints/`). Сильный слой — **L8 Security (7.0)** с defence-in-depth (CapabilityGate + WAF + AI Safety).

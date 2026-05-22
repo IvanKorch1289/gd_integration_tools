@@ -1,5 +1,25 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-22, Sprint 21 active — Resilience & Multi-tenancy)
+
+**Активный спринт**: **Sprint 21 — Resilience & Multi-tenancy Hardening** (post-production GAP-backlog, без дат).
+**HEAD**: `69a19197` (S17 closure) → S21 wave-серия 11 commits в работе.
+**План**: PLAN.md V22.2 FINAL §4 + `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md`.
+**Режим**: coordinator-self mode (без worktree-агентов, urok S6/S8 5/5 ECONNRESET).
+
+### Sprint 21 цели
+
+1. **Defence-in-depth multi-tenancy**: PG RLS + `TenantCacheBackend` wrapper закрывают B-03 cache poisoning + cross-BU SELECT bypass.
+2. **Single Entry для RPA resilience**: `RPACallPolicy` объединяет browser_pool / cdc / file_watcher / webhook_scheduler / desktop_rpa_client (B-02 closure, ADR-NEW-13).
+3. **Workflow durability**: `WorkflowState` SQLAlchemy + saga compensating persistence (B-05 closure, ADR-NEW-14, carryover S17 K-OPS-1).
+4. **Operations visibility**: Scheduler DLQ + Desktop pool + Browser cookies + Streamlit page 81.
+
+### Wave-расписание S21 (см. KNOWN_ISSUES.md секцию Sprint 21)
+
+W0 backbone → W1 RLS PG → W2 TenantCacheBackend → W3 RPACallPolicy → {W4 Scheduler DLQ, W5 Webhook resilience, W7 Browser cookies} → W6 Desktop pool → W8 Workflow state → W9 Streamlit page 81 → W10 closure.
+
+---
+
 ## Текущее состояние (2026-05-21 20:45, Sprint 16 12/12 DoD closed)
 
 **HEAD**: `69a19197 [wave:s17/k2-w4-pybreaker-restore]` — Sprint 16 closure сессия закрыла **3 active blocker (b1/b2/b3 partial)** + S16 12/12 DoD.
