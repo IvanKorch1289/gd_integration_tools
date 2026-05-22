@@ -455,3 +455,197 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 **Последствия**. (+) Resilience regressions detect at PR-time, не nightly. (+) Не slow-downим CI для not-critical PRs. (+) Comment-bot scaffolds правильную практику. (−) Bypass: reviewer может забыть label → relies on comment-bot reminders. (−) Дополнительный workflow YAML maintenance.
 
 **Wave**: `[wave:s23/k5-w3-chaos-ci-pr-gate]`.
+
+---
+
+## Архитектурные рекомендации V2 GAP-анализа (A-01 → A-07)
+
+Источник: GAP-анализ V2 (`gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`).
+Прошли цикл самокритики: Critic + Devil's Advocate. QUALITY_SCORE: 74/100.
+
+### ADR-A-01: RouteMiddlewareSpec dataclass для декларативной композиции middleware
+
+**Контекст.** L1 Gateway: middleware chain жёстко закодирована в `setup_middlewares.py`.
+Нет единого объекта контекста запроса. Per-route override невозможен без edit ядра.
+
+**Решение.** Ввести dataclass:
+```python
+@dataclass
+class RouteMiddlewareConfig:
+    include: list[str] = field(default_factory=list)
+    exclude: list[str] = field(default_factory=list)
+    overrides: dict[str, dict] = field(default_factory=dict)
+```
+route.toml:
+```toml
+[middleware]
+include = ["rate_limit", "auth", "audit"]
+exclude = ["data_masking"]
+overrides.rate_limit = { limit = 1000, window = "1m" }
+```
+`MiddlewareRegistry` читает конфиг → строит цепочку.
+
+**Обоснование.** Декларативность без переписывания ядра. Plugin-agnostic.
+Роууты остаются auth-агностичными. Middleware chain визуализируема.
+
+**Прошёл_самокритику:** Да (Адвокат D1: не оверинжиниринг — упрощает конфигурацию).
+
+**Wave**: `[wave:s17/k3-w2-middleware-registry]`.
+
+---
+
+### ADR-A-02: Plugin hot-swap V2 — per-plugin shutdown
+
+**Контекст.** L2 Core: `hot_swap.py:213` `loader.shutdown_all()` убивает ВСЕ плагины.
+B-04 критический блокер. Hot-reload одного плагина невозможен.
+
+**Решение.** Заменить `shutdown_all()` на:
+```python
+async def hot_swap_plugin(self, plugin_id: str) -> None:
+    # 1. Graceful drain: accept no new requests
+    # 2. Wait for in-flight (with timeout)
+    # 3. shutdown_plugin(plugin_id) — только один
+    # 4. reload + register
+    # 5. Other plugins unaffected
+```
+
+**Обоснование.** Изоляция failure domain. Независимые lifecycle per plugin.
+
+**Прошёл_самокритику:** Да (Адвокат D4: B-04 остаётся блокером, shutdown_all() — реальный риск).
+
+**Wave**: `[wave:s19/k3-w6-plugin-hot-swap-v2]`.
+
+---
+
+### ADR-A-03: TenantNamespacedCache integration — подключить к существующим адаптерам
+
+**Контекст.** L6 Data: `core/tenancy/cache.py::TenantNamespacedCache` (96 LOC) СУЩЕСТВУЕТ.
+Проблема: `redis_cluster.py` и `s3_cache.py` НЕ используют tenant key prefix.
+B-03 критический — данные тенантов могут пересекаться в кэше.
+
+**Решение.** Добавить wrapper-слой в адаптеры:
+```python
+class TenantAwareRedisCache:
+    def __init__(self, delegate: RedisCache, tenant_ctx: TenantContext):
+        self.delegate = delegate
+        self.tenant = tenant_ctx
+
+    async def get(self, key: str) -> Value | None:
+        return await self.delegate.get(f"{self.tenant.id}:{key}")
+```
+Аналогично для S3Cache.
+
+**Обоснование.** Infrastructure уже есть. Integration task, не архитектурное изменение.
+Минимальный risk, high impact.
+
+**Прошёл_самокритику:** Да (Критик NK-03: подтвердил существование TenantNamespacedCache).
+
+**Wave**: `[wave:s21/k1-w2-tenant-cache-wrapper]`.
+
+---
+
+### ADR-A-04: Workflow state persistence — Temporal persistence для LiteTemporalBackend
+
+**Контекст.** L6 Data: LiteTemporalBackend (stub) не персистит workflow state.
+B-05 критический. In-flight workflows теряются при crash.
+
+**Решение.** Подключить persistence к LiteTemporalBackend:
+```python
+# LiteTemporalBackend с persistence
+class LiteTemporalBackend:
+    async def save_state(self, run_id: str, state: dict) -> None:
+        async with aiofiles.open(f".temporal/{run_id}.json", "w") as f:
+            await f.write(json.dumps(state))
+
+    async def load_state(self, run_id: str) -> dict | None:
+        try:
+            async with aiofiles.open(f".temporal/{run_id}.json") as f:
+                return json.loads(await f.read())
+        except FileNotFoundError:
+            return None
+```
+
+**Обоснование.** Crash-resilience для development. Foundation для future workflow replay UI.
+
+**Прошёл_самокритику:** Да (Адвокат D4: B-05 остаётся блокером, LiteTemporalBackend = operator error).
+
+**Wave**: `[wave:s21/k3-w3-workflow-state-persist]`.
+
+---
+
+### ADR-A-05: RPA resilience wrapper — @policy decorator над RPA/CDC
+
+**Контекст.** L5 RPA: resilience infrastructure (CircuitBreaker, Retry, Bulkhead, Timeout)
+ЕСТЬ, но не применяется к RPA и CDC. B-02 критический — события теряются.
+
+**Решение.** Ввести decorator:
+```python
+@policy(
+    retries=Retry(attempts=3, backoff=exponential),
+    circuit_breaker=CircuitBreaker(failure_threshold=5),
+    timeout=Timeout(seconds=30),
+)
+async def rpa_action(exchange: Exchange) -> Exchange:
+    ...
+```
+Применяется к: `browser_pool.py`, `cdc.py:497`, `file_watcher.py`, `webhook_scheduler.py`.
+
+**Обоснование.** Zero architectural change. Resilience уже есть — только wire up.
+
+**Прошёл_самокритику:** Да (Шина-эксперт: CDC event loss подтверждён).
+
+**Wave**: `[wave:s21/k2-w1-rpa-resilience-wrapper]`.
+
+---
+
+### ADR-A-06: SecurityHeadersMiddleware → чистый ASGI middleware
+
+**Контекст.** L8 Security: `security_headers.py` наследует `BaseHTTPMiddleware`.
+B-07 — race condition: заголовки применяются после ASGI-цепочки.
+
+**Решение.** Переписать как чистый ASGI-app:
+```python
+class SecurityHeadersMiddleware:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                message.setdefault("headers", []).extend(SECURITY_HEADERS)
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+```
+
+**Обоснование.** Исправляет race condition. 50-80 LOC. ASGI-native.
+
+**Прошёл_самокритику:** Да (Критик CD-07: подтверждена race condition).
+
+**Wave**: `[wave:s22/k1-w1-security-headers-asgi]`.
+
+---
+
+### ADR-A-07: PII masker unification — DataMaskingMiddleware → mask_all()
+
+**Контекст.** L8 Security: DataMaskingMiddleware не использует `core/security/pii_masker.py::default_masker()`
+(8 типов PII: email, phone, INN, SNILS, passport, card). B-06 критический.
+
+**Решение.** Переписать middleware на использование существующего masker:
+```python
+class DataMaskingMiddleware:
+    def __init__(self, app, masker: PIIMasker = None):
+        self.app = app
+        self.masker = masker or default_masker()
+
+    async def __call__(self, scope, receive, send):
+        # Read and mask response body using self.masker.mask_all(value, pii_type)
+```
+
+**Обоснование.** Infrastructure уже есть (8 типов PII). Middleware не использует.
+Unification = 20-30 LOC diff.
+
+**Прошёл_самокритику:** Да (Критик CD-06: подтверждено).
+
+**Wave**: `[wave:s22/k1-w2-pii-masker-unify]`.
