@@ -44,7 +44,13 @@ class WebhookSink(Sink):
     kind: SinkKind = field(default=SinkKind.WEBHOOK, init=False)
 
     async def send(self, payload: Any) -> SinkResult:
-        """Подписывает и отправляет ``payload`` на ``url``."""
+        """Подписывает и отправляет ``payload`` на ``url``.
+
+        S21 W5: при включённом ``webhook_resilience_policy_enabled`` и
+        наличии глобальной :class:`RPACallPolicy` — POST оборачивается через
+        ``policy.call(...)`` (retry + CB + DLQ). При выключении/отсутствии
+        policy поведение остаётся прежним (legacy ad-hoc try/except).
+        """
         try:
             import httpx
 
@@ -64,16 +70,52 @@ class WebhookSink(Sink):
             ).hexdigest()
             headers["X-Webhook-Signature"] = sig
 
-        try:
+        async def _do_post() -> Any:
             async with OutboundHttpClient(
                 timeout=httpx.Timeout(self.timeout)
             ) as client:
-                response = await client.post(
-                    self.url, content=body_bytes, headers=headers
+                resp = await client.post(self.url, content=body_bytes, headers=headers)
+            # 5xx — поднимаем для retry policy
+            if 500 <= resp.status_code < 600:
+                raise httpx.HTTPStatusError(
+                    f"upstream 5xx: {resp.status_code}",
+                    request=resp.request,
+                    response=resp,
                 )
+            return resp
+
+        try:
+            from src.backend.core.config.features import feature_flags
+            from src.backend.core.resilience.rpa_policy import (
+                RPACallExhausted,
+                get_rpa_policy,
+            )
+
+            policy = (
+                get_rpa_policy()
+                if feature_flags.webhook_resilience_policy_enabled
+                else None
+            )
+            if policy is not None:
+                response = await policy.call(
+                    _do_post,
+                    transport="webhook",
+                    payload={"event": self.event, "url": self.url},
+                )
+            else:
+                response = await _do_post()
         except Exception as exc:  # noqa: BLE001
+            # RPACallExhausted уже отправил DLQ; legacy path — просто SinkResult.
+            err_name = type(exc).__name__
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False,
+                details={
+                    "error": str(exc) or err_name,
+                    "error_class": err_name,
+                    "exhausted": isinstance(exc, RPACallExhausted)
+                    if "RPACallExhausted" in dir()
+                    else False,
+                },
             )
 
         ok = 200 <= response.status_code < 300

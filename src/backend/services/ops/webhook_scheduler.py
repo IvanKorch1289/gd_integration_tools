@@ -108,19 +108,62 @@ class WebhookScheduler:
                 "success": False,
             }
 
+        from src.backend.core.config.features import feature_flags
         from src.backend.core.net.migration_helper import make_http_client
+        from src.backend.core.resilience.rpa_policy import (
+            RPACallExhausted,
+            get_rpa_policy,
+        )
 
-        async with make_http_client(timeout=30, plugin="webhook_scheduler") as client:
-            response = await client.post(
-                task["url"], json=task["payload"], headers=task.get("headers", {})
+        async def _do_post() -> Any:
+            async with make_http_client(timeout=30, plugin="webhook_scheduler") as client:
+                resp = await client.post(
+                    task["url"],
+                    json=task["payload"],
+                    headers=task.get("headers", {}),
+                )
+            import httpx
+
+            if 500 <= resp.status_code < 600:
+                raise httpx.HTTPStatusError(
+                    f"upstream 5xx: {resp.status_code}",
+                    request=resp.request,
+                    response=resp,
+                )
+            return resp
+
+        policy = (
+            get_rpa_policy()
+            if feature_flags.webhook_resilience_policy_enabled
+            else None
+        )
+        try:
+            if policy is not None:
+                response = await policy.call(
+                    _do_post,
+                    transport="webhook",
+                    route_id=schedule_id,
+                    payload=task,
+                )
+            else:
+                response = await _do_post()
+        except RPACallExhausted as exhausted:
+            logger.warning(
+                "Webhook %s exhausted retries: %s", schedule_id, exhausted.last_error
             )
-            result = {
+            return {
                 "schedule_id": schedule_id,
-                "status_code": response.status_code,
-                "success": response.is_success,
+                "success": False,
+                "error": "retries_exhausted",
             }
-            logger.info("Webhook executed: %s -> %d", schedule_id, response.status_code)
-            return result
+
+        result = {
+            "schedule_id": schedule_id,
+            "status_code": response.status_code,
+            "success": response.is_success,
+        }
+        logger.info("Webhook executed: %s -> %d", schedule_id, response.status_code)
+        return result
 
 
 @app_state_singleton("webhook_scheduler", factory=WebhookScheduler)
