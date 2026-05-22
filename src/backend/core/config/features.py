@@ -2147,5 +2147,46 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── K4 — Sprint 24 AI Safety Hardening (ADR-NEW-16/17/18) ─────────────
+    presidio_pii_enabled: bool = Field(
+        default=False,
+        title="K4 S24 W1: Presidio + ru NER PII layer (ADR-NEW-16)",
+        description=(
+            "K4 Sprint 24 Wave 1 (gap-2026-05-22 P0-1, ADR-NEW-16). Owner: K4 AI/Data. "
+            "Активирует services/ai/pii/presidio_analyzer.py — Presidio AnalyzerEngine "
+            "+ AnonymizerEngine + spaCy ru_core_news_lg + 4 custom recognizers (INN, "
+            "СНИЛС, паспорт РФ, номер кредитного дела). При True get_ai_sanitizer_provider() "
+            "возвращает PresidioSanitizerAdapter; при False — legacy AIDataSanitizer "
+            "(regex-based). default-OFF до `make pii-audit` precision/recall >= 0.9 "
+            "на ru hybrid gold-set (1000 docs) + production-config rollout."
+        ),
+    )
+
+    nemo_guardrails_enabled: bool = Field(
+        default=False,
+        title="K4 S24 W2: NeMo Guardrails + Llama Guard 3 defense-in-depth (ADR-NEW-17)",
+        description=(
+            "K4 Sprint 24 Wave 2 (gap-2026-05-22 P0-2, ADR-NEW-17). Owner: K4 AI/Data. "
+            "Активирует self-hosted defense-in-depth pipeline: NeMo Guardrails (Colang "
+            "input rails, jailbreak detection, banking topic filter) + Llama Guard 3 "
+            "output classifier (vLLM/TGI). Per-tenant policy через tenant_config.py. "
+            "При False — только Rebuff/Lakera SaaS-вызовы по существующим capabilities. "
+            "default-OFF до 100/100 jailbreak gold-set (block rate >= 95%) + p95 <= 80ms."
+        ),
+    )
+
+    langgraph_checkpointer_enabled: bool = Field(
+        default=False,
+        title="K4 S24 W3: LangGraph PostgresCheckpointer + Mem0 unified memory (ADR-NEW-18)",
+        description=(
+            "K4 Sprint 24 Wave 3 (gap-2026-05-22 P0-3, ADR-NEW-18). Owner: K4 AI/Data. "
+            "Активирует langgraph-checkpoint-postgres для durable graph-state "
+            "MultiAgentSupervisor + Mem0 OSS на pgvector как unified long-term memory "
+            "(поверх legacy LangMemService). При False — graph state in-memory, "
+            "LangMemService default-OFF. default-OFF до chaos-test resume-after-crash "
+            "4/4 + LangMem consolidate() рефакторинга через Mem0."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
