@@ -19,6 +19,7 @@ __all__ = (
     "AuthorizationError",
     "ServiceError",
     "RouteDisabledError",
+    "TenantContextRequiredError",
 )
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.
@@ -157,4 +158,32 @@ class RouteDisabledError(BaseError):
         super().__init__(
             message=f"Route '{route_id}' is disabled by feature flag '{feature_flag}'",
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+
+class TenantContextRequiredError(BaseError):
+    """Маршрут декларирует ``tenant_aware=True``, но tenant_id отсутствует.
+
+    K-ARCH-4 (Sprint 17): pipeline с ``tenant_aware=True`` требует, чтобы
+    хотя бы один из источников вернул tenant_id:
+
+    * :func:`src.backend.core.request_context.RequestContext.current` →
+      ``.tenant_id``;
+    * :func:`src.backend.core.tenancy.current_tenant` → ``.tenant_id``.
+
+    Если оба источника пусты — ExecutionEngine валит pipeline с этой
+    ошибкой ДО первого процессора, предотвращая утечку данных между
+    тенантами.
+    """
+
+    def __init__(self, *_: Any, route_id: str = "") -> None:
+        self.route_id = route_id
+        super().__init__(
+            message=(
+                f"Route '{route_id}' declares tenant_aware=True but no "
+                "tenant_id available in RequestContext or TenantContext. "
+                "Ensure X-Tenant-ID header is set and TenantMiddleware/"
+                "RequestContextMiddleware are wired in the middleware chain."
+            ),
+            status_code=status.HTTP_400_BAD_REQUEST,
         )

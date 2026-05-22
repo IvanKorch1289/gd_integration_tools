@@ -78,6 +78,9 @@ class ExchangeMeta(BaseModel):
         correlation_id: Идентификатор цепочки вызовов.
         created_at: Время создания Exchange.
         source: Имя входного источника (http, grpc, redis, rabbit и т.д.).
+        tenant_id: Идентификатор тенанта (K-ARCH-4, S17). Устанавливается
+            ExecutionEngine для pipeline'ов с ``tenant_aware=True`` из
+            RequestContext или TenantContext.
     """
 
     exchange_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -87,6 +90,7 @@ class ExchangeMeta(BaseModel):
     source: str | None = None
     protocol: ProtocolType | None = None
     protocol_attrs: dict[str, Any] = Field(default_factory=dict)
+    tenant_id: str | None = None
 
 
 class Exchange(BaseModel, Generic[T]):

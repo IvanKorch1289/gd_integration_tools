@@ -1,7 +1,7 @@
 import time
 from typing import Any
 
-from src.backend.core.errors import RouteDisabledError
+from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
@@ -16,6 +16,35 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.validation import pipeline_validator
 
 __all__ = ("ExecutionEngine",)
+
+
+def _resolve_tenant_id() -> str | None:
+    """Резолвит tenant_id из RequestContext или TenantContext.
+
+    K-ARCH-4 (S17): pipeline.tenant_aware=True требует хотя бы один из
+    источников. Порядок приоритета:
+
+    1. :class:`src.backend.core.request_context.RequestContext` →
+       ``.tenant_id`` (устанавливается RequestContextMiddleware рано
+       в ASGI-цепочке).
+    2. :func:`src.backend.core.tenancy.current_tenant` →
+       ``TenantContext.tenant_id`` (устанавливается TenantMiddleware
+       или явно в background-задачах).
+
+    Returns:
+        Найденный непустой tenant_id или ``None``.
+    """
+    from src.backend.core.request_context import RequestContext
+    from src.backend.core.tenancy import current_tenant
+
+    ctx = RequestContext.current()
+    if ctx is not None and ctx.tenant_id:
+        return ctx.tenant_id
+
+    tenant_ctx = current_tenant()
+    if tenant_ctx is not None and tenant_ctx.tenant_id:
+        return tenant_ctx.tenant_id
+    return None
 
 _default_middleware = MiddlewareChain(
     [
@@ -53,6 +82,26 @@ class ExecutionEngine:
             raise RouteDisabledError(
                 route_id=pipeline.route_id, feature_flag=pipeline.feature_flag
             )
+
+    @staticmethod
+    def _check_tenant_aware(pipeline: Pipeline) -> str | None:
+        """Проверка K-ARCH-4: tenant_aware → tenant_id обязателен.
+
+        Returns:
+            Найденный tenant_id (если pipeline.tenant_aware=True) или
+            ``None`` (если pipeline.tenant_aware=False).
+
+        Raises:
+            TenantContextRequiredError: pipeline.tenant_aware=True, но
+                ни RequestContext.tenant_id, ни current_tenant() не
+                содержат непустой tenant_id.
+        """
+        if not pipeline.tenant_aware:
+            return None
+        tenant_id = _resolve_tenant_id()
+        if not tenant_id:
+            raise TenantContextRequiredError(route_id=pipeline.route_id)
+        return tenant_id
 
     async def _execute_processor(
         self,
@@ -121,6 +170,7 @@ class ExecutionEngine:
         context: ExecutionContext | None = None,
     ) -> Exchange[Any]:
         self._check_feature_flag(pipeline)
+        tenant_id = self._check_tenant_aware(pipeline)
 
         if self._validate:
             result = pipeline_validator.validate(pipeline)
@@ -139,6 +189,9 @@ class ExecutionEngine:
         current_exchange.meta.route_id = pipeline.route_id
         current_exchange.meta.source = pipeline.source
         current_exchange.status = ExchangeStatus.processing
+        if tenant_id is not None:
+            current_exchange.meta.tenant_id = tenant_id
+            current_exchange.properties.setdefault("tenant_id", tenant_id)
 
         from src.backend.dsl.engine.tracer import get_tracer
 

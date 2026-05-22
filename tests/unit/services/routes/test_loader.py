@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -31,6 +32,7 @@ def _write_route(
     feature_flag: str | bool | None = None,
     pipelines: tuple[str, ...] = ("pipeline.dsl.yaml",),
     create_pipelines: bool = True,
+    tenant_aware: bool = False,
 ) -> Path:
     """Создать routes/<name>/route.toml + опц. пайплайны."""
     pkg = root / name
@@ -41,6 +43,8 @@ def _write_route(
         f'requires_core = "{requires_core}"',
         "pipelines = [{}]".format(", ".join(f'"{p}"' for p in pipelines)),
     ]
+    if tenant_aware:
+        body.append("tenant_aware = true")
     if feature_flag is not None:
         if isinstance(feature_flag, bool):
             body.append(f"feature_flag = {str(feature_flag).lower()}")
@@ -67,11 +71,11 @@ def _build_loader(
     *,
     installed_plugins: dict[str, InstalledPlugin] | None = None,
     feature_flag_resolver=None,
-) -> tuple[RouteLoader, list[tuple[str, Path]]]:
-    registered: list[tuple[str, Path]] = []
+) -> tuple[RouteLoader, list[tuple[str, Path, Any]]]:
+    registered: list[tuple[str, Path, Any]] = []
 
-    def registrar(route_name: str, pipeline_path: Path) -> None:
-        registered.append((route_name, pipeline_path))
+    def registrar(route_name: str, pipeline_path: Path, manifest: Any) -> None:
+        registered.append((route_name, pipeline_path, manifest))
 
     loader = RouteLoader(
         routes_dir=routes_dir,
@@ -98,7 +102,10 @@ class TestRouteLoaderDiscovery:
         assert len(loaded) == 1
         assert isinstance(loaded[0], LoadedRoute)
         assert loaded[0].status == "enabled"
-        assert registered == [("r1", tmp_path / "r1" / "pipeline.dsl.yaml")]
+        assert len(registered) == 1
+        assert registered[0][:2] == ("r1", tmp_path / "r1" / "pipeline.dsl.yaml")
+        # Третий аргумент — manifest (K-ARCH-4).
+        assert registered[0][2].name == "r1"
 
     async def test_skipped_on_incompatible_core(self, tmp_path: Path) -> None:
         _write_route(tmp_path, name="r1", requires_core=">=99.0,<100.0")
@@ -217,7 +224,7 @@ class TestPipelineRegistration:
         _write_route(tmp_path, name="r1", pipelines=("p1.dsl.yaml", "p2.dsl.yaml"))
         loader, registered = _build_loader(tmp_path)
         await loader.discover_and_load()
-        assert [p.name for _, p in registered] == ["p1.dsl.yaml", "p2.dsl.yaml"]
+        assert [r[1].name for r in registered] == ["p1.dsl.yaml", "p2.dsl.yaml"]
 
     async def test_unload_revokes_capabilities(self, tmp_path: Path) -> None:
         _write_route(
@@ -240,6 +247,30 @@ class TestPipelineRegistration:
         await loader.unload_all()
         with pytest.raises(Exception):
             loader._gate.check("r1", "db.read", "credit_db")
+
+
+class TestTenantAwarePropagation:
+    """K-ARCH-4 (S17): tenant_aware пробрасывается из manifest в registrar."""
+
+    async def test_default_false_not_propagated(self, tmp_path: Path) -> None:
+        """По умолчанию ``tenant_aware=False`` — manifest флаг = False."""
+        _write_route(tmp_path, name="r_plain")
+        loader, registered = _build_loader(tmp_path)
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
+        assert len(registered) == 1
+        assert registered[0][2].tenant_aware is False
+
+    async def test_tenant_aware_true_propagated_to_registrar(
+        self, tmp_path: Path
+    ) -> None:
+        """tenant_aware=true в route.toml попадает в manifest registrar'а."""
+        _write_route(tmp_path, name="r_tenant", tenant_aware=True)
+        loader, registered = _build_loader(tmp_path)
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
+        assert len(registered) == 1
+        assert registered[0][2].tenant_aware is True
 
 
 class TestLoadedRouteSerialisation:

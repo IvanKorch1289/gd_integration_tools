@@ -415,9 +415,22 @@ async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
                     capabilities=tuple(entry.manifest.capabilities),
                 )
 
-        def _registrar(route_name: str, pipeline_path: Path) -> None:
-            """Делегирует загрузку pipeline-файла в ``route_registry``."""
+        def _registrar(
+            route_name: str,
+            pipeline_path: Path,
+            manifest: object,
+        ) -> None:
+            """Делегирует загрузку pipeline-файла в ``route_registry``.
+
+            K-ARCH-4 (S17): пробрасывает ``manifest.tenant_aware`` в
+            ``Pipeline.tenant_aware``. ExecutionEngine на старте
+            ``execute()`` валидирует наличие tenant_id в
+            RequestContext / TenantContext и валит с
+            ``TenantContextRequiredError``, если декларация не выполнена.
+            """
             pipeline = load_pipeline_from_file(pipeline_path)
+            if bool(getattr(manifest, "tenant_aware", False)):
+                pipeline.tenant_aware = True
             route_registry.register(pipeline)
 
         loader = RouteLoader(

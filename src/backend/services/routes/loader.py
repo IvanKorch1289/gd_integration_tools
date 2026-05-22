@@ -52,8 +52,13 @@ AuditCallback = Callable[[dict[str, Any]], None]
 _logger = logging.getLogger("services.routes.loader")
 
 
-PipelineRegistrar = Callable[[str, Path], None]
-"""Подпись callback'а: ``(route_name, pipeline_path) -> None``."""
+PipelineRegistrar = Callable[[str, Path, RouteManifestV11], None]
+"""Подпись callback'а: ``(route_name, pipeline_path, manifest) -> None``.
+
+K-ARCH-4 (S17): третий параметр — полный manifest. Регистратор может
+читать ``manifest.tenant_aware`` и пробрасывать в Pipeline.tenant_aware
+для runtime-проверки в ExecutionEngine.
+"""
 
 FeatureFlagResolver = Callable[[str], bool]
 """Резолвер строкового feature_flag в bool."""
@@ -315,7 +320,7 @@ class RouteLoader:
                 pipeline_path = manifest_path.parent / relative
                 if not pipeline_path.is_file():
                     raise FileNotFoundError(f"Pipeline file not found: {pipeline_path}")
-                self._registrar(manifest.name, pipeline_path)
+                self._registrar(manifest.name, pipeline_path, manifest)
                 registered.append(pipeline_path)
         except Exception as exc:
             _logger.exception("Route %s pipeline registration failed", manifest.name)

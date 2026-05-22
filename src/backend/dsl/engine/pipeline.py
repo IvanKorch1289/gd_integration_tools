@@ -27,6 +27,14 @@ class Pipeline:
             Если флаг присутствует в ``disabled_feature_flags``
             (runtime_state), маршрут недоступен для выполнения.
             ``None`` — маршрут всегда доступен.
+        tenant_aware: Если ``True`` — pipeline требует наличия
+            ``tenant_id`` в RequestContext / TenantContext на момент
+            выполнения. K-ARCH-4 (S17): RouteLoader пробрасывает
+            значение из ``RouteManifestV11.tenant_aware`` через
+            ``pipeline_registrar``. ExecutionEngine проверяет
+            invariant в начале ``execute()`` и валит с
+            :class:`TenantContextRequiredError` если tenant_id
+            отсутствует.
     """
 
     route_id: str
@@ -36,6 +44,7 @@ class Pipeline:
     protocol: ProtocolType | None = None
     transport_config: TransportConfig | None = None
     feature_flag: str | None = None
+    tenant_aware: bool = False
 
     def add_processor(self, processor: BaseProcessor) -> "Pipeline":
         """
