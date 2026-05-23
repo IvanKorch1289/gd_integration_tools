@@ -21,7 +21,7 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("RLMFeedbackProcessor", "RLMSignal")
+__all__ = ("RLMConsolidator", "RLMFeedbackProcessor", "RLMSignal")
 
 
 @dataclass(slots=True)
@@ -165,3 +165,114 @@ async def _set_payload(
         await upsert(collection=collection, points=[{"id": doc_id, "payload": payload}])
         return
     await set_payload(collection=collection, payload=payload, points=[doc_id])
+
+class RLMConsolidator:
+    """Фоновый consolidator для semantic memory — re-embed + reindex."""
+
+    def __init__(
+        self,
+        qdrant_client,
+        embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        threshold: float = 0.3,
+    ):
+        self.qdrant = qdrant_client
+        self.embedding_model = embedding_model
+        self.threshold = threshold
+
+    async def consolidate(self, batch_size: int = 100) -> dict:
+        """
+        1. Fetch entries with penalty > threshold from Qdrant.
+        2. Re-embed via current embedding model.
+        3. Upsert updated vectors.
+        4. Delete stale entries.
+        5. Return consolidation report.
+        """
+        import datetime
+
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer(self.embedding_model)
+
+        # Step 1: scroll all entries, filter those with penalty > threshold
+        all_results = []
+        offset_token = None
+        penalty_threshold = float(self.threshold)
+        while True:
+            scroll_page = await self.qdrant.scroll(
+                collection="langmem_semantic",
+                scroll_filter={
+                    "must": [
+                        {
+                            "key": "rlm_penalty",
+                            "range": {"gt": penalty_threshold},
+                        }
+                    ]
+                },
+                limit=batch_size,
+                offset=offset_token,
+                with_payload=True,
+            )
+            page_results = getattr(scroll_page, "points", scroll_page.get("points", []))
+            all_results.extend(page_results)
+            offset_token = getattr(scroll_page, "next_page_offset", None)
+            if offset_token is None or len(page_results) == 0:
+                break
+        results = all_results[:batch_size]
+
+        if not results:
+            return {"consolidated": 0, "reindexed": 0, "deleted": 0}
+
+        # Step 2: re-embed
+        texts = [r.payload.get("text", "") for r in results]
+        vectors = model.encode(texts).tolist()
+
+        # Step 3: upsert re-embedded vectors + reset penalty (marks as reindexed)
+        import datetime
+        from datetime import UTC
+        now = datetime.datetime.now(UTC).isoformat()
+        points = []
+        for r, vector in zip(results, vectors):
+            p = dict(r.payload) if hasattr(r, "payload") else r.get("payload", {})
+            p["reindexed_at"] = now
+            p["rlm_penalty"] = 0  # reset after successful reindex
+            point_id = r.id if hasattr(r, "id") else r.get("id")
+            points.append({"id": point_id, "vector": vector, "payload": p})
+        await self.qdrant.upsert(collection="langmem_semantic", points=points)
+
+        # Step 4: NO delete — upsert is in-place update, deleting would remove
+        # the freshly reindexed records. Reset penalty prevents re-selection.
+
+        return {
+            "consolidated": len(results),
+            "reindexed": len(results),
+            "penalty_reset": len(results),
+        }
+
+    async def schedule_reindex(self, doc_ids: list[str]) -> dict:
+        """
+        Reindex specific documents by ID.
+        Triggered when penalty >= reindex_threshold.
+        """
+        if not doc_ids:
+            return {"reindexed": 0}
+
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer(self.embedding_model)
+
+        recs = await self.qdrant.retrieve(
+            collection="langmem_semantic", ids=doc_ids
+        )
+        if not recs:
+            return {"reindexed": 0}
+
+        texts = [r.payload.get("text", "") for r in recs]
+        vectors = model.encode(texts).tolist()
+
+        points = [
+            {"id": r.id, "vector": v, "payload": r.payload}
+            for r, v in zip(recs, vectors)
+        ]
+        await self.qdrant.upsert(collection="langmem_semantic", points=points)
+
+        return {"reindexed": len(points)}

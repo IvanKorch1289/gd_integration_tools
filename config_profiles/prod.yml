@@ -30,6 +30,15 @@ security:
     - "*.prod.local"
 
 
+# Block 1.1 (gap-ai-1.1, ADR-0072): production-enforcement AI Safety flags.
+# Каждый flag — default-OFF в base.yml; включается явным override per-profile.
+# Override через env (FEATURE_*) имеет приоритет над YAML — позволяет hot-flip
+# через k8s ConfigMap без передеплоя.
+features:
+  # ADR-0063 (Accepted) — Presidio + ru NER PII layer обязателен в prod.
+  presidio_pii_enabled: true
+
+
 database:
   type: "postgresql"
   host: "postgres-prod"

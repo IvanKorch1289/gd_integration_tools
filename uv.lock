@@ -2670,6 +2670,11 @@ ai-model-registry = [
     { name = "huggingface-hub", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "mlflow", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
+ai-safety = [
+    { name = "presidio-analyzer", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "presidio-anonymizer", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "spacy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
 auth-saml = [
     { name = "python3-saml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
@@ -2914,7 +2919,9 @@ requires-dist = [
     { name = "pip-audit", marker = "extra == 'security'", specifier = ">=2.7,<3" },
     { name = "playwright", marker = "extra == 'rpa'", specifier = ">=1.48.0" },
     { name = "polars", specifier = ">=1.20.0,<2.0.0" },
+    { name = "presidio-analyzer", marker = "extra == 'ai-safety'", specifier = ">=2.2.0" },
     { name = "presidio-analyzer", marker = "extra == 'security'", specifier = ">=2.2.0" },
+    { name = "presidio-anonymizer", marker = "extra == 'ai-safety'", specifier = ">=2.2.0" },
     { name = "prometheus-fastapi-instrumentator", specifier = ">=7.0.0,<8.0.0" },
     { name = "protobuf", specifier = ">=5.29.3,<6.0.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sources-cdc'", specifier = ">=3.1,<4.0.0" },
@@ -2945,6 +2952,7 @@ requires-dist = [
     { name = "result", marker = "extra == 'result-monad'", specifier = ">=0.17.0,<1.0.0" },
     { name = "sentence-transformers", marker = "extra == 'rag'", specifier = ">=3.0.0,<6.0.0" },
     { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2.20.0,<3.0.0" },
+    { name = "spacy", marker = "extra == 'ai-safety'", specifier = ">=3.8.13" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.1.0,<10.0.0" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5,<1" },
     { name = "sphinx-multiversion", marker = "extra == 'docs'", specifier = ">=0.2.4,<1.0.0" },
@@ -2975,7 +2983,7 @@ requires-dist = [
     { name = "xmltodict", specifier = ">=0.14.0,<1.0.0" },
     { name = "zeep", specifier = ">=4.3.1,<5.0.0" },
 ]
-provides-extras = ["ai", "security", "auth-saml", "mcp", "rpa", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "rag", "embeddings-fastembed-legacy", "ai-2026", "ai-model-registry", "ai-voice", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "circuit-breaker", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags"]
+provides-extras = ["ai", "security", "ai-safety", "auth-saml", "mcp", "rpa", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "rag", "embeddings-fastembed-legacy", "ai-2026", "ai-model-registry", "ai-voice", "workflow", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "circuit-breaker", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -6482,6 +6490,17 @@ dependencies = [
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/8a/d6cf4bddbb11d9c78f5c9342bbbcde4f90fe4e3c7de114a836ec4ed8a6cf/presidio_analyzer-2.2.362-py3-none-any.whl", hash = "sha256:4c36438924b1fcb4df92ea5cf2d8dc57508808e116b10923c983b8732aa07d90", size = 201084, upload-time = "2026-03-15T12:40:43.801Z" },
+]
+
+[[package]]
+name = "presidio-anonymizer"
+version = "2.2.362"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/01/1c3404e8da63a979ae951b8822576bc0e52ca3a46a624ac9439786990c6d/presidio_anonymizer-2.2.362-py3-none-any.whl", hash = "sha256:b2d81542cb797360d18506a1aa73ea0dfacc44abca15248c81dd062f582e6b2b", size = 36603, upload-time = "2026-03-15T12:40:38.651Z" },
 ]
 
 [[package]]

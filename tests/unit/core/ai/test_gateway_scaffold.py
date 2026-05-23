@@ -67,22 +67,27 @@ async def test_invoke_pass_through_when_flag_off(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_invoke_enforced_raises_not_implemented(monkeypatch: pytest.MonkeyPatch) -> None:
-    """При ``ai_gateway_enforce=True`` первый шаг падает NotImplementedError.
+async def test_invoke_enforced_runs_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """При ``ai_gateway_enforce=True`` запускается 9-step pipeline.
 
-    Это ожидаемо для scaffold S25 W1 — реальный backbone в Wave S25 W2+.
+    Без resolved policy и без работающего LiteLLM шаг 6 поднимает
+    ``GatewayUnavailable`` (default-OFF litellm) — это ожидаемо, проверяем
+    что pipeline проходит до шага invoke_llm, а не падает раньше.
     """
     from src.backend.core.config import features as features_module
+    from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 
     monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", True)
+    monkeypatch.setattr(features_module.feature_flags, "ai_policy_enforce", False)
 
     gateway = AIGateway()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(GatewayUnavailable):
         await gateway.invoke(
             AIRequest(
                 workflow_id="credit_check",
                 tenant_id="t-1",
                 correlation_id="req-abc",
+                prompt_inline="Hello AI",
             )
         )
 

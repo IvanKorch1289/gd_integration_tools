@@ -10,18 +10,27 @@
 * :class:`PolicyResolver` — резолверы политик по ``workflow_id`` + ``tenant_id``
   из ``ai_policies/*.policy.yaml`` (+ per-tenant override
   ``extensions/<plugin>/ai_policies/``);
+* :class:`PolicyNotResolvedError` — исключение при ``required=True`` policy
+  без match.
+* :class:`PolicyLoadError` — ошибка загрузки YAML или валидации Pydantic.
 * :class:`AIPolicyEnforcer` — middleware-like enforcement-точка для AIGateway.
 
 Использование (S25 W2+):
 
     from src.backend.core.ai.policy import AIPolicySpec, PolicyResolver
 
-    resolver = PolicyResolver(roots=["ai_policies/", "extensions/*/ai_policies/"])
+    resolver = PolicyResolver(roots=[Path("ai_policies"), Path("extensions/*/ai_policies")])
     policy = await resolver.resolve(workflow_id="credit_check", tenant_id="t-1")
 
 См. docs/adr/0067-ai-policy-spec-dsl.md.
 """
 
+from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
+from src.backend.core.ai.policy.resolver import (
+    PolicyLoadError,
+    PolicyNotResolvedError,
+    PolicyResolver,
+)
 from src.backend.core.ai.policy.spec import (
     AIPolicySpec,
     AuditSpec,
@@ -34,6 +43,7 @@ from src.backend.core.ai.policy.spec import (
 )
 
 __all__ = (
+    "AIPolicyEnforcer",
     "AIPolicySpec",
     "AuditSpec",
     "BackendSpec",
@@ -41,5 +51,8 @@ __all__ = (
     "GuardRef",
     "MemorySpec",
     "ModelRouterSpec",
+    "PolicyLoadError",
+    "PolicyNotResolvedError",
+    "PolicyResolver",
     "SanitizerRef",
 )

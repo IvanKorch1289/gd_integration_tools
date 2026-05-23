@@ -1,21 +1,45 @@
-"""LangGraph агентский граф.
+"""LangGraph агентский граф (LiteLLMGateway-backed).
 
-Определяет граф агента, который может использовать
-зарегистрированные actions как инструменты (tools).
+Определяет граф ReAct-агента, который использует зарегистрированные actions
+как инструменты (LangChain tools) и :class:`LiteLLMGateway` как
+единый шлюз LLM-провайдеров.
+
+В отличие от прежней реализации (hardcoded ``ChatOpenAI``), сейчас:
+
+* Модель/fallback-chain/timeout берутся из :mod:`core.config.ai_2026`
+  через :class:`LiteLLMGateway` — единый шлюз LLM.
+* Cost-tracking автоматически подключается через ``litellm.success_callback``
+  (см. :mod:`services.ai.gateway.callbacks`).
+* Поддерживается multi-provider (OpenAI, Anthropic, локальные модели) без
+  изменения кода — конфигурация в env / settings.
+
+Lazy-import:
+    Тяжёлые AI-зависимости (``langgraph``, ``langchain_litellm``,
+    ``langchain_core``) импортируются внутри функций — это позволяет
+    модулю быть импортированным в окружениях без extra ``[ai-2026]``.
 """
 
+from __future__ import annotations
+
+import asyncio
 import logging
 from typing import Any
 
-__all__ = ("build_and_run_agent",)
+__all__ = ("build_and_run_agent", "build_chat_model")
 
 logger = logging.getLogger(__name__)
 
 
 def _make_action_tool(action_name: str) -> Any:
-    """Создаёт LangChain tool из зарегистрированного action."""
-    import asyncio
+    """Создаёт LangChain-tool из зарегистрированного action.
 
+    Args:
+        action_name: Имя action в :class:`ActionHandlerRegistry`.
+
+    Returns:
+        :class:`StructuredTool` обёртка, диспетчеризующая в
+        ``action_handler_registry.dispatch``.
+    """
     from langchain_core.tools import StructuredTool
 
     from src.backend.dsl.commands.registry import action_handler_registry
@@ -31,8 +55,11 @@ def _make_action_tool(action_name: str) -> Any:
         return str(result)
 
     def _sync_run(**kwargs: Any) -> str:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = None
+        if loop is not None and loop.is_running():
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -47,23 +74,90 @@ def _make_action_tool(action_name: str) -> Any:
     )
 
 
-async def build_and_run_agent(prompt: str, tool_actions: list[str]) -> dict[str, Any]:
-    """Строит и запускает LangGraph-агента.
+def build_chat_model(
+    *,
+    gateway: Any | None = None,
+    temperature: float = 0.0,
+    **extra_kwargs: Any,
+) -> Any:
+    """Создаёт LangChain-compatible chat-model поверх :class:`LiteLLMGateway`.
+
+    Использует ``ChatLiteLLM`` адаптер (либо из ``langchain_litellm``, либо
+    из ``langchain_community``), конфигурируя его параметрами из
+    :class:`LiteLLMGateway` (``default_model``, ``fallback_models``,
+    ``timeout``, ``num_retries``).
+
+    Args:
+        gateway: Опц. :class:`LiteLLMGateway`. При ``None`` используется
+            singleton ``get_litellm_gateway()``.
+        temperature: Параметр sampling-температуры LLM.
+        **extra_kwargs: Дополнительные kwargs, прокидываемые в ChatLiteLLM
+            (например, ``max_tokens``, ``top_p``).
+
+    Returns:
+        LangChain ``BaseChatModel`` совместимый объект.
+
+    Raises:
+        ImportError: Если ни ``langchain_litellm``, ни
+            ``langchain_community`` не установлены.
+    """
+    from src.backend.services.ai.gateway import get_litellm_gateway
+
+    gw = gateway if gateway is not None else get_litellm_gateway()
+    model = gw._default_model
+    fallbacks = list(gw._fallbacks)
+    timeout = gw._timeout
+    num_retries = gw._num_retries
+
+    chat_kwargs: dict[str, Any] = {
+        "model": model,
+        "temperature": temperature,
+        "request_timeout": timeout,
+        "num_retries": num_retries,
+        **extra_kwargs,
+    }
+    if fallbacks:
+        chat_kwargs["fallbacks"] = fallbacks
+
+    try:
+        from langchain_litellm import ChatLiteLLM  # type: ignore[import-not-found]
+    except ImportError:
+        try:
+            from langchain_community.chat_models import ChatLiteLLM  # type: ignore[import-not-found]
+        except ImportError as exc:
+            raise ImportError(
+                "ChatLiteLLM недоступен: установите 'langchain-litellm' "
+                "или 'langchain-community' (extra '[ai-2026]')."
+            ) from exc
+
+    return ChatLiteLLM(**chat_kwargs)
+
+
+async def build_and_run_agent(
+    prompt: str,
+    tool_actions: list[str],
+    *,
+    gateway: Any | None = None,
+    temperature: float = 0.0,
+) -> dict[str, Any]:
+    """Строит и запускает LangGraph-агента через :class:`LiteLLMGateway`.
 
     Args:
         prompt: Задача для агента.
         tool_actions: Список имён actions, доступных как tools.
+        gateway: Опц. :class:`LiteLLMGateway` (для DI/тестов). Если
+            ``None`` — singleton.
+        temperature: Sampling-температура LLM.
 
     Returns:
-        Результат работы агента.
+        Результат работы агента: словарь с ``prompt``, ``tools_used``,
+        ``response``, ``message_count`` либо ``error``.
     """
     try:
-        from langchain_community.chat_models import ChatOpenAI
         from langgraph.prebuilt import create_react_agent
 
         tools = [_make_action_tool(action) for action in tool_actions]
-
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        llm = build_chat_model(gateway=gateway, temperature=temperature)
         agent = create_react_agent(llm, tools)
 
         result = await agent.ainvoke(
@@ -80,7 +174,7 @@ async def build_and_run_agent(prompt: str, tool_actions: list[str]) -> dict[str,
             "message_count": len(messages),
         }
     except ImportError as exc:
-        logger.warning("LangGraph не доступен: %s", exc)
+        logger.warning("LangGraph/LiteLLM не доступен: %s", exc)
         return {"error": f"Зависимости не установлены: {exc}"}
     except Exception as exc:
         logger.error("Agent execution error: %s", exc, exc_info=True)

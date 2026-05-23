@@ -95,6 +95,10 @@ class PresidioSanitizerAdapter:
         Возвращает True, если Presidio доступен; False — если установка
         пакетов отсутствует или модель ``ru_core_news_lg`` не загружена.
         После первого вызова результат кэшируется в ``self._available``.
+
+        При fallback на legacy regex-санитайзер инкрементирует Prometheus
+        counter ``presidio_fallback_total{reason="<...>"}`` для алертов на
+        утрату NER-покрытия в production.
         """
         if self._available is not None:
             return self._available
@@ -106,6 +110,7 @@ class PresidioSanitizerAdapter:
             logger.warning(
                 "Presidio/spaCy недоступны, fallback на AIDataSanitizer: %s", exc
             )
+            _record_presidio_fallback(reason="import_error")
             self._available = False
             return False
 
@@ -137,6 +142,7 @@ class PresidioSanitizerAdapter:
             logger.warning(
                 "Presidio init failed (%s), fallback на AIDataSanitizer", exc
             )
+            _record_presidio_fallback(reason="init_error")
             self._available = False
             return False
 
@@ -304,3 +310,33 @@ def get_presidio_sanitizer_adapter(
     if _instance is None:
         _instance = PresidioSanitizerAdapter(default_language=default_language)
     return _instance
+
+
+def _record_presidio_fallback(*, reason: str) -> None:
+    """Инкрементирует Prometheus counter ``presidio_fallback_total``.
+
+    Block 1.1 (gap-ai-1.1) — production-enforcement: при включённом
+    ``PRESIDIO_PII_ENABLED`` любой fallback на legacy regex-санайзер
+    должен быть наблюдаемым. Алерт на ``rate(presidio_fallback_total[5m]) > 0``
+    в production сигнализирует утрату NER-покрытия (отсутствует extra
+    ``[security-pii]`` либо spaCy-модель не загружена).
+
+    Реализация через ``metrics_registry`` (centralized) — при отсутствии
+    prometheus_client (минимальный профиль) — no-op.
+
+    Args:
+        reason: Причина fallback (``import_error`` / ``init_error``).
+    """
+    try:
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
+
+        counter = metrics_registry.counter(
+            "presidio_fallback_total",
+            "Fallback на legacy AIDataSanitizer при недоступном Presidio",
+            labels=("reason",),
+        )
+        counter.labels(reason=reason).inc()
+    except Exception:  # noqa: BLE001 — metric не должен ломать sanitize pipeline
+        logger.debug("presidio_fallback metric emit failed", exc_info=True)

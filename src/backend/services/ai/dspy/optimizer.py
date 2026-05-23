@@ -204,9 +204,135 @@ def _avg_metric(
 def _default_bootstrap(
     pipeline: DSPyPipeline, train: Sequence[dict[str, Any]]
 ) -> Callable[[dict[str, Any]], str]:
-    """Default fallback-bootstrap: возвращает best-match-by-input wrapper.
+    """Default bootstrap — использует DSPy BootstrapFewShot если SDK доступен.
 
-    При отсутствии DSPy SDK строит lookup: train-input → train-output (best).
+    Fallback: token-overlap lookup (существующий stub-алгоритм).
+    """
+    if not _is_dspy_available():
+        return _token_overlap_bootstrap(pipeline, train)
+
+    try:
+        import dspy
+        from dspy.teleprompt import BootstrapFewShot
+    except ImportError:
+        return _token_overlap_bootstrap(pipeline, train)
+
+    # Wrap pipeline into a DSPy Module
+    dspy_module = _wrap_pipeline_to_dspy(pipeline)
+
+    # BootstrapFewShot config
+    teleprompter = BootstrapFewShot(
+        metric=_dspy_metric_adapter(pipeline),
+        max_bootstrapped_demos=min(8, len(train)),
+        max_rounds=1,
+        patience=1,
+    )
+
+    try:
+        compiled = teleprompter.compile(
+            dspy_module,
+            trainset=list(train),
+        )
+    except Exception as exc:
+        logger.warning("DSPy BootstrapFewShot.compile failed, using fallback: %s", exc)
+        return _token_overlap_bootstrap(pipeline, train)
+
+    # Return adapter that calls compiled DSPy module
+    def _callable(example: dict[str, Any]) -> str:
+        with dspy.settings.context(lm=None, trace=None):
+            dspy_input = _example_to_dspy_input(example)
+            result = compiled(**dspy_input)
+            return _dspy_output_to_str(result)
+
+    return _callable
+
+
+# ── DSPy adapter helpers ────────────────────────────────────────────────────────
+
+def _is_dspy_available() -> bool:
+    try:
+        import dspy  # type: ignore[import-not-found]
+        return True
+    except ImportError:
+        return False
+
+
+
+def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):
+    """Wrap our DSPyPipeline Protocol → DSPy Module (lazy import)."""
+    if not _is_dspy_available():
+        raise RuntimeError("DSPy SDK not available — cannot wrap pipeline")
+
+    import dspy
+
+    class _DSPyPipelineModule(dspy.Module):
+        """DSPy Module wrapper поверх DSPyPipeline Protocol."""
+
+        def __init__(self, inner: DSPyPipeline):
+            super().__init__()
+            self._pipeline = inner
+
+        def forward(self, **kwargs) -> dspy.Prediction:
+            example = _dspy_kwargs_to_example(kwargs)
+            output = self._pipeline.forward(example)
+            return dspy.Prediction(prediction=output)
+
+    return _DSPyPipelineModule(pipeline)
+
+
+def _dspy_metric_adapter(
+    pipeline: DSPyPipeline,
+) -> Callable[[dspy.Example, dspy.Prediction, None], float]:
+    """Адаптер pipeline.metric → DSPy metric signature (example, prediction, ...)."""
+    def _metric(
+        example: dspy.Example, prediction: dspy.Prediction, *_args
+    ) -> float:
+        ex_dict = dict(example.inputs())
+        ex_dict.update(example.labels())
+        try:
+            return float(pipeline.metric(ex_dict, prediction.prediction))
+        except Exception:
+            return 0.0
+    return _metric
+
+
+def _example_to_dspy_input(example: dict[str, Any]) -> dict[str, Any]:
+    """Из нашего example dict → DSPy forward kwargs."""
+    # DSPy signature определяет поля
+    result = {}
+    for key, value in example.items():
+        if key in ("input", "question", "context"):
+            result[key] = str(value)
+        elif key not in ("expected", "output", "id"):
+            result[key] = value
+    if "input" not in result and "question" not in result:
+        result["input"] = str(example.get("input") or example.get("question") or "")
+    return result
+
+
+def _dspy_kwargs_to_example(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Из DSPy kwargs → наш example dict."""
+    return dict(kwargs)
+
+
+def _dspy_output_to_str(result: dspy.Prediction) -> str:
+    """DSPy Prediction → str."""
+    pred = getattr(result, "prediction", None)
+    if pred is None:
+        return str(result)
+    if isinstance(pred, str):
+        return pred
+    return str(pred)
+
+
+# ── Fallback: token-overlap bootstrap ──────────────────────────────────────────
+
+def _token_overlap_bootstrap(
+    pipeline: DSPyPipeline, train: Sequence[dict[str, Any]]
+) -> Callable[[dict[str, Any]], str]:
+    """Fallback-stub: best-match-by-input via token overlap.
+
+    Строит lookup: train-input → train-output (best).
     Для eval-example возвращает train-output с максимальным token-overlap.
     """
     pairs: list[tuple[set[str], str]] = []

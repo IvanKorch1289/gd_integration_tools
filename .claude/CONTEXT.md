@@ -1,5 +1,211 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-22 18:24, S24 W1 Presidio CLOSED — compact session)
+
+**HEAD**: `e360b975 [wave:s24/w1-fix-layer-violation]` (мой); параллельная сессия дальше: `63e31478 [plan:v22.4/s25-s27-ai-platform-backbone]`.
+**Compact**: `vault/session-2026-05-22-1824-summary.md` — детальная сводка S24 W1 (6 commits + doc-commit + plan-commit).
+**Memory updates**: `feedback_sprint24_w1_presidio.md` (NEW), `feedback_gap_analysis_ai_2026_05_22.md` (UPDATED), `project_s24_w1_carryover.md` (NEW), `MEMORY.md` (+2).
+
+### S24 W1 — 6 commits (5 wave + 1 fix-layer-violation)
+
+| Commit | Wave-тег | Что внесено |
+|---|---|---|
+| `33e1f280` | `s24/backbone` | 3 feature-flags (PRESIDIO/NEMO/LANGGRAPH) + 8 capabilities (`pii.*`, `ai.guardrail.*`, `ai.memory.*`) |
+| `4d9621b3` | `s24/w1-presidio-deps` | `[ai-safety]` extra + `make pii-audit-{smoke,full,bootstrap}` |
+| `8070067d` | `s24/w1-presidio-engine` | `PresidioSanitizerAdapter` + ru+en NER + 4 recognizers (INN/СНИЛС/паспорт/КД) + `AsyncPIISanitizerProtocol` + deprecation shim |
+| `f274ae71` | `s24/w1-presidio-integration` | DI provider switch + retrieval through Presidio + Langfuse PII callback |
+| `4228d21c` | `s24/w1-presidio-closure` | Hybrid gold-set CI-gate + 19 tests + ADR Draft → Accepted + DoD 7/11 |
+| `e360b975` | `s24/w1-fix-layer-violation` | `core/interfaces/sanitization.py` (DTO canonical) — устранил services → infra violation после code-reviewer |
+
+### DoD S24 W1 — 7/11 ✅
+
+✅ backbone landed | ✅ Presidio engine + ru NER | ✅ `make pii-audit` CI-gate | ✅ Capabilities `pii.*` | ✅ Feature-flag PRESIDIO_PII_ENABLED + DI switch | ✅ Audit-event emission | ✅ 19/20 tests passing.
+
+**4 carryover**: empirical P/R ≥ 0.9 (nightly CI после `make pii-bootstrap`) | latency p95 ≤ 20ms (perf wave) | `rag_pii_retrieval_mask=true` production flip | Sphinx page (docs batch).
+
+### Verify-команды этой сессии
+
+- `uv run ruff check src/backend/services/ai/pii/ src/backend/infrastructure/security/presidio_sanitizer.py src/backend/core/interfaces/ai_clients.py src/backend/core/di/providers.py src/backend/services/ai/gateway/langfuse_pii_callback.py tools/checks/pii_audit.py tests/unit/services/ai/test_presidio_*.py tests/integration/ai/test_*pii*.py` → **All checks passed**.
+- `uv run pytest tests/unit/services/ai/test_presidio_ru.py tests/unit/services/ai/test_pii_recognizers.py tests/integration/ai/test_langfuse_pii.py tests/integration/ai/test_pii_audit_gate.py` → **19 passed, 1 skipped**.
+- `make layers` → **0 новых violations** (51 legacy в allowlist).
+- code-reviewer agent verdict: OK с WARNING (layer violation), исправлен в `e360b975`.
+
+### Открытые риски
+
+1. Параллельная сессия S25-S27 backbone landed (`63e31478` PLAN.md V22.4 + 6 ADR 0066-0071 + AI Gateway/Policy/Skill Registry). S25 W4 PII tokenizer reversible пересекается с моим `PresidioSanitizerAdapter` — coordinate API при старте.
+2. `ru_core_news_lg` 1.5GB не установлен в dev/CI — Presidio graceful fallback на AIDataSanitizer; empirical P/R требует `make pii-bootstrap`.
+3. Deprecation shim `infrastructure/security/presidio_sanitizer.py` — silent callers (`sentry_init.py`, `pii_streaming.py`) ещё используют; `dead-code-hunter` pass в `[wave:s24/closure]`.
+4. `ahead origin/master` = много коммитов (push pending до S20 closure per commit-policy).
+
+### Следующий шаг
+
+1. **`/clear` или `/compact`** — этой сессии всё durable записано.
+2. **S24 W2** NeMo Guardrails + Llama Guard 3 (ADR-NEW-17) — Pre-Wave subagent ritual обязателен.
+3. **S24 W3** LangGraph Checkpointer + Mem0 (ADR-NEW-18).
+4. **S24 nightly CI** — `make pii-bootstrap` + empirical `make pii-audit` ≥ 0.9.
+5. **Coordinate** с параллельной S25 W4 PII tokenizer API.
+
+---
+
+## Текущее состояние (2026-05-22 18:21, S17 carryover — 4 wave landed)
+
+**Сессия**: coordinator-self carryover Sprint 17 (параллельно с активной S24/V22.4 сессией).
+**HEAD**: `6d9e0502` (мой); ahead origin/master = 2 коммита (`846b2d9b` + `6d9e0502`).
+**Сводка**: `vault/session-2026-05-22-1821-s17-carryover-summary.md`.
+
+### Что закрыто (4 wave Sprint 17)
+
+| Commit | Wave | DoD |
+|---|---|---|
+| `3aa1edac` | `s17/k3-w0-routes-tenant-aware` | #6 K-ARCH-4: tenant_aware enforcement в ExecutionEngine + 8 тестов |
+| `68095bdc` | `s17/k1-w5-backup-dr-scaffold` | #14 K-OPS-5: 4 bash-script + DR runbook (4 сценария) |
+| `846b2d9b` | `s17/k9-w1-pre-prod-check-v2-scaffold` | #13 K-OPS-3: 30 gates + `--dry-run` + warn-only режим |
+| `6d9e0502` | `s17/k3-w2-rlock-cleanup` | MiddlewareRegistry RLock → Lock (V22 §5) + KNOWN_ISSUES update |
+
+### Code-review (subagent code-reviewer)
+
+* **BLOCKER**: 0. **MAJOR (2)** в `ops/backup/backup_clickhouse.sh`: SQL injection в FREEZE-loop + word-splitting. **Carryover S18.**
+* **MINOR (3)** + **NIT (2)** — несущественные.
+* Рекомендация ревьюера: merge с carryover M1/M2.
+
+### Открытые риски S17
+
+1. MAJOR M1/M2 `backup_clickhouse.sh` — carryover S18.
+2. Параллельная сессия S24/V22.4 активна — все коммиты через `git commit -- <pathspec>`; перезаписывала `pre_prod_check.py` и `registry.py` несколько раз → решено через Write + немедленный commit.
+3. `docs/runbooks/` вместо `vault/runbooks/` (gitignore-конфликт).
+4. Pre-existing S603 в `_run_cmd` (`tools/checks/` вне lint-strict scope, не моя regression).
+5. Empirical coverage ≥77% для S17 closure — НЕ проверено в этой сессии.
+
+### Следующий шаг S17
+
+1. **S17 closure** — empirical pytest --cov + memory note + CONTEXT/ARCHITECTURE update.
+2. **S18 carryover** — `backup_clickhouse.sh` M1/M2 fix, `k2-w2-metrics-migrate` sweep, `k5-w2-k8s-manifests`.
+
+---
+
+## Текущее состояние (2026-05-22 18:21, PLAN.md V22.4 + Sprint 25-27 backbone landed)
+
+**HEAD**: `63e31478 [plan:v22.4/s25-s27-ai-platform-backbone]` — V22.4 + 6 ADR (0066-0071) + S25-S27 backbone scaffold.
+**Активные спринты параллельно**: **S24 AI Safety** (W1 Presidio CLOSED `f274ae71`; W2/W3 carryover) + **S25-S27 AI Platform Layer** (backbone landed, full impl carryover).
+**Compact-summary**: `vault/session-2026-05-22-1821-summary.md` (детальный: `1740-plan-v22-4-ai-platform-backbone.md`).
+**Memory**: `feedback_plan_v22_4_ai_platform.md`.
+
+### Что добавлено V22.4 (этот commit `63e31478`)
+
+- **PLAN.md V22.2 → V22.4 FINAL** (+349 LOC): §S25 AI Gateway + Policy DSL (6 wave, 8 DoD) / §S26 Prompts + Skills (6 wave, 8 DoD) / §S27 Agent DSL + MCP + Audit (7 wave, 10 DoD); ADR-table +6 (NEW-19..24).
+- **6 ADR scaffold** (`docs/adr/0066-0071`): AIGateway / AIPolicySpec / PIITokenizer reversible / SkillRegistry V11.2 / MCP Gateway / AI Audit Unified.
+- **10 feature-flags** в `core/config/features.py` (default-OFF): `ai_gateway_enforce`, `ai_policy_enforce`, `ai_pii_tokenizer_enabled`, `ai_prompt_sweep_strict`, `ai_prompt_eval_blocking`, `ai_skill_toml_enabled`, `ai_agent_dsl_enabled`, `mcp_gateway_namespaces_enabled`, `ai_audit_unified_enabled`, `workflow_invoke_agent_enabled`.
+- **4 capabilities** в `vocabulary.py`: `ai.invoke`, `ai.policy.read`, `pii.tokenize.reversible`, `mcp.gateway.invoke` (total 38).
+- **Scaffold-модули**: `core/ai/gateway.py` (AIGateway+AIRequest+AIResponse, 9-step pipeline scaffold), `core/ai/policy/{__init__,spec,resolver,enforcer}.py`, `core/ai/skill_registry.py`, `core/security/pii_tokenizer.py`.
+- **PoC**: `ai_policies/credit_check_strict.policy.yaml` (PII reversible + NeMo topics + Llama Guard + 152-FZ audit + Memory triade).
+- **CI-gate**: `tools/checks/check_ai_gateway_coverage.py` AST-checker (warn-only) + allowlist 8 legacy paths.
+- **32 unit-теста** passing (gateway pass-through / AIPolicySpec validation / PolicyResolver glob / SkillRegistry / PIITokenizer).
+
+### Выполненные команды проверки
+
+- `uv run python -c "from src.backend.core.ai import AIGateway, AIRequest, AIResponse"` → ✅ imports OK.
+- `uv run python -c "from ...vocabulary import build_default_vocabulary; v.has(...)"` → ✅ 4 new caps + total 38.
+- `uv run pytest tests/unit/core/ai/ tests/unit/core/security/test_pii_tokenizer_scaffold.py -q` → ✅ **32 passed in 1.17s**.
+- `git log --oneline -3` → `63e31478` HEAD.
+
+### Открытые риски (10)
+
+1. **Параллельная сессия откатывает Edits в tracked файлах** (6 откатов за эту сессию) — mitigation: untracked-файлы переживают, tracked-Edits перепроверять через grep.
+2. **AIGateway scaffold-pass-through** при `ai_gateway_enforce=False`; enforced-mode поднимает `NotImplementedError`. Production ban до S25 W2-W5 + S27 W2-W5.
+3. **PolicyResolver.resolve()** возвращает None (carryover S25 W2 YAML loader).
+4. **PIITokenizer scaffold-only** — Presidio engine landed (S24 W1 `8070067d`), но AES-GCM TokenRegistry не подключён (carryover S25 W4).
+5. **SkillRegistry TOML loader** — scaffold (carryover S26 W5).
+6. **`check_ai_gateway_coverage`** warn-only; allowlist 8 legacy paths; strict-mode → S27 closure.
+7. **6 ADR в Draft** — Sphinx index не обновлён до Wave-closure.
+8. **`Makefile ai-gateway-coverage` target** НЕ добавлен (Makefile в uncommitted параллельной сессии).
+9. **Параллельная сессия S24 W1** закрыла Presidio (5 commits): `33e1f280 backbone`, `4d9621b3 deps`, `8070067d engine`, `f274ae71 integration`, closure.
+10. **Чужие uncommitted в working tree**: `infrastructure/security/{ai_sanitizer,presidio_sanitizer}.py`, `services/ai/pii/presidio_analyzer.py`, `tools/check_layers_allowlist.txt`, `uv.lock`, `core/interfaces/sanitization.py`.
+
+### Следующий шаг (carryover для следующей сессии)
+
+1. **S25 W1** — полная имплементация AIGateway 9-step pipeline (4 `_apply_*` методов).
+2. **S25 W2** — PolicyResolver YAML loader + per-tenant override + `make ai-policy-schema`.
+3. **S25 W3** — обернуть 3 кодопути LLM (`ai_agent.py`, `ai_graph.py`, `agents_pydantic/base.py`) через AIGateway (allowlist → 0 после wrap).
+4. **S25 W4** — Presidio integration + AES-GCM TokenRegistry в Redis.
+5. **S25 W5** — Langfuse v3 + PII callback.
+6. **Параллельно (другая сессия)**: S24 W2 NeMo Guardrails + Llama Guard 3, S24 W3 LangGraph Checkpointer + Mem0.
+
+---
+
+## Текущее состояние (2026-05-22 ~18:20, Sprint 17 carryover quad + D12 finale)
+
+**Сессия**: coordinator-self закрытие 7 wave Sprint 17 carryover в одной сессии (4 wave из `/goal` + 4 продолжающих). Параллельная сессия активно работала в `Sprint 24 W1 Presidio + AI Gateway/Policy/Skill Registry/MCP Gateway` в тех же модулях workflow/security/observability. **Полная сводка — `vault/session-2026-05-22-1820-summary.md`**.
+
+### S17 carryover quad — 7 wave landed (4 wave из /goal + 4 продолжающих)
+
+| Wave | Commit | Что внесено |
+|---|---|---|
+| `s17/k1-w0-polish` | `b49526dc` | 10 unit-тестов codemod+checker + `make check-python3-syntax` + multi-line backslash+paren regression fix |
+| `s17/k1-w4-config-validator` | `d533ab96` + slip `8ccf72c9` | 13 правил (3 моих + 2 параллельных DB/Redis); defense-in-depth docstring; 42 теста |
+| `s17/k3-w2-middleware-registry` | `e3fbe3b6` | ADR-NEW-2 `MiddlewareRegistry` + 24 built-in MW по 4 layers + 9 тестов + `make middleware-tree` + plugin entry-points hook |
+| `s17/k2-w2-metrics-migrate` | `03b2791f` | 44→0 inline-metric; singleton `metrics_registry` с `default_labels=()`; 13 файлов мигрированы |
+| `s17/k2-w3-task-registry-coverage` | `1105ae23` | 3 HTTP3 `asyncio.ensure_future` → TaskRegistry; CI-gate `tools/checks/check_task_registry.py` + `make check-task-registry` + 7 тестов |
+| `s17/k7-w1-observability-fixes` | `cc3a9c7c` | 5 S110 `except: pass` → `_logger.debug(... extra={...})`; разделил CancelledError vs Exception в SLA stop() |
+| `s17/k3-w3-correlation-id-end-to-end` | `08e96770` | D12 finale: 4 propagation points (HTTP outbound + FastStream rabbit/redis/kafka + gRPC server + step_audit fallback); 20 тестов |
+| `s17/k1-w1-tls-cert-required` | — NO-OP | Закрыта в `0ce57673`+`8cacb47b`: 0 CERT_NONE, 4 regression-теста |
+
+### Изменённые файлы
+
+Источники (новые/правленые):
+- `tools/checks/check_python3_syntax.py` (расширен multi-line edge)
+- `tools/checks/check_task_registry.py` NEW + `tools/middleware_tree.py` NEW
+- `src/backend/entrypoints/middlewares/registry.py` NEW (ADR-NEW-2) + `setup_middlewares.py`
+- `src/backend/entrypoints/grpc/correlation.py` NEW (D12 helper) + `grpc_server.py`
+- `src/backend/core/net/outbound_http.py` (CORRELATION_ID_HEADER + inject)
+- `src/backend/infrastructure/clients/messaging/stream.py` (_inject_correlation_id_headers + 3 publish methods)
+- `src/backend/infrastructure/workflow/middlewares/step_audit.py` (ContextVar fallback)
+- `src/backend/infrastructure/observability/{prometheus_temporal_exporter.py,metrics_registry.py,client_metrics.py,nats_metrics.py,plugin_resource_monitor.py}`
+- `src/backend/infrastructure/{resilience/{snapshot_job.py,reconnection.py,components/database_chain.py},cache/{lru_cache.py,rag/metrics.py},ai/semantic_cache.py,scheduler/observability.py}`
+- `src/backend/services/{ai/metrics.py,ai/rag_query_stats.py,workflows/sla_alerting.py}`
+- `src/backend/workflows/worker_probes.py`, `src/backend/entrypoints/api/v1/endpoints/admin_tenants.py`, `src/backend/entrypoints/http3/_protocol.py`
+- `src/backend/core/config/{validator.py,features.py}` + `src/backend/core/utils/task_registry.py` (noqa marker)
+- `Makefile` (3 новых targets) + `pyproject.toml` (entry-points group)
+
+Тесты (новые): `tests/unit/tools/test_{fix_except_clause,check_python3_syntax,check_task_registry}.py`, `tests/unit/core/config/test_validator.py` (+6), `tests/unit/entrypoints/middlewares/test_registry.py`, `tests/unit/core/net/test_outbound_correlation.py`, `tests/unit/messaging/test_stream_correlation.py`, `tests/unit/entrypoints/grpc/test_correlation_metadata.py`, `tests/unit/dsl/workflow/test_step_audit_correlation_fallback.py`.
+
+### Verification команды (выполнены успешно)
+
+```bash
+make check-python3-syntax        # exit 0
+make middleware-tree              # 24 MW по 4 слоям
+make check-task-registry          # exit 0
+uv run python tools/checks/check_grep_violations.py --root src/backend | grep inline-metric | wc -l  # 0
+uv run pytest tests/unit/core/config/test_validator.py -q          # 42 passed
+uv run pytest tests/unit/entrypoints/middlewares/test_registry.py -q # 9 passed
+uv run pytest tests/unit/tools/test_check_task_registry.py -q       # 7 passed
+uv run pytest tests/unit/infrastructure/observability/ -q           # 41 passed
+uv run pytest tests/unit/services/workflows/test_sla_alerting.py -q # 9 passed
+uv run pytest tests/unit/core/net/test_outbound_correlation.py \
+              tests/unit/messaging/test_stream_correlation.py \
+              tests/unit/entrypoints/grpc/test_correlation_metadata.py \
+              tests/unit/dsl/workflow/test_step_audit_correlation_fallback.py  # 20 passed
+uv run ruff check --select S110 src/backend/infrastructure/observability/prometheus_temporal_exporter.py \
+                                src/backend/services/workflows/sla_alerting.py  # All checks passed!
+```
+
+### Открытые риски / техдолг
+
+1. **gRPC client-side outgoing metadata** — 5-я точка D12 не покрыта. Нужен `UnaryUnaryClientInterceptor` для GrpcSource/grpc_sink.
+2. **2 pre-existing S110 в `step_audit.py:157,292`** — не в Wave k7-w1 целях; рекомендую отдельный sweep по всем `except: pass`.
+3. **1 pre-existing S110 в `auto_scaler.py`** — техдолг.
+4. **Failing test `test_request_passes_through_when_waf_allows`** падает на чистом master (404 vs 200) — `httpx.MockTransport` API change. Pre-existing, не моя проблема.
+5. **MiddlewareRegistry 5 code-review warnings**: features.py rule-count (11 vs 13), 333 LOC near soft-limit, `default_labels=()` docstring warning, `_FEATURE_FLAG_DEPENDENCIES` TODO, `__qualname__` fragility в test.
+6. **Параллельная сессия Sprint 24 W1 stash collision**: `git stash pop` применил чужой stash → пришлось переделать Wave 7 (D12) с нуля. Использование `git commit -- <pathspec>` обязательно.
+
+### Следующий шаг (приоритет)
+
+1. **gRPC client metadata interceptor** — закрыть 5-ю точку D12 (carryover Wave 3).
+2. **Closure Sprint 17** — после закрытия 11 оставшихся carryover wave.
+3. **3 оставшихся pre-existing S110** — `[wave:s17/k7-w1-observability-fixes-tail]`.
+4. **MiddlewareRegistry finishing-touches** — 5 code-review warnings.
+
+---
+
 ## Текущее состояние (2026-05-22 ~15:30, Sprint 24 W1 Presidio + ru NER CLOSED)
 
 **Активный спринт**: **Sprint 24 — AI Safety Hardening** (post-production GAP-backlog). W1 закрыт coordinator-self mode.

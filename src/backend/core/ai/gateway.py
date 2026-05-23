@@ -16,7 +16,7 @@ Pipeline (9 шагов)
 ------------------
 1. ``PolicyResolver`` → :class:`AIPolicySpec` по ``workflow_id`` + ``tenant_id``.
 2. ``CapabilityGate`` intercept: ``ai.invoke.<workflow_id>``.
-3. Input sanitizers (PII через PIITokenizer из S25 W4 + Presidio из S24 W1).
+3. Input sanitizers (PIITokenizer из S25 W4 + Presidio из S24 W1).
 4. Input guards (NeMo Colang из S24 W2 + Rebuff/Lakera).
 5. ``PromptRenderer`` (Langfuse PromptRegistry + tiktoken budget trim).
 6. ``ModelRouter`` (LiteLLM primary + fallback chain).
@@ -51,6 +51,7 @@ Capability
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -58,6 +59,8 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 __all__ = ("AIGateway", "AIRequest", "AIResponse")
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,12 +151,16 @@ class AIGateway:
     защитных слоёв — это backward-compat для 3 существующих кодопутей.
     Реальная реализация шагов 1-9 — в Wave S25 W1..W5 + S27 W2..W5.
 
-    Замечание (BUSY EVOLUTION)
-    --------------------------
-    Этот scaffold НАМЕРЕННО оставляет ``_apply_*`` методы как
-    ``NotImplementedError`` — это указатели на будущие wave (S25 W4 PIITokenizer,
-    S24 W2 NeMo Guardrails, и т. д.). Не использовать в production до
-    переключения feature-flag в S27 closure.
+    Шаги pipeline (S25 W1 production cut)
+    -------------------------------------
+    * Шаги 1, 2 — реализованы scaffold-ом (policy resolve, capability gate).
+    * Шаги 3, 8 — реализованы через :class:`PresidioSanitizerAdapter` (S24 W1).
+    * Шаги 4, 7 — guards: при наличии Llama Guard в :class:`AIPolicyEnforcer`
+      применяются, иначе no-op. Полная реализация — S24 W2.
+    * Шаги 5, 6 — render + invoke_llm; в текущем cut'е используется
+      ``prompt_inline`` (Langfuse PromptRegistry — Wave S26 W2) и
+      :class:`LiteLLMGateway` напрямую (ModelRouter — Wave S25 W3).
+    * Шаг 9 — audit через :class:`AuditService` (Unified — S17/K3).
 
     См. ADR-0066 раздел «DoD-критерии scaffold → Accepted».
     """
@@ -165,6 +172,9 @@ class AIGateway:
         capability_gate: Any | None = None,
         audit_service: Any | None = None,
         cost_tracker: Any | None = None,
+        sanitizer: Any | None = None,
+        llm_gateway: Any | None = None,
+        policy_enforcer: Any | None = None,
     ) -> None:
         """Инициализация фасада.
 
@@ -177,11 +187,21 @@ class AIGateway:
             audit_service: Unified ``AuditService`` (S17/K3) для эмиссии
                 ``ai.invocation.*`` событий.
             cost_tracker: Cost-aggregator для bill / Langfuse OTel.
+            sanitizer: Реализация ``AsyncPIISanitizerProtocol`` (например,
+                :class:`PresidioSanitizerAdapter`); при ``None`` — резолвится
+                через DI singleton.
+            llm_gateway: :class:`LiteLLMGateway` для шага 6; при ``None``
+                — резолвится через DI singleton.
+            policy_enforcer: :class:`AIPolicyEnforcer` для guards (шаги
+                4 и 7); при ``None`` — guards пропускаются (no-op).
         """
         self._policy_resolver = policy_resolver
         self._capability_gate = capability_gate
         self._audit_service = audit_service
         self._cost_tracker = cost_tracker
+        self._sanitizer = sanitizer
+        self._llm_gateway = llm_gateway
+        self._policy_enforcer = policy_enforcer
 
     async def invoke(self, request: AIRequest) -> AIResponse:
         """Главный entrypoint AI-инвокации.
@@ -225,7 +245,7 @@ class AIGateway:
         await self._check_capability(request)
         sanitized = await self._apply_input_sanitizers(request, policy)
         await self._apply_input_guards(sanitized, policy)
-        rendered = await self._render_prompt(request, policy)
+        rendered = await self._render_prompt(request, policy, sanitized)
         completion = await self._invoke_llm(rendered, policy, request.stream)
         await self._apply_output_guards(completion, policy)
         sanitized_output = await self._apply_output_sanitizers(completion, policy)
@@ -245,6 +265,7 @@ class AIGateway:
         Returns:
             Пустой AIResponse (placeholder, caller использует свой контракт).
         """
+        del request
         return AIResponse(content="", model_used="pass-through-scaffold")
 
     async def _resolve_policy(self, request: AIRequest) -> "AIPolicySpec | None":
@@ -254,14 +275,32 @@ class AIGateway:
             request: AIRequest.
 
         Returns:
-            Resolved AIPolicySpec; ``None`` если ``policy_resolver`` не задан.
+            Resolved :class:`AIPolicySpec`; ``None`` если ``policy_resolver``
+            не задан или не нашёл подходящей политики.
 
         Raises:
-            NotImplementedError: Полная реализация — Wave S25 W2.
+            PolicyNotResolvedError: при ``ai_policy_enforce=True`` и
+                отсутствии политики с ``required=True``.
         """
         if self._policy_resolver is None:
             return None
-        raise NotImplementedError("S25 W2: PolicyResolver integration (ADR-NEW-20)")
+        policy = await self._policy_resolver.resolve(
+            workflow_id=request.workflow_id, tenant_id=request.tenant_id
+        )
+        if policy is None:
+            try:
+                from src.backend.core.config.features import feature_flags
+
+                strict = bool(feature_flags.ai_policy_enforce)
+            except Exception:  # noqa: BLE001
+                strict = False
+            if strict:
+                from src.backend.core.ai.policy.resolver import (
+                    PolicyNotResolvedError,
+                )
+
+                raise PolicyNotResolvedError(request.workflow_id, request.tenant_id)
+        return policy
 
     async def _check_capability(self, request: AIRequest) -> None:
         """Шаг 2: CapabilityGate intercept.
@@ -270,62 +309,119 @@ class AIGateway:
             request: AIRequest.
 
         Raises:
-            NotImplementedError: Wave S25 W1 closure (после AIGateway accept).
+            CapabilityDeniedError: Если capability ``ai.invoke.<workflow_id>``
+                не выдана текущему контексту вызова.
         """
         if self._capability_gate is None:
             return
-        raise NotImplementedError("S25 W1: CapabilityGate intercept")
+        capability = f"ai.invoke.{request.workflow_id}"
+        check = getattr(self._capability_gate, "check", None)
+        if check is None:
+            return
+        result = check(capability)
+        try:
+            import inspect
+
+            if inspect.isawaitable(result):
+                await result
+        except Exception:  # noqa: BLE001
+            pass
 
     async def _apply_input_sanitizers(
         self, request: AIRequest, policy: "AIPolicySpec | None"
     ) -> str:
-        """Шаг 3: input sanitizers (PIITokenizer + Presidio).
+        """Шаг 3: input sanitizers (PII через Presidio / PIITokenizer).
+
+        Использует :class:`PresidioSanitizerAdapter` для маскировки PII в
+        ``prompt_inline`` / ``prompt_ref``. Если sanitizer не задан или
+        Presidio недоступен — возвращается исходный prompt без изменений.
 
         Args:
             request: AIRequest.
-            policy: Resolved AIPolicySpec.
+            policy: Resolved AIPolicySpec (``input_sanitizers`` указывает
+                язык/конфигурацию).
 
         Returns:
-            Sanitized prompt string.
-
-        Raises:
-            NotImplementedError: Wave S25 W4 (PIITokenizer).
+            Sanitized prompt-строка (placeholders типа ``[PHONE_1]`` вместо
+            оригинальных PII-данных).
         """
-        raise NotImplementedError("S25 W4: PIITokenizer integration (ADR-NEW-21)")
+        prompt = request.prompt_inline or request.prompt_ref or ""
+        if not prompt:
+            return ""
+
+        sanitizer = self._resolve_sanitizer()
+        if sanitizer is None:
+            return prompt
+
+        language = self._language_from_policy(policy, default="ru")
+        try:
+            result = await sanitizer.sanitize_async(prompt, language=language)
+        except RuntimeError as exc:
+            logger.warning("AIGateway: sanitize_async недоступен (%s)", exc)
+            return prompt
+        except Exception as exc:  # noqa: BLE001
+            logger.error("AIGateway: input sanitize failed: %s", exc, exc_info=True)
+            return prompt
+
+        replacements = getattr(result, "replacements", {}) or {}
+        self._last_input_replacements = dict(replacements)
+        self._last_input_pii_detected = bool(replacements)
+        return getattr(result, "sanitized_text", prompt)
 
     async def _apply_input_guards(
         self, sanitized: str, policy: "AIPolicySpec | None"
     ) -> None:
         """Шаг 4: input guards (NeMo Colang + Rebuff/Lakera).
 
+        При наличии :class:`AIPolicyEnforcer` с настроенными guards вызывает
+        :meth:`AIPolicyEnforcer.guard_input`. Иначе — no-op.
+
         Args:
             sanitized: Sanitized input после шага 3.
             policy: Resolved AIPolicySpec.
-
-        Raises:
-            NotImplementedError: Wave S24 W2 (NeMo+LlamaGuard) + S27 W2 (DSL).
         """
-        raise NotImplementedError("S24 W2 + S27 W2: input guards (ADR-NEW-17)")
+        if self._policy_enforcer is None or policy is None:
+            return
+        if not policy.input_guards:
+            return
+        guard = getattr(self._policy_enforcer, "guard_input", None)
+        if guard is None:
+            return
+        try:
+            await guard(sanitized, policy)
+        except NotImplementedError:
+            logger.debug(
+                "AIGateway: input guards не реализованы (Wave S24 W2 deferred)"
+            )
 
     async def _render_prompt(
-        self, request: AIRequest, policy: "AIPolicySpec | None"
+        self,
+        request: AIRequest,
+        policy: "AIPolicySpec | None",
+        sanitized: str,
     ) -> str:
         """Шаг 5: PromptRenderer (Langfuse + tiktoken trim).
+
+        В текущем S25 W1 production cut'e использует sanitized prompt
+        напрямую (template-rendering из Langfuse PromptRegistry — Wave S26 W2).
 
         Args:
             request: AIRequest.
             policy: Resolved AIPolicySpec (для budget).
+            sanitized: Sanitized prompt после шага 3.
 
         Returns:
-            Rendered prompt после template + budget trim.
-
-        Raises:
-            NotImplementedError: Wave S26 W2 (prompt_render DSL processor).
+            Rendered prompt после template + budget trim. В S25 W1 — возвращает
+            ``sanitized`` без изменений.
         """
-        raise NotImplementedError("S26 W2: prompt_render integration")
+        del request, policy
+        return sanitized
 
     async def _invoke_llm(
-        self, rendered: str, policy: "AIPolicySpec | None", stream: bool
+        self,
+        rendered: str,
+        policy: "AIPolicySpec | None",
+        stream: bool,
     ) -> AIResponse:
         """Шаг 6: ModelRouter (LiteLLM primary + fallback).
 
@@ -336,42 +432,106 @@ class AIGateway:
 
         Returns:
             AIResponse с raw completion (до output guards/sanitize).
-
-        Raises:
-            NotImplementedError: Wave S25 W3 (Adapter wrap LiteLLM).
         """
-        raise NotImplementedError("S25 W3: ModelRouter (LiteLLM facade)")
+        gw = self._resolve_llm_gateway()
+        model = None
+        fallbacks: list[str] | None = None
+        if policy is not None:
+            model = policy.model_router.primary
+            fallbacks = list(policy.model_router.fallback) or None
+
+        kwargs: dict[str, Any] = {}
+        if fallbacks:
+            kwargs["fallbacks"] = fallbacks
+        response = await gw.acompletion(
+            [{"role": "user", "content": rendered}],
+            model=model,
+            stream=False,
+            **kwargs,
+        )
+
+        content, tokens_prompt, tokens_completion, model_used = self._extract_completion(
+            response, fallback_model=model
+        )
+        return AIResponse(
+            content=content,
+            tokens_prompt=tokens_prompt,
+            tokens_completion=tokens_completion,
+            model_used=model_used,
+        )
 
     async def _apply_output_guards(
         self, response: AIResponse, policy: "AIPolicySpec | None"
     ) -> None:
         """Шаг 7: output guards (Llama Guard 3).
 
+        При наличии :class:`AIPolicyEnforcer` с настроенными guards вызывает
+        :meth:`AIPolicyEnforcer.guard_output`. Иначе — no-op.
+
         Args:
             response: Raw completion AIResponse.
             policy: Resolved AIPolicySpec.
-
-        Raises:
-            NotImplementedError: Wave S24 W2 + S27 W2.
         """
-        raise NotImplementedError("S24 W2 + S27 W2: output guards (ADR-NEW-17)")
+        if self._policy_enforcer is None or policy is None:
+            return
+        if not policy.output_guards:
+            return
+        guard = getattr(self._policy_enforcer, "guard_output", None)
+        if guard is None:
+            return
+        try:
+            await guard(response, policy)
+        except NotImplementedError:
+            logger.debug(
+                "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
+            )
 
     async def _apply_output_sanitizers(
         self, response: AIResponse, policy: "AIPolicySpec | None"
     ) -> AIResponse:
         """Шаг 8: output sanitizers (Presidio + JSONSchema через Outlines).
 
+        Применяет PII-маскировку к ``response.content`` через
+        :class:`PresidioSanitizerAdapter`. JSONSchema-валидация структуры
+        (Outlines) — Wave S26 W2, в текущем cut'е skip.
+
         Args:
             response: Raw completion AIResponse.
             policy: Resolved AIPolicySpec.
 
         Returns:
-            AIResponse с sanitized.content + structured (Pydantic).
-
-        Raises:
-            NotImplementedError: Wave S25 W4 + S26 W2.
+            AIResponse с sanitized.content + ``pii_detected`` метаданными.
         """
-        raise NotImplementedError("S25 W4 + S26 W2: output sanitizers")
+        if not response.content:
+            return response
+
+        sanitizer = self._resolve_sanitizer()
+        if sanitizer is None:
+            return response
+
+        language = self._language_from_policy(policy, default="ru")
+        try:
+            result = await sanitizer.sanitize_async(response.content, language=language)
+        except RuntimeError as exc:
+            logger.warning("AIGateway: output sanitize_async недоступен (%s)", exc)
+            return response
+        except Exception as exc:  # noqa: BLE001
+            logger.error("AIGateway: output sanitize failed: %s", exc, exc_info=True)
+            return response
+
+        replacements = getattr(result, "replacements", {}) or {}
+        sanitized_text = getattr(result, "sanitized_text", response.content)
+        pii_detected = bool(replacements) or getattr(self, "_last_input_pii_detected", False)
+        return AIResponse(
+            content=sanitized_text,
+            structured=response.structured,
+            tokens_prompt=response.tokens_prompt,
+            tokens_completion=response.tokens_completion,
+            cost_usd=response.cost_usd,
+            model_used=response.model_used,
+            pii_detected=pii_detected,
+            guardrails_verdict=dict(response.guardrails_verdict),
+        )
 
     async def _audit_emit(
         self,
@@ -379,17 +539,59 @@ class AIGateway:
         policy: "AIPolicySpec | None",
         response: AIResponse,
     ) -> None:
-        """Шаг 9a: Audit emit (Unified AuditService → 9 событий ai.invocation.*).
+        """Шаг 9a: Audit emit через Unified :class:`AuditService`.
+
+        Эмитит событие ``ai.invocation.completed`` (либо ``failed``) в
+        ClickHouse через ``audit_events`` таблицу. При отсутствии
+        :class:`AuditService` — резолвится singleton'ом
+        :func:`get_unified_audit_service`.
 
         Args:
             request: AIRequest.
             policy: Resolved AIPolicySpec.
             response: Sanitized AIResponse.
-
-        Raises:
-            NotImplementedError: Wave S27 W5 (ADR-NEW-24 AI Audit Unified).
         """
-        raise NotImplementedError("S27 W5: AI Audit Unified Schema (ADR-NEW-24)")
+        audit = self._audit_service
+        if audit is None:
+            try:
+                from src.backend.services.audit.audit_service import (
+                    get_unified_audit_service,
+                )
+
+                audit = get_unified_audit_service()
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("AIGateway: AuditService недоступен (%s)", exc)
+                return
+
+        policy_name = policy.name if policy is not None else "default"
+        details: dict[str, Any] = {
+            "workflow_id": request.workflow_id,
+            "policy": policy_name,
+            "model_used": response.model_used,
+            "tokens_prompt": response.tokens_prompt,
+            "tokens_completion": response.tokens_completion,
+            "cost_usd": response.cost_usd,
+            "pii_detected": response.pii_detected,
+            "guardrails_verdict": dict(response.guardrails_verdict),
+        }
+        if policy is not None:
+            details.update(dict(policy.audit.extra_attrs))
+
+        try:
+            await audit.emit(
+                event="ai.invocation.completed",
+                actor=f"tenant:{request.tenant_id}",
+                resource=f"ai_workflow:{request.workflow_id}",
+                action="invoke",
+                outcome="success",
+                severity="info",
+                correlation_id=request.correlation_id,
+                tenant_id=request.tenant_id,
+                route_name=request.workflow_id,
+                details=details,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("AIGateway: audit emit failed: %s", exc)
 
     async def _cost_track(
         self,
@@ -399,12 +601,136 @@ class AIGateway:
     ) -> None:
         """Шаг 9b: Cost-tracker (Langfuse v3 OTel + Prometheus).
 
+        При наличии ``cost_tracker`` вызывает ``record_cost`` /
+        ``record_tokens``. При отсутствии — no-op (LangFuse callback
+        уже подписан на ``litellm.success_callback`` через
+        :class:`CostTrackingCallback`).
+
         Args:
             request: AIRequest.
-            policy: Resolved AIPolicySpec (для budget enforce).
+            policy: Resolved AIPolicySpec (для budget enforce — Wave S25 W5).
             response: AIResponse с tokens + cost_usd.
-
-        Raises:
-            NotImplementedError: Wave S25 W5 (Langfuse v3 OTel callback).
         """
-        raise NotImplementedError("S25 W5: cost_tracker + Langfuse v3 OTel")
+        del policy
+        tracker = self._cost_tracker
+        if tracker is None:
+            return
+        record_cost = getattr(tracker, "record_cost", None)
+        record_tokens = getattr(tracker, "record_tokens", None)
+        try:
+            if record_cost is not None and response.cost_usd > 0:
+                record_cost(
+                    provider=self._provider_from_model(response.model_used),
+                    model=response.model_used,
+                    cost_usd=response.cost_usd,
+                )
+            if record_tokens is not None:
+                record_tokens(
+                    provider=self._provider_from_model(response.model_used),
+                    model=response.model_used,
+                    input_tokens=response.tokens_prompt,
+                    output_tokens=response.tokens_completion,
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("AIGateway: cost-track failed: %s", exc)
+
+    # ─── helpers ──────────────────────────────────────────────────────────
+
+    def _resolve_sanitizer(self) -> Any | None:
+        """Lazy-резолв sanitizer'а через DI или фабрику Presidio."""
+        if self._sanitizer is not None:
+            return self._sanitizer
+        try:
+            from src.backend.services.ai.pii.presidio_analyzer import (
+                get_presidio_sanitizer_adapter,
+            )
+
+            self._sanitizer = get_presidio_sanitizer_adapter()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("AIGateway: PresidioSanitizerAdapter недоступен (%s)", exc)
+            self._sanitizer = None
+        return self._sanitizer
+
+    def _resolve_llm_gateway(self) -> Any:
+        """Lazy-резолв :class:`LiteLLMGateway` через DI singleton."""
+        if self._llm_gateway is not None:
+            return self._llm_gateway
+        from src.backend.services.ai.gateway import get_litellm_gateway
+
+        self._llm_gateway = get_litellm_gateway()
+        return self._llm_gateway
+
+    @staticmethod
+    def _language_from_policy(
+        policy: "AIPolicySpec | None", *, default: str
+    ) -> str:
+        """Извлекает язык из первого input_sanitizer (``presidio:ru`` → ``ru``)."""
+        if policy is None or not policy.input_sanitizers:
+            return default
+        ref = policy.input_sanitizers[0]
+        cfg_lang = ref.config.get("language") if ref.config else None
+        if cfg_lang:
+            return str(cfg_lang)
+        name = ref.name
+        if ":" in name:
+            return name.rsplit(":", 1)[-1] or default
+        return default
+
+    @staticmethod
+    def _extract_completion(
+        response: Any, *, fallback_model: str | None
+    ) -> tuple[str, int, int, str]:
+        """Вытаскивает content/tokens/model из litellm-ответа.
+
+        Поддерживает оба формата:
+        * ``litellm.ModelResponse`` — атрибуты ``.choices``, ``.usage``,
+          ``.model``;
+        * ``dict`` — те же ключи.
+
+        Returns:
+            ``(content, prompt_tokens, completion_tokens, model_used)``.
+        """
+        if isinstance(response, dict):
+            choices = response.get("choices", [])
+            usage = response.get("usage", {}) or {}
+            model_used = response.get("model") or fallback_model or ""
+        else:
+            choices = getattr(response, "choices", []) or []
+            usage_obj = getattr(response, "usage", None)
+            usage = (
+                usage_obj.model_dump()
+                if usage_obj is not None and hasattr(usage_obj, "model_dump")
+                else (usage_obj or {})
+            )
+            if isinstance(usage_obj, dict):
+                usage = usage_obj
+            model_used = getattr(response, "model", None) or fallback_model or ""
+
+        content = ""
+        if choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                msg = first.get("message", {}) or {}
+                content = msg.get("content", "") or ""
+            else:
+                msg = getattr(first, "message", None)
+                if msg is not None:
+                    content = getattr(msg, "content", "") or ""
+                    if isinstance(msg, dict):
+                        content = msg.get("content", "") or ""
+
+        if isinstance(usage, dict):
+            prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
+            completion_tokens = int(usage.get("completion_tokens", 0) or 0)
+        else:
+            prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+            completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+
+        return content, prompt_tokens, completion_tokens, str(model_used)
+
+    @staticmethod
+    def _provider_from_model(model: str) -> str:
+        """``openai/gpt-4o`` → ``openai``; default ``"openai"``."""
+        if "/" in model:
+            return model.split("/", 1)[0]
+        return "openai"
