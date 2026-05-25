@@ -165,7 +165,10 @@ rpa = [
 # требует paddlepaddle. Extras временно пуст до миграции на paddlepaddle 3.x
 # или замены на pytesseract — pin'ы вернутся когда появятся 3.14-wheels.
 rpa-ocr = [
-    # "paddleocr>=2.8.0,<4",
+    # Wave [wave:s18/w0-goal-driven-sweep-2-ocr]: pytesseract — lightweight
+    # OCR backend (требует Tesseract на хосте; lazy-import в processor).
+    "pytesseract>=0.3.10,<1.0",
+    # "paddleocr>=2.8.0,<4",       # carryover: ждём cp314 wheels paddlepaddle.
     # "paddlepaddle>=2.6.0,<3",
 ]
 # K3 Sprint 8 [wave:s8/k3-rpa-windows-desktop]: pywinauto Win32/UIA для

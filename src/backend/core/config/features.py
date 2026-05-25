@@ -1319,6 +1319,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    rpa_ocr_enabled: bool = Field(
+        default=False,
+        title="S18 W0: pytesseract OCR processor (services/rpa/ocr_processor)",
+        description=(
+            "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-2-ocr]. "
+            "Owner: K3 RPA. Активирует OCRProcessor поверх pytesseract "
+            "(extras [rpa-ocr], требует Tesseract на хосте). При False — "
+            "OCRProcessor.from_environment() возвращает NoOpOCRProcessor. "
+            "Default-OFF до staging-smoke."
+        ),
+    )
+
     # ─── Sprint 7 — K3 DSL+Workflow ────────────────────────────────────────
     dsl_blueprints_migrate: bool = Field(
         default=False,
