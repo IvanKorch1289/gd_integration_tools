@@ -1,33 +1,49 @@
-"""Global ASGI rate-limit middleware (fastapi-limiter scaffold).
+"""Global ASGI rate-limit middleware (S18 W7 — per-route + per-tenant extension).
 
-Wave: ``[wave:s16/k5-w2-global-ratelimit-mw]``.
-
-Scaffold для глобального rate-limit поверх всех HTTP endpoints. Default
-feature-flag ``global_rate_limit_enabled=False`` чтобы не нарушить текущее
-поведение. Реальная привязка к ``fastapi-limiter`` — после добавления
-зависимости в pyproject (carryover S17).
+История:
+    * S16 W2 (``[wave:s16/k5-w2-global-ratelimit-mw]``): scaffold с
+      feature-flag default-OFF + FakeRateLimitChecker.
+    * S18 W7 (``[wave:s18/k5-w1-rate-limit-global-mw]``): расширение —
+      per-route override (path-prefix dict) + tenant-aware identifier
+      (приоритет X-Tenant-ID → fallback client.host) +
+      :class:`RedisRateLimitChecker` adapter для fastapi-limiter
+      (production backend).
 
 Поведение:
 
-* При выключенном flag — pass-through (zero overhead).
-* При включённом — проверяет лимит через :class:`RateLimitChecker`.
-* На превышении — отвечает 429 ``Too Many Requests`` с заголовками:
-  - ``Retry-After: <seconds>``
-  - ``X-RateLimit-Limit: <max>``
-  - ``X-RateLimit-Remaining: <remaining>``
+* При ``multi_tenant_rate_limit_enabled=False`` (default) и при
+  отсутствии явного ``feature_enabled`` — middleware прозрачен
+  (pass-through). При наличии ``feature_enabled=lambda: True`` —
+  работает (для unit-тестов / explicit wiring).
+* При активном middleware проверяет лимит через
+  :class:`RateLimitChecker` с per-route override и tenant-aware
+  идентификатором.
+* На превышении — отвечает 429 ``Too Many Requests`` с заголовками
+  ``Retry-After`` и ``X-RateLimit-Remaining``.
 
-Per-tenant identification: tenant_id вычисляется из заголовка
-``X-Tenant-ID`` либо из ``request.state.tenant_id`` (set ранним middleware).
-Fallback — client.host.
+Per-route override (S18 W7):
+    Параметр ``route_limits: dict[str, tuple[int, float]]`` —
+    ``{path_prefix: (max_per_window, window_seconds)}``. Longest-prefix
+    match на ``scope["path"]``. Miss → global default из ``checker``.
+
+Per-tenant identifier (S18 W7):
+    Из заголовков по приоритету: ``X-Tenant-ID`` → ``X-User-ID`` →
+    ``client.host``. Casbin/OPA integration — carryover S19+.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = ("GlobalRateLimitMiddleware", "RateLimitChecker", "FakeRateLimitChecker")
+__all__ = (
+    "GlobalRateLimitMiddleware",
+    "RateLimitChecker",
+    "FakeRateLimitChecker",
+    "RedisRateLimitChecker",
+    "tenant_aware_identifier",
+)
 
 _logger = logging.getLogger("entrypoints.middlewares.global_ratelimit")
 
@@ -92,16 +108,107 @@ class FakeRateLimitChecker:
         return True, remaining, 0
 
 
+def tenant_aware_identifier(scope: dict[str, Any]) -> str:
+    """Tenant-aware identifier для rate-limit (S18 W7).
+
+    Приоритет:
+        1. ``X-Tenant-ID`` (multi-tenant deployments).
+        2. ``X-User-ID`` (per-user limits).
+        3. ``scope["client"][0]`` — IP fallback (anonymous traffic).
+
+    Args:
+        scope: ASGI scope (HTTP).
+
+    Returns:
+        Идентификатор (``tenant:<id>``, ``user:<id>``, ``ip:<host>``).
+    """
+    headers = dict(scope.get("headers") or ())
+    tenant = headers.get(b"x-tenant-id")
+    if tenant:
+        return f"tenant:{tenant.decode('latin-1', errors='replace')}"
+    user = headers.get(b"x-user-id")
+    if user:
+        return f"user:{user.decode('latin-1', errors='replace')}"
+    client = scope.get("client") or ("-", 0)
+    host = client[0] if isinstance(client, (list, tuple)) else "-"
+    return f"ip:{host}"
+
+
+class RedisRateLimitChecker:
+    """Production RateLimitChecker через ``fastapi-limiter`` Redis backend (S18 W7).
+
+    Использует sliding-window-counter pattern на Redis: incr+expire под
+    ключом ``ratelimit:{identifier}:{window_bucket}``. Fail-open: при
+    ошибке Redis — pass-through (advisor pattern: не превращать
+    rate-limit в SPoF).
+
+    Args:
+        redis: redis.asyncio.Redis клиент (или совместимый proxy).
+        max_per_window: Лимит запросов в окне.
+        window_seconds: Размер окна в секундах.
+        key_prefix: Префикс Redis-ключей (default ``"ratelimit:"``).
+    """
+
+    def __init__(
+        self,
+        redis: Any,
+        *,
+        max_per_window: int = 100,
+        window_seconds: float = 60.0,
+        key_prefix: str = "ratelimit:",
+    ) -> None:
+        self._redis = redis
+        self._max = max_per_window
+        self._window = window_seconds
+        self._prefix = key_prefix
+
+    async def check(self, identifier: str) -> tuple[bool, int, int]:
+        """Проверить лимит — см. :meth:`RateLimitChecker.check`."""
+        import time  # noqa: PLC0415
+
+        now_bucket = int(time.time() / self._window)
+        key = f"{self._prefix}{identifier}:{now_bucket}"
+        try:
+            current = await self._redis.incr(key)
+            if current == 1:
+                # Set TTL только на первый incr (минимизация Redis round-trips).
+                await self._redis.expire(key, int(self._window) + 1)
+        except Exception as exc:  # noqa: BLE001 — fail-open
+            _logger.warning(
+                "RedisRateLimitChecker failed for identifier=%s: %s",
+                identifier,
+                exc,
+            )
+            return True, self._max, 0
+
+        if current > self._max:
+            return False, 0, int(self._window)
+        return True, self._max - int(current), 0
+
+
 class GlobalRateLimitMiddleware:
-    """ASGI middleware с feature-flag default-OFF.
+    """ASGI middleware с feature-flag default-OFF + per-route override.
+
+    Args:
+        app: Next ASGI app в цепочке.
+        checker: Глобальный :class:`RateLimitChecker` (Redis или Fake).
+        feature_enabled: Lambda → bool. None → читать
+            ``feature_flags.multi_tenant_rate_limit_enabled`` (S18 W7
+            default-OFF).
+        identifier_fn: Callable, извлекающий identifier из ASGI scope.
+            По умолчанию — :func:`tenant_aware_identifier`.
+        route_checkers: Optional ``{path_prefix: RateLimitChecker}`` —
+            per-route override. Longest-prefix match на ``scope["path"]``.
+            Miss → используется ``checker`` (global default).
 
     Использование (FastAPI)::
 
         app.add_middleware(
             GlobalRateLimitMiddleware,
-            checker=FakeRateLimitChecker(max_per_window=100, window_seconds=60),
-            feature_enabled=lambda: settings.global_rate_limit_enabled,
-            identifier_fn=lambda scope: scope.get("headers_dict", {}).get(b"x-tenant-id", b"-").decode(),
+            checker=RedisRateLimitChecker(redis, max_per_window=1000, window_seconds=60),
+            route_checkers={
+                "/api/v1/heavy": FakeRateLimitChecker(max_per_window=10, window_seconds=60),
+            },
         )
     """
 
@@ -112,27 +219,37 @@ class GlobalRateLimitMiddleware:
         checker: RateLimitChecker,
         feature_enabled: Callable[[], bool] | None = None,
         identifier_fn: Callable[[dict[str, Any]], str] | None = None,
+        route_checkers: Mapping[str, RateLimitChecker] | None = None,
     ) -> None:
-        """Создать middleware.
-
-        Args:
-            app: Next ASGI app в цепочке.
-            checker: RateLimitChecker для проверки лимита.
-            feature_enabled: Lambda → bool. None = always enabled.
-            identifier_fn: Callable вытаскивающий identifier из scope.
-                По умолчанию — берёт client.host.
-        """
         self._app = app
         self._checker = checker
-        self._feature_enabled = feature_enabled or (lambda: True)
-        self._identifier_fn = identifier_fn or self._default_identifier
+        self._feature_enabled = feature_enabled or self._default_feature_enabled
+        self._identifier_fn = identifier_fn or tenant_aware_identifier
+        # Сортируем route_checkers по убыванию длины prefix для
+        # longest-prefix-match (тот же паттерн что в TimeoutMiddleware S18 W6).
+        items = tuple((p, c) for p, c in (route_checkers or {}).items())
+        self._route_checkers: tuple[tuple[str, RateLimitChecker], ...] = tuple(
+            sorted(items, key=lambda kv: len(kv[0]), reverse=True)
+        )
 
     @staticmethod
-    def _default_identifier(scope: dict[str, Any]) -> str:
-        """По умолчанию использует client.host из ASGI scope."""
-        client = scope.get("client") or ("-", 0)
-        host = client[0] if isinstance(client, (list, tuple)) else "-"
-        return str(host)
+    def _default_feature_enabled() -> bool:
+        """Lazy-проверка feature-flag ``multi_tenant_rate_limit_enabled``."""
+        try:
+            from src.backend.core.config.features import feature_flags  # noqa: PLC0415
+
+            return bool(
+                getattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
+            )
+        except Exception:  # noqa: BLE001 — best-effort
+            return False
+
+    def _resolve_checker(self, path: str) -> RateLimitChecker:
+        """Longest-prefix-match среди ``route_checkers``; fallback на global."""
+        for prefix, route_checker in self._route_checkers:
+            if path.startswith(prefix):
+                return route_checker
+        return self._checker
 
     async def __call__(
         self,
@@ -146,8 +263,9 @@ class GlobalRateLimitMiddleware:
             return
 
         identifier = self._identifier_fn(scope)
+        checker = self._resolve_checker(scope.get("path", ""))
         try:
-            allowed, remaining, retry_after = await self._checker.check(identifier)
+            allowed, remaining, retry_after = await checker.check(identifier)
         except Exception as exc:  # noqa: BLE001
             # Защитный fallback: если checker упал — пропускаем запрос,
             # чтобы не превратить rate-limit infrastructure в SPoF.
@@ -177,6 +295,8 @@ class GlobalRateLimitMiddleware:
             }
         )
         body = (
-            b'{"detail":"Too Many Requests","retry_after":' + str(retry_after).encode() + b"}"
+            b'{"detail":"Too Many Requests","retry_after":'
+            + str(retry_after).encode()
+            + b"}"
         )
         await send({"type": "http.response.body", "body": body})

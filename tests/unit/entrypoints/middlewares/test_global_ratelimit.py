@@ -98,7 +98,12 @@ async def test_blocked_returns_429() -> None:
     """allowed=False → 429 + Retry-After header."""
     inner = _RecordingApp()
     checker = FakeRateLimitChecker(max_per_window=1, window_seconds=60)
-    middleware = GlobalRateLimitMiddleware(inner, checker=checker)
+    # S18 W7: default `feature_enabled` теперь читает feature-flag
+    # `multi_tenant_rate_limit_enabled` (default-OFF). Тест требует
+    # активное middleware — указываем явный enable.
+    middleware = GlobalRateLimitMiddleware(
+        inner, checker=checker, feature_enabled=lambda: True
+    )
     send = _RecordingSend()
     scope = {"type": "http", "client": ("1.2.3.4", 0)}
     # Первый — разрешён.
@@ -123,7 +128,9 @@ async def test_non_http_scope_pass_through() -> None:
     """Не-HTTP scope (lifespan/websocket) → pass-through."""
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=FakeRateLimitChecker()
+        inner,
+        checker=FakeRateLimitChecker(),
+        feature_enabled=lambda: True,
     )
     send = _RecordingSend()
     await middleware({"type": "lifespan"}, _empty_receive, send)
@@ -139,7 +146,9 @@ async def test_checker_failure_falls_through() -> None:
             raise RuntimeError("Redis is down")
 
     inner = _RecordingApp()
-    middleware = GlobalRateLimitMiddleware(inner, checker=_BrokenChecker())
+    middleware = GlobalRateLimitMiddleware(
+        inner, checker=_BrokenChecker(), feature_enabled=lambda: True
+    )
     send = _RecordingSend()
     await middleware(
         {"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send
@@ -184,6 +193,7 @@ async def test_identifier_fn_custom() -> None:
         inner,
         checker=_Recording(),
         identifier_fn=lambda scope: "tenant-X",
+        feature_enabled=lambda: True,
     )
     send = _RecordingSend()
     await middleware(
