@@ -68,10 +68,12 @@ def render_macros(
         return yaml_text
 
     loader_path = str(search_path or Path.cwd())
-    env = Environment(
+    # YAML output (не HTML); autoescape экранирует <, >, & и сломает
+    # YAML (folded scalars, anchors). См. docstring модуля.
+    env = Environment(  # nosec B701
         loader=FileSystemLoader(loader_path),
         undefined=StrictUndefined,
-        autoescape=False,
+        autoescape=False,  # noqa: S701
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,

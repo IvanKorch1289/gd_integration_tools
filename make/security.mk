@@ -61,14 +61,12 @@ cosign-sign: ## K1 S3 W3: cosign artifact signing (требует ARTIFACT= и K
 	@test -n "$(KEY)" || { echo "[ERROR] Usage: make cosign-sign ARTIFACT=<path> KEY=<key>"; exit 1; }
 	@$(UV_RUN) python tools/checks/cosign_sign.py --artifact $(ARTIFACT) --key $(KEY)
 
-audit-zap: ## К5: OWASP ZAP baseline (требует zap-baseline.py docker)
-	@$(INFO) "Running OWASP ZAP baseline..."
-	@command -v docker >/dev/null 2>&1 || { $(ERROR) "docker not installed"; exit 1; }
-	@docker run --rm --network host -t \
-		-v $(PWD)/.security:/zap/wrk/:rw \
-		ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-		-t $(or $(BASE_URL),http://127.0.0.1:8000) \
-		-c zap-rules.tsv -I || $(INFO) "ZAP completed (alpha: non-blocking)"
+audit-zap: ## K1 S18 W2 (S-L8-6): OWASP ZAP blocking gate — exit 1 при HIGH findings
+	@$(INFO) "Running OWASP ZAP baseline (S-L8-6 blocking: exit 1 при HIGH)..."
+	@$(UV_RUN) python tools/checks/check_owasp_zap.py \
+		--base-url $(or $(BASE_URL),http://127.0.0.1:8000) \
+		--strict
+	@$(SUCCESS) "ZAP gate clean (0 HIGH-severity findings)"
 
 bandit-strict: ## К5: bandit -lll strict (только high-severity)
 	@$(INFO) "Running bandit -lll..."

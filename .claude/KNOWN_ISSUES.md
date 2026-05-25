@@ -1,5 +1,49 @@
 # KNOWN_ISSUES.md
 
+## S18 W2 deps-bump carryover — 2026-05-25 🟡 OPEN
+
+**Контекст**: `[wave:s18/k1-w2-supply-chain-finale]` закрыта через расширение
+`.security/pip-audit-allowlist.txt` (10 новых CVE/GHSA). DoD S18 #3
+формально выполнен (`make security` exit 0 + `make audit-zap` blocking), но
+allowlist уже не отражает желаемое состояние "0 vulnerabilities". Реальный
+bump требует прогона test-suite (~91 failing tests baseline) и проверки
+совместимости с FastAPI / semantic-release.
+
+### Запланированные carryover-bumps
+
+| Package | Текущая | Fix | Wave назначения | Риск |
+|---------|---------|-----|-----------------|------|
+| mistune | 3.2.0 | upstream-blocked / 3.2.1 (для CVE-44897) | post-V22 backlog | low (nbconvert ↔ mistune compat) |
+| gitpython | 3.1.47 | 3.1.50 | post-V22 / совм. с semantic-release | medium |
+| urllib3 | 2.6.3 | 2.7.0 | S18 K5 W5 multi-backend Tier-A wave (patch) | low |
+| idna | 3.13 | 3.15 | S18 K5 W5 (patch) | low |
+| starlette | 0.52.1 | 1.0.1 | post-V22 (FastAPI 0.136.1 compat) | high (major bump) |
+| sqladmin | 0.25.0 | 0.25.1 | S18 K5 W5 (patch) | low |
+| strawberry-graphql | 0.315.2 | 0.315.4 | S18 K5 W5 (patch) | low |
+
+### Связанные CVE/GHSA-ids в allowlist
+
+Полный список: `.security/pip-audit-allowlist.txt` раздел "S18 W2 baseline freeze".
+
+### Когда закрывать
+
+Все 10 CVE должны быть удалены из allowlist либо в S18 K5 W5 (`multi-backend
+tiers` wave — там запланирован deps-bump для Tier-A) либо в отдельной
+post-V22 deps-bump волне. Финальная DoD V22 S20 #3 (pip-audit zero HIGH/
+CRITICAL) требует чистого allowlist на момент `v1.0.0-production`.
+
+### Дополнительный carryover S18 W2
+
+* **secrets-check zero-tolerance**: `make secrets-check` сейчас warn-only
+  (16 baseline findings — fake credentials в test fixtures / DSN templates).
+  Strict-mode требует генерации `.secrets.baseline` через `detect-secrets
+  audit` + переключения target на `--baseline`. Отдельный wave (S19/S20).
+* **bandit-strict**: 1 finding (`jinja_macros.py:71` B701) suppressed inline
+  с `# nosec B701` (легитимно — YAML output, не HTML). Документировано
+  в docstring модуля.
+
+---
+
 ## Phase A AI hardening — 2026-05-25 ✅ CLOSED 8/8
 
 10-блочный execution-план AI-доработок (директива пользователя 2026-05-22).
