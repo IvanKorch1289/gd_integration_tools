@@ -2361,5 +2361,103 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 18 — Operational + Security GAP Carryover (backbone) ──────
+    waf_strict_zero_allowlist: bool = Field(
+        default=False,
+        title="K1 S18 W1: WAF strict — нулевой allowlist (все :external через make_http_client)",
+        description=(
+            "K1 Sprint 18 Wave 1 (PLAN.md V22 §S18). Owner: K1 Security. "
+            "При True tools/check_waf_coverage.py требует пустой allowlist; "
+            "23 callsites из tools/check_waf_coverage_allowlist.txt должны быть "
+            "мигрированы на OutboundHttpClient через core.net.make_http_client(). "
+            "default-OFF до завершения миграции (express_bot / telegram_bot / opa / "
+            "clickhouse / vault_cipher / ml_inference / proxy / imports / webhooks / "
+            "search_providers / Vault×2 / bots×2) и make check-waf-coverage exit 0."
+        ),
+    )
+
+    failing_tests_quarantined_off: bool = Field(
+        default=False,
+        title="K2 S18 W2: failing tests quarantine off (~91 pre-existing tests triage)",
+        description=(
+            "K2 Sprint 18 Wave 2 (PLAN.md V22 §S18). Owner: K2 Resilience+Quality. "
+            "При True CI требует zero quarantined pre-existing failing tests; "
+            "каждый тест должен быть либо fix / либо xfail-с-ADR / либо skip-под-FF. "
+            "default-OFF до завершения triage ~91 теста (coverage ratchet 50→70%)."
+        ),
+    )
+
+    sandbox_amortised_final: bool = Field(
+        default=False,
+        title="K1 S18 W5: plugin trust 2-tier (Tier-A signed / Tier-B sandboxed) — ADR-NEW-6",
+        description=(
+            "K1 Sprint 18 Wave 5 (ADR-NEW-6 / B-4, PLAN.md V22 §S18). Owner: K1 Security. "
+            "При True plugin.toml::trust_tier = 'A' | 'B' обязателен. Tier-A (signed by "
+            "org-CA cosign) — runtime sandbox disabled; isolation через capability-gate "
+            "+ code-review CI + supply-chain. Tier-B (untrusted/external) — strict e2b/"
+            "pyodide. F-2 closure через model change, не sandbox-tuning. "
+            "default-OFF до cosign-signing pipeline integration в make security."
+        ),
+    )
+
+    core_entities_legacy_off: bool = Field(
+        default=False,
+        title="K3 S18 W3: core_entities legacy removal (users/orders/orderkinds final cleanup)",
+        description=(
+            "K3 Sprint 18 Wave 3 (PLAN.md V22 §S18). Owner: K3 Routes. "
+            "При True services/core/{users.py,orders.py,orderkinds.py} удаляются; "
+            "все импортёры переключены на extensions/core_entities/ (S17 W3 carryover). "
+            "default-OFF до 0 импортов legacy путей в src/backend/."
+        ),
+    )
+
+    eventbus_dsl_enabled: bool = Field(
+        default=False,
+        title="K3 S18 W4: RouteBuilder .to_eventbus()/.from_eventbus() DSL",
+        description=(
+            "K3 Sprint 18 Wave 4 (V22 NEW, PLAN.md §S18). Owner: K3 DSL. "
+            "При True активирует RouteBuilder.to_eventbus(topic, payload_ref) + "
+            ".from_eventbus(topic_pattern, ack_mode) + 2 step-type (eventbus_publish / "
+            "eventbus_subscribe). EventBus production backend — S19 W12 (R1.8). "
+            "default-OFF до integration теста через EventBusBackend facade."
+        ),
+    )
+
+    langfuse_production_wired: bool = Field(
+        default=False,
+        title="K4 S18 W1: LangFuse production wiring + cost dashboard",
+        description=(
+            "K4 Sprint 18 Wave 1 (PLAN.md V22 §S18). Owner: K4 AI/Data. "
+            "При True LangFuse callbacks v3 подключены в production (ai_workflow_handlers "
+            "rag_query/multi_agent_supervisor/e2b_execute); AI cost dashboard собирает "
+            "tokens × cost_usd per tenant/workflow. default-OFF до staging-smoke "
+            "с LangFuse instance и cost-dashboard валидации."
+        ),
+    )
+
+    opa_runtime_query_enabled: bool = Field(
+        default=False,
+        title="K1 S18 W3: OPA runtime-query + Casbin tenant-scoped enforcer (S-L8-1/S-L8-2)",
+        description=(
+            "K1 Sprint 18 Wave 3 (PLAN.md V22 §S18, S-L8-1, S-L8-2). Owner: K1 Security. "
+            "При True CapabilityPolicy интегрирован с Casbin tenant-scoped enforcer; "
+            "AuthorizationGateway.opa_step() выполняет runtime-query к OPA-серверу; "
+            "политики живут в infrastructure/policy/opa/policies/*.rego. "
+            "default-OFF до smoke-test allow/deny decision + OPA-server в staging."
+        ),
+    )
+
+    multi_tenant_rate_limit_enabled: bool = Field(
+        default=False,
+        title="K5 S18 W1: global rate-limit middleware (fastapi-limiter + per-tenant)",
+        description=(
+            "K5 Sprint 18 Wave 1 (PLAN.md V22 §S18, P0 Gateway-centralization). "
+            "Owner: K5 Frontend/Ops. При True entrypoints/middlewares/global_rate_limit.py "
+            "RateLimitMiddleware активна: global default + per-route override + per-tenant "
+            "namespace через Casbin/OPA. Базируется на fastapi-limiter (Redis backend). "
+            "default-OFF до интеграции с TenantContext + staging-smoke."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

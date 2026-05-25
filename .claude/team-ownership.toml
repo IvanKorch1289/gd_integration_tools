@@ -1,7 +1,8 @@
-# team-ownership.toml — карта владения файлами Sprint 17 (V22 FINAL)
+# team-ownership.toml — карта владения файлами Sprint 18 (V22 FINAL)
 #
-# Версия: 2026-05-21
-# Источник: PLAN.md V22 §S17 (197–256), ADR-NEW-1..4, GAP-аудит 2026-05-21
+# Версия: 2026-05-25 (S18 backbone)
+# Источник: PLAN.md V22 §S18 (260–305) — Operational + Security GAP Carryover
+# Архив S17: PLAN.md V22 §S17 (197–256), ADR-NEW-1..4, GAP-аудит 2026-05-21
 #
 # Назначение:
 #   - каждая команда имеет owned_paths — единственный owner для PR-review;
@@ -15,16 +16,16 @@
 #   [blockers.<id>] — обязательны: title / owner_team / eta / dod / risk
 
 [meta]
-version = "2026-05-21"
-sprint = "S17"
-source = "PLAN.md V22 §S17 + ADR-NEW-1..4 + GAP-аудит 2026-05-21"
+version = "2026-05-25"
+sprint = "S18"
+source = "PLAN.md V22 §S18 (Operational + Security GAP Carryover) + ADR-NEW-6/-9/-11"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # K1 — Security / Auth / Syntax / TLS
 # ─────────────────────────────────────────────────────────────────────────────
 [team.k1]
-name = "Security/Auth/Syntax/TLS"
-goal = "S17: Python3 except sweep (K-SYN), TLS CERT_REQUIRED (K-TLS), AuthorizationGateway (ADR-NEW-1+4), call_function whitelist (K-ARCH-5), ConfigValidator (D14), backup/DR scaffold (K-OPS-5)."
+name = "Security/Auth/Supply-chain/Trust-tier"
+goal = "S18: WAF allowlist→0 (W1), supply-chain finale + OWASP ZAP blocking (W2), Casbin+OPA runtime-query (W3), JWT blacklist batch-revoke (W4), plugin trust 2-tier ADR-NEW-6 (W5), multi-tenancy M-B reduce ADR-NEW-9 (W6)."
 git_branch_prefix = "team/01-security"
 worktree = ".claude/worktrees/team-01-security"
 owned_paths = [
@@ -46,21 +47,22 @@ owned_paths = [
     "vault/runbooks/disaster_recovery.md",
 ]
 waves = [
-    "s17/k1-w0-python3-except-clause-sweep",
-    "s17/k1-w1-tls-cert-required",
-    "s17/k1-w2-authorization-gateway",
-    "s17/k1-w3-call-function-whitelist-strict",
-    "s17/k1-w4-config-validator",
-    "s17/k1-w5-backup-dr-scaffold",
+    "s18/backbone",
+    "s18/k1-w1-waf-allowlist-tightening",
+    "s18/k1-w2-supply-chain-finale",
+    "s18/k1-w3-casbin-opa-runtime-query",
+    "s18/k1-w4-jwt-blacklist-batch-revoke",
+    "s18/k1-w5-plugin-trust-2tier",
+    "s18/k1-w6-multi-tenancy-mb-reduce",
 ]
 shared_with = []
 
 # ─────────────────────────────────────────────────────────────────────────────
-# K2 — Centralization / Observability / Resilience
+# K2 — Quality / Coverage ramp / Failing tests triage
 # ─────────────────────────────────────────────────────────────────────────────
 [team.k2]
-name = "Centralization/Observability/Resilience"
-goal = "S17: MetricsRegistry (D11), TaskRegistry coverage (D13a), APScheduler observability (D13b), ResilienceCoordinator (W5)."
+name = "Quality/Coverage/FailingTests"
+goal = "S18: coverage ratchet 50→70% (W1), ~91 failing tests triage fix/xfail/skip (W2). К1 ≥75% / К2 ≥80% / К3 ≥75% / К4 ≥65% / К5 ≥60%."
 git_branch_prefix = "team/02-observability"
 worktree = ".claude/worktrees/team-02-observability"
 owned_paths = [
@@ -73,20 +75,17 @@ owned_paths = [
     "tools/checks/check_metrics_registry.py",
 ]
 waves = [
-    "s17/k2-w1-metrics-registry",
-    "s17/k2-w2-metrics-migrate",
-    "s17/k2-w3-task-registry-coverage",
-    "s17/k2-w4-apscheduler-observability",
-    "s17/k2-w5-resilience-coordinator-class",
+    "s18/k2-w1-coverage-ramp-70",
+    "s18/k2-w2-failing-tests-triage",
 ]
-shared_with = ["k7"]
+shared_with = ["k7", "k9"]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# K3 — Routes / RequestContext / Tenant / Correlation
+# K3 — DSL / Routes / PII middleware / EventBus / core_entities cleanup
 # ─────────────────────────────────────────────────────────────────────────────
 [team.k3]
-name = "Routes/RequestContext/Tenant/Correlation"
-goal = "S17: routes capability-gate (K-ARCH-3), tenant_aware strict (K-ARCH-4), RequestContext (ADR-NEW-3), middleware registry (ADR-NEW-2), correlation_id end-to-end (D12), Saga state store (K-OPS-1)."
+name = "DSL/Routes/PII/EventBus"
+goal = "S18: PII response middleware (W1, S-L8-4), per-route timeout DSL (W2), core_entities legacy cleanup (W3), EventBus DSL .to_eventbus/.from_eventbus (W4)."
 git_branch_prefix = "team/03-routes"
 worktree = ".claude/worktrees/team-03-routes"
 owned_paths = [
@@ -102,36 +101,38 @@ owned_paths = [
     "tools/migrate_request_context.py",
 ]
 waves = [
-    "s17/k3-w0-routes-capability-gate",
-    "s17/k3-w0-routes-tenant-aware",
-    "s17/k3-w1-unified-request-context",
-    "s17/k3-w2-middleware-registry",
-    "s17/k3-w3-correlation-id-end-to-end",
-    "s17/k3-w4-saga-state-store",
+    "s18/k3-w1-pii-response-middleware",
+    "s18/k3-w2-per-route-timeout",
+    "s18/k3-w3-core-entities-final-cleanup",
+    "s18/k3-w4-eventbus-dsl-methods",
 ]
-shared_with = []
+shared_with = ["k7"]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# K4 — AI / RAG / LLM (dormant в S17, активна в S18+)
+# K4 — AI / RAG / LLM (активная роль в S18: handlers + LangFuse + Multimodal + Guardrails)
 # ─────────────────────────────────────────────────────────────────────────────
 [team.k4]
 name = "AI/RAG/LLM"
-goal = "S17 dormant: poll-only поддержка ai_pr_review, arch_map_llm_search. Активные роли — S18 GenAI strict capabilities + Multimodal RAG."
+goal = "S18: ai_workflow handlers (rag_query/multi_agent_supervisor/e2b_execute) + LangFuse prod wiring + cost dashboard (W1), Multimodal RAG pipeline (W2, S11 carryover), GuardrailsEnforcer (W3, S-L4-2)."
 git_branch_prefix = "team/04-ai"
 worktree = ".claude/worktrees/team-04-ai"
 owned_paths = [
     "src/backend/services/ai/**",
     "src/backend/core/ai/**",
 ]
-waves = []
+waves = [
+    "s18/k4-w1-ai-workflow-handlers",
+    "s18/k4-w2-multimodal-rag-pipeline",
+    "s18/k4-w3-guardrails-enforcer",
+]
 shared_with = ["k7"]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# K5 — Admin UI / K8s scaffold / DB migration init
+# K5 — Gateway-centralization / Helm / Layer / Stub fidelity / Multi-backend Tier
 # ─────────────────────────────────────────────────────────────────────────────
 [team.k5]
-name = "Admin UI / K8s / DB-migration"
-goal = "S17: tenant feature-flag toggle UI (D9), K8s manifests scaffold (K-OPS-2), DB migration init-container (K-OPS-4), pre-prod-check v2 scaffold (K-OPS-3)."
+name = "Gateway/Helm/Layer/Backends"
+goal = "S18: global rate-limit MW (W1), pyi-stub fidelity (W2, F-5), layer violations 73→0 + composition-root → infrastructure (W3), K8s Helm chart finale (W4), Multi-Backend Tier-A/B ADR-NEW-11 (W5)."
 git_branch_prefix = "team/05-frontend-ops"
 worktree = ".claude/worktrees/team-05-frontend-ops"
 owned_paths = [
@@ -143,10 +144,11 @@ owned_paths = [
     "tools/manage.py",
 ]
 waves = [
-    "s17/k5-w1-tenant-feature-toggle-ui",
-    "s17/k5-w2-k8s-manifests",
-    "s17/k5-w3-db-migration-init-container",
-    "s17/k9-w1-pre-prod-check-v2-scaffold",
+    "s18/k5-w1-rate-limit-global-mw",
+    "s18/k5-w2-pyi-stub-fidelity",
+    "s18/k5-w3-layer-violations-protocol-extraction",
+    "s18/k5-w4-k8s-helm-chart-finale",
+    "s18/k5-w5-multi-backend-tiers",
 ]
 shared_with = ["k9"]
 
@@ -179,7 +181,7 @@ owned_paths = [
     "src/backend/infrastructure/observability/structlog_*.py",
 ]
 waves = [
-    "s17/k7-w1-observability-fixes",
+    "s18/k7-w1-observability-cardinality-tenant",
 ]
 shared_with = ["k2", "k4"]
 
@@ -211,7 +213,7 @@ owned_paths = [
     "Makefile",
 ]
 waves = [
-    "s17/k9-w1-pre-prod-check-v2-scaffold",
+    "s18/k9-w1-multi-environment-configs",
 ]
 shared_with = ["k5"]
 
