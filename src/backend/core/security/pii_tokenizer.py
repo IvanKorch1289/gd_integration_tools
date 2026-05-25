@@ -3,7 +3,7 @@
 Назначение
 ----------
 Reversible PII токенизация поверх Presidio (S24 W1 ADR-NEW-16) для
-банковского use-case'а:
+банковского use-case'''а:
 
     Иванов И.И., тел. +7-999-123-45-67, договор № 12345/CR-001
     ↓ mask_reversible (Presidio detect + UUIDv7 token + AES-GCM encrypt)
@@ -19,7 +19,7 @@ at-rest в Redis (TTL = ``policy.ttl_s``, ключ через :mod:`infrastructu
 
 Capability
 ----------
-``pii.tokenize.reversible.<scope>`` — обязательна для workflow'ов, использующих
+``pii.tokenize.reversible.<scope>`` — обязательна для workflow'''ов, использующих
 ``unmask`` round-trip. ``<scope>`` = доменная область (``banking``, ``hr``,
 ``medical``).
 
@@ -31,16 +31,19 @@ Audit-event
 См. также
 ---------
 * docs/adr/0068-pii-tokenizer-reversible.md;
-* :class:`infrastructure.security.token_registry.TokenRegistry`
+* :class:`infrastructure.security.token_registry.RedisTokenRegistry`
   (Redis-backed storage);
 * :class:`services.ai.pii.presidio_analyzer` (S24 W1 — engine backend).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import TYPE_CHECKING, Literal
+import logging
+import re
+import uuid
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -51,6 +54,12 @@ __all__ = (
     "PIITokenizer",
     "TokenMap",
 )
+
+_logger = logging.getLogger("core.security.pii_tokenizer")
+
+# Presidio выдаёт placeholders формата ``[PERSON_1]`` / ``[INN_3]``;
+# extract TYPE для перезаписи в UUIDv7-token ``<PERSON_a8f3>``.
+_PRESIDIO_PLACEHOLDER_RE = re.compile(r"\[([A-Z_]+)_\d+\]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,11 +134,25 @@ class PIIPolicy:
     scope: str = "default"
 
 
+def _uuid_short() -> str:
+    """UUIDv7-короткий suffix (8 hex chars) для placeholder.
+
+    Fallback на UUID4 на Python <3.14, где :func:`uuid.uuid7` отсутствует.
+    """
+    uuid7 = getattr(uuid, "uuid7", None)
+    if uuid7 is not None:
+        return uuid7().hex[:8]
+    return uuid.uuid4().hex[:8]
+
+
 class PIITokenizer:
     """Reversible PII tokenization через Presidio + AES-GCM TokenRegistry.
 
-    Scaffold S25 W4 (ADR-NEW-21). Lazy-import Presidio (приходит из S24 W1
-    при ``presidio_pii_enabled=True``).
+    Sprint 25 W4 (ADR-NEW-21). Lazy-зависимости:
+
+    * :class:`PresidioSanitizerAdapter` (приходит из S24 W1) — детектор PII;
+    * :class:`RedisTokenRegistry` (S25 W4) — AES-GCM шифрование значений;
+    * :class:`AuditService` (S17 K3) — emit ``ai.pii.tokenize.*``.
 
     Use-cases:
 
@@ -139,120 +162,273 @@ class PIITokenizer:
 
     Пример::
 
-        tokenizer = PIITokenizer(token_registry=registry, audit=audit_service)
+        tokenizer = PIITokenizer(
+            token_registry=registry,
+            audit=audit_service,
+            presidio_analyzer=presidio_adapter,
+        )
         masked, token_map = await tokenizer.mask_reversible(
             "Иванов И.И., договор № 12345",
             policy=PIIPolicy(name="ru_strict_reversible"),
         )
         completion = await ai_gateway.invoke(...)  # LLM работает с masked
         unmasked = await tokenizer.unmask(completion, token_map)
-
-    Notes:
-        Scaffold-методы поднимают ``NotImplementedError`` до подключения
-        ``presidio-analyzer`` через S24 W1 ADR-NEW-16.
     """
 
     def __init__(
         self,
         *,
-        token_registry: object | None = None,
-        audit: object | None = None,
-        presidio_analyzer: object | None = None,
+        token_registry: Any | None = None,
+        audit: Any | None = None,
+        presidio_analyzer: Any | None = None,
     ) -> None:
         """Инициализация.
 
         Args:
-            token_registry: :class:`TokenRegistry` (Redis + AES-GCM);
-                при ``None`` — TokenMap живёт только в-памяти (testkit).
-            audit: Unified ``AuditService`` для эмиссии
-                ``ai.pii.tokenize.{mask,unmask}`` (S17/K3).
-            presidio_analyzer: Presidio ``AnalyzerEngine`` (S24 W1);
-                при ``None`` — fallback на legacy regex-маскер из
-                :mod:`core.security.pii_masker`.
+            token_registry: :class:`RedisTokenRegistry` (Redis + AES-GCM);
+                при ``None`` — TokenMap живёт только в-памяти (testkit) с
+                синтетическим ``EncryptedValue`` (``key_version=0`` — sentinel).
+            audit: :class:`AuditService` для эмиссии
+                ``ai.pii.tokenize.{mask,unmask}`` (S17/K3); при ``None`` — no-op.
+            presidio_analyzer: :class:`PresidioSanitizerAdapter` (S24 W1).
+                Обязателен для ``mask_*`` методов; при ``None`` они поднимают
+                ``RuntimeError``.
         """
         self._token_registry = token_registry
         self._audit = audit
         self._presidio = presidio_analyzer
+
+    # ─── mask / unmask ────────────────────────────────────────────────────
 
     async def mask_reversible(
         self, text: str, policy: PIIPolicy
     ) -> tuple[str, TokenMap]:
         """Reversible PII tokenization.
 
+        Алгоритм:
+            1. Presidio детектирует PII → ``SanitizationResult`` с placeholders
+               формата ``[PERSON_1]`` и mapping ``placeholder → original``.
+            2. Для каждой entity: генерируем UUIDv7-short suffix →
+               формируем ``<{TYPE}_{suffix}>`` (стабильно уникальный токен).
+            3. Шифруем ``original`` через ``token_registry.encrypt_value`` →
+               :class:`EncryptedValue`.
+            4. Перезаписываем ``[PERSON_1]`` → ``<PERSON_a8f3>`` в тексте.
+            5. Возвращаем ``(masked_text, TokenMap)``.
+
         Args:
             text: Исходный текст для tokenization.
             policy: :class:`PIIPolicy` (язык, entity types, scope).
 
         Returns:
-            Tuple ``(masked_text, token_map)``:
-
-            * ``masked_text`` — текст с placeholders
-              (``"Уважаемый <PERSON_a8f3>"``);
-            * ``token_map`` — :class:`TokenMap` для :meth:`unmask`.
+            Tuple ``(masked_text, token_map)``.
 
         Raises:
-            CapabilityDeniedError: При отсутствии
-                ``pii.tokenize.reversible.<scope>`` в plugin.toml.
-            NotImplementedError: Полная реализация — S25 W4
-                (Presidio integration).
+            RuntimeError: при отсутствии ``presidio_analyzer`` в DI.
         """
-        del text, policy
-        raise NotImplementedError("S25 W4: Presidio + AES-GCM integration")
+        if not text:
+            return text, TokenMap(
+                tokens={},
+                policy_name=policy.name,
+                created_at=datetime.now(UTC),
+                ttl_s=policy.ttl_s,
+            )
+        if self._presidio is None:
+            raise RuntimeError(
+                "PIITokenizer.mask_reversible requires presidio_analyzer "
+                "(install gd_integration_tools[security-pii])"
+            )
+
+        result = await self._presidio.sanitize_async(text, language=policy.language)
+        masked_text = result.sanitized_text
+        new_tokens: dict[str, EncryptedValue] = {}
+        entity_types_set: set[str] = set()
+
+        for presidio_placeholder, original in result.replacements.items():
+            match = _PRESIDIO_PLACEHOLDER_RE.fullmatch(presidio_placeholder)
+            if not match:
+                _logger.debug(
+                    "skipping unrecognized placeholder format: %r",
+                    presidio_placeholder,
+                )
+                continue
+            entity_type = match.group(1)
+            entity_types_set.add(entity_type)
+            new_placeholder = f"<{entity_type}_{_uuid_short()}>"
+            encrypted = self._encrypt(original)
+            new_tokens[new_placeholder] = encrypted
+            masked_text = masked_text.replace(presidio_placeholder, new_placeholder, 1)
+
+        token_map = TokenMap(
+            tokens=new_tokens,
+            policy_name=policy.name,
+            created_at=datetime.now(UTC),
+            ttl_s=policy.ttl_s,
+        )
+        await self._emit_audit_safe(
+            event="ai.pii.tokenize.mask",
+            action="mask",
+            outcome="success",
+            details={
+                "policy_name": policy.name,
+                "scope": policy.scope,
+                "reversible": True,
+                "entity_types": sorted(entity_types_set),
+                "token_count": len(new_tokens),
+            },
+        )
+        return masked_text, token_map
 
     async def mask_irreversible(self, text: str, policy: PIIPolicy) -> str:
         """Irreversible PII masking (для audit / Langfuse traces).
 
-        Использует generic placeholders (``"<PERSON>"``, ``"<PHONE>"``)
+        Использует generic placeholders (``"<PERSON>"``, ``"<PHONE_NUMBER>"``)
         без uniqueness — нельзя восстановить.
 
         Args:
             text: Исходный текст для маскировки.
-            policy: :class:`PIIPolicy`.
+            policy: :class:`PIIPolicy` (используется ``language`` и ``scope``).
 
         Returns:
             Masked text (без TokenMap).
 
         Raises:
-            NotImplementedError: S25 W4 (Presidio integration).
+            RuntimeError: при отсутствии ``presidio_analyzer`` в DI.
         """
-        del text, policy
-        raise NotImplementedError("S25 W4: irreversible mask via Presidio")
+        if not text:
+            return text
+        if self._presidio is None:
+            raise RuntimeError(
+                "PIITokenizer.mask_irreversible requires presidio_analyzer "
+                "(install gd_integration_tools[security-pii])"
+            )
+
+        result = await self._presidio.sanitize_async(text, language=policy.language)
+        masked_text = _PRESIDIO_PLACEHOLDER_RE.sub(
+            lambda m: f"<{m.group(1)}>", result.sanitized_text
+        )
+        await self._emit_audit_safe(
+            event="ai.pii.tokenize.mask",
+            action="mask",
+            outcome="success",
+            details={
+                "policy_name": policy.name,
+                "scope": policy.scope,
+                "reversible": False,
+                "token_count": len(result.replacements),
+            },
+        )
+        return masked_text
 
     async def unmask(self, masked_text: str, token_map: TokenMap) -> str:
-        """Восстановление исходного текста из masked + TokenMap.
+        """Восстановление исходного текста из ``masked_text`` + ``token_map``.
+
+        Для каждого ``placeholder ∈ token_map.tokens`` извлекает
+        :class:`EncryptedValue` и подменяет в тексте на decrypted plaintext.
+        При ``decrypt_value() = None`` (key rotation gap / tag mismatch) —
+        placeholder остаётся в выводе и эмитится ``decrypt_failed``.
 
         Args:
             masked_text: Текст с placeholders из :meth:`mask_reversible`.
             token_map: :class:`TokenMap` из той же mask-операции.
 
         Returns:
-            Восстановленный исходный текст.
-
-        Raises:
-            CapabilityDeniedError: При отсутствии
-                ``pii.tokenize.reversible.<scope>`` в plugin.toml.
-            TokenMapExpiredError: TTL TokenMap истёк (Redis cleanup).
-            NotImplementedError: S25 W4 (AES-GCM decrypt).
+            Восстановленный исходный текст. Placeholders, для которых
+            decrypt не удался, остаются на месте.
         """
-        del masked_text, token_map
-        raise NotImplementedError("S25 W4: AES-GCM decrypt + placeholder replace")
+        if not token_map.tokens:
+            return masked_text
+
+        result_text = masked_text
+        restored = 0
+        failed = 0
+        for placeholder, encrypted in token_map.tokens.items():
+            original = self._decrypt(encrypted)
+            if original is None:
+                failed += 1
+                continue
+            if placeholder in result_text:
+                result_text = result_text.replace(placeholder, original)
+                restored += 1
+
+        await self._emit_audit_safe(
+            event="ai.pii.tokenize.unmask",
+            action="unmask",
+            outcome="success" if failed == 0 else "failure",
+            details={
+                "policy_name": token_map.policy_name,
+                "tokens_restored": restored,
+                "tokens_failed": failed,
+            },
+        )
+        return result_text
 
     async def cleanup_expired(self, ttl_s: int) -> int:
-        """Удалить expired :class:`TokenMap` из Redis (TTL > ``ttl_s``).
+        """Триггер cleanup просроченных TokenMap в Redis (delegated to registry).
 
-        Запускается из :class:`TaskRegistry` (фоновый cleanup-loop).
+        Redis сам удаляет expired через TTL; этот метод возвращает число
+        живых записей под prefix (observability для cleanup-loop).
 
         Args:
-            ttl_s: TTL (сек), TokenMap старше — удаляются.
+            ttl_s: Зарезервированный параметр (TTL уже задан при ``store``).
 
         Returns:
-            Число удалённых TokenMap.
-
-        Raises:
-            NotImplementedError: S25 W4 (TokenRegistry cleanup hook).
+            Число живых записей под prefix (0 если registry не задан).
         """
         del ttl_s
-        raise NotImplementedError("S25 W4: TokenRegistry cleanup")
+        if self._token_registry is None:
+            return 0
+        return await self._token_registry.cleanup_expired()
+
+    # ─── internal helpers ─────────────────────────────────────────────────
+
+    def _encrypt(self, plaintext: str) -> EncryptedValue:
+        """Шифрует ``plaintext`` через TokenRegistry (или sentinel при testkit).
+
+        Если ``token_registry`` не задан (testkit / unit-тест без crypto-stack) —
+        возвращает sentinel :class:`EncryptedValue` с ``key_version=0`` и
+        ``ciphertext`` = utf-8 bytes (decrypt в :meth:`_decrypt` симметричен).
+        """
+        if self._token_registry is None:
+            return EncryptedValue(
+                ciphertext=plaintext.encode("utf-8"),
+                nonce=b"\x00" * 12,
+                tag=b"\x00" * 16,
+                key_version=0,
+            )
+        return self._token_registry.encrypt_value(plaintext)
+
+    def _decrypt(self, value: EncryptedValue) -> str | None:
+        """Дешифрует ``value`` через TokenRegistry (или sentinel при testkit)."""
+        if self._token_registry is None:
+            if value.key_version != 0:
+                return None
+            try:
+                return value.ciphertext.decode("utf-8")
+            except UnicodeDecodeError:
+                return None
+        return self._token_registry.decrypt_value(value)
+
+    async def _emit_audit_safe(
+        self,
+        *,
+        event: str,
+        action: str,
+        outcome: str,
+        details: dict[str, Any],
+    ) -> None:
+        """Безопасный emit — никогда не ломает основной flow."""
+        if self._audit is None:
+            return
+        try:
+            await self._audit.emit(
+                event=event,
+                action=action,
+                outcome=outcome,
+                resource="pii_tokenizer",
+                details=details,
+            )
+        except Exception as exc:  # noqa: BLE001 — audit не должен ломать pipeline
+            _logger.debug("audit emit failed for %s: %r", event, exc)
 
     def _supported_entity_types(self, language: str) -> "Sequence[str]":
         """Список поддерживаемых entity types для языка.

@@ -1,10 +1,16 @@
 """Smoke-тесты scaffold :class:`PIITokenizer` (Sprint 25 W4, ADR-NEW-21).
 
-Проверяют:
+Покрывают:
 
-* импорт классов и dataclass'ов;
-* PIIPolicy defaults (ru-banking entity types);
-* scaffold-методы поднимают ``NotImplementedError`` до Presidio integration.
+* импорт классов и dataclass'''ов;
+* :class:`PIIPolicy` defaults (ru-banking entity types);
+* :class:`PIITokenizer` без deps: ``mask_*`` поднимает RuntimeError
+  при отсутствии ``presidio_analyzer``; ``unmask`` с пустым TokenMap —
+  возвращает входной текст;
+* :meth:`PIITokenizer._supported_entity_types` различает ru / en.
+
+Полноценный round-trip с Presidio + AES-GCM — отдельный набор
+:mod:`tests.unit.core.security.test_pii_tokenizer_roundtrip` (S25 W4).
 """
 
 from __future__ import annotations
@@ -72,31 +78,31 @@ def test_token_map_dataclass() -> None:
 
 
 def test_pii_tokenizer_construction_without_deps() -> None:
-    """PIITokenizer конструируется без backend'ов (все Optional)."""
+    """PIITokenizer конструируется без backend'''ов (все Optional)."""
     tokenizer = PIITokenizer()
     assert tokenizer is not None
 
 
 @pytest.mark.asyncio
-async def test_mask_reversible_not_implemented() -> None:
-    """mask_reversible scaffold поднимает NotImplementedError (S24 W1 backend)."""
+async def test_mask_reversible_requires_presidio_analyzer() -> None:
+    """Без presidio_analyzer mask_reversible поднимает RuntimeError."""
     tokenizer = PIITokenizer()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(RuntimeError, match="presidio_analyzer"):
         await tokenizer.mask_reversible(
             "Иванов И.И.", PIIPolicy(name="ru_strict_reversible")
         )
 
 
 @pytest.mark.asyncio
-async def test_unmask_not_implemented() -> None:
-    """unmask scaffold поднимает NotImplementedError."""
+async def test_unmask_with_empty_token_map_returns_input() -> None:
+    """unmask с пустым TokenMap возвращает входной текст без изменений."""
     tokenizer = PIITokenizer()
     now = datetime.now(UTC)
     token_map = TokenMap(
         tokens={}, policy_name="ru_strict_reversible", created_at=now, ttl_s=3600
     )
-    with pytest.raises(NotImplementedError):
-        await tokenizer.unmask("<PERSON_a8f3>", token_map)
+    result = await tokenizer.unmask("<PERSON_a8f3> подал заявку", token_map)
+    assert result == "<PERSON_a8f3> подал заявку"
 
 
 def test_supported_entity_types_distinguishes_ru_en() -> None:
