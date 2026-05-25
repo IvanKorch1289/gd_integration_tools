@@ -177,7 +177,15 @@ class RAGService:
         top_k: int = 5,
         namespace: str | None = None,
     ) -> str:
-        """Inject RAG-контекста в промпт с поддержкой L1/L2 cache."""
+        """Inject RAG-контекста в промпт с поддержкой L1/L2 cache.
+
+        Block 3.3 (gap-ai-3.3, ADR-0074): при включённом
+        ``rag_settings.source_attribution_enabled`` (default-ON) к каждому
+        chunk в augmented prompt добавляется маркер ``[источник: <source>]``
+        с приоритетом ``metadata.source`` → ``metadata.filename`` →
+        ``metadata.doc_id`` → ``id``. LLM получает explicit attribution
+        для each cited fact — критично для трассировки в банковском домене.
+        """
         tenant_key = self._cache_key(
             system_prompt=system_prompt, query=query, top_k=top_k, namespace=namespace
         )
@@ -194,8 +202,7 @@ class RAGService:
         if not results:
             answer = f"{system_prompt}\n\nВопрос: {query}" if system_prompt else query
         else:
-            context_parts = [r["document"] for r in results if r.get("document")]
-            context = "\n---\n".join(context_parts)
+            context = _format_context_with_sources(results)
             answer = (
                 f"{system_prompt}\n\n"
                 f"Контекст из базы знаний:\n{context}\n\nВопрос: {query}"
@@ -338,6 +345,57 @@ class RAGService:
         except Exception as exc:  # noqa: BLE001
             logger.warning("count(%s) failed: %s", collection, exc)
             return 0
+
+
+def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
+    """Block 3.3 (gap-ai-3.3, ADR-0074): format chunks с source-маркерами.
+
+    При ``rag_settings.source_attribution_enabled=True`` (default) — каждый
+    chunk обогащается маркером ``[источник: <source_id>]``. Source-id
+    извлекается с приоритетом:
+        1. ``chunk.metadata.source`` (явный source);
+        2. ``chunk.metadata.filename`` (filename из ingest);
+        3. ``chunk.metadata.doc_id`` (legacy);
+        4. ``chunk.id`` (fallback).
+
+    При выключенном flag — passthrough (старый формат без source).
+
+    Args:
+        results: chunks от RAGService.search.
+
+    Returns:
+        Concatenated context string с source-маркерами либо без.
+    """
+    try:
+        from src.backend.core.config.rag import rag_settings
+
+        attribution_on = bool(
+            getattr(rag_settings, "source_attribution_enabled", True)
+        )
+    except Exception:  # noqa: BLE001
+        attribution_on = True
+
+    parts: list[str] = []
+    for chunk in results:
+        document = chunk.get("document")
+        if not document:
+            continue
+        if not attribution_on:
+            parts.append(str(document))
+            continue
+        source = _extract_source_id(chunk)
+        parts.append(f"{document}\n[источник: {source}]" if source else str(document))
+    return "\n---\n".join(parts)
+
+
+def _extract_source_id(chunk: dict[str, Any]) -> str:
+    """Извлекает source-id из chunk.metadata с приоритетом source→filename→doc_id→id."""
+    metadata = chunk.get("metadata") or {}
+    for key in ("source", "filename", "doc_id"):
+        value = metadata.get(key)
+        if value:
+            return str(value)
+    return str(chunk.get("id") or "")
 
 
 def _filter_by_embedding_version(
