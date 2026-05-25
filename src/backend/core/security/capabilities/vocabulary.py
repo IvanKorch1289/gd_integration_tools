@@ -485,4 +485,15 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
+    vocab.register(
+        CapabilityDef(
+            name="skill.invoke",
+            matcher=dot_glob,
+            description=(
+                "Вызов AI skill через SkillRegistry (ADR-NEW-22, S26 W5); "
+                "scope = skill-id pattern (``credit.score.calculate``, "
+                "``credit.*``) или '*' (S27 W3 DSL .skill_invoke())."
+            ),
+        )
+    )
     return vocab
