@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from enum import StrEnum
 from typing import Annotated
 
@@ -92,7 +92,9 @@ def extract_admin_roles(auth_context: AuthContext | None) -> frozenset[AdminRole
     return frozenset(roles)
 
 
-def require_admin(roles: tuple[AdminRole, ...]):
+def require_admin(
+    roles: tuple[AdminRole, ...],
+) -> Callable[[Request], Awaitable[AuthContext]]:
     """Фабрика FastAPI-зависимостей — требует одну из указанных ролей.
 
     ``SUPER_ADMIN`` имеет неявный доступ ко всем admin-endpoints.

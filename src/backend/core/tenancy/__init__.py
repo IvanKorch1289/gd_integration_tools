@@ -50,7 +50,7 @@ class tenant_scope:
         self._token = _current.set(self._ctx)
         return self._ctx
 
-    def __exit__(self, *args) -> None:
+    def __exit__(self, *args: object) -> None:
         if self._token is not None:
             _current.reset(self._token)
 

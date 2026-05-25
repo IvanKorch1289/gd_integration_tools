@@ -120,7 +120,7 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         """Load raw data from source."""
         pass
 
-    def _handle_error(self, error: Exception):
+    def _handle_error(self, error: Exception) -> None:
         """Handle errors during data loading."""
         import logging
 

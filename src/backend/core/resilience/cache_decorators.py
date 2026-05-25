@@ -89,7 +89,9 @@ def cached(
                 return _format_key(key, args, kwargs)  # type: ignore[arg-type]
 
         # Подготавливаем underlying CachingDecorator с custom key_builder.
-        def _underlying_key(_func, args, kwargs) -> str:
+        def _underlying_key(
+            _func: Any, args: tuple[Any, ...], kwargs: dict[str, Any]
+        ) -> str:
             return key_builder(*args, **kwargs)
 
         from src.backend.infrastructure.decorators.caching.decorator import (

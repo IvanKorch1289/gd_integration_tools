@@ -628,6 +628,24 @@ module = [
 ignore_missing_imports = true
 
 
+# Wave [wave:s18/w0-goal-driven-sweep-9-mypy-no-untyped-def-core]:
+# core/ — hardened-зона: no-untyped-def обязателен для всех публичных
+# функций. Глобальный disable_error_code не применяется к этим модулям;
+# код-владельцы добавляют аннотации сразу при изменении.
+[[tool.mypy.overrides]]
+module = "src.backend.core.*"
+disable_error_code = [
+    "override",
+    "arg-type",
+    "assignment",
+    "import-untyped",
+    "union-attr",
+    "var-annotated",
+    "call-arg",
+    "call-overload",
+]
+
+
 [tool.ruff]
 line-length = 88
 target-version = "py314"

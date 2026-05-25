@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from src.backend.core.auth.saml_backend import SamlAuthResult, SamlBackend
@@ -72,7 +73,12 @@ class SamlSpHandler:
             redirect_url=url, request_id=request_id, relay_state=relay_state
         )
 
-    def consume_acs(self, *, request_id: str, validator_factory) -> SamlAuthResult:
+    def consume_acs(
+        self,
+        *,
+        request_id: str,
+        validator_factory: Callable[..., SamlAuthResult],
+    ) -> SamlAuthResult:
         """Обработать SAMLResponse в ACS-endpoint.
 
         Args:
