@@ -1,5 +1,34 @@
 # KNOWN_ISSUES.md
 
+## S18 W14 Multi-tenancy M-B scope reduction — 2026-05-25 ✅ LANDED
+
+**Контекст**: `[wave:s18/k1-w6-multi-tenancy-mb-reduce]` (ADR-NEW-9 / B-6).
+Multi-tenancy scope сужен до M-B (Multi-BU одного банка). Per-tenant
+cryptographic isolation отложена до M-C use case (см. revert-path).
+
+### Что осталось активным (M-B scope)
+
+- `TenantContext` + ACL в коде (BU-разграничение).
+- audit `tenant_id` label (S17 W11 DEFAULT_LABELS).
+- per-BU rate-limit (S18 K5 W1 — `multi_tenant_rate_limit_enabled`).
+- per-BU Casbin/OPA policies (S17 ADR-NEW-1 + S18 K1 W3).
+- RLS Postgres (S21 K1 W1 — `RLS_POSTGRES_ENFORCE`).
+
+### Что исключено в V22
+
+- `infrastructure/security/tenant_encryption.py` — не создавалась
+  (cryptographic separation отложена).
+- IDS-per-tenant — общий SIEM через Graylog достаточен для M-B.
+
+### Revert-path
+
+См. `post-v22-backlog/m-c-encryption.md` для детального плана M-C:
+- Per-tenant DEK через Vault Transit.
+- pgcrypto + DEK wrapper.
+- Triggers: 152-ФЗ КЗ-1, business SLA per-tenant KMS, audit findings.
+
+---
+
 ## S18 W10+W11 coverage + failing-tests carryover — 2026-05-25 🟡 OPEN
 
 **Контекст**: `[wave:s18/k2-w1-coverage-ramp-70]` + `[wave:s18/k2-w2-failing-tests-triage]`
