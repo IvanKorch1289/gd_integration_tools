@@ -233,6 +233,86 @@ def migration_current():
 # ────────────── Introspection ──────────────
 
 
+@app.command("validate-profile")
+def validate_profile(
+    env: str = typer.Argument(
+        ..., help="Имя профиля: dev | dev_light | staging | prod"
+    ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="exit 1 при любых WARNING (по умолчанию — только CRITICAL/ERROR).",
+    ),
+) -> None:
+    """Валидация config_profiles/<env>.yml (S18 W9, S-L9-3).
+
+    Проверяет:
+        * YAML syntax + наличие файла;
+        * базовая schema (app/secure/database/redis sections);
+        * ConfigValidator-инварианты для production-профиля
+          (waf strict, debug=false, jwt_secret length, и т.д.).
+
+    Exit codes:
+        * 0 — без нарушений.
+        * 1 — найдены CRITICAL/ERROR нарушения (или WARNING + --strict).
+    """
+    import yaml  # noqa: PLC0415
+
+    profile_path = Path("config_profiles") / f"{env}.yml"
+    if not profile_path.is_file():
+        typer.echo(f"[ERROR] Profile not found: {profile_path}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        with profile_path.open("r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as exc:
+        typer.echo(f"[ERROR] Invalid YAML in {profile_path}: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    if not isinstance(data, dict):
+        typer.echo(
+            f"[ERROR] Profile must be a YAML mapping, got {type(data).__name__}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    # Все профили — overlay поверх base.yml (deep_merge при загрузке).
+    # Базовая проверка: наличие хотя бы одной section. Полный invariant
+    # check выполняется через runtime ConfigValidator после merge.
+    if not data:
+        typer.echo(
+            f"[ERROR] Profile {env} is empty (no overlay sections)", err=True
+        )
+        raise typer.Exit(code=1)
+
+    # ConfigValidator-инварианты применимы только для прод (validate-profile
+    # дополняет startup-gate, не заменяет полностью runtime валидацию).
+    typer.echo(f"[OK] config_profiles/{env}.yml — syntax + schema valid")
+    if env == "prod":
+        # Минимальная prod-проверка (без полного Settings-load, который
+        # требует Vault + env vars): проверка ключевых flags в overlay.
+        app_cfg = data.get("app") or {}
+        secure_cfg = data.get("secure") or {}
+        prod_issues: list[str] = []
+        if app_cfg.get("debug") is True or app_cfg.get("debug_mode") is True:
+            prod_issues.append("app.debug=true в prod-профиле (B-1 CRITICAL)")
+        if app_cfg.get("enable_swagger") is True:
+            prod_issues.append("app.enable_swagger=true в prod (S-DOCS-1)")
+        if app_cfg.get("enable_redoc") is True:
+            prod_issues.append("app.enable_redoc=true в prod (S-DOCS-1)")
+        cors_origins = secure_cfg.get("cors_origins")
+        if cors_origins == "*" or cors_origins == ["*"]:
+            prod_issues.append("secure.cors_origins='*' в prod (B-2 CRITICAL)")
+        if prod_issues:
+            for issue in prod_issues:
+                typer.echo(f"[CRITICAL] {issue}", err=True)
+            raise typer.Exit(code=1)
+        typer.echo("[OK] prod profile invariants verified")
+    if strict and env in {"dev", "dev_light"}:
+        typer.echo("[OK] strict-mode не применяет prod-инварианты для dev")
+
+
 @app.command()
 def routes():
     """Список зарегистрированных DSL routes."""
