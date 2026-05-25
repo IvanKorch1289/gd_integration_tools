@@ -135,13 +135,16 @@ class PIIPolicy:
 
 
 def _uuid_short() -> str:
-    """UUIDv7-короткий suffix (8 hex chars) для placeholder.
+    """8-hex-char уникальный suffix для placeholder.
 
-    Fallback на UUID4 на Python <3.14, где :func:`uuid.uuid7` отсутствует.
+    Берём random tail (последние 8 hex chars) :func:`uuid.uuid7` — это часть
+    ``random_b`` (62 bits случайности), а не timestamp-prefix (первые 12 hex
+    одинаковы в рамках одной мс и дают коллизии). Fallback :func:`uuid.uuid4`
+    при отсутствии ``uuid7`` (Python <3.14).
     """
     uuid7 = getattr(uuid, "uuid7", None)
     if uuid7 is not None:
-        return uuid7().hex[:8]
+        return uuid7().hex[-8:]
     return uuid.uuid4().hex[:8]
 
 
