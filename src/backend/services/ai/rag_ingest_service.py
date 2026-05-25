@@ -119,9 +119,15 @@ class RagIngestService:
         for filename, content_bytes in files:
             try:
                 content_text = content_bytes.decode("utf-8", errors="replace")
+                content_text, pii_meta = _maybe_mask_pii(content_text)
+                metadata: dict[str, Any] = {
+                    "filename": filename,
+                    "chunker_fingerprint": fingerprint,
+                    **pii_meta,
+                }
                 doc_id = await rag.ingest(
                     content_text,
-                    metadata={"filename": filename, "chunker_fingerprint": fingerprint},
+                    metadata=metadata,
                     namespace=collection,
                 )
                 state["doc_ids"].append(doc_id)
@@ -149,6 +155,48 @@ class RagIngestService:
     async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
         """Последние ``limit`` задач (D.2)."""
         return await self._store.list_recent(limit=limit)
+
+
+def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
+    """Block 1.3 (gap-ai-1.3, ADR-0072): one-way PII-anonymize до записи в RAG.
+
+    При ``rag_ingest_settings.pii_mask_on_ingest=True`` пропускает текст
+    через DI-resolved sanitizer (Presidio при FEATURE_PRESIDIO_PII_ENABLED,
+    иначе legacy regex). В metadata добавляет ``pii_masked: bool`` +
+    ``pii_masker_version: str`` для retrieval-side проверки совместимости
+    при смене sanitizer.
+
+    Replacements mapping НЕ сохраняется в Qdrant — это one-way операция,
+    restore в retrieval не предполагается (для reversible-сценариев см.
+    ADR-0068 PIITokenizer).
+
+    Args:
+        content_text: Текст документа до ingest.
+
+    Returns:
+        Кортеж (masked_text, pii_metadata_dict). При выключенном флаге —
+        ``(content_text, {"pii_masked": False})``.
+    """
+    try:
+        from src.backend.core.config.ai_2026 import rag_ingest_settings
+    except Exception:  # noqa: BLE001
+        return content_text, {"pii_masked": False}
+    if not rag_ingest_settings.pii_mask_on_ingest:
+        return content_text, {"pii_masked": False}
+
+    try:
+        from src.backend.core.di.providers import get_ai_sanitizer_provider
+
+        sanitizer = get_ai_sanitizer_provider()
+        result = sanitizer.sanitize_text(content_text)
+        masker_version = type(sanitizer).__name__
+        return result.sanitized_text, {
+            "pii_masked": True,
+            "pii_masker_version": masker_version,
+        }
+    except Exception as exc:  # noqa: BLE001 — не блокируем ingest при сбое sanitizer
+        logger.warning("rag_ingest_pii_mask_failed: %s", exc)
+        return content_text, {"pii_masked": False, "pii_mask_error": str(exc)}
 
 
 _singleton: RagIngestService | None = None

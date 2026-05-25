@@ -135,6 +135,19 @@ class RagIngestSettings(BaseSettingsWithLoader):
     state_ttl_seconds: int = Field(
         default=86_400, ge=60, description="TTL Redis-ключей со state ingest-задач."
     )
+    pii_mask_on_ingest: bool = Field(
+        default=False,
+        description=(
+            "Block 1.3 (gap-ai-1.3, ADR-0072): one-way PII-anonymize "
+            "содержимого документа ДО передачи в RAGService.ingest. "
+            "Использует DI-resolved sanitizer (Presidio при включённом "
+            "FEATURE_PRESIDIO_PII_ENABLED, иначе legacy regex). "
+            "В chunk.metadata добавляются `pii_masked: bool` + "
+            "`pii_masker_version: str` — retrieval-side проверяет "
+            "соответствие текущему sanitizer version. default-OFF "
+            "в base.yml; ON в staging/prod через features-override."
+        ),
+    )
 
 
 class BGESettings(BaseSettingsWithLoader):
