@@ -290,6 +290,18 @@ pii-bootstrap: check-env ## S24 W1: Download spaCy ru_core_news_lg weights (~1.5
 	@$(UV_RUN) python -m spacy download ru_core_news_lg
 	@$(SUCCESS) "spaCy ru_core_news_lg installed"
 
+ai-rag-eval: check-env ## Wave 6 GAP-AI: RAGAS evaluation (faithfulness/answer_relevancy/context_precision)
+	@$(INFO) "Running RAGAS evaluation (banking samples)..."
+	@$(UV_RUN) python -m tools.checks.ragas_runner --dataset banking \
+		&& $(SUCCESS) "[ai-rag-eval] metrics >= thresholds" \
+		|| $(WARN) "[ai-rag-eval] metrics below threshold (см. artifacts/ragas/)"
+
+ai-rag-eval-strict: check-env ## Wave 6 GAP-AI: RAGAS evaluation как blocking-gate (exit 1 при провале метрик)
+	@$(INFO) "Running RAGAS evaluation strict (CI gate)..."
+	@mkdir -p artifacts/ragas
+	@$(UV_RUN) python -m tools.checks.ragas_runner --dataset banking
+	@$(SUCCESS) "[ai-rag-eval-strict] все метрики выше порога"
+
 api-fuzz: check-env ## S6 K2: schemathesis API fuzzing через tools/api_fuzz_runner.py (warn-only, feature_flag schemathesis_gate_enabled)
 	@$(INFO) "Running api-fuzz (schemathesis property-based testing)..."
 	@mkdir -p dist

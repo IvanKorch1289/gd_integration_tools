@@ -26,6 +26,25 @@ from src.backend.services.ai.eval.inspect_runner import (
     SuiteResult,
     SuiteSummary,
 )
+from src.backend.services.ai.eval.ragas_evaluator import (
+    DEFAULT_THRESHOLDS,
+    RAGASEvaluator,
+    RAGASMetric,
+    RAGASRecord,
+    RAGASReport,
+    get_ragas_evaluator,
+)
 from src.backend.services.ai.eval.suites import REFERENCE_SUITES
 
-__all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "REFERENCE_SUITES")
+__all__ = (
+    "InspectRunner",
+    "SuiteResult",
+    "SuiteSummary",
+    "REFERENCE_SUITES",
+    "RAGASRecord",
+    "RAGASMetric",
+    "RAGASReport",
+    "RAGASEvaluator",
+    "DEFAULT_THRESHOLDS",
+    "get_ragas_evaluator",
+)
