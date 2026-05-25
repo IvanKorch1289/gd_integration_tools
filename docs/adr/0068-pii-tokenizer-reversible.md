@@ -1,6 +1,7 @@
 # ADR-0068 — PIITokenizer — reversible PII tokenization layer
 
-* Статус: **Draft** (Sprint 25 candidate, [wave:s25/w4-pii-tokenizer])
+* Статус: **Accepted** (Sprint 25 W4, 2026-05-25)
+* Закрыт: [wave:s25/w4-token-registry] + [wave:s25/w4-pii-tokenizer-impl] + [wave:s25/w4-roundtrip-gold-set] + [wave:s25/w4-di-composition] + [wave:s25/w4-closure]
 * Связано с: `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md` Зона 4 (PII reversible), PLAN.md V22.4 §S25, ADR-NEW-21.
 * Память: [[feedback_wave_k1_security]], [[feedback_s1_security]].
 
@@ -126,17 +127,48 @@ class TokenRegistry:
 * Redis client — уже в стеке (`infrastructure/cache/redis_client.py`).
 * `core/utils/task_registry.py` — для async cleanup expired token_maps.
 
-## DoD-критерии scaffold → Accepted
+## DoD-критерии Accepted (2026-05-25)
 
-* [ ] `core/security/pii_tokenizer.py::PIITokenizer` с lazy Presidio import.
-* [ ] `infrastructure/security/token_registry.py::TokenRegistry` Redis-backed.
-* [ ] `PIIPolicy` Pydantic v2 model + 3 PoC policies (`ru_strict_reversible`, `ru_lite_irreversible`, `en_default`).
-* [ ] Capability `pii.tokenize.reversible.<scope>` зарегистрирована.
-* [ ] `tests/security/test_pii_tokenizer_roundtrip.py` — 500 примеров mask→unmask exact-match.
-* [ ] `tests/security/test_pii_tokenizer_encryption.py` — TokenMap at-rest AES-GCM verified.
-* [ ] `tests/security/test_pii_tokenizer_irreversible.py` — для audit-логов.
-* [ ] Audit-event `ai.pii.tokenize.{mask,unmask}` интегрирован с AuditService.
-* [ ] Sphinx page по PII tokenization architecture.
+* [x] `core/security/pii_tokenizer.py::PIITokenizer` с lazy Presidio import — `[wave:s25/w4-pii-tokenizer-impl]`.
+* [x] `infrastructure/security/token_registry.py::RedisTokenRegistry` Redis-backed (AES-256-GCM envelope, base64 orjson) — `[wave:s25/w4-token-registry]`.
+* [x] `PIIPolicy` — `@dataclass(frozen, slots)` (Pydantic v2 не нужен — frozen dataclass без I/O; ADR-update reconcile).
+* [x] Capability `pii.tokenize.reversible.<scope>` зарегистрирована в `capabilities/vocabulary.py` (S25 W4 backbone).
+* [x] `tests/unit/core/security/test_pii_tokenizer_roundtrip.py` — 13 тестов, 500/500 mask→unmask exact-match — `[wave:s25/w4-roundtrip-gold-set]`.
+* [x] AES-GCM at-rest verified: тест `test_encryption_at_rest_raw_bytes_differ_from_plaintext` (advisor recommendation) — встроен в `test_token_registry.py`.
+* [x] `test_mask_irreversible_*` для audit/Langfuse — встроены в `test_pii_tokenizer_roundtrip.py`.
+* [x] Audit-event `ai.pii.tokenize.{mask,unmask,store,retrieve,delete,decrypt_failed}` через `AuditService` (S17/K3).
+* [x] DI provider `get_pii_tokenizer_provider` + lifespan cleanup loop — `[wave:s25/w4-di-composition]`.
+* [ ] **Carry-over в S25 closure**: 3 PoC policies YAML (`ru_strict_reversible`, `ru_lite_irreversible`, `en_default`); Sphinx-страница "PII tokenization architecture"; per-tenant AES-GCM key через Vault rotation.
+
+## Decisions (S25 W4, advisor 2026-05-25)
+
+1. **EncryptedValue layout**: `ciphertext` + `tag` хранятся раздельно (split `AESGCM.encrypt(...)[:-16]`). Упрощает диагностику rotation и не требует concat-логики в callers.
+2. **Key format**: `SecretsBackend.get_secret(...) → str (base64) → b64decode → 32 raw bytes`. Production через Vault KV v2; dev/staging через env `PII_AES_KEY_V{version}`.
+3. **PIIPolicy форма**: `@dataclass(frozen, slots)` вместо Pydantic v2 — нет I/O-валидации, dataclass даёт frozen+slots без overhead'''а.
+4. **retrieve(key) path**: реализован defensive — caller (DSL `pii_unmask` processor) появится в S27 W2; включён в W4 чтобы избежать parallel-PR с тестами.
+5. **Placeholder rewrite**: Presidio выдаёт `[PERSON_1]` (sequential idx) → PIITokenizer переписывает на `<PERSON_{uuid7_short}>` через regex `_PRESIDIO_PLACEHOLDER_RE`. Не пытаемся форсить custom-формат через Presidio Anonymizer.
+6. **UUIDv7 random tail**: первые 12 hex chars UUIDv7 — timestamp (collisions внутри одной ms); используем `hex[-8:]` (часть `random_b`, 32 bits) — гарантированная уникальность для 1000+ PII в одном тексте.
+7. **Testkit sentinel**: при `token_registry=None` (unit-тесты без crypto-stack) PIITokenizer хранит `EncryptedValue(key_version=0, ciphertext=utf-8 bytes)`; `_decrypt` симметрично восстанавливает.
+
+## Verification (post-Accepted gates)
+
+| # | Команда | Результат |
+|---|---------|-----------|
+| 1 | `pytest tests/unit/infrastructure/security/test_token_registry.py -v` | 19/19 (0.26s) |
+| 2 | `pytest tests/unit/core/security/test_pii_tokenizer_roundtrip.py -v` | 13/13, 500/500 exact-match |
+| 3 | `pytest tests/unit/core/security/test_pii_tokenizer_scaffold.py -v` | 8/8 (regress) |
+| 4 | `ruff check src/backend/core/security/pii_tokenizer.py src/backend/infrastructure/security/token_registry.py` | 0 violations |
+| 5 | `mypy <new files>` | 0 issues |
+| 6 | `grep -rn "NotImplementedError" src/backend/core/security/pii_tokenizer.py` | 0 matches |
+| 7 | DI smoke: `get_pii_tokenizer_provider()` resolves через override-path | OK |
+| 8 | setup_ai_2026 регистрирует `pii-tokenizer-cleanup` task под TaskRegistry | OK |
+
+## Migration
+
+* **Production-flip `ai_pii_tokenizer_enabled=True`**: после staging verify (500/500 round-trip + presidio_fallback_total == 0 в течение 24h) — carry-over в `[plan:v22.4/s27-closure]`.
+* **Vault key provider**: `EnvAESGCMKeyProvider` → `VaultAESGCMKeyProvider` (через `SecretsBackend.get_secret("pii/aes/v1")`). Backward-compat: оба провайдера реализуют `AESGCMKeyProvider` Protocol.
+* **DSL processors `pii_mask`/`pii_unmask` reversible**: S27 W2 переведёт legacy `MaskPiiProcessor` (regex-based) на `PIITokenizer` под тем же feature-flag.
+* **AIGateway `_resolve_sanitizer`**: уже умеет switch на `feature_flags.ai_pii_tokenizer_enabled` (S25 W1 backbone) — после flip activates PIITokenizer вместо AIDataSanitizer.
 
 ## Связи с другими ADR
 

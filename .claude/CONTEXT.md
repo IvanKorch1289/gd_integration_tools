@@ -1,5 +1,65 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-25 16:44, Phase A AI hardening ✅ CLOSED 8/8 — переход к Phase B)
+
+**HEAD после моих commits**: `0a10700c docs(claude): [phase-a/closure] KNOWN_ISSUES + Phase A AI hardening summary` (мой) → плюс параллельные `df0b8797 / fac847c7 / e34e295d / f348f1fb`.
+**Compact**: `vault/session-2026-05-25-1644-summary.md` (детальная сводка 9 моих commits + 2 параллельных).
+**Memory**: `feedback_phase_a_ai_hardening.md` (NEW).
+
+### Phase A AI hardening — 9 commits + 2 параллельных landed
+
+**Директива**: 10-блочный execution-план AI-доработок (2026-05-22, директива пользователя). Phase A = Block 1 (PII hardening 5 wave) + Block 2 (Agent layer fixes 3 wave).
+
+| Wave | Commit | Title |
+|------|--------|-------|
+| 1.1 | `a3c5cc4b` + `08bfff3a` (parallel) | Presidio prod-enforcement: `prod.yml::features.presidio_pii_enabled=true` + Counter `presidio_fallback_total` + ADR-0072 NEW Accepted + ADR-0063 DoD flip |
+| 1.2 | `c62c453e` | `LangFuseSettings.sanitize_traces=True` + wire-up `anonymize_trace_payload` в callbacks v2 + v3 |
+| 1.3 | `e7e06ed2` | `RagIngestSettings.pii_mask_on_ingest` + one-way mask в `RagIngestService._run` + `chunk.metadata.pii_masked/pii_masker_version` |
+| 1.4 | `2d9587e5` | `McpSettings.{tool_authz_enabled,tool_allowlist,tool_public_namespaces}` + `_check_mcp_tool_authz()` fail-closed gate |
+| 1.5 | `17d6c1f0` | `AIAgentSettings.policy_gate_enabled` + `_policy_gate()` через `AuthorizationGateway.authorize(principal,"ai:llm","call",...)` |
+| 2.1 | `08bfff3a` (parallel) | LiteLLMGateway integration в ai_graph через `build_chat_model()` |
+| 2.2 | `648aaf9e` | asyncio deadlock fix: удалён `_sync_run`; `StructuredTool.from_function(coroutine=_run_action)` async-only |
+| 2.3 | `3abfea2f` | `FallbackTrackingCallback` + Counter `ai_graph_fallback_total` через `litellm.failure_callback` |
+| closure | `0a10700c` | KNOWN_ISSUES + Phase A summary section |
+
+### Verify-команды этой сессии
+
+```bash
+pytest tests/integration/ai/test_presidio_active.py -v          # 5 passed
+pytest tests/unit/services/ai/gateway/test_langfuse_payload_no_pii.py -v  # 3 passed
+pytest tests/unit/services/ai/test_rag_pii_mask.py -v           # 3 passed
+pytest tests/integration/test_mcp_tool_authz.py -v              # 5 passed
+pytest tests/unit/services/ai/test_ai_agent_policy_gate.py -v   # 5 passed
+pytest tests/integration/ai/test_ai_graph_no_deadlock.py -v     # 3 skipped (langchain_core lazy)
+pytest tests/unit/services/ai/gateway/test_fallback_callback.py -v  # 5 passed
+# Total: 24 passed + 3 skipped
+```
+
+### Открытые риски Phase A → carryover
+
+1. **Block 2.2 тесты skipped** — нужен `langchain_core` в CI matrix.
+2. **Block 1.4 scaffold** — per-tenant SkillRegistry → Block 9.1 (Phase E).
+3. **Block 1.5 zero callsites** — kw-args `tenant_id`/`route_id` в `AIAgentService.chat` нигде ещё не передаются (carryover).
+4. **Параллельная сессия активна** — `0a10700c..f348f1fb` за последние 30 мин.
+
+### Следующий шаг — Phase B (1 спринт, 7 wave)
+
+| Block | Wave | Цель |
+|-------|------|------|
+| 3 RAG | 3.1 | BGE-reranker v2-m3 + `BGESettings.reranker_enabled` |
+|       | 3.2 | NEW Hybrid retriever (dense+BM25+RRF) |
+|       | 3.3 | Source attribution в response (`chunk.source_id`) |
+|       | 3.4 | NEW Ragas runner + CI gate `make eval-rag` |
+|       | 3.5 | Embedding model version в chunk metadata |
+| 4 Mem | 4.1 | NEW `core/interfaces/agent_memory.py` Protocol + `services/ai/memory_gateway.py::UnifiedMemoryGateway` |
+|       | 4.2 | LangMem `consolidate()` + APScheduler job `consolidate_idle_sessions` |
+
+ADR Phase B: 0074 NEW (RAG hybrid + eval gate) + 0075 NEW (UnifiedAgentMemoryGateway) + 0065 Draft → Accepted.
+
+DoD Phase B: `make eval-rag` зелёный (faithfulness ≥ 0.8), `grep -rn 'AgentMemoryService\b' src/backend/{dsl,services/ai/agents_pydantic,services/ai/multi_agent}` = 0 direct calls.
+
+---
+
 ## Текущее состояние (2026-05-25 12:33, S17 CLOSED + ADR-NEW-19..24 — compact session)
 
 **HEAD после моих commits**: `14a13a93 [plan:v22.4/adr-19-24]` (мой) → плюс ~7 параллельных landed после (Langfuse v3 in progress).
@@ -774,3 +834,13 @@ make layers                # check_layers.py --strict-extensions
 ```
 
 ---
+
+### 9. S25 W4 closure 2026-05-25 — PIITokenizer reversible (ADR-0068 Accepted)
+
+- 5 commits: `df0b8797` token_registry + `fac847c7` impl + `c8d2fa4a` round-trip + `9b9f5872` di-composition + closure.
+- 40/40 unit-тестов: 19 RedisTokenRegistry + 13 round-trip 500/500 exact-match + 8 scaffold regress.
+- AES-256-GCM envelope + UUIDv7-tail placeholders + sentinel testkit-path + 6 audit-event-типов.
+- Feature flag `ai_pii_tokenizer_enabled` остаётся default-OFF; production-flip — carry-over в S27 closure после staging verify.
+- Carry-over: VaultAESGCMKeyProvider, per-tenant keys, DSL pii_mask/unmask переход на PIITokenizer (S27 W2), Sphinx page, 3 PoC policies YAML.
+- Memory: `feedback_s25_w4_pii_tokenizer.md`. Summary: `vault/session-2026-05-25-s25-w4-summary.md`.
+
