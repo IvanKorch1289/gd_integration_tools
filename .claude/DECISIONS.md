@@ -513,6 +513,96 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 ---
 
+## ADR из платформенного плана V22.4 (Sprint 25-27 AI Platform Layer)
+
+Источник: AI-GAP 2026-05-22 + V22.4 §3 платформенный план N1..N8. Шесть ADR описывают AIGateway facade и поддерживающие подсистемы (Policy DSL, PII Tokenizer reversible, Skill Registry V11.2, MCP Gateway namespaces, AI Audit Unified Schema).
+
+### ADR-NEW-19: AIGateway facade — единая точка входа в LLM
+
+**Контекст**. До S25 в проекте было ≥3 кодопутей вызова LLM (`services/ai/ai_agent.py`, `services/ai/ai_graph.py`, `services/ai/agents_pydantic/base.py`) без общего слоя enforcement. Любая защитная фича (PII / guardrails / cost-track / audit) повторялась N раз; нет единой точки для `AI_GATEWAY_ENFORCE` flag, capability `ai.invoke.<workflow>`, OTel GenAI spans.
+
+**Решение**. `core/ai/gateway.py::AIGateway` — facade с 9-step pipeline:
+`policy_resolve → input_sanitizers → input_guards → prompt_render → invoke_llm → output_guards → output_sanitizers → audit_emit → cost_track`.
+`AIRequest`/`AIResponse` dataclass с `workflow_id`, `tenant_id`, `correlation_id`, `prompt_ref`. Feature-flag `AI_GATEWAY_ENFORCE` default-OFF в S25 backbone → ON в S27 closure (после wrap всех 3 кодопутей). CI-gate `make ai-gateway-coverage` warn-only (strict-mode в S27 closure).
+
+**Обоснование**. Pattern reuse от ADR-NEW-1 AuthorizationGateway: один facade, scope-checked capability, audit-event-per-decision. Альтернативы: middleware-chain (не подходит — LLM-вызов не HTTP); inheritance (нарушает Liskov для 3 разнородных кодопутей).
+
+**Последствия**. (+) Единая точка enforcement (защитные слои применяются 1 раз). (+) OTel GenAI atts на 100% LLM-spans. (+) `AI_GATEWAY_ENFORCE=true` блокирует прямые `litellm.completion`. (−) Wrap 3 кодопутей требует regression golden-snapshot. (−) Backward-compat shim до S27 closure.
+
+**Wave**: `[wave:s25/w1-ai-gateway]` (landed `08bfff3a` non-wave) + `[wave:s25/w3-scaffold-gateway-adapter]` (`d0d1b0ba`). Источник: AI-GAP-2026-05-22 Зона 1 (orchestration consolidation) + V22.4 §3 N1.
+
+---
+
+### ADR-NEW-20: AIPolicySpec + PolicyResolver — Policy DSL для AI
+
+**Контекст**. AIGateway требует декларативного контракта policy-per-workflow: какие sanitizers/guards/memory/budget применять. Per-tenant override без редактирования ядра. До S25 — hardcode в каждом codepath.
+
+**Решение**. Pydantic v2 `AIPolicySpec(name, model_router, input_sanitizers, input_guards, output_guards, output_sanitizers, memory, budget, audit)`. `ai_policies/*.policy.yaml` JSON-Schema (`make ai-policy-schema`). Per-tenant override через `extensions/*/ai_policies/`. `PolicyResolver.resolve(workflow_id, tenant_id) → AIPolicySpec` с glob-mask matching.
+
+**Обоснование**. Pydantic v2 + YAML — паттерн уже устоявшийся в проекте (`extensions/*/services/*.service.toml`, `routes/*/route.toml`). Альтернатива OPA/Rego — добавляет внешний движок без выгод для AI-domain.
+
+**Последствия**. (+) Per-tenant policy без code-change. (+) JSON-Schema валидация на CI. (+) Decoupled от LLM-провайдеров (LiteLLM / LangChain). (−) YAML maintenance overhead. (−) Glob-resolution complexity (workflow_id pattern matching).
+
+**Wave**: `[wave:s25/w2-policy-resolver]` (landed в `08bfff3a` non-wave). Источник: V22.4 §3 N2.
+
+---
+
+### ADR-NEW-21: PIITokenizer reversible — UUIDv7 + AES-GCM + Redis TokenRegistry
+
+**Контекст**. S24 W1 Presidio даёт irreversible anonymization (placeholder `[PERSON_1]`). Для агентских flows (multi-turn, callbacks к downstream системам) нужна **reversible** маскировка с возможностью обратного восстановления оригинальных PII (например, после получения ответа LLM подставить реальное ФИО клиенту в HTML email).
+
+**Решение**. `core/security/pii_tokenizer.py::mask_reversible(text, policy) → (masked, token_map)` + `unmask(masked, token_map)` через UUIDv7-токенизацию + Presidio detector из S24 W1. `TokenRegistry` Redis-backed (TTL = `policy.ttl_s`, AES-GCM ключ через `infrastructure/secrets/`). Capability `pii.tokenize.reversible.<scope>`. Audit-event `ai.pii.tokenize.{mask,unmask}`.
+
+**Обоснование**. UUIDv7 — time-ordered (для analytics/debugging) + криптостойкий random. AES-GCM — auth-encryption, GDPR/152-ФЗ compliant с rotating keys через Vault. Альтернативы: format-preserving encryption (overkill для banking-PII), HMAC-deterministic (collision risk + не revocable).
+
+**Последствия**. (+) Reversible flow для multi-turn агентов. (+) AES-GCM + per-tenant key rotation. (+) TTL Redis = compliance window. (−) Redis dependency (отказ → token_map потерян, требуется fail-safe). (−) Latency overhead ~3ms (Redis write + AES-GCM seal).
+
+**Wave**: `[wave:s25/w4-pii-tokenizer]` (landed scaffold в `63e31478` backbone; production polish — carryover). Источник: V22.4 §3 N6.
+
+---
+
+### ADR-NEW-22: SkillRegistry V11.2 — TOML-manifest для AI tools
+
+**Контекст**. До S26 AI-tools жили в `services/ai/tools/registry.py` императивно (Python @decorator). Auto-export в MCP / LangGraph / OpenAI tools — manual. Нет JSON-Schema валидации input/output. Нет capability-gate на каждом tool-вызове.
+
+**Решение**. **ADR-NEW-22 SkillRegistry V11.2**: расширение `plugin.toml [[skill]]` секцией (`id`, `version`, `handler`, `input_schema`, `output_schema`, `capabilities`, `policy_ref`, `protocols=[mcp,langgraph,openai_tools]`, `timeout_s`). `core/ai/skill_registry.py::from_toml_manifest()`. `make skill-schema` JSON-Schema. Hot-reload через `watchfiles.awatch`. Auto-export в MCP + LangGraph + OpenAI tools.
+
+**Обоснование**. R-V15-1 (Plugin contract V11.1) расширяется одной секцией. Pattern: `[[service]]` уже использовался в V11. Альтернатива: декоратор `@skill(...)` — императивный, не валидируется на CI, не auto-export.
+
+**Последствия**. (+) Single source of truth для 3 интеграций (MCP/LangGraph/OpenAI). (+) Capability-gate per-skill. (+) Hot-reload без restart. (−) Migration overhead существующих ~12 tools. (−) Backward-compat с `services/ai/tools/registry.py` 1 wave.
+
+**Wave**: `[wave:s26/w5-skill-registry]` (scaffold в `63e31478`). Источник: V22.4 §3 N4.
+
+---
+
+### ADR-NEW-23: MCP Gateway namespaces — split монолита на 3 namespace
+
+**Контекст**. `entrypoints/mcp/mcp_server.py` — монолитный FastMCP server со всеми Tier 1+2 actions. Нет per-domain isolation, нет external MCP through WAF, FastMCP < 3.2.4 (без JWTAuthProvider).
+
+**Решение**. **ADR-NEW-23 MCP Gateway namespaces**: split на 3 namespace (`credit-mcp`, `analytics-mcp`, `system-mcp`) через aggregator (backward-compat). `entrypoints/mcp/gateway.py` — `MCPNamespace` + composite root. `MCPClientRegistry` в `infrastructure/clients/external/mcp_registry.py` — trusted external MCP через `OutboundHttpClient` + WAF capability `net.outbound.<host>:external`. FastMCP `>=3.2.4` upgrade с `JWTAuthProvider` (SSO integration из S18/B-1).
+
+**Обоснование**. Namespace pattern — устоявшийся для REST `/api/v1/{domain}/`. Aggregator сохраняет backward-compat — клиенты не меняют URL. Альтернативы: один namespace + capability filter (не покрывает scaling-isolation), отдельные processes (overkill для starting point).
+
+**Последствия**. (+) Domain isolation. (+) External MCP через WAF (S15 R-V15-5). (+) SSO через JWTAuthProvider. (−) Aggregator complexity (tool name collision check). (−) FastMCP 3.2.4 upgrade.
+
+**Wave**: `[wave:s27/w4-mcp-gateway]`. Источник: V22.4 §3 N7.
+
+---
+
+### ADR-NEW-24: AI Audit Unified Schema — 9 событий `ai.invocation.*`
+
+**Контекст**. До S27 audit-события AI разбросаны: `audit_clickhouse.py` legacy, Langfuse v2 trace, structured log. Нет единой схемы для `requested|policy_resolved|sanitized|guarded|completed|denied|failed|pii.mask|pii.unmask`.
+
+**Решение**. **ADR-NEW-24 AI Audit Unified Schema**: 9 событий `ai.invocation.{requested|policy_resolved|sanitized|guarded|completed|denied|failed|pii.mask|pii.unmask}` через `AuditService.emit()` (расширение S17/K3). Langfuse v3 OTel-exporter в ClickHouse. Удаление legacy `audit_clickhouse.py` (миграция в S26 dual-write window). PII в audit маскируется через `PIITokenizer.mask_irreversible`.
+
+**Обоснование**. Единая schema упрощает query (`SELECT count() FROM audit_events WHERE event_type LIKE 'ai.invocation.%'`). OTel-exporter покрывает Langfuse + Grafana одним path. Альтернативы: per-event tables (no JOIN-friendly), structured-log-only (no aggregation).
+
+**Последствия**. (+) Compliance-grade audit trail с PII-masking. (+) Unified query path (ClickHouse + Langfuse + Grafana). (+) Удаление 1 legacy модуля. (−) Dual-write window 1 sprint (S26). (−) Schema migration ClickHouse.
+
+**Wave**: `[wave:s27/w5-audit-unified]`. Источник: V22.4 §3 N8.
+
+---
+
 ## Архитектурные рекомендации V2 GAP-анализа (A-01 → A-07)
 
 Источник: GAP-анализ V2 (`gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`).
