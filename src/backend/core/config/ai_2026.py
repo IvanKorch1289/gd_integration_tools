@@ -33,6 +33,7 @@ __all__ = (
     "StreamingLLMSettings",
     "LangFuseSettings",
     "McpSettings",
+    "AIAgentSettings",
     "litellm_gateway_settings",
     "rag_cache_settings",
     "rag_ingest_settings",
@@ -41,6 +42,7 @@ __all__ = (
     "streaming_llm_settings",
     "langfuse_settings",
     "mcp_settings",
+    "ai_agent_settings",
 )
 
 
@@ -332,6 +334,27 @@ class StreamingLLMSettings(BaseSettingsWithLoader):
     )
 
 
+class AIAgentSettings(BaseSettingsWithLoader):
+    """Параметры AIAgentService (Block 1.5: policy gate + audit)."""
+
+    yaml_group: ClassVar[str] = "ai_agent"
+    model_config = SettingsConfigDict(env_prefix="AI_AGENT_", extra="ignore")
+
+    policy_gate_enabled: bool = Field(
+        default=False,
+        description=(
+            "Block 1.5 (gap-ai-1.5, ADR-0072/0066): AuthorizationGateway "
+            "проверка перед каждым LLM-вызовом через AIAgentService.chat(). "
+            "principal=<tenant_id>, resource='ai:llm', action='call', "
+            "context={model, route, route_id}. Fail-closed: при недоступном "
+            "gateway / любой exception → deny + audit-event "
+            "`ai.llm.policy.gate.unavailable`. Никогда allow-on-error. "
+            "default-OFF в base; ON в dev/staging/prod после интеграции с "
+            "TenantContext propagation."
+        ),
+    )
+
+
 litellm_gateway_settings = LiteLLMGatewaySettings()
 rag_cache_settings = RagCacheSettings()
 rag_ingest_settings = RagIngestSettings()
@@ -340,3 +363,4 @@ langmem_settings = LangMemSettings()
 streaming_llm_settings = StreamingLLMSettings()
 langfuse_settings = LangFuseSettings()
 mcp_settings = McpSettings()
+ai_agent_settings = AIAgentSettings()
