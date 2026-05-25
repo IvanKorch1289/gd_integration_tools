@@ -1,5 +1,36 @@
 # KNOWN_ISSUES.md
 
+## S18 W10+W11 coverage + failing-tests carryover — 2026-05-25 🟡 OPEN
+
+**Контекст**: `[wave:s18/k2-w1-coverage-ramp-70]` + `[wave:s18/k2-w2-failing-tests-triage]`
+объединены через scope-correction noop wave.
+
+### k2-w1 coverage-ramp-70: ✅ ratchet target уже превышен
+
+- `pyproject.toml::[tool.coverage.report]::fail_under = 75` (S16 W3).
+- Wave target 70% — фактически уже **75%** (S16 W3 closure, ratchet
+  50→75 пройден). Per-layer ramp (К1≥75/К2≥80/К3≥75/К4≥65/К5≥60) —
+  carryover к S19 (`[wave:s19/k2-w4-coverage-ratchet-75]`) либо S20
+  (`[wave:s20/k2-w3-coverage-finale-83]`).
+- Per-layer breakdown report (`tools/coverage/breakdown_by_layer.py`)
+  существует с S16; нужна интеграция в CI как gating gate — carryover.
+
+### k2-w2 failing-tests-triage: 🟡 carryover ~91 failing tests
+
+- Wave спец: разобрать ~91 pre-existing failing tests; fix / xfail-с-ADR
+  / skip-feature-flag.
+- Объём работы НЕ помещается в одну session (audit + categorization +
+  fix/xfail/skip + ADR для каждой категории).
+- Реалистично: carryover в **S18 K5 W5** (Tier-A multi-backend
+  finalization) либо в **S19 К2** dedicated triage wave.
+
+### Когда закрывать
+
+- coverage: S19 W4 (ratchet 75→77) + S20 W3 (finale 83).
+- failing-tests: separate audit wave (S18 carryover → S19 K2).
+
+---
+
 ## S18 W2 deps-bump carryover — 2026-05-25 🟡 OPEN
 
 **Контекст**: `[wave:s18/k1-w2-supply-chain-finale]` закрыта через расширение
