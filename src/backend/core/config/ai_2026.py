@@ -279,6 +279,33 @@ class McpSettings(BaseSettingsWithLoader):
         default=False,
         description="Сохранять JSON-Schema в description (graceful migration).",
     )
+    tool_authz_enabled: bool = Field(
+        default=False,
+        description=(
+            "Block 1.4 (gap-ai-1.4, ADR-0072/0070): per-tool authz при "
+            "MCP dispatch. При True каждый action-tool проверяет, что "
+            "action_name присутствует в `tool_allowlist` (если непустой) "
+            "либо в namespace, разрешённом для current tenant. Без tenant_id "
+            "в MCP session — доступны только public tools (allowlist). "
+            "Audit event `mcp.tool.denied{action, tenant}` на любой блок. "
+            "Default-OFF в base.yml; ON в staging/prod после миграции "
+            "клиентов на tenant-aware MCP sessions (см. SkillRegistry, Block 9.1)."
+        ),
+    )
+    tool_allowlist: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Block 1.4: явный whitelist action-names для tool_authz_enabled=True. "
+            "Пустой список = deny-all (только namespace-based access)."
+        ),
+    )
+    tool_public_namespaces: list[str] = Field(
+        default_factory=lambda: ["system", "health", "tech"],
+        description=(
+            "Block 1.4: namespaces, доступные клиентам без tenant_id "
+            "(public tools). Format: 'system.*' = все system.<action> допустимы."
+        ),
+    )
 
 
 class StreamingLLMSettings(BaseSettingsWithLoader):

@@ -144,6 +144,20 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
     @mcp.tool(**tool_kwargs)
     async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
+        # Block 1.4 (gap-ai-1.4, ADR-0072): per-tool authz fail-closed.
+        # При tool_authz_enabled=True action_name проходит проверку
+        # _check_mcp_tool_authz() — public namespace OR explicit allowlist.
+        # При denied возвращаем error-envelope + audit-event без dispatch.
+        deny_reason = _check_mcp_tool_authz(_action)
+        if deny_reason is not None:
+            logger.warning(
+                "mcp_tool_denied",
+                extra={"action": _action, "reason": deny_reason, "source": "mcp"},
+            )
+            return orjson.dumps(
+                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
+            ).decode()
+
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
         except (orjson.JSONDecodeError, TypeError):
@@ -160,6 +174,45 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
             return orjson.dumps(result).decode()
         except Exception as exc:
             return orjson.dumps({"error": str(exc)}).decode()
+
+
+def _check_mcp_tool_authz(action_name: str) -> str | None:
+    """Block 1.4: per-tool authz для MCP dispatch (fail-closed).
+
+    Возвращает причину деная (str) либо ``None`` если доступ разрешён.
+
+    Алгоритм:
+        1. При ``mcp_settings.tool_authz_enabled=False`` → allow (passthrough).
+        2. Иначе:
+           a. action_name в ``tool_allowlist`` → allow;
+           b. namespace action в ``tool_public_namespaces`` → allow;
+           c. иначе → deny с причиной ``"not_in_allowlist_or_public_ns"``.
+
+    Tenant-aware фильтрация (per-tenant action whitelist) — carryover
+    в Block 9.1 (SkillRegistry per-tenant tools filter, Phase E).
+
+    Args:
+        action_name: Имя action из ActionHandlerRegistry.
+
+    Returns:
+        Причина деная (str) либо None.
+    """
+    try:
+        from src.backend.core.config.ai_2026 import mcp_settings
+    except Exception:  # noqa: BLE001
+        return None
+    if not mcp_settings.tool_authz_enabled:
+        return None
+
+    if action_name in set(mcp_settings.tool_allowlist):
+        return None
+
+    namespace = action_name.split(".", 1)[0] if "." in action_name else action_name
+    public_namespaces = set(mcp_settings.tool_public_namespaces)
+    if namespace in public_namespaces:
+        return None
+
+    return "not_in_allowlist_or_public_ns"
 
 
 # ── Route Management Tools ──
