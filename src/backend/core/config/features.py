@@ -29,7 +29,7 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -1328,6 +1328,18 @@ class FeatureFlags(BaseSettingsWithLoader):
             "(extras [rpa-ocr], требует Tesseract на хосте). При False — "
             "OCRProcessor.from_environment() возвращает NoOpOCRProcessor. "
             "Default-OFF до staging-smoke."
+        ),
+    )
+
+    scheduler_backend: Literal["apscheduler", "temporal"] = Field(
+        default="apscheduler",
+        title="S18 W0: выбор SchedulerBackend (APScheduler default / Temporal stub)",
+        description=(
+            "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-8-scheduler-backend-protocol]. "
+            "Owner: K2 Platform. Выбор реализации :class:`SchedulerBackend` "
+            "из :mod:`core.interfaces.scheduler`. 'apscheduler' — стабильный "
+            "production-путь поверх SchedulerManager. 'temporal' — stub "
+            "(NotImplementedError) до реализации Temporal Schedule API."
         ),
     )
 
