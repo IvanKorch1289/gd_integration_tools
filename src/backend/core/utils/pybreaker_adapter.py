@@ -1,21 +1,25 @@
-"""Pybreaker-adapter scaffold с Redis state persistence (default-OFF).
+"""Pybreaker-adapter с Redis state persistence (default-OFF).
 
-Wave: ``[wave:s16/k2-w4-pybreaker-replace]`` — DoD-9 Sprint 16 scaffold.
+Waves:
+* ``[wave:s16/k2-w4-pybreaker-replace]`` — DoD-9 Sprint 16 scaffold
+  (Protocol + Fake + feature-gate);
+* ``[wave:s18/w0-goal-driven-sweep-3-pybreaker-sdk]`` — полная SDK-реализация
+  поверх ``pybreaker>=1.2.0`` с lazy-import и mapping состояний.
 
 Назначение: контракт для замены ``purgatory``-based [Breaker] на
-``pybreaker >= 1.2.0`` с опциональной персистентностью состояния в
-Redis (restore-on-restart).
-
-Состояние S16: scaffold (Protocol + Fake + feature-gate). Реальная
-зависимость ``pybreaker`` добавляется в pyproject через carryover S17
-после стабилизации API. Default feature-flag ``pybreaker_enabled=False``
-не нарушает текущий ``purgatory``-pipeline.
+``pybreaker`` с опциональной персистентностью состояния в Redis
+(restore-on-restart).
 
 Архитектурное обоснование:
 1. ``purgatory`` не персистирует state (после рестарта — closed).
 2. ``pybreaker`` поддерживает state-storage (Redis/Memory) — DoD-9.
 3. Адаптер с одинаковым API даёт нулевые breaking-changes для
    callsite'ов при включении ``feature_flag``.
+
+Default-режим S18: фабрика по-прежнему возвращает [InMemoryPybreakerAdapter],
+если ``v11.pybreaker_enabled=False`` или ``pybreaker`` не установлен. При
+``v11.pybreaker_enabled=True`` И успешном импорте — возвращается
+[PybreakerSDKAdapter] поверх настоящего ``pybreaker.CircuitBreaker``.
 """
 
 from __future__ import annotations
@@ -23,7 +27,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Final, Protocol, runtime_checkable
 
 __all__ = (
     "BreakerState",
@@ -31,10 +35,23 @@ __all__ = (
     "FakeBreakerStateStorage",
     "InMemoryPybreakerAdapter",
     "PybreakerAdapter",
+    "PybreakerSDKAdapter",
+    "PybreakerSDKUnavailable",
     "make_pybreaker_adapter",
 )
 
 _logger = logging.getLogger("core.utils.pybreaker_adapter")
+
+# Mapping pybreaker → наш Protocol: 'half-open' → 'half_open'.
+_PYBREAKER_STATE_MAP: Final[dict[str, str]] = {
+    "closed": "closed",
+    "open": "open",
+    "half-open": "half_open",
+}
+
+
+class PybreakerSDKUnavailable(RuntimeError):
+    """Бросается, когда требуется SDK adapter, но ``pybreaker`` не импортируется."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,28 +273,157 @@ class InMemoryPybreakerAdapter:
         )
 
 
+class PybreakerSDKAdapter:
+    """Реализация [PybreakerAdapter] поверх ``pybreaker`` SDK.
+
+    Lazy-import ``pybreaker`` в ``__init__``: если SDK не установлен —
+    бросается :class:`PybreakerSDKUnavailable`, чтобы фабрика могла
+    откатиться на [InMemoryPybreakerAdapter].
+
+    Привязка к нашему [PybreakerAdapter] контракту:
+
+    * ``state`` — ``current_state`` pybreaker, с маппингом
+      ``half-open → half_open``;
+    * ``failure_count`` — ``fail_counter`` SDK;
+    * ``call`` — обёртка над ``call_async`` SDK.
+
+    Args:
+        name: Имя breaker'а (попадает в логи pybreaker).
+        fail_max: Порог отказов до open.
+        reset_timeout: Через сколько секунд possible recovery.
+        state_storage: Опциональный ``pybreaker.CircuitBreakerStorage``
+            (например, ``CircuitRedisStorage``). При None pybreaker
+            держит state в памяти процесса (нет persistence).
+
+    Raises:
+        PybreakerSDKUnavailable: Если ``pybreaker`` не импортируется.
+    """
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        fail_max: int = 5,
+        reset_timeout: float = 60.0,
+        state_storage: Any | None = None,
+    ) -> None:
+        try:
+            import pybreaker  # type: ignore[import-not-found]
+        except ImportError as exc:
+            raise PybreakerSDKUnavailable(
+                "pybreaker не установлен; добавьте extras [circuit-breaker]."
+            ) from exc
+
+        self._name = name
+        cb_kwargs: dict[str, Any] = {
+            "fail_max": fail_max,
+            "reset_timeout": reset_timeout,
+            "name": name,
+        }
+        if state_storage is not None:
+            cb_kwargs["state_storage"] = state_storage
+        self._cb = pybreaker.CircuitBreaker(**cb_kwargs)
+        self._pybreaker_error: type[BaseException] = pybreaker.CircuitBreakerError
+
+    @property
+    def state(self) -> str:
+        """Текущее состояние с mapping ``half-open`` → ``half_open``."""
+        raw = str(self._cb.current_state)
+        return _PYBREAKER_STATE_MAP.get(raw, raw)
+
+    @property
+    def failure_count(self) -> int:
+        """Счётчик последовательных отказов pybreaker."""
+        return int(self._cb.fail_counter)
+
+    async def call(
+        self, fn: Callable[..., Awaitable[object]], *args: object, **kwargs: object
+    ) -> object:
+        """Выполнить ``fn`` через ``pybreaker.call_async``.
+
+        Args:
+            fn: Async-функция.
+            *args: Позиционные аргументы.
+            **kwargs: Именованные аргументы.
+
+        Returns:
+            Результат ``fn``.
+
+        Raises:
+            pybreaker.CircuitBreakerError: При open-state.
+            Exception: Прокидываются оригинальные исключения от ``fn``.
+        """
+        return await self._cb.call_async(fn, *args, **kwargs)
+
+    async def restore(self) -> None:
+        """No-op: pybreaker персистирует через ``state_storage`` автоматически.
+
+        Метод оставлен для совместимости с [InMemoryPybreakerAdapter.restore].
+        """
+        return None
+
+
+def _is_pybreaker_available() -> bool:
+    """Lazy-check доступности pybreaker SDK без побочных эффектов."""
+    try:
+        import pybreaker  # noqa: F401  # type: ignore[import-not-found]
+    except ImportError:
+        return False
+    return True
+
+
 def make_pybreaker_adapter(
     *,
     name: str,
     fail_max: int = 5,
     reset_timeout: float = 60.0,
     storage: BreakerStateStorage | None = None,
+    sdk_state_storage: Any | None = None,
 ) -> PybreakerAdapter:
     """Фабрика [PybreakerAdapter] для использования из application-кода.
 
-    Возвращает [InMemoryPybreakerAdapter] — S16 scaffold. После включения
-    feature-flag ``v11.pybreaker_enabled`` в Sprint 17 W1 фабрика начнёт
-    возвращать реализацию поверх ``pybreaker`` SDK с RedisBreakerStateStorage.
+    Логика выбора реализации:
+
+    1. Если ``v11.pybreaker_enabled=True`` И ``pybreaker`` импортируется —
+       возвращает :class:`PybreakerSDKAdapter` (production-путь).
+    2. Иначе — :class:`InMemoryPybreakerAdapter` (default/тесты).
+
+    Параметр ``storage`` относится **только** к InMemory-реализации (наш
+    :class:`BreakerStateStorage`). Для SDK-пути персистенцию задаёт
+    ``sdk_state_storage`` (например, ``pybreaker.CircuitRedisStorage``).
 
     Args:
-        name: Уникальное имя breaker'а (используется как ключ persistence).
-        fail_max: Порог отказов до перехода в state=open.
+        name: Уникальное имя breaker'а (ключ persistence).
+        fail_max: Порог отказов до state=open.
         reset_timeout: Через сколько секунд возможно восстановление.
-        storage: Опциональный backend для persistence (default — in-memory).
+        storage: Опциональный наш backend для InMemory-реализации.
+        sdk_state_storage: Опциональный native pybreaker state_storage
+            (используется только при возврате [PybreakerSDKAdapter]).
 
     Returns:
         Объект, удовлетворяющий [PybreakerAdapter]-протоколу.
     """
+    try:
+        from src.backend.core.config.v11 import v11_settings
+
+        sdk_enabled = bool(v11_settings.pybreaker_enabled)
+    except Exception:  # noqa: BLE001  # на ранней инициализации возможны импорт-ошибки
+        sdk_enabled = False
+
+    if sdk_enabled and _is_pybreaker_available():
+        try:
+            return PybreakerSDKAdapter(
+                name=name,
+                fail_max=fail_max,
+                reset_timeout=reset_timeout,
+                state_storage=sdk_state_storage,
+            )
+        except PybreakerSDKUnavailable as exc:
+            _logger.warning(
+                "pybreaker_enabled=True, но SDK недоступен (%s); fallback на InMemory.",
+                exc,
+            )
+
     return InMemoryPybreakerAdapter(
         name=name,
         fail_max=fail_max,

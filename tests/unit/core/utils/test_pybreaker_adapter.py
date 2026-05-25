@@ -11,6 +11,8 @@ Wave: ``[wave:s16/k2-w4-pybreaker-replace]`` — DoD-9 Sprint 16.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
+
 import pytest
 
 from src.backend.core.utils.pybreaker_adapter import (
@@ -193,3 +195,193 @@ def test_v11_pybreaker_enabled_default_off() -> None:
 
     flags = V11Settings()
     assert flags.pybreaker_enabled is False
+
+
+# ─── Wave [wave:s18/w0-goal-driven-sweep-3-pybreaker-sdk] ────────────────────
+
+
+def _make_fake_pybreaker(monkeypatch: pytest.MonkeyPatch) -> object:
+    """Подменить ``pybreaker`` модуль в ``sys.modules`` mock-реализацией.
+
+    Returns:
+        Корневой fake-модуль для inspection в тестах.
+    """
+    import sys
+    import types
+
+    fake = types.ModuleType("pybreaker")
+
+    class _FakeCircuitBreakerError(Exception):
+        pass
+
+    class _FakeCircuitBreaker:
+        def __init__(
+            self,
+            *,
+            fail_max: int = 5,
+            reset_timeout: float = 60.0,
+            name: str = "default",
+            state_storage: object | None = None,
+        ) -> None:
+            self.fail_max = fail_max
+            self.reset_timeout = reset_timeout
+            self.name = name
+            self.state_storage = state_storage
+            self._current_state = "closed"
+            self._fail_counter = 0
+
+        @property
+        def current_state(self) -> str:
+            return self._current_state
+
+        @property
+        def fail_counter(self) -> int:
+            return self._fail_counter
+
+        async def call_async(
+            self,
+            fn: Callable[..., Awaitable[object]],
+            *args: object,
+            **kwargs: object,
+        ) -> object:
+            if self._current_state == "open":
+                raise _FakeCircuitBreakerError(f"circuit {self.name} is open")
+            try:
+                result = await fn(*args, **kwargs)
+            except Exception:
+                self._fail_counter += 1
+                if self._fail_counter >= self.fail_max:
+                    self._current_state = "open"
+                raise
+            else:
+                self._fail_counter = 0
+                return result
+
+        # Test-only hook: вручную выставить состояние для проверки mapping.
+        def _force_state(self, state: str) -> None:
+            self._current_state = state
+
+    fake.CircuitBreaker = _FakeCircuitBreaker  # type: ignore[attr-defined]
+    fake.CircuitBreakerError = _FakeCircuitBreakerError  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "pybreaker", fake)
+    return fake
+
+
+@pytest.mark.asyncio
+async def test_sdk_adapter_uses_pybreaker_call_async(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SDK adapter делегирует call_async; state и failure_count проксируются."""
+    _make_fake_pybreaker(monkeypatch)
+    from src.backend.core.utils.pybreaker_adapter import PybreakerSDKAdapter
+
+    adapter = PybreakerSDKAdapter(name="sdk", fail_max=3)
+
+    async def ok() -> str:
+        return "result"
+
+    assert await adapter.call(ok) == "result"
+    assert adapter.state == "closed"
+    assert adapter.failure_count == 0
+
+
+@pytest.mark.asyncio
+async def test_sdk_adapter_state_mapping_half_open(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SDK adapter маппит pybreaker 'half-open' → наш 'half_open'."""
+    _make_fake_pybreaker(monkeypatch)
+    from src.backend.core.utils.pybreaker_adapter import PybreakerSDKAdapter
+
+    adapter = PybreakerSDKAdapter(name="ho")
+    # Внутренняя hook fake-реализации, не наш API.
+    adapter._cb._force_state("half-open")  # type: ignore[attr-defined]
+    assert adapter.state == "half_open"
+
+
+@pytest.mark.asyncio
+async def test_sdk_adapter_opens_after_fail_max(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SDK adapter переходит в open через fail_max отказов."""
+    fake = _make_fake_pybreaker(monkeypatch)
+    from src.backend.core.utils.pybreaker_adapter import PybreakerSDKAdapter
+
+    adapter = PybreakerSDKAdapter(name="bad", fail_max=2)
+
+    async def bad() -> None:
+        raise IOError("upstream")
+
+    for _ in range(2):
+        with pytest.raises(IOError):
+            await adapter.call(bad)
+    assert adapter.state == "open"
+    assert adapter.failure_count == 2
+    # Следующий вызов отвергается через FakeCircuitBreakerError.
+    with pytest.raises(fake.CircuitBreakerError):  # type: ignore[attr-defined]
+        await adapter.call(bad)
+
+
+def test_sdk_adapter_unavailable_when_pybreaker_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """При отсутствии pybreaker — PybreakerSDKAdapter бросает PybreakerSDKUnavailable."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "pybreaker", None)
+    from src.backend.core.utils.pybreaker_adapter import (
+        PybreakerSDKAdapter,
+        PybreakerSDKUnavailable,
+    )
+
+    with pytest.raises(PybreakerSDKUnavailable, match="pybreaker не установлен"):
+        PybreakerSDKAdapter(name="x")
+
+
+def test_factory_returns_inmemory_when_flag_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """При v11.pybreaker_enabled=False фабрика возвращает InMemory."""
+    from src.backend.core.config.v11 import v11_settings
+    from src.backend.core.utils.pybreaker_adapter import (
+        InMemoryPybreakerAdapter,
+        make_pybreaker_adapter,
+    )
+
+    monkeypatch.setattr(v11_settings, "pybreaker_enabled", False)
+    adapter = make_pybreaker_adapter(name="off")
+    assert isinstance(adapter, InMemoryPybreakerAdapter)
+
+
+def test_factory_returns_sdk_when_flag_on_and_available(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """При v11.pybreaker_enabled=True И доступном pybreaker → SDK adapter."""
+    _make_fake_pybreaker(monkeypatch)
+    from src.backend.core.config.v11 import v11_settings
+    from src.backend.core.utils.pybreaker_adapter import (
+        PybreakerSDKAdapter,
+        make_pybreaker_adapter,
+    )
+
+    monkeypatch.setattr(v11_settings, "pybreaker_enabled", True)
+    adapter = make_pybreaker_adapter(name="on")
+    assert isinstance(adapter, PybreakerSDKAdapter)
+
+
+def test_factory_fallback_to_inmemory_when_flag_on_but_pybreaker_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """v11.pybreaker_enabled=True, но pybreaker не импортируется → InMemory."""
+    import sys
+
+    monkeypatch.setitem(sys.modules, "pybreaker", None)
+    from src.backend.core.config.v11 import v11_settings
+    from src.backend.core.utils.pybreaker_adapter import (
+        InMemoryPybreakerAdapter,
+        make_pybreaker_adapter,
+    )
+
+    monkeypatch.setattr(v11_settings, "pybreaker_enabled", True)
+    adapter = make_pybreaker_adapter(name="fallback")
+    assert isinstance(adapter, InMemoryPybreakerAdapter)
