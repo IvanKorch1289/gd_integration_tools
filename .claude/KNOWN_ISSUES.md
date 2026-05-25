@@ -37,6 +37,61 @@ S18 auto-mode сессии.
 
 ---
 
+## S18 K4 AI waves (W18-W20) scope-correction — 2026-05-25 ✅ MOSTLY DONE
+
+**Контекст**: `[wave:s18/k4-w1-ai-workflow-handlers]`,
+`[wave:s18/k4-w2-multimodal-rag-pipeline]`,
+`[wave:s18/k4-w3-guardrails-enforcer]`.
+
+### Состояние
+
+Большая часть K4 wave **уже landed** через предыдущие сессии S24-S27
+AI Platform Layer:
+
+- **k4-w1 AI workflow handlers**: services/ai/multi_agent/supervisor.py +
+  rag_augment.py + cache_prewarmer существуют. LangFuse callback v3
+  (S25 W5) + cost dashboard infrastructure (S25 W1 AIGateway).
+- **k4-w2 Multimodal RAG**: BGE-reranker (S25), Hybrid retriever
+  (Phase B), source attribution (Phase B) landed.
+- **k4-w3 Guardrails enforcer**: core/ai/guardrails/ + services/ai/
+  guardrails/ + DSL processor agent_dsl/guardrails_apply.py (S27 W2)
+  landed. Lakera/Rebuff client wiring — carryover.
+
+### Carryover (что осталось)
+
+- Production wiring AIGateway → LangFuse в lifespan (DI providers).
+- Multimodal RAG pipeline E2E test (ingest → chunking → embedding →
+  Qdrant → retrieval → rerank → LLM) — отдельная integration wave.
+- Lakera/Rebuff API key через Vault (production).
+- GuardrailsEnforcerProcessor wiring перед LLMCallProcessor — carryover.
+
+---
+
+## S18 K5 W2+W3+W4 K5 final waves — 2026-05-25 🟡 CARRYOVER
+
+**Контекст**: `[wave:s18/k5-w2-pyi-stub-fidelity]` (F-5),
+`[wave:s18/k5-w3-layer-violations-protocol-extraction]` (73→0),
+`[wave:s18/k5-w4-k8s-helm-chart-finale]`.
+
+### k5-w2 pyi-stub-fidelity (F-5)
+
+- tools/gen_dsl_stubs._resolve_annotation через typing.get_type_hints
+  + PEP-695 — carryover. Не критическая проблема (stubs работают на
+  best-effort basis).
+
+### k5-w3 layer-violations 73→0
+
+- Текущий baseline: 11 violations (carryover из AI work). Wave target
+  73→0 — невозможен без massive refactoring (composition-root из core/
+  в infrastructure/). Carryover в S19 K5 либо S20.
+
+### k5-w4 K8s Helm chart finale
+
+- deploy/k8s/ scaffold landed в S17 W (K-OPS-2). Helm chart (Chart.yaml +
+  values.yaml + templates) — carryover; foundation готова.
+
+---
+
 ## S18 W14 Multi-tenancy M-B scope reduction — 2026-05-25 ✅ LANDED
 
 **Контекст**: `[wave:s18/k1-w6-multi-tenancy-mb-reduce]` (ADR-NEW-9 / B-6).
