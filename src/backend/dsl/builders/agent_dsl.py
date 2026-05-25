@@ -324,3 +324,117 @@ class AgentDSLMixin:
                 strict=strict,
             )
         )
+
+    # ── W3 — Skill + Memory (3 methods) ──
+
+    def skill_invoke(
+        self,
+        *,
+        skill_id: str,
+        params_property: str | None = "body",
+        result_property: str = "skill_result",
+    ) -> "RouteBuilder":
+        """Вызов AI skill через :class:`SkillRegistry.invoke` (S27 W3, ADR-NEW-22).
+
+        Args:
+            skill_id: Идентификатор skill (``"credit.score.calculate"``).
+            params_property: Откуда взять params (default ``"body"``).
+            result_property: Свойство для результата (default ``"skill_result"``).
+
+        Example::
+
+            builder.skill_invoke(skill_id="credit.score.calculate")
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
+            SkillInvokeProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            SkillInvokeProcessor(
+                skill_id=skill_id,
+                params_property=params_property,
+                result_property=result_property,
+            )
+        )
+
+    def ai_memory_recall(
+        self,
+        *,
+        namespace: str,
+        query: str | None = None,
+        query_property: str | None = None,
+        k: int = 5,
+        result_property: str = "memory_recall",
+    ) -> "RouteBuilder":
+        """RAG-style retrieval из :class:`MemoryProtocol` (S27 W3, ADR-NEW-18).
+
+        Args:
+            namespace: ``"<tenant_id>:<scope>"``. Поддерживает
+                ``${tenant_id}`` placeholder.
+            query: Опц. статичный запрос.
+            query_property: Опц. dot-path к динамическому запросу.
+            k: Максимум записей. Default ``5``.
+            result_property: Свойство exchange для записей.
+
+        Example::
+
+            builder.ai_memory_recall(
+                namespace="${tenant_id}:credit_chat",
+                query_property="body.user_input",
+                k=3,
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
+            MemoryRecallProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            MemoryRecallProcessor(
+                namespace=namespace,
+                query=query,
+                query_property=query_property,
+                k=k,
+                result_property=result_property,
+            )
+        )
+
+    def ai_memory_store(
+        self,
+        *,
+        namespace: str,
+        key: str | None = None,
+        key_property: str | None = None,
+        value_property: str = "agent_result",
+        ttl_s: int | None = None,
+    ) -> "RouteBuilder":
+        """Запись в :class:`MemoryProtocol` (S27 W3, ADR-NEW-18).
+
+        Args:
+            namespace: ``"<tenant_id>:<scope>"``.
+            key: Опц. статичный ключ.
+            key_property: Опц. dot-path
+                (``"meta.exchange_id"`` / ``"body.user_id"``).
+            value_property: Откуда взять value (default ``"agent_result"``).
+            ttl_s: Опц. TTL в секундах.
+
+        Example::
+
+            builder.ai_memory_store(
+                namespace="${tenant_id}:credit_chat",
+                key_property="meta.exchange_id",
+                ttl_s=86400,
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
+            MemoryStoreProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            MemoryStoreProcessor(
+                namespace=namespace,
+                key=key,
+                key_property=key_property,
+                value_property=value_property,
+                ttl_s=ttl_s,
+            )
+        )

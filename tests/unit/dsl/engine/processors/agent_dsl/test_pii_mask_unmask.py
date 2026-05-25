@@ -272,3 +272,147 @@ def test_pii_unmask_to_spec_round_trip() -> None:
             "strict": True,
         }
     }
+
+
+@pytest.mark.asyncio
+async def test_pii_mask_source_from_nested_body_field(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """``source_property="body.text"`` — извлечение из nested dict."""
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    tokenizer = _FakePIITokenizer()
+    monkeypatch.setattr(
+        PIIMaskProcessor,
+        "_resolve_tokenizer",
+        staticmethod(lambda: tokenizer),
+    )
+
+    ex: Exchange[Any] = Exchange(
+        in_message=Message(
+            body={"meta": "x", "text": "email: alice@example.com"}
+        )
+    )
+    proc = PIIMaskProcessor(
+        scope="banking",
+        source_property="body.text",
+        target_property="body.text",
+    )
+    await proc.process(ex, context)
+
+    body = ex.in_message.body
+    assert isinstance(body, dict)
+    assert "[EMAIL_1]" in body["text"]
+    assert body["meta"] == "x"  # untouched
+
+
+@pytest.mark.asyncio
+async def test_pii_mask_source_from_property(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """``source_property="prop_name"`` — извлечение из exchange.properties."""
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    tokenizer = _FakePIITokenizer()
+    monkeypatch.setattr(
+        PIIMaskProcessor,
+        "_resolve_tokenizer",
+        staticmethod(lambda: tokenizer),
+    )
+
+    ex: Exchange[Any] = Exchange()
+    ex.set_property("llm_input", "phone: +7 800 555 12 34")
+    proc = PIIMaskProcessor(
+        scope="banking",
+        source_property="llm_input",
+        target_property="llm_input_masked",
+    )
+    await proc.process(ex, context)
+
+    masked = ex.get_property("llm_input_masked")
+    assert "[PHONE_1]" in masked
+    assert "+7 800" not in masked
+
+
+@pytest.mark.asyncio
+async def test_pii_unmask_target_writes_to_body_field(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """``target_property="body.unmasked"`` — запись в nested dict."""
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    tokenizer = _FakePIITokenizer()
+    monkeypatch.setattr(
+        PIIUnmaskProcessor,
+        "_resolve_tokenizer",
+        staticmethod(lambda: tokenizer),
+    )
+
+    ex: Exchange[Any] = Exchange(in_message=Message(body={"text": "[EMAIL_1]"}))
+    ex.set_property("pii_token_map", {"[EMAIL_1]": "bob@example.com"})
+    proc = PIIUnmaskProcessor(
+        source_property="body.text",
+        target_property="body.unmasked",
+        strict=False,
+    )
+    await proc.process(ex, context)
+
+    body = ex.in_message.body
+    assert isinstance(body, dict)
+    assert body["unmasked"] == "bob@example.com"
+
+
+@pytest.mark.asyncio
+async def test_pii_unmask_tokenizer_unavailable_pass_through(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    monkeypatch.setattr(
+        PIIUnmaskProcessor,
+        "_resolve_tokenizer",
+        staticmethod(lambda: None),
+    )
+
+    ex: Exchange[Any] = Exchange(in_message=Message(body="[EMAIL_1]"))
+    ex.set_property("pii_token_map", {"[EMAIL_1]": "x"})
+    proc = PIIUnmaskProcessor(strict=False)
+    await proc.process(ex, context)
+
+    assert ex.in_message.body == "[EMAIL_1]"  # pass-through
+    assert ex.error is None
+
+
+@pytest.mark.asyncio
+async def test_pii_mask_tokenizer_raises_pass_through(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """Если tokenizer.mask_reversible() raises — pass-through + pii_detected=False."""
+    from src.backend.core.config.features import feature_flags
+
+    class _RaisingTokenizer:
+        async def mask_reversible(
+            self, text: str, language: str = "ru"
+        ) -> None:
+            del text, language
+            raise RuntimeError("tokenizer kaboom")
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    monkeypatch.setattr(
+        PIIMaskProcessor,
+        "_resolve_tokenizer",
+        staticmethod(lambda: _RaisingTokenizer()),
+    )
+
+    text = "email: x@x.com"
+    ex: Exchange[Any] = Exchange(in_message=Message(body=text))
+    proc = PIIMaskProcessor(scope="banking")
+    await proc.process(ex, context)
+
+    assert ex.in_message.body == text  # unchanged
+    assert ex.get_property("pii_detected") is False
+    assert ex.error is None
