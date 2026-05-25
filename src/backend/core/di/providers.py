@@ -35,6 +35,9 @@ __all__ = (
     "get_llm_judge_metrics_provider",
     "set_http_client_provider",
     "set_ai_sanitizer_provider",
+    # Wave S25 W4: PIITokenizer (ADR-0068)
+    "get_pii_tokenizer_provider",
+    "set_pii_tokenizer_provider",
     "set_redis_stream_client_provider",
     "set_mongo_client_provider",
     "set_llm_judge_metrics_provider",
@@ -318,6 +321,67 @@ def get_ai_sanitizer_provider() -> Any:
 
 def set_ai_sanitizer_provider(sanitizer: Any) -> None:
     _overrides["ai_sanitizer"] = sanitizer
+
+
+# ─────────────── PII Tokenizer (Wave S25 W4, ADR-0068) ───────────────
+
+
+def get_pii_tokenizer_provider() -> Any:
+    """Возвращает singleton :class:`PIITokenizer` (S25 W4, ADR-NEW-21).
+
+    Lazy-сборка из :class:`PresidioSanitizerAdapter` (S24 W1),
+    :class:`RedisTokenRegistry` (S25 W4) и :class:`AuditService` (S17/K3).
+    Feature-flag ``ai_pii_tokenizer_enabled`` — на стороне callers (AIGateway
+    ``_resolve_sanitizer`` switch); этот provider всегда отдаёт работающий
+    объект. Override через :func:`set_pii_tokenizer_provider` имеет приоритет.
+    """
+    if "pii_tokenizer" in _overrides:
+        return _overrides["pii_tokenizer"]
+    from src.backend.core.security.pii_tokenizer import PIITokenizer
+    from src.backend.services.ai.pii.presidio_analyzer import (
+        get_presidio_sanitizer_adapter,
+    )
+
+    return PIITokenizer(
+        token_registry=_resolve_pii_token_registry(),
+        audit=_resolve_unified_audit_service(),
+        presidio_analyzer=get_presidio_sanitizer_adapter(),
+    )
+
+
+def set_pii_tokenizer_provider(impl: Any) -> None:
+    """Test-override для PIITokenizer."""
+    _overrides["pii_tokenizer"] = impl
+
+
+def _resolve_pii_token_registry() -> Any:
+    """Lazy-собирает :class:`RedisTokenRegistry` с :class:`EnvAESGCMKeyProvider`.
+
+    Для production AES-GCM ключ читается из env ``PII_AES_KEY_V{version}``
+    (base64 → 32 raw bytes). Vault-источник — carry-over в S25 closure.
+    """
+    from src.backend.infrastructure.security.token_registry import (
+        EnvAESGCMKeyProvider,
+        RedisTokenRegistry,
+    )
+
+    redis_module = resolve_module("clients.storage.redis")
+    return RedisTokenRegistry(
+        redis_client=redis_module.redis_client,
+        key_provider=EnvAESGCMKeyProvider(current_version=1),
+        audit_service=_resolve_unified_audit_service(),
+    )
+
+
+def _resolve_unified_audit_service() -> Any | None:
+    """Lazy-резолв :class:`AuditService` (S17/K3); ``None`` при недоступности."""
+    try:
+        from src.backend.services.audit.audit_service import get_unified_audit_service
+
+        return get_unified_audit_service()
+    except Exception:  # noqa: BLE001 — audit опционален в minimal-профилях
+        return None
+
 
 
 # ─────────────── Redis stream client (Wave 6.3, llm_judge / semantic_cache) ───────────────

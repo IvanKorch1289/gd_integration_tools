@@ -133,6 +133,46 @@ async def register_ai_2026_providers() -> None:
         except Exception as exc:  # noqa: BLE001
             logger.debug("LangMemService registration skipped: %s", exc)
 
+    # ─── PII Tokenizer (Wave S25 W4, ADR-0068) ───
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        if feature_flags.ai_pii_tokenizer_enabled:
+            import asyncio as _asyncio
+
+            from src.backend.core.di.providers import get_pii_tokenizer_provider
+            from src.backend.core.utils.task_registry import get_task_registry
+
+            tokenizer = get_pii_tokenizer_provider()
+            if app is not None:
+                app.state.pii_tokenizer = tokenizer
+            register_provider("security", "pii_tokenizer", tokenizer)
+
+            async def _pii_tokenizer_cleanup_loop() -> None:
+                """Фоновый cleanup expired TokenMap (observability в Redis TTL)."""
+                while True:
+                    try:
+                        await tokenizer.cleanup_expired(ttl_s=3600)
+                    except Exception as cleanup_exc:  # noqa: BLE001
+                        logger.debug(
+                            "pii_tokenizer cleanup tick failed: %s", cleanup_exc
+                        )
+                    await _asyncio.sleep(900)
+
+            try:
+                task_registry = get_task_registry()
+                task_registry.create_task(
+                    _pii_tokenizer_cleanup_loop(),
+                    name="pii-tokenizer-cleanup",
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(
+                    "pii_tokenizer cleanup loop registration skipped: %s", exc
+                )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("PIITokenizer registration skipped: %s", exc)
+
+
     try:
         from src.backend.dsl.engine.processors.streaming_llm import (
             TokenStreamLLMProcessor,
