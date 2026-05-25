@@ -1,10 +1,12 @@
-"""DSL-процессор ``ldap_query`` — async LDAP search через aioldap3 / ldap3.
+"""DSL-процессор ``ldap_query`` — LDAP search через ldap3 / aioldap3.
 
-Wave ``[wave:s5/k3-w3-processor-pack-3]``.
+Wave ``[wave:s5/k3-w3-processor-pack-3]``;
+Wave ``[wave:s18/w0-goal-driven-sweep-1-ldap]`` — порядок fallback инвертирован.
 
-Lazy-import: попытка ``aioldap3`` (async-нативный); при отсутствии fallback
-на ``ldap3`` через ``asyncio.to_thread``. Если ни один не доступен —
-``exchange.fail()``.
+Lazy-import: основной путь ``ldap3`` через ``asyncio.to_thread`` (стабильный wheel
+для Python 3.14, soft-dep `dsl-extras-3`). Резервный путь ``aioldap3`` остаётся для
+сред, где он уже установлен (PyPI-пакет удалён 2026-05-21). Если ни один не
+доступен — ``exchange.fail()``.
 
 Контракт DSL::
 
@@ -166,7 +168,19 @@ class LdapQueryProcessor(BaseProcessor):
         except Exception:  # noqa: BLE001
             pass
 
-        # Try aioldap3 native async
+        # Primary path: ldap3 + asyncio.to_thread (стабильный wheel py3.14).
+        try:
+            entries = await asyncio.to_thread(self._search_sync)
+            self._apply_target(exchange, entries)
+            return
+        except ImportError:
+            pass
+        except Exception as exc:  # noqa: BLE001
+            exchange.fail(f"ldap_query error: {exc}")
+            return
+
+        # Legacy fallback: aioldap3 если каким-то образом ещё установлен.
+        # Пакет удалён с PyPI 2026-05-21, поэтому импорт обычно молча падает.
         try:
             from aioldap3 import LDAPClient  # type: ignore[import-not-found]
 
@@ -179,14 +193,6 @@ class LdapQueryProcessor(BaseProcessor):
                 entries = [dict(e) for e in entries_raw]
             finally:
                 await client.unbind()
-            self._apply_target(exchange, entries)
-            return
-        except ImportError:
-            pass
-
-        # Fallback ldap3 + thread
-        try:
-            entries = await asyncio.to_thread(self._search_sync)
             self._apply_target(exchange, entries)
             return
         except ImportError as exc:

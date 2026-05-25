@@ -57,3 +57,28 @@ def test_validates_constructor() -> None:
         LdapQueryProcessor(
             server="ldap://x", search_base="", search_filter="(uid=*)"
         )
+
+
+@pytest.mark.asyncio
+async def test_ldap3_primary_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Wave [wave:s18/w0-goal-driven-sweep-1-ldap]: ldap3 — основной путь.
+
+    Подменяем ``_search_sync`` так, чтобы он возвращал готовый список
+    словарей без обращения к реальному ldap3-клиенту. Проверяем, что
+    результат записан в ``body`` и нет ошибки.
+    """
+
+    proc = LdapQueryProcessor(
+        server="ldap://x:389",
+        search_base="dc=test",
+        search_filter="(uid=*)",
+        to="body.entries",
+    )
+
+    sample = [{"dn": "cn=user,dc=test", "cn": ["user"]}]
+    monkeypatch.setattr(proc, "_search_sync", lambda: sample)
+
+    ex = _ex(body={})
+    await proc.process(ex, AsyncMock())
+    assert ex.error is None
+    assert ex.in_message.body == {"entries": sample}
