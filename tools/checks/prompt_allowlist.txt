@@ -1,0 +1,15 @@
+# Allowlist для check_hardcoded_prompts.py (Wave 13 GAP-AI).
+# Один glob-pattern на строку. Поддерживается fnmatch синтаксис.
+# Пути относительные к каждому --root или абсолютные.
+#
+# Тесты, фикстуры, миграции уже исключены через DEFAULT_EXCLUDES.
+# Сюда — только специально одобренные исключения с обоснованием.
+
+# Пример: agents с deterministic-prompt'ом для smoke-демо
+# **/agents_pydantic/examples/**
+
+# Sample датасеты RAG-evaluation (Wave 6)
+**/eval/datasets/**
+
+# Legacy moderation evaluator — лимит < 50 символов (короткий prompt)
+**/ai_moderation.py

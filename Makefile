@@ -302,6 +302,20 @@ ai-rag-eval-strict: check-env ## Wave 6 GAP-AI: RAGAS evaluation как blocking
 	@$(UV_RUN) python -m tools.checks.ragas_runner --dataset banking
 	@$(SUCCESS) "[ai-rag-eval-strict] все метрики выше порога"
 
+check-hardcoded-prompts: check-env ## Wave 13 GAP-AI: скан hardcoded LLM-prompts (warn-only)
+	@$(INFO) "Running check-hardcoded-prompts (services/ai, min-length=50)..."
+	@$(UV_RUN) python -m tools.checks.check_hardcoded_prompts \
+		--root src/backend/services/ai \
+		--allowlist tools/checks/prompt_allowlist.txt
+
+check-hardcoded-prompts-strict: check-env ## Wave 13 GAP-AI: blocking-gate hardcoded prompts (exit=1 при findings)
+	@$(INFO) "Running check-hardcoded-prompts --strict (CI gate)..."
+	@$(UV_RUN) python -m tools.checks.check_hardcoded_prompts \
+		--root src/backend/services/ai \
+		--root src/backend/core/ai \
+		--allowlist tools/checks/prompt_allowlist.txt \
+		--strict
+
 api-fuzz: check-env ## S6 K2: schemathesis API fuzzing через tools/api_fuzz_runner.py (warn-only, feature_flag schemathesis_gate_enabled)
 	@$(INFO) "Running api-fuzz (schemathesis property-based testing)..."
 	@mkdir -p dist
