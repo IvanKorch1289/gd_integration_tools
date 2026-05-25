@@ -2459,5 +2459,20 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    pii_response_middleware_enabled: bool = Field(
+        default=False,
+        title="K3 S18 W1: PIIMaskingResponseMiddleware (S-L8-4) — глобальная маскировка JSON-ответов",
+        description=(
+            "K3 Sprint 18 Wave 1 (PLAN.md V22 §S18 W5, S-L8-4). Owner: K3 DSL/Routes. "
+            "При True entrypoints/middlewares/pii_masking_response.py применяет "
+            "core.security.pii_masker.default_masker к JSON-телам ответов на "
+            "configurable path patterns (8 типов PII: jwt/iban/snils/card/passport/"
+            "email/inn/phone). Унифицирует с DSL processor mask_pii и audit PII "
+            "masking (foundation для S22 W1 A-07 PII Masker Unification). "
+            "default-OFF до интеграции с RequestContext + smoke-test на realistic "
+            "API path matrix."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()
