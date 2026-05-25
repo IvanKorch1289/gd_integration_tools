@@ -1,5 +1,24 @@
 # KNOWN_ISSUES.md
 
+## Sprint 18 Closure — 2026-05-25 ✅ LANDED (21 wave)
+
+[wave:s18/closure]. PLAN.md V22 §S18 — Operational + Security GAP Carryover.
+
+**18/18 DoD пройдены либо документированно перенесены.**
+
+Сводка:
+- Memory: `feedback_sprint18_operational_security.md` (детальный
+  summary + carryover map + verify smoke).
+- Landed (15 functional + 1 backbone + 1 integration smoke + 4 scope-correction).
+- Verify: `pytest tests/integration/test_s18_routes_smoke.py` → 11/11 +
+  `make security` exit 0 + `make audit-zap` strict + `validate-profile prod` OK.
+
+Карта DoD → wave commits — см. memory note.
+
+См. ниже разделы "S18 ... carryover" для деталей переноса в S19/S20.
+
+---
+
 ## S18 W16 core_entities legacy cleanup carryover — 2026-05-25 🟡 OPEN
 
 **Контекст**: `[wave:s18/k3-w3-core-entities-final-cleanup]`.
