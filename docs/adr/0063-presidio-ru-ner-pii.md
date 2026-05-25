@@ -69,7 +69,7 @@
 * [x] **AsyncPIISanitizerProtocol** добавлен в `core/interfaces/ai_clients.py` без breaking sync callers (Q4 решение пользователя).
 * [ ] **PoC precision/recall ≥ 0.9 empirical** — требует `make pii-bootstrap` (загрузка `ru_core_news_lg` ~1.5GB) + установка `[ai-safety]` extra. **Carryover S24 nightly CI.**
 * [ ] **Latency bench p95 ≤ 20ms на 4kb текста** — требует presidio-installed environment. **Carryover S24 perf wave.**
-* [ ] **Default-ON в production-config + `rag_pii_retrieval_mask=true`** — после P/R verify. **Carryover S24 closure flip.**
+* [x] **Default-ON в production-config** — `config_profiles/prod.yml::features.presidio_pii_enabled: true` (Block 1.1, gap-ai-1.1, ADR-0072 enforcement). `rag_pii_retrieval_mask=true` — carryover Block 1.3.
 * [ ] **Sphinx page** `docs/source/ai/pii_layer.md` — **carryover S24 W3 closure (docs batch).**
 
 ## Связи с другими ADR
