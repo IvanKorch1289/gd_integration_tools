@@ -20,8 +20,33 @@ from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.backend.core.security.capabilities import CapabilityRef
+from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 
 __all__ = ("RouteManifestError", "RouteManifestV11", "load_route_manifest")
+
+
+class _RouteTimeoutModel(BaseModel):
+    """Pydantic-обёртка над :class:`RouteTimeoutSpec` для парсинга TOML.
+
+    Использует ``extra="forbid"`` чтобы поймать опечатки в ``[timeout]``
+    секции на этапе load (вместо silent ignore).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    connect: float | None = Field(default=None, gt=0)
+    read: float | None = Field(default=None, gt=0)
+    write: float | None = Field(default=None, gt=0)
+    total: float | None = Field(default=None, gt=0)
+
+    def to_spec(self) -> RouteTimeoutSpec:
+        """Конвертация pydantic-модели → frozen dataclass."""
+        return RouteTimeoutSpec(
+            connect=self.connect,
+            read=self.read,
+            write=self.write,
+            total=self.total,
+        )
 
 
 class RouteManifestError(ValueError):
@@ -69,6 +94,7 @@ class RouteManifestV11(BaseModel):
     description: str | None = None
     pipelines: tuple[str, ...] = Field(min_length=1)
     capabilities: tuple[CapabilityRef, ...] = ()
+    timeout: _RouteTimeoutModel | None = None
 
     @field_validator("requires_core")
     @classmethod

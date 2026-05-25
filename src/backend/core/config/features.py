@@ -2474,5 +2474,21 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    per_route_timeout_enabled: bool = Field(
+        default=False,
+        title="K3 S18 W2: per-route timeout (route.toml [timeout] + DSL .policy.timeout)",
+        description=(
+            "K3 Sprint 18 Wave 2 (PLAN.md V22 §S18 W6, P0 Gateway-centralization gap). "
+            "Owner: K3 DSL/Routes. При True TimeoutMiddleware читает per-route "
+            "registry (path-prefix → total seconds) и применяет route-specific cap "
+            "вместо global settings.secure.request_timeout. Fallback на global "
+            "default при отсутствии match. Source-of-truth: "
+            "RouteManifestV11.timeout (RouteTimeoutSpec dataclass) либо DSL "
+            ".policy.timeout(total=...). default-OFF до wiring RouteLoader → "
+            "TimeoutMiddleware registry в lifespan + smoke-test на realistic "
+            "route matrix."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

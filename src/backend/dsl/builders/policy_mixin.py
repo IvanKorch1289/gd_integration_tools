@@ -85,9 +85,55 @@ class PolicyChain:
             "rate_limit", rate=rate, per_seconds=per_seconds, scope=scope
         )
 
-    def timeout(self, *, seconds: float = 30.0) -> "RouteBuilder":
-        """Add timeout policy (через TimeoutProcessor)."""
-        return self._add_policy_processor("timeout", seconds=seconds)
+    def timeout(
+        self,
+        *,
+        seconds: float | None = None,
+        connect: float | None = None,
+        read: float | None = None,
+        write: float | None = None,
+        total: float | None = None,
+    ) -> "RouteBuilder":
+        """Add timeout policy (через TimeoutProcessor).
+
+        S18 W6 (Gateway-centralization): расширенная сигнатура с 4-мя
+        полями ``connect/read/write/total`` для unification с
+        ``route.toml::[timeout]``. Legacy ``seconds`` сохранён как
+        alias для ``total`` (S5 W7 backward-compat).
+
+        Args:
+            seconds: Backward-compat alias для ``total``. Нельзя
+                комбинировать с ``total``.
+            connect: httpx outbound connect-timeout (carryover: wiring
+                в httpx-клиенты — отдельная wave; TimeoutProcessor
+                использует только ``total``).
+            read: httpx outbound read-timeout (см. ``connect``).
+            write: httpx outbound write-timeout (см. ``connect``).
+            total: Общий бюджет inbound + DSL pipeline. По умолчанию
+                30.0s при отсутствии всех параметров.
+
+        Raises:
+            ValueError: ``seconds`` и ``total`` оба заданы.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+        """
+        if seconds is not None and total is not None:
+            raise ValueError(
+                "PolicyChain.timeout: укажите либо seconds (legacy alias), "
+                "либо total — не оба сразу"
+            )
+        effective_total = total if total is not None else seconds
+        if effective_total is None:
+            effective_total = 30.0  # default backward-compat (S5 W7)
+        return self._add_policy_processor(
+            "timeout",
+            seconds=effective_total,
+            connect=connect,
+            read=read,
+            write=write,
+            total=effective_total,
+        )
 
     def retry(
         self, *, max_attempts: int = 3, backoff_seconds: float = 1.0
