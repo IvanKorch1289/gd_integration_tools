@@ -1,5 +1,58 @@
 # KNOWN_ISSUES.md
 
+## Phase A AI hardening — 2026-05-25 ✅ CLOSED 8/8
+
+10-блочный execution-план AI-доработок (директива пользователя 2026-05-22).
+Phase A (Block 1 PII hardening + Block 2 Agent layer fixes) — все 8 wave landed.
+
+### Commits
+
+| Wave | Commit | Цель |
+|------|--------|------|
+| 1.1 | `a3c5cc4b` + `08bfff3a` parallel | Presidio prod-enforcement + ADR-0072 |
+| 1.2 | `c62c453e` | LangFuseSettings.sanitize_traces + wire-up callbacks v2/v3 |
+| 1.3 | `e7e06ed2` | RagIngestSettings.pii_mask_on_ingest + chunk.metadata |
+| 1.4 | `2d9587e5` | McpSettings.tool_authz_enabled + fail-closed gate |
+| 1.5 | `17d6c1f0` | AIAgentSettings.policy_gate_enabled + AuthorizationGateway |
+| 2.1 | `08bfff3a` parallel | LiteLLMGateway integration в ai_graph |
+| 2.2 | `648aaf9e` | asyncio deadlock fix в _make_action_tool |
+| 2.3 | `3abfea2f` | FallbackTrackingCallback + Counter ai_graph_fallback_total |
+
+### Tests: 24 passed + 3 skipped (langchain_core lazy)
+
+### Carryover в следующие сессии
+
+* **Phase B** (Block 3 RAG + Block 4 Memory): BGE-reranker, Hybrid retriever
+  (dense+BM25+RRF), source attribution, Ragas CI gate, embedding version в
+  metadata, UnifiedAgentMemoryGateway Protocol, LangMem consolidation.
+* **Phase C** (Block 5 DSL + Block 7 Guardrails): PolicyMixin.ai_guard(),
+  ContextWindowStrategy, AIPipelineSnapshot, mask_for_retrieval,
+  GuardrailEnforcer, structured output via Instructor.
+* **Phase D** (Block 6 RLM pilot): RLMSessionManager, MCP tools, eval suite.
+* **Phase E** (Block 8 OTel + Block 9 Skills + Block 10 ModelRegistry):
+  gen_ai.* conventions, quality alerts, SkillRegistry, MCP resources/prompts,
+  MLflow wire-up, task-routing.
+* **Docs**: Sphinx pages для PII layer + policy_gate (carryover S25-S27).
+
+### Verify
+
+```bash
+pytest tests/integration/ai/test_presidio_active.py \
+       tests/integration/ai/test_ai_graph_no_deadlock.py \
+       tests/integration/test_mcp_tool_authz.py \
+       tests/unit/services/ai/gateway/test_langfuse_payload_no_pii.py \
+       tests/unit/services/ai/gateway/test_fallback_callback.py \
+       tests/unit/services/ai/test_rag_pii_mask.py \
+       tests/unit/services/ai/test_ai_agent_policy_gate.py \
+       -v
+# Expected: 21 passed + 5 skipped (langchain_core / presidio lazy)
+```
+
+См. `vault/session-2026-05-25-1617-phase-a-summary.md` (локальный) и
+[[feedback_phase_a_ai_hardening]] (memory note).
+
+---
+
 ## Sprint 21 GAP-backlog status — 2026-05-22 ✅ CLOSED 10/10
 
 **Sprint 21 — Resilience & Multi-tenancy Hardening** — закрыт coordinator-self mode за одну сессию (11 коммитов: backbone + 9 wave + closure). 55/55 unit-тестов passing (+5 skipped: RLS требует Postgres).
