@@ -161,6 +161,7 @@ class RAGService:
             where = {"namespace": namespace}
 
         results = await self._store.query(embedding=embedding, top_k=top_k, where=where)
+        results = _filter_by_embedding_version(results)
 
         if self._cache is not None and results:
             try:
@@ -337,6 +338,79 @@ class RAGService:
         except Exception as exc:  # noqa: BLE001
             logger.warning("count(%s) failed: %s", collection, exc)
             return 0
+
+
+def _filter_by_embedding_version(
+    results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Block 3.5 (gap-ai-3.5, ADR-0074): retrieval-side embedding version check.
+
+    Сравнивает ``chunk.metadata.embedding_model`` с текущим
+    ``rag_settings.embedding_model``. При mismatch:
+        * ``RAGSettings.embedding_strict_mode=True`` — фильтрует chunk
+          (исключает из retrieval);
+        * False (default) — оставляет chunk + counter
+          ``rag_model_mismatch_total{chunk_model, current_model}`` + log warn.
+
+    Backward-compat: chunks без поля ``embedding_model`` в metadata
+    (legacy ingest до Block 3.5) — пропускаются без проверки (counter
+    `rag_model_unknown_total` инкрементируется, но не фильтрует).
+
+    Args:
+        results: List of retrieval results from vector store.
+
+    Returns:
+        Отфильтрованный список (или исходный в non-strict mode).
+    """
+    if not results:
+        return results
+    try:
+        from src.backend.core.config.rag import rag_settings
+    except Exception:  # noqa: BLE001
+        return results
+
+    current_model = getattr(rag_settings, "embedding_model", None)
+    if not current_model:
+        return results
+    strict_mode = bool(getattr(rag_settings, "embedding_strict_mode", False))
+
+    filtered: list[dict[str, Any]] = []
+    for chunk in results:
+        metadata = chunk.get("metadata") or {}
+        chunk_model = metadata.get("embedding_model")
+        if chunk_model is None:
+            _record_embedding_provenance("unknown", current_model)
+            filtered.append(chunk)
+            continue
+        if chunk_model != current_model:
+            _record_embedding_provenance(chunk_model, current_model)
+            logger.warning(
+                "rag_embedding_mismatch chunk=%s current=%s strict=%s",
+                chunk_model,
+                current_model,
+                strict_mode,
+            )
+            if strict_mode:
+                continue
+        filtered.append(chunk)
+    return filtered
+
+
+def _record_embedding_provenance(chunk_model: str, current_model: str) -> None:
+    """Counter `rag_model_mismatch_total` для observability re-embed gap."""
+    try:
+        from src.backend.infrastructure.observability.metrics_registry import (
+            metrics_registry,
+        )
+
+        counter = metrics_registry.counter(
+            "rag_model_mismatch_total",
+            "Chunks с embedding_model != current rag_settings.embedding_model",
+            labels=("chunk_model", "current_model"),
+        )
+        counter.labels(chunk_model=chunk_model, current_model=current_model).inc()
+    except Exception:  # noqa: BLE001
+        logger.debug("rag_model_mismatch metric emit failed", exc_info=True)
 
 
 @app_state_singleton("rag_service")

@@ -72,5 +72,42 @@ class RAGSettings(BaseSettingsWithLoader):
     top_k: int = Field(5, ge=1, le=100, description="Кол-во результатов поиска.")
     enabled: bool = Field(False, description="Включить RAG.")
 
+    # --- Block 3.5 (gap-ai-3.5, ADR-0074): embedding provenance --------
+    embedding_strict_mode: bool = Field(
+        default=False,
+        description=(
+            "Block 3.5: retrieval фильтрует chunks с "
+            "metadata.embedding_model != current rag.embedding_model. "
+            "Counter rag_model_mismatch_total{chunk_model, current_model} "
+            "инкрементируется в обоих режимах. Default-OFF — оставить "
+            "warn-only до полного re-embed, ON — после migration."
+        ),
+    )
+
+    # --- Block 3.2 (gap-ai-3.2): hybrid retrieval ---------------------
+    hybrid_enabled: bool = Field(
+        default=False,
+        description=(
+            "Block 3.2: hybrid retriever (dense + BM25 + RRF) поверх "
+            "vector store. При True RAGService.search комбинирует семантику "
+            "Qdrant с lexical BM25 через Reciprocal Rank Fusion (k=60 default)."
+        ),
+    )
+    rrf_k: int = Field(
+        default=60,
+        ge=1,
+        description="Block 3.2: Reciprocal Rank Fusion параметр k (default 60).",
+    )
+
+    # --- Block 3.3 (gap-ai-3.3): source attribution -------------------
+    source_attribution_enabled: bool = Field(
+        default=True,
+        description=(
+            "Block 3.3: добавлять source_id/filename в augmented prompt + "
+            "возвращать source_attribution: list[str] в response. "
+            "Default-ON — без compliance-impact."
+        ),
+    )
+
 
 rag_settings = RAGSettings()

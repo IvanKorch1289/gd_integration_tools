@@ -116,6 +116,7 @@ class RagIngestService:
     ) -> None:
         rag = self._ensure_rag()
         fingerprint = state["chunker_fingerprint"]
+        embedding_meta = _resolve_embedding_provenance()
         for filename, content_bytes in files:
             try:
                 content_text = content_bytes.decode("utf-8", errors="replace")
@@ -123,6 +124,7 @@ class RagIngestService:
                 metadata: dict[str, Any] = {
                     "filename": filename,
                     "chunker_fingerprint": fingerprint,
+                    **embedding_meta,
                     **pii_meta,
                 }
                 doc_id = await rag.ingest(
@@ -155,6 +157,35 @@ class RagIngestService:
     async def list_recent(self, limit: int = 50) -> list[dict[str, Any]]:
         """Последние ``limit`` задач (D.2)."""
         return await self._store.list_recent(limit=limit)
+
+
+def _resolve_embedding_provenance() -> dict[str, Any]:
+    """Block 3.5 (gap-ai-3.5, ADR-0074): embedding provenance в chunk.metadata.
+
+    Возвращает словарь:
+        * ``embedding_provider`` — имя backend ('bge', 'openai', 'gemini', ...);
+        * ``embedding_model`` — конкретная модель (например 'BAAI/bge-m3');
+        * ``chunker_fingerprint_version`` — int, для detect re-embed/index.
+
+    Retrieval-side проверяет соответствие текущим settings и при mismatch
+    либо отбрасывает chunk (strict mode), либо логирует warn + counter
+    `rag_model_mismatch_total{chunk_model, current_model}`.
+
+    Graceful: при недоступности rag_settings — возвращает ``{}``,
+    не блокирует ingest (existing chunks остаются без provenance).
+    """
+    try:
+        from src.backend.core.config.ai_2026 import rag_ingest_settings
+        from src.backend.core.config.rag import rag_settings
+    except Exception:  # noqa: BLE001
+        return {}
+    return {
+        "embedding_provider": getattr(rag_settings, "embedding_provider", "unknown"),
+        "embedding_model": getattr(rag_settings, "embedding_model", "unknown"),
+        "chunker_fingerprint_version": int(
+            getattr(rag_ingest_settings, "chunker_fingerprint_version", 1)
+        ),
+    }
 
 
 def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
