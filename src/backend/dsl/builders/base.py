@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
+from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
 from src.backend.dsl.builders.control_flow import ControlFlowMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
@@ -54,7 +55,12 @@ __all__ = ("RouteBuilder",)
 
 @dataclass(slots=True)
 class RouteBuilder(
-    AIRPAMixin, ControlFlowMixin, EIPMixin, IntegrationMixin, ConvertersMixin
+    AIRPAMixin,
+    ControlFlowMixin,
+    EIPMixin,
+    IntegrationMixin,
+    ConvertersMixin,
+    AgentDSLMixin,
 ):
     """Fluent-builder для DSL-маршрутов.
 
