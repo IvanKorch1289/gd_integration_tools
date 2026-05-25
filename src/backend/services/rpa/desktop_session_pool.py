@@ -35,6 +35,8 @@ from typing import Any
 
 import httpx
 
+from src.backend.core.net.migration_helper import make_http_client
+
 __all__ = (
     "DesktopRPASessionPool",
     "DesktopRPASessionStats",
@@ -98,16 +100,27 @@ class DesktopRPASessionPool:
         self._lock = asyncio.Lock()
 
     def _make_client(self) -> httpx.AsyncClient:
-        """Создаёт новый AsyncClient с keep-alive + headers."""
+        """Создаёт новый AsyncClient с keep-alive + headers.
+
+        S18 W1 (WAF-coverage): создание клиента идёт через
+        :func:`make_http_client` (V15 R-V15-5). При default-OFF feature-flag
+        ``waf_outbound_via_facade`` legacy-путь возвращает обычный
+        ``httpx.AsyncClient`` — поведение и API сохранены полностью.
+        """
         headers: dict[str, str] = {}
         if self._api_key:
             headers["X-API-Key"] = self._api_key
-        return httpx.AsyncClient(
+        client = make_http_client(
+            plugin="desktop_rpa",
             base_url=self._base_url,
             timeout=httpx.Timeout(self._timeout),
             headers=headers,
             limits=httpx.Limits(max_keepalive_connections=4, max_connections=8),
         )
+        # Default-OFF path возвращает httpx.AsyncClient; runtime-flag=ON
+        # переключение на OutboundHttpClient — отдельный wave (см. S18 W1
+        # carryover: headers/limits passthrough в migration_helper).
+        return client  # type: ignore[return-value]
 
     async def _get_or_create(self, app_name: str) -> _PooledSession:
         """Возвращает session по app_name; создаёт при отсутствии."""
