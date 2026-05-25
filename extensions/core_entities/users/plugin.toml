@@ -9,6 +9,8 @@ requires_core = ">=0.2,<0.3"
 entry_class = "extensions.core_entities.users.plugin.UsersPlugin"
 tenant_aware = false
 description = "User CRUD plugin (migrated from src/backend/services/core/users.py per R-V15-16)"
+# S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
+trust_tier = "A"
 
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 [[capabilities]]

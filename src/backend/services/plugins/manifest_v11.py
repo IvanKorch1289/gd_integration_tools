@@ -177,6 +177,19 @@ class PluginManifestV11(BaseModel):
     config: dict[str, Any] = Field(default_factory=dict)
     compatibility: PluginCompatibility = Field(default_factory=PluginCompatibility)
     sandbox: PluginSandbox | None = None
+    trust_tier: Literal["A", "B"] = "B"
+    """Plugin trust tier (S18 W12, ADR-NEW-6).
+
+    * ``"A"`` — signed by org-CA cosign (production trusted): runtime
+      sandbox disabled; isolation через capability-gate + code-review
+      CI + supply-chain (SBOM/cosign verify). Internal-only plugins.
+    * ``"B"`` — untrusted/external (default): strict e2b/pyodide
+      sandbox; cosign verification опциональна. External marketplace
+      plugins, AI-generated code.
+
+    Default = ``"B"`` (secure-by-default): новые плагины без явной
+    декларации рассматриваются как untrusted.
+    """
 
     @field_validator("requires_core")
     @classmethod

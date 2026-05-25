@@ -8,6 +8,8 @@ requires_core = ">=0.2,<0.3"
 entry_class = "extensions.example_plugin.plugin.ExamplePlugin"
 tenant_aware = false
 description = "Reference V11 plugin (Wave R1.fin demo)"
+# S18 W12 (ADR-NEW-6): internal trusted plugin → Tier-A (no runtime sandbox).
+trust_tier = "A"
 
 # ─── Runtime capabilities (sandbox gate) ──────────────────────────
 [[capabilities]]

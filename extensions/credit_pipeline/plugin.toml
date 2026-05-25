@@ -18,6 +18,8 @@ requires_core = ">=0.2,<0.3"
 entry_class = "extensions.credit_pipeline.plugin.CreditPipelinePlugin"
 tenant_aware = true
 description = "Credit pipeline plugin (scaffold; Team T3 будет наполнять Sprint 8+)"
+# S18 W12 (ADR-NEW-6): internal banking-critical plugin → Tier-A.
+trust_tier = "A"
 
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 # net.outbound — GlobScopeMatcher по '.' (DNS-стиль); :external требует WAF.
