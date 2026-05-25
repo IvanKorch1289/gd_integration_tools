@@ -1,5 +1,65 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-25, Sprint 17 ✅ CLOSED 15/15 — GAP P0 + Centralization Hardening)
+
+**HEAD на момент closure**: `a3c5cc4b feat(ai): [K4] PII hardening — Block 1.1 integration test + ADR-0063 DoD` (параллельная). Closure commit мой — ниже.
+**Memory**: `feedback_sprint17_gap_closure_centralization.md` (NEW).
+**Связь**: PLAN.md V22.4 §4 Sprint 17 (REPLACED 2026-05-21 GAP-driven).
+
+### Sprint 17 closure — 36 wave landed (5 команд K1/K2/K3/K7/K9)
+
+**ADR-NEW-1..4 backbone landed** + 12 default-OFF feature-flags + 79 файлов libcst codemod (Python-2 except) + 13 ConfigValidator rules + 44 metrics → MetricsRegistry + correlation_id end-to-end 4 propagation points + TaskRegistry 34+7 orphan migration + полный K8s scaffold (8 манифестов) + 4 backup scripts.
+
+### DoD Sprint 17 — 15/15 ✅
+
+| # | DoD | Статус |
+|---|---|---|
+| 1 | `[wave:s17/backbone]` 12 flags + team_s17 | ✅ |
+| 2 | K-SYN-1..5: libcst codemod 79 файлов | ✅ (0 violations) |
+| 3 | K-TLS-1..3: `ssl.CERT_NONE` = 0 (4 grep-hits — docstrings/error-msg) | ✅ |
+| 4 | K-ARCH-1+2 AuthorizationGateway + CapabilityGatewayProtocol | ✅ |
+| 5 | K-ARCH-3 routes capability-gate + audit-event | ✅ |
+| 6 | K-ARCH-4 tenant_aware enforcement в ExecutionEngine | ✅ |
+| 7 | K-ARCH-5 call_function_modules whitelist strict | ✅ |
+| 8 | ADR-NEW-2 MiddlewareRegistry + entry-points hooks | ✅ |
+| 9 | ADR-NEW-3 RequestContext + structlog trace_id | ✅ |
+| 10 | D11+D13a+D14: ConfigValidator + MetricsRegistry + TaskRegistry | ✅ (0 orphan, 1 false-positive docstring) |
+| 11 | D12+D13b+D9: correlation_id end-to-end + APScheduler obs + Tenant FF UI | ✅ (`3691fcdf` K5-W1 landed) |
+| 12 | K-OPS-1+K-OPS-2: SagaStateModel + K8s manifests | ✅ (`b88d10a4` 8 манифестов) |
+| 13 | K-OPS-3 `make pre-prod-check v2` 30 gates | ✅ scaffold (`846b2d9b`) |
+| 14 | K-OPS-4+K-OPS-5: alembic init-container + 4 backup scripts | ✅ (3 MAJOR в `backup_clickhouse.sh` — carryover S18) |
+| 15 | S-L7-1..3: ClickHouse retry + structlog trace_id + Graylog FD-leak | ✅ (`cc3a9c7c` 5 S110 fix) |
+
+### Verify-команды этой сессии
+
+- `grep -rn "ssl\.CERT_NONE\|check_hostname=False" src/backend/` → 4 hits, все docstrings/error-msg (active = 0).
+- `grep -rn "asyncio\.create_task" src/backend/ | grep -v task_registry` → 1 hit (task_watchdog.py:13 docstring example, active = 0).
+- `grep "threading\.RLock(" src/backend/` → 0.
+- `grep "except Exception:\s*pass\b" src/backend/` → 0.
+- `git log --oneline --grep="wave:s17"` → 36 commits.
+
+### Carryover S18 (осознанный долг)
+
+1. **3 MAJOR в `ops/backup/backup_clickhouse.sh`** (SQL injection FREEZE-loop + word-splitting) — code-reviewer от S17 K5-W2 review.
+2. **Coverage ≥77% empirical** — не verified в этой сессии.
+3. **Mypy 0** — не verified empirically.
+4. **DECISIONS.md ADR-NEW-19..24** — упомянуты в PLAN.md §6, отсутствуют в `.claude/DECISIONS.md`. Будут добавлены в `[plan:v22.4/adr-19-24]` следующим коммитом.
+
+### Параллельная активность (S25-S27 AI Platform)
+
+- `08bfff3a feat(ai): AI Platform Layer S25-S27 — gateway pipeline, DSL agent models, DSPy optimizer, LlamaGuard, RLM consolidator` (2026-05-23 от параллельной без wave-теги) — landed S25 W1 (AIGateway 432 LOC + 33 tests) / S25 W2 (Agent DSL 393 LOC + 12 tests) / S27 W1 (LlamaGuard 312 LOC).
+- `d0d1b0ba [wave:s25/w3-scaffold-gateway-adapter]` — Hybrid AIGateway adapter scaffold (мой carryover план был закрыт параллельной).
+- `a3c5cc4b feat(ai): [K4] PII hardening — Block 1.1 integration test + ADR-0063 DoD` — расширение S24 W1 моих файлов (Prometheus counter `presidio_fallback_total{reason}` + Block 1.1 integration test).
+
+### Следующий шаг
+
+1. **DECISIONS.md +ADR-NEW-19..24** — догнать AIGateway/AIPolicySpec/PIITokenizer/SkillRegistry/MCP/Audit ADR-секции (отдельный commit).
+2. **S24 W2** NeMo Guardrails + Llama Guard 3 (ADR-NEW-17) — Llama Guard уже landed в `08bfff3a`, нужны NeMo Colang flows + integration test.
+3. **S24 W3** LangGraph Checkpointer + Mem0 (ADR-NEW-18) — новый код, без пересечения.
+4. **S18 kickoff** — 3 MAJOR `backup_clickhouse.sh` fix + coverage verify + mypy verify.
+
+---
+
 ## Текущее состояние (2026-05-22 18:24, S24 W1 Presidio CLOSED — compact session)
 
 **HEAD**: `e360b975 [wave:s24/w1-fix-layer-violation]` (мой); параллельная сессия дальше: `63e31478 [plan:v22.4/s25-s27-ai-platform-backbone]`.
