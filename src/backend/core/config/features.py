@@ -1343,6 +1343,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    cdc_enabled: bool = Field(
+        default=False,
+        title="S18 W0: включить CDC backends (Poll/Listen-Notify/Debezium)",
+        description=(
+            "Sprint 18 W0 [wave:s18/w0-goal-driven-sweep-7-cdc-status-doc]. "
+            "Owner: K2 Platform. При False CDC-source'ы не активируются в "
+            "lifespan; PollCDCBackend и ListenNotifyCDCBackend готовы к "
+            "production, DebeziumEventsCDCBackend — scaffold (Sprint R3.4). "
+            "Default-OFF до явного staging-smoke."
+        ),
+    )
+
     # ─── Sprint 7 — K3 DSL+Workflow ────────────────────────────────────────
     dsl_blueprints_migrate: bool = Field(
         default=False,

@@ -134,7 +134,7 @@ files       │  (debounce=500 ms)     │
 | Streaming | `websocket/` `sse/` `webhook/` | Bidirectional / push / inbound |
 | Messaging | `stream/` `mqtt/` | RabbitMQ, Redis Streams, Kafka, MQTT |
 | LLM-tooling | `mcp/` | FastMCP (Model Context Protocol) |
-| CDC | `cdc/` | Change Data Capture |
+| CDC | `cdc/` | Change Data Capture (см. «CDC Status» ниже) |
 | Files | `filewatcher/` | FS monitoring → DSL trigger |
 | Enterprise | `enterprise/` `legacy/` `web3/` `iot/` | AS2/EDI/SAP/Modbus/OPC-UA |
 | UI | `streamlit_app/` | Dashboards / DSL builder / Wiki |
@@ -143,6 +143,21 @@ Middleware (`entrypoints/middlewares/`): Prometheus, TrustedHost,
 IPRestriction, APIKey, BlockedRoutes, GZip, ResponseCache (ETag),
 DataMasking, RequestID, Timeout, AuditLog, InnerRequestLogging,
 CircuitBreaker, ExceptionHandler.
+
+#### CDC Status (Sprint 18 W0)
+
+`src/backend/infrastructure/cdc/` содержит три backend'а; статус
+актуализирован в Wave `s18/w0-goal-driven-sweep-7-cdc-status-doc`:
+
+| Backend | Файл | Status | Use-case |
+|---|---|---|---|
+| Polling | `poll_backend.py` | **production-ready** | Кросс-БД (PG/Oracle/MSSQL/MySQL/DB2) через `updated_at`; самый универсальный путь. |
+| Listen/Notify | `listen_notify_backend.py` | **production-ready** | PG-only, small payload через `LISTEN/NOTIFY`. |
+| Debezium | `debezium_events_backend.py` | **scaffold** | Kafka topic с Debezium-сообщениями; полная реализация — Sprint R3.4 (требует Kafka + Debezium-connector). Методы `consume`/`commit_offset`/`replay` логируют намерение, но не подключаются к Kafka. |
+
+Включение CDC в runtime — через feature-flag `feature_flags.cdc_enabled`
+(default-OFF). Per-route активация — через `route.toml::sources.cdc`
+с указанием конкретного backend'а.
 
 ### 4. Сервисный слой
 
