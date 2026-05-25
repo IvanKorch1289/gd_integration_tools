@@ -165,16 +165,33 @@ class BGESettings(BaseSettingsWithLoader):
     embedding_model: str = Field(
         default="BAAI/bge-m3", description="Имя модели BGE-M3 (1024-dim dense)."
     )
+    reranker_enabled: bool = Field(
+        default=False,
+        description=(
+            "Block 3.1 (gap-ai-3.1, ADR-0074): включить BGE cross-encoder "
+            "reranker (FlagEmbedding.FlagReranker) в _RagRerankerPipeline. "
+            "При выключенном flag либо отсутствии пакета [rag-advanced] — "
+            "fallback на token-overlap heuristic. Counter "
+            "rag_reranker_fallback_total отслеживает деградацию покрытия."
+        ),
+    )
     reranker_model: str = Field(
         default="BAAI/bge-reranker-v2-m3",
         description="Имя cross-encoder reranker-модели.",
+    )
+    reranker_use_fp16: bool = Field(
+        default=True,
+        description=(
+            "Block 3.1: FP16 для cross-encoder (экономия GPU-памяти ×2, "
+            "негативное влияние на качество < 0.5%)."
+        ),
     )
     cache_dir: str = Field(
         default="./var/bge_cache", description="Каталог кэша HuggingFace для весов."
     )
     use_fp16: bool = Field(
         default=True,
-        description="Использовать FP16 при инициализации (экономия памяти).",
+        description="Использовать FP16 при инициализации embeddings (экономия памяти).",
     )
 
 
