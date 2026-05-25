@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, Any
 import orjson
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Callable
 
     from redis.asyncio import Redis as AsyncRedis
 
@@ -211,7 +211,8 @@ class RedisFeatureFlagBroadcaster:
 
     async def _listen(self) -> None:
         """Subscriber loop: получает messages и применяет к local singleton."""
-        assert self._pubsub is not None
+        if self._pubsub is None:  # pragma: no cover — start() гарантирует
+            return
         try:
             async for message in self._pubsub.listen():
                 if self._stop_event.is_set():

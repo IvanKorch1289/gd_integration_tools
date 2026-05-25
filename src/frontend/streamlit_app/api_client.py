@@ -81,6 +81,53 @@ class APIClient:
         except Exception:
             return False
 
+    def list_overrides(self) -> dict[str, Any]:
+        """Sprint 17 K5 W1 (D9): runtime overrides — global + per-tenant.
+
+        Returns ``{"global": {...}, "per_tenant": {tenant_id: {...}}}``
+        или пустой dict при недоступности backend.
+        """
+        try:
+            return self._request("GET", "/api/v1/admin/feature-flags")
+        except Exception:
+            return {}
+
+    def set_override(
+        self,
+        flag: str,
+        value: Any,
+        tenant_id: str | None = None,
+        actor: str = "ui",
+    ) -> dict[str, Any] | None:
+        """Sprint 17 K5 W1 (D9): установить runtime override (опц. per-tenant)."""
+        try:
+            return self._request(
+                "PUT",
+                f"/api/v1/admin/feature-flags/{flag}",
+                json={"value": value, "tenant_id": tenant_id, "actor": actor},
+            )
+        except Exception:
+            return None
+
+    def clear_override(
+        self,
+        flag: str,
+        tenant_id: str | None = None,
+        actor: str = "ui",
+    ) -> dict[str, Any] | None:
+        """Sprint 17 K5 W1 (D9): снять runtime override (вернуть к static-default)."""
+        try:
+            params: dict[str, Any] = {"actor": actor}
+            if tenant_id is not None:
+                params["tenant_id"] = tenant_id
+            return self._request(
+                "DELETE",
+                f"/api/v1/admin/feature-flags/{flag}",
+                params=params,
+            )
+        except Exception:
+            return None
+
     def get_config(self) -> dict[str, Any]:
         try:
             return self._request("GET", "/api/v1/admin/config")

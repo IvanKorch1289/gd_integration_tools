@@ -15,9 +15,10 @@ per-process. Подключение Redis pub/sub channel ``feature-flags:toggle
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from src.backend.core.feature_flags.runtime_overrides import (
@@ -28,7 +29,31 @@ from src.backend.services.audit import get_unified_audit_service
 
 __all__ = ("router",)
 
+_logger = logging.getLogger("entrypoints.api.v1.admin.feature_flags")
+
 router = APIRouter()
+
+
+async def _maybe_publish(
+    request: Request, change: FeatureFlagChange
+) -> None:
+    """Опубликовать FeatureFlagChange через Redis broadcaster, если активен.
+
+    Sprint 17 K5 W1 (D9). Broadcaster хранится в ``app.state`` после
+    lifespan startup при ``tenant_feature_flag_ui=True``. При отсутствии —
+    no-op (single-replica режим).
+    """
+    bcast = getattr(request.app.state, "feature_flag_broadcaster", None)
+    if bcast is None:
+        return
+    try:
+        await bcast.publish(change)
+    except Exception as exc:  # noqa: BLE001 — broadcast best-effort
+        _logger.warning(
+            "feature_flag.broadcast.publish_skipped: %s",
+            exc,
+            extra={"flag": change.flag, "tenant_id": change.tenant_id},
+        )
 
 
 class SetOverrideRequest(BaseModel):
@@ -81,12 +106,14 @@ async def list_overrides() -> dict[str, Any]:
 
 @router.put("/feature-flags/{flag}", tags=["Admin · Feature Flags"])
 async def set_override(
-    flag: str, body: SetOverrideRequest
+    flag: str, body: SetOverrideRequest, request: Request
 ) -> OverrideResponse:
     """Установить runtime override для feature-flag.
 
     Эмитирует ``feature.toggled`` audit-event через unified
-    :class:`AuditService` (см. ``services/audit/audit_service.py``).
+    :class:`AuditService` (см. ``services/audit/audit_service.py``)
+    и публикует change через Redis pub/sub broadcaster (S17 K5 W1 D9),
+    если ``tenant_feature_flag_ui=True`` и broadcaster активен.
     """
     overrides = get_runtime_overrides()
     change = overrides.set(
@@ -105,16 +132,22 @@ async def set_override(
             "new_value": change.new_value,
         },
     )
+    await _maybe_publish(request, change)
     return _to_response(change)
 
 
 @router.delete("/feature-flags/{flag}", tags=["Admin · Feature Flags"])
 async def clear_override(
     flag: str,
+    request: Request,
     tenant_id: str | None = Query(default=None),
     actor: str = Query(default="system"),
 ) -> OverrideResponse:
-    """Снять runtime override — flag вернётся к static-default."""
+    """Снять runtime override — flag вернётся к static-default.
+
+    Также публикует clear-change через Redis broadcaster (S17 K5 W1 D9)
+    для multi-replica propagation, если broadcaster активен.
+    """
     overrides = get_runtime_overrides()
     change = overrides.clear(flag, tenant_id=tenant_id)
     if change is None:
@@ -132,4 +165,5 @@ async def clear_override(
         tenant_id=tenant_id,
         details={"old_value": change.old_value},
     )
+    await _maybe_publish(request, change)
     return _to_response(change)

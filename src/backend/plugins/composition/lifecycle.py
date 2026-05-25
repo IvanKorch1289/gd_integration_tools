@@ -922,6 +922,39 @@ async def lifespan(app: FastAPI):
         except Exception as sr_exc:  # noqa: BLE001
             app_logger.warning("ServiceSchemaRegistry bootstrap skipped: %s", sr_exc)
 
+        # Sprint 17 K5 W1 (D9): запуск Redis pub/sub broadcaster для
+        # multi-replica propagation feature-flag overrides. Default-OFF
+        # через ``tenant_feature_flag_ui`` (backbone S17). Никогда не
+        # валит startup — graceful no-op при недоступности Redis.
+        try:
+            from src.backend.core.feature_flags.redis_broadcaster import (
+                maybe_start_broadcaster,
+            )
+            from src.backend.core.feature_flags.runtime_overrides import (
+                get_runtime_overrides,
+            )
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client,
+            )
+
+            redis_kv = getattr(get_redis_client(), "client", None)
+            broadcaster = await maybe_start_broadcaster(
+                redis_client=redis_kv,
+                overrides=get_runtime_overrides(),
+            )
+            if broadcaster is not None:
+                app.state.feature_flag_broadcaster = broadcaster
+                app_logger.info(
+                    "FeatureFlagBroadcaster registered: replica_id=%s",
+                    broadcaster.replica_id,
+                )
+        except Exception as bcast_exc:  # noqa: BLE001
+            app_logger.warning(
+                "FeatureFlagBroadcaster bootstrap skipped: %s "
+                "(приложение продолжит без multi-replica propagation)",
+                bcast_exc,
+            )
+
         startup_completed = True
         app.state.infrastructure_ready = True
 
@@ -1053,6 +1086,18 @@ async def lifespan(app: FastAPI):
                 await cluster_adapter.close()
             except Exception as rc_close_exc:  # noqa: BLE001
                 app_logger.warning("RedisClusterAdapter close error: %s", rc_close_exc)
+
+        # Sprint 17 K5 W1 (D9): graceful stop FeatureFlagBroadcaster
+        # ДО task_registry.shutdown_all, чтобы subscriber-task успел
+        # отписаться от Redis pub/sub корректно (а не быть отменённым).
+        bcast = getattr(app.state, "feature_flag_broadcaster", None)
+        if bcast is not None:
+            try:
+                await bcast.stop()
+            except Exception as bcast_stop_exc:  # noqa: BLE001
+                app_logger.warning(
+                    "FeatureFlagBroadcaster shutdown error: %s", bcast_stop_exc
+                )
 
         # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
         # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех
