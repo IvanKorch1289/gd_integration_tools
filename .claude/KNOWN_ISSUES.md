@@ -378,10 +378,36 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 
 ---
 
-## Sprint 17 — GAP P0 Closure + Centralization Hardening (открыто 2026-05-21)
+## Sprint 17 — GAP P0 Closure + Centralization Hardening ✅ CLOSED 2026-05-25 (14/15 + 1 carryover)
+
+**Closure**: `[wave:s17/closure]` — coordinator-self, см. `vault/session-2026-05-25-1900-s17-closure-summary.md` и [[feedback_sprint17_gap_closure_centralization]].
+**26 wave landed** (24 из плана + 2 cleanup) за 2026-05-21..2026-05-25 параллельно с S21/S24/S25-27.
+
+**Финальная DoD-матрица:**
+- ✅ 1: backbone (`b08c974d`)
+- ✅ 2: K-SYN — except A,B: = 0 (`6b822ab3` + `b49526dc`)
+- ✅ 3: K-TLS — CERT_NONE = 0 (`0ce57673` + `8cacb47b`)
+- ✅ 4: K-ARCH-1+2 AuthorizationGateway + Protocol (`bd49a53c`)
+- ✅ 5: K-ARCH-3 routes capability-gate (`970b655b`)
+- ✅ 6: K-ARCH-4 routes tenant-aware (`3aa1edac`)
+- ✅ 7: K-ARCH-5 call_function whitelist (`83ebf9f5`)
+- ✅ 8: ADR-NEW-2 MiddlewareRegistry (`e3fbe3b6`)
+- ✅ 9: ADR-NEW-3 RequestContext (`7a335d52`)
+- ✅ 10: D11/D13a/D14 — 0 inline-metric / 0 orphan-tasks / 13 ConfigValidator rules
+- ✅ 11: D12/D13b/D9 — correlation 4 propagation + apscheduler + D9 UI (`3691fcdf` сегодня)
+- ✅ 12: K-OPS-1+K-OPS-2 — saga_state PG + 11 K8s manifests (`b88d10a4`)
+- ✅ 13: K-OPS-3 — pre_prod_check 30 gates (`846b2d9b`)
+- ✅ 14: K-OPS-4+K-OPS-5 — db-migration init + 4 backup scripts + DR runbook (`c603b895`, `68095bdc`)
+- ⏳ 15: S-L7-1..3 partial (5 S110 closed via `cc3a9c7c`); coverage ramp-up 75→77% — **carryover S18 K2 W1**.
+
+**Carryover в S18**: 5 пунктов — см. [[feedback_sprint17_gap_closure_centralization]] раздел Carryover.
+
+---
+
+## Sprint 17 — История работы (для архива)
 
 **Источник:** GAP-аудит 2026-05-21 (10 слоёв × 4 вектора, среднее 5.7/10), ADR-NEW-1..4, PLAN.md V22 §S17 (197–256).
-**Срок:** 2026-06-05 → 2026-06-18 (2 недели, 5 команд).
+**Срок:** 2026-06-05 → 2026-06-18 (2 недели, 5 команд). Фактически закрыто за 2026-05-21..2026-05-25.
 **Backbone:** [wave:s17/backbone] — 12 default-OFF feature-flags + `[team.k1..k10]` (новый team-ownership.toml) + эта секция KNOWN_ISSUES.
 
 ### Wave в работе текущей сессии (2026-05-21)
