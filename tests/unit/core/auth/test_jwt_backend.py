@@ -25,7 +25,6 @@ from src.backend.core.auth.jwt_backend import (
     _parse_header_unsafe,
 )
 
-
 HS_SECRET = "supersecretkeywithatleast32characters!!"
 ISS = "test-iss"
 AUD = "test-aud"
@@ -149,6 +148,94 @@ async def test_blacklisted_jti_rejected(
     token = _make_hs_token(base_claims)
     with pytest.raises(JwtVerificationError, match="отозван"):
         await backend.decode(token)
+
+
+@pytest.mark.asyncio
+async def test_jwks_rotation_revoke_before_time_scenario() -> None:
+    """S18 W4 (S-L8-5): integration rotation scenario.
+
+    Шаги:
+        1. Issue токен с iat=100 (старый).
+        2. blacklist.revoke_before_time(150) — barrier rotation.
+        3. backend.decode(old_token) → JwtVerificationError ("rotation").
+        4. Issue новый токен с iat=200.
+        5. backend.decode(new_token) → succeeds.
+        6. Per-jti revoke остаётся ортогональным:
+           blacklist.revoke("jti-new", exp) → старая семантика работает.
+    """
+
+    class _RotationBlacklist:
+        """In-memory blacklist с полным контрактом JwtBlacklistProtocol."""
+
+        def __init__(self) -> None:
+            self.per_jti: set[str] = set()
+            self.revoke_before: int | None = None
+
+        async def is_revoked(self, jti: str) -> bool:
+            return jti in self.per_jti
+
+        async def revoke(self, jti: str, expires_at: int) -> None:
+            self.per_jti.add(jti)
+
+        async def revoke_before_time(self, time_threshold: int) -> None:
+            current = self.revoke_before or 0
+            self.revoke_before = max(current, int(time_threshold))
+
+        async def is_iat_revoked(self, iat: int | None) -> bool:
+            if iat is None or self.revoke_before is None:
+                return False
+            return int(iat) < self.revoke_before
+
+    blacklist = _RotationBlacklist()
+    backend = JwtBackend(
+        algorithms=["HS256"],
+        secret=HS_SECRET,
+        issuer=ISS,
+        audience=AUD,
+        blacklist=blacklist,
+    )
+
+    # 1. Старый токен (iat=100)
+    now_unix = int(time.time())
+    old_claims: dict[str, Any] = {
+        "sub": "user-1",
+        "iss": ISS,
+        "aud": AUD,
+        "exp": now_unix + 3600,
+        "iat": 100,
+        "jti": "jti-old",
+    }
+    old_token = _make_hs_token(old_claims)
+
+    # До rotation — старый токен валиден
+    claims_before = await backend.decode(old_token)
+    assert claims_before.sub == "user-1"
+
+    # 2. Rotation barrier на t=150
+    await blacklist.revoke_before_time(150)
+
+    # 3. Старый токен теперь отозван (iat=100 < 150)
+    with pytest.raises(JwtVerificationError, match="rotation"):
+        await backend.decode(old_token)
+
+    # 4. Новый токен с iat=200 (после barrier)
+    new_claims: dict[str, Any] = {
+        "sub": "user-2",
+        "iss": ISS,
+        "aud": AUD,
+        "exp": now_unix + 3600,
+        "iat": 200,
+        "jti": "jti-new",
+    }
+    new_token = _make_hs_token(new_claims)
+    # 5. Новый токен — успешно валидируется
+    claims_after = await backend.decode(new_token)
+    assert claims_after.sub == "user-2"
+
+    # 6. Per-jti revoke остаётся ортогональным batch-revoke
+    await blacklist.revoke("jti-new", expires_at=now_unix + 3600)
+    with pytest.raises(JwtVerificationError, match="blacklist"):
+        await backend.decode(new_token)
 
 
 @pytest.mark.asyncio
