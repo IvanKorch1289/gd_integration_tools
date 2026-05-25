@@ -233,6 +233,17 @@ class LangFuseSettings(BaseSettingsWithLoader):
     deep_link_base: str = Field(
         default="", description="Базовый URL для построения deep-link в UI LangFuse."
     )
+    sanitize_traces: bool = Field(
+        default=True,
+        description=(
+            "Block 1.2 (gap-ai-1.2, ADR-0072): применять PII-anonymize "
+            "(anonymize_trace_payload) к messages/output/metadata перед "
+            "отправкой в Langfuse. Default-ON — Langfuse SaaS не должен "
+            "получать сырые ФИО/ИНН/СНИЛС/паспорт клиентов банка (152-ФЗ). "
+            "Эффект no-op при PRESIDIO_PII_ENABLED=False — sanitizer "
+            "тогда работает как passthrough."
+        ),
+    )
 
 
 class McpSettings(BaseSettingsWithLoader):

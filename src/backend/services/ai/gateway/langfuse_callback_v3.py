@@ -108,6 +108,22 @@ class LangFuseCallbackV3:
             tenant: str = metadata.get("tenant") or "default"
             route: Any = metadata.get("route") or kwargs.get("litellm_call_id")
             messages: Any = kwargs.get("messages")
+            output_text: Any = _extract_output(response_obj)
+            span_metadata: dict[str, Any] = {
+                "tenant": tenant,
+                "route": route,
+                "cost_usd": _extract_cost(response_obj),
+                "start_time": str(start_time) if start_time else None,
+                "end_time": str(end_time) if end_time else None,
+            }
+
+            # Block 1.2 (gap-ai-1.2, ADR-0072): анонимизация PII в trace payload.
+            messages, output_text, span_metadata = _maybe_anonymize_v3(
+                input_messages=messages,
+                output_text=output_text,
+                span_metadata=span_metadata,
+                tenant_id=str(tenant) if tenant else None,
+            )
 
             trace_name = f"llm.{_provider_from_model(model)}"
 
@@ -115,18 +131,61 @@ class LangFuseCallbackV3:
             with client.start_as_current_span(name=trace_name, input=messages) as span:
                 span.update(
                     model=model,
-                    output=_extract_output(response_obj),
+                    output=output_text,
                     usage=_to_langfuse_usage(_extract_usage(response_obj)),
-                    metadata={
-                        "tenant": tenant,
-                        "route": route,
-                        "cost_usd": _extract_cost(response_obj),
-                        "start_time": str(start_time) if start_time else None,
-                        "end_time": str(end_time) if end_time else None,
-                    },
+                    metadata=span_metadata,
                 )
         except Exception as exc:  # noqa: BLE001
             logger.debug("LangFuseCallbackV3 emit failed: %s", exc)
+
+
+def _maybe_anonymize_v3(
+    *,
+    input_messages: Any,
+    output_text: Any,
+    span_metadata: dict[str, Any],
+    tenant_id: str | None,
+) -> tuple[Any, Any, dict[str, Any]]:
+    """Block 1.2: анонимизирует PII в trace payload до отправки в Langfuse 3.x.
+
+    Зеркало :func:`langfuse_callback._maybe_anonymize` для SDK 3.x ветки.
+    Учитывает ``LangFuseSettings.sanitize_traces`` и
+    ``feature_flags.presidio_pii_enabled`` (single source of truth через
+    :func:`anonymize_trace_payload`).
+    """
+    try:
+        from src.backend.core.config.ai_2026 import langfuse_settings
+    except Exception:  # noqa: BLE001
+        return input_messages, output_text, span_metadata
+    if not langfuse_settings.sanitize_traces:
+        return input_messages, output_text, span_metadata
+
+    from src.backend.services.ai.gateway.langfuse_pii_callback import (
+        anonymize_trace_payload,
+    )
+
+    sanitized_input = anonymize_trace_payload(
+        {"_messages": input_messages} if input_messages is not None else None,
+        tenant_id=tenant_id,
+    )
+    new_input = (
+        sanitized_input.get("_messages")
+        if isinstance(sanitized_input, dict)
+        else input_messages
+    )
+    sanitized_output = anonymize_trace_payload(
+        {"_text": output_text} if output_text is not None else None,
+        tenant_id=tenant_id,
+    )
+    new_output = (
+        sanitized_output.get("_text")
+        if isinstance(sanitized_output, dict)
+        else output_text
+    )
+    sanitized_metadata = (
+        anonymize_trace_payload(span_metadata, tenant_id=tenant_id) or span_metadata
+    )
+    return new_input, new_output, sanitized_metadata
 
 
 # ─── Вспомогательные функции ────────────────────────────────────────────────

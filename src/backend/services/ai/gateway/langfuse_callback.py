@@ -70,7 +70,13 @@ class LangFuseCostCallback:
         start_time: Any = None,
         end_time: Any = None,
     ) -> None:
-        """LiteLLM success-callback signature."""
+        """LiteLLM success-callback signature.
+
+        Block 1.2 (gap-ai-1.2, ADR-0072): при ``LangFuseSettings.sanitize_traces=True``
+        (default) input/output/metadata анонимизируются через PII-санитайзер
+        перед отправкой в Langfuse. Это закрывает 152-ФЗ compliance gap —
+        SaaS-instance Langfuse не получает ФИО/ИНН/СНИЛС клиентов банка.
+        """
         client = self._ensure_client()
         if client is None:
             return
@@ -82,6 +88,20 @@ class LangFuseCostCallback:
                 "litellm_call_id"
             )
 
+            input_messages = kwargs.get("messages")
+            output_text = _extract_output(response_obj)
+            generation_metadata: dict[str, Any] = {
+                "cost_usd": _extract_cost(response_obj),
+                "start_time": str(start_time) if start_time else None,
+                "end_time": str(end_time) if end_time else None,
+            }
+            input_messages, output_text, generation_metadata = _maybe_anonymize(
+                input_messages=input_messages,
+                output_text=output_text,
+                generation_metadata=generation_metadata,
+                tenant_id=str(tenant) if tenant else None,
+            )
+
             trace_name = f"llm.{_provider_from_model(model)}"
             trace = client.trace(
                 name=trace_name, metadata={"tenant": tenant, "route": route}
@@ -91,17 +111,75 @@ class LangFuseCostCallback:
                 return
             generation(
                 model=model,
-                input=kwargs.get("messages"),
-                output=_extract_output(response_obj),
+                input=input_messages,
+                output=output_text,
                 usage=_extract_usage(response_obj),
-                metadata={
-                    "cost_usd": _extract_cost(response_obj),
-                    "start_time": str(start_time) if start_time else None,
-                    "end_time": str(end_time) if end_time else None,
-                },
+                metadata=generation_metadata,
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("LangFuseCostCallback emit failed: %s", exc)
+
+
+def _maybe_anonymize(
+    *,
+    input_messages: Any,
+    output_text: Any,
+    generation_metadata: dict[str, Any],
+    tenant_id: str | None,
+) -> tuple[Any, Any, dict[str, Any]]:
+    """Block 1.2: анонимизирует payload Langfuse через PII-санитайзер.
+
+    Применяет :func:`anonymize_trace_payload` к ``input_messages``,
+    ``output_text``, ``generation_metadata`` при включённом
+    ``LangFuseSettings.sanitize_traces=True``. Иначе — passthrough.
+
+    ``anonymize_trace_payload`` сам учитывает ``PRESIDIO_PII_ENABLED``:
+    при выключенном feature-flag возвращает payload без изменений
+    (no-op). Это даёт single source of truth для PII-стека.
+
+    Args:
+        input_messages: Список сообщений LLM (input).
+        output_text: Текст ответа LLM.
+        generation_metadata: Произвольные поля trace.
+        tenant_id: Tenant-контекст для audit-event ``pii.anonymized``.
+
+    Returns:
+        Кортеж (input, output, metadata) после анонимизации (или без неё).
+    """
+    try:
+        from src.backend.core.config.ai_2026 import langfuse_settings
+    except Exception:  # noqa: BLE001 — конфиг недоступен в degenerate setup
+        return input_messages, output_text, generation_metadata
+    if not langfuse_settings.sanitize_traces:
+        return input_messages, output_text, generation_metadata
+
+    from src.backend.services.ai.gateway.langfuse_pii_callback import (
+        anonymize_trace_payload,
+    )
+
+    sanitized_input = anonymize_trace_payload(
+        {"_messages": input_messages} if input_messages is not None else None,
+        tenant_id=tenant_id,
+    )
+    new_input = (
+        sanitized_input.get("_messages")
+        if isinstance(sanitized_input, dict)
+        else input_messages
+    )
+    sanitized_output = anonymize_trace_payload(
+        {"_text": output_text} if output_text is not None else None,
+        tenant_id=tenant_id,
+    )
+    new_output = (
+        sanitized_output.get("_text")
+        if isinstance(sanitized_output, dict)
+        else output_text
+    )
+    sanitized_metadata = (
+        anonymize_trace_payload(generation_metadata, tenant_id=tenant_id)
+        or generation_metadata
+    )
+    return new_input, new_output, sanitized_metadata
 
 
 def _provider_from_model(model: str) -> str:
