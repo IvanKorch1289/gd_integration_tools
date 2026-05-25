@@ -21,7 +21,6 @@ Lazy-import:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any
 
@@ -31,7 +30,20 @@ logger = logging.getLogger(__name__)
 
 
 def _make_action_tool(action_name: str) -> Any:
-    """Создаёт LangChain-tool из зарегистрированного action.
+    """Создаёт async-only LangChain-tool из зарегистрированного action.
+
+    Block 2.2 (gap-ai-2.2): инструмент возвращается БЕЗ sync-обёртки
+    (``_sync_run`` удалён). Предыдущая реализация делала ``asyncio.run``
+    внутри ``ThreadPoolExecutor`` при работающем event loop, что под
+    нагрузкой давало ``RuntimeError: asyncio.run() cannot be called from
+    a running event loop`` (вложенный loop в worker-потоке создавал
+    deadlock на shared connection pools / DB sessions).
+
+    Текущая реализация:
+        * Только ``coroutine=_run_action`` в ``StructuredTool.from_function``;
+        * LangChain автоматически генерирует sync-wrapper через
+          ``asyncio.run_coroutine_threadsafe`` либо отвергает sync-вызов
+          с понятной ошибкой (LangGraph всегда использует async-path).
 
     Args:
         action_name: Имя action в :class:`ActionHandlerRegistry`.
@@ -54,20 +66,7 @@ def _make_action_tool(action_name: str) -> Any:
             return str(result.model_dump(mode="json"))
         return str(result)
 
-    def _sync_run(**kwargs: Any) -> str:
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = None
-        if loop is not None and loop.is_running():
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                return pool.submit(asyncio.run, _run_action(**kwargs)).result()
-        return asyncio.run(_run_action(**kwargs))
-
     return StructuredTool.from_function(
-        func=_sync_run,
         coroutine=_run_action,
         name=action_name.replace(".", "_"),
         description=f"Выполняет action '{action_name}' через ActionHandlerRegistry",
