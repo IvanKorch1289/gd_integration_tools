@@ -15,7 +15,10 @@ import logging
 from typing import Any, AsyncIterator
 
 from src.backend.core.di.app_state import app_state_singleton
-from src.backend.services.ai.gateway.callbacks import CostTrackingCallback
+from src.backend.services.ai.gateway.callbacks import (
+    CostTrackingCallback,
+    FallbackTrackingCallback,
+)
 from src.backend.services.ai.gateway.exceptions import (
     GatewayRateLimited,
     GatewayUnavailable,
@@ -51,6 +54,7 @@ class LiteLLMGateway:
         self._enabled = cfg.enabled
         self._litellm: Any = None
         self._cost_callback = CostTrackingCallback()
+        self._fallback_callback = FallbackTrackingCallback()
 
     def _ensure_litellm(self) -> Any:
         """Lazy-import litellm. Поднимает GatewayUnavailable если пакет не установлен."""
@@ -74,6 +78,19 @@ class LiteLLMGateway:
                     litellm.success_callback = callbacks
             except Exception as exc:  # noqa: BLE001
                 logger.debug("LiteLLM cost-callback registration failed: %s", exc)
+
+        # Block 2.3 (gap-ai-2.3, ADR-0073): observability fallback events.
+        # litellm.failure_callback вызывается на любой provider-failure
+        # (timeout / rate-limit / 5xx) ДО внутреннего fallback chain или после
+        # его исчерпания. Counter ai_graph_fallback_total{model,reason} даёт
+        # сигнал на Grafana alert при деградации primary-провайдера.
+        try:
+            failure_callbacks = list(getattr(litellm, "failure_callback", []) or [])
+            if self._fallback_callback not in failure_callbacks:
+                failure_callbacks.append(self._fallback_callback)
+                litellm.failure_callback = failure_callbacks
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("LiteLLM failure-callback registration failed: %s", exc)
 
         self._litellm = litellm
         return litellm
