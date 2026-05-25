@@ -37,6 +37,7 @@ from src.backend.dsl.builders.ai_rpa import AIRPAMixin
 from src.backend.dsl.builders.control_flow import ControlFlowMixin
 from src.backend.dsl.builders.converters import ConvertersMixin
 from src.backend.dsl.builders.eip import EIPMixin
+from src.backend.dsl.builders.eventbus_mixin import EventBusMixin
 from src.backend.dsl.builders.integration import IntegrationMixin
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
@@ -58,6 +59,7 @@ class RouteBuilder(
     AIRPAMixin,
     ControlFlowMixin,
     EIPMixin,
+    EventBusMixin,
     IntegrationMixin,
     ConvertersMixin,
     AgentDSLMixin,
