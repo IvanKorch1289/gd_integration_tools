@@ -1,5 +1,42 @@
 # KNOWN_ISSUES.md
 
+## S18 W16 core_entities legacy cleanup carryover — 2026-05-25 🟡 OPEN
+
+**Контекст**: `[wave:s18/k3-w3-core-entities-final-cleanup]`.
+Wave спец: удалить `src/backend/services/core/{users.py, orders.py,
+orderkinds.py}` legacy + миграция импортёров на `extensions/core_entities/`.
+
+### Состояние
+
+- 3 legacy файла существуют:
+  - `src/backend/services/core/users.py` (749 байт)
+  - `src/backend/services/core/orders.py` (15.9 KB)
+  - `src/backend/services/core/orderkinds.py` (824 байта)
+- Активные импортёры (8 файлов):
+  - `src/backend/plugins/composition/service_setup.py`
+  - `src/backend/core/interfaces/order_storage.py`
+  - `src/backend/dsl/commands/setup.py`
+  - `src/backend/entrypoints/api/v1/endpoints/{users,orders,orderkinds}.py`
+  - `src/backend/entrypoints/api/generator/setup.py`
+  - `src/backend/services/core/orderkinds.py` (self-reference)
+  - `src/backend/services/core/users.py` (self-reference)
+
+### Carryover
+
+Wave перенесена из S18 в S19 К3 (либо S20 final-cleanup). Объём
+работы:
+- audit + migrate 8 импортёров на `extensions/core_entities/`;
+- удалить 3 legacy файла;
+- обеспечить совместимость API endpoints (`/api/v1/{users,orders,orderkinds}`)
+  через extensions plugin routing;
+- регрессия test suite по всем endpoints.
+
+Risk: breakage existing `/api/v1/{users,orders,orderkinds}` endpoints
+без careful migration. Не входит в "критические проблемы only" scope
+S18 auto-mode сессии.
+
+---
+
 ## S18 W14 Multi-tenancy M-B scope reduction — 2026-05-25 ✅ LANDED
 
 **Контекст**: `[wave:s18/k1-w6-multi-tenancy-mb-reduce]` (ADR-NEW-9 / B-6).
