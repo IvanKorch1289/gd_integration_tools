@@ -1,5 +1,49 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-25 12:33, S17 CLOSED + ADR-NEW-19..24 — compact session)
+
+**HEAD после моих commits**: `14a13a93 [plan:v22.4/adr-19-24]` (мой) → плюс ~7 параллельных landed после (Langfuse v3 in progress).
+**Compact**: `vault/session-2026-05-25-1233-summary.md` (детальная сводка 2 commits + 8 параллельных landed).
+**Memory**: `feedback_sprint17_gap_closure_centralization.md` (NEW).
+
+### 2 моих commits
+
+| Hash | Tag | Описание |
+|---|---|---|
+| `5487921d` | `[wave:s17/closure]` | Sprint 17 GAP P0 + Centralization Hardening CLOSED 15/15 |
+| `14a13a93` | `[plan:v22.4/adr-19-24]` | ADR-NEW-19..24 AI Platform Layer (6 ADR) в DECISIONS.md |
+
+### Параллельная landed между моими commits (chronological)
+
+`b88d10a4 K8s-manifests` → `047e5e9e metrics-migrate-tail` → `d0d1b0ba s25/w3-scaffold-gateway-adapter` → `3691fcdf k5-w1-tenant-feature-toggle-ui` → `a3c5cc4b PII hardening` → `648aaf9e ai_graph asyncio deadlock fix` → `604095a2 k2-w5-resilience-coordinator-class`.
+
+S25 W3 adapter wrap (моя carryover задача) закрыта параллельной `d0d1b0ba` — пропустил собственную реализацию.
+
+### Verify-команды этой сессии
+
+- DoD grep-критерии S17: все 5 active violations = 0 (4 false-positive — docstrings/error-msg, 1 — task_watchdog docstring example).
+- Backbone файлы exists: AuthorizationGateway + CapabilityGatewayProtocol + MiddlewareRegistry + RequestContext + SagaStateModel + 8 K8s manifests + 4 backup scripts.
+- `git log --grep="wave:s17" | wc -l` → 36 wave landed.
+- `grep "ADR-NEW-1[9]\|ADR-NEW-2[0-4]" .claude/DECISIONS.md` → 9 matches.
+
+### Открытые carryover S18
+
+1. **3 MAJOR в `ops/backup/backup_clickhouse.sh`** — параллельная в работе (M в working tree).
+2. **Empirical coverage ≥77% verify** — не verified.
+3. **Mypy 0 verify** — не verified empirically.
+4. **S24 W2 NeMo Guardrails Colang flows** (Llama Guard уже в `08bfff3a`).
+5. **S24 W3 LangGraph Checkpointer + Mem0**.
+6. **S25 W5 Langfuse v3** — параллельная в работе (langfuse_callback_v3.py + test_langfuse_payload_no_pii.py untracked).
+7. **S26 / S27 W2-W6** — NOT_STARTED.
+
+### Следующий шаг
+
+1. **`/clear`** — этой сессии всё durable записано.
+2. **S24 W2** NeMo Colang flows / **S24 W3** LangGraph Checkpointer + Mem0 / **S26 W1** Prompts sweep — новый код без пересечения с параллельной.
+3. **S18 kickoff** — после параллельной закрытия `backup_clickhouse.sh` MAJOR.
+
+---
+
 ## Текущее состояние (2026-05-25, Sprint 17 ✅ CLOSED 15/15 — GAP P0 + Centralization Hardening)
 
 **HEAD на момент closure**: `a3c5cc4b feat(ai): [K4] PII hardening — Block 1.1 integration test + ADR-0063 DoD` (параллельная). Closure commit мой — ниже.
