@@ -219,3 +219,108 @@ class AgentDSLMixin:
                 continue_on_error=continue_on_error,
             )
         )
+
+    # ── W2 — Guardrails + PII (3 methods) ──
+
+    def guardrails_apply(
+        self,
+        *,
+        stage: str = "input",
+        source_property: str | None = None,
+        on_block: str = "warn",
+        categories: list[str] | None = None,
+    ) -> "RouteBuilder":
+        """Content safety через Llama Guard 3 (S27 W2).
+
+        Args:
+            stage: ``"input"`` (проверка prompt) или ``"output"`` (completion).
+            source_property: Dot-path к тексту. Default зависит от ``stage``.
+            on_block: ``"dlq"`` / ``"fail"`` / ``"warn"`` — политика при unsafe.
+            categories: Опц. список категорий
+                (default OAI moderation set от LlamaGuardRuntime).
+
+        Example::
+
+            builder.guardrails_apply(stage="output", on_block="fail")
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
+            GuardrailsApplyProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            GuardrailsApplyProcessor(
+                stage=stage,  # type: ignore[arg-type]
+                source_property=source_property,
+                on_block=on_block,  # type: ignore[arg-type]
+                categories=categories,
+            )
+        )
+
+    def pii_mask(
+        self,
+        *,
+        scope: str,
+        source_property: str = "body",
+        target_property: str | None = None,
+        language: str = "ru",
+    ) -> "RouteBuilder":
+        """Reversible PII tokenization через PIITokenizer (S27 W2, ADR-NEW-21).
+
+        Args:
+            scope: Capability scope (``"banking"`` / ``"hr"`` / ``"medical"``).
+            source_property: Откуда взять текст. Default ``"body"``.
+            target_property: Куда положить masked-текст. Default = source.
+            language: Язык для Presidio NER. Default ``"ru"``.
+
+        Example::
+
+            builder.pii_mask(scope="banking")
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (
+            PIIMaskProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            PIIMaskProcessor(
+                scope=scope,
+                source_property=source_property,
+                target_property=target_property,
+                language=language,
+            )
+        )
+
+    def pii_unmask(
+        self,
+        *,
+        source_property: str = "body",
+        target_property: str | None = None,
+        token_map_property: str = "pii_token_map",  # noqa: S107
+        scope: str = "default",
+        strict: bool = False,
+    ) -> "RouteBuilder":
+        """Восстановить PII по ``token_map`` от ``pii_mask`` (S27 W2).
+
+        Args:
+            source_property: Откуда взять masked-текст.
+            target_property: Куда положить unmasked. Default = source.
+            token_map_property: Где искать TokenMap. Default ``"pii_token_map"``.
+            scope: Capability scope.
+            strict: ``True`` — raise если token_map отсутствует.
+
+        Example::
+
+            builder.pii_unmask(source_property="agent_result.content", strict=True)
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (
+            PIIUnmaskProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            PIIUnmaskProcessor(
+                source_property=source_property,
+                target_property=target_property,
+                token_map_property=token_map_property,
+                scope=scope,
+                strict=strict,
+            )
+        )
