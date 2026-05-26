@@ -502,7 +502,7 @@ class AIGateway:
         Returns:
             Rendered prompt после template + budget trim + context strategy.
         """
-        from src.backend.services.ai.context_strategy import (
+        from src.backend.core.ai.context_strategy import (
             TokenBudget,
             get_context_strategy,
         )
@@ -542,7 +542,7 @@ class AIGateway:
         try:
             strategy = get_context_strategy(strategy_type)
         except Exception:  # noqa: BLE001
-            from src.backend.services.ai.context_strategy import RollingWindowStrategy
+            from src.backend.core.ai.context_strategy import RollingWindowStrategy
             strategy = RollingWindowStrategy()
 
         # String-level: split at 60/40 boundary, truncate middle

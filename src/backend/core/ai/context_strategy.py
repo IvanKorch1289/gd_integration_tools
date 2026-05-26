@@ -19,12 +19,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 __all__ = (
     "ContextStrategy",
@@ -36,7 +33,7 @@ __all__ = (
     "get_context_strategy",
 )
 
-logger = logging.getLogger("services.ai.context_strategy")
+logger = logging.getLogger("core.ai.context_strategy")
 
 
 class ContextStrategyType(StrEnum):
@@ -51,9 +48,10 @@ class ContextStrategyType(StrEnum):
 class ContextMessage:
     """Один message в conversation history.
 
-    role: "user" | "assistant" | "system"
-    content: текст сообщения
-    token_count: предвычисленный размер (если known)
+    Attributes:
+        role: Message role (user / assistant / system).
+        content: Текст сообщения.
+        token_count: Предвычисленный размер (если known).
     """
 
     role: str
