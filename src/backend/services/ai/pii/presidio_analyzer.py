@@ -148,13 +148,19 @@ class PresidioSanitizerAdapter:
 
     @staticmethod
     def _build_custom_recognizers() -> list[EntityRecognizer]:
-        """Регистрирует 4 custom recognizers для русских domain-сущностей.
+        """Регистрирует 7 custom recognizers для русских domain-сущностей.
 
         Импортируется отдельным методом, чтобы изолировать тяжёлые импорты
         от main module-load (lazy-pattern).
+
+        S24 W1: INN, СНИЛС, паспорт, кредитное дело (4).
+        S28 W5: адрес, банковский счёт, водительское удостоверение (+3 = 7).
         """
         from src.backend.services.ai.pii.recognizers import (
+            AddressRuRecognizer,
+            BankAccountRuRecognizer,
             CreditCaseRecognizer,
+            DriverLicenseRuRecognizer,
             InnRecognizer,
             PassportRuRecognizer,
             SnilsRecognizer,
@@ -165,6 +171,9 @@ class PresidioSanitizerAdapter:
             SnilsRecognizer(),
             PassportRuRecognizer(),
             CreditCaseRecognizer(),
+            AddressRuRecognizer(),      # S28 W5
+            BankAccountRuRecognizer(),   # S28 W5
+            DriverLicenseRuRecognizer(), # S28 W5
         ]
 
     # ─── sync API (AISanitizerProtocol) ───────────────────────────────────
