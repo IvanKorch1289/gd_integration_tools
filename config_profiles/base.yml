@@ -380,6 +380,30 @@ rag:
   chunk_size: 512
   chunk_overlap: 50
   top_k: 5
+  # Adaptive RAG strategies (Sprint 19 K4 W6).
+  adaptive:
+    enabled: true
+    # Стратегия по умолчанию (fallback).
+    default_strategy: "dense"
+    # Параметры для HyDE.
+    hyde:
+      max_tokens: 256
+      temperature: 0.1
+      prompt_template: "Напиши краткий идеальный ответ на следующий вопрос. Отвечай только по существу, без введения. Вопрос: {query}"
+      include_hypothetical_in_result: false
+    # Параметры для Multi-query.
+    multi_query:
+      num_reformulations: 5
+      rrf_k: 60
+      parallel: true
+      prompt_template: "Переформулируй следующий запрос {n} различными способами. Каждая реформализация должна раскрывать разный аспект или использовать синонимы. Верни только список реформализаций, по одной на строку. Оригинальный запрос: {query}"
+    # Параметры для Hybrid.
+    hybrid:
+      rrf_k: 60
+    # Пороги использования стратегий (confidence thresholds).
+    strategy_thresholds:
+      min_confidence_for_llm: 0.0
+      cache_size: 512
 
 
 perplexity:
