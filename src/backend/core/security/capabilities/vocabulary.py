@@ -181,19 +181,17 @@ def build_default_vocabulary() -> CapabilityVocabulary:
         CapabilityDef(
             name="fs.write",
             matcher=path_glob,
-            description="Запись файлов через FSFacade (path-glob по '/').",
-        )
-    )
-    vocab.register(
-        CapabilityDef(
-            name="fs.create_new",
-            matcher=path_glob,
+            aliases=("fs.create_new",),
             description=(
-                "Создание нового файла в AI workspace через AIFsFacade "
-                "(non-overwriting; запись существующих файлов запрещена, V15 R-V15-4)."
+                "Унифицированная запись файлов. "
+                "fs.create_new — deprecated alias (post-S20 removal). "
+                "Scope: fs.write.workspace.<session_id> для AI-workspaces; "
+                "fs.write.tenant.<tenant_id> / fs.write.repo.<area> для системных."
             ),
         )
     )
+    # fs.create_new больше не регистрируется отдельно — только как alias fs.write
+
     vocab.register(
         CapabilityDef(
             name="code.execute",

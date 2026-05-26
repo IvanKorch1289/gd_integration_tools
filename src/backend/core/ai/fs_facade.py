@@ -153,7 +153,16 @@ class AIFsFacade:
 
         scope = handle.path.as_posix()
         if self._check is not None:
-            self._check(self._plugin, "fs.create_new", scope)
+            from src.backend.core.config.features import feature_flags
+
+            if feature_flags.ai_safety_capability_unify:
+                # K1 S19 W5: Use unified fs.write.workspace.<session_id> capability
+                # fs.create_new is deprecated in favor of fs.write
+                write_scope = f"workspace.{handle.session_id}"
+                self._check(self._plugin, "fs.write", write_scope)
+            else:
+                # Legacy: fs.create_new.<workspace>
+                self._check(self._plugin, "fs.create_new", scope)
 
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
