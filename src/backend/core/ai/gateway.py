@@ -370,7 +370,7 @@ class AIGateway:
 
     async def _apply_input_guards(
         self, sanitized: str, policy: "AIPolicySpec | None"
-    ) -> None:
+    ) -> list[GuardResult]:
         """Шаг 4: input guards (NeMo Colang + Rebuff/Lakera).
 
         При наличии :class:`AIPolicyEnforcer` с настроенными guards вызывает
@@ -379,20 +379,25 @@ class AIGateway:
         Args:
             sanitized: Sanitized input после шага 3.
             policy: Resolved AIPolicySpec.
+
+        Returns:
+            Список :class:`GuardResult` от каждого guard'а.
         """
         if self._policy_enforcer is None or policy is None:
-            return
+            return []
         if not policy.input_guards:
-            return
+            return []
         guard = getattr(self._policy_enforcer, "guard_input", None)
         if guard is None:
-            return
+            return []
         try:
-            await guard(sanitized, policy)
+            results = await guard(sanitized, policy)
+            return results if results is not None else []
         except NotImplementedError:
             logger.debug(
                 "AIGateway: input guards не реализованы (Wave S24 W2 deferred)"
             )
+            return []
 
     async def _render_prompt(
         self,
@@ -462,7 +467,7 @@ class AIGateway:
 
     async def _apply_output_guards(
         self, response: AIResponse, policy: "AIPolicySpec | None"
-    ) -> None:
+    ) -> list[GuardResult]:
         """Шаг 7: output guards (Llama Guard 3).
 
         При наличии :class:`AIPolicyEnforcer` с настроенными guards вызывает
@@ -471,17 +476,25 @@ class AIGateway:
         Args:
             response: Raw completion AIResponse.
             policy: Resolved AIPolicySpec.
+
+        Returns:
+            Список :class:`GuardResult` от каждого guard'а.
         """
         if self._policy_enforcer is None or policy is None:
-            return
+            return []
         if not policy.output_guards:
-            return
+            return []
         guard = getattr(self._policy_enforcer, "guard_output", None)
         if guard is None:
-            return
+            return []
         try:
-            await guard(response, policy)
+            results = await guard(response, policy)
+            return results if results is not None else []
         except NotImplementedError:
+            logger.debug(
+                "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
+            )
+            return []
             logger.debug(
                 "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
             )
