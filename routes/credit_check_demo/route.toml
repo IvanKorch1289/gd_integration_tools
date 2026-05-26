@@ -1,7 +1,12 @@
+# Credit Check Demo — V11 Route Manifest (S27 W3/W4 PoC)
+#
+# PoC route для демонстрации всех 9 AI Agent DSL processors.
+# Использует pipeline: credit.dsl.yaml
+
 [route]
 name = "credit_check_demo"
 version = "0.1.0"
-description = "PoC route — credit check с AI Agent DSL processors (S27 W3 PoC)"
+description = "PoC — credit check с AI Agent DSL processors (S27 W3/W4)"
 requires_core = ">=27.0,<28.0"
 tenant_aware = true
 

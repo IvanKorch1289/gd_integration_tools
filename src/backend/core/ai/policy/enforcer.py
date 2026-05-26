@@ -224,7 +224,7 @@ class AIPolicyEnforcer:
 
             envelope = DLQEnvelope(
                 transport="ai_guard",
-                original_payload={"content": content, "guard": guard_name, "categories": flagged},
+                original_payload={"content": content[:200], "guard": guard_name, "categories": flagged},
                 error_class="GuardrailViolation",
                 error_message=f"Guard {guard_name} blocked: {flagged}",
                 reason=DLQReason.UNEXPECTED,

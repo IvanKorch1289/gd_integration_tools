@@ -241,8 +241,12 @@ def emit_ai_invocation_event(
         sink = _unified_sink
 
     try:
-        import asyncio
+        from src.backend.core.utils.task_registry import get_task_registry
 
-        asyncio.create_task(sink.emit_event(event), name=f"audit.emit.{event.event_type.value}")
+        registry = get_task_registry()
+        registry.create_task(
+            sink.emit_event(event),
+            name=f"audit.emit.{event.event_type.value}",
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning("emit_ai_invocation_event: failed to schedule: %s", exc)
