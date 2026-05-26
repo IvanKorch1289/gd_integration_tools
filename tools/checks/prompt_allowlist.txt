@@ -6,10 +6,11 @@
 # Сюда — только специально одобренные исключения с обоснованием.
 
 # Пример: agents с deterministic-prompt'ом для smoke-демо
-# **/agents_pydantic/examples/**
+**/agents_pydantic/examples/**
 
 # Sample датасеты RAG-evaluation (Wave 6)
 **/eval/datasets/**
 
 # Legacy moderation evaluator — лимит < 50 символов (короткий prompt)
 **/ai_moderation.py
+agents_pydantic/examples/rag_answering.py

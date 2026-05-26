@@ -9,21 +9,67 @@
 
 Feature-flag ``ai_audit_unified_enabled`` (default-OFF) контролирует
 активацию unified path.
+
+Layer-correct placement
+---------------------
+``core/audit/sinks/`` не импортирует ``services/`` напрямую.
+Импорт backends (``AuditService``, ``LangFuseCallbackV3``) — в
+``services.audit.unified_sink_factory``. Registry-функция
+``register_emit_ai_invocation_event`` регистрирует имплементацию
+при импорте ``services.audit.unified_sink_factory``.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.audit.schema.ai_invocation import (
     AIInvocationEvent,
     AIInvocationEventType,
 )
 
+if TYPE_CHECKING:
+    from src.backend.core.audit.interfaces import (
+        AuditBackend,
+        LangfuseCallbackBackend,
+    )
+
 logger = logging.getLogger(__name__)
 
-__all__ = ("UnifiedAISink", "emit_ai_invocation_event")
+__all__ = (
+    "UnifiedAISink",
+    "emit_ai_invocation_event",
+    "register_emit_ai_invocation_event",
+)
+
+
+# ── Registry для layer-correct services-имплементации ────────────────────────
+# core/audit/sinks не импортирует services/ напрямую.
+# services.audit.unified_sink_factory регистрирует имплементацию при импорте.
+# Это позволяет core/ai/gateway вызывать emit без импорта из services/.
+
+_emit_fn: callable | None = None
+
+
+def register_emit_ai_invocation_event(fn: callable) -> None:
+    """Регистрирует emit-функцию из services/.
+
+    Вызывается ``services.audit.unified_sink_factory`` при импорте.
+    После регистрации ``emit_ai_invocation_event`` делегирует в ``fn``.
+    """
+    global _emit_fn
+    _emit_fn = fn
+
+
+def emit_ai_invocation_event(event: "AIInvocationEvent") -> None:
+    """Emit ai.invocation.* события.
+
+    До регистрации (early bootstrap) — no-op.
+    После регистрации ``services/audit/unified_sink_factory`` — использует singleton.
+    """
+    if _emit_fn is not None:
+        _emit_fn(event)
 
 
 class UnifiedAISink:
@@ -40,15 +86,15 @@ class UnifiedAISink:
 
     def __init__(
         self,
-        audit_service: Any | None = None,
-        langfuse_callback: Any | None = None,
+        audit_service: AuditBackend | None = None,
+        langfuse_callback: LangfuseCallbackBackend | None = None,
         enabled: bool = False,
     ) -> None:
         """Инициализация sink.
 
         Args:
-            audit_service: AuditService для ClickHouse writes.
-            langfuse_callback: LangfuseCallbackV3 для Langfuse writes.
+            audit_service: AuditBackend для ClickHouse writes.
+            langfuse_callback: LangfuseCallbackBackend для Langfuse writes.
             enabled: True = unified path active, False = no-op.
         """
         self._audit = audit_service
@@ -64,7 +110,6 @@ class UnifiedAISink:
         if not self._enabled:
             return
 
-        # Dual-write: ClickHouse + Langfuse
         await self._emit_clickhouse(event)
         if self._langfuse is not None:
             await self._emit_langfuse(event)
@@ -82,7 +127,7 @@ class UnifiedAISink:
             await self.emit_event(event)
 
     async def _emit_clickhouse(self, event: AIInvocationEvent) -> None:
-        """Write в ClickHouse через AuditService."""
+        """Write в ClickHouse через AuditBackend."""
         if self._audit is None:
             return
 
@@ -93,7 +138,6 @@ class UnifiedAISink:
         except Exception:  # noqa: BLE001
             pii_mask = None
 
-        # Маскируем PII перед записью
         error_msg = event.error_message
         if pii_mask is not None and error_msg:
             try:
@@ -177,76 +221,9 @@ def _severity_from_event_type(event_type: AIInvocationEventType) -> str:
     """Map event type to severity string."""
     if event_type in (AIInvocationEventType.DENIED, AIInvocationEventType.FAILED):
         return "error"
-    if event_type in (AIInvocationEventType.GUARDED_INPUT, AIInvocationEventType.GUARDED_OUTPUT):
+    if event_type in (
+        AIInvocationEventType.GUARDED_INPUT,
+        AIInvocationEventType.GUARDED_OUTPUT,
+    ):
         return "warning"
     return "info"
-
-
-# ── Convenience function ───────────────────────────────────────────────────────
-
-_unified_sink: UnifiedAISink | None = None
-
-
-def emit_ai_invocation_event(
-    event: AIInvocationEvent,
-    *,
-    sink: UnifiedAISink | None = None,
-) -> None:
-    """Convenience function для emit ai.invocation.* события.
-
-    Использует глобальный singleton UnifiedAISink если sink не передан.
-
-    Args:
-        event: AIInvocationEvent.
-        sink: Опциональный sink (для тестов).
-    """
-    global _unified_sink
-
-    if sink is None:
-        if _unified_sink is None:
-            try:
-                from src.backend.core.config.features import feature_flags
-
-                enabled = bool(feature_flags.ai_audit_unified_enabled)
-            except Exception:  # noqa: BLE001
-                enabled = False
-
-            if enabled:
-                try:
-                    from src.backend.services.ai.gateway.langfuse_callback_v3 import (
-                        LangFuseCallbackV3,
-                    )
-                    from src.backend.services.audit.audit_service import (
-                        get_unified_audit_service,
-                    )
-
-                    audit = get_unified_audit_service()
-                    langfuse = None
-                    try:
-                        langfuse = LangFuseCallbackV3()
-                    except Exception:  # noqa: BLE001
-                        pass
-
-                    _unified_sink = UnifiedAISink(
-                        audit_service=audit,
-                        langfuse_callback=langfuse,
-                        enabled=True,
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("UnifiedAISink: init failed: %s", exc)
-                    _unified_sink = UnifiedAISink(enabled=False)
-            else:
-                _unified_sink = UnifiedAISink(enabled=False)
-
-        sink = _unified_sink
-
-    try:
-        from src.backend.core.utils.task_registry import get_task_registry
-
-        registry = get_task_registry()
-        registry.create_task(
-            sink.emit_event(event),
-            name=f"audit.emit.{event.event_type.value}",
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("emit_ai_invocation_event: failed to schedule: %s", exc)
