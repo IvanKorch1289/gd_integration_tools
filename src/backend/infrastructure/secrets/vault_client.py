@@ -229,7 +229,9 @@ class VaultClient:
             return
 
         self._running = True
-        self._rotation_task = asyncio.create_task(
+        from src.backend.core.utils.task_registry import get_task_registry  # noqa: PLC0415
+
+        self._rotation_task = get_task_registry().create_task(
             self._rotation_loop(),
             name="vault-client-rotation",
         )

@@ -234,7 +234,7 @@ def _to_hybrid_result(
 def _record_hybrid_fallback(*, reason: str) -> None:
     """Counter ``rag_hybrid_fallback_total`` через metrics_registry."""
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

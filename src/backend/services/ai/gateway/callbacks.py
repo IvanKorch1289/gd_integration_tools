@@ -137,7 +137,7 @@ class FallbackTrackingCallback:
             return self._counter
         self._initialized = True
         try:
-            from src.backend.infrastructure.observability.metrics_registry import (
+            from src.backend.core.utils.metrics_registry import (
                 metrics_registry,
             )
 

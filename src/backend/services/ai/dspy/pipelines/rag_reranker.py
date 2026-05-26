@@ -89,7 +89,7 @@ def _resolve_bge_reranker() -> Any:
 def _record_reranker_fallback(*, reason: str) -> None:
     """Counter ``rag_reranker_fallback_total`` для observability fallback."""
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

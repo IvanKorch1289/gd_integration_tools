@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 try:
     from src.backend.core.ai.guardrails.llamaguard import GuardResult
 except ImportError:
-    GuardResult = None
+    pass  # noqa: PIE797 — GuardResult used only in type stubs / tests
 
 
 class AIPolicyEnforcer:
@@ -277,8 +277,16 @@ class AIPolicyEnforcer:
             )
             return
 
+        # runtime is object at type-check time; check for classify at runtime
+        classify = getattr(runtime, "classify", None)
+        if not classify or not callable(classify):
+            logger.debug(
+                "AIPolicyEnforcer: llama_guard runtime has no classify method — skipped"
+            )
+            return
+
         try:
-            result = await runtime.classify(response.content)
+            result = await classify(response.content)
         except Exception as exc:  # noqa: BLE001
             logger.error("AIPolicyEnforcer: LlamaGuard classify failed: %s", exc)
             if on_block == "fail":

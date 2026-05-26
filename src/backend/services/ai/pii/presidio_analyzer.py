@@ -328,7 +328,7 @@ def _record_presidio_fallback(*, reason: str) -> None:
         reason: Причина fallback (``import_error`` / ``init_error``).
     """
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

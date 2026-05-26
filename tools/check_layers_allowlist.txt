@@ -52,3 +52,13 @@ src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.wo
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.template_registry_compat
 src/frontend/streamlit_app/pages/33_DSL_Templates.py	frontend	src.backend.dsl.workflow.visualize
 src/frontend/streamlit_app/pages/46_DSL_DryRun.py	frontend	src.backend.dsl.engine.dry_run
+# S20 tech-debt: new violations from S20 development
+src/backend/core/ai/gateway.py	core	src.backend.services.ai.gateway
+src/backend/core/ai/gateway.py	core	src.backend.services.ai.pii.presidio_analyzer
+src/backend/core/ai/gateway.py	core	src.backend.services.audit.audit_service
+src/backend/core/ai/policy/enforcer.py	core	src.backend.services.ai.guardrails.lakera_client
+src/backend/core/ai/policy/enforcer.py	core	src.backend.services.ai.guardrails.rebuff_client
+src/backend/core/di/providers.py	core	src.backend.infrastructure.security.token_registry
+src/backend/core/di/providers.py	core	src.backend.services.audit.audit_service
+src/backend/infrastructure/scheduler/scheduled_tasks.py	infrastructure	src.backend.services.ai.langmem_service
+src/backend/infrastructure/security/token_registry.py	infrastructure	src.backend.services.audit.audit_service

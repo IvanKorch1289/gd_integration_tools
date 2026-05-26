@@ -457,7 +457,7 @@ def _filter_by_embedding_version(
 def _record_embedding_provenance(chunk_model: str, current_model: str) -> None:
     """Counter `rag_model_mismatch_total` для observability re-embed gap."""
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 
