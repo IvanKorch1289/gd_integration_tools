@@ -28,6 +28,8 @@
 """
 
 from src.backend.core.ai.errors import (
+    GuardResult,
+    GuardrailViolationError,
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )
@@ -42,6 +44,8 @@ __all__ = (
     "AIResponse",
     "AIWorkspaceManager",
     "WorkspaceHandle",
+    "GuardResult",
+    "GuardrailViolationError",
     "WorkspaceQuotaExceededError",
     "WorkspaceTTLExpiredError",
 )

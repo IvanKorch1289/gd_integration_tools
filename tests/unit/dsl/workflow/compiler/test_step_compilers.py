@@ -320,3 +320,144 @@ def test_build_retry_policy_includes_max_interval_and_non_retryable(
     rp = _build_retry_policy(policy, None)
     assert rp.kwargs["maximum_interval"] == timedelta(seconds=10.0)
     assert rp.kwargs["non_retryable_error_types"] == ["ValidationError", "AuthError"]
+
+
+# ---------- compile_agent_invoke_step ----------
+
+
+@pytest.mark.asyncio
+async def test_agent_invoke_step_stateless_basic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test stateless agent_invoke calls AIGateway with correct input."""
+    from types import SimpleNamespace
+
+    fake_wf, recorder = _make_fake_temporal()
+    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
+    monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
+
+    # Mock AIGateway
+    class MockAIResponse:
+        content = "Credit approved"
+
+    class MockAIGateway:
+        async def invoke(self, request, timeout=None):
+            return MockAIResponse()
+
+    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+
+    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
+
+    decl = AgentInvokeDeclaration(agent_id="credit_advisor", durable=False)
+    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {"user_input": "approve my loan"}}
+    result = await compile_agent_invoke_step(decl, ctx)
+    assert result.content == "Credit approved"
+
+
+@pytest.mark.asyncio
+async def test_agent_invoke_step_durable_falls_back_to_stateless(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test durable agent_invoke falls back to stateless when checkpointer unavailable."""
+    from types import SimpleNamespace
+
+    fake_wf, recorder = _make_fake_temporal()
+    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
+    monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
+
+    class MockAIResponse:
+        content = "Approved"
+
+    class MockAIGateway:
+        async def invoke(self, request, timeout=None):
+            return MockAIResponse()
+
+    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+    # Make LangGraph checkpointer return None (unavailable)
+    monkeypatch.setattr(
+        "src.backend.services.ai.agents.langgraph_postgres_saver.get_langgraph_postgres_saver",
+        lambda: None,
+    )
+
+    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
+
+    decl = AgentInvokeDeclaration(agent_id="credit_advisor", durable=True)
+    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {"text": "test"}}
+    result = await compile_agent_invoke_step(decl, ctx)
+    assert result.content == "Approved"
+
+
+@pytest.mark.asyncio
+async def test_agent_invoke_writes_output_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test agent_invoke writes result to ctx._outputs."""
+    from types import SimpleNamespace
+
+    fake_wf, recorder = _make_fake_temporal()
+    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
+    monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
+
+    class MockAIResponse:
+        content = "Result content"
+
+    class MockAIGateway:
+        async def invoke(self, request, timeout=None):
+            return MockAIResponse()
+
+    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+
+    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
+
+    decl = AgentInvokeDeclaration(agent_id="credit_advisor", output_key="agent_result")
+    ctx: dict[str, Any] = {"_default_timeout_s": 60.0, "_input": {"query": "hello"}, "_outputs": {}}
+    await compile_agent_invoke_step(decl, ctx)
+    assert "agent_result" in ctx["_outputs"]
+
+
+@pytest.mark.asyncio
+async def test_agent_invoke_resolves_dot_path_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test agent_invoke resolves ${body.query} style input_context."""
+    from types import SimpleNamespace
+
+    fake_wf, recorder = _make_fake_temporal()
+    monkeypatch.setitem(sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=_make_fake_common()))
+    monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
+    monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
+
+    captured_request = None
+
+    class MockAIResponse:
+        content = "Done"
+
+    class MockAIGateway:
+        async def invoke(self, request, timeout=None):
+            nonlocal captured_request
+            captured_request = request
+            return MockAIResponse()
+
+    monkeypatch.setattr("src.backend.core.ai.gateway.AIGateway", lambda: MockAIGateway())
+
+    from src.backend.dsl.workflow.compiler.step_compilers import compile_agent_invoke_step
+    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
+
+    decl = AgentInvokeDeclaration(
+        agent_id="credit_advisor",
+        input_context="${body.user_query}",
+        durable=False,
+    )
+    ctx: dict[str, Any] = {
+        "_default_timeout_s": 60.0,
+        "_input": {"body": {"user_query": "my credit request"}},
+    }
+    await compile_agent_invoke_step(decl, ctx)
+    assert captured_request is not None
+    assert "my credit request" in str(captured_request.messages[0])
