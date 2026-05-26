@@ -128,7 +128,7 @@ def _resolve_include_extends(
 
         # Recursively resolve the base (in case it also has include/extends)
         base_data = _resolve_include_extends(
-            base_data, resolved_path.parent, _visited
+            base_data, resolved_path, _visited
         )
 
         # Merge: child overrides parent

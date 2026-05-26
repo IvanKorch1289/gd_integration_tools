@@ -460,4 +460,4 @@ async def test_agent_invoke_resolves_dot_path_input(
     }
     await compile_agent_invoke_step(decl, ctx)
     assert captured_request is not None
-    assert "my credit request" in str(captured_request.messages[0])
+    assert "my credit request" in str(captured_request.prompt_inline)

@@ -282,13 +282,16 @@ async def compile_agent_invoke_step(
         from src.backend.core.ai.gateway import AIGateway, AIRequest
 
         gateway = AIGateway()
+        # Build prompt from raw_input (single user message)
+        prompt_text = str(raw_input) if raw_input else ""
         request = AIRequest(
-            model="auto",  # Let gateway select best model
-            messages=[{"role": "user", "content": str(raw_input)}],
-            max_turns=decl.max_turns,
+            workflow_id=decl.agent_id,
+            tenant_id=ctx.get("_tenant_id", "unknown"),
+            correlation_id=ctx.get("_correlation_id", "n/a"),
+            prompt_inline=prompt_text,
+            context={"max_turns": decl.max_turns, "timeout_s": timeout_s},
         )
-        timeout = timedelta(seconds=timeout_s)
-        result = await gateway.invoke(request, timeout=timeout)
+        result = await gateway.invoke(request)
 
         if decl.output_key:
             ctx.setdefault("_outputs", {})[decl.output_key] = result
