@@ -178,6 +178,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    lsp_server_published: bool = Field(
+        default=False,
+        title="S19 K3 W4: LSP server published (YAML schema completion)",
+        description=(
+            "S19 K3 W4. Owner: K3 DSL. "
+            "Активирует YAML schema completion в LSP server "
+            "(tools/dsl_lsp/schema_completion.py + gd_dsl.yaml schema). "
+            "CompletionList с 22 step-type keywords (proxy, call_function, "
+            "crud_create, и т.д.) + JSON-Schema snippets. "
+            "default-OFF до staging-smoke completion в VSCode/JetBrains."
+        ),
+    )
+
     admin_marketplace_endpoints: bool = Field(
         default=False,
         title="Admin: Action-Bus + Plugin-Marketplace REST endpoints",

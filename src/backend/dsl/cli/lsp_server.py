@@ -9,6 +9,8 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
   :class:`~src.backend.dsl.cli.linter.DSLLinter` на буфере;
 * ``textDocument/publishDiagnostics`` — публикация warnings/errors как
   diagnostics с link на правило (``code``) и suggestion;
+* ``textDocument/completion`` — YAML schema completion для step types и
+  route keys (wired from :mod:`tools.dsl_lsp.schema_completion`);
 * **plugin-aware schema discovery** — при открытии файла внутри
   ``extensions/<name>/`` сервер ищет ``plugin.toml`` и подгружает
   declared capabilities + per-extension processor whitelist (если есть
@@ -16,8 +18,11 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
 
 Запуск (stdio): ``python -m src.backend.dsl.cli.lsp_server``.
 
-Feature flag: ``feature_flags.dsl_linter_strict`` — выше severity в
-diagnostics (warning → error).
+Feature flags:
+* ``feature_flags.dsl_linter_strict`` — выше severity в
+  diagnostics (warning → error).
+* ``feature_flags.lsp_server_published`` — активирует LSP server publishing
+  (по умолчанию default-OFF).
 
 Зависимости: ``pygls>=1.3`` (опциональная, см. ``[project.optional-dependencies].dev``).
 """
@@ -28,51 +33,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-__all__ = ("create_server", "main", "ROUTE_KEY_COMPLETIONS", "STEP_KEY_COMPLETIONS")
+__all__ = ("create_server", "main")
 
 _logger = logging.getLogger(__name__)
-
-#: Ключи верхнего уровня в `route.toml` / `*.dsl.yaml` для автокомплита.
-ROUTE_KEY_COMPLETIONS: tuple[tuple[str, str], ...] = (
-    ("from", "Источник route (HTTP/Email/MQ/CDC/Webhook/Stream/...)."),
-    ("steps", "Массив step-операций, выполняемых последовательно."),
-    ("to", "Терминал route (response/sink/MQ/...) — финальная остановка."),
-    ("on_error", "Глобальный обработчик ошибок: dlq | retry | fail | warn."),
-    ("policy", "Idempotency/rate-limit/circuit-breaker для всего route."),
-    ("schedule", "Cron / interval для scheduled-route."),
-    ("requires_core", "SemVer-ограничение ядра."),
-    ("requires_plugins", "Список плагинов с SemVer."),
-    ("capabilities", "Список capabilities (V11) — db.read/net.outbound/..."),
-    ("tenant_aware", "Bool — учитывать tenant-контекст."),
-    ("feature_flag", "Имя feature_flag для default-OFF включения."),
-    ("slo", "Service Level Objective: latency_p95_ms, error_budget_pct."),
-)
-
-#: Типы step-операций для автокомплита внутри массива `steps`.
-STEP_KEY_COMPLETIONS: tuple[tuple[str, str], ...] = (
-    ("proxy", "Прокси-запрос на upstream без бизнес-логики."),
-    ("redirect", "HTTP-redirect 30x на target URL."),
-    ("call_function", "Вызов Python-функции 'module:fn' через whitelist."),
-    ("dispatch_action", "Service Activator — диспетчер action в sync/async/bg/api/sse/ws."),
-    ("transform", "JMESPath/JSONata/JSONLogic трансформация body/header."),
-    ("choice", "EIP Content-Based Router — when/otherwise ветвление."),
-    ("parallel", "EIP Scatter-Gather — параллельное выполнение branches."),
-    ("try_catch", "Try-catch с компенсацией / DLQ-handoff."),
-    ("saga", "Saga-step (Temporal compensation)."),
-    ("invoke_workflow", "Temporal/Lite workflow invocation."),
-    ("crud_create", "CRUD create entity через repository."),
-    ("crud_read", "CRUD read by id или filter."),
-    ("crud_update", "CRUD update by id."),
-    ("crud_delete", "CRUD delete by id."),
-    ("publish_event", "Publish в MQ (Kafka/RabbitMQ/NATS/Redis Streams)."),
-    ("notify_cascade", "Email/SMS/Telegram cascade notification."),
-    ("audit", "Audit-event в audit-trail."),
-    ("validate_response", "Pydantic-валидация response от внешнего API."),
-    ("db_query_external", "SELECT в внешней БД через capability db.read."),
-    ("db_call_procedure", "Вызов хранимой процедуры через capability."),
-    ("get_setting", "Прочитать конфиг по path → body.x."),
-    ("sink_publish", "Публикация в sink (S3/Kafka/WebDAV/...)."),
-)
 
 
 def _try_import_pygls() -> Any | None:
@@ -132,9 +95,26 @@ def create_server() -> Any:
 
         Простой статический list — Tier 1 (роуты сверху + типы step-ов).
         Tier 2 (контекстно-зависимый по cursor-line prefix) — carryover S17.
+
+        Wiring: импортирует STEP_COMPLETIONS / ROUTE_COMPLETIONS из
+        :mod:`tools.dsl_lsp.schema_completion` — централизованный источник
+        истины для всех LSP completion данных.
         """
+        # Lazy import schema_completion — tools/ может не быть в PYTHONPATH.
+        try:
+            from tools.dsl_lsp.schema_completion import (
+                ROUTE_COMPLETIONS,
+                STEP_COMPLETIONS,
+            )
+        except ImportError:
+            _logger.warning(
+                "tools.dsl_lsp.schema_completion unavailable — completion will be empty. "
+                "Ensure tools/ is in PYTHONPATH or install the package."
+            )
+            return lsp_types.CompletionList(is_incomplete=False, items=[])
+
         items: list[lsp_types.CompletionItem] = []
-        for key, detail in ROUTE_KEY_COMPLETIONS:
+        for key, detail, *_ in ROUTE_COMPLETIONS:
             items.append(
                 lsp_types.CompletionItem(
                     label=key,
@@ -142,7 +122,7 @@ def create_server() -> Any:
                     detail=detail,
                 )
             )
-        for key, detail in STEP_KEY_COMPLETIONS:
+        for key, detail, *_ in STEP_COMPLETIONS:
             items.append(
                 lsp_types.CompletionItem(
                     label=key,
@@ -157,6 +137,15 @@ def create_server() -> Any:
         ls: LanguageServer, params: lsp_types.HoverParams
     ) -> lsp_types.Hover | None:
         """Hover-описание поля под курсором (Tier 1 — статический lookup)."""
+        # Lazy import schema_completion.
+        try:
+            from tools.dsl_lsp.schema_completion import (
+                ROUTE_COMPLETIONS,
+                STEP_COMPLETIONS,
+            )
+        except ImportError:
+            return None
+
         document = ls.workspace.get_text_document(params.text_document.uri)
         line_idx = params.position.line
         if line_idx >= len(document.lines):
@@ -164,7 +153,7 @@ def create_server() -> Any:
         line = document.lines[line_idx]
         # Извлекаем первое слово (ключ перед `:` или `=`).
         token = line.lstrip().split(":", 1)[0].split("=", 1)[0].strip(" -")
-        lookup = {k: d for k, d in (*ROUTE_KEY_COMPLETIONS, *STEP_KEY_COMPLETIONS)}
+        lookup = {k: d for k, d in (*ROUTE_COMPLETIONS, *STEP_COMPLETIONS)}
         detail = lookup.get(token)
         if detail is None:
             return None
