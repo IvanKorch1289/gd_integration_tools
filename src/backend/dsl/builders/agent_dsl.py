@@ -325,6 +325,81 @@ class AgentDSLMixin:
             )
         )
 
+    # ── W4 — LangGraph DSL processor (S28) ──
+
+    def agent_graph(
+        self,
+        *,
+        graph_type: str,
+        model: str = "gpt-4o-mini",
+        agents: list[dict[str, Any]] | None = None,
+        prompt_inline: str | None = None,
+        tool_actions: list[str] | None = None,
+        max_handoffs: int = 5,
+        result_property: str = "agent_graph_result",
+    ) -> "RouteBuilder":
+        """LangGraph execution as DSL step (S28 W4).
+
+        Two modes:
+
+        **Supervisor mode** (``graph_type="supervisor"``):
+            LLM-driven multi-agent coordination via LangGraph StateGraph
+            with handoff tools. Delegates to
+            :class:`MultiAgentSupervisor <services.ai.multi_agent.supervisor>`.
+            Each agent is a DSL workflow invoked via :class:`AgentRunProcessor`.
+
+            Example::
+
+                builder.agent_graph(
+                    graph_type="supervisor",
+                    agents=[
+                        {"key": "scoring", "workflow_id": "credit_scoring",
+                         "description": "Считает кредитный score"},
+                        {"key": "decision", "workflow_id": "credit_decision",
+                         "description": "Финальное решение"},
+                    ],
+                    max_handoffs=5,
+                )
+
+        **ReAct mode** (``graph_type="react"``):
+            Tool-calling agent via ``langgraph.prebuilt.create_react_agent``.
+            Delegates to :func:`services.ai.ai_graph.build_and_run_agent`.
+
+            Example::
+
+                builder.agent_graph(
+                    graph_type="react",
+                    prompt_inline="Найди информацию о заявке...",
+                    tool_actions=["db.query", "http.get"],
+                )
+
+        Args:
+            graph_type: ``"supervisor"`` or ``"react"``.
+            model: LLM identifier. Default ``"gpt-4o-mini"``.
+            agents: List of agent specs for supervisor mode.
+                Each dict requires ``key``, ``workflow_id``, ``description``.
+            prompt_inline: Inline prompt for react mode.
+            tool_actions: Action names available as tools (react mode).
+            max_handoffs: Maximum handoffs in supervisor mode. Default 5.
+            result_property: Exchange property for result dict.
+                Default ``"agent_graph_result"``.
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
+            AgentGraphProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            AgentGraphProcessor(
+                graph_type=graph_type,
+                model=model,
+                agents=agents,
+                prompt_inline=prompt_inline,
+                tool_actions=tool_actions,
+                max_handoffs=max_handoffs,
+                result_property=result_property,
+            )
+        )
+
     # ── W3 — Skill + Memory (3 methods) ──
 
     def skill_invoke(
