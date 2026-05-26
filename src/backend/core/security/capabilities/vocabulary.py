@@ -483,6 +483,18 @@ def build_default_vocabulary() -> CapabilityVocabulary:
             ),
         )
     )
+    # Per-namespace capabilities (ADR-0070 §1, S27 W4)
+    for _ns_name in ("credit", "analytics", "system"):
+        vocab.register(
+            CapabilityDef(
+                name=f"mcp.gateway.invoke.{_ns_name}",
+                matcher=dot_glob,
+                description=(
+                    f"Вызов tool в namespace '{_ns_name}' через MCPGateway "
+                    f"(ADR-0070, S27 W4); scope = tool-name или '*'."
+                ),
+            )
+        )
     vocab.register(
         CapabilityDef(
             name="skill.invoke",

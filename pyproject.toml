@@ -149,7 +149,9 @@ auth-saml = [
     "python3-saml>=1.16.0,<2.0.0",
 ]
 mcp = [
-    "fastmcp>=2.0.0"
+    # ADR-0070 §3 (S27 W4): FastMCP 3.2.4+ required для JWTAuthProvider
+    # (JWTVerifier from fastmcp.server.auth.providers.jwt).
+    "fastmcp>=3.2.4"
 ]
 rpa = [
     # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection

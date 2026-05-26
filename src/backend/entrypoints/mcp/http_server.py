@@ -49,6 +49,10 @@ def _resolve_http_app(mcp: Any) -> Any:
 def create_mcp_http_app() -> Any:
     """Создаёт ASGI-приложение MCP HTTP transport с auth middleware.
 
+    При ``mcp_gateway_namespaces_enabled=True`` использует MCPGateway
+    (ADR-0070, S27 W4) — 3 namespace (credit/analytics/system) aggregator.
+    При False — legacy монолитный mcp_server.
+
     Returns:
         ASGI-приложение (Starlette-совместимое) с прикрученной авторизацией.
         Может быть смонтировано через ``app.mount(prefix, asgi_app)``.
@@ -58,8 +62,31 @@ def create_mcp_http_app() -> Any:
         RuntimeError: если HTTP transport недоступен в текущей версии.
     """
     from src.backend.entrypoints.mcp.auth_middleware import McpAuthMiddleware
-    from src.backend.entrypoints.mcp.mcp_server import create_mcp_server
 
-    mcp = create_mcp_server()
+    if _is_namespaces_enabled():
+        from src.backend.entrypoints.mcp.gateway import create_mcp_gateway
+
+        mcp = create_mcp_gateway()
+        logger.info("MCP HTTP app: using MCPGateway (namespaces enabled)")
+    else:
+        from src.backend.entrypoints.mcp.mcp_server import create_mcp_server
+
+        mcp = create_mcp_server()
+        logger.info("MCP HTTP app: using legacy mcp_server")
+
     asgi = _resolve_http_app(mcp)
     return McpAuthMiddleware(asgi)
+
+
+def _is_namespaces_enabled() -> bool:
+    """Проверяет feature-flag ``mcp_gateway_namespaces_enabled``.
+
+    Returns:
+        True если namespaces enabled и FastMCP version compatible.
+    """
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        return bool(feature_flags.mcp_gateway_namespaces_enabled)
+    except Exception:
+        return False
