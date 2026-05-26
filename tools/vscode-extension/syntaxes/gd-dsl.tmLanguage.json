@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GD DSL",
+  "patterns": [
+    {
+      "name": "comment.line.gd-dsl",
+      "match": "#.*$"
+    },
+    {
+      "name": "keyword.control.gd-dsl",
+      "match": "\\b(step|route|source|processor|when|then|else|filter|transform|validate)\\b"
+    },
+    {
+      "name": "keyword.operator.gd-dsl",
+      "match": "[:=!<>]+"
+    },
+    {
+      "name": "string.quoted.double.gd-dsl",
+      "match": "\"[^\"]*\""
+    },
+    {
+      "name": "string.quoted.single.gd-dsl",
+      "match": "'[^']*'"
+    },
+    {
+      "name": "variable.other.gd-dsl",
+      "match": "\\{[a-zA-Z_][a-zA-Z0-9_]*\\}"
+    },
+    {
+      "name": "constant.numeric.gd-dsl",
+      "match": "\\b[0-9]+\\b"
+    },
+    {
+      "name": "entity.name.function.gd-dsl",
+      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\s*(?=\\()"
+    },
+    {
+      "name": "support.type.gd-dsl",
+      "match": "\\b(int|str|bool|float|list|dict|object)\\b"
+    }
+  ],
+  "scopeName": "source.gd-dsl"
+}

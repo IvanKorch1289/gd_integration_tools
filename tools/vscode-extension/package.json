@@ -1,0 +1,97 @@
+{
+  "name": "gd-integration-tools",
+  "displayName": "GD Integration Tools",
+  "description": "K5 S19 W2: VSCode extension for GD Integration Tools - syntax highlighting, hover docs, Run step CodeLens, and LSP client",
+  "version": "0.1.0",
+  "publisher": "k5-frontend-dx",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:yaml",
+    "onCommand:gd-integration-tools.runStep"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "gd-dsl",
+        "aliases": ["GD DSL", "gd-dsl"],
+        "extensions": [".gd", ".gds"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gd-dsl",
+        "scopeName": "source.gd-dsl",
+        "path": "./syntaxes/gd-dsl.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "gd-integration-tools.runStep",
+        "title": "GD: Run Step",
+        "category": "GD Integration",
+        "description": "Run the current DSL step"
+      },
+      {
+        "command": "gd-integration-tools.showDocs",
+        "title": "GD: Show Documentation",
+        "category": "GD Integration",
+        "description": "Show documentation for current element"
+      }
+    ],
+    "codeLens": [
+      {
+        "language": "gd-dsl",
+        "source": "gd-integration-tools",
+        "command": "gd-integration-tools.runStep"
+      }
+    ],
+    "hoverProvider": [
+      {
+        "language": "gd-dsl",
+        "command": "gd-integration-tools.showDocs"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "GD Integration Tools",
+      "properties": {
+        "gdIntegrationTools.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable LSP client for enhanced features"
+        },
+        "gdIntegrationTools.lsp.server": {
+          "type": "string",
+          "default": "localhost:8765",
+          "description": "LSP server address"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "cd client && npm install",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.3.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}
