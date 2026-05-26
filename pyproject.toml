@@ -1,6 +1,6 @@
 [project]
 name = "gd_advanced_tools"
-version = "0.19.0"
+version = "0.20.0"
 description = "GD Integration Tools — интеграционная шина на Python 3.14"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"

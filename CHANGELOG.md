@@ -5,6 +5,53 @@ All notable changes to **GD Integration Tools** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] — 2026-05-26 — Sprint 28
+
+### Added
+
+#### s28/k4-w4-langgraph-integration
+- AgentGraphProcessor (LangGraph as DSL step): supervisor + ReAct modes
+- AgentDSLMixin.agent_graph() Builder method
+- ADR-0076: LangGraph integration decision (keep + wrap, not core engine)
+
+#### s28/k4-w2-skill-registry-impl
+- SkillRegistry.from_toml_manifest(): load [[skill]] tables from plugin.toml V11.2
+- SkillRegistry.invoke(): dynamic import_module + capability check
+
+#### s28/k4-w3-aigateway-enforcement
+- AIPolicyEnforcer.sanitize_input(): uses PIITokenizer
+- AIPolicyEnforcer.sanitize_output(): uses PIITokenizer
+- ai_gateway_enforce default: False → True
+
+#### s28/k1-w5-pii-ru-expansion
+- AddressRuRecognizer (ADDRESS_RU): Russian address patterns + context boost
+- BankAccountRuRecognizer (BANK_ACCOUNT_RU): 20-digit settlement accounts + БИК
+- DriverLicenseRuRecognizer (DRIVER_LICENSE_RU): old + new format, Cyrillic + Latin
+
+#### s28/k4-w6-rag-memory-hardening
+- HuggingFace role formatting fix: system: prefix for system messages
+- LLM Judge JSON extraction: strip markdown code fences (```json ... ```)
+- HybridRetriever: corpus_loader + reload() for Redis-backed multi-instance corpus
+
+#### s28/k4-w7-sandbox-decision
+- ADR-0077: E2B for production, NoOp for dev, Pyodide deferred
+
+#### s28/k4-w8-observability
+- GuardrailsMetricsService: ClickHouse bulk writer integration
+- New record() fields: model_used, cost_usd, latency_ms
+- SQL schema documented: guardrail_events table
+
+### Changed
+
+#### s28/k4-w1-dep-cleanup
+- Removed dead AI deps from pyproject.toml: langchain-core, langchain-community, langmem, mem0ai
+- Kept: langgraph (3 real consumers), pydantic-ai (lazy import), chromadb (HttpClient dev)
+
+### Fixed
+
+- AIGateway._apply_input/output_guards: return list[GuardResult]
+- AI policy enforcer: guardrails_verdict type fix (dict not None)
+
 ## [0.19.0] — 2026-05-26 — Sprint 19
 
 ### Added
