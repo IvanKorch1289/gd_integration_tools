@@ -101,17 +101,15 @@ def _resolve_include_extends(
         ext_str = str(extends_path)
 
         if base_path is not None:
-            resolved_path = (base_path.parent / ext_str).resolve()
+            resolved_path = (base_path / ext_str).resolve()
         else:
             resolved_path = Path(ext_str).resolve()
 
-        # Check existence BEFORE tracking to avoid false-positive on first pass
         if not resolved_path.exists():
             raise FileNotFoundError(
                 f"Extended YAML file not found: {resolved_path}"
             )
 
-        # Track resolved path to avoid cycle detection
         resolved_str = str(resolved_path)
         if resolved_str in _visited:
             raise RuntimeError(
@@ -164,7 +162,7 @@ def _resolve_include_extends(
             inc_str = str(inc_path)
 
             if base_path is not None:
-                resolved_inc = (base_path.parent / inc_str).resolve()
+                resolved_inc = (base_path / inc_str).resolve()
             else:
                 resolved_inc = Path(inc_str).resolve()
 

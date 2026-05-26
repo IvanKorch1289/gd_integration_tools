@@ -155,12 +155,79 @@ class SensorDeclaration(BaseModel):
     )
 
 
+class AgentInvokeDeclaration(BaseModel):
+    """Вызов AI-агента через AIGateway как Temporal activity (S27 W6).
+
+    Реализует R-V15-9 «AI-функции через Workflow DSL»:
+    LangGraph multi-agent supervisor обёрнут в Temporal activity.
+    При ``durable=False`` — stateless direct call через AIGateway;
+    при ``durable=True`` — использует LangGraph Checkpointer
+    (требует ``langgraph_postgres_checkpoint=True``, иначе fallback).
+
+    YAML::
+
+        steps:
+          - invoke_agent:
+              agent_id: "credit_advisor"
+              input_context: "${body.user_input}"
+              durable: true
+
+    Python::
+
+        WorkflowBuilder("credit.flow").invoke_agent(
+            agent_id="credit_advisor",
+            input_context="${body.user_input}",
+            durable=True,
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["agent_invoke"] = "agent_invoke"
+    agent_id: str = Field(
+        min_length=1,
+        description="Имя агента (``skill_id`` из SkillRegistry или ``workflow_id``).",
+    )
+    input_context: str | None = Field(
+        default=None,
+        description=(
+            "Строка-выражение (dot-path или ``${...}``) для извлечения "
+            "input context из workflow-аргументов. Если None — используется "
+            "корневой input workflow."
+        ),
+    )
+    durable: bool = Field(
+        default=False,
+        description=(
+            "При True — использует LangGraph Checkpointer (требует "
+            "``feature_flags.langgraph_postgres_checkpoint=True``). "
+            "При False — stateless call через AIGateway.invoke()."
+        ),
+    )
+    output_key: str | None = Field(
+        default=None,
+        description="Имя property для сохранения результата агента.",
+    )
+    max_turns: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Максимум turns в agent conversation (для durable mode).",
+    )
+    timeout_s: float | None = Field(
+        default=None,
+        gt=0.0,
+        description="Per-invocation timeout; None — использует workflow-default.",
+    )
+
+
 WorkflowStep = Annotated[
     ActivityDeclaration
     | SagaDeclaration
     | SignalWaitDeclaration
     | SleepDeclaration
-    | SensorDeclaration,
+    | SensorDeclaration
+    | AgentInvokeDeclaration,
     Field(discriminator="type"),
 ]
 

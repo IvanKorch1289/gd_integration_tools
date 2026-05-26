@@ -2,13 +2,31 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 __all__ = (
     "AIFsError",
     "AIWorkspaceError",
     "WorkspaceQuotaExceededError",
     "WorkspaceTTLExpiredError",
     "GuardrailViolationError",
+    "GuardResult",
 )
+
+
+@dataclass(frozen=True, slots=True)
+class GuardResult:
+    """Результат одного guard check для audit-события.
+
+    Attributes:
+        guard_name: Идентификатор (``"llama_guard:safe_v3"``, ``"rebuff"``, etc.).
+        verdict: Вердикт (``"passed"``, ``"blocked"``, ``"warned"``).
+        categories: Срабоавшие категории при блокировке.
+    """
+
+    guard_name: str
+    verdict: str
+    categories: list[str] = field(default_factory=list)
 
 
 class GuardrailViolationError(Exception):

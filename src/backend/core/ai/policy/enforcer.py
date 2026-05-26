@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
     from src.backend.core.messaging.dlq import DLQWriter
 
-from src.backend.core.ai.errors import GuardrailViolationError
+from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
 
 __all__ = ("AIPolicyEnforcer",)
 
@@ -58,7 +58,7 @@ class AIPolicyEnforcer:
 
     async def guard_input(
         self, prompt: str, policy: "AIPolicySpec"
-    ) -> None:
+    ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
         Поддерживаетые guard'ы:
@@ -70,45 +70,51 @@ class AIPolicyEnforcer:
             GuardrailViolationError: При ``on_block="fail"``.
         """
         if not policy.input_guards:
-            return
+            return []
 
+        results: list[GuardResult] = []
         for ref in policy.input_guards:
-            await self._guard_input_one(prompt, ref)
+            result = await self._guard_input_one(prompt, ref)
+            if result is not None:
+                results.append(result)
+        return results
 
     async def _guard_input_one(
         self, prompt: str, ref: "GuardRef"
-    ) -> None:
-        """Apply single input guard ref."""
+    ) -> GuardResult | None:
+        """Apply single input guard ref.
+
+        Returns GuardResult with verdict 'passed' if no block,
+        or raises GuardrailViolationError if on_block='fail'.
+        """
         name = ref.name.lower()
         on_block = ref.on_block
 
         # NeMo — Python 3.14 incompat, пропускаем
         if name.startswith("nemo:"):
             logger.debug("AIPolicyEnforcer: nemo input guard skipped (Python 3.14 incompat)")
-            return
+            return None
 
         # Rebuff
         if name.startswith("rebuff:"):
-            await self._guard_input_rebuff(prompt, ref, on_block)
-            return
+            return await self._guard_input_rebuff(prompt, ref, on_block)
 
         # Lakera
         if name.startswith("lakera:"):
-            await self._guard_input_lakera(prompt, ref, on_block)
-            return
+            return await self._guard_input_lakera(prompt, ref, on_block)
 
         logger.warning("AIPolicyEnforcer: unknown input guard %r — skipped", name)
+        return None
 
     async def _guard_input_rebuff(
         self, prompt: str, ref: "GuardRef", on_block: str
-    ) -> None:
+    ) -> GuardResult:
         """Rebuff input guard check."""
         try:
             from src.backend.services.ai.guardrails.rebuff_client import RebuffClient
             client = RebuffClient()
             result = await client.detect(prompt)
             if result.injected:
-                # RebuffResult.categories из metadata, если есть
                 categories = result.metadata.get("categories", [])
                 self._handle_guard_block(
                     guard_name=ref.name,
@@ -116,8 +122,14 @@ class AIPolicyEnforcer:
                     on_block=on_block,
                     content=prompt,
                 )
+                # on_block != fail — block handled (dlq/warn), return blocked result
+                return GuardResult(
+                    guard_name=ref.name,
+                    verdict="blocked",
+                    categories=categories or ["prompt_injection"],
+                )
+            return GuardResult(guard_name=ref.name, verdict="passed")
         except GuardrailViolationError:
-            # _handle_guard_block уже поднял GuardrailViolationError — пробросить as-is
             raise
         except Exception as exc:  # noqa: BLE001
             logger.warning("AIPolicyEnforcer: Rebuff check failed: %s", exc)
@@ -128,17 +140,17 @@ class AIPolicyEnforcer:
                     on_block=on_block,
                     content=prompt,
                 ) from exc
+            return GuardResult(guard_name=ref.name, verdict="passed")
 
     async def _guard_input_lakera(
         self, prompt: str, ref: "GuardRef", on_block: str
-    ) -> None:
+    ) -> GuardResult:
         """Lakera input guard check."""
         try:
             from src.backend.services.ai.guardrails.lakera_client import LakeraClient
             client = LakeraClient()
             result = await client.screen(prompt)
             if result.flagged:
-                # categories = list of dicts; extract keys
                 categories = [
                     c.get("category") or c.get("name") or str(c)
                     for c in result.categories
@@ -149,6 +161,12 @@ class AIPolicyEnforcer:
                     on_block=on_block,
                     content=prompt,
                 )
+                return GuardResult(
+                    guard_name=ref.name,
+                    verdict="blocked",
+                    categories=categories or ["prompt_injection"],
+                )
+            return GuardResult(guard_name=ref.name, verdict="passed")
         except GuardrailViolationError:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -160,6 +178,7 @@ class AIPolicyEnforcer:
                     on_block=on_block,
                     content=prompt,
                 ) from exc
+            return GuardResult(guard_name=ref.name, verdict="passed")
 
     def _handle_guard_block(
         self,
@@ -237,7 +256,7 @@ class AIPolicyEnforcer:
 
     async def guard_output(
         self, response: "AIResponse", policy: "AIPolicySpec"
-    ) -> None:
+    ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.output_guards` к ``response.content``.
 
         Поддерживаемые guard'ы:
@@ -248,14 +267,18 @@ class AIPolicyEnforcer:
             GuardrailViolationError: При ``on_block="fail"``.
         """
         if not policy.output_guards or not response.content:
-            return
+            return []
 
+        results: list[GuardResult] = []
         for ref in policy.output_guards:
-            await self._guard_output_one(response, ref)
+            result = await self._guard_output_one(response, ref)
+            if result is not None:
+                results.append(result)
+        return results
 
     async def _guard_output_one(
         self, response: "AIResponse", ref: "GuardRef"
-    ) -> None:
+    ) -> GuardResult | None:
         """Apply single output guard ref."""
         name = ref.name.lower()
         on_block = ref.on_block
@@ -264,14 +287,14 @@ class AIPolicyEnforcer:
             logger.warning(
                 "AIPolicyEnforcer: unknown output guard %r — skipped", name
             )
-            return
+            return None
 
         runtime = self._llama_guard_runtime
         if runtime is None:
             logger.debug(
                 "AIPolicyEnforcer: llama_guard runtime not configured — output guard skipped"
             )
-            return
+            return None
 
         # runtime is object at type-check time; check for classify at runtime
         classify = getattr(runtime, "classify", None)
@@ -279,7 +302,7 @@ class AIPolicyEnforcer:
             logger.debug(
                 "AIPolicyEnforcer: llama_guard runtime has no classify method — skipped"
             )
-            return
+            return None
 
         try:
             result = await classify(response.content)
@@ -292,7 +315,7 @@ class AIPolicyEnforcer:
                     on_block=on_block,
                     content=response.content,
                 ) from exc
-            return
+            return None
 
         if not result.safe:
             self._handle_guard_block(
@@ -301,6 +324,12 @@ class AIPolicyEnforcer:
                 on_block=on_block,
                 content=response.content,
             )
+            return GuardResult(
+                guard_name=ref.name,
+                verdict="blocked",
+                categories=result.flagged_categories,
+            )
+        return GuardResult(guard_name=ref.name, verdict="passed", categories=[])
 
     # ── Sanitizers (stub, S25 W4 + S26 W2) ────────────────────────────────────
 
