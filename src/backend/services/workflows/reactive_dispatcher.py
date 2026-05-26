@@ -194,7 +194,11 @@ class ReactiveWorkflowDispatcher:
             evaluator = SimpleEval(names=dict(event))
             return bool(evaluator.eval(expression))
         except ImportError:
-            return bool(eval(expression, {"__builtins__": {}}, dict(event)))  # noqa: S307
+            msg = (
+                "simpleeval not available — expression evaluation requires it. "
+                "Install via: pip install simpleeval"
+            )
+            raise RuntimeError(msg) from None
         except Exception:  # noqa: BLE001
             return False
 

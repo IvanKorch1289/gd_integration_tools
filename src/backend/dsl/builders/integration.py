@@ -1572,7 +1572,7 @@ class IntegrationMixin:
                     host="imap.corp.local",
                     port=993,
                     user="robot@corp.local",
-                    password="s3cr3t",
+                    password="DEV_PASSWORD_PLACEHOLDER",  # dev-only; prod — через Vault
                     folder="INVOICES",
                     subject_filter="INVOICE",
                     from_filter="billing@acme.com",

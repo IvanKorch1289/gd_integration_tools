@@ -242,6 +242,15 @@
       "title": "Tenant Aware",
       "type": "boolean"
     },
+    "trust_tier": {
+      "default": "B",
+      "enum": [
+        "A",
+        "B"
+      ],
+      "title": "Trust Tier",
+      "type": "string"
+    },
     "version": {
       "minLength": 1,
       "title": "Version",

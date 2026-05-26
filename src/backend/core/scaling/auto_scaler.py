@@ -237,8 +237,8 @@ class TemporalWorkerScaler:
                 result = starter(task_queue=self._task_queue)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug("AutoScaler: starter failed: %s", exc)
 
     async def _safe_stop_worker(self) -> None:
         stopper = getattr(self._pool, "stop_worker", None)
@@ -247,5 +247,5 @@ class TemporalWorkerScaler:
                 result = stopper(task_queue=self._task_queue)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug("AutoScaler: starter failed: %s", exc)

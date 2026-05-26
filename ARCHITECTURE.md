@@ -64,10 +64,10 @@ AI-агентами и developer portal на Streamlit.
 ### 1. DSL Engine
 
 **Точки**:
-- `src/dsl/engine/exchange.py` — `Exchange`, `Message`, `ExchangeStatus`:
+- `src/backend/dsl/engine/exchange.py` — `Exchange`, `Message`, `ExchangeStatus`:
   контейнер данных pipeline (god-node, 1071 ребро в Graphify)
-- `src/dsl/engine/pipeline.py` — `Pipeline` + `feature_flag`
-- `src/dsl/engine/processors/` — ~50+ процессоров по семьям:
+- `src/backend/dsl/engine/pipeline.py` — `Pipeline` + `feature_flag`
+- `src/backend/dsl/engine/processors/` — ~50+ процессоров по семьям:
   - **base/core/control_flow** — фундамент + Choice/TryCatch/Retry/Parallel/Saga
   - **eip/** — Enterprise Integration Patterns: Multicast/Aggregator/Splitter/
     Resequencer/Filter/WindowedCollect/WindowedDedup/Redirect
@@ -78,12 +78,12 @@ AI-агентами и developer portal на Streamlit.
   - **rpa.py / rpa_banking.py** — RPA primitives (W28 — full coverage)
   - **banking.py / business.py / dq_check.py / ml_inference.py** — domain
   - **converters.py / streaming.py / scraping.py / web.py / external.py**
-- `src/dsl/builder.py` — `RouteBuilder` (god-node, 325 рёбер) — fluent API
-- `src/dsl/commands/action_registry.py` — `ActionHandlerRegistry`
-- `src/dsl/commands/registry.py` — `RouteRegistry` + feature flags
-- `src/dsl/yaml_store.py` — DSL YAML persistence
-- `src/dsl/hot_reload.py` — горячая перезагрузка DSL-маршрутов
-- `src/dsl/yaml_watcher.py` — Wave B: единый FS-watcher для DSL YAML
+- `src/backend/dsl/builder.py` — `RouteBuilder` (god-node, 325 рёбер) — fluent API
+- `src/backend/dsl/commands/action_registry.py` — `ActionHandlerRegistry`
+- `src/backend/dsl/commands/registry.py` — `RouteRegistry` + feature flags
+- `src/backend/dsl/yaml_store.py` — DSL YAML persistence
+- `src/backend/dsl/hot_reload.py` — горячая перезагрузка DSL-маршрутов
+- `src/backend/dsl/yaml_watcher.py` — Wave B: единый FS-watcher для DSL YAML
   поверх ``watchfiles.awatch`` (см. ADR-041); заменил watchdog-based
   threading-реализацию
 
@@ -116,14 +116,14 @@ files       │  (debounce=500 ms)     │
 ### 2. Workflow / orchestration
 
 **Точки**:
-- `src/dsl/orchestration/` — sensors, backfill, dry-run, HITL
-- `src/infrastructure/workflow/` — durable workflows (Prefect удалён в
-  IL-WF1, ADR-031: переход на DSL durable workflows)
-- `src/services/io/` — workflow-state на MongoDB
+- `src/backend/dsl/orchestration/` — sensors, backfill, dry-run, HITL
+- `src/backend/infrastructure/workflow/` — durable workflows (Temporal DSL;
+  Prefect удалён в IL-WF1, ADR-031: переход на DSL durable workflows)
+- `src/backend/services/io/` — workflow-state на MongoDB
 
 ### 3. Коннекторы (entrypoints/)
 
-12 protocol-адаптеров (`src/entrypoints/`):
+12 protocol-адаптеров (`src/backend/entrypoints/`):
 
 | Группа | Каталог | Описание |
 |---|---|---|
@@ -139,7 +139,7 @@ files       │  (debounce=500 ms)     │
 | Enterprise | `enterprise/` `legacy/` `web3/` `iot/` | AS2/EDI/SAP/Modbus/OPC-UA |
 | UI | `streamlit_app/` | Dashboards / DSL builder / Wiki |
 
-Middleware (`entrypoints/middlewares/`): Prometheus, TrustedHost,
+Middleware (`src/backend/entrypoints/middlewares/`): Prometheus, TrustedHost,
 IPRestriction, APIKey, BlockedRoutes, GZip, ResponseCache (ETag),
 DataMasking, RequestID, Timeout, AuditLog, InnerRequestLogging,
 CircuitBreaker, ExceptionHandler.
@@ -161,7 +161,7 @@ CircuitBreaker, ExceptionHandler.
 
 ### 4. Сервисный слой
 
-`src/services/` сгруппирован по доменам:
+`src/backend/services/` сгруппирован по доменам:
 - `ai/` — `AIAgentService` (chat + run_agent), `RAGService`,
   `EmbeddingProvider` (sentence-transformers default; ollama / openai /
   fastembed как opt-in), `HybridRAGSearch`, `SemanticCache`,
@@ -176,20 +176,20 @@ CircuitBreaker, ExceptionHandler.
 
 ### 5. Схемы и контракты
 
-- `src/schemas/` — Pydantic input/output/filter schemas
-- `src/core/protocols.py` — Protocol-варианты (typing)
-- `src/core/interfaces/` — ABC-варианты (`antivirus`, `cache`, `notification`,
+- `src/backend/schemas/` — Pydantic input/output/filter schemas
+- `src/backend/core/protocols.py` — Protocol-варианты (typing)
+- `src/backend/core/interfaces/` — ABC-варианты (`antivirus`, `cache`, `notification`,
   `storage`)
-- `src/dsl/contracts/` — DSL data contracts (Wave C7: data expectations)
+- `src/backend/dsl/contracts/` — DSL data contracts (Wave C7: data expectations)
 - CloudEvents + Schema Registry + AsyncAPI (ADR-010, фаза C4)
 
 ### 6. Developer portal / UI
 
-- `streamlit_app/` (под `src/entrypoints/streamlit_app/`) — dashboard,
+- `streamlit_app/` (под `src/backend/entrypoints/streamlit_app/`) — dashboard,
   DSL builder, Wiki, S3 browser, Schema Viewer (Wave 8), Notebooks UI
 - `docs/` — Sphinx (W34 в плане), AI_INTEGRATION, DSL_COOKBOOK,
   PROCESSORS, DEPLOYMENT, RPA_GUIDE, CDC_GUIDE
-- `docs/adr/` — 32 ADR
+- `docs/adr/` — 27 ADR
 
 ## Инфраструктурные зависимости
 
@@ -210,19 +210,19 @@ CircuitBreaker, ExceptionHandler.
 
 ## Single source of truth (после Wave 0–13 + IL-* доводок)
 
-- ABC: `src/core/interfaces/`
-- Protocol-варианты: `src/core/protocols.py`
+- ABC: `src/backend/core/interfaces/`
+- Protocol-варианты: `src/backend/core/protocols.py`
 - Circuit Breaker: `infrastructure/resilience/breaker.py`
 - Retry: `infrastructure/resilience/retry.py`
 - JSON: `utilities/json_codec.py`
-- Auth: `src/core/auth.py`
-- Layer linter: `scripts/check_layers.py`
+- Auth: `src/backend/core/auth.py`
+- Layer linter: `tools/checks/check_layers.py`
 - ASGI: `settings.app.server` (uvicorn dev / granian prod)
 
 ## DI и точки расширения
 
 Всё через DI:
-- `src/core/svcs_registry.py` + `src/core/providers_registry.py`
+- `src/backend/core/svcs_registry.py` + `src/backend/core/providers_registry.py`
 - DSL `RouteBuilder.dispatch_action()` — единая точка вызова сервисов
 - `EmbeddingProvider` Protocol + factory
 - `BaseVectorStore` ABC + factory (qdrant / chroma / faiss)
@@ -247,7 +247,7 @@ CircuitBreaker, ExceptionHandler.
 
 ## Multi-tenancy (фаза G1, done)
 
-- `src/core/tenancy/` — tenant context, RLS-helpers
+- `src/backend/core/tenancy/` — tenant context, RLS-helpers
 - Postgres RLS + Redis prefixing + per-tenant rate limit + quotas + billing
 - Casbin tenant-scoped (IL-SEC2, ADR-028)
 - Открытый долг: `IL-BIZ1` — multi-tenant cache + Saga + PII audit
@@ -268,8 +268,8 @@ CircuitBreaker, ExceptionHandler.
 
 ## AI / Agents
 
-- LangChain (chat-провайдеры)
-- LangGraph (агентные графы) — `services/ai/run_agent`
+- **PydanticAI** (agents) + **LiteLLM** (gateway: Claude/GPT-4/Gemini/Ollama/OpenWebUI/HuggingFace)
+- AIGraph (агентные графы) — `services/ai/run_agent`
 - LangFuse (observability)
 - AgentMemory (Mongo): `agent_memory_messages` / `_scratchpad` / `_facts`
 - FastMCP — все actions экспортируются как MCP tools
@@ -277,8 +277,8 @@ CircuitBreaker, ExceptionHandler.
 
 ## Workflow / Durable
 
-- DSL durable workflows (IL-WF1, ADR-031) — заменили Prefect
-- `infrastructure/workflow/` + `services/io/`
+- Temporal DSL (IL-WF1, ADR-031) — заменили Prefect; LiteTemporalBackend для dev
+- `src/backend/infrastructure/workflow/` + `src/backend/services/io/`
 - Outbox + Inbox + FastStream (ADR-011, ADR-013)
 
 ## Правила изменения архитектуры

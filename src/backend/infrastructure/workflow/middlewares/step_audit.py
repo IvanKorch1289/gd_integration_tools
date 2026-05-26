@@ -116,7 +116,8 @@ def schema_hash(payload: Any) -> str:
         import orjson
 
         data = orjson.dumps(payload, default=str)
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        _logger.debug("orjson unavailable, using str(): %s", exc)
         data = str(payload).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
 

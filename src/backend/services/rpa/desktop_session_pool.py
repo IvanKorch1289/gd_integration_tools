@@ -134,8 +134,8 @@ class DesktopRPASessionPool:
                 )
                 try:
                     await session.client.aclose()
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as exc:  # noqa: BLE001
+                    _logger.debug("desktop_rpa_pool: aclose failed for %s: %s", app_name, exc)
                 session = None
         if session is None:
             if len(self._sessions) >= self._max_sessions:
