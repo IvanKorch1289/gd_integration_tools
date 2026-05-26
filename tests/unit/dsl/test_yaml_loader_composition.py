@@ -51,7 +51,7 @@ include:
   - ./nonexistent.yaml
 extends: ./also_nonexistent.yaml
 steps:
-  - audit: {event: test}
+  - audit: {action: test}
 """
         with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=False):
             pipeline = load_pipeline_from_yaml(yaml_str)
@@ -67,8 +67,8 @@ steps:
             (tmppath / "shared.yaml").write_text("""
 route_id: shared.route
 steps:
-  - audit: {event: shared.start}
-  - proxy: {src: /shared, dst: http://shared:8080}
+  - audit: {action: shared.start}
+  - audit: {action: shared.proxy}
 """)
 
             # Create main file that includes shared
@@ -99,8 +99,8 @@ route_id: base.route
 source: timer:60s
 description: Base route description
 steps:
-  - proxy: {src: /api/base, dst: http://base:8080}
-  - audit: {event: base.called}
+  - audit: {action: base.proxy}
+  - audit: {action: base.called}
 """)
 
             # Create child that extends base
@@ -145,7 +145,7 @@ route_id: test.route
 include:
   - ./nonexistent.yaml
 steps:
-  - audit: {event: test}
+  - audit: {action: test}
 """
         with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
             with pytest.raises(FileNotFoundError) as exc_info:
@@ -158,7 +158,7 @@ steps:
 route_id: test.route
 extends: ./nonexistent.yaml
 steps:
-  - audit: {event: test}
+  - audit: {action: test}
 """
         with patch('src.backend.dsl.yaml_loader._is_route_composition_include_enabled', return_value=True):
             with pytest.raises(FileNotFoundError) as exc_info:

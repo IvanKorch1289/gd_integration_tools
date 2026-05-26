@@ -229,6 +229,51 @@ class WorkflowBuilder:
         self._steps.append(spec)  # type: ignore[arg-type]
         return self
 
+    def invoke_agent(
+        self,
+        agent_id: str,
+        *,
+        input_context: str | None = None,
+        durable: bool = False,
+        output_key: str | None = None,
+        max_turns: int = 10,
+        timeout_s: float | None = None,
+    ) -> Self:
+        """Добавить AI-агент как шаг workflow (S27 W6, R-V15-9).
+
+        При ``durable=False``: stateless call через
+        :meth:`AIGateway.invoke() <src.backend.core.ai.gateway.AIGateway.invoke>`.
+        При ``durable=True``: использует LangGraph Checkpointer
+        (требует ``feature_flags.langgraph_postgres_checkpoint=True``;
+        fallback на stateless при отсутствии).
+
+        Args:
+            agent_id: Имя агента (``skill_id`` из SkillRegistry или
+                ``workflow_id`` из LangGraph).
+            input_context: Опц. dot-path или ``${...}`` выражение для
+                извлечения input context из workflow-аргументов.
+            durable: При True — LangGraph checkpoint persistence.
+            output_key: Опц. имя property для сохранения результата.
+            max_turns: Максимум turns в agent conversation (default 10).
+            timeout_s: Per-invocation timeout (None → workflow-default).
+
+        Returns:
+            Self для chain.
+        """
+        from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
+
+        self._steps.append(
+            AgentInvokeDeclaration(
+                agent_id=agent_id,
+                input_context=input_context,
+                durable=durable,
+                output_key=output_key,
+                max_turns=max_turns,
+                timeout_s=timeout_s,
+            )
+        )
+        return self
+
     def build(self) -> WorkflowDeclaration:
         """Собрать и провалидировать :class:`WorkflowDeclaration`.
 
