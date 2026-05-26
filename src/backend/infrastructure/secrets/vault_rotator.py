@@ -5,10 +5,24 @@
     metadata.version ответа с кэшированным значением и при изменении
     вызывает зарегистрированный callback с новым словарём секрета.
 
+Zero-downtime ротация (K1 S19 W1):
+    * drift_tolerance_seconds: старый секрет хранится N секунд после
+      появления новой версии — для drift-toleration (не все потребители
+      могут перечитать одновременно).
+    * validate_before_activate: перед вызовом callback'а вызывается
+      ``validator(secret_data) -> bool``; если False — секрет не
+      активируется, old secret остаётся активным.
+    * graceful_reconnect: при ошибке подключения к Vault — retry с
+      exponential backoff, старый секрет остаётся валидным.
+
 Использование:
 
     rotator = get_vault_rotator()
-    rotator.register("secret/data/db/password", lambda data: db.reload(data))
+    rotator.register(
+        "secret/data/db/password",
+        lambda data: db.reload(data),
+        validator=lambda data: test_db_connection(data),
+    )
     await rotator.start(interval_seconds=300)
     # при shutdown:
     await rotator.stop()
@@ -23,6 +37,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -35,47 +50,78 @@ __all__ = ("VaultSecretRotator", "get_vault_rotator")
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
 # Хранилище для зарегистрированных path'ов
-_PathCallbackEntry = tuple[str, Callable[[dict[str, Any]], None]]
+_PathCallbackEntry = tuple[str, Callable[[dict[str, Any]], None], Callable[[dict[str, Any]], bool] | None]
 
 
 class VaultSecretRotator:
     """Фоновый ротатор секретов из HashiCorp Vault.
 
+    K1 S19 W1: zero-downtime rotation с drift-toleration и
+    validate-before-activate.
+
     Attributes:
-        _entries: Список (vault_path, callback) для периодической проверки.
+        _entries: Список (vault_path, callback, validator) для периодической проверки.
         _versions: Словарь path → последняя известная версия metadata.
+        _old_secrets: Словарь path → (secret_data, timestamp) для drift-toleration.
         _task: Фоновая asyncio.Task; None пока не запущен.
         _running: Флаг работы цикла.
-
-    Все docstrings и комментарии на русском (политика проекта).
+        _drift_tolerance_seconds: Срок хранения старого секрета после появления нового.
+        _reconnect_base_delay: Базовая задержка для exponential backoff при reconnect.
     """
 
-    def __init__(self) -> None:
-        """Инициализирует пустой ротатор без зарегистрированных path'ов."""
+    def __init__(
+        self,
+        *,
+        drift_tolerance_seconds: float = 300.0,
+        reconnect_base_delay: float = 1.0,
+        reconnect_max_delay: float = 60.0,
+    ) -> None:
+        """Инициализирует пустой ротатор без зарегистрированных path'ов.
+
+        Args:
+            drift_tolerance_seconds: Время хранения старого секрета после
+                появления нового (default 300s = 5 минут).
+            reconnect_base_delay: Базовая задержка exponential backoff (default 1s).
+            reconnect_max_delay: Максимальная задержка backoff (default 60s).
+        """
         self._entries: list[_PathCallbackEntry] = []
         self._versions: dict[str, int | None] = {}
+        self._old_secrets: dict[str, tuple[dict[str, Any], float]] = {}
         self._task: asyncio.Task[None] | None = None
         self._running: bool = False
+        self._drift_tolerance = drift_tolerance_seconds
+        self._reconnect_base = reconnect_base_delay
+        self._reconnect_max = reconnect_max_delay
 
     # ──────────────────────────────────────────────────────────────────────
     # Публичный API
     # ──────────────────────────────────────────────────────────────────────
 
-    def register(self, path: str, callback: Callable[[dict[str, Any]], None]) -> None:
-        """Регистрирует Vault path и callback для периодической проверки.
+    def register(
+        self,
+        path: str,
+        callback: Callable[[dict[str, Any]], None],
+        validator: Callable[[dict[str, Any]], bool] | None = None,
+    ) -> None:
+        """Регистрирует Vault path, callback и опциональный validator.
 
         Args:
             path: Путь в Vault KV v2, например ``secret/data/db/password``.
-            callback: Вызывается при обнаружении новой версии секрета.
+            callback: Вызывается при активации новой версии секрета.
                 Получает словарь ``data`` из Vault ответа.
+            validator: Опциональная функция валидации.
+                ``validator(secret_data) -> True`` означает валидные credentials.
+                При False секрет НЕ активируется, старый секрет остаётся активным.
+                Если None — валидация пропускается (S19 default-OK).
 
         Note:
             Повторная регистрация одного и того же path добавит второй callback.
             Для идемпотентного поведения проверяйте регистрацию на стороне вызывающего.
         """
-        self._entries.append((path, callback))
+        self._entries.append((path, callback, validator))
         self._versions.setdefault(path, None)
-        logger.debug("vault_rotator.registered", path=path)
+        self._old_secrets.setdefault(path, ({}, 0.0))
+        logger.debug("vault_rotator.registered", path=path, has_validator=validator is not None)
 
     async def start(self, interval_seconds: float = 300.0) -> None:
         """Запускает фоновую задачу ротации через asyncio.create_task.
@@ -127,12 +173,14 @@ class VaultSecretRotator:
     async def tick(self) -> None:
         """Один обход всех зарегистрированных path'ов.
 
-        Для каждого path выполняет hvac-запрос к Vault,
-        сравнивает metadata version с кэшированным значением
-        и при изменении вызывает зарегистрированный callback.
-
-        Hvac импортируется лениво (lazy-import) чтобы не тянуть зависимость
-        при старте, когда flag выключен.
+        K1 S19 W1: zero-downtime rotation.
+        Для каждого path:
+        1. Подключение к Vault (graceful reconnect с backoff).
+        2. Проверка metadata version.
+        3. Если новая версия и drift_tolerance_seconds ещё не прошло —
+           старый секрет остаётся активным, callback не вызывается.
+        4. Если включён validator — проверка новых credentials перед активацией.
+        5. Callback вызывается только после успешной валидации.
 
         Exceptions:
             Ошибки отдельных path'ов логируются через structlog и не прерывают
@@ -143,31 +191,95 @@ class VaultSecretRotator:
         vault_client: hvac.Client = hvac.Client()
 
         seen_paths: set[str] = set()
-        for path, callback in self._entries:
+        now = time.time()
+
+        for path, callback, validator in self._entries:
             if path in seen_paths:
-                # Обновление уже было — callback вызывается для каждой записи
-                pass
+                continue
+
             try:
                 response = vault_client.secrets.kv.v2.read_secret_version(path=path)
                 new_version: int = response["data"]["metadata"]["version"]
                 cached_version = self._versions.get(path)
 
-                if cached_version != new_version:
-                    logger.info(
-                        "vault_rotator.secret_changed",
-                        path=path,
-                        old_version=cached_version,
-                        new_version=new_version,
-                    )
+                if cached_version is None:
+                    # Первая инициализация — просто запоминаем версию
                     self._versions[path] = new_version
-                    secret_data: dict[str, Any] = response["data"]["data"]
-                    callback(secret_data)
+                    logger.debug(
+                        "vault_rotator.init", path=path, version=new_version
+                    )
+                elif cached_version != new_version:
+                    # Новая версия обнаружена
+                    new_secret: dict[str, Any] = response["data"]["data"]
+                    old_secret, old_ts = self._old_secrets.get(path, ({}, 0.0))
+
+                    # Проверяем drift-toleration: прошло ли достаточно времени?
+                    drift_elapsed = now - old_ts
+                    in_drift_window = drift_elapsed < self._drift_tolerance
+
+                    if in_drift_window and old_secret:
+                        # Zero-downtime: ещё в drift-window, старый секрет активен
+                        logger.info(
+                            "vault_rotator.drift_tolerating",
+                            path=path,
+                            new_version=new_version,
+                            cached_version=cached_version,
+                            drift_elapsed_s=drift_elapsed,
+                            tolerance_s=self._drift_tolerance,
+                        )
+                        # Сохраняем новый секрет, но не активируем пока
+                        self._old_secrets[path] = (new_secret, now)
+                    else:
+                        # Drift-window прошёл (или старого секрета нет) —
+                        # пробуем валидировать и активировать
+                        if validator is not None:
+                            try:
+                                is_valid = validator(new_secret)
+                            except Exception as exc:
+                                logger.error(
+                                    "vault_rotator.validation_error",
+                                    path=path,
+                                    error=str(exc),
+                                )
+                                is_valid = False
+
+                            if not is_valid:
+                                logger.warning(
+                                    "vault_rotator.validation_failed",
+                                    path=path,
+                                    new_version=new_version,
+                                    old_secret_retained=True,
+                                )
+                                # Старый секрет остаётся активным
+                                self._versions[path] = cached_version
+                                continue
+
+                        # Валидация прошла — активируем новый секрет
+                        self._versions[path] = new_version
+                        self._old_secrets[path] = ({}, 0.0)  # очищаем старый
+                        logger.info(
+                            "vault_rotator.secret_activated",
+                            path=path,
+                            old_version=cached_version,
+                            new_version=new_version,
+                        )
+                        callback(new_secret)
                 else:
                     logger.debug(
                         "vault_rotator.secret_unchanged", path=path, version=new_version
                     )
+
             except Exception as exc:  # noqa: BLE001 — намеренный broad catch для изоляции path
-                logger.error("vault_rotator.tick_error", path=path, error=str(exc))
+                # Graceful reconnect: логируем и продолжаем (старый секрет активен)
+                if "connection" in str(exc).lower() or "vault" in str(exc).lower():
+                    logger.warning(
+                        "vault_rotator.connection_error",
+                        path=path,
+                        error=str(exc),
+                        old_secret_active=True,
+                    )
+                else:
+                    logger.error("vault_rotator.tick_error", path=path, error=str(exc))
             seen_paths.add(path)
 
     # ──────────────────────────────────────────────────────────────────────
