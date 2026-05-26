@@ -1,4 +1,4 @@
-"""DSL-процессоры Agent DSL (Sprint 27 W1-W3).
+"""DSL-процессоры Agent DSL (Sprint 27 W1-W3, S28 W4).
 
 Декларативная агентика поверх :class:`AIGateway` (ADR-NEW-19, S25 W1):
 
@@ -6,6 +6,8 @@
 * :class:`AgentBranchProcessor` — verdict-based routing;
 * :class:`AgentLoopProcessor` — повтор до stop_condition / max_iterations;
 * :class:`AgentParallelProcessor` — fan-out агентов через TaskGroup;
+* :class:`AgentGraphProcessor` — LangGraph execution as DSL step (S28 W4).
+  Supervisor mode (LLM-driven multi-agent handoff) и ReAct mode.
 * :class:`GuardrailsApplyProcessor` — Llama Guard input/output;
 * :class:`PIIMaskProcessor` / :class:`PIIUnmaskProcessor` — reversible PII
   (S25 W4 ADR-NEW-21);

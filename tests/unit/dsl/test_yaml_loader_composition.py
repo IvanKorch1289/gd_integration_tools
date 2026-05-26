@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 

@@ -71,16 +71,18 @@ def _resolve_include_extends(
     data: dict[str, Any],
     base_path: Path | None = None,
     _visited: set[str] | None = None,
+    _is_root: bool = True,
 ) -> dict[str, Any]:
     """Resolve include: and extends: fields in a YAML spec with cycle detection.
 
     Args:
         data: Parsed YAML dict.
         base_path: Base directory for resolving relative paths.
+            On first call from load_pipeline_from_yaml, this is the directory
+            containing the YAML file (file_path.parent). On recursive calls it's
+            the parent directory of the extended/included file.
         _visited: Internal set for cycle detection (files being processed).
-
-    Returns:
-        Merged spec with include:/extends: resolved.
+        _is_root: True for the initial call, False for recursive calls.
 
     Raises:
         RuntimeError: If a cycle is detected in include/extends chain.
@@ -101,7 +103,15 @@ def _resolve_include_extends(
         ext_str = str(extends_path)
 
         if base_path is not None:
-            resolved_path = (base_path / ext_str).resolve()
+            # _is_root=True means first call: base_path is directory, use it directly.
+            # _is_root=False means recursive call: base_path is already a directory.
+            if _is_root:
+                # First call: base_path is already a directory (file.parent from loader)
+                base_dir = base_path
+            else:
+                # Recursive: base_path is directory of the file that has extends
+                base_dir = base_path
+            resolved_path = (base_dir / ext_str).resolve()
         else:
             resolved_path = Path(ext_str).resolve()
 
@@ -128,20 +138,23 @@ def _resolve_include_extends(
 
         # Recursively resolve the base (in case it also has include/extends)
         base_data = _resolve_include_extends(
-            base_data, resolved_path, _visited
+            base_data, resolved_path.parent, _visited, _is_root=False
         )
 
         # Merge: child overrides parent
         # Start with base, then overlay child (child takes precedence)
         merged: dict[str, Any] = {}
-        # First add all from base
+        # First add all from base (including steps)
         for k, v in base_data.items():
-            if k not in ("include", "extends"):  # Don't copy composition fields
+            if k not in ("include", "extends"):
                 merged[k] = v
         # Then overlay from child (allows overriding)
         for k, v in spec.items():
             if k not in ("include", "extends"):
                 merged[k] = v
+        # For 'steps', we must CONCATENATE not replace (extends adds steps)
+        if "steps" in base_data and "steps" in spec:
+            merged["steps"] = base_data["steps"] + spec["steps"]
         spec = merged
 
     # Handle include: - include steps from other YAML files (one level)
@@ -189,7 +202,10 @@ def _resolve_include_extends(
                     f"{type(inc_data).__name__}"
                 )
 
-            # Get steps from included file
+            # Get steps from included file (recursive resolution for nested includes)
+            inc_data = _resolve_include_extends(
+                inc_data, resolved_inc.parent, _visited, _is_root=False
+            )
             inc_steps = inc_data.get("steps", [])
             if not isinstance(inc_steps, list):
                 raise ValueError(
