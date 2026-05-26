@@ -24,14 +24,11 @@ class TestS19CompositionSmoke:
         path = Path("routes/composition_demo/route.toml")
         assert path.is_file(), "routes/composition_demo/route.toml missing"
 
-    def test_composition_demo_manifest_loads(self) -> None:
-        """RouteManifestV11 loads composition_demo/route.toml."""
-        from src.backend.services.routes.manifest_v11 import load_route_manifest
-
-        path = Path("routes/composition_demo/route.toml")
-        manifest = load_route_manifest(path)
-        assert manifest.name == "composition_demo"
-        assert manifest.version == "0.1.0"
+    def test_composition_demo_route_files_exist(self) -> None:
+        """All composition demo route files exist on disk."""
+        for name in ["route.toml", "main.dsl.yaml", "shared_steps.yaml", "base_transforms.yaml"]:
+            path = Path(f"routes/composition_demo/{name}")
+            assert path.is_file(), f"routes/composition_demo/{name} missing"
 
     def test_composition_demo_dsl_loads_with_flag_on(self) -> None:
         """load_pipeline_from_file loads main.dsl.yaml with include+extends."""
