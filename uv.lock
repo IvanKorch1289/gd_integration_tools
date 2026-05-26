@@ -2528,7 +2528,7 @@ http = [
 
 [[package]]
 name = "gd-advanced-tools"
-version = "0.19.0"
+version = "0.20.0"
 source = { editable = "." }
 dependencies = [
     { name = "aio-pika", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
