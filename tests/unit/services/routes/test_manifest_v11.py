@@ -133,6 +133,55 @@ class TestRouteManifestV11:
         assert "a" not in unmet
         assert unmet["b"] == ">=0.5"
 
+    def test_requires_workflows_default_empty(self) -> None:
+        """requires_workflows defaults to empty dict."""
+        m = RouteManifestV11(
+            name="x",
+            version="1.0.0",
+            requires_core=">=0.1",
+            pipelines=("p.dsl.yaml",),
+        )
+        assert m.requires_workflows == {}
+
+    def test_requires_workflows_valid_spec(self) -> None:
+        """requires_workflows accepts valid SemVer specs."""
+        m = RouteManifestV11(
+            name="x",
+            version="1.0.0",
+            requires_core=">=0.1",
+            requires_workflows={"credit_flow": ">=1.0,<2.0", "approval": ">=0.5"},
+            pipelines=("p.dsl.yaml",),
+        )
+        assert m.requires_workflows == {"credit_flow": ">=1.0,<2.0", "approval": ">=0.5"}
+
+    def test_invalid_requires_workflows_spec(self) -> None:
+        """Invalid SemVer spec in requires_workflows raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            RouteManifestV11(
+                name="x",
+                version="1.0.0",
+                requires_core=">=0.1",
+                requires_workflows={"bad_flow": "NOT_A_SPEC"},
+                pipelines=("p.dsl.yaml",),
+            )
+        assert "requires_workflows" in str(exc_info.value).lower()
+
+    def test_missing_workflows_returns_unmet(self) -> None:
+        """missing_workflows returns workflows that are absent or incompatible."""
+        m = RouteManifestV11(
+            name="x",
+            version="1.0.0",
+            requires_core=">=0.1",
+            requires_workflows={"wf_a": ">=1.0,<2.0", "wf_b": ">=0.5"},
+            pipelines=("p.dsl.yaml",),
+        )
+        # wf_a — installed and compatible; wf_b — installed but too low;
+        # wf_missing doesn't exist.
+        unmet = m.missing_workflows({"wf_a": "1.5.0", "wf_b": "0.4.0"})
+        assert "wf_a" not in unmet
+        assert unmet["wf_b"] == ">=0.5"
+        assert "wf_missing" in unmet
+
     def test_extra_field_forbidden(self) -> None:
         with pytest.raises(ValidationError):
             RouteManifestV11.model_validate(

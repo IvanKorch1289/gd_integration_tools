@@ -110,6 +110,14 @@
       "title": "Requires Plugins",
       "type": "object"
     },
+    "requires_workflows": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Requires Workflows",
+      "type": "object",
+      "description": "K3 S19 W1: Workflow SemVer version requirements."
+    },
     "security": {
       "$ref": "#/$defs/SecurityModel",
       "default": null,

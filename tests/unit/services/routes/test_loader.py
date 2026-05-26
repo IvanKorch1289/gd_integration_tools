@@ -28,6 +28,7 @@ def _write_route(
     name: str,
     requires_core: str = ">=0.2,<0.3",
     requires_plugins: dict[str, str] | None = None,
+    requires_workflows: dict[str, str] | None = None,
     capabilities: list[tuple[str, str | None]] | None = None,
     feature_flag: str | bool | None = None,
     pipelines: tuple[str, ...] = ("pipeline.dsl.yaml",),
@@ -54,6 +55,10 @@ def _write_route(
         body.append("[requires_plugins]")
         for n, spec in requires_plugins.items():
             body.append(f'{n} = "{spec}"')
+    if requires_workflows:
+        body.append("[requires_workflows]")
+        for n, spec in requires_workflows.items():
+            body.append(f'{n} = "{spec}"')
     for cap_name, scope in capabilities or []:
         body.append("[[capabilities]]")
         body.append(f'name = "{cap_name}"')
@@ -70,6 +75,7 @@ def _build_loader(
     routes_dir: Path,
     *,
     installed_plugins: dict[str, InstalledPlugin] | None = None,
+    installed_workflows: dict[str, str] | None = None,
     feature_flag_resolver=None,
 ) -> tuple[RouteLoader, list[tuple[str, Path, Any]]]:
     registered: list[tuple[str, Path, Any]] = []
@@ -86,6 +92,7 @@ def _build_loader(
         pipeline_registrar=registrar,
         feature_flag_resolver=feature_flag_resolver
         or default_env_feature_flag_resolver,
+        installed_workflows=installed_workflows,
     )
     return loader, registered
 
@@ -149,6 +156,66 @@ class TestRequiresPlugins:
         loaded = await loader.discover_and_load()
         assert loaded[0].status == "enabled"
         assert registered
+
+
+class TestRequiresWorkflows:
+    """K3 S19 W1: requires_workflows SemVer version checking in RouteLoader."""
+
+    async def test_missing_workflow_fails(self, tmp_path: Path) -> None:
+        """Route with absent workflow requirement fails to load."""
+        _write_route(tmp_path, name="r1", requires_workflows={"absent_wf": ">=1.0"})
+        loader, _ = _build_loader(tmp_path)
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "failed"
+        assert "missing_workflows" in (loaded[0].reason or "")
+
+    async def test_incompatible_workflow_version_fails(self, tmp_path: Path) -> None:
+        """Route with incompatible workflow version fails to load."""
+        _write_route(tmp_path, name="r1", requires_workflows={"wf_a": ">=2.0,<3.0"})
+        # wf_a is installed but version 1.5.0 is not compatible with >=2.0,<3.0
+        loader, _ = _build_loader(tmp_path, installed_workflows={"wf_a": "1.5.0"})
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "failed"
+        assert "missing_workflows" in (loaded[0].reason or "")
+
+    async def test_present_compatible_workflow_passes(self, tmp_path: Path) -> None:
+        """Route with compatible workflow version passes."""
+        _write_route(tmp_path, name="r1", requires_workflows={"wf_a": ">=1.0,<2.0"})
+        loader, _ = _build_loader(tmp_path, installed_workflows={"wf_a": "1.5.0"})
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
+
+    async def test_audit_event_emitted_on_workflow_mismatch(
+        self, tmp_path: Path
+    ) -> None:
+        """workflow.version.mismatch audit event is emitted when workflow check fails."""
+        _write_route(tmp_path, name="r1", requires_workflows={"wf_missing": ">=1.0"})
+        events: list[dict[str, object]] = []
+        loader = RouteLoader(
+            routes_dir=tmp_path,
+            capability_gate=CapabilityGate(),
+            vocabulary=build_default_vocabulary(),
+            core_version="0.2.0",
+            installed_plugins={},
+            pipeline_registrar=lambda *_: None,
+            installed_workflows={},
+            audit_callback=events.append,
+        )
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "failed"
+        mismatch_events = [
+            e for e in events if e.get("event") == "workflow.version.mismatch"
+        ]
+        assert len(mismatch_events) == 1
+        assert mismatch_events[0]["route"] == "r1"
+        assert mismatch_events[0]["missing_workflows"] == {"wf_missing": ">=1.0"}
+
+    async def test_empty_requires_workflows_passes(self, tmp_path: Path) -> None:
+        """Route without requires_workflows (or empty) loads normally."""
+        _write_route(tmp_path, name="r1")
+        loader, _ = _build_loader(tmp_path)
+        loaded = await loader.discover_and_load()
+        assert loaded[0].status == "enabled"
 
 
 class TestCapabilitiesSubset:

@@ -224,6 +224,29 @@ class RouteLoader:
             )
             return
 
+        # ── Pre-condition: requires_workflows (K3 S19 W1)
+        if manifest.requires_workflows:
+            missing_wf = manifest.missing_workflows(self._installed_workflows)
+            if missing_wf:
+                # Emit audit event for workflow version mismatch
+                self._emit_audit(
+                    {
+                        "event": "workflow.version.mismatch",
+                        "route": manifest.name,
+                        "version": manifest.version,
+                        "missing_workflows": missing_wf,
+                    }
+                )
+                self._loaded[manifest.name] = LoadedRoute(
+                    name=manifest.name,
+                    version=manifest.version,
+                    manifest_path=manifest_path,
+                    manifest=manifest,
+                    status="failed",
+                    reason=f"missing_workflows: {missing_wf}",
+                )
+                return
+
         # ── Inv: route.capabilities ⊆ plugin-каталог ∪ public-core
         try:
             plugin_caps_by_name = {
