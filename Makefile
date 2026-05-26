@@ -77,7 +77,8 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	config-new config-apply config-extract \
 	new-service new-repository codegen-extract \
 	import-swagger import-postman import-wsdl \
-	testkit-smoke new-plugin perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale
+	testkit-smoke new-plugin perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale \
+new-adr release-notes
 
 help: ##@ Misc Show this help
 	@printf "\nUsage:\n  make \033[36m<target>\033[0m\n"
@@ -973,3 +974,15 @@ check-task-registry: check-env ## S17 K2 W3 (R-V15-11): orphan asyncio.create_ta
 
 middleware-tree: check-env ## S17 ADR-NEW-2: показать дерево зарегистрированных middleware по слоям
 	$(UV_RUN) python tools/middleware_tree.py
+
+##@ K5 S19 W4 — quick-wins-pack (new-adr + completions + release-notes)
+
+new-adr: ## Создать новый ADR из шаблона (TITLE="Заголовок ADR" [NUMBER=123])
+	@if [ -z "$(TITLE)" ]; then \
+		echo "Использование: make new-adr TITLE=\"Мой новый ADR\""; \
+		exit 1; \
+	fi
+	$(UV_RUN) python tools/new_adr.py "$(TITLE)" $(if $(NUMBER),--adr-number $(NUMBER),)
+
+release-notes: ## Сгенерировать release-notes из wave-tags в git log (FROM=v0.1.0 TO=v0.2.0)
+	$(UV_RUN) python tools/changelog_autogen.py $(if $(FROM),--from $(FROM),) $(if $(TO),--to $(TO),) $(if $(OUTPUT),--output $(OUTPUT),)

@@ -1526,5 +1526,55 @@ def ai_eval_suite(
     typer.echo(summary.to_markdown())
 
 
+# ────────────── Shell Completions ──────────────
+
+
+completions_app = typer.Typer(help="Install shell completions for gd-tools CLI")
+app.add_typer(completions_app, name="completions")
+
+
+@completions_app.command("install")
+def completions_install(
+    shell: str = typer.Option(
+        ..., "--shell", "-s",
+        help="Shell type: bash | zsh | fish | powershell"
+    ),
+) -> None:
+    """Install shell completions for gd-tools CLI.
+
+    Example:
+        python manage.py completions install --shell bash
+        python manage.py completions install --shell zsh
+    """
+    from typer import completion
+    from typer import main as typer_main
+
+    valid_shells = {"bash", "zsh", "fish", "powershell", "pwsh"}
+    if shell not in valid_shells:
+        typer.echo(
+            f"Shell '{shell}' not supported. Valid options: {', '.join(sorted(valid_shells))}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    # Get the underlying Click command and install completions
+    click_cmd = typer_main.get_command(app)
+    prog_name = click_cmd.info_name or "gd-tools"
+    complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
+
+    try:
+        installed_shell, installed_path = completion.install(
+            shell=shell, prog_name=prog_name, complete_var=complete_var
+        )
+        typer.secho(
+            f"{installed_shell} completion installed in {installed_path}",
+            fg=typer.colors.GREEN,
+        )
+        typer.echo("Completion will take effect once you restart the terminal")
+    except Exception as exc:
+        typer.echo(f"Failed to install completions: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
 if __name__ == "__main__":
     app()
