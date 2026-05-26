@@ -293,7 +293,14 @@ CircuitBreaker, ExceptionHandler.
 
 ## Известные ограничения
 
-- 98 ruff-ошибок и 313 mypy-ошибок в `src/` — pre-existing baseline
+- ruff/mypy ошибки в `src/backend/` — pre-existing baseline
+- 42 ruff-S101 в `tests/` — pre-existing baseline
+- 125 legacy layer-нарушений в allowlist
+- `make type-check` / `make actions` / `make deps-check` — pre-existing failed
+- ClamAV не поднят в `docker-compose.yml`
+- Memcached cache backend = stub
+- CertStore vault backend требует `vault_url` / `vault_token`
+- `psycopg2` отсутствует в venv (используется asyncpg)
 - 42 ruff-S101 в `tests/` — pre-existing baseline
 - 125 legacy layer-нарушений в allowlist
 - `make type-check` / `make actions` / `make deps-check` — pre-existing failed

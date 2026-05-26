@@ -1,13 +1,44 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-26 16:35, S27 closure / S28 continuation)
+## Текущее состояние (2026-05-26 18:30, S28 closure / S29 start)
 
-**HEAD**: `d94b984e` (S28/W5 skill-registry-toml-impl + W6 invoke_agent fix)
-**Session summary**: `vault/session-2026-05-26-1635-summary.md`
+**HEAD**: `163be9c9` (fix Cron_Builder.py except tuple syntax)
+**Мой коммит**: `e95c75c0` (layer violations fix)
+**Session summary**: `vault/session-2026-05-26-1830-summary.md`
 
-### S27/28 P0 AI Hardening — GuardResult foundation + Audit schema ✅
+### S28 closure ✅
 
-**Коммиты** (7 wave commits + parallel session absorbs):
+**Версия**: 0.20.0 (d98290bf)
+
+**Последние коммиты S28**:
+- `163be9c9` — Cron_Builder.py Python 3 except tuple syntax fix
+- `1b4f1204` — [wave:s29/k4-w0-syntax-fix] 82 Python 2 except clauses + 3 Protocol errors
+- `e95c75c0` — [fix(core/audit)] 2 layer violations в ai_unified_sink.py
+- `75af9fcd` — Fix F821 undefined AIInvocationEvent + S110 silent exception
+- `d98290bf` — release: bump version to 0.20.0
+
+### Layer violations — ИСПРАВЛЕНЫ ✅
+
+**Было**: 2 violations в `core/audit/sinks/ai_unified_sink.py` (core → services.audit + services.ai.gateway)
+**Стало**: 0 новых нарушений (`make layers`)
+
+**Решение**: Registry pattern
+- `core/audit/interfaces.py` — Protocol definitions (TYPE_CHECKING)
+- `services/audit/unified_sink_factory.py` — единая точка создания UnifiedAISink
+- `core/audit/sinks/ai_unified_sink.py` — register_emit_ai_invocation_event() + emit_ai_invocation_event()
+- `core/ai/gateway.py` — импортирует из core/audit/sinks (registry), не напрямую из services/
+
+### Открытые вопросы
+
+1. **Pre-existing layer violation**: `infrastructure/clients/external/langfuse_client.py` → `services.ai.gateway.langfuse_pii_callback` (существовало до S28, не исправлено)
+2. **PLAN.md не содержит S28/S29**: Sprint 28 закрыт но не в плане; Sprint 29 не существует в документе
+3. **8 uncommitted файлов**: параллельная сессия изменила `auto_scaler.py`, `integration.py`, `langfuse_client.py`, `browser_pool.py`, `desktop_session_pool.py`, `reactive_dispatcher.py`, схемы docs
+
+### Следующий шаг
+
+1. Определить текущий спринт (S28 closed, нужен ли S29 или это carryover сессия)
+2. Исправить pre-existing layer violation в `langfuse_client.py` или внести в backlog
+3. Согласовать план — какие S28 carryover waves реализовать
 
 | Компонент | Файл | Коммит | Изменение |
 |----------|------|--------|-----------|

@@ -166,10 +166,11 @@ class BaseExternalAPIClient:
                 total = get_adaptive_timeout_policy().get_timeout(
                     host, endpoint, default_seconds=total
                 )
-            except Exception:  # noqa: BLE001
-                # Policy lookup не должен ломать HTTP-flow — fallback
-                # на hardcoded таймауты.
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(
+                    "BaseExternalAPIClient: adaptive timeout policy lookup failed: %s",
+                    exc,
+                )
         return {
             "connect_timeout": connect,
             "read_timeout": read,
@@ -189,8 +190,8 @@ class BaseExternalAPIClient:
             )
 
             get_adaptive_timeout_policy().record_latency(host, endpoint, latency_ms)
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("BaseExternalAPIClient: record latency failed: %s", exc)
 
     async def _request(
         self,

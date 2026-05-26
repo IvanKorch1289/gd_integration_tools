@@ -323,77 +323,80 @@ curl -X POST http://localhost:8000/api/v1/dsl/dispatch \
 ## Структура проекта
 
 ```
-src/
-├── core/                      # Ядро: конфигурация, ошибки, реестр сервисов
-│   ├── config/               # Настройки (Pydantic Settings)
-│   │   ├── settings.py       # Главный объект settings
-│   │   ├── runtime_state.py  # Мутабельное runtime-состояние (blocked_routes, disabled_feature_flags)
-│   │   └── services.py       # Настройки внешних сервисов
-│   ├── decorators/           # Кэширование, rate-limiting, singleton
-│   ├── enums/                # Enum-ы для доменных моделей
-│   ├── errors.py             # Иерархия ошибок (BaseError → RouteDisabledError и др.)
-│   └── service_registry.py   # Реестр бизнес-сервисов
+gd_integration_tools/
+├── src/backend/                # Основной код (backend API)
+│   ├── core/                  # Ядро: конфигурация, ошибки, DI, протоколы
+│   │   ├── config/           # Pydantic Settings
+│   │   ├── interfaces/       # ABC-варианты (antivirus, cache, notification, storage)
+│   │   ├── protocols.py      # Protocol-варианты (typing)
+│   │   ├── ai/               # AI workspace, gateway, guardrails
+│   │   ├── auth/             # JWT, API-key, mTLS
+│   │   ├── tenancy/          # TenantContext, RLS-helpers
+│   │   └── ...
+│   ├── dsl/                   # DSL Engine — ядро интеграционной шины
+│   │   ├── engine/
+│   │   │   ├── exchange.py    # Exchange, Message, ExchangeStatus
+│   │   │   ├── pipeline.py   # Pipeline + feature_flag
+│   │   │   └── processors/   # 50+ процессоров (control-flow, EIP, AI, RPA...)
+│   │   ├── builder.py        # RouteBuilder — Camel-style fluent API
+│   │   ├── workflow/         # WorkflowBuilder + Temporal DSL
+│   │   ├── commands/          # ActionHandlerRegistry, RouteRegistry
+│   │   ├── blueprints/       # 19 DSL- blueprints
+│   │   └── contracts/        # DSL data contracts
+│   ├── entrypoints/           # 12 протоколов: REST/gRPC/GraphQL/SOAP/WS/SSE/MQTT/MCP...
+│   │   ├── api/              # FastAPI REST
+│   │   ├── graphql/          # Strawberry GraphQL
+│   │   ├── grpc/            # gRPC + protobuf
+│   │   ├── websocket/        # WebSocket
+│   │   ├── sse/             # Server-Sent Events
+│   │   ├── webhook/         # Inbound webhooks
+│   │   ├── stream/          # RabbitMQ/Kafka/Redis Streams
+│   │   ├── mcp/             # FastMCP server
+│   │   ├── cdc/             # Change Data Capture
+│   │   ├── filewatcher/     # FS monitoring → DSL trigger
+│   │   └── middlewares/     # 26 ASGI middleware
+│   ├── services/              # Бизнес-логика
+│   │   ├── ai/              # AIAgentService, RAGService, HybridRAGSearch
+│   │   ├── core/            # OrderService, UserService, FileService
+│   │   ├── integrations/    # APISKBService, APIDADATAService
+│   │   └── ops/             # AdminService
+│   └── infrastructure/       # DB, cache, storage, messaging, observability
+│       ├── database/        # PostgreSQL (SQLAlchemy async)
+│       ├── cache/           # Redis/KeyDB
+│       ├── storage/        # S3/MinIO/LocalFS
+│       ├── eventing/        # RabbitMQ/Kafka/Redis Streams/NATS
+│       ├── messaging/       # Outbox + FastStream
+│       ├── observability/   # OTel, Prometheus, Graylog, Watchdog
+│       ├── secrets/        # Vault + env fallback
+│       ├── workflow/        # Temporal Lite + LiteTemporalBackend
+│       └── audit/          # ClickHouse + Graylog
 │
-├── dsl/                       # DSL Engine — ядро интеграционной шины
-│   ├── engine/
-│   │   ├── exchange.py       # Exchange, Message, ExchangeStatus — контейнер данных
-│   │   ├── pipeline.py       # Pipeline — описание маршрута + feature_flag
-│   │   ├── processors.py     # 16 процессоров (базовые + control-flow)
-│   │   ├── execution_engine.py  # Исполнитель маршрутов (проверяет feature flags)
-│   │   └── context.py        # ExecutionContext
-│   ├── commands/
-│   │   ├── action_registry.py   # ActionHandlerRegistry — 50+ action→service маппингов
-│   │   ├── registry.py          # RouteRegistry — реестр DSL-маршрутов
-│   │   └── setup.py             # Регистрация всех action-handlers при старте
-│   ├── adapters/             # Протокольные адаптеры (SOAP и др.)
-│   ├── builder.py            # RouteBuilder — fluent API для создания маршрутов
-│   ├── routes.py             # Авторегистрация DSL-маршрутов для всех actions
-│   └── service.py            # DslService — facade для entrypoints
+├── extensions/               # V11 plugin system: plugin.toml + BasePlugin
+│   └── example_plugin/     # Эталонный плагин
 │
-├── entrypoints/               # Точки входа (протоколы)
-│   ├── api/                  # REST API (FastAPI)
-│   │   ├── generator/        # ActionRouterBuilder, CrudRouterBuilder — генерация эндпоинтов
-│   │   └── v1/endpoints/     # Endpoint-файлы по доменам (orders, users, admin...)
-│   ├── graphql/              # GraphQL (Strawberry)
-│   ├── grpc/                 # gRPC server + protobuf
-│   ├── soap/                 # SOAP handler + WSDL
-│   ├── websocket/            # WebSocket
-│   ├── sse/                  # Server-Sent Events
-│   ├── webhook/              # Webhook subscriptions
-│   ├── stream/               # Redis/RabbitMQ subscribers
-│   ├── mcp/                  # FastMCP server
-│   ├── cdc/                  # Change Data Capture routes
-│   ├── middlewares/          # 14 HTTP middleware
-│   └── filewatcher/          # File system monitoring
+├── routes/                   # DSL routes как «лёгкие плагины»
+│   └── <route>/route.toml + *.dsl.yaml
 │
-├── services/                  # Бизнес-логика
-│   ├── base.py               # BaseService[Repo, SchemaOut, SchemaIn, VersionSchema]
-│   ├── orders.py             # OrderService — заказы + SKB-интеграция
-│   ├── users.py              # UserService — пользователи + аутентификация
-│   ├── admin.py              # AdminService — конфиг, кэш, introspection, feature flags
-│   └── ...                   # Остальные сервисы
+├── frontend/                 # React admin UI
+├── src/frontend/
+│   └── streamlit_app/        # Streamlit developer portal (80+ pages)
 │
-├── infrastructure/            # Инфраструктура
-│   ├── database/             # SQLAlchemy ORM, миграции, модели
-│   ├── repositories/         # Data Access Layer (BaseRepository)
-│   ├── clients/              # HTTP, Redis, Kafka, SMTP, S3, SFTP, CDC
-│   ├── scheduler/            # APScheduler
-│   └── application/          # App factory, lifecycle, telemetry
-│
-├── schemas/                   # Pydantic-модели (input/output/filter)
-├── workflows/                 # Prefect flows и task factory
-└── utilities/                 # Вспомогательные функции
+├── tools/                    # 30+ codegen/migration/check утилит
+├── tests/                    # unit/integration/e2e/chaos
+├── testkit/                  # Публичный API для plugin authors
+├── ai_policies/             # AI policies (промпты, guards, sanitizers)
+└── docs/                    # Sphinx: ADR/tutorials/how-to/explanation
 ```
 
 ## Как добавить новый action (для новых разработчиков)
 
-1. **Создайте метод в сервисе** (`src/services/my_service.py`):
+1. **Создайте метод в сервисе** (`src/backend/services/my_service.py`):
    ```python
    async def my_new_method(self, param: str) -> dict:
        return {"result": param}
    ```
 
-2. **Зарегистрируйте action** (`src/dsl/commands/setup.py`):
+2. **Зарегистрируйте action** (`src/backend/dsl/commands/setup.py`):
    ```python
    action_handler_registry.register(
        action="myservice.my_new_method",
@@ -460,15 +463,78 @@ route = (
 
 ## Управление проектом
 
-```bash
-make run          # Запуск
-make stop         # Остановка
-make status       # Статус сервисов
-make format       # Форматирование кода
-make lint         # Линтинг
-make docker-build # Docker сборка
-make docker-run   # Docker запуск
-```
+### Запуск
+
+| Target | Описание |
+|--------|---------|
+| `make dev` | Запуск backend (uvicorn, dev режим) |
+| `make dev-light` | Запуск без Docker (APP_PROFILE=dev_light) |
+| `make prod` | Запуск backend (granian, production) |
+| `make run-all` | Запуск backend + frontend |
+| `make stop` | Остановка проекта |
+
+### Качество кода
+
+| Target | Описание |
+|--------|---------|
+| `make format` | Форматирование (Ruff) |
+| `make format-check` | Проверка форматирования |
+| `make lint` | Мягкий lint (mypy/vulture non-blocking) |
+| `make lint-strict` | Строгий lint без mypy/vulture |
+| `make type-check` | Проверка типов (mypy, non-blocking) |
+| `make type-check-strict` | Строгий mypy |
+| `make type-check-budget` | Budget gate (Sprint 10 K2) |
+| `make vulture-check` | Dead code scan |
+| `make refurb-check` | Modern Python idioms |
+| `make layers` | Проверка архитектурных слоёв |
+| `make dsl-complexity-check` | DSL complexity budget |
+
+### Тесты и безопасность
+
+| Target | Описание |
+|--------|---------|
+| `make test` | Запуск unit-тестов |
+| `make audit` | Security + dependency audit |
+| `make bandit-strict` | Bandit high-severity |
+| `make secrets-check` | Скан секретов (detect-secrets) |
+| `make check-waf-coverage` | WAF coverage gate |
+| `make check-ai-safety` | AI workspace + sandbox safety |
+
+### CI Gates
+
+| Target | Описание |
+|--------|---------|
+| `make ci` | lint + type + test + coverage + security |
+| `make pr` | ci + docs (перед PR) |
+| `make readiness-check` | All anti-forget guards локально |
+
+### Deployment
+
+| Target | Описание |
+|--------|---------|
+| `make docker-build` | Docker сборка |
+| `make docker-run` | Docker запуск |
+| `make init` | Инициализация проекта (uv) |
+| `make install` | Установка зависимостей |
+| `make update` | Обновление зависимостей |
+
+### Утилиты
+
+| Target | Описание |
+|--------|---------|
+| `make doctor` | Comprehensive dev environment health check |
+| `make simulate` | CLI dry-run route (ROUTE=\<name\>) |
+| `make plugin-dev` | Infra-only docker + hot-reload + tests |
+| `make new-adr` | Создать ADR из шаблона |
+| `make release-notes` | Generate release notes |
+| `make wave-memory` | Post-wave memory skeleton |
+| `make routes` | Рендер всех DSL routes |
+| `make actions` | Рендер всех actions |
+| `make plugin-schema` | Plugin schema валидация |
+| `make route-schema` | Route schema валидация |
+| `make service-schema` | Service schema валидация |
+
+> Полный список: `make help`
 
 ## Автор
 

@@ -976,4 +976,59 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
+## 10. Sprint 29 — GAP Resolution (2026-05-26)
+
+**Дата**: 2026-05-26. **Owner**: AI/Data (K4, K1, K2, K5). **Партнёры**: Dev, Analyst, Researcher.
+
+### Цель
+
+Завершить оставшиеся GAP-пункты из `AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`.
+
+### Waves
+
+| Wave | Task | GAP Ref | Owner | PR |
+|------|------|---------|-------|----|
+| w1 | Langfuse PII Leak Fix | T3 (gap-ai-1.2) | K4 | — |
+| w2 | BGE FlagReranker | T7 (gap-ai-3.1) | K4 | — |
+| w3 | RAGAS Evaluator | T8 (gap-ai-6) | K4 | — |
+| w4 | ModelRouter LiteLLM | T9 (gap-ai-7) | K4 | — |
+| w5 | Context Strategy | T10 (gap-ai-8) | K4 | — |
+| w6 | NeMo + Llama Guard | T11 (gap-ai-9) | K4 | — |
+| w7 | Mem0 + Checkpointer | T12 (gap-ai-10) | K5 | — |
+| w8 | Hardcoded Prompts Checker | T16 (gap-ai-13) | K4 | — |
+
+### w1 — Langfuse PII Leak Fix (gap-ai-1.2)
+
+**Status**: ✅ ALREADY IMPLEMENTED. Оба callback'а (`LangFuseCostCallback`, `LangFuseCallbackV3`) вызывают `_maybe_anonymize()` → `anonymize_trace_payload()` → `PIITokenizer`. `sanitize_traces=True` (default). `presidio_pii_enabled=False` (default, opt-in).
+
+### w2 — BGE FlagReranker (gap-ai-3.1)
+
+**Status**: ✅ DONE. `HybridRAGSearch._rerank()` подключён к `rag_reranker._resolve_bge_reranker()` → `FlagEmbedding.FlagReranker`. Fallback: token-overlap. Sentence-transformers deprecated. `BGESettings.reranker_enabled=True` для активации.
+
+### w3 — RAGAS Evaluator (gap-ai-6)
+
+**Status**: 🔲 TO DO. `services/ai/eval/ragas_evaluator.py` + `make ai-rag-eval` CI gate.
+
+### w4 — ModelRouter LiteLLM (gap-ai-7)
+
+**Status**: 🔲 TO DO. `AIGateway._invoke_llm()` → LiteLLM Router из `AIPolicySpec.model_router`.
+
+### w5 — Context Strategy (gap-ai-8)
+
+**Status**: 🔲 TO DO. Rolling window + map-reduce + hierarchical в `context_strategy.py`.
+
+### w6 — NeMo Guardrails + Llama Guard (gap-ai-9)
+
+**Status**: 🔲 TO DO. `nemo_client.py` + `llama_guard_client.py` + `banking_topics.co`.
+
+### w7 — Mem0 + Postgres Checkpointer (gap-ai-10)
+
+**Status**: 🔲 TO DO. `Mem0Backend` → `MemoryProtocol` + Postgres checkpointer.
+
+### w8 — Hardcoded Prompts Checker (gap-ai-13)
+
+**Status**: 🔲 TO DO. `tools/checks/check_hardcoded_prompts.py` AST-checker.
+
+---
+
 **Конец PLAN.md V22.4 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`. Архив V0–V22.3: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension` / `feedback_plan_v22_4_ai_platform`.

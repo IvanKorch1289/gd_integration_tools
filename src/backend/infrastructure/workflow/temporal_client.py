@@ -130,8 +130,8 @@ class TemporalClientFactory:
                 if asyncio.iscoroutinefunction(close):
                     try:
                         await close()
-                    except Exception:  # noqa: BLE001
-                        pass
+                    except Exception as exc:  # noqa: BLE001
+                        _logger.debug("TemporalClientFactory: close failed: %s", exc)
             self._cache.clear()
 
     @staticmethod
@@ -322,8 +322,8 @@ class ActivityHeartbeatMonitor:
             self._task.cancel()
             try:
                 await self._task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
-                pass
+            except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
+                _logger.debug("ActivityHeartbeatMonitor: task error: %s", exc)
             self._task = None
 
     async def _run(self) -> None:

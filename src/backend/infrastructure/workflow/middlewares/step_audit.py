@@ -155,8 +155,8 @@ class StepAuditMiddleware:
             if not feature_flags.workflow_step_log_enabled:
                 _logger.info("StepAuditMiddleware: feature-flag OFF, no-op mode")
                 return
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug("StepAuditMiddleware: feature flag check failed: %s", exc)
 
         if self._flusher_task is not None:
             return
@@ -290,8 +290,8 @@ class StepAuditMiddleware:
                 span.set_attribute("workflow.step.status", status)
         except ImportError:
             pass
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug("StepAuditMiddleware: feature flag check failed: %s", exc)
 
     async def _flusher_loop(self) -> None:
         while not self._stop_event.is_set():

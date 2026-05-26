@@ -126,17 +126,17 @@ class PlaywrightBrowserPool:
                 try:
                     await pooled.context.close()
                 except Exception as exc:  # noqa: BLE001
-                        _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
+                    _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
             if self._browser is not None:
                 try:
                     await self._browser.close()
                 except Exception as exc:  # noqa: BLE001
-                        _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
+                    _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
             if self._pw_instance is not None:
                 try:
                     await self._pw_instance.stop()
                 except Exception as exc:  # noqa: BLE001
-                        _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
+                    _logger.debug("PlaywrightBrowserPool: close failed: %s", exc)
             self._contexts.clear()
             self._browser = None
             self._pw_instance = None

@@ -135,25 +135,25 @@ class DesktopRPASessionPool:
                 try:
                     await session.client.aclose()
                 except Exception as exc:  # noqa: BLE001
-                    _logger.debug("desktop_rpa_pool: aclose failed for %s: %s", app_name, exc)
+                    _logger.debug(
+                        "desktop_rpa_pool: aclose failed for %s: %s", app_name, exc
+                    )
                 session = None
         if session is None:
             if len(self._sessions) >= self._max_sessions:
                 # Простая eviction policy: убрать самую старую idle session
                 oldest_app, oldest = min(
-                    (
-                        (a, s)
-                        for a, s in self._sessions.items()
-                        if not s.in_use
-                    ),
+                    ((a, s) for a, s in self._sessions.items() if not s.in_use),
                     key=lambda kv: kv[1].last_used_at,
                     default=(None, None),
                 )
                 if oldest_app is not None and oldest is not None:
                     try:
                         await oldest.client.aclose()
-                    except Exception:  # noqa: BLE001
-                        pass
+                    except Exception as exc:  # noqa: BLE001
+                        _logger.debug(
+                            "desktop_rpa_pool: oldest session aclose failed: %s", exc
+                        )
                     self._sessions.pop(oldest_app, None)
             session = _PooledSession(
                 app_name=app_name,
@@ -187,8 +187,8 @@ class DesktopRPASessionPool:
             )
             try:
                 await session.client.aclose()
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
             async with self._lock:
                 self._sessions.pop(app_name, None)
             raise
@@ -205,8 +205,8 @@ class DesktopRPASessionPool:
         if session is not None:
             try:
                 await session.client.aclose()
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug("desktop_rpa_pool: stale session aclose failed: %s", exc)
 
     async def stats(self) -> DesktopRPASessionStats:
         """Снимок состояния pool."""

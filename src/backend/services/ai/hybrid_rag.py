@@ -25,10 +25,11 @@ logger = logging.getLogger("services.hybrid_rag")
 
 
 class HybridRAGSearch:
-    """Hybrid RAG: BM25 + vector + reranker.
+    """Hybrid RAG: BM25 + vector + BGE FlagReranker.
 
-    Делегирует векторный поиск в существующий RAGService.
-    BM25 и reranker — опциональные улучшения поверх.
+    BM25 и BGE FlagReranker — опциональные улучшения поверх vector search.
+    Block 3.1 (gap-ai-3.1, ADR-0074): BGE reranker включается через
+    ``BGESettings.reranker_enabled=True``.
     """
 
     def __init__(self) -> None:
@@ -39,6 +40,8 @@ class HybridRAGSearch:
         self._try_init()
 
     def _try_init(self) -> None:
+        """Lazy-init BM25 + BGE FlagReranker (gap-ai-3.1, ADR-0074)."""
+        # BM25 — lexical fallback
         try:
             from rank_bm25 import BM25Okapi  # noqa: F401
 
@@ -46,26 +49,10 @@ class HybridRAGSearch:
         except ImportError:
             logger.debug("rank_bm25 not installed, hybrid falls to vector-only")
 
-        # IL-CRIT1.3 / ADR-014: sentence-transformers помечен deprecated.
-        # `fastembed` не поставляет CrossEncoder как drop-in замену, поэтому
-        # reranking отключён по умолчанию. Если заказчику нужен rerank —
-        # установить opt-in: `pip install gd_integration_tools[rag-rerank]`
-        # (extra добавляет `sentence-transformers`), либо дождаться IL-AI2
-        # где будет использован BGE reranker через fastembed.
-        try:
-            from sentence_transformers import CrossEncoder  # noqa: PLC0415
-
-            self._reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-            logger.info("Cross-encoder reranker loaded (opt-in, deprecated path)")
-        except ImportError:
-            logger.debug(
-                "sentence-transformers not installed — reranking disabled. "
-                "Install gd_integration_tools[rag-rerank] for rerank support."
-            )
-            self._reranker = None
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("Cross-encoder model load failed: %s", exc)
-            self._reranker = None
+        # BGE FlagReranker — инициализируется lazy в _rerank() через
+        # _resolve_bge_reranker(). Здесь только no-op placeholder.
+        self._reranker = None
+        logger.debug("BGE FlagReranker will be resolved lazily on first rerank")
 
     def _get_rag(self) -> Any:
         if self._rag is None:
@@ -135,7 +122,7 @@ class HybridRAGSearch:
 
         combined = self._combine_scores(vector_results, bm25_results, alpha=alpha)
 
-        if rerank and self._reranker is not None and combined:
+        if rerank and combined:
             combined = self._rerank(query, combined)
 
         return combined[:top_k]
@@ -164,21 +151,47 @@ class HybridRAGSearch:
     def _rerank(
         self, query: str, candidates: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Cross-encoder rerank (query, doc) pairs."""
+        """Cross-encoder rerank: BGE FlagReranker (preferred) или token-overlap fallback.
+
+        Block 3.1 (gap-ai-3.1, ADR-0074): при ``bge_settings.reranker_enabled=True``
+        использует FlagEmbedding.FlagReranker. Иначе — token-overlap heuristic.
+        """
         try:
-            pairs = [
-                (query, str(doc.get("document", doc.get("text", ""))))
-                for doc in candidates
-            ]
-            scores = self._reranker.predict(pairs)
-            for doc, score in zip(candidates, scores):
-                doc["rerank_score"] = float(score)
-            return sorted(
-                candidates, key=lambda x: x.get("rerank_score", 0), reverse=True
+            from src.backend.services.ai.dspy.pipelines.rag_reranker import (
+                _resolve_bge_reranker,
             )
-        except Exception as exc:
-            logger.warning("Rerank failed: %s", exc)
-            return candidates
+
+            reranker = _resolve_bge_reranker()
+            if reranker is not None:
+                pairs = [
+                    (query, str(doc.get("document", doc.get("text", ""))))
+                    for doc in candidates
+                ]
+                scores = reranker.compute_score(pairs)
+                if not isinstance(scores, list):
+                    scores = [scores]
+                for doc, score in zip(candidates, scores):
+                    doc["rerank_score"] = float(score)
+                return sorted(
+                    candidates, key=lambda x: x.get("rerank_score", 0), reverse=True
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("BGE FlagReranker rerank failed: %s", exc)
+
+        # Fallback: token-overlap
+        query_lower = query.lower()
+        query_tokens = {t for t in query_lower.split() if t}
+
+        def _score(doc: dict[str, Any]) -> float:
+            text = str(doc.get("document", doc.get("text", ""))).lower()
+            doc_tokens = {t for t in text.split() if t}
+            if not doc_tokens or not query_tokens:
+                return 0.0
+            return len(doc_tokens & query_tokens) / max(len(query_tokens), 1)
+
+        for doc in candidates:
+            doc["rerank_score"] = _score(doc)
+        return sorted(candidates, key=lambda x: x.get("rerank_score", 0), reverse=True)
 
 
 _instance: HybridRAGSearch | None = None
