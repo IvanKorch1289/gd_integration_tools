@@ -87,11 +87,28 @@ class LLMJudge:
             else:
                 content = str(result)
 
-            start = content.find("{")
-            end = content.rfind("}") + 1
+            # Improved extraction: strip markdown fences first, then find JSON
+            # Models commonly wrap JSON in ```json ... ``` code fences
+            content_clean = content.strip()
+            if content_clean.startswith("```"):
+                # Strip opening fence: ```json or ```
+                lines = content_clean.split("\n")
+                if lines[0].startswith("```"):
+                    content_clean = "\n".join(lines[1:])
+                if content_clean.endswith("```"):
+                    content_clean = content_clean[:-3].rstrip("\n")
+            elif content_clean.startswith("'''"):
+                lines = content_clean.split("\n")
+                if lines[0].startswith("'''"):
+                    content_clean = "\n".join(lines[1:])
+                if content_clean.endswith("'''"):
+                    content_clean = content_clean[:-3].rstrip("\n")
+
+            start = content_clean.find("{")
+            end = content_clean.rfind("}") + 1
             if start < 0 or end <= start:
                 raise ValueError("No JSON in judge response")
-            parsed = orjson.loads(content[start:end])
+            parsed = orjson.loads(content_clean[start:end])
 
             verdict = JudgeVerdict(
                 timestamp=datetime.now(UTC).isoformat(),

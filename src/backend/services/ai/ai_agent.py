@@ -117,7 +117,12 @@ class AIAgentService:
         url = f"{self._huggingface.base_url}/{model}"
         headers = self._build_auth_headers(self._huggingface.api_key)
 
-        prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
+        prompt = "\n".join(
+            f"system: {m['content']}"
+            if m.get("role") == "system"
+            else f"{m['role']}: {m['content']}"
+            for m in messages
+        )
         payload = {
             "inputs": prompt,
             "parameters": {

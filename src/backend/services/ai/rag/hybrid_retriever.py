@@ -50,7 +50,12 @@ class HybridRetriever:
             от vector store (e.g. RAGService.search).
         corpus: Список ``{"id": str, "text": str, "metadata": dict}`` для
             BM25 индексации. При пустом списке — fallback на dense-only.
+            Для multi-instance production используйте ``corpus_loader`` (см. ниже).
         rrf_k: Параметр RRF (default 60).
+        corpus_loader: Async callable ``() → list[dict]``. Если задан,
+            ``corpus`` игнорируется и BM25-индекс перестраивается при каждом
+            вызове ``reload()`` из corpus_loader. Используйте для загрузки
+            corpus из Redis (shared across instances) в multi-instance deployment.
     """
 
     def __init__(
@@ -59,12 +64,31 @@ class HybridRetriever:
         dense_search: Any,
         corpus: Sequence[dict[str, Any]] | None = None,
         rrf_k: int = 60,
+        corpus_loader: Any = None,  # async callable, returns list[dict]
     ) -> None:
         self._dense_search = dense_search
         self._corpus = list(corpus or [])
         self._rrf_k = max(1, int(rrf_k))
         self._bm25: Any = None
         self._bm25_unavailable = not self._corpus
+        self._corpus_loader = corpus_loader  # async callable for Redis-backed corpus
+
+    async def reload(self) -> None:
+        """Перезагрузить corpus из corpus_loader и перестроить BM25-индекс.
+
+        Вызывайте после обновления corpus в backend store (Redis / DB / S3).
+        В multi-instance deployment каждый инстанс вызывает reload() при
+        получении события обновления (Redis pub/sub, Kafka message и т.д.).
+        """
+        if self._corpus_loader is None:
+            return
+        try:
+            new_corpus = await self._corpus_loader()
+            self._corpus = list(new_corpus or [])
+            self._bm25 = None  # force rebuild on next _ensure_bm25()
+            self._bm25_unavailable = not self._corpus
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("hybrid_retriever.corpus_loader_failed: %s", exc)
 
     def _ensure_bm25(self) -> Any:
         """Lazy-init BM25Okapi на первом вызове.
