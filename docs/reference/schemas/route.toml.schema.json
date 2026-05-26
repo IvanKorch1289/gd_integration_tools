@@ -27,6 +27,23 @@
       ],
       "title": "CapabilityRef",
       "type": "object"
+    },
+    "SecurityModel": {
+      "additionalProperties": false,
+      "description": "Секция ``[security]`` в route.toml.\n\nK3 S19 W3: route_authz_requires_permission feature flag\nактивирует проверку permissions через AuthorizationGateway.",
+      "properties": {
+        "requires_permission": {
+          "default": [],
+          "description": "Список required permissions в формате \"role:<role_name>\" или \"scope:<scope_name>\". При route_authz_requires_permission=True AuthorizationGateway проверяет наличие всех перечисленных permissions у principal перед dispatch на route.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Requires Permission",
+          "type": "array"
+        }
+      },
+      "title": "SecurityModel",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -92,6 +109,11 @@
       },
       "title": "Requires Plugins",
       "type": "object"
+    },
+    "security": {
+      "$ref": "#/$defs/SecurityModel",
+      "default": null,
+      "title": "Security"
     },
     "tags": {
       "default": [],

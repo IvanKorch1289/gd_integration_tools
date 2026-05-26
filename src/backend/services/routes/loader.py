@@ -129,6 +129,7 @@ class RouteLoader:
         feature_flag_resolver: FeatureFlagResolver = default_env_feature_flag_resolver,
         audit_callback: AuditCallback | None = None,
         strict_capabilities: bool | None = None,
+        installed_workflows: dict[str, str] | None = None,
     ) -> None:
         self._routes_dir = Path(routes_dir)
         self._gate = capability_gate
@@ -143,6 +144,8 @@ class RouteLoader:
         #    (K-ARCH-3, S17). None → попытаться прочитать из feature_flags.
         self._strict_capabilities = strict_capabilities
         self._loaded: dict[str, LoadedRoute] = {}
+        # K3 S19 W1: workflow version checking
+        self._installed_workflows = installed_workflows or {}
 
     @property
     def loaded(self) -> tuple[LoadedRoute, ...]:

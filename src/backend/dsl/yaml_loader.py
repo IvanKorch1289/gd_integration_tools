@@ -22,6 +22,19 @@
           action: analytics.insert_batch
       - log:
           level: info
+
+K3 S19 W2: route composition via include:/extends: с cycle detection.
+При route_composition_include=True *.dsl.yaml поддерживает::
+
+    # Include shared steps from other YAML files (one level)
+    include:
+      - ./common-steps.yaml
+      - ./shared-transforms.yaml
+
+    # Extend a base route (inherits all fields, can override)
+    extends: ./base-route.yaml
+
+Cycle detection: RuntimeError raised if include/extends chain creates a cycle.
 """
 
 from __future__ import annotations
@@ -41,22 +54,176 @@ __all__ = (
 
 logger = logging.getLogger("dsl.yaml_loader")
 
+# Sentinel for "not set" to distinguish from None
+_MISSING = object()
 
-def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
+
+def _is_route_composition_include_enabled() -> bool:
+    """Check if route_composition_include feature flag is enabled."""
+    try:
+        from src.backend.core.config.features import feature_flags
+        return getattr(feature_flags, "route_composition_include", False)
+    except ImportError:
+        return False
+
+
+def _resolve_include_extends(
+    data: dict[str, Any],
+    base_path: Path | None = None,
+    _visited: set[str] | None = None,
+) -> dict[str, Any]:
+    """Resolve include: and extends: fields in a YAML spec with cycle detection.
+
+    Args:
+        data: Parsed YAML dict.
+        base_path: Base directory for resolving relative paths.
+        _visited: Internal set for cycle detection (files being processed).
+
+    Returns:
+        Merged spec with include:/extends: resolved.
+
+    Raises:
+        RuntimeError: If a cycle is detected in include/extends chain.
+    """
+    if _visited is None:
+        _visited = set()
+
+    # If feature flag is off, return data as-is
+    if not _is_route_composition_include_enabled():
+        return data
+
+    # Work on a copy to avoid mutating the original
+    spec = dict(data)
+
+    # Handle extends: - inherit from a base YAML file
+    extends_path = spec.pop("extends", None)
+    if extends_path is not None:
+        ext_str = str(extends_path)
+        if ext_str in _visited:
+            raise RuntimeError(
+                f"Cycle detected in extends: chain: {ext_str} is already being "
+                f"processed. Chain: {_visited}"
+            )
+        _visited.add(ext_str)
+
+        if base_path is not None:
+            resolved_path = (base_path.parent / ext_str).resolve()
+        else:
+            resolved_path = Path(ext_str).resolve()
+
+        if not resolved_path.exists():
+            raise FileNotFoundError(
+                f"Extended YAML file not found: {resolved_path}"
+            )
+
+        ext_yaml_str = resolved_path.read_text(encoding="utf-8")
+        import yaml
+        base_data = yaml.safe_load(ext_yaml_str)
+        if not isinstance(base_data, dict):
+            raise ValueError(
+                f"Extended YAML must be a mapping, got: {type(base_data).__name__}"
+            )
+
+        # Recursively resolve the base (in case it also has include/extends)
+        base_data = _resolve_include_extends(
+            base_data, resolved_path.parent, _visited
+        )
+
+        # Merge: child overrides parent
+        # Start with base, then overlay child (child takes precedence)
+        merged: dict[str, Any] = {}
+        # First add all from base
+        for k, v in base_data.items():
+            if k not in ("include", "extends"):  # Don't copy composition fields
+                merged[k] = v
+        # Then overlay from child (allows overriding)
+        for k, v in spec.items():
+            if k not in ("include", "extends"):
+                merged[k] = v
+        spec = merged
+
+    # Handle include: - include steps from other YAML files (one level)
+    include_paths = spec.pop("include", None)
+    if include_paths is not None:
+        if isinstance(include_paths, str):
+            include_paths = [include_paths]
+        if not isinstance(include_paths, list):
+            raise ValueError(
+                f"include: must be a string or list of strings, got: "
+                f"{type(include_paths).__name__}"
+            )
+
+        # Collect steps from all included files
+        all_steps: list[Any] = []
+
+        for inc_path in include_paths:
+            inc_str = str(inc_path)
+            if inc_str in _visited:
+                raise RuntimeError(
+                    f"Cycle detected in include: chain: {inc_str} is already "
+                    f"being processed. Chain: {_visited}"
+                )
+            _visited.add(inc_str)
+
+            if base_path is not None:
+                resolved_inc = (base_path.parent / inc_str).resolve()
+            else:
+                resolved_inc = Path(inc_str).resolve()
+
+            if not resolved_inc.exists():
+                raise FileNotFoundError(
+                    f"Included YAML file not found: {resolved_inc}"
+                )
+
+            inc_yaml_str = resolved_inc.read_text(encoding="utf-8")
+            import yaml
+            inc_data = yaml.safe_load(inc_yaml_str)
+            if not isinstance(inc_data, dict):
+                raise ValueError(
+                    f"Included YAML must be a mapping, got: "
+                    f"{type(inc_data).__name__}"
+                )
+
+            # Get steps from included file
+            inc_steps = inc_data.get("steps", [])
+            if not isinstance(inc_steps, list):
+                raise ValueError(
+                    f"steps: in included file must be a list, got: "
+                    f"{type(inc_steps).__name__}"
+                )
+            all_steps.extend(inc_steps)
+
+        # Append included steps to the current spec's steps
+        existing_steps = spec.get("steps", [])
+        if not isinstance(existing_steps, list):
+            raise ValueError(
+                f"steps: must be a list, got: {type(existing_steps).__name__}"
+            )
+        spec["steps"] = existing_steps + all_steps
+
+    return spec
+
+
+def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pipeline:
     """Парсит YAML-строку в Pipeline.
 
     Если в spec'е указан ``apiVersion`` отличный от текущего (W25.3
     ``CURRENT_VERSION``), перед сборкой spec прогоняется через
     зарегистрированные миграции (см. ``src/dsl/versioning``).
 
+    При route_composition_include=True поддерживает include:/extends: с
+    cycle detection (один уровень включения).
+
     Args:
         yaml_str: YAML-описание маршрута.
+        base_path: Optional base path for resolving relative include/extends paths.
 
     Returns:
         Готовый Pipeline.
 
     Raises:
         ValueError: Неверный формат YAML или неизвестный процессор.
+        RuntimeError: Цикл в include:/extends: цепочке.
     """
     try:
         import yaml
@@ -67,6 +234,10 @@ def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
     if not isinstance(data, dict):
         raise ValueError("YAML root must be a mapping (dict)")
 
+    # Resolve include:/extends: if feature flag is enabled
+    if _is_route_composition_include_enabled():
+        data = _resolve_include_extends(data, base_path)
+
     from src.backend.dsl.versioning import CURRENT_VERSION, apply_migrations
 
     if data.get("apiVersion") != CURRENT_VERSION:
@@ -76,8 +247,17 @@ def load_pipeline_from_yaml(yaml_str: str) -> Pipeline:
 
 
 def load_pipeline_from_file(path: str | Path) -> Pipeline:
-    """Загружает Pipeline из YAML-файла."""
-    return load_pipeline_from_yaml(Path(path).read_text(encoding="utf-8"))
+    """Загружает Pipeline из YAML-файла.
+
+    Args:
+        path: Путь к YAML-файлу.
+
+    Returns:
+        Готовый Pipeline.
+    """
+    file_path = Path(path)
+    yaml_str = file_path.read_text(encoding="utf-8")
+    return load_pipeline_from_yaml(yaml_str, base_path=file_path)
 
 
 def load_all_from_directory(directory: str | Path) -> list[Pipeline]:

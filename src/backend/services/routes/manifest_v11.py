@@ -53,6 +53,26 @@ class RouteManifestError(ValueError):
     """Ошибка парсинга / валидации `route.toml`."""
 
 
+class _SecurityModel(BaseModel):
+    """Pydantic-модель для секции ``[security]`` в route.toml.
+
+    Использует ``extra="forbid"`` чтобы поймать опечатки в полях
+    секции на этапе load.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    requires_permission: tuple[str, ...] = Field(
+        default_factory=tuple,
+        description=(
+            "Список required permissions в формате \"role:<role_name>\" или "
+            "\"scope:<scope_name>\". При route_authz_requires_permission=True "
+            "AuthorizationGateway проверяет наличие всех перечисленных "
+            "permissions у principal перед dispatch на route."
+        ),
+    )
+
+
 class RouteManifestV11(BaseModel):
     """Манифест маршрута V11 (``routes/<name>/route.toml``).
 
@@ -80,6 +100,10 @@ class RouteManifestV11(BaseModel):
             Должна быть подмножеством объединения capabilities
             требуемых плагинов + публичных capabilities ядра
             (проверка в :class:`RouteLoader`, а не в pydantic).
+        security: Опц. секция ``[security]`` с requires_permission.
+            K3 S19 W3: route_authz_requires_permission feature flag
+            активирует проверку permissions через AuthorizationGateway.
+        timeout: Конфигурация таймаутов (connect / read / write / total).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -88,12 +112,14 @@ class RouteManifestV11(BaseModel):
     version: str = Field(min_length=1)
     requires_core: str = Field(min_length=1)
     requires_plugins: dict[str, str] = Field(default_factory=dict)
+    requires_workflows: dict[str, str] = Field(default_factory=dict)
     tenant_aware: bool = False
     feature_flag: str | bool | None = None
     tags: tuple[str, ...] = ()
     description: str | None = None
     pipelines: tuple[str, ...] = Field(min_length=1)
     capabilities: tuple[CapabilityRef, ...] = ()
+    security: _SecurityModel | None = None
     timeout: _RouteTimeoutModel | None = None
 
     @field_validator("requires_core")
@@ -119,6 +145,19 @@ class RouteManifestV11(BaseModel):
                 ) from exc
         return value
 
+    @field_validator("requires_workflows")
+    @classmethod
+    def _validate_workflow_specs(cls, value: dict[str, str]) -> dict[str, str]:
+        """Валидирует каждый spec в ``requires_workflows`` как PEP-440 SemVer."""
+        for workflow_name, spec in value.items():
+            try:
+                SpecifierSet(spec)
+            except InvalidSpecifier as exc:
+                raise ValueError(
+                    f"Invalid requires_workflows spec for {workflow_name!r}: {spec!r}"
+                ) from exc
+        return value
+
     def is_compatible_with_core(self, core_version: str) -> bool:
         """Совместим ли маршрут с заданной версией ядра."""
         return core_version in SpecifierSet(self.requires_core)
@@ -138,6 +177,23 @@ class RouteManifestV11(BaseModel):
             installed = available.get(plugin_name)
             if installed is None or installed not in SpecifierSet(spec):
                 missing[plugin_name] = spec
+        return missing
+
+    def missing_workflows(self, available: dict[str, str]) -> dict[str, str]:
+        """Возвращает workflows, которых не хватает или несовместимых.
+
+        Args:
+            available: ``{workflow_name: installed_version}``.
+
+        Returns:
+            ``{workflow_name: required_spec}`` для отсутствующих или
+            не подходящих по spec'у workflows.
+        """
+        missing: dict[str, str] = {}
+        for workflow_name, spec in self.requires_workflows.items():
+            installed = available.get(workflow_name)
+            if installed is None or installed not in SpecifierSet(spec):
+                missing[workflow_name] = spec
         return missing
 
 
