@@ -2628,8 +2628,8 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     langmem_consolidation_impl: bool = Field(
-        default=False,
-        title="K4 S19 W4: LangMemService.consolidate() implementation (S-L4-3 closure)",
+        default=True,
+        title="S19 K4 W4b: LangMemService.consolidate() APScheduler job (wave:s19/k4-w4b)",
         description=(
             "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W9, S-L4-3 closure). Owner: K4 AI/RAG. "
             "При True реализует LangMemService.consolidate(): episodic → semantic compaction "

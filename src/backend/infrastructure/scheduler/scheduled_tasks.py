@@ -2,7 +2,7 @@ from src.backend.core.config.settings import settings
 from src.backend.infrastructure.external_apis.logging_service import scheduler_logger
 from src.backend.schemas.base import EmailSchema
 
-__all__ = ("check_all_services",)
+__all__ = ("check_all_services", "consolidate_idle_sessions")
 
 
 async def check_all_services():
@@ -39,4 +39,28 @@ async def check_all_services():
     except Exception as exc:
         scheduler_logger.error(
             f"Ошибка при проверке состояния: {str(exc)}", exc_info=True
+        )
+
+
+async def consolidate_idle_sessions():
+    """
+    APScheduler-cron job (Sprint 19 K4 W4b): LangMem consolidation.
+
+    Запускает :meth:`LangMemService.consolidate()` для idle-эпизодов.
+    Регистрируется только если ``langmem_settings.consolidation_schedule_cron``
+    непустое; иначе — только ручной запуск через admin UI / API.
+    """
+    try:
+        scheduler_logger.info("Запуск LangMem consolidation...")
+        from src.backend.services.ai.langmem_service import get_langmem_service
+
+        svc = get_langmem_service()
+        report = await svc.consolidate()
+        scheduler_logger.info(
+            "LangMem consolidation finished: %s",
+            report,
+        )
+    except Exception as exc:  # noqa: BLE001
+        scheduler_logger.error(
+            "LangMem consolidation failed: %s", str(exc), exc_info=True
         )
