@@ -101,3 +101,28 @@ class K4APIClient(APIClient):
         except Exception as exc:  # noqa: BLE001
             logger.debug("rag_search_preview failed: %s", exc)
             return []
+
+    def bulk_rag_ingest(
+        self,
+        *,
+        documents: list[dict[str, Any]],
+        collection: str = "default",
+    ) -> dict[str, Any]:
+        """Bulk ingest documents via POST /api/v1/rag/bulk-ingest (S19 K4 W1).
+
+        Args:
+            documents: List of {"content": str, "metadata": dict} objects.
+            collection: RAG namespace/collection name.
+
+        Returns:
+            dict with task_id, status, doc_ids, errors, etc.
+        """
+        try:
+            return self._request(
+                "POST",
+                "/api/v1/rag/bulk-ingest",
+                json={"documents": documents, "collection": collection},
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("bulk_rag_ingest failed: %s", exc)
+            return {"task_id": None, "error": str(exc)}

@@ -994,6 +994,19 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    multipart_rag_ingest: bool = Field(
+        default=False,
+        title="K4 W1: Bulk RAG ingest endpoint + Streamlit UI (multipart/form-data)",
+        description=(
+            "S19 K4 W1. Owner: K4 AI/RAG. "
+            "Активирует POST /api/v1/rag/bulk-ingest endpoint, который принимает "
+            "список {\"content\", \"metadata\"} документов, обрабатывает через embeddings "
+            "pipeline и сохраняет в Chroma. Также активирует страницу "
+            "85_RAG_Bulk_Upload.py с drag-drop файлом или textarea. "
+            "default-OFF до staging-smoke."
+        ),
+    )
+
     multimodal_rag_docling: bool = Field(
         default=False,
         title="K4 S5 W3: Multimodal RAG (docling + PaddleOCR/EasyOCR)",
@@ -2597,6 +2610,19 @@ class FeatureFlags(BaseSettingsWithLoader):
             "KycAmlVerifyProcessor / AntiFraudScoreProcessor / CreditScoringRagProcessor / "
             "DocumentClassifierProcessor / FrancotypingProcessor — LLM call + structured output Pydantic + "
             "capability-gate ai.banking.* + audit-event + cost budget tracking. "
+            "default-OFF до LLM integration smoke-tests."
+        ),
+    )
+
+    banking_ai_processors_enabled: bool = Field(
+        default=False,
+        title="K4 S19 W3: Banking AI processors - CreditScore, FraudDetection, RiskAssessment, CustomerSegmentation, LoanEligibility",
+        description=(
+            "K4 Sprint 19 Wave 3 (S-L4-1 closure). Owner: K4 AI. "
+            "При True активирует 5 AI-процессоров в dsl/engine/processors/ai/banking_processors.py: "
+            "CreditScoreProcessor / FraudDetectionProcessor / RiskAssessmentProcessor / "
+            "CustomerSegmentationProcessor / LoanEligibilityProcessor — LLM call через "
+            "instructor/litellm + structured output Pydantic + capability-gate ai.llm.litellm. "
             "default-OFF до LLM integration smoke-tests."
         ),
     )
