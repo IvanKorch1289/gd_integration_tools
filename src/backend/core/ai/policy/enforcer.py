@@ -15,7 +15,7 @@ Warn-лог при ``on_block="warn"``.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest, AIResponse
@@ -27,12 +27,6 @@ from src.backend.core.ai.errors import GuardrailViolationError
 __all__ = ("AIPolicyEnforcer",)
 
 logger = logging.getLogger(__name__)
-
-# Re-export GuardResult из LlamaGuardRuntime (используется в unit-тестах)
-try:
-    from src.backend.core.ai.guardrails.llamaguard import GuardResult
-except ImportError:
-    pass  # noqa: PIE797 — GuardResult used only in type stubs / tests
 
 
 class AIPolicyEnforcer:
@@ -110,9 +104,7 @@ class AIPolicyEnforcer:
     ) -> None:
         """Rebuff input guard check."""
         try:
-            from src.backend.services.ai.guardrails.rebuff_client import (
-                RebuffClient,
-            )
+            from src.backend.services.ai.guardrails.rebuff_client import RebuffClient
             client = RebuffClient()
             result = await client.detect(prompt)
             if result.injected:
@@ -142,9 +134,7 @@ class AIPolicyEnforcer:
     ) -> None:
         """Lakera input guard check."""
         try:
-            from src.backend.services.ai.guardrails.lakera_client import (
-                LakeraClient,
-            )
+            from src.backend.services.ai.guardrails.lakera_client import LakeraClient
             client = LakeraClient()
             result = await client.screen(prompt)
             if result.flagged:
@@ -189,7 +179,9 @@ class AIPolicyEnforcer:
             )
         if on_block == "dlq":
             # DLQ publish асинхронно, не блокируем
-            from src.backend.core.utils.task_registry import get_task_registry  # noqa: PLC0415
+            from src.backend.core.utils.task_registry import (
+                get_task_registry,  # noqa: PLC0415
+            )
 
             get_task_registry().create_task(
                 self._publish_dlq(guard_name, flagged, content),
@@ -214,7 +206,11 @@ class AIPolicyEnforcer:
         """Publish blocked content to DLQ (fire-and-forget)."""
         if self._dlq_writer is None:
             try:
-                from src.backend.core.messaging.dlq import DLQWriter
+                import importlib.util
+
+                if importlib.util.find_spec("src.backend.core.messaging.dlq") is None:
+                    logger.debug("DLQWriter not available — skipping DLQ publish")
+                    return
             except ImportError:
                 logger.debug("DLQWriter not available — skipping DLQ publish")
                 return

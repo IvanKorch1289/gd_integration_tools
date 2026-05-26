@@ -7,7 +7,37 @@ __all__ = (
     "AIWorkspaceError",
     "WorkspaceQuotaExceededError",
     "WorkspaceTTLExpiredError",
+    "GuardrailViolationError",
 )
+
+
+class GuardrailViolationError(Exception):
+    """Выходной guard заблокировал контент (Llama Guard / NeMo / Rebuff / Lakera).
+
+    Attributes:
+        guard_name: Идентификатор guard'а (``"llama_guard:safe_v3"``, etc.).
+        flagged_categories: Категории нарушения
+            (``["hate", "violence"]``).
+        on_block: Поведение при блокировке (``"fail"`` | ``"dlq"`` | ``"warn"``).
+        content: Заблокированный контент (не хранить raw PII).
+    """
+
+    def __init__(
+        self,
+        *,
+        guard_name: str,
+        flagged_categories: list[str],
+        on_block: str = "fail",
+        content: str = "",
+    ) -> None:
+        self.guard_name = guard_name
+        self.flagged_categories = flagged_categories
+        self.on_block = on_block
+        self.content = content[:200] if content else ""  # truncate для логов
+        super().__init__(
+            f"Guard {guard_name!r} blocked content "
+            f"(categories={flagged_categories}, on_block={on_block})"
+        )
 
 
 class AIWorkspaceError(Exception):
