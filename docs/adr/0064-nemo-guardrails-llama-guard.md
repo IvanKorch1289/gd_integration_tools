@@ -1,6 +1,6 @@
 # ADR-0064 — NeMo Guardrails + Llama Guard 3 defense-in-depth
 
-* Статус: **Draft** (Sprint 24 candidate, [wave:s24/w2-nemo-llamaguard])
+* Статус: **Proposed** (S29, T11 — GPU-check scaffolding + nemo_client.py)
 * Связано с: GAP-2026-05-22 P0-2 (`gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md` Зона 8), PLAN.md V22.3 §S24, ADR-NEW-17.
 * Память: [[feedback_gap_analysis_ai_2026_05_22]], [[feedback_wave_k1_security]].
 

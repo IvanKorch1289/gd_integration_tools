@@ -28,14 +28,14 @@ class GuardrailsConfig:
 
     Attributes:
         enabled_providers: Какие провайдеры активны для tenant'а
-            (``{"lakera", "rebuff"}`` подмножество).
+            (``{"lakera", "rebuff", "nemo"}`` подмножество).
         thresholds: Численные пороги.
         block_on_failure: ``True`` — при ошибке/timeout провайдера запрос
             блокируется fail-closed; ``False`` — fail-open (для warn-only).
     """
 
     enabled_providers: frozenset[str] = field(
-        default_factory=lambda: frozenset(("lakera", "rebuff"))
+        default_factory=lambda: frozenset(("lakera", "rebuff", "nemo"))
     )
     thresholds: GuardrailsThresholds = field(default_factory=GuardrailsThresholds)
     block_on_failure: bool = False

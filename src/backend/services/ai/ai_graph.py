@@ -74,10 +74,7 @@ def _make_action_tool(action_name: str) -> Any:
 
 
 def build_chat_model(
-    *,
-    gateway: Any | None = None,
-    temperature: float = 0.0,
-    **extra_kwargs: Any,
+    *, gateway: Any | None = None, temperature: float = 0.0, **extra_kwargs: Any
 ) -> Any:
     """Создаёт LangChain-compatible chat-model поверх :class:`LiteLLMGateway`.
 
@@ -122,7 +119,9 @@ def build_chat_model(
         from langchain_litellm import ChatLiteLLM  # type: ignore[import-not-found]
     except ImportError:
         try:
-            from langchain_community.chat_models import ChatLiteLLM  # type: ignore[import-not-found]
+            from langchain_community.chat_models import (
+                ChatLiteLLM,  # type: ignore[import-not-found]
+            )
         except ImportError as exc:
             raise ImportError(
                 "ChatLiteLLM недоступен: установите 'langchain-litellm' "
@@ -138,6 +137,7 @@ async def build_and_run_agent(
     *,
     gateway: Any | None = None,
     temperature: float = 0.0,
+    durable: bool = False,
 ) -> dict[str, Any]:
     """Строит и запускает LangGraph-агента через :class:`LiteLLMGateway`.
 
@@ -147,6 +147,9 @@ async def build_and_run_agent(
         gateway: Опц. :class:`LiteLLMGateway` (для DI/тестов). Если
             ``None`` — singleton.
         temperature: Sampling-температура LLM.
+        durable: При True — подключает LangGraph PostgresCheckpointer
+            (требует ``feature_flags.langgraph_postgres_checkpoint=True``).
+            При недоступности — fallback на in-memory checkpointing.
 
     Returns:
         Результат работы агента: словарь с ``prompt``, ``tools_used``,
@@ -157,7 +160,27 @@ async def build_and_run_agent(
 
         tools = [_make_action_tool(action) for action in tool_actions]
         llm = build_chat_model(gateway=gateway, temperature=temperature)
-        agent = create_react_agent(llm, tools)
+
+        checkpointer: Any | None = None
+        if durable:
+            from src.backend.services.ai.agents.langgraph_postgres_saver import (
+                get_langgraph_postgres_saver,
+            )
+
+            saver = await get_langgraph_postgres_saver()
+            if saver is not None:
+                checkpointer = saver
+                logger.debug("LangGraph Checkpointer: using PostgresSaver")
+            else:
+                logger.debug(
+                    "LangGraph Checkpointer: PostgresSaver unavailable, "
+                    "using MemorySaver"
+                )
+                from langgraph.checkpoint.memory import MemorySaver
+
+                checkpointer = MemorySaver()
+
+        agent = create_react_agent(llm, tools, checkpointer=checkpointer)
 
         result = await agent.ainvoke(
             {"messages": [{"role": "user", "content": prompt}]}

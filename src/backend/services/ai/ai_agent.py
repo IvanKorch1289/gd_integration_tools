@@ -251,10 +251,7 @@ class AIAgentService:
         # выполняется ПЕРВЫМ — до RAG retrieval и sanitize. Fail-closed: любая
         # ошибка резолва / authorize → deny + audit-event без LLM-вызова.
         gate_denial = await self._policy_gate(
-            model=model,
-            tenant_id=tenant_id,
-            route_id=route_id,
-            metadata=metadata,
+            model=model, tenant_id=tenant_id, route_id=route_id, metadata=metadata
         )
         if gate_denial is not None:
             return gate_denial
@@ -381,6 +378,7 @@ class AIAgentService:
         agent_id: str = "default",
         session_id: str | None = None,
         metadata: dict[str, Any] | None = None,
+        durable: bool = False,
     ) -> dict[str, Any]:
         """Запуск AI-агента с маскировкой PII.
 
@@ -388,15 +386,15 @@ class AIAgentService:
         в ``AIFeedbackService`` для последующей разметки оператором.
 
         Args:
-            prompt: Текст задачи.
-            tools: Список actions, доступных агенту.
-            agent_id: Логический идентификатор агента (для feedback).
-            session_id: Идентификатор сессии (для feedback).
+            prompt: Текст запроса к агенту.
+            tools: Опц. список имён action'ов, доступных агенту.
+            agent_id: Идентификатор агента (для feedback).
+            session_id: Идентификатор сессии (для LangGraph Checkpointer
+                persistence). При ``durable=True`` требует настроенный
+                ``feature_flags.langgraph_postgres_checkpoint``.
             metadata: Дополнительные поля в feedback.
-
-        Returns:
-            Результат работы агента. В поле ``feedback_id`` —
-            идентификатор записи feedback для кнопок оценки в UI.
+            durable: При True — включает LangGraph PostgresCheckpointer
+                для stateful-сессий (resume после interruption).
         """
         sanitized = self._sanitizer.sanitize_text(prompt)
 
@@ -404,7 +402,7 @@ class AIAgentService:
             from src.backend.services.ai.ai_graph import build_and_run_agent
 
             result = await build_and_run_agent(
-                prompt=sanitized.sanitized, tool_actions=tools or []
+                prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable
             )
 
             if isinstance(result, str):
@@ -653,10 +651,7 @@ class AIAgentService:
 
     @staticmethod
     def _policy_gate_deny(
-        *,
-        principal: str,
-        reason: str,
-        detail: str,
+        *, principal: str, reason: str, detail: str
     ) -> dict[str, Any]:
         """Возвращает унифицированный deny-envelope для policy-gate."""
         return {
