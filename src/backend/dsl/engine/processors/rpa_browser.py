@@ -22,8 +22,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.config.features import feature_flags
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+from src.backend.services.rpa.browser_cookies_store import BrowserCookieStore
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -43,6 +45,19 @@ __all__ = (
 )
 
 _logger = logging.getLogger(__name__)
+
+
+def _extract_domain(url: str) -> str:
+    """Извлекает domain из URL для cookie key."""
+    if not url:
+        return ""
+    try:
+        # urlparse работает с "https://example.com/path?query"
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        return parsed.netloc or ""
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _get_pool(context: "ExecutionContext") -> "PlaywrightBrowserPool":
@@ -87,24 +102,44 @@ class BrowserLaunchProcessor(BaseProcessor):
     Args:
         url: Опц. URL для немедленного перехода.
         name: Имя для трейсов.
+        cookie_store: Опц. BrowserCookieStore для lazy-restore сессионных cookies.
+            При ``browser_cookies_redis_persist=True``: cookie_store сохраняется в
+            exchange.properties для последующего использования в NavigateProcessor.
+            Actual restore происходит в NavigateProcessor (lazy — по domain из URL).
     """
 
     name = "browser_launch"
 
-    def __init__(self, *, url: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        url: str | None = None,
+        name: str | None = None,
+        cookie_store: BrowserCookieStore | None = None,
+    ) -> None:
         super().__init__(name=name or self.name)
         self._url = url
+        self._cookie_store = cookie_store
 
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
-        """Получает context из pool, открывает page, опц. переходит на URL."""
+        """Получает context из pool, открывает page, опц. переходит на URL.
+
+        При ``browser_cookies_redis_persist=True`` и ``cookie_store``:
+        lazy-restore cookies после acquire, до первого goto.
+        """
         try:
             pool = _get_pool(context)
             ctx = await pool.acquire().__aenter__()  # type: ignore[attr-defined]
             page = await ctx.new_page()
             exchange.set_property("rpa.page", page)
             exchange.set_property("rpa.context", ctx)
+            exchange.set_property("rpa.cookie_store", self._cookie_store)
+
+            # Lazy-restore: actual restore с domain делается в NavigateProcessor
+            # (domain ещё неизвестен в момент browser_launch)
+
             if self._url:
                 await page.goto(self._url)
         except Exception as exc:  # noqa: BLE001 — DSL-граница
@@ -113,7 +148,12 @@ class BrowserLaunchProcessor(BaseProcessor):
 
 @processor(name="rpa_navigate")
 class NavigateProcessor(BaseProcessor):
-    """Переход по URL (page.goto)."""
+    """Переход по URL (page.goto).
+
+    При ``browser_cookies_redis_persist=True``:
+    1. Восстанавливает cookies из BrowserCookieStore (lazy-restore по domain).
+    2. После успешного goto сохраняет cookies обратно в store.
+    """
 
     name = "rpa_navigate"
 
@@ -126,7 +166,48 @@ class NavigateProcessor(BaseProcessor):
     ) -> None:
         try:
             page = _get_or_create_page(exchange)
+            ctx = exchange.properties.get("rpa.context")
+            cookie_store: BrowserCookieStore | None = exchange.properties.get(
+                "rpa.cookie_store"
+            )
+
+            # Lazy-restore cookies перед навигацией
+            if (
+                cookie_store is not None
+                and feature_flags.browser_cookies_redis_persist
+                and ctx is not None
+            ):
+                tenant_id = exchange.meta.tenant_id or ""
+                user_id = exchange.in_message.headers.get("X-User-ID", "")
+                domain = _extract_domain(self._url)
+                if (tenant_id or user_id) and domain:
+                    cookies = await cookie_store.restore_cookies(
+                        tenant_id=tenant_id,
+                        user_id=user_id,
+                        domain=domain,
+                    )
+                    if cookies:
+                        await ctx.add_cookies(cookies)
+
             await page.goto(self._url)
+
+            # Сохраняем cookies после навигации
+            if (
+                cookie_store is not None
+                and feature_flags.browser_cookies_redis_persist
+                and ctx is not None
+            ):
+                tenant_id = exchange.meta.tenant_id or ""
+                user_id = exchange.in_message.headers.get("X-User-ID", "")
+                domain = _extract_domain(self._url)
+                if (tenant_id or user_id) and domain:
+                    current_cookies = await ctx.cookies()
+                    await cookie_store.save_cookies(
+                        tenant_id=tenant_id,
+                        user_id=user_id,
+                        domain=domain,
+                        cookies=current_cookies,
+                    )
         except Exception as exc:  # noqa: BLE001
             exchange.fail(f"rpa_navigate failed: {exc}")
 
