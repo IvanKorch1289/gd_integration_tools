@@ -11,20 +11,8 @@ source: http:POST /api/v1/composition/demo
 description: Composition demo — extends base + includes shared steps
 
 steps:
-  - validate_request:
-      schema:
-        type: object
-        properties:
-          message: { type: string }
-          amount: { type: number }
-        required: [message]
-  - transform:
-      set:
-        body.processed_by: "composition_demo"
-        body.demo_id: "${uuid()}"
-  - proxy:
-      src: /api/v1/composition/demo
-      dst: http://localhost:9000/demo
+  - audit:
+      action: "route.composition_demo.start"
   - audit:
       action: "route.composition_demo.complete"
 

@@ -4,9 +4,10 @@
 route_id: shared.audit.steps
 steps:
   - audit:
-      event: "route.composition_demo.start"
-      level: info
-  - transform:
-      set:
-        body._meta.composition: "included"
-        body._meta.ts: "${timestamp()}"
+      action: "route.composition_demo.start"
+  - set_property:
+      key: "body._meta.composition"
+      value: "included"
+  - set_property:
+      key: "body._meta.ts"
+      value: "${timestamp()}"
