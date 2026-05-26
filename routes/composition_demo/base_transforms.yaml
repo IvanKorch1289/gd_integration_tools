@@ -1,0 +1,17 @@
+# Base route for extends: demonstration
+# Child routes can extend this and override specific fields
+
+route_id: base.composition.route
+source: timer:300s
+description: Base route with common proxy and audit steps
+steps:
+  - proxy:
+      src: /api/v1/composition/base
+      dst: http://localhost:9000/base
+  - audit:
+      event: "route.composition.base.called"
+      level: debug
+  - transform:
+      set:
+        body.base_route: true
+        body.proxied_src: "/api/v1/composition/base"

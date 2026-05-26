@@ -1,5 +1,43 @@
 # CONTEXT.md
 
+## Текущее состояние (2026-05-26 15:15, S19 K3 W1+W2 — Tech Debt CRITICAL fixed + code review PASSED)
+
+**HEAD**: `4d874eb9` (S27 W5 audit-unified-schema)
+**Session summary**: `vault/session-2026-05-26-1515-summary.md`
+
+### S27 W2 — Tech Debt CRITICAL fix (ЭТА СЕССИЯ)
+
+**Блокер устранён**: `asyncio.create_task` вне TaskRegistry в `AIPolicyEnforcer._handle_guard_block`.
+
+| Файл | Коммит | Изменение |
+|------|--------|-----------|
+| `src/backend/core/ai/policy/enforcer.py` | `d0da0998` | `asyncio.create_task` → `TaskRegistry.create_task()` |
+| `src/backend/core/ai/errors.py` | `d0da0998` | `GuardrailViolationError` экспортирован |
+| `tests/unit/core/ai/policy/test_enforcer.py` | `d0da0998` | 14 unit-тестов (DLQ path покрыт) |
+
+**Верификация**:
+```bash
+grep -n "asyncio\.create_task" src/backend/core/ai/policy/enforcer.py  # 0 (исправлено)
+uv run pytest tests/unit/core/ai/policy/test_enforcer.py -x -v         # 14 passed
+make lint  # Soft lint complete
+```
+
+**Code Review** (subagent code-reviewer, 16 файлов): **OK с WARN** (2 minor issues)
+- `test_namespaces_aggregator.py`: import sorting — `ruff --fix`
+- `integration.py`: unused type:ignore comments — косметика
+
+### Открытые риски
+
+1. **`eval()` с sandbox** — `reactive_dispatcher.py:197` — acknowledged safe pattern
+2. **31 TODO/FIXME/HACK маркеров** — scaffolding/verify-pending
+3. **769 mypy errors (pre-existing)** — не из наших изменений
+
+### Следующий шаг
+
+**`[wave:s19/k3-w2-route-composition-include]`**: YAML include/extends с cycle detection
+
+---
+
 ## Текущее состояние (2026-05-26 14:30, S19 K3 W1 ✅ CLOSED)
 
 **HEAD**: `ed40c655` (tech-debt fix: asyncio orphan + 5 layer violations)

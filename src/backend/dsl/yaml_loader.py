@@ -99,22 +99,26 @@ def _resolve_include_extends(
     extends_path = spec.pop("extends", None)
     if extends_path is not None:
         ext_str = str(extends_path)
-        if ext_str in _visited:
-            raise RuntimeError(
-                f"Cycle detected in extends: chain: {ext_str} is already being "
-                f"processed. Chain: {_visited}"
-            )
-        _visited.add(ext_str)
 
         if base_path is not None:
             resolved_path = (base_path.parent / ext_str).resolve()
         else:
             resolved_path = Path(ext_str).resolve()
 
+        # Check existence BEFORE tracking to avoid false-positive on first pass
         if not resolved_path.exists():
             raise FileNotFoundError(
                 f"Extended YAML file not found: {resolved_path}"
             )
+
+        # Track resolved path to avoid cycle detection
+        resolved_str = str(resolved_path)
+        if resolved_str in _visited:
+            raise RuntimeError(
+                f"Cycle detected in extends: chain: {resolved_str} is already "
+                f"being processed. Chain: {_visited}"
+            )
+        _visited.add(resolved_str)
 
         ext_yaml_str = resolved_path.read_text(encoding="utf-8")
         import yaml
@@ -158,22 +162,25 @@ def _resolve_include_extends(
 
         for inc_path in include_paths:
             inc_str = str(inc_path)
-            if inc_str in _visited:
-                raise RuntimeError(
-                    f"Cycle detected in include: chain: {inc_str} is already "
-                    f"being processed. Chain: {_visited}"
-                )
-            _visited.add(inc_str)
 
             if base_path is not None:
                 resolved_inc = (base_path.parent / inc_str).resolve()
             else:
                 resolved_inc = Path(inc_str).resolve()
 
+            # Check existence BEFORE tracking to avoid false-positive on first pass
             if not resolved_inc.exists():
                 raise FileNotFoundError(
                     f"Included YAML file not found: {resolved_inc}"
                 )
+
+            resolved_inc_str = str(resolved_inc)
+            if resolved_inc_str in _visited:
+                raise RuntimeError(
+                    f"Cycle detected in include: chain: {resolved_inc_str} is "
+                    f"already being processed. Chain: {_visited}"
+                )
+            _visited.add(resolved_inc_str)
 
             inc_yaml_str = resolved_inc.read_text(encoding="utf-8")
             import yaml
@@ -257,7 +264,7 @@ def load_pipeline_from_file(path: str | Path) -> Pipeline:
     """
     file_path = Path(path)
     yaml_str = file_path.read_text(encoding="utf-8")
-    return load_pipeline_from_yaml(yaml_str, base_path=file_path)
+    return load_pipeline_from_yaml(yaml_str, base_path=file_path.parent)
 
 
 def load_all_from_directory(directory: str | Path) -> list[Pipeline]:
@@ -291,7 +298,8 @@ def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
 
     builder = RouteBuilder.from_(route_id, source=source, description=description)
 
-    processors_spec = spec.get("processors", [])
+    # Support both `processors` (original) and `steps` (V11 route format)
+    processors_spec = spec.get("processors") or spec.get("steps", [])
     if not isinstance(processors_spec, list):
         raise ValueError("'processors' must be a list")
 

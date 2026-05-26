@@ -1,0 +1,12 @@
+# Shared audit and transform steps for composition demo
+# This file is included via `include:` in main route
+
+route_id: shared.audit.steps
+steps:
+  - audit:
+      event: "route.composition_demo.start"
+      level: info
+  - transform:
+      set:
+        body._meta.composition: "included"
+        body._meta.ts: "${timestamp()}"
