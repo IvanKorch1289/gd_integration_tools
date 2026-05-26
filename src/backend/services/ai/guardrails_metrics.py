@@ -13,6 +13,7 @@ Prometheus exporter (``guardrails_metrics``).
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -23,6 +24,8 @@ __all__ = (
     "GuardrailVerdict",
     "GuardrailsMetricsService",
 )
+
+logger = logging.getLogger("services.ai.guardrails_metrics")
 
 
 class GuardrailVerdict(StrEnum):
@@ -86,14 +89,36 @@ class GuardrailMetrics:
 
 
 class GuardrailsMetricsService:
-    """In-memory aggregator (Sprint 9 K4 W5).
+    """In-memory + ClickHouse aggregator (Sprint 9 K4 W5 → S28 W8).
 
-    Production-реализация — на ClickHouse через bulk writer (K2 W2).
+    In-memory aggregation supports Prometheus scraping and real-time dashboards.
+    ClickHouse bulk writer (if provided) persists every guardrail check to
+    ``guardrail_events`` table for long-term analytics.
+
+    ClickHouse table schema:
+
+    .. code-block:: sql
+
+        CREATE TABLE IF NOT EXISTS guardrail_events (
+            tenant_id     String,
+            verdict       Enum8('allow'=1, 'block'=2, 'redact'=3),
+            reason        String,
+            model_used    String,
+            cost_usd      Float64,
+            latency_ms    Float32,
+            timestamp     DateTime64(3) DEFAULT now64(3)
+        ) ENGINE = MergeTree()
+        ORDER BY (tenant_id, timestamp);
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        clickhouse_writer: Any = None,  # ClickHouseBulkWriter | None
+    ) -> None:
         self._by_tenant: dict[str, GuardrailMetrics] = {}
         self._lock = asyncio.Lock()
+        self._ch_writer = clickhouse_writer  # bulk writer, may be None
 
     async def record(
         self,
@@ -101,8 +126,16 @@ class GuardrailsMetricsService:
         tenant_id: str,
         verdict: GuardrailVerdict,
         reason: GuardrailReason | None = None,
+        model_used: str = "unknown",
+        cost_usd: float = 0.0,
+        latency_ms: float = 0.0,
     ) -> None:
-        """Зарегистрировать одну guardrail-проверку."""
+        """Зарегистрировать одну guardrail-проверку.
+
+        Writes to both in-memory aggregation (for Prometheus) and
+        ClickHouse (for analytics). ClickHouse errors are logged but
+        do not affect the in-memory state.
+        """
         async with self._lock:
             metrics = self._by_tenant.setdefault(
                 tenant_id, GuardrailMetrics(tenant_id=tenant_id)
@@ -118,6 +151,20 @@ class GuardrailsMetricsService:
                 metrics.by_reason[reason.value] = (
                     metrics.by_reason.get(reason.value, 0) + 1
                 )
+
+        # ClickHouse persistence — fire-and-forget, errors logged but non-fatal
+        if self._ch_writer is not None:
+            try:
+                self._ch_writer.add({
+                    "tenant_id": tenant_id,
+                    "verdict": verdict.value,
+                    "reason": reason.value if reason else "other",
+                    "model_used": model_used,
+                    "cost_usd": cost_usd,
+                    "latency_ms": latency_ms,
+                })
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("GuardrailsMetrics CH write failed: %s", exc)
 
     async def mark_false_positive(self, *, tenant_id: str, count: int = 1) -> None:
         """Operator-labeled FP (после review)."""
