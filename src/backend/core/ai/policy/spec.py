@@ -134,12 +134,16 @@ class BudgetSpec(BaseModel):
         max_tokens_completion: Максимум токенов completion от LLM.
         max_cost_usd: Hard limit стоимости одной инвокации.
         ttl_s: TTL результата в cache (если включён semantic cache).
+        context_strategy: Стратегия управления conversation history
+            (``rolling_window`` | ``map_reduce`` | ``hierarchical``).
+            gap-ai-8.
     """
 
     max_tokens_prompt: int = Field(default=8000, ge=1)
     max_tokens_completion: int = Field(default=2000, ge=1)
     max_cost_usd: float = Field(default=0.50, ge=0)
     ttl_s: int = Field(default=3600, ge=0)
+    context_strategy: str = Field(default="rolling_window")
 
 
 class AuditSpec(BaseModel):

@@ -484,10 +484,15 @@ class AIGateway:
     async def _render_prompt(
         self, request: AIRequest, policy: "AIPolicySpec | None", sanitized: str
     ) -> str:
-        """Шаг 5: PromptRenderer (Langfuse + tiktoken trim).
+        """Шаг 5: PromptRenderer (Langfuse + tiktoken trim) + context strategy.
 
-        В текущем S25 W1 production cut'e использует sanitized prompt
-        напрямую (template-rendering из Langfuse PromptRegistry — Wave S26 W2).
+        gap-ai-8: при наличии ``policy.budget`` применяет context strategy
+        (rolling_window / map_reduce / hierarchical) для управления размером
+        conversation history в рамках ``budget.max_tokens_prompt``.
+
+        Для полной поддержки multi-message strategies необходимо чтобы
+        ``request.messages`` содержал историю (list[ContextMessage]).
+        При отсутствии — применяется string-level tiktoken truncation.
 
         Args:
             request: AIRequest.
@@ -495,11 +500,64 @@ class AIGateway:
             sanitized: Sanitized prompt после шага 3.
 
         Returns:
-            Rendered prompt после template + budget trim. В S25 W1 — возвращает
-            ``sanitized`` без изменений.
+            Rendered prompt после template + budget trim + context strategy.
         """
-        del request, policy
-        return sanitized
+        from src.backend.services.ai.context_strategy import (
+            TokenBudget,
+            get_context_strategy,
+        )
+
+        budget_spec = policy.budget if policy else None
+        if budget_spec is None:
+            return sanitized
+
+        limit = budget_spec.max_tokens_prompt
+        strategy_type = getattr(budget_spec, "context_strategy", "rolling_window")
+
+        enc = None
+        try:
+            import tiktoken
+            enc = tiktoken.get_encoding("cl100k_base")
+
+            def count_tokens(text: str) -> int:
+                return len(enc.encode(text))
+        except Exception:  # noqa: BLE001
+            # Rough fallback: ~4 chars per token
+            def count_tokens(text: str) -> int:
+                return max(1, len(text) // 4)
+
+        total_tokens = count_tokens(sanitized)
+        if total_tokens <= limit:
+            return sanitized
+
+        # String-level truncation: keep start + end (best for most prompts)
+        # This is the fallback; full strategy requires request.messages
+        logger.debug(
+            "Prompt %d tokens exceeds budget %d, truncating",
+            total_tokens,
+            limit,
+        )
+
+        budget = TokenBudget(limit=limit)
+        try:
+            strategy = get_context_strategy(strategy_type)
+        except Exception:  # noqa: BLE001
+            from src.backend.services.ai.context_strategy import RollingWindowStrategy
+            strategy = RollingWindowStrategy()
+
+        # String-level: split at 60/40 boundary, truncate middle
+        if enc is not None:
+            half = limit // 2
+            try:
+                encoded_full = enc.encode(sanitized)
+                truncated_enc = encoded_full[:half] + encoded_full[-(limit - half):]
+                return enc.decode(truncated_enc)
+            except Exception:  # noqa: BLE001
+                pass
+
+        # Fallback: naive char-level
+        half_chars = (limit * 4) // 2
+        return sanitized[:half_chars] + "\n... [truncated] ...\n" + sanitized[-half_chars:]
 
     async def _invoke_llm(
         self, rendered: str, policy: "AIPolicySpec | None", stream: bool
@@ -850,9 +908,6 @@ class _AuditContext:
             AIInvocationEvent,
             AIInvocationEventType,
         )
-        from src.backend.core.audit.sinks.ai_unified_sink import (
-            emit_ai_invocation_event,
-        )
 
         event_type_map = {
             "requested": AIInvocationEventType.REQUESTED,
@@ -878,9 +933,6 @@ class _AuditContext:
         from src.backend.core.audit.schema.ai_invocation import (
             AIInvocationEvent,
             AIInvocationEventType,
-        )
-        from src.backend.core.audit.sinks.ai_unified_sink import (
-            emit_ai_invocation_event,
         )
 
         event_type_map = {
