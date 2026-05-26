@@ -45,6 +45,7 @@ _DEFAULT_REPLY_TIMEOUT_SECONDS = 60.0
         "type": "object",
         "properties": {
             "name": {"type": "string"},
+            "version": {"type": "string"},
             "mode": {"type": "string", "enum": sorted(_ALLOWED_MODES)},
             "args": {"type": "object"},
             "namespace": {"type": "string"},
@@ -90,9 +91,11 @@ class InvokeWorkflowProcessor(BaseProcessor):
         reply_timeout_seconds: float = _DEFAULT_REPLY_TIMEOUT_SECONDS,
         backend: WorkflowBackend | None = None,
         backend_factory: Callable[[], Any] | None = None,
+        version: str | None = None,
     ) -> None:
         super().__init__(name=f"invoke_workflow:{name}")
         self.workflow_name = name
+        self.version = version
         self.mode = self._coerce_mode(mode, workflow_name=name)
         self.args = args
         self.namespace_name = namespace
@@ -122,6 +125,36 @@ class InvokeWorkflowProcessor(BaseProcessor):
 
         return await create_workflow_backend(kind="auto")
 
+    async def _resolve_workflow_version(self) -> str:
+        """Resolve workflow version using WorkflowLauncher if flag enabled.
+
+        Returns the resolved version string. If version is None or flag is disabled,
+        returns the original workflow name (no version resolution).
+        """
+        if not self.version:
+            return self.workflow_name
+
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            if not feature_flags.workflow_versioning_routes:
+                return self.workflow_name
+        except Exception:
+            return self.workflow_name
+
+        try:
+            from src.backend.dsl.workflow.launcher import (
+                WorkflowLauncher,
+                WorkflowResolutionError,
+            )
+
+            launcher = WorkflowLauncher()
+            resolved = launcher.resolve(self.workflow_name, self.version)
+            return resolved.name
+        except WorkflowResolutionError:
+            # Fallback to original name if resolution fails
+            return self.workflow_name
+
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
@@ -132,11 +165,14 @@ class InvokeWorkflowProcessor(BaseProcessor):
             body = exchange.in_message.body
             payload = dict(body) if isinstance(body, dict) else {}
 
+        # Resolve workflow name (may include version spec)
+        workflow_name = await self._resolve_workflow_version()
+
         backend = await self._resolve_backend()
         workflow_id = str(uuid.uuid4())
 
         handle = await backend.start_workflow(
-            workflow_name=self.workflow_name,
+            workflow_name=workflow_name,
             workflow_id=workflow_id,
             input=payload,
             namespace=self.namespace_name,
@@ -181,6 +217,8 @@ class InvokeWorkflowProcessor(BaseProcessor):
     def to_spec(self) -> dict[str, Any] | None:
         """Round-trip DSL-спецификация ``{"invoke_workflow": {...}}``."""
         spec: dict[str, Any] = {"name": self.workflow_name, "mode": self.mode}
+        if self.version:
+            spec["version"] = self.version
         if self.args is not None:
             spec["args"] = dict(self.args)
         if self.namespace_name != "default":

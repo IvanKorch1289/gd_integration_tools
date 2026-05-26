@@ -115,11 +115,15 @@ class IntegrationMixin:
         result_property: str = "workflow_result",
         invocation_id_property: str = "invocation_id",
         reply_timeout_seconds: float = 60.0,
+        version: str | None = None,
     ) -> "RouteBuilder":
         """Запуск Workflow (Temporal/LiteTemporal/PgRunner) — R-V15-7 / R-V15-9.
 
         Args:
             name: Логическое имя workflow.
+            version: Опциональный SemVer-диапазон (например ``">=1.0,<2.0"``).
+                При наличии ``workflow_versioning_routes=True`` — валидируется
+                WorkflowLauncher.resolve() при старте workflow.
             mode: Режим вызова:
 
                 * ``"sync"`` — ждёт terminal-статуса (без timeout).
@@ -151,6 +155,7 @@ class IntegrationMixin:
                 result_property=result_property,
                 invocation_id_property=invocation_id_property,
                 reply_timeout_seconds=reply_timeout_seconds,
+                version=version,
             )
         )
 

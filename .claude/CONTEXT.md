@@ -1,6 +1,38 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-25 18:05, S27 W1+W2+W3 Agent DSL ✅ CLOSED 4/4)
+## Текущее состояние (2026-05-26 14:30, S19 K3 W1 ✅ CLOSED)
+
+**HEAD**: `ed40c655` (tech-debt fix: asyncio orphan + 5 layer violations)
+**Session summary**: `vault/session-2026-05-26-1430-summary.md`
+
+### S19 K3 W1 — workflow versioning routes (Func-rec #1)
+
+**Цель**: route.toml секция `[requires_workflows]`, SemVer-range validation, audit-event.
+
+| Компонент | Файл | Изменение |
+|-----------|------|-----------|
+| RouteBuilder.invoke_workflow | `dsl/builders/integration.py` | +version param |
+| InvokeWorkflowProcessor | `dsl/engine/processors/invoke_workflow.py` | +version support + `_resolve_workflow_version()` |
+
+**Инфраструктура уже существует**: `manifest_v11.requires_workflows`, `loader.missing_workflows()`, `features.workflow_versioning_routes`
+
+### Verify-команды этой сессии
+
+```bash
+make routes                  # 119 routes — OK
+make lint                    # Soft lint complete — OK
+uv run python -c "..."        # version param: True — OK
+pytest tests/unit/core/ai/policy/test_enforcer.py  # 14 passed — OK
+```
+
+### Открытые риски
+
+1. **mypy errors** — 769 pre-existing errors (не наши)
+2. **orjson not installed** — bypass через `uv run`
+
+### Следующий шаг
+
+**[wave:s19/k3-w2-route-composition-include]**: YAML include/extends с cycle detection
 
 **HEAD после моих commits**: `d7056ae0` (мой Wave 4) → плюс параллельные `06c92878 / 050cf680 / 812db145 / 48704682 / ba708895` после.
 **Compact**: `vault/session-2026-05-25-1805-s27-w1-w3-agent-dsl-summary.md`.
