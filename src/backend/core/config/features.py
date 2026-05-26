@@ -2263,7 +2263,7 @@ class FeatureFlags(BaseSettingsWithLoader):
 
     # ─── K4 — Sprint 25 AI Gateway + Policy DSL (ADR-NEW-19/20/21) ────────
     ai_gateway_enforce: bool = Field(
-        default=False,
+        default=True,
         title="K4 S25 W1: AIGateway единая точка входа в AI (ADR-NEW-19)",
         description=(
             "K4 Sprint 25 Wave 1 (ADR-NEW-19, PLAN.md V22.4 §S25). Owner: K4 AI/Data + К1 Security. "
