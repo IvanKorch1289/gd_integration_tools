@@ -5,6 +5,8 @@ description = "Reference route demonstrating include:/extends: composition (S19 
 requires_core = ">=15.0,<16.0"
 tenant_aware = false
 
+pipelines = ["main.dsl.yaml"]
+
 capabilities = [
   "net.inbound.http:/api/v1/composition/demo",
   "net.outbound.http://localhost:9000:internal",
