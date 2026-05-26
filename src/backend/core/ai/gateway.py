@@ -72,6 +72,7 @@ from src.backend.core.ai.errors import GuardResult
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
+    from src.backend.core.audit.schema.ai_invocation import AIInvocationEvent
 
 __all__ = ("AIGateway", "AIRequest", "AIResponse")
 
@@ -266,18 +267,14 @@ class AIGateway:
         start_ms = int(time.monotonic() * 1000)
 
         # Шаг 0: emit REQUESTED
-        await ctx._emit(
-            "requested",
-            latency_ms=int(time.monotonic() * 1000) - start_ms,
-        )
+        await ctx._emit("requested", latency_ms=int(time.monotonic() * 1000) - start_ms)
 
         # Шаг 1: policy resolution
         policy = await self._resolve_policy(request)
         ctx.policy = policy
         ctx.policy_name = policy.name if policy else "default"
         await ctx._emit(
-            "policy_resolved",
-            latency_ms=int(time.monotonic() * 1000) - start_ms,
+            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
         )
 
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
@@ -301,8 +298,7 @@ class AIGateway:
                 await ctx._emit_guard("guarded.input", gr)
         else:
             await ctx._emit(
-                "guarded.input",
-                latency_ms=int(time.monotonic() * 1000) - start_ms,
+                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms
             )
 
         # Шаг 5: render prompt
@@ -324,8 +320,7 @@ class AIGateway:
                 await ctx._emit_guard("guarded.output", gr)
         else:
             await ctx._emit(
-                "guarded.output",
-                latency_ms=int(time.monotonic() * 1000) - start_ms,
+                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms
             )
 
         # Шаг 8: output sanitizers
@@ -382,9 +377,7 @@ class AIGateway:
             except Exception:  # noqa: BLE001
                 strict = False
             if strict:
-                from src.backend.core.ai.policy.resolver import (
-                    PolicyNotResolvedError,
-                )
+                from src.backend.core.ai.policy.resolver import PolicyNotResolvedError
 
                 raise PolicyNotResolvedError(request.workflow_id, request.tenant_id)
         return policy
@@ -411,8 +404,10 @@ class AIGateway:
 
             if inspect.isawaitable(result):
                 await result
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(
+                "AIGateway: capability check for %s failed: %s", capability, exc
+            )
 
     async def _apply_input_sanitizers(
         self, request: AIRequest, policy: "AIPolicySpec | None"
@@ -487,10 +482,7 @@ class AIGateway:
             return []
 
     async def _render_prompt(
-        self,
-        request: AIRequest,
-        policy: "AIPolicySpec | None",
-        sanitized: str,
+        self, request: AIRequest, policy: "AIPolicySpec | None", sanitized: str
     ) -> str:
         """Шаг 5: PromptRenderer (Langfuse + tiktoken trim).
 
@@ -510,10 +502,7 @@ class AIGateway:
         return sanitized
 
     async def _invoke_llm(
-        self,
-        rendered: str,
-        policy: "AIPolicySpec | None",
-        stream: bool,
+        self, rendered: str, policy: "AIPolicySpec | None", stream: bool
     ) -> AIResponse:
         """Шаг 6: ModelRouter (LiteLLM primary + fallback).
 
@@ -536,14 +525,11 @@ class AIGateway:
         if fallbacks:
             kwargs["fallbacks"] = fallbacks
         response = await gw.acompletion(
-            [{"role": "user", "content": rendered}],
-            model=model,
-            stream=False,
-            **kwargs,
+            [{"role": "user", "content": rendered}], model=model, stream=False, **kwargs
         )
 
-        content, tokens_prompt, tokens_completion, model_used = self._extract_completion(
-            response, fallback_model=model
+        content, tokens_prompt, tokens_completion, model_used = (
+            self._extract_completion(response, fallback_model=model)
         )
         return AIResponse(
             content=content,
@@ -621,7 +607,9 @@ class AIGateway:
 
         replacements = getattr(result, "replacements", {}) or {}
         sanitized_text = getattr(result, "sanitized_text", response.content)
-        pii_detected = bool(replacements) or getattr(self, "_last_input_pii_detected", False)
+        pii_detected = bool(replacements) or getattr(
+            self, "_last_input_pii_detected", False
+        )
         return AIResponse(
             content=sanitized_text,
             structured=response.structured,
@@ -634,10 +622,7 @@ class AIGateway:
         )
 
     async def _audit_emit(
-        self,
-        request: AIRequest,
-        policy: "AIPolicySpec | None",
-        response: AIResponse,
+        self, request: AIRequest, policy: "AIPolicySpec | None", response: AIResponse
     ) -> None:
         """Шаг 9a: Audit emit через Unified :class:`AuditService`.
 
@@ -694,10 +679,7 @@ class AIGateway:
             logger.warning("AIGateway: audit emit failed: %s", exc)
 
     async def _cost_track(
-        self,
-        request: AIRequest,
-        policy: "AIPolicySpec | None",
-        response: AIResponse,
+        self, request: AIRequest, policy: "AIPolicySpec | None", response: AIResponse
     ) -> None:
         """Шаг 9b: Cost-tracker (Langfuse v3 OTel + Prometheus).
 
@@ -761,9 +743,7 @@ class AIGateway:
         return self._llm_gateway
 
     @staticmethod
-    def _language_from_policy(
-        policy: "AIPolicySpec | None", *, default: str
-    ) -> str:
+    def _language_from_policy(policy: "AIPolicySpec | None", *, default: str) -> str:
         """Извлекает язык из первого input_sanitizer (``presidio:ru`` → ``ru``)."""
         if policy is None or not policy.input_sanitizers:
             return default
@@ -838,6 +818,7 @@ class AIGateway:
 
 # ── _AuditContext — 9-event audit sequence helper ───────────────────────────
 
+
 @dataclass
 class _AuditContext:
     """Контекст для 9-event audit sequence (ADR-0071 §3).
@@ -862,11 +843,7 @@ class _AuditContext:
     tokens_completion: int = 0
 
     async def _emit(
-        self,
-        step: str,
-        *,
-        pii_detected: bool = False,
-        latency_ms: int = 0,
+        self, step: str, *, pii_detected: bool = False, latency_ms: int = 0
     ) -> None:
         """Emit одно событие ``ai.invocation.{step}``."""
         from src.backend.core.audit.schema.ai_invocation import (
