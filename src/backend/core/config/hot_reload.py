@@ -85,6 +85,18 @@ class ConfigHotReloader:
         """Запускает watcher в отдельной таске."""
         if self._task and not self._task.done():
             return  # уже запущен
+
+        # K1 S19 W6: Disable hot-reload when APP_PROFILE=prod and flag is set
+        from src.backend.core.config.features import feature_flags
+        from src.backend.core.config.profile import get_active_profile
+
+        if (
+            get_active_profile().value == "prod"
+            and feature_flags.prod_hot_reload_disable
+        ):
+            logger.info("Config hot-reload disabled (APP_PROFILE=prod, prod_hot_reload_disable=True)")
+            return
+
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
             self._watch_loop(), name="config-hot-reload"
