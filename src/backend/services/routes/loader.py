@@ -247,6 +247,22 @@ class RouteLoader:
                 )
                 return
 
+        # ── Pre-condition: requires_permission format validation (K3 S19 W3)
+        if manifest.security and manifest.security.requires_permission:
+            invalid = self._validate_permission_strings(
+                manifest.security.requires_permission
+            )
+            if invalid:
+                self._loaded[manifest.name] = LoadedRoute(
+                    name=manifest.name,
+                    version=manifest.version,
+                    manifest_path=manifest_path,
+                    manifest=manifest,
+                    status="failed",
+                    reason=f"invalid_permission_format: {invalid}",
+                )
+                return
+
         # ── Inv: route.capabilities ⊆ plugin-каталог ∪ public-core
         try:
             plugin_caps_by_name = {
@@ -414,3 +430,25 @@ class RouteLoader:
             self._audit(event)
         except Exception:  # noqa: BLE001 — audit best-effort, не ломает loader
             _logger.exception("RouteLoader audit_callback failed: %s", event.get("event"))
+
+    # ── permission validation helpers ──────────────────────────────────
+
+    PERMISSION_PREFIXES = ("role:", "scope:")
+
+    def _validate_permission_strings(
+        self, permissions: tuple[str, ...]
+    ) -> str | None:
+        """Валидирует формат permission-strings.
+
+        Каждая permission должна начинаться с ``role:`` или ``scope:``.
+
+        Returns:
+            None если все валидны; str с описанием первой ошибки иначе.
+        """
+        for perm in permissions:
+            if not any(perm.startswith(prefix) for prefix in self.PERMISSION_PREFIXES):
+                return (
+                    f"permission {perm!r} must start with "
+                    f"{' or '.join(repr(p) for p in self.PERMISSION_PREFIXES)}"
+                )
+        return None

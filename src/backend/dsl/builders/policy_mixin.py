@@ -153,6 +153,48 @@ class PolicyChain:
             wait_timeout_seconds=wait_timeout_seconds,
         )
 
+    def adaptive_timeout(
+        self,
+        *,
+        percentile: int = 99,
+        safety_factor: float = 1.5,
+        min_timeout: float = 2.0,
+        max_timeout: float = 60.0,
+        window_size: int = 100,
+    ) -> "RouteBuilder":
+        """Sprint 19 K2 W3: Add adaptive timeout policy.
+
+        Вычисляет таймаут динамически на основе historical latency percentile.
+        Использует :class:`AdaptiveTimeoutPolicy` из
+        ``src.backend.core.resilience.adaptive_timeout``.
+
+        Formula: ``timeout = max(p{percentile} * safety_factor, min_timeout)``
+
+        Args:
+            percentile: Which percentile to use (default 99).
+            safety_factor: Multiplier for the observed latency (default 1.5).
+            min_timeout: Minimum timeout in seconds (default 2.0).
+            max_timeout: Maximum timeout in seconds (default 60.0).
+            window_size: Rolling window size for latency samples (default 100).
+
+        Example::
+
+            route = (
+                RouteBuilder.from_("api.slow", source="http:GET /api/slow")
+                .policy.adaptive_timeout(percentile=99, safety_factor=1.5)
+                .dispatch_action("slow.execute")
+                .build()
+            )
+        """
+        return self._add_policy_processor(
+            "adaptive_timeout",
+            percentile=percentile,
+            safety_factor=safety_factor,
+            min_timeout=min_timeout,
+            max_timeout=max_timeout,
+            window_size=window_size,
+        )
+
     def idempotency(
         self, *, key: str = "header.X-Idempotency-Key", ttl_seconds: int = 3600
     ) -> "RouteBuilder":
