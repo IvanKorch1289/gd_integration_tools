@@ -1,6 +1,60 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-25 16:44, Phase A AI hardening ✅ CLOSED 8/8 — переход к Phase B)
+## Текущее состояние (2026-05-25 18:05, S27 W1+W2+W3 Agent DSL ✅ CLOSED 4/4)
+
+**HEAD после моих commits**: `d7056ae0` (мой Wave 4) → плюс параллельные `06c92878 / 050cf680 / 812db145 / 48704682 / ba708895` после.
+**Compact**: `vault/session-2026-05-25-1805-s27-w1-w3-agent-dsl-summary.md`.
+**Memory**: `feedback_s27_w1_w3_agent_dsl.md` (NEW).
+
+### S27 W1+W2+W3 — 4 wave landed
+
+**Директива**: реализовать Agent DSL Sprint 27 W1+W2+W3 (декларативная агентика над AIGateway, ADR-NEW-19..24).
+
+| Wave | Commit | Title |
+|------|--------|-------|
+| backbone | `f348f1fb` | `MemoryProtocol` + `skill.invoke` capability + пустой `agent_dsl/` package |
+| W1 | `8d4f97d8` | `BaseAIProcessor` + 4 agent processors (run/branch/loop/parallel) + 5 fluent methods |
+| W2 | `82f4b107` | `GuardrailsApplyProcessor` + `PIIMask/Unmask` + 3 fluent methods |
+| W3 | `d7056ae0` | `SkillInvokeProcessor` + `MemoryRecall/Store` + 3 fluent methods + final 11-methods mixin тест |
+
+### Verify-команды этой сессии
+
+```bash
+pytest tests/unit/core/interfaces/test_ai_memory_protocol.py        # 5 passed
+pytest tests/unit/dsl/engine/processors/agent_dsl/                  # 86 passed
+pytest tests/unit/dsl/builders/test_agent_dsl_mixin.py              # 24 passed
+# Total: 115 passed
+
+pytest --cov=src.backend.dsl.engine.processors.agent_dsl ... → 76.95% (≥75% threshold)
+ruff check src/backend/dsl/engine/processors/agent_dsl/ ...        # All checks passed!
+```
+
+### Архитектурное решение: rename `ai/` → `agent_dsl/`
+
+Существовал `processors/ai.py` (43 KB module с `CacheProcessor/LLMFallback/Guardrails/SemanticRouter`). Python разрешает оба (file + dir с одинаковым именем), но package перебивает module. Wave 1 backbone с пустым `ai/__init__.py` сломал импорт `CacheProcessor`. Решение: `git mv ai/ agent_dsl/` + обновить импорты в 5 моих processors + mixin.
+
+### Открытые риски S27 carryover
+
+1. **W4 MCP gateway namespaces** (ADR-NEW-23) — credit/analytics/system + auth/WAF. NOT_STARTED.
+2. **W5 audit unified** (ADR-NEW-24) — `ai.invocation.*` → Unified ClickHouse audit_events. NOT_STARTED (требует CH migration).
+3. **W6 workflow.invoke_agent** — Temporal activity. Зависит от S24 W3 LangGraph Checkpointer.
+4. **PoC route `credit_check_demo`** — DoD-3 требует использования всех 9 processors в одном route.
+5. **Coverage 76.95% → 90%** — `_base.py` 68% (DI fallback), `pii_mask/unmask.py` 67-68% (dot-path edges).
+6. **YAML loader для 10 processors** — `to_spec()` готов, но обратная сторона (YAML → instance) в DSL loader не extended.
+7. **Параллельная сессия активна** — landed Phase B (BGE-reranker / hybrid retriever / source attribution / UnifiedAgentMemoryGateway) между моими commits; зоны не пересекаются.
+
+### Следующий шаг — выбор пользователя
+
+1. **S27 W4 MCP gateway namespaces** (ADR-NEW-23) — credit/analytics/system MCP-tier.
+2. **S27 W5 audit unified** (ADR-NEW-24) — миграция ai.invocation.* в Unified audit_events.
+3. **S27 closure** — PoC route credit_check_demo + coverage boost.
+4. **Phase B carryover** — Ragas runner (3.4) + LangMem consolidate (4.2).
+
+Рекомендация: S27 W4+W5 (architectural backbone) перед PoC route.
+
+---
+
+## Архив (2026-05-25 16:44, Phase A AI hardening ✅ CLOSED 8/8 — переход к Phase B)
 
 **HEAD после моих commits**: `0a10700c docs(claude): [phase-a/closure] KNOWN_ISSUES + Phase A AI hardening summary` (мой) → плюс параллельные `df0b8797 / fac847c7 / e34e295d / f348f1fb`.
 **Compact**: `vault/session-2026-05-25-1644-summary.md` (детальная сводка 9 моих commits + 2 параллельных).

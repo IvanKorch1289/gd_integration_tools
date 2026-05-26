@@ -2490,5 +2490,286 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    # ─── Sprint 19 — DSL+AI Extensions + DX ────────────────────────────────
+    workflow_versioning_routes: bool = Field(
+        default=False,
+        title="K3 S19 W1: workflow SemVer versioning in route.toml [requires_workflows]",
+        description=(
+            "K3 Sprint 19 Wave 1 (PLAN.md V22 §S19 W1, Func-rec #1). Owner: K3 DSL/Workflow. "
+            "При True route.toml поддерживает секцию [requires_workflows] = { wf_name = \">=1.0,<2.0\" }. "
+            "RouteLoader.load() проверяет совместимость версий workflow при загрузке. "
+            "RouteBuilder.invoke_workflow(name, version=...) принимает SemVer-range. "
+            "Audit-event workflow.version.mismatch при несовместимости. "
+            "default-OFF до integration-test на reference route."
+        ),
+    )
+
+    route_composition_include: bool = Field(
+        default=False,
+        title="K3 S19 W2: route composition via include:/extends: с cycle detection",
+        description=(
+            "K3 Sprint 19 Wave 2 (PLAN.md V22 §S19 W2, Func-rec #2). Owner: K3 DSL. "
+            "При True *.dsl.yaml поддерживает include: [\"./common-steps.yaml\"] (один уровень) "
+            "и extends: \"./base-route.yaml\". YAML-loader разрешает дерево включений "
+            "с cycle detection (RuntimeError при цикле). JSON-Schema каталог обновляется. "
+            "default-OFF до DSL linter integration и smoke-test."
+        ),
+    )
+
+    route_authz_requires_permission: bool = Field(
+        default=False,
+        title="K3 S19 W3: AuthorizationGateway route-level requires_permission",
+        description=(
+            "K3 Sprint 19 Wave 3 (PLAN.md V22 §S19 W3, Func-rec #3). Owner: K3 DSL/Security. "
+            "При True route.toml поддерживает [security] requires_permission = [\"role:admin\", \"scope:credit.read\"]. "
+            "AuthorizationGateway (S17 ADR-NEW-1) проверяет permissions перед dispatch на route. "
+            "Capability-gate в RouteLoader.load() валидирует синтаксис permission-string. "
+            "default-OFF до integration-test с AuthorizationGateway."
+        ),
+    )
+
+    rag_multipart_ingest: bool = Field(
+        default=False,
+        title="K4 S19 W1: RAG bulk-ingest multipart endpoint + Streamlit UI",
+        description=(
+            "K4 Sprint 19 Wave 1 (PLAN.md V22 §S19 W4, Func-rec #4). Owner: K4 AI/RAG. "
+            "При True активирует POST /api/v1/ai/rag/bulk-ingest multipart endpoint "
+            "для bulk document upload (PDF/DOCX/TXT) + Streamlit page bulk-ingest UI. "
+            "Capability rag.ingest.<collection> обязательна. "
+            "default-OFF до integration-test с real documents."
+        ),
+    )
+
+    reranking_pipeline_enabled: bool = Field(
+        default=False,
+        title="K4 S19 W2: RerankerProcessor cross-encoder reranking pipeline",
+        description=(
+            "K4 Sprint 19 Wave 2 (PLAN.md V22 §S19 W5, Func-rec #5). Owner: K4 AI/RAG. "
+            "При True RerankerProcessor интегрируется в RagQueryProcessor (default-OFF). "
+            "Поддержка cross-encoder моделей (BAAI/bge-reranker-v1.5, cohere-rerank-v3). "
+            "Latency budget tracking. "
+            "default-OFF до bench-test reranking accuracy +15%."
+        ),
+    )
+
+    rpa_session_persistence: bool = Field(
+        default=False,
+        title="K5 S19 W1: RPA browser session persistence via Redis (S-L5-2 closure)",
+        description=(
+            "K5 Sprint 19 Wave 1 (PLAN.md V22 §S19 W6, Func-rec #6, S-L5-2 closure). Owner: K5 RPA. "
+            "При True BrowserCookieStore (S21 W7) интегрируется в BrowserLaunchProcessor "
+            "с lazy-restore. Redis-backed session-store key = tenant_id:session_id с cookies/auth/local-storage. "
+            "TTL configurable. RPA-route routes/banking_legacy_session_demo/ как reference. "
+            "default-OFF до smoke-test session persistence after browser restart."
+        ),
+    )
+
+    banking_ai_processors_impl: bool = Field(
+        default=False,
+        title="K4 S19 W3: Banking AI processors implementation (S-L4-1 closure)",
+        description=(
+            "K4 Sprint 19 Wave 3 (PLAN.md V22 §S19 W8, S-L4-1 closure). Owner: K4 AI. "
+            "При True реализует логику в dsl/engine/processors/ai_banking.py: "
+            "KycAmlVerifyProcessor / AntiFraudScoreProcessor / CreditScoringRagProcessor / "
+            "DocumentClassifierProcessor / FrancotypingProcessor — LLM call + structured output Pydantic + "
+            "capability-gate ai.banking.* + audit-event + cost budget tracking. "
+            "default-OFF до LLM integration smoke-tests."
+        ),
+    )
+
+    langmem_consolidation_impl: bool = Field(
+        default=False,
+        title="K4 S19 W4: LangMemService.consolidate() implementation (S-L4-3 closure)",
+        description=(
+            "K4 Sprint 19 Wave 4 (PLAN.md V22 §S19 W9, S-L4-3 closure). Owner: K4 AI/RAG. "
+            "При True реализует LangMemService.consolidate(): episodic → semantic compaction "
+            "через LLM-summarisation. Интеграция с langmem package. Запуск через APScheduler "
+            "daily + admin-trigger. Metrics: consolidation_count + token_usage. "
+            "default-OFF до consolidation quality smoke-test."
+        ),
+    )
+
+    vscode_extension_published: bool = Field(
+        default=False,
+        title="K5 S19 W2: VSCode extension .vsix published (ADR R1.14)",
+        description=(
+            "K5 Sprint 19 Wave 2 (PLAN.md V22 §S19 W10). Owner: K5 Frontend/DX. "
+            "При True tools/vscode-extension/ содержит готовый .vsix: syntax highlighting + "
+            "hover docs + 'Run step' CodeLens + LSP client. Private marketplace publish. "
+            "default-OFF до VSCode team validation."
+        ),
+    )
+
+    lsp_server_strict: bool = Field(
+        default=False,
+        title="K3 S19 W4: DSL LSP server YAML schema completion + diagnostics",
+        description=(
+            "K3 Sprint 19 Wave 4 (PLAN.md V22 §S19 W11). Owner: K3 DSL/LSP. "
+            "При True tools/dsl_lsp/server.py расширяется: YAML schema completion + "
+            "diagnostics через DSL Linter. Integration test pygls test-client. "
+            "default-OFF до LSP smoke-test."
+        ),
+    )
+
+    dsl_visual_editor_drag_drop: bool = Field(
+        default=False,
+        title="K3 S19 W5: DSL Visual Editor drag-drop + BPMN export (page 31)",
+        description=(
+            "K3 Sprint 19 Wave 5 (PLAN.md V22 §S19 W12). Owner: K3 DSL/Frontend. "
+            "При True frontend/streamlit_app/pages/31_DSL_Visual_Editor.py: "
+            "drag-drop через streamlit-elements + BPMN 2.0 export через lxml + "
+            "undo/redo stack в session_state + step palette с capability descriptions. "
+            "default-OFF до visual editor smoke-test."
+        ),
+    )
+
+    ai_pr_review_enabled: bool = Field(
+        default=False,
+        title="K4 S19 W5: AI PR review GitHub Action workflow",
+        description=(
+            "K4 Sprint 19 Wave 5 (PLAN.md V22 §S19 W13). Owner: K4 AI/DevOps. "
+            "При True .github/workflows/ai-pr-review.yml: layer-policy + security + "
+            "perf-regression + coverage delta. Prompt caching ≥80% hit. Cost ≤$0.10/PR. "
+            "default-OFF до PR review quality calibration."
+        ),
+    )
+
+    testkit_public_api: bool = Field(
+        default=False,
+        title="K5 S19 W3: src/testkit/ public API для extensions/plugin authors (S-L10-1)",
+        description=(
+            "K5 Sprint 19 Wave 3 (PLAN.md V22 §S19 W14, S-L10-1). Owner: K5 DX. "
+            "При True src/testkit/ (NEW) предоставляет public API: RouteRunner, WorkflowRunner, "
+            "MockCapabilityGateway, FakeWorkflowBackend, recorder/replay fixtures, "
+            "assert_audit_event, assert_metric_recorded. Документация в docs/testkit/. "
+            "default-OFF до testkit API review."
+        ),
+    )
+
+    adaptive_timeout_enabled: bool = Field(
+        default=False,
+        title="K2 S19 W3: .policy.adaptive_timeout(percentile=99, safety_factor=1.5) builder API",
+        description=(
+            "K2 Sprint 19 Wave 3 (PLAN.md V22 §S19 W15). Owner: K2 Resilience. "
+            "При True RouteBuilder и WorkflowBuilder поддерживают "
+            ".policy.adaptive_timeout(percentile=99, safety_factor=1.5) — адаптивный "
+            "timeout на основе historical latency. "
+            "default-OFF до adaptive timeout smoke-test."
+        ),
+    )
+
+    multi_replica_failover: bool = Field(
+        default=False,
+        title="K2 S19 W1: SmartSessionManager multi-replica failover (S-L6-4)",
+        description=(
+            "K2 Sprint 19 Wave 1 (PLAN.md V22 §S19 W10, S-L6-4). Owner: K2 Resilience. "
+            "При True SmartSessionManager поддерживает multi-replica failover: "
+            "replication-lag monitoring через pg_stat_replication + auto-routing по lag-budget. "
+            "Chaos test (kill replica) должен проходить. "
+            "default-OFF до chaos-test validation."
+        ),
+    )
+
+    vault_zero_downtime_rotation: bool = Field(
+        default=False,
+        title="K1 S19 W1: Vault zero-downtime secret rotation (S-L6-6)",
+        description=(
+            "K1 Sprint 19 Wave 1 (PLAN.md V22 §S19 W10, S-L6-6). Owner: K1 Security. "
+            "При True graceful Vault reconnect: сохранение старого secret N минут drift-toleration + "
+            "validation новых credentials ДО активации. "
+            "default-OFF до rotation smoke-test."
+        ),
+    )
+
+    manage_py_diagnose: bool = Field(
+        default=False,
+        title="K2 S19 W2: manage.py diagnose aggregator JSON output для CI",
+        description=(
+            "K2 Sprint 19 Wave 2 (PLAN.md V22 §S19 W16). Owner: K2 DevOps. "
+            "При True manage.py diagnose выводит JSON со status всех subsystems: "
+            "db/redis/kafka/vault/llm-gateway/health/endpoints. "
+            "CI-gate: diagnose JSON exit 0 только при all-healthy. "
+            "default-OFF до diagnose output schema review."
+        ),
+    )
+
+    current_frames_fallback: bool = Field(
+        default=False,
+        title="K1 S19 W2: sys._current_frames() graceful fallback для PyPy/Jython (F-6)",
+        description=(
+            "K1 Sprint 19 Wave 2 (PLAN.md V22 §S19 W17, F-6 carryover). Owner: K1 Security. "
+            "При True tools/checks/check_deadlock.py использует sys._current_frames() "
+            "с graceful fallback на PyPy/Jython (где отсутствует). "
+            "default-OFF до fallback smoke-test на PyPy."
+        ),
+    )
+
+    adaptive_rag_strategy_enabled: bool = Field(
+        default=False,
+        title="K4 S19 W6: Adaptive RAG strategy finale (dense/hybrid/hyde/multi_query)",
+        description=(
+            "K4 Sprint 19 Wave 6 (PLAN.md V22 §S19 W18). Owner: K4 AI/RAG. "
+            "При True RagQueryProcessor расширяется: dense/hybrid/hyde/multi_query "
+            "через LLM-classifier. Accuracy +15% bench. Latency <50ms. "
+            "default-OFF до adaptive RAG bench validation."
+        ),
+    )
+
+    ai_safety_capability_unify: bool = Field(
+        default=False,
+        title="K1 S19 W5: AI Safety fs.write.<scope> unified capability (ADR-NEW-16/17/18 closure)",
+        description=(
+            "K1 Sprint 19 Wave 5 (PLAN.md V22 §S19 W19). Owner: K1 Security/AI Safety. "
+            "При True AI workspace fs.write.<scope> унифицирован: все write-operations "
+            "проходят через AIWorkspaceManager с capability-checked scopes. "
+            "fs.write.artifact / fs.write.session / fs.write.tenant. "
+            "default-OFF до AI Safety audit."
+        ),
+    )
+
+    prod_hot_reload_disable: bool = Field(
+        default=False,
+        title="K1 S19 W6: APP_PROFILE=prod hot-reload disabled",
+        description=(
+            "K1 Sprint 19 Wave 6 (PLAN.md V22 §S19 W20). Owner: K1 Security/DevOps. "
+            "При True hot-reload деактивируется при APP_PROFILE=prod "
+            "(settings.app.profile == 'prod'). "
+            "default-OFF до prod hot-reload validation."
+        ),
+    )
+
+    dsl_usage_audit_enabled: bool = Field(
+        default=False,
+        title="K3 S19 W6: DSL usage audit tools/audit/dsl_usage_audit.py",
+        description=(
+            "K3 Sprint 19 Wave 6 (PLAN.md V22 §S19 W21). Owner: K3 DSL. "
+            "При True tools/audit/dsl_usage_audit.py собирает статистику использования "
+            "DSL процессоров: top-20 steps, avg latency, error rate per step type. "
+            "default-OFF до audit dashboard integration."
+        ),
+    )
+
+    admin_react_mvp: bool = Field(
+        default=False,
+        title="K5 S19 W5: frontend/admin-react/ MVP (React-based admin UI)",
+        description=(
+            "K5 Sprint 19 Wave 5 (PLAN.md V22 §S19 W22). Owner: K5 Frontend. "
+            "При True frontend/admin-react/ содержит MVP React admin UI: "
+            "routes dashboard + feature-flag toggle + audit viewer. "
+            "default-OFF до admin MVP review."
+        ),
+    )
+
+    quick_wins_pack: bool = Field(
+        default=False,
+        title="K5 S19 W4: make new-adr + completions + release-notes + D3.js arch map",
+        description=(
+            "K5 Sprint 19 Wave 4 (PLAN.md V22 §S19 W16). Owner: K5 DX. "
+            "При True: make new-adr TITLE=\"...\" + manage.py completions install + "
+            "make release-notes + frontend/streamlit_app/pages/05_Architecture_Map.py (D3.js). "
+            "default-OFF до quick-wins review."
+        ),
+    )
+
 
 feature_flags = FeatureFlags()

@@ -17,8 +17,8 @@
 
 [meta]
 version = "2026-05-25"
-sprint = "S18"
-source = "PLAN.md V22 §S18 (Operational + Security GAP Carryover) + ADR-NEW-6/-9/-11"
+sprint = "S19"
+source = "PLAN.md V22 §S19 (DSL+AI Extensions + DX)"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # K1 — Security / Auth / Syntax / TLS
@@ -240,7 +240,115 @@ waves = [
 shared_with = []
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Blockers — открытые препятствия Sprint 17 (≥3 обязательно)
+# Sprint 19 — DSL+AI Extensions + DX
+# ═════════════════════════════════════════════════════════════════════════════
+
+[team_s19.k1]
+name = "Security / Auth / Vault / AI Safety"
+goal = "S19: vault zero-downtime rotation (k1-w1), current_frames fallback (k1-w2), ai-safety capability unify (k1-w5), prod hot-reload disable (k1-w6)."
+git_branch_prefix = "team-s19/k1-security"
+worktree = ".claude/worktrees/team-s19-k1-security"
+owned_paths = [
+    "src/backend/core/config/vault.py",
+    "src/backend/infrastructure/secrets/vault*.py",
+    "src/backend/core/ai/workspace_manager.py",
+    "src/backend/core/ai/fs_facade.py",
+    "src/backend/tools/checks/check_deadlock.py",
+]
+waves = [
+    "s19/k1-w1-vault-zero-downtime-rotation",
+    "s19/k1-w2-current-frames-fallback",
+    "s19/k1-w5-ai-safety-capability-unify",
+    "s19/k1-w6-prod-hot-reload-disable",
+]
+shared_with = ["k4"]
+
+[team_s19.k2]
+name = "Resilience / Performance / Observability"
+goal = "S19: multi-replica failover (k2-w1), manage.py diagnose (k2-w2), adaptive timeout policy (k2-w3), coverage ratchet 75% (k2-w4)."
+git_branch_prefix = "team-s19/k2-resilience"
+worktree = ".claude/worktrees/team-s19-k2-resilience"
+owned_paths = [
+    "src/backend/core/resilience/**",
+    "src/backend/core/scaling/**",
+    "manage.py",
+    "src/backend/infrastructure/observability/**",
+]
+waves = [
+    "s19/k2-w1-multi-replica-failover",
+    "s19/k2-w2-manage-py-diagnose",
+    "s19/k2-w3-adaptive-timeout-policy",
+    "s19/k2-w4-coverage-ratchet-75",
+]
+shared_with = ["k1", "k3"]
+
+[team_s19.k3]
+name = "DSL / Routes / Workflow / LSP"
+goal = "S19: workflow versioning routes (k3-w1), route composition include (k3-w2), route authz requires permission (k3-w3), lsp server finale (k3-w4), dsl visual editor finale (k3-w5), dsl usage audit (k3-w6)."
+git_branch_prefix = "team-s19/k3-dsl"
+worktree = ".claude/worktrees/team-s19-k3-dsl"
+owned_paths = [
+    "src/backend/dsl/route/**",
+    "src/backend/services/routes/**",
+    "src/backend/dsl/engine/processors/*.py",
+    "tools/dsl_lsp/**",
+    "tools/audit/dsl_usage_audit.py",
+]
+waves = [
+    "s19/k3-w1-workflow-versioning-routes",
+    "s19/k3-w2-route-composition-include",
+    "s19/k3-w3-route-authz-requires-permission",
+    "s19/k3-w4-lsp-server-finale",
+    "s19/k3-w5-dsl-visual-editor-finale",
+    "s19/k3-w6-dsl-usage-audit",
+]
+shared_with = ["k4", "k5"]
+
+[team_s19.k4]
+name = "AI / RAG / LLM / Multimodal"
+goal = "S19: multipart rag ingest (k4-w1), reranking pipeline (k4-w2), banking ai processors impl (k4-w3), langmem consolidation impl (k4-w4), ai pr review action (k4-w5), adaptive rag strategy finale (k4-w6)."
+git_branch_prefix = "team-s19/k4-ai"
+worktree = ".claude/worktrees/team-s19-k4-ai"
+owned_paths = [
+    "src/backend/services/ai/**",
+    "src/backend/core/config/rag.py",
+    "src/backend/entrypoints/api/v1/endpoints/rag*.py",
+    "src/backend/entrypoints/api/v1/endpoints/ai_*.py",
+    ".github/workflows/ai-pr-review.yml",
+]
+waves = [
+    "s19/k4-w1-multipart-rag-ingest",
+    "s19/k4-w2-reranking-pipeline",
+    "s19/k4-w3-banking-ai-processors-impl",
+    "s19/k4-w4-langmem-consolidation-impl",
+    "s19/k4-w5-ai-pr-review-action",
+    "s19/k4-w6-adaptive-rag-strategy-finale",
+]
+shared_with = ["k1", "k3"]
+
+[team_s19.k5]
+name = "Frontend / DX / VSCode / Testkit / Admin-React"
+goal = "S19: rpa browser session persistence (k5-w1), vscode extension (k5-w2), testkit public api (k5-w3), quick wins pack (k5-w4), admin react mvp (k5-w5)."
+git_branch_prefix = "team-s19/k5-frontend"
+worktree = ".claude/worktrees/team-s19-k5-frontend"
+owned_paths = [
+    "frontend/streamlit_app/pages/**/*.py",
+    "frontend/admin-react/**",
+    "tools/vscode-extension/**",
+    "src/testkit/**",
+    "docs/testkit/**",
+]
+waves = [
+    "s19/k5-w1-rpa-browser-session-persistence",
+    "s19/k5-w2-vscode-extension",
+    "s19/k5-w3-testkit-public-api",
+    "s19/k5-w4-quick-wins-pack",
+    "s19/k5-w5-admin-react-mvp",
+]
+shared_with = ["k3"]
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Blockers — открытые препятствия Sprint 19
 # ═════════════════════════════════════════════════════════════════════════════
 
 # ─────────────────────────────────────────────────────────────────────────────
