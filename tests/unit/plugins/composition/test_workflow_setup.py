@@ -47,7 +47,7 @@ def test_bootstrap_defaults_registers_two_sagas_when_enabled(
     _clean_registry: workflow_setup.WorkflowCompilerRegistry,
 ) -> None:
     """При выставленном флаге регистрируются orders_saga + payments_saga."""
-
+    pytest.importorskip("temporalio")
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings.workflow.bootstrap_defaults_enabled",
         True,

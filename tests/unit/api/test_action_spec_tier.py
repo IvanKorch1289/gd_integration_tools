@@ -70,7 +70,8 @@ class TestActionSpecPostInit:
     def test_default_tier_is_2_no_inference(self) -> None:
         spec = _spec("GET", "/api/v1/orders/all/")
         assert spec.tier == 2
-        assert spec.action_id is None
+        # tier 2 falls back to name as action_id (post-init guarantee)
+        assert spec.action_id == "dummy"
 
     def test_tier1_infers_action_id(self) -> None:
         spec = _spec("GET", "/api/v1/orders/all/", tier=1)
@@ -87,4 +88,5 @@ class TestActionSpecPostInit:
 
     def test_tier3_does_not_infer(self) -> None:
         spec = _spec("GET", "/api/v1/orders/all/", tier=3)
-        assert spec.action_id is None
+        # tier 3 falls back to name (no inference, post-init guarantee)
+        assert spec.action_id == "dummy"
