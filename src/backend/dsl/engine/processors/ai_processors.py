@@ -112,6 +112,9 @@ class LLMCallProcessor(BaseProcessor):
                 else str(exchange.in_message.body)
             )
 
+        # S30 w4: сохраняем prompt для NeMo output guardrails
+        exchange.set_property("llm.original_prompt", prompt)
+
         _log = logging.getLogger("dsl.ai")
 
         try:
@@ -853,6 +856,27 @@ class GuardrailsProcessor(BaseProcessor):
             except Exception as exc:  # noqa: BLE001
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/rebuff: provider error: {exc}")
+                    return
+
+        if "nemo" in config.enabled_providers:
+            try:
+                from src.backend.services.ai.guardrails.nemo_client import (
+                    get_nemo_guardrails_runtime,
+                )
+
+                runtime = get_nemo_guardrails_runtime()
+                if runtime is None:
+                    return  # GPU/FF unavailable — skip NeMo silently
+                prompt = exchange.get_property("llm.original_prompt", "")
+                nemo_result = await runtime.check_output(prompt=prompt, completion=text)
+                if not nemo_result.get("safe", True):
+                    exchange.fail(
+                        f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}"
+                    )
+                    return
+            except Exception as exc:  # noqa: BLE001
+                if config.block_on_failure:
+                    exchange.fail(f"Guardrail/nemo: provider error: {exc}")
                     return
 
     def _resolve_config(self) -> Any:
