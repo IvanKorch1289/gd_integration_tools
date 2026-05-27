@@ -10,12 +10,20 @@
 from __future__ import annotations
 
 import asyncio
+
+import logging
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import AsyncIterator, Callable, Literal
+from typing import TYPE_CHECKING, Callable, Literal
 
-__all__ = ("FileWatcherSource", "FileEvent")
+from watchfiles import Change
+
+from src.backend.core.interfaces.source import EventCallback, SourceKind
+
+if TYPE_CHECKING:
+    from watchfiles import awatch as _awatch
 
 
 @dataclass
@@ -37,10 +45,10 @@ class FileWatcherSource:
     """Источник событий файловой системы на базе ``watchfiles.awatch``.
 
     Обёртка над rust-based async-генератором ``watchfiles.awatch``.
-    Метод :meth:`stream` возвращает ``AsyncIterator[FileEvent]`` и корректно
-    завершается при отмене (``asyncio.CancelledError`` пробрасывается наружу).
+    Реализует протокол :class:`Source`.
 
     Args:
+        source_id: Уникальный id (используется в SourceRegistry).
         path: Корневой путь для наблюдения.
         recursive: Рекурсивно обходить поддиректории (default ``True``).
         debounce: Debounce-окно в секундах (default ``0.1``). Преобразуется
@@ -51,23 +59,78 @@ class FileWatcherSource:
     Example:
         .. code-block:: python
 
-            async for event in FileWatcherSource(Path("/data")).stream():
+            async for event in FileWatcherSource("fw1", Path("/data")).stream():
                 print(event.path, event.change_type)
     """
 
+    kind: SourceKind = SourceKind.FILE_WATCHER
+
     def __init__(
         self,
+        source_id: str,
         path: Path,
         *,
         recursive: bool = True,
         debounce: float = 0.1,
         watch_filter: Callable | None = None,
     ) -> None:
+        self.source_id = source_id
         self._path = path
         self._recursive = recursive
-        # watchfiles принимает debounce в миллисекундах (int)
         self._debounce_ms: int = max(1, int(debounce * 1000))
         self._watch_filter = watch_filter
+        self._running = False
+        self._on_event: EventCallback | None = None
+        self._watch_task: asyncio.Task[None] | None = None
+
+    async def start(self, on_event: EventCallback) -> None:
+        """Начать отслеживание файлов."""
+        if self._running:
+            raise RuntimeError(f"FileWatcherSource(id={self.source_id!r}) уже запущен")
+        self._running = True
+        self._on_event = on_event
+        from src.backend.core.utils.task_registry import get_task_registry
+
+        self._watch_task = get_task_registry().create_task(
+            self._run_watch(),
+            name=f"file-watcher-{self.source_id}",
+            deadline_seconds=None,
+        )
+
+    async def _run_watch(self) -> None:
+        """Background task: run watch loop and emit events."""
+        from datetime import UTC
+
+        from src.backend.core.interfaces.source import SourceEvent
+
+        try:
+            async for event in self.stream():
+                if self._on_event is not None:
+                    source_event = SourceEvent(
+                        source_id=self.source_id,
+                        kind=self.kind,
+                        payload={"path": str(event.path), "change_type": event.change_type},
+                    )
+                    await self._on_event(source_event)
+        except asyncio.CancelledError:
+            pass
+
+    async def stop(self) -> None:
+        """Остановить отслеживание."""
+        if not self._running:
+            return
+        self._running = False
+        if self._watch_task is not None:
+            self._watch_task.cancel()
+            try:
+                await self._watch_task
+            except asyncio.CancelledError:
+                pass
+            self._watch_task = None
+
+    async def health(self) -> bool:
+        """Health check: always healthy if not crashed."""
+        return self._running
 
     async def stream(self) -> AsyncIterator[FileEvent]:
         """Асинхронный генератор событий файловой системы.
@@ -78,8 +141,7 @@ class FileWatcherSource:
         Raises:
             asyncio.CancelledError: При отмене задачи (propagates наружу).
         """
-        # Ленивый импорт тяжёлой зависимости
-        from watchfiles import Change, awatch  # noqa: PLC0415
+        from watchfiles import awatch as _awatch  # noqa: PLC0415
 
         _change_map: dict[Change, Literal["added", "modified", "deleted"]] = {
             Change.added: "added",
@@ -92,7 +154,7 @@ class FileWatcherSource:
             kwargs["watch_filter"] = self._watch_filter
 
         try:
-            async for changes in awatch(self._path, **kwargs):
+            async for changes in _awatch(self._path, **kwargs):
                 for change, raw_path in changes:
                     change_type = _change_map.get(change, "modified")
                     yield FileEvent(path=Path(raw_path), change_type=change_type)
