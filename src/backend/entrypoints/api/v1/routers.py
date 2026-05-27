@@ -41,6 +41,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_workflows import (
         router as admin_workflows_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_langgraph import (
+        router as admin_langgraph_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.agent_memory import (
         router as agent_memory_router,
     )
@@ -204,6 +207,10 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(ai_stream_router, prefix="/ai", tags=["AI · Stream"])
     # Wave D.5: AI cost-dashboard (LangFuse primary).
     api_router_v1.include_router(ai_costs_router, prefix="/admin", tags=["AI · Costs"])
+    # S27 Wave 3: LangGraph checkpoint/session management UI.
+    api_router_v1.include_router(
+        admin_langgraph_router, prefix="/admin", tags=["Admin · LangGraph"]
+    )
     # Wave D.6: LangMem consolidation admin endpoints.
     api_router_v1.include_router(
         langmem_admin_router, prefix="/admin", tags=["AI · LangMem"]

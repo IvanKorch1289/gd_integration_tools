@@ -155,3 +155,13 @@ class AdminClient(BaseAPIClient):
             return self.post("/api/v1/admin/plugins/scaffold", json=body)
         except Exception as exc:  # noqa: BLE001
             return {"name": name, "created": False, "error": str(exc)}
+
+    def get_langgraph_sessions(self, limit: int = 50, offset: int = 0) -> dict[str, Any]:
+        """GET /api/v1/admin/langgraph/checkpoints — список активных LangGraph сессий."""
+        try:
+            return self.get(
+                "/api/v1/admin/langgraph/checkpoints",
+                params={"limit": limit, "offset": offset},
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {"sessions": [], "count": 0, "error": str(exc)}
