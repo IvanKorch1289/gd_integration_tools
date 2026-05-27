@@ -13,7 +13,10 @@ supported-markers = [
 ]
 
 [manifest]
-overrides = [{ name = "pyarrow", specifier = ">=20.0.0,<25.0.0" }]
+overrides = [
+    { name = "lxml", specifier = ">=6.1.1,<7.0.0" },
+    { name = "pyarrow", specifier = ">=20.0.0,<25.0.0" },
+]
 
 [[package]]
 name = "accelerate"
@@ -1455,6 +1458,7 @@ version = "11.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "license-expression", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "lxml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "packageurl-python", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "py-serializable", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "sortedcontainers", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -1467,7 +1471,6 @@ wheels = [
 [package.optional-dependencies]
 validation = [
     { name = "jsonschema", extra = ["format-nongpl"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "lxml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "referencing", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 

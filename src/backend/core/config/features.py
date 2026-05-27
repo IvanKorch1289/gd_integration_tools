@@ -133,6 +133,18 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
+    workflow_orchestrator_enabled: bool = Field(
+        default=False,
+        title="K4 S28 W4: OrchestratorEngine routing tasks between agents",
+        description=(
+            "K4 Sprint 28 Wave 4 (wave:s28/k4-w4-orchestrator-engine). "
+            "Owner: K4 AI/Workflow. Activates OrchestratorEngine.route() - "
+            "task -> agent routing based on RoutingRule with JMESPath evaluation. "
+            "When False, engine returns default_agent (if specified) "
+            "or raises ValueError. default-OFF until staging-smoke."
+        ),
+    )
+
     # ─── K5 — DSL ──────────────────────────────────────────────────────────
     frontend_schema_registry_ui: bool = Field(
         default=False,
