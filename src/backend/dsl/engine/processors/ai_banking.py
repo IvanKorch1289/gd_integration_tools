@@ -364,6 +364,12 @@ Respond with JSON:
             )
             return False
 
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.jurisdiction != "ru":
+            spec["jurisdiction"] = self.jurisdiction
+        return {"kyc_aml_verify": spec}
+
 
 # ─── Anti-Fraud Processor ─────────────────────────────────────────────────────
 
@@ -472,6 +478,12 @@ Respond with JSON:
                 error=str(exc),
             )
             return False
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.model != "default":
+            spec["model"] = self.model
+        return {"antifraud_score": spec}
 
 
 # ─── Credit Scoring RAG Processor ──────────────────────────────────────────────
@@ -597,6 +609,12 @@ Respond with JSON:
                 error=str(exc),
             )
             return False
+
+    def to_spec(self) -> dict[str, Any] | None:
+        spec: dict[str, Any] = {}
+        if self.product != "retail":
+            spec["product"] = self.product
+        return {"credit_scoring_rag": spec}
 
 
 # ─── Document Classifier Processor ──────────────────────────────────────────────
