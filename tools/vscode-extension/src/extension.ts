@@ -1,12 +1,14 @@
 /**
  * GD Integration Tools - VSCode Extension
- * K5 S19 W2: VSCode extension for GD Integration Tools
+ * K5 S19 W2 + S33 W5: VSCode extension for GD Integration Tools
  *
  * Features:
  * - Syntax highlighting for GD DSL
  * - Hover docs
  * - 'Run step' CodeLens
  * - LSP client for enhanced language features
+ * - Wizard commands: wizardRoute, wizardPlugin (S33 W5)
+ * - DSL-aware editing for .dsl.yaml and route.toml
  */
 
 import * as vscode from 'vscode';
@@ -178,7 +180,102 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }
     );
 
-    context.subscriptions.push(runStepCommand, showDocsCommand);
+    // GD Wizard Route command
+    const wizardRouteCommand = vscode.commands.registerCommand(
+        "gd-integration-tools.wizardRoute",
+        async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                vscode.window.showWarningMessage("No workspace folder open");
+                return;
+            }
+            const config = vscode.workspace.getConfiguration("gdIntegrationTools");
+            const pythonCmd = config.get<string>("pythonCommand", "uv run python");
+            const terminal = vscode.window.createTerminal({
+                name: "GD Wizard Route",
+                cwd: workspaceFolder.uri.fsPath,
+            });
+            terminal.sendText(`${pythonCmd} tools/wizards/route_wizard.py`);
+            terminal.show();
+        }
+    );
+
+    // GD Wizard Plugin command
+    const wizardPluginCommand = vscode.commands.registerCommand(
+        "gd-integration-tools.wizardPlugin",
+        async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                vscode.window.showWarningMessage("No workspace folder open");
+                return;
+            }
+            const config = vscode.workspace.getConfiguration("gdIntegrationTools");
+            const pythonCmd = config.get<string>("pythonCommand", "uv run python");
+            const terminal = vscode.window.createTerminal({
+                name: "GD Wizard Plugin",
+                cwd: workspaceFolder.uri.fsPath,
+            });
+            terminal.sendText(`${pythonCmd} tools/wizards/plugin_wizard.py`);
+            terminal.show();
+        }
+    );
+
+    // GD Validate Route command
+    const validateRouteCommand = vscode.commands.registerCommand(
+        "gd-integration-tools.validateRoute",
+        async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                return;
+            }
+            const terminal = vscode.window.createTerminal({
+                name: "GD Validate Route",
+                cwd: workspaceFolder.uri.fsPath,
+            });
+            terminal.sendText("make routes");
+            terminal.show();
+        }
+    );
+
+    // GD Open Routes Folder
+    const openRoutesCommand = vscode.commands.registerCommand(
+        "gd-integration-tools.openRoutesFolder",
+        async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                return;
+            }
+            const config = vscode.workspace.getConfiguration("gdIntegrationTools");
+            const routesDir = config.get<string>("routesDir", "routes");
+            const folderUri = vscode.Uri.joinPath(workspaceFolder.uri, routesDir);
+            await vscode.commands.executeCommand("revealFileInOS", folderUri);
+        }
+    );
+
+    // GD Open Extensions Folder
+    const openExtensionsCommand = vscode.commands.registerCommand(
+        "gd-integration-tools.openExtensionsFolder",
+        async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                return;
+            }
+            const config = vscode.workspace.getConfiguration("gdIntegrationTools");
+            const extensionsDir = config.get<string>("extensionsDir", "extensions");
+            const folderUri = vscode.Uri.joinPath(workspaceFolder.uri, extensionsDir);
+            await vscode.commands.executeCommand("revealFileInOS", folderUri);
+        }
+    );
+
+    context.subscriptions.push(
+        runStepCommand,
+        showDocsCommand,
+        wizardRouteCommand,
+        wizardPluginCommand,
+        validateRouteCommand,
+        openRoutesCommand,
+        openExtensionsCommand,
+    );
 }
 
 /**

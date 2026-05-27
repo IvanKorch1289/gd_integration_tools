@@ -391,14 +391,39 @@ streamlit: frontend ## Alias: Streamlit dashboard (R3.10c)
 scaffold: check-env ## Scaffold new component (usage: make scaffold type=service name=invoices)
 	@$(MANAGE_SCRIPT) scaffold $(type) $(name)
 
-scaffold-route: check-env ## Sprint 10 K5 W2: interactive route wizard (NAME=... [SOURCE=http SINK=http AI=1 RETRY=1])
-	@$(INFO) "Scaffolding route $(NAME)..."
+scaffold-route: check-env ## Sprint 10 K5 W2: DEPRECATED — use make wizard-route instead
+	@echo "use: make wizard-route NAME=... SOURCE=... SINK=..."
 	@$(UV_RUN) python tools/scaffold_route.py \
 		$(if $(NAME),--name $(NAME),) \
 		$(if $(SOURCE),--source $(SOURCE),) \
 		$(if $(SINK),--sink $(SINK),) \
 		$(if $(AI),--ai,) \
 		$(if $(RETRY),--retry,) \
+		$(if $(FORCE),--force,)
+
+wizard-route: check-env ## S33 W1: Typer-based route wizard (NAME=... [SOURCE=http SINK=http AI=1 RETRY=1])
+	@$(INFO) "Scaffolding route $(NAME)..."
+	@$(UV_RUN) python tools/wizards/route_wizard.py \
+		$(if $(NAME),--name $(NAME),) \
+		$(if $(SOURCE),--source $(SOURCE),) \
+		$(if $(SINK),--sink $(SINK),) \
+		$(if $(AI),--ai,) \
+		$(if $(RETRY),--retry,) \
+		$(if $(RETRY_ATTEMPTS),--retry-attempts $(RETRY_ATTEMPTS),) \
+		$(if $(AI_MODEL),--ai-model $(AI_MODEL),) \
+		$(if $(AI_PROVIDER),--ai-provider $(AI_PROVIDER),) \
+		$(if $(TENANT_AWARE),--tenant-aware,) \
+		$(if $(P95_MS),--p95-ms $(P95_MS),) \
+		$(if $(TIMEOUT_MS),--timeout-ms $(TIMEOUT_MS),) \
+		$(if $(FORCE),--force,)
+
+wizard-plugin: check-env ## S33 W2: Typer-based plugin wizard (NAME=...)
+	@$(INFO) "Scaffolding plugin $(NAME)..."
+	@$(UV_RUN) python tools/wizards/plugin_wizard.py \
+		$(if $(NAME),--name $(NAME),) \
+		$(if $(DESCRIPTION),--description $(DESCRIPTION),) \
+		$(if $(TRUST_TIER),--trust-tier $(TRUST_TIER),) \
+		$(if $(REQUIRES_CORE),--requires-core $(REQUIRES_CORE),) \
 		$(if $(FORCE),--force,)
 
 routes: check-env ## List DSL routes

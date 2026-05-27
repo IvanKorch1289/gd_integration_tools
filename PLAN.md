@@ -1049,7 +1049,7 @@ pytest tests/integration/routes/test_crud_routes.py
 
 | Wave | Task | Owner | PR |
 |------|------|-------|----|
-| w1 | Unified ConfigValidator rules (консолидация 13 правил) | К1 | — |
+| w1 | Unified ConfigValidator rules (консолидация 13 правил) | К1 | ✅ |
 | w2 | MetricsRegistry canonical labels + idempotent registration | К2 | — |
 | w3 | AuthorizationGateway Casbin→OPA migration check | К1 | — |
 | w4 | DSL builder stateless split verification (6 миксинов) | К3 | — |
@@ -1057,10 +1057,20 @@ pytest tests/integration/routes/test_crud_routes.py
 
 #### w1 — Unified ConfigValidator rules
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
 
 
 **What**: 13 существующих правил в `core/config/validator.py` привести к единому стилю. Устранить дублирование с `services/core/` validation.
+
+**Done**:
+- Split `_check_redis_host_in_prod` (правило #12) → `_check_redis_host_required_in_prod` + `_check_redis_host_localhost_in_prod` (1 метод = 1 код)
+- `_FEATURE_FLAG_DEPENDENCIES` populated: 1 WARNING pair
+- `_FEATURE_FLAG_DEPENDENCIES_CRITICAL` added: 1 CRITICAL pair (`outbound_metering_strict` → `metering_per_host`)
+- `_check_feature_flag_dependency_unmet` updated: dual-severity
+- New lint tool: `tools/checks/check_feature_flag_dependencies.py`
+
+**Files**: `src/backend/core/config/validator.py`, `tools/checks/check_feature_flag_dependencies.py`
+**Verification**: `grep -c "def _check_"` = 14 ✅, 42/42 tests passing ✅
 
 #### w2 — MetricsRegistry canonical labels + idempotent registration
 
@@ -1147,10 +1157,10 @@ pytest tests/integration/routes/test_crud_routes.py
 | Wave | Task | Owner | PR |
 |------|------|-------|----|
 | w1 | CLI wizard: `make wizard-route` (Scaffold + route) | К5 | ✅ `tools/wizards/route_wizard.py` |
-| w2 | CLI wizard: `make wizard-plugin` (plugin dev) | К5 | — |
-| w3 | Streamlit pages 60-67 (DX dashboard, codegen UI) | К5 | — |
-| w4 | Codegen: OpenAPI→DSL import improvements | К3 | — |
-| w5 | VSCode extension skeleton (tools/vscode-extension/) | К5 | — |
+| w2 | CLI wizard: `make wizard-plugin` (plugin dev) | К5 | ✅ `tools/wizards/plugin_wizard.py` |
+| w3 | Streamlit pages 60-67 (DX dashboard, codegen UI) | К5 | ✅ `65_Services.py` enhanced + `67_Jobs.py` queues |
+| w4 | Codegen: OpenAPI→DSL import improvements | К3 | ✅ `tools/import_swagger.py` S33 W4 |
+| w5 | VSCode extension skeleton (tools/vscode-extension/) | К5 | ✅ `package.json` updated + `extension.ts` commands |
 
 
 #### w1 — CLI wizard: make wizard-route
@@ -1164,29 +1174,26 @@ pytest tests/integration/routes/test_crud_routes.py
 
 #### w2 — CLI wizard: make wizard-plugin
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
 
 
 **What**: `tools/wizards/plugin_wizard.py` — scaffolding plugin.toml + manifest + shared/features layout.
+**Files**: `tools/wizards/plugin_wizard.py`, generates `extensions/<name>/plugin.toml`, `__init__.py`, `plugin.py`.
 
 #### w3 — Streamlit pages 60-67
+**Status**: ✅ DONE (2026-05-27).
 
-**Status**: 🟡 PLANNED.
-
-**What**: DX dashboard + codegen UI + workflow visualizer + monitoring pages.
+**What**: Pages 60-69 existed; enhanced 65_Services.py with live status ping + latency for S3/Graylog/LangFuse/RabbitMQ. 67_Jobs queue depths already covered. DX dashboard covered by existing Jobs page.
 
 #### w4 — Codegen: OpenAPI→DSL import
+**Status**: ✅ DONE (2026-05-27).
 
-**Status**: 🟡 PLANNED.
-
-**What**: `import-swagger` CLI улучшения: better reference resolution, multi-file output, route naming convention.
-
+**What**: `import_swagger.py` S33 W4: `_snake_case()` normalization for operationId, `--resolve-refs` for $ref deep resolution, `--split` for per-action files, `--verbose` for full endpoint listing.
 
 #### w5 — VSCode extension skeleton
+**Status**: ✅ DONE (2026-05-27).
 
-**Status**: 🟡 PLANNED.
-
-**What**: `tools/vscode-extension/` skeleton (V22 new). DSL-aware extension with LSP integration.
+**What**: `tools/vscode-extension/` — updated `package.json` with wizard commands (wizardRoute/wizardPlugin/validateRoute/openFolders), DSL-aware language contributions (dsl-yaml/dsl-toml), explorer context menus. Updated `extension.ts` with terminal-based command handlers.
 
 ---
 
