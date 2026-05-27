@@ -1053,7 +1053,7 @@ pytest tests/integration/routes/test_crud_routes.py
 | w2 | MetricsRegistry canonical labels + idempotent registration | К2 | ✅ |
 | w3 | AuthorizationGateway Casbin→OPA migration check | К1 | ✅ |
 | w4 | DSL builder stateless split verification (6 миксинов) | К3 | ✅ |
-| w5 | TaskRegistry CI-gate enforce + check_task_registry.py | К2 | — |
+| w5 | TaskRegistry CI-gate enforce + check_task_registry.py | К2 | ✅ |
 
 #### w1 — Unified ConfigValidator rules
 
@@ -1108,15 +1108,33 @@ pytest tests/integration/routes/test_crud_routes.py
 
 #### w4 — DSL builder stateless split verification
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
+
 
 **What**: 6 stateless миксинов RouteBuilder (S12 Track A) верифицировать на отсутствие shared state. golden-snapshot baseline.
 
+**Done**:
+- RouteBuilder = 7 mixins (AIRPAMixin, ControlFlowMixin, EIPMixin, EventBusMixin, IntegrationMixin, ConvertersMixin, AgentDSLMixin) + base class
+- Все 6+ миксинов stateless: `__slots__ = ()` объявлен во всех ✅
+- Нет instance-атрибутов: все используют `self._add()` / `self._add_lazy()` через MRO ✅
+- RouteBuilder — `@dataclass(slots=True)` с полями state: `route_id`, `source`, `description`, `_processors`, `_protocol`, `_transport_config`, `_feature_flag`
+- State separation: state в `RouteBuilder`, behavior в mixins
+
+**Files**: `src/backend/dsl/builders/base.py`, `src/backend/dsl/builders/{control_flow,eip,eventbus_mixin,integration,converters,agent_dsl}.py`
+
 #### w5 — TaskRegistry CI-gate enforce
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
+
 
 **What**: `check_task_registry.py` → mandatory CI gate. Все `asyncio.create_task` → `TaskRegistry.create_task`.
+
+**Done**:
+- `tools/checks/check_task_registry.py` — CI-gate для orphan `asyncio.create_task/ensure_future/loop.create_task`, поддерживает `--strict` + `--json` + `--root`
+- `make check-task-registry` — уже существует в Makefile (S17 K2 W3) ✅
+- Ловит: `asyncio.create_task`, `asyncio.ensure_future`, `loop.create_task`, `loop.ensure_future`
+- Пропускает: `tests/`, `# noqa: orphan-create-task`, `if __name__ == "__main__":`
+- `python tools/checks/check_task_registry.py --root src/backend` → OK: 0 violations ✅
 
 
 ---
