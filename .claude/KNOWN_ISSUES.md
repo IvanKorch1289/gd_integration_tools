@@ -549,7 +549,7 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 **Статус:** Открыта | В работе: `s22/k2-w1-smoke-tests`
 
 #### 🟡 B-09 [L5] Desktop RPA создаёт новый Application() каждый запрос
-**Файл:** `windows_worker/handlers/desktop_rpa_handler.py`
+**Файл:** `src/backend/windows_worker/handlers/desktop_rpa_handler.py`
 **Статус:** Открыта | В работе: `s21/k3-w1-desktop-rpa-pool`
 
 #### 🟡 B-10 [L4] Multi-agent supervisor — stub
@@ -935,40 +935,20 @@ async, `HotSwapResult`, `PluginLoaderProtocol`, graceful shutdown через
 
 ---
 
-### ⚠️ AUDIT-3 — windows-sidecar layout ≠ PLAN.md V17 `windows_worker/`
+### ⚠️ AUDIT-3 — windows-sidecar layout → RESOLVED 2026-05-26
 
-- **Owner**: K3 DSL+Workflow
-- **ETA**: Sprint 8 K3 W1 (`[wave:s8/k3-w1-windows-worker-rename]`)
-- **Risk**: low (RPA stage 1 не начат, рефакторинг до scaling-up)
-- **Текущий layout**: `windows-sidecar/{app.py, com_router.py, Dockerfile.windows}`
-- **Целевой layout V17**: `windows_worker/{main.py, handlers/com_handler.py, handlers/desktop_rpa_handler.py, Dockerfile.windows}`
+**Решение**: Перенесён в `src/backend/windows_worker/` (user directive 2026-05-26).
+Windows-only процесс остаётся частью core (не marketplace), platform markers
+в pyproject.toml отделяют deps.
 
-**Описание**:
-- Имя `windows-sidecar` использует kebab-case, PEP 8 и V17 требуют snake_case
-  `windows_worker/`.
-- `app.py` → `main.py` (V17 alignment с остальными top-level Python entry).
-- `com_router.py` (137 LOC) разделить на `handlers/com_handler.py`
-  (текущее содержимое) + scaffold `handlers/desktop_rpa_handler.py` под
-  Sprint 8 K3 W4 pywinauto.
-- `docker-compose.windows-worker.yml` сейчас **untracked** в git — закоммитить
-  вместе с rename.
-
-**Вердикт «правильно вынесено наружу»** — оставить top-level (НЕ переносить в
-`src/`):
-- Отдельный процесс (REST API на Windows-контейнере), не Python import.
-- Windows-only runtime (Granian RSGI не работает на Windows нативно).
-- Windows-only deps (`pywin32`, `comtypes`, `pywinauto`) загрязнили бы основной
-  `src/` `[project.dependencies]` platform markers.
-- PLAN.md V17 строка 732 явно фиксирует top-level.
+**Старый вердикт (2026-05-15)**: оставить top-level.
+**Новый вердикт (2026-05-26)**: перенести в `src/backend/windows_worker/` — Windows-only
+runtime (Granian RSGI не работает на Windows нативно), но является неотъемлемой
+частью ядра, не external tooling.
 
 **DoD checklist**:
-- [ ] `git mv windows-sidecar windows_worker`
-- [ ] `git mv windows_worker/app.py windows_worker/main.py`
-- [ ] split `com_router.py` → `handlers/com_handler.py` + `handlers/desktop_rpa_handler.py`
-- [ ] Обновить `Dockerfile.windows` (CMD/ENTRYPOINT → `main.py`)
-- [ ] `git add docker-compose.windows-worker.yml`
-- [ ] Обновить `pyproject.toml::[project.optional-dependencies] com-windows / rpa-windows` если требуется
-- [ ] `make wave-memory NAME=windows-worker-rename TYPE=feedback`
+- [x] `git mv windows_worker src/backend/windows_worker/` (S29 `[wave:s29/windows-worker-relocate]`)
+- [x] Обновить пути в `desktop_rpa_client.py`, `features.py`, `docker-compose.windows-worker.yml`, `ARCHITECTURE.md`, `KNOWN_ISSUES.md`
 
 ---
 

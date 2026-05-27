@@ -18,7 +18,7 @@ services:
     image: gd-windows-worker:py314
     build:
       context: ../..
-      dockerfile: windows_worker/Dockerfile.windows
+      dockerfile: src/backend/windows_worker/Dockerfile.windows
     container_name: gd-windows-worker
     isolation: process
     ports:

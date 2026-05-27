@@ -1236,7 +1236,7 @@ class FeatureFlags(BaseSettingsWithLoader):
         description=(
             "K3 Sprint 6 Wave 5. Owner: K3 DSL. ETA: S6-W5. "
             "Активирует .call_com(worker, method, params) DSL-шаг → REST к "
-            "windows_worker/main.py через services/rpa/com_sidecar_client.py. "
+            "src/backend/windows_worker/main.py через services/rpa/com_sidecar_client.py. "
             "default-OFF на Linux (mock); ON на Windows-worker docker."
         ),
     )

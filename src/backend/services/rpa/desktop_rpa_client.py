@@ -1,7 +1,7 @@
 """Async HTTP-клиент для windows-worker Desktop RPA endpoints.
 
 Wave: ``[wave:s8/k3-rpa-windows-desktop]``. Обращается к sidecar'у
-(``windows_worker.handlers.desktop_rpa_handler``) по REST для выполнения
+(``backend.windows_worker.handlers.desktop_rpa_handler``) по REST для выполнения
 ``click`` / ``type`` / ``screenshot`` действий через pywinauto.
 
 Используется из DSL-шага ``.desktop_rpa(app, action, params)``.
