@@ -1,6 +1,6 @@
 # ADR-0065 — LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer
 
-* Статус: **Draft** (Sprint 24 candidate, [wave:s24/w3-memory-persistence])
+* Статус: **Accepted** (S29 T12, 2026-05-26 — durable flag + PostgresCheckpointer wrapper)
 * Связано с: GAP-2026-05-22 P0-3 (`gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md` Зона 2), PLAN.md V22.3 §S24, ADR-NEW-18.
 * Память: [[feedback_gap_analysis_ai_2026_05_22]], [[feedback_wave_8_rag]].
 

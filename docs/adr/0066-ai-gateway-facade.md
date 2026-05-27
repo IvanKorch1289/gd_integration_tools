@@ -1,6 +1,6 @@
 # ADR-0066 — AIGateway — единая точка входа в AI
 
-* Статус: **Draft** (Sprint 25 candidate, [wave:s25/w1-ai-gateway])
+* Статус: **Accepted** (S29 T9, 2026-05-26 — ModelRouter LiteLLM fallback chain + E2E tests)
 * Связано с: `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md` Зона 1 (orchestration consolidation), PLAN.md V22.4 §S25, ADR-NEW-19.
 * Память: [[feedback_gap_analysis_ai_2026_05_22]], [[feedback_v11_manifest_design]].
 

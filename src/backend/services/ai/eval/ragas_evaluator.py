@@ -19,7 +19,7 @@ RAG-цепочек проекта (RAGService + HybridRAGSearch). Поддерж
 
 См. также
 ---------
-* ADR-0073 ``docs/adr/0073-ragas-evaluation-gate.md`` (планируется);
+* ADR-0073 ``docs/adr/0073-ragas-evaluation-gate.md`` (Accepted S29 W3);
 * :mod:`src.backend.services.ai.eval.inspect_runner` — родственный Inspect AI runner;
 * :mod:`src.backend.services.ai.ai_moderation` — legacy single-question RagasEvaluator.
 
@@ -56,7 +56,7 @@ DEFAULT_THRESHOLDS: Final[dict[str, float]] = {
     "context_precision": 0.7,
     "context_recall": 0.7,
 }
-"""Пороговые значения качества RAG-цепочки (ADR-0073 черновик).
+"""Пороговые значения качества RAG-цепочки (ADR-0073).
 
 При значении ниже порога — gate в CI fail-ит (см. :meth:`RAGASReport.is_blocking`).
 """
