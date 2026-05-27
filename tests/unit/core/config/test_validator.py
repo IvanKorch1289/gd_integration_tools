@@ -400,6 +400,27 @@ class TestFeatureFlagDependencyUnmet:
         assert v.context["dependent"] == "foo_strict"
         assert v.context["unmet_requirements"] == ["foo_enabled"]
 
+    def test_unmet_critical_dependency_yields_critical(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Зависимость в _FEATURE_FLAG_DEPENDENCIES_CRITICAL → CRITICAL severity."""
+        from src.backend.core.config import validator as validator_module
+
+        monkeypatch.setattr(
+            validator_module,
+            "_FEATURE_FLAG_DEPENDENCIES_CRITICAL",
+            {"bar_strict": ("bar_enabled",)},
+        )
+        fake_flags = SimpleNamespace(bar_strict=True, bar_enabled=False)
+        settings = _make_settings(app=_make_app(environment="production"))
+        settings.features = fake_flags
+        waf = _make_waf(strict=True, allow_hosts=("a",))
+        violations = ConfigValidator().validate(settings, waf)
+        v = next(v for v in violations if v.code == "feature_flag.dependency_unmet")
+        assert v.severity == ConfigSeverity.CRITICAL
+        assert v.context["dependent"] == "bar_strict"
+        assert v.context["unmet_requirements"] == ["bar_enabled"]
+
 
 class TestDatabaseHostInProd:
     """R-CFG-1: ``database.host`` пустой в production для non-sqlite — CRITICAL."""

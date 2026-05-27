@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 from collections.abc import Iterator
+from pathlib import Path
 
 import httpx
 import pytest
@@ -74,7 +75,7 @@ async def test_non_webhook_source_returns_404(
     """Source существует, но имеет kind != webhook → 404."""
     from src.backend.infrastructure.sources.file_watcher import FileWatcherSource
 
-    fresh_registry.register(FileWatcherSource("fw1", directory="/tmp", pattern="*.json"))
+    fresh_registry.register(FileWatcherSource("fw1", path=Path("/tmp")))
     resp = await client.post("/webhooks/sources/fw1", json={})
     assert resp.status_code == 404
     assert "kind=file_watcher" in resp.json()["detail"]

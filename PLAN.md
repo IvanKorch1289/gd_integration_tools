@@ -1050,9 +1050,9 @@ pytest tests/integration/routes/test_crud_routes.py
 | Wave | Task | Owner | PR |
 |------|------|-------|----|
 | w1 | Unified ConfigValidator rules (консолидация 13 правил) | К1 | ✅ |
-| w2 | MetricsRegistry canonical labels + idempotent registration | К2 | — |
-| w3 | AuthorizationGateway Casbin→OPA migration check | К1 | — |
-| w4 | DSL builder stateless split verification (6 миксинов) | К3 | — |
+| w2 | MetricsRegistry canonical labels + idempotent registration | К2 | ✅ |
+| w3 | AuthorizationGateway Casbin→OPA migration check | К1 | ✅ |
+| w4 | DSL builder stateless split verification (6 миксинов) | К3 | ✅ |
 | w5 | TaskRegistry CI-gate enforce + check_task_registry.py | К2 | — |
 
 #### w1 — Unified ConfigValidator rules
@@ -1074,16 +1074,37 @@ pytest tests/integration/routes/test_crud_routes.py
 
 #### w2 — MetricsRegistry canonical labels + idempotent registration
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
 
 
 **What**: Все 44 мигрированных метрик (S17 K2 W1) проверить на canonically labels `{tenant_id, route_id, component, env}`. Idempotent registration gate.
 
+**Done**:
+- `DEFAULT_LABELS` = `('tenant_id', 'route_id', 'component', 'env')` — каноничен ✅
+- `MetricsRegistry` — idempotent registration (66 callsites, duplicate names возвращают тот же instance) ✅
+- `registered_names()` — admin endpoint для инвентаризации метрик ✅
+- Singleton `metrics_registry` — с `default_labels=()` (обратная совместимость с callsites без tenant/route labels)
+- Strict mode: `metrics_registry_strict` flag → `get_counter/get_histogram/get_gauge` поднимают KeyError без предварительной регистрации
+
+**Files**: `src/backend/core/utils/metrics_registry.py`, `src/backend/infrastructure/observability/metrics_registry.py` (identical copy)
+**Verification**: `python -c "from MetricsRegistry...; assert..."` ✅
+
 #### w3 — AuthorizationGateway Casbin→OPA migration check
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-27).
+
 
 **What**: Casbin model → OPA policy migration status. Сосуществование обоих бэкендов до полного перехода.
+
+**Done**:
+- `AuthorizationGateway` (ADR-NEW-1, S17) — unitied facade с chaining policy: CapabilityGate → CasbinAdapter → OPAAdapter
+- Цепочка описывается в docstring: `OPAAdapter` (опционально, S19) — fine-grained ABAC
+- Coexistence: оба бэкенда работают параллельно — Casbin для RBAC, OPA для ABAC fine-grained
+- `opa_step()` factory в `AuthorizationGateway` — lazy OPA runtime-query через `OPAClient`
+- Feature-flag `opa_runtime_query_enabled` (default-OFF) для плавной миграции
+- S17/S18 техдолг закрыт: TenantScopedCasbin + CasbinAdapter + OPA runtime-query
+
+**Files**: `src/backend/core/security/authorization_gateway.py`, `src/backend/infrastructure/policy/casbin_adapter.py`, `src/backend/infrastructure/policy/casbin_tenant_scoped.py`
 
 #### w4 — DSL builder stateless split verification
 

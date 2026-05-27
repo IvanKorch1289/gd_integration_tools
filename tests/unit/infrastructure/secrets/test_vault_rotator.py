@@ -67,9 +67,10 @@ def test_rotator_registers_path_and_callback(rotator: VaultSecretRotator) -> Non
     rotator.register("secret/data/db/password", callback)
 
     assert len(rotator._entries) == 1
-    registered_path, registered_cb = rotator._entries[0]
+    registered_path, registered_cb, registered_validator = rotator._entries[0]
     assert registered_path == "secret/data/db/password"
     assert registered_cb is callback
+    assert registered_validator is None  # не передан при регистрации
     assert rotator._versions["secret/data/db/password"] is None
 
 

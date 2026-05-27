@@ -55,11 +55,16 @@ def build_source(spec: SourceSpec) -> Source:
 
             return MQSource(source_id=spec.id, **spec.config)
         case SourceKind.FILE_WATCHER:
+            from pathlib import Path
+
             from src.backend.infrastructure.sources.file_watcher import (
                 FileWatcherSource,
             )
 
-            return FileWatcherSource(source_id=spec.id, **spec.config)
+            config = dict(spec.config)
+            if "directory" in config:
+                config["path"] = Path(config.pop("directory"))
+            return FileWatcherSource(source_id=spec.id, **config)
         case SourceKind.POLLING:
             from src.backend.infrastructure.sources.polling import PollingSource
 

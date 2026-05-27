@@ -67,11 +67,31 @@ JWT_SECRET_MIN_LENGTH: Final[int] = 32
 
 # Зависимости feature-flag'ов: ключ — зависимый flag, значение — кортеж
 # имён flag'ов, которые должны быть включены, чтобы зависимый имел смысл.
-# Сейчас пустой: реальные пары strict↔enabled в features.py отсутствуют
-# (например, ``metrics_registry_strict`` существует без ``_enabled``-пары).
-# Словарь сохранён как точка расширения для будущих зависимостей; правило
-# ``feature_flag.dependency_unmet`` итерируется по нему.
-_FEATURE_FLAG_DEPENDENCIES: Final[Mapping[str, tuple[str, ...]]] = {}
+# Правило ``feature_flag.dependency_unmet`` итерируется по нему.
+#
+# Критерии добавления пары:
+#   1. dependent == strict-mode flag (без базового _enabled-партнёра);
+#   2. требование логически обосновано (security posture, correctness);
+#   3. оба флага существуют в features.py.
+#
+# Текущие пары (S31 w1):
+#   - ``waf_strict_zero_allowlist`` (если появится) → ``waf_outbound_via_facade``
+#     WAF zero-allowlist имеет смысл только при маршрутизации через facade.
+_FEATURE_FLAG_DEPENDENCIES: Final[Mapping[str, tuple[str, ...]]] = {
+    # supply_chain_strict_mode без supply_chain_finale_strict — WARNING (не блокирует startup)
+    "supply_chain_strict_mode": ("supply_chain_finale_strict",),
+}
+
+# Пары зависимостей, которые блокируют production startup (CRITICAL).
+# Критерии CRITICAL:
+#   1. Security posture напрямую зависит от базового flag (без него — открытая дыра).
+#   2. Влияние на audit/compliance/safety.
+_FEATURE_FLAG_DEPENDENCIES_CRITICAL: Final[Mapping[str, tuple[str, ...]]] = {
+    # WAF zero-allowlist (при появлении) — CRITICAL security posture violation
+    # "waf_strict_zero_allowlist": ("waf_outbound_via_facade",),  # раскомментировать когда флаг появится
+    # outbound_metering_strict без per-host baseline = неверные rate-лимиты
+    "outbound_metering_strict": ("metering_per_host",),
+}
 
 
 class ConfigSeverity(StrEnum):
@@ -167,7 +187,8 @@ class ConfigValidator:
         if database is not None:
             violations.extend(self._check_database_host_in_prod(app, database))
         if redis is not None:
-            violations.extend(self._check_redis_host_in_prod(app, redis))
+            violations.extend(self._check_redis_host_required_in_prod(app, redis))
+            violations.extend(self._check_redis_host_localhost_in_prod(app, redis))
         violations.extend(self._check_feature_flag_dependency_unmet(settings))
 
         return tuple(violations)
@@ -517,12 +538,44 @@ class ConfigValidator:
             )
         ]
 
-    def _check_redis_host_in_prod(
+    def _check_redis_host_required_in_prod(
         self, app: "AppBaseSettings", redis: "RedisSettings"
     ) -> list[ConfigViolation]:
-        """R-CFG-2: ``redis.host`` пустой/localhost в production с Redis enabled.
+        """R-CFG-2a: ``redis.host`` пустой в production при Redis enabled.
 
-        Redis в проде должен указывать на shared instance (не localhost),
+        Redis в production обязан иметь явно заданный хост — иначе
+        распределённый кеш/rate-limit/idempotency недоступны.
+        """
+        if not self._is_prod(app):
+            return []
+        if not getattr(redis, "enabled", True):
+            return []
+        host = (redis.host or "").strip()
+        if host:
+            return []
+        return [
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="redis.host_required_in_prod",
+                message=(
+                    "redis.host пустой в production при redis.enabled=true: "
+                    "распределённый кеш недоступен."
+                ),
+                field="redis.host",
+                recommendation=(
+                    "Указать REDIS_HOST=<shared-instance> "
+                    "или выключить REDIS_ENABLED=false."
+                ),
+                context={"environment": app.environment, "enabled": True},
+            )
+        ]
+
+    def _check_redis_host_localhost_in_prod(
+        self, app: "AppBaseSettings", redis: "RedisSettings"
+    ) -> list[ConfigViolation]:
+        """R-CFG-2b: ``redis.host`` = localhost/127.0.0.1 в production.
+
+        Redis в production должен указывать на shared instance (не localhost),
         иначе под несколькими репликами каждый pod пишет в свой локальный
         Redis, разрушая распределённый кеш/rate-limit/idempotency.
         """
@@ -532,22 +585,8 @@ class ConfigValidator:
             return []
         host = (redis.host or "").strip().lower()
         if not host:
-            return [
-                ConfigViolation(
-                    severity=ConfigSeverity.CRITICAL,
-                    code="redis.host_required_in_prod",
-                    message=(
-                        "redis.host пустой в production при redis.enabled=true: "
-                        "распределённый кеш недоступен."
-                    ),
-                    field="redis.host",
-                    recommendation=(
-                        "Указать REDIS_HOST=<shared-instance> "
-                        "или выключить REDIS_ENABLED=false."
-                    ),
-                    context={"environment": app.environment, "enabled": True},
-                )
-            ]
+            # Пустой host уже обработан в _check_redis_host_required_in_prod
+            return []
         if host in {"localhost", "127.0.0.1", "::1", "0.0.0.0"}:
             return [
                 ConfigViolation(
@@ -575,11 +614,15 @@ class ConfigValidator:
 
         Источник flag'ов: ``settings.features`` (если задан в Settings) либо
         глобальный singleton ``feature_flags``. Зависимости перечислены в
-        ``_FEATURE_FLAG_DEPENDENCIES`` — словарь пуст по умолчанию, пары
-        дописываются по мере появления связанных flag'ов в features.py.
-        Severity: WARNING (не блокирует prod-стартап).
+        ``_FEATURE_FLAG_DEPENDENCIES`` (WARNING) и
+        ``_FEATURE_FLAG_DEPENDENCIES_CRITICAL`` (CRITICAL, блокирует startup).
+
+        Severity дифференцирована:
+        - CRITICAL: security posture напрямую зависит от базового flag
+          (supply-chain integrity, WAF allowlist, audit compliance).
+        - WARNING: остальные зависимости (не блокируют startup).
         """
-        if not _FEATURE_FLAG_DEPENDENCIES:
+        if not _FEATURE_FLAG_DEPENDENCIES and not _FEATURE_FLAG_DEPENDENCIES_CRITICAL:
             return []
         flags = getattr(settings, "features", None)
         if flags is None:
@@ -589,6 +632,35 @@ class ConfigValidator:
                 return []
             flags = _flags
         violations: list[ConfigViolation] = []
+
+        # CRITICAL-зависимости
+        for dependent, requirements in _FEATURE_FLAG_DEPENDENCIES_CRITICAL.items():
+            if not getattr(flags, dependent, False):
+                continue
+            unmet = tuple(req for req in requirements if not getattr(flags, req, False))
+            if not unmet:
+                continue
+            violations.append(
+                ConfigViolation(
+                    severity=ConfigSeverity.CRITICAL,
+                    code="feature_flag.dependency_unmet",
+                    message=(
+                        f"feature-flag '{dependent}' включён, но требует "
+                        f"{', '.join(unmet)} = true (CRITICAL: security posture)."
+                    ),
+                    field=f"features.{dependent}",
+                    recommendation=(
+                        f"Включить зависимости {', '.join(unmet)} либо выключить "
+                        f"'{dependent}'."
+                    ),
+                    context={
+                        "dependent": dependent,
+                        "unmet_requirements": list(unmet),
+                    },
+                )
+            )
+
+        # WARNING-зависимости
         for dependent, requirements in _FEATURE_FLAG_DEPENDENCIES.items():
             if not getattr(flags, dependent, False):
                 continue

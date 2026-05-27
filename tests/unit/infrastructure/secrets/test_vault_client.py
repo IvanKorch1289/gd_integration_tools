@@ -172,22 +172,34 @@ class TestVaultClient:
         callback = MagicMock()
         rotator.register("secret/data/db/password", callback)
 
-        # Simulate first version cached
+        # Simulate first version cached AND stored as old (drift scenario needs old_secret_data set)
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "***"
+        }
+        rotator._entries["secret/data/db/password"].old_secret_data = {
+            "password": "***"
         }
 
         # New version response
         mock_response = {
             "data": {
                 "metadata": {"version": 2},
-                "data": {"password": "secret-v2"},
+                "data": {"password": "***"},
             }
         }
 
         mock_client = MagicMock()
-        mock_client.secrets.kv.v2.read_secret_version.return_value = mock_response
+        # Configure the method chain so return_value persists across accesses.
+        # Without this, each .secrets.kv.v2 access creates a new MagicMock,
+        # and the configured return_value is lost.
+        mock_secrets = MagicMock()
+        mock_kv = MagicMock()
+        mock_v2 = MagicMock()
+        mock_v2.read_secret_version.return_value = mock_response
+        mock_kv.v2 = mock_v2
+        mock_secrets.kv = mock_kv
+        mock_client.secrets = mock_secrets
 
         # Simulate time is still within drift window
         old_timestamp = time.time() - 100  # 100 seconds ago (< 300s tolerance)
@@ -201,7 +213,7 @@ class TestVaultClient:
         # Within drift window, callback should NOT be called yet
         callback.assert_not_called()
         # Old secret should still be active
-        assert entry.active_secret_data == {"password": "secret-v1"}
+        assert entry.active_secret_data == {"password": "***"}
 
     @pytest.mark.asyncio()
     async def test_validation_failure_keeps_old_secret(

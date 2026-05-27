@@ -186,7 +186,8 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
         2. Иначе:
            a. action_name в ``tool_allowlist`` → allow;
            b. namespace action в ``tool_public_namespaces`` → allow;
-           c. иначе → deny с причиной ``"not_in_allowlist_or_public_ns"``.
+           c. namespace имеет ``capabilities_required`` → CapabilityGate.check;
+           d. иначе → deny с причиной ``"not_in_allowlist_or_public_ns"``.
 
     Tenant-aware фильтрация (per-tenant action whitelist) — carryover
     в Block 9.1 (SkillRegistry per-tenant tools filter, Phase E).
@@ -211,6 +212,24 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     public_namespaces = set(mcp_settings.tool_public_namespaces)
     if namespace in public_namespaces:
         return None
+
+    # Capability check via MCPNamespace.capabilities_required (ADR-0070 §3)
+    try:
+        from src.backend.core.security.capabilities import CapabilityDeniedError
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+        from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
+
+        ns = get_namespace_for_action(action_name)
+        if ns is not None and ns.capabilities_required:
+            gate = CapabilityGate()
+            for cap in ns.capabilities_required:
+                try:
+                    gate.check(plugin="mcp", capability=cap, requested_scope=None)
+                except CapabilityDeniedError:
+                    return f"capability_denied:{cap}"
+    except Exception as _:  # noqa: BLE001
+        # Best-effort: capability check failure → deny
+        return "capability_check_failed"
 
     return "not_in_allowlist_or_public_ns"
 

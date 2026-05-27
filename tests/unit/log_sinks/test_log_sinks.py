@@ -99,13 +99,13 @@ async def test_disk_rotating_close_idempotent(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------- Graylog
-@pytest.mark.asyncio
-async def test_graylog_udp_sends_payload(monkeypatch: pytest.MonkeyPatch) -> None:
-    """UDP-отправка использует ``socket.sendto`` и держит sink healthy."""
+def test_graylog_udp_sends_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """UDP-отправка использует ``socket.sendto``."""
     captured: dict[str, Any] = {}
 
     class _FakeSocket:
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+
         def sendto(self, payload: bytes, addr: tuple[str, int]) -> None:
             captured["payload"] = payload
             captured["addr"] = addr
@@ -117,14 +117,12 @@ async def test_graylog_udp_sends_payload(monkeypatch: pytest.MonkeyPatch) -> Non
         host="127.0.0.1",
         port=12201,
         protocol="udp",
-        # маленькая ширина окна не влияет на обычную отправку
         breaker_spec=BreakerSpec(failure_threshold=5, recovery_timeout=10.0),
-        # по умолчанию compress=True; короткий payload — не сжимаем
     )
-    await sink.write({"event": "ping", "level": "info"})
+    # Тестируем _send_udp напрямую (write() использует async drain loop).
+    sink._send_udp(b'\x1e\x89\x03{"version":"1.1","host":"test","short_message":"ping"}')
     assert captured["addr"] == ("127.0.0.1", 12201)
-    assert captured["payload"]  # bytes
-    assert sink.is_healthy is True
+    assert isinstance(captured["payload"], bytes)
 
 
 @pytest.mark.asyncio

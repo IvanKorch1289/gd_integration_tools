@@ -85,7 +85,7 @@ def test_build_chat_model_falls_back_to_community(
     monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any
 ) -> None:
     """При отсутствии ``langchain_litellm`` подхватывается ``langchain_community``."""
-    monkeypatch.setitem(sys.modules, "langchain_litellm", None)  # type: ignore[arg-type]
+    monkeypatch.setitem(sys.modules, "langchain_litellm", None)
     # При попытке `from langchain_litellm import ...` Python увидит None и кинет ImportError
     sys.modules.pop("langchain_litellm", None)
 
@@ -97,8 +97,8 @@ def test_build_chat_model_falls_back_to_community(
 
     fake_community = ModuleType("langchain_community")
     fake_chat_models = ModuleType("langchain_community.chat_models")
-    fake_chat_models.ChatLiteLLM = _CommunityChatLiteLLM  # type: ignore[attr-defined]
-    fake_community.chat_models = fake_chat_models  # type: ignore[attr-defined]
+    fake_chat_models.ChatLiteLLM = _CommunityChatLiteLLM
+    fake_community.chat_models = fake_chat_models
     monkeypatch.setitem(sys.modules, "langchain_community", fake_community)
     monkeypatch.setitem(sys.modules, "langchain_community.chat_models", fake_chat_models)
 
@@ -117,9 +117,9 @@ def test_build_chat_model_raises_when_no_adapter(
     sys.modules.pop("langchain_litellm", None)
     sys.modules.pop("langchain_community", None)
     sys.modules.pop("langchain_community.chat_models", None)
-    monkeypatch.setitem(sys.modules, "langchain_litellm", None)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "langchain_community", None)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "langchain_community.chat_models", None)  # type: ignore[arg-type]
+    monkeypatch.setitem(sys.modules, "langchain_litellm", None)
+    monkeypatch.setitem(sys.modules, "langchain_community", None)
+    monkeypatch.setitem(sys.modules, "langchain_community.chat_models", None)
     sys.modules.pop("langchain_litellm", None)
     sys.modules.pop("langchain_community", None)
     sys.modules.pop("langchain_community.chat_models", None)
@@ -138,8 +138,8 @@ async def test_build_and_run_agent_returns_error_when_deps_missing(
     """build_and_run_agent корректно деградирует при отсутствии LangGraph."""
     sys.modules.pop("langgraph", None)
     sys.modules.pop("langgraph.prebuilt", None)
-    monkeypatch.setitem(sys.modules, "langgraph", None)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "langgraph.prebuilt", None)  # type: ignore[arg-type]
+    monkeypatch.setitem(sys.modules, "langgraph", None)
+    monkeypatch.setitem(sys.modules, "langgraph.prebuilt", None)
 
     from src.backend.services.ai.ai_graph import build_and_run_agent
 
@@ -162,9 +162,10 @@ async def test_build_and_run_agent_invokes_react(
             captured_invoke.update(payload)
             return {"messages": [SimpleNamespace(content="ok-final")]}
 
-    def _fake_create_react_agent(llm: Any, tools: list[Any]) -> _FakeAgent:
+    def _fake_create_react_agent(llm: Any, tools: list[Any], **kwargs: Any) -> _FakeAgent:
         captured_invoke["llm_present"] = llm is not None
         captured_invoke["tools_count"] = len(tools)
+        captured_invoke["checkpointer"] = kwargs.get("checkpointer")
         return _FakeAgent()
 
     fake_lp = ModuleType("langgraph.prebuilt")

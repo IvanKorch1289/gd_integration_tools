@@ -94,7 +94,9 @@ def validate_cron_expression(
         base_dt = base_dt.astimezone(tz)
 
     try:
-        itr = croniter(expression, base_dt)
+        fields = expression.split()
+        second_at_beginning = len(fields) == 6
+        itr = croniter(expression, base_dt, second_at_beginning=second_at_beginning)
     except (ValueError, KeyError) as exc:
         return CronValidationResult(
             expression=expression,

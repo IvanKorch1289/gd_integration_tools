@@ -192,7 +192,7 @@ class RouteManifestV11(BaseModel):
         missing: dict[str, str] = {}
         for workflow_name, spec in self.requires_workflows.items():
             installed = available.get(workflow_name)
-            if installed is None or installed not in SpecifierSet(spec):
+            if installed is None or not SpecifierSet(spec).contains(installed):
                 missing[workflow_name] = spec
         return missing
 
