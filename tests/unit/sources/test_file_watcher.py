@@ -20,7 +20,7 @@ async def test_watcher_emits_on_create(tmp_path: Path) -> None:
     async def cb(ev: SourceEvent) -> None:
         captured.append(ev)
 
-    src = FileWatcherSource("fw1", directory=str(tmp_path), pattern="*.csv", debounce_ms=50)
+    src = FileWatcherSource(tmp_path, debounce=0.05)
     await src.start(cb)
     try:
         await asyncio.sleep(0.1)
@@ -42,7 +42,10 @@ async def test_watcher_filters_by_pattern(tmp_path: Path) -> None:
     async def cb(ev: SourceEvent) -> None:
         captured.append(ev)
 
-    src = FileWatcherSource("fw2", directory=str(tmp_path), pattern="*.csv", debounce_ms=50)
+    async def filter_csv(change, path):
+        return str(path).endswith(".csv")
+
+    src = FileWatcherSource(tmp_path, debounce=0.05, watch_filter=filter_csv)
     await src.start(cb)
     try:
         await asyncio.sleep(0.1)
@@ -57,7 +60,7 @@ async def test_watcher_filters_by_pattern(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_double_start_rejected(tmp_path: Path) -> None:
-    src = FileWatcherSource("fw3", directory=str(tmp_path))
+    src = FileWatcherSource(tmp_path)
     await src.start(_noop_cb)
     try:
         with pytest.raises(RuntimeError):

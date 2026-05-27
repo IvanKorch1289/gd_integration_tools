@@ -31,8 +31,8 @@ def _page_path(filename: str) -> Path:
     "filename",
     [
         "45_admin.py",
-        "55_s3_files.py",
-        "65_workflow_live_logs.py",
+        "59_S3_Files.py",
+        "69_Workflow_Live_Logs.py",
     ],
 )
 def test_streamlit_page_is_valid_python(filename: str) -> None:
@@ -52,8 +52,8 @@ def test_streamlit_page_is_valid_python(filename: str) -> None:
     "filename",
     [
         "45_admin.py",
-        "55_s3_files.py",
-        "65_workflow_live_logs.py",
+        "59_S3_Files.py",
+        "69_Workflow_Live_Logs.py",
     ],
 )
 def test_streamlit_page_spec_loadable(filename: str) -> None:
@@ -80,15 +80,15 @@ def test_admin_page_uses_api_client() -> None:
 
 
 def test_s3_page_uses_storage_endpoint() -> None:
-    """55_s3_files.py обращается к ``/api/v1/storage/list`` (unified facade)."""
-    src = _page_path("55_s3_files.py").read_text(encoding="utf-8")
+    """59_S3_Files.py обращается к ``/api/v1/storage/list`` (unified facade)."""
+    src = _page_path("59_S3_Files.py").read_text(encoding="utf-8")
     assert "/api/v1/storage/list" in src
     assert "from src.backend.infrastructure" not in src
 
 
 def test_workflow_live_logs_is_read_only() -> None:
-    """65_workflow_live_logs.py не вызывает workflow engine (read-only)."""
-    src = _page_path("65_workflow_live_logs.py").read_text(encoding="utf-8")
+    """69_Workflow_Live_Logs.py не вызывает workflow engine (read-only)."""
+    src = _page_path("69_Workflow_Live_Logs.py").read_text(encoding="utf-8")
     assert "/api/v1/admin/audit" in src, "Страница должна читать audit endpoint"
     # Запрет вызовов workflow CRUD из live-logs view.
     forbidden = [
