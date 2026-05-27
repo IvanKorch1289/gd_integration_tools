@@ -397,6 +397,237 @@ class AIRPAMixin:
             namespace=namespace,
         )
 
+    # ── Document / File RPA ─────────────────────────────────────────────────────
+
+    def pdf_read(
+        self, *, extract_tables: bool = False
+    ) -> "RouteBuilder":
+        """Извлечь текст и таблицы из PDF.
+
+        Body: bytes (содержимое PDF) или str (путь к файлу).
+        Результат: {"text": "...", "pages": [...], "tables": [...]}
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "PdfReadProcessor",
+            extract_tables=extract_tables,
+        )
+
+    def pdf_merge(self) -> "RouteBuilder":
+        """Объединить несколько PDF в один.
+
+        Body: list[bytes] — список PDF-файлов.
+        Результат: bytes (merged PDF).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "PdfMergeProcessor",
+        )
+
+    def word_read(self) -> "RouteBuilder":
+        """Извлечь текст из .docx файла.
+
+        Body: bytes или str (путь).
+        Результат: {"text": "...", "paragraphs": [...]}
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "WordReadProcessor",
+        )
+
+    def word_write(self) -> "RouteBuilder":
+        """Генерировать .docx документ из текста.
+
+        Body: dict с ключами "paragraphs" (list[str]) или "text" (str).
+        Результат: bytes (.docx файл).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "WordWriteProcessor",
+        )
+
+    def excel_read(
+        self, *, sheet_name: str | None = None
+    ) -> "RouteBuilder":
+        """Читать Excel файл в list[dict].
+
+        Body: bytes или str (путь).
+        Результат: list[dict] (rows).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "ExcelReadProcessor",
+            sheet_name=sheet_name,
+        )
+
+    def file_move(
+        self,
+        src: str | None = None,
+        dst: str | None = None,
+        *,
+        mode: str = "copy",
+    ) -> "RouteBuilder":
+        """Копировать или переместить файл.
+
+        mode: "copy" (default), "move", "rename".
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "FileMoveProcessor",
+            src=src,
+            dst=dst,
+            mode=mode,
+        )
+
+    def archive(
+        self, *, mode: str = "extract", format: str = "zip"
+    ) -> "RouteBuilder":
+        """Создать или распаковать архив (ZIP/TAR).
+
+        mode: "extract" (default), "create".
+        format: "zip" (default), "tar", "gztar", "bztar", "xztar".
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "ArchiveProcessor",
+            mode=mode,
+            format=format,
+        )
+
+    def ocr(self, *, lang: str = "eng+rus") -> "RouteBuilder":
+        """OCR — оптическое распознавание текста из изображений/PDF.
+
+        Body: bytes (image/PDF) или str (путь к файлу).
+        Результат: {"text": "...", "pages": [...]}
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "ImageOcrProcessor",
+            lang=lang,
+        )
+
+    def image_resize(
+        self,
+        *,
+        width: int | None = None,
+        height: int | None = None,
+        output_format: str = "PNG",
+    ) -> "RouteBuilder":
+        """Изменить размер изображения.
+
+        width/height: целевые размеры (None = авто).
+        output_format: "PNG" (default), "JPEG", "GIF", "BMP", "WEBP".
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "ImageResizeProcessor",
+            width=width,
+            height=height,
+            output_format=output_format,
+        )
+
+    def regex(
+        self,
+        pattern: str,
+        *,
+        action: str = "extract",
+        replacement: str = "",
+    ) -> "RouteBuilder":
+        """Извлечь или заменить текст по регулярному выражению.
+
+        action: "extract" (default), "replace", "match", "split", "findall".
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "RegexProcessor",
+            pattern=pattern,
+            action=action,
+            replacement=replacement,
+        )
+
+    def render_template(self, template: str) -> "RouteBuilder":
+        """Рендеринг Jinja2-шаблона.
+
+        Body: dict с переменными контекста.
+        Результат: str (отрендеренный шаблон).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "TemplateRenderProcessor",
+            template=template,
+        )
+
+    def hash(self, *, algorithm: str = "sha256") -> "RouteBuilder":
+        """Хеширование тела сообщения.
+
+        algorithm: "sha256" (default), "md5", "sha1", "sha512", "blake2b".
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "HashProcessor",
+            algorithm=algorithm,
+        )
+
+    def encrypt(self, key: str) -> "RouteBuilder":
+        """Шифрование тела сообщения (AES-GCM).
+
+        key: Base64-encoded AES-ключ (16, 24 или 32 байта).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "EncryptProcessor",
+            key=key,
+        )
+
+    def decrypt(self, key: str) -> "RouteBuilder":
+        """Дешифрование AES-GCM-сообщения.
+
+        key: тот же ключ, что использовался для encrypt.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "DecryptProcessor",
+            key=key,
+        )
+
+    def shell(
+        self,
+        command: str,
+        *,
+        args: list[str] | None = None,
+        allowed_commands: list[str] | None = None,
+        timeout_seconds: float = 30.0,
+    ) -> "RouteBuilder":
+        """Выполнить shell-команду.
+
+        command: имя команды (не full path).
+        allowed_commands: whitelist допустимых команд (security).
+        timeout_seconds: лимит времени выполнения.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "ShellExecProcessor",
+            command=command,
+            args=args,
+            allowed_commands=allowed_commands,
+            timeout_seconds=timeout_seconds,
+        )
+
+    def email(
+        self, to: str, subject: str, body_template: str
+    ) -> "RouteBuilder":
+        """Compose + отправка email через SMTP.
+
+        Body: dict с переменными для template или str.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa",
+            "EmailComposeProcessor",
+            to=to,
+            subject=subject,
+            body_template=body_template,
+        )
+
     # ── RPA terminal / desktop / mobile ──
 
     def citrix(self, operation: str, session_id: str) -> "RouteBuilder":

@@ -7,9 +7,11 @@
 * :meth:`bulk_register` — пересборка списка;
 * :meth:`unregister` / :meth:`clear`.
 """
-# ruff: noqa: S101
-
 from __future__ import annotations
+
+import pytest  # noqa: S101
+
+pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.registry import WorkflowCompilerRegistry

@@ -8,9 +8,11 @@
 * :meth:`ActivityBridge.decorate` — идемпотентен (повторный вызов не дублирует
   декораторы).
 """
-# ruff: noqa: S101
-
 from __future__ import annotations
+
+import pytest  # noqa: S101
+
+pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.activity_bridge import (

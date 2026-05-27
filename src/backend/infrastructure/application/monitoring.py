@@ -8,31 +8,33 @@ in-progress requests gauge. Exposes /metrics endpoint.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Awaitable, Callable
+from typing import TYPE_CHECKING
 
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 if TYPE_CHECKING:
     from starlette.types import ASGIApp, Receive, Scope, Send
 
 __all__ = ("setup_monitoring",)
 
-# Metrics — same names as prometheus-fastapi-instrumentator provided.
-REQUEST_COUNT = Counter(
+# Metrics — registered once via MetricsRegistry (idempotent, prevents duplicates).
+_request_count = metrics_registry.counter(
     "http_requests_total",
     "Total HTTP request count",
-    ["method", "path", "status_code"],
+    labels=("method", "path", "status_code"),
 )
-REQUEST_LATENCY = Histogram(
+_request_latency = metrics_registry.histogram(
     "http_request_duration_seconds",
     "HTTP request latency in seconds",
-    ["method", "path"],
+    labels=("method", "path"),
     buckets=(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0),
 )
-REQUESTS_IN_PROGRESS = Gauge(
+_requests_in_progress = metrics_registry.gauge(
     "http_requests_in_progress",
     "Number of HTTP requests currently in progress",
-    ["method", "path"],
+    labels=("method", "path"),
 )
 
 
@@ -55,7 +57,7 @@ class PrometheusMiddleware:
         path = self._normalize_path(scope)
         labels = {"method": method, "path": path}
 
-        REQUESTS_IN_PROGRESS.labels(**labels).inc()
+        _requests_in_progress.labels(**labels).inc()
         start = time.perf_counter()
         status_code = "500"
 
@@ -68,12 +70,12 @@ class PrometheusMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         finally:
-            REQUESTS_IN_PROGRESS.labels(**labels).dec()
+            _requests_in_progress.labels(**labels).dec()
             duration = time.perf_counter() - start
-            REQUEST_COUNT.labels(
+            _request_count.labels(
                 method=method, path=path, status_code=status_code
             ).inc()
-            REQUEST_LATENCY.labels(method=method, path=path).observe(duration)
+            _request_latency.labels(method=method, path=path).observe(duration)
 
     @staticmethod
     def _normalize_path(scope: "Scope") -> str:

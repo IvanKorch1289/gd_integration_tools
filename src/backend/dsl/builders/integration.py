@@ -1085,8 +1085,8 @@ class IntegrationMixin:
             secret=secret,
             header=header,
             algorithm=algorithm,
-            prefix=prefix,
-            on_mismatch=on_mismatch,
+            prefix=prefix if prefix is not None else "",
+            on_invalid=on_mismatch,
         )
 
     def deadline(

@@ -10,7 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-
 IGNORED_VULNS: frozenset[str] = frozenset([
     # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache now uses JSONDisk
     # instead of default pickle-based Disk (s19 diskcache upgrade).
@@ -54,7 +53,7 @@ def main() -> None:
         print("Update dependencies to fix versions to pass the gate.")
         sys.exit(1)
 
-    print(f"\nPASS: 0 unignored vulnerabilities")
+    print("\nPASS: 0 unignored vulnerabilities")
     sys.exit(0)
 
 

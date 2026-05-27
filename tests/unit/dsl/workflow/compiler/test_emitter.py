@@ -9,11 +9,11 @@
 * Применённый ``@workflow.defn`` обнаруживается через
   ``__temporal_workflow_definition``.
 """
-# ruff: noqa: S101
-
 from __future__ import annotations
 
-import pytest
+import pytest  # noqa: S101
+
+pytest.importorskip("temporalio", reason="temporalio not installed — run: uv sync --extra workflow")
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder
 from src.backend.dsl.workflow.compiler.emitter import (
