@@ -727,11 +727,11 @@ coverage-gate: ## К3 S6 [wave:s6/k3-coverage-gate-70] — pytest coverage gate 
 	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 50
 	@$(SUCCESS) "Coverage gate passed"
 
-coverage-gate-strict: ## К3 S6 — coverage gate strict (drop > 0.5% от baseline → fail)
-	@$(INFO) "Running pytest with --cov + coverage gate (strict)..."
+coverage-gate-strict: ## [wave:s19/k2-w4-coverage-ratchet-75] — coverage gate strict 70→75%
+	@$(INFO) "Running pytest with --cov + coverage gate (strict, 75%)..."
 	$(UV_RUN) pytest tests --cov=src/backend --cov-report=xml --cov-report=term --maxfail=20
-	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 70 --strict
-	@$(SUCCESS) "Coverage gate strict passed"
+	$(UV_RUN) python tools/check_coverage_gate.py --coverage-xml coverage.xml --baseline .baselines/coverage.json --threshold 75 --strict
+	@$(SUCCESS) "Coverage gate strict (75%) passed"
 
 ##@ Git & Release
 

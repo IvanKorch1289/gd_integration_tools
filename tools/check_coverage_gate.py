@@ -1,9 +1,9 @@
 """Sprint 6 K3 — Coverage gate CLI.
 
-Wave ``[wave:s6/k3-coverage-gate-70]``.
+Wave ``[wave:s6/k3-coverage-gate-70]`` + ``[wave:s19/k2-w4-coverage-ratchet-75]``.
 
 Назначение: blocking-проверка покрытия тестами модулей ``src/backend``.
-Целевой порог — **70%** (декларировано в PLAN.md V18.1 Sprint 6 K3 DoD).
+Целевой порог — **75%** (S19 K2 W4 ratchet: 70% → 75% per PLAN.md V22 Sprint 19 DoD).
 
 Источник данных: ``coverage.xml`` (формат cobertura), создаваемый
 ``pytest --cov=src/backend --cov-report=xml``.
@@ -14,7 +14,7 @@ Wave ``[wave:s6/k3-coverage-gate-70]``.
     pytest --cov=src/backend --cov-report=xml
 
     # 2. Проверить порог:
-    python tools/check_coverage_gate.py --threshold 70
+    python tools/check_coverage_gate.py --threshold 75
 
     # 3. Зафиксировать baseline (только при первой настройке):
     python tools/check_coverage_gate.py --update-baseline
@@ -24,9 +24,9 @@ Baseline-snapshot хранится в ``.baselines/coverage.json``.
 относительно baseline более чем на 0.5%, гейт падает. Если поднялся —
 гейт пропускает.
 
-Если 70% недостижим за текущий wave (вариант B из плана) — порог
-снижается через CLI-флаг ``--threshold 60``, и в baseline появляется
-запись ``next_wave_todo: "raise threshold to 70"``.
+Если 75% недостижим за текущий wave (вариант B из плана) — порог
+снижается через CLI-фlag ``--threshold``, и в baseline появляется
+запись ``next_wave_todo: "raise threshold to 75"``.
 
 Exit-codes:
 
@@ -48,7 +48,7 @@ EXIT_OK = 0
 EXIT_THRESHOLD_FAIL = 1
 EXIT_ERROR = 2
 
-_DEFAULT_THRESHOLD = 70.0
+_DEFAULT_THRESHOLD = 75.0
 _BASELINE_DROP_TOLERANCE = 0.5  # допустимое снижение от baseline (в %)
 
 

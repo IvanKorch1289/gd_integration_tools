@@ -784,7 +784,8 @@ source = ["src"]
 branch = true
 
 [tool.coverage.report]
-# Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
+# [wave:s19/k2-w4-coverage-ratchet-75] Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
+# S19 K2 W4 ratchet: 70% → 75%.
 # Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
 # + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
 fail_under = 75
