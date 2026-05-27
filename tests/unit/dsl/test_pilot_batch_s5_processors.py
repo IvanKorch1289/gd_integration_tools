@@ -54,7 +54,7 @@ class TestWebhookSignVerifyProcessor:
         await proc.process(ex, _ctx())
 
         assert ex.error is None
-        assert ex.properties.get("webhook_signature_valid") is True
+        assert ex.properties.get("webhook_signature_verified") is True
 
     async def test_mismatch_fails_pipeline(self) -> None:
         ex = _exchange(body=b"x", headers={"X-Webhook-Signature": "deadbeef"})
@@ -62,17 +62,17 @@ class TestWebhookSignVerifyProcessor:
 
         await proc.process(ex, _ctx())
 
-        assert ex.properties.get("webhook_signature_valid") is False
-        assert ex.error is not None and "signature mismatch" in ex.error
+        assert ex.properties.get("webhook_signature_verified") is False
+        assert ex.error is not None and "Signature mismatch" in ex.error
 
     async def test_mismatch_warn_does_not_fail(self) -> None:
         ex = _exchange(body=b"x", headers={"X-Webhook-Signature": "deadbeef"})
-        proc = WebhookSignVerifyProcessor(secret="K", on_mismatch="warn")
+        proc = WebhookSignVerifyProcessor(secret="K", on_invalid="warn")
 
         await proc.process(ex, _ctx())
 
         assert ex.error is None
-        assert ex.properties.get("webhook_signature_valid") is False
+        assert ex.properties.get("webhook_signature_verified") is False
 
     async def test_missing_header_fails(self) -> None:
         ex = _exchange(body=b"x")
@@ -80,7 +80,7 @@ class TestWebhookSignVerifyProcessor:
 
         await proc.process(ex, _ctx())
 
-        assert ex.error is not None and "missing" in ex.error
+        assert ex.error is not None and "Missing" in ex.error
 
     async def test_prefixed_signature_v1(self) -> None:
         secret = "K"
@@ -91,7 +91,7 @@ class TestWebhookSignVerifyProcessor:
 
         await proc.process(ex, _ctx())
 
-        assert ex.properties.get("webhook_signature_valid") is True
+        assert ex.properties.get("webhook_signature_verified") is True
 
     async def test_dict_body_is_orjson_serialized(self) -> None:
         import orjson
@@ -105,11 +105,11 @@ class TestWebhookSignVerifyProcessor:
 
         await proc.process(ex, _ctx())
 
-        assert ex.properties.get("webhook_signature_valid") is True
+        assert ex.properties.get("webhook_signature_verified") is True
 
-    async def test_invalid_on_mismatch_value_raises(self) -> None:
+    async def test_invalid_on_invalid_value_raises(self) -> None:
         with pytest.raises(ValueError):
-            WebhookSignVerifyProcessor(secret="K", on_mismatch="weird")
+            WebhookSignVerifyProcessor(secret="K", on_invalid="weird")
 
     def test_to_spec_round_trip(self) -> None:
         proc = WebhookSignVerifyProcessor(
@@ -117,16 +117,16 @@ class TestWebhookSignVerifyProcessor:
             header="X-Sig",
             algorithm="sha512",
             prefix="v1",
-            on_mismatch="warn",
+            on_invalid="warn",
         )
         spec = proc.to_spec()
         assert spec == {
-            "webhook_verify": {
+            "webhook_sign_verify": {
                 "secret": "K",
                 "header": "X-Sig",
                 "algorithm": "sha512",
                 "prefix": "v1",
-                "on_mismatch": "warn",
+                "on_invalid": "warn",
             }
         }
 

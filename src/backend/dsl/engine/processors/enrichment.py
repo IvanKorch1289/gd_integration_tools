@@ -467,6 +467,7 @@ class WebhookSignVerifyProcessor(BaseProcessor):
 
     def _handle_invalid(self, exchange: Exchange[Any], reason: str) -> None:
         exchange.set_property("webhook_signature_error", reason)
+        exchange.set_property("webhook_signature_verified", False)
         if self._on_invalid == "fail":
             exchange.fail(f"webhook_sign_verify: {reason}")
         elif self._on_invalid == "dlq":
