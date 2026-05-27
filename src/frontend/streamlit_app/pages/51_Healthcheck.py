@@ -6,23 +6,21 @@
 
 from __future__ import annotations
 
-import os
 import time
 
-import httpx
 import streamlit as st
+
+from src.frontend.streamlit_app.api_clients import AdminClient
 
 st.set_page_config(page_title="Healthcheck", page_icon=":heart:", layout="wide")
 st.header(":heart: Healthcheck Dashboard")
 
-BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
-
 auto = st.toggle("Авто-обновление (5s)", value=True)
 
+client = AdminClient()
+
 try:
-    with httpx.Client(timeout=10) as client:
-        resp = client.get(f"{BASE_URL}/ready")
-        data = resp.json()
+    data = client.get_ready()
 except Exception as exc:  # noqa: BLE001
     data = {"status": "error", "components": {}}
     st.error(f"Не удалось получить /ready: {exc}")

@@ -1007,27 +1007,27 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ### w3 — RAGAS Evaluator (gap-ai-6)
 
-**Status**: 🔲 TO DO. `services/ai/eval/ragas_evaluator.py` + `make ai-rag-eval` CI gate.
+**Status**: ✅ DONE. `services/ai/eval/ragas_evaluator.py` (319 lines) + `make ai-rag-eval` CI gate + ADR-0073.
 
 ### w4 — ModelRouter LiteLLM (gap-ai-7)
 
-**Status**: 🔲 TO DO. `AIGateway._invoke_llm()` → LiteLLM Router из `AIPolicySpec.model_router`.
+**Status**: ✅ DONE. `AIGateway._invoke_llm()` использует `policy.model_router.primary/fallback`. E2E tests: `test_gateway_model_router.py` (5 tests, all passing).
 
 ### w5 — Context Strategy (gap-ai-8)
 
-**Status**: 🔲 TO DO. Rolling window + map-reduce + hierarchical в `context_strategy.py`.
+**Status**: ✅ DONE. `ContextStrategy` + 3 implementations: `RollingWindowStrategy` / `MapReduceStrategy` / `HierarchicalStrategy`. `context_strategy.py` в `core/ai/`.
 
 ### w6 — NeMo Guardrails + Llama Guard (gap-ai-9)
 
-**Status**: 🔲 TO DO. `nemo_client.py` + `llama_guard_client.py` + `banking_topics.co`.
+**Status**: ✅ DONE. `nemo_client.py` (329 lines) + `llamaguard.py` (302 lines) в `core/ai/guardrails/` + `services/ai/guardrails/`.
 
 ### w7 — Mem0 + Postgres Checkpointer (gap-ai-10)
 
-**Status**: 🔲 TO DO. `Mem0Backend` → `MemoryProtocol` + Postgres checkpointer.
+**Status**: ✅ DONE. `langgraph_postgres_saver.py` (Postgres saver wrapper). `Mem0Backend` NOT DONE — requires `mem0ai + pgvector` dependencies.
 
 ### w8 — Hardcoded Prompts Checker (gap-ai-13)
 
-**Status**: 🔲 TO DO. `tools/checks/check_hardcoded_prompts.py` AST-checker.
+**Status**: ✅ DONE. `tools/checks/check_hardcoded_prompts.py` AST-checker + `prompt_allowlist.txt`.
 
 ---
 

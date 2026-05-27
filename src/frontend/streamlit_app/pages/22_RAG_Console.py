@@ -10,26 +10,21 @@ from __future__ import annotations
 
 import json
 
-import httpx
 import streamlit as st
+
+from src.frontend.streamlit_app.api_clients.rag import RAGClient
 
 st.set_page_config(page_title="RAG Console", layout="wide")
 
 st.title("RAG Console")
 
-api_base = st.text_input("API base URL", value="http://localhost:8000")
+client = RAGClient()
 
 with st.expander("Статус RAG"):
     namespace = st.text_input("Namespace (опционально)", "")
     if st.button("Get stats"):
-        params: dict[str, str] = {}
-        if namespace:
-            params["collection"] = namespace
-        try:
-            resp = httpx.get(f"{api_base}/api/v1/rag/stats", params=params, timeout=5.0)
-            st.json(resp.json())
-        except Exception as exc:  # noqa: BLE001
-            st.error(f"stats failed: {exc}")
+        result = client.get_stats(collection=namespace or None)
+        st.json(result)
 
 st.divider()
 
@@ -38,14 +33,8 @@ query = st.text_input("Query", "")
 top_k = st.slider("top_k", 1, 20, 5)
 search_ns = st.text_input("Namespace (search)", "")
 if st.button("Search") and query:
-    body: dict[str, object] = {"query": query, "top_k": top_k}
-    if search_ns:
-        body["namespace"] = search_ns
-    try:
-        resp = httpx.post(f"{api_base}/api/v1/rag/search", json=body, timeout=10.0)
-        st.json(resp.json())
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"search failed: {exc}")
+    result = client.search(query, top_k, namespace=search_ns or None)
+    st.json(result)
 
 st.divider()
 
@@ -58,7 +47,6 @@ upload_meta = st.text_area(
     "Metadata JSON (опционально)", '{"source": "streamlit"}', height=80
 )
 if st.button("Upload") and uploaded is not None:
-    files = {"file": (uploaded.name, uploaded.getvalue(), uploaded.type)}
     data: dict[str, str] = {"namespace": upload_ns}
     if upload_meta.strip():
         try:
@@ -66,14 +54,14 @@ if st.button("Upload") and uploaded is not None:
             data["metadata_json"] = upload_meta
         except json.JSONDecodeError:
             st.warning("metadata_json: невалидный JSON, передаю без metadata")
-    try:
-        resp = httpx.post(
-            f"{api_base}/api/v1/rag/upload", files=files, data=data, timeout=60.0
-        )
-        st.json(resp.json())
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"upload failed: {exc}")
-
+    result = client.upload(
+        file_bytes=uploaded.getvalue(),
+        filename=uploaded.name,
+        content_type=uploaded.type,
+        namespace=upload_ns,
+        metadata_json=data.get("metadata_json"),
+    )
+    st.json(result)
 
 st.divider()
 st.subheader("Augment (с freshness badge)")
@@ -84,27 +72,16 @@ max_staleness = st.number_input(
     "Max staleness (hours, 0=без фильтра)", min_value=0.0, value=72.0, step=24.0
 )
 if st.button("Augment") and augment_query:
-    body_a: dict[str, object] = {"query": augment_query, "top_k": augment_top_k}
-    if augment_ns:
-        body_a["namespace"] = augment_ns
-    if max_staleness > 0:
-        body_a["max_staleness_hours"] = max_staleness
-    try:
-        resp = httpx.post(f"{api_base}/api/v1/rag/augment", json=body_a, timeout=15.0)
-        data_a = resp.json()
-        worst = data_a.get("worst_freshness", "fresh")
-        badge = {
-            "fresh": ":green_circle: FRESH",
-            "stale": ":yellow_circle: STALE",
-            "expired": ":red_circle: EXPIRED",
-        }.get(worst, worst)
-        st.metric("Freshness", badge)
-        dist = data_a.get("freshness_distribution", {})
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Fresh chunks", dist.get("fresh", 0))
-        c2.metric("Stale chunks", dist.get("stale", 0))
-        c3.metric("Expired (skipped)", data_a.get("skipped_expired", 0))
-        with st.expander("Augment details"):
-            st.json(data_a)
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"augment failed: {exc}")
+    result = client.augment(
+        augment_query,
+        namespace=augment_ns or None,
+        top_k=augment_top_k,
+    )
+    worst = result.get("worst_freshness", "fresh")
+    badge = {
+        "fresh": ":green_circle: FRESH",
+        "stale": ":yellow_circle: STALE",
+        "expired": ":red_circle: EXPIRED",
+    }.get(worst, worst)
+    st.markdown(f"Freshness: {badge}")
+    st.json(result)
