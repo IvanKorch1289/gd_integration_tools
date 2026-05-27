@@ -52,12 +52,10 @@ Scaffold S28 W1: model + methods; full implementation loader — S28 W2.
 
 from __future__ import annotations
 
-import importlib
 import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
     from src.backend.core.ai.agent_spec import AgentSpec
@@ -125,10 +123,7 @@ class AgentRegistry:
                 handoff_allow_revisit = bool(raw.get("handoff_allow_revisit", False))
                 handoff_escalation = raw.get("handoff_escalation_on_max")
 
-                from src.backend.core.ai.agent_spec import (
-                    HandoffPolicy,
-                    MemoryScope,
-                )
+                from src.backend.core.ai.agent_spec import HandoffPolicy, MemoryScope
 
                 memory_scope = MemoryScope(
                     read=tuple(raw.get("memory_read", [])),

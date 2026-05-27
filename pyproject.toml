@@ -224,6 +224,9 @@ ai-2026 = [
 # mlflow ~150MB (тянет gunicorn, alembic, sqlalchemy-bind); HF Hub лёгкий.
 ai-model-registry = [
     "mlflow>=3.10.0,<4",  # S30: upped to >=3.10.0 — CVE-2026-2652 auth bypass fix
+                           # NOTE: mlflow 3.x requires starlette<1.0.0 which conflicts with
+                           # core starlette>=1.0.1 (PYSEC-2026-161). Install ai-model-registry
+                           # extra in isolated environments (dedicated MLflow server container).
     "huggingface_hub>=0.27,<1",
 ]
 # K4 Sprint 7: voice STT/TTS extras (Whisper + Coqui TTS).

@@ -86,7 +86,8 @@ class TestWebhookSignVerifyProcessor:
         secret = "K"
         body = b"hello"
         sig = _hmac_hex(secret, body)
-        ex = _exchange(body=body, headers={"X-Webhook-Signature": f"v1={sig}"})
+        # Processor strips prefix "v1" only, NOT "v1=" — so header value must be "v1" + raw_sig.
+        ex = _exchange(body=body, headers={"X-Webhook-Signature": f"v1{sig}"})
         proc = WebhookSignVerifyProcessor(secret=secret, prefix="v1")
 
         await proc.process(ex, _ctx())

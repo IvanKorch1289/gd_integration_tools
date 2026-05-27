@@ -84,7 +84,7 @@ class MCPClientRegistry:
     Usage::
 
         registry = MCPClientRegistry()
-        registry.load_from_yaml("configs/mcp_clients.yaml")
+        registry.load_from_yaml("config_profiles/mcp_clients.yaml")
 
         result = await registry.call(
             "anthropic-mcp-search",

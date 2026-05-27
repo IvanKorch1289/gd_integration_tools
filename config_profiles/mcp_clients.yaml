@@ -5,7 +5,7 @@
 # 2. Auth provider (jwt / api_key / oauth / none)
 #
 # Usage:
-#   MCPClientRegistry().load_from_yaml("configs/mcp_clients.yaml")
+#   MCPClientRegistry().load_from_yaml("config_profiles/mcp_clients.yaml")
 
 clients: []
 # Example entries (uncomment to use):

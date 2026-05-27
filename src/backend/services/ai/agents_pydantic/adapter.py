@@ -9,28 +9,90 @@ adapter ``pydantic_ai_litellm``.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, AsyncIterator
 
 logger = logging.getLogger(__name__)
 
 __all__ = ("LiteLLMModel",)
 
+try:
+    from pydantic_ai.models import Model
+    from pydantic_ai.messages import ModelMessage, ModelResponse
+    from pydantic_ai.settings import ModelSettings
+    from pydantic_ai.models import ModelRequestParameters
+    from pydantic_ai.result import StreamedResponse
+    from contextlib import asynccontextmanager
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+    Model = object  # type: ignore[misc,assignment]
+    ModelMessage = Any  # type: ignore[misc,assignment]
+    ModelResponse = Any  # type: ignore[misc,assignment]
+    ModelSettings = Any  # type: ignore[misc,assignment]
+    ModelRequestParameters = Any  # type: ignore[misc,assignment]
+    StreamedResponse = Any  # type: ignore[misc,assignment]
 
-class LiteLLMModel:
-    """Минимальный adapter: forward chat-completion к LiteLLM-шлюзу."""
+
+class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
+    """Минимальный adapter: forward chat-completion к LiteLLM-шлюзу.
+
+    Реализует ``pydantic_ai.models.Model`` ABC (pydantic-ai 0.5.x)
+    чтобы ``isinstance(model, Model)`` возвращал True и pydantic-ai
+    не пытался парсить model name как строку.
+    """
 
     def __init__(self, *, gateway: Any, model_name: str | None = None) -> None:
+        if HAS_PYDANTIC_AI:
+            super().__init__()
         self._gateway = gateway
         self._model_name = model_name
 
     @property
     def model_name(self) -> str:
+        """The model name used for LiteLLM."""
         return self._model_name or "litellm-default"
 
     async def request(
-        self, messages: list[dict[str, Any]], *, stream: bool = False, **kwargs: Any
-    ) -> Any:
-        """PydanticAI-совместимый entry-point: делегирует в gateway.acompletion."""
-        return await self._gateway.acompletion(
-            messages=messages, model=self._model_name, stream=stream, **kwargs
+        self,
+        messages: list[ModelMessage],
+        model_settings: ModelSettings | None,
+        model_request_parameters: ModelRequestParameters,
+    ) -> ModelResponse:
+        """Delegate to gateway.acompletion."""
+        # Convert ModelMessage → dict for gateway
+        dict_messages: list[dict[str, Any]] = []
+        for msg in messages:
+            if hasattr(msg, "parts"):
+                role = getattr(msg, "role", "user")
+                text = ""
+                for part in getattr(msg, "parts", []):
+                    if hasattr(part, "content"):
+                        text += str(getattr(part, "content", ""))
+                dict_messages.append({"role": str(role), "content": text})
+            elif hasattr(msg, "content"):
+                dict_messages.append({"role": "user", "content": str(msg.content)})
+
+        result = await self._gateway.acompletion(
+            messages=dict_messages,
+            model=self._model_name,
+            stream=False,
         )
+        # Extract text from LiteLLM response
+        content = ""
+        if hasattr(result, "choices") and result.choices:
+            msg_obj = result.choices[0].message
+            content = str(getattr(msg_obj, "content", "") or "")
+        return ModelResponse(content=content)
+
+    @asynccontextmanager
+    async def request_stream(
+        self,
+        messages: list[ModelMessage],
+        model_settings: ModelSettings | None,
+        model_request_parameters: ModelRequestParameters,
+    ) -> AsyncIterator[StreamedResponse]:
+        """Streaming not supported yet."""
+        raise NotImplementedError(
+            f"Streaming not yet supported by {self.__class__.__name__}"
+        )
+        yield  # pragma: no cover

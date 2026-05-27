@@ -1,85 +1,72 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-27 18:30)
+## Текущее состояние (2026-05-27 16:58)
 
 **HEAD**: `07aef42d` — [carryover] S31 w1 foundation
-**Session summary**: `vault/session-2026-05-27-1830-summary.md`
+**Session summary**: `vault/session-2026-05-27-1658-summary.md` (S27 architecture migration)
 
 ---
 
-### Carryover session 2026-05-27 — исполнено
+### S27 Architecture Violations Migration ✅ DONE
 
-| Что | Коммит | Статус |
-|-----|--------|--------|
-| asyncio.create_task → TaskRegistry (file_watcher.py:91) | `b9f130ad` | ✅ DONE |
-| S31 w1 foundation (14 файлов, 259+) | `07aef42d` | ✅ DONE |
+| Что | Файлы | Результат |
+|-----|-------|-----------|
+| TYPE_CHECKING detection | `tools/check_layers.py` | ✅ DLQEnvelope violation fixed |
+| Lazy-import detection (bridge pattern) | `tools/check_layers.py` | ✅ bypass runtime-only infra imports |
+| CircuitBreakerMetricsRecorder protocol | `core/interfaces/observability.py` | ✅ +2 protocols added |
+| CorrelationIdProvider protocol | `core/interfaces/observability.py` | ✅ +2 protocols added |
+| Breaker bridge pattern | `core/resilience/breaker.py` | ✅ indirect infra import removed |
+| OutboundHttp bridge pattern | `core/net/outbound_http.py` | ✅ indirect infra import removed |
+| Email utils refactoring | `infrastructure/sources/email_utils.py` | **NEW** — parse_email extracted |
+| Email source fix | `infrastructure/sources/email.py` | ✅ no more entrypoints import |
 
-### S31 w1 foundation — carryover детали
+**Allowlist**: 3 entries eliminated, 21 stale pending cleanup (→ `--update-allowlist`)
+
+### Code review (subagent a54558ac219924094)
+
+✅ All S27 changes correctly implemented — no blocking issues
+⚠️ Dead code: `_parse_email()` дублируется в `imap_monitor.py:333`
+⚠️ `grpc_server.py → correlation` не вошло в S27 (separate tech-debt)
+ℹ️ Рекомендация: unit-тесты для `check_layers.py` в `tests/unit/tools/`
+
+---
+
+### S31 w1 foundation (carryover from earlier session)
 
 **Изменённые файлы (14):**
-- `core/config/validator.py` — feature flag dependency rules (WARNING + CRITICAL pairs)
+- `core/config/validator.py` — feature flag dependency rules
 - `entrypoints/mcp/mcp_server.py` — ADR-0070 capability check per namespace
 - `scheduler/cron_validator.py` — second_at_beginning для 6-полевых cron
 - `sources/factory.py` — directory → path mapping
 - `routes/manifest_v11.py` — SpecifierSet.contains() fix
-- `PLAN.md` — S31 w5 TaskRegistry CI-gate → ✅ DONE
-
-### Аудит запрещённых паттернов (финальный)
-
-```
-✅ asyncio.create_task (orphan): 0
-✅ threading.RLock: 0
-✅ ssl.CERT_NONE: 0
-✅ except Exception: pass: 0
-✅ yaml.load unsafe: 0
-```
 
 ---
 
-## Следующий шаг
+### Следующий шаг
+
+**Очистить allowlist** (ожидает подтверждения):
+```bash
+python tools/check_layers.py --update-allowlist  # удалит 21 стейл-запись
+```
 
 **S31 w2**: MetricsRegistry canonical labels verification (🟡 PLANNED)
-- 44 метрики из S17 K2 W1 проверить на canonical labels `{tenant_id, route_id, component, env}`
-- Idempotent registration gate
-
-**Pending carryover:**
-- `vault_rotator.py` — docstring improvement + first-init callback (modified, not committed)
-- `test_manifest_v11.py` — related to manifest fix (modified, not committed)
 
 ---
 
-## Открытые риски
+### Открытые риски
 
 | Риск | Уровень |
 |------|---------|
+| 21 стейл-запись в allowlist | HIGH → pending `--update-allowlist` |
+| `imap_monitor.py` дублирует `_parse_email()` | LOW → мёртвый код |
+| `grpc_server.py` → `infrastructure.observability.correlation` | MEDIUM → separate tech-debt |
 | vault_rotator.py + test_manifest_v11.py не закоммичены | LOW |
-| S31 w2 MetricsRegistry: ещё не начат | INFO |
-| tools/checks/check_task_registry.py существует, интеграция в make ci pending | INFO |
 
 ---
 
-## Проверки (из сессии 2026-05-27)
+## Проверки (S27 session)
 
 ```bash
-# Forbidden patterns audit
-grep -rn "asyncio\.create_task" src/backend/ --include="*.py" | grep -v task_registry  # 0 writes
-grep -rn "threading\.RLock" src/backend/ --include="*.py"  # 0
-grep -rn "ssl\.CERT_NONE\|check_hostname=False" src/backend/ --include="*.py"  # 0
-grep -rn "except Exception:\s*pass" src/backend/ --include="*.py"  # 0
-
-# Import check (watchfiles missing — dev env only)
-python -c "from src.backend.infrastructure.sources.file_watcher import FileWatcherSource"
-
-# TaskRegistry pattern verification
-python -c "
-import pathlib, re
-for f in ['src/backend/infrastructure/sources/file_watcher.py',
-          'src/backend/infrastructure/secrets/vault_rotator.py']:
-    p = pathlib.Path(f)
-    c = p.read_text()
-    has_raw = bool(re.search(r'asyncio\.create_task\s*\(', c))
-    has_tr = 'get_task_registry()' in c
-    print(f'{f}: raw_create_task={has_raw}, uses_TaskRegistry={has_tr}')
-"
-# → оба файла: raw_create_task=False, uses_TaskRegistry=True ✅
+python tools/check_layers.py  # 0 новых, 21 стейл
+python -c "import ast; [ast.parse(open(f).read()) for f in [...]]"  # AST valid
 ```

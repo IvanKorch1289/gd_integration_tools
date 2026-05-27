@@ -517,6 +517,7 @@ class AIGateway:
         enc = None
         try:
             import tiktoken
+
             enc = tiktoken.get_encoding("cl100k_base")
 
             def count_tokens(text: str) -> int:
@@ -533,9 +534,7 @@ class AIGateway:
         # String-level truncation: keep start + end (best for most prompts)
         # This is the fallback; full strategy requires request.messages
         logger.debug(
-            "Prompt %d tokens exceeds budget %d, truncating",
-            total_tokens,
-            limit,
+            "Prompt %d tokens exceeds budget %d, truncating", total_tokens, limit
         )
 
         budget = TokenBudget(limit=limit)
@@ -543,6 +542,7 @@ class AIGateway:
             strategy = get_context_strategy(strategy_type)
         except Exception as _:  # noqa: BLE001 — Python 3.14 compat
             from src.backend.core.ai.context_strategy import RollingWindowStrategy
+
             strategy = RollingWindowStrategy()
 
         # String-level: split at 60/40 boundary, truncate middle
@@ -550,28 +550,68 @@ class AIGateway:
             half = limit // 2
             try:
                 encoded_full = enc.encode(sanitized)
-                truncated_enc = encoded_full[:half] + encoded_full[-(limit - half):]
+                truncated_enc = encoded_full[:half] + encoded_full[-(limit - half) :]
                 return enc.decode(truncated_enc)
             except Exception:  # noqa: BLE001
                 pass
 
         # Fallback: naive char-level
         half_chars = (limit * 4) // 2
-        return sanitized[:half_chars] + "\n... [truncated] ...\n" + sanitized[-half_chars:]
+        return (
+            sanitized[:half_chars] + "\n... [truncated] ...\n" + sanitized[-half_chars:]
+        )
 
     async def _invoke_llm(
         self, rendered: str, policy: "AIPolicySpec | None", stream: bool
     ) -> AIResponse:
-        """Шаг 6: ModelRouter (LiteLLM primary + fallback).
+        """Шаг 6: PydanticAI unified client (S32 W1) или LiteLLMGateway fallback.
+
+        При наличии ``policy.model_router`` использует :class:`PydanticAIClient`
+        для интеграции ModelRouter fallback chain через PydanticAI Agent.
+        При отсутствии ``policy`` — backward-compat path через LiteLLMGateway
+        напрямую (pass-through scaffold).
 
         Args:
             rendered: Готовый prompt.
             policy: Resolved AIPolicySpec (для ``model_router``).
-            stream: Streaming flag.
+            stream: Streaming flag (reserved, пока not supported).
 
         Returns:
             AIResponse с raw completion (до output guards/sanitize).
         """
+        if (
+            policy is not None
+            and hasattr(policy, "model_router")
+            and policy.model_router is not None
+        ):
+            from src.backend.core.ai.pydantic_ai_client import (
+                LLMDependencies,
+                PydanticAIClient,
+            )
+
+            gw = self._resolve_llm_gateway()
+            model_router = policy.model_router
+
+            client = PydanticAIClient(
+                gateway=gw,
+                model_router=model_router,
+                metrics_registry=getattr(self, "_metrics_registry", None),
+            )
+
+            deps = LLMDependencies(
+                tenant_id=getattr(self, "_tenant_id", "default"), correlation_id=""
+            )
+            result = await client.run(prompt=rendered, deps=deps, stream=stream)
+
+            return AIResponse(
+                content=result.content,
+                tokens_prompt=result.tokens_prompt,
+                tokens_completion=result.tokens_completion,
+                model_used=result.model_used,
+                cost_usd=result.cost_usd,
+            )
+
+        # Backward-compat: LiteLLMGateway напрямую (scaffold pass-through)
         gw = self._resolve_llm_gateway()
         model = None
         fallbacks: list[str] | None = None

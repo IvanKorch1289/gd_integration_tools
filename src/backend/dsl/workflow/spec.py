@@ -298,13 +298,206 @@ class MemoryScope(BaseModel):
     write_strategy: Literal["hot_path", "background", "manual"] = "background"
 
 
+class ReflectDeclaration(BaseModel):
+    """Reflect-шаг: procedural memory update на основе output (S28 W3).
+
+    Используется после :class:`AgentInvokeDeclaration` для сохранения
+    результатов агента в semantic/procedural memory.
+
+    YAML::
+
+        steps:
+          - reflect:
+              source_step: "ai_advisor"
+              memory_writes: ["episodic", "semantic"]
+              consolidation_policy: "reflect"
+              async_mode: true
+
+    Python::
+
+        WorkflowBuilder("credit.flow").reflect(
+            source_step="ai_advisor",
+            memory_writes=["episodic", "semantic"],
+            consolidation_policy="reflect",
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["reflect"] = "reflect"
+    trigger: str | None = Field(
+        default=None,
+        description="Dot-path condition для запуска reflect.",
+    )
+    source_step: str | None = Field(
+        default=None,
+        description="WorkflowStep.id, чей output анализировать.",
+    )
+    memory_writes: list[str] = Field(
+        default_factory=list,
+        description="Memory resource names для записи.",
+    )
+    consolidation_policy: Literal["summarize", "dedup", "reflect", "none"] = "reflect"
+    async_mode: bool = Field(
+        default=True,
+        description="Выполнять в background (True) или синхронно (False).",
+    )
+    output_key: str | None = Field(
+        default=None,
+        description="Имя property для сохранения результата reflect.",
+    )
+
+
+class CheckpointDeclaration(BaseModel):
+    """Checkpoint-шаг: workflow state persistence (S28 W3).
+
+    Сохраняет snapshot workflow state (outputs указанных шагов)
+    для возможности resume/replay.
+
+    YAML::
+
+        steps:
+          - checkpoint:
+              checkpoint_id: "credit_chk_001"
+              include_steps: ["fetch_score", "check_rules"]
+              metadata:
+                stage: "pre_approval"
+
+    Python::
+
+        WorkflowBuilder("credit.flow").checkpoint(
+            checkpoint_id="credit_chk_001",
+            include_steps=("fetch_score", "check_rules"),
+            metadata={"stage": "pre_approval"},
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["checkpoint"] = "checkpoint"
+    checkpoint_id: str | None = Field(
+        default=None,
+        description="Явный id checkpoint'а (None = auto-generated UUID).",
+    )
+    include_steps: tuple[str, ...] = Field(
+        default=(),
+        description="Кортеж step-id, output которых сохранить. Пустой = весь state.",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Произвольные metadata для checkpoint.",
+    )
+    output_key: str | None = Field(
+        default=None,
+        description="Имя property для сохранения checkpoint_id.",
+    )
+
+
+class GuardrailDeclaration(BaseModel):
+    """Guardrail-шаг: лимиты доступа для AI-вызовов (S28 W3).
+
+    Проверяет что значение ``rule`` не превышает ``threshold``.
+    При превышении — выполняется ``on_exceed`` действие.
+
+    YAML::
+
+        steps:
+          - guardrail:
+              rule: "max_cost_usd"
+              threshold: 0.50
+              on_exceed: "fail"
+
+    Python::
+
+        WorkflowBuilder("credit.flow").guardrail(
+            rule="max_cost_usd",
+            threshold=0.50,
+            on_exceed="fail",
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["guardrail"] = "guardrail"
+    rule: str = Field(
+        min_length=1,
+        description=(
+            "Тип правила: ``max_cost_usd``, ``max_tokens``, "
+            "``max_turns``, ``output_size_bytes``."
+        ),
+    )
+    threshold: float = Field(
+        description="Пороговое значение для сравнения.",
+    )
+    on_exceed: Literal["escalate", "fail", "warn", "dlq"] = Field(
+        default="fail",
+        description="Действие при превышении threshold.",
+    )
+    target: str | None = Field(
+        default=None,
+        description="Dot-path до значения для проверки (None = текущий шаг).",
+    )
+    output_key: str | None = Field(
+        default=None,
+        description="Имя property для сохранения результата проверки.",
+    )
+
+
+class EscalateDeclaration(BaseModel):
+    """Escalate-шаг: переключение на другого агента/модель (S28 W3).
+
+    Применяется при достижении лимитов (guardrail ``on_exceed=escalate``)
+    или при явном решении supervisor'а.
+
+    YAML::
+
+        steps:
+          - escalate:
+              to_agent: "senior_advisor"
+              to_model: "minimax:m2.5"
+              reason: "complex_case_requires_specialist"
+
+    Python::
+
+        WorkflowBuilder("credit.flow").escalate(
+            to_agent="senior_advisor",
+            to_model="minimax:m2.5",
+            reason="complex_case_requires_specialist",
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["escalate"] = "escalate"
+    to_agent: str | None = Field(
+        default=None,
+        description="Target agent_id для escalation.",
+    )
+    to_model: str | None = Field(
+        default=None,
+        description="Target model (``provider:model``) для escalation.",
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Причина escalation (логируется в audit).",
+    )
+    output_key: str | None = Field(
+        default=None,
+        description="Имя property для сохранения результата escalation.",
+    )
+
+
 WorkflowStep = Annotated[
     ActivityDeclaration
     | SagaDeclaration
     | SignalWaitDeclaration
     | SleepDeclaration
     | SensorDeclaration
-    | AgentInvokeDeclaration,
+    | AgentInvokeDeclaration
+    | ReflectDeclaration
+    | CheckpointDeclaration
+    | GuardrailDeclaration
+    | EscalateDeclaration,
     Field(discriminator="type"),
 ]
 
