@@ -216,6 +216,9 @@ ai-2026 = [
     # REMOVED langmem: zero imports, custom memory consolidation (UnifiedMemoryGateway)
     # is better suited for self-hosted. Long-term memory via LangMem requires managed
     # cloud — not compatible with self-hosted-first constraint.
+    # NOTE: inscriptis (dep of FlagEmbedding) requires lxml<6.1.0 which conflicts
+    # with core lxml>=6.1.1 (PYSEC-2026-87 fix). Install ai-2026 extra in isolated
+    # ML environments to avoid lxml downgrade. S31: tracking fix in inscriptis upstream.
     "FlagEmbedding>=1.3.0,<2.0.0",
     "instructor>=1.7.0,<2.0.0",
 ]
@@ -475,6 +478,10 @@ environments = [
 # pyarrow в проекте уже >=20.
 override-dependencies = [
     "pyarrow>=20.0.0,<25.0.0",
+    # S31: force lxml to latest to prevent flagembedding→inscriptis→lxml downgrade.
+    # inscriptis (dep of FlagEmbedding) requires lxml<6.1.0; override keeps core safe.
+    # AI-2026 extra: install in isolated ML environments per NOTE above.
+    "lxml>=6.1.1,<7.0.0",
 ]
 
 [tool.mypy]
