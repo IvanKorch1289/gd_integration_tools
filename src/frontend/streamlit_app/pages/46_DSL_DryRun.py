@@ -4,14 +4,10 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 import streamlit as st
 import yaml as _yaml
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 

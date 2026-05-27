@@ -14,14 +14,10 @@ button-based reordering when not.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 import streamlit as st
 import yaml as _yaml
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 from src.backend.services.dsl_portal import (  # noqa: E402
     Pipeline,

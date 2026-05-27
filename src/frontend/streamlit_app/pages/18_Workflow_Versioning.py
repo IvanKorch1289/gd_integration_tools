@@ -8,14 +8,7 @@ UI для WorkflowVersionRegistry: pin default + rollback + history view.
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import streamlit as st
-
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 st.set_page_config(page_title="Workflow Versioning", layout="wide")
 st.header("Workflow Versioning — Sprint 12 K3 W8")

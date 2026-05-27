@@ -23,14 +23,10 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 import streamlit as st
 
 # Добавляем корень проекта в sys.path для импорта backend-модулей
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 # ─── Проверка feature-flag ─────────────────────────────────────────────────
 

@@ -12,13 +12,9 @@ from __future__ import annotations
 import asyncio
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import streamlit as st
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 st.set_page_config(page_title="Saga Compensation Viewer", layout="wide")
 st.header("Saga Compensation Viewer — Sprint 12 K3 W6")

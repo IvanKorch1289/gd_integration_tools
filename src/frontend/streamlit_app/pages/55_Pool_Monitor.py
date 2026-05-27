@@ -21,13 +21,9 @@ from __future__ import annotations
 import sys
 from collections import deque
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-_project_root = Path(__file__).resolve().parents[4]
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
 
 import streamlit as st  # noqa: E402
 

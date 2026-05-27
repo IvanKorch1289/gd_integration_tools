@@ -14,13 +14,9 @@ Sprint 14 K5 W5 + K1 W4: добавлены вкладки **Capability Graph** 
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 import streamlit as st
 
-_root = Path(__file__).resolve().parents[4]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
