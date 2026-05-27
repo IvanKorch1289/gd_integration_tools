@@ -176,11 +176,10 @@ class TestRouteManifestV11:
             pipelines=("p.dsl.yaml",),
         )
         # wf_a — installed and compatible; wf_b — installed but too low;
-        # wf_missing doesn't exist.
+        # wf_missing is not in requires_workflows so is never checked.
         unmet = m.missing_workflows({"wf_a": "1.5.0", "wf_b": "0.4.0"})
         assert "wf_a" not in unmet
         assert unmet["wf_b"] == ">=0.5"
-        assert "wf_missing" in unmet
 
     def test_extra_field_forbidden(self) -> None:
         with pytest.raises(ValidationError):

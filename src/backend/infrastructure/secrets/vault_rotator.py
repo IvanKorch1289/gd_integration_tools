@@ -203,14 +203,21 @@ class VaultSecretRotator:
                 cached_version = self._versions.get(path)
 
                 if cached_version is None:
-                    # Первая инициализация — просто запоминаем версию
+                    # Первая инициализация — просто запоминаем версию.
+                    # Callback вызывается сразу: drift-tolerance неприменима
+                    # (старого секрета нет), валидации нет → активируем.
                     self._versions[path] = new_version
+                    secret_data: dict[str, Any] = response["data"]["data"]
+                    callback(secret_data)
+                    self._old_secrets[path] = ({}, 0.0)
                     logger.debug(
-                        "vault_rotator.init", path=path, version=new_version
+                        "vault_rotator.init",
+                        path=path,
+                        version=new_version,
                     )
                 elif cached_version != new_version:
                     # Новая версия обнаружена
-                    new_secret: dict[str, Any] = response["data"]["data"]
+                    new_secret_data: dict[str, Any] = response["data"]["data"]
                     old_secret, old_ts = self._old_secrets.get(path, ({}, 0.0))
 
                     # Проверяем drift-toleration: прошло ли достаточно времени?
@@ -228,13 +235,13 @@ class VaultSecretRotator:
                             tolerance_s=self._drift_tolerance,
                         )
                         # Сохраняем новый секрет, но не активируем пока
-                        self._old_secrets[path] = (new_secret, now)
+                        self._old_secrets[path] = (new_secret_data, now)
                     else:
                         # Drift-window прошёл (или старого секрета нет) —
                         # пробуем валидировать и активировать
                         if validator is not None:
                             try:
-                                is_valid = validator(new_secret)
+                                is_valid = validator(new_secret_data)
                             except Exception as exc:
                                 logger.error(
                                     "vault_rotator.validation_error",
@@ -263,7 +270,7 @@ class VaultSecretRotator:
                             old_version=cached_version,
                             new_version=new_version,
                         )
-                        callback(new_secret)
+                        callback(new_secret_data)
                 else:
                     logger.debug(
                         "vault_rotator.secret_unchanged", path=path, version=new_version
