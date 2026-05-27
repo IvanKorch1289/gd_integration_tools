@@ -370,7 +370,8 @@ multimodal-rag = [
     # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.
-    "transformers>=4.45,<5",
+    # S31: upper bound снят <5 -> <6 для закрытия GHSA-69w3-r845-3855.
+    "transformers>=4.45,<6",
     # Sprint 11 K4 W1: audio resample / mel-spectrogram (Whisper STT).
     # openai-whisper не входит в multimodal-rag из-за отсутствия py3.14
     # wheels — установка через `pip install --no-build-isolation
@@ -443,6 +444,7 @@ include = ["src*", "testkit*", "tools*"]
 # testkit подхватывались pytest без явного импорта в conftest.py.
 [project.entry-points."pytest11"]
 testkit = "testkit.pytest_plugin"
+src_testkit = "src.testkit.pytest_plugin"
 
 # S17 ADR-NEW-2: hook-точка для middleware из внешних дистрибутивов.
 # Расширения регистрируют ASGI middleware-классы; MiddlewareRegistry
