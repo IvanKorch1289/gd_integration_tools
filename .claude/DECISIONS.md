@@ -820,3 +820,48 @@ Unification = 20-30 LOC diff.
 - diskcache: **BLOCKED** — нет fix version
 
 **Wave**: `[wave:s29/w1-pip-audit-gate]` + `[wave:s29/w2-pip-audit-dep-upgrade]`.
+
+---
+
+## R1 Series ADR Finalization (S19 adr-w1 / adr-w2)
+
+Sprint 19 finalized the following R-series open decisions. Full ADR documents are in `docs/adr/`:
+
+### ADR-0078: plugin.toml Capability Syntax (R1.1) — **Accepted**
+
+**Decision**: `[[capabilities]]` TOML array-of-tables format with `name` + `scope` fields.
+Not flat key-value (`capabilities.db_read = "files"`) or colon-delimited string array.
+Codified from existing implementation across all plugins (`credit_pipeline`, `core_entities_files`, `test_plug`).
+
+**File**: `docs/adr/0078-plugin-toml-capability-syntax.md`
+
+### ADR-0079: SLO Format (R1.5) — **Accepted**
+
+**Decision**: Inline `route.toml::slo` TOML section (flat `slo = {}` or `[route.slo]` block).
+Not separate Sloth YAML file. `p95_ms`, `p99_ms`, `timeout_ms`, `rps_target` fields.
+Codified from existing implementation in all route manifests.
+
+**File**: `docs/adr/0079-slo-format-route-toml-slo.md`
+
+### ADR-0080: Single Entry Policy Naming (R1.7) — **Accepted**
+
+**Decision**: Facade classes use `Coordinator` suffix; decorators use `with_` prefix;
+config dataclasses use `Spec` suffix; enums use `Policy` suffix.
+Rejected: `_policy` suffix on facades, bare `@retry` decorators, `Handler` suffix.
+
+**File**: `docs/adr/0080-single-entry-policy-naming.md`
+
+### ADR-0081: EventBus Production Backend (R1.8) — **Accepted**
+
+**Decision**: FastStream `RedisBroker` as primary EventBus backend.
+Rejected: NATS (no native schema validation), Kafka (operational complexity), RabbitMQ (higher latency).
+FastStream abstraction allows broker swap to NATS/Kafka without interface changes.
+
+**File**: `docs/adr/0081-eventbus-production-backend-faststream-redis.md`
+
+### Already-Finalized (prior ADR documents)
+
+| R1 Ref | Topic | ADR File | Status |
+|--------|-------|----------|--------|
+| R1.9 | Granian RSGI vs Uvicorn | ADR-0059 | Accepted (S6) |
+| R1.20 | PluginSandboxAdapter final strategy | ADR-0077 | Accepted (S28) |
