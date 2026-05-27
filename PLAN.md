@@ -1,9 +1,10 @@
-# PLAN.md — gd_integration_tools V22.4 FINAL (S17–S19 GAP-adapted + S21–S24 + S25–S27 AI Platform Layer)
+# PLAN.md — gd_integration_tools V22.6 FINAL (S31–S36 GAP-driven maturity ramp to 90%+)
 
-> **Версия**: V22.4 FINAL (Sprint 25-27 AI Platform Layer добавлены 2026-05-22; production-ready roadmap S16-S20 ≤ 10 недель + post-production backlog без дат). Sprint 16 active (не изменён). **Sprint 17–S19 replaced GAP-driven 2026-05-21** по результатам 10-слойного аудита (см. `.claude/KNOWN_ISSUES.md` + `.claude/DECISIONS.md` ADR-NEW-1..4). Sprint 20 «Production Signoff» сохранён в V22 формате. **Sprint 21-24 post-production GAP-backlog** (DEEP-RESEARCH 2026-05-20 + AI-GAP 2026-05-22). **Sprint 25-27 AI Platform Layer** добавлены 2026-05-22 на основе нового платформенного плана: AIGateway фасад (ADR-NEW-19), AIPolicySpec (ADR-NEW-20), PIITokenizer reversible (ADR-NEW-21), SkillRegistry V11.2 (ADR-NEW-22), MCP Gateway namespaces (ADR-NEW-23), AI Audit Unified Schema (ADR-NEW-24).
-> **Дата**: 2026-05-22.
+> **Версия**: V22.6 FINAL (S31–S36 GAP-driven sprint planning добавлены 2026-05-27; повышение зрелости до 90%+). Sprint 28–S30 CLOSED. **Sprint 21–S27 AI Platform Layer** — предыдущий пласт. **Sprint 31–S36** — GAP-driven планирование (архитектурная нормализация, AI consolidation, DX, documentation CI, dependency governance, chaos, production readiness).
+> **Дата**: 2026-05-27.
 > **Замещает**: V22.3 FINAL (предыдущая ревизия с S24 AI Safety) и V21.0 (архив → `vault/archive-plan-v21.md`).
-> **Срок**: 2026-05-22 → 2026-07-31 (S16–S20: 5 спринтов × 2 недели × 5 команд).
+> **Срок**: 2026-05-22 → 2026-08-31 (S16–S20: 5 спринтов × 2 недели × 5 команд). S28–S30 closed 2026-05-27.
+> **S31–S36 GAP-driven** (2026-06-09 → 2026-08-31): 6 спринтов × 2 недели × 5 команд для достижения зрелости 90%+.
 > **Post-production backlog (S21-S23)**: без дат, выполняется параллельно release stabilization, не блокирует release v1.0.0-production.
 >
 > **Главные принципы V22**:
@@ -976,7 +977,7 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
-## 10. Sprint 29 — GAP Resolution (2026-05-26)
+## 10. GAP-driven sprint planning — повышение зрелости до 90%+
 
 **Дата**: 2026-05-26. **Owner**: AI/Data (K4, K1, K2, K5). **Партнёры**: Dev, Analyst, Researcher.
 
@@ -1031,4 +1032,376 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
-**Конец PLAN.md V22.4 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`. Архив V0–V22.3: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension` / `feedback_plan_v22_4_ai_platform`.
+### Контекст
+
+Текущий coverage ≈83% (S20 DoD). mypy=0. pre-prod-check=38/38. RPS≥1500, p95≤80ms. S28–S30 закрыты. Для достижения зрелости 90%+ необходимо:
+- Архитектурная нормализация после 27 спринтов (унификация API, консистентность имён, консолидация дублирующих модулей)
+- AI Platform consolidation (PydanticAI/LiteLLM/RAG/MCP в единый стек)
+- Developer Experience & Platform (CLI wizards, codegen, docs, auto-scaler)
+- Documentation CI + coverage 90%+ (Sphinx + Diátaxis + pre-push gate)
+- Dependency governance + chaos testing (SBOM, supply-chain, resilience)
+- Production readiness 90%+ (smoke tests, property-based tests, Grafana dashboards)
+
+### Sprint 31 — Архитектурная нормализация (2026-06-09 → 2026-06-22)
+
+**Фокус**: унификация после 27 Sprint-волн. Устранение дублирующих модулей, консолидация API-стиля,的统一命名.
+
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | Unified ConfigValidator rules (консолидация 13 правил) | К1 | — |
+| w2 | MetricsRegistry canonical labels + idempotent registration | К2 | — |
+| w3 | AuthorizationGateway Casbin→OPA migration check | К1 | — |
+| w4 | DSL builder stateless split verification (6 миксинов) | К3 | — |
+| w5 | TaskRegistry CI-gate enforce + check_task_registry.py | К2 | — |
+
+#### w1 — Unified ConfigValidator rules
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: 13 существующих правил в `core/config/validator.py` привести к единому стилю. Устранить дублирование с `services/core/` validation.
+
+#### w2 — MetricsRegistry canonical labels + idempotent registration
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: Все 44 мигрированных метрик (S17 K2 W1) проверить на canonically labels `{tenant_id, route_id, component, env}`. Idempotent registration gate.
+
+#### w3 — AuthorizationGateway Casbin→OPA migration check
+
+**Status**: 🟡 PLANNED.
+
+**What**: Casbin model → OPA policy migration status. Сосуществование обоих бэкендов до полного перехода.
+
+#### w4 — DSL builder stateless split verification
+
+**Status**: 🟡 PLANNED.
+
+**What**: 6 stateless миксинов RouteBuilder (S12 Track A) верифицировать на отсутствие shared state. golden-snapshot baseline.
+
+#### w5 — TaskRegistry CI-gate enforce
+
+**Status**: 🟡 PLANNED.
+
+**What**: `check_task_registry.py` → mandatory CI gate. Все `asyncio.create_task` → `TaskRegistry.create_task`.
+
+
+---
+
+### Sprint 32 — AI Platform Consolidation (2026-06-23 → 2026-07-06)
+
+**Фокус**: консолидация AI-стека в единую платформу. PydanticAI + LiteLLM + MCP + RAG unified.
+
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | PydanticAI unified client (model router → AIGateway) | К4 | — |
+| w2 | LiteLLM Proxy integration + model registry | К4 | — |
+| w3 | MCP Gateway domain namespaces (ADR-NEW-23) | К3/К1 | — |
+| w4 | Unified RAG cache 3-level (embedding/vector/results) | К4 | — |
+| w5 | AI Audit Unified Schema (ADR-NEW-24) | К3/К1 | — |
+
+
+#### w1 — PydanticAI unified client
+
+**Status**: 🟡 PLANNED.
+
+**What**: `AIGateway._invoke_llm()` → PydanticAI unified client. All 44 metrics + 3 counters funneled through single client.
+
+
+#### w2 — LiteLLM Proxy integration
+
+**Status**: 🟡 PLANNED.
+
+**What**: LiteLLM proxy как единый LLM gateway (OpenAI-compatible). Model registry в `services/ai/`.
+
+#### w3 — MCP Gateway domain namespaces
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: ADR-NEW-23: MCP Gateway domain namespaces для AI-tools. Trusted external registry.
+
+#### w4 — Unified RAG cache 3-level
+
+**Status**: 🟡 PLANNED.
+
+**What**: Embedding cache + vector cache + results cache. RRF k=60 default. Reranker fallback.
+
+
+#### w5 — AI Audit Unified Schema
+
+**Status**: 🟡 PLANNED.
+
+**What**: ADR-NEW-24: `ai.invocation.*` unified schema. Audit sink → unified schema bridge.
+
+
+---
+
+### Sprint 33 — Developer Experience & Platform (2026-07-07 → 2026-07-20)
+
+**Фокус**: DX Wizards, CLI tooling, Streamlit pages, codegen improvements.
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | CLI wizard: `make wizard-route` (Scaffold + route) | К5 | ✅ `tools/wizards/route_wizard.py` |
+| w2 | CLI wizard: `make wizard-plugin` (plugin dev) | К5 | — |
+| w3 | Streamlit pages 60-67 (DX dashboard, codegen UI) | К5 | — |
+| w4 | Codegen: OpenAPI→DSL import improvements | К3 | — |
+| w5 | VSCode extension skeleton (tools/vscode-extension/) | К5 | — |
+
+
+#### w1 — CLI wizard: make wizard-route
+
+**Status**: ✅ DONE (2026-05-27).
+
+
+**What**: `tools/wizards/route_wizard.py` — интерактивный CLI для создания routes/. Формирует route.toml + *.dsl.yaml.
+**Files**: `tools/wizards/route_wizard.py`, `tools/wizards/route_templates.py`, `tools/wizards/__init__.py`, `Makefile wizard-route` target.
+
+
+#### w2 — CLI wizard: make wizard-plugin
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: `tools/wizards/plugin_wizard.py` — scaffolding plugin.toml + manifest + shared/features layout.
+
+#### w3 — Streamlit pages 60-67
+
+**Status**: 🟡 PLANNED.
+
+**What**: DX dashboard + codegen UI + workflow visualizer + monitoring pages.
+
+#### w4 — Codegen: OpenAPI→DSL import
+
+**Status**: 🟡 PLANNED.
+
+**What**: `import-swagger` CLI улучшения: better reference resolution, multi-file output, route naming convention.
+
+
+#### w5 — VSCode extension skeleton
+
+**Status**: 🟡 PLANNED.
+
+**What**: `tools/vscode-extension/` skeleton (V22 new). DSL-aware extension with LSP integration.
+
+---
+
+### Sprint 34 — Documentation CI + Coverage 90% (2026-07-21 → 2026-08-03)
+
+**Фокус**: Sphinx auto-gen + Diátaxis + pre-push gate + coverage 90%+.
+
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | Sphinx auto-api: multi-version + ReadTheDocs | К5 | — |
+| w2 | Diátaxis structure: tutorials/howto/reference/guides | К5 | — |
+| w3 | Pre-push docstring gate (tools/checks/check_docstrings.py --strict) | К5 | — |
+| w4 | Coverage gap: find coverage < 90% files | К2 | — |
+| w5 | Vale prose linter + ru-language proofreader | К5 | — |
+
+
+#### w1 — Sphinx auto-api
+
+**Status**: 🟡 PLANNED.
+
+**What**: Auto-gen API reference из docstrings. Multi-version + GitLab Pages. Narrow scope: core/, dsl/engine/, core/interfaces/.
+
+
+#### w2 — Diátaxis structure
+
+**Status**: 🟡 PLANNED.
+
+**What**: tutorials (getting-started,/tutorials/11*/), howto (guides/*), reference (api/*.rst), explanation (arch/*.rst).
+
+
+#### w3 — Pre-push docstring gate
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: `tools/checks/check_docstrings.py --strict` в pre-commit (stages: pre-push). Amnesty baseline: `tools/checks/check_docstrings_allowlist.txt`.
+
+
+#### w4 — Coverage gap analysis
+
+**Status**: 🟡 PLANNED.
+
+**What**: `coverage report --fail-under=90` — найти файлы с coverage < 90%. Добить каждый до 90%+.
+
+
+#### w5 — Vale prose linter
+
+**Status**: 🟡 PLANNED.
+
+**What**: Vale prose linter + ru-language proofreader. GitLab CI mirror.
+
+
+---
+
+### Sprint 35 — Dependency Governance + Chaos (2026-08-04 → 2026-08-17)
+**Фокус**: SBOM, supply-chain security, chaos testing, property-based tests.
+
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | SBOM cyclonedx + cosign sign (supply-chain gate) | К1 | — |
+| w2 | OWASP ZAP security gate (API Top 10) | К1 | — |
+| w3 | Chaos testing framework: chaos/*.py | К2 | — |
+| w4 | Property-based test suites (hypothesis 6.x) | К2 | — |
+| w5 | Dependency audit: pip-audit + outdated deps | К1 | — |
+
+#### w1 — SBOM + cosign
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: cyclonedx SBOM generation + cosign sign. CI gate: SBOM + pip-audit + cosign.
+
+
+#### w2 — OWASP ZAP gate
+
+**Status**: 🟡 PLANNED.
+
+**What**: OWASP ZAP integration в CI. API Top 10 scanning. R3 gate.
+
+#### w3 — Chaos testing framework
+
+**Status**: 🟡 PLANNED.
+
+**What**: `tests/chaos/*.py` — chaos monkey для DB/Redis/MQ/Claude API. `make chaos`.
+
+
+#### w4 — Property-based test suites
+
+**Status**: 🟡 PLANNED.
+
+**What**: Hypothesis 6.x test suites. 5+ suites for critical paths. S22 W5 (G-16).
+
+
+#### w5 — Dependency audit
+
+**Status**: 🟡 PLANNED.
+
+**What**: `pip-audit` CI gate + `make deps-check-strict`. outdated deps detection.
+
+
+---
+
+
+### Sprint 36 — Production Readiness 90%+ (2026-08-18 → 2026-08-31)
+**Фокус**: smoke tests, Grafana dashboards, multi-region, pre-prod-check 90%+.
+
+| Wave | Task | Owner | PR |
+|------|------|-------|----|
+| w1 | Smoke tests: 12+ critical paths | К2 | — |
+| w2 | Grafana dashboards: CB/RateLimit/SLA/Semantic Cache | К2 | — |
+| w3 | Multi-region routing scaffold | К2 | — |
+| w4 | Pre-prod-check upgrade: 90% of 38/38 gates | К1 | — |
+| w5 | Granian runtime mode verification (2.x API) | К2 | — |
+
+#### w1 — Smoke tests
+
+**Status**: 🟡 PLANNED.
+
+**What**: 12+ smoke tests для критических путей. `make smoke` CI gate.
+
+#### w2 — Grafana dashboards
+
+**Status**: 🟡 PLANNED.
+
+**What**: 8+ Grafana dashboards: CB (F-02), RateLimit (F-09), SLA (F-14), Semantic Cache (F-11), AI cost, Tenant isolation.
+
+#### w3 — Multi-region routing scaffold
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: Scaffold only. Production rollout = future work. S23 W10 (F-07).
+
+#### w4 — Pre-prod-check 90%+
+
+
+**Status**: 🟡 PLANNED.
+
+
+**What**: pre-prod-check v3: 90%+ coverage of 38 gates. Incremental from 38/38.
+
+
+#### w5 — Granian runtime mode API
+
+**Status**: 🟡 PLANNED.
+
+**What**: Granian 2.x `runtime_mode` API verification. SIGUSR1 → fork. asgiref compatibility.
+
+---
+
+## 11. Sprint 30 — Production Hardening (2026-05-27)
+
+**Дата**: 2026-05-27. **Owner**: AI/Data + Plugin/Platform + DSL/Workflow. **Канал**: #s30.
+
+### Цель
+
+Финальное усиление перед production release: starlette security hotfix, core entities migration, NeMo guardrails wiring, Helm chart, control-flow processor tests.
+
+### w1 — starlette PYSEC-2026-161 Fix
+
+**Status**: ✅ DONE (commit adfc850c).
+
+- starlette→1.1.0 (Apache 2.0 licensed, no PYSEC vulnerability)
+- Удалён `prometheus-fastapi-instrumentator` (unmaintained, CVE risk)
+- Custom `prometheus_client` implementation в `entrypoints/api/v1/instrumentation.py`
+- `pip-audit` CI gate в blocking mode
+
+### w2 — users/orderkinds imports migration
+
+**Status**: ✅ DONE (commit 7bd1e1d7).
+
+- `src/backend/services/core/users.py` → `extensions/core_entities/users.py`
+- `src/backend/services/core/orderkinds.py` → `extensions/core_entities/orderkinds.py`
+- Shim-файлы в старом location (21-line + 24-line) остаются до полной верификации extensions
+- `src/backend/dsl/commands/setup.py`, `src/backend/plugins/composition/service_setup.py` обновлены
+
+### w3 — users/orderkinds/orders service migration
+
+**Status**: ✅ DONE (commit ec12db45).
+
+- Orders service полностью мигрирован в `extensions/core_entities/orders/services/orders.py`
+- Полная бизнес-логика: create_skb_order, get_order_result, file/storage operations, ES indexing
+- DI через importlib (канонические пути), resolve_module удалён из extension
+- `src/backend/services/core/orders.py` → deprecation shim (как users/orderkinds)
+- Shim-файлы users/orderkinds/orders остаются до полной верификации extensions
+- Проверка `extensions/core_entities` implementations complete
+
+### w4 — NeMo Guardrails Output Check
+
+**Status**: ✅ DONE (commit 58738202).
+
+- `LLMCallProcessor`: сохраняет оригинальный prompt в `exchange.properties['llm.original_prompt']`
+- `GuardrailsProcessor._check_external_providers`: добавлен `NeMo.check_output` наряду с Lakera/Rebuff
+- GPU unavailable graceful skip
+- ADR-0064 Accepted: NeMo как output guardrail provider
+
+### w5 — Helm Chart for gd-integration-tools
+
+**Status**: ✅ DONE (commit cbddf70c).
+
+- `deploy/helm/gd-integration-tools/` — полный Helm chart
+- Deployment, Worker, HPA, PDB, Ingress, NetworkPolicy, Secret, ServiceAccount, Job (migration)
+- `values.yaml` с full configuration coverage
+
+### eip-unit-tests — Control Flow Processor Tests
+
+**Status**: ✅ DONE (this session).
+
+- `tests/unit/dsl/engine/processors/test_control_flow.py` (14 tests)
+- `TryCatchProcessor`: 5 tests (success, exception caught, finally, status recovered, failed exchange)
+- `ParallelProcessor`: 5 tests (all strategy, first strategy, errors, cancellation, body copy)
+- `ChoiceProcessor`: 4 tests (first match, otherwise, jmespath, no match)
+
+---
+
+**Конец PLAN.md V22.6 FINAL.** Полный GAP-анализ: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + `gap-analysis/AI-GAP-ANALYSIS-gd_integration_tools-2026-05-22.md`. Архив V0–V22.3: `vault/archive-plan-v21.md`. Memory: `feedback_sprint16_closure` / `feedback_sprint17_centralization` / `feedback_sprint18_techdebt` / `feedback_sprint19_dx` / `project_v22_production_ready` / `feedback_plan_v22_2_extension` / `feedback_plan_v22_4_ai_platform`.
