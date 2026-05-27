@@ -212,7 +212,7 @@ embeddings-fastembed-legacy = [
 # instructor — structured-output fallback. Default-OFF в settings.
 ai-2026 = [
     "litellm>=1.0.0,<2.0.0",  # S30: lowered to >=1.0.0 — CVE-2026-42208 fix available from 1.0.0
-    "pydantic-ai>=1.56.0,<2.0.0",  # S31: >=1.56.0 fixes GHSA-9gxr-xmx6, GHSA-fwxg-cgq5 (CVE-2026-2328, CVE-2026-0596). Major version jump 0.5→1.x — adapter.py LiteLLMModel shim needs rewrite (use pydantic-ai's native litellm Model instead of custom Model ABC impl). Default-OFF until S32 W2.
+    "pydantic-ai>=1.99.0,<2.0.0",  # S31: >=1.99.0 fixes GHSA-cqp8-fcvh-x7r3 (CVE-2026-46678, SSRF via IPv4-mapped IPv6). 1.94.0 was in vulnerable range >=1.56.0,<1.99.0. adapter.py LiteLLMModel shim needs rewrite for 1.x Model ABC — default-OFF until S32 W2.
     # REMOVED langmem: zero imports, custom memory consolidation (UnifiedMemoryGateway)
     # is better suited for self-hosted. Long-term memory via LangMem requires managed
     # cloud — not compatible with self-hosted-first constraint.
