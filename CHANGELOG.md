@@ -127,7 +127,17 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #### s19/k1-w6-prod-hot-reload-disable
 - Disable hot-reload when APP_PROFILE=prod
 
-### Total: 26 commits across 29 waves
+#### s19/k2-w4-coverage-ratchet-75
+- Coverage gate threshold ratchet 70%→75%
+- _DEFAULT_THRESHOLD=75 in check_coverage_gate.py
+- CI --threshold updated to 75 in test.yml
+
+#### s19/adr-w2-r1-8-r1-9-r1-20
+- R1.8→ADR-0081 FastStream Redis (EventBus, finalized adr-w1)
+- R1.9→ADR-0059 Granian RSGI (Accepted S6)
+- R1.20→ADR-0077 E2B sandbox (Accepted S28)
+
+### Total: 28 commits across 29 waves
 
 ## [0.1.0] — 2025 — Initial release
 
