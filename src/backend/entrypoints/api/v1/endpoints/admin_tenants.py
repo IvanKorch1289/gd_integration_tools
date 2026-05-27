@@ -17,7 +17,7 @@ Endpoints (под ``/api/v1/admin``):
 from __future__ import annotations
 
 import logging
-from collections import Counter
+from collections import Counter as CollectionsCounter
 from typing import Any
 
 from fastapi import APIRouter
@@ -73,10 +73,9 @@ def _aggregate_tenants(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     aggregated: list[dict[str, Any]] = []
     for tid, items in by_tenant.items():
-        # ``Counter`` — это ``collections.Counter`` (счётчик строк), не
-        # ``prometheus_client.Counter``; violation-check ругается из-за
-        # идентичного имени.
-        actions = Counter(  # noqa: violation-check
+        # ``CollectionsCounter`` — это ``collections.Counter`` (счётчик строк),
+        # не ``prometheus_client.Counter``.
+        actions = CollectionsCounter(
             str(r.get("action", "")) for r in items if r.get("action")
         )
         last_seen = max(
