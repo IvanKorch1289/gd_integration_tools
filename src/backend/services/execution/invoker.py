@@ -433,7 +433,7 @@ class Invoker(InvokerProtocol):
         if channel is not None:
             try:
                 await channel.send(response)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.exception(
                     "Temporal-activity: ReplyChannel.send failed (id=%s)",
                     request.invocation_id,
@@ -472,7 +472,7 @@ class Invoker(InvokerProtocol):
             return
         try:
             await channel.send(response)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception("ReplyChannel.send failed (id=%s)", request.invocation_id)
 
     async def _run_silent(self, request: InvocationRequest) -> None:
@@ -481,7 +481,7 @@ class Invoker(InvokerProtocol):
                 action=request.action, payload=request.payload
             )
             await self._dispatch(command, self._build_context(request))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception(
                 "BACKGROUND task failed: action=%s id=%s",
                 request.action,
@@ -648,7 +648,7 @@ async def _run_deferred_job(request: InvocationRequest) -> None:
         return
     try:
         await channel.send(response)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.exception(
             "DEFERRED: ReplyChannel.send failed (invocation_id=%s)",
             request.invocation_id,

@@ -291,7 +291,7 @@ def _dspy_metric_adapter(
         ex_dict.update(example.labels())
         try:
             return float(pipeline.metric(ex_dict, prediction.prediction))
-        except Exception:
+        except Exception as _:
             return 0.0
     return _metric
 

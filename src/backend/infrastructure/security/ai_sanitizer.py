@@ -178,7 +178,7 @@ class AIDataSanitizer:
                         },
                         maxlen=10000,
                     )
-            except Exception:
+            except Exception as _:
                 logger.debug("PII masking audit publish to Redis failed", exc_info=True)
 
         return result, result.audit_events

@@ -271,7 +271,7 @@ class QuotasService:
             from src.backend.core.config.features import feature_flags  # noqa: PLC0415
 
             return bool(getattr(feature_flags, "per_tenant_billing_enabled", False))
-        except Exception:  # noqa: BLE001 — fallback default-OFF
+        except Exception as _:  # noqa: BLE001 — fallback default-OFF
             return False
 
     @staticmethod
@@ -301,7 +301,7 @@ class QuotasService:
             from src.backend.infrastructure.clients.storage.redis import (  # noqa: PLC0415
                 redis_client,
             )
-        except Exception:  # noqa: BLE001 — fail-open для unit-тестов / dev_light
+        except Exception as _:  # noqa: BLE001 — fail-open для unit-тестов / dev_light
             return None
         candidate = getattr(redis_client, "_raw_client", None) or redis_client
         if not all(

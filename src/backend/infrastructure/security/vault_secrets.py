@@ -225,7 +225,7 @@ class VaultSecretsBackend(SecretsBackend):
                         path=path, mount_point=self._mount
                     )
                     return True
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     return False
             return False
 
@@ -250,7 +250,7 @@ class VaultSecretsBackend(SecretsBackend):
                     response = client.secrets.kv.v2.list_secrets(
                         path=base, mount_point=self._mount
                     )
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     return []
             else:
                 return []

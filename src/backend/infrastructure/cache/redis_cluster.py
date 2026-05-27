@@ -146,7 +146,7 @@ class RedisClusterAdapter:
         # внутреннюю группировку по shard'у.
         try:
             return await self._cluster.mget(list(keys))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             # Fallback: fan-out параллельных GET.
             import asyncio
 
@@ -165,7 +165,7 @@ class RedisClusterAdapter:
             return
         try:
             await self._cluster.mset(mapping)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             import asyncio
 
             await asyncio.gather(*(self._cluster.set(k, v) for k, v in mapping.items()))

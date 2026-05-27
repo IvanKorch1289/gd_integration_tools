@@ -202,7 +202,7 @@ class TokenBudget:
             used = await self._backend.increment(
                 key=key, amount=tokens, ttl_seconds=ttl
             )
-        except Exception:
+        except Exception as _:
             if config.fail_mode == "closed":
                 raise
             # fail-open: пропускаем, бюджет не учитывается

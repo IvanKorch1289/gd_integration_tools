@@ -33,7 +33,7 @@ async def _emit_saga_audit(
             tenant_id=None,
             payload={"caller": "dsl.saga", **payload},
         )
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         pass
 
 

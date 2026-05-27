@@ -41,7 +41,7 @@ def get_route_pipeline(route_id: str) -> Pipeline | None:
     """Возвращает Pipeline по ``route_id`` или ``None``."""
     try:
         return route_registry.get(route_id)
-    except Exception:  # noqa: BLE001 — UI устойчив к отсутствию маршрутов
+    except Exception as _:  # noqa: BLE001 — UI устойчив к отсутствию маршрутов
         return None
 
 

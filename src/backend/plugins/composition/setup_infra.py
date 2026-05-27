@@ -257,7 +257,7 @@ async def _warmup_connection_pools() -> None:
     if _redis_enabled():
         try:
             redis_cache_client = await get_redis_client().get_client("cache")
-        except Exception:  # noqa: BLE001 — warmup best-effort
+        except Exception as _:  # noqa: BLE001 — warmup best-effort
             redis_cache_client = None
 
     clickhouse_client: Any = None

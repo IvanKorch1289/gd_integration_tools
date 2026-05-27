@@ -88,5 +88,5 @@ def _is_namespaces_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(feature_flags.mcp_gateway_namespaces_enabled)
-    except Exception:
+    except Exception as _:
         return False

@@ -118,7 +118,7 @@ class ResultUnwrapProcessor(BaseProcessor):
             if not feature_flags.result_unwrap_processor:
                 exchange.set_property("result_unwrap_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         # Lazy-import result library (extra)

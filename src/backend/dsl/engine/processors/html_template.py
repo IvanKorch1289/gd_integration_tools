@@ -129,7 +129,7 @@ class HtmlTemplateProcessor(BaseProcessor):
             if not feature_flags.proc_html_template:
                 exchange.set_property("html_template_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             # feature flags недоступны — продолжаем работу (для unit-тестов)
             pass
 

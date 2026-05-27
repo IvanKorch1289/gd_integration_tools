@@ -199,7 +199,7 @@ class ReactiveWorkflowDispatcher:
                 "Install via: pip install simpleeval"
             )
             raise RuntimeError(msg) from None
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     async def _check_dedup(self, key: str) -> bool:
@@ -212,5 +212,5 @@ class ReactiveWorkflowDispatcher:
         try:
             result = await self._redis.set(key, "1", nx=True, ex=60)
             return bool(result)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return True

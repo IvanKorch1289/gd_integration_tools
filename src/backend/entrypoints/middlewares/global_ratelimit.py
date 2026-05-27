@@ -241,7 +241,7 @@ class GlobalRateLimitMiddleware:
             return bool(
                 getattr(feature_flags, "multi_tenant_rate_limit_enabled", False)
             )
-        except Exception:  # noqa: BLE001 — best-effort
+        except Exception as _:  # noqa: BLE001 — best-effort
             return False
 
     def _resolve_checker(self, path: str) -> RateLimitChecker:

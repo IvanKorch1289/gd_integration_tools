@@ -127,7 +127,7 @@ def _is_gate_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(feature_flags.activity_capability_gate_enabled)
-    except Exception:  # noqa: BLE001 — fallback на NoOp при ошибке загрузки
+    except Exception as _:  # noqa: BLE001 — fallback на NoOp при ошибке загрузки
         _logger.warning("Не удалось прочитать feature_flags; capability-gate NoOp")
         return False
 
@@ -138,7 +138,7 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
         return
     try:
         context.audit(event)
-    except Exception:  # noqa: BLE001 — audit не должен валить activity
+    except Exception as _:  # noqa: BLE001 — audit не должен валить activity
         _logger.exception("Audit callback raised; suppressing")
 
 

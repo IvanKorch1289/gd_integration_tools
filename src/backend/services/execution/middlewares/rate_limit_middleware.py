@@ -114,13 +114,13 @@ class RateLimitMiddleware:
         if self._limiter_provider is not None:
             try:
                 return self._limiter_provider()
-            except Exception:
+            except Exception as _:
                 return None
         try:
             from src.backend.core.di.providers import get_rate_limiter_provider
 
             return get_rate_limiter_provider()
-        except Exception:
+        except Exception as _:
             return None
 
     def _resolve_limiter_module(self) -> Any | None:
@@ -133,6 +133,6 @@ class RateLimitMiddleware:
             return self._limiter_module
         try:
             self._limiter_module = importlib.import_module(_LIMITER_MODULE_NAME)
-        except Exception:
+        except Exception as _:
             return None
         return self._limiter_module

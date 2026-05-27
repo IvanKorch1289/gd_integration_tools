@@ -167,7 +167,7 @@ class WorkflowLauncher:
                 v = Version(version_str)
                 if v in spec_set:
                     matching.append((v, version_str))
-            except Exception:
+            except Exception as _:
                 continue
 
         if not matching:

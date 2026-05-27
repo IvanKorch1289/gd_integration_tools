@@ -146,7 +146,7 @@ class WebSearchProcessor(BaseProcessor):
             if not feature_flags.web_search_enabled:
                 exchange.set_property("web_search_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         query = self._resolve_query(exchange)

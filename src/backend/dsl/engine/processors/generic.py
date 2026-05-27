@@ -245,7 +245,7 @@ class FeatureFlagGuardProcessor(BaseProcessor):
         if self._resolver:
             try:
                 enabled = bool(self._resolver(self.flag))
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.warning("feature flag resolver failed for %s", self.flag)
         else:
             flags = exchange.get_property("_feature_flags") or {}

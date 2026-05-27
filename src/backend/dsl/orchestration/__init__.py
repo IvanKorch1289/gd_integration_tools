@@ -48,7 +48,7 @@ class Sensor:
                         await get_dsl_service().dispatch(
                             route_id=self.route_id, body={}, headers={}
                         )
-                except Exception:
+                except Exception as _:
                     import logging
 
                     logging.getLogger("dsl.sensor").exception(

@@ -73,7 +73,7 @@ class RedisLock:
             return False
         try:
             return bool(await self._lock.extend(additional_seconds or self._ttl))
-        except Exception:
+        except Exception as _:
             return False
 
 

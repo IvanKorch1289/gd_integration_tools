@@ -175,7 +175,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
             envelope = await dispatcher.dispatch(
                 spec.action, dict(spec.payload), context
             )
-        except Exception:  # noqa: BLE001 — лог и выходим, повторим на следующий tick.
+        except Exception as _:  # noqa: BLE001 — лог и выходим, повторим на следующий tick.
             logger.exception(
                 "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
             )
@@ -203,7 +203,7 @@ async def _run_scheduled_invocation(spec: ScheduleSpec) -> None:
     invoker = get_invoker()
     try:
         await invoker.invoke(request)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.exception(
             "Scheduled invocation failed: action=%s job_id=%s", spec.action, job_id
         )

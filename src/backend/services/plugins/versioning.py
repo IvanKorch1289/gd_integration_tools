@@ -245,7 +245,7 @@ class PluginVersionService:
         try:
             data = _load_toml(manifest)
             return str(data.get("version")) if data.get("version") else None
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
     def _archive_current(

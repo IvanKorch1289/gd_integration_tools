@@ -170,7 +170,7 @@ class WatcherManager:
                     await self._dispatch(spec, watcher_id, raw_path, filename)
         except asyncio.CancelledError:
             raise
-        except Exception:
+        except Exception as _:
             logger.exception("Watcher %s: ошибка awatch-цикла", watcher_id)
 
     @staticmethod
@@ -190,7 +190,7 @@ class WatcherManager:
                 },
                 headers={"x-source": "filewatcher", "x-watcher-id": watcher_id},
             )
-        except Exception:
+        except Exception as _:
             logger.exception("Watcher %s: ошибка обработки %s", watcher_id, filepath)
 
     async def stop_all(self) -> None:

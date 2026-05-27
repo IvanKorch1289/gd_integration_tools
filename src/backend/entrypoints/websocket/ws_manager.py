@@ -99,7 +99,7 @@ class ConnectionManager:
                 continue
             try:
                 await ws.send_json(data)
-            except Exception:
+            except Exception as _:
                 disconnected.append(client_id)
 
         for client_id in disconnected:

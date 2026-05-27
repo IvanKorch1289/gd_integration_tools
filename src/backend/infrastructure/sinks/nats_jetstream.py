@@ -129,7 +129,7 @@ class NATSJetStreamSink(Sink):
         try:
             nc = await nats.connect(self.nats_url)
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         finally:
             if nc is not None:

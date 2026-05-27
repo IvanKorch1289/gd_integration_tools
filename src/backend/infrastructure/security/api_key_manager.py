@@ -98,7 +98,7 @@ class APIKeyManager:
                         parsed = orjson.loads(v) if isinstance(v, (bytes, str)) else v
                         if isinstance(parsed, dict):
                             result.append(parsed)
-                    except Exception:
+                    except Exception as _:
                         logger.debug(
                             "API key Redis value parse failed; skipped", exc_info=True
                         )

@@ -354,7 +354,7 @@ class FlagsmithBackend:
         if shutdown is not None:
             try:
                 await shutdown()
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _logger.exception("FlagsmithBackend shutdown failed")
         self._provider = None
 
@@ -388,7 +388,7 @@ def _read_local_flag(flag_key: str, default: bool) -> bool:
         from src.backend.core.config.features import feature_flags  # noqa: PLC0415
 
         return bool(getattr(feature_flags, flag_key, default))
-    except Exception:  # noqa: BLE001 — graceful fallback в любых ошибках
+    except Exception as _:  # noqa: BLE001 — graceful fallback в любых ошибках
         _logger.debug("local feature_flags недоступен, default=%s", default)
         return default
 

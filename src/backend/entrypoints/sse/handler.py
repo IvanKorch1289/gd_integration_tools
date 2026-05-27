@@ -125,7 +125,7 @@ async def sse_stream(request: Request) -> StreamingResponse:
             policy = tenant_policy if tenant_policy else PiiStreamPolicy()
             async for chunk in stream_filter(_raw_generator(), policy):
                 yield chunk
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             async for chunk in _raw_generator():
                 yield chunk
 

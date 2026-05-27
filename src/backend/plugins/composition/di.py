@@ -124,7 +124,7 @@ def register_app_state(app: FastAPI) -> None:
 
     try:
         mqtt_settings = MqttSettings()
-    except Exception:
+    except Exception as _:
         # Fallback на локальный брокер, если конфиг невалиден в dev-окружении.
         mqtt_settings = MqttSettings(
             broker_host="localhost", broker_port=1883, enabled=False

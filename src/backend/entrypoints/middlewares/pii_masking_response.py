@@ -120,7 +120,7 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False)
             )
-        except Exception:  # noqa: BLE001 — best-effort
+        except Exception as _:  # noqa: BLE001 — best-effort
             return False
 
     def _path_matches(self, path: str) -> bool:

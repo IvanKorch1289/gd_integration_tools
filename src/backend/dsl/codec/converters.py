@@ -21,7 +21,7 @@ def convert_numpy_types(value: Any) -> Any:
     if callable(item):
         try:
             return item()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return value
     return value
 

@@ -150,6 +150,6 @@ async def _safe_sanitize(
         result = await sanitizer.sanitize(
             text, entities=list(entities) if entities else None
         )
-    except Exception:  # noqa: BLE001 — streaming best-effort
+    except Exception as _:  # noqa: BLE001 — streaming best-effort
         return text
     return result.sanitized_text

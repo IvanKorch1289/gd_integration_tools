@@ -367,7 +367,7 @@ class AIAgentService:
             from src.backend.services.ai.metrics import get_agent_metrics_service
 
             return get_agent_metrics_service()
-        except Exception:
+        except Exception as _:
             return None
 
     async def run_agent(
@@ -561,7 +561,7 @@ class AIAgentService:
         """
         try:
             from src.backend.core.config.ai_2026 import ai_agent_settings
-        except Exception:  # noqa: BLE001 — конфиг недоступен
+        except Exception as _:  # noqa: BLE001 — конфиг недоступен
             return None
         if not ai_agent_settings.policy_gate_enabled:
             return None
@@ -646,7 +646,7 @@ class AIAgentService:
             if app is None:
                 return None
             return getattr(app.state, "authorization_gateway", None)
-        except Exception:  # noqa: BLE001 — caller handles fail-closed
+        except Exception as _:  # noqa: BLE001 — caller handles fail-closed
             return None
 
     @staticmethod

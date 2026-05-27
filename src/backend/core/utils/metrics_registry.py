@@ -209,7 +209,7 @@ class MetricsRegistry:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.metrics_registry_strict)
-        except Exception:  # noqa: BLE001 — best-effort
+        except Exception as _:  # noqa: BLE001 — best-effort
             return False
 
 

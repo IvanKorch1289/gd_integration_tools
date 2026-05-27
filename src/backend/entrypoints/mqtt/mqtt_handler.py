@@ -169,7 +169,7 @@ class MqttHandler:
 
         try:
             data = orjson.loads(payload)
-        except Exception:
+        except Exception as _:
             data = {"raw": payload.decode("utf-8", errors="replace")}
 
         action = data.pop("action", None)
@@ -232,7 +232,7 @@ class MqttHandler:
 def _create_mqtt_handler() -> MqttHandler:
     try:
         settings = MqttSettings()
-    except Exception:
+    except Exception as _:
         settings = MqttSettings(
             broker_host="localhost", broker_port=1883, enabled=False
         )

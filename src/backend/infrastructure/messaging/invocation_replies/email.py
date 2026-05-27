@@ -106,7 +106,7 @@ class EmailReplyChannel(InvocationReplyChannel):
                 body=body,
                 metadata={"invocation_id": response.invocation_id},
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception(
                 "EmailReplyChannel.send failed (invocation_id=%s, recipient=%s)",
                 response.invocation_id,
@@ -139,7 +139,7 @@ class EmailReplyChannel(InvocationReplyChannel):
             if not from_address:
                 return None
             return EmailAdapter(from_address=str(from_address))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
 

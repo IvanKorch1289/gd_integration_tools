@@ -219,7 +219,7 @@ class PolicyChain:
                 )
                 self._builder._processors.append(marker)
                 return self._builder
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         marker = PolicyMarkerProcessor(policy_name=name, params=kwargs, enabled=True)
@@ -253,7 +253,7 @@ class PolicyMarkerProcessor:
 
             if not feature_flags.policy_chainable_enabled:
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         if not self.enabled:
@@ -275,7 +275,7 @@ class PolicyMarkerProcessor:
             if register and callable(register):
                 try:
                     register(**self.params)
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     pass
         except ImportError:
             pass

@@ -166,7 +166,7 @@ class ClickHouseBulkWriter:
             if self._on_failure is not None:
                 try:
                     await self._on_failure(batch, exc)
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     logger.exception("clickhouse_bulk.on_failure_callback_raised")
             return 0
 

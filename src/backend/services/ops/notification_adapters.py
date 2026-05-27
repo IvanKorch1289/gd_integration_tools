@@ -72,7 +72,7 @@ class EmailNotificationAdapter:
             from src.backend.core.di.providers import get_smtp_client_provider
 
             return await get_smtp_client_provider().test_connection()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 
@@ -102,7 +102,7 @@ class ExpressNotificationAdapter:
 
             client = get_express_client_provider()
             return await client.ping() if hasattr(client, "ping") else True
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 
@@ -161,7 +161,7 @@ class TelegramNotificationAdapter:
                     f"https://api.telegram.org/bot{self._token}/getMe"
                 )
                 return resp.is_success
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

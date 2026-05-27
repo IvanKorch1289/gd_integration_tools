@@ -269,7 +269,7 @@ def _is_flag_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.pool_health_monitor
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return False
 
 

@@ -90,7 +90,7 @@ class WebDAVSource:
             self._processed_files = {
                 line.strip() for line in content.splitlines() if line.strip()
             }
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             # Marker не существует — first run.
             self._processed_files = set()
 
@@ -105,14 +105,14 @@ class WebDAVSource:
             client.upload_fileobj(
                 buf, self._config.processed_marker_path, overwrite=True
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception("WebDAVSource._save_marker failed")
 
     def _list_remote_files(self, client) -> list[str]:
         try:
             items = client.ls(self._config.watch_path, detail=False)
             return [str(p) for p in items]
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception("WebDAVSource._list_remote_files failed")
             return []
 

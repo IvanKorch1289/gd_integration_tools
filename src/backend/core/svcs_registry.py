@@ -72,7 +72,7 @@ def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:
             # опционально получает их тоже (svcs ≥ 25.1 это допускает).
             try:
                 registry.register_factory(key, factory)
-            except Exception:
+            except Exception as _:
                 logger.debug(
                     "svcs не принял ключ %r — используется внутренний cache.", key
                 )
@@ -124,7 +124,7 @@ def get_service(key: Hashable | type[T]) -> T | Any:
         try:
             container = svcs.Container(registry)
             instance = container.get(key)
-        except Exception:
+        except Exception as _:
             factory = _factory_for(key)
             if factory is None:
                 raise KeyError(f"Factory для '{key}' не найдена") from None

@@ -32,7 +32,7 @@ class HttpAntivirusBackend(AntivirusBackend):
             return True  # сервис не объявляет ping — считаем доступным
         try:
             return bool(await check())
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:

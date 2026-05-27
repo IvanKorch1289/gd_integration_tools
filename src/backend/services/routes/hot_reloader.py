@@ -168,7 +168,7 @@ class RouteHotReloader:
             if self._on_event is not None:
                 try:
                     self._on_event(event)
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     _logger.exception("hot_reloader.on_event_callback_raised")
 
     async def _do_reload(self, route_name: str) -> ReloadEvent:

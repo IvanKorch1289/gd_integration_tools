@@ -108,7 +108,7 @@ class PluginLoader:
         for ep in eps:
             try:
                 await self._load_one(ep_name=ep.name, loader=ep.load)
-            except Exception:
+            except Exception as _:
                 logger.exception(
                     "Plugin load failed (skipped): entry_point=%s value=%s",
                     ep.name,
@@ -198,7 +198,7 @@ class PluginLoader:
         for name, (plugin, _) in list(self._loaded.items()):
             try:
                 await plugin.on_shutdown()
-            except Exception:
+            except Exception as _:
                 logger.exception("Plugin shutdown failed: %s", name)
         self._loaded.clear()
 
@@ -241,7 +241,7 @@ def _read_manifest_near(target: object) -> PluginManifest | None:
         import importlib
 
         module = importlib.import_module(module_name)
-    except Exception:
+    except Exception as _:
         return None
     file_attr = getattr(module, "__file__", None)
     if file_attr is None:

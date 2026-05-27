@@ -275,7 +275,7 @@ class AuthorizationGateway:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.authz_gateway_enabled)
-        except Exception:  # noqa: BLE001 — best-effort
+        except Exception as _:  # noqa: BLE001 — best-effort
             return False
 
     def _emit_audit(self, decision: AuthorizationDecision) -> None:
@@ -301,7 +301,7 @@ class AuthorizationGateway:
                     ],
                 }
             )
-        except Exception:  # noqa: BLE001 — audit best-effort
+        except Exception as _:  # noqa: BLE001 — audit best-effort
             _logger.exception("AuthorizationGateway audit_callback failed")
 
     # ------------------------------------------------------------------ steps
@@ -412,7 +412,7 @@ class AuthorizationGateway:
                         outcome="allow",
                         detail="opa_runtime_query_enabled=False",
                     )
-            except Exception:  # noqa: BLE001 — feature-flag недоступен → deny
+            except Exception as _:  # noqa: BLE001 — feature-flag недоступен → deny
                 return AuthorizationReason(
                     source="opa",
                     outcome="deny",
@@ -511,7 +511,7 @@ class AuthorizationGateway:
                         outcome="allow",
                         detail="route_authz_requires_permission=False",
                     )
-            except Exception:  # noqa: BLE001 — feature-flag недоступен → deny
+            except Exception as _:  # noqa: BLE001 — feature-flag недоступен → deny
                 return AuthorizationReason(
                     source="permission",
                     outcome="deny",

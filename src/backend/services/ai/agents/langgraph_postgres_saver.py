@@ -78,7 +78,7 @@ class LangGraphPostgresSaverWrapper:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "langgraph_postgres_checkpoint", False))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     def _resolve_dsn(self) -> str:
@@ -93,7 +93,7 @@ class LangGraphPostgresSaverWrapper:
                 dsn = getattr(db, "dsn", None) or getattr(db, "url", None)
                 if dsn:
                     return str(dsn)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
         raise LangGraphPostgresSaverUnavailable(
             "DSN для AsyncPostgresSaver не передан и не найден в settings.database"

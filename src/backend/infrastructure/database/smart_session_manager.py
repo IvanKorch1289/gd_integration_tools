@@ -147,7 +147,7 @@ class SmartSessionManager:
             yield session
             if on_replica:
                 self._record_replica_success()
-        except Exception:
+        except Exception as _:
             if on_replica:
                 self._record_replica_failure()
             raise
@@ -194,7 +194,7 @@ class SmartSessionManager:
 
             if not feature_flags.multi_replica_failover:
                 return False
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return (time.monotonic() - self._last_lag_check) >= self._lag_check_interval
 

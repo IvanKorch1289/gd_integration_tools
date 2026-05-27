@@ -327,7 +327,7 @@ class AsyncBatcher:
             result = self._flush_fn(batch)
             if hasattr(result, "__await__"):
                 await result
-        except Exception:
+        except Exception as _:
             logger.debug("AsyncBatcher flush_fn raised; batch dropped", exc_info=True)
 
     async def start(self) -> None:

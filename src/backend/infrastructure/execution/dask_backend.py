@@ -127,13 +127,13 @@ class DaskBackend:
             if self._client is not None:
                 try:
                     self._client.close()
-                except Exception:
+                except Exception as _:
                     _logger.exception("DaskBackend: close client failed")
                 self._client = None
             if self._cluster is not None:
                 try:
                     self._cluster.close()
-                except Exception:
+                except Exception as _:
                     _logger.exception("DaskBackend: close cluster failed")
                 self._cluster = None
 

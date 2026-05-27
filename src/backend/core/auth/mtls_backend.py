@@ -211,7 +211,7 @@ def default_cryptography_parser() -> CertParser:
     def _attr(name: Any, oid: Any) -> str | None:
         try:
             attrs = name.get_attributes_for_oid(oid)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
         if not attrs:
             return None

@@ -99,7 +99,7 @@ class JqProcessor(BaseProcessor):
             if not feature_flags.proc_jq:
                 exchange.set_property("jq_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         try:

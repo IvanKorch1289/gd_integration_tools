@@ -292,7 +292,7 @@ class RAGService:
             await self._store.delete([document_id])
             await self._invalidate_namespace(None)
             return True
-        except Exception:
+        except Exception as _:
             return False
 
     async def delete_collection(self, namespace: str) -> int:
@@ -372,7 +372,7 @@ def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
         attribution_on = bool(
             getattr(rag_settings, "source_attribution_enabled", True)
         )
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         attribution_on = True
 
     parts: list[str] = []
@@ -424,7 +424,7 @@ def _filter_by_embedding_version(
         return results
     try:
         from src.backend.core.config.rag import rag_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return results
 
     current_model = getattr(rag_settings, "embedding_model", None)
@@ -467,7 +467,7 @@ def _record_embedding_provenance(chunk_model: str, current_model: str) -> None:
             labels=("chunk_model", "current_model"),
         )
         counter.labels(chunk_model=chunk_model, current_model=current_model).inc()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.debug("rag_model_mismatch metric emit failed", exc_info=True)
 
 

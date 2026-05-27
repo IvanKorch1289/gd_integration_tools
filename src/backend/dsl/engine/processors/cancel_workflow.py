@@ -166,7 +166,7 @@ class CancelWorkflowProcessor(BaseProcessor):
                         "namespace": self.namespace_name,
                     },
                 )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         exchange.set_property(

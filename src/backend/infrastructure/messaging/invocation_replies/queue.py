@@ -97,7 +97,7 @@ class QueueReplyChannel(InvocationReplyChannel):
         message = _response_to_dict(response)
         try:
             await publisher(topic, message)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception(
                 "QueueReplyChannel.send failed (invocation_id=%s, topic=%s)",
                 response.invocation_id,
@@ -126,7 +126,7 @@ class QueueReplyChannel(InvocationReplyChannel):
             )
 
             client = get_stream_client()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
         publisher_fn: Callable[..., Awaitable[Any]] | None

@@ -136,6 +136,6 @@ class EmailSink(Sink):
         try:
             await client.connect()
             await client.quit()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return True

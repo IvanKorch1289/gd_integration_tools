@@ -224,7 +224,7 @@ class AgentMetricsService:
         ctx = {"provider": provider, "status": "success"}
         try:
             yield ctx
-        except Exception:
+        except Exception as _:
             ctx["status"] = "error"
             raise
         finally:

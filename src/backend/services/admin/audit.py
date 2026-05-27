@@ -61,5 +61,5 @@ def emit_admin_action(
         return
     try:
         _audit_callback(event)
-    except Exception:  # noqa: BLE001 — best-effort, never breaks admin ops
+    except Exception as _:  # noqa: BLE001 — best-effort, never breaks admin ops
         logger.exception("emit_admin_action failed for %s", event["event"])

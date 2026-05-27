@@ -36,7 +36,7 @@ class DiskTTLCache:
         try:
             payload = json_loads(raw)
             return CacheEnvelope.from_payload(payload)
-        except Exception:
+        except Exception as _:
             return None
 
     def _get_sync(self, key: str) -> CacheEnvelope | None:

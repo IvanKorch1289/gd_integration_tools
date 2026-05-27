@@ -148,7 +148,7 @@ def _maybe_anonymize(
     """
     try:
         from src.backend.core.config.ai_2026 import langfuse_settings
-    except Exception:  # noqa: BLE001 — конфиг недоступен в degenerate setup
+    except Exception as _:  # noqa: BLE001 — конфиг недоступен в degenerate setup
         return input_messages, output_text, generation_metadata
     if not langfuse_settings.sanitize_traces:
         return input_messages, output_text, generation_metadata

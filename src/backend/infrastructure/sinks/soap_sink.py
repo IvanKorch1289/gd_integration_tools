@@ -100,7 +100,7 @@ class SoapSink(Sink):
         """Health: успешная загрузка WSDL."""
         try:
             client = await asyncio.to_thread(self._get_client)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return client is not None
 

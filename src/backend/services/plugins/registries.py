@@ -145,7 +145,7 @@ class RepositoryHookRegistry:
         for callback in self.hooks_for(repo_name, event):
             try:
                 await callback(repo, *args, **kwargs)
-            except Exception:
+            except Exception as _:
                 logger.exception(
                     "Repository hook failed: %s.%s callback=%s",
                     repo_name,

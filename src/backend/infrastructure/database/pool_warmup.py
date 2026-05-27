@@ -45,7 +45,7 @@ try:  # pragma: no cover - prometheus_client optional
     _POOL_RECONNECTS = _PromCounter(
         "pool_reconnects_total", "Pool reconnect events", ("pool",)
     )
-except Exception:  # noqa: BLE001
+except Exception as _:  # noqa: BLE001
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
     _WARMUP_FAILURES = None  # type: ignore[assignment,unused-ignore]
     _POOL_RECONNECTS = None  # type: ignore[assignment,unused-ignore]
@@ -352,7 +352,7 @@ class PoolReconnectMonitor:
             for name, healthcheck in self._pools.items():
                 try:
                     healthy = await healthcheck()
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     healthy = False
                 previously_healthy = self._last_state.get(name, True)
                 if not healthy and previously_healthy:
@@ -369,5 +369,5 @@ class PoolReconnectMonitor:
                     if self._on_reconnect is not None:
                         try:
                             await self._on_reconnect(name)
-                        except Exception:  # noqa: BLE001
+                        except Exception as _:  # noqa: BLE001
                             logger.exception("pool_reconnect_monitor.callback_failed")

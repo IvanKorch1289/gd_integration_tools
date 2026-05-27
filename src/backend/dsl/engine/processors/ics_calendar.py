@@ -157,7 +157,7 @@ class IcsCalendarProcessor(BaseProcessor):
             if not feature_flags.proc_ics_calendar:
                 exchange.set_property("ics_calendar_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         src_value = self._resolve_source(exchange)

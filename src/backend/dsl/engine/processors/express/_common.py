@@ -52,7 +52,7 @@ async def log_outgoing_message(
             bubble=bubble,
             keyboard=keyboard,
         )
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         # Best-effort логирование; ошибки Mongo не критичны.
         return
 

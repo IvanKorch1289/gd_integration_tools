@@ -91,7 +91,7 @@ async def _verify_basic(request: Request) -> AuthContext | None:
         if not user or not password:
             return None
         return AuthContext(AuthMethod.BASIC, user, {"auth_type": "basic"})
-    except Exception:
+    except Exception as _:
         return None
 
 

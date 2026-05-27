@@ -80,7 +80,7 @@ class SlackAdapter:
     async def health(self) -> bool:
         try:
             return bool(self._webhook_url_provider())
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

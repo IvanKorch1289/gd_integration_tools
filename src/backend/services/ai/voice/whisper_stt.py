@@ -123,7 +123,7 @@ class WhisperSTTService:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "voice_stt_tts_enabled", False))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     def is_available(self) -> bool:

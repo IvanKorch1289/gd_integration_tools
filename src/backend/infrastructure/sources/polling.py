@@ -127,6 +127,6 @@ class PollingSource:
         body_hash = hashlib.sha256(body).hexdigest()
         try:
             payload: Any = response.json()
-        except Exception:
+        except Exception as _:
             payload = body.decode(errors="replace")
         return payload, body_hash

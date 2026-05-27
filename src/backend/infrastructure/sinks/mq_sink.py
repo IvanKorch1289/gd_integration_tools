@@ -78,7 +78,7 @@ class MqSink(Sink):
         try:
             await broker.connect()
             await broker.close()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return True
 

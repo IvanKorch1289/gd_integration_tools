@@ -251,7 +251,7 @@ def attach_scheduler_dlq(
                         name="scheduler-dlq-write",
                         deadline_seconds=10.0,
                     )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _logger.exception("scheduler DLQ listener failed")
 
     scheduler.add_listener(_on_job_error, EVENT_JOB_ERROR)

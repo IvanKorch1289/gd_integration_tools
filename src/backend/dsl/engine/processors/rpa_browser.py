@@ -56,7 +56,7 @@ def _extract_domain(url: str) -> str:
         from urllib.parse import urlparse
         parsed = urlparse(url)
         return parsed.netloc or ""
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return ""
 
 

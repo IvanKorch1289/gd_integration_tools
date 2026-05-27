@@ -105,5 +105,5 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             return bool(
                 getattr(feature_flags, "per_route_timeout_enabled", False)
             )
-        except Exception:  # noqa: BLE001 — best-effort
+        except Exception as _:  # noqa: BLE001 — best-effort
             return False

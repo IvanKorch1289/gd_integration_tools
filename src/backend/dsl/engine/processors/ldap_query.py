@@ -165,7 +165,7 @@ class LdapQueryProcessor(BaseProcessor):
             if not feature_flags.proc_ldap_query:
                 exchange.set_property("ldap_query_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         # Primary path: ldap3 + asyncio.to_thread (стабильный wheel py3.14).

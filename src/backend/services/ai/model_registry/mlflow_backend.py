@@ -114,7 +114,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             await loop.run_in_executor(
                 None, lambda: client.create_registered_model(record.name)
             )
-        except Exception:  # noqa: BLE001 — already exists OK
+        except Exception as _:  # noqa: BLE001 — already exists OK
             pass
 
         artifact_uri = record.artifact_uri or "models:/placeholder"

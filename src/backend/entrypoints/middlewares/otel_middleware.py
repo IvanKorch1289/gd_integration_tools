@@ -118,7 +118,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
                 response = await self._process(request, call_next, span)
                 self._inject_traceparent(response)
                 return response
-        except Exception:
+        except Exception as _:
             # Ошибка уже размечена в _process — пробрасываем
             raise
 
@@ -186,7 +186,7 @@ class OtelMiddleware(BaseHTTPMiddleware):
                 ctx = current_tenant()
                 if ctx is not None:
                     tenant_id = getattr(ctx, "tenant_id", "") or ""
-            except Exception:  # noqa: BLE001 — best-effort
+            except Exception as _:  # noqa: BLE001 — best-effort
                 tenant_id = ""
 
         attrs: dict[str, Any] = {

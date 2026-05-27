@@ -253,7 +253,7 @@ class StreamingBackpressureController:
             from src.backend.core.config.features import feature_flags
 
             return feature_flags.backpressure_streaming_enabled
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

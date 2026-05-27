@@ -35,7 +35,7 @@ def _get_three_tier_cache() -> Any:
         from src.backend.core.di.app_state import get_app_ref
 
         app = get_app_ref()
-    except Exception:
+    except Exception as _:
         return None
     if app is None:
         return None

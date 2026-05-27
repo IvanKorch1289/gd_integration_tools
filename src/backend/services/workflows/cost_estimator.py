@@ -170,7 +170,7 @@ class WorkflowCostEstimator:
             decl = getattr(wf_version, "declaration", None) if wf_version else None
             if decl is not None:
                 llm_breakdown = self._estimate_llm_cost(decl, sample_size=sample_size)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             llm_breakdown = None
 
         estimated_cost_usd = llm_breakdown.total_usd if llm_breakdown else Decimal("0")

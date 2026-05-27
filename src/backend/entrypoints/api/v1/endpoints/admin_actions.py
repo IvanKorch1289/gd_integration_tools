@@ -101,7 +101,7 @@ def _get_registry() -> Any:
         )
 
         return ActionHandlerRegistry.get_instance()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 

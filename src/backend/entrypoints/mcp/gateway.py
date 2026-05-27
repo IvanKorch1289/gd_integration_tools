@@ -39,7 +39,7 @@ def _check_feature_flag() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(feature_flags.mcp_gateway_namespaces_enabled)
-    except Exception:
+    except Exception as _:
         return False
 
 
@@ -80,7 +80,7 @@ def _resolve_auth_provider() -> Any | None:
             logger.warning("JWTVerifier init failed: %s", exc)
             return None
 
-    except Exception:
+    except Exception as _:
         return None
 
 
@@ -233,7 +233,7 @@ class MCPGateway:
 
         try:
             registry = SkillRegistry()
-        except Exception:
+        except Exception as _:
             logger.debug("SkillRegistry instantiation failed")
             return 0
 

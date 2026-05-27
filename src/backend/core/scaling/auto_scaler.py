@@ -103,7 +103,7 @@ class AutoScaler:
             try:
                 self._hpa_exporter.export()
                 result["hpa_exported"] = True
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _logger.exception("hpa_exporter.export raised; suppressed")
         return result
 
@@ -113,7 +113,7 @@ class AutoScaler:
             while not self._stop_event.is_set():
                 try:
                     await self.tick_once()
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     _logger.exception("AutoScaler tick_once raised; продолжаем")
                 try:
                     await asyncio.wait_for(

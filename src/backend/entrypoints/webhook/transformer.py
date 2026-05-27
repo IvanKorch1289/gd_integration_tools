@@ -159,7 +159,7 @@ class WebhookRelay:
 
                 if not jmespath.search(rule.condition, payload):
                     return None
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.debug(
                     "jmespath condition raised; rule applied as match-all",
                     exc_info=True,
@@ -258,7 +258,7 @@ class WebhookRelay:
             try:
                 data = orjson.loads(item)
                 entries.append(DLQEntry(**data))
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.debug("DLQ entry parse failed; skipped", exc_info=True)
                 continue
         return entries
@@ -279,7 +279,7 @@ class WebhookRelay:
                     if data.get("id") == entry_id:
                         await raw.lrem(_DLQ_KEY, 1, item)
                         return
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     logger.debug(
                         "DLQ entry parse failed during remove; skipped", exc_info=True
                     )

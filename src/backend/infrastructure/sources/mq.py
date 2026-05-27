@@ -175,7 +175,7 @@ class MQSource:
             import orjson
 
             return orjson.loads(data)
-        except Exception:
+        except Exception as _:
             return data.decode(errors="replace")
 
     async def _on_message(self, on_event: EventCallback, msg: Any) -> None:

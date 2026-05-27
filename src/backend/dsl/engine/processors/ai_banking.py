@@ -118,7 +118,7 @@ async def _emit_audit(
             from src.backend.infrastructure.service_locator import locator
 
             audit = locator.resolve(AuditService)
-        except Exception:
+        except Exception as _:
             audit = None
 
         if audit is None:
@@ -144,7 +144,7 @@ async def _emit_audit(
             },
         }
         await audit.emit(**payload)
-    except Exception:
+    except Exception as _:
         _logger.debug("audit emit skipped: %s", event)
 
 
@@ -243,7 +243,7 @@ class _BankingAIProcessor(BaseProcessor):
             try:
                 parsed = orjson.loads(text[start:end])
                 return output_model.model_validate(parsed)
-            except Exception:
+            except Exception as _:
                 pass
         return None
 

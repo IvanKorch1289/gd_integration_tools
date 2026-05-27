@@ -487,7 +487,7 @@ class GroupByKeyProcessor(_BaseWindow):
             import jmespath
 
             key = jmespath.search(self._key_path, exchange.in_message.body)
-        except Exception:
+        except Exception as _:
             key = None
 
         async with self._lock:

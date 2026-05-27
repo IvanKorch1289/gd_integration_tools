@@ -173,7 +173,7 @@ class WebDavProcessor(BaseProcessor):
             if not feature_flags.proc_webdav:
                 exchange.set_property("webdav_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         src_value = self._resolve_source(exchange) if self._mode == "upload" else None

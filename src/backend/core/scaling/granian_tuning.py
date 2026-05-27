@@ -159,7 +159,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
             if not feature_flags.granian_rsgi_mode_enabled:
                 return "asgi"
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return "asgi"
         return self.interface
 

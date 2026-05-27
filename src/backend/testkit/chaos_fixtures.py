@@ -57,7 +57,7 @@ def toxiproxy_available() -> bool:
 
         response = httpx.get(f"{TOXIPROXY_URL}/version", timeout=1.0)
         return response.status_code == 200
-    except Exception:
+    except Exception as _:
         return False
 
 

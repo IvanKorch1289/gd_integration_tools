@@ -141,7 +141,7 @@ class ZipArchiveProcessor(BaseProcessor):
             if not feature_flags.proc_zip_archive:
                 exchange.set_property("zip_archive_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         src_value = self._resolve_source(exchange)

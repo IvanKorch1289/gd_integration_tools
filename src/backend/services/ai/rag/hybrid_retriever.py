@@ -268,5 +268,5 @@ def _record_hybrid_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.debug("rag_hybrid_fallback metric emit failed", exc_info=True)

@@ -120,7 +120,7 @@ class EvaluateRulesProcessor(BaseProcessor):
                 if bool(evaluator.eval(rule.expr)):
                     matched = rule
                     break
-            except Exception:  # noqa: BLE001 — best-effort skip плохого правила
+            except Exception as _:  # noqa: BLE001 — best-effort skip плохого правила
                 continue
 
         decision = matched.decision if matched else self.params.default_decision

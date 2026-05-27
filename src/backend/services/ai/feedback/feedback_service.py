@@ -139,7 +139,7 @@ class AIFeedbackService:
         """Wave D.6: оптинально подаёт feedback в RLMFeedbackProcessor."""
         try:
             from src.backend.core.config.ai_2026 import langmem_settings
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return
         if not langmem_settings.rlm_enabled:
             return

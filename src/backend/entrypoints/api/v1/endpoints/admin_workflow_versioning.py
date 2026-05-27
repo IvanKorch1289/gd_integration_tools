@@ -127,6 +127,6 @@ async def get_running_count(workflow_id: str) -> RunningCountResponse:
             counts = await backend.count_running_per_version(  # type: ignore[attr-defined]
                 workflow_id=workflow_id
             )
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         counts = {}
     return RunningCountResponse(workflow_id=workflow_id, counts=counts)

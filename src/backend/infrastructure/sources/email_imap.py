@@ -84,7 +84,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
                     body = part.get_payload(decode=True).decode(  # type: ignore[union-attr]
                         part.get_content_charset() or "utf-8", errors="replace"
                     )
-                except Exception:
+                except Exception as _:
                     body = ""
                 break
     else:
@@ -94,7 +94,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
                 body = raw_payload.decode(
                     msg.get_content_charset() or "utf-8", errors="replace"
                 )
-        except Exception:
+        except Exception as _:
             body = ""
 
     return {
@@ -326,7 +326,7 @@ class EmailIMAPSource:
                     finally:
                         try:
                             client.idle_done()
-                        except Exception:
+                        except Exception as _:
                             logger.debug(
                                 "EmailIMAPSource: idle_done failed", exc_info=True
                             )
@@ -337,5 +337,5 @@ class EmailIMAPSource:
             finally:
                 try:
                     await client.logout()
-                except Exception:
+                except Exception as _:
                     logger.debug("EmailIMAPSource: logout failed", exc_info=True)

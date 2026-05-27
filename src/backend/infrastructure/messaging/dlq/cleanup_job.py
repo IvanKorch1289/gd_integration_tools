@@ -30,7 +30,7 @@ try:  # pragma: no cover
         "Number of DLQ records deleted by cleanup job",
         ("dlq_class",),
     )
-except Exception:  # noqa: BLE001
+except Exception as _:  # noqa: BLE001
     _CLEANUP_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 

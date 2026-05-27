@@ -235,7 +235,7 @@ class TemporalWorkerPool:
             for tq, worker in list(self._workers.items()):
                 try:
                     await worker.shutdown()
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     _logger.exception(
                         "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )

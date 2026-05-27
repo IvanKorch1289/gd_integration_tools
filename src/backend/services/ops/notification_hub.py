@@ -232,7 +232,7 @@ class NotificationHub:
             from src.backend.core.config.settings import settings
 
             bot_token = getattr(settings, "telegram_bot_token", "")
-        except Exception:
+        except Exception as _:
             bot_token = ""
 
         if not bot_token:

@@ -175,7 +175,7 @@ class AgentRunProcessor(BaseAIProcessor):
             from src.backend.services.ai.gateway_adapter import get_ai_gateway
 
             return get_ai_gateway()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             try:
                 from src.backend.core.di.container import get_container
 

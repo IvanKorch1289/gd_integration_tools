@@ -161,5 +161,5 @@ class LongRunningSecretRotator:
             if inspect.isawaitable(result):
                 awaitable: Awaitable[Any] = result
                 await awaitable
-        except Exception:  # noqa: BLE001 — heartbeat не должен валить activity
+        except Exception as _:  # noqa: BLE001 — heartbeat не должен валить activity
             _logger.exception("Heartbeat callback raised; suppressing")

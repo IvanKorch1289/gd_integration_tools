@@ -59,7 +59,7 @@ class AuditMiddleware:
 
         try:
             result = await next_handler(action, payload, context)
-        except Exception:
+        except Exception as _:
             duration_ms = int((time.monotonic() - started_at) * 1000)
             _logger.exception(
                 "action.dispatch.error",

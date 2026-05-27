@@ -103,7 +103,7 @@ def _get_plugin_registry() -> Any:
         from src.backend.core.plugin_runtime.loader import PluginLoader  # lazy import
 
         return PluginLoader.get_instance()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.warning("PluginLoader недоступен — используется mock")
         return None
 
@@ -345,7 +345,7 @@ def _get_version_service() -> Any | None:
         )
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 

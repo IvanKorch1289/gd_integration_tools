@@ -111,7 +111,7 @@ class L2SemanticRagCache:
         if isinstance(raw, str):
             try:
                 return orjson.loads(raw)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 return raw
         return raw
 

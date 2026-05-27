@@ -141,7 +141,7 @@ class DegradationManager:
         if self._store is not None:
             try:
                 await self._store.persist(mode, transition)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.exception("degradation.store_persist_failed")
         return transition
 

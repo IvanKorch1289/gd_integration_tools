@@ -83,20 +83,20 @@ class BaseExternalAPIClient:
             return self._outbound_http_client
         try:
             from src.backend.core.config.waf import waf_settings
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
         if not getattr(waf_settings, "outbound_via_facade", False):
             return None
         try:
             from src.backend.core.net.outbound_http import OutboundHttpClient
             from src.backend.core.svcs_registry import get_service, has_service
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
         if not has_service(OutboundHttpClient):
             return None
         try:
             return get_service(OutboundHttpClient)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
     def _url(self, endpoint_key: str) -> str:

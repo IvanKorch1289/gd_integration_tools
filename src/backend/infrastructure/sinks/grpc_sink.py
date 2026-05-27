@@ -101,6 +101,6 @@ class GrpcSink(Sink):
                 await channel.channel_ready()
             finally:
                 await channel.close()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return True

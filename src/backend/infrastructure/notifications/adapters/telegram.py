@@ -126,13 +126,13 @@ class TelegramAdapter:
         if self._bot_token_provider is not None:
             try:
                 return bool(self._bot_token_provider())
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 return False
         try:
             from src.backend.core.config.telegram import telegram_bot_settings
 
             return bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     def _build_config(self) -> Any:

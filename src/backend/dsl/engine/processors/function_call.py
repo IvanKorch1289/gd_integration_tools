@@ -97,7 +97,7 @@ class CallFunctionProcessor(BaseProcessor):
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.call_function_whitelist_strict)
-        except Exception:  # noqa: BLE001 — feature-flag доступ best-effort
+        except Exception as _:  # noqa: BLE001 — feature-flag доступ best-effort
             return False
 
     @staticmethod

@@ -155,7 +155,7 @@ def _maybe_anonymize_v3(
     """
     try:
         from src.backend.core.config.ai_2026 import langfuse_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return input_messages, output_text, span_metadata
     if not langfuse_settings.sanitize_traces:
         return input_messages, output_text, span_metadata

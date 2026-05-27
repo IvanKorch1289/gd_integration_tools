@@ -48,7 +48,7 @@ class EventBusPublishProcessor:
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return
 
         payload = exchange.body if self.payload_ref == "body" else (
@@ -98,7 +98,7 @@ class EventBusSubscribeProcessor:
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return
 
         subscriptions = list(exchange.properties.get("_eventbus_subscribed") or [])

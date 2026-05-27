@@ -53,7 +53,7 @@ class _ToolUse:
     def score(self, sample: dict[str, Any], output: str) -> dict[str, float]:
         try:
             parsed = json.loads(output)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return {"tool_name_correct": 0.0, "args_coverage": 0.0}
         tool = parsed.get("tool")
         args = parsed.get("arguments") or {}

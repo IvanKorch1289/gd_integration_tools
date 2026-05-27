@@ -391,7 +391,7 @@ class BaseService[
                 try:
                     response = await self.helper._transfer(version, self.version_schema)
                     result.append(response)
-                except Exception:
+                except Exception as _:
                     logger.exception(
                         "Ошибка преобразования версии object_id=%s", object_id
                     )

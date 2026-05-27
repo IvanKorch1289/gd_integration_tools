@@ -164,7 +164,7 @@ class WhooshIndex:
             for stale in set(existing_mtimes) - seen:
                 writer.delete_by_term("path", stale)
             writer.commit()
-        except Exception:
+        except Exception as _:
             writer.cancel()
             raise
 

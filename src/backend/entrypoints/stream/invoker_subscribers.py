@@ -88,7 +88,7 @@ async def _dispatch_invocation_message(
     invoker = get_invoker()
     try:
         await invoker.invoke(request)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         stream_logger.exception(
             "MQ invocation: Invoker.invoke failed source=%s id=%s",
             source,

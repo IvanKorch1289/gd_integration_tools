@@ -43,7 +43,7 @@ def _flag_enabled() -> bool:
         from src.backend.core.config.features import feature_flags  # noqa: PLC0415
 
         return bool(getattr(feature_flags, "waf_outbound_via_facade", False))
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return False
 
 

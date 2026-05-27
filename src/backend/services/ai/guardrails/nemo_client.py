@@ -93,7 +93,7 @@ def _check_ff_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(getattr(feature_flags, "nemo_guardrails_enabled", False))
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return False
 
 

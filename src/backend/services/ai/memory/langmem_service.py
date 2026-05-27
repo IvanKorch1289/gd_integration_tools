@@ -119,7 +119,7 @@ class LangMemService:
                 from src.backend.core.config.features import feature_flags
 
                 enabled = feature_flags.langmem_enabled
-            except Exception:
+            except Exception as _:
                 enabled = False
         self._enabled: bool = bool(enabled)
         self._pg_dsn = pg_dsn

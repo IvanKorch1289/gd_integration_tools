@@ -56,7 +56,7 @@ class RabbitDLQWriter:
                 else await self._channel.get_exchange(self._exchange_name)
             )
             await exchange.publish(message, routing_key=routing_key)
-        except Exception:
+        except Exception as _:
             logger.exception(
                 "dlq.rabbit.write_failed",
                 extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},

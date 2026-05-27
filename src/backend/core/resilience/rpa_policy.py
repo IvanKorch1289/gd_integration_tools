@@ -220,7 +220,7 @@ class RPACallPolicy:
                 if self._on_attempt is not None:
                     try:
                         self._on_attempt(ctx, attempt, exc)
-                    except Exception:  # noqa: BLE001
+                    except Exception as _:  # noqa: BLE001
                         _logger.exception("RPACallPolicy on_attempt callback failed")
 
                 if self._breaker is not None:
@@ -245,7 +245,7 @@ class RPACallPolicy:
                 if self._on_attempt is not None:
                     try:
                         self._on_attempt(ctx, attempt, None)
-                    except Exception:  # noqa: BLE001
+                    except Exception as _:  # noqa: BLE001
                         _logger.exception("RPACallPolicy on_attempt success cb failed")
                 return result
 
@@ -286,7 +286,7 @@ class RPACallPolicy:
         )
         try:
             await self._dlq_writer.write(envelope)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _logger.exception(
                 "RPACallPolicy[%s] DLQ write failed transport=%s",
                 self.name,

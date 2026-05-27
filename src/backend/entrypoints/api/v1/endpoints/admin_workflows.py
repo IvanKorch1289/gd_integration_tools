@@ -537,7 +537,7 @@ def input_schema_json(schema: Any) -> dict[str, Any] | None:
         return None
     try:
         return TypeAdapter(schema).json_schema()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 

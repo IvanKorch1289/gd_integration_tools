@@ -169,7 +169,7 @@ class HealthCheck:
             connection = await connect(settings.queue.queue_url)
             await connection.close()
             return True
-        except Exception:
+        except Exception as _:
             return False
 
 

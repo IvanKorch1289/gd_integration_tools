@@ -265,7 +265,7 @@ class HitlService:
                         "comment": (payload or {}).get("comment"),
                     },
                 )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         return resolved

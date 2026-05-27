@@ -36,7 +36,7 @@ def _create_emit_ai_invocation_event() -> None:
             from src.backend.core.config.features import feature_flags
 
             enabled = bool(feature_flags.ai_audit_unified_enabled)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             enabled = False
 
         if enabled:

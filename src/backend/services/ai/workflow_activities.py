@@ -137,7 +137,7 @@ async def _execute_llm_call(
             result = heartbeat()
             if hasattr(result, "__await__"):
                 await result
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _logger.exception("Heartbeat callback raised; suppressing")
 
     # Унифицированное извлечение content / usage из response.
@@ -150,7 +150,7 @@ async def _execute_llm_call(
     cost_usd = 0.0
     try:
         cost_usd = float(await gateway.acost_estimate(response))
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         _logger.debug("acost_estimate недоступен; cost=0.0")
 
     structured: dict[str, Any] | None = None
@@ -229,7 +229,7 @@ def register_llm_activity(worker: Any) -> bool:
         from src.backend.core.config.features import feature_flags
 
         enabled = bool(feature_flags.ai_workflow_activity_enabled)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         enabled = False
 
     if not enabled:

@@ -275,7 +275,7 @@ class MCPClientRegistry:
                 )
 
                 broker = VaultSecretsBackend()
-            except Exception:
+            except Exception as _:
                 try:
                     from src.backend.infrastructure.security.env_secrets import (
                         EnvSecretsBackend,
@@ -289,7 +289,7 @@ class MCPClientRegistry:
                 result = await broker.get_secret(f"mcp/{client_name}/api_key")
                 return result
             return None
-        except Exception:
+        except Exception as _:
             return None
 
 

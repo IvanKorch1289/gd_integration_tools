@@ -163,7 +163,7 @@ def _get_correlation_id_safe() -> str | None:
 
         value = get_correlation_id()
         return value or None
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 
@@ -174,7 +174,7 @@ def _get_tenant_id_safe() -> str | None:
 
         ctx = current_tenant()
         return ctx.tenant_id if ctx is not None else None
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 

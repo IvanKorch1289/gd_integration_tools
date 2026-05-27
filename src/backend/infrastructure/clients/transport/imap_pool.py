@@ -219,7 +219,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         try:
             await asyncio.wait_for(conn.noop(), timeout=1.5)
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

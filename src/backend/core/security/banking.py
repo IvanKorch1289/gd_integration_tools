@@ -152,7 +152,7 @@ class AntiFraudEngine:
             try:
                 if rule.predicate(tx):
                     triggered.append(rule)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.debug(
                     "anti-fraud rule predicate raised; rule skipped", exc_info=True
                 )

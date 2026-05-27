@@ -141,7 +141,7 @@ class PluginResourceMonitor:
         while not self._stopped.is_set():
             try:
                 self.snapshot()
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _logger.exception("plugin_resource_monitor: snapshot failed")
             try:
                 await asyncio.wait_for(self._stopped.wait(), timeout=self._interval)
@@ -167,7 +167,7 @@ class PluginResourceMonitor:
             import psutil  # noqa: PLC0415
 
             return float(psutil.Process().cpu_percent(interval=None))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return 0.0
 
     def _collect_cpu_share(self) -> dict[str, float]:
@@ -185,7 +185,7 @@ class PluginResourceMonitor:
 
         try:
             frames = sys._current_frames()  # noqa: SLF001
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return {}
 
         counts: dict[str, int] = defaultdict(int)
@@ -214,7 +214,7 @@ class PluginResourceMonitor:
             return dict.fromkeys(self._plugins, 0)
         try:
             snapshot = tracemalloc.take_snapshot()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return dict.fromkeys(self._plugins, 0)
         per_plugin: dict[str, int] = dict.fromkeys(self._plugins, 0)
         for stat in snapshot.statistics("filename"):

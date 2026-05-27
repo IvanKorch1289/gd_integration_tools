@@ -50,13 +50,13 @@ class _DocumentParserPipeline:
     def metric(self, example: dict[str, Any], output: str) -> float:
         try:
             parsed = json.loads(output)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return 0.0
         expected = example.get("expected") or {}
         if isinstance(expected, str):
             try:
                 expected = json.loads(expected)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 expected = {}
         if not isinstance(expected, dict):
             return 0.0

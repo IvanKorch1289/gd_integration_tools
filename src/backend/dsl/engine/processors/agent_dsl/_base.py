@@ -210,7 +210,7 @@ class BaseAIProcessor(BaseProcessor):
             from src.backend.core.security.capabilities.gate import get_capability_gate
 
             return get_capability_gate()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             try:
                 from src.backend.core.di.container import get_container
 
@@ -263,5 +263,5 @@ class BaseAIProcessor(BaseProcessor):
             )
 
             return get_unified_audit_service()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None

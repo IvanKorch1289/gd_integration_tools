@@ -114,7 +114,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         if secret_bytes.startswith("whsec_"):
             try:
                 secret_bytes_raw = base64.b64decode(secret_bytes[len("whsec_") :])
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 secret_bytes_raw = secret_bytes.encode()
         else:
             secret_bytes_raw = secret_bytes.encode()
@@ -151,7 +151,7 @@ class WebhookSignatureProcessor(BaseProcessor):
             if not feature_flags.proc_webhook_signature:
                 exchange.set_property("webhook_signature_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         headers = exchange.in_message.headers
@@ -180,7 +180,7 @@ class WebhookSignatureProcessor(BaseProcessor):
                     },
                 )
                 verified = True
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 verified = False
         except ImportError:
             verified = self._verify_manual(

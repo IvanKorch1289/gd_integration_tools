@@ -66,7 +66,7 @@ class CronDashboardService:
                 else "default"
             )
             return await get_async_client(host=host, port=port, database=database)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
     async def list_scheduled(self) -> list[ScheduledWorkflowSummary]:

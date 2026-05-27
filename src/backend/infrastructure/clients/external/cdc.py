@@ -287,7 +287,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
             try:
                 await conn.remove_listener(channel, _notify_handler)
                 await conn.close()
-            except Exception:
+            except Exception as _:
                 logger.debug("CDC LISTEN connection cleanup failed", exc_info=True)
 
 

@@ -41,7 +41,7 @@ class NATSDLQWriter:
                     "X-Trace": envelope.trace_id or "",
                 },
             )
-        except Exception:
+        except Exception as _:
             logger.exception(
                 "dlq.nats.write_failed",
                 extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},

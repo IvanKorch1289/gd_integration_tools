@@ -248,7 +248,7 @@ class LoopProcessor(BaseProcessor):
                 try:
                     if self._until(exchange):
                         break
-                except Exception:
+                except Exception as _:
                     break
 
             exchange.set_property("loop_index", iteration)

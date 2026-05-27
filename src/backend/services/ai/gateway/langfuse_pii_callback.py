@@ -103,7 +103,7 @@ def _emit_pii_audit(
                 "source": source,
             },
         )
-    except Exception:  # noqa: BLE001 — audit не должен ломать pipeline
+    except Exception as _:  # noqa: BLE001 — audit не должен ломать pipeline
         logger.debug("pii_audit emit failed", exc_info=True)
 
 

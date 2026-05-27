@@ -35,13 +35,13 @@ class _CreditScoringPipeline:
         """Возвращает 1.0 если decision совпадает, partial для score-mismatch."""
         try:
             parsed = json.loads(output)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return 0.0
         expected = example.get("expected")
         if isinstance(expected, str):
             try:
                 expected_dict = json.loads(expected)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 expected_dict = {}
         elif isinstance(expected, dict):
             expected_dict = expected

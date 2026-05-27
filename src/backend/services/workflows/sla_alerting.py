@@ -299,7 +299,7 @@ class SlaTracker:
             ):
                 try:
                     await self._on_hard_breach(entry.workflow_id)
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     _logger.exception(
                         "sla.on_hard_breach.callback_failed",
                         extra={"workflow_id": entry.workflow_id},

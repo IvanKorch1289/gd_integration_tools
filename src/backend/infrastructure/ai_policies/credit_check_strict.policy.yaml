@@ -1,0 +1,95 @@
+# AIPolicySpec PoC — credit_check workflow (ADR-NEW-20, Sprint 25 W2)
+#
+# Назначение: декларативная политика AI для банковского credit_check —
+# defense-in-depth (PII reversible mask → NeMo topic filter → Llama Guard 3
+# → output PII redaction) + cost budget + audit compliance attrs.
+#
+# Применяется AIGateway.invoke() через PolicyResolver когда:
+#   workflow_id matches "credit_check*" AND tenant_id matches "*"
+#
+# См. docs/adr/0067-ai-policy-spec-dsl.md.
+
+name: credit_check_strict
+version: 1
+workflow_pattern: "credit_check*"
+tenant_pattern: "*"
+
+model_router:
+  primary: "openrouter/anthropic/claude-3.5-sonnet"
+  fallback:
+    - "openrouter/openai/gpt-4o-mini"
+    - "huggingface/local-llama-3-instruct"
+  timeout_s: 30.0
+  retry_attempts: 2
+
+# Шаг 3 AIGateway pipeline: input sanitizers
+input_sanitizers:
+  - name: "pii_tokenizer:reversible:ru_strict"
+    config:
+      entity_types:
+        - PERSON
+        - PHONE_NUMBER
+        - INN
+        - SNILS
+        - PASSPORT_RF
+        - CONTRACT
+      ttl_s: 1800
+    on_error: "fail"
+
+# Шаг 4 AIGateway pipeline: input guards
+input_guards:
+  - name: "nemo:colang:topics"
+    config:
+      allowed_topics: ["finance", "credit", "banking"]
+      blocked_topics: ["politics", "religion"]
+    on_block: "fail"
+  - name: "rebuff:default"
+    config:
+      threshold: 0.7
+    on_block: "fail"
+
+# Шаг 7 AIGateway pipeline: output guards
+output_guards:
+  - name: "llama_guard:safe_v3"
+    config:
+      taxonomy: "banking_strict"
+    on_block: "dlq"
+
+# Шаг 8 AIGateway pipeline: output sanitizers
+output_sanitizers:
+  - name: "presidio:ru_anonymize"
+    on_error: "warn"
+
+# MemoryProtocol (ADR-NEW-18, S24 W3)
+memory:
+  short_term:
+    backend: "redis"
+    namespace: "credit:short:{tenant_id}:{session_id}"
+    ttl: 3600
+  long_term:
+    backend: "mem0+pgvector"
+    namespace: "credit:long:{tenant_id}"
+    ttl: 2592000
+  checkpointer:
+    backend: "langgraph+postgres"
+    namespace: "credit_checkpoints"
+  tenant_isolation: true
+  encryption: true
+
+# BudgetSpec
+budget:
+  max_tokens_prompt: 4000
+  max_tokens_completion: 1000
+  max_cost_usd: 0.25
+  ttl_s: 1800
+
+# AuditSpec (extra attrs для ai.invocation.* событий)
+audit:
+  extra_attrs:
+    compliance: "152-FZ"
+    domain: "banking_credit"
+  schema_version: 1
+
+# Если true — AIGateway раздаст PolicyNotResolvedError для credit_check*
+# без resolved policy. False — fallback default-pass-through.
+required: true

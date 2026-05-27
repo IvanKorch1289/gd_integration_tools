@@ -148,7 +148,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             if not feature_flags.db_call_procedure_enabled:
                 exchange.set_property("db_call_procedure_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         from sqlalchemy import text
@@ -164,7 +164,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             try:
                 rows = result.mappings().all()
                 payload: Any = [dict(r) for r in rows]
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 payload = None
             await session.commit()
 

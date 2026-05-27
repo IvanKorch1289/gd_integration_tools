@@ -158,11 +158,11 @@ class SinkRouter:
         for sink in self._sinks:
             try:
                 await sink.flush()
-            except Exception:  # noqa: BLE001 — sink-ошибки не должны прерывать close
+            except Exception as _:  # noqa: BLE001 — sink-ошибки не должны прерывать close
                 _INTERNAL_LOG.warning("flush failed for sink %s", sink.name)
             try:
                 await sink.close()
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _INTERNAL_LOG.warning("close failed for sink %s", sink.name)
         self._sinks.clear()
 

@@ -167,7 +167,7 @@ class CachingDecorator:
             return None
         try:
             envelope = CacheEnvelope.from_payload(json_loads(raw))
-        except Exception:
+        except Exception as _:
             await self.memory_cache.delete(key)
             return None
         if not envelope.is_alive():

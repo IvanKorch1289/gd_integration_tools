@@ -103,7 +103,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
                     ),
                 },
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             logger.exception(
                 "ExpressReplyChannel.send failed (invocation_id=%s, chat_id=%s)",
                 response.invocation_id,
@@ -128,7 +128,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
             )
 
             return ExpressAdapter(default_bot=self._default_bot)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return None
 
 

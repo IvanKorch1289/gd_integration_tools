@@ -184,7 +184,7 @@ def _check_strict_mode(
 
         if not feature_flags.plugin_semver_strict:
             return
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         # feature_flags недоступны в тестах без DI — пропускаем strict.
         return
 

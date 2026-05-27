@@ -166,7 +166,7 @@ class RateConvertProcessor(BaseProcessor):
             if not feature_flags.proc_rate_convert:
                 exchange.set_property("rate_convert_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         amount = self._resolve_amount(exchange)

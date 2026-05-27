@@ -72,7 +72,7 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
             return
         try:
             tenant = current_tenant()
-        except Exception:
+        except Exception as _:
             return
         if tenant is None:
             return

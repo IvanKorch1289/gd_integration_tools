@@ -43,7 +43,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
     for k, v in raw_headers:
         try:
             headers[k.decode("latin1").lower()] = v.decode("latin1")
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             continue
 
     request = _DummyHeadersRequest(headers)

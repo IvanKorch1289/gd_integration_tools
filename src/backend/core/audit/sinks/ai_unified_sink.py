@@ -135,14 +135,14 @@ class UnifiedAISink:
             from src.backend.core.security.pii_tokenizer import PIITokenizer
 
             pii_mask = PIITokenizer()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pii_mask = None
 
         error_msg = event.error_message
         if pii_mask is not None and error_msg:
             try:
                 error_msg = pii_mask.mask_irreversible(error_msg)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 pass
 
         details: dict[str, Any] = {

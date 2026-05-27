@@ -120,7 +120,7 @@ def _current_tenant() -> str:
             return "_system"
         # Может быть object или str — берём tenant_id.
         return getattr(tenant, "tenant_id", None) or str(tenant) or "_system"
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return "_system"
 
 

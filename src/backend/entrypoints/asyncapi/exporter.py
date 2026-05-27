@@ -50,7 +50,7 @@ def _collect_brokers() -> list[tuple[str, Any]]:
         )
 
         client = get_stream_client()
-    except Exception:  # noqa: BLE001 — намеренно широкий guard для endpoint resilience
+    except Exception as _:  # noqa: BLE001 — намеренно широкий guard для endpoint resilience
         return []
 
     pairs: list[tuple[str, Any]] = []

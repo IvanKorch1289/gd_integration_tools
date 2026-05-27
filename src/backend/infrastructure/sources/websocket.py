@@ -75,7 +75,7 @@ class WebSocketSource:
             import orjson
 
             return orjson.loads(msg)
-        except Exception:
+        except Exception as _:
             return msg
 
     async def _run(self, on_event: EventCallback) -> None:

@@ -73,7 +73,7 @@ def is_external_provider_enabled() -> bool:
         from src.backend.core.config.features import feature_flags  # noqa: PLC0415
 
         return bool(getattr(feature_flags, "openfeature_external", False))
-    except Exception:  # noqa: BLE001 — fallback на default-OFF в любых ошибках
+    except Exception as _:  # noqa: BLE001 — fallback на default-OFF в любых ошибках
         _logger.debug("feature_flags недоступны, default-OFF")
         return False
 
@@ -218,7 +218,7 @@ class FlagsmithProvider:
                 # close() может быть sync или async.
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:  # noqa: BLE001 — best-effort shutdown
+            except Exception as _:  # noqa: BLE001 — best-effort shutdown
                 _logger.exception("Flagsmith client shutdown failed")
         self._client = None
 

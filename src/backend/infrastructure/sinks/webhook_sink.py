@@ -138,6 +138,6 @@ class WebhookSink(Sink):
                 timeout=httpx.Timeout(self.timeout)
             ) as client:
                 response = await client.request("HEAD", self.url)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         return response.status_code < 500

@@ -125,7 +125,7 @@ def list_supported_timezones() -> Sequence[str]:
         from zoneinfo import available_timezones
 
         return sorted(available_timezones())
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return (
             "UTC",
             "Europe/Moscow",

@@ -169,7 +169,7 @@ class DegradationMiddleware(BaseHTTPMiddleware):
             )
 
             statuses = get_resilience_coordinator_provider().status()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return []
         blocked: list[str] = []
         db = statuses.get("db_main")

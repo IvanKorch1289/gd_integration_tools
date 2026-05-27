@@ -77,13 +77,13 @@ def _resolve_capability_check() -> Any | None:
     try:
         from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.core.svcs_registry import get_service
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
     if not has_service(CapabilityGate):
         return None
     try:
         gate = get_service(CapabilityGate)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
     check = getattr(gate, "check", None)
     return check if callable(check) else None

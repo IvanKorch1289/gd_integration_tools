@@ -99,7 +99,7 @@ def _get_process() -> Any | None:
 
         _cached_process = psutil.Process()
         return _cached_process
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         _psutil_unavailable = True
         return None
 
@@ -127,7 +127,7 @@ def _read_resource_snapshot(
             cpu_times = process.cpu_times()
             cpu_seconds = float(cpu_times.user + cpu_times.system)
         return _ResourceSnapshot(rss_bytes=rss_bytes, cpu_seconds=cpu_seconds)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 

@@ -52,7 +52,7 @@ class KafkaDLQWriter:
                 value=self._serializer(envelope),
                 key=envelope.dlq_id.encode("utf-8"),
             )
-        except Exception:
+        except Exception as _:
             logger.exception(
                 "dlq.kafka.write_failed",
                 extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},

@@ -86,7 +86,7 @@ class HttpSink(Sink):
                 # имеет shortcut'а ``head``, request совместим со всеми
                 # методами + поддерживает WAF-проверку.
                 response = await client.request("HEAD", self.url)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         # 4xx считаем как «адрес отвечает» (метод не разрешён, и т.п.).
         return response.status_code < 500

@@ -94,7 +94,7 @@ def _action_input_schema_json(action_name: str) -> dict[str, Any] | None:
         return None
     try:
         return metadata.input_model.model_json_schema()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
 
 
@@ -120,7 +120,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
         from src.backend.core.config.ai_2026 import mcp_settings
 
         legacy_inline = bool(mcp_settings.legacy_description_schema)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         legacy_inline = False
 
     if schema is not None and legacy_inline:
@@ -199,7 +199,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     """
     try:
         from src.backend.core.config.ai_2026 import mcp_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return None
     if not mcp_settings.tool_authz_enabled:
         return None

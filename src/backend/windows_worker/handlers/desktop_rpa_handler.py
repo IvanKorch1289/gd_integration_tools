@@ -137,7 +137,7 @@ def _connect_or_start(app: str, *, backend: str, timeout: float):  # noqa: ANN20
         return application.connect(process=int(app), timeout=timeout)
     try:
         return application.connect(path=app, timeout=timeout)
-    except Exception:  # noqa: BLE001 — pywinauto.MatchError / TimeoutError
+    except Exception as _:  # noqa: BLE001 — pywinauto.MatchError / TimeoutError
         return application.start(app)
 
 

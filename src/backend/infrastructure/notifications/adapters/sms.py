@@ -135,7 +135,7 @@ class SMSAdapter:
         try:
             creds = self._credentials_provider()
             return bool(creds)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

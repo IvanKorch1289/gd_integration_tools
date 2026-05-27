@@ -374,7 +374,7 @@ class AIGateway:
                 from src.backend.core.config.features import feature_flags
 
                 strict = bool(feature_flags.ai_policy_enforce)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001 — Python 3.14 compat
                 strict = False
             if strict:
                 from src.backend.core.ai.policy.resolver import PolicyNotResolvedError
@@ -521,7 +521,7 @@ class AIGateway:
 
             def count_tokens(text: str) -> int:
                 return len(enc.encode(text))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001 — Python 3.14 compat
             # Rough fallback: ~4 chars per token
             def count_tokens(text: str) -> int:
                 return max(1, len(text) // 4)
@@ -541,7 +541,7 @@ class AIGateway:
         budget = TokenBudget(limit=limit)
         try:
             strategy = get_context_strategy(strategy_type)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001 — Python 3.14 compat
             from src.backend.core.ai.context_strategy import RollingWindowStrategy
             strategy = RollingWindowStrategy()
 

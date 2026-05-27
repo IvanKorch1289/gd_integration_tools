@@ -57,5 +57,5 @@ class Watchdog:
             sentry_sdk.capture_message(
                 f"Watchdog deadline exceeded: {self.name}", level="warning"
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return

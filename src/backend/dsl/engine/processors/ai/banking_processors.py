@@ -161,7 +161,7 @@ class _BankingAIProcessor(BaseProcessor):
             if not feature_flags.banking_ai_processors_enabled:
                 exchange.set_property(f"{self.name}_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         prompt = self._build_prompt(exchange)

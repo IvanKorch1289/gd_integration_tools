@@ -128,5 +128,5 @@ class LocalProcessScaler:
                 )
             ]
             return max(len(workers) - 1, self.min_workers)  # -1 для master
-        except Exception:  # noqa: BLE001 — psutil может быть недоступен
+        except Exception as _:  # noqa: BLE001 — psutil может быть недоступен
             return self.min_workers

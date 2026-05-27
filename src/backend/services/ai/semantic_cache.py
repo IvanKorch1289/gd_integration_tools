@@ -126,7 +126,7 @@ class SemanticCache:
             if data is None:
                 return None
             return orjson.loads(data)
-        except Exception:
+        except Exception as _:
             return None
 
     async def _exact_store(
@@ -281,7 +281,7 @@ class L3RetrievalGraphCache:
             return bool(
                 getattr(feature_flags, "rag_cache_l3_retrieval_invalidation", False)
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     @staticmethod
@@ -381,7 +381,7 @@ class L3RetrievalGraphCache:
             from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
         payload = orjson.dumps({"namespace": namespace, "doc_id": doc_id})
         try:
@@ -441,7 +441,7 @@ class L3RetrievalGraphCache:
                     continue
                 try:
                     payload = orjson.loads(message.get("data") or b"{}")
-                except Exception:  # noqa: BLE001
+                except Exception as _:  # noqa: BLE001
                     continue
                 ns = payload.get("namespace") or "*"
                 self.invalidate_namespace(ns)

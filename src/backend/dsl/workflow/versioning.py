@@ -144,7 +144,7 @@ class WorkflowVersionRegistry:
                 strict = bool(
                     getattr(feature_flags, "workflow_versioning_strict", False)
                 )
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 strict = False
 
             if strict:
@@ -368,7 +368,7 @@ def patched(patch_id: str) -> bool:
 
     try:
         return bool(temporal_workflow.patched(patch_id))
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         # Вызов вне workflow-контекста — Temporal бросает RuntimeError.
         # Для dryrun / unit-тестов возвращаем False (legacy ветка).
         return False

@@ -71,7 +71,7 @@ class TenantScopeProcessor(BaseProcessor):
                 import jmespath
 
                 tenant_id = jmespath.search(self._body_path, exchange.in_message.body)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 tenant_id = None
         if tenant_id is None:
             if self._required:

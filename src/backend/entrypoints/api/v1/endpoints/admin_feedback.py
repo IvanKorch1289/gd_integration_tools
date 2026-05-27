@@ -34,5 +34,5 @@ async def labeled_count(tenant_id: str | None = None) -> dict[str, Any]:
         service = AIFeedbackService()
         items = await service.list_labeled(tenant_id=tenant_id, limit=10_000)
         return {"tenant_id": tenant_id, "count": len(items)}
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return {"tenant_id": tenant_id, "count": 0}

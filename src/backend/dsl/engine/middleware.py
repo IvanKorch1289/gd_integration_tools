@@ -192,5 +192,5 @@ class MiddlewareChain:
             for mw in reversed(self._middlewares):
                 try:
                     await mw.after(name, exchange, context, error, duration_ms)
-                except Exception:
+                except Exception as _:
                     logger.warning("Middleware %s.after() failed", type(mw).__name__)

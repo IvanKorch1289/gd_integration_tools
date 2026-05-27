@@ -54,7 +54,7 @@ class InboxDLQWriter:
             async with self._session_factory() as session:
                 await session.execute(sql, params)
                 await session.commit()
-        except Exception:
+        except Exception as _:
             logger.exception(
                 "dlq.inbox.write_failed",
                 extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},

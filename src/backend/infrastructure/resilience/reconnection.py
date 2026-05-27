@@ -185,7 +185,7 @@ class NoReconnect(ReconnectionStrategy):
             result = await dial()
             reconnect_attempts_total.labels(client=client_name, outcome="success").inc()
             return result
-        except Exception:
+        except Exception as _:
             reconnect_attempts_total.labels(client=client_name, outcome="failure").inc()
             raise
 

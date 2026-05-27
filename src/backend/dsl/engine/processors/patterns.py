@@ -119,7 +119,7 @@ try:  # pragma: no cover - prometheus_client опционален в dev_light
         "Total number of BatchWindow flushes",
         ("reason", "group"),
     )
-except Exception:  # noqa: BLE001
+except Exception as _:  # noqa: BLE001
     _BATCH_FLUSH_COUNTER = None  # type: ignore[assignment,unused-ignore]
 
 

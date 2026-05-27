@@ -194,7 +194,7 @@ class HttpxClient:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "httpx_unified_transport", False))
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     def _build_cert_tuple(self) -> tuple[str, str] | tuple[str, str, str] | None:
@@ -223,13 +223,13 @@ class HttpxClient:
         try:
             from src.backend.core.svcs_registry import get_service, has_service
             from src.backend.infrastructure.security.cert_store import CertStore
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return
         if not has_service(CertStore):
             return
         try:
             cert_store = get_service(CertStore)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return
         # CertStore API имеет несколько форм (project-зависимо):
         # — `on_rotation(path, callback)` (план);
@@ -241,14 +241,14 @@ class HttpxClient:
                 on_rotation(str(cert_path), self._on_cert_rotated)
                 self._cert_subscribed = True
                 return
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 pass
         register_listener = getattr(cert_store, "register_listener", None)
         if callable(register_listener):
             try:
                 register_listener(self._on_cert_rotated)
                 self._cert_subscribed = True
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 return
 
     def _on_cert_rotated(self, *_args: Any, **_kwargs: Any) -> None:

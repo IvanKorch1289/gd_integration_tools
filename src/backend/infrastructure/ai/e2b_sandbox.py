@@ -113,7 +113,7 @@ class E2BSandbox(CodeSandbox):
         artifacts: dict[str, bytes] = {}
         try:
             entries = sandbox.files.list("/home/user")
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return artifacts
         for entry in entries or ():
             try:
@@ -124,6 +124,6 @@ class E2BSandbox(CodeSandbox):
                 artifacts[str(path)] = (
                     content.encode() if isinstance(content, str) else bytes(content)
                 )
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 continue
         return artifacts

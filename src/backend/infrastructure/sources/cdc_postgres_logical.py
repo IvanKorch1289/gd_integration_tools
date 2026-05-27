@@ -183,7 +183,7 @@ class CdcPostgresLogicalSource:
                     self.source_id,
                 )
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         # Lazy-import существующего CDCSource (не дублируем psycopg-логику).

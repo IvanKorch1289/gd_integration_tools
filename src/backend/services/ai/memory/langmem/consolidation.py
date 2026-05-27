@@ -211,7 +211,7 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         return []
     try:
         data = orjson.loads(text)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return []
     facts: list[ExtractedFact] = []
     if not isinstance(data, list):

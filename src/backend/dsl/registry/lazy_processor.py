@@ -174,7 +174,7 @@ class LazyProcessorRegistry:
             try:
                 self.resolve(ref.fqn)
                 count += 1
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.exception(
                     "lazy_processor.resolve_failed",
                     extra={"fqn": ref.fqn, "module_path": ref.module_path},

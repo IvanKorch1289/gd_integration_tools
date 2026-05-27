@@ -213,7 +213,7 @@ class InMemoryPybreakerAdapter:
             raise RuntimeError(f"circuit_open: {self._name}")
         try:
             result = await fn(*args, **kwargs)
-        except Exception:
+        except Exception as _:
             await self._on_failure()
             raise
         else:

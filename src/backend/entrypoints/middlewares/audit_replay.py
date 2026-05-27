@@ -65,7 +65,7 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
         else:
             try:
                 request_body_bytes = await request.body()
-            except Exception:
+            except Exception as _:
                 request_body_bytes = b""
 
         response = await call_next(request)

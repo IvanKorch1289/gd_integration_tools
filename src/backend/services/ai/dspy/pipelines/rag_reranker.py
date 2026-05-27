@@ -47,7 +47,7 @@ def _resolve_bge_reranker() -> Any:
 
     try:
         from src.backend.core.config.ai_2026 import bge_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         _reranker_unavailable = True
         return None
     if not getattr(bge_settings, "reranker_enabled", False):
@@ -99,7 +99,7 @@ def _record_reranker_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         logger.debug("rag_reranker_fallback metric emit failed", exc_info=True)
 
 
@@ -169,7 +169,7 @@ class _RagRerankerPipeline:
         """NDCG@k где k = min(len(predicted), len(expected_ranking))."""
         try:
             predicted = json.loads(output)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return 0.0
         expected_ranking = example.get("expected_ranking") or []
         if not predicted or not expected_ranking:

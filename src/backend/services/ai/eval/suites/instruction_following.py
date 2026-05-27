@@ -66,7 +66,7 @@ class _InstructionFollowing:
         try:
             parsed = json.loads(output)
             is_json = 1.0
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             parsed = {}
             is_json = 0.0
 

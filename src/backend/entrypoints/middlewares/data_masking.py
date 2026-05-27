@@ -54,7 +54,7 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             masked = self._mask_bytes(body)
             response.headers["content-length"] = str(len(masked))
             response.body_iterator = AsyncChunkIterator([masked])  # type: ignore
-        except Exception:
+        except Exception as _:
             response.body_iterator = AsyncChunkIterator([body])  # type: ignore
 
         return response

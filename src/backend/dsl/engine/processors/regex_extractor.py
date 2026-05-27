@@ -144,7 +144,7 @@ class RegexExtractorProcessor(BaseProcessor):
             if not feature_flags.proc_regex_extractor:
                 exchange.set_property("regex_extractor_status", "skipped")
                 return
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             pass
 
         text = self._resolve_source(exchange)

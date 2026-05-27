@@ -91,7 +91,7 @@ class ExpressAdapter:
             from src.backend.core.config.express import express_settings
 
             return bool(express_settings.enabled and express_settings.bot_id)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 

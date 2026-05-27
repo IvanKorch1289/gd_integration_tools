@@ -238,7 +238,7 @@ class StepAuditMiddleware:
         self._set_otel_attrs(step_name=step_name, started=True)
         try:
             yield ctx
-        except Exception:
+        except Exception as _:
             status = "error"
             raise
         finally:

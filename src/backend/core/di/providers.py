@@ -379,7 +379,7 @@ def _resolve_unified_audit_service() -> Any | None:
         from src.backend.services.audit.audit_service import get_unified_audit_service
 
         return get_unified_audit_service()
-    except Exception:  # noqa: BLE001 — audit опционален в minimal-профилях
+    except Exception as _:  # noqa: BLE001 — audit опционален в minimal-профилях
         return None
 
 

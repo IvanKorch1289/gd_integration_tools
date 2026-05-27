@@ -152,7 +152,7 @@ class FlagsmithClient:
             return
         try:
             await self._client.aclose()
-        except Exception:  # noqa: BLE001 — best-effort shutdown
+        except Exception as _:  # noqa: BLE001 — best-effort shutdown
             _logger.exception("FlagsmithClient close failed")
         self._client = None
 

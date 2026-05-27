@@ -129,7 +129,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
         gateway = getattr(agent, "_authz_gateway", None)
         if gateway is not None:
             return gateway
-    except Exception:
+    except Exception as _:
         pass
 
     return None

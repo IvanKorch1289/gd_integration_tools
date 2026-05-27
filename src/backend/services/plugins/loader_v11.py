@@ -329,7 +329,7 @@ class PluginLoaderV11:
                 continue
             try:
                 await entry.instance.on_shutdown()
-            except Exception:
+            except Exception as _:
                 _logger.exception("Plugin %s on_shutdown failed", entry.name)
             self._unmount_frontend_pages(entry.name)
             self._gate.revoke(entry.name)

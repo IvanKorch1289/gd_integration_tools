@@ -296,7 +296,7 @@ class EmailSource:
                     finally:
                         try:
                             client.idle_done()
-                        except Exception:
+                        except Exception as _:
                             logger.debug(
                                 "EmailSource(%s): idle_done failed",
                                 self.source_id,
@@ -306,7 +306,7 @@ class EmailSource:
             finally:
                 try:
                     await client.logout()
-                except Exception:
+                except Exception as _:
                     logger.debug(
                         "EmailSource(%s): logout failed", self.source_id, exc_info=True
                     )
@@ -321,13 +321,13 @@ class EmailSource:
                 finally:
                     try:
                         await client.logout()
-                    except Exception:
+                    except Exception as _:
                         logger.debug(
                             "EmailSource(%s): logout failed",
                             self.source_id,
                             exc_info=True,
                         )
-            except Exception:
+            except Exception as _:
                 logger.exception(
                     "EmailSource(%s): poll iteration failed", self.source_id
                 )

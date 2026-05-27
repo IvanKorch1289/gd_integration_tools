@@ -347,5 +347,5 @@ def _record_presidio_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception:  # noqa: BLE001 — metric не должен ломать sanitize pipeline
+    except Exception as _:  # noqa: BLE001 — metric не должен ломать sanitize pipeline
         logger.debug("presidio_fallback metric emit failed", exc_info=True)

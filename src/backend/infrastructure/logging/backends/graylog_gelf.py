@@ -262,7 +262,7 @@ class GraylogGelfLogSink(LogSink):
                 # purgatory увеличил failure-counter; sink остаётся "живым",
                 # но текущая запись потеряна; reconnect — на следующей итерации
                 self.is_healthy = False
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 # любой неожиданный сбой не должен ронять worker
                 self.is_healthy = False
                 _INTERNAL_LOG.exception("graylog drain unexpected error")

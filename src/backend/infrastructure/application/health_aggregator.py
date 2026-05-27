@@ -261,7 +261,7 @@ class HealthAggregator:
                 from src.backend.infrastructure.registry import ConnectorRegistry
 
                 client = ConnectorRegistry.instance().get(name)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 return {
                     "name": name,
                     "status": "error",

@@ -134,7 +134,7 @@ class WsdlImportGateway:
             return None
         try:
             sig_str = msg.signature() if hasattr(msg, "signature") else str(msg)
-        except Exception:
+        except Exception as _:
             sig_str = str(msg)
         return {"signature": sig_str}
 

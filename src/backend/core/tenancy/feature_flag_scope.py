@@ -117,7 +117,7 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_boolean_value(flag_key, default, ctx)
-            except Exception:  # noqa: BLE001 — fallback на local при любых ошибках
+            except Exception as _:  # noqa: BLE001 — fallback на local при любых ошибках
                 _logger.exception(
                     "External provider failed для %s, fallback на local", flag_key
                 )
@@ -138,7 +138,7 @@ class TenantFeatureFlagResolver:
             try:
                 ctx = self._build_eval_context()
                 return await self.provider.resolve_string_value(flag_key, default, ctx)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _logger.exception(
                     "External provider failed для %s, fallback default", flag_key
                 )
@@ -160,7 +160,7 @@ class TenantFeatureFlagResolver:
             )
 
             return is_external_provider_enabled()
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     def _build_eval_context(self) -> EvaluationContext:
@@ -189,6 +189,6 @@ class TenantFeatureFlagResolver:
             if value is None:
                 return default
             return bool(value)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _logger.debug("Local feature_flags lookup failed для %s", flag_key)
             return default

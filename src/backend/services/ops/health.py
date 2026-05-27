@@ -375,7 +375,7 @@ def _is_strict_mode() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return feature_flags.processor_health_checks_strict
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return False
 
 

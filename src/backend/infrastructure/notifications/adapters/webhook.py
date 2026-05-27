@@ -92,7 +92,7 @@ class WebhookAdapter:
 
             upstream_registry.get(self._upstream_name)
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
 
@@ -104,7 +104,7 @@ def _url_is_safe(url: str, allow_internal: bool) -> bool:
     """
     try:
         parsed = urlparse(url)
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return False
     if parsed.scheme not in ("http", "https"):
         return False

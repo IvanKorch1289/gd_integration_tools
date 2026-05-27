@@ -79,7 +79,7 @@ class DSLLinter:
             from src.backend.dsl.commands.registry import action_handler_registry
 
             known_actions = set(action_handler_registry.list_actions())
-        except Exception:
+        except Exception as _:
             return
 
         for i, p in enumerate(pipeline.processors):

@@ -112,7 +112,7 @@ class BatchingSinkRouter:
                     for record in batch:
                         try:
                             await self._inner.dispatch(record)
-                        except Exception:  # noqa: BLE001 — изолируем sink-сбои
+                        except Exception as _:  # noqa: BLE001 — изолируем sink-сбои
                             _INTERNAL_LOG.exception("inner dispatch failed")
                 if self._closed and self._queue.empty():
                     return

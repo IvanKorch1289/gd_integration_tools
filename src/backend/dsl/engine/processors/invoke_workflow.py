@@ -139,7 +139,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
 
             if not feature_flags.workflow_versioning_routes:
                 return self.workflow_name
-        except Exception:
+        except Exception as _:
             return self.workflow_name
 
         try:

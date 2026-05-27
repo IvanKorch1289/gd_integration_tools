@@ -1123,7 +1123,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
             results = await rag.search(
                 query=query, top_k=top_k * 2, namespace=self._NAMESPACE
             )
-        except Exception:
+        except Exception as _:
             return []
 
         examples: list[dict[str, str]] = []

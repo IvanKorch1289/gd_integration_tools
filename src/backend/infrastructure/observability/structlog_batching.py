@@ -128,7 +128,7 @@ class BatchingStructlogWrapper:
             from src.backend.core.config.features import feature_flags
 
             return feature_flags.structlog_batching_enabled
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return False
 
     # ------------------------------------------------------------------
@@ -206,7 +206,7 @@ class BatchingStructlogWrapper:
             return
         try:
             method(event, **kwargs)
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _INTERNAL_LOG.warning("structlog_batching: emit error", exc_info=True)
 
     # ------------------------------------------------------------------

@@ -18,10 +18,13 @@ time resolve, поэтому performance-cost ничтожен.
 from __future__ import annotations
 
 import asyncio
+import logging
 from functools import wraps
 from typing import Any, Awaitable, Callable, Literal, Mapping
 
 __all__ = ("cached", "invalidate", "multi_cached")
+
+_logger = logging.getLogger(__name__)
 
 
 Backend = Literal["redis", "memory", "disk", "multi"]
@@ -145,10 +148,13 @@ def invalidate(
                 )
 
                 await redis_client.cache_delete_pattern(key_pattern)
-            except Exception:
+            except Exception as exc:  # noqa: BLE001
                 # Best-effort инвалидация; ошибки кеша не должны рушить
                 # mutating-операцию.
-                pass
+                _logger.debug(
+                    "cache_invalidate: redis unavailable (%s), skipping invalidation",
+                    exc,
+                )
             return result
 
         return wrapper

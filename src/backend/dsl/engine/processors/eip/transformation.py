@@ -274,13 +274,13 @@ class NormalizerProcessor(BaseProcessor):
                 if len(parsed) == 1:
                     return dict(next(iter(parsed.values())))
                 return dict(parsed)
-            except Exception:
+            except Exception as _:
                 _eip_logger.debug("XML parse failed; falling back", exc_info=True)
 
         if text.startswith("{") or text.startswith("["):
             try:
                 return orjson.loads(text)
-            except Exception:
+            except Exception as _:
                 _eip_logger.debug("JSON parse failed; falling back", exc_info=True)
 
         try:
@@ -289,7 +289,7 @@ class NormalizerProcessor(BaseProcessor):
             result = yaml.safe_load(text)
             if isinstance(result, (dict, list)):
                 return result
-        except Exception:
+        except Exception as _:
             _eip_logger.debug("YAML parse failed; falling back", exc_info=True)
 
         lines = text.split("\n")

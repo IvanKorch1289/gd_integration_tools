@@ -185,7 +185,7 @@ class K8sHPAMetricsExporter:
                 )
 
                 enabled = feature_flags.k8s_hpa_exporter
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 enabled = False
 
             if not enabled:

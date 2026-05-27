@@ -147,7 +147,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
         for invocation_id in bound:
             try:
                 await ws_channel.unregister(invocation_id)
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 logger.debug("unregister failed for %s", invocation_id, exc_info=True)
 
 

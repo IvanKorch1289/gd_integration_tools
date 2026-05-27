@@ -99,7 +99,7 @@ class LiteLLMGateway:
         """Wave D.5: LangFuse как primary cost-tracker если включён."""
         try:
             from src.backend.core.config.ai_2026 import langfuse_settings
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             return self._cost_callback
         if not langfuse_settings.enabled:
             return self._cost_callback

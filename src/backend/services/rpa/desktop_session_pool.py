@@ -237,7 +237,7 @@ class DesktopRPASessionPool:
         for s in sessions:
             try:
                 await s.client.aclose()
-            except Exception:  # noqa: BLE001
+            except Exception as _:  # noqa: BLE001
                 _logger.debug("desktop_rpa_pool: error closing %s", s.app_name)
 
 

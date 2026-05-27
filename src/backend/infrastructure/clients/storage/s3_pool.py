@@ -430,13 +430,13 @@ class S3Client(BaseS3Client):
                     MultipartUpload={"Parts": parts},
                 )
                 return str(complete_resp.get("ETag", ""))
-            except Exception:
+            except Exception as _:
                 if upload_id is not None:
                     try:
                         await client.abort_multipart_upload(
                             Bucket=bucket, Key=key, UploadId=upload_id
                         )
-                    except Exception:  # noqa: BLE001
+                    except Exception as _:  # noqa: BLE001
                         self.logger.exception(
                             "s3.multipart_abort_failed key=%s upload_id=%s",
                             key,

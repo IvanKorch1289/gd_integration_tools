@@ -43,7 +43,7 @@ def _chunker_fingerprint() -> str:
         version = rag_ingest_settings.chunker_fingerprint_version
         size = rag_settings.chunk_size
         overlap = rag_settings.chunk_overlap
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         version, size, overlap = 1, 0, 0
     raw = f"v{version}:{size}:{overlap}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
@@ -177,7 +177,7 @@ def _resolve_embedding_provenance() -> dict[str, Any]:
     try:
         from src.backend.core.config.ai_2026 import rag_ingest_settings
         from src.backend.core.config.rag import rag_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return {}
     return {
         "embedding_provider": getattr(rag_settings, "embedding_provider", "unknown"),
@@ -210,7 +210,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
     """
     try:
         from src.backend.core.config.ai_2026 import rag_ingest_settings
-    except Exception:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001
         return content_text, {"pii_masked": False}
     if not rag_ingest_settings.pii_mask_on_ingest:
         return content_text, {"pii_masked": False}
@@ -251,6 +251,6 @@ def get_rag_ingest_service() -> RagIngestService:
             _singleton = RagIngestService(
                 deferred=rag_ingest_settings.deferred, store=store
             )
-        except Exception:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001
             _singleton = RagIngestService()
     return _singleton
