@@ -794,3 +794,32 @@ Unification = 20-30 LOC diff.
 **Прошёл_самокритику:** Да (Критик CD-06: подтверждено).
 
 **Wave**: `[wave:s22/k1-w2-pii-masker-unify]`.
+
+---
+
+## ADR из S29 W1 pip-audit gate (2026-05-27)
+
+### ADR-NEW-30: pip-audit CI gate — HIGH blocking с ignore-list
+
+**Контекст**. Baseline-режим (continue-on-error: true) не блокирует merge при обнаружении CVEs. Текущий скан `uv run pip-audit -f json .` показывает 4 пакета с уязвимостями:
+- **diskcache 5.6.3** — CVE-2025-69872 (pickle RCE), **нет fix version**
+- **pypdf 5.9.0** — 20 CVEs, все имеют fix versions (6.1.0 → 6.12.2)
+- **lxml 5.4.0** — PYSEC-2026-87, fix: 6.1.0 (нет Python 3.14 wheels)
+- **starlette 0.52.1** — PYSEC-2026-161, fix: 1.0.1 (prometheus-fastapi-instrumentator блокирует)
+
+**Решение**. Переключить pip-audit job в blocking mode:
+- `continue-on-error: false`
+- `--ignore-vuln CVE-2025-69872` (diskcache pickle RCE, no fix version)
+- `--ignore-vuln PYSEC-2026-87` (lxml, нет Python 3.14 wheels)
+- `--ignore-vuln PYSEC-2026-161` (starlette, prometheus-fastapi-instrumentator блокирует)
+- Wrapper-скрипт `scripts/pip_audit_gate.py` для проверки JSON-выхода
+
+**Обоснование**. pip-audit 2.10.0 **всегда возвращает exit 0** даже при наличии уязвимостей. Wrapper-скрипт парсит JSON и вызывает `sys.exit(1)` при обнаружении неигнорированных уязвимостей. pypdf обновлён до 6.12.2 (20 CVEs исправлены). lxml и starlette имеют dependency constraints, блокирующие upgrade (NOT unfixable, just blocked). `--ignore-vuln` позволяет пропускать конкретные CVE, не весь пакет — если в ragas/transformers появится новая CRITICAL уязвимость, она заблокирует.
+
+**Последствия**.
+- pypdf: UPGRADED to 6.12.2 ✓
+- lxml: **BLOCKED** — lxml 6.x не имеет Python 3.14 wheels; нужен upstream wheel или build from source
+- starlette: **BLOCKED** — prometheus-fastapi-instrumentator 7.1.0 requires `starlette<1.0.0`; нужен новый релиз instrumentator
+- diskcache: **BLOCKED** — нет fix version
+
+**Wave**: `[wave:s29/w1-pip-audit-gate]` + `[wave:s29/w2-pip-audit-dep-upgrade]` (pypdf done, lxml/starlette/diskcache carryover).

@@ -3,7 +3,10 @@ name: security
 # Sprint 3 W3 К1 / ADR-0054: security CI-gate — bandit + safety + pip-audit
 # + gitleaks + trivy-fs (SARIF upload в Security tab репозитория).
 # Baseline-режим: все jobs continue-on-error: true (Sprint 3 W3 первая итерация).
-# В Sprint 5 R2 ужесточить fail-on-severity=high после очистки baseline.
+# S29 W1: pip-audit переключён в blocking mode (continue-on-error: false).
+# exit code 1 при любой уязвимости (pip-audit 2.10.0 не имеет --fail-on).
+# --ignore-vuln CVE-2025-69872: diskcache pickle RCE, no fix version.
+# При появлении фиксов для diskcache — убрать --ignore-vuln.
 
 on:
   push:
@@ -100,7 +103,7 @@ jobs:
     name: pip-audit (PyPA advisory)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
+    continue-on-error: false  # S29 W1: blocking mode (Sprint 3 W3 was baseline)
 
     steps:
       - name: Checkout
@@ -122,7 +125,20 @@ jobs:
 
       - name: Run pip-audit
         # pip-audit уже в pyproject.toml dev-deps.
-        run: uv run pip-audit --format json --output pip-audit.json || true
+        # S29 W1: pip-audit 2.10.0 always exits 0, используем wrapper-скрипт
+        # для проверки JSON-выхода и enforce exit code.
+        # S29 W2: 3 packages не могут быть обновлены (dependency constraints):
+        #   - CVE-2025-69872: diskcache, no fix version
+        #   - PYSEC-2026-87: lxml, fix 6.1.0 but no Python 3.14 wheels
+        #   - PYSEC-2026-161: starlette, fix 1.0.1 but prometheus-fastapi-instrumentator blocks
+        run: |
+          uv run pip-audit \
+            --format json \
+            --output pip-audit.json \
+            --ignore-vuln CVE-2025-69872 \
+            --ignore-vuln PYSEC-2026-87 \
+            --ignore-vuln PYSEC-2026-161
+          uv run python scripts/pip_audit_gate.py
 
       - name: Upload pip-audit report
         if: always()
