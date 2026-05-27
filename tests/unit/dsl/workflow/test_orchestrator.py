@@ -58,99 +58,109 @@ def test_routing_rule_defaults() -> None:
     assert rule.memory_scope is None
 
 
-def test_orchestrator_engine_route_first_rule_matches(
+@pytest.mark.asyncio
+async def test_orchestrator_engine_route_first_rule_matches(
     agent_registry: AgentRegistry,
 ) -> None:
     """route() возвращает agent по первому matching rule."""
     engine = OrchestratorEngine(registry=agent_registry)
+    engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
         routing=[
-            RoutingRule(when="input.type == 'score'", use_agent="score_agent"),
-            RoutingRule(when="input.type == 'approval'", use_agent="approval_agent"),
+            RoutingRule(when="type == 'score'", use_agent="score_agent"),
+            RoutingRule(when="type == 'approval'", use_agent="approval_agent"),
         ],
         default_agent="default_agent",
     )
-    result = engine.route(
-        task={"input": {"type": "score"}},
+    result = await engine.route(
+        task={"type": "score"},
         orchestrator_spec=spec,
     )
     assert result.target_agent.id == "score_agent"
     assert result.matched_rule == 0
 
 
-def test_orchestrator_engine_route_second_rule_matches(
+@pytest.mark.asyncio
+async def test_orchestrator_engine_route_second_rule_matches(
     agent_registry: AgentRegistry,
 ) -> None:
     """route() возвращает agent по второму matching rule."""
     engine = OrchestratorEngine(registry=agent_registry)
+    engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
         routing=[
-            RoutingRule(when="input.type == 'score'", use_agent="score_agent"),
-            RoutingRule(when="input.type == 'approval'", use_agent="approval_agent"),
+            RoutingRule(when="type == 'score'", use_agent="score_agent"),
+            RoutingRule(when="type == 'approval'", use_agent="approval_agent"),
         ],
     )
-    result = engine.route(
-        task={"input": {"type": "approval"}},
+    result = await engine.route(
+        task={"type": "approval"},
         orchestrator_spec=spec,
     )
     assert result.target_agent.id == "approval_agent"
     assert result.matched_rule == 1
 
 
-def test_orchestrator_engine_route_no_match_uses_default(
+@pytest.mark.asyncio
+async def test_orchestrator_engine_route_no_match_uses_default(
     agent_registry: AgentRegistry,
 ) -> None:
     """route() использует default_agent когда ни одно правило не сработало."""
     engine = OrchestratorEngine(registry=agent_registry)
+    engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
         routing=[
-            RoutingRule(when="input.type == 'score'", use_agent="score_agent"),
+            RoutingRule(when="type == 'score'", use_agent="score_agent"),
         ],
         default_agent="default_agent",
     )
-    result = engine.route(
-        task={"input": {"type": "unknown"}},
+    result = await engine.route(
+        task={"type": "unknown"},
         orchestrator_spec=spec,
     )
     assert result.target_agent.id == "default_agent"
     assert result.matched_rule is None
 
 
-def test_orchestrator_engine_route_raises_on_no_default(
+@pytest.mark.asyncio
+async def test_orchestrator_engine_route_raises_on_no_default(
     agent_registry: AgentRegistry,
 ) -> None:
     """route() raises ValueError когда ни одно правило не сработало и default_agent нет."""
     engine = OrchestratorEngine(registry=agent_registry)
+    engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
         routing=[
-            RoutingRule(when="input.type == 'score'", use_agent="score_agent"),
+            RoutingRule(when="type == 'score'", use_agent="score_agent"),
         ],
     )
     with pytest.raises(ValueError, match="no routing rule matched"):
-        engine.route(task={"input": {"type": "unknown"}}, orchestrator_spec=spec)
+        await engine.route(task={"type": "unknown"}, orchestrator_spec=spec)
 
 
-def test_orchestrator_engine_rule_model_override(
+@pytest.mark.asyncio
+async def test_orchestrator_engine_rule_model_override(
     agent_registry: AgentRegistry,
 ) -> None:
     """route() применяет use_model override из routing rule."""
     engine = OrchestratorEngine(registry=agent_registry)
+    engine._is_orchestrator_enabled = lambda: True
     spec = OrchestratorSpec(
         name="test",
         routing=[
             RoutingRule(
-                when="input.type == 'score'",
+                when="type == 'score'",
                 use_agent="score_agent",
                 use_model="openai:gpt-4o",
             ),
         ],
     )
-    result = engine.route(
-        task={"input": {"type": "score"}},
+    result = await engine.route(
+        task={"type": "score"},
         orchestrator_spec=spec,
     )
     assert result.target_model == "openai:gpt-4o"
