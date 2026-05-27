@@ -18,8 +18,8 @@ CVE-2026-33079
 CVE-2025-69872
 # gitpython — semantic-release dependency, разморозим вместе с upstream
 CVE-2026-44244
-# lxml — bump до 6.x требует Python 3.14 wheels
-CVE-2026-41066
+# lxml — FIXED: lxml→6.1.1 (PYSEC-2026-87 resolved, resolve_entities defaults to False)
+# CVE-2026-41066
 # mako — alembic dependency
 CVE-2026-44307
 # pypdf 5.9 — серия уязвимостей; bump до 6.x в Sprint 6

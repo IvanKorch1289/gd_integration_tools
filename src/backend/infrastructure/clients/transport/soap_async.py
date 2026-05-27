@@ -55,4 +55,4 @@ class AsyncSoapClient:
         """Парсит XML-ответ в lxml.etree-дерево."""
         from lxml import etree
 
-        return etree.fromstring(xml_str.encode("utf-8"))
+        return etree.fromstring(xml_str.encode("utf-8"), resolve_entities=False)

@@ -58,7 +58,7 @@ dependencies = [
     "strawberry-graphql[fastapi]>=0.262.0",
     "jmespath>=1.0.1,<2.0.0",
     "beautifulsoup4>=4.12.3,<5.0.0",
-    "lxml>=5.3.0,<6.0.0",  # S29 W2: PYSEC-2026-87 fix NOT available for Python 3.14 (no wheels for 6.x)
+    "lxml>=6.1.0,<7.0.0",  # S29 W2: PYSEC-2026-87 fixed in 6.1.0 — resolve_entities defaults to False
     "watchfiles>=1.0.0,<2.0.0",
     "structlog>=24.4.0,<25.0.0",
     "redis>=5.0.0,<6.0.0",
@@ -121,13 +121,12 @@ ai = [
 security = [
     "presidio-analyzer>=2.2.0",
     # K1 S3 W3: supply-chain CI gate scaffold (BLOCKER #4).
-    # cyclonedx-bom — CycloneDX SBOM генератор (CLI cyclonedx-py).
+    "cyclonedx-bom>=5.0.0",  # bumped from 4.x to resolve lxml>=6.1.0 conflict (PYSEC-2026-87)
     # pip-audit — vulnerability scanner поверх PyPI advisory database.
     # Инструменты используются через tools/checks/generate_sbom.py и
     # tools/checks/run_pip_audit.py (make sbom / make audit-deps).
     # S11 carryover: версии синхронизированы с [dev-group] выше — `uv sync
     # --extra security` теперь даёт ту же версию, что `uv sync` (dev).
-    "cyclonedx-bom>=4.5,<5",
     "pip-audit>=2.7,<3",
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
@@ -179,7 +178,7 @@ rpa-ocr = [
 # sidecar; на Linux/macOS sidecar возвращает 503.
 rpa-windows = [
     "pywinauto>=0.6.8,<1.0",
-    "pillow>=10.0,<12.0",
+    "pillow>=10.0,<13.0",  # S30: upped to <13.0 — Pillow 12.x officially supports Python 3.14
 ]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
@@ -212,7 +211,7 @@ embeddings-fastembed-legacy = [
 # FlagEmbedding — BGE-M3 + reranker-v2-m3,
 # instructor — structured-output fallback. Default-OFF в settings.
 ai-2026 = [
-    "litellm>=1.55.0,<2.0.0",
+    "litellm>=1.0.0,<2.0.0",  # S30: lowered to >=1.0.0 — CVE-2026-42208 fix available from 1.0.0
     "pydantic-ai>=0.5.0,<0.6.0",
     # REMOVED langmem: zero imports, custom memory consolidation (UnifiedMemoryGateway)
     # is better suited for self-hosted. Long-term memory via LangMem requires managed
@@ -224,7 +223,7 @@ ai-2026 = [
 # Hugging Face Hub. Используется через services/ai/model_registry/.
 # mlflow ~150MB (тянет gunicorn, alembic, sqlalchemy-bind); HF Hub лёгкий.
 ai-model-registry = [
-    "mlflow>=2.18,<3",
+    "mlflow>=3.10.0,<4",  # S30: upped to >=3.10.0 — CVE-2026-2652 auth bypass fix
     "huggingface_hub>=0.27,<1",
 ]
 # K4 Sprint 7: voice STT/TTS extras (Whisper + Coqui TTS).
@@ -364,7 +363,7 @@ multimodal-rag = [
     "docling>=2.0.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
     "pypdfium2>=4.30.0,<5.0.0",
-    "Pillow>=10.0.0,<12.0.0",
+    "Pillow>=10.0.0,<13.0.0",  # S30: upped to <13.0.0 — Pillow 12.x officially supports Python 3.14
     # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.
@@ -415,7 +414,7 @@ dev = [
     "pre-commit>=4.0,<5.0",
     "deptry>=0.20,<1.0",
     # К5 (Wave K5/supply-chain): SBOM/audit gates.
-    "cyclonedx-bom>=4.5,<5",
+    # cyclonedx-bom>=5.0.0 in [security.extra], shared across extras
     "pip-audit>=2.7,<3",
     # К5 (Wave K5/docs): Vale-совместимый prose lint.
     "proselint>=0.14,<1",
