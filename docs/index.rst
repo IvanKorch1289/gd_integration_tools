@@ -12,9 +12,9 @@ gd_integration_tools — документация
    :caption: Содержание
 
    tutorials/index
-   howto/index
+   how-to/index
    reference/index
-   explanations/index
+   explanation/index
 
 Indices
 -------

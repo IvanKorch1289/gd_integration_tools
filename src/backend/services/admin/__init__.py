@@ -10,5 +10,6 @@ audit_callback pattern (same as RouteLoader):
 
 from src.backend.services.admin.api import AdminService
 from src.backend.services.admin.audit import emit_admin_action
+from src.backend.services.admin.sqladmin_setup import register_admin
 
-__all__ = ("AdminService", "emit_admin_action")
+__all__ = ("AdminService", "emit_admin_action", "register_admin")

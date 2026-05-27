@@ -156,13 +156,16 @@ class SensorDeclaration(BaseModel):
 
 
 class AgentInvokeDeclaration(BaseModel):
-    """Вызов AI-агента через AIGateway как Temporal activity (S27 W6).
+    """Вызов AI-агента через AIGateway как Temporal activity (S27 W6, S28 W2).
 
     Реализует R-V15-9 «AI-функции через Workflow DSL»:
     LangGraph multi-agent supervisor обёрнут в Temporal activity.
     При ``durable=False`` — stateless direct call через AIGateway;
     при ``durable=True`` — использует LangGraph Checkpointer
     (требует ``langgraph_postgres_checkpoint=True``, иначе fallback).
+
+    S28 W2 расширения: memory_scope, write_episode, namespace_template,
+    inject_memory, recall_on.
 
     YAML::
 
@@ -171,6 +174,15 @@ class AgentInvokeDeclaration(BaseModel):
               agent_id: "credit_advisor"
               input_context: "${body.user_input}"
               durable: true
+              memory_scope:
+                read: ["episodic", "semantic"]
+                write: ["episodic"]
+                mode: scoped
+                write_strategy: background
+              write_episode: true
+              namespace_template: "tenant:${tenant_id}:wf:${workflow_name}"
+              inject_memory: true
+              recall_on: "body.query"
 
     Python::
 
@@ -178,6 +190,11 @@ class AgentInvokeDeclaration(BaseModel):
             agent_id="credit_advisor",
             input_context="${body.user_input}",
             durable=True,
+            memory_scope=MemoryScope(read=("episodic",), write=("episodic",)),
+            write_episode=True,
+            namespace_template="tenant:${tenant_id}:wf:${workflow_name}",
+            inject_memory=True,
+            recall_on="body.query",
         )
     """
 
@@ -219,6 +236,66 @@ class AgentInvokeDeclaration(BaseModel):
         gt=0.0,
         description="Per-invocation timeout; None — использует workflow-default.",
     )
+    # S28 W2: Memory orchestration fields
+    memory_scope: "MemoryScope | None" = Field(
+        default=None,
+        description=(
+            "Memory scope для агента. Если None — наследуется из AgentSpec "
+            "(или default scoped при отсутствии)."
+        ),
+    )
+    write_episode: bool = Field(
+        default=False,
+        description=(
+            "При True — записать результат вызова в episodic memory "
+            "после завершения агента."
+        ),
+    )
+    namespace_template: str | None = Field(
+        default=None,
+        description=(
+            "Шаблон namespace для memory resources. Подставляет "
+            "``${tenant_id}``, ``${workflow_name}``, ``${session_id}``."
+        ),
+    )
+    inject_memory: bool = Field(
+        default=False,
+        description=(
+            "При True — перед вызовом агента вызвать "
+            "``AgentMemoryGateway.recall_semantic()`` и инжектировать "
+            "результат в context агента как ``memory_context``."
+        ),
+    )
+    recall_on: str | None = Field(
+        default=None,
+        description=(
+            "Dot-path condition (JMESPath) — trigger для recall. "
+            "Если условие истинно — выполняется ``inject_memory``. "
+            "Если None — recall выполняется всегда при ``inject_memory=True``."
+        ),
+    )
+
+
+# MemoryScope Pydantic model (S28 W2) — for DSL YAML compatibility
+class MemoryScope(BaseModel):
+    """Memory scope policy для :class:`AgentInvokeDeclaration` (S28 W2).
+
+    Pydantic-версия :class:`core.ai.agent_spec.MemoryScope` для
+    декларативного использования в YAML workflow definition.
+
+    Attributes:
+        read: Кортеж имён memory resources для чтения.
+        write: Кортеж имён memory resources для записи.
+        mode: Стратегия изоляции (``none`` / ``scoped`` / ``inherited`` / ``shared``).
+        write_strategy: Стратегия записи (``hot_path`` / ``background`` / ``manual``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    read: tuple[str, ...] = ()
+    write: tuple[str, ...] = ()
+    mode: Literal["none", "scoped", "inherited", "shared"] = "scoped"
+    write_strategy: Literal["hot_path", "background", "manual"] = "background"
 
 
 WorkflowStep = Annotated[

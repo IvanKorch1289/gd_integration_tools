@@ -71,14 +71,14 @@ class TestCapabilityVocabulary:
             "llm.invoke",
         ):
             assert v.has(name), f"missing {name}"
-        assert len(v.all()) == 16
+        assert len(v.all()) == 41
 
     def test_fs_create_new_registered(self) -> None:
         """V15 R-V15-4: capability fs.create_new обязательна для AIFsFacade."""
         v = build_default_vocabulary()
         defn = v.get("fs.create_new")
         assert defn.scope_required is True
-        assert "AI workspace" in defn.description
+        assert "AI-workspaces" in defn.description
 
     def test_code_execute_registered(self) -> None:
         """V15 R-V15-4: capability code.execute обязательна для CodeSandbox."""

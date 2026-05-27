@@ -12,8 +12,8 @@
   (`from_filter` substring) применяются до эмита события.
 * Использует :func:`get_task_registry` для leak-prevention asyncio-задач.
 
-Реальные IMAP-операции и парсинг писем переиспользуют утилиты из
-``entrypoints.email.imap_monitor`` (``_parse_email``).
+Реальные IMAP-операции и парсинг писем переиспользуют утилиту из
+``infrastructure.sources.email_utils.parse_email`` (S27 refactoring).
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.entrypoints.email.imap_monitor import _parse_email
+from src.backend.infrastructure.sources.email_utils import parse_email
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 if TYPE_CHECKING:
@@ -374,7 +374,7 @@ class EmailSource:
             if not raw_bytes:
                 continue
 
-            message = _parse_email(raw_bytes)
+            message = parse_email(raw_bytes)
             if not self.matches(message):
                 logger.debug(
                     "EmailSource(%s): UID=%s отфильтрован (subject=%r, from=%r)",

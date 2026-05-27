@@ -15,13 +15,18 @@ Wave 6.2: вынесено из `infrastructure/application/...`, чтобы ser
 
 from __future__ import annotations
 
-from typing import Any, AsyncContextManager, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, AsyncContextManager, Literal, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = (
     "SLOTrackerProtocol",
     "HealthAggregatorProtocol",
     "HealthCheckProtocol",
     "HealthCheckSessionProtocol",
+    "CircuitBreakerMetricsRecorder",
+    "CorrelationIdProvider",
 )
 
 
@@ -92,4 +97,39 @@ class HealthCheckProtocol(Protocol):
 
     def __call__(self) -> AsyncContextManager[HealthCheckSessionProtocol]:
         """Возвращает async context manager для healthcheck-сессии."""
+        ...
+
+
+@runtime_checkable
+class CircuitBreakerMetricsRecorder(Protocol):
+    """Контракт recorder'а для circuit breaker state changes.
+
+    S27: BreakerRegistry._publish_metric() вызывает этот protocol
+    вместо прямого импорта ``infrastructure.observability.client_metrics``.
+    Реализация по умолчанию — ``record_circuit_state`` в client_metrics.py.
+    """
+
+    def __call__(self, *, client: str, host: str, state: str) -> None:
+        """Записать состояние circuit breaker'а.
+
+        Args:
+            client: Имя breaker'а.
+            host: Хост/endpoint.
+            state: Нормализованное состояние ``closed`` / ``open`` / ``half_open``.
+        """
+        ...
+
+
+@runtime_checkable
+class CorrelationIdProvider(Protocol):
+    """Контракт для получения correlation_id из внешнего контекста.
+
+    S27: OutboundHttpClient._inject_correlation_id() вызывает этот protocol
+    вместо прямого импорта ``infrastructure.observability.correlation``.
+    Реализация по умолчанию — ``get_correlation_id`` в correlation.py
+    (contextvars-based).
+    """
+
+    def __call__(self) -> str | None:
+        """Вернуть текущий correlation_id или None."""
         ...

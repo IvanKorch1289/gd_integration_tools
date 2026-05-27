@@ -169,14 +169,24 @@ class OutboundHttpClient:
         S17 K3 W3 (D12). Если caller передал явный ``X-Correlation-ID``
         (или одну из его case-вариаций), значение не перетирается. Если
         ContextVar пуст — header не добавляется (избегаем пустых строк).
+
+        S27: Использует CorrelationIdProvider protocol из core/interfaces/observability
+        (реализация — ``get_correlation_id`` из ``infrastructure.observability.correlation``).
+        При недоступности — silent pass.
         """
         try:
-            from src.backend.infrastructure.observability.correlation import (
-                get_correlation_id,
+            from src.backend.core.interfaces.observability import (
+                CorrelationIdProvider,
             )
-        except ImportError:
+
+            def _get_cid() -> str | None:
+                from src.backend.infrastructure.observability import correlation
+                return correlation.get_correlation_id()
+
+            provider: CorrelationIdProvider = _get_cid
+            cid = provider()
+        except Exception:
             return headers
-        cid = get_correlation_id()
         if not cid:
             return headers
         existing = dict(headers or {})

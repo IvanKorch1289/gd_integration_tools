@@ -62,20 +62,21 @@ def test_skill_registry_empty() -> None:
     assert registry.list_skills() == []
 
 
-def test_skill_registry_from_toml_not_implemented(tmp_path: Path) -> None:
-    """from_toml_manifest scaffold поднимает NotImplementedError."""
+def test_skill_registry_from_toml_loads_skills(tmp_path: Path) -> None:
+    """from_toml_manifest загружает [[skill]] секции из plugin.toml V11.2."""
     registry = SkillRegistry()
     plugin_toml = tmp_path / "plugin.toml"
-    plugin_toml.write_text("[plugin]\nname='demo'\n", encoding="utf-8")
-    with pytest.raises(NotImplementedError):
-        registry.from_toml_manifest(plugin_toml)
+    plugin_toml.write_text('[[skill]]\nid="credit.score"\nversion="1.0"\nhandler="skills.credit:score"\n', encoding="utf-8")
+    specs = registry.from_toml_manifest(plugin_toml)
+    assert len(specs) == 1
+    assert specs[0].id == "credit.score"
 
 
 @pytest.mark.asyncio
-async def test_skill_registry_invoke_not_implemented() -> None:
-    """invoke() scaffold поднимает NotImplementedError."""
+async def test_skill_registry_invoke_raises_key_error_for_unknown_skill() -> None:
+    """invoke() raises KeyError for an unknown skill_id."""
     registry = SkillRegistry()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(KeyError):
         await registry.invoke("credit.score.calculate")
 
 

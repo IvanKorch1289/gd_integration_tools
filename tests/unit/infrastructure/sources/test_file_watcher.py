@@ -48,7 +48,7 @@ async def _collect_one(source: FileWatcherSource, timeout: float = 3.0) -> FileE
 @pytest.mark.timeout(5)
 async def test_file_watcher_emits_added(tmp_path: Path) -> None:
     """Создание файла порождает событие change_type='added'."""
-    source = FileWatcherSource(tmp_path, recursive=False, debounce=0.05)
+    source = FileWatcherSource("test_emits_added", tmp_path, recursive=False, debounce=0.05)
     target = tmp_path / "new_file.txt"
 
     async def _write_after_delay() -> None:
@@ -77,7 +77,7 @@ async def test_file_watcher_emits_modified(tmp_path: Path) -> None:
     target = tmp_path / "existing.txt"
     target.write_text("initial")
 
-    source = FileWatcherSource(tmp_path, recursive=False, debounce=0.05)
+    source = FileWatcherSource("test_emits_modified", tmp_path, recursive=False, debounce=0.05)
 
     async def _modify_after_delay() -> None:
         await asyncio.sleep(0.1)
@@ -104,7 +104,7 @@ async def test_file_watcher_emits_deleted(tmp_path: Path) -> None:
     target = tmp_path / "to_delete.txt"
     target.write_text("bye")
 
-    source = FileWatcherSource(tmp_path, recursive=False, debounce=0.05)
+    source = FileWatcherSource("test_emits_deleted", tmp_path, recursive=False, debounce=0.05)
 
     async def _delete_after_delay() -> None:
         await asyncio.sleep(0.1)
@@ -133,7 +133,7 @@ async def test_file_watcher_respects_recursive_false(tmp_path: Path) -> None:
     nested_file = sub / "nested.txt"
     top_file = tmp_path / "top.txt"
 
-    source = FileWatcherSource(tmp_path, recursive=False, debounce=0.05)
+    source = FileWatcherSource("test_recursive_false", tmp_path, recursive=False, debounce=0.05)
 
     events: list[FileEvent] = []
 

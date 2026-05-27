@@ -40,9 +40,9 @@ def test_index_rst_exists() -> None:
 
     content = index_path.read_text(encoding="utf-8")
     assert "tutorials" in content, "index.rst не содержит toctree tutorials"
-    assert "howto" in content, "index.rst не содержит toctree howto"
+    assert "how-to" in content, "index.rst не содержит toctree how-to"
     assert "reference" in content, "index.rst не содержит toctree reference"
-    assert "explanations" in content, "index.rst не содержит toctree explanations"
+    assert "explanation" in content, "index.rst не содержит toctree explanation"
 
 
 def test_diataxis_folders_present() -> None:
@@ -51,7 +51,7 @@ def test_diataxis_folders_present() -> None:
     Проверяет наличие tutorials/, howto/, reference/, explanations/
     и их корневых index.md согласно Diátaxis-структуре.
     """
-    quadrants = ["tutorials", "howto", "reference", "explanations"]
+    quadrants = ["tutorials", "how-to", "reference", "explanation"]
     for quadrant in quadrants:
         folder = _DOCS_DIR / quadrant
         assert folder.is_dir(), f"Diátaxis-директория отсутствует: docs/{quadrant}/"

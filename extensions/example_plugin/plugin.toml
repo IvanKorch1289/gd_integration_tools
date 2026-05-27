@@ -17,13 +17,10 @@ name = "mq.publish"
 scope = "example.events.*"
 
 # ─── DSL call_function whitelist (K-ARCH-5, S17) ──────────────────
-# В strict-режиме (ENVIRONMENT=production или feature_flags.
-# call_function_whitelist_strict=True) plugin.toml::call_function_modules
-# обязателен — иначе call_function поднимает PermissionError.
-call_function_modules = [
-    "extensions.example_plugin.functions",
-    "extensions.example_plugin.functions.*",
-]
+# NOTE: call_function_modules was removed from manifest schema (ADR-042).
+# In strict mode (ENVIRONMENT=production or call_function_whitelist_strict=True),
+# plugins must declare call_function_modules inside each [[capabilities]] block.
+# For now this example plugin uses the non-strict approach.
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]

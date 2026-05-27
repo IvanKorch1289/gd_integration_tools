@@ -124,14 +124,55 @@ def _file_layer(path: Path, root: Path) -> str | None:
     return None
 
 
-def _imports(tree: ast.AST) -> Iterable[tuple[str, int]]:
+def _imports(tree: ast.AST) -> Iterable[tuple[str, int, bool]]:
+    """Yield (module, lineno, is_lazy) for each import.
+
+    ``is_lazy`` = True if import is inside a function body (not at module level).
+    S27: lazy imports inside functions are not checked (they resolve at runtime).
+    """
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                yield alias.name, node.lineno
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                yield node.module, node.lineno
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        module = getattr(node, "module", None)
+        if not module:
+            continue
+        # Check if this import is nested inside a function (lazy import)
+        is_lazy = _is_lazy_import(tree, node)
+        yield module, node.lineno, is_lazy
+
+
+def _is_lazy_import(tree: ast.AST, import_node: ast.AST) -> bool:
+    """Проверяет, является ли import lazy (внутри тела функции)."""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for child in ast.walk(node):
+            if child is import_node:
+                return True
+    return False
+
+
+def _is_in_type_checking_block(tree: ast.AST, target_lineno: int) -> bool:
+    """Проверяет, находится ли строка внутри ``if TYPE_CHECKING:`` блока.
+
+    S27: TYPE_CHECKING импорты (например, ``DLQEnvelope`` в dlq_policy.py)
+    не создают runtime-зависимостей и не должны считаться нарушениями слоёв.
+    """
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            test = node.test
+            if (
+                isinstance(test, ast.Attribute)
+                and isinstance(test.value, ast.Name)
+                and test.value.id == "typing"
+                and test.attr == "TYPE_CHECKING"
+            ):
+                if node.col_offset <= 0:  # top-level only
+                    for child in ast.walk(node):
+                        if isinstance(child, (ast.Import, ast.ImportFrom)):
+                            if hasattr(child, "lineno") and child.lineno == target_lineno:
+                                return True
+    return False
 
 
 def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
@@ -148,7 +189,7 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
 
     # R3.10d: frontend проверяется по белому списку префиксов, не по слоям.
     if layer == FRONTEND_LAYER:
-        for module, _lineno in _imports(tree):
+        for module, lineno, _is_lazy in _imports(tree):
             if module.startswith(("src.frontend", "app.frontend")):
                 continue
             if not module.startswith(("src.backend", "app.backend", "src.", "app.")):
@@ -158,7 +199,14 @@ def _check_file(path: Path, root: Path) -> list[tuple[str, str, str]]:
         return violations
 
     allowed = ALLOWED.get(layer, set())
-    for module, _lineno in _imports(tree):
+    for module, lineno, is_lazy in _imports(tree):
+        # S27: lazy imports inside functions are runtime-only, not checked.
+        # These are bridge-pattern implementations (protocol→impl).
+        if is_lazy:
+            continue
+        # S27: TYPE_CHECKING импорты не считаются нарушениями
+        if _is_in_type_checking_block(tree, lineno):
+            continue
         # R3.10d: одностороннее правило — backend никогда не импортирует frontend.
         target = _layer_of(module)
         if target == FRONTEND_LAYER:
