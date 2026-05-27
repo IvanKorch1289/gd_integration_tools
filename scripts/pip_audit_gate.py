@@ -13,9 +13,9 @@ from pathlib import Path
 
 IGNORED_VULNS: frozenset[str] = frozenset([
     "CVE-2025-69872",  # diskcache pickle RCE, no fix version
-    # S29 W2 carryover — dependency constraints, NOT unfixable:
+    # S29 W2 carryover — dependency constraint, NOT unfixable:
     "PYSEC-2026-87",   # lxml: fix 6.1.0 available but no Python 3.14 wheels
-    "PYSEC-2026-161",  # starlette: fix 1.0.1 available but prometheus-fastapi-instrumentator blocks upgrade
+    # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0 now used
 ])
 
 

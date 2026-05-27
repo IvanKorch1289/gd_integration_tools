@@ -127,17 +127,16 @@ jobs:
         # pip-audit уже в pyproject.toml dev-deps.
         # S29 W1: pip-audit 2.10.0 always exits 0, используем wrapper-скрипт
         # для проверки JSON-выхода и enforce exit code.
-        # S29 W2: 3 packages не могут быть обновлены (dependency constraints):
+        # S29 W2: 2 packages не могут быть обновлены (dependency constraints):
         #   - CVE-2025-69872: diskcache, no fix version
         #   - PYSEC-2026-87: lxml, fix 6.1.0 but no Python 3.14 wheels
-        #   - PYSEC-2026-161: starlette, fix 1.0.1 but prometheus-fastapi-instrumentator blocks
+        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
         run: |
           uv run pip-audit \
             --format json \
             --output pip-audit.json \
             --ignore-vuln CVE-2025-69872 \
-            --ignore-vuln PYSEC-2026-87 \
-            --ignore-vuln PYSEC-2026-161
+            --ignore-vuln PYSEC-2026-87
           uv run python scripts/pip_audit_gate.py
 
       - name: Upload pip-audit report
