@@ -39,10 +39,10 @@ def register_action_handlers() -> None:
     )
     from src.backend.services.ai.ai_agent import get_ai_agent_service
     from src.backend.services.core.admin import get_admin_service
-    from src.backend.services.core.orderkinds import get_order_kind_service
+    from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
     from src.backend.services.core.orders import get_order_service
     from src.backend.services.core.tech import get_tech_service
-    from src.backend.services.core.users import get_user_service
+    from extensions.core_entities.users.services.users import get_user_service
     from src.backend.services.integrations.dadata import get_dadata_service
     from src.backend.services.integrations.skb import get_skb_service
     from src.backend.services.io.files import get_file_service

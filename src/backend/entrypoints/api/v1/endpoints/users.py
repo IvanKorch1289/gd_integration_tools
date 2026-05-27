@@ -9,7 +9,7 @@ from src.backend.schemas.route_schemas.users import (
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from src.backend.services.core.users import get_user_service
+from extensions.core_entities.users.services.users import get_user_service
 
 __all__ = ("router",)
 
