@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import ntpath
 import os
 import sys
 from typing import Any, Literal
@@ -121,7 +122,17 @@ def _check_app_whitelist(app: str) -> None:
         )
     if "*" in allowed:
         return
-    if not any(app.lower().endswith(a.lower()) or app == a for a in allowed):
+
+    # normalize: извлекаем basename и приводим к lowercase для case-insensitive compare.
+    # Это предотвращает substring-bypass: "C:\Windows\notepad.exe" vs "notepad"
+    # не должны совпадать как "C:\notepad_notepad.exe".
+    app_basename = ntpath.basename(app).lower()
+    normalized = app_basename.rstrip(".exe")
+
+    # Support both "notepad" and "notepad.exe" in allowlist uniformly
+    allowed_normalized = {a.lower().rstrip(".exe") for a in allowed}
+
+    if normalized not in allowed_normalized:
         raise HTTPException(
             status_code=403,
             detail=f"App {app!r} не входит в whitelist (DESKTOP_RPA_ALLOWED_APPS).",

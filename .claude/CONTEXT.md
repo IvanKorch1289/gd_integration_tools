@@ -1,47 +1,46 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-27 18:27)
+## Текущее состояние (2026-05-27 18:35)
 
-**HEAD**: `663385a0` — fix: add missing workflow_orchestrator_enabled feature-flag (S28 W4)
-**Session summary**: `vault/session-2026-05-27-1827-summary.md` (Feature-flag fix + tests sync)
-
----
-
-### Исправления сессии (2026-05-27 18:27) ✅ CLOSED
-
-| Что | Файл | Результат |
-|-----|------|-----------|
-| Missing `workflow_orchestrator_enabled` flag | `src/backend/core/config/features.py` | ✅ +12 строк |
-| Tests async conversion | `tests/unit/dsl/workflow/test_orchestrator.py` | ✅ 8/8 passed |
-| Broken untracked test file | `tests/unit/core/ai/test_pydantic_ai_client.py` | ✅ REMOVED |
-
-**Тесты**: 25 passed (test_orchestrator 8 + agent_registry 12 + memory_profile 5)
-**Проверки**: `ruff check` ✅ `pytest` ✅
+**HEAD**: `368025b6` — chore: update check_layers allowlist (cleanup stale entries)
+**Session summary**: `vault/session-2026-05-27-1827-summary.md` (Feature-flag + allowlist cleanup)
 
 ---
 
-### Открытые задачи
+### Сессия завершена ✅
 
-| Задача | Приоритет | Status |
-|--------|-----------|--------|
-| Allowlist cleanup (21 stale entries) | Medium | Pending — `tools/check_layers.py --update-allowlist` |
-| S32 pre-planning | Low | Starts 2026-06-23 |
+| Коммит | Описание |
+|--------|----------|
+| `663385a0` | fix: add missing workflow_orchestrator_enabled feature-flag (S28 W4) |
+| `368025b6` | chore: update check_layers allowlist (cleanup stale entries) |
+
+**HEAD ahead of origin/master**: 2 commits
+
+---
+
+### Allowlist cleanup ✅ DONE
+
+- `tools/check_layers_allowlist.txt` — очищено 5 stale entries (39 → active count)
+- Все критические нарушения исправлены в S16/S17:
+  - ✅ `asyncio.create_task` — все через TaskRegistry
+  - ✅ `threading.RLock` — 0
+  - ✅ `ssl.CERT_NONE` — 0
+  - ✅ `except Exception: pass` — 0
 
 ---
 
 ### Git состояние
 
 ```
-HEAD: 663385a0 fix: add missing workflow_orchestrator_enabled feature-flag (S28 W4)
-branch: master, ahead of origin/master на 1 коммит
+HEAD: 368025b6 chore: update check_layers allowlist
+branch: master, ahead of origin/master на 2 коммита
 ```
 
 **Untracked**: `.cocoindex_code/`, `src/frontend/admin-react/package-lock.json`
-**Staged**: nothing
 
 ---
 
 ### Следующий шаг
 
-1. `python tools/check_layers.py --update-allowlist` — очистка 21 stale entry
-2. Или S32 pre-planning (starts 2026-06-23)
+- S32 pre-planning — starts 2026-06-23
+- Или push: `git push` (2 commits ahead of origin/master)
