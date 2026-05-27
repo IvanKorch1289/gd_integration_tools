@@ -127,10 +127,9 @@ jobs:
         # pip-audit уже в pyproject.toml dev-deps.
         # S29 W1: pip-audit 2.10.0 always exits 0, используем wrapper-скрипт
         # для проверки JSON-выхода и enforce exit code.
-        # S29 W2: 2 packages не могут быть обновлены (dependency constraints):
-        #   - CVE-2025-69872: diskcache, no fix version
-        #   - PYSEC-2026-87: lxml, fix 6.1.0 but no Python 3.14 wheels
-        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 - starlette 1.1.0
+        # S30: diskcache CVE-2025-69872 MITIGATED — DiskTTLCache uses JSONDisk
+        # (pip-audit checks VERSION, not usage — CVE stays in ignore).
+        # S29 W2 carryover: PYSEC-2026-87 (lxml) — dependency constraint
         run: |
           uv run pip-audit \
             --format json \
