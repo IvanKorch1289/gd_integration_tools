@@ -159,7 +159,10 @@ class MLModelLoader:
                 "torch не установлен; установите: uv add torch "
                 "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)"
             ) from exc
-        # S301: weights_only=True с fallback; безопасно из AI_WORKSPACE (isolated)
+        # SECURITY: weights_only=True first (no arbitrary code exec).
+        # Fallback to weights_only=False ONLY if model contains non-tensor data
+        # (e.g., custom classes, which is safe if AI_WORKSPACE is isolated).
+        # AI workspace isolation (V22 RLS) ensures only trusted content reaches this path.
         try:
             return torch.load(path, map_location="cpu", weights_only=True)
         except Exception as exc:

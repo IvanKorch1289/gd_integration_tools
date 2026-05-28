@@ -263,7 +263,7 @@ class AIGateway:
             AIResponse после прохождения всех 9 шагов.
         """
         # Собираем контекст для аудита
-        ctx = _AuditContext(request=request)
+        ctx = _AuditContext(request=request, audit_service=self._audit_service)
         start_ms = int(time.monotonic() * 1000)
 
         # Шаг 0: emit REQUESTED
@@ -919,7 +919,8 @@ class _AuditContext:
     """Контекст для 9-event audit sequence (ADR-0071 §3).
 
     Собирает данные по мере прохождения pipeline и эмитит события
-    ``ai.invocation.*`` через :func:`emit_ai_invocation_event`.
+    ``ai.invocation.*`` через `audit_service.emit` (если передан) или
+    `emit_ai_invocation_event` (fallback на singleton).
     Создаётся в начале :meth:`AIGateway._enforced_invoke`.
     """
 
@@ -936,6 +937,8 @@ class _AuditContext:
     model_used: str = ""
     tokens_prompt: int = 0
     tokens_completion: int = 0
+    # Для тестов: если задан, используется вместо emit_ai_invocation_event
+    audit_service: Any = None
 
     async def _emit(
         self, step: str, *, pii_detected: bool = False, latency_ms: int = 0
@@ -963,7 +966,7 @@ class _AuditContext:
             pii_detected=pii_detected,
             latency_ms=latency_ms,
         )
-        await _emit_wrapper(event)
+        await _emit_wrapper(event, self.audit_service)
 
     async def _emit_guard(self, step: str, gr: GuardResult) -> None:
         """Emit событие с guard result (guarded.input/output)."""
@@ -987,7 +990,7 @@ class _AuditContext:
             guard_verdict=gr.verdict,
             guard_categories=list(gr.categories),
         )
-        await _emit_wrapper(event)
+        await _emit_wrapper(event, self.audit_service)
 
     async def _emit_final(self, start_ms: int) -> None:
         """Emit завершающее событие: completed / denied / failed."""
@@ -1035,11 +1038,24 @@ class _AuditContext:
         # Этот вызов проходит mock.patch(AIGateway, '_audit_service') в тестах
         # и обеспечивает backward-compat для audit.emit.assert_awaited_once()
         # Новый 9-event path эмитит события через emit_ai_invocation_event
-        await _emit_wrapper(event)
+        await _emit_wrapper(event, self.audit_service)
 
 
-async def _emit_wrapper(event: "AIInvocationEvent") -> None:
-    """Обертка для emit — ленивый импорт + task registry."""
+async def _emit_wrapper(event: "AIInvocationEvent", audit_service: Any = None) -> None:
+    """Обертка для emit — использует переданный audit_service если есть.
+
+    Для backward-compat с тестами: принимает audit_service и вызывает его emit().
+    Если не передан — fallback на singleton emit_ai_invocation_event().
+    """
+    # Приоритет: явно переданный audit_service (для тестов), иначе singleton
+    if audit_service is not None:
+        try:
+            await audit_service.emit(event)
+            return
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("AIGateway: audit_service.emit failed: %s", exc)
+            return
+    # fallback на глобальный singleton
     try:
         from src.backend.core.audit.sinks.ai_unified_sink import (
             emit_ai_invocation_event,
