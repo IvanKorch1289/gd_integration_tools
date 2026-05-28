@@ -1472,3 +1472,30 @@ Agent с `isolation: "worktree"`, делает intermediate commits после �
 - [ ] schemathesis в CI (warn-only)
 - [x] msgspec hotpath benchmark задокументирован (`vault/benchmark-2026-05-14-msgspec.md`)
 - [x] layer-violations через `services/dsl_portal/` фасад → 0
+
+---
+
+## Tech Debt Session 2026-05-28 — Layer Violations Fix ✅ CLOSED
+
+**Дата**: 2026-05-28
+**Commits**: `99cc4945` — fix(arch): устранить 4 layer violations (core → infrastructure imports)
+
+### Исправлено
+
+1. **`core/resilience/rate_limiter.py`** — TYPE_CHECKING guard + lazy `__getattr__` для re-export RedisRateLimiter из infrastructure
+2. **`core/messaging/dlq.py`** — TYPE_CHECKING guard + lazy `__getattr__` для re-export DLQEnvelope/DLQWriter из infrastructure
+3. **`core/scaling/bulkhead_scaler.py`** — TYPE_CHECKING guard + lazy `__getattr__` для Bulkhead/BulkheadRegistry из infrastructure
+4. **`services/ai/langmem_models.py`** — мигрирован в `infrastructure/database/models/langmem_models.py` (правильный слой для ORM) + re-export facade для обратной совместимости
+
+### Оставшийся технический долг S20/S24
+
+| Файл | Маркер | Описание | Приоритет |
+|------|--------|---------|-----------|
+| `services/admin/sso.py:148` | TODO S20 | `require_sso_auth` decorator placeholder | MEDIUM |
+| `dsl/workflow/compiler/step_compilers.py:270` | TODO S24 W3 | LangGraph Checkpointer integration pending | MEDIUM |
+
+### Проверки
+
+- `ruff check`: All checks passed
+- `mypy --ignore-missing-imports`: Success (5 files)
+- Runtime imports: OK (lazy loading работает корректно)
