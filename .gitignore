@@ -177,3 +177,4 @@ testkit/cassettes/*.json
 # Sentry native debug symbols (permission-denied dir)
 .sentry-native/
 .claude/smells/
+docs/autoapi/
