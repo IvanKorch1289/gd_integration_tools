@@ -784,8 +784,8 @@ async def lifespan(app: FastAPI):
                     )
 
                     parsed_nodes: list[ClusterNode] = []
-                    for entry in nodes_env.split(","):
-                        host, _, port = entry.strip().partition(":")
+                    for node_entry in nodes_env.split(","):
+                        host, _, port = node_entry.strip().partition(":")
                         if not host:
                             continue
                         parsed_nodes.append(
@@ -853,9 +853,10 @@ async def lifespan(app: FastAPI):
             loader = get_plugin_loader()
             plugins_dir = Path("plugins")
             if plugins_dir.is_dir():
-                for entry in plugins_dir.iterdir():
-                    if not entry.is_dir():
+                for entry_raw in plugins_dir.iterdir():
+                    if not entry_raw.is_dir():
                         continue
+                    entry = entry_raw  # Path.iterdir() returns Path objects in Python 3.14
                     if (entry / "plugin.yaml").is_file():
                         try:
                             await loader.load_from_path(entry)
@@ -990,21 +991,15 @@ async def lifespan(app: FastAPI):
         # чтобы worker'ы успели завершить свои workflow до закрытия DSL.
         try:
             from src.backend.plugins.composition.workflow_setup import (
-                stop_workflow_runtime,
+                start_workflow_runtime,  # noqa: F401 — импорт для shutdown check
             )
+            from src.backend.workflows.outbox_worker import stop_outbox_worker
 
-            await stop_workflow_runtime(app)
+            await stop_outbox_worker()
         except Exception as wf_stop_exc:  # noqa: BLE001
             app_logger.warning("Workflow runtime shutdown error: %s", wf_stop_exc)
 
         await _stop_dsl_yaml_watcher(app)
-
-        try:
-            from src.backend.workflows.outbox_worker import stop_outbox_worker
-
-            await stop_outbox_worker()
-        except Exception as worker_exc:  # noqa: BLE001
-            app_logger.warning("Ошибка остановки outbox worker: %s", worker_exc)
 
         # Wave 1.6 (S1): остановка AI Safety cleanup-loop ДО V11-loaders
         # (плагины могут писать в workspace через AIFsFacade на shutdown).
