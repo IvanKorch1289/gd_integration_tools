@@ -4,8 +4,9 @@
 
 - :func:`APIClient.list_step_logs` — правильное формирование query params;
 - :func:`APIClient.get_step_detail` — drill-down endpoint;
-- graceful fallback на stub-данные при недоступности backend (К3 W11);
 - AST-валидация модуля страницы (Streamlit runtime в unit-тестах не поднимается).
+
+NOTE: K3 W11 stub-fallback удалён — backend errors теперь поднимают RuntimeError.
 """
 
 # ruff: noqa: S101
@@ -13,6 +14,7 @@
 from __future__ import annotations
 
 import importlib.util
+import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -121,17 +123,12 @@ def test_filter_params_pass_to_api() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Тест 3: list_step_logs возвращает stub при недоступности backend
+# Тест 3: list_step_logs поднимает RuntimeError при недоступности backend
 # ---------------------------------------------------------------------------
 
 
 def test_table_renders_data() -> None:
-    """``list_step_logs`` возвращает stub-данные при ConnectError.
-
-    Эквивалент ``test_table_renders_data``: проверяем, что при недоступном
-    K3 W11 endpoint фронт получает не пустой список stub-словарей с
-    обязательными ключами для df rendering (workflow_id/step_name/status/...).
-    """
+    """``list_step_logs`` поднимает RuntimeError при ConnectError."""
     import httpx
 
     with patch("httpx.Client") as mock_client_cls:
@@ -144,28 +141,17 @@ def test_table_renders_data() -> None:
         from src.frontend.streamlit_app.api_client import APIClient
 
         client = APIClient(base_url="http://test")
-        rows = client.list_step_logs(workflow_name="my_wf", limit=5)
-
-    assert isinstance(rows, list), "Должен вернуть список даже при ошибке"
-    assert len(rows) >= 3, "Stub-fallback не должен быть пустым"
-    first = rows[0]
-    for key in ("workflow_id", "workflow_name", "step_name", "status", "duration_ms"):
-        assert key in first, f"Stub-запись не содержит ключ '{key}'"
-    assert first["__stub__"] is True
-    # workflow_name должен подхватываться из аргумента
-    assert first["workflow_name"] == "my_wf"
+        with pytest.raises(RuntimeError, match="Failed to fetch step logs"):
+            client.list_step_logs(workflow_name="my_wf", limit=5)
 
 
 # ---------------------------------------------------------------------------
-# Тест 4: get_step_detail работает + fallback на stub
+# Тест 4: get_step_detail работает (happy path)
 # ---------------------------------------------------------------------------
 
 
 def test_drilldown_returns_detail() -> None:
-    """``get_step_detail`` возвращает dict с workflow_id и steps.
-
-    Проверяет happy-path (HTTP 200) и graceful fallback (stub при error).
-    """
+    """``get_step_detail`` возвращает dict с workflow_id и steps."""
     # Happy-path: HTTP 200 c корректным dict.
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -195,7 +181,7 @@ def test_drilldown_returns_detail() -> None:
     assert detail["status"] == "completed"
     assert len(detail["steps"]) == 2
 
-    # Fallback: HTTP error → stub с __stub__ флагом.
+    # Error path: RuntimeError при недоступности backend.
     import httpx
 
     with patch("httpx.Client") as mock_client_cls:
@@ -208,8 +194,5 @@ def test_drilldown_returns_detail() -> None:
         from src.frontend.streamlit_app.api_client import APIClient
 
         client = APIClient(base_url="http://test")
-        stub = client.get_step_detail("wf-missing")
-
-    assert stub["__stub__"] is True
-    assert stub["workflow_id"] == "wf-missing"
-    assert "steps" in stub
+        with pytest.raises(RuntimeError, match="Failed to fetch step detail"):
+            client.get_step_detail("wf-missing")

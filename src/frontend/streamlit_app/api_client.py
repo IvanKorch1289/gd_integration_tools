@@ -490,9 +490,7 @@ class APIClient:
             limit: Максимум записей в ответе.
 
         Returns:
-            Список step-логов (dict). При недоступности backend
-            (К3 W11 ещё не готов) возвращает stub-данные с пометкой
-            ``__stub__: True`` в каждой записи.
+            Список step-логов (dict). При ошибке backend поднимает RuntimeError.
         """
         params: dict[str, Any] = {
             k: v
@@ -513,9 +511,8 @@ class APIClient:
             if isinstance(result, list):
                 return result
             return []
-        except Exception:  # noqa: BLE001
-            # K3 W11 endpoint ещё не реализован — возвращаем stub.
-            return _build_step_logs_stub(workflow_name=workflow_name, limit=limit)
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch step logs: {e}") from e
 
     def get_step_detail(self, workflow_id: str) -> dict[str, Any]:
         """GET /api/v1/admin/workflow/step-logs/{workflow_id} — drill-down.
@@ -524,8 +521,7 @@ class APIClient:
             workflow_id: Идентификатор workflow для drill-down.
 
         Returns:
-            Подробности workflow со списком всех steps. При недоступности
-            backend возвращает stub-словарь с ``__stub__: True``.
+            Подробности workflow со списком всех steps.
         """
         try:
             result = self._request(
@@ -534,53 +530,8 @@ class APIClient:
             if isinstance(result, dict):
                 return result
             return {}
-        except Exception:  # noqa: BLE001
-            return _build_step_detail_stub(workflow_id)
-
-
-def _build_step_logs_stub(
-    *, workflow_name: str | None = None, limit: int = 100
-) -> list[dict[str, Any]]:
-    """Сформировать stub-данные при недоступности K3 W11 endpoint.
-
-    Args:
-        workflow_name: Если задано — используется в stub-записях.
-        limit: Сколько stub-записей вернуть (минимум 3, максимум limit).
-
-    Returns:
-        Список stub-словарей с ключом ``__stub__=True`` для индикации в UI.
-    """
-    base_name = workflow_name or "credit_assessment"
-    statuses = ("ok", "ok", "fail", "ok", "retry")
-    rows: list[dict[str, Any]] = []
-    count = max(3, min(limit, 5))
-    for idx in range(count):
-        rows.append(
-            {
-                "workflow_id": f"wf-stub-{idx:03d}",
-                "workflow_name": base_name,
-                "step_name": f"step_{idx}",
-                "status": statuses[idx % len(statuses)],
-                "duration_ms": 100 + idx * 50,
-                "tenant_id": "stub-tenant",
-                "ts": "2026-05-14T00:00:00Z",
-                "__stub__": True,
-            }
-        )
-    return rows
-
-
-def _build_step_detail_stub(workflow_id: str) -> dict[str, Any]:
-    """Stub для get_step_detail при недоступности backend."""
-    return {
-        "workflow_id": workflow_id,
-        "status": "stub",
-        "steps": [
-            {"name": "step_0", "status": "ok", "duration_ms": 120},
-            {"name": "step_1", "status": "ok", "duration_ms": 250},
-        ],
-        "__stub__": True,
-    }
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch step detail: {e}") from e
 
 
 def get_api_client() -> APIClient:
