@@ -84,10 +84,16 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
     def _model_dir(self, name: str) -> Path:
         """Каталог конкретной модели (без trailing slash)."""
         # S108/S301: явная валидация против path traversal
-        safe_name = name.replace("/", "_").replace("\\", "_").replace("..", "_")
-        if not safe_name or safe_name.startswith("."):
+        # Категорически запрещаем любые path separator и ".."
+        if ".." in name or "/" in name or "\\" in name or name.startswith("."):
             raise ValueError(f"Invalid model name (path traversal attempt): {name!r}")
-        return self._root / safe_name
+        target = self._root / name
+        # verify traversal resolves within root
+        resolved = target.resolve()
+        root_resolved = self._root.resolve()
+        if not str(resolved).startswith(str(root_resolved)):
+            raise ValueError(f"Path traversal attempt: {name!r}")
+        return target
 
     def _manifest_path(self, model_dir: Path) -> Path:
         return model_dir / ".model_manifest.json"
@@ -224,9 +230,11 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         loop = asyncio.get_running_loop()
         content = json.dumps(manifest, ensure_ascii=False, indent=2)
         manifest_path = self._manifest_path(model_dir)
-        await loop.run_in_executor(
-            None, lambda p=manifest_path, c=content: p.write_text(c, encoding="utf-8")
-        )
+
+        def _write_text(p: Path, c: str) -> None:
+            p.write_text(c, encoding="utf-8")
+
+        await loop.run_in_executor(None, _write_text, manifest_path, content)
         # Re-read to get full record
         return await self.get_model(name, version=version) or ModelRecord(
             name=name, version=version, stage=new_stage  # type: ignore[arg-type]
