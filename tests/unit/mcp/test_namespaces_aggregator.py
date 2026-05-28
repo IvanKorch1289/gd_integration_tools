@@ -96,13 +96,15 @@ class TestMCPNamespace:
             CREDIT_NAMESPACE,
             ANALYTICS_NAMESPACE,
             SYSTEM_NAMESPACE,
+            AI_NAMESPACE,
         )
 
         namespaces = list_namespaces()
-        assert len(namespaces) == 3
+        assert len(namespaces) == 4
         assert CREDIT_NAMESPACE in namespaces
         assert ANALYTICS_NAMESPACE in namespaces
         assert SYSTEM_NAMESPACE in namespaces
+        assert AI_NAMESPACE in namespaces
 
 
 class TestMCPClientSpec:
