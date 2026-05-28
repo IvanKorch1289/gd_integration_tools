@@ -166,7 +166,7 @@ class BGESettings(BaseSettingsWithLoader):
         default="BAAI/bge-m3", description="Имя модели BGE-M3 (1024-dim dense)."
     )
     reranker_enabled: bool = Field(
-        default=False,
+        default=True,
         description=(
             "Block 3.1 (gap-ai-3.1, ADR-0074): включить BGE cross-encoder "
             "reranker (FlagEmbedding.FlagReranker) в _RagRerankerPipeline. "
