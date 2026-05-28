@@ -1,9 +1,10 @@
-"""Composite Model Registry — объединяет MLflow + HF Hub (Sprint 11 K4 W6).
+"""Composite Model Registry — объединяет MLflow + HF Hub + Local FS (Sprint 11 K4 W6 + S29).
 
-Делегирует list_models() в оба backend'а и сводит результаты по
-``(name, version, backend)`` — позволяет UI показывать модели из любых
-источников в одном списке. Запись (`register_model`) идёт в указанный
-provider, по умолчанию — первый из списка (mlflow).
+Делегирует list_models() во все backends и сводит результаты по
+(name, version, backend) — позволяет UI показывать модели из любых
+источников в одном списке. Запись (register_model) идёт в указанный
+provider, по умолчанию — первый из списка (mlflow). Local FS — lowest
+priority read-only backend.
 """
 
 from __future__ import annotations

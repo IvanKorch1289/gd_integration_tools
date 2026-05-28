@@ -120,6 +120,35 @@ class PydanticAIClient:
         self._gateway = gateway
         self._model_router = model_router
         self._metrics_registry = metrics_registry
+        self._register_metrics()
+
+    def _register_metrics(self) -> None:
+        """Pre-register all ai_pydantic_client_* metrics (idempotent)."""
+        if self._metrics_registry is None:
+            return
+        try:
+            self._metrics_registry.counter(
+                "ai_pydantic_client_requests_total",
+                "PydanticAIClient LLM request counter",
+                labels=("model", "status"),
+            )
+            self._metrics_registry.histogram(
+                "ai_pydantic_client_latency_ms",
+                "PydanticAIClient LLM latency in ms",
+                labels=("model",),
+            )
+            self._metrics_registry.counter(
+                "ai_pydantic_client_fallback_total",
+                "PydanticAIClient fallback counter",
+                labels=("model", "reason"),
+            )
+            self._metrics_registry.counter(
+                "ai_pydantic_client_retry_total",
+                "PydanticAIClient retry counter",
+                labels=("model", "attempt"),
+            )
+        except Exception:  # noqa: BLE001
+            pass
 
     # ── public API ─────────────────────────────────────────────────────────
 
@@ -136,8 +165,9 @@ class PydanticAIClient:
         Args:
             prompt: Готовый prompt (после render + sanitize + guard).
             output_type: Pydantic model для structured output.
-                Пока не реализовано (S32 W2), всегда возвращает str в content.
+                Реализовано в S32 W2; пока игнорируется.
             deps: LLMDependencies для tenant/correlation isolation.
+                Реализовано в S32 W2; пока игнорируется.
             stream: Если True — возвращает AsyncIterator чанков
                 (пока не поддерживается, для future use).
 
@@ -152,6 +182,8 @@ class PydanticAIClient:
             raise NotImplementedError("Streaming support planned for S32 W2+")
 
         assert not stream, "unreachable"  # for mypy
+        # output_type и deps зарезервированы для S32 W2 (real pydantic_ai Agent)
+        del output_type, deps
         start_ms: int = int(time.monotonic() * 1000)
 
         primary = self._primary_model()
@@ -226,35 +258,7 @@ class PydanticAIClient:
             {"model": primary, "status": "error"},
         )
         self._reraise_normalized(last_exc or RuntimeError("No models available"))
-        # unreachable — _reraise_normalized always raises
-        raise AssertionError("unreachable") from last_exc
-
-    # ── mock result ────────────────────────────────────────────────────────
-
-    async def _mock_result(self, start_ms: int) -> LLMResult:
-        """Last resort: возвращает mock result при исчерпании всех моделей."""
-        latency_ms = int(time.monotonic() * 1000) - start_ms
-        self._emit_counter(
-            "ai_pydantic_client_requests_total",
-            {"model": "mock", "status": "mock"},
-        )
-        self._emit_counter(
-            "ai_pydantic_client_fallback_total",
-            {"model": "mock", "reason": "all_exhausted"},
-        )
-        logger.warning(
-            "PydanticAIClient: all models exhausted, returning mock result"
-        )
-        return LLMResult(
-            content="[mock: all models unavailable]",
-            structured=None,
-            tokens_prompt=0,
-            tokens_completion=0,
-            cost_usd=0.0,
-            model_used="mock",
-            latency_ms=latency_ms,
-            is_fallback=True,
-        )
+        return  # type: ignore[unreachable] — _reraise_normalized always raises
 
     # ── helpers ───────────────────────────────────────────────────────────
 

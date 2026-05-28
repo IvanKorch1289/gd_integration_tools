@@ -1956,3 +1956,42 @@ class IntegrationMixin:
                 name=name,
             )
         )
+
+    # ── S29: ML predict (local models repository) ──
+
+    def ml_predict(
+        self,
+        model: str,
+        *,
+        input_field: str = "body.features",
+        output_property: str = "ml_prediction",
+        model_type: str | None = None,
+        name: str | None = None,
+    ) -> "RouteBuilder":
+        """Выполняет ML-инференс через локальный filesystem model registry.
+
+        Wave: ``[wave:s29/local-models-repository]``. Использует
+        :class:`MLPredictProcessor` + :class:`MLModelLoader`.
+
+        Модель ищется в ``${AI_WORKSPACE}/models/<model>/`` через
+        :class:`LocalFSModelRegistry`. Поддерживает torch, onnx, sklearn,
+        catboost, lightgbm.
+
+        Args:
+            model: Имя модели в LocalFSModelRegistry.
+            input_field: dotted-path к входным данным (default ``body.features``).
+            output_property: Куда положить результат инференса.
+            model_type: Явный тип модели (default — по расширению файла).
+            name: Имя процессора в трейсах.
+        """
+        from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
+
+        return self._add(  # type: ignore[attr-defined,no-any-return]
+            MLPredictProcessor(
+                model_endpoint=model,
+                input_field=input_field,
+                output_property=output_property,
+                model_type=model_type,
+                name=name,
+            )
+        )

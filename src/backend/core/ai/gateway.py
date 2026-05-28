@@ -666,9 +666,6 @@ class AIGateway:
                 "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
             )
             return []
-            logger.debug(
-                "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
-            )
 
     async def _apply_output_sanitizers(
         self, response: AIResponse, policy: "AIPolicySpec | None"
