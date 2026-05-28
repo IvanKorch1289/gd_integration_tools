@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 __all__ = ("LiteLLMModel",)
 
+from contextlib import asynccontextmanager
+
 try:
     from pydantic_ai.models import Model
     from pydantic_ai.messages import ModelMessage, ModelResponse
     from pydantic_ai.settings import ModelSettings
     from pydantic_ai.models import ModelRequestParameters
     from pydantic_ai.result import StreamedResponse
-    from contextlib import asynccontextmanager
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
