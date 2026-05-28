@@ -49,6 +49,14 @@ def create_mcp_server() -> Any:
     _register_yaml_tools(mcp)
     _register_document_tools(mcp)
 
+    # S32 W3: AI namespace tools
+    try:
+        from src.backend.entrypoints.mcp.namespaces.ai_mcp import register_ai_tools
+
+        register_ai_tools(mcp)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("AI namespace MCP tools registration skipped: %s", exc)
+
     # IL-WF1.5: auto-export durable workflows как MCP tools
     # (CrewAI / LangChain / LangGraph получают каждый workflow
     # отдельным tool'ом с валидацией payload через input_schema).

@@ -17,6 +17,7 @@ __all__ = (
     "CREDIT_NAMESPACE",
     "ANALYTICS_NAMESPACE",
     "SYSTEM_NAMESPACE",
+    "AI_NAMESPACE",
     "MCPNamespace",
     "get_namespace_for_action",
     "list_namespaces",
@@ -64,6 +65,14 @@ SYSTEM_NAMESPACE = MCPNamespace(
     capabilities_required=("mcp.gateway.invoke.system",),
 )
 
+# S32 W3: AI namespace для AI/RAG/ML actions
+AI_NAMESPACE = MCPNamespace(
+    name="ai",
+    description="AI/RAG/ML actions: search, chat, agent, embeddings, model registry.",
+    action_prefixes=("ai.", "ml.", "rag.", "embed."),
+    capabilities_required=("mcp.gateway.invoke.ai",),
+)
+
 
 def get_namespace_for_action(action_name: str) -> MCPNamespace | None:
     """Возвращает MCPNamespace для action или None если не найден.
@@ -77,7 +86,7 @@ def get_namespace_for_action(action_name: str) -> MCPNamespace | None:
     Returns:
         MCPNamespace или None если action не принадлежит ни одному namespace.
     """
-    for ns in (CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE):
+    for ns in (CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE, AI_NAMESPACE):
         for prefix in ns.action_prefixes:
             if action_name.startswith(prefix):
                 return ns
@@ -88,6 +97,6 @@ def list_namespaces() -> list[MCPNamespace]:
     """Возвращает список всех defined namespaces.
 
     Returns:
-        Список [credit, analytics, system] namespaces.
+        Список [credit, analytics, system, ai] namespaces.
     """
-    return [CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE]
+    return [CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE, AI_NAMESPACE]
