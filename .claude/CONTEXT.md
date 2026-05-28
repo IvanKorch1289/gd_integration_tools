@@ -1,39 +1,45 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-27 18:35)
+## Текущее состояние (2026-05-27 ~18:40)
 
-**HEAD**: `368025b6` — chore: update check_layers allowlist (cleanup stale entries)
-**Session summary**: `vault/session-2026-05-27-1827-summary.md` (Feature-flag + allowlist cleanup)
+**HEAD**: `fccff5ba` — refactor(features): remove duplicate S15-era field definitions
+**Предыдущая сессия**: `vault/session-2026-05-27-1833-summary.md`
 
 ---
 
-### Сессия завершена ✅
+### Сессия 2026-05-27 итоги
 
 | Коммит | Описание |
 |--------|----------|
 | `663385a0` | fix: add missing workflow_orchestrator_enabled feature-flag (S28 W4) |
 | `368025b6` | chore: update check_layers allowlist (cleanup stale entries) |
+| `fccff5ba` | refactor(features): remove duplicate S15-era field definitions |
 
-**HEAD ahead of origin/master**: 2 commits
+**HEAD ahead of origin/master**: 1 коммит (`fccff5ba`)
 
 ---
 
-### Allowlist cleanup ✅ DONE
+### Проверки ✅
 
-- `tools/check_layers_allowlist.txt` — очищено 5 stale entries (39 → active count)
-- Все критические нарушения исправлены в S16/S17:
-  - ✅ `asyncio.create_task` — все через TaskRegistry
-  - ✅ `threading.RLock` — 0
-  - ✅ `ssl.CERT_NONE` — 0
-  - ✅ `except Exception: pass` — 0
+- `uv run pytest tests/unit/dsl/workflow/test_orchestrator.py` — 8 passed
+- `uv run ruff check src/backend/core/config/features.py` — All checks passed
+- `python tools/check_layers.py` — 0 новых нарушений (baseline: 39 legacy)
+
+---
+
+### Code review findings (max effort) — закрыты
+
+| Замечание | Severity | Status |
+|-----------|----------|--------|
+| Duplicate field names (`ai_pr_review_enabled`, `dsl_visual_editor_drag_drop`) | Medium | ✅ Удалены S15-era дубли |
 
 ---
 
 ### Git состояние
 
 ```
-HEAD: 368025b6 chore: update check_layers allowlist
-branch: master, ahead of origin/master на 2 коммита
+HEAD: fccff5ba refactor(features): remove duplicate S15-era field definitions
+branch: master, ahead of origin/master на 1 коммит
 ```
 
 **Untracked**: `.cocoindex_code/`, `src/frontend/admin-react/package-lock.json`
@@ -42,5 +48,5 @@ branch: master, ahead of origin/master на 2 коммита
 
 ### Следующий шаг
 
+- `git push` (1 коммит ahead of origin/master)
 - S32 pre-planning — starts 2026-06-23
-- Или push: `git push` (2 commits ahead of origin/master)
