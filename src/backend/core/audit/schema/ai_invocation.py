@@ -1,6 +1,6 @@
 """AI invocation audit schema (ADR-0071, S27 W5).
 
-9 событий ``ai.invocation.*`` для полного traceability AI-вызова:
+10 событий ``ai.invocation.*`` для полного traceability AI-вызова:
 
 - ai.invocation.requested       — после _resolve_policy
 - ai.invocation.policy_resolved — policy найдена

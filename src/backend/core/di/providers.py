@@ -38,6 +38,9 @@ __all__ = (
     # Wave S25 W4: PIITokenizer (ADR-0068)
     "get_pii_tokenizer_provider",
     "set_pii_tokenizer_provider",
+    # Wave S32 W4: ThreeTierRagCache provider
+    "get_rag_cache_provider",
+    "set_rag_cache_provider",
     "set_redis_stream_client_provider",
     "set_mongo_client_provider",
     "set_llm_judge_metrics_provider",
@@ -352,6 +355,31 @@ def get_pii_tokenizer_provider() -> Any:
 def set_pii_tokenizer_provider(impl: Any) -> None:
     """Test-override для PIITokenizer."""
     _overrides["pii_tokenizer"] = impl
+
+
+# ─────────────── Wave S32 W4: ThreeTierRagCache provider ───────────────
+
+
+def get_rag_cache_provider() -> Any:
+    """Возвращает ThreeTierRagCache из app.state или None.
+
+    Wave S32 W4: lazy-резолв RAG-кэша через
+    ``_get_three_tier_cache()`` (rag_cache_admin). Кэш регистрируется
+    в ``setup_ai_2026.py`` при ``rag_cache_settings`` (default-OFF).
+    Override через :func:`set_rag_cache_provider` имеет приоритет.
+    """
+    if "rag_cache" in _overrides:
+        return _overrides["rag_cache"]
+    from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
+        _get_three_tier_cache,
+    )
+
+    return _get_three_tier_cache()
+
+
+def set_rag_cache_provider(impl: Any) -> None:
+    """Test-override для ThreeTierRagCache."""
+    _overrides["rag_cache"] = impl
 
 
 def _resolve_pii_token_registry() -> Any:
