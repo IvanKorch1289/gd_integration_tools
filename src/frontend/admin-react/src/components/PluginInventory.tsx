@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { api } from '../api'
 
 interface PluginInfo {
   name: string
@@ -14,8 +15,7 @@ export function PluginInventory() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/plugins/inventory')
-      .then(r => r.json())
+    api.get<PluginInfo[]>('/admin/plugins')
       .then(data => { setPlugins(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(e => { setError(String(e)); setLoading(false) })
   }, [])

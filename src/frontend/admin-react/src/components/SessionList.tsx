@@ -8,25 +8,32 @@ interface Session {
   tenant?: string
 }
 
+/**
+ * Active Sessions list.
+ *
+ * NOTE: Backend endpoint GET /admin/sessions does not exist yet.
+ * Displays empty state until endpoint is implemented.
+ */
 export function SessionList() {
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [sessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/sessions')
-      .then(r => r.json())
-      .then(data => { setSessions(Array.isArray(data) ? data : []); setLoading(false) })
-      .catch(e => { setError(String(e)); setLoading(false) })
+    // TODO: Replace with real endpoint when available
+    // api.get<Session[]>('/admin/sessions')
+    //   .then(data => { setSessions(Array.isArray(data) ? data : []); setLoading(false) })
+    //   .catch(e => { setError(String(e)); setLoading(false) })
+    setLoading(false)
   }, [])
 
   if (loading) return <p>Loading sessions…</p>
-  if (error && sessions.length === 0) return <p style={{ color: 'red' }}>Error: {error}</p>
+  if (error && sessions.length === 0) return <p style={{ color: 'orange' }}>{error}</p>
 
   return (
     <div>
       <h2>Active Sessions</h2>
-      {error && <p style={{ color: 'orange' }}>Last error: {error}</p>}
+      {error && <p style={{ color: 'orange' }}>{error}</p>}
       {sessions.length === 0 ? (
         <p style={{ color: '#888' }}>No active sessions.</p>
       ) : (

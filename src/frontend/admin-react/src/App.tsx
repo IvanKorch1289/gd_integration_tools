@@ -5,11 +5,50 @@ import { FeatureFlags } from './components/FeatureFlags'
 import { AuditLog } from './components/AuditLog'
 import { SessionList } from './components/SessionList'
 import { PluginInventory } from './components/PluginInventory'
+import { api } from './api'
 
 type NavItem = 'routes' | 'health' | 'flags' | 'audit' | 'sessions' | 'plugins'
 
+function LoginScreen() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#0a0a0a',
+      color: '#fff',
+    }}>
+      <div style={{
+        border: '1px solid #333',
+        borderRadius: '8px',
+        padding: '32px',
+        maxWidth: '400px',
+        textAlign: 'center',
+        backgroundColor: '#1a1a1a',
+      }}>
+        <h2 style={{ marginBottom: '8px' }}>Admin Dashboard</h2>
+        <p style={{ color: '#888', marginBottom: '24px' }}>
+          VITE_ADMIN_API_KEY not configured at build time.
+        </p>
+        <p style={{ color: '#666', fontSize: '0.9em' }}>
+          Build with:<br />
+          <code style={{ color: '#aaa' }}>
+            VITE_ADMIN_API_KEY=your_key npm run build
+          </code>
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activeNav, setActiveNav] = useState<NavItem>('routes')
+
+  // Auth gate: require API key at build time
+  if (!api.isConfigured()) {
+    return <LoginScreen />
+  }
 
   const navItems: { id: NavItem; label: string }[] = [
     { id: 'routes', label: 'Route Management' },
@@ -59,7 +98,7 @@ function App() {
         <header style={{ marginBottom: '24px' }}>
           <h1>Admin Dashboard</h1>
           <p style={{ color: '#888' }}>
-            GD Integration Tools — Feature Flags: admin_react_mvp, langmem_consolidation_impl
+            GD Integration Tools — Admin Panel
           </p>
         </header>
 

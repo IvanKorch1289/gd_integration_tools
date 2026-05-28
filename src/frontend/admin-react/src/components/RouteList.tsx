@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 interface Route {
   id: string
   name: string
@@ -7,38 +9,32 @@ interface Route {
   lastAccessed: string
 }
 
-const mockRoutes: Route[] = [
-  { id: '1', name: 'Get Users', path: '/api/users', method: 'GET', status: 'active', lastAccessed: '2026-05-26T10:30:00Z' },
-  { id: '2', name: 'Create User', path: '/api/users', method: 'POST', status: 'active', lastAccessed: '2026-05-26T10:25:00Z' },
-  { id: '3', name: 'Get Routes', path: '/api/routes', method: 'GET', status: 'active', lastAccessed: '2026-05-26T09:15:00Z' },
-  { id: '4', name: 'Health Check', path: '/api/health', method: 'GET', status: 'active', lastAccessed: '2026-05-26T10:45:00Z' },
-  { id: '5', name: 'Deprecated Endpoint', path: '/api/v1/legacy', method: 'DELETE', status: 'inactive', lastAccessed: '2026-05-20T08:00:00Z' },
-  { id: '6', name: 'Error Route', path: '/api/error', method: 'POST', status: 'error', lastAccessed: '2026-05-26T01:00:00Z' },
-]
-
-function getStatusColor(status: Route['status']): string {
-  switch (status) {
-    case 'active': return '#4ade80'
-    case 'inactive': return '#facc15'
-    case 'error': return '#f87171'
-  }
-}
-
+/**
+ * Route Management UI.
+ *
+ * NOTE: Backend endpoint for route listing does not exist yet.
+ * When the endpoint is added (e.g. GET /admin/routes from dsl_routes store),
+ * replace the placeholder below with:
+ *   api.get<Route[]>('/admin/routes').then(...).catch(...)
+ */
 export function RouteList() {
-  // Auth stub - in production this would use actual auth
-  const isAuthenticated = true
+  const [routes] = useState<Route[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error] = useState<string | null>(null)
 
-  if (!isAuthenticated) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <p>Authentication required (stubbed - no auth implemented)</p>
-      </div>
-    )
-  }
+  useEffect(() => {
+    setLoading(false)
+  }, [])
+
+  if (loading) return <p>Loading routes…</p>
+  if (error) return <p style={{ color: 'orange' }}>{error}</p>
 
   return (
     <section>
       <h2 style={{ marginBottom: '16px' }}>Route Management</h2>
+      <p style={{ color: '#888' }}>
+        Route listing endpoint not yet implemented.
+      </p>
       <div style={{ overflowX: 'auto' }}>
         <table>
           <thead>
@@ -48,35 +44,19 @@ export function RouteList() {
               <th>Method</th>
               <th>Status</th>
               <th>Last Accessed</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {mockRoutes.map((route) => (
-              <tr key={route.id}>
-                <td>{route.name}</td>
-                <td><code>{route.path}</code></td>
-                <td><span style={{
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: '#333',
-                  fontFamily: 'monospace'
-                }}>{route.method}</span></td>
-                <td>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: getStatusColor(route.status),
-                    marginRight: '8px'
-                  }}></span>
-                  {route.status}
-                </td>
-                <td>{new Date(route.lastAccessed).toLocaleString()}</td>
-                <td>
-                  <button onClick={() => alert(`Edit ${route.name}`)}>Edit</button>
-                </td>
+            {routes.map(r => (
+              <tr key={r.id}>
+                <td>{r.name}</td>
+                <td><code>{r.path}</code></td>
+                <td>{r.method}</td>
+                <td style={{
+                  color: r.status === 'active' ? '#4ade80'
+                    : r.status === 'inactive' ? '#facc15' : '#f87171'
+                }}>{r.status}</td>
+                <td>{r.lastAccessed}</td>
               </tr>
             ))}
           </tbody>

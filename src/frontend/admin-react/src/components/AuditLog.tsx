@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { api } from '../api'
 
 interface AuditEntry {
   event: string
@@ -17,8 +18,7 @@ export function AuditLog() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/audit')
-      .then(r => r.json())
+    api.get<AuditEntry[]>('/admin/workflow-audit')
       .then(data => { setEntries(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(e => { setError(String(e)); setLoading(false) })
   }, [])

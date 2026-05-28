@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { api } from '../api'
 
 interface FeatureFlag {
-  Name: string
+  name: string
   value: boolean | string | number
 }
 
@@ -19,27 +20,24 @@ export function FeatureFlags() {
   const [toggling, setToggling] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/flags')
-      .then(r => r.json())
+    api.get<FeatureFlag[]>('/admin/feature-flags')
       .then(data => { setFlags(data); setLoading(false) })
       .catch(e => { setError(String(e)); setLoading(false) })
   }, [])
 
   async function handleToggle(flag: FeatureFlag) {
     if (typeof flag.value !== 'boolean') return
-    setToggling(flag.Name)
+    setToggling(flag.name)
     try {
-      const res = await fetch(`/api/admin/flags/${flag.Name}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !flag.value }),
-      })
-      const data: ToggleResult = await res.json()
+      const data: ToggleResult = await api.put<ToggleResult>(
+        `/admin/feature-flags/${flag.name}`,
+        { enabled: !flag.value },
+      )
       if (data.error) {
         setError(data.error)
       } else {
         setFlags(prev =>
-          prev.map(f => f.Name === flag.Name ? { ...f, value: data.new! } : f)
+          prev.map(f => f.name === flag.name ? { ...f, value: data.new! } : f)
         )
       }
     } catch (e) {
@@ -66,8 +64,8 @@ export function FeatureFlags() {
         </thead>
         <tbody>
           {flags.map(f => (
-            <tr key={f.Name} style={{ borderBottom: '1px solid #222' }}>
-              <td style={{ padding: '8px' }}>{f.Name}</td>
+            <tr key={f.name} style={{ borderBottom: '1px solid #222' }}>
+              <td style={{ padding: '8px' }}>{f.name}</td>
               <td style={{ padding: '8px', color: typeof f.value === 'boolean' ? (f.value ? '#4caf50' : '#f44336') : '#888' }}>
                 {String(f.value)}
               </td>
@@ -75,7 +73,7 @@ export function FeatureFlags() {
                 {typeof f.value === 'boolean' ? (
                   <button
                     onClick={() => handleToggle(f)}
-                    disabled={toggling === f.Name}
+                    disabled={toggling === f.name}
                     style={{
                       padding: '4px 12px',
                       backgroundColor: f.value ? '#f44336' : '#4caf50',
@@ -85,7 +83,7 @@ export function FeatureFlags() {
                       cursor: 'pointer',
                     }}
                   >
-                    {toggling === f.Name ? '…' : (f.value ? 'Disable' : 'Enable')}
+                    {toggling === f.name ? '…' : (f.value ? 'Disable' : 'Enable')}
                   </button>
                 ) : (
                   <span style={{ color: '#666', fontSize: '0.9em' }}>read-only</span>
