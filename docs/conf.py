@@ -99,17 +99,19 @@ autoapi_member_order = "bysource"
 autoapi_python_use_imodule_names = True
 
 # S34 W1: Suppress expected warnings for narrow-scope autoapi.
-# Import resolution warnings are expected because we only document core/dsl/engine/interfaces
-# but some modules import from infrastructure/ which is outside scope.
-# Docutils formatting warnings come from auto-generated RST files (tabs directive not supported in MyST,
-# duplicate object descriptions from protobuf-generated classes, etc.)
-# ref.python warnings: duplicate targets (AuditCallback, RetryPolicy, type) - unavoidable with narrow scope.
-# ref.doc warnings: ADR cross-references to non-existent documents.
+# Import resolution warnings: we document core/dsl/engine/interfaces but some modules
+# import from infrastructure/ which is outside scope.
+# ref.python: duplicate cross-ref targets (type/AuditCallback/RetryPolicy) - unavoidable.
+# ref.doc: ADR cross-references to non-existent documents.
+# KNOWN LIMITATION: 418 "duplicate object description" warnings from autoapi-generated
+# RST for protobuf classes (ProtoField/ProtoMessage/ProtoFile etc.) cannot be suppressed
+# via Sphinx suppress_warnings — caused by autoapi documenting same objects from
+# multiple locations. Does not affect build or published output.
 suppress_warnings = [
     "autoapi.python_import_resolution",
-    "autoapi",
     "docutils",
     "myst.directive_unknown",
+    "myst.xref_unknown",
     "toc.not_included",
     "ref.python",
     "ref.doc",
