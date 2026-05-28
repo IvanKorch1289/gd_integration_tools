@@ -101,6 +101,11 @@ autoapi_python_use_imodule_names = True
 # S34 W1: Suppress expected warnings for narrow-scope autoapi.
 # Import resolution warnings are expected because we only document core/dsl/engine/interfaces
 # but some modules import from infrastructure/ which is outside scope.
+# Docutils formatting warnings come from auto-generated RST files (tabs directive not supported in MyST,
+# duplicate object descriptions from protobuf-generated classes, etc.)
 suppress_warnings = [
     "autoapi.python_import_resolution",
+    "docutils",
+    "myst.directive_unknown",
+    "toc.not_included",
 ]
