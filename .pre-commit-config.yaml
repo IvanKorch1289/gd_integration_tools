@@ -33,7 +33,7 @@ repos:
       # любой НОВЫЙ пропущенный docstring блокирует push.
       - id: check-docstrings
         name: "Docstring policy (Wave F.6 / Roadmap V10 #12)"
-        entry: uv run python tools/check_docstrings.py src/core src/dsl/engine src/core/interfaces
+        entry: uv run python tools/check_docstrings.py src/backend/core src/backend/dsl/engine src/backend/core/interfaces
         language: system
         types: [python]
         pass_filenames: false
