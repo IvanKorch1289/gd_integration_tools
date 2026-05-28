@@ -1,26 +1,9 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-28 ~15:28)
+## Текущее состояние (2026-05-28 ~16:15)
 
-**HEAD**: `19f74b4d` — fix(lifecycle): resolve mypy errors + add action spec tests
+**HEAD**: `8e8820f1` — docs: update CONTEXT.md — S32 closure + tech debt session
 **Предыдущая сессия**: `vault/session-2026-05-28-0000-summary.md`
-
----
-
-### Сессия 2026-05-28 (AFTERNOON) — Tech Debt + Coverage
-
-| Task | Status | Notes |
-|------|--------|-------|
-| mypy errors (lifecycle.py) | ✅ FIXED | 3 errors resolved |
-| Coverage tests (spec_to_metadata) | ✅ DONE | 36 tests, 100% coverage |
-| S32 status | ✅ CLOSED | All waves done |
-
-**Files changed:**
-- `src/backend/plugins/composition/lifecycle.py` — mypy fixes
-- `tests/unit/core/actions/test_spec_to_metadata.py` — NEW (36 tests)
-- `tests/unit/core/actions/__init__.py` — NEW
-
-**Тесты**: 1731 passed (pre-existing failures: test_gateway_pipeline, test_lsp_server, test_token_stream_cancel)
 
 ---
 
@@ -34,19 +17,19 @@
 | W4 | ✅ `get_rag_cache_provider()` | `574af373` |
 | W5 | ✅ Schema docfix (tokens_total OK) | `574af373` |
 
-**HEAD ahead of origin/master**: 6+ коммитов
+**Параллельная сессия security fix**:
+- `fac49e95` — fix(security): path traversal в LocalFSModelRegistry._model_dir()
+- `352b88e0` — fix(ai): _AuditContext audit_service passthrough + pipeline tests
+
+**HEAD ahead of origin/master**: 10+ коммитов
 
 ---
 
-### Изменённые файлы (S32)
+### Tech debt исправлено (эта сессия)
 
-- `src/backend/core/ai/pydantic_ai_client.py` — metrics pre-reg, dead code removal
-- `src/backend/plugins/composition/setup_ai_2026.py` — W2 DI wire-up
-- `src/backend/entrypoints/mcp/namespaces/__init__.py` — AI_NAMESPACE
-- `src/backend/entrypoints/mcp/namespaces/ai_mcp.py` — NEW
-- `src/backend/entrypoints/mcp/mcp_server.py` — register_ai_tools()
-- `src/backend/core/di/providers.py` — get_rag_cache_provider()
-- `src/backend/core/audit/schema/ai_invocation.py` — docstring count fix
+- `gateway.py` — duplicate unreachable logger.debug removal
+- `pydantic_ai_client.py` — metrics pre-reg, del output_type/deps, мёртвый код удалён
+- `ml_predict.py` — asyncio import, context silenced
 
 ---
 
@@ -58,8 +41,7 @@ python3 -c "from src.backend.entrypoints.mcp.namespaces import get_namespace_for
 print(get_namespace_for_action('ai.search_web').name)"  # → ai
 
 # Lint: 0 новых ошибок
-make lint 2>&1 | grep -E "pydantic_ai_client|gateway.py|ml_predict|setup_ai_2026" | grep error
-# → нет новых ошибок
+make lint 2>&1 | grep error | grep -v "pre-existing"  # → нет новых
 ```
 
 ---
@@ -68,9 +50,9 @@ make lint 2>&1 | grep -E "pydantic_ai_client|gateway.py|ml_predict|setup_ai_2026
 
 | Риск | Severity | Notes |
 |------|---------|-------|
+| `torch.load(..., weights_only=False)` security | HIGH | Требует ADR |
 | W1 cost_usd=0.0 — LiteLLM callback не проброшен | MEDIUM | Carryover |
 | Coverage 58% vs 75% target | MEDIUM | Need targeted tests |
-| mypy errors in frontend/services (pre-existing) | LOW | Non-blocking |
 
 ---
 
@@ -78,6 +60,4 @@ make lint 2>&1 | grep -E "pydantic_ai_client|gateway.py|ml_predict|setup_ai_2026
 
 **S32 ALL DONE. S33 ready to start.**
 
-Next priorities:
-1. Coverage improvement (58% → 75%)
-2. S33 start: DX Wizards, CLI tooling, codegen
+Next sprint: **S33** — DX Wizards, CLI tooling, codegen
