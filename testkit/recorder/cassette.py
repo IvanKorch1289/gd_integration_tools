@@ -41,10 +41,7 @@ import httpx
 import yaml
 
 from testkit.recorder._har import HARCassette, HAREntry, HARRecorder
-from testkit.recorder.secrets_mask import (
-    mask_request_body,
-    mask_response_headers,
-)
+from testkit.recorder.secrets_mask import mask_request_body, mask_response_headers
 
 __all__ = (
     "cassette",
@@ -211,6 +208,14 @@ def _build_sync_handler(cas: HARCassette):
     }
 
     def _handler(request: httpx.Request) -> httpx.Response:
+        """Sync handler для httpx.MockTransport — отдаёт записанный ответ.
+
+        Args:
+            request: httpx.Request (method + URL).
+
+        Returns:
+            httpx.Response с данными из CASSETTE или 599 при miss.
+        """
         key = (request.method.upper(), str(request.url))
         entry = cmap.get(key)
         if entry is None:

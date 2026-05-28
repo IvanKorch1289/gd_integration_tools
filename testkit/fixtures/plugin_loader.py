@@ -66,6 +66,17 @@ def loaded_plugin(
     """
 
     def _load(name: str) -> Any:
+        """Загружает plugin spec по имени.
+
+        Args:
+            name: Имя плагина (совпадает с именем директории в ``extensions/``).
+
+        Returns:
+            PluginSpec с capabilities/provides.
+
+        Raises:
+            pytest.Failed: Если загрузка не удалась.
+        """
         try:
             spec = plugin_runtime.load(name)
         except Exception as exc:

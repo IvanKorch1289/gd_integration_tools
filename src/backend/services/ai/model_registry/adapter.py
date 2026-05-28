@@ -43,6 +43,41 @@ class ModelRecord(BaseModel):
     updated_at: datetime | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
+    # ── W2: capability-tags для dynamic routing ──────────────────────────
+    capability_tags: dict[str, bool] = Field(default_factory=dict)
+    latency_tier: Literal["fast", "standard", "slow"] = Field(default="standard")
+    max_tokens: int = Field(default=4096)
+    supports_vision: bool = Field(default=False)
+    supports_function_calling: bool = Field(default=False)
+    supports_streaming: bool = Field(default=False)
+
+    def match_capabilities(
+        self,
+        *,
+        vision: bool | None = None,
+        function_calling: bool | None = None,
+        streaming: bool | None = None,
+        min_max_tokens: int | None = None,
+        latency_tier: str | None = None,
+    ) -> bool:
+        """Проверяет, удовлетворяет ли модель заданным capability-требованиям.
+
+        Фильтрация работает как subset-	match: если модель поддерживает
+        capability — она проходит фильтр. ``capability=False`` означает
+        "не требуется", а не "требуется отсутствие".
+        """
+        if vision is not None and not self.supports_vision:
+            return False
+        if function_calling is not None and not self.supports_function_calling:
+            return False
+        if streaming is not None and not self.supports_streaming:
+            return False
+        if min_max_tokens is not None and self.max_tokens < min_max_tokens:
+            return False
+        if latency_tier is not None and self.latency_tier != latency_tier:
+            return False
+        return True
+
 
 @runtime_checkable
 class ModelRegistryAdapter(Protocol):

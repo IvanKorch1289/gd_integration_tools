@@ -140,7 +140,20 @@ def _check_app_whitelist(app: str) -> None:
 
 
 def _connect_or_start(app: str, *, backend: str, timeout: float):  # noqa: ANN202
-    """Подключается к запущенному приложению или стартует exe."""
+    """Подключается к запущенному приложению или стартует exe.
+
+    Args:
+        app: Путь к exe или PID (digits only).
+        backend: pywinauto backend (``'win32'`` или ``'uia'``).
+        timeout: Таймаут подключения в секундах.
+
+    Returns:
+        ``Application``-объект pywinauto (connect или start).
+
+    Raises:
+        pywinauto.MatchError: Приложение не найдено и не может быть запущено.
+        TimeoutError: Превышен таймаут ожидания.
+    """
     from pywinauto import Application  # noqa: PLC0415
 
     application = Application(backend=backend)

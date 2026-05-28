@@ -39,6 +39,7 @@ class LiteLLMGateway:
         num_retries: int | None = None,
         request_timeout: float | None = None,
         cost_tracking: bool | None = None,
+        model_registry: Any | None = None,
     ) -> None:
         from src.backend.core.config.ai_2026 import litellm_gateway_settings as cfg
 
@@ -55,6 +56,49 @@ class LiteLLMGateway:
         self._litellm: Any = None
         self._cost_callback = CostTrackingCallback()
         self._fallback_callback = FallbackTrackingCallback()
+        # ── W2: model registry для dynamic routing ───────────────────────────
+        self._model_registry = model_registry
+
+    @property
+    def model_registry(self) -> Any:
+        """ModelRegistryAdapter для dynamic routing. Может быть None (default-OFF)."""
+        return self._model_registry
+
+    async def find_model_by_capabilities(
+        self,
+        *,
+        vision: bool | None = None,
+        function_calling: bool | None = None,
+        streaming: bool | None = None,
+        min_max_tokens: int | None = None,
+        latency_tier: str | None = None,
+        preferred_provider: str | None = None,
+    ) -> str | None:
+        """Находит модель по capability-тегам через model registry.
+
+        Если registry недоступен — возвращает ``default_model``.
+        """
+        registry = self.model_registry
+        if registry is None:
+            return self._default_model
+
+        try:
+            records = await registry.list_models()
+            for rec in records:
+                if rec.match_capabilities(
+                    vision=vision,
+                    function_calling=function_calling,
+                    streaming=streaming,
+                    min_max_tokens=min_max_tokens,
+                    latency_tier=latency_tier,
+                ):
+                    if preferred_provider is None or preferred_provider in rec.tags.get(
+                        "provider", ""
+                    ):
+                        return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
+            return self._default_model
+        except Exception:  # noqa: BLE001
+            return self._default_model
 
     def _ensure_litellm(self) -> Any:
         """Lazy-import litellm. Поднимает GatewayUnavailable если пакет не установлен."""
