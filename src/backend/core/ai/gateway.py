@@ -26,7 +26,7 @@ Pipeline (9 шагов)
 
 Feature-flag
 ------------
-:envvar:`FEATURE_AI_GATEWAY_ENFORCE` (default-OFF, см. ADR-NEW-19).
+:envvar:`FEATURE_AI_GATEWAY_ENFORCE` (default-ON, см. ADR-NEW-19).
 
 При ``False`` — :meth:`AIGateway.invoke` работает в **pass-through** режиме:
 делегирует вызов в ``_legacy_invoke()`` без enforcement. Все 3 кодопути LLM

@@ -2259,7 +2259,7 @@ class FeatureFlags(BaseSettingsWithLoader):
             "(policy_resolve → sanitize → guards → render → invoke_llm → "
             "output_guards → output_sanitize → audit → cost). При False — "
             "scaffold-pass-through через _legacy_invoke (3 кодопути сохраняют интерфейс). "
-            "default-OFF до S27 closure: 100% callsites обёрнуты, "
+            "default-ON после S27 closure: 100% callsites обёрнуты, "
             "`make ai-gateway-coverage` strict zero violations."
         ),
     )
