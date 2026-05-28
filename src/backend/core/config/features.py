@@ -1944,30 +1944,6 @@ class FeatureFlags(BaseSettingsWithLoader):
         ),
     )
 
-    ai_pr_review_enabled: bool = Field(
-        default=False,
-        title="K4 S15 W16: AI PR review GitHub Action (Claude API + WAF)",
-        description=(
-            "K4 Sprint 15 Wave 16 (wave:s15/k4-w1-ai-pr-review). "
-            "Owner: K4 AI/Innovation. Активирует .github/workflows/ai-pr-review.yml "
-            "Claude API review через make_http_client (WAF compliance). "
-            "При False — workflow self-skip через if-condition. "
-            "default-OFF до публикации ANTHROPIC_API_KEY secret и smoke."
-        ),
-    )
-
-    dsl_visual_editor_drag_drop: bool = Field(
-        default=False,
-        title="K3 S15 W10: DSL Visual Editor drag-drop + BPMN export (page 31)",
-        description=(
-            "K3 Sprint 15 Wave 10 (wave:s15/k3-w2-dsl-visual-editor-finale). "
-            "Owner: K3 DSL/LSP. Активирует drag-drop через streamlit-elements "
-            "+ BPMN 2.0 export через lxml + undo/redo stack в session_state. "
-            "При False — page 31 в read-only режиме. "
-            "default-OFF до staging-smoke с reference workflow."
-        ),
-    )
-
     changelog_autogen_enabled: bool = Field(
         default=False,
         title="K5 S15 W15: changelog autogen из wave-tags (make release-notes)",
