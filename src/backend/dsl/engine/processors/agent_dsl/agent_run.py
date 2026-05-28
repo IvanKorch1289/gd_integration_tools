@@ -15,6 +15,8 @@ YAML контракт::
           policy_ref: credit_check_strict
           context_property: body.context
           result_property: agent_result
+          timeout_s: 120
+          max_retries: 3
 
 Python контракт через :meth:`AgentDSLMixin.agent_run`::
 
@@ -22,17 +24,22 @@ Python контракт через :meth:`AgentDSLMixin.agent_run`::
         workflow_id="credit_check",
         prompt_ref="credit_check.production",
         context_property="body.context",
+        timeout_s=120,
+        max_retries=3,
     )
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-
+from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
 if TYPE_CHECKING:
+    from src.backend.core.ai.gateway import AIRequest
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.engine.exchange import Exchange
 
@@ -60,6 +67,10 @@ class AgentRunProcessor(BaseAIProcessor):
             как ``dict``-context).
         result_property: Свойство, куда записать результат (default
             ``"agent_result"``).
+        timeout_s: Timeout на вызов в секундах (default 300).
+            При превышении — ``ExchangeStatus.failed`` с error.
+        max_retries: Число повторных попыток при transient failure (default 3).
+            Retry выполняется до ``timeout_s`` совокупно.
         name: Имя процессора.
 
     Result в exchange:
@@ -81,6 +92,8 @@ class AgentRunProcessor(BaseAIProcessor):
         policy_ref: str | None = None,
         context_property: str | None = "body",
         result_property: str = "agent_result",
+        timeout_s: float = 300.0,
+        max_retries: int = 3,
         name: str | None = None,
     ) -> None:
         if not workflow_id:
@@ -96,6 +109,8 @@ class AgentRunProcessor(BaseAIProcessor):
         self.policy_ref = policy_ref
         self.context_property = context_property
         self.result_property = result_property
+        self.timeout_s = timeout_s
+        self.max_retries = max_retries
 
     def _capability_scope(self, exchange: "Exchange[Any]") -> str | None:
         """Scope для ``ai.invoke`` = ``workflow_id`` (см. ADR-NEW-19)."""
@@ -124,7 +139,27 @@ class AgentRunProcessor(BaseAIProcessor):
             prompt_inline=self.prompt_inline,
             context=self._extract_context(exchange),
         )
-        response = await gateway.invoke(request)
+
+        try:
+            if self.max_retries > 0:
+                response = await self._invoke_with_retry(gateway, request)
+            else:
+                response = await asyncio.wait_for(
+                    gateway.invoke(request), timeout=self.timeout_s
+                )
+        except asyncio.TimeoutError:
+            exchange.set_error(
+                f"{self.name}: timeout ({self.timeout_s}s) при вызове AIGateway.invoke"
+            )
+            exchange.stop()
+            return
+        except Exception as exc:
+            _logger.warning(
+                "%s: AIGateway.invoke failed: %s", self.name, exc, exc_info=True
+            )
+            exchange.set_error(f"{self.name}: AIGateway.invoke error: {exc}")
+            exchange.stop()
+            return
 
         exchange.set_property(
             self.result_property,
@@ -142,6 +177,33 @@ class AgentRunProcessor(BaseAIProcessor):
                 "policy_ref": self.policy_ref,
             },
         )
+
+    async def _invoke_with_retry(
+        self, gateway: Any, request: "AIRequest"
+    ) -> Any:
+        """Retry-обёртка над gateway.invoke с exponential backoff.
+
+        Retry на transient exceptions (GatewayUnavailable, network errors,
+        TimeoutError). Не retry на CapabilityDeniedError, PolicyNotResolvedError.
+        """
+        import tenacity
+
+        async def _call() -> Any:
+            return await asyncio.wait_for(
+                gateway.invoke(request), timeout=self.timeout_s
+            )
+
+        retry = tenacity.AsyncRetrying(
+            retry=tenacity.retry_if_exception_type(
+                (GatewayUnavailable, OSError, TimeoutError)
+            ),
+            wait=tenacity.wait_exponential(multiplier=1.0, min=1.0, max=30.0),
+            stop=tenacity.stop_after_attempt(self.max_retries),
+            reraise=True,
+        )
+        async for attempt in retry:
+            with attempt:
+                return await _call()
 
     def _extract_context(self, exchange: "Exchange[Any]") -> dict[str, Any]:
         """Достать context для template из exchange.
@@ -199,4 +261,8 @@ class AgentRunProcessor(BaseAIProcessor):
             spec["context_property"] = self.context_property
         if self.result_property != "agent_result":
             spec["result_property"] = self.result_property
+        if self.timeout_s != 300.0:
+            spec["timeout_s"] = self.timeout_s
+        if self.max_retries != 3:
+            spec["max_retries"] = self.max_retries
         return {"agent_run": spec}

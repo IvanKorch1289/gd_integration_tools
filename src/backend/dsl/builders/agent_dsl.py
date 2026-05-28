@@ -41,6 +41,8 @@ class AgentDSLMixin:
         policy_ref: str | None = None,
         context_property: str | None = "body",
         result_property: str = "agent_result",
+        timeout_s: float = 300.0,
+        max_retries: int = 3,
     ) -> "RouteBuilder":
         """Вызов :class:`AIGateway.invoke` по ``workflow_id`` (S27 W1).
 
@@ -55,12 +57,16 @@ class AgentDSLMixin:
             context_property: Путь к context-переменным в exchange
                 (``"body"`` / ``"body.<key>"`` / ``"property:<name>"``).
             result_property: Свойство, куда записать :class:`AIResponse`.
+            timeout_s: Timeout на вызов в секундах (default 300).
+            max_retries: Число повторных попыток при transient failure (default 3).
 
         Example::
 
             builder.agent_run(
                 workflow_id="credit_check",
                 prompt_ref="credit_check.production",
+                timeout_s=120,
+                max_retries=3,
             )
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
@@ -75,6 +81,8 @@ class AgentDSLMixin:
                 policy_ref=policy_ref,
                 context_property=context_property,
                 result_property=result_property,
+                timeout_s=timeout_s,
+                max_retries=max_retries,
             )
         )
 
