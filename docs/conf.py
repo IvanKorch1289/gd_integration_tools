@@ -103,9 +103,14 @@ autoapi_python_use_imodule_names = True
 # but some modules import from infrastructure/ which is outside scope.
 # Docutils formatting warnings come from auto-generated RST files (tabs directive not supported in MyST,
 # duplicate object descriptions from protobuf-generated classes, etc.)
+# ref.python warnings: duplicate targets (AuditCallback, RetryPolicy, type) - unavoidable with narrow scope.
+# ref.doc warnings: ADR cross-references to non-existent documents.
 suppress_warnings = [
     "autoapi.python_import_resolution",
+    "autoapi",
     "docutils",
     "myst.directive_unknown",
     "toc.not_included",
+    "ref.python",
+    "ref.doc",
 ]

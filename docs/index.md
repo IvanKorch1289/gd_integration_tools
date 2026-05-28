@@ -24,3 +24,9 @@ explanation/index
 * [PLAN.md](https://github.com/crazyivan1289/gd_integration_tools/blob/master/PLAN.md) — главный roadmap.
 * [ADR](https://github.com/crazyivan1289/gd_integration_tools/tree/master/docs/adr) — принятые архитектурные решения.
 * [CLAUDE.md](https://github.com/crazyivan1289/gd_integration_tools/blob/master/CLAUDE.md) — режим работы AI-агента.
+
+## Indices
+
+* {ref}`genindex`
+* {ref}`modindex`
+* {ref}`search`
