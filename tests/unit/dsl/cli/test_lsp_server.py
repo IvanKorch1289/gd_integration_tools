@@ -72,19 +72,19 @@ async def test_publish_diagnostics_calls_linter(
 
 
 def test_completion_tables_non_empty() -> None:
-    """ROUTE_KEY_COMPLETIONS + STEP_KEY_COMPLETIONS заполнены и без дублей."""
-    from src.backend.dsl.cli.lsp_server import (
-        ROUTE_KEY_COMPLETIONS,
-        STEP_KEY_COMPLETIONS,
+    """ROUTE_COMPLETIONS + STEP_COMPLETIONS заполнены и без дублей."""
+    from tools.dsl_lsp.schema_completion import (
+        ROUTE_COMPLETIONS,
+        STEP_COMPLETIONS,
     )
 
-    assert len(ROUTE_KEY_COMPLETIONS) >= 8
-    assert len(STEP_KEY_COMPLETIONS) >= 15
+    assert len(ROUTE_COMPLETIONS) >= 8
+    assert len(STEP_COMPLETIONS) >= 15
     # Уникальные ключи (label → detail).
-    route_keys = [k for k, _ in ROUTE_KEY_COMPLETIONS]
-    step_keys = [k for k, _ in STEP_KEY_COMPLETIONS]
-    assert len(route_keys) == len(set(route_keys)), "дубли в ROUTE_KEY_COMPLETIONS"
-    assert len(step_keys) == len(set(step_keys)), "дубли в STEP_KEY_COMPLETIONS"
+    route_keys = [k for k, _ in ROUTE_COMPLETIONS]
+    step_keys = [k for k, *_ in STEP_COMPLETIONS]
+    assert len(route_keys) == len(set(route_keys)), "дубли в ROUTE_COMPLETIONS"
+    assert len(step_keys) == len(set(step_keys)), "дубли в STEP_COMPLETIONS"
     # Базовые ожидаемые ключи присутствуют.
     assert "from" in route_keys
     assert "steps" in route_keys
@@ -96,11 +96,11 @@ def test_completion_tables_non_empty() -> None:
 
 def test_completion_details_non_empty() -> None:
     """Detail-строка для каждого ключа содержит описание (>= 8 символов)."""
-    from src.backend.dsl.cli.lsp_server import (
-        ROUTE_KEY_COMPLETIONS,
-        STEP_KEY_COMPLETIONS,
+    from tools.dsl_lsp.schema_completion import (
+        ROUTE_COMPLETIONS,
+        STEP_COMPLETIONS,
     )
 
-    for key, detail in (*ROUTE_KEY_COMPLETIONS, *STEP_KEY_COMPLETIONS):
+    for key, detail, *_ in (*ROUTE_COMPLETIONS, *STEP_COMPLETIONS):
         assert isinstance(detail, str)
         assert len(detail) >= 8, f"detail для {key!r} слишком короткий: {detail!r}"
