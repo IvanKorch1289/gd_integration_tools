@@ -97,3 +97,10 @@ autoapi_ignore = [
 ]
 autoapi_member_order = "bysource"
 autoapi_python_use_imodule_names = True
+
+# S34 W1: Suppress expected warnings for narrow-scope autoapi.
+# Import resolution warnings are expected because we only document core/dsl/engine/interfaces
+# but some modules import from infrastructure/ which is outside scope.
+suppress_warnings = [
+    "autoapi.python_import_resolution",
+]
