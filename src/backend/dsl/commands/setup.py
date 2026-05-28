@@ -39,10 +39,8 @@ def register_action_handlers() -> None:
     )
     from src.backend.services.ai.ai_agent import get_ai_agent_service
     from src.backend.services.core.admin import get_admin_service
-    from extensions.core_entities.orderkinds.services.orderkinds import get_order_kind_service
     from src.backend.services.core.orders import get_order_service
     from src.backend.services.core.tech import get_tech_service
-    from extensions.core_entities.users.services.users import get_user_service
     from src.backend.services.integrations.dadata import get_dadata_service
     from src.backend.services.integrations.skb import get_skb_service
     from src.backend.services.io.files import get_file_service
@@ -96,24 +94,8 @@ def register_action_handlers() -> None:
         ]
     )
 
-    # ── Users: CRUD + login ──
-    _register_crud_actions("users", get_user_service)
-
-    action_handler_registry.register(
-        action="users.login", service_getter=get_user_service, service_method="login"
-    )
-
     # ── Files: CRUD ──
     _register_crud_actions("files", get_file_service)
-
-    # ── OrderKinds: CRUD + sync ──
-    _register_crud_actions("orderkinds", get_order_kind_service)
-
-    action_handler_registry.register(
-        action="orderkinds.sync_from_skb",
-        service_getter=get_order_kind_service,
-        service_method="create_or_update_kinds_from_skb",
-    )
 
     # ── SKB (прокси к внешнему API) ──
     action_handler_registry.register_many(
