@@ -1,67 +1,29 @@
-"""ORM-модели LangMem (К4 MVP, Шаг 4).
+"""ORM-модели LangMem — re-export facade.
 
-Три типа long-term memory:
+Модели перенесены в ``infrastructure.database.models.langmem_models``
+для соблюдения архитектурного слоя (services/ не должен импортировать
+infrastructure напрямую).
 
-* :class:`LangMemEpisodic` — события / диалоги (конкретные эпизоды).
-* :class:`LangMemProcedural` — выученные процедуры / how-to / playbooks.
-* Semantic-факты живут в Qdrant (по collection ``langmem_semantic``)
-  — отдельной ORM-таблицы для них нет.
-
-Таблицы создаются миграцией Alembic
-``a8b9c0d1e2f3_add_langmem_tables.py``. Default-OFF: при
-``LANGMEM_ENABLED=false`` миграция всё равно создаёт пустые таблицы
-(идемпотентно).
+Этот модуль остаётся для обратной совместимости импортёров.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, Index, Integer, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+if TYPE_CHECKING:
+    from src.backend.infrastructure.database.models.langmem_models import (
+        LangMemEpisodic,
+        LangMemProcedural,
+    )
 
-from src.backend.infrastructure.database.models.base import Base
+
+def __getattr__(name: str):
+    if not TYPE_CHECKING:
+        if name in ("LangMemEpisodic", "LangMemProcedural"):
+            from src.backend.infrastructure.database.models import langmem_models
+            return getattr(langmem_models, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ("LangMemEpisodic", "LangMemProcedural")
-
-
-class LangMemEpisodic(Base):  # type: ignore[misc]
-    """Эпизод (диалог / событие) с временной привязкой."""
-
-    __tablename__ = "langmem_episodic"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    session_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    tenant: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    role: Mapped[str] = mapped_column(String(32), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
-    meta: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-
-    __table_args__ = (
-        Index("ix_langmem_episodic_session_time", "session_id", "occurred_at"),
-        Index("ix_langmem_episodic_tenant", "tenant"),
-    )
-
-
-class LangMemProcedural(Base):  # type: ignore[misc]
-    """Процедурный факт (how-to, playbook, rule)."""
-
-    __tablename__ = "langmem_procedural"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(256), nullable=False, unique=True)
-    tenant: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    steps: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    __table_args__ = (Index("ix_langmem_procedural_tenant", "tenant"),)

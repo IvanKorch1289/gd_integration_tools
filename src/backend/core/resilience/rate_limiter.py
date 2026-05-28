@@ -20,17 +20,25 @@ Step 3.4 добавит сюда ``BoundedInMemoryBucket`` (size-cap + LRU evict
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-# Re-export Redis-backed реализации как backward-compat. Эти классы
-# по-прежнему живут в infrastructure/, потому что зависят от
-# ``infrastructure.clients.storage.redis`` (cross-layer запрещён).
-from src.backend.infrastructure.resilience.unified_rate_limiter import (
-    RateLimit,
-    RateLimitExceeded,
-    RedisRateLimiter,
-    get_rate_limiter,
-)
+if TYPE_CHECKING:
+    # Lazy re-export: infrastructure реализации импортируются только
+    # при type-checking (mypy) и не создают runtime-зависимость core → infrastructure.
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+        RateLimit,
+        RateLimitExceeded,
+        RedisRateLimiter,
+        get_rate_limiter,
+    )
+
+
+def __getattr__(name: str):
+    if not TYPE_CHECKING:
+        if name in ("RateLimit", "RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter"):
+            from src.backend.infrastructure.resilience import unified_rate_limiter
+            return getattr(unified_rate_limiter, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = (
     "RateLimit",
