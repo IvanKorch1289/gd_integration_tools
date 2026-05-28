@@ -35,6 +35,24 @@ class APIClient:
     def get_health(self) -> dict[str, Any]:
         return self._request("GET", "/api/v1/health/components")
 
+    # ── Admin: Tenants (K5, Wave K5/docs-tenants-caps) ──
+
+    def get_tenants(self) -> dict[str, Any]:
+        """Список tenants с агрегатом по audit-events.
+
+        GET /api/v1/admin/tenants
+        При ClickHouse offline возвращает ``{"stub": True, "tenants": [], "total": 0}``.
+        """
+        return self._request("GET", "/api/v1/admin/tenants")
+
+    def get_tenant_detail(self, tenant_id: str) -> dict[str, Any]:
+        """Детальный профиль tenant'а (audit events, denials, RLS).
+
+        GET /api/v1/admin/tenants/{tenant_id}
+        При ClickHouse offline возвращает ``{"stub": True, ...}``.
+        """
+        return self._request("GET", f"/api/v1/admin/tenants/{tenant_id}")
+
     def get_routes(self) -> list[dict[str, Any]]:
         return self._request("GET", "/api/v1/admin/routes")
 
