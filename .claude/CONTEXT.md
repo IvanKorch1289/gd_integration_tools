@@ -2,8 +2,25 @@
 
 ## Текущее состояние (2026-05-28 ~15:28)
 
-**HEAD**: `49bb8bcb` — docs: update CONTEXT.md post-S32 completion
+**HEAD**: `19f74b4d` — fix(lifecycle): resolve mypy errors + add action spec tests
 **Предыдущая сессия**: `vault/session-2026-05-28-0000-summary.md`
+
+---
+
+### Сессия 2026-05-28 (AFTERNOON) — Tech Debt + Coverage
+
+| Task | Status | Notes |
+|------|--------|-------|
+| mypy errors (lifecycle.py) | ✅ FIXED | 3 errors resolved |
+| Coverage tests (spec_to_metadata) | ✅ DONE | 36 tests, 100% coverage |
+| S32 status | ✅ CLOSED | All waves done |
+
+**Files changed:**
+- `src/backend/plugins/composition/lifecycle.py` — mypy fixes
+- `tests/unit/core/actions/test_spec_to_metadata.py` — NEW (36 tests)
+- `tests/unit/core/actions/__init__.py` — NEW
+
+**Тесты**: 1731 passed (pre-existing failures: test_gateway_pipeline, test_lsp_server, test_token_stream_cancel)
 
 ---
 
@@ -51,17 +68,16 @@ make lint 2>&1 | grep -E "pydantic_ai_client|gateway.py|ml_predict|setup_ai_2026
 
 | Риск | Severity | Notes |
 |------|---------|-------|
-| `torch.load(..., weights_only=False)` security | MEDIUM | Требует аудит |
 | W1 cost_usd=0.0 — LiteLLM callback не проброшен | MEDIUM | Carryover |
-| `src/backend/services/ai/ml/` untracked | LOW | Carryover |
+| Coverage 58% vs 75% target | MEDIUM | Need targeted tests |
+| mypy errors in frontend/services (pre-existing) | LOW | Non-blocking |
 
 ---
 
 ### Следующий шаг
 
-**S32 ALL DONE.**
+**S32 ALL DONE. S33 ready to start.**
 
-Carryover items:
-- W1 cost_usd tracking (LiteLLM callback propagate)
-- Demo route `ml_demo/` с fake model artifact
-- `torch.load(..., weights_only=False)` security audit
+Next priorities:
+1. Coverage improvement (58% → 75%)
+2. S33 start: DX Wizards, CLI tooling, codegen
