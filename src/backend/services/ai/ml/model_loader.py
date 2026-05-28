@@ -5,11 +5,7 @@ Wave: ``[wave:s29/local-models-repository]``.
 LRU cache предотвращает повторную загрузку одной и той же модели.
 Graceful fallback если библиотека не установлена.
 
-Usage::
-
-    loader = MLModelLoader()
-    model = await loader.load("/path/to/model.pt", model_type="torch")
-    prediction = model(input_data)
+Реализует :class:`MLModelLoaderProtocol` из ``core.interfaces.ml_model_loader``.
 """
 
 from __future__ import annotations
@@ -19,15 +15,30 @@ import logging
 from collections import OrderedDict
 from pathlib import Path
 from threading import Lock
-from typing import Any, Literal
+from typing import Any
 
-from typing_extensions import TypeAlias
+from src.backend.core.interfaces.ml_model_loader import (
+    MLModelLoaderProtocol,
+    MLModelType,
+)
 
-__all__ = ("MLModelLoader", "MLModelType")
+__all__ = ("MLModelLoader",)
 
 logger = logging.getLogger(__name__)
 
-MLModelType: TypeAlias = Literal["torch", "torchscript", "onnx", "sklearn", "catboost", "lightgbm", "joblib"]
+# Module-level singleton instance for process lifetime
+_loader_instance: "MLModelLoaderProtocol | None" = None
+
+
+def get_ml_model_loader() -> MLModelLoaderProtocol:
+    """Возвращает глобальный синглтон MLModelLoader.
+
+    Используется процессором ml_predict для DI-free доступа к loader.
+    """
+    global _loader_instance
+    if _loader_instance is None:
+        _loader_instance = MLModelLoader(max_models=8)
+    return _loader_instance
 
 
 class MLModelLoader:
@@ -36,6 +47,8 @@ class MLModelLoader:
     Потокобезопасный синглтон: загружает модель один раз, повторные вызовы
     возвращают закэшированный экземпляр. Вытеснение по LRU при превышении
     ``max_models``.
+
+    Реализует :class:`MLModelLoaderProtocol`.
 
     Args:
         max_models: Максимальное число моделей в кэше (default 8).
@@ -48,43 +61,27 @@ class MLModelLoader:
         self._cache: OrderedDict[str, Any] = OrderedDict()
         self._lock = Lock()
 
-    # ── Public API ────────────────────────────────────────────────────────────
+    # ── MLModelLoaderProtocol implementation ──────────────────────────────────
 
     async def load(
         self,
         path: str | Path,
         model_type: MLModelType | None = None,
     ) -> Any:
-        """Загружает модель (lazy, с LRU-кэшированием).
-
-        Args:
-            path: Путь к файлу модели.
-            model_type: Тип модели. Если ``None`` — определяется по расширению
-                файла (````.pt``/``.pth`` → ``torch``, ``.joblib`` → ``sklearn``,
-                ``.cbm`` → ``catboost``, ``.pkl`` → ``joblib``).
-
-        Returns:
-            Загруженный модельный объект.
-
-        Raises:
-            RuntimeError: Если библиотека не установлена или тип неизвестен.
-        """
+        """Загружает модель (lazy, с LRU-кэшированием)."""
         path_str = str(Path(path).resolve())
         cache_key = f"{path_str}:{model_type or 'auto'}"
 
-        # Fast path: уже в кэше
         with self._lock:
             if cache_key in self._cache:
                 self._cache.move_to_end(cache_key)
                 return self._cache[cache_key]
 
-        # Lazy load в executor (синхронные библиотеки)
         loop = asyncio.get_running_loop()
         model = await loop.run_in_executor(
             None, self._load_sync, path, model_type
         )
 
-        # Записываем в кэш с LRU-вытеснением
         with self._lock:
             self._cache[cache_key] = model
             self._cache.move_to_end(cache_key)
@@ -103,7 +100,7 @@ class MLModelLoader:
                 del self._cache[key]
                 logger.info("MLModelLoader unloaded: %s", key)
 
-    # ── Sync loading per type ──────────────────────────────────────────────────
+    # ── Internal ──────────────────────────────────────────────────────────────
 
     def _load_sync(self, path: str | Path, model_type: MLModelType | None) -> Any:
         """Синхронная загрузка (вызывается в executor)."""
@@ -162,15 +159,13 @@ class MLModelLoader:
                 "torch не установлен; установите: uv add torch "
                 "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)"
             ) from exc
-        # S301: безопасная загрузка через weights_only=True
-        # Fallback на weights_only=False только если модель содержит non-tensor data
-        # (напр. optimizer state); в этом случае path validation ниже обязательна
+        # S301: weights_only=True с fallback; безопасно из AI_WORKSPACE (isolated)
         try:
             return torch.load(path, map_location="cpu", weights_only=True)
         except Exception as exc:
             logger.warning(
                 "torch.load(weights_only=True) failed for %s (%s); "
-                "retrying with weights_only=False (model contains non-tensor data)",
+                "retrying with weights_only=False",
                 path,
                 exc,
             )

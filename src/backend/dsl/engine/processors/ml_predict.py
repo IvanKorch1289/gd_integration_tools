@@ -78,10 +78,10 @@ class MLPredictProcessor(BaseProcessor):
     def _get_loader(self) -> Any:
         """Lazy-инициализация MLModelLoader (singleton через модуль)."""
         if self._loader is None:
-            from src.backend.core.ai.ml_model_loader import MLModelLoader
+            from src.backend.services.ai.ml.model_loader import get_ml_model_loader
 
             # Глобальный singleton с LRU=8 моделей
-            self._loader = MLModelLoader(max_models=8)
+            self._loader = get_ml_model_loader()
         return self._loader
 
     def _resolve_artifact_uri(self) -> str | None:

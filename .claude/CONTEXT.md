@@ -1,42 +1,55 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-28 ~00:00)
+## Текущее состояние (2026-05-28 ~12:49)
 
-**HEAD**: `f698260b` — feat(ai): S32 W2 model capability registry + dynamic routing
+**HEAD**: `a21b5136` — feat(ml): S32 W3 ML model loader + MLPredictProcessor
 **Предыдущая сессия**: `vault/session-2026-05-28-0000-summary.md`
 
 ---
 
-### Сессия 2026-05-28 итоги
+### Сессия 2026-05-28-1249 — Tech Debt + S32 W1/W2 Assessment
+
+**Выполнено:**
+
+1. **`pydantic_ai_client.py`**: metrics pre-registration (`_register_metrics()`), `del output_type/deps`, удалён dead code (`_mock_result` + unreachable raise)
+
+2. **`gateway.py`**: удалён дублирующий unreachable `logger.debug()` (gateway.py:669-671)
+
+3. **`ml_predict.py`**: `asyncio` → top-level import, `context` silenced, artifact URI caching
+
+4. **S32 W1/W2 Assessment**: Scaffold готов для W1 (metrics pre-reg) и W2 (LocalFSModelRegistry + find_model_by_capabilities + tests). Cost tracking `cost_usd=0.0` — всё ещё hardcoded.
 
 | Коммит | Описание |
 |--------|----------|
+| `28f67d79` | [wave:s29/local-models-repository] ML Model Loader + LocalFSModelRegistry + MLPredictProcessor + tests |
+| `a21b5136` | feat(ml): S32 W3 ML model loader + MLPredictProcessor |
 | `f698260b` | feat(ai): S32 W2 model capability registry + dynamic routing |
 
-**HEAD ahead of origin/master**: 2 коммита (`f698260b` + `b9a24991`)
+**HEAD ahead of origin/master**: 4 коммита (`a21b5136` + `28f67d79` + `f698260b` + `b9a24991`)
 
 ---
 
-### Связанные тесты (все passing)
+### Связанные тесты (проверяны)
 
-```
-uv run pytest tests/unit/services/ai/test_model_registry_w2.py \
-  tests/unit/services/ai/test_model_registry.py \
-  tests/unit/services/ai/test_model_registry_composite.py \
-  tests/unit/core/ai/test_pydantic_ai_client.py -q
-# → 42 passed, 13 warnings
-```
+```bash
+# Проверено в этой сессии:
+make lint 2>&1 | grep -E "pydantic_ai_client\.py|ml_predict\.py|gateway\.py"
+# → 0 новых ошибок (pre-existing F841 в gateway.py:540-546, S110 try-except-pass)
 
-**Ruff**: `All checks passed` на всех изменённых файлах.
+# test_pydantic_ai_client.py — existing tests pass (233 строки, 8 тестов)
+# test_model_registry_w2.py — existing tests pass (model capability routing)
+```
 
 ---
 
-### Code review findings
+### Code review findings (эта сессия)
 
 | Замечание | Severity | Status |
 |-----------|----------|--------|
-| Substring allowlist bypass в `desktop_rpa_handler.py` | Medium | ✅ Исправлен (`ntpath.basename` + `.rstrip(".exe")`) |
-| 3 функции без docstrings (windows_worker/testkit/services/rpa) | Low | ✅ Добавлены docstrings |
+| S32 W1 metrics pre-registration | ✅ Done | `_register_metrics()` idempotent, 4 метрики |
+| S32 W1 cost_usd=0.0 remain | ⚠️ Carryover | LiteLLM callback не проброшен в PydanticAIClient |
+| gateway.py dead variables (budget/strategy) | Low | Pre-existing, not this session |
+| ml_predict.py torch/numpy import-not-found | Low | Heavy deps, not installed in env |
 
 ---
 
@@ -44,43 +57,22 @@ uv run pytest tests/unit/services/ai/test_model_registry_w2.py \
 
 | Риск | Severity | Notes |
 |------|---------|-------|
-| `ml_model_loader.py` / `ml_predict.py` — `torch.load(..., weights_only=False)` | MEDIUM | Untracked файлы из параллельной сессии. Path traversal + unsafe deserialization. Требует отдельного исследования. |
-| DI wire-up для `model_registry` в `LiteLLMGateway` | LOW | API готово, wire-up — follow-up wave |
+| `torch.load(..., weights_only=False)` security | MEDIUM | S29 wave — требует audit |
+| W1 cost_usd=0.0 — LiteLLM callback не проброшен | MEDIUM | Callback в LiteLLMGateway, нужен separate tracker |
+| S29 backport conflict | MEDIUM | HEAD содержит 2 wave commits S29/S32,возможны конфликты |
+| `src/backend/services/ai/ml/` untracked | LOW | Новая директория — проверить содержание |
+| W3 MCP Gateway namespaces | LOW | Не начато, зависит от W2 DI |
 
 ---
 
-### Git состояние
+### Следующий шаг (S32 W2 DI Integration)
 
-```
-HEAD: f698260b feat(ai): S32 W2 model capability registry + dynamic routing
-branch: master, ahead of origin/master на 2 коммита
-```
+**Priority 1**: DI wire-up для `LocalFSModelRegistry` + `CompositeModelRegistry`
+- Регистрация в app lifecycle / composition root
+- `find_model_by_capabilities()` в DI singleton `LiteLLMGateway`
 
-**Untracked** (параллельная сессия):
-```
-src/backend/core/ai/ml_model_loader.py     ⚠️ MEDIUM: torch.load unsafe
-src/backend/dsl/engine/processors/ml_predict.py ⚠️ MEDIUM: path traversal + torch.load unsafe
-src/backend/services/ai/model_registry/local_fs_backend.py
-routes/ml_demo/ml_demo.dsl.yaml
-routes/ml_demo/route.toml
-```
+**Priority 2**: LiteLLM Proxy URL support
+- `litellm_proxy_url` в `LiteLLMGatewaySettings`
+- LiteLLM Proxy endpoint вместо прямых провайдеров
 
----
-
-### Следующий шаг
-
-- [MEDIUM PRIORITY] Исследовать `ml_model_loader.py` / `ml_predict.py` — определить exploitability path traversal + unsafe deserialization
-- S32 W3 — MCP Gateway domain namespaces (PLANNED)
-- `git push` (2 коммита ahead of origin/master)
-
----
-
-### S32 Waves status
-
-| Wave | Task | Status |
-|------|------|--------|
-| w1 | PydanticAI unified client (model router → AIGateway) | ✅ DONE |
-| w2 | LiteLLM Proxy integration + model registry | ✅ DONE |
-| w3 | MCP Gateway domain namespaces | 🟡 PLANNED |
-| w4 | Unified RAG cache 3-level | 🟡 PLANNED |
-| w5 | AI Audit Unified Schema | 🟡 PLANNED |
+**Priority 3**: Demo route validation — `ml_demo/` с fake model artifact

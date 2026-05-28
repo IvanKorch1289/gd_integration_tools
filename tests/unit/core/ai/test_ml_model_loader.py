@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.backend.core.ai.ml_model_loader import MLModelLoader
+from src.backend.services.ai.ml.model_loader import MLModelLoader
 
 # ── Type detection (no heavy libs required) ──────────────────────────────────
 

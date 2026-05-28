@@ -32,11 +32,16 @@ async def register_ai_2026_providers() -> None:
     if litellm_gateway_settings.enabled:
         try:
             from src.backend.services.ai.gateway.client import LiteLLMGateway
+            from src.backend.services.ai.model_registry import LocalFSModelRegistry
 
-            gateway = LiteLLMGateway()
+            # W2: Model Registry для dynamic routing
+            model_registry = LocalFSModelRegistry()
+            gateway = LiteLLMGateway(model_registry=model_registry)
             if app is not None:
                 app.state.litellm_gateway = gateway
+                app.state.local_fs_model_registry = model_registry
             register_provider("llm_gateway", "litellm", gateway)
+            register_provider("model_registry", "local_fs", model_registry)
         except Exception as exc:  # noqa: BLE001
             logger.debug("LiteLLMGateway registration skipped: %s", exc)
 
