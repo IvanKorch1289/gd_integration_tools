@@ -1,64 +1,48 @@
 # CONTEXT.md
 
-## Текущее состояние (2026-05-28 ~12:45)
+## Текущее состояние (2026-05-28 ~15:28)
 
-**HEAD**: `365a8682` — [wave:s34/w1] Sphinx auto-api: narrow scope core/dsl/engine/core/interfaces
+**HEAD**: `49bb8bcb` — docs: update CONTEXT.md post-S32 completion
 **Предыдущая сессия**: `vault/session-2026-05-28-0000-summary.md`
 
 ---
 
-### Сессия 2026-05-28 — S29/S32 ML + MCP Completion (ALL DONE ✅)
+### Сессия 2026-05-28 — S32 AI Platform Consolidation (ALL DONE ✅)
 
-**S29 W1+W2+W3**: local models repository — MLModelLoader + LocalFSModelRegistry + MLPredictProcessor
-**S32 W3**: MCP AI namespace (`ai_mcp.py`, `AI_NAMESPACE` prefixes ai./ml./rag./embed.)
-**Review fixes**: ai_mcp null guard, ml_predict async def fix, joblib importorskip
-
-| Коммит | Описание |
-|--------|----------|
-| `856e8f2c` | [wave:s29] Migrate MLModelLoader: core/ai/ → services/ai/ml/ |
-| `ae84bf5e` | refactor(ai): move asynccontextmanager import to top-level |
-| `16f36d37` | [wave:s32/w3] MCP Gateway AI namespace (ADR-NEW-23) |
-| `f712e7b0` | feat(mcp): add AI namespace for ML/RAG/embed actions |
-| `365a8682` | [wave:s34/w1] Sphinx auto-api scope fix (graphify hook) |
+| Wave | Status | Commit |
+|------|--------|--------|
+| W1 | ✅ Metrics pre-registration | `pydantic_ai_client.py` |
+| W2 | ✅ DI wire-up (LocalFSModelRegistry) | `setup_ai_2026.py` |
+| W3 | ✅ AI namespace (ai., ml., rag., embed.) | `16f36d37` |
+| W4 | ✅ `get_rag_cache_provider()` | `574af373` |
+| W5 | ✅ Schema docfix (tokens_total OK) | `574af373` |
 
 **HEAD ahead of origin/master**: 6+ коммитов
 
 ---
 
-### Новые файлы (S29/S32)
+### Изменённые файлы (S32)
 
-- `src/backend/core/interfaces/ml_model_loader.py` — Protocol
-- `src/backend/services/ai/ml/__init__.py` — module init
-- `src/backend/services/ai/ml/model_loader.py` — MLModelLoader (LRU cache, async loading)
-- `src/backend/entrypoints/mcp/namespaces/ai_mcp.py` — AI namespace MCP tools
-
----
-
-### Баги исправлены (code review)
-
-1. **`ai_mcp.py` null result guard**: `dispatch()` returning `None` → `{"error": "action_returned_null"}` (был silent JSON null)
-2. **`ml_predict.py` async fix**: `_resolve_artifact_uri()` → `async def` (run_until_complete в работающем loop → RuntimeError)
-3. **`joblib` tests**: `pytest.importorskip("joblib")` → graceful skip без ML-стека
+- `src/backend/core/ai/pydantic_ai_client.py` — metrics pre-reg, dead code removal
+- `src/backend/plugins/composition/setup_ai_2026.py` — W2 DI wire-up
+- `src/backend/entrypoints/mcp/namespaces/__init__.py` — AI_NAMESPACE
+- `src/backend/entrypoints/mcp/namespaces/ai_mcp.py` — NEW
+- `src/backend/entrypoints/mcp/mcp_server.py` — register_ai_tools()
+- `src/backend/core/di/providers.py` — get_rag_cache_provider()
+- `src/backend/core/audit/schema/ai_invocation.py` — docstring count fix
 
 ---
 
 ### Проверки
 
 ```bash
-# ML component tests
-uv run python -m pytest \
-  tests/unit/core/ai/test_ml_model_loader.py \
-  tests/unit/services/ai/model_registry/test_local_fs_backend.py \
-  tests/unit/dsl/engine/processors/test_ml_predict.py -q
-# Result: 35 passed, 3 skipped (joblib unavailable), 0 failed
+# AI namespace routing
+python3 -c "from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action; \
+print(get_namespace_for_action('ai.search_web').name)"  # → ai
 
-# Lint (ml_predict, ai_mcp, tests)
-uv run ruff check \
-  src/backend/dsl/engine/processors/ml_predict.py \
-  src/backend/entrypoints/mcp/namespaces/ai_mcp.py \
-  tests/unit/dsl/engine/processors/test_ml_predict.py \
-  tests/unit/core/ai/test_ml_model_loader.py --fix
-# All clean
+# Lint: 0 новых ошибок
+make lint 2>&1 | grep -E "pydantic_ai_client|gateway.py|ml_predict|setup_ai_2026" | grep error
+# → нет новых ошибок
 ```
 
 ---
@@ -67,16 +51,17 @@ uv run ruff check \
 
 | Риск | Severity | Notes |
 |------|---------|-------|
-| `torch.load(..., weights_only=False)` security | MEDIUM | S29 wave — requires separate audit |
-| W1 cost_usd=0.0 — LiteLLM callback не проброшен | MEDIUM | Callback в LiteLLMGateway, нужен separate tracker |
-| `local_fs_backend.py` mypy lambda error | LOW | Pre-existing, not introduced this session |
-| `docs/conf.py` S34 W1 autoapi | LOW | Graphify hook auto-committed — belongs to future S34 |
+| `torch.load(..., weights_only=False)` security | MEDIUM | Требует аудит |
+| W1 cost_usd=0.0 — LiteLLM callback не проброшен | MEDIUM | Carryover |
+| `src/backend/services/ai/ml/` untracked | LOW | Carryover |
 
 ---
 
 ### Следующий шаг
 
-**S33** (стартует 2026-07-07) или carryover items:
+**S32 ALL DONE.**
+
+Carryover items:
 - W1 cost_usd tracking (LiteLLM callback propagate)
 - Demo route `ml_demo/` с fake model artifact
 - `torch.load(..., weights_only=False)` security audit

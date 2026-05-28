@@ -1139,50 +1139,50 @@ pytest tests/integration/routes/test_crud_routes.py
 
 ---
 
-### Sprint 32 — AI Platform Consolidation (2026-06-23 → 2026-07-06)
+### Sprint 32 — AI Platform Consolidation (2026-06-23 → 2026-07-06) — ✅ ALL DONE
 
 **Фокус**: консолидация AI-стека в единую платформу. PydanticAI + LiteLLM + MCP + RAG unified.
 
 
 | Wave | Task | Owner | PR |
 |------|------|-------|----|
-| w1 | PydanticAI unified client (model router → AIGateway) | К4 | — |
-| w2 | LiteLLM Proxy integration + model registry | К4 | — |
-| w3 | MCP Gateway domain namespaces (ADR-NEW-23) | К3/К1 | — |
-| w4 | Unified RAG cache 3-level (embedding/vector/results) | К4 | — |
-| w5 | AI Audit Unified Schema (ADR-NEW-24) | К3/К1 | — |
+| w1 | PydanticAI unified client (model router → AIGateway) | К4 | ✅ `574af373` + `856e8f2c` |
+| w2 | LiteLLM Proxy integration + model registry | К4 | ✅ `856e8f2c` |
+| w3 | MCP Gateway domain namespaces (ADR-NEW-23) | К3/К1 | ✅ `16f36d37`, `f712e7b0` |
+| w4 | Unified RAG cache 3-level (embedding/vector/results) | К4 | ✅ `574af373` |
+| w5 | AI Audit Unified Schema (ADR-NEW-24) | К3/К1 | ✅ `574af373` |
 
 
 #### w1 — PydanticAI unified client
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-28).
 
 **What**: `AIGateway._invoke_llm()` → PydanticAI unified client. All 44 metrics + 3 counters funneled through single client.
 
 
 #### w2 — LiteLLM Proxy integration
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-28).
 
 **What**: LiteLLM proxy как единый LLM gateway (OpenAI-compatible). Model registry в `services/ai/`.
 
 #### w3 — MCP Gateway domain namespaces
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-28).
 
 
 **What**: ADR-NEW-23: MCP Gateway domain namespaces для AI-tools. Trusted external registry.
 
 #### w4 — Unified RAG cache 3-level
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-28).
 
 **What**: Embedding cache + vector cache + results cache. RRF k=60 default. Reranker fallback.
 
 
 #### w5 — AI Audit Unified Schema
 
-**Status**: 🟡 PLANNED.
+**Status**: ✅ DONE (2026-05-28).
 
 **What**: ADR-NEW-24: `ai.invocation.*` unified schema. Audit sink → unified schema bridge.
 
