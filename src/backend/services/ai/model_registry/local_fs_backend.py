@@ -74,7 +74,8 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         import os
 
         base = workspace_path or os.environ.get(
-            "AI_WORKSPACE", "/tmp/ai_workspace"
+            # S108: AI_WORKSPACE intentionally uses temp dir as dev fallback (V15 R-V15-4)
+            "AI_WORKSPACE", "/tmp/ai_workspace"  # noqa: S108
         )
         self._root = Path(base).expanduser().resolve() / models_subdir
 
@@ -82,7 +83,11 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
 
     def _model_dir(self, name: str) -> Path:
         """Каталог конкретной модели (без trailing slash)."""
-        return self._root / name.replace("/", "_")
+        # S108/S301: явная валидация против path traversal
+        safe_name = name.replace("/", "_").replace("\\", "_").replace("..", "_")
+        if not safe_name or safe_name.startswith("."):
+            raise ValueError(f"Invalid model name (path traversal attempt): {name!r}")
+        return self._root / safe_name
 
     def _manifest_path(self, model_dir: Path) -> Path:
         return model_dir / ".model_manifest.json"

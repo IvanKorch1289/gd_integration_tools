@@ -34,7 +34,7 @@ _logger = logging.getLogger("dsl.processors.ml_predict")
 
 
 class MLPredictProcessor(BaseProcessor):
-    """Process ML model inference from local filesystem repository.
+    """Процессор ML-инференса из локального filesystem model registry.
 
     Загружает модель по имени из локального реестра
     (``${AI_WORKSPACE}/models/<name>/``), выполняет инференс на входных
@@ -43,7 +43,7 @@ class MLPredictProcessor(BaseProcessor):
 
     Поддерживаетые форматы: torch, torchscript, onnx, sklearn, catboost, lightgbm.
 
-    Attributes:
+    Атрибуты:
         model_endpoint: Имя модели в LocalFSModelRegistry (не путь к файлу).
         input_field: dotted-path к входным данным в body
             (default ``body.features``).
@@ -85,20 +85,31 @@ class MLPredictProcessor(BaseProcessor):
         return self._loader
 
     def _resolve_artifact_uri(self) -> str | None:
-        """Находит путь к бинарному файлу модели через LocalFSModelRegistry."""
+        """Находит путь к бинарному файлу модели через LocalFSModelRegistry.
+
+        Note: Использует run_until_complete т.к. вызывается из sync-контекста
+        (до process()). Результат кэшируется в self._artifact_uri.
+        """
+        # Кэшируем результат чтобы не ходить в registry каждый раз
+        cached = getattr(self, "_cached_artifact_uri", None)
+        if cached is not None:
+            return cached
+
         try:
             from src.backend.services.ai.model_registry import LocalFSModelRegistry
 
             registry = LocalFSModelRegistry()
-            # Ищем модель в registry
             loop = asyncio.get_running_loop()
             record = loop.run_until_complete(
                 registry.get_model(self._model_endpoint)
             )
-            if record and record.artifact_uri:
-                return record.artifact_uri
+            result = record.artifact_uri if record else None
+            # Кэшируем
+            object.__setattr__(self, "_cached_artifact_uri", result)
+            return result
         except Exception as exc:  # noqa: BLE001
             _logger.debug("LocalFSModelRegistry lookup failed: %s", exc)
+            object.__setattr__(self, "_cached_artifact_uri", None)
         return None
 
     def _extract_input(self, exchange: Exchange[Any]) -> Any:

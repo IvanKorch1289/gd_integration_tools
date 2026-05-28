@@ -1,4 +1,4 @@
-"""PydanticAI Unified Client — единая точка входа в LLM.
+"""PydanticAI Unified Client — единая точка входа в LWM.
 
 Интегрирует:
 - ModelRouter fallback chain (LiteLLM primary + fallback через LiteLLMGateway)
@@ -182,7 +182,6 @@ class PydanticAIClient:
             raise NotImplementedError("Streaming support planned for S32 W2+")
 
         assert not stream, "unreachable"  # for mypy
-        # output_type и deps зарезервированы для S32 W2 (real pydantic_ai Agent)
         del output_type, deps
         start_ms: int = int(time.monotonic() * 1000)
 
@@ -258,7 +257,8 @@ class PydanticAIClient:
             {"model": primary, "status": "error"},
         )
         self._reraise_normalized(last_exc or RuntimeError("No models available"))
-        return  # type: ignore[unreachable] — _reraise_normalized always raises
+        # NOTE: unreachable — _reraise_normalized always raises; kept for type checker
+        raise RuntimeError("Unexpected: no retry path returned")
 
     # ── helpers ───────────────────────────────────────────────────────────
 

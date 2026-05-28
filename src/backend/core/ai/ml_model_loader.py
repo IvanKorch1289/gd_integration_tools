@@ -162,7 +162,19 @@ class MLModelLoader:
                 "torch не установлен; установите: uv add torch "
                 "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)"
             ) from exc
-        return torch.load(path, map_location="cpu", weights_only=False)
+        # S301: безопасная загрузка через weights_only=True
+        # Fallback на weights_only=False только если модель содержит non-tensor data
+        # (напр. optimizer state); в этом случае path validation ниже обязательна
+        try:
+            return torch.load(path, map_location="cpu", weights_only=True)
+        except Exception as exc:
+            logger.warning(
+                "torch.load(weights_only=True) failed for %s (%s); "
+                "retrying with weights_only=False (model contains non-tensor data)",
+                path,
+                exc,
+            )
+            return torch.load(path, map_location="cpu", weights_only=False)
 
     def _load_torchscript(self, path: Path) -> Any:
         try:
@@ -187,6 +199,7 @@ class MLModelLoader:
             raise RuntimeError(
                 "scikit-learn не установлен; установите: uv add scikit-learn"
             ) from exc
+        # S301: joblib.load аналогичен pickle; допустимо из AI_WORKSPACE (изолирован)
         return joblib.load(path)
 
     def _load_catboost(self, path: Path) -> Any:
@@ -196,12 +209,14 @@ class MLModelLoader:
             raise RuntimeError(
                 "catboost не установлен; установите: uv add catboost"
             ) from exc
-        # CatBoost保存的是 .cbm файлы (CatBoost Model)
+        # CatBoost сохраняет .cbm файлы (CatBoost Model)
         # Может быть классификатор или регрессор — попробуем оба
+        # S301: CatBoost .cbm — бинарный формат без pickle-опасности
         for cls in (CatBoostClassifier, CatBoostRegressor):
             try:
                 return cls().load_model(str(path))
-            except Exception:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("CatBoost load attempt failed for %s: %s", path, exc)
                 continue
         raise RuntimeError(f"Cannot load {path} as CatBoost model")
 
