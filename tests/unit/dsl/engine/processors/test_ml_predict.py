@@ -65,15 +65,8 @@ class TestInputExtraction:
 # ── Artifact URI resolution ─────────────────────────────────────────────────────
 
 class TestArtifactResolution:
-    def test_resolve_returns_none_when_no_running_loop(self) -> None:
-        """_resolve_artifact_uri uses run_until_complete on get_running_loop.
-
-        When there's a running loop (async test), it uses that loop to await
-        registry.get_model(). If model is not found → returns None.
-        When no running loop (sync test), run_until_complete works via new_event_loop.
-        """
-        import asyncio
-
+    async def test_resolve_returns_none_when_model_not_found(self) -> None:
+        """_resolve_artifact_uri is async — awaits registry.get_model() directly."""
         proc = MLPredictProcessor(model_endpoint="nonexistent")
 
         mock_registry = MagicMock()
@@ -83,14 +76,8 @@ class TestArtifactResolution:
             "src.backend.services.ai.model_registry.LocalFSModelRegistry",
             return_value=mock_registry,
         ):
-            try:
-                loop = asyncio.get_running_loop()
-                result = proc._resolve_artifact_uri()
-                # In async test context, this would use the running loop
-                assert result is None
-            except RuntimeError:
-                # No running loop — skip (sync context)
-                pass
+            result = await proc._resolve_artifact_uri()
+            assert result is None
 
 
 # ── Processing (fallback behavior) ───────────────────────────────────────────

@@ -115,6 +115,7 @@ class TestLRUCache:
 
 class TestAsyncLoadCycle:
     async def test_load_returns_model_object_joblib(self) -> None:
+        pytest.importorskip("joblib")
         loader = MLModelLoader()
         with TemporaryDirectory() as tmpdir:
             model_path = Path(tmpdir) / "test.joblib"
@@ -127,6 +128,7 @@ class TestAsyncLoadCycle:
             assert model == [1.0, 2.0, 3.0]
 
     async def test_unload_clears_cache(self) -> None:
+        pytest.importorskip("joblib")
         loader = MLModelLoader()
         with TemporaryDirectory() as tmpdir:
             model_path = Path(tmpdir) / "test.joblib"
@@ -140,6 +142,7 @@ class TestAsyncLoadCycle:
             assert all(str(model_path) not in k for k in cache_keys)
 
     async def test_load_max_models_eviction(self) -> None:
+        pytest.importorskip("joblib")
         loader = MLModelLoader(max_models=2)
         with TemporaryDirectory() as tmpdir:
             for i in range(3):

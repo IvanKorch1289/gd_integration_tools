@@ -2,7 +2,7 @@
 
 К10 Sprint-2 Wave 5: Sphinx 9+ scaffold + Diátaxis structure.
 conf.py размещён в docs/ (DOCS_SOURCE = docs) согласно Makefile.
-autoapi — отдельная Wave (требует cleanup docstrings).
+S34 W1: sphinx-autoapi добавлен (Narrow scope: core/, dsl/engine/, core/interfaces/).
 """
 
 project = "gd_integration_tools"
@@ -23,6 +23,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
     "myst_parser",
+    # S34 W1: auto-api для core/ + dsl/engine/ + core/interfaces/
+    "autoapi.extension",
 ]
 
 # K1 Sprint 8 [wave:s8/k1-sphinx-multiversion]: multi-version build.
@@ -78,3 +80,20 @@ myst_heading_anchors = 3
 html_theme_options = {
     "navigation_with_keys": True,
 }
+
+# S34 W1: autoapi configuration (narrow scope: core/ + dsl/engine/ + core/interfaces/)
+autoapi_type = "python"
+autoapi_dirs = [
+    "../src/backend/core",
+    "../src/backend/dsl/engine",
+    "../src/backend/core/interfaces",
+]
+autoapi_ignore = [
+    "*/__pycache__/*",
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__init__.py",  # skip top-level init files unless they have docs
+    "*/.venv/*",
+]
+autoapi_member_order = "bysource"
+autoapi_python_use_imodule_names = True

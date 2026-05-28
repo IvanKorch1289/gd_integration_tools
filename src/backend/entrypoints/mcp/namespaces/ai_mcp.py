@@ -87,6 +87,8 @@ def _register_ai_tool(mcp: "FastMCP", action_name: str) -> None:
 
         try:
             result = await action_handler_registry.dispatch(command)
+            if result is None:
+                return orjson.dumps({"error": "action_returned_null", "action": _action}).decode()
             if hasattr(result, "model_dump"):
                 return orjson.dumps(result.model_dump(mode="json")).decode()
             return orjson.dumps(result).decode()

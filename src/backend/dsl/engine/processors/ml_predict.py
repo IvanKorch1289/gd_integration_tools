@@ -19,7 +19,6 @@ Capabilities required: ``ml.predict``.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any
 
@@ -84,12 +83,8 @@ class MLPredictProcessor(BaseProcessor):
             self._loader = get_ml_model_loader()
         return self._loader
 
-    def _resolve_artifact_uri(self) -> str | None:
-        """Находит путь к бинарному файлу модели через LocalFSModelRegistry.
-
-        Note: Использует run_until_complete т.к. вызывается из sync-контекста
-        (до process()). Результат кэшируется в self._artifact_uri.
-        """
+    async def _resolve_artifact_uri(self) -> str | None:
+        """Находит путь к бинарному файлу модели через LocalFSModelRegistry (async)."""
         # Кэшируем результат чтобы не ходить в registry каждый раз
         cached = getattr(self, "_cached_artifact_uri", None)
         if cached is not None:
@@ -99,10 +94,7 @@ class MLPredictProcessor(BaseProcessor):
             from src.backend.services.ai.model_registry import LocalFSModelRegistry
 
             registry = LocalFSModelRegistry()
-            loop = asyncio.get_running_loop()
-            record = loop.run_until_complete(
-                registry.get_model(self._model_endpoint)
-            )
+            record = await registry.get_model(self._model_endpoint)
             result = record.artifact_uri if record else None
             # Кэшируем
             object.__setattr__(self, "_cached_artifact_uri", result)
@@ -142,7 +134,7 @@ class MLPredictProcessor(BaseProcessor):
         """Выполняет ML-инференс."""
         del context  # Зарезервирован для будущего use (correlation, tenant_id)
         # 1. Найти artifact URI модели
-        artifact_uri = self._resolve_artifact_uri()
+        artifact_uri = await self._resolve_artifact_uri()
         if artifact_uri is None:
             msg = f"Model '{self._model_endpoint}' not found in LocalFSModelRegistry"
             if self._fallback_on_error:
