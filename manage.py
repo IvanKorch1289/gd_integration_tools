@@ -451,9 +451,10 @@ def diagnose(
         False, "--verbose", "-v", help="Include feature flags and full routes"
     ),
 ):
-    """Sprint 19 K2 W2: Aggregate all diagnostics into JSON for CI pipeline.
+    """Sprint 19 K2 W2 + K5 W4: Aggregate all diagnostics into JSON for CI pipeline.
 
-    Collects: health checks, circuit breakers, services, routes count,
+    Wave k2-w2 was delivered as part of k5-w4-quick-wins-pack (d82cfbd6).
+    This command collects: health checks, circuit breakers, services, routes count,
     actions count, feature flags status, Python/version info.
     Use --json for machine-readable output.
     """

@@ -180,6 +180,9 @@ class PluginResourceMonitor:
         ``sys._current_frames`` — приватный CPython API (best-effort,
         graceful fallback на ``{}`` для альтернативных runtime'ов).
         См. ``.claude/KNOWN_ISSUES.md`` (S14 carryover F-6).
+
+        [wave:s19/k1-w2-current-frames-fallback] graceful fallback
+        реализован здесь (absorbed into backbone at 154dc52e).
         """
         import sys  # noqa: PLC0415
 

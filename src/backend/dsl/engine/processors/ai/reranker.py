@@ -4,11 +4,17 @@ Integrates into the RAG pipeline: initial retrieval → cross-encoder rerank →
 Uses feature flag ``reranking_pipeline_enabled`` (default-OFF).
 
 Model: cross-encoder/ms-marco-MiniLM-L-12-v2 (HuggingFace).
+
+Sprint 19 K4 W2: latency budget tracking — model.predict() is timed and stored in
+``rerank_latency_ms`` exchange property; if it exceeds ``latency_budget_ms``
+(default 50 ms) a warning is logged and the budget is recorded in
+``rerank_budget_exceeded``.
 """
 
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -60,6 +66,7 @@ class RerankerProcessor(BaseProcessor):
         output_property: str = "reranked_results",
         query_field: str = "question",
         top_k: int = 5,
+        latency_budget_ms: float = 50.0,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or "reranker")
@@ -67,6 +74,7 @@ class RerankerProcessor(BaseProcessor):
         self._output_property = output_property
         self._query_field = query_field
         self._top_k = top_k
+        self._latency_budget_ms = latency_budget_ms
         self._model: Any = None
         self._model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"
 
@@ -119,6 +127,8 @@ class RerankerProcessor(BaseProcessor):
             for doc in candidates
         ]
 
+        # Sprint 19 K4 W2: latency budget tracking
+        t0 = time.perf_counter()
         try:
             scores = model.predict(pairs)
             if not isinstance(scores, list):
@@ -127,6 +137,21 @@ class RerankerProcessor(BaseProcessor):
             logger.warning("RerankerProcessor: model.predict failed: %s", exc)
             exchange.set_property(self._output_property, candidates[: self._top_k])
             return
+        elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+        # Store latency metrics
+        exchange.set_property("rerank_latency_ms", round(elapsed_ms, 2))
+        budget_exceeded = elapsed_ms > self._latency_budget_ms
+        exchange.set_property("rerank_budget_exceeded", budget_exceeded)
+        if budget_exceeded:
+            logger.warning(
+                "RerankerProcessor: latency %.1f ms exceeds budget %.1f ms "
+                "(%d candidates, top_k=%d)",
+                elapsed_ms,
+                self._latency_budget_ms,
+                len(candidates),
+                self._top_k,
+            )
 
         # Attach rerank scores and sort
         for doc, score in zip(candidates, scores, strict=True):
@@ -176,4 +201,6 @@ class RerankerProcessor(BaseProcessor):
             spec["query_field"] = self._query_field
         if self._top_k != 5:
             spec["top_k"] = self._top_k
+        if self._latency_budget_ms != 50.0:
+            spec["latency_budget_ms"] = self._latency_budget_ms
         return {"rerank": spec}

@@ -162,7 +162,7 @@ class PolicyChain:
         max_timeout: float = 60.0,
         window_size: int = 100,
     ) -> "RouteBuilder":
-        """Sprint 19 K2 W3: Add adaptive timeout policy.
+        """[wave:s19/k2-w3-adaptive-timeout-policy] Adaptive timeout policy.
 
         Вычисляет таймаут динамически на основе historical latency percentile.
         Использует :class:`AdaptiveTimeoutPolicy` из
