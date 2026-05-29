@@ -12,9 +12,7 @@ __all__ = ("WorkflowVersionClient",)
 class WorkflowVersionClient(BaseAPIClient):
     """Клиент для Workflow Versioning operations."""
 
-    def pin_version(
-        self, workflow_id: str, semver: str
-    ) -> dict[str, Any] | None:
+    def pin_version(self, workflow_id: str, semver: str) -> dict[str, Any] | None:
         """POST /api/v1/admin/workflow-versioning/{id}/pin."""
         try:
             return self.post(
@@ -27,7 +25,9 @@ class WorkflowVersionClient(BaseAPIClient):
     def rollback(self, workflow_id: str) -> dict[str, Any] | None:
         """POST /api/v1/admin/workflow-versioning/{id}/rollback."""
         try:
-            return self.post(f"/api/v1/admin/workflow-versioning/{workflow_id}/rollback")
+            return self.post(
+                f"/api/v1/admin/workflow-versioning/{workflow_id}/rollback"
+            )
         except Exception as _:  # noqa: BLE001
             return None
 

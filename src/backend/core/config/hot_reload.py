@@ -94,7 +94,9 @@ class ConfigHotReloader:
             get_active_profile().value == "prod"
             and feature_flags.prod_hot_reload_disable
         ):
-            logger.info("Config hot-reload disabled (APP_PROFILE=prod, prod_hot_reload_disable=True)")
+            logger.info(
+                "Config hot-reload disabled (APP_PROFILE=prod, prod_hot_reload_disable=True)"
+            )
             return
 
         self._stop_event.clear()

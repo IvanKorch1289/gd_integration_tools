@@ -67,20 +67,13 @@ class RequestContextMiddleware:
     def __init__(self, app: Any) -> None:
         self.app = app
 
-    async def __call__(
-        self,
-        scope: dict[str, Any],
-        receive: Any,
-        send: Any,
-    ) -> None:
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
 
         headers = scope.get("headers", []) or []
-        correlation_id = _get_header(headers, b"x-correlation-id") or str(
-            uuid.uuid4()
-        )
+        correlation_id = _get_header(headers, b"x-correlation-id") or str(uuid.uuid4())
         request_id = _get_header(headers, b"x-request-id") or str(uuid.uuid4())
         tenant_id = _get_header(headers, b"x-tenant-id")
         trace_id, span_id = _otel_ids()

@@ -42,17 +42,12 @@ class BaseAPIClient:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
 
-    def _request(
-        self, method: str, path: str, **kwargs: Any
-    ) -> Any:  # noqa: BLE001
+    def _request(self, method: str, path: str, **kwargs: Any) -> Any:  # noqa: BLE001
         """Выполнить HTTP запрос с retry и обработкой ошибок."""
         headers = {**self._headers(), **kwargs.pop("headers", {})}
         with httpx.Client(timeout=self._timeout) as client:
             response = client.request(
-                method,
-                f"{self._base_url}{path}",
-                headers=headers,
-                **kwargs,
+                method, f"{self._base_url}{path}", headers=headers, **kwargs
             )
             if response.status_code == 401:
                 msg = f"Unauthorized: {path}"

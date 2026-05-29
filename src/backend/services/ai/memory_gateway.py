@@ -113,11 +113,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         return message_id
 
     async def get_facts(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str | None = None,
-        limit: int = 50,
+        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50
     ) -> list[MemoryFact]:
         """Возвращает known facts.
 
@@ -182,9 +178,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
 
         # Fallback на short_term key-value.
         fact_key = f"fact_{uuid.uuid4().hex[:8]}"
-        session_scoped = _scope(
-            tenant_id, source_session_id or "_global"
-        )
+        session_scoped = _scope(tenant_id, source_session_id or "_global")
         try:
             await self._short.set_fact(session_scoped, fact_key, content)
         except Exception as exc:  # noqa: BLE001
@@ -206,9 +200,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             return []
         return [_lang_to_fact(r) for r in (results or [])]
 
-    async def get_scratchpad(
-        self, *, tenant_id: str, session_id: str
-    ) -> str | None:
+    async def get_scratchpad(self, *, tenant_id: str, session_id: str) -> str | None:
         """Возвращает scratchpad сессии (короткая рабочая область агента)."""
         scoped = _scope(tenant_id, session_id)
         try:

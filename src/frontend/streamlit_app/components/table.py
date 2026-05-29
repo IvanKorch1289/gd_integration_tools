@@ -8,10 +8,7 @@ import streamlit as st
 
 
 def paginated_table(
-    data: list[dict[str, Any]],
-    *,
-    page_size: int = 20,
-    key: str | None = None,
+    data: list[dict[str, Any]], *, page_size: int = 20, key: str | None = None
 ) -> None:
     """Показать таблицу с пагинацией.
 
@@ -45,7 +42,11 @@ def paginated_table(
     with col_info:
         st.caption(f"Страница {page + 1} из {total_pages} ({total} записей)")
     with col_next:
-        if st.button("Вперёд →", key=f"{key}_next" if key else None, disabled=page >= total_pages - 1):
+        if st.button(
+            "Вперёд →",
+            key=f"{key}_next" if key else None,
+            disabled=page >= total_pages - 1,
+        ):
             st.session_state[page_key] = page + 1
             st.rerun()
 

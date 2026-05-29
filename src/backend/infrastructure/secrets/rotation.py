@@ -112,9 +112,7 @@ class RotationScheduler:
             from src.backend.core.utils.task_registry import get_task_registry
 
             self._task = get_task_registry().create_task(
-                _loop(),
-                name="secret-rotation",
-                deadline_seconds=None,
+                _loop(), name="secret-rotation", deadline_seconds=None
             )
         else:
             self._task = task_factory(_loop(), name="secret-rotation")
@@ -127,7 +125,7 @@ class RotationScheduler:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001, S110
+            except asyncio.CancelledError, Exception:  # noqa: BLE001, S110
                 pass
 
     def add_watch(self, name: str, *, current_version: int | None = None) -> None:

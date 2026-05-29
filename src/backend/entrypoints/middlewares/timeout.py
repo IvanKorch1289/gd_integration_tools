@@ -46,10 +46,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self,
-        app: ASGIApp,
-        *,
-        route_timeouts: Mapping[str, float] | None = None,
+        self, app: ASGIApp, *, route_timeouts: Mapping[str, float] | None = None
     ) -> None:
         super().__init__(app)
         # Сортируем по убыванию длины для longest-prefix-match.
@@ -102,8 +99,6 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         try:
             from src.backend.core.config.features import feature_flags  # noqa: PLC0415
 
-            return bool(
-                getattr(feature_flags, "per_route_timeout_enabled", False)
-            )
+            return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
         except Exception as _:  # noqa: BLE001 — best-effort
             return False

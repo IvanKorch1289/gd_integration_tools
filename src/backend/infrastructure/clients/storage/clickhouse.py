@@ -61,7 +61,9 @@ class ClickHouseClient:
         from src.backend.core.config.clickhouse import clickhouse_settings
 
         self._host = host if host is not None else clickhouse_settings.host
-        self._http_port = http_port if http_port is not None else clickhouse_settings.http_port
+        self._http_port = (
+            http_port if http_port is not None else clickhouse_settings.http_port
+        )
         self._database = database
         self._user = user
         self._password = password
@@ -279,7 +281,7 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
 
 

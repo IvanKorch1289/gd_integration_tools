@@ -39,11 +39,7 @@ class RedisErrorCategory:
     """
 
     #: Базовые типы из stdlib — гарантированно ловятся.
-    BASE: tuple[type[BaseException], ...] = (
-        ConnectionError,
-        TimeoutError,
-        OSError,
-    )
+    BASE: tuple[type[BaseException], ...] = (ConnectionError, TimeoutError, OSError)
 
 
 @runtime_checkable

@@ -22,8 +22,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
 
 # Добавляем корень проекта в sys.path для импорта backend-модулей

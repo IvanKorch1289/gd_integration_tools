@@ -62,7 +62,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
 
     def _ensure_streaming_service(self) -> Any:
         """Wave D.3: lazy-init LLMStreamingService via DI.
-        
+
         If a gateway was injected into the processor, pass it through to the
         service so that tests can inject a mock and `LITELLM_ENABLED=false`
         does not cause a spurious GatewayUnavailable error.

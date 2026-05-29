@@ -300,9 +300,7 @@ def route_to_sinks(
         from src.backend.core.utils.task_registry import get_task_registry
 
         get_task_registry().create_task(
-            router.dispatch(snapshot),
-            name="log-sink-dispatch",
-            deadline_seconds=10.0,
+            router.dispatch(snapshot), name="log-sink-dispatch", deadline_seconds=10.0
         )
     else:
         threading.Thread(

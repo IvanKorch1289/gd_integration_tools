@@ -46,6 +46,7 @@ def _resolve_tenant_id() -> str | None:
         return tenant_ctx.tenant_id
     return None
 
+
 _default_middleware = MiddlewareChain(
     [
         TimeoutMiddleware(default_timeout=30.0),
@@ -157,7 +158,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass
 
     async def execute(

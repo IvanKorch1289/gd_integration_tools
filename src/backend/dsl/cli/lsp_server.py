@@ -117,17 +117,13 @@ def create_server() -> Any:
         for key, detail, *_ in ROUTE_COMPLETIONS:
             items.append(
                 lsp_types.CompletionItem(
-                    label=key,
-                    kind=lsp_types.CompletionItemKind.Property,
-                    detail=detail,
+                    label=key, kind=lsp_types.CompletionItemKind.Property, detail=detail
                 )
             )
         for key, detail, *_ in STEP_COMPLETIONS:
             items.append(
                 lsp_types.CompletionItem(
-                    label=key,
-                    kind=lsp_types.CompletionItemKind.Function,
-                    detail=detail,
+                    label=key, kind=lsp_types.CompletionItemKind.Function, detail=detail
                 )
             )
         return lsp_types.CompletionList(is_incomplete=False, items=items)
@@ -159,8 +155,7 @@ def create_server() -> Any:
             return None
         return lsp_types.Hover(
             contents=lsp_types.MarkupContent(
-                kind=lsp_types.MarkupKind.Markdown,
-                value=f"**{token}** — {detail}",
+                kind=lsp_types.MarkupKind.Markdown, value=f"**{token}** — {detail}"
             )
         )
 
@@ -213,9 +208,9 @@ async def _publish_diagnostics(ls: Any, uri: str) -> None:
 
     # pygls 2.x: метод называется text_document_publish_diagnostics;
     # для тестового _FakeLS оставлен fallback на старое publish_diagnostics.
-    publisher = getattr(
-        ls, "text_document_publish_diagnostics", None
-    ) or getattr(ls, "publish_diagnostics", None)
+    publisher = getattr(ls, "text_document_publish_diagnostics", None) or getattr(
+        ls, "publish_diagnostics", None
+    )
     if publisher is None:
         _logger.warning("LS has no publish_diagnostics method — skipping")
         return

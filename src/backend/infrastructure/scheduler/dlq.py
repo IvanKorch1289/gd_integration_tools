@@ -97,7 +97,9 @@ class SchedulerDLQEntry:
             "job_id": self.job_id,
             "exception": self.exception,
             "traceback": self.traceback_text,
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": self.scheduled_at.isoformat()
+            if self.scheduled_at
+            else None,
             "failed_at": self.failed_at.isoformat(),
             "retry_count": self.retry_count,
         }
@@ -192,9 +194,7 @@ def attach_scheduler_dlq(
     try:
         from apscheduler.events import EVENT_JOB_ERROR
     except ImportError:
-        _logger.warning(
-            "attach_scheduler_dlq: apscheduler not installed — no-op"
-        )
+        _logger.warning("attach_scheduler_dlq: apscheduler not installed — no-op")
         return store
 
     def _on_job_error(event: Any) -> None:
@@ -242,9 +242,7 @@ def attach_scheduler_dlq(
                         "DLQWriter.write skipped — no running loop in listener"
                     )
                 else:
-                    from src.backend.core.utils.task_registry import (
-                        get_task_registry,
-                    )
+                    from src.backend.core.utils.task_registry import get_task_registry
 
                     get_task_registry().create_task(
                         writer.write(envelope),

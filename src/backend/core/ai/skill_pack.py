@@ -70,17 +70,12 @@ class SkillPackSpec(BaseModel):
 
     id: str = Field(min_length=1, description="Уникальный идентификатор.")
     description: str = Field(default="", description="Человекочитаемое описание.")
-    skills: list[str] = Field(
-        min_length=1,
-        description="Список skill_id references.",
-    )
+    skills: list[str] = Field(min_length=1, description="Список skill_id references.")
     input_schema: str | None = Field(
-        default=None,
-        description="JSON-Schema path для входных данных.",
+        default=None, description="JSON-Schema path для входных данных."
     )
     output_schema: str | None = Field(
-        default=None,
-        description="JSON-Schema path для выходных данных.",
+        default=None, description="JSON-Schema path для выходных данных."
     )
     retrieval_policy: Literal["recent", "semantic", "none"] = "none"
     post_processing: Literal["dedup", "rank", "none"] = "none"

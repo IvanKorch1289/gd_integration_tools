@@ -66,16 +66,14 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
     """
 
     def __init__(
-        self,
-        *,
-        workspace_path: str | None = None,
-        models_subdir: str = "models",
+        self, *, workspace_path: str | None = None, models_subdir: str = "models"
     ) -> None:
         import os
 
         base = workspace_path or os.environ.get(
             # S108: AI_WORKSPACE intentionally uses temp dir as dev fallback (V15 R-V15-4)
-            "AI_WORKSPACE", "/tmp/ai_workspace"  # noqa: S108
+            "AI_WORKSPACE",
+            "/tmp/ai_workspace",  # noqa: S108
         )
         self._root = Path(base).expanduser().resolve() / models_subdir
 
@@ -124,8 +122,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
                 lambda: [
                     p
                     for p in self._root.iterdir()
-                    if p.is_dir()
-                    and (p / ".model_manifest.json").exists()
+                    if p.is_dir() and (p / ".model_manifest.json").exists()
                 ],
             )
             return dirs
@@ -171,11 +168,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         return records
 
     async def get_model(
-        self,
-        name: str,
-        *,
-        version: str | None = None,
-        stage: str | None = None,
+        self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
         """Находит модель по имени + version или stage."""
         candidates = await self.list_models()
@@ -194,7 +187,9 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         model_dir = self._model_dir(record.name)
         loop = asyncio.get_running_loop()
 
-        await loop.run_in_executor(None, lambda: model_dir.mkdir(parents=True, exist_ok=True))
+        await loop.run_in_executor(
+            None, lambda: model_dir.mkdir(parents=True, exist_ok=True)
+        )
 
         manifest: dict[str, Any] = {
             "name": record.name,
@@ -210,7 +205,9 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(
             None, lambda: manifest_path.write_text(content, encoding="utf-8")
         )
-        _logger.info("Registered model %s/%s in %s", record.name, record.version, model_dir)
+        _logger.info(
+            "Registered model %s/%s in %s", record.name, record.version, model_dir
+        )
         return record.model_copy(
             update={
                 "artifact_uri": str(model_dir),
@@ -237,5 +234,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         await loop.run_in_executor(None, _write_text, manifest_path, content)
         # Re-read to get full record
         return await self.get_model(name, version=version) or ModelRecord(
-            name=name, version=version, stage=new_stage  # type: ignore[arg-type]
+            name=name,
+            version=version,
+            stage=new_stage,  # type: ignore[arg-type]
         )

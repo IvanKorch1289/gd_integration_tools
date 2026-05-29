@@ -369,9 +369,7 @@ def _format_context_with_sources(results: list[dict[str, Any]]) -> str:
     try:
         from src.backend.core.config.rag import rag_settings
 
-        attribution_on = bool(
-            getattr(rag_settings, "source_attribution_enabled", True)
-        )
+        attribution_on = bool(getattr(rag_settings, "source_attribution_enabled", True))
     except Exception as _:  # noqa: BLE001
         attribution_on = True
 
@@ -398,9 +396,7 @@ def _extract_source_id(chunk: dict[str, Any]) -> str:
     return str(chunk.get("id") or "")
 
 
-def _filter_by_embedding_version(
-    results: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
+def _filter_by_embedding_version(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Block 3.5 (gap-ai-3.5, ADR-0074): retrieval-side embedding version check.
 
     Сравнивает ``chunk.metadata.embedding_model`` с текущим
@@ -457,9 +453,7 @@ def _filter_by_embedding_version(
 def _record_embedding_provenance(chunk_model: str, current_model: str) -> None:
     """Counter `rag_model_mismatch_total` для observability re-embed gap."""
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         counter = metrics_registry.counter(
             "rag_model_mismatch_total",

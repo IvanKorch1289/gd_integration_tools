@@ -82,14 +82,10 @@ class AgentParallelProcessor(BaseAIProcessor):
         name: str | None = None,
     ) -> None:
         if not agents:
-            raise ValueError(
-                "AgentParallelProcessor: agents не может быть пустым"
-            )
+            raise ValueError("AgentParallelProcessor: agents не может быть пустым")
         for idx, agent in enumerate(agents):
             if "key" not in agent:
-                raise ValueError(
-                    f"AgentParallelProcessor: agents[{idx}] без 'key'"
-                )
+                raise ValueError(f"AgentParallelProcessor: agents[{idx}] без 'key'")
             if "workflow_id" not in agent:
                 raise ValueError(
                     f"AgentParallelProcessor: agents[{idx}] без 'workflow_id'"
@@ -132,9 +128,7 @@ class AgentParallelProcessor(BaseAIProcessor):
             )
             for item in collected:
                 if isinstance(item, BaseException):
-                    _logger.error(
-                        "%s: agent gather raised: %s", self.name, item
-                    )
+                    _logger.error("%s: agent gather raised: %s", self.name, item)
                     continue
                 key, value = item
                 results[key] = value
@@ -157,9 +151,7 @@ class AgentParallelProcessor(BaseAIProcessor):
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""
-        spec: dict[str, Any] = {
-            "agents": [dict(a) for a in self.agents],
-        }
+        spec: dict[str, Any] = {"agents": [dict(a) for a in self.agents]}
         if self.result_property != "agent_parallel_results":
             spec["result_property"] = self.result_property
         if self.timeout_s is not None:

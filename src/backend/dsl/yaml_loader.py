@@ -62,6 +62,7 @@ def _is_route_composition_include_enabled() -> bool:
     """Check if route_composition_include feature flag is enabled."""
     try:
         from src.backend.core.config.features import feature_flags
+
         return getattr(feature_flags, "route_composition_include", False)
     except ImportError:
         return False
@@ -116,9 +117,7 @@ def _resolve_include_extends(
             resolved_path = Path(ext_str).resolve()
 
         if not resolved_path.exists():
-            raise FileNotFoundError(
-                f"Extended YAML file not found: {resolved_path}"
-            )
+            raise FileNotFoundError(f"Extended YAML file not found: {resolved_path}")
 
         resolved_str = str(resolved_path)
         if resolved_str in _visited:
@@ -130,6 +129,7 @@ def _resolve_include_extends(
 
         ext_yaml_str = resolved_path.read_text(encoding="utf-8")
         import yaml
+
         base_data = yaml.safe_load(ext_yaml_str)
         if not isinstance(base_data, dict):
             raise ValueError(
@@ -181,9 +181,7 @@ def _resolve_include_extends(
 
             # Check existence BEFORE tracking to avoid false-positive on first pass
             if not resolved_inc.exists():
-                raise FileNotFoundError(
-                    f"Included YAML file not found: {resolved_inc}"
-                )
+                raise FileNotFoundError(f"Included YAML file not found: {resolved_inc}")
 
             resolved_inc_str = str(resolved_inc)
             if resolved_inc_str in _visited:
@@ -195,11 +193,11 @@ def _resolve_include_extends(
 
             inc_yaml_str = resolved_inc.read_text(encoding="utf-8")
             import yaml
+
             inc_data = yaml.safe_load(inc_yaml_str)
             if not isinstance(inc_data, dict):
                 raise ValueError(
-                    f"Included YAML must be a mapping, got: "
-                    f"{type(inc_data).__name__}"
+                    f"Included YAML must be a mapping, got: {type(inc_data).__name__}"
                 )
 
             # Get steps from included file (recursive resolution for nested includes)

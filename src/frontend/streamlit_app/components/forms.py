@@ -28,11 +28,7 @@ def text_input(
         Введённое значение.
     """
     return st.text_input(
-        label,
-        value=value,
-        placeholder=placeholder,
-        help=help,
-        key=key,
+        label, value=value, placeholder=placeholder, help=help, key=key
     )
 
 
@@ -91,13 +87,7 @@ def select_input(
     Returns:
         Выбранная опция.
     """
-    return st.selectbox(
-        label,
-        options=options,
-        index=index,
-        help=help,
-        key=key,
-    )
+    return st.selectbox(label, options=options, index=index, help=help, key=key)
 
 
 def multiselect_input(
@@ -120,21 +110,11 @@ def multiselect_input(
     Returns:
         Список выбранных опций.
     """
-    return st.multiselect(
-        label,
-        options=options,
-        default=default,
-        help=help,
-        key=key,
-    )
+    return st.multiselect(label, options=options, default=default, help=help, key=key)
 
 
 def date_input(
-    label: str,
-    value: Any = None,
-    *,
-    help: str | None = None,
-    key: str | None = None,
+    label: str, value: Any = None, *, help: str | None = None, key: str | None = None
 ) -> Any:
     """Поле для ввода даты.
 
@@ -147,19 +127,11 @@ def date_input(
     Returns:
         Выбранная дата.
     """
-    return st.date_input(
-        label,
-        value=value,
-        help=help,
-        key=key,
-    )
+    return st.date_input(label, value=value, help=help, key=key)
 
 
 def form_submit(
-    label: str = "Submit",
-    *,
-    disabled: bool = False,
-    help: str | None = None,
+    label: str = "Submit", *, disabled: bool = False, help: str | None = None
 ) -> bool:
     """Кнопка submit для формы.
 
@@ -171,11 +143,7 @@ def form_submit(
     Returns:
         True если форма отправлена.
     """
-    return st.form_submit_button(
-        label,
-        disabled=disabled,
-        help=help,
-    )
+    return st.form_submit_button(label, disabled=disabled, help=help)
 
 
 def on_submit_callback(callback: Callable[[], None]) -> None:

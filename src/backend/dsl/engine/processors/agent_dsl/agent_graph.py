@@ -229,7 +229,9 @@ class AgentGraphProcessor(BaseAIProcessor):
         )
 
         prompt = self._extract_prompt(exchange)
-        result = await supervisor.run(prompt=prompt, payload=self._build_payload(exchange))
+        result = await supervisor.run(
+            prompt=prompt, payload=self._build_payload(exchange)
+        )
         return result
 
     async def _run_react(
@@ -251,8 +253,7 @@ class AgentGraphProcessor(BaseAIProcessor):
 
         prompt = self._prompt_with_context(exchange)
         result = await build_and_run_agent(
-            prompt=prompt,
-            tool_actions=self.tool_actions,
+            prompt=prompt, tool_actions=self.tool_actions
         )
         return result
 
@@ -275,7 +276,9 @@ class AgentGraphProcessor(BaseAIProcessor):
         prompt = self.prompt_inline or ""
         body = exchange.in_message.body
         if isinstance(body, dict):
-            user_input = body.get("user_input") or body.get("query") or body.get("prompt")
+            user_input = (
+                body.get("user_input") or body.get("query") or body.get("prompt")
+            )
             if user_input:
                 prompt = f"{prompt}\n\nContext: {user_input}"
         return prompt
@@ -291,10 +294,7 @@ class AgentGraphProcessor(BaseAIProcessor):
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip serialization for YAML."""
-        spec: dict[str, Any] = {
-            "graph_type": self.graph_type,
-            "model": self.model,
-        }
+        spec: dict[str, Any] = {"graph_type": self.graph_type, "model": self.model}
         if self.agents:
             spec["agents"] = [dict(a) for a in self.agents]
         if self.prompt_inline is not None:

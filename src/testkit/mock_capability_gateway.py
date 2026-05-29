@@ -38,10 +38,7 @@ Example::
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass, field
-from typing import Any
-
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
+from dataclasses import dataclass
 
 __all__ = ("MockCapabilityGateway", "CapabilityDeniedError")
 
@@ -68,11 +65,7 @@ class MockCapabilityGateway:
             :meth:`reset_calls` call.
     """
 
-    def __init__(
-        self,
-        *,
-        default_allowed: bool = True,
-    ) -> None:
+    def __init__(self, *, default_allowed: bool = True) -> None:
         """Initialize the mock.
 
         Args:
@@ -88,20 +81,19 @@ class MockCapabilityGateway:
 
     # ─── CapabilityGatewayProtocol ─────────────────────────────────────────────
 
-    def check(
-        self, plugin: str, capability: str, scope: str | None = None
-    ) -> None:
+    def check(self, plugin: str, capability: str, scope: str | None = None) -> None:
         """Check capability; raises ``CapabilityDeniedError`` if configured to deny.
 
         Records the call in :attr:`check_calls` for test inspection.
         """
-        self._calls.append(_CheckCall(plugin=plugin, capability=capability, scope=scope))
+        self._calls.append(
+            _CheckCall(plugin=plugin, capability=capability, scope=scope)
+        )
         key = (plugin, capability)
         allowed = self._check_results.get(key, self._default_allowed)
         if not allowed:
             raise CapabilityDeniedError(
-                f"MockCapabilityGateway: {plugin}/{capability} denied "
-                f"(scope={scope!r})"
+                f"MockCapabilityGateway: {plugin}/{capability} denied (scope={scope!r})"
             )
 
     def declare(self, plugin: str, capabilities: Iterable[object]) -> None:
@@ -126,13 +118,7 @@ class MockCapabilityGateway:
 
     # ─── Test helpers ─────────────────────────────────────────────────────────
 
-    def add_check_result(
-        self,
-        plugin: str,
-        capability: str,
-        *,
-        allowed: bool,
-    ) -> None:
+    def add_check_result(self, plugin: str, capability: str, *, allowed: bool) -> None:
         """Configure the result for a specific ``plugin``/``capability`` check.
 
         Args:

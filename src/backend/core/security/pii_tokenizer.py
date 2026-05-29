@@ -48,12 +48,7 @@ from typing import TYPE_CHECKING, Any, Literal
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = (
-    "EncryptedValue",
-    "PIIPolicy",
-    "PIITokenizer",
-    "TokenMap",
-)
+__all__ = ("EncryptedValue", "PIIPolicy", "PIITokenizer", "TokenMap")
 
 _logger = logging.getLogger("core.security.pii_tokenizer")
 
@@ -250,8 +245,7 @@ class PIITokenizer:
             match = _PRESIDIO_PLACEHOLDER_RE.fullmatch(presidio_placeholder)
             if not match:
                 _logger.debug(
-                    "skipping unrecognized placeholder format: %r",
-                    presidio_placeholder,
+                    "skipping unrecognized placeholder format: %r", presidio_placeholder
                 )
                 continue
             entity_type = match.group(1)
@@ -412,12 +406,7 @@ class PIITokenizer:
         return self._token_registry.decrypt_value(value)
 
     async def _emit_audit_safe(
-        self,
-        *,
-        event: str,
-        action: str,
-        outcome: str,
-        details: dict[str, Any],
+        self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""
         if self._audit is None:

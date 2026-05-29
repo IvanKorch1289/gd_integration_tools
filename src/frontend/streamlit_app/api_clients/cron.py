@@ -13,10 +13,7 @@ class CronClient(BaseAPIClient):
     """Клиент для Cron/Scheduler operations."""
 
     def validate(
-        self,
-        expression: str,
-        timezone: str = "Europe/Moscow",
-        preview_count: int = 5,
+        self, expression: str, timezone: str = "Europe/Moscow", preview_count: int = 5
     ) -> dict[str, Any]:
         """POST /api/v1/admin/cron/validate — валидировать cron-выражение."""
         try:

@@ -170,7 +170,10 @@ class BreakerRegistry:
                 # но это bridge pattern (protocol→impl в runtime).
                 try:
                     from src.backend.infrastructure.observability import client_metrics
-                    client_metrics.record_circuit_state(client=client, host=host, state=state)
+
+                    client_metrics.record_circuit_state(
+                        client=client, host=host, state=state
+                    )
                 except Exception:
                     pass
 

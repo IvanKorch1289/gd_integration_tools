@@ -10,11 +10,9 @@ aggregated stats.
 from __future__ import annotations
 
 import asyncio
-import sys
 from datetime import datetime, timedelta, timezone
 
 import streamlit as st
-
 
 st.set_page_config(page_title="Saga Compensation Viewer", layout="wide")
 st.header("Saga Compensation Viewer — Sprint 12 K3 W6")

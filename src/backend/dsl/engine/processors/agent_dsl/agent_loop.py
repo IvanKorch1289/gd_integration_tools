@@ -79,9 +79,7 @@ class AgentLoopProcessor(BaseAIProcessor):
         name: str | None = None,
     ) -> None:
         if not processors:
-            raise ValueError(
-                "AgentLoopProcessor: processors не может быть пустым"
-            )
+            raise ValueError("AgentLoopProcessor: processors не может быть пустым")
         if max_iterations < 1:
             raise ValueError(
                 f"AgentLoopProcessor: max_iterations должен быть >=1, "

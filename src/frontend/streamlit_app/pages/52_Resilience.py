@@ -24,12 +24,10 @@ Auto-refresh: ``@st.fragment(run_every=5)`` — обновление матри�
 
 from __future__ import annotations
 
-import sys
 from datetime import datetime, timezone
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-
 import streamlit as st  # noqa: E402
 
 st.set_page_config(

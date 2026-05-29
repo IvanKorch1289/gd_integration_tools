@@ -28,11 +28,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-__all__ = (
-    "AgentMemoryGateway",
-    "MemoryFact",
-    "MemoryMessage",
-)
+__all__ = ("AgentMemoryGateway", "MemoryFact", "MemoryMessage")
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,11 +70,7 @@ class AgentMemoryGateway(Protocol):
     """Block 4.1: единый Protocol для AI memory с tenant isolation."""
 
     async def get_messages(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str,
-        limit: int = 50,
+        self, *, tenant_id: str, session_id: str, limit: int = 50
     ) -> list[MemoryMessage]:
         """Возвращает последние ``limit`` сообщений conversation (short-term).
 
@@ -107,11 +99,7 @@ class AgentMemoryGateway(Protocol):
         """
 
     async def get_facts(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str | None = None,
-        limit: int = 50,
+        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50
     ) -> list[MemoryFact]:
         """Возвращает known facts (long-term).
 
@@ -135,37 +123,19 @@ class AgentMemoryGateway(Protocol):
         """
 
     async def recall_semantic(
-        self,
-        *,
-        tenant_id: str,
-        query: str,
-        top_k: int = 5,
+        self, *, tenant_id: str, query: str, top_k: int = 5
     ) -> list[MemoryFact]:
         """Semantic search facts по embedding(query)."""
 
-    async def get_scratchpad(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str,
-    ) -> str | None:
+    async def get_scratchpad(self, *, tenant_id: str, session_id: str) -> str | None:
         """Возвращает scratchpad сессии или None если пуст/отсутствует."""
 
     async def save_scratchpad(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str,
-        content: str,
+        self, *, tenant_id: str, session_id: str, content: str
     ) -> None:
         """Записывает scratchpad (один документ на session)."""
 
-    async def consolidate(
-        self,
-        *,
-        tenant_id: str,
-        session_id: str,
-    ) -> int:
+    async def consolidate(self, *, tenant_id: str, session_id: str) -> int:
         """Block 4.2 entrypoint: short-term → semantic consolidation.
 
         Triggers ConsolidationEngine.run(session_id) либо аналог в backend.

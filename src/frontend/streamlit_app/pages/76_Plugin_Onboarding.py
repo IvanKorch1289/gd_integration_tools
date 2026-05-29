@@ -15,10 +15,7 @@ Feature_flag: ``plugin_onboarding_wizard_enabled`` (default-OFF).
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 

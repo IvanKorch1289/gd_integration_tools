@@ -1,0 +1,17 @@
+# Based on Google Developer Documentation Style Guide
+# S34 W5: Vale prose linter
+
+extends: substitution
+message: "Use '%s' instead of '%s'."
+ignorecase: true
+
+# Google style terms
+swap:
+  webhook: Webhook
+  javascript: JavaScript
+  filename: filename
+  part-of: part of
+  'non-zero': nonzero
+  'end-point': endpoint
+  'log-in': log in
+  'set-up': set up

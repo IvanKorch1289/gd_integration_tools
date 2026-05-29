@@ -72,13 +72,9 @@ class MemoryRecallProcessor(BaseAIProcessor):
         if not namespace:
             raise ValueError("MemoryRecallProcessor: namespace обязателен")
         if query is None and query_property is None:
-            raise ValueError(
-                "MemoryRecallProcessor: укажите query или query_property"
-            )
+            raise ValueError("MemoryRecallProcessor: укажите query или query_property")
         if k < 1:
-            raise ValueError(
-                f"MemoryRecallProcessor: k должен быть >=1, получено {k}"
-            )
+            raise ValueError(f"MemoryRecallProcessor: k должен быть >=1, получено {k}")
         super().__init__(name=name or f"memory_recall:{namespace}")
         self.namespace = namespace
         self.query = query

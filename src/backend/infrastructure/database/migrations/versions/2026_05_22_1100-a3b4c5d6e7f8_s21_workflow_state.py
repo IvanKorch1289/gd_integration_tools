@@ -55,10 +55,7 @@ def upgrade() -> None:
         sa.Column("workflow_id", _uuid_t(), nullable=False, index=True),
         sa.Column("run_id", sa.String(length=64), nullable=False, index=True),
         sa.Column(
-            "step_index",
-            sa.BigInteger(),
-            nullable=False,
-            server_default=sa.text("0"),
+            "step_index", sa.BigInteger(), nullable=False, server_default=sa.text("0")
         ),
         sa.Column(
             "compensating_actions",

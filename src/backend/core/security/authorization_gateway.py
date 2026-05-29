@@ -85,8 +85,7 @@ class AuthorizationDecision:
 
 AuditCallback = Callable[[dict[str, Any]], None]
 PolicyDecider = Callable[
-    [str, str, str, dict[str, Any]],
-    Awaitable[AuthorizationReason],
+    [str, str, str, dict[str, Any]], Awaitable[AuthorizationReason]
 ]
 
 
@@ -175,13 +174,9 @@ class AuthorizationGateway:
 
         # 1. Capability gateway: единственная обязательная policy.
         try:
-            self._capability_gateway.check(
-                principal, resource, ctx.get("scope")
-            )
+            self._capability_gateway.check(principal, resource, ctx.get("scope"))
             reasons.append(
-                AuthorizationReason(
-                    source="capability_gateway", outcome="allow"
-                )
+                AuthorizationReason(source="capability_gateway", outcome="allow")
             )
         except Exception as exc:  # noqa: BLE001 — собираем reason
             reason = AuthorizationReason(
@@ -292,11 +287,7 @@ class AuthorizationGateway:
                     "action": decision.action,
                     "outcome": "allow" if decision.allowed else "deny",
                     "reasons": [
-                        {
-                            "source": r.source,
-                            "outcome": r.outcome,
-                            "detail": r.detail,
-                        }
+                        {"source": r.source, "outcome": r.outcome, "detail": r.detail}
                         for r in decision.reasons
                     ],
                 }
@@ -414,9 +405,7 @@ class AuthorizationGateway:
                     )
             except Exception as _:  # noqa: BLE001 — feature-flag недоступен → deny
                 return AuthorizationReason(
-                    source="opa",
-                    outcome="deny",
-                    detail="feature_flag_unavailable",
+                    source="opa", outcome="deny", detail="feature_flag_unavailable"
                 )
 
             input_doc = {
@@ -430,9 +419,7 @@ class AuthorizationGateway:
                 decision = await opa_client.query(policy_name, input_doc)
             except Exception as exc:  # noqa: BLE001 — fail-closed
                 return AuthorizationReason(
-                    source="opa",
-                    outcome="deny",
-                    detail=f"{type(exc).__name__}: {exc}",
+                    source="opa", outcome="deny", detail=f"{type(exc).__name__}: {exc}"
                 )
 
             allow = bool(getattr(decision, "allow", False))
@@ -441,9 +428,7 @@ class AuthorizationGateway:
             if not allow:
                 detail = ",".join(reasons) if reasons else "opa_denied"
             return AuthorizationReason(
-                source="opa",
-                outcome="allow" if allow else "deny",
-                detail=detail,
+                source="opa", outcome="allow" if allow else "deny", detail=detail
             )
 
         _step.__name__ = "opa_step"
@@ -452,9 +437,7 @@ class AuthorizationGateway:
     # ------------------------------------------------------------------ permission_step
 
     @staticmethod
-    def permission_step(
-        required_permissions: tuple[str, ...],
-    ) -> PolicyDecider:
+    def permission_step(required_permissions: tuple[str, ...]) -> PolicyDecider:
         """Фабрика :data:`PolicyDecider` для route-level permission check (K3 S19 W3).
 
         Args:
@@ -544,9 +527,7 @@ class AuthorizationGateway:
                 )
 
             return AuthorizationReason(
-                source="permission",
-                outcome="allow",
-                detail=None,
+                source="permission", outcome="allow", detail=None
             )
 
         _step.__name__ = "permission_step"

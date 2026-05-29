@@ -191,18 +191,16 @@ class RPACallPolicy:
 
         if self._breaker is not None and self._breaker.is_open():
             _logger.warning(
-                "RPACallPolicy[%s] breaker_open transport=%s — skip", self.name, transport
+                "RPACallPolicy[%s] breaker_open transport=%s — skip",
+                self.name,
+                transport,
             )
             raise RPACallExhausted(
-                transport,
-                last_error=RuntimeError("circuit breaker open"),
+                transport, last_error=RuntimeError("circuit breaker open")
             )
 
         ctx = RPACallContext(
-            transport=transport,
-            tenant_id=tenant_id,
-            route_id=route_id,
-            payload=payload,
+            transport=transport, tenant_id=tenant_id, route_id=route_id, payload=payload
         )
         start = time.monotonic()
 
@@ -251,8 +249,7 @@ class RPACallPolicy:
 
         # unreachable (всегда return или raise внутри loop), но mypy doesn't know
         raise RPACallExhausted(
-            transport,
-            ctx.last_error or RuntimeError("RPACallPolicy unreachable"),
+            transport, ctx.last_error or RuntimeError("RPACallPolicy unreachable")
         )
 
     async def _send_to_dlq(self, ctx: RPACallContext, reason: DLQReason) -> None:

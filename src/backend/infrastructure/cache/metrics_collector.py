@@ -9,17 +9,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot as get_rag_metrics_snapshot
+from src.backend.infrastructure.cache.rag.metrics import (
+    get_metrics_snapshot as get_rag_metrics_snapshot,
+)
 
 logger = logging.getLogger(__name__)
 
 __all__ = ("get_cache_metrics_snapshot",)
 
 # Local snapshot for LRU metrics (mirrors rag/metrics.py pattern)
-_lru_snapshot: dict[str, int] = {
-    "lru_cache_hits": 0,
-    "lru_cache_misses": 0,
-}
+_lru_snapshot: dict[str, int] = {"lru_cache_hits": 0, "lru_cache_misses": 0}
 
 
 def _ensure_lru_metrics() -> None:

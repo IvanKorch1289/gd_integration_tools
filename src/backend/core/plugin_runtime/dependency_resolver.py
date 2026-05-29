@@ -64,8 +64,7 @@ class PluginGraphResolver:
     """
 
     def resolve(
-        self,
-        manifests: Mapping[str, PluginManifestV11],
+        self, manifests: Mapping[str, PluginManifestV11]
     ) -> tuple[PluginManifestV11, ...]:
         """Сортирует плагины по dependency-графу.
 

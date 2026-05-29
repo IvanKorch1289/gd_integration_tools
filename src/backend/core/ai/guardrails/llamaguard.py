@@ -29,14 +29,7 @@ __all__ = ("LlamaGuardRuntime", "GuardResult")
 
 
 # Категории OAI moderation API (совместимый набор)
-DEFAULT_CATEGORIES = [
-    "hate",
-    "harassment",
-    "violence",
-    "sexual",
-    "self-harm",
-    "unsafe",
-]
+DEFAULT_CATEGORIES = ["hate", "harassment", "violence", "sexual", "self-harm", "unsafe"]
 
 
 @dataclass
@@ -105,10 +98,7 @@ class LlamaGuardRuntime:
     # ── Public API ──────────────────────────────────────────────────────────────
 
     async def classify(
-        self,
-        text: str,
-        categories: list[str] | None = None,
-        return_raw: bool = False,
+        self, text: str, categories: list[str] | None = None, return_raw: bool = False
     ) -> GuardResult:
         """
         Классифицировать текст на unsafe content.
@@ -133,9 +123,7 @@ class LlamaGuardRuntime:
         return parsed
 
     async def classify_batch(
-        self,
-        texts: list[str],
-        categories: list[str] | None = None,
+        self, texts: list[str], categories: list[str] | None = None
     ) -> list[GuardResult]:
         """Классифицировать список текстов. Каждый — отдельный вызов."""
         return [await self.classify(t, categories) for t in texts]
@@ -172,9 +160,7 @@ class LlamaGuardRuntime:
         [2] category
         <Content>text</Content>
         """
-        cats_block = "\n".join(
-            f"[{i + 1}] {cat}" for i, cat in enumerate(categories)
-        )
+        cats_block = "\n".join(f"[{i + 1}] {cat}" for i, cat in enumerate(categories))
         return (
             f"<<Task>> You are a content safety classifier.\n"
             f"Provide your safety evaluation in the following format: "
@@ -245,8 +231,12 @@ class LlamaGuardRuntime:
         logger.info("Downloading %s from HuggingFace...", filename)
 
         proc = await asyncio.create_subprocess_exec(
-            hf_cli, "download", self.gguf_repo, filename,
-            "--local-dir", cache_dir,
+            hf_cli,
+            "download",
+            self.gguf_repo,
+            filename,
+            "--local-dir",
+            cache_dir,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

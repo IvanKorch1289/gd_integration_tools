@@ -15,8 +15,7 @@ class AIClient(BaseAPIClient):
     def chat(self, message: str, session_id: str = "default") -> str:
         """POST /api/v1/ai/chat — отправить сообщение в AI-чат."""
         result = self.post(
-            "/api/v1/ai/chat",
-            json={"message": message, "session_id": session_id},
+            "/api/v1/ai/chat", json={"message": message, "session_id": session_id}
         )
         return (
             result.get("response", str(result))

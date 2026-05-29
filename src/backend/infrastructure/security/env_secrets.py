@@ -31,7 +31,7 @@ class EnvSecretsBackend(SecretsBackend):
         if self._path is not None and self._path.is_file():
             try:
                 self._cache = json.loads(self._path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
+            except json.JSONDecodeError, OSError:
                 # Повреждённый файл — стартуем с пустого кеша, не падаем.
                 self._cache = {}
 

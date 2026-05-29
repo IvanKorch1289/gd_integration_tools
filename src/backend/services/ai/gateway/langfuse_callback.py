@@ -167,8 +167,7 @@ def _maybe_anonymize(
         else input_messages
     )
     sanitized_output = anonymize_trace_payload(
-        {"_text": output_text} if output_text is not None else None,
-        tenant_id=tenant_id,
+        {"_text": output_text} if output_text is not None else None, tenant_id=tenant_id
     )
     new_output = (
         sanitized_output.get("_text")
@@ -229,7 +228,7 @@ def _extract_cost(response_obj: Any) -> float:
         if value:
             try:
                 return float(value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return 0.0
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)

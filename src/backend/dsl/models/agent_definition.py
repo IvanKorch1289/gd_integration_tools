@@ -73,7 +73,9 @@ class ModelRouterSpec(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    primary: str = Field(min_length=1, description="Canonical LiteLLM model id primary.")
+    primary: str = Field(
+        min_length=1, description="Canonical LiteLLM model id primary."
+    )
     fallback: list[str] = Field(
         default_factory=list, description="Fallback chain в порядке приоритета."
     )
@@ -217,9 +219,7 @@ class StopConditionSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     max_steps: int = Field(default=25, ge=1, description="Максимум шагов graph'а.")
-    max_tool_calls: int = Field(
-        default=50, ge=1, description="Максимум вызовов tools."
-    )
+    max_tool_calls: int = Field(default=50, ge=1, description="Максимум вызовов tools.")
     max_tokens: int | None = Field(
         default=None, ge=1, description="Hard-cap total tokens."
     )

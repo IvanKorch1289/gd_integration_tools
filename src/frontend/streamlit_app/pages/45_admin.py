@@ -16,12 +16,9 @@
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
 
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
-
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
 st.set_page_config(page_title="Admin Console", page_icon=":wrench:", layout="wide")

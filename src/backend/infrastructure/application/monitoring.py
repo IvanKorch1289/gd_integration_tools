@@ -29,7 +29,22 @@ _request_latency = metrics_registry.histogram(
     "http_request_duration_seconds",
     "HTTP request latency in seconds",
     labels=("method", "path"),
-    buckets=(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0),
+    buckets=(
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.075,
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+        2.5,
+        5.0,
+        7.5,
+        10.0,
+    ),
 )
 _requests_in_progress = metrics_registry.gauge(
     "http_requests_in_progress",
@@ -86,9 +101,7 @@ class PrometheusMiddleware:
         return path or "/"
 
 
-async def metrics_endpoint(
-    scope: "Scope", receive: "Receive", send: "Send"
-) -> None:
+async def metrics_endpoint(scope: "Scope", receive: "Receive", send: "Send") -> None:
     """ASGI handler for GET /metrics — returns Prometheus text format."""
     await send(
         {
@@ -97,12 +110,7 @@ async def metrics_endpoint(
             "headers": [(b"content-type", CONTENT_TYPE_LATEST.encode())],
         }
     )
-    await send(
-        {
-            "type": "http.response.body",
-            "body": generate_latest(),
-        }
-    )
+    await send({"type": "http.response.body", "body": generate_latest()})
 
 
 def setup_monitoring(app: "ASGIApp") -> None:
@@ -119,6 +127,4 @@ def setup_monitoring(app: "ASGIApp") -> None:
     app.add_middleware(PrometheusMiddleware)
 
     # Mount /metrics route (ASGI-level, not FastAPI route)
-    app.routes.append(
-        Route("/metrics", metrics_endpoint, methods=["GET"])
-    )
+    app.routes.append(Route("/metrics", metrics_endpoint, methods=["GET"]))

@@ -15,12 +15,8 @@ See the original implementation for full documentation:
 
 from __future__ import annotations
 
-from src.backend.core.workflow import (
-    FakeWorkflowBackend as _Impl,
-    WorkflowBackend,
-    WorkflowHandle,
-    WorkflowResult,
-)
+from src.backend.core.workflow import FakeWorkflowBackend as _Impl
+from src.backend.core.workflow import WorkflowBackend, WorkflowHandle, WorkflowResult
 
 # Re-export under the testkit namespace with the same class reference.
 # This avoids breaking existing code that imports FakeWorkflowBackend from
@@ -28,9 +24,4 @@ from src.backend.core.workflow import (
 # ``src.testkit.FakeWorkflowBackend`` import path.
 FakeWorkflowBackend = _Impl
 
-__all__ = (
-    "FakeWorkflowBackend",
-    "WorkflowBackend",
-    "WorkflowHandle",
-    "WorkflowResult",
-)
+__all__ = ("FakeWorkflowBackend", "WorkflowBackend", "WorkflowHandle", "WorkflowResult")

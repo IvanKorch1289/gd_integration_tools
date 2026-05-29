@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
+from extensions.core_entities.orders.services.orders import get_order_service
 from src.backend.core.config.settings import settings
 from src.backend.core.enums.invocation import BrokerKind
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
@@ -22,7 +23,6 @@ from src.backend.schemas.route_schemas.orders import (
     OrderSchemaOut,
     OrderVersionSchemaOut,
 )
-from extensions.core_entities.orders.services.orders import get_order_service
 
 __all__ = ("router",)
 

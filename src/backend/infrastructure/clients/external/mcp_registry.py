@@ -24,11 +24,7 @@ from pydantic import BaseModel, Field
 if __name__ == "__main__":
     raise SystemExit("Import-only module")
 
-__all__ = (
-    "MCPClientSpec",
-    "MCPClientRegistry",
-    "mcp_client_registry",
-)
+__all__ = ("MCPClientSpec", "MCPClientRegistry", "mcp_client_registry")
 
 logger = logging.getLogger(__name__)
 
@@ -50,26 +46,19 @@ class MCPClientSpec(BaseModel):
     name: str = Field(..., description="Уникальный identifier клиента")
     url: str = Field(..., description="HTTP endpoint MCP-сервера")
     auth_provider: str = Field(
-        default="none",
-        description="Тип auth: jwt | api_key | oauth | none",
+        default="none", description="Тип auth: jwt | api_key | oauth | none"
     )
     capability_required: str = Field(
-        default="",
-        description="Capability для outbound access к этому endpoint",
+        default="", description="Capability для outbound access к этому endpoint"
     )
     waf_policy: str = Field(
-        default="strict",
-        description="WAF policy: strict | permissive",
+        default="strict", description="WAF policy: strict | permissive"
     )
     timeout_s: float = Field(
-        default=10.0,
-        ge=0.1,
-        le=120.0,
-        description="Таймаут запроса (секунды)",
+        default=10.0, ge=0.1, le=120.0, description="Таймаут запроса (секунды)"
     )
     headers: dict[str, str] = Field(
-        default_factory=dict,
-        description="Дополнительные HTTP headers",
+        default_factory=dict, description="Дополнительные HTTP headers"
     )
 
 
@@ -156,12 +145,7 @@ class MCPClientRegistry:
         """
         return self._clients.get(name)
 
-    async def call(
-        self,
-        client_name: str,
-        tool_name: str,
-        **params: Any,
-    ) -> Any:
+    async def call(self, client_name: str, tool_name: str, **params: Any) -> Any:
         """Вызывает tool на external MCP-сервере через WAF.
 
         Args:
@@ -200,18 +184,12 @@ class MCPClientRegistry:
             "jsonrpc": "2.0",
             "id": 1,
             "method": "tools/call",
-            "params": {
-                "name": tool_name,
-                "arguments": params,
-            },
+            "params": {"name": tool_name, "arguments": params},
         }
 
         try:
             response = await http_client.post(
-                spec.url,
-                json=payload,
-                headers=headers,
-                timeout=spec.timeout_s,
+                spec.url, json=payload, headers=headers, timeout=spec.timeout_s
             )
             response.raise_for_status()
             result = response.json()

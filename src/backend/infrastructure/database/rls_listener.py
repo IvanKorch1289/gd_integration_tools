@@ -81,8 +81,7 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
             return
         try:
             connection.exec_driver_sql(
-                "SELECT set_config('app.tenant_id', %s, true)",
-                (str(tenant_id),),
+                "SELECT set_config('app.tenant_id', %s, true)", (str(tenant_id),)
             )
         except Exception as exc:  # noqa: BLE001
             db_logger.warning(

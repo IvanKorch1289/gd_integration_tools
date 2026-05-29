@@ -8,11 +8,9 @@
 
 from __future__ import annotations
 
-import sys
 from datetime import datetime, timedelta
 
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client
 

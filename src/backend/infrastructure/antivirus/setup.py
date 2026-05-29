@@ -45,9 +45,7 @@ def build_clamav_scanner_if_enabled() -> "ClamAVPayloadScanner | None":
             ClamAVPayloadScanner,
         )
     except ImportError as exc:
-        _logger.warning(
-            "waf.clamav.import_failed", extra={"error": repr(exc)}
-        )
+        _logger.warning("waf.clamav.import_failed", extra={"error": repr(exc)})
         return None
 
     backend = ClamAVTcpBackend(

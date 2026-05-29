@@ -34,9 +34,7 @@ _logger = logging.getLogger("entrypoints.api.v1.admin.feature_flags")
 router = APIRouter()
 
 
-async def _maybe_publish(
-    request: Request, change: FeatureFlagChange
-) -> None:
+async def _maybe_publish(request: Request, change: FeatureFlagChange) -> None:
     """Опубликовать FeatureFlagChange через Redis broadcaster, если активен.
 
     Sprint 17 K5 W1 (D9). Broadcaster хранится в ``app.state`` после
@@ -68,9 +66,7 @@ class SetOverrideRequest(BaseModel):
     )
     tenant_id: str | None = Field(
         default=None,
-        description=(
-            "Опц. для per-tenant override. ``None`` — global override."
-        ),
+        description=("Опц. для per-tenant override. ``None`` — global override."),
     )
     actor: str = Field(
         default="system",
@@ -116,9 +112,7 @@ async def set_override(
     если ``tenant_feature_flag_ui=True`` и broadcaster активен.
     """
     overrides = get_runtime_overrides()
-    change = overrides.set(
-        flag, body.value, tenant_id=body.tenant_id, actor=body.actor
-    )
+    change = overrides.set(flag, body.value, tenant_id=body.tenant_id, actor=body.actor)
 
     await get_unified_audit_service().emit(
         event="feature.toggled",
@@ -127,10 +121,7 @@ async def set_override(
         action="set",
         outcome="success",
         tenant_id=body.tenant_id,
-        details={
-            "old_value": change.old_value,
-            "new_value": change.new_value,
-        },
+        details={"old_value": change.old_value, "new_value": change.new_value},
     )
     await _maybe_publish(request, change)
     return _to_response(change)

@@ -95,6 +95,4 @@ class AdminCacheInvalidateTableSchema(BaseSchema):
         table: Имя таблицы для инвалидации.
     """
 
-    table: str = Field(
-        description="Имя таблицы для инвалидации (e.g., 'orders')."
-    )
+    table: str = Field(description="Имя таблицы для инвалидации (e.g., 'orders').")

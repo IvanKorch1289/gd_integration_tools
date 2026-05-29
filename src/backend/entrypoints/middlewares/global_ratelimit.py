@@ -210,9 +210,7 @@ class RedisRateLimitChecker:
                 await self._redis.expire(key, int(self._window) + 1)
         except Exception as exc:  # noqa: BLE001 — fail-open
             _logger.warning(
-                "RedisRateLimitChecker failed for identifier=%s: %s",
-                identifier,
-                exc,
+                "RedisRateLimitChecker failed for identifier=%s: %s", identifier, exc
             )
             return True, self._max, 0
 
@@ -237,7 +235,11 @@ class RedisRateLimitChecker:
             # Find the longest matching prefix
             best_match: tuple[str, str] | None = None
             for route_prefix, config_str in all_overrides.items():
-                route_prefix_str = route_prefix.decode("utf-8") if isinstance(route_prefix, bytes) else route_prefix
+                route_prefix_str = (
+                    route_prefix.decode("utf-8")
+                    if isinstance(route_prefix, bytes)
+                    else route_prefix
+                )
                 if route_prefix_str and route.startswith(route_prefix_str):
                     if best_match is None or len(route_prefix_str) > len(best_match[0]):
                         best_match = (route_prefix_str, config_str)
@@ -270,7 +272,9 @@ class RedisRateLimitChecker:
                 )
                 return None
 
-            return RateLimitConfig(max_per_window=max_per_window, window_seconds=window_seconds)
+            return RateLimitConfig(
+                max_per_window=max_per_window, window_seconds=window_seconds
+            )
         except Exception as exc:  # noqa: BLE001 — fail-open
             _logger.warning(
                 "RedisRateLimitChecker.check_route_override failed for route=%s: %s",
@@ -381,13 +385,7 @@ class GlobalRateLimitMiddleware:
             (b"retry-after", str(retry_after).encode()),
             (b"x-ratelimit-remaining", str(remaining).encode()),
         ]
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 429,
-                "headers": headers,
-            }
-        )
+        await send({"type": "http.response.start", "status": 429, "headers": headers})
         body = (
             b'{"detail":"Too Many Requests","retry_after":'
             + str(retry_after).encode()

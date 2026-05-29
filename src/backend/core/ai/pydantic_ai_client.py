@@ -190,8 +190,7 @@ class PydanticAIClient:
         retry_attempts = self._retry_attempts()
 
         self._emit_counter(
-            "ai_pydantic_client_requests_total",
-            {"model": primary, "status": "started"},
+            "ai_pydantic_client_requests_total", {"model": primary, "status": "started"}
         )
 
         messages = [{"role": "user", "content": prompt}]
@@ -207,12 +206,9 @@ class PydanticAIClient:
                 )
                 latency_ms = int(time.monotonic() * 1000) - start_ms
 
-                (
-                    content,
-                    tokens_prompt,
-                    tokens_completion,
-                    model_used,
-                ) = self._extract_completion(response, fallback_model=primary)
+                (content, tokens_prompt, tokens_completion, model_used) = (
+                    self._extract_completion(response, fallback_model=primary)
+                )
                 is_fallback = model_used != primary
 
                 self._emit_counter(
@@ -220,9 +216,7 @@ class PydanticAIClient:
                     {"model": model_used, "status": "success"},
                 )
                 self._emit_histogram(
-                    "ai_pydantic_client_latency_ms",
-                    latency_ms,
-                    {"model": model_used},
+                    "ai_pydantic_client_latency_ms", latency_ms, {"model": model_used}
                 )
                 if is_fallback:
                     self._emit_counter(
@@ -246,15 +240,12 @@ class PydanticAIClient:
                     "ai_pydantic_client_retry_total",
                     {"model": primary, "attempt": str(attempt)},
                 )
-                logger.debug(
-                    "PydanticAIClient: attempt %d failed (%s)", attempt, exc
-                )
+                logger.debug("PydanticAIClient: attempt %d failed (%s)", attempt, exc)
                 continue
 
         # Все fail — эмитим ошибку и пробрасываем
         self._emit_counter(
-            "ai_pydantic_client_requests_total",
-            {"model": primary, "status": "error"},
+            "ai_pydantic_client_requests_total", {"model": primary, "status": "error"}
         )
         self._reraise_normalized(last_exc or RuntimeError("No models available"))
         # NOTE: unreachable — _reraise_normalized always raises; kept for type checker

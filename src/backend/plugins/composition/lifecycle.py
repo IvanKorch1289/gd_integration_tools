@@ -415,11 +415,7 @@ async def _bootstrap_v11_route_loader(app: FastAPI) -> None:
                     capabilities=tuple(entry.manifest.capabilities),
                 )
 
-        def _registrar(
-            route_name: str,
-            pipeline_path: Path,
-            manifest: object,
-        ) -> None:
+        def _registrar(route_name: str, pipeline_path: Path, manifest: object) -> None:
             """Делегирует загрузку pipeline-файла в ``route_registry``.
 
             K-ARCH-4 (S17): пробрасывает ``manifest.tenant_aware`` в
@@ -856,7 +852,9 @@ async def lifespan(app: FastAPI):
                 for entry_raw in plugins_dir.iterdir():
                     if not entry_raw.is_dir():
                         continue
-                    entry = entry_raw  # Path.iterdir() returns Path objects in Python 3.14
+                    entry = (
+                        entry_raw  # Path.iterdir() returns Path objects in Python 3.14
+                    )
                     if (entry / "plugin.yaml").is_file():
                         try:
                             await loader.load_from_path(entry)
@@ -940,8 +938,7 @@ async def lifespan(app: FastAPI):
 
             redis_kv = getattr(get_redis_client(), "client", None)
             broadcaster = await maybe_start_broadcaster(
-                redis_client=redis_kv,
-                overrides=get_runtime_overrides(),
+                redis_client=redis_kv, overrides=get_runtime_overrides()
             )
             if broadcaster is not None:
                 app.state.feature_flag_broadcaster = broadcaster

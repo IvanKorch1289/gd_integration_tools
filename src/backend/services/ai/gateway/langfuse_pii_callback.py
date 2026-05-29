@@ -23,18 +23,13 @@ from typing import Any
 
 from src.backend.core.config.features import feature_flags
 
-__all__ = (
-    "LangfusePIICallback",
-    "anonymize_trace_payload",
-)
+__all__ = ("LangfusePIICallback", "anonymize_trace_payload")
 
 logger = logging.getLogger("services.ai.gateway.langfuse_pii")
 
 
 def anonymize_trace_payload(
-    payload: dict[str, Any] | None,
-    *,
-    tenant_id: str | None = None,
+    payload: dict[str, Any] | None, *, tenant_id: str | None = None
 ) -> dict[str, Any] | None:
     """Anonymize все строковые значения в trace-payload рекурсивно.
 
@@ -59,9 +54,7 @@ def anonymize_trace_payload(
     return _walk_anonymize(payload, sanitizer, tenant_id)
 
 
-def _walk_anonymize(
-    value: Any, sanitizer: Any, tenant_id: str | None
-) -> Any:
+def _walk_anonymize(value: Any, sanitizer: Any, tenant_id: str | None) -> Any:
     """Recursive anonymize: dict/list/str → новые структуры без PII."""
     if isinstance(value, str) and value:
         result = sanitizer.sanitize_text(value)
@@ -81,11 +74,7 @@ def _walk_anonymize(
 
 
 def _emit_pii_audit(
-    event_type: str,
-    *,
-    tenant_id: str | None,
-    entity_count: int,
-    source: str,
+    event_type: str, *, tenant_id: str | None, entity_count: int, source: str
 ) -> None:
     """Emit pii.{detected,anonymized,blocked} audit-event.
 
@@ -122,9 +111,7 @@ class LangfusePIICallback:
     def __init__(self, *, tenant_id: str | None = None) -> None:
         self._tenant_id = tenant_id
 
-    def __call__(
-        self, event: dict[str, Any]
-    ) -> dict[str, Any]:
+    def __call__(self, event: dict[str, Any]) -> dict[str, Any]:
         """Anonymize input/output/metadata перед отправкой в Langfuse API."""
         cloned = dict(event)
         for key in ("input", "output", "metadata"):

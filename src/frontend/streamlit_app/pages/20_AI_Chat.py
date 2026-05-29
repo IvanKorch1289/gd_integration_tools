@@ -1,9 +1,6 @@
 """AI Assistant — чат с AI-агентом."""
 
-import sys
-
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from extensions.core_entities.users.services.users import get_user_service
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
@@ -9,7 +10,6 @@ from src.backend.schemas.route_schemas.users import (
     UserSchemaOut,
     UserVersionSchemaOut,
 )
-from extensions.core_entities.users.services.users import get_user_service
 
 __all__ = ("router",)
 

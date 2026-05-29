@@ -121,9 +121,7 @@ class HybridRetriever:
             self._bm25_unavailable = True
             return None
 
-    async def retrieve(
-        self, *, query: str, top_k: int = 5
-    ) -> list[HybridResult]:
+    async def retrieve(self, *, query: str, top_k: int = 5) -> list[HybridResult]:
         """Hybrid retrieval с RRF-merge.
 
         Алгоритм:
@@ -191,9 +189,7 @@ class HybridRetriever:
 
 
 def rrf_merge(
-    *,
-    ranked_lists: list[tuple[str, list[str]]],
-    k: int = 60,
+    *, ranked_lists: list[tuple[str, list[str]]], k: int = 60
 ) -> list[tuple[str, float, tuple[str, ...]]]:
     """Reciprocal Rank Fusion: merge ranked lists в единый список.
 
@@ -216,10 +212,7 @@ def rrf_merge(
             scores[chunk_id] = scores.get(chunk_id, 0.0) + inc
             provenance.setdefault(chunk_id, set()).add(source)
     return sorted(
-        (
-            (cid, score, tuple(sorted(provenance[cid])))
-            for cid, score in scores.items()
-        ),
+        ((cid, score, tuple(sorted(provenance[cid]))) for cid, score in scores.items()),
         key=lambda triple: triple[1],
         reverse=True,
     )
@@ -240,10 +233,7 @@ def _chunk_id(chunk: dict[str, Any]) -> str:
 
 
 def _to_hybrid_result(
-    chunk: dict[str, Any],
-    *,
-    rrf_score: float,
-    sources: tuple[str, ...],
+    chunk: dict[str, Any], *, rrf_score: float, sources: tuple[str, ...]
 ) -> HybridResult:
     """Преобразует chunk dict → :class:`HybridResult`."""
     return HybridResult(
@@ -258,9 +248,7 @@ def _to_hybrid_result(
 def _record_hybrid_fallback(*, reason: str) -> None:
     """Counter ``rag_hybrid_fallback_total`` через metrics_registry."""
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         counter = metrics_registry.counter(
             "rag_hybrid_fallback_total",

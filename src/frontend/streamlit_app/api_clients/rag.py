@@ -27,11 +27,7 @@ class RAGClient(BaseAPIClient):
             return {}
 
     def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        *,
-        namespace: str | None = None,
+        self, query: str, top_k: int = 5, *, namespace: str | None = None
     ) -> dict[str, Any]:
         """POST /api/v1/rag/search — семантический поиск."""
         body: dict[str, Any] = {"query": query, "top_k": top_k}
@@ -61,11 +57,7 @@ class RAGClient(BaseAPIClient):
             return {}
 
     def augment(
-        self,
-        query: str,
-        *,
-        namespace: str | None = None,
-        top_k: int = 5,
+        self, query: str, *, namespace: str | None = None, top_k: int = 5
     ) -> dict[str, Any]:
         """POST /api/v1/rag/augment — augmentation с freshness badge."""
         body: dict[str, Any] = {"query": query, "top_k": top_k}

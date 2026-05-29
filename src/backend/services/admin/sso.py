@@ -111,9 +111,7 @@ class SamlSSOClient(ABC):
         raise NotImplementedError("SAML logout URL — implement in S20+")
 
     @abstractmethod
-    async def handle_acs_response(
-        self, *, saml_response: str
-    ) -> SSOUserInfo:
+    async def handle_acs_response(self, *, saml_response: str) -> SSOUserInfo:
         """Обрабатывает SAML Response от IdP. Returns SSOUserInfo."""
         raise NotImplementedError("SAML ACS handler — implement in S20+")
 
@@ -138,18 +136,13 @@ class OidcSSOClient(ABC):
         raise NotImplementedError("OIDC auth URL — implement in S20+")
 
     @abstractmethod
-    async def exchange_code(
-        self, *, code: str, code_verifier: str
-    ) -> SSOUserInfo:
+    async def exchange_code(self, *, code: str, code_verifier: str) -> SSOUserInfo:
         """Обменивает authorization code на tokens, returns SSOUserInfo."""
         raise NotImplementedError("OIDC token exchange — implement in S20+")
 
 
 # TODO S20: decorator for admin endpoints
-def require_sso_auth(
-    resource: str,
-    action: str,
-) -> Any:
+def require_sso_auth(resource: str, action: str) -> Any:
     """
     Decorator для admin endpoints — enforces SSO auth + AuthZ (S20+).
 
@@ -164,10 +157,13 @@ def require_sso_auth(
         2. Call AuthorizationGateway with principal = SSOUserInfo.sub
         3. Map SSO groups → RBAC roles
     """
+
     def decorator(fn: Any) -> Any:
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             logger.debug("require_sso_auth placeholder for %s/%s", resource, action)
             # S20: implement SSO validation + AuthZ
             return fn(*args, **kwargs)
+
         return wrapper
+
     return decorator

@@ -218,7 +218,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]

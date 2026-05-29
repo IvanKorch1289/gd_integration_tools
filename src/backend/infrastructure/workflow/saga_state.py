@@ -81,19 +81,11 @@ def uuid_t() -> Any:
     """Локальный alias на :class:`_UUIDType` — dialect-aware UUID column."""
     return _UUIDType()
 
-__all__ = (
-    "WorkflowState",
-    "WorkflowStateRepository",
-    "WorkflowStateValue",
-)
+
+__all__ = ("WorkflowState", "WorkflowStateRepository", "WorkflowStateValue")
 
 
-WorkflowStateValue = Literal[
-    "running",
-    "completed",
-    "compensating",
-    "rolled_back",
-]
+WorkflowStateValue = Literal["running", "completed", "compensating", "rolled_back"]
 
 
 class WorkflowState(BaseModel, TenantMixin):
@@ -118,11 +110,7 @@ class WorkflowState(BaseModel, TenantMixin):
         UniqueConstraint(
             "workflow_id", "run_id", name="uq_workflow_state_workflow_run"
         ),
-        Index(
-            "ix_workflow_state_state_tenant",
-            "state",
-            "tenant_id",
-        ),
+        Index("ix_workflow_state_state_tenant", "state", "tenant_id"),
         {"comment": "Sprint 21 W8 — saga state persistence (B-05)"},
     )
 
@@ -218,17 +206,12 @@ class WorkflowStateRepository:
         await self._session.flush()
         return existing
 
-    async def load(
-        self, workflow_id: uuid.UUID, run_id: str
-    ) -> WorkflowState | None:
+    async def load(self, workflow_id: uuid.UUID, run_id: str) -> WorkflowState | None:
         """Возвращает state-record по составному ключу."""
         return await self._fetch_one(workflow_id, run_id)
 
     async def list_compensating(
-        self,
-        *,
-        tenant_id: str | None = None,
-        limit: int = 100,
+        self, *, tenant_id: str | None = None, limit: int = 100
     ) -> list[WorkflowState]:
         """Возвращает saga'и в состоянии compensating (для compensation worker).
 
@@ -244,11 +227,7 @@ class WorkflowStateRepository:
         return list(result.scalars().all())
 
     async def signal_event(
-        self,
-        workflow_id: uuid.UUID,
-        run_id: str,
-        *,
-        event: WorkflowStateValue,
+        self, workflow_id: uuid.UUID, run_id: str, *, event: WorkflowStateValue
     ) -> WorkflowState | None:
         """Атомарный переход state через signal-event.
 
@@ -266,8 +245,7 @@ class WorkflowStateRepository:
         self, workflow_id: uuid.UUID, run_id: str
     ) -> WorkflowState | None:
         stmt = select(WorkflowState).where(
-            WorkflowState.workflow_id == workflow_id,
-            WorkflowState.run_id == run_id,
+            WorkflowState.workflow_id == workflow_id, WorkflowState.run_id == run_id
         )
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()

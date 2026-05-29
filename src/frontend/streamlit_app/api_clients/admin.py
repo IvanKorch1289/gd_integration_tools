@@ -31,8 +31,7 @@ class AdminClient(BaseAPIClient):
         """POST /api/v1/admin/feature-flags/{name}/toggle."""
         try:
             self.post(
-                f"/api/v1/admin/feature-flags/{name}/toggle",
-                json={"enabled": enabled},
+                f"/api/v1/admin/feature-flags/{name}/toggle", json={"enabled": enabled}
             )
             return True
         except Exception:  # noqa: BLE001
@@ -156,7 +155,9 @@ class AdminClient(BaseAPIClient):
         except Exception as exc:  # noqa: BLE001
             return {"name": name, "created": False, "error": str(exc)}
 
-    def get_langgraph_sessions(self, limit: int = 50, offset: int = 0) -> dict[str, Any]:
+    def get_langgraph_sessions(
+        self, limit: int = 50, offset: int = 0
+    ) -> dict[str, Any]:
         """GET /api/v1/admin/langgraph/checkpoints — список активных LangGraph сессий."""
         try:
             return self.get(

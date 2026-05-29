@@ -30,10 +30,7 @@ from src.backend.core.audit.schema.ai_invocation import (
 )
 
 if TYPE_CHECKING:
-    from src.backend.core.audit.interfaces import (
-        AuditBackend,
-        LangfuseCallbackBackend,
-    )
+    from src.backend.core.audit.interfaces import AuditBackend, LangfuseCallbackBackend
 
 logger = logging.getLogger(__name__)
 

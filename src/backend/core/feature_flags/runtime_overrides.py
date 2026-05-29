@@ -60,9 +60,7 @@ class FeatureFlagChange:
     old_value: Any
     new_value: Any
     actor: str
-    timestamp: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class RuntimeFeatureFlagOverrides:
@@ -83,13 +81,7 @@ class RuntimeFeatureFlagOverrides:
         self._per_tenant: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
 
-    def get(
-        self,
-        flag: str,
-        default: Any,
-        *,
-        tenant_id: str | None = None,
-    ) -> Any:
+    def get(self, flag: str, default: Any, *, tenant_id: str | None = None) -> Any:
         """Резолвит значение flag по приоритету tenant→global→default.
 
         Args:
@@ -109,9 +101,7 @@ class RuntimeFeatureFlagOverrides:
                 return self._global[flag]
         return default
 
-    def has_override(
-        self, flag: str, *, tenant_id: str | None = None
-    ) -> bool:
+    def has_override(self, flag: str, *, tenant_id: str | None = None) -> bool:
         """Возвращает ``True`` если override установлен (global или tenant)."""
         with self._lock:
             if tenant_id is not None:
@@ -149,11 +139,7 @@ class RuntimeFeatureFlagOverrides:
                 per_tenant[flag] = value
 
         change = FeatureFlagChange(
-            flag=flag,
-            tenant_id=tenant_id,
-            old_value=old,
-            new_value=value,
-            actor=actor,
+            flag=flag, tenant_id=tenant_id, old_value=old, new_value=value, actor=actor
         )
         _logger.info(
             "feature_flag.override.set",
@@ -190,11 +176,7 @@ class RuntimeFeatureFlagOverrides:
                 new = None
 
         change = FeatureFlagChange(
-            flag=flag,
-            tenant_id=tenant_id,
-            old_value=old,
-            new_value=new,
-            actor="system",
+            flag=flag, tenant_id=tenant_id, old_value=old, new_value=new, actor="system"
         )
         _logger.info(
             "feature_flag.override.clear",
@@ -212,8 +194,7 @@ class RuntimeFeatureFlagOverrides:
             return {
                 "global": dict(self._global),
                 "per_tenant": {
-                    tenant: dict(values)
-                    for tenant, values in self._per_tenant.items()
+                    tenant: dict(values) for tenant, values in self._per_tenant.items()
                 },
             }
 

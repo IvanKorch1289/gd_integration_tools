@@ -9,7 +9,6 @@ import streamlit as st
 import yaml as _yaml
 
 
-
 def _load_diff_module():
     path = _root / "tools" / "dsl_diff.py"
     spec = importlib.util.spec_from_file_location("_dsl_diff_app", path)

@@ -64,9 +64,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
         if not namespace:
             raise ValueError("MemoryStoreProcessor: namespace обязателен")
         if key is None and key_property is None:
-            raise ValueError(
-                "MemoryStoreProcessor: укажите key или key_property"
-            )
+            raise ValueError("MemoryStoreProcessor: укажите key или key_property")
         super().__init__(name=name or f"memory_store:{namespace}")
         self.namespace = namespace
         self.key = key

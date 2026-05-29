@@ -223,8 +223,7 @@ class PluginLoaderV11:
             )
 
         ordered_paths = self._reorder_manifest_paths(
-            manifest_paths=manifest_paths,
-            sorted_names=sorted_names,
+            manifest_paths=manifest_paths, sorted_names=sorted_names
         )
 
         parse_failures_map = dict(parse_failures)
@@ -260,9 +259,7 @@ class PluginLoaderV11:
             кортеж и ``cycle_blocked`` пополняется именами участников
             цикла (или всеми не-blocked, если SDK не передал детали).
         """
-        non_blocked = [
-            m for m in parsed_manifests if m.name not in compat_blocked
-        ]
+        non_blocked = [m for m in parsed_manifests if m.name not in compat_blocked]
         if not non_blocked:
             return ()
         resolver = PluginGraphResolver()
@@ -271,8 +268,7 @@ class PluginLoaderV11:
         except PluginDependencyCycleError as exc:
             cycle_blocked.update(exc.cycle or {m.name for m in non_blocked})
             _logger.error(
-                "Plugin dependency cycle detected: %s — affected plugins will fail",
-                exc,
+                "Plugin dependency cycle detected: %s — affected plugins will fail", exc
             )
             return ()
         except KeyError as exc:
@@ -285,10 +281,7 @@ class PluginLoaderV11:
         return tuple(m.name for m in ordered)
 
     def _reorder_manifest_paths(
-        self,
-        *,
-        manifest_paths: list[Path],
-        sorted_names: tuple[str, ...],
+        self, *, manifest_paths: list[Path], sorted_names: tuple[str, ...]
     ) -> list[Path]:
         """Возвращает ``manifest_paths`` в bootstrap-порядке.
 

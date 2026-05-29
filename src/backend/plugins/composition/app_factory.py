@@ -103,6 +103,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     """Подключение бизнес-маршрутизаторов"""
     from fastapi import APIRouter
     from fastapi.responses import RedirectResponse
+
     from src.backend.entrypoints.filewatcher.watcher_routes import watcher_router
 
     # S27 Wave 3: admin-react API bridge — редирект /api/admin/* → /api/v1/admin/*
@@ -111,14 +112,20 @@ def _configure_business_routers(app: FastAPI) -> None:
     # избегает риска повторной отправки body (307 сохраняет метод)
     _admin_bridge_router = APIRouter()
 
-    @_admin_bridge_router.api_route("/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    @_admin_bridge_router.api_route(
+        "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]
+    )
     async def admin_legacy_redirect(path: str):
         # Защита от open redirect: валидируем что path только относительный
         from urllib.parse import urlparse
+
         parsed = urlparse(f"/{path}")  # Префикс "/" для корректного парсинга
         if parsed.scheme or parsed.netloc:
             from fastapi import HTTPException
-            raise HTTPException(status_code=400, detail="Invalid path: external URLs not allowed")
+
+            raise HTTPException(
+                status_code=400, detail="Invalid path: external URLs not allowed"
+            )
         return RedirectResponse(url=f"/api/v1/admin/{path}", status_code=303)
 
     app.include_router(_admin_bridge_router)

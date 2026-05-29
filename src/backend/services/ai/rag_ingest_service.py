@@ -128,9 +128,7 @@ class RagIngestService:
                     **pii_meta,
                 }
                 doc_id = await rag.ingest(
-                    content_text,
-                    metadata=metadata,
-                    namespace=collection,
+                    content_text, metadata=metadata, namespace=collection
                 )
                 state["doc_ids"].append(doc_id)
             except Exception as exc:  # noqa: BLE001

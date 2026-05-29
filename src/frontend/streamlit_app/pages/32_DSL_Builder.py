@@ -13,10 +13,7 @@ Layer policy: страница импортирует только ``services/ds
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
-
 
 from src.backend.services.dsl.builder_service import (  # noqa: E402
     DSLBuilderService,

@@ -18,12 +18,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
-
-
 
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
 
@@ -59,11 +56,7 @@ class WorkflowLauncher:
         self._installed = dict(installed_workflows or {})
         self._registry = registry
 
-    def resolve(
-        self,
-        workflow_name: str,
-        spec: str | None = None,
-    ) -> ResolvedWorkflow:
+    def resolve(self, workflow_name: str, spec: str | None = None) -> ResolvedWorkflow:
         """Resolve workflow name + SemVer spec to best matching version.
 
         Args:
@@ -115,9 +108,7 @@ class WorkflowLauncher:
 
         if installed_version in spec_set:
             return ResolvedWorkflow(
-                name=workflow_name,
-                version=installed_version_str,
-                spec=spec,
+                name=workflow_name, version=installed_version_str, spec=spec
             )
 
         # Find best matching version if multiple versions were available
@@ -128,10 +119,7 @@ class WorkflowLauncher:
         )
 
     def resolve_best_match(
-        self,
-        workflow_name: str,
-        spec: str,
-        available_versions: list[str] | None = None,
+        self, workflow_name: str, spec: str, available_versions: list[str] | None = None
     ) -> ResolvedWorkflow:
         """Resolve to best matching version from available versions.
 

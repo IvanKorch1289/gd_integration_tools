@@ -9,10 +9,8 @@ Feature-flag: ``feature_flags.prompt_lab_enabled`` (default-OFF).
 from __future__ import annotations
 
 import json
-import sys
 
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client
 

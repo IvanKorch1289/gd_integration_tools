@@ -167,16 +167,12 @@ async def register_ai_2026_providers() -> None:
             try:
                 task_registry = get_task_registry()
                 task_registry.create_task(
-                    _pii_tokenizer_cleanup_loop(),
-                    name="pii-tokenizer-cleanup",
+                    _pii_tokenizer_cleanup_loop(), name="pii-tokenizer-cleanup"
                 )
             except Exception as exc:  # noqa: BLE001
-                logger.debug(
-                    "pii_tokenizer cleanup loop registration skipped: %s", exc
-                )
+                logger.debug("pii_tokenizer cleanup loop registration skipped: %s", exc)
     except Exception as exc:  # noqa: BLE001
         logger.debug("PIITokenizer registration skipped: %s", exc)
-
 
     try:
         from src.backend.dsl.engine.processors.streaming_llm import (

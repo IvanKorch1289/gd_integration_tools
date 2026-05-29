@@ -16,10 +16,8 @@
 from __future__ import annotations
 
 import json
-import sys
 
 # Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
-
 import streamlit as st
 
 st.set_page_config(page_title="Action Bus", page_icon=":electric_plug:", layout="wide")

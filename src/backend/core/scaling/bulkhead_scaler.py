@@ -30,8 +30,10 @@ def __getattr__(name: str):
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):
             from src.backend.infrastructure.resilience import bulkhead
+
             return getattr(bulkhead, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ("BulkheadScaler",)
 

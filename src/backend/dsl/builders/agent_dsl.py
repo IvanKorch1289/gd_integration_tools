@@ -142,9 +142,7 @@ class AgentDSLMixin:
 
         return self._add(  # type: ignore[attr-defined]
             AgentBranchProcessor(
-                source_property=source_property,
-                branches=branches,
-                default=default,
+                source_property=source_property, branches=branches, default=default
             )
         )
 

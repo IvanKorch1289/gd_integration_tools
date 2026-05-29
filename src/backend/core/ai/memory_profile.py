@@ -106,23 +106,19 @@ class MemoryProfileSpec(BaseModel):
     id: str = Field(min_length=1, description="Уникальный идентификатор.")
     kind: MemoryKind = Field(description="Тип памяти.")
     store: str = Field(
-        min_length=1,
-        description="Имя storage backend в AgentMemoryGateway.",
+        min_length=1, description="Имя storage backend в AgentMemoryGateway."
     )
     namespace_template: str = Field(
         description=(
             "Шаблон namespace. Подставляет ${tenant_id}, "
             "${workflow_name}, ${session_id}."
-        ),
+        )
     )
     retention_days: int | None = Field(
-        default=None,
-        ge=1,
-        description="Срок хранения в днях. None = бессрочно.",
+        default=None, ge=1, description="Срок хранения в днях. None = бессрочно."
     )
     access: Literal["scoped", "shared-read", "shared-write"] = "scoped"
     consolidation: Literal["summarize", "dedup", "reflect", "none"] = "none"
     schema_ref: str | None = Field(
-        default=None,
-        description="JSON-Schema path для валидации записей.",
+        default=None, description="JSON-Schema path для валидации записей."
     )

@@ -79,9 +79,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
                 )
                 exchange.stop()
                 return
-            _logger.debug(
-                "%s: token_map=None и strict=False — pass-through", self.name
-            )
+            _logger.debug("%s: token_map=None и strict=False — pass-through", self.name)
             return
 
         text = self._extract_text(exchange)
@@ -90,9 +88,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
 
         tokenizer = self._resolve_tokenizer()
         if tokenizer is None:
-            _logger.warning(
-                "%s: PIITokenizer недоступен — pass-through", self.name
-            )
+            _logger.warning("%s: PIITokenizer недоступен — pass-through", self.name)
             return
 
         try:
@@ -118,8 +114,10 @@ class PIIUnmaskProcessor(BaseAIProcessor):
                     if isinstance(cursor, dict)
                     else getattr(cursor, part, None)
                 )
-            return cursor if isinstance(cursor, str) else (
-                str(cursor) if cursor is not None else ""
+            return (
+                cursor
+                if isinstance(cursor, str)
+                else (str(cursor) if cursor is not None else "")
             )
 
         cursor = exchange.get_property(head)
@@ -131,8 +129,10 @@ class PIIUnmaskProcessor(BaseAIProcessor):
                 if isinstance(cursor, dict)
                 else getattr(cursor, part, None)
             )
-        return cursor if isinstance(cursor, str) else (
-            str(cursor) if cursor is not None else ""
+        return (
+            cursor
+            if isinstance(cursor, str)
+            else (str(cursor) if cursor is not None else "")
         )
 
     def _write_target(self, exchange: "Exchange[Any]", text: str) -> None:

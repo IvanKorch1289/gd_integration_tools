@@ -112,11 +112,7 @@ class APIClient:
             return {}
 
     def set_override(
-        self,
-        flag: str,
-        value: Any,
-        tenant_id: str | None = None,
-        actor: str = "ui",
+        self, flag: str, value: Any, tenant_id: str | None = None, actor: str = "ui"
     ) -> dict[str, Any] | None:
         """Sprint 17 K5 W1 (D9): установить runtime override (опц. per-tenant)."""
         try:
@@ -129,10 +125,7 @@ class APIClient:
             return None
 
     def clear_override(
-        self,
-        flag: str,
-        tenant_id: str | None = None,
-        actor: str = "ui",
+        self, flag: str, tenant_id: str | None = None, actor: str = "ui"
     ) -> dict[str, Any] | None:
         """Sprint 17 K5 W1 (D9): снять runtime override (вернуть к static-default)."""
         try:
@@ -140,9 +133,7 @@ class APIClient:
             if tenant_id is not None:
                 params["tenant_id"] = tenant_id
             return self._request(
-                "DELETE",
-                f"/api/v1/admin/feature-flags/{flag}",
-                params=params,
+                "DELETE", f"/api/v1/admin/feature-flags/{flag}", params=params
             )
         except Exception:
             return None

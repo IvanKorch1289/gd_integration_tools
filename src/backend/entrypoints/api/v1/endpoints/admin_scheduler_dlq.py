@@ -63,7 +63,11 @@ async def list_failed_jobs(
     "/{entry_id}",
     response_model=dict[str, Any],
     dependencies=[
-        Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN, AdminRole.READ_ONLY)))
+        Depends(
+            require_admin(
+                (AdminRole.OPERATOR, AdminRole.SUPER_ADMIN, AdminRole.READ_ONLY)
+            )
+        )
     ],
 )
 async def get_failed_job(entry_id: str) -> dict[str, Any]:
@@ -71,7 +75,9 @@ async def get_failed_job(entry_id: str) -> dict[str, Any]:
     store = _require_store()
     entry = store.get(entry_id)
     if entry is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
+        )
     return entry.to_dict()
 
 
@@ -88,7 +94,9 @@ async def retry_failed_job(entry_id: str) -> dict[str, Any]:
     store = _require_store()
     entry = store.get(entry_id)
     if entry is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
+        )
     entry.mark_retried()
 
     reschedule_attempted = False
@@ -117,4 +125,6 @@ async def delete_failed_job(entry_id: str) -> None:
     """Удаляет DLQ-запись из in-memory store."""
     store = _require_store()
     if not store.delete(entry_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="DLQ entry not found"
+        )

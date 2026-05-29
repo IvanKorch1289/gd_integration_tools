@@ -23,9 +23,7 @@ def _safe_repr_message(payload: Any, limit: int = 500) -> str:
     return text[:limit] + ("..." if len(text) > limit else "")
 
 
-def _inject_correlation_id_headers(
-    headers: dict[str, Any] | None,
-) -> dict[str, Any]:
+def _inject_correlation_id_headers(headers: dict[str, Any] | None) -> dict[str, Any]:
     """Дополнить FastStream-headers ``correlation_id`` из ContextVar.
 
     Sprint 17 K3 W3 (D12). Caller-override (явный ключ ``correlation_id``)

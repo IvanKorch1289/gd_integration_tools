@@ -30,7 +30,7 @@ class PassportRuRecognizer(PatternRecognizer):
                 name="passport_ru_series_number",
                 regex=r"\b(\d{2}\s?\d{2})\s+(\d{6})\b",
                 score=0.3,
-            ),
+            )
         ]
         super().__init__(
             supported_entity="PASSPORT_RU",

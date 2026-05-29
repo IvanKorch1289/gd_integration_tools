@@ -73,9 +73,7 @@ max_staleness = st.number_input(
 )
 if st.button("Augment") and augment_query:
     result = client.augment(
-        augment_query,
-        namespace=augment_ns or None,
-        top_k=augment_top_k,
+        augment_query, namespace=augment_ns or None, top_k=augment_top_k
     )
     worst = result.get("worst_freshness", "fresh")
     badge = {

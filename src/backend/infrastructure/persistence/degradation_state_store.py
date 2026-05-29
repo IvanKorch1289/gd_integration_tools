@@ -110,6 +110,6 @@ class RedisDegradationStateStore:
             try:
                 data = json.loads(raw)
                 result.append(DegradationTransition(**data))
-            except (json.JSONDecodeError, TypeError):
+            except json.JSONDecodeError, TypeError:
                 continue
         return result

@@ -58,10 +58,7 @@ def handle_api_error(
 
 
 def try_except(
-    default: Any = None,
-    *,
-    message: str = "Произошла ошибка",
-    reraise: bool = False,
+    default: Any = None, *, message: str = "Произошла ошибка", reraise: bool = False
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Декоратор для обработки исключений в функциях страниц.
 
@@ -73,6 +70,7 @@ def try_except(
     Returns:
         Декорированная функция.
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
@@ -82,7 +80,9 @@ def try_except(
                 if reraise:
                     raise
                 return default
+
         return wrapper
+
     return decorator
 
 
@@ -95,6 +95,7 @@ def require_api_client(func: Callable[..., Any]) -> Callable[..., Any]:
     Returns:
         Декорированная функция.
     """
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         from src.frontend.streamlit_app.api_clients.base import get_base_client
 
@@ -106,4 +107,5 @@ def require_api_client(func: Callable[..., Any]) -> Callable[..., Any]:
         except Exception as exc:
             handle_api_error(exc, default_message="API недоступен")
             return None
+
     return wrapper

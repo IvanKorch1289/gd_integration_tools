@@ -56,10 +56,7 @@ async def consolidate_idle_sessions():
 
         svc = get_langmem_service()
         report = await svc.consolidate()
-        scheduler_logger.info(
-            "LangMem consolidation finished: %s",
-            report,
-        )
+        scheduler_logger.info("LangMem consolidation finished: %s", report)
     except Exception as exc:  # noqa: BLE001
         scheduler_logger.error(
             "LangMem consolidation failed: %s", str(exc), exc_info=True

@@ -59,7 +59,9 @@ class AuditService:
 
     __slots__ = ("_backend",)
 
-    def __init__(self, clickhouse_service: "ClickHouseAuditService | None" = None) -> None:
+    def __init__(
+        self, clickhouse_service: "ClickHouseAuditService | None" = None
+    ) -> None:
         self._backend = clickhouse_service
 
     async def emit(

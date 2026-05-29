@@ -53,7 +53,7 @@ class InnRecognizer(PatternRecognizer):
 
     def __init__(self) -> None:
         patterns = [
-            Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4),
+            Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4)
         ]
         super().__init__(
             supported_entity="INN_RU",

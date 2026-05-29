@@ -6,10 +6,7 @@ correlation-id. Данные берутся из ExecutionEngine trace-buffer'а
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client
 

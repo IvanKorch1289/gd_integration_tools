@@ -21,7 +21,9 @@ if TYPE_CHECKING:
 
 __all__ = ("MLModelLoaderProtocol", "MLModelType")
 
-MLModelType: TypeAlias = Literal["torch", "torchscript", "onnx", "sklearn", "catboost", "lightgbm", "joblib"]
+MLModelType: TypeAlias = Literal[
+    "torch", "torchscript", "onnx", "sklearn", "catboost", "lightgbm", "joblib"
+]
 
 
 @runtime_checkable
@@ -34,9 +36,7 @@ class MLModelLoaderProtocol(Protocol):
     """
 
     async def load(
-        self,
-        path: str | Path,
-        model_type: MLModelType | None = None,
+        self, path: str | Path, model_type: MLModelType | None = None
     ) -> Any:
         """Загружает модель (lazy, с LRU-кэшированием).
 

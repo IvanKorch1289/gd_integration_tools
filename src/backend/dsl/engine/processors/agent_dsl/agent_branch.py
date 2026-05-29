@@ -75,13 +75,9 @@ class AgentBranchProcessor(BaseAIProcessor):
         name: str | None = None,
     ) -> None:
         if not source_property:
-            raise ValueError(
-                "AgentBranchProcessor: source_property обязателен"
-            )
+            raise ValueError("AgentBranchProcessor: source_property обязателен")
         if not branches and default is None:
-            raise ValueError(
-                "AgentBranchProcessor: требуется branches или default"
-            )
+            raise ValueError("AgentBranchProcessor: требуется branches или default")
         super().__init__(name=name or f"agent_branch:{source_property}")
         self.source_property = source_property
         self.branches = {k: list(v) for k, v in branches.items()}
@@ -97,8 +93,7 @@ class AgentBranchProcessor(BaseAIProcessor):
         if target is None:
             target = self.default
             exchange.set_property(
-                "agent_branch_taken",
-                "default" if target is not None else "skip",
+                "agent_branch_taken", "default" if target is not None else "skip"
             )
             if target is None:
                 _logger.warning(
@@ -139,9 +134,7 @@ class AgentBranchProcessor(BaseAIProcessor):
         spec: dict[str, Any] = {"source_property": self.source_property}
         branches_spec: dict[str, list[dict[str, Any]]] = {}
         for verdict, processors in self.branches.items():
-            branches_spec[verdict] = [
-                p.to_spec() or {} for p in processors
-            ]
+            branches_spec[verdict] = [p.to_spec() or {} for p in processors]
         spec["branches"] = branches_spec
         if self.default is not None:
             spec["default"] = [p.to_spec() or {} for p in self.default]

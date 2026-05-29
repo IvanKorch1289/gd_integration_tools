@@ -411,7 +411,6 @@ def _resolve_unified_audit_service() -> Any | None:
         return None
 
 
-
 # ─────────────── Redis stream client (Wave 6.3, llm_judge / semantic_cache) ───────────────
 
 

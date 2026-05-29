@@ -232,7 +232,6 @@ async def compile_agent_invoke_step(
         decl: Декларация agent_invoke шага.
         ctx: Рантайм-контекст workflow (содержит ``_input`` и ``_outputs``).
     """
-    from temporalio import workflow
 
     # Resolve input context
     if decl.input_context is None:
@@ -244,7 +243,11 @@ async def compile_agent_invoke_step(
         for part in parts:
             if cursor is None:
                 break
-            cursor = cursor.get(part) if isinstance(cursor, dict) else getattr(cursor, part, None)
+            cursor = (
+                cursor.get(part)
+                if isinstance(cursor, dict)
+                else getattr(cursor, part, None)
+            )
         raw_input = cursor if cursor is not None else {}
     else:
         # Simple dot-path
@@ -253,7 +256,11 @@ async def compile_agent_invoke_step(
         for part in parts:
             if cursor is None:
                 break
-            cursor = cursor.get(part) if isinstance(cursor, dict) else getattr(cursor, part, None)
+            cursor = (
+                cursor.get(part)
+                if isinstance(cursor, dict)
+                else getattr(cursor, part, None)
+            )
         raw_input = cursor if cursor is not None else {}
 
     timeout_s = decl.timeout_s or ctx.get("_default_timeout_s", 300.0)

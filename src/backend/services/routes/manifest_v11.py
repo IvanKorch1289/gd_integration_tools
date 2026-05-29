@@ -42,10 +42,7 @@ class _RouteTimeoutModel(BaseModel):
     def to_spec(self) -> RouteTimeoutSpec:
         """Конвертация pydantic-модели → frozen dataclass."""
         return RouteTimeoutSpec(
-            connect=self.connect,
-            read=self.read,
-            write=self.write,
-            total=self.total,
+            connect=self.connect, read=self.read, write=self.write, total=self.total
         )
 
 
@@ -65,8 +62,8 @@ class _SecurityModel(BaseModel):
     requires_permission: tuple[str, ...] = Field(
         default_factory=tuple,
         description=(
-            "Список required permissions в формате \"role:<role_name>\" или "
-            "\"scope:<scope_name>\". При route_authz_requires_permission=True "
+            'Список required permissions в формате "role:<role_name>" или '
+            '"scope:<scope_name>". При route_authz_requires_permission=True '
             "AuthorizationGateway проверяет наличие всех перечисленных "
             "permissions у principal перед dispatch на route."
         ),

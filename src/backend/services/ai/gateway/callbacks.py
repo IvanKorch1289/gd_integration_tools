@@ -88,7 +88,7 @@ class CostTrackingCallback:
             if value:
                 try:
                     return float(value)
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     return 0.0
         if isinstance(response_obj, dict):
             return float(response_obj.get("response_cost", 0.0) or 0.0)
@@ -137,9 +137,7 @@ class FallbackTrackingCallback:
             return self._counter
         self._initialized = True
         try:
-            from src.backend.core.utils.metrics_registry import (
-                metrics_registry,
-            )
+            from src.backend.core.utils.metrics_registry import metrics_registry
 
             self._counter = metrics_registry.counter(
                 "ai_graph_fallback_total",

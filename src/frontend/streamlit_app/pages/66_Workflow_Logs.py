@@ -25,12 +25,10 @@ Sprint 5 K5 W1 — Frontend.
 
 from __future__ import annotations
 
-import sys
 from datetime import datetime, timedelta
 
 import pandas as pd
 import streamlit as st
-
 
 from src.backend.core.config.features import feature_flags  # noqa: E402
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402

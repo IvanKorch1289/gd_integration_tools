@@ -116,9 +116,7 @@ def get_service(key: Hashable | type[T]) -> T | Any:
                 str(k) if not isinstance(k, type) else k.__name__
                 for k in sorted(_known_keys, key=lambda x: str(x))
             )
-            raise KeyError(
-                f"Сервис '{key}' не зарегистрирован. Доступные: {available}"
-            )
+            raise KeyError(f"Сервис '{key}' не зарегистрирован. Доступные: {available}")
         # Пытаемся svcs Container (type-keys); fallback — прямой вызов factory.
         instance: Any
         try:

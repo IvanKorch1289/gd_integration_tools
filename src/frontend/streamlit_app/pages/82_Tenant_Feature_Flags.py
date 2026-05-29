@@ -16,18 +16,14 @@ UI для multi-replica runtime управления feature-flag overrides:
 
 from __future__ import annotations
 
-import sys
 from typing import Any
 
 import streamlit as st
 
-
 from src.frontend.streamlit_app.api_client import get_api_client
 
 st.set_page_config(
-    page_title="Tenant Feature Flags",
-    page_icon=":busts_in_silhouette:",
-    layout="wide",
+    page_title="Tenant Feature Flags", page_icon=":busts_in_silhouette:", layout="wide"
 )
 st.header("Tenant Feature Flags (per-tenant overrides)")
 st.caption(
@@ -93,10 +89,10 @@ st.divider()
 # ─── Set override ────────────────────────────────────────────────────
 st.subheader("Установить override")
 with st.form("set_override_form", clear_on_submit=False):
-    flag_name = st.text_input("flag", value="", placeholder="например, metrics_registry_strict")
-    tenant_input = st.text_input(
-        "tenant_id (пусто = global override)", value=""
+    flag_name = st.text_input(
+        "flag", value="", placeholder="например, metrics_registry_strict"
     )
+    tenant_input = st.text_input("tenant_id (пусто = global override)", value="")
     kind = st.selectbox(
         "Тип значения", options=["boolean", "string", "integer", "json"]
     )
@@ -155,6 +151,4 @@ with st.form("clear_override_form", clear_on_submit=False):
                 )
                 st.rerun()
             else:
-                st.warning(
-                    "Override не найден (404) или backend недоступен."
-                )
+                st.warning("Override не найден (404) или backend недоступен.")

@@ -177,7 +177,10 @@ class SmartSessionManager:
         if self._lag_exceeded:
             _logger.debug(
                 "smart_session.replica_lag_exceeded: fallback to primary",
-                extra={"lag_bytes": self._current_replay_lag_bytes, "budget_bytes": self._lag_budget_bytes},
+                extra={
+                    "lag_bytes": self._current_replay_lag_bytes,
+                    "budget_bytes": self._lag_budget_bytes,
+                },
             )
             return self._primary, False
         return self._replica, True
@@ -222,7 +225,9 @@ class SmartSessionManager:
                 row = result.fetchone()
                 if row is not None:
                     self._current_replay_lag_bytes = int(row[0])
-                    self._lag_exceeded = self._current_replay_lag_bytes > self._lag_budget_bytes
+                    self._lag_exceeded = (
+                        self._current_replay_lag_bytes > self._lag_budget_bytes
+                    )
                     _logger.debug(
                         "smart_session.lag_checked",
                         extra={

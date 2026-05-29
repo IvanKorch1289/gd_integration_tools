@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass, field
 from typing import Any, TypedDict
 
 __all__ = ("DenseResult", "DenseRetriever")
@@ -40,9 +39,7 @@ class DenseResult(TypedDict):
 
 
 EmbedFn = Callable[[Sequence[str]], Awaitable[list[list[float]]]]
-SearchVectorsFn = Callable[
-    [list[list[float]], int], Awaitable[list[dict[str, Any]]]
-]
+SearchVectorsFn = Callable[[list[list[float]], int], Awaitable[list[dict[str, Any]]]]
 SearchTextsFn = Callable[[str, int], Awaitable[list[dict[str, Any]]]]
 
 
@@ -74,11 +71,7 @@ class DenseRetriever:
         self._chunk_id_field = chunk_id_field
         self._default_score = default_score
 
-    async def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-    ) -> list[DenseResult]:
+    async def retrieve(self, query: str, top_k: int = 5) -> list[DenseResult]:
         """Dense retrieval по query.
 
         Алгоритм:
@@ -107,10 +100,7 @@ class DenseRetriever:
             return []
 
         try:
-            results = await self._search_vectors(
-                [embeddings[0]],
-                top_k,
-            )
+            results = await self._search_vectors([embeddings[0]], top_k)
         except Exception as exc:  # noqa: BLE001
             logger.warning("dense_retriever.search_failed: %s", exc)
             return []
@@ -121,8 +111,7 @@ class DenseRetriever:
         """Преобразует result dict → DenseResult."""
         chunk_id = str(
             doc.get(self._chunk_id_field)
-            or doc.get("metadata", {}
-            ).get(self._chunk_id_field)
+            or doc.get("metadata", {}).get(self._chunk_id_field)
             or ""
         )
         return DenseResult(

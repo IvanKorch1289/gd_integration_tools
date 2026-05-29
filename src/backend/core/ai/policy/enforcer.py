@@ -92,7 +92,9 @@ class AIPolicyEnforcer:
 
         # NeMo — Python 3.14 incompat, пропускаем
         if name.startswith("nemo:"):
-            logger.debug("AIPolicyEnforcer: nemo input guard skipped (Python 3.14 incompat)")
+            logger.debug(
+                "AIPolicyEnforcer: nemo input guard skipped (Python 3.14 incompat)"
+            )
             return None
 
         # Rebuff
@@ -112,6 +114,7 @@ class AIPolicyEnforcer:
         """Rebuff input guard check."""
         try:
             from src.backend.services.ai.guardrails.rebuff_client import RebuffClient
+
             client = RebuffClient()
             result = await client.detect(prompt)
             if result.injected:
@@ -148,6 +151,7 @@ class AIPolicyEnforcer:
         """Lakera input guard check."""
         try:
             from src.backend.services.ai.guardrails.lakera_client import LakeraClient
+
             client = LakeraClient()
             result = await client.screen(prompt)
             if result.flagged:
@@ -181,12 +185,7 @@ class AIPolicyEnforcer:
             return GuardResult(guard_name=ref.name, verdict="passed")
 
     def _handle_guard_block(
-        self,
-        *,
-        guard_name: str,
-        flagged: list[str],
-        on_block: str,
-        content: str,
+        self, *, guard_name: str, flagged: list[str], on_block: str, content: str
     ) -> None:
         """Handle guard block according to on_block policy."""
         if on_block == "fail":
@@ -243,7 +242,11 @@ class AIPolicyEnforcer:
 
             envelope = DLQEnvelope(
                 transport="ai_guard",
-                original_payload={"content": content[:200], "guard": guard_name, "categories": flagged},
+                original_payload={
+                    "content": content[:200],
+                    "guard": guard_name,
+                    "categories": flagged,
+                },
                 error_class="GuardrailViolation",
                 error_message=f"Guard {guard_name} blocked: {flagged}",
                 reason=DLQReason.UNEXPECTED,
@@ -284,9 +287,7 @@ class AIPolicyEnforcer:
         on_block = ref.on_block
 
         if not name.startswith("llama_guard:"):
-            logger.warning(
-                "AIPolicyEnforcer: unknown output guard %r — skipped", name
-            )
+            logger.warning("AIPolicyEnforcer: unknown output guard %r — skipped", name)
             return None
 
         runtime = self._llama_guard_runtime
@@ -333,9 +334,7 @@ class AIPolicyEnforcer:
 
     # ── Sanitizers (stub, S25 W4 + S26 W2) ────────────────────────────────────
 
-    async def sanitize_input(
-        self, request: "AIRequest", policy: "AIPolicySpec"
-    ) -> str:
+    async def sanitize_input(self, request: "AIRequest", policy: "AIPolicySpec") -> str:
         """Применить :attr:`AIPolicySpec.input_sanitizers` (PIITokenizer).
 
         Использует ``self._pii_tokenizer``, который является экземпляром
@@ -349,7 +348,11 @@ class AIPolicyEnforcer:
         Returns:
             Sanitized prompt-строку (PII заменён на placeholder'ы).
         """
-        prompt = getattr(request, "prompt_inline", None) or getattr(request, "prompt_ref", "") or ""
+        prompt = (
+            getattr(request, "prompt_inline", None)
+            or getattr(request, "prompt_ref", "")
+            or ""
+        )
         if not prompt or self._pii_tokenizer is None:
             return prompt
 

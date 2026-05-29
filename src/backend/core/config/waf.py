@@ -75,10 +75,7 @@ class WafSettings(BaseSettingsWithLoader):
     )
 
     clamav_port: int = Field(
-        default=3310,
-        ge=1,
-        le=65535,
-        description="TCP-порт clamd (стандартный — 3310).",
+        default=3310, ge=1, le=65535, description="TCP-порт clamd (стандартный — 3310)."
     )
 
     clamav_timeout: float = Field(

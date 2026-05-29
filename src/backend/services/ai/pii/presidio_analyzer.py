@@ -36,10 +36,7 @@ if TYPE_CHECKING:
     from presidio_analyzer import AnalyzerEngine, EntityRecognizer
     from presidio_anonymizer import AnonymizerEngine
 
-__all__ = (
-    "PresidioSanitizerAdapter",
-    "get_presidio_sanitizer_adapter",
-)
+__all__ = ("PresidioSanitizerAdapter", "get_presidio_sanitizer_adapter")
 
 logger = logging.getLogger("services.ai.pii.presidio")
 
@@ -67,10 +64,7 @@ class PresidioSanitizerAdapter:
     """
 
     def __init__(
-        self,
-        *,
-        default_language: str = "ru",
-        legacy_fallback: Any | None = None,
+        self, *, default_language: str = "ru", legacy_fallback: Any | None = None
     ) -> None:
         self._default_language = default_language
         # Lazy fallback: legacy AIDataSanitizer резолвится при первом
@@ -171,9 +165,9 @@ class PresidioSanitizerAdapter:
             SnilsRecognizer(),
             PassportRuRecognizer(),
             CreditCaseRecognizer(),
-            AddressRuRecognizer(),      # S28 W5
-            BankAccountRuRecognizer(),   # S28 W5
-            DriverLicenseRuRecognizer(), # S28 W5
+            AddressRuRecognizer(),  # S28 W5
+            BankAccountRuRecognizer(),  # S28 W5
+            DriverLicenseRuRecognizer(),  # S28 W5
         ]
 
     # ─── sync API (AISanitizerProtocol) ───────────────────────────────────
@@ -233,7 +227,9 @@ class PresidioSanitizerAdapter:
                 "недоступен. Установите extra `[ai-safety]` и выполните "
                 "`make pii-bootstrap` (загрузка ru_core_news_lg)."
             )
-        return self._presidio_sanitize_sync(text, language=language or self._default_language)
+        return self._presidio_sanitize_sync(
+            text, language=language or self._default_language
+        )
 
     async def sanitize_messages_async(
         self, messages: list[dict[str, str]]
@@ -249,7 +245,9 @@ class PresidioSanitizerAdapter:
         sanitized: list[dict[str, str]] = []
         for msg in messages:
             content = msg.get("content", "")
-            result = self._presidio_sanitize_sync(content, language=self._default_language)
+            result = self._presidio_sanitize_sync(
+                content, language=self._default_language
+            )
             full_mapping.update(result.replacements)
             sanitized.append({**msg, "content": result.sanitized_text})
         return sanitized, full_mapping
@@ -282,17 +280,13 @@ class PresidioSanitizerAdapter:
 
         replacements: dict[str, str] = {}
         sanitized = text
-        for idx, r in enumerate(
-            sorted(analyzer_results, key=lambda x: -x.start)
-        ):
+        for idx, r in enumerate(sorted(analyzer_results, key=lambda x: -x.start)):
             placeholder = f"[{r.entity_type}_{idx + 1}]"
             original = text[r.start : r.end]
             sanitized = sanitized[: r.start] + placeholder + sanitized[r.end :]
             replacements[placeholder] = original
 
-        return SanitizationResult(
-            sanitized_text=sanitized, replacements=replacements
-        )
+        return SanitizationResult(sanitized_text=sanitized, replacements=replacements)
 
     # ─── introspection ────────────────────────────────────────────────────
 
@@ -337,9 +331,7 @@ def _record_presidio_fallback(*, reason: str) -> None:
         reason: Причина fallback (``import_error`` / ``init_error``).
     """
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         counter = metrics_registry.counter(
             "presidio_fallback_total",

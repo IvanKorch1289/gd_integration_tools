@@ -297,9 +297,7 @@ class JwtBackend:
         # S18 W4 (S-L8-5): batch-revoke barrier по iat. Проверяется
         # независимо от jti — токен может иметь iat без jti. hasattr-guard
         # для backward-compat с blacklist-mock'ами без is_iat_revoked.
-        if self.blacklist is not None and hasattr(
-            self.blacklist, "is_iat_revoked"
-        ):
+        if self.blacklist is not None and hasattr(self.blacklist, "is_iat_revoked"):
             iat = claims.get("iat")
             try:
                 if await self.blacklist.is_iat_revoked(iat):

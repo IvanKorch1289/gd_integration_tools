@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -210,9 +210,7 @@ class MapReduceStrategy(ContextStrategy):
                 }
             )
 
-        total_tokens = sum(
-            len(enc.encode(str(c.get("content", "")))) for c in chunks
-        )
+        total_tokens = sum(len(enc.encode(str(c.get("content", "")))) for c in chunks)
 
         return ContextBudgetResult(
             messages=chunks,
@@ -273,7 +271,10 @@ class HierarchicalStrategy(ContextStrategy):
                 # Summarize this message (placeholder)
                 role = msg.get("role", "unknown")
                 summary_parts.insert(
-                    0, f"[Earlier {role}: {content[:100]}...]" if len(content) > 100 else f"[Earlier {role}: {content}]"
+                    0,
+                    f"[Earlier {role}: {content[:100]}...]"
+                    if len(content) > 100
+                    else f"[Earlier {role}: {content}]",
                 )
                 tokens_summary += msg_tokens
 
@@ -282,7 +283,8 @@ class HierarchicalStrategy(ContextStrategy):
             result.append(
                 {
                     "role": "system",
-                    "content": "Previous conversation summary:\n" + "\n".join(summary_parts),
+                    "content": "Previous conversation summary:\n"
+                    + "\n".join(summary_parts),
                     "_is_summary": True,
                 }
             )
@@ -320,9 +322,7 @@ class ContextBudgetManager:
         """Register a custom strategy."""
         self._strategies[strategy.strategy_type] = strategy
 
-    def get_strategy(
-        self, strategy_type: ContextStrategyType | str
-    ) -> ContextStrategy:
+    def get_strategy(self, strategy_type: ContextStrategyType | str) -> ContextStrategy:
         """Get strategy by type.
 
         Args:

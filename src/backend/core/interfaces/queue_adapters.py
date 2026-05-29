@@ -9,7 +9,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from src.backend.core.interfaces.queue_gateway import QueueGateway
 from src.backend.core.messaging.outbox import OutboxBackend, OutboxEvent
 
 __all__ = ("OutboxQueueAdapter", "AsyncioQueueAdapter")

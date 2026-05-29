@@ -7,7 +7,6 @@ All other modules import from here instead of duplicating values.
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 # ── API ────────────────────────────────────────────────────────────────────────
 

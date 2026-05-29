@@ -35,9 +35,9 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
+
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest
     from src.backend.dsl.engine.context import ExecutionContext
@@ -178,9 +178,7 @@ class AgentRunProcessor(BaseAIProcessor):
             },
         )
 
-    async def _invoke_with_retry(
-        self, gateway: Any, request: "AIRequest"
-    ) -> Any:
+    async def _invoke_with_retry(self, gateway: Any, request: "AIRequest") -> Any:
         """Retry-обёртка над gateway.invoke с exponential backoff.
 
         Retry на transient exceptions (GatewayUnavailable, network errors,

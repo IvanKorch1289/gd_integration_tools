@@ -30,11 +30,11 @@ __all__ = ("AddressRuRecognizer",)
 class AddressRuRecognizer(PatternRecognizer):
     """Presidio recognizer для российских адресов.
 
-    Регистрирует entity type ``ADDRESS_RU``. Средний score (0.5) —
-   contextual words могут повысить до 0.8.
+     Регистрирует entity type ``ADDRESS_RU``. Средний score (0.5) —
+    contextual words могут повысить до 0.8.
 
-    Не пытается валидировать адрес (это NER-задача, не regex). Цель —
-    перехватить типичные форматы прежде чем они попадут в LLM.
+     Не пытается валидировать адрес (это NER-задача, не regex). Цель —
+     перехватить типичные форматы прежде чем они попадут в LLM.
     """
 
     # Patterns for common Russian address components
@@ -58,21 +58,9 @@ class AddressRuRecognizer(PatternRecognizer):
 
     def __init__(self) -> None:
         patterns = [
-            Pattern(
-                name="ru_address_full",
-                regex=ADDRESS_PATTERN,
-                score=0.5,
-            ),
-            Pattern(
-                name="ru_address_short",
-                regex=SHORT_ADDRESS_PATTERN,
-                score=0.4,
-            ),
-            Pattern(
-                name="ru_postal_code",
-                regex=POSTAL_CODE_PATTERN,
-                score=0.3,
-            ),
+            Pattern(name="ru_address_full", regex=ADDRESS_PATTERN, score=0.5),
+            Pattern(name="ru_address_short", regex=SHORT_ADDRESS_PATTERN, score=0.4),
+            Pattern(name="ru_postal_code", regex=POSTAL_CODE_PATTERN, score=0.3),
         ]
         super().__init__(
             supported_entity="ADDRESS_RU",

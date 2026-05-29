@@ -43,12 +43,14 @@ else:
     # Маппинг полей из LangGraph SessionInfo в формат для отображения
     display_rows = []
     for s in sessions:
-        display_rows.append({
-            "Session ID": s.get("session_id", ""),
-            "Last Checkpoint": s.get("last_checkpoint_id", ""),
-            "Updated At": s.get("updated_at", ""),
-            "Checkpoint Count": s.get("checkpoint_count", 0),
-        })
+        display_rows.append(
+            {
+                "Session ID": s.get("session_id", ""),
+                "Last Checkpoint": s.get("last_checkpoint_id", ""),
+                "Updated At": s.get("updated_at", ""),
+                "Checkpoint Count": s.get("checkpoint_count", 0),
+            }
+        )
 
     st.dataframe(display_rows, use_container_width=True, height=500)
 
@@ -60,4 +62,9 @@ else:
             options=[s["Session ID"] for s in display_rows],
         )
         if selected_id:
-            st.json(data={"session_id": selected_id, "note": "Детали доступны через GET /api/v1/admin/langgraph/checkpoints/{session_id}"})
+            st.json(
+                data={
+                    "session_id": selected_id,
+                    "note": "Детали доступны через GET /api/v1/admin/langgraph/checkpoints/{session_id}",
+                }
+            )

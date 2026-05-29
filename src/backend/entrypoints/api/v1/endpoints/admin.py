@@ -4,11 +4,13 @@ from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
-from src.backend.infrastructure.cache.metrics_collector import get_cache_metrics_snapshot
+from src.backend.infrastructure.cache.metrics_collector import (
+    get_cache_metrics_snapshot,
+)
 from src.backend.schemas.route_schemas.admin import (
     AdminCacheInvalidatePatternSchema,
-    AdminCacheInvalidateTagsSchema,
     AdminCacheInvalidateTableSchema,
+    AdminCacheInvalidateTagsSchema,
     AdminCacheKeysQuerySchema,
     AdminCacheValuePathSchema,
     AdminToggleFeatureFlagQuerySchema,

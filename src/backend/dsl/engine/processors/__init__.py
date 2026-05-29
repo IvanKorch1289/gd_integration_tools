@@ -138,10 +138,10 @@ from src.backend.dsl.engine.processors.integration import (
     MemoryLoadProcessor,
     MemorySaveProcessor,
 )
-from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
 from src.backend.dsl.engine.processors.invoke import InvokeProcessor
 from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
 from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor
+from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
 from src.backend.dsl.engine.processors.notify import NotifyProcessor
 from src.backend.dsl.engine.processors.patterns import (
     BatchWindowProcessor,

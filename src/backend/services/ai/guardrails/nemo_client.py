@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from nemoguardrails import LLMRails, RailsConfig
+    pass
 
 __all__ = (
     "NeMoGuardrailsUnavailable",
@@ -108,8 +108,7 @@ def _check_dependencies() -> None:
         import nemoguardrails  # type: ignore[import-not-found]
     except ImportError as exc:
         raise NeMoGuardrailsUnavailable(
-            "nemoguardrails не установлен. "
-            "Установите: pip install nemoguardrails>=0.10"
+            "nemoguardrails не установлен. Установите: pip install nemoguardrails>=0.10"
         ) from exc
 
 
@@ -126,7 +125,6 @@ class NeMoGuardrailsRuntime:
     """
 
     def __init__(self, config: NeMoGuardrailsConfig | None = None) -> None:
-        import os
         from pathlib import Path
 
         self.config = config or NeMoGuardrailsConfig()
@@ -185,12 +183,12 @@ class NeMoGuardrailsRuntime:
                 инициализация не удалась.
         """
         try:
-            from nemoguardrails import RailsConfig
-
             # synchronous blocking call — run in thread pool to avoid
             # blocking the event loop (NeMo uses torch which may sync)
             import asyncio
             from concurrent.futures import ThreadPoolExecutor
+
+            from nemoguardrails import RailsConfig
 
             loop = asyncio.get_running_loop()
             executor = ThreadPoolExecutor(max_workers=1)
@@ -220,11 +218,7 @@ class NeMoGuardrailsRuntime:
         except Exception as exc:
             logger.warning("NeMo Guardrails check_input error: %s", exc)
             if self.config.fail_closed:
-                return {
-                    "safe": False,
-                    "reason": str(exc),
-                    "rail": "nemo_error",
-                }
+                return {"safe": False, "reason": str(exc), "rail": "nemo_error"}
             return {"safe": True, "response": None}
 
     async def check_output(self, prompt: str, completion: str) -> dict[str, Any]:
@@ -270,11 +264,7 @@ class NeMoGuardrailsRuntime:
         except Exception as exc:
             logger.warning("NeMo Guardrails check_output error: %s", exc)
             if self.config.fail_closed:
-                return {
-                    "safe": False,
-                    "reason": str(exc),
-                    "rail": "nemo_output_error",
-                }
+                return {"safe": False, "reason": str(exc), "rail": "nemo_output_error"}
             return {"safe": True, "response": None}
 
 

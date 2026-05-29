@@ -115,11 +115,7 @@ class HyDERetriever:
         self._generate_hypothetical = generate_hypothetical
         self._config = config or HyDEConfig()
 
-    async def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-    ) -> list[HyDEResult]:
+    async def retrieve(self, query: str, top_k: int = 5) -> list[HyDEResult]:
         """HyDE retrieval по query.
 
         Алгоритм:
@@ -175,11 +171,7 @@ class HyDERetriever:
         # Шаг 4: маппинг в HyDEResult.
         dense_results: list[HyDEResult] = []
         for doc in results[:top_k]:
-            chunk_id = str(
-                doc.get("id")
-                or doc.get("metadata", {}).get("id")
-                or ""
-            )
+            chunk_id = str(doc.get("id") or doc.get("metadata", {}).get("id") or "")
             dense_results.append(
                 HyDEResult(
                     chunk_id=chunk_id,
@@ -187,7 +179,9 @@ class HyDERetriever:
                     metadata=dict(doc.get("metadata") or {}),
                     score=float(doc.get("score", 1.0)),
                     hypothetical_document=(
-                        hypothetical_doc if self._config.include_hypothetical_in_result else ""
+                        hypothetical_doc
+                        if self._config.include_hypothetical_in_result
+                        else ""
                     ),
                 )
             )

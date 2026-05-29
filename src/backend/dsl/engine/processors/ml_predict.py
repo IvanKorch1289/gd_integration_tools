@@ -128,9 +128,7 @@ class MLPredictProcessor(BaseProcessor):
                 return value
         return value
 
-    async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет ML-инференс."""
         del context  # Зарезервирован для будущего use (correlation, tenant_id)
         # 1. Найти artifact URI модели
@@ -183,7 +181,11 @@ class MLPredictProcessor(BaseProcessor):
                     if tensor.ndim == 1:
                         tensor = tensor.unsqueeze(0)
                     output = model(tensor)
-                    prediction = output.squeeze().tolist() if hasattr(output, "squeeze") else list(output)
+                    prediction = (
+                        output.squeeze().tolist()
+                        if hasattr(output, "squeeze")
+                        else list(output)
+                    )
             # ONNX session
             elif hasattr(model, "run"):
                 input_name = model.get_inputs()[0].name
@@ -195,7 +197,9 @@ class MLPredictProcessor(BaseProcessor):
                 if hasattr(prediction, "tolist"):
                     prediction = prediction.tolist()
             else:
-                raise RuntimeError(f"Loaded model type not supported for inference: {type(model)}")
+                raise RuntimeError(
+                    f"Loaded model type not supported for inference: {type(model)}"
+                )
 
             exchange.set_property(self._output_property, prediction)
 

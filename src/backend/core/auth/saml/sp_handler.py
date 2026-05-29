@@ -74,10 +74,7 @@ class SamlSpHandler:
         )
 
     def consume_acs(
-        self,
-        *,
-        request_id: str,
-        validator_factory: Callable[..., SamlAuthResult],
+        self, *, request_id: str, validator_factory: Callable[..., SamlAuthResult]
     ) -> SamlAuthResult:
         """Обработать SAMLResponse в ACS-endpoint.
 

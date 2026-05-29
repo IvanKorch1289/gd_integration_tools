@@ -155,14 +155,16 @@ class GuardrailsMetricsService:
         # ClickHouse persistence — fire-and-forget, errors logged but non-fatal
         if self._ch_writer is not None:
             try:
-                self._ch_writer.add({
-                    "tenant_id": tenant_id,
-                    "verdict": verdict.value,
-                    "reason": reason.value if reason else "other",
-                    "model_used": model_used,
-                    "cost_usd": cost_usd,
-                    "latency_ms": latency_ms,
-                })
+                self._ch_writer.add(
+                    {
+                        "tenant_id": tenant_id,
+                        "verdict": verdict.value,
+                        "reason": reason.value if reason else "other",
+                        "model_used": model_used,
+                        "cost_usd": cost_usd,
+                        "latency_ms": latency_ms,
+                    }
+                )
             except Exception as exc:  # noqa: BLE001
                 logger.debug("GuardrailsMetrics CH write failed: %s", exc)
 

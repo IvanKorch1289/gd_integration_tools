@@ -33,9 +33,7 @@ class RouteClient(BaseAPIClient):
 
     def update_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any]:
         """PUT /api/v1/admin/dsl-routes/{id} — обновить маршрут."""
-        return self.put(
-            f"/api/v1/admin/dsl-routes/{route_id}", json={"yaml": yaml_str}
-        )
+        return self.put(f"/api/v1/admin/dsl-routes/{route_id}", json={"yaml": yaml_str})
 
     def delete_dsl_route(self, route_id: str) -> bool:
         """DELETE /api/v1/admin/dsl-routes/{id} — удалить маршрут."""
@@ -58,8 +56,7 @@ class RouteClient(BaseAPIClient):
         """POST /api/v1/admin/dsl-routes/{id}/diff — diff с переданным YAML."""
         try:
             return self.post(
-                f"/api/v1/admin/dsl-routes/{route_id}/diff",
-                json={"yaml": yaml_str},
+                f"/api/v1/admin/dsl-routes/{route_id}/diff", json={"yaml": yaml_str}
             )
         except Exception:  # noqa: BLE001
             return None

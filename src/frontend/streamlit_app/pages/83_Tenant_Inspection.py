@@ -18,18 +18,11 @@ Sprint 21 — номер 83 потому что 81/82 уже заняты Adapti
 
 from __future__ import annotations
 
-import sys
-
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client  # noqa: E402
 
-st.set_page_config(
-    page_title="Tenant Inspection (S21)",
-    page_icon="🛡️",
-    layout="wide",
-)
+st.set_page_config(page_title="Tenant Inspection (S21)", page_icon="🛡️", layout="wide")
 st.header("Tenant Inspection — Sprint 21 multi-tenancy + resilience")
 st.caption(
     "Read-only dashboard: cache hit-rates per tenant + RLS policy status + "
@@ -46,9 +39,7 @@ if _refresh_seconds > 0:
 
         st_autorefresh(interval=_refresh_seconds * 1000, key="s21_inspect_refresh")
     except ImportError:
-        st.sidebar.caption(
-            "(streamlit-autorefresh не установлен — обновляйте через R)"
-        )
+        st.sidebar.caption("(streamlit-autorefresh не установлен — обновляйте через R)")
 
 client = get_api_client()
 tenants_payload = client.get_tenants()
@@ -68,8 +59,7 @@ selected_id = st.selectbox(
 cols_overview = st.columns(4)
 cols_overview[0].metric("Всего tenants", tenants_payload.get("total", 0))
 cols_overview[1].metric(
-    "Активных",
-    sum(1 for t in tenants_list if t.get("active", True)),
+    "Активных", sum(1 for t in tenants_list if t.get("active", True))
 )
 
 
@@ -135,7 +125,10 @@ pool_rows = [
     {"metric": "Total sessions", "value": "—"},
     {"metric": "In use", "value": "—"},
     {"metric": "Idle", "value": "—"},
-    {"metric": "Feature-flag", "value": "desktop_rpa_session_pool_enabled (default-OFF)"},
+    {
+        "metric": "Feature-flag",
+        "value": "desktop_rpa_session_pool_enabled (default-OFF)",
+    },
 ]
 st.dataframe(pool_rows, hide_index=True, use_container_width=True)
 
@@ -145,8 +138,7 @@ st.dataframe(pool_rows, hide_index=True, use_container_width=True)
 # ─────────────────────────────────────────────────────────────────────────
 st.subheader("4. Scheduler DLQ (S21 W4)")
 st.caption(
-    "Последние failed APScheduler jobs. Endpoint: "
-    "`GET /admin/scheduler/dlq?limit=10`."
+    "Последние failed APScheduler jobs. Endpoint: `GET /admin/scheduler/dlq?limit=10`."
 )
 
 dlq_entries: list[dict] = []

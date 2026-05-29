@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.core.ai.agent_registry import AgentRegistry
-    from src.backend.core.ai.agent_spec import AgentSpec, MemoryScope
+    from src.backend.core.ai.agent_spec import AgentSpec
     from src.backend.dsl.workflow.orchestrator import OrchestratorSpec
 
 __all__ = ("OrchestratorEngine", "RoutingResult")
@@ -77,9 +77,7 @@ class OrchestratorEngine:
         self._registry = registry
 
     async def route(
-        self,
-        task: dict[str, Any],
-        orchestrator_spec: "OrchestratorSpec",
+        self, task: dict[str, Any], orchestrator_spec: "OrchestratorSpec"
     ) -> RoutingResult:
         """Маршрутизировать задачу к агенту на основе routing rules.
 
@@ -104,10 +102,7 @@ class OrchestratorEngine:
             # Fallback: return default_agent if available
             if orchestrator_spec.default_agent:
                 agent = self._registry.get_agent(orchestrator_spec.default_agent)
-                return RoutingResult(
-                    target_agent=agent,
-                    target_model=agent.model,
-                )
+                return RoutingResult(target_agent=agent, target_model=agent.model)
             raise ValueError(
                 "OrchestratorEngine.route: workflow_orchestrator_enabled=False "
                 "and no default_agent specified"
@@ -140,10 +135,7 @@ class OrchestratorEngine:
         # No rule matched — use default_agent
         if orchestrator_spec.default_agent:
             agent = self._registry.get_agent(orchestrator_spec.default_agent)
-            return RoutingResult(
-                target_agent=agent,
-                target_model=agent.model,
-            )
+            return RoutingResult(target_agent=agent, target_model=agent.model)
 
         raise ValueError(
             "OrchestratorEngine.route: no routing rule matched and "

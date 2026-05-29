@@ -183,9 +183,7 @@ class SkillRegistry:
 
         return results
 
-    def from_python_decorator(
-        self, func: "Callable[..., Any]"
-    ) -> SkillSpec:
+    def from_python_decorator(self, func: "Callable[..., Any]") -> SkillSpec:
         """Создать :class:`SkillSpec` из legacy ``@agent_tool``-функции.
 
         Args:
@@ -249,13 +247,14 @@ class SkillRegistry:
         # In production, every declared capability must pass before handler runs.
         _capability_check: Any = None
         try:
-            from src.backend.core.plugin_runtime.sandbox import CapabilityChecker
-
             # CapabilityChecker is a type alias, not an instance.
             # Try to get the global check function from the sandbox module.
             import src.backend.core.plugin_runtime.sandbox as sandbox_module
+            from src.backend.core.plugin_runtime.sandbox import CapabilityChecker
 
-            _capability_check = getattr(sandbox_module, "_global_capability_check", None)
+            _capability_check = getattr(
+                sandbox_module, "_global_capability_check", None
+            )
         except ImportError:
             pass  # sandbox module not available — skip check
 

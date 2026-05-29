@@ -111,9 +111,7 @@ class PolicyResolver:
         self._cache: dict[tuple[str, str], AIPolicySpec] = {}
         self._policies: list[AIPolicySpec] | None = None
 
-    async def resolve(
-        self, workflow_id: str, tenant_id: str
-    ) -> AIPolicySpec | None:
+    async def resolve(self, workflow_id: str, tenant_id: str) -> AIPolicySpec | None:
         """Резолвер :class:`AIPolicySpec` по ``workflow_id`` + ``tenant_id``.
 
         Args:
@@ -207,4 +205,6 @@ class PolicyResolver:
         try:
             return AIPolicySpec.model_validate(raw)
         except (TypeError, ValueError) as exc:
-            raise PolicyLoadError(path, f"AIPolicySpec validation error: {exc}") from exc
+            raise PolicyLoadError(
+                path, f"AIPolicySpec validation error: {exc}"
+            ) from exc

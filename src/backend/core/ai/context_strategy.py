@@ -245,12 +245,7 @@ class HierarchicalStrategy(ContextStrategy):
     condensed: each level halves the group size.
     """
 
-    def __init__(
-        self,
-        *,
-        levels: int = 3,
-        base_group_size: int = 20,
-    ) -> None:
+    def __init__(self, *, levels: int = 3, base_group_size: int = 20) -> None:
         """Initialize.
 
         Args:
@@ -309,7 +304,11 @@ class HierarchicalStrategy(ContextStrategy):
                 result.append(condensation)
                 available -= t
                 # Move older messages to next level
-                current_group = current_group[:-group_size] if len(current_group) > group_size else []
+                current_group = (
+                    current_group[:-group_size]
+                    if len(current_group) > group_size
+                    else []
+                )
             else:
                 logger.debug(
                     "Hierarchical level %d: summary %d tokens exceeds remaining %d",

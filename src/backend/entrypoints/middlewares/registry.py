@@ -40,11 +40,7 @@ from importlib import import_module
 from threading import Lock
 from typing import Any
 
-__all__ = (
-    "MiddlewareRegistry",
-    "MiddlewareSpec",
-    "default_registry",
-)
+__all__ = ("MiddlewareRegistry", "MiddlewareSpec", "default_registry")
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,11 +120,7 @@ class MiddlewareRegistry:
         with self._lock:
             self._specs[name] = spec
 
-    def register_from_plugin(
-        self,
-        plugin_name: str,
-        spec: MiddlewareSpec,
-    ) -> None:
+    def register_from_plugin(self, plugin_name: str, spec: MiddlewareSpec) -> None:
         """Регистрирует middleware, заявленный плагином (``plugin.toml``).
 
         ``spec`` уже содержит ``middleware_cls`` (загруженный через
@@ -147,9 +139,7 @@ class MiddlewareRegistry:
             self._specs[spec.name] = marked
 
     def register_from_toml(
-        self,
-        plugin_name: str,
-        toml_section: Iterable[Mapping[str, Any]],
+        self, plugin_name: str, toml_section: Iterable[Mapping[str, Any]]
     ) -> None:
         """Распарсить ``plugin.toml`` секцию ``[[middleware]]`` и зарегистрировать.
 
@@ -201,8 +191,7 @@ class MiddlewareRegistry:
                 self._specs[name] = spec
 
     def register_from_entry_points(
-        self,
-        group: str = "gd_integration_tools.middleware_hooks",
+        self, group: str = "gd_integration_tools.middleware_hooks"
     ) -> None:
         """Подобрать middleware через entry-points группу.
 
@@ -309,9 +298,7 @@ class MiddlewareRegistry:
     def specs(self) -> tuple[MiddlewareSpec, ...]:
         """Вернуть упорядоченный snapshot всех зарегистрированных spec'ов."""
         with self._lock:
-            return tuple(
-                sorted(self._specs.values(), key=lambda s: (s.order, s.name))
-            )
+            return tuple(sorted(self._specs.values(), key=lambda s: (s.order, s.name)))
 
     def clear(self) -> None:
         """Удалить все зарегистрированные spec'и (для тестов)."""

@@ -142,8 +142,12 @@ class AgentRegistry:
                 if "retry_max_attempts" in raw:
                     retry_policy = RetryPolicy(
                         max_attempts=int(raw.get("retry_max_attempts", 3)),
-                        initial_interval_s=float(raw.get("retry_initial_interval_s", 1.0)),
-                        backoff_coefficient=float(raw.get("retry_backoff_coefficient", 2.0)),
+                        initial_interval_s=float(
+                            raw.get("retry_initial_interval_s", 1.0)
+                        ),
+                        backoff_coefficient=float(
+                            raw.get("retry_backoff_coefficient", 2.0)
+                        ),
                     )
 
                 spec = AgentSpec(

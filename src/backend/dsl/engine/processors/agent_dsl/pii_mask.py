@@ -135,8 +135,10 @@ class PIIMaskProcessor(BaseAIProcessor):
                     if isinstance(cursor, dict)
                     else getattr(cursor, part, None)
                 )
-            return cursor if isinstance(cursor, str) else (
-                str(cursor) if cursor is not None else ""
+            return (
+                cursor
+                if isinstance(cursor, str)
+                else (str(cursor) if cursor is not None else "")
             )
 
         cursor = exchange.get_property(head)
@@ -148,8 +150,10 @@ class PIIMaskProcessor(BaseAIProcessor):
                 if isinstance(cursor, dict)
                 else getattr(cursor, part, None)
             )
-        return cursor if isinstance(cursor, str) else (
-            str(cursor) if cursor is not None else ""
+        return (
+            cursor
+            if isinstance(cursor, str)
+            else (str(cursor) if cursor is not None else "")
         )
 
     def _write_target(self, exchange: "Exchange[Any]", masked_text: str) -> None:

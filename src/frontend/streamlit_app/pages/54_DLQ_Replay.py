@@ -22,12 +22,10 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-
 import streamlit as st  # noqa: E402
 
 st.set_page_config(

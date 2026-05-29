@@ -23,10 +23,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = (
-    "MCPGateway",
-    "create_mcp_gateway",
-)
+__all__ = ("MCPGateway", "create_mcp_gateway")
 
 
 def _check_feature_flag() -> bool:
@@ -128,22 +125,16 @@ class MCPGateway:
         from fastmcp import FastMCP
 
         if self._auth is not None:
-            mcp = FastMCP(
-                "GD Integration Tools Gateway",
-                auth=self._auth,
-            )
+            mcp = FastMCP("GD Integration Tools Gateway", auth=self._auth)
         else:
-            mcp = FastMCP(
-                "GD Integration Tools Gateway",
-            )
+            mcp = FastMCP("GD Integration Tools Gateway")
 
         self._register_namespaces(mcp)
         self._register_workflow_tools(mcp)
         self._register_system_tools(mcp)
 
         logger.info(
-            "MCPGateway created with namespaces: %s",
-            self._namespaces_registered,
+            "MCPGateway created with namespaces: %s", self._namespaces_registered
         )
         return mcp
 

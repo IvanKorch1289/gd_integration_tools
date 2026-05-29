@@ -39,11 +39,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-__all__ = (
-    "MemoryScope",
-    "HandoffPolicy",
-    "AgentSpec",
-)
+__all__ = ("MemoryScope", "HandoffPolicy", "AgentSpec")
 
 
 @dataclass(frozen=True, slots=True)

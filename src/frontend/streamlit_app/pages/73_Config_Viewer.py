@@ -9,11 +9,9 @@
 from __future__ import annotations
 
 import re
-import sys
 from typing import Any
 
 import streamlit as st
-
 
 from src.frontend.streamlit_app.api_client import get_api_client
 

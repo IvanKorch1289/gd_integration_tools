@@ -129,10 +129,7 @@ class BaseAIProcessor(BaseProcessor):
             exchange.set_error(f"{self.name} error: {exc}")
             exchange.stop()
             await self._emit_audit_safe(
-                exchange,
-                outcome="failure",
-                severity="error",
-                extra={"error": str(exc)},
+                exchange, outcome="failure", severity="error", extra={"error": str(exc)}
             )
             return
 

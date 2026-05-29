@@ -21,7 +21,7 @@ Example::
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
@@ -83,8 +83,7 @@ class WorkflowRunner:
         from src.backend.core.workflow import FakeWorkflowBackend
 
         self.backend: FakeWorkflowBackend = FakeWorkflowBackend(
-            default_result=default_result,
-            query_handlers=query_handlers,
+            default_result=default_result, query_handlers=query_handlers
         )
 
     async def run(
@@ -119,13 +118,10 @@ class WorkflowRunner:
             execution_timeout=execution_timeout,
         )
         result = await self.backend.await_completion(
-            handle=handle,
-            timeout=execution_timeout,
+            handle=handle, timeout=execution_timeout
         )
         return WorkflowRunResult(
-            output=result.output,
-            status=result.status,
-            failure=result.failure,
+            output=result.output, status=result.status, failure=result.failure
         )
 
     async def start(

@@ -28,6 +28,7 @@ def register_action_handlers() -> None:
 
     Функция идемпотентна — вызывается на startup приложения.
     """
+    from extensions.core_entities.orders.services.orders import get_order_service
     from src.backend.schemas.base import EmailSchema
     from src.backend.schemas.route_schemas.dadata import DadataGeolocateQuerySchema
     from src.backend.schemas.route_schemas.orders import OrderIdQuerySchema
@@ -39,7 +40,6 @@ def register_action_handlers() -> None:
     )
     from src.backend.services.ai.ai_agent import get_ai_agent_service
     from src.backend.services.core.admin import get_admin_service
-    from extensions.core_entities.orders.services.orders import get_order_service
     from src.backend.services.core.tech import get_tech_service
     from src.backend.services.integrations.dadata import get_dadata_service
     from src.backend.services.integrations.skb import get_skb_service

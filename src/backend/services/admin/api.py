@@ -88,15 +88,14 @@ class AdminService:
         authz = self._get_authz()
         if authz is None:
             # AuthZ unavailable — fail-open for dev, but log warning
-            logger.warning("AuthZ unavailable for %s@%s/%s — allowing", actor, resource, action)
+            logger.warning(
+                "AuthZ unavailable for %s@%s/%s — allowing", actor, resource, action
+            )
             return
 
         try:
             decision = await authz.authorize(
-                principal=actor,
-                resource=resource,
-                action=action,
-                context=context,
+                principal=actor, resource=resource, action=action, context=context
             )
         except Exception as exc:  # noqa: BLE001 — AuthZ error → deny
             emit_admin_action(
@@ -123,11 +122,7 @@ class AdminService:
     # ── feature flags ────────────────────────────────────────────────────────
 
     async def toggle_feature_flag(
-        self,
-        *,
-        flag_name: str,
-        enabled: bool,
-        actor: str = "system",
+        self, *, flag_name: str, enabled: bool, actor: str = "system"
     ) -> dict[str, Any]:
         """
         Toggle a feature flag by name (S19 K5 W5b).
@@ -162,11 +157,7 @@ class AdminService:
         )
         return {"flag": flag_name, "old": old_value, "new": bool(enabled)}
 
-    async def get_feature_flags(
-        self,
-        *,
-        actor: str = "system",
-    ) -> list[dict[str, Any]]:
+    async def get_feature_flags(self, *, actor: str = "system") -> list[dict[str, Any]]:
         """
         List all feature flags with their values (S19 K5 W5b).
 
@@ -198,11 +189,7 @@ class AdminService:
     # ── audit log ────────────────────────────────────────────────────────────
 
     async def get_audit_log(
-        self,
-        *,
-        actor: str = "system",
-        limit: int = 100,
-        event_type: str | None = None,
+        self, *, actor: str = "system", limit: int = 100, event_type: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Retrieve audit log entries (S19 K5 W5b).
@@ -228,9 +215,7 @@ class AdminService:
     # ── sessions ────────────────────────────────────────────────────────────
 
     async def list_active_sessions(
-        self,
-        *,
-        actor: str = "system",
+        self, *, actor: str = "system"
     ) -> list[dict[str, Any]]:
         """
         List active sessions (placeholder, S19 K5 W5b).

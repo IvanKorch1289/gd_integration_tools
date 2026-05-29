@@ -35,10 +35,17 @@ if TYPE_CHECKING:
 
 def __getattr__(name: str):
     if not TYPE_CHECKING:
-        if name in ("RateLimit", "RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter"):
+        if name in (
+            "RateLimit",
+            "RateLimitExceeded",
+            "RedisRateLimiter",
+            "get_rate_limiter",
+        ):
             from src.backend.infrastructure.resilience import unified_rate_limiter
+
             return getattr(unified_rate_limiter, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = (
     "RateLimit",

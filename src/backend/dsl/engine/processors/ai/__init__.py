@@ -5,6 +5,17 @@ plus the new RerankerProcessor and banking AI processors.
 """
 
 # Original AI processors from ai_processors.py (sibling file)
+# Banking AI processors
+from src.backend.dsl.engine.processors.ai.banking_processors import (
+    CreditScoreProcessor,
+    CustomerSegmentationProcessor,
+    FraudDetectionProcessor,
+    LoanEligibilityProcessor,
+    RiskAssessmentProcessor,
+)
+
+# Reranker processor
+from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
 from src.backend.dsl.engine.processors.ai_processors import (
     CacheProcessor,
     CacheWriteProcessor,
@@ -22,18 +33,6 @@ from src.backend.dsl.engine.processors.ai_processors import (
     SemanticRouterProcessor,
     TokenBudgetProcessor,
     VectorSearchProcessor,
-)
-
-# Reranker processor
-from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
-
-# Banking AI processors
-from src.backend.dsl.engine.processors.ai.banking_processors import (
-    CreditScoreProcessor,
-    CustomerSegmentationProcessor,
-    FraudDetectionProcessor,
-    LoanEligibilityProcessor,
-    RiskAssessmentProcessor,
 )
 
 __all__ = (

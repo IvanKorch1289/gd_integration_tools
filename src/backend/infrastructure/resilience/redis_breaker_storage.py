@@ -103,9 +103,7 @@ class RedisBreakerStateStorage:
         try:
             raw = await self._redis.get(key)
         except Exception as exc:  # noqa: BLE001
-            _logger.warning(
-                "RedisBreakerStateStorage load(%s) failed: %s", name, exc
-            )
+            _logger.warning("RedisBreakerStateStorage load(%s) failed: %s", name, exc)
             return None
 
         if raw is None:

@@ -26,10 +26,7 @@ from typing import TYPE_CHECKING, Any, Final
 if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-__all__ = (
-    "attach_scheduler_metrics",
-    "report_jobstore_type",
-)
+__all__ = ("attach_scheduler_metrics", "report_jobstore_type")
 
 _logger = logging.getLogger("infrastructure.scheduler.observability")
 
@@ -169,7 +166,10 @@ def attach_scheduler_metrics(scheduler: "AsyncIOScheduler") -> None:
         _JOB_SUBMIT_TIMES.pop(str(event.job_id), None)
         _logger.warning(
             "scheduler.job_missed",
-            extra={"job_id": event.job_id, "scheduled_run_time": str(event.scheduled_run_time)},
+            extra={
+                "job_id": event.job_id,
+                "scheduled_run_time": str(event.scheduled_run_time),
+            },
         )
 
     scheduler.add_listener(_on_submitted, EVENT_JOB_SUBMITTED)
@@ -179,11 +179,7 @@ def attach_scheduler_metrics(scheduler: "AsyncIOScheduler") -> None:
     _logger.info("Scheduler Prometheus metrics listeners attached")
 
 
-def report_jobstore_type(
-    *,
-    is_memory: bool,
-    is_production: bool,
-) -> None:
+def report_jobstore_type(*, is_memory: bool, is_production: bool) -> None:
     """Регистрирует тип default-jobstore'а в Prometheus и логирует CRITICAL
     при memory jobstore в production-окружении.
 

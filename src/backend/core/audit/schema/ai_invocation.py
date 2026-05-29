@@ -25,11 +25,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-__all__ = (
-    "AIInvocationEventType",
-    "AIInvocationEvent",
-    "AIInvocationPayload",
-)
+__all__ = ("AIInvocationEventType", "AIInvocationEvent", "AIInvocationPayload")
 
 
 class AIInvocationEventType(StrEnum):
@@ -150,10 +146,7 @@ class AIInvocationEvent(BaseModel):
     extra_attrs: dict[str, str] = Field(default_factory=dict)
 
     def with_guard_result(
-        self,
-        guard_type: str,
-        verdict: str,
-        categories: list[str],
+        self, guard_type: str, verdict: str, categories: list[str]
     ) -> "AIInvocationEvent":
         """Копирует событие с guard result (для guarded.input/output событий)."""
         return self.model_copy(
@@ -165,14 +158,9 @@ class AIInvocationEvent(BaseModel):
         )
 
     def with_pii_result(
-        self,
-        detected: bool,
-        entity_types: list[str],
+        self, detected: bool, entity_types: list[str]
     ) -> "AIInvocationEvent":
         """Копирует событие с PII result."""
         return self.model_copy(
-            update={
-                "pii_detected": detected,
-                "pii_entity_types": entity_types,
-            }
+            update={"pii_detected": detected, "pii_entity_types": entity_types}
         )

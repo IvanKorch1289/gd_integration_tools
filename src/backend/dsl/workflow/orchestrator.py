@@ -54,16 +54,13 @@ class RoutingRule(BaseModel):
         description="JMESPath condition (например ``body.type == 'score'``).",
     )
     use_agent: str | None = Field(
-        default=None,
-        description="agent_id при выполнении условия.",
+        default=None, description="agent_id при выполнении условия."
     )
     use_model: str | None = Field(
-        default=None,
-        description="Переопределение модели (``provider:model``).",
+        default=None, description="Переопределение модели (``provider:model``)."
     )
     memory_scope: "MemoryScopeSpec | None" = Field(
-        default=None,
-        description="Переопределение memory scope для этого правила.",
+        default=None, description="Переопределение memory scope для этого правила."
     )
 
 
@@ -118,14 +115,11 @@ class OrchestratorSpec(BaseModel):
         "orchestrator-subagent"
     )
     routing: list[RoutingRule] = Field(
-        default_factory=list,
-        description="Routing rules (evaluate顺序 по порядку).",
+        default_factory=list, description="Routing rules (evaluate顺序 по порядку)."
     )
     default_agent: str | None = Field(
-        default=None,
-        description="agent_id агента по умолчанию.",
+        default=None, description="agent_id агента по умолчанию."
     )
     fallback_agent: str | None = Field(
-        default=None,
-        description="agent_id для критических ошибок / escalation.",
+        default=None, description="agent_id для критических ошибок / escalation."
     )

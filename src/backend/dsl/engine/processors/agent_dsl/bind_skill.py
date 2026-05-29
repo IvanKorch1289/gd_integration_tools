@@ -127,9 +127,7 @@ class BindSkillProcessor(BaseAIProcessor):
                 self._output_key,
             )
 
-    async def _resolve_pack(
-        self, registry: Any
-    ) -> dict[str, Any] | None:
+    async def _resolve_pack(self, registry: Any) -> dict[str, Any] | None:
         """Resolve skill pack из registry.
 
         Args:

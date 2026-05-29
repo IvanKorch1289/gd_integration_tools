@@ -75,9 +75,13 @@ class CreditScoringResult(BaseModel):
 class DocumentClassifierResult(BaseModel):
     """Результат классификации документа."""
 
-    document_type: str = Field(description="passport| driver's_license|invoice|contract|statement|other")
+    document_type: str = Field(
+        description="passport| driver's_license|invoice|contract|statement|other"
+    )
     confidence: float = Field(ge=0.0, le=1.0, description="Classification confidence")
-    subtypes: list[str] = Field(default_factory=list, description="Additional type info")
+    subtypes: list[str] = Field(
+        default_factory=list, description="Additional type info"
+    )
     extracted_fields: dict[str, str] = Field(default_factory=dict)
 
 
@@ -186,7 +190,9 @@ class _BankingAIProcessor(BaseProcessor):
 
         _retryable = (TimeoutError, ConnectionError)
 
-        @make_async_retry(max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable)
+        @make_async_retry(
+            max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable
+        )
         async def _chat_with_retry() -> Any:
             return await agent.chat(
                 messages=[{"role": "user", "content": prompt}],
@@ -310,7 +316,10 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
         await _emit_audit(
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
-            params={"jurisdiction": self.jurisdiction, "customer_id": customer.get("id")},
+            params={
+                "jurisdiction": self.jurisdiction,
+                "customer_id": customer.get("id"),
+            },
             result={
                 "decision": result.decision,
                 "score": result.score,
@@ -319,17 +328,29 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
         )
 
         # Set result
-        exchange.in_message.set_body({
-            "decision": result.decision,
-            "score": result.score,
-            "reasons": result.reasons,
-        })
+        exchange.in_message.set_body(
+            {
+                "decision": result.decision,
+                "score": result.score,
+                "reasons": result.reasons,
+            }
+        )
         exchange.set_property("kyc_decision", result.decision)
         exchange.set_property("kyc_score", result.score)
 
-    def _build_prompt(self, customer: dict[str, Any], documents: list[dict[str, Any]]) -> str:
-        customer_info = orjson.dumps(customer).decode() if isinstance(customer, dict) else str(customer)
-        docs_info = orjson.dumps(documents).decode() if isinstance(documents, list) else str(documents)
+    def _build_prompt(
+        self, customer: dict[str, Any], documents: list[dict[str, Any]]
+    ) -> str:
+        customer_info = (
+            orjson.dumps(customer).decode()
+            if isinstance(customer, dict)
+            else str(customer)
+        )
+        docs_info = (
+            orjson.dumps(documents).decode()
+            if isinstance(documents, list)
+            else str(documents)
+        )
         return f"""Analyze the following customer and documents for KYC/AML verification.
 
 Customer: {customer_info}
@@ -346,7 +367,9 @@ Respond with JSON:
   "kyc_jurisdiction": "{self.jurisdiction}"
 }}"""
 
-    async def _check_capability(self, exchange: Exchange[Any], context: ExecutionContext) -> bool:
+    async def _check_capability(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> bool:
         """Verify ai.banking.kyc_aml capability."""
         try:
             from src.backend.core.security.capabilities import CapabilityGate
@@ -434,21 +457,38 @@ class AntiFraudScoreProcessor(_BankingAIProcessor):
             },
         )
 
-        exchange.in_message.set_body({
-            "risk_score": result.risk_score,
-            "risk_level": result.risk_level,
-            "explanation": result.explanation,
-            "triggered_rules": result.triggered_rules,
-        })
+        exchange.in_message.set_body(
+            {
+                "risk_score": result.risk_score,
+                "risk_level": result.risk_level,
+                "explanation": result.explanation,
+                "triggered_rules": result.triggered_rules,
+            }
+        )
         exchange.set_property("fraud_risk_score", result.risk_score)
         exchange.set_property("fraud_risk_level", result.risk_level)
 
     def _build_prompt(
-        self, transaction: dict[str, Any], history: list[dict[str, Any]], rules_triggered: list[str]
+        self,
+        transaction: dict[str, Any],
+        history: list[dict[str, Any]],
+        rules_triggered: list[str],
     ) -> str:
-        tx_json = orjson.dumps(transaction).decode() if isinstance(transaction, dict) else str(transaction)
-        hist_json = orjson.dumps(history).decode() if isinstance(history, list) else str(history)
-        rules_json = orjson.dumps(rules_triggered).decode() if isinstance(rules_triggered, list) else str(rules_triggered)
+        tx_json = (
+            orjson.dumps(transaction).decode()
+            if isinstance(transaction, dict)
+            else str(transaction)
+        )
+        hist_json = (
+            orjson.dumps(history).decode()
+            if isinstance(history, list)
+            else str(history)
+        )
+        rules_json = (
+            orjson.dumps(rules_triggered).decode()
+            if isinstance(rules_triggered, list)
+            else str(rules_triggered)
+        )
         return f"""Analyze this transaction for fraud risk.
 
 Transaction: {tx_json}
@@ -463,9 +503,12 @@ Respond with JSON:
   "triggered_rules": ["additional_rules_if_any"]
 }}"""
 
-    async def _check_capability(self, exchange: Exchange[Any], context: ExecutionContext) -> bool:
+    async def _check_capability(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> bool:
         try:
             from src.backend.core.security.capabilities import CapabilityGate
+
             gate = CapabilityGate()
             gate.check(self.capability, scope=None)
             return True
@@ -544,7 +587,11 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
         await _emit_audit(
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
-            params={"customer_id": customer.get("id"), "amount": amount, "product": product},
+            params={
+                "customer_id": customer.get("id"),
+                "amount": amount,
+                "product": product,
+            },
             result={
                 "approved": result.approved,
                 "limit": result.limit,
@@ -553,13 +600,15 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
             },
         )
 
-        exchange.in_message.set_body({
-            "approved": result.approved,
-            "limit": result.limit,
-            "rate": result.rate,
-            "citations": result.citations,
-            "reasons": result.reasons,
-        })
+        exchange.in_message.set_body(
+            {
+                "approved": result.approved,
+                "limit": result.limit,
+                "rate": result.rate,
+                "citations": result.citations,
+                "reasons": result.reasons,
+            }
+        )
         exchange.set_property("credit_approved", result.approved)
 
     def _format_rag_context(self, rag_context: Any) -> str:
@@ -575,7 +624,11 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
     def _build_prompt(
         self, customer: dict[str, Any], amount: float, product: str, rag_context: str
     ) -> str:
-        customer_json = orjson.dumps(customer).decode() if isinstance(customer, dict) else str(customer)
+        customer_json = (
+            orjson.dumps(customer).decode()
+            if isinstance(customer, dict)
+            else str(customer)
+        )
         return f"""Analyze this credit application using the policy documents for context.
 
 Customer: {customer_json}
@@ -594,9 +647,12 @@ Respond with JSON:
   "reasons": ["reason1", "reason2"]
 }}"""
 
-    async def _check_capability(self, exchange: Exchange[Any], context: ExecutionContext) -> bool:
+    async def _check_capability(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> bool:
         try:
             from src.backend.core.security.capabilities import CapabilityGate
+
             gate = CapabilityGate()
             gate.check(self.capability, scope=None)
             return True
@@ -682,12 +738,14 @@ class DocumentClassifierProcessor(_BankingAIProcessor):
             },
         )
 
-        exchange.in_message.set_body({
-            "document_type": result.document_type,
-            "confidence": result.confidence,
-            "subtypes": result.subtypes,
-            "extracted_fields": result.extracted_fields,
-        })
+        exchange.in_message.set_body(
+            {
+                "document_type": result.document_type,
+                "confidence": result.confidence,
+                "subtypes": result.subtypes,
+                "extracted_fields": result.extracted_fields,
+            }
+        )
         exchange.set_property("doc_type", result.document_type)
         exchange.set_property("doc_classify_confidence", result.confidence)
 
@@ -709,9 +767,12 @@ Respond with JSON:
   "extracted_fields": {{"field_name": "value", ...}}
 }}"""
 
-    async def _check_capability(self, exchange: Exchange[Any], context: ExecutionContext) -> bool:
+    async def _check_capability(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> bool:
         try:
             from src.backend.core.security.capabilities import CapabilityGate
+
             gate = CapabilityGate()
             gate.check(self.capability, scope=None)
             return True
@@ -791,13 +852,15 @@ class FrancotypingProcessor(_BankingAIProcessor):
             },
         )
 
-        exchange.in_message.set_body({
-            "language": result.language,
-            "region": result.region,
-            "script": result.script,
-            "classification": result.classification,
-            "confidence": result.confidence,
-        })
+        exchange.in_message.set_body(
+            {
+                "language": result.language,
+                "region": result.region,
+                "script": result.script,
+                "classification": result.classification,
+                "confidence": result.confidence,
+            }
+        )
         exchange.set_property("francotype_lang", result.language)
         exchange.set_property("francotype_script", result.script)
 
@@ -817,9 +880,12 @@ Respond with JSON:
   "confidence": 0.0-1.0
 }}"""
 
-    async def _check_capability(self, exchange: Exchange[Any], context: ExecutionContext) -> bool:
+    async def _check_capability(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> bool:
         try:
             from src.backend.core.security.capabilities import CapabilityGate
+
             gate = CapabilityGate()
             gate.check(self.capability, scope=None)
             return True

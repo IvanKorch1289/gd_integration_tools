@@ -160,9 +160,7 @@ class RedisFeatureFlagBroadcaster:
             return False
 
     async def start(
-        self,
-        *,
-        task_factory: "Callable[..., asyncio.Task[Any]] | None" = None,
+        self, *, task_factory: "Callable[..., asyncio.Task[Any]] | None" = None
     ) -> None:
         """Запустить subscriber loop через TaskRegistry.
 
@@ -180,8 +178,7 @@ class RedisFeatureFlagBroadcaster:
 
             task_factory = get_task_registry().create_task
         self._task = task_factory(
-            self._listen(),
-            name="feature-flag-broadcaster-subscriber",
+            self._listen(), name="feature-flag-broadcaster-subscriber"
         )
         _logger.info(
             "feature_flag.broadcast.subscriber.started",
@@ -229,7 +226,9 @@ class RedisFeatureFlagBroadcaster:
         """Распарсить и применить одно сообщение из pub/sub channel."""
         if raw is None:
             return
-        payload_bytes = raw if isinstance(raw, (bytes, bytearray)) else str(raw).encode()
+        payload_bytes = (
+            raw if isinstance(raw, (bytes, bytearray)) else str(raw).encode()
+        )
         try:
             payload = deserialize_change(payload_bytes)
         except orjson.JSONDecodeError as exc:
@@ -261,9 +260,7 @@ class RedisFeatureFlagBroadcaster:
 
 
 async def maybe_start_broadcaster(
-    *,
-    redis_client: "AsyncRedis | None",
-    overrides: "RuntimeFeatureFlagOverrides",
+    *, redis_client: "AsyncRedis | None", overrides: "RuntimeFeatureFlagOverrides"
 ) -> RedisFeatureFlagBroadcaster | None:
     """Запустить broadcaster, если feature-flag ``tenant_feature_flag_ui=True``.
 
@@ -286,8 +283,7 @@ async def maybe_start_broadcaster(
         return None
     if redis_client is None:
         _logger.warning(
-            "feature_flag.broadcast.skipped",
-            extra={"reason": "redis_client is None"},
+            "feature_flag.broadcast.skipped", extra={"reason": "redis_client is None"}
         )
         return None
     broadcaster = RedisFeatureFlagBroadcaster(

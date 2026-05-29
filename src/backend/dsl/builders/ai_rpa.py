@@ -399,9 +399,7 @@ class AIRPAMixin:
 
     # ── Document / File RPA ─────────────────────────────────────────────────────
 
-    def pdf_read(
-        self, *, extract_tables: bool = False
-    ) -> "RouteBuilder":
+    def pdf_read(self, *, extract_tables: bool = False) -> "RouteBuilder":
         """Извлечь текст и таблицы из PDF.
 
         Body: bytes (содержимое PDF) или str (путь к файлу).
@@ -420,8 +418,7 @@ class AIRPAMixin:
         Результат: bytes (merged PDF).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "PdfMergeProcessor",
+            "src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor"
         )
 
     def word_read(self) -> "RouteBuilder":
@@ -431,8 +428,7 @@ class AIRPAMixin:
         Результат: {"text": "...", "paragraphs": [...]}
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "WordReadProcessor",
+            "src.backend.dsl.engine.processors.rpa", "WordReadProcessor"
         )
 
     def word_write(self) -> "RouteBuilder":
@@ -442,13 +438,10 @@ class AIRPAMixin:
         Результат: bytes (.docx файл).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "WordWriteProcessor",
+            "src.backend.dsl.engine.processors.rpa", "WordWriteProcessor"
         )
 
-    def excel_read(
-        self, *, sheet_name: str | None = None
-    ) -> "RouteBuilder":
+    def excel_read(self, *, sheet_name: str | None = None) -> "RouteBuilder":
         """Читать Excel файл в list[dict].
 
         Body: bytes или str (путь).
@@ -461,11 +454,7 @@ class AIRPAMixin:
         )
 
     def file_move(
-        self,
-        src: str | None = None,
-        dst: str | None = None,
-        *,
-        mode: str = "copy",
+        self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
     ) -> "RouteBuilder":
         """Копировать или переместить файл.
 
@@ -479,9 +468,7 @@ class AIRPAMixin:
             mode=mode,
         )
 
-    def archive(
-        self, *, mode: str = "extract", format: str = "zip"
-    ) -> "RouteBuilder":
+    def archive(self, *, mode: str = "extract", format: str = "zip") -> "RouteBuilder":
         """Создать или распаковать архив (ZIP/TAR).
 
         mode: "extract" (default), "create".
@@ -501,9 +488,7 @@ class AIRPAMixin:
         Результат: {"text": "...", "pages": [...]}
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "ImageOcrProcessor",
-            lang=lang,
+            "src.backend.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang
         )
 
     def image_resize(
@@ -527,11 +512,7 @@ class AIRPAMixin:
         )
 
     def regex(
-        self,
-        pattern: str,
-        *,
-        action: str = "extract",
-        replacement: str = "",
+        self, pattern: str, *, action: str = "extract", replacement: str = ""
     ) -> "RouteBuilder":
         """Извлечь или заменить текст по регулярному выражению.
 
@@ -574,9 +555,7 @@ class AIRPAMixin:
         key: Base64-encoded AES-ключ (16, 24 или 32 байта).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "EncryptProcessor",
-            key=key,
+            "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
         )
 
     def decrypt(self, key: str) -> "RouteBuilder":
@@ -585,9 +564,7 @@ class AIRPAMixin:
         key: тот же ключ, что использовался для encrypt.
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa",
-            "DecryptProcessor",
-            key=key,
+            "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
         )
 
     def shell(
@@ -613,9 +590,7 @@ class AIRPAMixin:
             timeout_seconds=timeout_seconds,
         )
 
-    def email(
-        self, to: str, subject: str, body_template: str
-    ) -> "RouteBuilder":
+    def email(self, to: str, subject: str, body_template: str) -> "RouteBuilder":
         """Compose + отправка email через SMTP.
 
         Body: dict с переменными для template или str.

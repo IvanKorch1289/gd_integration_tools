@@ -229,10 +229,7 @@ def _default_bootstrap(
     )
 
     try:
-        compiled = teleprompter.compile(
-            dspy_module,
-            trainset=list(train),
-        )
+        compiled = teleprompter.compile(dspy_module, trainset=list(train))
     except Exception as exc:
         logger.warning("DSPy BootstrapFewShot.compile failed, using fallback: %s", exc)
         return _token_overlap_bootstrap(pipeline, train)
@@ -249,13 +246,14 @@ def _default_bootstrap(
 
 # ── DSPy adapter helpers ────────────────────────────────────────────────────────
 
+
 def _is_dspy_available() -> bool:
     try:
         import dspy  # type: ignore[import-not-found]
+
         return True
     except ImportError:
         return False
-
 
 
 def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):
@@ -284,15 +282,15 @@ def _dspy_metric_adapter(
     pipeline: DSPyPipeline,
 ) -> Callable[[dspy.Example, dspy.Prediction, None], float]:
     """Адаптер pipeline.metric → DSPy metric signature (example, prediction, ...)."""
-    def _metric(
-        example: dspy.Example, prediction: dspy.Prediction, *_args
-    ) -> float:
+
+    def _metric(example: dspy.Example, prediction: dspy.Prediction, *_args) -> float:
         ex_dict = dict(example.inputs())
         ex_dict.update(example.labels())
         try:
             return float(pipeline.metric(ex_dict, prediction.prediction))
         except Exception as _:
             return 0.0
+
     return _metric
 
 
@@ -326,6 +324,7 @@ def _dspy_output_to_str(result: dspy.Prediction) -> str:
 
 
 # ── Fallback: token-overlap bootstrap ──────────────────────────────────────────
+
 
 def _token_overlap_bootstrap(
     pipeline: DSPyPipeline, train: Sequence[dict[str, Any]]

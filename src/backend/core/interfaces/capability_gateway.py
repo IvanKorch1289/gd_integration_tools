@@ -48,15 +48,11 @@ class CapabilityGatewayProtocol(Protocol):
         конкретный формат scope — это контракт реализации.
     """
 
-    def check(
-        self, plugin: str, capability: str, scope: str | None = None
-    ) -> None:
+    def check(self, plugin: str, capability: str, scope: str | None = None) -> None:
         """Проверить разрешение; raise при denied."""
         ...
 
-    def declare(
-        self, plugin: str, capabilities: Iterable[object]
-    ) -> None:
+    def declare(self, plugin: str, capabilities: Iterable[object]) -> None:
         """Задекларировать capabilities плагина/route'а."""
         ...
 

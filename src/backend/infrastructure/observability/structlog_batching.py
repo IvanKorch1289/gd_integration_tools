@@ -192,9 +192,7 @@ class BatchingStructlogWrapper:
                 from src.backend.core.utils.task_registry import get_task_registry
 
                 get_task_registry().create_task(
-                    self._flush_batch(),
-                    name="structlog-flush",
-                    deadline_seconds=5.0,
+                    self._flush_batch(), name="structlog-flush", deadline_seconds=5.0
                 )
 
     def _emit_direct(self, level: str, event: str, kwargs: dict[str, Any]) -> None:

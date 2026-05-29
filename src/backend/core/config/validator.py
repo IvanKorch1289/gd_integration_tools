@@ -79,7 +79,7 @@ JWT_SECRET_MIN_LENGTH: Final[int] = 32
 #     WAF zero-allowlist имеет смысл только при маршрутизации через facade.
 _FEATURE_FLAG_DEPENDENCIES: Final[Mapping[str, tuple[str, ...]]] = {
     # supply_chain_strict_mode без supply_chain_finale_strict — WARNING (не блокирует startup)
-    "supply_chain_strict_mode": ("supply_chain_finale_strict",),
+    "supply_chain_strict_mode": ("supply_chain_finale_strict",)
 }
 
 # Пары зависимостей, которые блокируют production startup (CRITICAL).
@@ -90,7 +90,7 @@ _FEATURE_FLAG_DEPENDENCIES_CRITICAL: Final[Mapping[str, tuple[str, ...]]] = {
     # WAF zero-allowlist (при появлении) — CRITICAL security posture violation
     # "waf_strict_zero_allowlist": ("waf_outbound_via_facade",),  # раскомментировать когда флаг появится
     # outbound_metering_strict без per-host baseline = неверные rate-лимиты
-    "outbound_metering_strict": ("metering_per_host",),
+    "outbound_metering_strict": ("metering_per_host",)
 }
 
 
@@ -280,10 +280,7 @@ class ConfigValidator:
                 ),
                 field="waf.clamav_fail_open",
                 recommendation="WAF_CLAMAV_FAIL_OPEN=false для production-strict.",
-                context={
-                    "clamav_enabled": True,
-                    "clamav_fail_open": True,
-                },
+                context={"clamav_enabled": True, "clamav_fail_open": True},
             )
         ]
 
@@ -416,7 +413,6 @@ class ConfigValidator:
             )
         ]
 
-
     def _check_debug_mode_in_prod(
         self, app: "AppBaseSettings"
     ) -> list[ConfigViolation]:
@@ -446,10 +442,7 @@ class ConfigValidator:
                     "была обойдена через model_construct/мутацию — устранить "
                     "обходной путь."
                 ),
-                context={
-                    "debug_mode": True,
-                    "environment": app.environment,
-                },
+                context={"debug_mode": True, "environment": app.environment},
             )
         ]
 
@@ -653,10 +646,7 @@ class ConfigValidator:
                         f"Включить зависимости {', '.join(unmet)} либо выключить "
                         f"'{dependent}'."
                     ),
-                    context={
-                        "dependent": dependent,
-                        "unmet_requirements": list(unmet),
-                    },
+                    context={"dependent": dependent, "unmet_requirements": list(unmet)},
                 )
             )
 
@@ -680,10 +670,7 @@ class ConfigValidator:
                         f"Включить зависимости {', '.join(unmet)} либо выключить "
                         f"'{dependent}'."
                     ),
-                    context={
-                        "dependent": dependent,
-                        "unmet_requirements": list(unmet),
-                    },
+                    context={"dependent": dependent, "unmet_requirements": list(unmet)},
                 )
             )
         return violations

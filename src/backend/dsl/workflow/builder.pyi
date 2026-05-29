@@ -25,6 +25,16 @@ class WorkflowBuilder:
         """Собрать и провалидировать :class:`WorkflowDeclaration`."""
         ...
 
+    def checkpoint(
+        self,
+        checkpoint_id: str | None = ...,
+        include_steps: tuple[str, ...] = ...,
+        metadata: dict[str, Any] | None = ...,
+        output_key: str | None = ...,
+    ) -> Self:
+        """Добавить checkpoint-шаг для workflow state persistence (S28 W3)."""
+        ...
+
     def default_retry(self, policy: RetryPolicy) -> Self:
         """Установить default retry-политику workflow."""
         ...
@@ -37,6 +47,16 @@ class WorkflowBuilder:
         """Установить человекочитаемое описание workflow."""
         ...
 
+    def escalate(
+        self,
+        to_agent: str | None = ...,
+        to_model: str | None = ...,
+        reason: str | None = ...,
+        output_key: str | None = ...,
+    ) -> Self:
+        """Добавить escalate-шаг для переключения на другого агента/модель (S28 W3)."""
+        ...
+
     def gateway_and(self, *branches: "BranchSpec") -> Self:
         """Добавить AND (parallel) gateway — параллельный fan-out, ждёт всех."""
         ...
@@ -47,6 +67,46 @@ class WorkflowBuilder:
 
     def gateway_xor(self, *branches: "BranchSpec") -> Self:
         """Добавить XOR (exclusive) gateway — выбирает первую активную ветку."""
+        ...
+
+    def guardrail(
+        self,
+        rule: str,
+        threshold: float,
+        on_exceed: str = ...,
+        target: str | None = ...,
+        output_key: str | None = ...,
+    ) -> Self:
+        """Добавить guardrail-шаг для лимитов доступа (S28 W3)."""
+        ...
+
+    def invoke_agent(
+        self,
+        agent_id: str,
+        input_context: str | None = ...,
+        durable: bool = ...,
+        output_key: str | None = ...,
+        max_turns: int = ...,
+        timeout_s: float | None = ...,
+        memory_scope: "MemoryScope | None" = ...,
+        write_episode: bool = ...,
+        namespace_template: str | None = ...,
+        inject_memory: bool = ...,
+        recall_on: str | None = ...,
+    ) -> Self:
+        """Добавить AI-агент как шаг workflow (S27 W6, S28 W2, R-V15-9)."""
+        ...
+
+    def reflect(
+        self,
+        trigger: str | None = ...,
+        source_step: str | None = ...,
+        memory_writes: list[str] | None = ...,
+        consolidation_policy: str = ...,
+        async_mode: bool = ...,
+        output_key: str | None = ...,
+    ) -> Self:
+        """Добавить reflect-шаг для procedural memory update (S28 W3)."""
         ...
 
     def saga(self) -> SagaBuilder:

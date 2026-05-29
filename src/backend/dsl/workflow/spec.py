@@ -222,8 +222,7 @@ class AgentInvokeDeclaration(BaseModel):
         ),
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения результата агента.",
+        default=None, description="Имя property для сохранения результата агента."
     )
     max_turns: int = Field(
         default=10,
@@ -326,25 +325,20 @@ class ReflectDeclaration(BaseModel):
 
     type: Literal["reflect"] = "reflect"
     trigger: str | None = Field(
-        default=None,
-        description="Dot-path condition для запуска reflect.",
+        default=None, description="Dot-path condition для запуска reflect."
     )
     source_step: str | None = Field(
-        default=None,
-        description="WorkflowStep.id, чей output анализировать.",
+        default=None, description="WorkflowStep.id, чей output анализировать."
     )
     memory_writes: list[str] = Field(
-        default_factory=list,
-        description="Memory resource names для записи.",
+        default_factory=list, description="Memory resource names для записи."
     )
     consolidation_policy: Literal["summarize", "dedup", "reflect", "none"] = "reflect"
     async_mode: bool = Field(
-        default=True,
-        description="Выполнять в background (True) или синхронно (False).",
+        default=True, description="Выполнять в background (True) или синхронно (False)."
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения результата reflect.",
+        default=None, description="Имя property для сохранения результата reflect."
     )
 
 
@@ -376,20 +370,17 @@ class CheckpointDeclaration(BaseModel):
 
     type: Literal["checkpoint"] = "checkpoint"
     checkpoint_id: str | None = Field(
-        default=None,
-        description="Явный id checkpoint'а (None = auto-generated UUID).",
+        default=None, description="Явный id checkpoint'а (None = auto-generated UUID)."
     )
     include_steps: tuple[str, ...] = Field(
         default=(),
         description="Кортеж step-id, output которых сохранить. Пустой = весь state.",
     )
     metadata: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Произвольные metadata для checkpoint.",
+        default_factory=dict, description="Произвольные metadata для checkpoint."
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения checkpoint_id.",
+        default=None, description="Имя property для сохранения checkpoint_id."
     )
 
 
@@ -426,20 +417,16 @@ class GuardrailDeclaration(BaseModel):
             "``max_turns``, ``output_size_bytes``."
         ),
     )
-    threshold: float = Field(
-        description="Пороговое значение для сравнения.",
-    )
+    threshold: float = Field(description="Пороговое значение для сравнения.")
     on_exceed: Literal["escalate", "fail", "warn", "dlq"] = Field(
-        default="fail",
-        description="Действие при превышении threshold.",
+        default="fail", description="Действие при превышении threshold."
     )
     target: str | None = Field(
         default=None,
         description="Dot-path до значения для проверки (None = текущий шаг).",
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения результата проверки.",
+        default=None, description="Имя property для сохранения результата проверки."
     )
 
 
@@ -470,20 +457,16 @@ class EscalateDeclaration(BaseModel):
 
     type: Literal["escalate"] = "escalate"
     to_agent: str | None = Field(
-        default=None,
-        description="Target agent_id для escalation.",
+        default=None, description="Target agent_id для escalation."
     )
     to_model: str | None = Field(
-        default=None,
-        description="Target model (``provider:model``) для escalation.",
+        default=None, description="Target model (``provider:model``) для escalation."
     )
     reason: str | None = Field(
-        default=None,
-        description="Причина escalation (логируется в audit).",
+        default=None, description="Причина escalation (логируется в audit)."
     )
     output_key: str | None = Field(
-        default=None,
-        description="Имя property для сохранения результата escalation.",
+        default=None, description="Имя property для сохранения результата escalation."
     )
 
 

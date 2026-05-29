@@ -104,10 +104,7 @@ class QueryClassifier:
     """
 
     def __init__(
-        self,
-        *,
-        llm_classify: LLMClassifyFn | None = None,
-        cache_size: int = 512,
+        self, *, llm_classify: LLMClassifyFn | None = None, cache_size: int = 512
     ) -> None:
         """Создать classifier.
 
@@ -144,9 +141,7 @@ class QueryClassifier:
             elapsed_ms=decision.elapsed_ms,
         )
 
-    async def classify_batch(
-        self, queries: Sequence[str]
-    ) -> list[ClassifierResult]:
+    async def classify_batch(self, queries: Sequence[str]) -> list[ClassifierResult]:
         """Параллельная классификация пачки query.
 
         Args:
@@ -158,9 +153,7 @@ class QueryClassifier:
         """
         if not queries:
             return []
-        return list(
-            await asyncio.gather(*(self.classify(q) for q in queries))
-        )
+        return list(await asyncio.gather(*(self.classify(q) for q in queries)))
 
     def stats(self) -> dict[str, int]:
         """Возвращает копию счётчиков выбора стратегий (для dashboard)."""
@@ -168,9 +161,7 @@ class QueryClassifier:
 
 
 async def benchmark_accuracy(
-    dataset: Sequence[tuple[str, str]],
-    *,
-    llm_classify: LLMClassifyFn,
+    dataset: Sequence[tuple[str, str]], *, llm_classify: LLMClassifyFn
 ) -> AccuracyBenchmarkResult:
     """Сравнить accuracy heuristic-only vs LLM-classifier на датасете.
 
@@ -187,10 +178,7 @@ async def benchmark_accuracy(
     """
     if not dataset:
         return AccuracyBenchmarkResult(
-            total=0,
-            heuristic_correct=0,
-            llm_correct=0,
-            accuracy_uplift_pct=0.0,
+            total=0, heuristic_correct=0, llm_correct=0, accuracy_uplift_pct=0.0
         )
 
     heuristic_correct = 0

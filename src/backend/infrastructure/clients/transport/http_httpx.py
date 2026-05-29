@@ -264,9 +264,7 @@ class HttpxClient:
         from src.backend.core.utils.task_registry import get_task_registry
 
         get_task_registry().create_task(
-            client.aclose(),
-            name="httpx-rotate-close",
-            deadline_seconds=30.0,
+            client.aclose(), name="httpx-rotate-close", deadline_seconds=30.0
         )
 
     def _breaker_for(self, host: str) -> Breaker:
@@ -356,7 +354,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except (RetryError, CircuitOpen, httpx.HTTPError):
+        except RetryError, CircuitOpen, httpx.HTTPError:
             raise
 
 

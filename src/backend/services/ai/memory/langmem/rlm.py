@@ -166,6 +166,7 @@ async def _set_payload(
         return
     await set_payload(collection=collection, payload=payload, points=[doc_id])
 
+
 class RLMConsolidator:
     """Фоновый consolidator для semantic memory — re-embed + reindex."""
 
@@ -201,12 +202,7 @@ class RLMConsolidator:
             scroll_page = await self.qdrant.scroll(
                 collection="langmem_semantic",
                 scroll_filter={
-                    "must": [
-                        {
-                            "key": "rlm_penalty",
-                            "range": {"gt": penalty_threshold},
-                        }
-                    ]
+                    "must": [{"key": "rlm_penalty", "range": {"gt": penalty_threshold}}]
                 },
                 limit=batch_size,
                 offset=offset_token,
@@ -227,8 +223,8 @@ class RLMConsolidator:
         vectors = model.encode(texts).tolist()
 
         # Step 3: upsert re-embedded vectors + reset penalty (marks as reindexed)
-        import datetime
         from datetime import UTC
+
         now = datetime.datetime.now(UTC).isoformat()
         points = []
         for r, vector in zip(results, vectors):
@@ -260,9 +256,7 @@ class RLMConsolidator:
 
         model = SentenceTransformer(self.embedding_model)
 
-        recs = await self.qdrant.retrieve(
-            collection="langmem_semantic", ids=doc_ids
-        )
+        recs = await self.qdrant.retrieve(collection="langmem_semantic", ids=doc_ids)
         if not recs:
             return {"reindexed": 0}
 

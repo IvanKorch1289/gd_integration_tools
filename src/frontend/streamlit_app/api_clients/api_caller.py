@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from src.frontend.streamlit_app.api_clients.base import BaseAPIClient

@@ -43,10 +43,7 @@ def _register_analytics_tool(mcp: "FastMCP", action_name: str) -> None:
     tool_name = action_name.replace(".", "_")
     description = f"Analytics namespace: {action_name}"
 
-    tool_kwargs: dict[str, object] = {
-        "name": tool_name,
-        "description": description,
-    }
+    tool_kwargs: dict[str, object] = {"name": tool_name, "description": description}
     if schema is not None:
         try:
             tool_sig = inspect.signature(mcp.tool)
@@ -54,13 +51,11 @@ def _register_analytics_tool(mcp: "FastMCP", action_name: str) -> None:
                 tool_kwargs["input_schema"] = schema
             elif "inputSchema" in tool_sig.parameters:
                 tool_kwargs["inputSchema"] = schema
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             pass
 
     @mcp.tool(**tool_kwargs)
-    async def tool_handler(
-        payload: str = "{}", _action: str = action_name
-    ) -> str:
+    async def tool_handler(payload: str = "{}", _action: str = action_name) -> str:
         import orjson
 
         from src.backend.dsl.commands.registry import action_handler_registry
@@ -74,11 +69,13 @@ def _register_analytics_tool(mcp: "FastMCP", action_name: str) -> None:
 
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except (orjson.JSONDecodeError, TypeError):
+        except orjson.JSONDecodeError, TypeError:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
-            action=_action, payload=parsed_payload, meta={"source": "mcp", "namespace": "analytics"}
+            action=_action,
+            payload=parsed_payload,
+            meta={"source": "mcp", "namespace": "analytics"},
         )
 
         try:

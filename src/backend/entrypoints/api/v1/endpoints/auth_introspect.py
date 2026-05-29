@@ -44,7 +44,9 @@ _INTROSPECT_FIELDS = (
 @router.post("/introspect", summary="OAuth2 Token Introspection (RFC 7662)")
 async def introspect(
     token: str = Form(..., description="JWT для проверки"),
-    token_type_hint: str | None = Form(None, description="Игнорируется (only access_token)"),
+    token_type_hint: str | None = Form(
+        None, description="Игнорируется (only access_token)"
+    ),
 ) -> dict[str, Any]:
     """RFC 7662 token introspection.
 

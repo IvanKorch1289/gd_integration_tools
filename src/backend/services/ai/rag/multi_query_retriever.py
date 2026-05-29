@@ -86,9 +86,7 @@ class MultiQueryConfig:
     parallel: bool = True
 
 
-GenerateReformulationsFn = Callable[
-    [str, int], Awaitable[list[str]]
-]
+GenerateReformulationsFn = Callable[[str, int], Awaitable[list[str]]]
 
 
 class MultiQueryRetriever:
@@ -119,11 +117,7 @@ class MultiQueryRetriever:
         self._generate_reformulations = generate_reformulations
         self._config = config or MultiQueryConfig()
 
-    async def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-    ) -> list[MultiQueryResult]:
+    async def retrieve(self, query: str, top_k: int = 5) -> list[MultiQueryResult]:
         """Multi-query retrieval по query.
 
         Алгоритм:
@@ -145,8 +139,7 @@ class MultiQueryRetriever:
         # Шаг 1: генерация альтернативных запросов.
         try:
             reformulations = await self._generate_reformulations(
-                query,
-                self._config.num_reformulations,
+                query, self._config.num_reformulations
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("multi_query.generate_reformulations_failed: %s", exc)
@@ -154,7 +147,9 @@ class MultiQueryRetriever:
 
         # Всегда включаем оригинальный запрос.
         all_queries = [query] + reformulations
-        source_labels = ["original"] + [f"reform_{i}" for i in range(len(reformulations))]
+        source_labels = ["original"] + [
+            f"reform_{i}" for i in range(len(reformulations))
+        ]
 
         # Шаг 2: embedding всех запросов.
         try:
@@ -190,7 +185,10 @@ class MultiQueryRetriever:
                     return label, []
 
             search_results = await asyncio.gather(
-                *(search_single(emb, label) for emb, label in zip(all_embeddings, source_labels))
+                *(
+                    search_single(emb, label)
+                    for emb, label in zip(all_embeddings, source_labels)
+                )
             )
             ranked_lists = list(search_results)
         else:
@@ -231,8 +229,4 @@ class MultiQueryRetriever:
 
     def _chunk_id(self, doc: dict[str, Any]) -> str:
         """Извлекает chunk-id из dict."""
-        return str(
-            doc.get("id")
-            or doc.get("metadata", {}).get("id")
-            or ""
-        )
+        return str(doc.get("id") or doc.get("metadata", {}).get("id") or "")

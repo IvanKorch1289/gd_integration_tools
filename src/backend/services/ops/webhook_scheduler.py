@@ -116,11 +116,11 @@ class WebhookScheduler:
         )
 
         async def _do_post() -> Any:
-            async with make_http_client(timeout=30, plugin="webhook_scheduler") as client:
+            async with make_http_client(
+                timeout=30, plugin="webhook_scheduler"
+            ) as client:
                 resp = await client.post(
-                    task["url"],
-                    json=task["payload"],
-                    headers=task.get("headers", {}),
+                    task["url"], json=task["payload"], headers=task.get("headers", {})
                 )
             import httpx
 
@@ -140,10 +140,7 @@ class WebhookScheduler:
         try:
             if policy is not None:
                 response = await policy.call(
-                    _do_post,
-                    transport="webhook",
-                    route_id=schedule_id,
-                    payload=task,
+                    _do_post, transport="webhook", route_id=schedule_id, payload=task
                 )
             else:
                 response = await _do_post()

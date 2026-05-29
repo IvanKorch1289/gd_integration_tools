@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import json
-import sys
 
 import streamlit as st
 import yaml as _yaml
-
 
 from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines
 

@@ -30,7 +30,9 @@ def __getattr__(name: str):
     if not TYPE_CHECKING:
         if name in ("DLQEnvelope", "DLQReason", "DLQWriter"):
             from src.backend.infrastructure.messaging import dlq_base
+
             return getattr(dlq_base, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ("DLQEnvelope", "DLQReason", "DLQWriter")

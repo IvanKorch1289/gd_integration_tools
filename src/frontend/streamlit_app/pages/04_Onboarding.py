@@ -7,8 +7,6 @@ import sys
 
 import streamlit as st
 
-
-
 st.set_page_config(page_title="Onboarding", page_icon=":sparkles:", layout="wide")
 st.header("Onboarding Checklist")
 st.caption(

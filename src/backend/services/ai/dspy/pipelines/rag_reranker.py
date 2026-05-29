@@ -78,9 +78,7 @@ def _resolve_bge_reranker() -> Any:
         )
         return _reranker_cache
     except Exception as exc:  # noqa: BLE001 — CUDA OOM / weights download fail
-        logger.warning(
-            "FlagReranker init failed (%s), fallback на token-overlap", exc
-        )
+        logger.warning("FlagReranker init failed (%s), fallback на token-overlap", exc)
         _record_reranker_fallback(reason="init_error")
         _reranker_unavailable = True
         return None
@@ -89,9 +87,7 @@ def _resolve_bge_reranker() -> Any:
 def _record_reranker_fallback(*, reason: str) -> None:
     """Counter ``rag_reranker_fallback_total`` для observability fallback."""
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         counter = metrics_registry.counter(
             "rag_reranker_fallback_total",
@@ -125,9 +121,7 @@ class _RagRerankerPipeline:
         query = str(example.get("query") or "")
         candidates = example.get("candidates") or []
         if not query or not candidates:
-            return json.dumps(
-                [d.get("id") for d in candidates], ensure_ascii=False
-            )
+            return json.dumps([d.get("id") for d in candidates], ensure_ascii=False)
 
         reranker = _resolve_bge_reranker()
         if reranker is not None:

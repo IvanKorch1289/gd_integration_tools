@@ -42,6 +42,11 @@ from src.backend.core.resilience.cache_decorators import (
     multi_cached,
 )
 
+# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
+# импортируется ПОСЛЕ degradation и остальных модулей пакета, чтобы избежать
+# циклической зависимости при загрузке __init__.py.
+from src.backend.core.resilience.decorators import policy
+
 # degradation ИМПОРТИРУЕТСЯ ДО decorators.policy: rate_limiter подтягивает
 # infrastructure/resilience/__init__.py → coordinator.py, который делает
 # обратный импорт ``from src.backend.core.resilience import DegradationManager``.
@@ -53,11 +58,6 @@ from src.backend.core.resilience.degradation import (
     DegradationMode,
     degradation_manager,
 )
-
-# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
-# импортируется ПОСЛЕ degradation и остальных модулей пакета, чтобы избежать
-# циклической зависимости при загрузке __init__.py.
-from src.backend.core.resilience.decorators import policy
 from src.backend.core.resilience.graceful_degradation import (
     DegradationFeature,
     FeatureState,

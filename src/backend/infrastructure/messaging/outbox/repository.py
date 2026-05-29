@@ -124,9 +124,7 @@ class OutboxRepository:
         return message
 
     @staticmethod
-    def _merge_context_headers(
-        headers: dict[str, Any] | None,
-    ) -> dict[str, Any]:
+    def _merge_context_headers(headers: dict[str, Any] | None) -> dict[str, Any]:
         """Дополнить headers значениями из RequestContext (correlation/tenant).
 
         Если caller передал явный header — он имеет приоритет. Если ни

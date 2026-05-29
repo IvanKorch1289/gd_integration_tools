@@ -31,11 +31,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
-__all__ = (
-    "PresidioSanitizer",
-    "SanitizeResult",
-    "get_presidio_sanitizer",
-)
+__all__ = ("PresidioSanitizer", "SanitizeResult", "get_presidio_sanitizer")
 
 
 def _resolve_adapter(*, language: str) -> PresidioSanitizerAdapter:

@@ -18,13 +18,11 @@ Auto-refresh: ``@st.fragment(run_every=5)``.
 
 from __future__ import annotations
 
-import sys
 from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
 # Поднимаем корень проекта в sys.path для корректного импорта в Streamlit-режиме.
-
 import streamlit as st  # noqa: E402
 
 st.set_page_config(page_title="Pool Monitor", page_icon=":swimmer:", layout="wide")

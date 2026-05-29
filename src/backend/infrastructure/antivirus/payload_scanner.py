@@ -65,12 +65,7 @@ class ClamAVPayloadScanner:
 
     __slots__ = ("_backend", "_fail_open")
 
-    def __init__(
-        self,
-        backend: "AntivirusBackend",
-        *,
-        fail_open: bool = True,
-    ) -> None:
+    def __init__(self, backend: "AntivirusBackend", *, fail_open: bool = True) -> None:
         self._backend = backend
         self._fail_open = fail_open
 

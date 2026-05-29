@@ -53,7 +53,7 @@ def _ensure_metrics() -> dict[str, Any]:
                 labels=("action",),
             ),
         }
-    except (ImportError, ValueError):
+    except ImportError, ValueError:
         _metrics = {"_disabled": True}
     return _metrics
 
@@ -77,7 +77,8 @@ def set_task_queue_depth(task_queue: str, depth: int) -> None:
             gauge.labels(task_queue=task_queue).set(depth)
         except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
             _logger.debug(
-                "temporal_exporter.task_queue_depth_set_failed: %s", exc,
+                "temporal_exporter.task_queue_depth_set_failed: %s",
+                exc,
                 extra={"task_queue": task_queue},
             )
 
@@ -94,7 +95,8 @@ def set_workers_active(task_queue: str, count: int) -> None:
             gauge.labels(task_queue=task_queue).set(count)
         except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
             _logger.debug(
-                "temporal_exporter.workers_active_set_failed: %s", exc,
+                "temporal_exporter.workers_active_set_failed: %s",
+                exc,
                 extra={"task_queue": task_queue},
             )
 
@@ -111,6 +113,7 @@ def record_scale_event(action: str) -> None:
             counter.labels(action=action).inc()
         except Exception as exc:  # noqa: BLE001 — Prometheus best-effort
             _logger.debug(
-                "temporal_exporter.scale_event_inc_failed: %s", exc,
+                "temporal_exporter.scale_event_inc_failed: %s",
+                exc,
                 extra={"action": action},
             )

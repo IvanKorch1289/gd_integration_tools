@@ -425,8 +425,5 @@ def make_pybreaker_adapter(
             )
 
     return InMemoryPybreakerAdapter(
-        name=name,
-        fail_max=fail_max,
-        reset_timeout=reset_timeout,
-        storage=storage,
+        name=name, fail_max=fail_max, reset_timeout=reset_timeout, storage=storage
     )

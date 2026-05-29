@@ -118,9 +118,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
 
         verdict = {
             "safe": bool(getattr(result, "safe", True)),
-            "flagged_categories": list(
-                getattr(result, "flagged_categories", []) or []
-            ),
+            "flagged_categories": list(getattr(result, "flagged_categories", []) or []),
             "stage": self.stage,
         }
         existing = exchange.get_property("guardrails_verdict")

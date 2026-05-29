@@ -9,10 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = (
-    "GRPC_CORRELATION_ID_KEY",
-    "extract_correlation_id_from_grpc_context",
-)
+__all__ = ("GRPC_CORRELATION_ID_KEY", "extract_correlation_id_from_grpc_context")
 
 # gRPC спецификация требует lowercase ASCII для текстовых metadata keys
 # (binary keys имеют суффикс ``-bin``). Браузеры/клиенты могут прислать

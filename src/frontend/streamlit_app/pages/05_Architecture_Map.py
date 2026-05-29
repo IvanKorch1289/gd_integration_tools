@@ -249,11 +249,7 @@ layerNames.forEach((name, i) => {{
 
 
 def render() -> None:
-    st.set_page_config(
-        page_title="Architecture Map",
-        page_icon="🗺️",
-        layout="wide",
-    )
+    st.set_page_config(page_title="Architecture Map", page_icon="🗺️", layout="wide")
     st.title("🗺️ System Architecture Map")
     st.caption(
         "Interactive D3.js force-directed graph · drag nodes · hover · filter by layer · zoom (scroll)"

@@ -28,10 +28,7 @@ import json
 import logging
 from typing import Any, Protocol
 
-__all__ = (
-    "BrowserCookieStore",
-    "RedisLike",
-)
+__all__ = ("BrowserCookieStore", "RedisLike")
 
 _logger = logging.getLogger(__name__)
 
@@ -98,11 +95,7 @@ class BrowserCookieStore:
             _logger.warning("BrowserCookieStore.save_cookies failed: %s", exc)
 
     async def restore_cookies(
-        self,
-        *,
-        tenant_id: str,
-        user_id: str,
-        domain: str,
+        self, *, tenant_id: str, user_id: str, domain: str
     ) -> list[dict[str, Any]]:
         """Возвращает cookies (пустой список если ключ не найден)."""
         key = self._make_key(tenant_id, user_id, domain)
@@ -117,7 +110,7 @@ class BrowserCookieStore:
             raw = raw.decode("utf-8")
         try:
             return json.loads(raw)
-        except (TypeError, json.JSONDecodeError):
+        except TypeError, json.JSONDecodeError:
             _logger.warning("BrowserCookieStore.restore: malformed JSON key=%s", key)
             return []
 

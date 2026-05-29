@@ -137,10 +137,7 @@ class EnvAESGCMKeyProvider:
     """
 
     def __init__(
-        self,
-        *,
-        env_prefix: str = "PII_AES_KEY_V",
-        current_version: int = 1,
+        self, *, env_prefix: str = "PII_AES_KEY_V", current_version: int = 1
     ) -> None:
         self._env_prefix = env_prefix
         self.current_version = current_version
@@ -152,7 +149,7 @@ class EnvAESGCMKeyProvider:
             return None
         try:
             decoded = base64.b64decode(raw)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             _logger.warning(
                 "EnvAESGCMKeyProvider: %s — invalid base64 payload", env_name
             )
@@ -250,9 +247,7 @@ class RedisTokenRegistry:
             return None
         aesgcm = AESGCM(key)
         try:
-            plaintext = aesgcm.decrypt(
-                value.nonce, value.ciphertext + value.tag, None
-            )
+            plaintext = aesgcm.decrypt(value.nonce, value.ciphertext + value.tag, None)
         except InvalidTag:
             _logger.warning(
                 "decrypt_value: AES-GCM tag mismatch (key_version=%d)",
@@ -400,12 +395,7 @@ class RedisTokenRegistry:
                 yield k
 
     async def _emit_audit(
-        self,
-        *,
-        event: str,
-        action: str,
-        outcome: str,
-        details: dict[str, Any],
+        self, *, event: str, action: str, outcome: str, details: dict[str, Any]
     ) -> None:
         """Безопасный emit — никогда не ломает основной flow."""
         if self._audit is None:

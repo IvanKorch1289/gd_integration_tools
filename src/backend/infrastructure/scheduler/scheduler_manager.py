@@ -91,9 +91,7 @@ class SchedulerManager:
                 is_production=settings.app.environment == "production",
             )
         except Exception as exc:  # noqa: BLE001
-            self.logger.warning(
-                "Scheduler observability bootstrap skipped: %s", exc
-            )
+            self.logger.warning("Scheduler observability bootstrap skipped: %s", exc)
 
     async def stop(self):
         """

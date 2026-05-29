@@ -64,9 +64,7 @@ class MLModelLoader:
     # ── MLModelLoaderProtocol implementation ──────────────────────────────────
 
     async def load(
-        self,
-        path: str | Path,
-        model_type: MLModelType | None = None,
+        self, path: str | Path, model_type: MLModelType | None = None
     ) -> Any:
         """Загружает модель (lazy, с LRU-кэшированием)."""
         path_str = str(Path(path).resolve())
@@ -78,9 +76,7 @@ class MLModelLoader:
                 return self._cache[cache_key]
 
         loop = asyncio.get_running_loop()
-        model = await loop.run_in_executor(
-            None, self._load_sync, path, model_type
-        )
+        model = await loop.run_in_executor(None, self._load_sync, path, model_type)
 
         with self._lock:
             self._cache[cache_key] = model

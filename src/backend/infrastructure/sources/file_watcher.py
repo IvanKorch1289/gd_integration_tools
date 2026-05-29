@@ -10,8 +10,6 @@
 from __future__ import annotations
 
 import asyncio
-
-import logging
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
@@ -23,7 +21,7 @@ from watchfiles import Change
 from src.backend.core.interfaces.source import EventCallback, SourceKind
 
 if TYPE_CHECKING:
-    from watchfiles import awatch as _awatch
+    pass
 
 
 @dataclass
@@ -99,7 +97,6 @@ class FileWatcherSource:
 
     async def _run_watch(self) -> None:
         """Background task: run watch loop and emit events."""
-        from datetime import UTC
 
         from src.backend.core.interfaces.source import SourceEvent
 
@@ -109,7 +106,10 @@ class FileWatcherSource:
                     source_event = SourceEvent(
                         source_id=self.source_id,
                         kind=self.kind,
-                        payload={"path": str(event.path), "change_type": event.change_type},
+                        payload={
+                            "path": str(event.path),
+                            "change_type": event.change_type,
+                        },
                     )
                     await self._on_event(source_event)
         except asyncio.CancelledError:

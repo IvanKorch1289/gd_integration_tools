@@ -51,10 +51,14 @@ class EventBusPublishProcessor:
         except Exception as _:  # noqa: BLE001
             return
 
-        payload = exchange.body if self.payload_ref == "body" else (
-            exchange.properties.get(self.payload_ref.removeprefix("property:"))
-            if self.payload_ref.startswith("property:")
-            else None
+        payload = (
+            exchange.body
+            if self.payload_ref == "body"
+            else (
+                exchange.properties.get(self.payload_ref.removeprefix("property:"))
+                if self.payload_ref.startswith("property:")
+                else None
+            )
         )
         published = list(exchange.properties.get("_eventbus_published") or [])
         published.append({"topic": self.topic, "payload": payload})
@@ -62,10 +66,7 @@ class EventBusPublishProcessor:
 
     def to_spec(self) -> dict[str, Any] | None:
         return {
-            "eventbus_publish": {
-                "topic": self.topic,
-                "payload_ref": self.payload_ref,
-            }
+            "eventbus_publish": {"topic": self.topic, "payload_ref": self.payload_ref}
         }
 
 
@@ -81,11 +82,7 @@ class EventBusSubscribeProcessor:
     compensatable: bool = True
 
     def __init__(
-        self,
-        *,
-        topic_pattern: str,
-        ack_mode: str = "auto",
-        name: str | None = None,
+        self, *, topic_pattern: str, ack_mode: str = "auto", name: str | None = None
     ) -> None:
         self.name = name or f"eventbus.subscribe({topic_pattern})"
         self.topic_pattern = topic_pattern
@@ -126,11 +123,7 @@ class EventBusMixin:
     __slots__ = ()
 
     def to_eventbus(
-        self,
-        topic: str,
-        *,
-        payload_ref: str = "body",
-        name: str | None = None,
+        self, topic: str, *, payload_ref: str = "body", name: str | None = None
     ) -> "RouteBuilder":
         """Publish текущий exchange в EventBus topic (V22 NEW).
 
@@ -145,11 +138,7 @@ class EventBusMixin:
         )
 
     def from_eventbus(
-        self,
-        topic_pattern: str,
-        *,
-        ack_mode: str = "auto",
-        name: str | None = None,
+        self, topic_pattern: str, *, ack_mode: str = "auto", name: str | None = None
     ) -> "RouteBuilder":
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW).
 

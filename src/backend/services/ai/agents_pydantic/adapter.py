@@ -18,11 +18,11 @@ __all__ = ("LiteLLMModel",)
 from contextlib import asynccontextmanager
 
 try:
-    from pydantic_ai.models import Model
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
-    from pydantic_ai.settings import ModelSettings
-    from pydantic_ai.models import ModelRequestParameters
+    from pydantic_ai.models import Model, ModelRequestParameters
     from pydantic_ai.result import StreamedResponse
+    from pydantic_ai.settings import ModelSettings
+
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
@@ -75,9 +75,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
                 dict_messages.append({"role": "user", "content": str(msg.content)})
 
         result = await self._gateway.acompletion(
-            messages=dict_messages,
-            model=self._model_name,
-            stream=False,
+            messages=dict_messages, model=self._model_name, stream=False
         )
         # Extract text from LiteLLM response
         content = ""
