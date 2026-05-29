@@ -35,17 +35,32 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
     "GlobalRateLimitMiddleware",
     "RateLimitChecker",
+    "RateLimitConfig",
     "FakeRateLimitChecker",
     "RedisRateLimitChecker",
     "tenant_aware_identifier",
 )
 
 _logger = logging.getLogger("entrypoints.middlewares.global_ratelimit")
+
+
+@dataclass(frozen=True, slots=True)
+class RateLimitConfig:
+    """Per-route rate-limit configuration.
+
+    Attributes:
+        max_per_window: Maximum requests allowed per window.
+        window_seconds: Duration of the rate-limit window in seconds.
+    """
+
+    max_per_window: int
+    window_seconds: float
 
 
 @runtime_checkable
@@ -65,6 +80,17 @@ class RateLimitChecker(Protocol):
         Returns:
             (allowed, remaining, retry_after_seconds). Если allowed=False —
             ``retry_after_seconds`` указывает через сколько сек повторить.
+        """
+
+    async def check_route_override(self, route: str) -> RateLimitConfig | None:
+        """Возвращает per-route override для заданного route.
+
+        Args:
+            route: The route path to check for override.
+
+        Returns:
+            :class:`RateLimitConfig` если есть override для route,
+            иначе ``None``.
         """
 
 
@@ -107,6 +133,10 @@ class FakeRateLimitChecker:
         remaining = self._max - len(history)
         return True, remaining, 0
 
+    async def check_route_override(self, route: str) -> RateLimitConfig | None:
+        """FakeRateLimitChecker не поддерживает route-level overrides."""
+        return None
+
 
 def tenant_aware_identifier(scope: dict[str, Any]) -> str:
     """Tenant-aware identifier для rate-limit (S18 W7).
@@ -147,6 +177,9 @@ class RedisRateLimitChecker:
         max_per_window: Лимит запросов в окне.
         window_seconds: Размер окна в секундах.
         key_prefix: Префикс Redis-ключей (default ``"ratelimit:"``).
+        route_overrides_hash: Optional Redis hash key for per-route overrides
+            (e.g., ``"ratelimit:route_overrides"``). Hash stores
+            ``{route_prefix: "max_per_window:window_seconds"}``.
     """
 
     def __init__(
@@ -156,11 +189,13 @@ class RedisRateLimitChecker:
         max_per_window: int = 100,
         window_seconds: float = 60.0,
         key_prefix: str = "ratelimit:",
+        route_overrides_hash: str | None = None,
     ) -> None:
         self._redis = redis
         self._max = max_per_window
         self._window = window_seconds
         self._prefix = key_prefix
+        self._route_overrides_hash = route_overrides_hash
 
     async def check(self, identifier: str) -> tuple[bool, int, int]:
         """Проверить лимит — см. :meth:`RateLimitChecker.check`."""
@@ -184,6 +219,65 @@ class RedisRateLimitChecker:
         if current > self._max:
             return False, 0, int(self._window)
         return True, self._max - int(current), 0
+
+    async def check_route_override(self, route: str) -> RateLimitConfig | None:
+        """Возвращает per-route override из Redis hash.
+
+        Looks up the longest matching prefix in the route overrides hash.
+        """
+        if self._route_overrides_hash is None:
+            return None
+
+        try:
+            # Fetch all route overrides from the hash
+            all_overrides = await self._redis.hgetall(self._route_overrides_hash)
+            if not all_overrides:
+                return None
+
+            # Find the longest matching prefix
+            best_match: tuple[str, str] | None = None
+            for route_prefix, config_str in all_overrides.items():
+                route_prefix_str = route_prefix.decode("utf-8") if isinstance(route_prefix, bytes) else route_prefix
+                if route_prefix_str and route.startswith(route_prefix_str):
+                    if best_match is None or len(route_prefix_str) > len(best_match[0]):
+                        best_match = (route_prefix_str, config_str)
+
+            if best_match is None:
+                return None
+
+            config_str = best_match[1]
+            if isinstance(config_str, bytes):
+                config_str = config_str.decode("utf-8")
+
+            # Parse "max_per_window:window_seconds"
+            parts = config_str.split(":")
+            if len(parts) != 2:
+                _logger.warning(
+                    "Invalid route override config %r for prefix %r",
+                    config_str,
+                    best_match[0],
+                )
+                return None
+
+            try:
+                max_per_window = int(parts[0])
+                window_seconds = float(parts[1])
+            except ValueError:
+                _logger.warning(
+                    "Invalid route override config %r for prefix %r",
+                    config_str,
+                    best_match[0],
+                )
+                return None
+
+            return RateLimitConfig(max_per_window=max_per_window, window_seconds=window_seconds)
+        except Exception as exc:  # noqa: BLE001 — fail-open
+            _logger.warning(
+                "RedisRateLimitChecker.check_route_override failed for route=%s: %s",
+                route,
+                exc,
+            )
+            return None
 
 
 class GlobalRateLimitMiddleware:

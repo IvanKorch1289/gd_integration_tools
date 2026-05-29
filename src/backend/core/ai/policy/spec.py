@@ -202,3 +202,12 @@ class AIPolicySpec(BaseModel):
     budget: BudgetSpec = Field(default_factory=BudgetSpec)
     audit: AuditSpec = Field(default_factory=AuditSpec)
     required: bool = True
+
+    @property
+    def model(self) -> str:
+        """Returns the resolved model name (primary from model_router).
+
+        This provides a convenient way to check which model will be used
+        before calling AIGateway.
+        """
+        return self.model_router.primary

@@ -219,6 +219,35 @@ class AIGateway:
         self._llm_gateway = llm_gateway
         self._policy_enforcer = policy_enforcer
 
+    async def get_policy(
+        self, workflow_id: str, tenant_id: str | None = None
+    ) -> "AIPolicySpec | None":
+        """Возвращает resolved :class:`AIPolicySpec` для заданного workflow.
+
+        Позволяет extension developer узнать, какая модель будет использована,
+        перед вызовом :meth:`invoke`.
+
+        Usage::
+
+            policy = await gateway.get_policy("credit_check", tenant_id="premium")
+            if policy is not None:
+                model = policy.model  # e.g., "openai/gpt-4o"
+                await gateway.invoke(request)
+
+        Args:
+            workflow_id: Логический идентификатор бизнес-операции.
+            tenant_id: Tenant identifier (опционально, для per-tenant override).
+
+        Returns:
+            Resolved :class:`AIPolicySpec` или ``None`` если resolver
+            не нашёл подходящей политики.
+        """
+        if self._policy_resolver is None:
+            return None
+        return await self._policy_resolver.resolve(
+            workflow_id=workflow_id, tenant_id=tenant_id
+        )
+
     async def invoke(self, request: AIRequest) -> AIResponse:
         """Главный entrypoint AI-инвокации.
 
