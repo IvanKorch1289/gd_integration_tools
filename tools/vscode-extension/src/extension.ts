@@ -10,7 +10,7 @@
  */
 
 import * as vscode from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, ErrorAction, CloseAction, State } from 'vscode-languageclient/node';
 
 /**
  * LSP Client instance for GD Integration Tools
@@ -51,10 +51,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         errorHandler: {
             error: (error, message, count) => {
                 vscode.window.showErrorMessage(`LSP Error: ${error.message}`);
-                return { action: 'continue' as const };
+                return { action: ErrorAction.Continue };
             },
             closed: () => {
-                return { action: 'restart' as const, message: 'LSP connection closed' };
+                return { action: CloseAction.Restart, message: 'LSP connection closed' };
             },
         },
     };
@@ -122,7 +122,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
             const selection = editor.selection;
 
             // Send document text to LSP for processing
-            if (client?.isReady()) {
+            if (client?.state === State.Running) {
                 const params = {
                     textDocument: { uri: document.uri.toString() },
                     position: { line: selection.start.line, character: selection.start.character },
@@ -154,7 +154,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            if (client?.isReady()) {
+            if (client?.state === State.Running) {
                 const params = {
                     textDocument: { uri: document.uri.toString() },
                 };

@@ -23,7 +23,9 @@ if str(ROOT) not in sys.path:
 
 from src.frontend.streamlit_app.api_client import get_api_client
 
-st.set_page_config(page_title="DSL Usage Audit", page_icon=":bar_chart:", layout="wide")
+st.set_page_config(
+    page_title="DSL Usage Audit", page_icon=":bar_chart:", layout="wide"
+)
 st.header(":bar_chart: DSL Usage Audit")
 st.caption("K3 S19 W6 — статистика использования DSL процессоров")
 
@@ -31,12 +33,9 @@ client = get_api_client()
 
 # ── Controls
 col1, col2, col3 = st.columns(3)
-top_n = col1.number_input(
-    "Top N процессоров", min_value=1, max_value=100, value=20, step=5
-)
+top_n = col1.number_input("Top N процессоров", min_value=1, max_value=100, value=20, step=5)
 auto_refresh = col2.toggle("Авто-обновление (30s)", value=False)
 show_details = col3.toggle("Показать детали", value=True)
-
 
 # ── Run audit
 def run_audit(top: int = 20) -> dict:
@@ -49,16 +48,8 @@ def run_audit(top: int = 20) -> dict:
         return {"error": f"Audit script not found: {audit_script}"}
 
     try:
-        result = subprocess.run(  # noqa: S603
-            [
-                sys.executable,
-                str(audit_script),
-                "--top",
-                str(top),
-                "--output",
-                "json",
-                "--force",
-            ],
+        result = subprocess.run(
+            [sys.executable, str(audit_script), "--top", str(top), "--output", "json", "--force"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -109,30 +100,24 @@ if top_processors:
     df = pd.DataFrame(top_processors)
 
     # Rename columns for display
-    df_display = df.rename(
-        columns={
-            "processor_name": "Processor Name",
-            "processor_class": "Class",
-            "usage_count": "Usage Count",
-            "avg_latency_ms": "Avg Latency (ms)",
-            "error_rate_pct": "Error Rate (%)",
-            "samples": "Samples",
-        }
-    )
+    df_display = df.rename(columns={
+        "processor_name": "Processor Name",
+        "processor_class": "Class",
+        "usage_count": "Usage Count",
+        "avg_latency_ms": "Avg Latency (ms)",
+        "error_rate_pct": "Error Rate (%)",
+        "samples": "Samples",
+    })
 
     if show_details:
-        st.dataframe(df_display, use_container_width=True, height=400)
+        st.dataframe(
+            df_display,
+            use_container_width=True,
+            height=400,
+        )
     else:
         st.dataframe(
-            df_display[
-                [
-                    "Processor Name",
-                    "Class",
-                    "Usage Count",
-                    "Avg Latency (ms)",
-                    "Error Rate (%)",
-                ]
-            ],
+            df_display[["Processor Name", "Class", "Usage Count", "Avg Latency (ms)", "Error Rate (%)"]],
             use_container_width=True,
             height=400,
         )
@@ -147,33 +132,25 @@ if top_processors:
     with chart_col1:
         st.write("**Использование по процессорам**")
         if not df_display.empty:
-            chart_data = df_display[["Processor Name", "Usage Count"]].set_index(
-                "Processor Name"
-            )
+            chart_data = df_display[["Processor Name", "Usage Count"]].set_index("Processor Name")
             st.bar_chart(chart_data, horizontal=True, height=400)
 
     # Latency bar chart
     with chart_col2:
         st.write("**Средняя латентность (ms)**")
         if not df_display.empty:
-            latency_data = df_display[["Processor Name", "Avg Latency (ms)"]].set_index(
-                "Processor Name"
-            )
+            latency_data = df_display[["Processor Name", "Avg Latency (ms)"]].set_index("Processor Name")
             st.bar_chart(latency_data, horizontal=True, height=400)
 
     # Error rate chart
     if show_details and "Error Rate (%)" in df_display.columns:
         st.divider()
         st.write("**Error Rate (%)**")
-        error_data = df_display[["Processor Name", "Error Rate (%)"]].set_index(
-            "Processor Name"
-        )
+        error_data = df_display[["Processor Name", "Error Rate (%)"]].set_index("Processor Name")
         st.bar_chart(error_data, horizontal=True, height=300)
 
 else:
-    st.info(
-        "Нет данных о использовании процессоров. Проверьте, что DSL маршруты загружены."
-    )
+    st.info("Нет данных о использовании процессоров. Проверьте, что DSL маршруты загружены.")
 
 st.divider()
 
