@@ -823,9 +823,10 @@ Unification = 20-30 LOC diff.
 
 ---
 
-## R1 Series ADR Finalization (S19 adr-w1 / adr-w2)
+## R1 Series ADR Finalization (S19 adr-w1 / adr-w2) — [wave:s19/adr-w2-r1-8-r1-9-r1-20]
 
-Sprint 19 finalized the following R-series open decisions. Full ADR documents are in `docs/adr/`:
+Sprint 19 adr-w2 confirms finalization of R1.8 (EventBus), R1.9 (Granian RSGI), and R1.20 (PluginSandboxAdapter).
+Full ADR documents are in `docs/adr/`:
 
 ### ADR-0078: plugin.toml Capability Syntax (R1.1) — **Accepted**
 
