@@ -531,10 +531,7 @@ class AIGateway:
         Returns:
             Rendered prompt после template + budget trim + context strategy.
         """
-        from src.backend.core.ai.context_strategy import (
-            TokenBudget,
-            get_context_strategy,
-        )
+        from src.backend.core.ai.context_strategy import get_context_strategy
 
         budget_spec = policy.budget if policy else None
         if budget_spec is None:
@@ -569,7 +566,7 @@ class AIGateway:
         try:
             get_context_strategy(strategy_type)
         except Exception as _:  # noqa: BLE001 — Python 3.14 compat
-            from src.backend.core.ai.context_strategy import RollingWindowStrategy
+            pass
 
             # Fallback strategy used below
 

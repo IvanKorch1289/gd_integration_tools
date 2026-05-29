@@ -369,17 +369,8 @@
         "defaults": {
           "color": {"mode": "thresholds"},
           "mappings": [
-            {
-              "options": {
-                "0": {"color": "green", "index": 0, "text": "CLOSED"},
-                "1": {"color": "yellow", "index": 1, "text": "HALF-OPEN"},
-                "2": {"color": "red", "index": 2, "text": "OPEN"},
-                "3": {"color": "blue", "index": 3, "text": "FORCED-OPEN"},
-                "-1": {"color": "gray", "index": 4, "text": "DISABLED"}
-              },
-              "type": "value"
-            }
-          ],
+            {"options": {"0": {"color": "green", "index": 0, "text": "CLOSED"}}, {"options": {"1": {"color": "yellow", "index": 1, "text": "HALF-OPEN"}}}, {"options": {"2": {"color": "red", "index": 2, "text": "OPEN"}}}, {"options": {"3": {"color": "blue", "index": 3, "text": "FORCED-OPEN"}}}, {"options": {"-1": {"color": "gray", "index": 4, "text": "DISABLED"}}}, {"options": {"null": {"color": "gray", "index": 5, "text": "N/A"}}}, {"options": {"__all": {"text": "MULTI"}}}},
+            {"type": "value"}],
           "thresholds": {
             "mode": "absolute",
             "steps": [

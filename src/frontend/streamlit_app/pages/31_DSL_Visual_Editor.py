@@ -148,7 +148,6 @@ STEP_PALETTE: dict[str, dict[str, str]] = {
 
 def _render_step_palette():
     """Render draggable step palette items using HTML/JS."""
-    import json
 
     # Palette serialized for JS
 

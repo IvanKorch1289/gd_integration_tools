@@ -642,6 +642,12 @@ def generate_stub(module_name: str, class_name: str, output_path: Path) -> str:
     methods = _collect_public_methods(cls, module_ns)
     extra_imports = _collect_all_imports(cls, module_name, module_ns)
 
+    # Remove self-import: if the target class itself is in extra_imports as a
+    # "from {module_name} import {class_name}", drop it — the stub IS the definition.
+    self_import = f"from {module_name} import {class_name}"
+    if self_import in extra_imports:
+        extra_imports.remove(self_import)
+
     # Build fq_to_short mapping before rendering so annotations are shortened
     global _fq_to_short
     _fq_to_short = _build_fq_to_short(extra_imports)

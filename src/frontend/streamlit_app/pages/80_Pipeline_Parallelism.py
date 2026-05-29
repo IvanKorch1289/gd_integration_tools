@@ -81,7 +81,7 @@ with tab_topn:
                 try:
                     rep = client.get(f"/api/v1/admin/routes/{rid}/parallelism-report")
                     results.append((rid, rep.get("estimated_speedup", 1.0)))
-                except Exception:  # noqa: BLE001
+                except Exception:  # noqa: BLE001, S112
                     continue
             results.sort(key=lambda x: x[1], reverse=True)
             for rid, speedup in results[:n]:

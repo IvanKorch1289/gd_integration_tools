@@ -15,7 +15,7 @@ _root = Path(__file__).resolve().parents[4]
 def _load_diff_module():
     path = _root / "tools" / "dsl_diff.py"
     spec = importlib.util.spec_from_file_location("_dsl_diff_app", path)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None and spec.loader is not None  # noqa: S101
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)

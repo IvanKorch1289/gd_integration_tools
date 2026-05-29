@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -214,7 +214,7 @@ class RegionRouter:
 # ---------------------------------------------------------------------------
 
 if TYPE_CHECKING:
-    import asyncio
+    pass
 
 
 class RegionHealthChecker:
@@ -276,7 +276,6 @@ class RegionHealthChecker:
 
     async def check_all(self) -> None:
         """Run one health check round across all registered regions."""
-        import asyncio as _asyncio
 
         regions = list_regions()
         checks = [(r.code, await self.probe(r)) for r in regions]
