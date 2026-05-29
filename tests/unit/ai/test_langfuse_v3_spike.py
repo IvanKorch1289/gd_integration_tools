@@ -1,59 +1,31 @@
-"""Smoke-тесты K6 Wave 1: LangFuse v3 parallel shim под feature_flag.langfuse_v3.
+"""Smoke-тесты K6 Wave 1: LangFuse v3 parallel shim (W11 GAP-AI finalized).
 
 Покрывает:
-- ``test_factory_v2_when_flag_off`` — фабрика возвращает v2-callback при flag=False.
-- ``test_factory_v3_when_flag_on`` — фабрика возвращает v3-callback при flag=True.
+- ``test_factory_returns_v3`` — фабрика возвращает v3-callback (default-ON).
 - ``test_v3_callback_noop_without_langfuse`` — v3-callback silent при недоступном пакете.
 - ``test_v3_callback_calls_span`` — v3-callback вызывает start_as_current_span.
 """
 
 from __future__ import annotations
 
-import importlib
 import sys
-from contextlib import contextmanager
-from typing import Any, Generator
+from typing import Any
 from unittest.mock import MagicMock, patch
-
-
-@contextmanager
-def _patch_flag(value: bool) -> Generator[None, None, None]:
-    """Контекст-менеджер для временной подмены feature_flags.langfuse_v3."""
-    module_path = "src.backend.services.ai.gateway.langfuse_callback"
-    with patch(f"{module_path}.feature_flags") as mock_flags:
-        mock_flags.langfuse_v3 = value
-        yield
 
 
 # ─── Тесты фабрики ──────────────────────────────────────────────────────────
 
 
-def test_factory_v2_when_flag_off() -> None:
-    """При feature_flags.langfuse_v3=False фабрика возвращает v2-callback."""
-    from src.backend.services.ai.gateway.langfuse_callback import (
-        LangFuseCostCallback,
+def test_factory_returns_v3() -> None:
+    """W11 GAP-AI: factory всегда возвращает v3-callback (default-ON, v2 удалён)."""
+    from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+        LangFuseCallbackV3,
         get_langfuse_callback,
     )
 
-    with _patch_flag(False):
-        cb = get_langfuse_callback()
-
-    assert isinstance(cb, LangFuseCostCallback), (
-        f"Ожидался LangFuseCostCallback (v2), получен {type(cb).__name__}"
-    )
-
-
-def test_factory_v3_when_flag_on() -> None:
-    """При feature_flags.langfuse_v3=True фабрика возвращает v3-callback."""
-    from src.backend.services.ai.gateway.langfuse_callback_v3 import LangFuseCallbackV3
-
-    with _patch_flag(True):
-        from src.backend.services.ai.gateway.langfuse_callback import get_langfuse_callback
-
-        cb = get_langfuse_callback()
-
+    cb = get_langfuse_callback()
     assert isinstance(cb, LangFuseCallbackV3), (
-        f"Ожидался LangFuseCallbackV3 (v3), получен {type(cb).__name__}"
+        f"Expected LangFuseCallbackV3 (v3), got {type(cb).__name__}"
     )
 
 
@@ -111,7 +83,7 @@ def test_v3_callback_calls_span() -> None:
     fake_client.start_as_current_span.assert_called_once()
     call_kwargs = fake_client.start_as_current_span.call_args.kwargs
     assert call_kwargs["name"] == "llm.openai", (
-        f"Ожидалось name='llm.openai', получено '{call_kwargs.get('name')}'"
+        f"Expected name='llm.openai', got '{call_kwargs.get('name')}'"
     )
 
     # Проверяем, что span.update вызван с ключевыми полями.

@@ -472,11 +472,11 @@ plugin-migrate-guide: check-env ## Sprint 14 K5 W1: сгенерировать m
 perf-plugin-sandbox: check-env ## Sprint 14 K2 W2: pytest-benchmark plugin sandbox overhead
 	@$(UV_RUN) pytest tests/perf/test_plugin_sandbox_overhead.py --benchmark-only --benchmark-json=tests/perf/baselines/plugin_sandbox.benchmark.json
 
-dsl-stubs: check-env ## Sprint 14 K3 W2: regenerate .pyi stubs for RouteBuilder/WorkflowBuilder
-	@$(UV_RUN) python -m tools.gen_dsl_stubs
+dsl-stubs: ## Sprint 14 K3 W2: regenerate .pyi stubs for RouteBuilder/WorkflowBuilder
+	@.venv/bin/python -m tools.gen_dsl_stubs
 
-dsl-stubs-check: check-env ## Sprint 14 K3 W2: CI gate — нет ли drift между .pyi и runtime
-	@$(UV_RUN) python -m tools.gen_dsl_stubs --check
+dsl-stubs-check: ## Sprint 14 K3 W2: CI gate — нет ли drift между .pyi и runtime
+	@.venv/bin/python -m tools.gen_dsl_stubs --check
 
 migrate-plugin-manifest: check-env ## Wave R1.2.b: convert plugins/<name>/plugin.yaml → plugin.toml (PLUGIN_DIR=...)
 	@if [ -z "$(PLUGIN_DIR)" ]; then \

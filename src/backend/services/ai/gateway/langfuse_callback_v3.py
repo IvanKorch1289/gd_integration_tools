@@ -1,9 +1,9 @@
 """LangFuse 3.x cost-tracking callback для LiteLLM (K6 Wave 1, spike).
 
 Параллельная реализация поверх LangFuse 3.x SDK (OTEL-native).
-Активируется только при ``feature_flags.langfuse_v3 = True`` (default-OFF).
+Активируется при ``feature_flags.langfuse_v3 = True`` (W11 GAP-AI: default-ON).
 
-Отличия от v2 (``langfuse_callback.py``):
+Отличия от v2 (удалён ``langfuse_callback.py``):
 - Трассировка через контекстный менеджер ``langfuse.start_as_current_span`` вместо
   imperative ``client.trace(...).generation(...)``.
 - Декоратор ``@langfuse.observe`` для автоматического создания trace-span.
@@ -12,12 +12,8 @@
 - Импорт ``langfuse`` выполняется lazy (отсутствие пакета не ломает старт).
 
 Использование:
-    Через фабрику ``get_langfuse_callback()`` в ``langfuse_callback.py``:
-
-        if feature_flags.langfuse_v3:
-            from .langfuse_callback_v3 import LangFuseCallbackV3
-            return LangFuseCallbackV3()
-"""
+    Фабрика ``get_langfuse_callback()`` импортируется из этого модуля
+    (client.py -> langfuse_callback_v3)."""
 
 from __future__ import annotations
 
@@ -26,7 +22,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("LangFuseCallbackV3",)
+__all__ = ("LangFuseCallbackV3", "get_langfuse_callback")
 
 
 class LangFuseCallbackV3:
@@ -293,3 +289,12 @@ def _extract_cost(response_obj: Any) -> float:
     if isinstance(response_obj, dict):
         return float(response_obj.get("response_cost", 0.0) or 0.0)
     return 0.0
+
+
+def get_langfuse_callback() -> Any:
+    """W11 GAP-AI: factory — returns v3 callback (now default-ON).
+
+    v2 LangFuseCostCallback from ``langfuse_callback.py`` removed.
+    For local development, set ``FEATURE_LANGFUSE_V3=false`` to fallback.
+    """
+    return LangFuseCallbackV3()

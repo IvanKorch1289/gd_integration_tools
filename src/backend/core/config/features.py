@@ -260,12 +260,12 @@ class FeatureFlags(BaseSettingsWithLoader):
     )
 
     langfuse_v3: bool = Field(
-        default=False,
+        default=True,
         title="AI: LangFuse 3.x callbacks",
         description=(
-            "K6 Wave 1. Owner: K6 AI/RAG. ETA: S2-W1. "
-            "Переключение на LangFuse 3.x SDK. default-OFF до полной "
-            "миграции callbacks и smoke на 1 trace + generation."
+            "K6 Wave 1. Owner: K6 AI/RAG. "
+            "LangFuse 3.x SDK — OTEL-native, лучше совместимость с self-hosted. "
+            "W11 GAP-AI: default-ON, v2 callback (langfuse_callback.py) удалён."
         ),
     )
 

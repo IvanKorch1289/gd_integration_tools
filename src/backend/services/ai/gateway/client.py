@@ -148,13 +148,11 @@ class LiteLLMGateway:
         if not langfuse_settings.enabled:
             return self._cost_callback
         try:
-            from src.backend.services.ai.gateway.langfuse_callback import (
-                LangFuseCostCallback,
+            from src.backend.services.ai.gateway.langfuse_callback_v3 import (
+                get_langfuse_callback,
             )
 
-            if not hasattr(self, "_langfuse_callback"):
-                self._langfuse_callback: Any = LangFuseCostCallback()
-            return self._langfuse_callback
+            return get_langfuse_callback()
         except Exception as exc:  # noqa: BLE001
             logger.debug("LangFuse callback selection failed: %s", exc)
             return self._cost_callback
