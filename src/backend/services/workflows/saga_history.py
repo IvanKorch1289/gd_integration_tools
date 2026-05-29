@@ -91,7 +91,7 @@ async def get_saga_history(
     for row in getattr(result, "result_rows", []):
         try:
             payload = json.loads(row[4]) if row[4] else {}
-        except TypeError, json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             payload = {}
         records.append(
             SagaHistoryRecord(
@@ -139,8 +139,8 @@ async def aggregate_saga_stats(
         conditions.append("tenant_id = %(tenant_id)s")
         params["tenant_id"] = tenant_id
 
-    sql = (
-        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "
+    sql = (  # noqa: S608
+        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "  # noqa: S608
         "  countIf(event_type='workflow.compensation_fail') AS failed, "
         "  avg(duration_ms) AS avg_dur "
         f"FROM workflow_audit WHERE {' AND '.join(conditions)}"

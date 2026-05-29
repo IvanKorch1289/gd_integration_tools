@@ -103,13 +103,12 @@ def _check_dependencies() -> None:
     Raises:
         NeMoGuardrailsUnavailable: если пакет не установлен.
     """
-    try:
-        # noqa: F401 — импорт для проверки наличия
-        import nemoguardrails  # type: ignore[import-not-found]
-    except ImportError as exc:
+    import importlib.util
+
+    if importlib.util.find_spec("nemoguardrails") is None:
         raise NeMoGuardrailsUnavailable(
             "nemoguardrails не установлен. Установите: pip install nemoguardrails>=0.10"
-        ) from exc
+        )
 
 
 class NeMoGuardrailsRuntime:

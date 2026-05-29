@@ -207,7 +207,9 @@ class AIPolicyEnforcer:
             )
             return GuardResult(guard_name=ref.name, verdict="passed")
         try:
-            from src.backend.services.ai.guardrails.llm_guard_client import LLMGuardResult
+            from src.backend.services.ai.guardrails.llm_guard_client import (
+                LLMGuardResult,
+            )
 
             result: LLMGuardResult = await self._llm_guard_client.scan(prompt)
             if result.flagged:

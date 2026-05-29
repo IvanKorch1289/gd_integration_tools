@@ -19,7 +19,6 @@ Re-exposes ``tools/dev/snapshot_db.py`` функционал через pytest f
 from __future__ import annotations
 
 import sqlite3
-import tempfile
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path

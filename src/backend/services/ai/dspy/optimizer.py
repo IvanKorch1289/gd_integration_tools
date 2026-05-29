@@ -248,12 +248,9 @@ def _default_bootstrap(
 
 
 def _is_dspy_available() -> bool:
-    try:
-        import dspy  # type: ignore[import-not-found]
+    import importlib.util
 
-        return True
-    except ImportError:
-        return False
+    return importlib.util.find_spec("dspy") is not None
 
 
 def _wrap_pipeline_to_dspy(pipeline: DSPyPipeline):

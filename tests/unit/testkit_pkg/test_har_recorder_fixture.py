@@ -14,7 +14,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from testkit.recorder import HARRecorder, load_cassette
+from testkit.recorder import HARCassette, HARRecorder
 
 
 def test_har_recorder_fixture_round_trip(
@@ -59,7 +59,7 @@ async def test_har_recorder_fixture_records_via_mock_transport(
     har_recorder.cassette.save(har_cassette_path)
     assert har_cassette_path.exists()
 
-    loaded = load_cassette(har_cassette_path)
+    loaded = HARCassette.load(har_cassette_path)
     assert len(loaded.entries) == 1
     entry = loaded.entries[0]
     assert entry.method == "GET"

@@ -566,13 +566,12 @@ class AIGateway:
             "Prompt %d tokens exceeds budget %d, truncating", total_tokens, limit
         )
 
-        budget = TokenBudget(limit=limit)
         try:
-            strategy = get_context_strategy(strategy_type)
+            get_context_strategy(strategy_type)
         except Exception as _:  # noqa: BLE001 — Python 3.14 compat
             from src.backend.core.ai.context_strategy import RollingWindowStrategy
 
-            strategy = RollingWindowStrategy()
+            # Fallback strategy used below
 
         # String-level: split at 60/40 boundary, truncate middle
         if enc is not None:

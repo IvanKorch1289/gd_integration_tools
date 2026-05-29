@@ -250,7 +250,6 @@ class SkillRegistry:
             # CapabilityChecker is a type alias, not an instance.
             # Try to get the global check function from the sandbox module.
             import src.backend.core.plugin_runtime.sandbox as sandbox_module
-            from src.backend.core.plugin_runtime.sandbox import CapabilityChecker
 
             _capability_check = getattr(
                 sandbox_module, "_global_capability_check", None

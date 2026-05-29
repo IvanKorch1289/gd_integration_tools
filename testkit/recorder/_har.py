@@ -23,10 +23,7 @@ from typing import Any
 
 import httpx
 
-from testkit.recorder.secrets_mask import (
-    mask_request_body,
-    mask_response_headers,
-)
+from testkit.recorder.secrets_mask import mask_request_body, mask_response_headers
 
 __all__ = ("HARCassette", "HAREntry", "HARRecorder", "record_session")
 

@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.resilience.coordinator import (
         ComponentStatus,
         ResilienceCoordinator,
-        get_resilience_coordinator,
     )
 
 __all__ = (

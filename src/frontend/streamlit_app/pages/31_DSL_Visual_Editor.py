@@ -150,7 +150,7 @@ def _render_step_palette():
     """Render draggable step palette items using HTML/JS."""
     import json
 
-    palette_json = json.dumps(STEP_PALETTE)
+    # Palette serialized for JS
 
     html = """
     <style>
@@ -639,7 +639,7 @@ with tab_visual:
                         meta, reordered_steps
                     )
                     _push_history()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
         # Clear the query param
         query_params.clear()

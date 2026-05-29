@@ -9,6 +9,10 @@ Sprint 0 (Redis cluster + pipelining): добавлены ``mget_pipelined`` /
 ``mset_pipelined`` — тонкие обёртки над ``client.pipeline(transaction=False)``
 для batch-операций. Совместимы и с обычным ``redis.asyncio.Redis``, и с
 ``redis.asyncio.cluster.RedisCluster`` (последний поддерживает pipeline()).
+
+Tag-index (Wave 2.3): добавлены ``bind_key_to_tag`` и ``delete_by_tag`` —
+для tag-based инвалидации используется Redis SET-индекс:
+``__cache_tag:{tag}`` хранит множество ключей с этим тегом.
 """
 
 from __future__ import annotations
@@ -21,6 +25,8 @@ if TYPE_CHECKING:
     from redis.asyncio import Redis
 
 __all__ = ("RedisBackend",)
+
+_TAG_INDEX_PREFIX = "__cache_tag:"
 
 
 class RedisBackend(CacheBackend):
@@ -49,6 +55,51 @@ class RedisBackend(CacheBackend):
 
     async def exists(self, key: str) -> bool:
         return bool(await self._client.exists(key))
+
+    # ── Tag-index support (for tag-based invalidation) ──────────────────────
+
+    def _tag_index_key(self, tag: str) -> str:
+        """Возвращает Redis-ключ для индекса тега."""
+        return f"{_TAG_INDEX_PREFIX}{tag}"
+
+    async def bind_key_to_tag(self, tag: str, key: str) -> None:
+        """Привязывает cache key к тегу (SET SADD __cache_tag:{tag} {key})."""
+        await self._client.sadd(self._tag_index_key(tag), key)
+
+    async def delete_by_tag(self, tag: str) -> int:
+        """
+        Удаляет все ключи, привязанные к тегу.
+
+        Алгоритм:
+        1. SMEMBERS — получить все ключи с этим тегом
+        2. DEL — удалить каждый ключ
+        3. DEL tag-index — удалить сам SET
+
+        Args:
+            tag: Имя тега (без префикса ``__cache_tag:``).
+
+        Returns:
+            Число удалённых ключей (без учёта DEL tag-index).
+        """
+        index_key = self._tag_index_key(tag)
+        # SMEMBERS + pipeline DEL
+        keys = await self._client.smembers(index_key)
+        if not keys:
+            return 0
+        # Декодируем bytes-ключи из SET в str
+        str_keys = [k.decode() if isinstance(k, bytes) else k for k in keys]
+        if str_keys:
+            await self._client.delete(*str_keys)
+        await self._client.delete(index_key)
+        return len(str_keys)
+
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """Удаляет все ключи, matching glob pattern."""
+        count = 0
+        async for key in self._client.scan_iter(match=pattern, count=200):
+            await self._client.delete(key)
+            count += 1
+        return count
 
     async def mget_pipelined(self, keys: list[str]) -> list[bytes | None]:
         """Batch-чтение через non-transactional pipeline.

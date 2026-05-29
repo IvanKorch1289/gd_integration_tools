@@ -181,7 +181,7 @@ class GraylogGelfLogSink(LogSink):
 
         try:
             payload = self._serialize(record)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             # fallback: всё неизвестное → str
             payload = self._serialize({k: _coerce(v) for k, v in record.items()})
 
@@ -221,7 +221,7 @@ class GraylogGelfLogSink(LogSink):
             self._worker_task.cancel()
             try:
                 await self._worker_task
-            except asyncio.CancelledError, Exception:  # noqa: BLE001
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
                 pass
         await asyncio.to_thread(self._close_sockets)
 
@@ -231,7 +231,8 @@ class GraylogGelfLogSink(LogSink):
         if self._worker_task is not None and not self._worker_task.done():
             return
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
+            return
         except RuntimeError:
             return
         from src.backend.core.utils.task_registry import get_task_registry

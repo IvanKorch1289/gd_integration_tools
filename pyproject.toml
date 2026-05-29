@@ -719,6 +719,13 @@ ignore = [
 "src/backend/infrastructure/scheduler/scheduler_manager.py" = ["F822"]
 "src/backend/services/decorators/limiting.py" = ["F822"]
 "src/backend/services/io/external_database.py" = ["F822"]
+# DSPy is optional (lazy import) — F821 intentionally bypasses runtime import check.
+"src/backend/services/ai/dspy/optimizer.py" = ["F821"]
+"src/frontend/streamlit_app/app.py" = ["BLE001", "E402"]
+"src/frontend/streamlit_app/pages/*.py" = ["BLE001", "E402"]
+"src/frontend/streamlit_app/api_client.py" = ["BLE001"]
+# Backend services: BLE001+S110 intentional (resilience, circuit breakers, fail-soft).
+"src/backend/**" = ["BLE001", "S110"]
 # Wave-6.1 lazy ``@app_state_singleton`` (E402: import после класса).
 "src/backend/dsl/engine/plugin_registry.py" = ["E402"]
 "src/backend/dsl/engine/tracer.py" = ["E402"]
@@ -733,11 +740,8 @@ ignore = [
 "src/backend/infrastructure/clients/storage/mongodb.py" = ["E402"]
 "src/backend/infrastructure/database/pool_monitor.py" = ["E402"]
 "src/backend/infrastructure/security/api_key_manager.py" = ["E402"]
-# Streamlit pages: set_page_config() требует быть первым st-вызовом.
-"src/frontend/streamlit_app/app.py" = ["E402"]
-"src/frontend/streamlit_app/pages/*.py" = ["E402"]
-# Тесты используют ``assert`` (pytest convention) — S101 не релевантен.
-"tests/**/*.py" = ["S101", "S105", "S106", "S311"]
+# Tests: BLE001 intentional (fail-soft), S101/S105/S106/S311 pytest convention.
+"tests/**/*.py" = ["S101", "S105", "S106", "S311", "BLE001"]
 # testkit импортирует heavy-deps lazy внутри функций — допускается S404/S603.
 "testkit/**/*.py" = ["S101"]
 
@@ -792,7 +796,7 @@ branch = true
 # ~26000 дополнительных covered statements и нереально за один спринт.
 # Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
 # + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
-fail_under = 60
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",

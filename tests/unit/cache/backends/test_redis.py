@@ -152,3 +152,80 @@ async def test_exists_false(
     """``exists`` возвращает False если client.exists == 0."""
     client.exists.return_value = 0
     assert await backend.exists("k") is False
+
+
+# ── Tag-index tests ────────────────────────────────────────────────────────────
+
+
+async def test_bind_key_to_tag_adds_to_set(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """``bind_key_to_tag`` вызывает SADD __cache_tag:{tag} {key}."""
+    await backend.bind_key_to_tag("entity:orders", "orders:42")
+    client.sadd.assert_awaited_once_with("__cache_tag:entity:orders", "orders:42")
+
+
+async def test_delete_by_tag_removes_all_tagged_keys(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """``delete_by_tag`` удаляет все ключи из SET и сам SET-индекс."""
+    # SMEMBERS возвращает bytes-ключи → декодируются в str перед DEL
+    client.smembers.return_value = {b"orders:1", b"orders:2"}
+    removed = await backend.delete_by_tag("entity:orders")
+
+    assert removed == 2
+    client.smembers.assert_awaited_once_with("__cache_tag:entity:orders")
+    # delete(*keys) — один вызов с двумя str-аргументами, затем DEL tag-index
+    assert client.delete.await_count == 2
+    # Проверяем структуру: первая DEL — ключи (str, порядок не определён),
+    # вторая DEL — tag-index
+    calls = client.delete.call_args_list
+    # Tag-index DEL — всегда str, без __cache_tag: префикса в начале
+    tag_del = [c for c in calls if c.args and c.args[0] == "__cache_tag:entity:orders"]
+    key_del = [c for c in calls if c.args and c.args[0] != "__cache_tag:entity:orders"]
+    assert len(tag_del) == 1
+    assert len(key_del) == 1
+    # Ключи — str, два аргумента
+    assert len(key_del[0].args) == 2
+    assert all(isinstance(k, str) for k in key_del[0].args)
+
+
+async def test_delete_by_tag_empty_returns_zero(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """Пустой tag-index → возвращает 0, DEL не вызывается."""
+    client.smembers.return_value = set()
+    removed = await backend.delete_by_tag("nonexistent:tag")
+
+    assert removed == 0
+    client.delete.assert_not_called()
+
+
+async def test_delete_by_tag_decodes_bytes_keys(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """Ключи из SMEMBERS декодируются из bytes в str перед DEL."""
+    client.smembers.return_value = {b"cache:key:1", b"cache:key:2"}
+    await backend.delete_by_tag("table:orders")
+
+    # Проверяем что DEL вызван с str-ключами (bytes декодированы)
+    calls = client.delete.call_args_list
+    assert len(calls) == 2
+    # Первый вызов: delete(key1, key2) — ключи декодированы в str
+    key_call_args = calls[0].args
+    assert all(isinstance(k, str) for k in key_call_args)
+    assert set(key_call_args) == {"cache:key:1", "cache:key:2"}
+    # Второй вызов: DEL tag-index
+    assert calls[1].args == ("__cache_tag:table:orders",)
+
+
+async def test_delete_by_pattern_returns_count(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """``delete_by_pattern`` (новый, возвращающий int) считает удалённые ключи."""
+    client.scan_iter.return_value = _AsyncIterator([b"a", b"b"])
+    removed = await backend.delete_by_pattern("cache:orders:*")
+
+    assert removed == 2
+    assert client.delete.await_count == 2
+

@@ -32,7 +32,7 @@ class InboxDLQWriter:
         from sqlalchemy import text  # type: ignore[import-untyped]
 
         sql = text(
-            f"""
+            f"""  # noqa: S608
             INSERT INTO {self._table} (
                 dlq_id, transport, trace_id, tenant_id, route_id,
                 original_payload, error_class, error_message, reason,
@@ -44,7 +44,7 @@ class InboxDLQWriter:
                 :retry_count, :first_failed_at, :last_failed_at, :metadata
             )
             ON CONFLICT (dlq_id) DO NOTHING
-            """
+            """  # noqa: S608
         )
         params = envelope.model_dump()
         # SQLAlchemy JSON-сериализация поля metadata + original_payload

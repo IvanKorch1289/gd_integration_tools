@@ -154,7 +154,7 @@ class RPACallPolicy:
         """Exponential backoff с jitter (attempt — 0-indexed)."""
         base = min(self.backoff_initial * (2**attempt), self.backoff_max)
         if self.jitter > 0:
-            base *= 1 + random.uniform(-self.jitter, self.jitter)
+            base *= 1 + random.uniform(-self.jitter, self.jitter)  # noqa: S311
         return max(0.0, base)
 
     async def call(
@@ -202,7 +202,7 @@ class RPACallPolicy:
         ctx = RPACallContext(
             transport=transport, tenant_id=tenant_id, route_id=route_id, payload=payload
         )
-        start = time.monotonic()
+        _ = time.monotonic()
 
         for attempt in range(self.max_attempts):
             ctx.attempts = attempt + 1

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ("LiteLLMModel",)
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager  # noqa: E402
 
 try:
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart

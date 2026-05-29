@@ -112,8 +112,8 @@ class HitlHistoryService:
             conditions.append("actor = %(operator)s")
             params["operator"] = operator
 
-        sql = (
-            "SELECT workflow_id, tenant_id, event_type, actor, payload, "
+        sql = (  # noqa: S608
+            "SELECT workflow_id, tenant_id, event_type, actor, payload, "  # noqa: S608
             "  created_at, duration_ms "
             f"FROM workflow_audit WHERE {' AND '.join(conditions)} "
             "ORDER BY created_at DESC LIMIT %(limit)s"
@@ -129,7 +129,7 @@ class HitlHistoryService:
         for row in getattr(result, "result_rows", []):
             try:
                 payload = json.loads(row[4]) if row[4] else {}
-            except TypeError, json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 payload = {}
             event_type = row[2]
             action_str = event_type.removeprefix("hitl.")

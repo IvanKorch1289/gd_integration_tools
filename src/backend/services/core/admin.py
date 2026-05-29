@@ -116,12 +116,13 @@ class AdminService:
         removed = await get_cache_invalidator_provider().invalidate_pattern(pattern)
         return {"pattern": pattern, "removed": removed}
 
-    async def invalidate_cache_by_tag(self, *tags: str) -> dict[str, Any]:
+    async def invalidate_cache_by_tag(self, tags: list[str]) -> dict[str, Any]:
         """
         Инвалидирует кэш по одному или нескольким тегам.
 
         Args:
-            tags: Теги для инвалидации (e.g., "entity:orders", "table:orders").
+            tags: Список тегов для инвалидации
+                (e.g., ["entity:orders", "table:orders"]).
 
         Returns:
             dict с количеством удалённых ключей.
@@ -129,7 +130,7 @@ class AdminService:
         from src.backend.core.di.providers import get_cache_invalidator_provider
 
         removed = await get_cache_invalidator_provider().invalidate_tags(*tags)
-        return {"tags": list(tags), "removed": removed}
+        return {"tags": tags, "removed": removed}
 
     async def invalidate_table(self, table: str) -> dict[str, Any]:
         """

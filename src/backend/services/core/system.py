@@ -107,7 +107,7 @@ class SystemService:
 
     async def invalidate_cache(self, pattern: str = "*") -> dict[str, Any]:
         """Invalidate cache by pattern (Redis SCAN + DEL, multi-instance safe)."""
-        return await self.admin.invalidate_cache(pattern=pattern)
+        return await self.admin.invalidate_cache_by_pattern(pattern=pattern)
 
     # ── SLO Metrics ─────────────────────────────────────────
 

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from pathlib import Path
 
 import streamlit as st
+
+_root = Path(__file__).resolve().parents[4]
 
 st.set_page_config(page_title="Onboarding", page_icon=":sparkles:", layout="wide")
 st.header("Onboarding Checklist")

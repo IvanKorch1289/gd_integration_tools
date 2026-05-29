@@ -58,9 +58,9 @@ class AddressRuRecognizer(PatternRecognizer):
 
     def __init__(self) -> None:
         patterns = [
-            Pattern(name="ru_address_full", regex=ADDRESS_PATTERN, score=0.5),
-            Pattern(name="ru_address_short", regex=SHORT_ADDRESS_PATTERN, score=0.4),
-            Pattern(name="ru_postal_code", regex=POSTAL_CODE_PATTERN, score=0.3),
+            Pattern(name="ru_address_full", regex=AddressRuRecognizer.ADDRESS_PATTERN, score=0.5),
+            Pattern(name="ru_address_short", regex=AddressRuRecognizer.SHORT_ADDRESS_PATTERN, score=0.4),
+            Pattern(name="ru_postal_code", regex=AddressRuRecognizer.POSTAL_CODE_PATTERN, score=0.3),
         ]
         super().__init__(
             supported_entity="ADDRESS_RU",

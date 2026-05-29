@@ -112,7 +112,7 @@ def dry_run_route(
     Returns:
         DryRunResult со списком StepResult и total_ms.
     """
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311
     steps_src = route.get("steps") or route.get("processors") or []
     result = DryRunResult(route_id=route.get("route_id"))
 

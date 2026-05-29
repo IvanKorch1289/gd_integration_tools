@@ -27,12 +27,8 @@ import pytest
 # Pre-wired фикстуры — pytest подхватит их автоматически благодаря
 # импорту в conftest.py. Если фикстура не нужна — закомментируйте.
 from testkit.fixtures.db_snapshot import db_snapshot  # noqa: F401
-from testkit.fixtures.plugin_loader import (  # noqa: F401
-    loaded_plugin,
-    plugin_runtime,
-)
+from testkit.fixtures.plugin_loader import loaded_plugin, plugin_runtime  # noqa: F401
 from testkit.fixtures.s3_mock import s3_client, s3_mock  # noqa: F401
-
 
 # === Адаптируйте под свой extension ===
 

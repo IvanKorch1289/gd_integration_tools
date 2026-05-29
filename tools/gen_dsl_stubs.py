@@ -90,14 +90,67 @@ class StubMethod:
 def _get_module_namespace(module_name: str) -> dict[str, Any]:
     """Load module's full namespace: globals + imported names.
 
-    Used to evaluate string annotations and ForwardRef at generation time.
+    Also parses ``if TYPE_CHECKING:`` blocks in the source file and injects
+    those imports into the namespace (with ``TYPE_CHECKING = True``) so that
+    ``get_type_hints`` can resolve ForwardRef annotations that use them.
     """
     import importlib
+    import pathlib
+
     mod = importlib.import_module(module_name)
     ns = dict(vars(mod))
     # Remove the module object itself to avoid self-references
     ns.pop(module_name.split(".")[-1], None)
     ns.pop("__builtins__", None)
+
+    # Inject TYPE_CHECKING = True so that get_type_hints can resolve
+    # imports inside `if TYPE_CHECKING:` blocks (common pattern for avoiding
+    # circular imports in type annotations).
+    ns["TYPE_CHECKING"] = True
+
+    # Resolve string placeholders from TYPE_CHECKING blocks to actual type objects.
+    # e.g. ns['BranchSpec'] = 'BranchSpec' (string) → actual BranchSpec class.
+    # We do this by scanning the source file for `from X import Y` inside
+    # `if TYPE_CHECKING:` blocks and trying to import them.
+    try:
+        src_path = getattr(mod, "__file__", None)
+        if src_path and src_path.endswith(".py"):
+            import re
+
+            src = pathlib.Path(src_path).read_text()
+            lines = src.splitlines()
+            i = 0
+            while i < len(lines):
+                stripped = lines[i].strip()
+                if stripped.startswith("if TYPE_CHECKING"):
+                    # Found the block, collect all indented lines that follow
+                    i += 1
+                    while i < len(lines):
+                        line = lines[i]
+                        stripped_i = line.strip()
+                        # Unindented line = block ended
+                        if stripped_i and not line[0].isspace():
+                            break
+                        # Inside the block — look for `from X import Y, Z` lines
+                        m = re.match(r"from\s+(\S+)\s+import\s+(.+)", stripped_i)
+                        if m:
+                            from_module, imports_str = m.group(1), m.group(2)
+                            # Handle parentheses: `from x import (Y, Z)` or `from x import Y, Z)`
+                            imports_str = imports_str.strip().strip("()")
+                            for imp in re.split(r",\s*", imports_str):
+                                imp = imp.strip().split(" as ")[0].strip()
+                                if imp and imp.isidentifier():
+                                    try:
+                                        ns[imp] = importlib.import_module(from_module).__dict__[imp]
+                                    except (KeyError, ImportError):
+                                        pass
+                        i += 1
+                    break  # Only handle first TYPE_CHECKING block
+                i += 1
+    except Exception:
+        pass
+
+    ns.pop("TYPE_CHECKING", None)
     return ns
 
 

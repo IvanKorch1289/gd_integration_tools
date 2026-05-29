@@ -20,17 +20,8 @@ Pytest-фикстуры регистрируются автоматически 
 
 from __future__ import annotations
 
-from testkit.recorder import (
-    HARCassette,
-    HAREntry,
-    HARRecorder,
-    record_session,
-)
-from testkit.replay import (
-    MissingCassetteEntry,
-    build_replay_transport,
-    load_cassette,
-)
+from testkit.recorder import HARCassette, HAREntry, HARRecorder, record_session
+from testkit.replay import MissingCassetteEntry, build_replay_transport, load_cassette
 from testkit.route_runner import RouteRunner, RouteRunResult
 
 __all__ = (

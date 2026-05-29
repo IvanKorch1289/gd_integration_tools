@@ -11,18 +11,8 @@
 
 from __future__ import annotations
 
-from testkit.recorder._har import (
-    HARCassette,
-    HAREntry,
-    HARRecorder,
-    record_session,
-)
-from testkit.recorder.cassette import (
-    CassetteMode,
-    cassette,
-    load_cassette,
-    save_cassette,
-)
+from testkit.recorder._har import HARCassette, HAREntry, HARRecorder, record_session
+from testkit.recorder.cassette import CassetteMode, cassette, save_cassette
 from testkit.recorder.secrets_mask import (
     MASKED_VALUE,
     SECRET_BODY_KEYS,
@@ -40,7 +30,6 @@ __all__ = (
     "SECRET_BODY_KEYS",
     "SECRET_HEADER_KEYS",
     "cassette",
-    "load_cassette",
     "mask_request_body",
     "mask_response_headers",
     "record_session",

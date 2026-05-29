@@ -92,7 +92,7 @@ class TaskRegistry:
         # Сам TaskRegistry — это и есть санкционированная точка
         # обёртки raw create_task; CI-gate orphan-create-task здесь не
         # применим (мы уже регистрируем task в self._tasks ниже).
-        task: asyncio.Task[_T] = loop.create_task(  # noqa: orphan-create-task
+        task: asyncio.Task[_T] = loop.create_task(
             self._with_context(ctx, wrapped), name=name
         )
         self._tasks.add(task)
@@ -111,7 +111,7 @@ class TaskRegistry:
         for var, value in ctx.items():
             try:
                 var.set(value)
-            except LookupError, RuntimeError, TypeError:  # noqa: S110
+            except (LookupError, RuntimeError, TypeError):  # noqa: S110
                 continue
         return await coro
 
