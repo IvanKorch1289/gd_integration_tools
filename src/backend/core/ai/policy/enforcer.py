@@ -2,8 +2,12 @@
 
 Реализует AIPolicySpec guards:
 
-* Input guards: Rebuff + Lakera (NeMo пропускается — Python 3.14 incompat).
-* Output guards: Llama Guard 3 (GGUF self-hosted).
+* Input guards: LLM Guard (self-hosted, S35 W1) — replaces Rebuff/Lakera external APIs.
+  - ``llm_guard:*`` — self-hosted scanner (PromptInjection, Toxicity, etc.)
+  - ``rebuff:*`` — deprecated external API (kept for backward-compat)
+  - ``lakera:*`` — deprecated external API (kept for backward-compat)
+  - ``nemo:*`` — skip (Python 3.14 incompat)
+* Output guards: Llama Guard 3 (GGUF self-hosted, S25 W4).
 
 GuardrailViolationError поднимается при ``on_block="fail"``.
 DLQ publish при ``on_block="dlq"``.
@@ -36,6 +40,7 @@ class AIPolicyEnforcer:
     - ``llama_guard_runtime``: LlamaGuardRuntime (S25 W4, GGUF)
     - ``pii_tokenizer``: PIITokenizer (S25 W4) — для sanitize_input
     - ``nemo_runtime``: NeMo (Python 3.14 incompat — skip при None)
+    - ``llm_guard_client``: LLMGuardClient (S35 W1, self-hosted scanner)
 
     Не применяет guards если :attr:`AIPolicySpec.required` = False
     (контролируется AIGateway через feature-flag).
@@ -47,11 +52,13 @@ class AIPolicyEnforcer:
         pii_tokenizer: object | None = None,
         nemo_runtime: object | None = None,
         llama_guard_runtime: object | None = None,
+        llm_guard_client: object | None = None,
         dlq_writer: "DLQWriter | None" = None,
     ) -> None:
         self._pii_tokenizer = pii_tokenizer
         self._nemo_runtime = nemo_runtime
         self._llama_guard_runtime = llama_guard_runtime
+        self._llm_guard_client = llm_guard_client
         self._dlq_writer = dlq_writer
 
     # ── Input guards ───────────────────────────────────────────────────────────
@@ -62,8 +69,9 @@ class AIPolicyEnforcer:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
         Поддерживаетые guard'ы:
-        - ``"rebuff:<variant>"`` — Rebuff client
-        - ``"lakera:<variant>"`` — Lakera client
+        - ``"llm_guard:<scanner>"`` — LLM Guard self-hosted (S35 W1, default)
+        - ``"rebuff:<variant>"`` — Rebuff client (deprecated, external API)
+        - ``"lakera:<variant>"`` — Lakera client (deprecated, external API)
         - ``"nemo:*"`` — NeMo Colang (skip, Python 3.14 incompat)
 
         Raises:
@@ -96,6 +104,10 @@ class AIPolicyEnforcer:
                 "AIPolicyEnforcer: nemo input guard skipped (Python 3.14 incompat)"
             )
             return None
+
+        # LLM Guard — self-hosted (S35 W1, default)
+        if name.startswith("llm_guard:") or name.startswith("llm-guard:"):
+            return await self._guard_input_llm_guard(prompt, ref, on_block)
 
         # Rebuff
         if name.startswith("rebuff:"):
@@ -179,6 +191,46 @@ class AIPolicyEnforcer:
                 raise GuardrailViolationError(
                     guard_name=ref.name,
                     flagged_categories=["lakera_error"],
+                    on_block=on_block,
+                    content=prompt,
+                ) from exc
+            return GuardResult(guard_name=ref.name, verdict="passed")
+
+    async def _guard_input_llm_guard(
+        self, prompt: str, ref: "GuardRef", on_block: str
+    ) -> GuardResult:
+        """LLM Guard self-hosted input guard check (S35 W1)."""
+        if self._llm_guard_client is None:
+            logger.warning(
+                "AIPolicyEnforcer: llm_guard input guard requires llm_guard_client "
+                "— skipped. Set LLAMA_GUARD_ENABLED=1 for self-hosted scanner."
+            )
+            return GuardResult(guard_name=ref.name, verdict="passed")
+        try:
+            from src.backend.services.ai.guardrails.llm_guard_client import LLMGuardResult
+
+            result: LLMGuardResult = await self._llm_guard_client.scan(prompt)
+            if result.flagged:
+                self._handle_guard_block(
+                    guard_name=ref.name,
+                    flagged=result.categories,
+                    on_block=on_block,
+                    content=prompt,
+                )
+                return GuardResult(
+                    guard_name=ref.name,
+                    verdict="blocked",
+                    categories=result.categories,
+                )
+            return GuardResult(guard_name=ref.name, verdict="passed")
+        except GuardrailViolationError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("AIPolicyEnforcer: LLM Guard check failed: %s", exc)
+            if on_block == "fail":
+                raise GuardrailViolationError(
+                    guard_name=ref.name,
+                    flagged_categories=["llm_guard_error"],
                     on_block=on_block,
                     content=prompt,
                 ) from exc
