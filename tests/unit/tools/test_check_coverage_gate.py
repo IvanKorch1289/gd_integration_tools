@@ -62,7 +62,8 @@ def test_baseline_json_loadable() -> None:
     assert "coverage_percent" in data
     assert "threshold" in data
     assert "target_threshold" in data
-    assert data["target_threshold"] == 70.0
+    # S19 K2 W4: threshold ratchet 70% → 75%
+    assert data["target_threshold"] == 75.0
 
 
 def test_gate_passes_when_above_threshold(tmp_path: Path) -> None:
@@ -118,8 +119,8 @@ def test_update_baseline_writes_snapshot(tmp_path: Path) -> None:
     assert baseline.exists()
     data = json.loads(baseline.read_text(encoding="utf-8"))
     assert data["coverage_percent"] == pytest.approx(65.0, abs=0.01)
-    # next-wave todo автоматически добавлен, т.к. coverage < 70.
-    assert any("70" in t for t in data.get("next_wave_todo", []))
+    # S19 K2 W4: _DEFAULT_THRESHOLD = 75.0 (ratcheted from 70)
+    assert any("75" in t for t in data.get("next_wave_todo", []))
 
 
 def test_strict_mode_detects_drop(tmp_path: Path) -> None:

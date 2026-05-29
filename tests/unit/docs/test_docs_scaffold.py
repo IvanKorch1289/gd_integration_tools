@@ -30,19 +30,20 @@ def test_conf_py_loadable() -> None:
     assert namespace["project"] == "gd_integration_tools"
 
 
-def test_index_rst_exists() -> None:
-    """docs/index.rst присутствует и содержит ожидаемый заголовок.
+def test_index_md_exists() -> None:
+    """docs/index.md присутствует и содержит ожидаемый заголовок.
 
     Проверяет наличие Diátaxis toctree-директив в корневом индексе.
+    Проект использует Markdown (index.md), не reStructuredText (index.rst).
     """
-    index_path = _DOCS_DIR / "index.rst"
-    assert index_path.exists(), f"docs/index.rst не найден: {index_path}"
+    index_path = _DOCS_DIR / "index.md"
+    assert index_path.exists(), f"docs/index.md не найден: {index_path}"
 
     content = index_path.read_text(encoding="utf-8")
-    assert "tutorials" in content, "index.rst не содержит toctree tutorials"
-    assert "how-to" in content, "index.rst не содержит toctree how-to"
-    assert "reference" in content, "index.rst не содержит toctree reference"
-    assert "explanation" in content, "index.rst не содержит toctree explanation"
+    assert "tutorials" in content, "index.md не содержит toctree tutorials"
+    assert "how-to" in content, "index.md не содержит toctree how-to"
+    assert "reference" in content, "index.md не содержит toctree reference"
+    assert "explanation" in content, "index.md не содержит toctree explanation"
 
 
 def test_diataxis_folders_present() -> None:

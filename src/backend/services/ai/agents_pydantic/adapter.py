@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 
 try:
     from pydantic_ai.models import Model
-    from pydantic_ai.messages import ModelMessage, ModelResponse
+    from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
     from pydantic_ai.settings import ModelSettings
     from pydantic_ai.models import ModelRequestParameters
     from pydantic_ai.result import StreamedResponse
@@ -29,6 +29,7 @@ except ImportError:
     Model = object  # type: ignore[misc,assignment]
     ModelMessage = Any  # type: ignore[misc,assignment]
     ModelResponse = Any  # type: ignore[misc,assignment]
+    TextPart = None  # type: ignore[assignment, misc]
     ModelSettings = Any  # type: ignore[misc,assignment]
     ModelRequestParameters = Any  # type: ignore[misc,assignment]
     StreamedResponse = Any  # type: ignore[misc,assignment]
@@ -83,7 +84,11 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):
         if hasattr(result, "choices") and result.choices:
             msg_obj = result.choices[0].message
             content = str(getattr(msg_obj, "content", "") or "")
-        return ModelResponse(content=content)
+        # pydantic-ai ModelResponse uses parts (TextPart), not content kwarg
+        if TextPart is not None:
+            return ModelResponse(parts=[TextPart(content=content)])
+        # Fallback when pydantic_ai not installed (shouldn't reach here in practice)
+        return result  # type: ignore[return-value]
 
     @asynccontextmanager
     async def request_stream(

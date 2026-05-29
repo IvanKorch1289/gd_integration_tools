@@ -8,13 +8,24 @@ import pytest
 
 from src.backend.services.ai.agents_pydantic.adapter import LiteLLMModel
 
+# pydantic_ai imports — graceful degradation if not installed
+try:
+    from pydantic_ai.models import ModelRequestParameters
+except ImportError:
+    ModelRequestParameters = None  # type: ignore[assignment, misc]
+
 
 @pytest.mark.asyncio
 async def test_adapter_forwards_to_gateway() -> None:
     gw = type("G", (), {})()
     gw.acompletion = AsyncMock(return_value={"id": "x"})
     model = LiteLLMModel(gateway=gw, model_name="openai/gpt-4o-mini")
-    result = await model.request([{"role": "user", "content": "hi"}])
+    model_request_params = ModelRequestParameters() if ModelRequestParameters else None
+    result = await model.request(
+        [{"role": "user", "content": "hi"}],
+        model_settings=None,
+        model_request_parameters=model_request_params,  # type: ignore[arg-type]
+    )
     assert result == {"id": "x"}
     gw.acompletion.assert_awaited_once()
 

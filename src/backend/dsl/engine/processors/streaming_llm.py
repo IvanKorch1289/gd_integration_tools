@@ -61,12 +61,17 @@ class TokenStreamLLMProcessor(BaseProcessor):
         return self._gateway
 
     def _ensure_streaming_service(self) -> Any:
-        """Wave D.3: lazy-init LLMStreamingService через DI."""
+        """Wave D.3: lazy-init LLMStreamingService via DI.
+        
+        If a gateway was injected into the processor, pass it through to the
+        service so that tests can inject a mock and `LITELLM_ENABLED=false`
+        does not cause a spurious GatewayUnavailable error.
+        """
         if self._streaming_service is not None:
             return self._streaming_service
-        from src.backend.services.ai.streaming_service import get_llm_streaming_service
+        from src.backend.services.ai.streaming_service import LLMStreamingService
 
-        self._streaming_service = get_llm_streaming_service()
+        self._streaming_service = LLMStreamingService(gateway=self._gateway)
         return self._streaming_service
 
     def _ensure_publisher(self) -> Any:
